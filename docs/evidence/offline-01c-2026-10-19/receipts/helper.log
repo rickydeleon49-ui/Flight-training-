@@ -1,223 +1,223 @@
 TAP version 13
-# (node:97276) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (node:99550) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: distributed helper
     # Subtest: exports nothing, has one operator entry, one fixed lane and no test or environment route
     ok 1 - exports nothing, has one operator entry, one fixed lane and no test or environment route
       ---
-      duration_ms: 0.835041
+      duration_ms: 0.856208
       type: 'test'
       ...
     # Subtest: the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
     ok 2 - the distributed CLI refuses to self-check; the runner runs it in a disposable copy and every named regression passes
       ---
-      duration_ms: 756.09125
+      duration_ms: 794.138625
       type: 'test'
       ...
     1..2
 ok 1 - distributed helper
   ---
-  duration_ms: 757.496875
+  duration_ms: 795.462209
   type: 'suite'
   ...
 # Subtest: full self-check reporting
     # Subtest: reports lost special keys as named failures, completes all checks and exits nonzero
     ok 1 - reports lost special keys as named failures, completes all checks and exits nonzero
       ---
-      duration_ms: 652.191375
+      duration_ms: 660.395458
       type: 'test'
       ...
     # Subtest: runs the historical schema13 self-check with only its intentional schema-ceiling alarm
     ok 2 - runs the historical schema13 self-check with only its intentional schema-ceiling alarm
       ---
-      duration_ms: 496.528041
+      duration_ms: 499.286125
       type: 'test'
       ...
     1..2
 ok 2 - full self-check reporting
   ---
-  duration_ms: 1148.800458
+  duration_ms: 1159.767792
   type: 'suite'
   ...
 # Subtest: proof source walker
     # Subtest: sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
     ok 1 - sets aside genuine Cargo/Tauri build output but reports unexpected source and changed protected files
       ---
-      duration_ms: 25.291291
+      duration_ms: 25.632625
       type: 'test'
       ...
     # Subtest: recognizes Cargo's Apple Silicon target folder only in its exact tagged shape
     ok 2 - recognizes Cargo's Apple Silicon target folder only in its exact tagged shape
       ---
-      duration_ms: 16.139833
+      duration_ms: 16.166458
       type: 'test'
       ...
     # Subtest: recognizes only the two exact build-output paths, and this checkout's real ones when present
     ok 3 - recognizes only the two exact build-output paths, and this checkout's real ones when present
       ---
-      duration_ms: 3.085083
+      duration_ms: 3.175958
       type: 'test'
       ...
     1..3
 ok 3 - proof source walker
   ---
-  duration_ms: 44.71775
+  duration_ms: 45.173083
   type: 'suite'
   ...
 # Subtest: post-merge replay dependency lock (QA-02)
     # Subtest: accepts an identical lock and a version-only bump of both root fields
     ok 1 - accepts an identical lock and a version-only bump of both root fields
       ---
-      duration_ms: 3.671833
+      duration_ms: 3.930625
       type: 'test'
       ...
     # Subtest: refuses any other difference, including dependency, integrity, resolution and inconsistent root versions
     ok 2 - refuses any other difference, including dependency, integrity, resolution and inconsistent root versions
       ---
-      duration_ms: 13.598458
+      duration_ms: 13.648834
       type: 'test'
       ...
     1..2
 ok 4 - post-merge replay dependency lock (QA-02)
   ---
-  duration_ms: 17.326
+  duration_ms: 17.641667
   type: 'suite'
   ...
 # Subtest: operator CLI refusals
     # Subtest: snapshot outside the approved lane refuses and writes nothing
     ok 1 - snapshot outside the approved lane refuses and writes nothing
       ---
-      duration_ms: 77.680959
+      duration_ms: 78.327792
       type: 'test'
       ...
     # Subtest: no flag retargets the lane or relaxes a rule
     ok 2 - no flag retargets the lane or relaxes a rule
       ---
-      duration_ms: 189.639125
+      duration_ms: 189.907041
       type: 'test'
       ...
     # Subtest: the account guard refuses any uid other than the approved standard account
     ok 3 - the account guard refuses any uid other than the approved standard account
       ---
-      duration_ms: 0.219459
+      duration_ms: 0.226209
       type: 'test'
       ...
     1..3
 ok 5 - operator CLI refusals
   ---
-  duration_ms: 267.59875
+  duration_ms: 268.526958
   type: 'suite'
   ...
 # Subtest: operator CLI compare
     # Subtest: writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
     ok 1 - writes a fresh receipt for a genuine upgrade, then never clobbers it or an input
       ---
-      duration_ms: 266.38925
+      duration_ms: 270.517167
       type: 'test'
       ...
     # Subtest: refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
     ok 2 - refuses the original PR \#142 installed receipts instead of reinterpreting them, leaving them byte-identical
       ---
-      duration_ms: 51.967958
+      duration_ms: 51.454875
       type: 'test'
       ...
     # Subtest: refuses oversized and symlinked receipts before reading them
     ok 3 - refuses oversized and symlinked receipts before reading them
       ---
-      duration_ms: 145.866709
+      duration_ms: 147.655208
       type: 'test'
       ...
     1..3
 ok 6 - operator CLI compare
   ---
-  duration_ms: 464.289791
+  duration_ms: 469.698167
   type: 'suite'
   ...
 # Subtest: the disposable copy's scratch lane
     # Subtest: refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
     ok 1 - refuses roots outside task-owned scratch, outside the temporary directory, or not named for the app
       ---
-      duration_ms: 0.294583
+      duration_ms: 0.303542
       type: 'test'
       ...
     # Subtest: is never selected outside a takeSnapshot call
     ok 2 - is never selected outside a takeSnapshot call
       ---
-      duration_ms: 33.087458
+      duration_ms: 33.809334
       type: 'test'
       ...
     # Subtest: clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
     ok 3 - clones are independent single-linked files, so the hard-link guard is never tripped by fixture copies
       ---
-      duration_ms: 43.133791
+      duration_ms: 43.246167
       type: 'test'
       ...
     1..3
 ok 7 - the disposable copy's scratch lane
   ---
-  duration_ms: 76.577917
+  duration_ms: 77.424375
   type: 'suite'
   ...
 # Subtest: special metadata keys on real SQLite
     # Subtest: capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
     ok 1 - capture __proto__, constructor, toString and Unicode keys as own digests in a prototype-free map
       ---
-      duration_ms: 0.243542
+      duration_ms: 0.250291
       type: 'test'
       ...
     # Subtest: retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
     ok 2 - retained special keys pass upgrade and restore; changed, removed or added ones fail restore by name
       ---
-      duration_ms: 78.708792
+      duration_ms: 80.192708
       type: 'test'
       ...
     # Subtest: sets aside exactly the three receipt keys, only for restore
     ok 3 - sets aside exactly the three receipt keys, only for restore
       ---
-      duration_ms: 70.924292
+      duration_ms: 71.674083
       type: 'test'
       ...
     1..3
 ok 8 - special metadata keys on real SQLite
   ---
-  duration_ms: 149.942334
+  duration_ms: 152.186791
   type: 'suite'
   ...
 # Subtest: inventory and runtime-root boundaries
     # Subtest: inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
     ok 1 - inventories sqlite-like user objects that a LIKE wildcard would hide, and compare names them
       ---
-      duration_ms: 59.079167
+      duration_ms: 59.8965
       type: 'test'
       ...
     # Subtest: refuses a symlinked backups/ root before listing it and writes no receipt
     ok 2 - refuses a symlinked backups/ root before listing it and writes no receipt
       ---
-      duration_ms: 37.755958
+      duration_ms: 37.83225
       type: 'test'
       ...
     # Subtest: refuses a symlinked .restore-staging/ root before listing it and writes no receipt
     ok 3 - refuses a symlinked .restore-staging/ root before listing it and writes no receipt
       ---
-      duration_ms: 36.1795
+      duration_ms: 36.043375
       type: 'test'
       ...
     # Subtest: refuses a symlinked .restore-pending/ root before listing it and writes no receipt
     ok 4 - refuses a symlinked .restore-pending/ root before listing it and writes no receipt
       ---
-      duration_ms: 35.960917
+      duration_ms: 37.178375
       type: 'test'
       ...
     # Subtest: still records a real (non-symlinked) backups/ root as runtime disclosure
     ok 5 - still records a real (non-symlinked) backups/ root as runtime disclosure
       ---
-      duration_ms: 37.660667
+      duration_ms: 39.481416
       type: 'test'
       ...
     1..5
 ok 9 - inventory and runtime-root boundaries
   ---
-  duration_ms: 206.72375
+  duration_ms: 210.518458
   type: 'suite'
   ...
 1..9
@@ -228,4 +228,4 @@ ok 9 - inventory and runtime-root boundaries
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 3248.813041
+# duration_ms 3315.44075

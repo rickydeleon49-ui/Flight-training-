@@ -1,6 +1,6 @@
 {
   "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
-  "workerSha256": "608bb15d292353612216f6e356c39779367f6cac4969df9857726c9dff5b33f0",
+  "workerSha256": "ff438af2990120811ff5f58ec0f8e32e9716412d1a62cb1413ce40032a1e15ee",
   "memoryCapBytes": 536870912,
   "command": [
     "docs/evidence/offline-01c-2026-10-19/corpus.py",
@@ -19,32 +19,33 @@
       "pages": 524,
       "outcomes": {
         "image_only": 1,
-        "text": 522,
+        "text": 497,
+        "text_unreadable": 25,
         "failed": 1
       },
       "pageErrors": {
         "page_content_limit": 1
       },
-      "textBytes": 1863210,
+      "textBytes": 1766300,
       "countedPeakBytes": 401571949,
-      "peakRssMiB": 534.0,
-      "wallSeconds": 2.37,
+      "peakRssMiB": 533.5,
+      "wallSeconds": 2.4,
       "samples": [
         {
           "page": 2,
           "excerpt": "Pilot\u2019s Handbook of Aeronautical Knowledge U.S. Department of Transportation FEDERAL AVIATION ADMINISTRATION Flight Standards Service 2016"
         },
         {
-          "page": 132,
-          "excerpt": "Low angle of attack High angle of attack Load on upward movingpropeller blade Load on downward movingpropeller blade Load on downward movingpropeller blade Load"
+          "page": 130,
+          "excerpt": "2.Corkscrewing effect of the slipstream3.Gyroscopic action of the propeller4.Asymmetric loading of the propeller (P-factor)Torque Reaction Torque reaction invol"
         },
         {
-          "page": 262,
-          "excerpt": "as air density decreases (higher density altitude), aircraft performance decreases. A decrease in air density means a high density altitude; an increase in air "
+          "page": 260,
+          "excerpt": "It must be emphasized that the manufacturers\u2019 information and data furnished in the AFM/POH is not standardized. Some provide the data in tabular form, while ot"
         },
         {
-          "page": 392,
-          "excerpt": "Longitude Latitude aattoorr \u00b0\u00b0NN 6600\u00b0\u00b0NN 44NN 3300\u00b0\u00b0NN \u00b0\u00b0SS \u00b0\u00b0SS \u00b0\u00b0SS \u00b0\u00b0SS 115500\u00b0\u00b0WW113355\u00b0\u00b0WW 112200\u00b0\u00b0WW 110055\u00b0\u00b0WW 9900\u00b0\u00b0WW6600\u00b0\u00b0WW 4455\u00b0\u00b0WW 3300\u00b0\u00b0WW 1155\u00b0\u00b0"
+          "page": 395,
+          "excerpt": "Figure 16-9. Note the agonic line where magnetic variation is zero. Easterly variation Westerly variation Agonic line Zero degree variation exists on the agonic"
         }
       ],
       "file": "pilot_handbook.pdf",
@@ -82,7 +83,7 @@
       "pageErrors": {},
       "textBytes": 43301,
       "countedPeakBytes": 67241183,
-      "peakRssMiB": 68.1,
+      "peakRssMiB": 67.9,
       "wallSeconds": 0.12,
       "samples": [
         {
@@ -119,7 +120,7 @@
       "pageErrors": {},
       "textBytes": 53730,
       "countedPeakBytes": 21783263,
-      "peakRssMiB": 28.9,
+      "peakRssMiB": 29.0,
       "wallSeconds": 0.05,
       "samples": [
         {
@@ -156,7 +157,7 @@
       "pageErrors": {},
       "textBytes": 99081,
       "countedPeakBytes": 10205961,
-      "peakRssMiB": 22.6,
+      "peakRssMiB": 22.3,
       "wallSeconds": 0.05,
       "samples": [
         {
@@ -192,8 +193,8 @@
       },
       "pageErrors": {},
       "textBytes": 22303,
-      "countedPeakBytes": 7264166,
-      "peakRssMiB": 18.0,
+      "countedPeakBytes": 7265303,
+      "peakRssMiB": 18.1,
       "wallSeconds": 0.02,
       "samples": [
         {

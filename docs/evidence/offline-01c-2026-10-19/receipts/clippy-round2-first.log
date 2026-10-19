@@ -1,0 +1,44 @@
+    Checking her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+error: this function has too many arguments (8/7)
+   --> src/extraction/inspect.rs:247:1
+    |
+247 | / fn walk(
+248 | |     doc: &Document,
+249 | |     content: &Content<Vec<lopdf::content::Operation>>,
+250 | |     resources: &[Dictionary],
+...   |
+255 | |     font_unmapped: &mut bool,
+256 | | ) {
+    | |_^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#too_many_arguments
+    = note: `-D clippy::too-many-arguments` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::too_many_arguments)]`
+
+error: this function has too many arguments (8/7)
+   --> src/extraction/inspect.rs:340:1
+    |
+340 | / fn invoke(
+341 | |     doc: &Document,
+342 | |     name: &[u8],
+343 | |     resources: &[Dictionary],
+...   |
+348 | |     font_unmapped: &mut bool,
+349 | | ) {
+    | |_^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#too_many_arguments
+
+error: could not compile `her-flight-deck` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: very complex type used. Consider factoring parts into `type` definitions
+   --> src/extraction/inspect.rs:977:19
+    |
+977 |         let make: Vec<(&str, Box<dyn Fn(&mut PdfBuilder) -> Object>)> = vec![
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#type_complexity
+    = note: `-D clippy::type-complexity` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::type_complexity)]`
+
+error: could not compile `her-flight-deck` (lib test) due to 3 previous errors

@@ -129,17 +129,15 @@ pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> 
         found.decoded_bytes = budget.used;
         return found;
     };
-    let mut stack = Vec::new();
-    walk(
+    let mut walker = Walker {
         doc,
-        &content,
-        &resources,
-        0,
-        &mut stack,
-        &mut budget,
-        &mut found,
-    );
-    found.decoded_bytes = budget.used;
+        stack: Vec::new(),
+        budget,
+        found,
+    };
+    walker.walk(&content, &resources, 0, &mut false);
+    let mut found = walker.found;
+    found.decoded_bytes = walker.budget.used;
     found
 }
 
@@ -243,50 +241,150 @@ fn page_resources(doc: &Document, page_id: ObjectId) -> Option<Vec<Dictionary>> 
     Some(all)
 }
 
-fn walk(
-    doc: &Document,
-    content: &Content<Vec<lopdf::content::Operation>>,
-    resources: &[Dictionary],
-    depth: usize,
-    stack: &mut Vec<ObjectId>,
-    budget: &mut Budget,
-    found: &mut Inspection,
-) {
-    let mut font_unmapped = false;
-    for op in &content.operations {
-        if budget.exhausted {
-            return;
+/// Traversal state shared by one page's walk: the document, the forms
+/// being walked (for cycle detection), the page's content budget and what
+/// has been found so far.
+struct Walker<'d> {
+    doc: &'d Document,
+    stack: Vec<ObjectId>,
+    budget: Budget,
+    found: Inspection,
+}
+
+impl Walker<'_> {
+    fn walk(
+        &mut self,
+        content: &Content<Vec<lopdf::content::Operation>>,
+        resources: &[Dictionary],
+        depth: usize,
+        font_unmapped: &mut bool,
+    ) {
+        // The selected font is graphics state: `q` saves it, `Q` restores it.
+        let mut saved: Vec<bool> = Vec::new();
+        for op in &content.operations {
+            if self.budget.exhausted {
+                return;
+            }
+            match op.operator.as_str() {
+                "q" => saved.push(*font_unmapped),
+                "Q" => {
+                    if let Some(previous) = saved.pop() {
+                        *font_unmapped = previous;
+                    }
+                }
+                "Tf" => {
+                    *font_unmapped = op
+                        .operands
+                        .first()
+                        .and_then(|o| o.as_name().ok())
+                        .map(|name| is_unmapped_composite(self.doc, name, resources))
+                        .unwrap_or(false);
+                }
+                "Tj" | "TJ" | "'" | "\"" => {
+                    self.found.shows_text = true;
+                    if *font_unmapped {
+                        self.found.unmapped_text = true;
+                    }
+                }
+                "BI" => self.found.draws_image = true,
+                "Do" => {
+                    let name = op.operands.first().and_then(|o| o.as_name().ok());
+                    match name {
+                        Some(name) => self.invoke(name, resources, depth, font_unmapped),
+                        None => self.found.complete = false,
+                    }
+                }
+                _ => {}
+            }
         }
-        match op.operator.as_str() {
-            "Tf" => {
-                font_unmapped = op
-                    .operands
-                    .first()
-                    .and_then(|o| o.as_name().ok())
-                    .map(|name| is_unmapped_composite(doc, name, resources))
-                    .unwrap_or(false);
+    }
+
+    /// Resolve one `Do` operand and follow it: an image is noted, a form is
+    /// walked with its own resources (falling back to the caller's), and
+    /// anything else leaves the inspection incomplete.
+    fn invoke(
+        &mut self,
+        name: &[u8],
+        resources: &[Dictionary],
+        depth: usize,
+        font_unmapped: &mut bool,
+    ) {
+        let target = resources.iter().find_map(|r| {
+            let xobjects = match r.get(b"XObject").ok()? {
+                Object::Reference(id) => self.doc.get_dictionary(*id).ok()?,
+                Object::Dictionary(d) => d,
+                _ => return None,
+            };
+            match xobjects.get(name).ok()? {
+                Object::Reference(id) => Some(*id),
+                _ => None,
             }
-            "Tj" | "TJ" | "'" | "\"" => {
-                found.shows_text = true;
-                if font_unmapped {
-                    found.unmapped_text = true;
+        });
+        let Some(id) = target else {
+            self.found.complete = false;
+            return;
+        };
+        let Ok(Object::Stream(stream)) = self.doc.get_object(id) else {
+            self.found.complete = false;
+            return;
+        };
+        let subtype = stream.dict.get(b"Subtype").and_then(Object::as_name).ok();
+        match subtype {
+            Some(b"Image") => self.found.draws_image = true,
+            Some(b"Form") => {
+                if depth + 1 > MAX_FORM_DEPTH || self.stack.contains(&id) {
+                    self.found.complete = false;
+                    return;
                 }
+                let content = match strict_stream_bytes(stream, &mut self.budget) {
+                    Ok(bytes) => Content::decode_strict(&bytes).ok(),
+                    Err(Refused::TooLarge) => {
+                        self.found.complete = false;
+                        self.found.content_too_large = true;
+                        return;
+                    }
+                    Err(Refused::Unreadable) => None,
+                };
+                let Some(content) = content else {
+                    self.found.complete = false;
+                    return;
+                };
+                let own = match stream.dict.get(b"Resources") {
+                    Ok(Object::Dictionary(d)) => Some(d.clone()),
+                    Ok(Object::Reference(r)) => match self.doc.get_dictionary(*r) {
+                        Ok(d) => Some(d.clone()),
+                        Err(_) => {
+                            self.found.complete = false;
+                            return;
+                        }
+                    },
+                    _ => None,
+                };
+                let scoped: Vec<Dictionary> = match own {
+                    Some(d) => std::iter::once(d)
+                        .chain(resources.iter().cloned())
+                        .collect(),
+                    None => resources.to_vec(),
+                };
+                // A form inherits the caller's graphics state, including the
+                // selected font, and invoking it is an implicit `q`/`Q`.
+                let caller_font = *font_unmapped;
+                self.stack.push(id);
+                self.walk(&content, &scoped, depth + 1, font_unmapped);
+                self.stack.pop();
+                *font_unmapped = caller_font;
             }
-            "BI" => found.draws_image = true,
-            "Do" => {
-                let name = op.operands.first().and_then(|o| o.as_name().ok());
-                match name {
-                    Some(name) => invoke(doc, name, resources, depth, stack, budget, found),
-                    None => found.complete = false,
-                }
-            }
-            _ => {}
+            _ => self.found.complete = false,
         }
     }
 }
 
-/// A Type0 (composite) font without a `/ToUnicode` map: its glyph ids can't
-/// be turned into text reliably.
+/// A Type0 (composite) font whose glyph ids `lopdf` cannot turn into text.
+/// `lopdf` decodes such a font through its `/ToUnicode` map only when
+/// `get_font_encoding` yields a parsed map; on a missing, null, dangling or
+/// corrupt map it silently falls back to a one-byte encoding and produces
+/// glyph bytes as "text". So the same function decides here: anything other
+/// than a parsed map is unmapped.
 fn is_unmapped_composite(doc: &Document, name: &[u8], resources: &[Dictionary]) -> bool {
     let font = resources.iter().find_map(|r| {
         let fonts = match r.get(b"Font").ok()? {
@@ -303,86 +401,12 @@ fn is_unmapped_composite(doc: &Document, name: &[u8], resources: &[Dictionary]) 
     match font {
         Some(f) => {
             f.get(b"Subtype").and_then(Object::as_name).ok() == Some(b"Type0".as_slice())
-                && f.get(b"ToUnicode").is_err()
+                && !matches!(
+                    f.get_font_encoding(doc),
+                    Ok(lopdf::Encoding::UnicodeMapEncoding(_))
+                )
         }
         None => false,
-    }
-}
-
-/// Resolve one `Do` operand and follow it: an image is noted, a form is
-/// walked with its own resources (falling back to the caller's), and
-/// anything else leaves the inspection incomplete.
-fn invoke(
-    doc: &Document,
-    name: &[u8],
-    resources: &[Dictionary],
-    depth: usize,
-    stack: &mut Vec<ObjectId>,
-    budget: &mut Budget,
-    found: &mut Inspection,
-) {
-    let target = resources.iter().find_map(|r| {
-        let xobjects = match r.get(b"XObject").ok()? {
-            Object::Reference(id) => doc.get_dictionary(*id).ok()?,
-            Object::Dictionary(d) => d,
-            _ => return None,
-        };
-        match xobjects.get(name).ok()? {
-            Object::Reference(id) => Some(*id),
-            _ => None,
-        }
-    });
-    let Some(id) = target else {
-        found.complete = false;
-        return;
-    };
-    let Ok(Object::Stream(stream)) = doc.get_object(id) else {
-        found.complete = false;
-        return;
-    };
-    let subtype = stream.dict.get(b"Subtype").and_then(Object::as_name).ok();
-    match subtype {
-        Some(b"Image") => found.draws_image = true,
-        Some(b"Form") => {
-            if depth + 1 > MAX_FORM_DEPTH || stack.contains(&id) {
-                found.complete = false;
-                return;
-            }
-            let content = match strict_stream_bytes(stream, budget) {
-                Ok(bytes) => Content::decode_strict(&bytes).ok(),
-                Err(Refused::TooLarge) => {
-                    found.complete = false;
-                    found.content_too_large = true;
-                    return;
-                }
-                Err(Refused::Unreadable) => None,
-            };
-            let Some(content) = content else {
-                found.complete = false;
-                return;
-            };
-            let own = match stream.dict.get(b"Resources") {
-                Ok(Object::Dictionary(d)) => Some(d.clone()),
-                Ok(Object::Reference(r)) => match doc.get_dictionary(*r) {
-                    Ok(d) => Some(d.clone()),
-                    Err(_) => {
-                        found.complete = false;
-                        return;
-                    }
-                },
-                _ => None,
-            };
-            let scoped: Vec<Dictionary> = match own {
-                Some(d) => std::iter::once(d)
-                    .chain(resources.iter().cloned())
-                    .collect(),
-                None => resources.to_vec(),
-            };
-            stack.push(id);
-            walk(doc, &content, &scoped, depth + 1, stack, budget, found);
-            stack.pop();
-        }
-        _ => found.complete = false,
     }
 }
 
@@ -578,6 +602,43 @@ pub(crate) mod tests {
             .map(|s| s.content.len())
             .sum();
         println!("stream bytes held by the document: {} MiB", streams >> 20);
+    }
+
+    /// Diagnostic for real documents (01c): every page whose inspection finds
+    /// text in an unmapped composite font, with that font's encoding result
+    /// and the text `lopdf` would extract. Same environment variable as
+    /// `diagnose_pages`.
+    #[test]
+    #[ignore]
+    fn diagnose_unmapped() {
+        let path = std::env::var("HFD_DIAG_PDF").expect("HFD_DIAG_PDF");
+        let doc = Document::load_mem(&std::fs::read(path).unwrap()).unwrap();
+        for (n, id) in doc.get_pages() {
+            if !inspect_page(&doc, id).unmapped_text {
+                continue;
+            }
+            let fonts = doc.get_page_fonts(id).unwrap_or_default();
+            let mut described = Vec::new();
+            for (name, font) in fonts {
+                if font.get(b"Subtype").and_then(Object::as_name).ok() != Some(b"Type0".as_slice()) {
+                    continue;
+                }
+                let encoding = match font.get_font_encoding(&doc) {
+                    Ok(lopdf::Encoding::UnicodeMapEncoding(_)) => "parsed map",
+                    Ok(_) => "fallback one-byte",
+                    Err(_) => "error",
+                };
+                let to_unicode = match font.get(b"ToUnicode") {
+                    Err(_) => "absent",
+                    Ok(Object::Reference(_)) => "reference",
+                    Ok(_) => "other",
+                };
+                described.push(format!("{}={encoding}/ToUnicode {to_unicode}", String::from_utf8_lossy(&name)));
+            }
+            let text = doc.extract_text(&[n]).unwrap_or_default();
+            let excerpt: String = text.split_whitespace().collect::<Vec<_>>().join(" ").chars().take(100).collect();
+            println!("page {n}: [{}] text: {excerpt:?}", described.join(", "));
+        }
     }
 
     #[test]
@@ -892,6 +953,135 @@ pub(crate) mod tests {
             "partial output before the error was charged"
         );
         assert_eq!(outcome(&i, ""), Outcome::Failed);
+    }
+
+    /// A Type0 font with the given `/ToUnicode` entry (or none).
+    fn composite_font(b: &mut PdfBuilder, to_unicode: Option<Object>) -> ObjectId {
+        let descendant = b.doc.add_object(dictionary! {
+            "Type" => "Font", "Subtype" => "CIDFontType2", "BaseFont" => "SyntheticCID",
+            "CIDSystemInfo" => dictionary! { "Registry" => Object::string_literal("Adobe"),
+                "Ordering" => Object::string_literal("Identity"), "Supplement" => 0 },
+        });
+        let mut font = dictionary! {
+            "Type" => "Font", "Subtype" => "Type0", "BaseFont" => "SyntheticCID",
+            "Encoding" => "Identity-H", "DescendantFonts" => vec![descendant.into()],
+        };
+        if let Some(entry) = to_unicode {
+            font.set("ToUnicode", entry);
+        }
+        b.doc.add_object(font)
+    }
+
+    const VALID_CMAP: &str = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap\n\
+        /CMapName /Synthetic def /CMapType 2 def\n\
+        1 begincodespacerange <0000> <FFFF> endcodespacerange\n\
+        2 beginbfchar <0041> <0041> <0042> <0042> endbfchar\n\
+        endcmap CMapName currentdict /CMap defineresource pop end end";
+
+    #[test]
+    fn a_valid_tounicode_map_still_yields_text() {
+        let mut b = PdfBuilder::new();
+        let map = b
+            .doc
+            .add_object(Stream::new(dictionary! {}, VALID_CMAP.as_bytes().to_vec()));
+        let font = composite_font(&mut b, Some(Object::Reference(map)));
+        b.page(
+            "BT /F1 12 Tf <00410042> Tj ET",
+            dictionary! { "Font" => dictionary! { "F1" => font } },
+        );
+        let (i, o) = classify(b);
+        assert!(!i.unmapped_text);
+        assert_eq!(o, Outcome::Text);
+    }
+
+    #[test]
+    fn unusable_tounicode_entries_are_unmapped() {
+        type MakeEntry = fn(&mut PdfBuilder) -> Object;
+        let make: [(&str, MakeEntry); 3] = [
+            ("null", |_| Object::Null),
+            ("dangling", |_| Object::Reference((9999, 0))),
+            ("not a cmap", |b| {
+                Object::Reference(
+                    b.doc
+                        .add_object(Stream::new(dictionary! {}, b"garbage".to_vec())),
+                )
+            }),
+        ];
+        for (label, entry) in make {
+            let mut b = PdfBuilder::new();
+            let value = entry(&mut b);
+            let font = composite_font(&mut b, Some(value));
+            b.page(
+                "BT /F1 12 Tf <00410042> Tj ET",
+                dictionary! { "Font" => dictionary! { "F1" => font } },
+            );
+            let (i, o) = classify(b);
+            assert!(i.unmapped_text, "{label}");
+            assert_ne!(o, Outcome::Text, "{label}");
+        }
+    }
+
+    /// Ordinary text first (so the page has some), then the unmapped font.
+    fn mixed_resources(b: &mut PdfBuilder) -> Dictionary {
+        let plain = b.font();
+        let cid = composite_font(b, None);
+        dictionary! { "F1" => plain, "F2" => cid }
+    }
+
+    #[test]
+    fn a_form_inherits_the_callers_unmapped_font() {
+        let mut b = PdfBuilder::new();
+        let fonts = mixed_resources(&mut b);
+        // The form shows text without its own Tf: it uses the caller's font.
+        let form = b.form("BT <00410042> Tj ET", dictionary! {});
+        b.page(
+            "BT /F1 12 Tf (Plain words) Tj ET BT /F2 12 Tf ET /Fm1 Do",
+            dictionary! { "Font" => fonts, "XObject" => dictionary! { "Fm1" => form } },
+        );
+        let (i, o) = classify(b);
+        assert!(i.unmapped_text);
+        assert_eq!(o, Outcome::TextUnreadable);
+    }
+
+    #[test]
+    fn nested_forms_inherit_and_restore_the_font() {
+        let mut b = PdfBuilder::new();
+        let fonts = mixed_resources(&mut b);
+        let inner = b.form("BT <00410042> Tj ET", dictionary! {});
+        let outer = b.form(
+            "/Fi Do",
+            dictionary! { "XObject" => dictionary! { "Fi" => inner } },
+        );
+        b.page(
+            "BT /F2 12 Tf ET /Fo Do",
+            dictionary! { "Font" => fonts, "XObject" => dictionary! { "Fo" => outer } },
+        );
+        assert!(
+            classify(b).0.unmapped_text,
+            "the unmapped font reaches a nested form"
+        );
+    }
+
+    #[test]
+    fn q_and_capital_q_restore_the_selected_font() {
+        // Restored to the unmapped font by Q, then text is shown.
+        let mut b = PdfBuilder::new();
+        let fonts = mixed_resources(&mut b);
+        b.page(
+            "BT /F2 12 Tf ET q BT /F1 12 Tf (Plain) Tj ET Q BT <0041> Tj ET",
+            dictionary! { "Font" => fonts },
+        );
+        assert!(classify(b).0.unmapped_text, "Q restored the unmapped font");
+        // And the other way: an unmapped font inside q/Q does not leak out.
+        let mut b = PdfBuilder::new();
+        let fonts = mixed_resources(&mut b);
+        b.page(
+            "BT /F1 12 Tf ET q BT /F2 12 Tf ET Q BT (Plain again) Tj ET",
+            dictionary! { "Font" => fonts },
+        );
+        let (i, o) = classify(b);
+        assert!(!i.unmapped_text, "Q restored the plain font");
+        assert_eq!(o, Outcome::Text);
     }
 
     #[test]

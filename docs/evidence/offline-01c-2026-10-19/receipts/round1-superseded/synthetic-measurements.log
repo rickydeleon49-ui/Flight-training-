@@ -1,0 +1,11 @@
+{"case": "text-1-page", "exit": 0, "breachMarker": false, "peakRssMiB": 9.8, "countedPeakBytes": 32638, "wallSeconds": 0.007, "frames": {"verified": 1, "start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-64MiB-decoded", "exit": 0, "breachMarker": false, "peakRssMiB": 28.2, "countedPeakBytes": 16947242, "wallSeconds": 0.009, "frames": {"verified": 1, "start": 1, "page:failed": 1, "end": 1}}
+{"case": "content-bomb-1GiB-decoded", "exit": 0, "breachMarker": false, "peakRssMiB": 30.0, "countedPeakBytes": 17925647, "wallSeconds": 0.014, "frames": {"verified": 1, "start": 1, "page:failed": 1, "end": 1}}
+{"case": "content-bomb-1GiB-cap-64MiB", "exit": 0, "breachMarker": false, "peakRssMiB": 30.0, "countedPeakBytes": 17925649, "wallSeconds": 0.014, "frames": {"verified": 1, "start": 1, "page:failed": 1, "end": 1}}
+{"case": "shared-stream-400-pages-2MiB", "exit": 0, "breachMarker": false, "peakRssMiB": 192.4, "countedPeakBytes": 46200271, "wallSeconds": 13.113, "frames": {"verified": 1, "start": 1, "page:failed": 400, "end": 1}}
+{"case": "object-stream-bomb-1GiB-at-load", "exit": -6, "breachMarker": true, "peakRssMiB": 523.5, "countedPeakBytes": null, "wallSeconds": 0.756, "frames": {"verified": 1}}
+{"case": "xref-stream-bomb-1GiB-at-load", "exit": 70, "breachMarker": true, "peakRssMiB": 523.5, "countedPeakBytes": null, "wallSeconds": 0.073, "frames": {"verified": 1}}
+{"case": "deep-nesting-200000", "exit": 3, "breachMarker": false, "peakRssMiB": 10.2, "countedPeakBytes": null, "wallSeconds": 0.009, "frames": {"verified": 1, "error": 1}}
+{"case": "many-objects-300000", "exit": 0, "breachMarker": false, "peakRssMiB": 300.6, "countedPeakBytes": 305324256, "wallSeconds": 0.404, "frames": {"verified": 1, "start": 1, "page:text": 1, "end": 1}}
+{"case": "churn-2000-distinct-pages", "exit": 0, "breachMarker": false, "peakRssMiB": 20.2, "countedPeakBytes": 9116986, "wallSeconds": 0.548, "frames": {"verified": 1, "start": 1, "page:text": 2000, "end": 1}}
+{"case": "text-1000-pages-3KB", "exit": 0, "breachMarker": false, "peakRssMiB": 15.4, "countedPeakBytes": 4570779, "wallSeconds": 0.161, "frames": {"verified": 1, "start": 1, "page:text": 1000, "end": 1}}

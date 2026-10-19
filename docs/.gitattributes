@@ -372,3 +372,14 @@ evidence/offline-01c-2026-10-19/receipts/round0-superseded/fmt.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round0-superseded/helper.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round0-superseded/release-build.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round0-superseded/synthetic-measurements.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/r2-font-before-fix.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/clippy-round2-first.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/phak-unmapped-pages.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/cargo-lock.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/cargo-test.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/clippy.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/corpus-results.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/fmt.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/helper.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/release-build.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round1-superseded/synthetic-measurements.log -text -diff

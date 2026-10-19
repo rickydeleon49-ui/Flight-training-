@@ -1,6 +1,6 @@
 # OFFLINE-01c: real-document fidelity and memory evidence
 
-**Status: implemented; Codex round-1 corrections applied; pending re-review. The 512 MiB cap was rejected for release enablement pending pressure testing on dedicated machines (see the decision below).** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
+**Status: implemented; Codex round-1 and round-2 corrections applied; pending re-review. The 512 MiB cap was rejected for release enablement pending pressure testing on dedicated machines (see the decision below).** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
 
 **Slice order:** 01c comes before 01b. The 01a cap rejection was the only blocker, and a readiness UI would have had to stay disabled anyway.
 
@@ -10,7 +10,7 @@ These are US government works, downloaded from faa.gov and kept outside Git. `co
 
 | File | Size | Pages | Result | Text pages | Other pages | Counted peak | Peak RSS | Time |
 | --- | ---: | ---: | --- | ---: | --- | ---: | ---: | ---: |
-| Pilot's Handbook of Aeronautical Knowledge, full | 53.5 MiB | 524 | success | 522 | 1 `image_only`, 1 `failed` (`page_content_limit`) | 383.0 MiB | 533.9 MiB | 2.4 s |
+| Pilot's Handbook of Aeronautical Knowledge, full | 53.5 MiB | 524 | success | 497 | 25 `text_unreadable` (unparseable font maps), 1 `image_only`, 1 `failed` (`page_content_limit`) | 383.0 MiB | about 534 MiB | 2.4 s |
 | Airplane Flying Handbook, full | 260.6 MiB | – | `input_too_large` (over 128 MiB, refused before parsing) | – | – | – | 139.3 MiB | 0.02 s |
 | AFH chapter 1 | 24.3 MiB | 16 | success | 16 | – | 64.1 MiB | 68.1 MiB | 0.12 s |
 | AFH chapter 4 | 4.5 MiB | 19 | success | 19 | – | 20.8 MiB | 28.9 MiB | 0.05 s |
@@ -25,7 +25,7 @@ Raw results: `receipts/corpus-results.json`. The harness is `corpus.py`; the bin
    - **What happened:** with the 01a code, the PHAK breached the memory cap at page 449 of 524 (`receipts/corpus-results-before-budget.*`).
    - **The cause:** page 450 decodes to **60.5 MB and 2,181,004 drawing operations** (`receipts/phak-pages-440-460.txt`), and both strict inspection and text extraction built that operation list in full.
    - **The fix, a per-page content budget:** `MAX_PAGE_CONTENT_BYTES` = 8 MiB. It covers a page's decoded content plus every form it invokes, and decoding **stops** at the budget, so the oversized content is never allocated. That page is `failed` with `page_content_limit`, its text is not extracted, and the rest of the document carries on. The next largest page in the PHAK is page 228, at 4.8 MB and 190,377 operations, which is inside the budget.
-   - **The result:** the PHAK completes, losing exactly one page.
+   - **The result:** the PHAK completes. The budget costs exactly one page; separately, 25 pages are `text_unreadable` because of unparseable font maps (round 2, below).
 2. **Loading costs more than the file.**
    - **The PHAK:** loading the 53 MB file holds **238 MiB live** for its 71,546 objects (`receipts/phak-load.txt`). That's about 3.3 KB per object in `lopdf`'s in-memory model; the document's streams account for only 55 MiB of it.
    - **The AFH parts,** with roughly 900–1,300 objects each, vary widely (`receipts/afh-load.txt`): chapter 1 is 24.3 MiB of file and 56 MiB counted (2.3×); chapter 4 is 4.5 MiB and 16 MiB (3.6×); the glossary is 1.6 MiB and 9 MiB (5.6×). Small files carry a fixed overhead, so no single ratio applies.
@@ -53,6 +53,21 @@ Raw results: `receipts/corpus-results.json`. The harness is `corpus.py`; the bin
 | 4. Checksummed `.log` receipts were missing from Git | `*.log` is gitignored, so the logs had not been committed. They are now force-added, here and for the 25 missing from the **merged 01a evidence**, and verified from a clean checkout. | Both `SHA256SUMS` files verify from a fresh clone. |
 | 5. Claims exceeded the evidence | Load ratios are reported per file, fidelity is described as sampled, and CID without ToUnicode is now handled and tested (above). | This report. |
 
+## Review round 2 corrections (Codex RED)
+
+| Finding | Correction | Evidence |
+| --- | --- | --- |
+| 1. Font state reset at form boundaries and ignored `q`/`Q` | The selected font is tracked as graphics state: `q` saves it, `Q` restores it, and a form inherits the caller's font, which is restored on return (the implicit `q`/`Q` the PDF spec defines). The traversal state now lives in a small `Walker` struct. | `a_form_inherits_the_callers_unmapped_font`, `nested_forms_inherit_and_restore_the_font`, `q_and_capital_q_restore_the_selected_font` (both directions). |
+| 2. A present `/ToUnicode` was taken as usable | The rule now asks `lopdf`'s own `get_font_encoding`, the function its text extraction uses. A Type0 font is mapped only if that yields a parsed `UnicodeMapEncoding`. A missing, `null`, dangling or corrupt map, all of which `lopdf` silently replaces with a one-byte fallback, counts as unmapped. | `unusable_tounicode_entries_are_unmapped` (null, dangling, not a CMap), and the guard `a_valid_tounicode_map_still_yields_text`. The 4 defect tests fail on the round-1 code: `receipts/r2-font-before-fix.log`, exit 101. |
+
+**What this changed on the real PHAK:** **25 pages moved from `text` to `text_unreadable`** (497 text pages instead of 522; `receipts/phak-unmapped-pages.txt`). Every one uses a composite font whose ToUnicode map exists but `lopdf` cannot parse, so `lopdf` emits glyph ids as letters. Examples:
+- page 58: "VCQPUGSWGPEGU)C[NGOUKPGZRGTK…";
+- page 362: "#WVQOCVKE&GRGPFGPV5WTXGKNN…".
+
+Before this correction that garbage was counted as searchable text. **The cost is also real:** most of those pages are mostly good text from other fonts (page 103: "Some aircraft have the ability to change the direction of thrust"), and the page-level rule now withholds all of it.
+
+**Follow-up for OFFLINE-02:** span-level filtering, which drops only the text drawn in unmapped fonts and keeps the rest, or a CMap parser that handles these maps. Until then the conservative rule keeps cipher-like garbage out of search, and readiness shows these pages as "Couldn't read some pages".
+
 ## Cap proposal and the reviewer's decision (§6)
 
 - **Proposed cap:** 512 MiB of counted requested bytes, with the per-page content budget of 8 MiB, one worker at a time and a 120 s deadline.
@@ -69,7 +84,7 @@ Raw results: `receipts/corpus-results.json`. The harness is `corpus.py`; the bin
 
 ## Gate
 
-- Native tests: 761 passed, 0 failed, 9 ignored (the ignored ones include the new release-only diagnostics).
+- Native tests: 771 passed, 0 failed, 10 ignored (the ignored ones include the release-only diagnostics). The first strict clippy run of round 2 is kept: `receipts/clippy-round2-first.log`.
 - fmt, strict clippy and the lockfile check pass.
 - The release build succeeds, and the corpus and synthetic measurements were taken on that same binary.
 - No dependency, lock, migration, frontend or backup-format change in this slice.
