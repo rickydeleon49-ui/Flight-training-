@@ -7,9 +7,9 @@ Read `../../OFFLINE_02A_COMPLETION_REPORT_2026-10-19.md` and `BUDGETS.md`. This 
 - `source-hashes.json`: ten final source inputs and measured optimized harness hash. It does not claim a Git commit includes uncommitted files.
 - `inherited-start.json`, `inherited-focused.*`: original four-file checkpoint identity and reproduced ordering failure. The full inherited files/patch remain in the private recovery directory.
 - `interruption-proof-development-failure.txt`: retained intermediate failure. The bounded timeout response now returns independently from the separate bounded SQLite-retirement assertion.
-- `gate/`: local gates, final 13-case service rerun, immutable inputs, default-release refusal, dev/normal feature trees. See report for exact reuse/count boundaries.
+- `gate/`: gate summaries and immutable-input JSON; `gate-logs.tar.gz` retains the exact raw local gate logs, final 13-case service rerun, default-release refusal and dev/normal feature trees. See report for exact reuse/count boundaries.
 - `gate-missing-dependencies/`: initial exit-127 failure before locked `npm ci`. `npm-ci.txt` records remediation, not a test pass.
-- `measured-release-build.txt`: optimized opt-in harness build; missing LLVM strip-library warnings retained, exit 0. No installable release artifact or normal app launch was made.
+- `measured-release-build.txt` inside `gate-logs.tar.gz`: optimized opt-in harness build; missing LLVM strip-library warnings retained, exit 0. No installable release artifact or normal app launch was made.
 - `archive-members.json`: exact SHA-256 of every raw receipt within each archive. `SHA256SUMS`: all published evidence files except itself. Verify before review.
 
 ## Reproduce safely
@@ -22,6 +22,8 @@ Build only the scratch example: scoped Node/Rust/SDK environment from the report
 
 Managed benchmark files are deterministic page JSON with `.pdf` fixture names, for **all** corpora; real corpus page text comes from the actual PDF worker. This tests the production search/hash path deterministically. The separate native composition test uses actual PDF binaries through the real extraction child and search command. Do not conflate these proofs with installed PDF navigation.
 
-Extract either raw archive into its own empty scratch folder, compare each member with `archive-members.json`, and read the per-process samples, command lines, exit values and `/usr/bin/time -l` stderr. Never extract over a working tree or profile. Original unarchived receipts remain in the private recovery directory.
+Extract each raw archive into its own empty scratch folder, compare each member with `archive-members.json`, and read the per-process samples, command lines, exit values and `/usr/bin/time -l` stderr. Never extract over a working tree or profile. Original unarchived receipts remain in the private recovery directory.
 
 No desktop/browser paint, release signing, minimum-spec testing or memory-pressure simulation is claimed.
+
+Raw gate logs are archived without trimming their generated whitespace. The initial packaging check found whitespace in these logs; preserving their exact bytes inside `gate-logs.tar.gz` fixes delivery hygiene without editing a receipt.
