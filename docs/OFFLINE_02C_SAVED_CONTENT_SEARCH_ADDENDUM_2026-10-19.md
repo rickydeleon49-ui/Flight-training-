@@ -1,6 +1,6 @@
 # OFFLINE-02c: searching saved study content — design addendum — 19 October 2026
 
-**Status: proposal for review, revision 2.** Codex round 1 was RED with six findings; §9 maps each to its answer. Nothing here is implemented.
+**Status: proposal for review, revision 3.** Codex rounds 1 and 2 were RED; §9 and §10 map each finding to its answer. Nothing here is implemented.
 
 This adds the saved-content part of OFFLINE-02 to the accepted [search design](OFFLINE_02_SEARCH_DESIGN_2026-10-19.md) (revision 6). Everything that design fixes still applies unless changed here:
 - query parsing and literal operators (§3);
@@ -68,11 +68,16 @@ The connection is opened with `SQLITE_OPEN_URI`. Saved content is indexed in tem
 
 These are checked before and during the rebuild, so memory and time stay bounded outside SQLite as well as inside.
 
-**Preflight**, inside the snapshot, a cheap `length()` sum per source:
+**Byte counts.** Every size check uses `octet_length(column)`, available since SQLite 3.43 (the bundled build is 3.46).
+- **Why not `length()`:** for text it counts characters, not bytes, and stops at an embedded NUL.
+- **The check is cheap:** SQLite answers `octet_length` from the record header's stored size, without loading the value. That is the same optimization `length()` gets for blobs.
+- **Order:** a value is fetched only **after** its byte check passes.
+
+**Preflight**, inside the snapshot, an `octet_length()` sum per source:
 - if the total text across all saved sources exceeds **32 MiB**, the rebuild is skipped;
 - the response then reports `savedContent: "too_large"`, and only documents are searched. The UI says: "Your saved study content is too large to search offline in one go."
 
-**Per field.** A single JSON field (`sections_json` or `flashcards_json`) over **4 MiB**, or a single note or question field over **1 MiB**, is skipped and counted in coverage as **too large to search**. Its length is checked with `length()` **before** the value is read.
+**Per field.** A single JSON field (`sections_json` or `flashcards_json`) over **4 MiB**, or a single note or question field over **1 MiB**, is skipped and counted in coverage as **too large to search**. Its size is checked with `octet_length()` **before** the value is read.
 
 **Per item.** At most **200,000** indexed records in total. Past that, the rebuild stops, with the same `too_large` result. A partial index is never used.
 
@@ -105,27 +110,35 @@ A record hit opens **that record**. Each page gains a small, tested deep link th
 
 | Hit | Opens |
 | --- | --- |
-| Guide summary | `/study/:materialId?guide=summary&rev=<token>`: the material page at its guide |
-| Guide section | `/study/:materialId?guide=<index>&rev=<token>`: the material page scrolled to that section |
-| Card | `/study/:materialId?card=<index>&rev=<token>`: the material page's saved cards, with that card shown |
+| Guide summary | `/study/:materialId?guide=summary&rev=<digest>`: the material page at its guide |
+| Guide section | `/study/:materialId?guide=<index>&rev=<digest>`: the material page scrolled to that section |
+| Card | `/study/:materialId?card=<index>&rev=<digest>`: the material page's saved cards, with that card shown |
 | Practice question | `/study/:materialId?question=<itemId>`: the question is shown **without its answer**. During an active attempt, the attempt's normal hidden-answer rules apply |
 | Note | `/notes?note=<id>`: that note scrolled into view and highlighted |
 | Instructor question | `/questions?question=<id>`: that question scrolled into view and highlighted |
 
-**Revision tokens for guides and cards.** A section or card index alone could still be valid after she regenerates the set, and would then silently point at different text. So guide and card hits carry `rev`: the study set's `updated_at` at the snapshot.
-- **The page opens the item only if** the set's current `updated_at` equals `rev` **and** the index exists. Otherwise it shows the material page with: "This study guide has changed since you searched. Search again to find it."
+**Content digests for guides and cards.** A section or card index alone could still be valid after she regenerates the set, and would then silently point at different text. A timestamp can't prevent that either: `updated_at` comes from a millisecond clock, so two different saves can share one.
+
+So guide and card hits carry `rev`, a digest of **that item's own stored text**:
+- **What is hashed:** the lowercase hex SHA-256 of the UTF-8 bytes of the original text, never the canonical form. For a section that is `heading + U+0000 + body`; for a card, `front + U+0000 + back`; for the summary, `summary`.
+- **Who computes it:** the native side computes it during the rebuild. The page computes the same digest from the app's loaded study set, with Web Crypto `SHA-256`.
+- **When the item opens:** only if an item exists at that index **and** its digest equals `rev`. Otherwise the page shows the material with: "This study guide has changed since you searched. Search again to find it."
+- **Identical text is fine:** if a regenerated set happens to keep identical text at that index, opening it shows exactly the text that matched, which is correct.
+- **Tests:**
+  - different content saved with an identical `updated_at` is refused;
+  - native and UI digests agree on Unicode, NUL-free and multi-byte fixtures.
 - **Notes, questions and practice items** have stable ids, so they need only an existence check.
 
-**Re-checking before navigating.** The UI also confirms the id, or the set and its `rev`, against the app's loaded data before it navigates. No file hashing is involved.
+**Re-checking before navigating.** The UI also confirms the id, or the item and its `rev`, against the app's loaded data before it navigates. No file hashing is involved.
 
 ## 5. Coverage
 
 **What coverage reports.** The response adds counts per searched category:
-- guides;
-- card versions;
+- study sets (guides and cards);
 - practice versions;
 - notes;
-- instructor questions.
+- instructor questions;
+- items skipped as too large.
 
 **What the UI says.** The UI states which categories were searched, so "no match" means no match in the listed categories.
 
@@ -146,27 +159,36 @@ All of this is frozen and hashed **before** any timing, using the 02a harness an
 *Vocabulary.* Words come from the PHAK's canonical vocabulary, at its Zipf frequencies, which are recorded with the generator.
 
 *Records,* with lengths uniform within each range:
-- 200 materials, each with a saved study set:
+- 100 materials, each with a saved study set:
   - a summary of 40–120 words;
-  - 40 sections, each with a heading of 3–8 words and a body of 200–1,200 words;
-  - 500 cards, each side 5–60 words;
+  - 20 sections, each with a heading of 3–8 words and a body of 100–600 words;
+  - 200 cards, each side 5–60 words;
 - an active practice version of 50 stems, each 10–40 words, with 4 options of 2–12 words and an explanation of 20–80 words. These options and explanations must never hit;
 - one inactive practice version per material, which must never hit;
 - one `card_versions` snapshot per material, holding **different** words, which must never hit;
 - 1,000 notes, each with a title of 2–10 words and a body of 20–800 words;
 - 500 instructor questions, each with a text of 8–60 words and an answer of 0–120 words.
 
-*Size check.* The generator records the total canonical bytes. The corpus must be under the 32 MiB preflight, so that the measured rebuild is a real one.
+*Size check.* At about 6.5 bytes per word, the estimate is:
+
+| Source | Estimate |
+| --- | --- |
+| Sections | about 4.5 MB |
+| Cards | about 8.3 MB |
+| Notes | about 2.7 MB |
+| Practice and questions | under 1 MB |
+
+The generator records the exact octet total and **fails** unless it is under 24 MiB. That leaves margin below the 32 MiB preflight, so the measured rebuild is always a real, complete one.
 
 **Queries:** the same six query types as 02a, with each query's expected hit identities, by category and id, from the reference scan.
 
 **The rebuild-inclusive protocol.** Before **every** rebuild-inclusive sample, warm-ups included, the harness commits a one-row edit through a separate connection. The edit replaces one word of a fixed note's body with `editmarker<n>`, where `n` is the sample number.
 
-A sample counts only if both of these hold:
-- the harness-only diagnostic reports that this search **rebuilt**;
-- the result contains `editmarker<n>`.
+A sample counts only if the harness-only diagnostic reports that this search **rebuilt**. A sample that didn't rebuild is reported as an error, not as a time.
 
-A sample that didn't rebuild is reported as an error, not as a time.
+**Freshness check, untimed and separate.** After each timed rebuild-inclusive sample, the harness runs one more search: the targeted query `editmarker<n>`, with `contentTypes = ["notes"]`. It must return exactly the edited note. This search is not timed, and it doesn't count toward any sample.
+
+The timed queries' own results are compared only with their frozen expected identities. The edited word is a new, unique token, so it doesn't change any frozen query's expected results. The generator asserts that no frozen query term equals or contains `editmarker`.
 
 **Schedule:**
 - 3 fresh processes;
@@ -230,3 +252,12 @@ Each asserts exact hits **and** exclusions:
 | 4 | Active card snapshots aren't the current cards | Cards are indexed from `ai_study_sets.flashcards_json`. Card snapshots are excluded, and tests cover untouched and regenerated sets. Practice versions are confirmed current from code (§1) |
 | 5 | Guide destinations lacked stable identity | Guide and card hits carry `rev`, the set's `updated_at`, and are opened only if it still matches. The summary has its own destination, and a stale link gets a "has changed" fallback (§4) |
 | 6 | Measurement workload not frozen | Length ranges, a PHAK Zipf vocabulary, a hashed generated corpus, expected identities and a fixed schedule. A committed edit precedes every rebuild-inclusive sample, and each is verified to have rebuilt (§6) |
+
+## 10. Codex round 2 corrections
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | `length()` counts characters, stops at NUL, and may load the value | Every check uses `octet_length()`, which SQLite answers from the record header's stored size without loading the value. Values are fetched only after the check passes (§2.1) |
+| 2 | `updated_at` doesn't identify a revision | `rev` is the SHA-256 of the item's own stored text, computed the same way natively and in the UI. There are tests for different content with the same timestamp and for digest agreement (§4) |
+| 3 | The `editmarker` acceptance contradicted the frozen queries | Freshness is verified by a separate, untimed targeted search for `editmarker<n>` in notes. Timed queries are compared only with their frozen expected identities, and the generator asserts that no frozen query term contains `editmarker` (§6) |
+| — | Found while revising: the corpus exceeded the 32 MiB preflight | Reduced to 100 materials with 20 sections and 200 cards each. The generator fails unless the total is under 24 MiB (§6) |
