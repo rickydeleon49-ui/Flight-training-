@@ -1,3 +1,26 @@
+## OFFLINE-02b search UI implemented and reviewed; dormant — 19 October 2026
+
+With the build opt-in, the Study Library search box also searches the text of prepared PDFs among the materials the other filters select.
+
+**What she sees:**
+- **Results:** grouped by material, with the page and a highlighted snippet. Snippets render only as text, never as HTML.
+- **Coverage line:** it separates "no match" from not prepared, still being checked, being prepared, couldn't be prepared, missing files, and image or unreadable pages.
+- **Opening a result:** the file is re-checked by hash first, then opened at the page through the existing navigation controller. A changed file, a missing file and a failed check each get their own wording.
+- **Split parts** also show the original's page.
+
+**How it behaves:**
+- Only the newest answer and the newest click are used.
+- A changed search, a newer click or leaving the page retires an open that is still in progress.
+- A temporary "getting search ready" state is waited out, arrow keys move between results, and each result button is described by its passage.
+
+**Dormant builds** return before any hook runs: nothing is rendered and no request is made.
+
+**Review:** Codex rounds 1 and 2 were RED, with 5 findings and then 1; round 3 was GREEN. All of it ran locally, to save Actions minutes. Frontend tests: 3,752 passed; typecheck and build pass.
+
+**Not verified:** the painted UI. Browser mode has no native side, so this check waits for installed acceptance when the feature is enabled.
+
+**Stacked on** PR #231 (02a).
+
 ## OFFLINE-02a independently reviewed and corrected; ready for PR — 19 October 2026
 
 Claude reviewed `codex/offline-02a-completion` independently.
