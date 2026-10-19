@@ -1,0 +1,580 @@
+{
+  "schema": "hfd-fsrs6-scenarios/1",
+  "note": "Preregistered inputs only. Outputs come from the pinned FSRS4Anki oracle via generate-reference.mjs.",
+  "scenarios": [
+    {
+      "id": "initial-again",
+      "category": "initial-rating",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "again"
+        }
+      ]
+    },
+    {
+      "id": "initial-hard",
+      "category": "initial-rating",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "hard"
+        }
+      ]
+    },
+    {
+      "id": "initial-good",
+      "category": "initial-rating",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        }
+      ]
+    },
+    {
+      "id": "initial-easy",
+      "category": "initial-rating",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "easy"
+        }
+      ]
+    },
+    {
+      "id": "same-day-again-x3",
+      "category": "same-day",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "again"
+        },
+        {
+          "phase": "learning",
+          "rating": "again"
+        },
+        {
+          "phase": "learning",
+          "rating": "again"
+        }
+      ]
+    },
+    {
+      "id": "same-day-hard-x3",
+      "category": "same-day",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "hard"
+        },
+        {
+          "phase": "learning",
+          "rating": "hard"
+        },
+        {
+          "phase": "learning",
+          "rating": "hard"
+        }
+      ]
+    },
+    {
+      "id": "same-day-good-x3",
+      "category": "same-day",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        }
+      ]
+    },
+    {
+      "id": "same-day-easy-x2",
+      "category": "same-day",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "easy"
+        },
+        {
+          "phase": "learning",
+          "rating": "easy"
+        }
+      ]
+    },
+    {
+      "id": "same-day-again-then-good",
+      "category": "same-day",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "again"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        }
+      ]
+    },
+    {
+      "id": "on-time-good-x6",
+      "category": "on-time",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        }
+      ]
+    },
+    {
+      "id": "on-time-easy-x4",
+      "category": "on-time",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "easy"
+        },
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": "scheduled"
+        }
+      ]
+    },
+    {
+      "id": "on-time-hard-x5",
+      "category": "on-time",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": "scheduled"
+        }
+      ]
+    },
+    {
+      "id": "repeated-lapse",
+      "category": "repeated-failure",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "again",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "again",
+          "elapsedDays": 1
+        },
+        {
+          "phase": "learning",
+          "rating": "again"
+        },
+        {
+          "phase": "learning",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 1
+        }
+      ]
+    },
+    {
+      "id": "hard-after-lapse",
+      "category": "repeated-failure",
+      "start": "new",
+      "steps": [
+        {
+          "phase": "new",
+          "rating": "good"
+        },
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "review",
+          "rating": "again",
+          "elapsedDays": "scheduled"
+        },
+        {
+          "phase": "learning",
+          "rating": "hard"
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": 1
+        },
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": 1
+        }
+      ]
+    },
+    {
+      "id": "late-10-years-small-s",
+      "category": "lateness",
+      "start": {
+        "d": 5,
+        "s": 1
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 3650,
+          "scheduledDays": 1
+        }
+      ]
+    },
+    {
+      "id": "late-100-years-large-s",
+      "category": "lateness",
+      "start": {
+        "d": 5,
+        "s": 100
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 36500,
+          "scheduledDays": 100
+        }
+      ]
+    },
+    {
+      "id": "late-1-year-again",
+      "category": "lateness",
+      "start": {
+        "d": 7,
+        "s": 5
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "again",
+          "elapsedDays": 365,
+          "scheduledDays": 5
+        }
+      ]
+    },
+    {
+      "id": "early-1-day-large-s",
+      "category": "lateness",
+      "start": {
+        "d": 3,
+        "s": 100
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 1,
+          "scheduledDays": 100
+        }
+      ]
+    },
+    {
+      "id": "bound-min-d-min-s",
+      "category": "bounded-state",
+      "start": {
+        "d": 1,
+        "s": 0.1
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 1,
+          "scheduledDays": 1
+        }
+      ]
+    },
+    {
+      "id": "bound-max-d-min-s",
+      "category": "bounded-state",
+      "start": {
+        "d": 10,
+        "s": 0.1
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "again",
+          "elapsedDays": 1,
+          "scheduledDays": 1
+        }
+      ]
+    },
+    {
+      "id": "bound-max-d-huge-s",
+      "category": "bounded-state",
+      "start": {
+        "d": 10,
+        "s": 36500
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 36500,
+          "scheduledDays": 36500
+        }
+      ]
+    },
+    {
+      "id": "bound-min-d-huge-s-early",
+      "category": "bounded-state",
+      "start": {
+        "d": 1,
+        "s": 36500
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": 1,
+          "scheduledDays": 36500
+        }
+      ]
+    },
+    {
+      "id": "bound-tiny-s-same-day",
+      "category": "bounded-state",
+      "start": {
+        "d": 5,
+        "s": 0.01
+      },
+      "steps": [
+        {
+          "phase": "learning",
+          "rating": "good"
+        }
+      ]
+    },
+    {
+      "id": "bound-max-interval-cap",
+      "category": "bounded-state",
+      "start": {
+        "d": 1,
+        "s": 30000
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "easy",
+          "elapsedDays": 30000,
+          "scheduledDays": 30000
+        }
+      ]
+    },
+    {
+      "id": "bound-stability-ceiling",
+      "category": "bounded-state",
+      "start": {
+        "d": 1,
+        "s": 1000000
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 36500,
+          "scheduledDays": 36500
+        }
+      ]
+    },
+    {
+      "id": "round-d-5555-s-1005",
+      "category": "rounding-adjacent",
+      "start": {
+        "d": 5.555,
+        "s": 1.005
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 1,
+          "scheduledDays": 1
+        }
+      ]
+    },
+    {
+      "id": "round-d-9995-s-2345",
+      "category": "rounding-adjacent",
+      "start": {
+        "d": 9.995,
+        "s": 2.345
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "hard",
+          "elapsedDays": 2,
+          "scheduledDays": 2
+        }
+      ]
+    },
+    {
+      "id": "round-d-1005-s-0125",
+      "category": "rounding-adjacent",
+      "start": {
+        "d": 1.005,
+        "s": 0.125
+      },
+      "steps": [
+        {
+          "phase": "learning",
+          "rating": "easy"
+        }
+      ]
+    },
+    {
+      "id": "round-interval-near-half",
+      "category": "rounding-adjacent",
+      "start": {
+        "d": 5,
+        "s": 2.5
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 2,
+          "scheduledDays": 2
+        }
+      ]
+    },
+    {
+      "id": "oracle-review-zero-elapsed",
+      "category": "oracle-limitation",
+      "start": {
+        "d": 5,
+        "s": 10
+      },
+      "steps": [
+        {
+          "phase": "review",
+          "rating": "good",
+          "elapsedDays": 0,
+          "scheduledDays": 10,
+          "expectOracleError": true
+        }
+      ]
+    }
+  ]
+}

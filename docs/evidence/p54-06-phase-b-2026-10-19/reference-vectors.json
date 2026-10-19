@@ -1,0 +1,2249 @@
+{
+  "schema": "hfd-fsrs6-reference-vectors/1",
+  "oracle": "fsrs4anki v6.1.3 fsrs4anki_scheduler.js blob 724a2f445adfffb2cc3d7fae7a96ab37b948561c",
+  "scenariosSha256": "c783f59cf276f26a27b872b376f2c73a6fbc3a83e6beb01778069ced8a4f673b",
+  "ratings": [
+    "again",
+    "hard",
+    "good",
+    "easy"
+  ],
+  "vectors": [
+    {
+      "id": "initial-again",
+      "category": "initial-rating",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "initial-again#0",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "initial-hard",
+      "category": "initial-rating",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "initial-hard#0",
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "initial-good",
+      "category": "initial-rating",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "initial-good#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 7
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "initial-easy",
+      "category": "initial-rating",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "initial-easy#0",
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-again-x3",
+      "category": "same-day",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "same-day-again-x3#0",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 6.41,
+            "s": 0.21
+          },
+          "seed": "same-day-again-x3#1",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 8.81,
+              "s": 0.08,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.61,
+              "s": 0.14,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 6.4,
+              "s": 0.24,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 5.2,
+              "s": 0.42,
+              "scheduledDays": 2
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 8.81,
+            "s": 0.08
+          },
+          "seed": "same-day-again-x3#2",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 9.6,
+              "s": 0.03,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.2,
+              "s": 0.06,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 8.8,
+              "s": 0.1,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 8.4,
+              "s": 0.17,
+              "scheduledDays": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-hard-x3",
+      "category": "same-day",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "same-day-hard-x3#0",
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 9
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 5.11,
+            "s": 1.29
+          },
+          "seed": "same-day-hard-x3#1",
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 8.38,
+              "s": 0.45,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.74,
+              "s": 0.77,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 5.11,
+              "s": 1.33,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 3.47,
+              "s": 2.29,
+              "scheduledDays": 2
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 6.74,
+            "s": 0.77
+          },
+          "seed": "same-day-hard-x3#2",
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 8.92,
+              "s": 0.28,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.83,
+              "s": 0.48,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 6.73,
+              "s": 0.82,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 5.64,
+              "s": 1.42,
+              "scheduledDays": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-good-x3",
+      "category": "same-day",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "same-day-good-x3#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 7
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "same-day-good-x3#1",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.78,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 1.34,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 3.95,
+              "scheduledDays": 5
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "same-day-good-x3#2",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.78,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 1.34,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 3.95,
+              "scheduledDays": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-easy-x2",
+      "category": "same-day",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "same-day-easy-x2#0",
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 1,
+            "s": 8.3
+          },
+          "seed": "same-day-easy-x2#1",
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 2.56,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 4.41,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 9
+            },
+            "easy": {
+              "d": 1,
+              "s": 13.05,
+              "scheduledDays": 15
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-again-then-good",
+      "category": "same-day",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "same-day-again-then-good#0",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 7
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 6.41,
+            "s": 0.21
+          },
+          "seed": "same-day-again-then-good#1",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.81,
+              "s": 0.08,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.61,
+              "s": 0.14,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 6.4,
+              "s": 0.24,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 5.2,
+              "s": 0.42,
+              "scheduledDays": 2
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 6.4,
+            "s": 0.24
+          },
+          "seed": "same-day-again-then-good#2",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.81,
+              "s": 0.09,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.6,
+              "s": 0.16,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 6.39,
+              "s": 0.28,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 5.19,
+              "s": 0.48,
+              "scheduledDays": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "on-time-good-x6",
+      "category": "on-time",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "on-time-good-x6#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 7
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "on-time-good-x6#1",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.61,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 7.52,
+              "scheduledDays": 7
+            },
+            "good": {
+              "d": 2.12,
+              "s": 10.97,
+              "scheduledDays": 9
+            },
+            "easy": {
+              "d": 1,
+              "s": 18.52,
+              "scheduledDays": 17
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 10.97
+          },
+          "seed": "on-time-good-x6#2",
+          "elapsedDays": 9,
+          "scheduledDays": 9,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 1.51,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 29.3,
+              "scheduledDays": 28
+            },
+            "good": {
+              "d": 2.12,
+              "s": 41.44,
+              "scheduledDays": 39
+            },
+            "easy": {
+              "d": 1,
+              "s": 68.04,
+              "scheduledDays": 65
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 41.44
+          },
+          "seed": "on-time-good-x6#3",
+          "elapsedDays": 39,
+          "scheduledDays": 39,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 2.79,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 102.81,
+              "scheduledDays": 108
+            },
+            "good": {
+              "d": 2.12,
+              "s": 143.49,
+              "scheduledDays": 150
+            },
+            "easy": {
+              "d": 1,
+              "s": 232.56,
+              "scheduledDays": 244
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 143.49
+          },
+          "seed": "on-time-good-x6#4",
+          "elapsedDays": 150,
+          "scheduledDays": 150,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 4.53,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 329.77,
+              "scheduledDays": 316
+            },
+            "good": {
+              "d": 2.12,
+              "s": 453.24,
+              "scheduledDays": 433
+            },
+            "easy": {
+              "d": 1,
+              "s": 723.62,
+              "scheduledDays": 694
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 453.24
+          },
+          "seed": "on-time-good-x6#5",
+          "elapsedDays": 433,
+          "scheduledDays": 433,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 6.64,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 908.76,
+              "scheduledDays": 925
+            },
+            "good": {
+              "d": 2.12,
+              "s": 1210.67,
+              "scheduledDays": 1233
+            },
+            "easy": {
+              "d": 1,
+              "s": 1871.82,
+              "scheduledDays": 1905
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 1210.67
+          },
+          "seed": "on-time-good-x6#6",
+          "elapsedDays": 1233,
+          "scheduledDays": 1233,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 9.15,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 2292.18,
+              "scheduledDays": 2265
+            },
+            "good": {
+              "d": 2.12,
+              "s": 3008.99,
+              "scheduledDays": 2974
+            },
+            "easy": {
+              "d": 1,
+              "s": 4578.74,
+              "scheduledDays": 4526
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "on-time-easy-x4",
+      "category": "on-time",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "on-time-easy-x4#0",
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 8.3
+          },
+          "seed": "on-time-easy-x4#1",
+          "elapsedDays": 8,
+          "scheduledDays": 8,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 1.39,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 26.71,
+              "scheduledDays": 28
+            },
+            "good": {
+              "d": 1,
+              "s": 38.91,
+              "scheduledDays": 40
+            },
+            "easy": {
+              "d": 1,
+              "s": 65.63,
+              "scheduledDays": 67
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 65.63
+          },
+          "seed": "on-time-easy-x4#2",
+          "elapsedDays": 67,
+          "scheduledDays": 67,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 3.54,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 173.11,
+              "scheduledDays": 165
+            },
+            "good": {
+              "d": 1,
+              "s": 244.35,
+              "scheduledDays": 234
+            },
+            "easy": {
+              "d": 1,
+              "s": 400.35,
+              "scheduledDays": 384
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 400.35
+          },
+          "seed": "on-time-easy-x4#3",
+          "elapsedDays": 384,
+          "scheduledDays": 384,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 6.68,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 864.26,
+              "scheduledDays": 877
+            },
+            "good": {
+              "d": 1,
+              "s": 1171.73,
+              "scheduledDays": 1190
+            },
+            "easy": {
+              "d": 1,
+              "s": 1845.06,
+              "scheduledDays": 1872
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 1845.06
+          },
+          "seed": "on-time-easy-x4#4",
+          "elapsedDays": 1872,
+          "scheduledDays": 1872,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 10.9,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 3570.69,
+              "scheduledDays": 3485
+            },
+            "good": {
+              "d": 1,
+              "s": 4714.41,
+              "scheduledDays": 4601
+            },
+            "easy": {
+              "d": 1,
+              "s": 7219.07,
+              "scheduledDays": 7046
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "on-time-hard-x5",
+      "category": "on-time",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "on-time-hard-x5#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 7
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "on-time-hard-x5#1",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.61,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 7.52,
+              "scheduledDays": 7
+            },
+            "good": {
+              "d": 2.12,
+              "s": 10.97,
+              "scheduledDays": 9
+            },
+            "easy": {
+              "d": 1,
+              "s": 18.52,
+              "scheduledDays": 17
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 4.76,
+            "s": 7.52
+          },
+          "seed": "on-time-hard-x5#2",
+          "elapsedDays": 7,
+          "scheduledDays": 7,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 8.27,
+              "s": 1.19,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.51,
+              "s": 17.84,
+              "scheduledDays": 17
+            },
+            "good": {
+              "d": 4.76,
+              "s": 24.68,
+              "scheduledDays": 24
+            },
+            "easy": {
+              "d": 3,
+              "s": 39.65,
+              "scheduledDays": 38
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 6.51,
+            "s": 17.84
+          },
+          "seed": "on-time-hard-x5#3",
+          "elapsedDays": 17,
+          "scheduledDays": 17,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 8.84,
+              "s": 1.8,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.67,
+              "s": 33.35,
+              "scheduledDays": 35
+            },
+            "good": {
+              "d": 6.5,
+              "s": 43.63,
+              "scheduledDays": 46
+            },
+            "easy": {
+              "d": 5.33,
+              "s": 66.15,
+              "scheduledDays": 69
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 7.67,
+            "s": 33.35
+          },
+          "seed": "on-time-hard-x5#4",
+          "elapsedDays": 35,
+          "scheduledDays": 35,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.23,
+              "s": 2.38,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.44,
+              "s": 54.11,
+              "scheduledDays": 50
+            },
+            "good": {
+              "d": 7.66,
+              "s": 67.87,
+              "scheduledDays": 64
+            },
+            "easy": {
+              "d": 6.88,
+              "s": 98.01,
+              "scheduledDays": 92
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 8.44,
+            "s": 54.11
+          },
+          "seed": "on-time-hard-x5#5",
+          "elapsedDays": 50,
+          "scheduledDays": 50,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.48,
+              "s": 2.84,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.96,
+              "s": 75.92,
+              "scheduledDays": 72
+            },
+            "good": {
+              "d": 8.43,
+              "s": 90.37,
+              "scheduledDays": 86
+            },
+            "easy": {
+              "d": 7.91,
+              "s": 122.02,
+              "scheduledDays": 117
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "repeated-lapse",
+      "category": "repeated-failure",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "repeated-lapse#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 8
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "repeated-lapse#1",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.61,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 7.52,
+              "scheduledDays": 8
+            },
+            "good": {
+              "d": 2.12,
+              "s": 10.97,
+              "scheduledDays": 12
+            },
+            "easy": {
+              "d": 1,
+              "s": 18.52,
+              "scheduledDays": 20
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 10.97
+          },
+          "seed": "repeated-lapse#2",
+          "elapsedDays": 12,
+          "scheduledDays": 12,
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 1.55,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 33.54,
+              "scheduledDays": 31
+            },
+            "good": {
+              "d": 2.12,
+              "s": 48.49,
+              "scheduledDays": 45
+            },
+            "easy": {
+              "d": 1,
+              "s": 81.24,
+              "scheduledDays": 77
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 7.4,
+            "s": 1.55
+          },
+          "seed": "repeated-lapse#3",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 9.14,
+              "s": 0.53,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.26,
+              "s": 0.92,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 7.39,
+              "s": 1.58,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 6.52,
+              "s": 2.72,
+              "scheduledDays": 3
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 7.39,
+            "s": 1.58
+          },
+          "seed": "repeated-lapse#4",
+          "elapsedDays": 1,
+          "scheduledDays": 2,
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 9.13,
+              "s": 0.42,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.26,
+              "s": 2.79,
+              "scheduledDays": 4
+            },
+            "good": {
+              "d": 7.38,
+              "s": 3.6,
+              "scheduledDays": 5
+            },
+            "easy": {
+              "d": 6.51,
+              "s": 5.36,
+              "scheduledDays": 6
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 9.13,
+            "s": 0.42
+          },
+          "seed": "repeated-lapse#5",
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 9.71,
+              "s": 0.16,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.41,
+              "s": 0.27,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 9.12,
+              "s": 0.47,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 8.83,
+              "s": 0.8,
+              "scheduledDays": 2
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 9.71,
+            "s": 0.16
+          },
+          "seed": "repeated-lapse#6",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 9.9,
+              "s": 0.06,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.8,
+              "s": 0.11,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 9.7,
+              "s": 0.19,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 9.6,
+              "s": 0.33,
+              "scheduledDays": 2
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 9.7,
+            "s": 0.19
+          },
+          "seed": "repeated-lapse#7",
+          "elapsedDays": 1,
+          "scheduledDays": 1,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 9.89,
+              "s": 0.09,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.79,
+              "s": 0.46,
+              "scheduledDays": 1
+            },
+            "good": {
+              "d": 9.69,
+              "s": 0.65,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 9.59,
+              "s": 1.04,
+              "scheduledDays": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hard-after-lapse",
+      "category": "repeated-failure",
+      "steps": [
+        {
+          "phase": "new",
+          "prior": null,
+          "seed": "hard-after-lapse#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 6.41,
+              "s": 0.21,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.11,
+              "s": 1.29,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 2.12,
+              "s": 2.31,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 1,
+              "s": 8.3,
+              "scheduledDays": 9
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 2.31
+          },
+          "seed": "hard-after-lapse#1",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 0.61,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 7.52,
+              "scheduledDays": 7
+            },
+            "good": {
+              "d": 2.12,
+              "s": 10.97,
+              "scheduledDays": 10
+            },
+            "easy": {
+              "d": 1,
+              "s": 18.52,
+              "scheduledDays": 18
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 2.12,
+            "s": 10.97
+          },
+          "seed": "hard-after-lapse#2",
+          "elapsedDays": 10,
+          "scheduledDays": 10,
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 7.4,
+              "s": 1.52,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.76,
+              "s": 30.78,
+              "scheduledDays": 28
+            },
+            "good": {
+              "d": 2.12,
+              "s": 43.91,
+              "scheduledDays": 41
+            },
+            "easy": {
+              "d": 1,
+              "s": 72.66,
+              "scheduledDays": 69
+            }
+          }
+        },
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 7.4,
+            "s": 1.52
+          },
+          "seed": "hard-after-lapse#3",
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.14,
+              "s": 0.52,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.26,
+              "s": 0.9,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 7.39,
+              "s": 1.55,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 6.52,
+              "s": 2.67,
+              "scheduledDays": 4
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 8.26,
+            "s": 0.9
+          },
+          "seed": "hard-after-lapse#4",
+          "elapsedDays": 1,
+          "scheduledDays": 10,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.42,
+              "s": 0.29,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8.84,
+              "s": 1.78,
+              "scheduledDays": 2
+            },
+            "good": {
+              "d": 8.25,
+              "s": 2.36,
+              "scheduledDays": 3
+            },
+            "easy": {
+              "d": 7.67,
+              "s": 3.63,
+              "scheduledDays": 4
+            }
+          }
+        },
+        {
+          "phase": "review",
+          "prior": {
+            "d": 8.84,
+            "s": 1.78
+          },
+          "seed": "hard-after-lapse#5",
+          "elapsedDays": 1,
+          "scheduledDays": 2,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.61,
+              "s": 0.45,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.22,
+              "s": 2.51,
+              "scheduledDays": 4
+            },
+            "good": {
+              "d": 8.83,
+              "s": 2.99,
+              "scheduledDays": 5
+            },
+            "easy": {
+              "d": 8.44,
+              "s": 4.05,
+              "scheduledDays": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "late-10-years-small-s",
+      "category": "lateness",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 5,
+            "s": 1
+          },
+          "seed": "late-10-years-small-s#0",
+          "elapsedDays": 3650,
+          "scheduledDays": 1,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.35,
+              "s": 0.88,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.67,
+              "s": 19.05,
+              "scheduledDays": 19
+            },
+            "good": {
+              "d": 5,
+              "s": 31.02,
+              "scheduledDays": 32
+            },
+            "easy": {
+              "d": 3.32,
+              "s": 57.22,
+              "scheduledDays": 58
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "late-100-years-large-s",
+      "category": "lateness",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 5,
+            "s": 100
+          },
+          "seed": "late-100-years-large-s#0",
+          "elapsedDays": 36500,
+          "scheduledDays": 100,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.35,
+              "s": 8.49,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.67,
+              "s": 761.81,
+              "scheduledDays": 747
+            },
+            "good": {
+              "d": 5,
+              "s": 1200.46,
+              "scheduledDays": 1177
+            },
+            "easy": {
+              "d": 3.32,
+              "s": 2161.05,
+              "scheduledDays": 2121
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "late-1-year-again",
+      "category": "lateness",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 7,
+            "s": 5
+          },
+          "seed": "late-1-year-again#0",
+          "elapsedDays": 365,
+          "scheduledDays": 5,
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 9,
+              "s": 1.76,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 8,
+              "s": 33.08,
+              "scheduledDays": 35
+            },
+            "good": {
+              "d": 6.99,
+              "s": 51.69,
+              "scheduledDays": 54
+            },
+            "easy": {
+              "d": 5.99,
+              "s": 92.44,
+              "scheduledDays": 95
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "early-1-day-large-s",
+      "category": "lateness",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 3,
+            "s": 100
+          },
+          "seed": "early-1-day-large-s#0",
+          "elapsedDays": 1,
+          "scheduledDays": 100,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.69,
+              "s": 3.29,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 5.34,
+              "s": 101.74,
+              "scheduledDays": 108
+            },
+            "good": {
+              "d": 3,
+              "s": 102.89,
+              "scheduledDays": 109
+            },
+            "easy": {
+              "d": 1,
+              "s": 105.42,
+              "scheduledDays": 111
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-min-d-min-s",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 0.1
+          },
+          "seed": "bound-min-d-min-s#0",
+          "elapsedDays": 1,
+          "scheduledDays": 1,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 0.06,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 1.69,
+              "scheduledDays": 2
+            },
+            "good": {
+              "d": 1,
+              "s": 2.74,
+              "scheduledDays": 4
+            },
+            "easy": {
+              "d": 1,
+              "s": 5.05,
+              "scheduledDays": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-max-d-min-s",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 10,
+            "s": 0.1
+          },
+          "seed": "bound-max-d-min-s#0",
+          "elapsedDays": 1,
+          "scheduledDays": 1,
+          "rating": "again",
+          "outputs": {
+            "again": {
+              "d": 9.99,
+              "s": 0.05,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.99,
+              "s": 0.26,
+              "scheduledDays": 1
+            },
+            "good": {
+              "d": 9.99,
+              "s": 0.36,
+              "scheduledDays": 2
+            },
+            "easy": {
+              "d": 9.99,
+              "s": 0.6,
+              "scheduledDays": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-max-d-huge-s",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 10,
+            "s": 36500
+          },
+          "seed": "bound-max-d-huge-s#0",
+          "elapsedDays": 36500,
+          "scheduledDays": 36500,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 9.99,
+              "s": 22.52,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.99,
+              "s": 38554.84,
+              "scheduledDays": 36500
+            },
+            "good": {
+              "d": 9.99,
+              "s": 39916.75,
+              "scheduledDays": 36501
+            },
+            "easy": {
+              "d": 9.99,
+              "s": 42899.24,
+              "scheduledDays": 36502
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-min-d-huge-s-early",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 36500
+          },
+          "seed": "bound-min-d-huge-s-early#0",
+          "elapsedDays": 1,
+          "scheduledDays": 36500,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 22,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 36500.82,
+              "scheduledDays": 36500
+            },
+            "good": {
+              "d": 1,
+              "s": 36501.36,
+              "scheduledDays": 36501
+            },
+            "easy": {
+              "d": 1,
+              "s": 36502.55,
+              "scheduledDays": 36502
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-tiny-s-same-day",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 5,
+            "s": 0.01
+          },
+          "seed": "bound-tiny-s-same-day#0",
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.35,
+              "s": 0,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.67,
+              "s": 0.01,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 5,
+              "s": 0.01,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 3.32,
+              "s": 0.02,
+              "scheduledDays": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-max-interval-cap",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 30000
+          },
+          "seed": "bound-max-interval-cap#0",
+          "elapsedDays": 30000,
+          "scheduledDays": 30000,
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 24.55,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 47449.98,
+              "scheduledDays": 36500
+            },
+            "good": {
+              "d": 1,
+              "s": 59015.6,
+              "scheduledDays": 36501
+            },
+            "easy": {
+              "d": 1,
+              "s": 84343.33,
+              "scheduledDays": 36502
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bound-stability-ceiling",
+      "category": "bounded-state",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 1,
+            "s": 1000000
+          },
+          "seed": "bound-stability-ceiling#0",
+          "elapsedDays": 36500,
+          "scheduledDays": 36500,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 55.07,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 1016881.89,
+              "scheduledDays": 36500
+            },
+            "good": {
+              "d": 1,
+              "s": 1028070.98,
+              "scheduledDays": 36501
+            },
+            "easy": {
+              "d": 1,
+              "s": 1052574.13,
+              "scheduledDays": 36502
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-d-5555-s-1005",
+      "category": "rounding-adjacent",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 5.555,
+            "s": 1.005
+          },
+          "seed": "round-d-5555-s-1005#0",
+          "elapsedDays": 1,
+          "scheduledDays": 1,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.53,
+              "s": 0.32,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 7.04,
+              "s": 2.77,
+              "scheduledDays": 3
+            },
+            "good": {
+              "d": 5.55,
+              "s": 3.94,
+              "scheduledDays": 4
+            },
+            "easy": {
+              "d": 4.06,
+              "s": 6.5,
+              "scheduledDays": 7
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-d-9995-s-2345",
+      "category": "rounding-adjacent",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 9.995,
+            "s": 2.345
+          },
+          "seed": "round-d-9995-s-2345#0",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "hard",
+          "outputs": {
+            "again": {
+              "d": 9.99,
+              "s": 0.56,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 9.99,
+              "s": 2.94,
+              "scheduledDays": 4
+            },
+            "good": {
+              "d": 9.99,
+              "s": 3.33,
+              "scheduledDays": 5
+            },
+            "easy": {
+              "d": 9.98,
+              "s": 4.18,
+              "scheduledDays": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-d-1005-s-0125",
+      "category": "rounding-adjacent",
+      "steps": [
+        {
+          "phase": "learning",
+          "prior": {
+            "d": 1.005,
+            "s": 0.125
+          },
+          "seed": "round-d-1005-s-0125#0",
+          "rating": "easy",
+          "outputs": {
+            "again": {
+              "d": 7.03,
+              "s": 0.05,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 4.02,
+              "s": 0.09,
+              "scheduledDays": null
+            },
+            "good": {
+              "d": 1,
+              "s": 0.15,
+              "scheduledDays": 1
+            },
+            "easy": {
+              "d": 1,
+              "s": 0.26,
+              "scheduledDays": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "round-interval-near-half",
+      "category": "rounding-adjacent",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 5,
+            "s": 2.5
+          },
+          "seed": "round-interval-near-half#0",
+          "elapsedDays": 2,
+          "scheduledDays": 2,
+          "rating": "good",
+          "outputs": {
+            "again": {
+              "d": 8.35,
+              "s": 0.6,
+              "scheduledDays": null
+            },
+            "hard": {
+              "d": 6.67,
+              "s": 6.04,
+              "scheduledDays": 7
+            },
+            "good": {
+              "d": 5,
+              "s": 8.39,
+              "scheduledDays": 9
+            },
+            "easy": {
+              "d": 3.32,
+              "s": 13.53,
+              "scheduledDays": 15
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "oracle-review-zero-elapsed",
+      "category": "oracle-limitation",
+      "steps": [
+        {
+          "phase": "review",
+          "prior": {
+            "d": 5,
+            "s": 10
+          },
+          "seed": "oracle-review-zero-elapsed#0",
+          "elapsedDays": 0,
+          "scheduledDays": 10,
+          "oracleError": true
+        }
+      ]
+    }
+  ]
+}
