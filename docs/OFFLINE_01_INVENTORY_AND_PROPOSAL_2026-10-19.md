@@ -2,7 +2,12 @@
 
 **Status: proposal for independent review. No code, dependency, migration or behavior change.** This is the first OFFLINE-01 deliverable, as the [plan's entry point](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md#implementer-entry-point-and-stopping-rule) requires. Claude implements and Codex reviews. Base: main `e27c390`.
 
-**Revision 2** answers Codex round 1 (RED: findings 1–4 blocking, 5–7 non-blocking) and records the owner's approval of memory option (a), §4.2. Round-1 text is in Git history.
+**Revision 3** answers Codex rounds 1 and 2 (both RED). Earlier text is in Git history. The changes:
+- the memory strategy is now a capped allocator in the worker (§4.2);
+- verified readiness requires a fresh hash in the current session (§4.3);
+- image detection inspects content recursively, and nothing is called a scan (§4.4);
+- the worker is fail-closed on any use of its flag (§4.1);
+- the parent plan's evidence gates are explicit (§5).
 
 ## 1. What is stored today, and what is offline and searchable
 
@@ -69,7 +74,12 @@ Open, and reused here rather than re-proven:
 
 ### 4.1 Worker in the shipped binary
 
-`main.rs` enters worker mode **only** when the argument list is exactly `[exe, "--hfd-extract-worker"]`. Anything else starts the app normally, and the flag is never combined with other arguments. The argument can be typed by a user, so it grants nothing: the worker can only read one file and write text to its own standard output.
+`main.rs` looks at its arguments **before Tauri is initialized**:
+- If the argument list is exactly `[exe, "--hfd-extract-worker"]`, the process becomes the worker.
+- If `--hfd-extract-worker` appears in **any other** form (duplicated, combined with other arguments or in a different position), the process exits immediately with a fixed error code. It never falls through to starting the app, so it never opens the database or a WebView.
+- Any argument list without the flag starts the app normally.
+
+The flag can be typed by a user, so it grants nothing: the worker can only read one file and write text to its own standard output.
 
 **In worker mode the process:**
 - reads **one** request of at most 4 KiB from standard input. Empty, oversized, malformed or late input exits with a fixed error code and no output;
@@ -86,25 +96,29 @@ Open, and reused here rather than re-proven:
 
 Installed acceptance includes a packaged, translocated launch (§5, item 4).
 
-### 4.2 Memory: whole-process strategy (option (a) approved by the owner)
+### 4.2 Memory: a capped allocator in the worker
 
-**Owner decision, 19 October 2026:** approved adding `flate2` and `weezl` as **direct** dependencies, at the same locked versions, for bounded decompression. No new package enters `Cargo.lock`. This approval covers the dependency only; it does not by itself establish a memory bound.
+**The strategy:** the shipped binary installs a counting global allocator that wraps the system allocator.
+- **In app mode** it imposes no limit; its only cost is an atomic counter.
+- **In worker mode** it receives a compiled-in cap before the worker reads any input, for example 384 MiB, with the final value set by measurement in 01a. Any allocation that would exceed the cap returns null. Rust then calls the allocation-error handler, the worker **aborts**, and the supervisor records **Could not process** with a `memory_limit` code.
 
-The strategy has four layers, applied in the worker before `lopdf` is called:
-1. **Raw-byte pre-scan.** Every compressed byte in a PDF lives in a top-level stream object; stream objects cannot be nested inside object streams. The worker scans the raw file for each `stream … endstream` body and its dictionary (`/Filter`, `/DecodeParms`, `/Length`, including indirect lengths) **without using `lopdf`**. This covers object streams and cross-reference streams decompressed during loading, and content streams decompressed during extraction.
-2. **Bounded decoding.** Each stream is decoded with a size cap: FlateDecode through `flate2`'s streaming decoder and LZWDecode through `weezl`, with predictor parameters respected.
-   - The per-stream cap and the **aggregate cap across all streams** are compiled in.
-   - Unknown or chained filters beyond an allowlist are refused, and so are encrypted or password-protected files (they show as **Could not process**).
-   - Image filters (DCT, JPX, CCITT, JBIG2) are never decoded, because text extraction doesn't need them.
-3. **Repeated processing.** `lopdf` decodes some streams more than once (at load, and per page during extraction). Because every stream's decoded size has already been proven within the cap, total decoded work is bounded by a small, measured multiple of the aggregate cap. 01c measures that multiple on adversarial and real files.
-4. **Backstops.** The deadline and the sampled RSS watchdog still run. They are documented as a **time bound and a sampled backstop, not a memory cap**.
+**What this bounds:** every heap allocation the worker makes, whatever makes it:
+- reading the file;
+- `lopdf` parsing, including object and cross-reference streams decompressed while loading;
+- content-stream decompression, including repeated decoding of the same stream;
+- text decoding and result frames.
 
-**Residual risk, stated plainly:**
-- `lopdf`'s parsed object graph is proportional to the file, up to 128 MiB of input. Allocation patterns inside `lopdf` and the text decoder are not individually capped.
-- Byte limits therefore bound decompression, not whole-process memory.
-- Even out of process, a worker under memory pressure can affect the system.
+It does not depend on predicting how `lopdf` will parse a file, so parser disagreement, incremental updates, indirect lengths and malformed files cannot bypass it. The deadline still bounds CPU time, and the sampled RSS watchdog stays as a backstop.
 
-01a measures peak RSS on bombs, deep object graphs and large real files, then proposes a concrete budget. **Shipping requires the reviewer to accept that budget and this residual risk explicitly.** Option (c) on its own (deadline plus watchdog) is **not** proposed for shipping.
+**What it does not bound,** stated plainly:
+- **The worker's stack:** the worker runs extraction on one thread with an explicit, fixed stack size, so a stack overflow aborts the worker.
+- **Fixed overheads:** the binary's code and read-only pages, which are shared and fixed.
+- **Kernel-side buffers**, and memory any C library would map directly. `lopdf`, `flate2` (with the pure-Rust `miniz_oxide` and `zlib-rs` backends) and `weezl` are pure Rust and allocate through the global allocator, but 01a verifies that from the locked dependency tree.
+- **System effects:** a worker using memory up to its cap can still pressure the system. Running one worker at a time limits that.
+
+01a measures peak RSS for decompression bombs (in content, object and cross-reference streams), deep object graphs, shared streams referenced by many pages, and large real files, and proposes the cap. **Shipping requires the reviewer to accept that cap and these residual risks explicitly.**
+
+**Owner decision, 19 October 2026:** the owner approved direct `flate2` and `weezl` dependencies for bounded decompression. The capped allocator does not need them, so **01a makes no dependency change**. The approval remains available if a later, separately reviewed defence-in-depth pre-scan is justified. The raw-byte pre-scan in revision 2 is withdrawn: as Codex round 2 showed, it could not be shown to cover exactly what `lopdf` decodes. Deadline plus watchdog alone (option (c)) is not proposed for shipping.
 
 ### 4.3 Readiness and page text: a content-addressed derived cache, no migration
 
@@ -115,7 +129,15 @@ A separate SQLite file, `content-cache.db`, in the app data folder. It is outsid
 
 **A material's readiness is never stored.** It is derived when needed by finding the hash of the material's *current* managed file and looking that hash up.
 
-**Finding the current hash:** each material's last known `(path, size, mtime, inode)` maps to its hash in a small table. Any difference re-hashes the file; a missing file shows **Missing**. Anything that can act on content re-hashes the file before using cached text: publishing, search hits from OFFLINE-02, and page destinations.
+**Finding the current hash:**
+- A material's last known `(path, size, mtime, inode)` and hash are kept only as a **hint**. Different bytes can keep the same tuple, for example after an in-place rewrite that preserves timestamps.
+- **Verified readiness requires the file's bytes to have been hashed in the current app session.** Until then the material shows **On this Mac** with "Checking…", never **Searchable**.
+- A bounded background queue hashes one file at a time after launch, and before preparation.
+- Because the hint is never trusted across sessions, a restore (which restarts the app) or a rollback needs no special invalidation.
+- A missing file shows **Missing**.
+- Anything that acts on content re-hashes the file at that moment: publishing, OFFLINE-02 search hits and page destinations.
+
+A test changes a file's bytes while keeping its tuple, and checks that readiness stays unverified until the file is re-hashed.
 
 **Why this survives restore without a fingerprint:**
 - Restoring an older backup, rolling back a profile, or restoring only the database while documents and the cache survive cannot make a cached entry *wrong*, because each entry describes exact bytes.
@@ -131,22 +153,32 @@ Originals, guides, cards, notes, histories and annotations are never touched by 
 
 ### 4.4 Per-page outcomes that never guess
 
+Each page's content is inspected **recursively**, within fixed bounds:
+- the page's content streams;
+- every Form XObject it invokes, through the resources in force at that point;
+- at most 8 levels deep, with cycle detection, and within the worker's time and memory limits.
+
+**Inspection is complete** only when every invoked content stream and form was resolved and read without error. If anything was missing, cyclic, too deep, unsupported or failed, inspection is **incomplete**.
+
 | Outcome | Rule | How it's shown |
 | --- | --- | --- |
 | `text` | Non-empty extracted text | counts as searchable |
-| `blank` | Parsed; no text-showing operators and no image drawn | counts as searchable (nothing to find) |
-| `image_only` | **Positively identified:** the page draws at least one image XObject or inline image, and has **no** text-showing operators | "This page is an image; text recognition is needed to search it" |
-| `text_unreadable` | Has text-showing operators, but extraction produced no usable text (for example a CID font without a ToUnicode map) | "Some text on this page couldn't be read" |
+| `blank` | Complete inspection found no text-showing operators and no image drawn | counts as searchable (nothing to find) |
+| `image_only` | Complete inspection found at least one image drawn (image XObject or inline image) and **no** text-showing operators anywhere, forms included | "This page is an image. Text recognition is needed to search it." |
+| `text_unreadable` | Text-showing operators were found, but extraction produced no usable text (for example a CID font without a ToUnicode map) | "Some text on this page couldn't be read" |
+| `unknown` | Inspection was incomplete | "This page couldn't be fully checked" |
 | `failed` | Extraction error; a privacy-safe code is kept | "This page couldn't be processed" |
+
+`image_only` says only that the page's content is an image. It does **not** claim the page was scanned.
 
 A material's state summarizes exact per-page counts:
 - **Searchable:** every page is `text` or `blank`.
 - **Partly searchable:** with counts, for example "41 of 50 pages".
-- **Scanned pages need text recognition:** used **only** when every page that isn't searchable is `image_only`.
-- **Couldn't read some pages:** the neutral wording, used whenever `text_unreadable` or `failed` pages exist.
+- **Image pages need text recognition:** used **only** when every page that isn't searchable is `image_only`.
+- **Couldn't read some pages:** the neutral wording, used whenever `text_unreadable`, `unknown` or `failed` pages exist.
 - **Missing** and **Could not process** apply to the whole file.
 
-Empty extraction is never reported as searchable coverage, and an unknown cause is never labelled a scan.
+Empty extraction never counts as searchable coverage, and an unknown cause is never given a specific diagnosis.
 
 ### 4.5 Preparation never uploads
 
@@ -159,9 +191,16 @@ Nothing reads the Gemini key or calls a provider. A test asserts that no Gemini 
 
 ## 5. Delivery slices and stopping rule
 
-Each slice has focused regressions first, then one normal gate, then Codex review and green exact-head CI, and **stops for authorized integration**. Nothing moves to the next slice automatically, and nothing is published automatically.
+Every slice, and installed acceptance, follows the parent plan's evidence rules:
+- focused regressions first, then the applicable normal gate once;
+- failed receipts are kept, never relabeled;
+- source hashes and exact exit codes are recorded;
+- trackers are updated, and one report is left with a precise reviewer prompt;
+- then Codex review and green exact-head CI.
 
-1. **OFFLINE-01a, native extraction and cache.** The worker mode (§4.1); the memory layers (§4.2) with measured peak RSS and a proposed budget; the content-addressed cache (§4.3); per-page outcomes (§4.4); and readiness commands.
+Each slice then **stops for authorized integration**. Nothing moves to the next slice automatically, and nothing is published automatically. Installed acceptance names the exact candidate it tested (source commit, executable and DMG hashes).
+
+1. **OFFLINE-01a, native extraction and cache.** The worker mode (§4.1); the capped allocator (§4.2) with measured peak RSS and a proposed cap; the content-addressed cache (§4.3); per-page outcomes (§4.4); and readiness commands.
    - **Tests, all native and synthetic:**
      - fresh import, replacement during extraction, deletion;
      - an original moved outside the app;
@@ -169,10 +208,14 @@ Each slice has focused regressions first, then one normal gate, then Codex revie
      - corrupt, encrypted and password-protected PDFs;
      - Unicode, text, blank, image-only, unreadable and mixed pages;
      - bombs in content, object and cross-reference streams;
+     - a shared stream referenced by many pages, and deep or cyclic forms;
+     - a page that draws an image directly and text through a form;
      - cancellation, a crash and restart, and a stale worker;
      - every restore case in §4.3;
      - partial coverage, with empty text never counting as searchable;
-     - argument and standard-input fail-closed behavior;
+     - argument handling: exact flag, duplicated flag, flag with extra arguments;
+     - standard-input fail-closed behavior;
+     - a file whose bytes change while its tuple stays the same;
      - no Gemini reachability.
 2. **OFFLINE-01b, honest readiness in the UI.** Study Library and the material page show the §4.4 states in warm, plain wording, with **Prepare for offline study**. Existing metadata search is unchanged.
 3. **OFFLINE-01c, fidelity and release measurements.**
@@ -185,14 +228,14 @@ Each slice has focused regressions first, then one normal gate, then Codex revie
    - supported-Mac coverage as available, with anything unavailable stated as unverified.
 
    No everyday profile and no provider calls.
-5. The memory budget and residual risk accepted by the reviewer (§4.2) before 01a's extraction is enabled in a release.
+5. The allocator cap and residual risks accepted by the reviewer (§4.2) before 01a's extraction is enabled in a release.
 6. Search itself is OFFLINE-02, with its own engine and folding decisions.
 7. **Follow-up:** move the existing main-process `lopdf` parsing (§2) into the worker, or bound it. It is listed so the exposure stays visible; it is not part of 01a.
 
 ## 6. Decisions
 
-- **Owner (made 19 October 2026):** approved direct `flate2` and `weezl` dependencies for bounded decompression (§4.2).
-- **Reviewer, at 01a:** accept or reject the measured memory budget and the stated residual risk.
-- **Reviewer, now:** confirm the content-addressed derived cache with no migration, the worker contract and the per-page outcome rules.
+- **Owner (made 19 October 2026):** approved direct `flate2` and `weezl` dependencies. They are not needed by 01a's capped allocator and remain unused unless a later defence-in-depth step is separately reviewed (§4.2).
+- **Reviewer, at 01a:** accept or reject the measured allocator cap and the stated residual risks.
+- **Reviewer, now:** confirm the capped-allocator strategy, the content-addressed derived cache with no migration, session-verified readiness, the worker contract and the per-page outcome rules.
 
 Search-engine and folding choices remain with OFFLINE-02.

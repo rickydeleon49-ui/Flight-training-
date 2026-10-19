@@ -1,6 +1,6 @@
 ## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
 
-Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 2 answers Codex round 1, which was RED on four contract gaps: an overclaimed memory bound, decompression coverage, the restore contract, and scan diagnosis.
+Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed. Revision 3 answers Codex rounds 1 and 2, both RED on contract gaps: memory bounds, decompression coverage, restore and stale readiness, scan diagnosis, and fail-closed worker dispatch.
 
 **Inventory findings:**
 - Today's search is the Study Library filter (title, notes, topic, type, tags) and QuickFind (material title, notes, tags and file name, plus notes, events, goals, instructor questions and other records). **Neither searches document, guide, card or practice-question text.**
@@ -9,10 +9,10 @@ Claude delivered the first OFFLINE-01 deliverable: a source inventory and an ext
 - Existing features (Check pages, splitting, the page-length check, flashcard batches) parse whole PDFs with `lopdf` inside the main app process. This is an existing exposure, now recorded.
 
 **Proposal:**
-- A fail-closed worker mode in the shipped binary that reuses the P54-02 bounds and finalization rule, one worker at a time.
-- **Owner-approved** direct `flate2`/`weezl` dependencies (already locked) for a raw-byte, bounded decompression pre-scan covering content, object and cross-reference streams. A measured memory budget and the stated residual risk must be accepted at review.
-- A content-addressed derived `content-cache.db`. It stays correct across restores, needs no migration and doesn't choose the search engine.
-- Per-page outcomes that never call an unknown failure a scan.
+- A worker mode in the shipped binary that is fail-closed on any use of its flag, reuses the P54-02 bounds and finalization rule, and runs one worker at a time.
+- A **capped allocator in the worker**, which bounds every heap allocation, including `lopdf`'s own decompression. The measured cap and the stated residual risks must be accepted at review. The owner approved direct `flate2`/`weezl` dependencies, but they aren't needed, so 01a changes no dependency.
+- A content-addressed derived `content-cache.db` that stays correct across restores, with readiness verified by a fresh hash in each session. It needs no migration and doesn't choose the search engine.
+- Per-page outcomes from bounded recursive inspection. They never label an unknown cause, and say "image pages", never "scanned".
 - Slices: 01a native, 01b UI, 01c fidelity and release measurements, then installed acceptance. Each stops for authorized integration.
 
 [Proposal](docs/OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md). Earlier entries remain historical.
