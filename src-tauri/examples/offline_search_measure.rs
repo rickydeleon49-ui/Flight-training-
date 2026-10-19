@@ -64,9 +64,27 @@ fn fixture(dir: &Path, manifest: &Value) -> Arc<Service> {
 }
 fn query(svc: Arc<Service>, ids: Vec<String>, q: String) -> (f64, Value, usize) {
     let entered = Instant::now();
-    let result = submit_search(svc, q, ids, vec!["documentPages".into()], 0, entered)
-        .unwrap()
-        .wait();
+    let result = loop {
+        match submit_search(
+            svc.clone(),
+            q.clone(),
+            ids.clone(),
+            vec!["documentPages".into()],
+            0,
+            Instant::now(),
+        ) {
+            Ok(ticket) => break ticket.wait(),
+            Err(code)
+                if code == "index_preparing"
+                    && entered.elapsed() < std::time::Duration::from_secs(5) =>
+            {
+                // A caller observes setup explicitly. Include this wait in the
+                // first-query measurement; never discard it as a warm-up.
+                std::thread::yield_now();
+            }
+            Err(code) => return (ms(entered), json!({"error":code}), 0),
+        }
+    };
     match result {
         Ok(r) => {
             let bytes = serde_json::to_vec(&r).unwrap();

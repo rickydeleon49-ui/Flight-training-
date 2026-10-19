@@ -14,7 +14,7 @@ use rusqlite::{params, Connection, ErrorCode, InterruptHandle, OpenFlags};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use std::sync::{mpsc, Arc, Condvar, Mutex};
 use std::time::{Duration, Instant};
 
@@ -803,11 +803,33 @@ struct Slot {
     running: Option<Arc<Control>>,
     next_id: u64,
     shutdown: bool,
+    refresh: bool,
+}
+
+/// Initialization is not a timed search and cannot expose a partly checked
+/// index. The command reports this state so its caller can retry after setup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Initialization {
+    Preparing,
+    Ready,
+    Failed,
+}
+
+struct Boot {
+    state: AtomicU8, // 0 preparing, 1 ready, 2 failed
+    identity: Mutex<Option<super::cache::FileIdentity>>,
+}
+
+enum Work {
+    Initialize,
+    Search(Job),
 }
 
 /// One search at a time, at most one waiting; a newer request replaces the
 /// waiting one and interrupts the running one.
 pub struct Host {
+    boot: Arc<Boot>,
+    cache_file: PathBuf,
     slot: Arc<(Mutex<Slot>, Condvar)>,
     guard: Arc<Guard>,
     deadline: Duration,
@@ -821,6 +843,19 @@ impl Host {
     }
 
     pub fn start_with(cache_file: PathBuf, deadline: Duration) -> Self {
+        Self::start_impl(
+            cache_file,
+            deadline,
+            #[cfg(test)]
+            None,
+        )
+    }
+
+    fn start_impl(
+        cache_file: PathBuf,
+        deadline: Duration,
+        #[cfg(test)] before_initialization: Option<Box<dyn FnOnce() + Send>>,
+    ) -> Self {
         let guard = Arc::new(Guard {
             active: Mutex::new(None),
             current: Mutex::new(None),
@@ -829,6 +864,11 @@ impl Host {
             shutdown: AtomicBool::new(false),
         });
         let slot: Arc<(Mutex<Slot>, Condvar)> = Arc::default();
+        slot.0.lock().unwrap().refresh = true;
+        let boot = Arc::new(Boot {
+            state: AtomicU8::new(0),
+            identity: Mutex::new(None),
+        });
         #[cfg(test)]
         let searcher_setup: SetupHook = Arc::new(Mutex::new(None));
         {
@@ -843,51 +883,66 @@ impl Host {
         {
             let guard = guard.clone();
             let slot = slot.clone();
+            let boot = boot.clone();
+            let cache_file = cache_file.clone();
             #[cfg(test)]
             let setup = searcher_setup.clone();
             std::thread::spawn(move || {
                 let mut searcher: Option<Searcher> = None;
-                let mut identity = None;
+                #[cfg(test)]
+                if let Some(before) = before_initialization {
+                    before();
+                }
+                let initialize = || {
+                    boot.state.store(0, Ordering::SeqCst);
+                    let ready = cache_file
+                        .parent()
+                        .and_then(|root| super::cache::Cache::open(root).ok());
+                    let opened =
+                        ready.and_then(|_| Searcher::open(&cache_file, guard.clone()).ok());
+                    *boot.identity.lock().unwrap_or_else(|e| e.into_inner()) =
+                        super::cache::file_identity(&cache_file);
+                    boot.state
+                        .store(if opened.is_some() { 1 } else { 2 }, Ordering::SeqCst);
+                    opened
+                };
                 loop {
-                    let job = {
+                    let work = {
                         let (lock, wake) = &*slot;
                         let mut s = lock.lock().unwrap_or_else(|e| e.into_inner());
                         loop {
                             if s.shutdown {
                                 return;
                             }
+                            if s.refresh {
+                                s.refresh = false;
+                                break Work::Initialize;
+                            }
                             if let Some(job) = s.waiting.take() {
                                 s.running = Some(job.control.clone());
-                                break job;
+                                break Work::Search(job);
                             }
                             s = wake.wait(s).unwrap_or_else(|e| e.into_inner());
                         }
                     };
+                    let job = match work {
+                        Work::Initialize => {
+                            drop(searcher.take());
+                            searcher = initialize();
+                            continue;
+                        }
+                        Work::Search(job) => job,
+                    };
                     *guard.current.lock().unwrap_or_else(|e| e.into_inner()) =
                         Some(job.control.clone());
-                    // A disposable cache may have been replaced since the last
-                    // request. Never keep searching the unlinked old database.
-                    let current_identity = super::cache::file_identity(&cache_file);
-                    if identity != current_identity {
-                        searcher = None;
+                    let identity = *boot.identity.lock().unwrap_or_else(|e| e.into_inner());
+                    if identity != super::cache::file_identity(&cache_file) || searcher.is_none() {
+                        drop(searcher.take());
+                        searcher = initialize();
                     }
-                    if searcher.is_none() {
-                        // Validation/rebuild is isolated from the extraction executor.
-                        // If first-open validation exceeds the request budget, its
-                        // ticket still returns timeout and the next request retries.
-                        let ready = cache_file
-                            .parent()
-                            .and_then(|root| super::cache::Cache::open(root).ok());
-                        if ready.is_some() && job.control.check().is_ok() {
-                            searcher = Searcher::open(&cache_file, guard.clone()).ok();
-                            identity = super::cache::file_identity(&cache_file);
-                        }
-                        #[cfg(test)]
-                        if let (Some(s), Some(f)) =
-                            (searcher.as_mut(), setup.lock().unwrap().take())
-                        {
-                            f(s);
-                        }
+                    #[cfg(test)]
+                    if let (Some(s), Some(f)) = (searcher.as_mut(), setup.lock().unwrap().take()) {
+                        f(s);
                     }
                     let result = match job.control.check() {
                         Err(stop) => Err(stop),
@@ -904,12 +959,48 @@ impl Host {
             });
         }
         Self {
+            boot,
+            cache_file,
             slot,
             guard,
             deadline,
             #[cfg(test)]
             searcher_setup,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn start_held_for_test(
+        cache_file: PathBuf,
+        before: Box<dyn FnOnce() + Send>,
+    ) -> Self {
+        Self::start_impl(cache_file, DEADLINE, Some(before))
+    }
+
+    /// Cheap readiness check; replacing the cache schedules revalidation on
+    /// the same worker. No validation or extra executor runs on this caller.
+    pub fn initialization(&self) -> Initialization {
+        match self.boot.state.load(Ordering::SeqCst) {
+            1 => {
+                let identity = *self.boot.identity.lock().unwrap_or_else(|e| e.into_inner());
+                if identity != super::cache::file_identity(&self.cache_file) {
+                    self.retry_initialization();
+                    Initialization::Preparing
+                } else {
+                    Initialization::Ready
+                }
+            }
+            2 => Initialization::Failed,
+            _ => Initialization::Preparing,
+        }
+    }
+
+    pub fn retry_initialization(&self) {
+        let (lock, wake) = &*self.slot;
+        let mut slot = lock.lock().unwrap_or_else(|e| e.into_inner());
+        self.boot.state.store(0, Ordering::SeqCst);
+        slot.refresh = true;
+        wake.notify_all();
     }
 
     /// Submit already resolved targets (tests and measurement tooling).
@@ -1629,6 +1720,13 @@ mod tests {
             let _ = std::fs::remove_file(root.join(format!("{CACHE_FILE}{suffix}")));
         }
         std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).unwrap();
+        assert_eq!(host.initialization(), Initialization::Preparing);
+        let until = Instant::now() + Duration::from_secs(5);
+        while host.initialization() != Initialization::Ready {
+            assert!(Instant::now() < until);
+            std::thread::yield_now();
+        }
+
         assert!(search(&host, &targets, "old", 0).unwrap().groups.is_empty());
         assert_eq!(search(&host, &targets, "new", 0).unwrap().groups.len(), 1);
         drop(host);
@@ -1654,6 +1752,27 @@ mod tests {
         );
         drop(host);
         drop(db);
+        let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn failed_background_initialization_can_be_retried_after_the_root_is_available() {
+        let root = temp();
+        std::fs::remove_dir(&root).unwrap();
+        let host = Host::start(root.join(CACHE_FILE));
+        let until = Instant::now() + Duration::from_secs(5);
+        while host.initialization() == Initialization::Preparing {
+            assert!(Instant::now() < until);
+            std::thread::yield_now();
+        }
+        assert_eq!(host.initialization(), Initialization::Failed);
+        std::fs::create_dir(&root).unwrap();
+        host.retry_initialization();
+        while host.initialization() != Initialization::Ready {
+            assert!(Instant::now() < until);
+            std::thread::yield_now();
+        }
+        assert!(search(&host, &[], "wind", 0).unwrap().groups.is_empty());
+        drop(host);
         let _ = std::fs::remove_dir_all(root);
     }
 }

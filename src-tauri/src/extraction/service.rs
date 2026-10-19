@@ -159,6 +159,13 @@ struct Queue {
     running: bool,
 }
 
+// Test-only scheduling seam at the gap between hashing and remembering a
+// stamp; never compiled into application commands or enabled by environment.
+#[cfg(test)]
+type AfterHashHook = Option<Box<dyn FnOnce(&Path)>>;
+#[cfg(test)]
+thread_local! { static AFTER_HASH: std::cell::RefCell<AfterHashHook> = const { std::cell::RefCell::new(None) }; }
+
 /// One app session's knowledge. A new session (for example after a restore,
 /// which restarts the app) starts with nothing verified.
 pub struct Service {
@@ -210,8 +217,22 @@ impl Service {
     }
 
     fn remember(&self, path: &Path) -> Option<String> {
+        let before = stamp(path)?;
         let sha = hash_file(path)?;
+        #[cfg(test)]
+        AFTER_HASH.with(|slot| {
+            if let Some(hook) = slot.borrow_mut().take() {
+                hook(path);
+            }
+        });
         let st = stamp(path)?;
+        if st != before {
+            self.verified
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .remove(path);
+            return None;
+        }
         self.verified
             .lock()
             .unwrap_or_else(|e| e.into_inner())
@@ -699,6 +720,13 @@ mod tests {
         // A real preparation holds this lock while the worker runs. Search
         // must complete while it is held, not merely after it is released.
         let held = svc.slot.lock().unwrap();
+        let until = std::time::Instant::now() + Duration::from_secs(5);
+        while super::super::search_api::search_initialization(&svc).unwrap()
+            != super::super::search::Initialization::Ready
+        {
+            assert!(std::time::Instant::now() < until);
+            std::thread::yield_now();
+        }
         let ticket = super::super::search_api::submit_search(
             svc.clone(),
             "wind".into(),
@@ -713,6 +741,73 @@ mod tests {
         crate::practice_sessions::unmark_root_ready(&root);
         drop(svc);
         drop(db);
+        let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn a_change_after_hashing_cannot_bind_old_bytes_to_the_new_stamp() {
+        let root = std::env::temp_dir().join(format!("hfd-remember-gap-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join("test.pdf");
+        std::fs::write(&path, b"original").unwrap();
+        let svc = Service::new(root.clone(), PathBuf::new());
+        AFTER_HASH.with(|slot| {
+            *slot.borrow_mut() = Some(Box::new(|path| {
+                std::fs::write(path, b"longer replacement").unwrap()
+            }))
+        });
+        assert_eq!(
+            svc.verify(&path),
+            None,
+            "a hash must belong to the stamp remembered with it"
+        );
+        assert_eq!(svc.current(&path), None);
+        assert_eq!(
+            svc.verify(&path),
+            hash_file(&path),
+            "a fresh retry verifies the replacement"
+        );
+        let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn commands_report_initializing_without_admitting_a_search() {
+        use super::super::{
+            search::{Host, Initialization},
+            search_api,
+        };
+        let root = std::env::temp_dir().join(format!("hfd-boot-held-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let svc = Arc::new(Service::new(root.clone(), PathBuf::new()));
+        let (release, held) = std::sync::mpsc::channel();
+        let host = Host::start_held_for_test(
+            root.join(super::super::cache::CACHE_FILE),
+            Box::new(move || held.recv().unwrap()),
+        );
+        assert!(svc.search.set(host).is_ok());
+        assert_eq!(
+            search_api::search_initialization(&svc).unwrap(),
+            Initialization::Preparing
+        );
+        let entered = std::time::Instant::now();
+        let result = search_api::submit_search(
+            svc.clone(),
+            "wind".into(),
+            vec![],
+            vec!["documentPages".into()],
+            0,
+            entered,
+        );
+        assert_eq!(result.err().as_deref(), Some("index_preparing"));
+        assert!(
+            !root.join(super::super::cache::CACHE_FILE).exists(),
+            "no SQL can run before setup completes"
+        );
+        release.send(()).unwrap();
+        let until = std::time::Instant::now() + Duration::from_secs(5);
+        while search_api::search_initialization(&svc).unwrap() != Initialization::Ready {
+            assert!(std::time::Instant::now() < until);
+            std::thread::yield_now();
+        }
+        drop(svc);
         let _ = std::fs::remove_dir_all(root);
     }
 }

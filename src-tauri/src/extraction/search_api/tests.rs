@@ -4,6 +4,20 @@ use crate::extraction::supervisor::{Extraction, PageResult};
 use sha2::{Digest, Sha256};
 use std::fs;
 
+fn wait_ready(svc: &Service) {
+    let until = Instant::now() + Duration::from_secs(5);
+    loop {
+        match search_initialization(svc).unwrap() {
+            Initialization::Ready => return,
+            Initialization::Failed => panic!("index initialization failed"),
+            Initialization::Preparing => {
+                assert!(Instant::now() < until);
+                std::thread::yield_now();
+            }
+        }
+    }
+}
+
 struct Fixture {
     root: PathBuf,
     svc: Arc<Service>,
@@ -59,6 +73,7 @@ impl Fixture {
         sha
     }
     fn search(&self, ids: &[&str], query: &str) -> search::Response {
+        wait_ready(&self.svc);
         submit_search(
             self.svc.clone(),
             query.into(),
@@ -147,6 +162,7 @@ fn fresh_session_after_restore_has_no_verified_files() {
     let f = Fixture::new();
     f.add("a", b"aaa", &[(Outcome::Text, "wind")], true);
     let fresh = Arc::new(Service::new(f.root.clone(), PathBuf::new()));
+    wait_ready(&fresh);
     let r = submit_search(
         fresh,
         "wind".into(),
@@ -242,6 +258,7 @@ fn validates_limits_and_never_queries_unready_storage() {
         submit("", vec![], vec!["documentPages".into()], 0),
         "empty_query"
     );
+    wait_ready(&f.svc);
     crate::practice_sessions::unmark_root_ready(&f.root);
     let result = submit_search(
         f.svc.clone(),

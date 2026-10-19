@@ -1,3 +1,13 @@
+## OFFLINE-02a corrected and paused by owner — 19 October 2026
+
+**Owner requested finishing current work, then pausing. No further roadmap task or merge now.** [Latest self-review and pause report](docs/OFFLINE_02A_SELF_REVIEW_AND_PAUSE_2026-10-19.md); [resume/reviewer prompt](docs/OFFLINE_02A_FINAL_REVIEW_RESUME_2026-10-19.md); [budget owner decision](docs/OFFLINE_02A_BUDGET_OWNER_DECISION_2026-10-19.md). Codex authored these corrections, so independent acceptance remains pending.
+
+Closed the reproduced missing/changed-trigger validation defect and the after-hash stamp race. Background initialization now reports `index_preparing` before admitting search, distinguishes failed initialization and supports retry/cache replacement. Final native tests: **813 passed / 11 ignored**; strict lint/format/lock/source checks pass. Unchanged frontend evidence (3,728 passes) is reused.
+
+The owner explicitly approved cold 10k ≤750 ms and added index ≤3× canonical text. Final measurements: **588.53 ms**, **1.693×–2.663×**; both amended criteria pass. All 90 exact hit sets/capped prefixes and 4,050 timed searches pass without errors. Warm p95: 15.39 ms at 10k / 38.20 ms at 30k; concurrent 13.78 ms. Original 300 ms/1× failures remain historical evidence. The original 30k ≤1 s or background-before-search rule remains; no proposed 3-second replacement was adopted.
+
+**OFFLINE-02A-COLD/STORAGE:** closed against the documented owner-approved criteria, subject to independent verification. **OFFLINE-02A-REVIEW:** next when the owner resumes; inspect Codex's work, then normal PR and exact-head CI before any merge. Only after accepted integration: 02b search UI/navigation (handle `index_preparing` explicitly) → 02c saved study content → homework → exports. Offline release flags remain off; installed/minimum-spec/pressure gates remain unverified. Do not resume automatically. Earlier entries below are preserved history.
+
 ## OFFLINE-02a native implementation complete; acceptance budgets open — 19 October 2026
 
 Codex completed Claude's quota-interrupted cache/search work in the existing `Flight-training-offline-01` worktree on `codex/offline-02a-completion`. [Report](docs/OFFLINE_02A_COMPLETION_REPORT_2026-10-19.md), [independent reviewer handoff](docs/OFFLINE_02A_REVIEWER_HANDOFF_2026-10-19.md), [measured budgets](docs/evidence/offline-02a-completion-2026-10-19/BUDGETS.md). Design rev6 was merged in PR #230 (`123b4fc`); older pending-design entries below are historical. **No 02a acceptance or merge is claimed.**

@@ -1,0 +1,16 @@
+{
+  "reviewedBase": "b84f56c",
+  "sources": {
+    "src-tauri/Cargo.toml": "97b39eba91126248933c9d8026f77d4a763b17c084c60e1dcecde9794ea2ec9f",
+    "src-tauri/src/lib.rs": "ac69381d7e21a0715fd5c818ea8a5f88f7ce8b0740f19078402f0df9cf828e7e",
+    "src-tauri/src/extraction/mod.rs": "911061b0c75598d00318fedafbe2de4666e384dc50711fcfd24129d629ec5696",
+    "src-tauri/src/extraction/cache.rs": "e944b7df5a6d74c997ef1048d219cf06548ce937fd56281c26db1122e2b789c2",
+    "src-tauri/src/extraction/search.rs": "5359ff48e8d714161b0a73667de384785ee9e0c6a95812de1f3ad9730753a719",
+    "src-tauri/src/extraction/search_api.rs": "43825c1e4a9f0d5aa988b572d6ee5c6ed2e6739b12556976d080e82900cfe914",
+    "src-tauri/src/extraction/search_api/tests.rs": "8fb0b8876427278098302ad6c0193225ce4f97a2b01674e3af1f2c6442605f12",
+    "src-tauri/src/extraction/service.rs": "2e0fe0bc6c70fbe972acf4ce813651a767ff0150cf1d774f5ce3ec8e79dad06b",
+    "src-tauri/examples/offline_search_measure.rs": "e23a7fb46ee4dcc3fc149031732dec1271484dca2375e1093caaab4946e26cb6",
+    "src-tauri/tests/extraction_service.rs": "cee6672e4a55e73303d6887d03d323d7ba2212c6b70bc89e47c3cfd03ecdf53f"
+  },
+  "measuredHarness": "f2c2bcf7a2e3aca356872b71968d8b94d079fe9e8b88c1ed4d4ab2b268ca8b24"
+}

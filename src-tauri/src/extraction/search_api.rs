@@ -6,7 +6,7 @@
 pub use crate::practice_sessions::run_legacy_conversion_at as initialize_storage;
 
 use super::cache::{Cache, Summary};
-use super::search::{self, Control, Coverage, Request, Stop, Target, Ticket};
+use super::search::{self, Control, Coverage, Initialization, Request, Stop, Target, Ticket};
 use super::service::{self, Service};
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde::Serialize;
@@ -121,6 +121,15 @@ fn resolve(
     Ok((targets, coverage))
 }
 
+/// Rust consumers can observe background setup without issuing a query.
+/// The webview receives the same distinction as `index_preparing` from search.
+pub fn search_initialization(svc: &Service) -> Result<Initialization, String> {
+    if !service::extraction_enabled() {
+        return Err("offline_extraction_disabled".into());
+    }
+    Ok(svc.search_host().initialization())
+}
+
 /// Admission is synchronous and bounded before any runtime wait. Resolution
 /// and coverage run on the search thread, not the hashing/extraction executor.
 pub fn submit_search(
@@ -144,8 +153,17 @@ pub fn submit_search(
         return Err("unsupported_content_type".into());
     }
     let terms = search::parse(&query).map_err(|s| s.code().to_string())?;
+    let host = svc.search_host();
+    match host.initialization() {
+        Initialization::Preparing => return Err("index_preparing".into()),
+        Initialization::Failed => {
+            host.retry_initialization();
+            return Err("index_unavailable".into());
+        }
+        Initialization::Ready => {}
+    }
     let owned = svc.clone();
-    Ok(svc.search_host().submit(entered, move |control, cache| {
+    Ok(host.submit(entered, move |control, cache| {
         let (targets, coverage) = resolve(&owned, &material_ids, control, cache)?;
         Ok(Request {
             targets,

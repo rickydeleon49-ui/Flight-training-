@@ -1,0 +1,15 @@
+{
+  "approvedCold10kMs": 750,
+  "observedCold10kMs": 588.533041,
+  "approvedIndexRatio": 3,
+  "observedMaxIndexRatio": 2.662942902796028,
+  "originalColdTargetPassed": false,
+  "originalStorageTargetPassed": false,
+  "backgroundRequired30k": true,
+  "finalTimedSamples": 4050,
+  "timedErrors": 0,
+  "exactReferenceCases": 90,
+  "unchangedWarmAndSizeBudgetsPassed": true,
+  "concurrentP95Ms": 13.775791,
+  "rss30kMaxBytes": 35160064
+}

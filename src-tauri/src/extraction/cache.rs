@@ -41,7 +41,7 @@ pub fn canonical(text: &str) -> String {
 
 /// Cache files already validated by this process (design §5): the full
 /// FTS integrity check runs once per process, at first open.
-type FileIdentity = (u64, Option<std::time::SystemTime>);
+pub(crate) type FileIdentity = (u64, Option<std::time::SystemTime>);
 
 pub(crate) fn file_identity(path: &Path) -> Option<FileIdentity> {
     let meta = std::fs::metadata(path).ok()?;
@@ -191,6 +191,31 @@ impl Cache {
         ok
     }
 
+    /// Compare complete object definitions, not just schema version/counts.
+    /// A valid FTS index today cannot prove a missing trigger will index the
+    /// next publish. This small catalog check also runs on memoized opens.
+    fn schema_matches(conn: &Connection) -> bool {
+        type Objects = Vec<(String, String, String)>;
+        fn objects(conn: &Connection) -> rusqlite::Result<Objects> {
+            let mut stmt = conn.prepare(
+                "SELECT type, name, sql FROM sqlite_master
+                WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY type, name",
+            )?;
+            let rows = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+            rows.collect()
+        }
+        static EXPECTED: OnceLock<Option<Objects>> = OnceLock::new();
+        let expected = EXPECTED.get_or_init(|| {
+            let reference = Connection::open_in_memory().ok()?;
+            Self::create(&reference).ok()?;
+            objects(&reference).ok()
+        });
+        let Some(expected) = expected else {
+            return false;
+        };
+        objects(conn).is_ok_and(|actual| actual == *expected)
+    }
+
     fn trustworthy(path: &Path, conn: &Connection) -> bool {
         let meta = |key: &str| -> Option<String> {
             conn.query_row("SELECT value FROM cache_meta WHERE key = ?1", [key], |r| {
@@ -198,7 +223,9 @@ impl Cache {
             })
             .ok()
         };
-        if meta("schema").as_deref() != Some(SCHEMA) || meta("state").as_deref() != Some("complete")
+        if meta("schema").as_deref() != Some(SCHEMA)
+            || meta("state").as_deref() != Some("complete")
+            || !Self::schema_matches(conn)
         {
             return false;
         }
@@ -845,5 +872,40 @@ mod tests {
         assert_eq!(hits(&cache, "committed"), vec![(sha.clone(), 1)]);
         assert_eq!(hits(&cache, "half"), vec![]);
         let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn missing_or_changed_index_triggers_cannot_be_trusted_after_reopen() {
+        for poison in ["missing", "changed"] {
+            let root = temp();
+            let sha = "9".repeat(64);
+            {
+                let mut cache = Cache::open(&root).unwrap();
+                cache
+                    .publish(&doc(&sha, &[(Outcome::Text, "original wind")]))
+                    .unwrap();
+                cache
+                    .conn
+                    .execute_batch("DROP TRIGGER search_passage_ai")
+                    .unwrap();
+                if poison == "changed" {
+                    cache.conn.execute_batch("CREATE TRIGGER search_passage_ai AFTER INSERT ON search_passage BEGIN SELECT 1; END;").unwrap();
+                }
+                assert!(
+                    consistent(&cache),
+                    "current rows still agree; integrity alone does not test future writes"
+                );
+            }
+            let mut reopened = Cache::open(&root).unwrap();
+            reopened
+                .publish(&doc(&sha, &[(Outcome::Text, "replacement crosswind")]))
+                .unwrap();
+            assert_eq!(
+                hits(&reopened, "crosswind"),
+                vec![(sha, 1)],
+                "{poison} trigger silently lost new text"
+            );
+            assert!(consistent(&reopened));
+            let _ = std::fs::remove_dir_all(root);
+        }
     }
 }

@@ -458,6 +458,13 @@ fn prepared_real_pdf_is_searchable_and_its_destination_is_revalidated() {
         svc.prepare(name, no_cancel());
     }
     let before = std::fs::read(root.0.join("her-flight-deck.db")).unwrap();
+    let until = std::time::Instant::now() + Duration::from_secs(5);
+    while her_flight_deck_lib::extraction::search_api::search_initialization(&svc).unwrap()
+        != her_flight_deck_lib::extraction::search::Initialization::Ready
+    {
+        assert!(std::time::Instant::now() < until);
+        std::thread::yield_now();
+    }
     let response = submit_search(
         svc.clone(),
         "crosswind".into(),
