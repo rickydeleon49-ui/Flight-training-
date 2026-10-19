@@ -1,8 +1,8 @@
-## OFFLINE-01c merged; OFFLINE-01b readiness UI pending review — 19 October 2026
+## OFFLINE-01c merged; OFFLINE-01b readiness UI, round-1 corrections pending re-review — 19 October 2026
 
 OFFLINE-01c merged as PR #228 (`a3324a1`) after Codex rounds 1–3 were RED and round 4 GREEN. The release cap stays rejected pending pressure testing on dedicated minimum-spec Macs.
 
-**OFFLINE-01b** (`docs/OFFLINE_01B_REPORT_2026-10-19.md`) adds the §4.4 readiness wording to the material page and library cards, with **Prepare for offline study**. It is **dormant in releases on both sides**: native preparation needs a debug build or `HFD_OFFLINE_EXTRACTION=1`, the UI needs `VITE_OFFLINE_EXTRACTION=1`, and a test fails if any workflow or config sets either flag. Frontend tests: 3,725 passed; native: 774 passed.
+**OFFLINE-01b** (`docs/OFFLINE_01B_REPORT_2026-10-19.md`) adds the §4.4 readiness wording to the material page and library cards, with **Prepare for offline study**. It is **dormant in releases on both sides**: native preparation needs a debug build or `HFD_OFFLINE_EXTRACTION=1`, the UI needs `VITE_OFFLINE_EXTRACTION=1`, and a test fails if any workflow or config sets either flag. Codex round 1 was RED: worker mode itself bypassed the gate (now refused with exit 69 in builds without the opt-in, proven against the real release binary), and a replaced file kept the old file's readiness (now keyed by file identity). Frontend tests: 3,728 passed; native: 775 passed.
 
 ## OFFLINE-01a merged; OFFLINE-01c real-document evidence — 19 October 2026
 

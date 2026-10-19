@@ -1,6 +1,6 @@
 # OFFLINE-01b: honest readiness in the UI — 19 October 2026
 
-**Status: implemented and dormant; pending Codex review.**
+**Status: implemented and dormant; Codex round-1 corrections applied, pending re-review.**
 
 This slice builds the proposal's §4.4 readiness wording into the Study Library and the material page, with **Prepare for offline study**. Existing metadata search is unchanged.
 
@@ -37,10 +37,35 @@ The wording rules from §4.4:
 
 **Library:** the PDFs on screen get one readiness request per change of the shown set. "Checking" and "not a PDF" show no badge, so the cards stay quiet.
 
+## Review round 1 corrections (Codex RED)
+
+**1. High: worker mode bypassed the release gate.** Only the Tauri command was gated. `main.rs` dispatched `--hfd-extract-worker` straight into extraction, so a release executable handed a valid request on stdin would extract.
+
+The receipt `receipts/release-worker-refuses-before-fix.log` (exit 101) shows a release worker exiting `0` where `69` was expected.
+
+**Correction:**
+- `extraction_enabled()` now lives in `worker.rs` and is checked by worker dispatch itself, after argument validation and before any request is read. A build without the opt-in exits `EXIT_DISABLED` (69) with no output.
+- The service re-exports the same function, so there is one gate for both paths.
+
+**Tests:**
+- unit test `a_build_without_the_opt_in_refuses_worker_mode_before_reading_anything`;
+- release-only integration test `a_release_build_without_the_opt_in_refuses_a_valid_request`, which runs the real release binary with a valid request: no frames, exit 69. Receipt: `receipts/release-worker-refuses.log`.
+
+**Consequence for evidence:** reproducing the OFFLINE-01c release measurements now needs a release build compiled with `HFD_OFFLINE_EXTRACTION=1`. That is deliberate.
+
+**2. Medium: a replaced file kept the old file's readiness.** Restoring or reattaching a file keeps the material's id, and the panel and badges were keyed by id only.
+
+**Correction:**
+- `fileIdentity()` combines the id, path, size and `updatedAt`.
+- The panel resets to nothing when the identity changes, asks again, and uses an answer, whether from a readiness check or from Prepare, only if it was asked about the file still shown.
+- The badges key their request by the shown files' identities, clear at once on a change, and ignore late answers.
+
+**Tests:** three delayed-answer replacement regressions, for the panel (late answer, settled state) and the badges. They fail on the previous UI (`receipts/file-replacement-before-fix.log`, 3 failed) and pass now.
+
 ## Tests
 
 - `offlineReadiness.test.ts` (8): exact counts, singulars, image versus neutral wording, no "scan", preparation offered only when not prepared, privacy of unknown codes.
-- `OfflineStudyPanel.test.ts` (9):
+- `OfflineStudyPanel.test.ts` (12):
   - dormant renders nothing and makes no request;
   - not a PDF;
   - prepare flow;
@@ -48,10 +73,11 @@ The wording rules from §4.4:
   - neutral partial wording;
   - a run that stops short;
   - a start failure shown without its code;
-  - library badges: one request, PDFs only, quiet states hidden, dormant.
+  - library badges: one request, PDFs only, quiet states hidden, dormant;
+  - file replacement under the same material, for both panel and badges.
 - `offlineContent.test.ts` (9): the dormancy guards.
-- Native: `debug_builds_may_extract_and_release_builds_need_the_opt_in`.
+- Native: `debug_builds_may_extract_and_release_builds_need_the_opt_in`, the worker-dispatch refusal test, and the release-only binary refusal test.
 
-**Gate:** 3,725 frontend tests and 774 native tests pass; typecheck, build, fmt, strict clippy and cargo-lock pass.
+**Gate** (receipts in `docs/evidence/offline-01b-2026-10-19/receipts/`): 3,728 frontend tests and 775 native tests pass; typecheck, build, fmt, strict clippy and cargo-lock pass.
 
 **Not verified here:** the painted UI. Browser mode has no native side, so the panel can't render there. A visual check belongs with installed acceptance when the feature is enabled.

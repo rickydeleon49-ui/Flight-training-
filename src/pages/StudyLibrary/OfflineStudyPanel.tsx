@@ -4,6 +4,7 @@ import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { describeReadiness } from "@/logic/offlineReadiness";
 import {
+  fileIdentity,
   offlineContentReadiness,
   offlineStudyEnabled,
   prepareOfflineContent,
@@ -22,13 +23,17 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
   const [readiness, setReadiness] = useState<OfflineReadiness | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
-  const mounted = useRef(true);
   const enabled = offlineStudyEnabled() && Boolean(material.filePath);
+  const identity = fileIdentity(material);
+  // The file the panel is showing, or null once unmounted. An answer is used
+  // only if it was asked about this same file: restoring or reattaching a
+  // file keeps the material's id, and the old file's answer must not stick.
+  const current = useRef<string | null>(identity);
+  const last = useRef<OfflineReadiness["state"] | null>(null);
 
   // Apply a new state. A run that stopped short (a timeout, or the worker
   // failing for a reason worth retrying) isn't remembered by the cache, so it
   // shows up as "preparing" turning back into "not prepared": say so.
-  const last = useRef<OfflineReadiness["state"] | null>(null);
   const apply = useCallback((next: OfflineReadiness) => {
     if (last.current === "preparing" && next.state === "notPrepared") {
       setProblem("Preparing didn't finish this time. You can try again.");
@@ -38,21 +43,27 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
   }, []);
 
   const refresh = useCallback(async () => {
+    const asked = identity;
     try {
       const [row] = await offlineContentReadiness([material.id]);
-      if (mounted.current && row) apply(row.readiness);
+      if (current.current === asked && row) apply(row.readiness);
     } catch {
-      if (mounted.current) setProblem("Offline study status couldn't be checked just now.");
+      if (current.current === asked) setProblem("Offline study status couldn't be checked just now.");
     }
-  }, [material.id, apply]);
+  }, [identity, material.id, apply]);
 
+  // A different file (or the first look): start from nothing, then ask.
   useEffect(() => {
-    mounted.current = true;
+    current.current = identity;
+    last.current = null;
+    setReadiness(null);
+    setProblem(null);
+    setAsking(false);
     if (enabled) void refresh();
     return () => {
-      mounted.current = false;
+      current.current = null;
     };
-  }, [enabled, refresh]);
+  }, [enabled, identity, refresh]);
 
   const wording = readiness ? describeReadiness(readiness) : null;
 
@@ -66,15 +77,16 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
   if (!enabled || !readiness || !wording || readiness.state === "unsupported") return null;
 
   const prepare = async () => {
+    const asked = identity;
     setAsking(true);
     setProblem(null);
     try {
       const row = await prepareOfflineContent(material.id);
-      if (mounted.current) apply(row.readiness);
+      if (current.current === asked) apply(row.readiness);
     } catch {
-      if (mounted.current) setProblem("Preparing for offline study couldn't start. Please try again.");
+      if (current.current === asked) setProblem("Preparing for offline study couldn't start. Please try again.");
     } finally {
-      if (mounted.current) setAsking(false);
+      if (current.current === asked) setAsking(false);
     }
   };
 

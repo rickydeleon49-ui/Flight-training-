@@ -29,6 +29,20 @@ export interface MaterialReadiness {
   readiness: OfflineReadiness;
 }
 
+/**
+ * Which file a material points at, for readiness purposes. Restoring or
+ * reattaching a file keeps the material's id but changes this, so readiness
+ * fetched for the old file is never shown for the new one.
+ */
+export function fileIdentity(m: {
+  id: string;
+  filePath: string | null;
+  fileSize: number | null;
+  updatedAt: string;
+}): string {
+  return [m.id, m.filePath ?? "", m.fileSize ?? "", m.updatedAt].join("\0");
+}
+
 /** True only in the desktop app, and only when this build opted in. */
 export function offlineStudyEnabled(): boolean {
   return isTauri() && import.meta.env.VITE_OFFLINE_EXTRACTION === "1";

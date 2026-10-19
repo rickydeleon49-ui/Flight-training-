@@ -12,7 +12,8 @@ const service = vi.hoisted(() => ({
   prepare: vi.fn<(id: string) => Promise<MaterialReadiness>>(),
 }));
 
-vi.mock("@/services/offlineContent", () => ({
+vi.mock("@/services/offlineContent", async (original) => ({
+  fileIdentity: (await original<typeof import("@/services/offlineContent")>()).fileIdentity,
   offlineStudyEnabled: () => service.enabled,
   offlineContentReadiness: (ids: string[]) => service.readiness(ids),
   prepareOfflineContent: (id: string) => service.prepare(id),
@@ -99,6 +100,34 @@ describe("Offline study panel", () => {
     expect(screen.getByRole("button", { name: "Prepare for offline study" })).toBeTruthy();
   });
 
+  it("drops the old file's answer when the file is replaced under the same material", async () => {
+    let answerOld!: (rows: MaterialReadiness[]) => void;
+    service.readiness
+      .mockImplementationOnce(() => new Promise((resolve) => (answerOld = resolve)))
+      .mockResolvedValue([row({ state: "notPrepared" })]);
+    const { rerender } = render(h(OfflineStudyPanel, { material: pdf }));
+    await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(1));
+    const replaced = { ...pdf, fileSize: 999, updatedAt: "2026-10-19T12:00:00.000Z" };
+    rerender(h(OfflineStudyPanel, { material: replaced }));
+    expect(await screen.findByText("Not prepared")).toBeTruthy();
+    expect(service.readiness).toHaveBeenCalledTimes(2);
+    // The old file's late answer arrives and is ignored.
+    await act(async () => answerOld([row({ state: "searchable", pages: 524 })]));
+    expect(screen.queryByText("Searchable")).toBeNull();
+    expect(screen.getByText("Not prepared")).toBeTruthy();
+  });
+
+  it("forgets a settled state when the file is replaced", async () => {
+    service.readiness
+      .mockResolvedValueOnce([row({ state: "searchable", pages: 524 })])
+      .mockImplementation(() => new Promise(() => {}));
+    const { rerender } = render(h(OfflineStudyPanel, { material: pdf }));
+    expect(await screen.findByText("Searchable")).toBeTruthy();
+    rerender(h(OfflineStudyPanel, { material: { ...pdf, filePath: "m1-restored.pdf" } }));
+    await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText("Searchable")).toBeNull();
+  });
+
   it("uses neutral wording when some pages couldn't be read", async () => {
     service.readiness.mockResolvedValue([
       row({ state: "partial", searchable: 497, pages: 524, imagePages: 1, reason: "someUnreadable" }),
@@ -144,6 +173,21 @@ describe("Library offline badges", () => {
     expect(service.readiness).toHaveBeenCalledTimes(1);
     expect(service.readiness).toHaveBeenCalledWith(["a", "b"]);
     expect(screen.queryByText(/^b:/)).toBeNull();
+  });
+
+  it("asks again, and drops the old answer, when a shown file is replaced", async () => {
+    let answerOld!: (rows: MaterialReadiness[]) => void;
+    service.readiness
+      .mockImplementationOnce(() => new Promise((resolve) => (answerOld = resolve)))
+      .mockResolvedValue([row({ state: "notPrepared" }, "a")]);
+    const a = makeMaterial({ id: "a", filePath: "a.pdf", fileSize: 10 });
+    const { rerender } = render(h(BadgeProbe, { materials: [a] }));
+    await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(1));
+    rerender(h(BadgeProbe, { materials: [{ ...a, fileSize: 20 }] }));
+    expect(await screen.findByText("a:Not prepared")).toBeTruthy();
+    await act(async () => answerOld([row({ state: "searchable", pages: 3 }, "a")]));
+    expect(screen.queryByText("a:Searchable")).toBeNull();
+    expect(service.readiness).toHaveBeenCalledTimes(2);
   });
 
   it("shows nothing when this build hasn't opted in", async () => {

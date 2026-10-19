@@ -393,3 +393,13 @@ evidence/offline-01c-2026-10-19/receipts/round2-superseded/helper.log -text -dif
 evidence/offline-01c-2026-10-19/receipts/round2-superseded/phak-unmapped-pages.txt -text -diff
 evidence/offline-01c-2026-10-19/receipts/round2-superseded/release-build.log -text -diff
 evidence/offline-01c-2026-10-19/receipts/round2-superseded/synthetic-measurements.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/build.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/cargo-lock.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/cargo-test.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/clippy.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/file-replacement-before-fix.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/fmt.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/npm-test.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/release-worker-refuses-before-fix.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/release-worker-refuses.log -text -diff
+evidence/offline-01b-2026-10-19/receipts/typecheck.log -text -diff

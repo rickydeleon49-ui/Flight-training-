@@ -1,0 +1,131 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-01
+
+ ❯ src/pages/StudyLibrary/OfflineStudyPanel.test.ts (12 tests | 3 failed) 3241ms
+     × drops the old file's answer when the file is replaced under the same material 1013ms
+     × forgets a settled state when the file is replaced 1014ms
+     × asks again, and drops the old answer, when a shown file is replaced 1006ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/OfflineStudyPanel.test.ts > Offline study panel > drops the old file's answer when the file is replaced under the same material
+TestingLibraryElementError: Unable to find an element with the text: Not prepared. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/OfflineStudyPanel.test.ts:112:25
+    110|     const replaced = { ...pdf, fileSize: 999, updatedAt: "2026-10-19T1…
+    111|     rerender(h(OfflineStudyPanel, { material: replaced }));
+    112|     expect(await screen.findByText("Not prepared")).toBeTruthy();
+       |                         ^
+    113|     expect(service.readiness).toHaveBeenCalledTimes(2);
+    114|     // The old file's late answer arrives and is ignored.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pages/StudyLibrary/OfflineStudyPanel.test.ts > Offline study panel > forgets a settled state when the file is replaced
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"card"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"card__header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"card__eyebrow"[39m
+            [36m>[39m
+              [0mOn this Mac[0m
+            [36m</p>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"card__title"[39m
+            [36m>[39m
+              [0mOffline study[0m
+            [36m</h2>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"badge badge--complete"[39m
+          [36m>[39m
+            [0mSearchable[0m
+          [36m</span>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"card__body"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"stack stack--3"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"small"[39m
+              [33mrole[39m=[32m"status"[39m
+            [36m>[39m
+              [0mReady for offline search: all 524 pages.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/pages/StudyLibrary/OfflineStudyPanel.test.ts:127:51
+    125|     expect(await screen.findByText("Searchable")).toBeTruthy();
+    126|     rerender(h(OfflineStudyPanel, { material: { ...pdf, filePath: "m1-…
+    127|     await waitFor(() => expect(service.readiness).toHaveBeenCalledTime…
+       |                                                   ^
+    128|     expect(screen.queryByText("Searchable")).toBeNull();
+    129|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pages/StudyLibrary/OfflineStudyPanel.test.ts > Library offline badges > asks again, and drops the old answer, when a shown file is replaced
+TestingLibraryElementError: Unable to find an element with the text: a:Not prepared. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<ul />[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<ul />[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/OfflineStudyPanel.test.ts:187:25
+    185|     await waitFor(() => expect(service.readiness).toHaveBeenCalledTime…
+    186|     rerender(h(BadgeProbe, { materials: [{ ...a, fileSize: 20 }] }));
+    187|     expect(await screen.findByText("a:Not prepared")).toBeTruthy();
+       |                         ^
+    188|     await act(async () => answerOld([row({ state: "searchable", pages:…
+    189|     expect(screen.queryByText("a:Searchable")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  08:19:24
+   Duration  3.65s (transform 60ms, setup 0ms, import 105ms, tests 3.24s, environment 222ms)
+

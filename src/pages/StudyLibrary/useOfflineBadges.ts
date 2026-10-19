@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { StudyMaterial } from "@/domain/types";
 import { describeReadiness, type ReadinessTone } from "@/logic/offlineReadiness";
-import { offlineContentReadiness, offlineStudyEnabled } from "@/services/offlineContent";
+import { fileIdentity, offlineContentReadiness, offlineStudyEnabled } from "@/services/offlineContent";
 
 export interface OfflineBadge {
   label: string;
@@ -15,11 +15,10 @@ export interface OfflineBadge {
  * opted in. "Checking" and "not a PDF" show no badge, to keep cards quiet.
  */
 export function useOfflineBadges(shown: StudyMaterial[]): Map<string, OfflineBadge> {
-  const ids = useMemo(
-    () => shown.filter((m) => m.filePath?.toLowerCase().endsWith(".pdf")).map((m) => m.id),
-    [shown],
-  );
-  const key = ids.join("\0");
+  const pdfs = useMemo(() => shown.filter((m) => m.filePath?.toLowerCase().endsWith(".pdf")), [shown]);
+  const ids = useMemo(() => pdfs.map((m) => m.id), [pdfs]);
+  // File identity, not just ids: a replaced file must be asked about afresh.
+  const key = pdfs.map(fileIdentity).join("\n");
   const [badges, setBadges] = useState<Map<string, OfflineBadge>>(() => new Map());
 
   useEffect(() => {
@@ -27,6 +26,9 @@ export function useOfflineBadges(shown: StudyMaterial[]): Map<string, OfflineBad
       setBadges(new Map());
       return;
     }
+    // Drop the previous set's badges at once; an answer for it that arrives
+    // later is ignored (`live`).
+    setBadges(new Map());
     let live = true;
     offlineContentReadiness(ids)
       .then((rows) => {
@@ -45,7 +47,7 @@ export function useOfflineBadges(shown: StudyMaterial[]): Map<string, OfflineBad
     return () => {
       live = false;
     };
-    // `key` captures the shown PDF ids; `ids` itself is a new array each render.
+    // `key` captures the shown PDFs' file identities, which include the ids.
   }, [key]);
 
   return badges;

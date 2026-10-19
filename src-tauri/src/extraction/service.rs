@@ -497,13 +497,7 @@ pub async fn offline_content_readiness(
     .map_err(|_| "task_failed".to_string())?
 }
 
-/// Whether this build may run extraction at all. Release builds are opted in
-/// only by compiling with `HFD_OFFLINE_EXTRACTION=1`, which happens once a
-/// reviewer has accepted the worker's memory cap (OFFLINE-01c §6). Debug
-/// builds may, for development and tests.
-pub fn extraction_enabled() -> bool {
-    cfg!(debug_assertions) || option_env!("HFD_OFFLINE_EXTRACTION") == Some("1")
-}
+pub use super::worker::extraction_enabled;
 
 /// Start preparing one material for offline study. Returns at once with
 /// `preparing` (or the current state if nothing needs doing).
