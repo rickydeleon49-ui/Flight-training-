@@ -1,6 +1,6 @@
 # OFFLINE-03: study material she makes herself — inventory and proposal — 19 October 2026
 
-**Status: proposal for review and owner decisions, revision 3.** Codex rounds 1 and 2 were RED; §6 and §7 map each finding to its answer. Nothing here is implemented.
+**Status: owner-approved scope, revision 4; implementation pending.** The independent revision-3 review was GREEN after rounds 1 and 2 were RED. Its original result is preserved in [the completion evidence](evidence/offline-03-handoff-completion-2026-10-19/proposal-revision3-independent-review.txt). Revision 4 records the owner’s five approvals and clarifies the retirement limit; that clarification is pending independent review. No OFFLINE-03 application feature or migration has been implemented.
 
 The roadmap's [OFFLINE-03](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) asks for two things:
 - **Manual content.** She can write a guide, create or edit cards and practice questions, and attach notes linked to a place in a document, all without Gemini.
@@ -41,7 +41,7 @@ The roadmap's entry rule applies: this proposal comes first, with one concrete p
 
 ### 2.1 Stable item identity, including the summary
 
-**Item ids.** Every item gets a stable `itemId`, stored inside the existing JSON:
+**Item ids.** Every section and card gets a stable `itemId` stored inside its existing JSON; practice items retain immutable version/item identities. The summary uses the material-scoped identity `summary` and its separate origin column, because its text is not JSON. Identities cover:
 - the summary;
 - each guide section;
 - each card;
@@ -107,6 +107,8 @@ ALTER TABLE ai_study_sets ADD COLUMN retired_json TEXT NOT NULL DEFAULT '[]';
 - **`textKey`:** the SHA-256 of the item's normalized text, meaning NFKC, lowercased, with whitespace collapsed.
 - **`terms`:** its sorted distinct word set, capped at 64 words, so a near-copy can be found later (§2.4).
 - **Not the text itself:** that is already preserved in `study_set_history`.
+
+**At the 2,000-entry limit:** never evict an earlier record or silently disable reconciliation. Before beginning a save transaction, compute the full resulting retirement list, deduplicating the same `(kind, itemId, reason, textKey)` record. A result of exactly 2,000 is valid. If a save would need entry 2,001, refuse that entire save with "This study set has reached its deletion and correction history limit. Your changes haven't been saved." Retain the draft for copying or revision. The active set, history and retirement list all remain unchanged. Actions that do not grow the retirement list may still save. Increasing the limit or providing a reset/archive operation is a separate reviewed change; no automatic truncation. Tests must cover 1,999 → 2,000, a repeated record at 2,000, refusal of 2,001, and failure/cancel without any partial history write.
 
 **Study sets get an extended save contract,** like practice questions (§2.5):
 - **Two repository paths:**
@@ -224,19 +226,17 @@ Editing creates a new version. Attempts keep pointing at their own version.
 | **03b** | Writing and editing practice questions through the extended IPC, validators, transactions and readers; `practice_item_origins` |
 | **03c** | Later: passage quotes on bookmarks, once extraction is enabled |
 
-**Release.** 03a and 03b need no PDF extraction, so they could ship enabled (owner question 3).
+**Release.** The owner approved shipping 03a and 03b enabled after acceptance; extraction and search remain dormant. See §4.
 
-## 4. Owner questions
+## 4. Owner decisions — approved 19 October 2026
 
-1. **Migration 0016 as proposed** (side tables plus one added column), rather than rebuilding `card_versions`. Recommended: approve.
-2. **Regeneration default:** "Keep my items" as the default choice when regenerating a set that has her items. Recommended: yes.
-3. **Release:**
-   - **Option A:** 03a and 03b ship **enabled** in the next release, since they need no PDF extraction.
-   - **Option B:** they stay dormant with offline search.
+The owner explicitly answered **"Use all five recommendations"** in this session. This approves the following implementation defaults; it does not accept code, authorize a merge or publish a release.
 
-   Recommended: A. They work entirely from her saved data, like today's study aids.
-4. **03c now or later:** passage quotes depend on extraction, which is still disabled. Recommended: later, after the memory cap is accepted.
-5. **Packets and origin:** v1 can't record who wrote an item, so for now the export dialog discloses it. Recommended: leave a v2 packet format for when it's actually needed, for example when sharing with an instructor.
+1. **Approved: additive migration 0016.** Add the proposed history/origin side tables, both `ai_study_sets` columns (`summary_origin`, `retired_json`), and the nullable bookmark quote column reserved for 03c. Do not rebuild `card_versions`.
+2. **Approved: regeneration defaults to "Keep my items"** when regenerating a set that has her items.
+3. **Approved: 03a and 03b are intended to ship enabled after implementation, independent acceptance and normal release verification.** They need no PDF extraction. This does not enable extraction/search or authorize publishing a release.
+4. **Approved: defer 03c passage quotes** until extraction’s release gates are accepted. The reserved nullable column alone does not enable the feature.
+5. **Approved: retain packet v1** and disclose its loss of per-item author labels before export. A new v2 format is deferred.
 
 ## 5. Verification plan (per slice)
 

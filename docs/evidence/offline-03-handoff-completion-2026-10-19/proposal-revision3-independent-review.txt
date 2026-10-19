@@ -1,0 +1,5 @@
+No blocking defects found. The storage/save/mapper proposal addresses round 2 against the existing schema and code. Reconciliation blocks unresolved near-matches and explicitly discloses its limits.
+
+Both `ADD COLUMN` statements are valid and additive; an in-memory check preserved existing rows with `NULL` and `'[]'` defaults. [SQLite documentation](https://www.sqlite.org/lang_altertable.html#alter_table_add_column) confirms these constraints are supported. No other blocking regression identified.
+
+VERDICT: GREEN

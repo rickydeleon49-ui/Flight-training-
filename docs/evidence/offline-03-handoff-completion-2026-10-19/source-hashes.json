@@ -1,0 +1,46 @@
+{
+  "base": "fdbf290",
+  "inheritedProposalHead": "fea61bec53266c5048f1df30f715ef7ad4992734",
+  "files": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 198484,
+      "sha256": "abee5dd0fd35d161315c9d8eee63ab3aae6200dd55d4fb2c4c0b70b001107684"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 314212,
+      "sha256": "cdbabeda50882d34393bb4e21e1358aeababd57e49bd60018d7e467df331ef44"
+    },
+    {
+      "path": "docs/OFFLINE_03_COMPLETION_HANDOFF_2026-10-19.md",
+      "bytes": 4634,
+      "sha256": "c400473c5f1cad5175514c47a7f62dc8473239e775d4ecda05e4a6fa02a5d7d6"
+    },
+    {
+      "path": "docs/OFFLINE_03_IMPLEMENTATION_PROMPT_2026-10-19.md",
+      "bytes": 9357,
+      "sha256": "edddc0e1f0783fa04a8c3223cb135394a0402b1e25fd869da08d05c337df99e4"
+    },
+    {
+      "path": "docs/OFFLINE_03_INVENTORY_AND_PROPOSAL_2026-10-19.md",
+      "bytes": 20221,
+      "sha256": "3c04458485f5e0614bbd989287acce96b5f67ce7db7a16398fe2b484d6f16ac0"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 222872,
+      "sha256": "88014aa5bd9f4a2cfbf7b16bb8423cee57e1af203099d05d6a56bd16b29d8aa1"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetail.tsx",
+      "bytes": 51748,
+      "sha256": "64a61f6dcd0f4ff0913b29f6e41c369244806ecfa8a2a930b757912c9a6e79d9"
+    },
+    {
+      "path": "src/pages/StudyLibrary/MaterialDetailSearchLink.test.ts",
+      "bytes": 7457,
+      "sha256": "bea9b6ccad23faf224428fbfe86c304f339fd62dcba0127ca58a6d3a3c0168b3"
+    }
+  ]
+}
