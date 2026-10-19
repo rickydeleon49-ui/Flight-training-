@@ -1,6 +1,6 @@
 # OFFLINE-02: search a subject — design and pre-registration — 19 October 2026
 
-**Status: proposal for review, revision 4.** Codex rounds 1–3 were RED; §10 lists how each finding was answered. Nothing here is implemented.
+**Status: proposal for review, revision 5.** Codex rounds 1–4 were RED; §10 lists how each finding was answered. Nothing here is implemented.
 
 The roadmap requires the query rules, limits, fallbacks and measurement targets to be written down before the search engine is built in ([roadmap](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), OFFLINE-02 "Acceptance and engine decision"). This document does that.
 
@@ -230,15 +230,11 @@ When the deadline has passed or the request was superseded, the thread stops and
 - **The search thread's side:** after recording `active` and before the first step, it checks `cancelled` again and doesn't start a cancelled statement. Together with the repeated interrupt, a statement started after the deadline is stopped within one tick plus SQLite's interrupt latency.
 - **Why a late timer can't hit the next request:** clearing `active` and starting the next request's statements both happen after that mutex is released. So a late timer can't interrupt a different request.
 - **Retiring a timer:** a request's timer is cancelled when the request ends. A test drives a timer that fires exactly at the end of a request and asserts the next request completes normally.
-- **Startup-race test:** a test-only pause sits between recording `active` and the first SQLite step. The test:
-  1. pauses there;
-  2. fires the deadline;
-  3. resumes into an expensive candidate statement, a worst-case common word over a large fixture.
+- **Startup-race tests.** Two test-only pause points sit in the startup sequence. Both tests use an expensive statement: a worst-case common word over a large fixture.
+  - **Point A** is after `active` is recorded and **before** the `cancelled` re-check. The test pauses there, fires the deadline, and resumes. It asserts that the search answers `timeout` and that **no SQLite step ran**: the statement was never started.
+  - **Point B** is **after** the re-check and before the first SQLite step. The test pauses there, then fires the deadline and **waits for the watchdog to acknowledge** its first interrupt, the no-op one. Only then does it resume SQLite. It asserts that the statement was interrupted by a **later** tick (the watchdog's tick count is above 1 when the interrupt lands), and that the search answers `timeout` within 2 s + 100 ms.
 
-  It asserts:
-  - the request answers `timeout` within 2 s + 100 ms;
-  - the statement was interrupted, not run to completion;
-  - the next request runs to a correct result.
+  A one-shot watchdog fails the point-B test. Both tests then run the next request and assert a correct result.
 
 **Bounded work, in two phases:**
 1. **Candidates**, with the cutoff ordered by the full §6.4 key:
@@ -449,3 +445,9 @@ Each case asserts **expected hits and expected exclusions**, by material id and 
 | # | Finding | Answer |
 | --- | --- | --- |
 | 1 | A one-shot watchdog can fire between recording `active` and SQLite's first step, where the interrupt is a no-op | Cancellation is persistent. The watchdog re-interrupts every 10 ms while that request's statement is active, and the search thread re-checks `cancelled` before the first step. A deterministic startup-race test pauses at that point, fires the deadline, resumes an expensive statement, and asserts prompt `timeout` and a correct next request (§6.2) |
+
+## 13. Codex round 4 correction
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | The startup-race test didn't deterministically exercise the race | Two tests. Point A, before the re-check: cancellation means no SQLite step runs. Point B, after the re-check: the test waits for the first, no-op interrupt to be acknowledged, then resumes, and requires a later tick to interrupt, which a one-shot watchdog fails. Both assert a correct next request (§6.2) |
