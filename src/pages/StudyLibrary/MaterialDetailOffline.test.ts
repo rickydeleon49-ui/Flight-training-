@@ -290,8 +290,11 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     await act(async () => finish({
       title: "Weather guide", summary: "Late summary", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash",
     }));
-    // GEN-REL-02: a result that arrives after leaving its material is saved to
-    // that material only; the material on screen is untouched.
+    // The late study answer waits for acceptance on its own material.
+    expect((await repos.documents.listAiStudySets()).map((set) => set.title)).toEqual(["Saved VOR guide"]);
+    expect(screen.getByRole("heading", { name: "Saved VOR guide" })).toBeTruthy();
+    await act(async () => navigate("/study/mat-other"));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
     await waitFor(async () => {
       const sets = await repos.documents.listAiStudySets();
       expect(sets.map((set) => [set.sourceMaterialId, set.title]).sort()).toEqual([
@@ -299,7 +302,8 @@ describe("A4: generation eligibility stays separate from saved content", () => {
         ["mat-saved", "Saved VOR guide"],
       ]);
     });
-    expect(screen.getByRole("heading", { name: "Saved VOR guide" })).toBeTruthy();
+    await act(async () => navigate("/study/mat-saved"));
+    expect(await screen.findByRole("heading", { name: "Saved VOR guide" })).toBeTruthy();
     // The lock is released once the other request settles.
     await waitFor(() => {
       for (const button of generateButtons()) expect(button.hasAttribute("disabled")).toBe(false);

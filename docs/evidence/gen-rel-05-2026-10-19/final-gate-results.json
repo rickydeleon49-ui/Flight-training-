@@ -1,0 +1,47 @@
+[
+  {
+    "check": "typecheck",
+    "exit": 0,
+    "seconds": 3.96
+  },
+  {
+    "check": "frontend-tests",
+    "exit": 1,
+    "seconds": 59.99
+  },
+  {
+    "check": "build",
+    "exit": 0,
+    "seconds": 5.23
+  },
+  {
+    "check": "cargo-test",
+    "exit": 0,
+    "seconds": 49.98
+  },
+  {
+    "check": "clippy",
+    "exit": 0,
+    "seconds": 0.33
+  },
+  {
+    "check": "fmt",
+    "exit": 0,
+    "seconds": 0.27
+  },
+  {
+    "check": "cargo-lock",
+    "exit": 0,
+    "seconds": 2.0
+  },
+  {
+    "check": "schema14",
+    "exit": 1,
+    "seconds": 3.36
+  },
+  {
+    "check": "diff-check",
+    "exit": 0,
+    "seconds": 0.02
+  }
+]

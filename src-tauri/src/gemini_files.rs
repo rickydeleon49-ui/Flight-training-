@@ -675,6 +675,21 @@ impl Drop for Lease<'_> {
     }
 }
 
+/// Owns only cleanup entries whose DELETE has not yet been sent. If the
+/// cleanup future is dropped (for example by `Cancellable`), keep those entries
+/// for the next cleanup opportunity. The outstanding request has an uncertain
+/// outcome and is deliberately not queued a second time.
+struct PendingRetirements<'a> {
+    cache: &'a PreparedSources,
+    unsent: std::collections::VecDeque<Retired>,
+}
+
+impl Drop for PendingRetirements<'_> {
+    fn drop(&mut self) {
+        self.cache.lock().orphaned.extend(self.unsent.drain(..));
+    }
+}
+
 /// Counters for tests and evidence: what actually happened, not what was asked.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Stats {
@@ -855,17 +870,20 @@ impl PreparedSources {
     ) -> usize {
         let credential = credential_of(api_key);
         let mut removed = 0;
-        let mut pending = retired
-            .into_iter()
-            .filter(|r| r.credential == credential)
-            .collect::<std::collections::VecDeque<_>>();
-        while let Some(r) = pending.pop_front() {
+        let mut pending = PendingRetirements {
+            cache: self,
+            unsent: retired
+                .into_iter()
+                .filter(|r| r.credential == credential)
+                .collect(),
+        };
+        while !pending.unsent.is_empty() {
             if !budget.admit() {
-                let mut inner = self.lock();
-                inner.orphaned.push(r);
-                inner.orphaned.extend(pending);
                 break;
             }
+            // No await between taking this entry and polling its DELETE.
+            // Every later entry remains guarded throughout that wait.
+            let r = pending.unsent.pop_front().expect("nonempty cleanup queue");
             if delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout).await {
                 removed += 1;
             }

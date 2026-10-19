@@ -1,0 +1,8 @@
+COMMAND: npm run typecheck
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+
+> her-flight-deck@0.5.5 typecheck
+> tsc --noEmit
+
+
+EXIT: 0

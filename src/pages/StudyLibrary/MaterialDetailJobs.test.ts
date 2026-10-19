@@ -97,6 +97,10 @@ async function startStudyAid() {
   fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
 }
 
+async function acceptStudyAid() {
+  fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+}
+
 const studySets = async () =>
   (await repos.documents.listAiStudySets()).map((set) => [set.sourceMaterialId, set.title]);
 
@@ -158,7 +162,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
     await open("/study/mat-a");
     await startStudyAid();
-    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.pdf", "mat-a", undefined, expect.stringMatching(/^req-/)));
+    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.pdf", "mat-a", undefined, expect.stringMatching(/^req-/), 40));
 
     await act(async () => navigate("/study/mat-b"));
     await screen.findByRole("heading", { name: "Material B" });
@@ -168,6 +172,8 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     expect(screen.getByText("Gemini is reviewing this document")).toBeTruthy();
 
     await act(async () => answer.resolve({ ...AID, jobId: "job-111111111111111111111111", contentSha256: "" }));
+    expect(await studySets()).toEqual([]);
+    await acceptStudyAid();
     await waitFor(async () => expect(await studySets()).toEqual([["mat-a", "Synthetic guide"]]));
     await screen.findByRole("heading", { name: "Synthetic guide" });
     expect(acknowledge).toHaveBeenCalledWith("job-111111111111111111111111");
@@ -183,6 +189,9 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await act(async () => navigate("/flight-deck"));
     await screen.findByText("Somewhere else");
     await act(async () => answer.resolve(AID));
+    expect(await studySets()).toEqual([]);
+    await act(async () => navigate("/study/mat-a"));
+    await acceptStudyAid();
     await waitFor(async () => expect(await studySets()).toEqual([["mat-a", "Synthetic guide"]]));
   });
 
@@ -217,6 +226,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     });
     await open("/study/mat-a");
     await startStudyAid();
+    await acceptStudyAid();
     expect(await screen.findByText(/changed or was removed while Gemini was working/)).toBeTruthy();
     expect(await studySets()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
@@ -249,6 +259,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
     await open("/study/mat-a");
     await startStudyAid();
+    await acceptStudyAid();
     expect(await screen.findByText(/saving the answer did not work/)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Old guide" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Regenerate" }).hasAttribute("disabled")).toBe(true);
@@ -395,6 +406,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
       );
     });
     await act(async () => answer.resolve({ ...AID, jobId: "job-444444444444444444444444", checkpointed: true }));
+    await acceptStudyAid();
     expect(await screen.findByText(/Something newer was saved/)).toBeTruthy();
     expect(await studySets()).toEqual([["mat-a", "Newer guide"]]);
   });
@@ -419,6 +431,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     });
     await open("/study/mat-a");
     await startStudyAid();
+    await acceptStudyAid();
     await screen.findByRole("heading", { name: "Synthetic guide" });
     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(1));
     await act(async () => {
@@ -519,6 +532,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await act(async () =>
       answer.resolve({ ...AID, jobId: "job-666666666666666666666666", contentSha256: "a".repeat(64), checkpointed: true }),
     );
+    await acceptStudyAid();
     stored = "b".repeat(64);
     await act(async () => {
       hold.resolve();
@@ -538,6 +552,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, jobId: null, checkpointed: false });
     await open("/study/mat-a");
     await startStudyAid();
+    await acceptStudyAid();
     expect(await screen.findByText(/could not be kept on this Mac either/)).toBeTruthy();
   });
 
@@ -568,6 +583,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     });
     await open("/study/mat-a");
     await startStudyAid();
+    await acceptStudyAid();
     await screen.findByRole("heading", { name: "Synthetic guide" });
     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(2), { timeout: 6000 });
@@ -657,4 +673,60 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     const shell = readFileSync(join(process.cwd(), "src/components/layout/AppShell.tsx"), "utf8");
     expect(shell).toMatch(/<div className="content__inner">\s*<GeminiOrphanNotices \/>/);
   });
+  it("GENREL05-R2 practice tests still auto-save", async () => {
+    await material("mat-a", "Material A");
+    const generate = vi.spyOn(geminiService, "generatePracticeTest").mockResolvedValue(TEST);
+    await open("/study/mat-a");
+    fireEvent.click(await screen.findByRole("button", { name: "Create practice test" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+    await waitFor(async () => expect(await repos.documents.listPracticeTests()).toHaveLength(1));
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Save the new practice test" })).toBeNull();
+  });
+
+  it("GEN-REL-05 completed batches wait for acceptance; failed final save preserves the prior set", async () => {
+    await material("mat-a", "Material A");
+    await repos.documents.saveAiStudySet({ ...AID, sourceMaterialId: "mat-a", title: "Old guide" });
+    const at = "2026-10-18T12:00:00.000Z";
+    await db.execute("INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES ('old-v','mat-a',?,1,'gemini',?,1)", ["a".repeat(64), at]);
+    await db.execute("INSERT INTO card_items (id,version_id,ordinal,front,back,source_page) VALUES ('old-i','old-v',0,'Q','A',1)");
+    await db.execute("INSERT INTO card_review_events (id,item_id,generation,rating,reviewed_at,scheduler_version,prior_state_json,next_state_json) VALUES ('old-e','old-i',0,'good',?,'leitner-v1','{}','{}')", [at]);
+    const history = await db.select("SELECT * FROM card_review_events");
+    const versions = await db.select("SELECT * FROM card_versions");
+    const before = await repos.documents.listAiStudySets();
+    const generate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, title: "Batched guide", jobId: "job-333333333333333333333333", checkpointed: true });
+    await open("/study/mat-a");
+    await startStudyAid();
+    const accept = await screen.findByRole("button", { name: "Save the new study guide and cards" });
+    expect(await repos.documents.listAiStudySets()).toEqual(before);
+    const execute = db.execute.bind(db);
+    let failures = 1;
+    db.execute = (async (sql: string, params?: unknown[]) => {
+      if (failures && sql.includes("INSERT INTO ai_study_sets")) { failures--; throw new Error("synthetic final-save failure"); }
+      return execute(sql, params as never);
+    }) as typeof db.execute;
+    fireEvent.click(accept);
+    await screen.findByRole("button", { name: "Save again" });
+    expect(await repos.documents.listAiStudySets()).toEqual(before);
+    expect(await db.select("SELECT * FROM card_review_events")).toEqual(history);
+    expect(await db.select("SELECT * FROM card_versions")).toEqual(versions);
+    expect(acknowledge).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Save again" }));
+    await screen.findByRole("heading", { name: "Batched guide" });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it("GEN-REL-05 interrupted drafts survive recovery without a provider call", async () => {
+    await material("mat-a", "Material A");
+    const generate = vi.spyOn(geminiService, "generateStudyAid");
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([record({ stage: "interrupted", draft: { target: 60, cards: AID.flashcards } })]);
+    await open("/study/mat-a");
+    expect(await screen.findByText(/1 \/ 60 cards kept as a draft/)).toBeTruthy();
+    expect(screen.getByText(/1 \/ 60 cards kept as a draft/).closest(".ai-disclaimer")?.getAttribute("role")).toBe("status");
+    expect(generate).not.toHaveBeenCalled();
+    expect(acknowledge).not.toHaveBeenCalled();
+    expect(await studySets()).toEqual([]);
+    expect(screen.getByRole("button", { name: "Discard draft" })).toBeTruthy();
+  });
+
 });

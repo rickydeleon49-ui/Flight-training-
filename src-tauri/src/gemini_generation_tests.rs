@@ -18,7 +18,7 @@ const OTHER_KEY: &str = "synthetic-key-BBBBBBBBBBBBBBBBBBBB";
 
 /// A real PDF of `pages` pages; `salt` changes its bytes but not its length
 /// when the salts have the same length.
-fn pdf(pages: u32, salt: &str) -> Vec<u8> {
+pub(super) fn pdf(pages: u32, salt: &str) -> Vec<u8> {
     let mut document = Document::with_version("1.5");
     let pages_id = document.new_object_id();
     let kids: Vec<Object> = (0..pages)

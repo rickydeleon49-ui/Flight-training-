@@ -1,0 +1,38 @@
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri)
+error[E0433]: cannot find module or crate `tempfile` in this scope
+   --> src/gemini_batches.rs:147:24
+    |
+147 |             let root = tempfile::tempdir().unwrap();
+    |                        ^^^^^^^^ use of unresolved module or unlinked crate `tempfile`
+    |
+    = help: if you wanted to use a crate named `tempfile`, use `cargo add tempfile` to add it to your `Cargo.toml`
+
+error[E0599]: no associated function or constant named `closed` found for struct `Gate` in the current scope
+   --> src/gemini_batches.rs:245:58
+    |
+245 |         let r=Rig::new();let id=r.begin();let gate=Gate::closed();
+    |                                                          ^^^^^^ associated function or constant not found in `Gate`
+    |
+   ::: src/fake_gemini.rs:52:1
+    |
+ 52 | pub(crate) struct Gate {
+    | ---------------------- associated function or constant `closed` not found for this struct
+    |
+help: there is a method `clone` with a similar name
+    |
+245 -         let r=Rig::new();let id=r.begin();let gate=Gate::closed();
+245 +         let r=Rig::new();let id=r.begin();let gate=Gate::clone();
+    |
+
+error[E0433]: cannot find module or crate `tempfile` in this scope
+   --> src/gemini_batches.rs:144:24
+    |
+144 |     struct Rig { root: tempfile::TempDir, source: LoadedSource, fake: FakeGemini, http: Client, cache: PreparedSources }
+    |                        ^^^^^^^^ use of unresolved module or unlinked crate `tempfile`
+    |
+    = help: if you wanted to use a crate named `tempfile`, use `cargo add tempfile` to add it to your `Cargo.toml`
+
+Some errors have detailed explanations: E0433, E0599.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `her-flight-deck` (lib test) due to 3 previous errors
+warning: build failed, waiting for other jobs to finish...

@@ -1,0 +1,19 @@
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.71s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-08bb77c6382aa979)
+
+running 5 tests
+test gemini_files::tests::r12_cancellable_drop_keeps_only_unsent_entries_without_transport ... ok
+test gemini_files::tests::r12_shared_copy_crossing_expiry_margin_is_not_adopted ... ok
+test gemini_files::tests::r12_dropped_retire_returns_unsent_copies_to_orphaned ... ok
+test gemini_files::tests::r12_dropped_finish_returns_unsent_copies_to_orphaned ... ok
+test gemini_files::tests::r12_expiry_is_rechecked_after_a_slow_cached_confirmation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 671 filtered out; finished in 0.01s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-5679ebb59647789a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

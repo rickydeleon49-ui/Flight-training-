@@ -102,6 +102,7 @@ pub(crate) struct Behaviour {
     pub partial_generations: u32,
     pub generate_body_gate: Option<Arc<Gate>>,
     pub generate_answer: Option<String>,
+    pub generate_answers: Vec<String>,
     /// A 200 generateContent body that is not a usable answer.
     pub garbage_answer: bool,
     /// Refuse generation with 400 when the referred file is deleted.
@@ -141,6 +142,7 @@ impl Default for Behaviour {
             partial_generations: 0,
             generate_body_gate: None,
             generate_answer: None,
+            generate_answers: vec![],
             garbage_answer: false,
             enforce_files: true,
             finalize_gate: None,
@@ -480,6 +482,10 @@ fn respond(request: &Recorded, sim: &Arc<Mutex<Sim>>, base: &str) -> Reply {
                 .map(|v| vec![("Retry-After".to_string(), v)])
                 .unwrap_or_default();
             return Reply::Send(status, headers, body.into_bytes());
+        }
+        if !s.behaviour.generate_answers.is_empty() {
+            let answer = s.behaviour.generate_answers.remove(0);
+            return Reply::Send(200, vec![], answer.into_bytes());
         }
         let body = request.json();
         if s.behaviour.enforce_files {

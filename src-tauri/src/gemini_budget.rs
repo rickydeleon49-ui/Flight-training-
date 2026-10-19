@@ -90,9 +90,11 @@ struct Trace {
 pub(crate) struct Budget {
     started: Instant,
     total: Duration,
+    deadline: Mutex<Option<Instant>>,
     now: Now,
     sleep: Sleep,
     attempts: Mutex<u32>,
+    allocator: Mutex<Option<AttemptAllocator>>,
     trace: Mutex<Trace>,
     /// Told each time the stage changes, with the attempts made so far
     /// (GEN-REL-04's progress). Called outside every lock.
@@ -105,6 +107,8 @@ pub(crate) struct Budget {
 }
 
 pub(crate) type Admission = Arc<dyn Fn() -> bool + Send + Sync>;
+
+pub(crate) type AttemptAllocator = Arc<dyn Fn() -> Option<u32> + Send + Sync>;
 
 pub(crate) type Observer = Arc<dyn Fn(Stage, u32) + Send + Sync>;
 
@@ -123,9 +127,11 @@ impl Budget {
         Budget {
             started: now(),
             total,
+            deadline: Mutex::new(None),
             now,
             sleep,
             attempts: Mutex::new(0),
+            allocator: Mutex::new(None),
             trace: Mutex::new(Trace {
                 stage: Stage::Preparing,
                 last_status: None,
@@ -154,8 +160,31 @@ impl Budget {
         (self.now)().saturating_duration_since(self.started)
     }
 
+    pub(crate) fn shorten(&self, remaining: Duration) {
+        *self.deadline.lock().unwrap_or_else(|e| e.into_inner()) = Some((self.now)() + remaining);
+    }
+
     pub(crate) fn remaining(&self) -> Duration {
-        self.total.saturating_sub(self.elapsed())
+        let original = self.total.saturating_sub(self.elapsed());
+        match *self.deadline.lock().unwrap_or_else(|e| e.into_inner()) {
+            Some(deadline) => original.min(deadline.saturating_duration_since((self.now)())),
+            None => original,
+        }
+    }
+
+    /// Snapshot the active monotonic deadline for durable request reservations.
+    pub(crate) fn remaining_clock(&self) -> impl Fn() -> Duration + Send + Sync + 'static {
+        let now = self.now.clone();
+        let started = self.started;
+        let total = self.total;
+        let deadline = *self.deadline.lock().unwrap_or_else(|e| e.into_inner());
+        move || {
+            let current = now();
+            let original = total.saturating_sub(current.saturating_duration_since(started));
+            deadline.map_or(original, |end| {
+                original.min(end.saturating_duration_since(current))
+            })
+        }
     }
 
     /// The timeout for the next request: what remains, or `None` if nothing does.
@@ -208,8 +237,26 @@ impl Budget {
         true
     }
 
+    pub(crate) fn restore_attempts(&self, count: u32) {
+        *self.attempts.lock().unwrap_or_else(|e| e.into_inner()) = count;
+    }
+
+    pub(crate) fn allocate_with(&self, allocator: AttemptAllocator) {
+        *self.allocator.lock().unwrap_or_else(|e| e.into_inner()) = Some(allocator);
+    }
+
     /// Count a generation request about to be made; `None` if none may be.
     pub(crate) fn start_attempt(&self) -> Option<u32> {
+        let allocator = self
+            .allocator
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
+        if let Some(allocator) = allocator {
+            let local = allocator()?;
+            *self.attempts.lock().unwrap_or_else(|e| e.into_inner()) += 1;
+            return Some(local);
+        }
         let mut attempts = self.attempts.lock().unwrap_or_else(|e| e.into_inner());
         if *attempts >= MAX_GENERATION_ATTEMPTS {
             return None;

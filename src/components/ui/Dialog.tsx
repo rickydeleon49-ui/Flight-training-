@@ -98,6 +98,7 @@ export function Dialog({
 }
 
 interface ConfirmDialogProps {
+  children?: ReactNode;
   open: boolean;
   title: string;
   message: string;
@@ -119,6 +120,7 @@ interface ConfirmDialogProps {
 
 /** Every destructive action goes through this; nothing deletes on one click. */
 export function ConfirmDialog({
+  children,
   open,
   title,
   message,
@@ -159,6 +161,7 @@ export function ConfirmDialog({
       }
     >
       <p className="muted">{message}</p>
+      {children}
       {pending ? (
         <p className="tiny muted" role="status">
           Waiting for the result. This stays open until the outcome is known.

@@ -1,0 +1,23 @@
+   Compiling her-flight-deck v0.5.5 (/Users/rickymac/code/Flight-training-gen-rel-05/src-tauri)
+error: expected identifier, found `:`
+   --> src/gemini_budget.rs:118:21
+    |
+118 |             deadline: Mutex::new(None),
+    |                     ^ expected identifier
+
+error[E0063]: missing field `deadline` in initializer of `Budget`
+   --> src/gemini_budget.rs:126:9
+    |
+126 |         Budget {
+    |         ^^^^^^ missing `deadline`
+
+error[E0063]: missing field `deadline` in initializer of `gemini_budget::Budget`
+   --> src/gemini_budget.rs:126:9
+    |
+126 |         Budget {
+    |         ^^^^^^ missing `deadline`
+
+For more information about this error, try `rustc --explain E0063`.
+error: could not compile `her-flight-deck` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `her-flight-deck` (lib test) due to 2 previous errors

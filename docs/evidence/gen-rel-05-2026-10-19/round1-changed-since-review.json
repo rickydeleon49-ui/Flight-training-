@@ -1,0 +1,16 @@
+[
+  "docs/GEN_REL_05_IMPLEMENTATION_REPORT_2026-10-19.md",
+  "docs/GEN_REL_05_REVIEWER_PROMPT_2026-10-19.md",
+  "src-tauri/src/gemini.rs",
+  "src-tauri/src/gemini_batches.rs",
+  "src-tauri/src/gemini_budget.rs",
+  "src/pages/StudyLibrary/GeminiJobNotice.tsx",
+  "src/pages/StudyLibrary/MaterialDetailCancel.test.ts",
+  "src/pages/StudyLibrary/MaterialDetailGemini.test.ts",
+  "src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts",
+  "src/pages/StudyLibrary/MaterialDetailJobs.test.ts",
+  "src/pages/StudyLibrary/MaterialDetailOffline.test.ts",
+  "src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts",
+  "src/services/gemini.ts",
+  "src/state/GeminiJobs.tsx"
+]

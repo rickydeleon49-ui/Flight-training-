@@ -998,3 +998,119 @@ fn r11_finishing_admits_each_delete_and_stops_at_a_cancel() {
         tauri::async_runtime::block_on(cache.finish_admitted(lease, http, KEY, budget));
     });
 }
+
+/// Unlike R11, cancellation drops the cleanup while DELETE is still pending.
+fn assert_dropped_cleanup_keeps_unsent(finishing: bool) {
+    use crate::gemini_cancel::{CancelToken, Cancellable, Cancelled};
+    let fake = FakeGemini::start();
+    let gate = Arc::new(Gate::default());
+    fake.behave(|b| b.delete_gate = Some(gate.clone()));
+    let cache = cache();
+    let budget = Budget::new(Duration::from_secs(60));
+    let token = Arc::new(CancelToken::default());
+    let http = http();
+    let retired = retired_pair(&fake);
+    let lease = finishing
+        .then(|| prepare_now(&cache, &fake.base, b"%PDF-r12", "documents/r12.pdf").unwrap());
+    std::thread::scope(|scope| {
+        let running = scope.spawn(|| {
+            tauri::async_runtime::block_on(Cancellable::new(
+                async {
+                    if let Some(lease) = lease {
+                        cache.lock().orphaned.extend(retired);
+                        cache.finish_admitted(lease, &http, KEY, &budget).await;
+                    } else {
+                        cache.retire_admitted(&http, KEY, retired, &budget).await;
+                    }
+                },
+                token.clone(),
+            ))
+        });
+        wait_for("R12 first DELETE held", || gate.waiting() == 1);
+        token.cancel();
+        assert_eq!(running.join().unwrap(), Err(Cancelled));
+        // Keep the first request held until after the cleanup future is gone.
+        assert_eq!(fake.count(|r| r.is_delete()), 1);
+        let queued: Vec<_> = cache
+            .lock()
+            .orphaned
+            .iter()
+            .map(|r| r.name.clone())
+            .collect();
+        gate.open();
+        assert_eq!(
+            queued,
+            vec!["files/synthetic-92"],
+            "the unsent copy survives the dropped future"
+        );
+    });
+    fake.behave(|b| b.delete_gate = None);
+    let pending = std::mem::take(&mut cache.lock().orphaned);
+    tauri::async_runtime::block_on(cache.retire_admitted(&http, KEY, pending, &budget));
+    assert_eq!(
+        fake.count(|r| r.is_delete()),
+        2,
+        "a later cleanup sends the retained copy once"
+    );
+    assert!(cache.lock().orphaned.is_empty());
+}
+
+#[test]
+fn r12_dropped_retire_returns_unsent_copies_to_orphaned() {
+    assert_dropped_cleanup_keeps_unsent(false);
+}
+
+#[test]
+fn r12_dropped_finish_returns_unsent_copies_to_orphaned() {
+    assert_dropped_cleanup_keeps_unsent(true);
+}
+
+#[test]
+fn r12_cancellable_drop_keeps_only_unsent_entries_without_transport() {
+    use crate::gemini_cancel::{CancelToken, Cancellable, Cancelled};
+    use std::future::Future;
+    use std::task::{Context, Poll, Wake, Waker};
+
+    struct Noop;
+    impl Wake for Noop {
+        fn wake(self: Arc<Self>) {}
+    }
+    let cache = cache();
+    let copy = |name: &str| Retired {
+        credential: credential_of(KEY),
+        base: "http://127.0.0.1:1".to_string(),
+        name: name.to_string(),
+    };
+    let token = Arc::new(CancelToken::default());
+    let mut dispatched = None;
+    let mut work = Box::pin(Cancellable::new(
+        async {
+            let mut pending = PendingRetirements {
+                cache: &cache,
+                unsent: [
+                    copy("files/first"),
+                    copy("files/second"),
+                    copy("files/third"),
+                ]
+                .into(),
+            };
+            dispatched = pending.unsent.pop_front();
+            std::future::pending::<()>().await;
+        },
+        token.clone(),
+    ));
+    let waker = Waker::from(Arc::new(Noop));
+    let mut cx = Context::from_waker(&waker);
+    assert!(work.as_mut().poll(&mut cx).is_pending());
+    token.cancel();
+    assert_eq!(work.as_mut().poll(&mut cx), Poll::Ready(Err(Cancelled)));
+    drop(work);
+    assert_eq!(dispatched.unwrap().name, "files/first");
+    let queued: Vec<_> = cache
+        .lock()
+        .orphaned
+        .iter()
+        .map(|r| r.name.clone())
+        .collect();
+    assert_eq!(queued, ["files/second", "files/third"]);
+}

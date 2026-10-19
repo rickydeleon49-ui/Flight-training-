@@ -1,0 +1,19 @@
+ M src-tauri/src/fake_gemini.rs
+ M src-tauri/src/gemini.rs
+ M src-tauri/src/gemini_budget.rs
+ M src-tauri/src/gemini_files.rs
+ M src-tauri/src/gemini_files_tests.rs
+ M src-tauri/src/gemini_generation_tests.rs
+ M src-tauri/src/gemini_jobs.rs
+ M src/components/ui/Dialog.tsx
+ M src/pages/StudyLibrary/GeminiJobNotice.tsx
+ M src/pages/StudyLibrary/MaterialDetail.tsx
+ M src/pages/StudyLibrary/MaterialDetailCancel.test.ts
+ M src/pages/StudyLibrary/MaterialDetailJobs.test.ts
+ M src/pages/StudyLibrary/MaterialDetailSourceChoice.test.ts
+ M src/services/gemini.ts
+ M src/state/GeminiJobs.tsx
+?? docs/GEN_REL_05_IMPLEMENTATION_REPORT_2026-10-19.md
+?? docs/GEN_REL_05_REVIEWER_PROMPT_2026-10-19.md
+?? docs/evidence/gen-rel-05-2026-10-19/
+?? src-tauri/src/gemini_batches.rs

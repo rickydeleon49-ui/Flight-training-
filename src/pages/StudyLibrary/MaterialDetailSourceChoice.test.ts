@@ -135,7 +135,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined, expect.stringMatching(/^req-/)));
+    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined, expect.stringMatching(/^req-/), 40));
   });
 
   it("a part sends only that part, names its pages, and saves to the part, not the original", async () => {
@@ -146,8 +146,10 @@ describe("choosing what to send (GEN-REL-01)", () => {
     expect(dialog.textContent).toMatch(/Only “ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac/);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
     await waitFor(() => expect(generateStudyAid).toHaveBeenCalledTimes(1));
-    expect(generateStudyAid).toHaveBeenCalledWith("documents/ch3.pdf", "ch3", undefined, expect.stringMatching(/^req-/));
+    expect(generateStudyAid).toHaveBeenCalledWith("documents/ch3.pdf", "ch3", undefined, expect.stringMatching(/^req-/), 40);
     const repos = createRepositories(db);
+    expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
     await waitFor(async () => expect(await repos.documents.listAiStudySets()).toHaveLength(1));
     const [saved] = await repos.documents.listAiStudySets();
     expect(saved?.sourceMaterialId).toBe("ch3");
@@ -187,5 +189,21 @@ describe("choosing what to send (GEN-REL-01)", () => {
     expect(await screen.findByText(/Google could not process this PDF/)).toBeTruthy();
     expect(await repos.documents.listAiStudySets()).toEqual(before);
     expect(screen.getAllByText("Existing guide").length).toBeGreaterThan(0);
+  });
+});
+
+// GEN-REL-05 target selection uses the same consent flow for new sets.
+describe("GEN-REL-05 card targets", () => {
+  it.each([20, 40, 60])("sends target %i and leaves practice question count alone", async (target) => {
+    await openMaterial("root", "Synthetic Handbook");
+    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    const dialog = await waitFor(sendDialog);
+    const choice = within(dialog).getByRole("combobox", { name: "Target cards" }) as HTMLSelectElement;
+    expect(choice.value).toBe("40");
+    expect([...choice.options].map((option) => option.value)).toEqual(["20", "40", "60"]);
+    fireEvent.change(choice, { target: { value: String(target) } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
+    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined, expect.stringMatching(/^req-/), target));
+    expect(generatePracticeTest).not.toHaveBeenCalled();
   });
 });

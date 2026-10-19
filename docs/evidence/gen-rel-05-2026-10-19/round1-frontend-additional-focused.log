@@ -1,0 +1,19 @@
+
+> her-flight-deck@0.5.5 test
+> vitest run src/pages/StudyLibrary/MaterialDetailGemini.test.ts src/pages/StudyLibrary/MaterialDetailGeminiModel.test.ts src/pages/StudyLibrary/MaterialDetailOffline.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-gen-rel-05
+
+(node:13561) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13560) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13562) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  18:45:33
+   Duration  10.89s (transform 1.83s, setup 0ms, import 3.07s, tests 14.38s, environment 2.16s)
+

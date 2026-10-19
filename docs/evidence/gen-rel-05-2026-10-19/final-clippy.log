@@ -1,0 +1,6 @@
+COMMAND: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+PATH prefix: /opt/homebrew/opt/node@22/bin; CARGO_NET_OFFLINE=true
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.28s
+
+EXIT: 0

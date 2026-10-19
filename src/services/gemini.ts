@@ -166,6 +166,7 @@ export interface GeminiJobRecord {
   createdAt: number;
   updatedAt: number;
   result?: GeneratedStudyAid | GeneratedPracticeTest;
+  draft?: { target: number; cards: StudyFlashcard[] };
   error?: string;
 }
 
@@ -174,6 +175,7 @@ export async function generateStudyAid(
   materialId?: string,
   baseRevision?: string,
   requestId?: string,
+  targetCards = 40,
 ): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   return invoke<GeneratedStudyAid & GenerationJobIdentity>("generate_study_aid", {
@@ -181,6 +183,7 @@ export async function generateStudyAid(
     materialId,
     baseRevision,
     requestId,
+    targetCards,
   });
 }
 

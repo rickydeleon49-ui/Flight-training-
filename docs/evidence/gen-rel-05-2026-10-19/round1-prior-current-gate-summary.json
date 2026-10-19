@@ -1,0 +1,63 @@
+{
+  "implementation": "complete",
+  "integration_gate": "blocked",
+  "reason": "schema-14 helper cannot enumerate processes in this sandbox",
+  "checks": [
+    {
+      "check": "typecheck",
+      "exit": 0,
+      "seconds": 3.96,
+      "receipt": "corrected-typecheck.log"
+    },
+    {
+      "check": "frontend-tests",
+      "exit": 0,
+      "seconds": 59.99,
+      "receipt": "corrected-frontend-tests.log",
+      "note": "Test-only progress fixture correction; first failing gate receipt retained."
+    },
+    {
+      "check": "build",
+      "exit": 0,
+      "seconds": 5.23,
+      "receipt": "final-build.log"
+    },
+    {
+      "check": "cargo-test",
+      "exit": 0,
+      "seconds": 49.98,
+      "receipt": "final-cargo-test.log"
+    },
+    {
+      "check": "clippy",
+      "exit": 0,
+      "seconds": 0.33,
+      "receipt": "final-clippy.log"
+    },
+    {
+      "check": "fmt",
+      "exit": 0,
+      "seconds": 0.27,
+      "receipt": "final-fmt.log"
+    },
+    {
+      "check": "cargo-lock",
+      "exit": 0,
+      "seconds": 2.0,
+      "receipt": "final-cargo-lock.log"
+    },
+    {
+      "check": "schema14",
+      "exit": 1,
+      "seconds": 3.36,
+      "receipt": "final-schema14.log",
+      "note": "25 passed / 1 failed: sandbox pgrep/sysmon diagnostics precede expected REFUSED prefix; not generated build output."
+    },
+    {
+      "check": "diff-check",
+      "exit": 0,
+      "seconds": 0.02,
+      "receipt": "final-diff-check.log"
+    }
+  ]
+}

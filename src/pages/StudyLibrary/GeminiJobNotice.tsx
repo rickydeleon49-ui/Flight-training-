@@ -22,6 +22,30 @@ export function GeminiJobNotice({
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
 
+  if (job.draft && ["failed", "interrupted", "cancelled"].includes(job.phase)) {
+    return (
+      <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+        <div className="ai-disclaimer" role="status">
+          <AlertIcon size={16} />
+          <p className="tiny">
+            {job.draft.cards.length} / {job.draft.target} cards kept as a draft. Nothing has replaced your saved content.{" "}
+            {job.error}
+          </p>
+        </div>
+        <div className="row row--wrap">
+          {onRetry && !busy ? (
+            <Button size="small" onClick={onRetry}>
+              Try again
+            </Button>
+          ) : null}
+          <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
+            Discard draft
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (job.phase === "recovered") {
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
@@ -30,10 +54,13 @@ export function GeminiJobNotice({
           <p className="tiny">
             {job.cancelAttempted
               ? `Gemini finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
-              : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
+              : job.local
+                ? `A completed new ${what} is ready for this document. It has not been saved yet.`
+                : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
             Saving it replaces what is saved now; completed practice history is kept.
           </p>
         </div>
+        {job.answer && "sourceNotes" in job.answer ? <p className="tiny">{job.answer.sourceNotes}</p> : null}
         <div className="row row--wrap">
           <Button size="small" disabled={busy} onClick={() => void jobs.saveAgain(job.key)}>
             Save the new {what}
@@ -177,7 +204,7 @@ export function GeminiProgressView({
   const stage =
     job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
   const attempt =
-    job.attempt && job.attempt > 1 && job.maxAttempts ? ` · attempt ${job.attempt} of ${job.maxAttempts}` : "";
+    job.attempt && job.attempt > 1 && job.maxAttempts ? ` · ${job.kind === "study-aid" ? "request" : "attempt"} ${job.attempt} of ${job.maxAttempts}` : "";
   const elapsed = job.startedAt ? ` · ${elapsedWords(now - job.startedAt)}` : "";
   return (
     <div className="ai-working">
