@@ -2,7 +2,7 @@
 
 **Status: proposal for independent review. No code, dependency, migration or behavior change.** This is the first OFFLINE-01 deliverable, as the [plan's entry point](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md#implementer-entry-point-and-stopping-rule) requires. Claude implements and Codex reviews. Base: main `e27c390`.
 
-**Revision 4** answers Codex rounds 1–3 (all RED). Earlier text is in Git history. The changes:
+**Revision 5** answers Codex rounds 1–4 (all RED). Earlier text is in Git history. The changes:
 - the memory strategy is now a capped allocator in the worker, with exact accounting, breach signalling and its limits stated (§4.2);
 - verified readiness requires a fresh hash in the current session (§4.3);
 - image detection inspects content recursively, and nothing is called a scan (§4.4);
@@ -102,26 +102,36 @@ Installed acceptance includes a packaged, translocated launch (§5, item 4).
 
 **Accounting** (in both modes):
 - The counter starts at process start, so allocations made before the worker reads its arguments are included.
-- It tracks the **requested** bytes of `alloc`, `alloc_zeroed` and `realloc` (as the size difference) minus `dealloc`.
-- Each allocation first **reserves** its bytes with a compare-and-swap loop, so concurrent reservations can never jointly pass the cap.
-- If the system allocator then fails, the reservation is released.
+- It tracks the **requested** bytes of live allocations.
+- **`alloc` and `alloc_zeroed`:** reserve the full size first with a compare-and-swap loop, so concurrent reservations can never jointly pass the cap. If the system allocator fails, the reservation is released.
+- **`realloc` growing:** reserve only the positive growth before calling the system allocator. If `realloc` fails, the growth is rolled back and the original block keeps its original count.
+- **`realloc` shrinking:** credit the reduction only **after** a successful `realloc`. While the larger block is still live, the counter never runs ahead of reality.
+- **`dealloc`:** credit after freeing.
+- **Arithmetic:** all of it uses checked operations. An overflowing reservation is treated as a cap breach, and a credit that would underflow is an internal error that aborts the worker (reported as `worker_failed`).
 
 **Cap check** (worker mode only):
-- When worker mode starts, before any input is read, the cap is set (for example 384 MiB, with the final value set by measurement in 01a). If the counter already exceeds it, the worker exits.
+- When worker mode starts, before any input is read, the cap is set (for example 384 MiB, with the final value set by measurement in 01a).
+- If the counter already exceeds it, that is treated as a breach through the same signalling path below, and the worker exits without reading input.
 - A reservation that would pass the cap returns null.
 
-**Signalling a breach without allocating:**
-- Before returning null, the allocator sets a static `CAP_BREACHED` flag.
-- It writes a fixed, static marker to the worker's standard error with a raw file-descriptor write, which allocates nothing.
+**Signalling a breach without allocating (one-shot, best effort):**
+- **Sticky flag:** the first breach sets a static atomic `CAP_BREACHED` flag with an atomic swap. Later breaches see it already set, so the marker is written **at most once**.
+- **The one write:** a fixed, static marker of at most 64 bytes is written to standard error with a raw file-descriptor `write`, which allocates nothing.
+  - An interrupted write (`EINTR`) is retried a small fixed number of times.
+  - A partial write continues from the remaining bytes within the same bound.
+  - Any other error abandons signalling silently.
+- **No blocking:** the supervisor drains the worker's stderr concurrently from the moment it spawns, so the write cannot block for long. Only the first 4 KiB is kept; the rest is read and discarded until end of file.
 
 **Both failure paths are covered:**
 - **Infallible allocations** call Rust's allocation-error handler, and the worker aborts.
 - **Fallible allocations** (for example `try_reserve`, which locked `lopdf 0.42.0` uses in `filters/png.rs`) return an error to their caller. The worker checks `CAP_BREACHED` before emitting any success frame or its terminal event, and stops with no success if it is set.
 
-**How the supervisor classifies the outcome:**
-- **`memory_limit`** only when the static marker is present.
-- **An undifferentiated `worker_failed`** for any other abnormal exit, including a stack overflow or another abort.
+**How the supervisor classifies the outcome,** only after the child has exited **and** both stdout and stderr have reached end of file:
+- **`memory_limit`** only when the kept stderr starts with the exact marker.
+- **An undifferentiated `worker_failed`** for any other abnormal exit. That includes a breach whose marker could not be delivered, a stack overflow, or another abort.
 - A breach never publishes a success.
+
+**Not every breach is guaranteed to be identified,** only that none is ever reported as success.
 
 **What the cap bounds:** the **requested allocation bytes** of every Rust heap allocation the worker makes, whatever makes it:
 - reading the file;
@@ -248,7 +258,9 @@ Each slice then **stops for authorized integration**. Nothing moves to the next 
      - every restore case in §4.3;
      - partial coverage, with empty text never counting as searchable;
      - argument handling: exact flag, duplicated flag, flag with extra arguments;
-     - allocator breaches on both an aborting path and a fallible `try_reserve` path, each classified `memory_limit` with no success published, and a stack overflow classified `worker_failed`;
+     - allocator breaches on an aborting path, a fallible `try_reserve` path and at startup, each classified `memory_limit` with no success published;
+     - a breach whose marker write fails, and a stack overflow, both classified `worker_failed`;
+     - `realloc` growth that fails, shrinking under concurrent allocation, and counter overflow;
      - standard-input fail-closed behavior;
      - a file whose bytes change while its tuple stays the same;
      - no Gemini reachability.
