@@ -124,8 +124,26 @@ fn main() {
         material_ids: materials.clone(),
     };
     for (qi, q) in queries.iter().enumerate() {
-        let all = audit_saved(corpus.join(CACHE_FILE), &saved_request, q, false).unwrap();
-        let capped = audit_saved(corpus.join(CACHE_FILE), &saved_request, q, true).unwrap();
+        // The frozen identities group notes and questions under "" (they
+        // are shown as "Your notes" and "Instructor questions"); the audit
+        // reports a linked question's material, so it is normalized here.
+        let normalize = |items: Vec<(String, String, String)>| -> Vec<(String, String, String)> {
+            items
+                .into_iter()
+                .map(|(k, g, r)| {
+                    let g = if k == "note" || k == "question" {
+                        String::new()
+                    } else {
+                        g
+                    };
+                    (k, g, r)
+                })
+                .collect()
+        };
+        let all =
+            normalize(audit_saved(corpus.join(CACHE_FILE), &saved_request, q, false).unwrap());
+        let capped =
+            normalize(audit_saved(corpus.join(CACHE_FILE), &saved_request, q, true).unwrap());
         let want: BTreeSet<(String, String, String)> = expected[qi.to_string()]
             .as_array()
             .unwrap()

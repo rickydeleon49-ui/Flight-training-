@@ -403,3 +403,10 @@ evidence/offline-01b-2026-10-19/receipts/npm-test.log -text -diff
 evidence/offline-01b-2026-10-19/receipts/release-worker-refuses-before-fix.log -text -diff
 evidence/offline-01b-2026-10-19/receipts/release-worker-refuses.log -text -diff
 evidence/offline-01b-2026-10-19/receipts/typecheck.log -text -diff
+evidence/offline-02c-2026-10-19/receipts/harness-build.log -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-1.log -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-1.time -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-2.log -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-2.time -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-3.log -text -diff
+evidence/offline-02c-2026-10-19/receipts/run1-identity-key-bug/process-3.time -text -diff
