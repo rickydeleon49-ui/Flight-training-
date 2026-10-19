@@ -79,8 +79,21 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   const generation = useRef(0);
   // Only the newest "open" click may open anything, and only while mounted.
   const opening = useRef(0);
+  // The navigation request this panel started and may still be working on.
+  const started = useRef<{ epoch: number } | null>(null);
   const baseId = useId();
   const { controller } = useNavigationController();
+  // Retire this panel's open request if the controller is still working on it
+  // (checking or reserving): it is then never opened or saved. A newer click,
+  // new results and leaving the page all do this.
+  const retire = useCallback(() => {
+    opening.current += 1;
+    const mine = started.current;
+    started.current = null;
+    if (!controller || !mine) return;
+    const status = controller.status();
+    if (status.epoch === mine.epoch && status.kind === "working") controller.abort();
+  }, [controller]);
   const byId = new Map(materials.map((m) => [m.id, m]));
 
   const run = useCallback(
@@ -116,7 +129,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
   // Search after a pause in typing, and again whenever the filters change.
   useEffect(() => {
     const mine = ++generation.current;
-    opening.current += 1;
+    retire();
     setNotes({});
     // Results for other words or other filters are never left on screen.
     setResults(null);
@@ -128,15 +141,15 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
     setPhase({ kind: "searching" });
     const timer = window.setTimeout(() => void run(trimmed, scope ? scope.split("\n") : [], 0, mine), TYPING_PAUSE_MS);
     return () => window.clearTimeout(timer);
-  }, [trimmed, scope, run]);
+  }, [trimmed, scope, run, retire]);
 
   // Stop listening for answers once the panel goes away.
   useEffect(
     () => () => {
       generation.current += 1;
-      opening.current += 1;
+      retire();
     },
-    [],
+    [retire],
   );
 
   if (!trimmed) return null;
@@ -150,7 +163,8 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
 
   const open = async (materialId: string, sha: string, page: number) => {
     const key = `${materialId}:${page}`;
-    const mine = ++opening.current;
+    retire();
+    const mine = opening.current;
     const current = () => opening.current === mine;
     setNotes((n) => ({ ...n, [key]: { text: "Checking the file…", error: false } }));
     let check: Awaited<ReturnType<typeof verifyOfflineDestination>>;
@@ -174,7 +188,12 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         setNotes((n) => ({ ...n, [key]: { text: "Opening documents works in the desktop app.", error: true } }));
         return;
       }
-      const status = await controller.request({ materialId, reference: page, provenance: "physical_index" });
+      const pending = controller.request({ materialId, reference: page, provenance: "physical_index" });
+      // The request's epoch is published synchronously as it starts.
+      const request = { epoch: controller.status().epoch };
+      started.current = request;
+      const status = await pending;
+      if (started.current === request) started.current = null;
       if (!status || !current()) return;
       const text =
         status.kind === "saved"

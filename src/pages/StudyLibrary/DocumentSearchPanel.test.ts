@@ -11,7 +11,21 @@ const service = vi.hoisted(() => ({
   search: vi.fn<(q: string, ids: string[], offset: number) => Promise<SearchResponse>>(),
   verify: vi.fn<(id: string, sha: string) => Promise<"ok" | "changed" | "missing">>(),
 }));
-const nav = vi.hoisted(() => ({ request: vi.fn() }));
+const nav = vi.hoisted(() => {
+  const state = {
+    request: vi.fn(),
+    abort: vi.fn(),
+    status: { kind: "idle", epoch: 0 } as { kind: string; epoch: number },
+    controller: null as unknown,
+  };
+  // A stable controller object, as the real hook memoizes it.
+  state.controller = {
+    request: (...args: unknown[]) => state.request(...args),
+    abort: () => state.abort(),
+    status: () => state.status,
+  };
+  return state;
+});
 
 vi.mock("@/services/offlineContent", async (original) => {
   const real = await original<typeof import("@/services/offlineContent")>();
@@ -23,7 +37,11 @@ vi.mock("@/services/offlineContent", async (original) => {
   };
 });
 vi.mock("@/state/navigation/useDocumentNavigation", () => ({
-  useNavigationController: () => ({ repo: null, controller: { request: nav.request }, status: { kind: "idle", epoch: 0 } }),
+  useNavigationController: () => ({
+    repo: null,
+    controller: nav.controller,
+    status: { kind: "idle", epoch: 0 },
+  }),
   navigationMessage: () => "Couldn't open it.",
 }));
 
@@ -74,6 +92,8 @@ beforeEach(() => {
   service.search.mockReset();
   service.verify.mockReset();
   nav.request.mockReset();
+  nav.abort.mockReset();
+  nav.status = { kind: "idle", epoch: 0 };
 });
 afterEach(() => {
   cleanup();
@@ -254,6 +274,69 @@ describe("Searching inside documents", () => {
     const button = await screen.findByRole("button", { name: /open the document/ });
     const described = document.getElementById(button.getAttribute("aria-describedby") ?? "");
     expect(described?.textContent).toBe("the crosswind <script>x</script> component");
+  });
+});
+
+describe("an open already handed to the navigation controller", () => {
+  const two = () =>
+    response({
+      groups: [
+        {
+          ...response().groups[0]!,
+          passages: [
+            { contentSha256: sha, pageIndex: 1, snippet: "a" },
+            { contentSha256: sha, pageIndex: 2, snippet: "b" },
+          ],
+        },
+      ],
+    });
+
+  /** Start opening page 1 and hold the controller in its "checking" step. */
+  async function holdFirstOpen(view: ReturnType<typeof render>) {
+    service.verify.mockResolvedValue("ok");
+    nav.request.mockImplementationOnce(() => {
+      nav.status = { kind: "working", epoch: 7 };
+      return new Promise(() => {});
+    });
+    await typed();
+    const [first] = await view.findAllByRole("button", { name: /open the document/ });
+    fireEvent.click(first!);
+    await waitFor(() => expect(nav.request).toHaveBeenCalledTimes(1));
+  }
+
+  it("is retired by a newer click before that click's file check finishes", async () => {
+    service.search.mockResolvedValue(two());
+    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await holdFirstOpen(view);
+    service.verify.mockImplementationOnce(() => new Promise(() => {}));
+    fireEvent.click(view.getAllByRole("button", { name: /open the document/ })[1]!);
+    expect(nav.abort).toHaveBeenCalledTimes(1);
+  });
+
+  it("is retired when the search changes", async () => {
+    service.search.mockResolvedValue(two());
+    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await holdFirstOpen(view);
+    view.rerender(h(DocumentSearchPanel, { query: "landing", materials }));
+    expect(nav.abort).toHaveBeenCalledTimes(1);
+  });
+
+  it("is retired when she leaves the page", async () => {
+    service.search.mockResolvedValue(two());
+    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await holdFirstOpen(view);
+    view.unmount();
+    expect(nav.abort).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves someone else's request alone", async () => {
+    service.search.mockResolvedValue(two());
+    const view = render(h(DocumentSearchPanel, { query: "crosswind", materials }));
+    await holdFirstOpen(view);
+    // Another part of the app has since started its own request.
+    nav.status = { kind: "working", epoch: 8 };
+    view.unmount();
+    expect(nav.abort).not.toHaveBeenCalled();
   });
 });
 
