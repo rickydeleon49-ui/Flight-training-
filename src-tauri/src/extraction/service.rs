@@ -126,6 +126,39 @@ pub fn hash_file(path: &Path) -> Option<String> {
     Some(hex::encode(hasher.finalize()))
 }
 
+/// Whole-file failures that depend only on a file's bytes, so they can be
+/// stored against its hash. Identity mismatches, unreadable files,
+/// timeouts, cancellations and crashes may be transient and are never
+/// stored: a later try with the same bytes must still be possible.
+pub fn cacheable(failure: &Failure) -> bool {
+    match failure {
+        Failure::MemoryLimit => true,
+        Failure::Reported(code) => matches!(
+            code.as_str(),
+            "encrypted" | "malformed" | "input_too_large" | "total_text_limit"
+        ),
+        _ => false,
+    }
+}
+
+/// Work for the single executor thread.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum Task {
+    Verify(PathBuf),
+    Prepare(String),
+}
+
+/// At most this many tasks wait; more are dropped and simply re-requested
+/// by the next readiness check.
+pub const MAX_QUEUED: usize = 1024;
+
+#[derive(Default)]
+struct Queue {
+    tasks: std::collections::VecDeque<Task>,
+    queued: HashSet<Task>,
+    running: bool,
+}
+
 /// One app session's knowledge. A new session (for example after a restore,
 /// which restarts the app) starts with nothing verified.
 pub struct Service {
@@ -133,8 +166,10 @@ pub struct Service {
     worker: PathBuf,
     verified: Mutex<HashMap<PathBuf, (Stamp, String)>>,
     preparing: Mutex<HashSet<String>>,
-    /// One worker at a time.
+    /// Serializes all hashing and extraction.
     slot: Mutex<()>,
+    queue: Mutex<Queue>,
+    idle: std::sync::Condvar,
 }
 
 impl Service {
@@ -145,6 +180,8 @@ impl Service {
             verified: Mutex::new(HashMap::new()),
             preparing: Mutex::new(HashSet::new()),
             slot: Mutex::new(()),
+            queue: Mutex::new(Queue::default()),
+            idle: std::sync::Condvar::new(),
         }
     }
 
@@ -154,8 +191,7 @@ impl Service {
         Some(self.root.join(crate::documents::DOCUMENTS_DIR).join(safe))
     }
 
-    /// Hash `path` now and remember it for this session.
-    pub fn verify(&self, path: &Path) -> Option<String> {
+    fn remember(&self, path: &Path) -> Option<String> {
         let sha = hash_file(path)?;
         let st = stamp(path)?;
         self.verified
@@ -163,6 +199,12 @@ impl Service {
             .unwrap_or_else(|e| e.into_inner())
             .insert(path.to_path_buf(), (st, sha.clone()));
         Some(sha)
+    }
+
+    /// Hash `path` now and remember it for this session.
+    pub fn verify(&self, path: &Path) -> Option<String> {
+        let _slot = self.slot.lock().unwrap_or_else(|e| e.into_inner());
+        self.remember(path)
     }
 
     /// The verified hash for `path`, if it was hashed this session and its
@@ -175,19 +217,32 @@ impl Service {
             .map(|(_, sha)| sha.clone())
     }
 
+    fn is_queued_prepare(&self, relative: &str) -> bool {
+        self.queue
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .queued
+            .contains(&Task::Prepare(relative.to_string()))
+    }
+
+    fn is_pdf(path: &Path) -> bool {
+        path.extension()
+            .map(|e| e.eq_ignore_ascii_case("pdf"))
+            .unwrap_or(false)
+    }
+
     pub fn readiness(&self, relative: &str) -> Readiness {
         let Some(path) = self.document_path(relative) else {
             return Readiness::Missing;
         };
-        let is_pdf = path
-            .extension()
-            .map(|e| e.eq_ignore_ascii_case("pdf"))
-            .unwrap_or(false);
-        if !is_pdf {
+        if !Self::is_pdf(&path) {
             return Readiness::Unsupported;
         }
         if stamp(&path).is_none() {
             return Readiness::Missing;
+        }
+        if self.is_queued_prepare(relative) {
+            return Readiness::Preparing;
         }
         let Some(sha) = self.current(&path) else {
             return Readiness::Checking;
@@ -211,62 +266,72 @@ impl Service {
         }
     }
 
-    /// Prepare one material now, blocking; the commands run it on a
-    /// background thread. Returns the readiness afterwards.
+    /// Prepare one material now, blocking. The commands go through the
+    /// queue; tests may call this directly.
     pub fn prepare(&self, relative: &str, cancel: Arc<AtomicBool>) -> Readiness {
+        self.prepare_with(relative, cancel, None)
+    }
+
+    /// `prepare` with extra worker request fields: fault injection, which
+    /// the worker honours only in debug builds.
+    pub fn prepare_with(
+        &self,
+        relative: &str,
+        cancel: Arc<AtomicBool>,
+        extra: Option<serde_json::Value>,
+    ) -> Readiness {
         let Some(path) = self.document_path(relative) else {
             return Readiness::Missing;
         };
-        if matches!(
-            self.readiness(relative),
-            Readiness::Unsupported | Readiness::Missing
-        ) {
-            return self.readiness(relative);
+        if !Self::is_pdf(&path) {
+            return Readiness::Unsupported;
         }
-        let _slot = self.slot.lock().unwrap_or_else(|e| e.into_inner());
-        // Re-hash at the moment of acting, before deciding anything: a
-        // remembered hash may describe bytes the file no longer has.
-        let Some(sha) = self.verify(&path) else {
-            return Readiness::Missing;
-        };
-        if Cache::open(&self.root)
-            .ok()
-            .and_then(|c| c.summary(&sha))
-            .is_some()
         {
-            return self.readiness(relative);
-        }
-        self.preparing
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .insert(sha.clone());
-        let result = supervisor::run(Job {
-            worker: &self.worker,
-            file: &path,
-            sha256: &sha,
-            limits: Limits::default(),
-            deadline: PREPARE_DEADLINE,
-            cancel,
-            extra: None,
-        });
-        if let Ok(mut cache) = Cache::open(&self.root) {
-            match &result {
-                // Content-addressed: correct for these bytes even if the
-                // file has changed since; a changed file simply misses.
-                Ok(extraction) if extraction.sha256 == sha => {
-                    let _ = cache.publish(extraction);
+            let _slot = self.slot.lock().unwrap_or_else(|e| e.into_inner());
+            // Re-hash before deciding anything: a remembered hash may
+            // describe bytes the file no longer has.
+            let Some(sha) = self.remember(&path) else {
+                return Readiness::Missing;
+            };
+            let cached = Cache::open(&self.root).ok().and_then(|c| c.summary(&sha));
+            if cached.is_none() {
+                self.preparing
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .insert(sha.clone());
+                let result = supervisor::run(Job {
+                    worker: &self.worker,
+                    file: &path,
+                    sha256: &sha,
+                    limits: Limits::default(),
+                    deadline: PREPARE_DEADLINE,
+                    cancel,
+                    extra,
+                });
+                if let Ok(mut cache) = Cache::open(&self.root) {
+                    match &result {
+                        // Content-addressed: correct for these bytes even if
+                        // the file has changed since.
+                        Ok(extraction) if extraction.sha256 == sha => {
+                            let _ = cache.publish(extraction);
+                        }
+                        Err(failure) if cacheable(failure) => {
+                            let _ = cache.publish_failure(&sha, &failure.code());
+                        }
+                        _ => {}
+                    }
                 }
-                Err(failure @ (Failure::Reported(_) | Failure::MemoryLimit)) => {
-                    let _ = cache.publish_failure(&sha, &failure.code());
-                }
-                // Timeouts, cancellations and crashes may be transient.
-                _ => {}
+                self.preparing
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .remove(&sha);
+            }
+            // Hash again before reporting: the file may have been replaced,
+            // even keeping its stamp, while the worker ran.
+            if self.remember(&path).is_none() {
+                return Readiness::Missing;
             }
         }
-        self.preparing
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .remove(&sha);
         self.readiness(relative)
     }
 
@@ -275,6 +340,72 @@ impl Service {
         Cache::open(&self.root)
             .and_then(|mut c| c.prune(referenced, limit))
             .unwrap_or(0)
+    }
+
+    /// Queue a task for the single executor thread, deduplicated and
+    /// bounded. Returns false if it was dropped because the queue is full.
+    fn enqueue(self: &Arc<Self>, task: Task) -> bool {
+        let mut q = self.queue.lock().unwrap_or_else(|e| e.into_inner());
+        if q.queued.contains(&task) {
+            return true;
+        }
+        if q.tasks.len() >= MAX_QUEUED {
+            return false;
+        }
+        q.queued.insert(task.clone());
+        q.tasks.push_back(task);
+        if !q.running {
+            q.running = true;
+            let me = self.clone();
+            std::thread::spawn(move || me.drain());
+        }
+        true
+    }
+
+    pub fn enqueue_verify(self: &Arc<Self>, path: PathBuf) -> bool {
+        self.enqueue(Task::Verify(path))
+    }
+
+    pub fn enqueue_prepare(self: &Arc<Self>, relative: String) -> bool {
+        self.enqueue(Task::Prepare(relative))
+    }
+
+    /// The executor: one task at a time until the queue is empty. A task
+    /// stays in `queued` until it finishes, so a duplicate request made
+    /// while it runs is not queued again.
+    fn drain(&self) {
+        loop {
+            let task = {
+                let mut q = self.queue.lock().unwrap_or_else(|e| e.into_inner());
+                match q.tasks.front().cloned() {
+                    Some(t) => t,
+                    None => {
+                        q.running = false;
+                        self.idle.notify_all();
+                        return;
+                    }
+                }
+            };
+            match &task {
+                Task::Verify(path) => {
+                    self.verify(path);
+                }
+                Task::Prepare(relative) => {
+                    self.prepare(relative, Arc::new(AtomicBool::new(false)));
+                }
+            }
+            let mut q = self.queue.lock().unwrap_or_else(|e| e.into_inner());
+            q.tasks.pop_front();
+            q.queued.remove(&task);
+        }
+    }
+
+    /// Block until the executor has nothing queued or running.
+    pub fn wait_idle(&self) {
+        let mut q = self.queue.lock().unwrap_or_else(|e| e.into_inner());
+        while q.running {
+            q = self.idle.wait(q).unwrap_or_else(|e| e.into_inner());
+        }
     }
 }
 
@@ -354,13 +485,8 @@ pub async fn offline_content_readiness(
                 readiness,
             });
         }
-        if !to_verify.is_empty() {
-            let bg = svc.clone();
-            std::thread::spawn(move || {
-                for path in to_verify {
-                    bg.verify(&path);
-                }
-            });
+        for path in to_verify {
+            svc.enqueue_verify(path);
         }
         Ok(out)
     })
@@ -385,11 +511,7 @@ pub async fn prepare_offline_content(
                 readiness: Readiness::Missing,
             });
         };
-        let bg = svc.clone();
-        let rel = relative.clone();
-        std::thread::spawn(move || {
-            bg.prepare(&rel, Arc::new(AtomicBool::new(false)));
-        });
+        svc.enqueue_prepare(relative.clone());
         Ok(MaterialReadiness {
             material_id,
             readiness: svc.readiness(&relative),
@@ -462,6 +584,25 @@ mod tests {
             summarize(empty_text),
             Readiness::Partial { searchable: 0, .. }
         ));
+    }
+
+    #[test]
+    fn only_byte_determined_failures_are_cacheable() {
+        for code in [
+            "encrypted",
+            "malformed",
+            "input_too_large",
+            "total_text_limit",
+        ] {
+            assert!(cacheable(&Failure::Reported(code.into())), "{code}");
+        }
+        assert!(cacheable(&Failure::MemoryLimit));
+        for code in ["identity_mismatch", "unreadable", "anything_else"] {
+            assert!(!cacheable(&Failure::Reported(code.into())), "{code}");
+        }
+        assert!(!cacheable(&Failure::Timeout));
+        assert!(!cacheable(&Failure::Cancelled));
+        assert!(!cacheable(&Failure::WorkerFailed("exit")));
     }
 
     #[test]

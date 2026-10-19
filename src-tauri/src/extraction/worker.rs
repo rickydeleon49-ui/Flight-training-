@@ -73,6 +73,9 @@ pub enum TestHook {
     /// Try to reserve this many bytes, as `lopdf`'s fallible paths do.
     TryReserve(usize),
     Sleep(u64),
+    /// Sleep after the file has been read and verified, so a test can
+    /// replace it while extraction is under way.
+    SleepAfterRead(u64),
     OverflowStack,
 }
 
@@ -93,7 +96,12 @@ pub enum Frame {
     Error {
         code: &'static str,
     },
-    End,
+    /// Success. `peakBytes` is the counted peak of requested allocation
+    /// bytes in this worker: evidence for measurements, not a bound.
+    #[serde(rename_all = "camelCase")]
+    End {
+        peak_bytes: u64,
+    },
 }
 
 fn run() -> i32 {
@@ -142,7 +150,12 @@ fn work() -> i32 {
     let stdout = std::io::stdout();
     let mut out = std::io::BufWriter::new(stdout.lock());
     let code = match extract(&request, &mut out) {
-        Ok(()) => match emit(&mut out, &Frame::End) {
+        Ok(()) => match emit(
+            &mut out,
+            &Frame::End {
+                peak_bytes: COUNTER.peak() as u64,
+            },
+        ) {
             Ok(()) => EXIT_DONE,
             Err(code) => code,
         },
@@ -209,6 +222,11 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
     }
     if hex::encode(Sha256::digest(&bytes)) != sha {
         return Err(Stop::Reported("identity_mismatch"));
+    }
+    if cfg!(debug_assertions) {
+        if let Some(TestHook::SleepAfterRead(ms)) = request.test {
+            std::thread::sleep(std::time::Duration::from_millis(ms));
+        }
     }
     let doc = lopdf::Document::load_mem(&bytes).map_err(|_| Stop::Reported("malformed"))?;
     drop(bytes);
@@ -279,6 +297,7 @@ fn run_hook(hook: TestHook) -> Result<(), Stop> {
             std::hint::black_box(&v);
         }
         TestHook::Sleep(ms) => std::thread::sleep(std::time::Duration::from_millis(ms)),
+        TestHook::SleepAfterRead(_) => {}
         TestHook::OverflowStack => {
             // Deliberately unbounded: proves a stack overflow is not a success.
             #[allow(unconditional_recursion)]

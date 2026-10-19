@@ -52,10 +52,8 @@ pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
         found.unreadable_page = true;
         return found;
     };
-    let content = doc
-        .get_page_content(page_id)
-        .ok()
-        .and_then(|bytes| Content::decode_strict(&bytes).ok());
+    let content =
+        strict_page_content(doc, page_id).and_then(|bytes| Content::decode_strict(&bytes).ok());
     let Some(content) = content else {
         found.complete = false;
         found.unreadable_page = true;
@@ -64,6 +62,63 @@ pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
     let mut stack = Vec::new();
     walk(doc, &content, &resources, 0, &mut stack, &mut found);
     found
+}
+
+/// A stream's decoded bytes, or `None` unless decoding is known to be
+/// complete. `lopdf` logs and keeps partial output for corrupt Flate or LZW
+/// data and silently skips missing content objects, so it cannot tell a
+/// blank page from an unreadable one. Only unfiltered streams and a single
+/// FlateDecode with no predictor are accepted; the zlib stream must reach its
+/// verified end. Anything else is treated as unreadable, never as empty.
+pub fn strict_stream_bytes(stream: &lopdf::Stream) -> Option<Vec<u8>> {
+    let filter = match stream.dict.get(b"Filter") {
+        Err(_) => return Some(stream.content.clone()),
+        Ok(Object::Name(name)) => name.as_slice(),
+        Ok(Object::Array(list)) if list.len() == 1 => list[0].as_name().ok()?,
+        Ok(_) => return None,
+    };
+    if filter != b"FlateDecode" {
+        return None;
+    }
+    if let Ok(params) = stream.dict.get(b"DecodeParms") {
+        let predictor = match params {
+            Object::Dictionary(d) => d.get(b"Predictor").and_then(Object::as_i64).unwrap_or(1),
+            Object::Null => 1,
+            _ => return None,
+        };
+        if predictor != 1 {
+            return None;
+        }
+    }
+    let mut out = Vec::new();
+    use std::io::Read;
+    flate2::read::ZlibDecoder::new(stream.content.as_slice())
+        .read_to_end(&mut out)
+        .ok()?;
+    Some(out)
+}
+
+/// Every entry of the page's `/Contents`, resolved and strictly decoded.
+/// A page with no `/Contents` is legitimately empty; a dangling reference,
+/// a non-stream entry or any undecodable stream makes the page unreadable.
+fn strict_page_content(doc: &Document, page_id: ObjectId) -> Option<Vec<u8>> {
+    let page = doc.get_dictionary(page_id).ok()?;
+    let entries: Vec<ObjectId> = match page.get(b"Contents") {
+        Err(_) => return Some(Vec::new()),
+        Ok(Object::Reference(id)) => vec![*id],
+        Ok(Object::Array(list)) => list
+            .iter()
+            .map(|o| o.as_reference().ok())
+            .collect::<Option<Vec<_>>>()?,
+        Ok(_) => return None,
+    };
+    let mut content = Vec::new();
+    for id in entries {
+        let stream = doc.get_object(id).ok()?.as_stream().ok()?;
+        content.extend_from_slice(&strict_stream_bytes(stream)?);
+        content.push(b'\n');
+    }
+    Some(content)
 }
 
 /// The page's resource dictionaries, nearest first (own, then inherited).
@@ -141,10 +196,8 @@ fn invoke(
                 found.complete = false;
                 return;
             }
-            let content = stream
-                .get_plain_content()
-                .ok()
-                .and_then(|bytes| Content::decode_strict(&bytes).ok());
+            let content =
+                strict_stream_bytes(stream).and_then(|bytes| Content::decode_strict(&bytes).ok());
             let Some(content) = content else {
                 found.complete = false;
                 return;
@@ -174,12 +227,14 @@ fn invoke(
     }
 }
 
-/// Decide a page's outcome from its inspection and extracted text.
+/// Decide a page's outcome from its inspection and extracted text. A page
+/// whose own content couldn't be read is `failed` even if some text came
+/// out, since that text may be only part of the page.
 pub fn outcome(inspection: &Inspection, text: &str) -> Outcome {
-    if !text.trim().is_empty() {
-        Outcome::Text
-    } else if inspection.unreadable_page {
+    if inspection.unreadable_page {
         Outcome::Failed
+    } else if !text.trim().is_empty() {
+        Outcome::Text
     } else if !inspection.complete {
         Outcome::Unknown
     } else if inspection.shows_text {
@@ -428,6 +483,92 @@ pub(crate) mod tests {
         let (_, o) = classify(b);
         assert!(matches!(o, Outcome::Failed | Outcome::Unknown), "{o:?}");
         assert_ne!(o, Outcome::Blank);
+    }
+
+    fn page_with_contents(b: &mut PdfBuilder, contents: Object) {
+        let page = b.page("", dictionary! {});
+        b.doc
+            .get_dictionary_mut(page)
+            .unwrap()
+            .set("Contents", contents);
+    }
+
+    #[test]
+    fn a_dangling_contents_reference_is_failed_not_blank() {
+        let mut b = PdfBuilder::new();
+        page_with_contents(&mut b, Object::Reference((999, 0)));
+        let (i, o) = classify(b);
+        assert!(i.unreadable_page);
+        assert_eq!(o, Outcome::Failed);
+    }
+
+    #[test]
+    fn a_valid_stream_beside_a_missing_one_is_failed() {
+        let mut b = PdfBuilder::new();
+        let f = b.font();
+        let good = b.doc.add_object(Stream::new(
+            dictionary! {},
+            b"BT /F1 12 Tf (Half a page) Tj ET".to_vec(),
+        ));
+        let page = b.page("", dictionary! { "Font" => dictionary! { "F1" => f } });
+        b.doc.get_dictionary_mut(page).unwrap().set(
+            "Contents",
+            vec![Object::Reference(good), Object::Reference((999, 0))],
+        );
+        let (_, o) = classify(b);
+        assert_eq!(
+            o,
+            Outcome::Failed,
+            "partial text from part of a page is not reported as the page's text"
+        );
+    }
+
+    #[test]
+    fn corrupt_and_unsupported_filters_are_failed_not_blank() {
+        for (filter, data) in [
+            ("FlateDecode", b"x\x9c not really zlib data".to_vec()),
+            ("ASCIIHexDecode", b"2020>".to_vec()),
+            ("LZWDecode", vec![0x80, 0x0b]),
+        ] {
+            let mut b = PdfBuilder::new();
+            let mut s = Stream::new(dictionary! { "Filter" => filter }, data);
+            s.allows_compression = false;
+            let id = b.doc.add_object(s);
+            page_with_contents(&mut b, Object::Reference(id));
+            let (_, o) = classify(b);
+            assert_eq!(o, Outcome::Failed, "{filter}");
+        }
+    }
+
+    #[test]
+    fn a_truncated_flate_stream_is_failed() {
+        let mut b = PdfBuilder::new();
+        let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(200));
+        s.compress().unwrap();
+        let cut = s.content.len() / 2;
+        s.content.truncate(cut);
+        s.allows_compression = false;
+        let id = b.doc.add_object(s);
+        page_with_contents(&mut b, Object::Reference(id));
+        assert_eq!(classify(b).1, Outcome::Failed);
+    }
+
+    #[test]
+    fn a_compressed_blank_page_is_still_blank() {
+        let mut b = PdfBuilder::new();
+        let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(200));
+        s.compress().unwrap();
+        let id = b.doc.add_object(s);
+        page_with_contents(&mut b, Object::Reference(id));
+        assert_eq!(classify(b).1, Outcome::Blank);
+    }
+
+    #[test]
+    fn a_page_with_no_contents_at_all_is_blank() {
+        let mut b = PdfBuilder::new();
+        let page = b.page("", dictionary! {});
+        b.doc.get_dictionary_mut(page).unwrap().remove(b"Contents");
+        assert_eq!(classify(b).1, Outcome::Blank);
     }
 
     #[test]

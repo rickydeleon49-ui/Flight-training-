@@ -311,6 +311,7 @@ mod tests {
 
     fn extraction(sha: &str) -> Extraction {
         Extraction {
+            peak_bytes: 0,
             sha256: sha.into(),
             pages: vec![
                 page(1, Outcome::Text, "metar"),

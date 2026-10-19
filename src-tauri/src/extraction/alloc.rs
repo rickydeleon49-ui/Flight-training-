@@ -25,6 +25,8 @@ pub struct Counting {
     /// True until the process is known to be the app; then never again.
     counting: AtomicBool,
     live: AtomicUsize,
+    /// Highest `live` seen while counting (the worker's counted peak).
+    peak: AtomicUsize,
     cap: AtomicUsize,
     breached: AtomicBool,
     /// Where the one-shot marker goes; `None` in tests that only count.
@@ -36,6 +38,7 @@ impl Counting {
         Self {
             counting: AtomicBool::new(true),
             live: AtomicUsize::new(0),
+            peak: AtomicUsize::new(0),
             cap: AtomicUsize::new(UNCAPPED),
             breached: AtomicBool::new(false),
             signal_fd,
@@ -62,6 +65,11 @@ impl Counting {
     /// Requested bytes of live allocations.
     pub fn live(&self) -> usize {
         self.live.load(Ordering::Acquire)
+    }
+
+    /// The highest counted live bytes so far.
+    pub fn peak(&self) -> usize {
+        self.peak.load(Ordering::Acquire)
     }
 
     pub fn breached(&self) -> bool {
@@ -103,6 +111,8 @@ impl Counting {
             self.breach();
             return false;
         }
+        self.peak
+            .fetch_max(self.live.load(Ordering::Relaxed), Ordering::Relaxed);
         true
     }
 
@@ -451,6 +461,47 @@ mod tests {
                 (c / a - 1.0) * 100.0
             );
         }
+    }
+
+    #[test]
+    fn concurrent_shrinking_never_lets_reservations_pass_the_cap() {
+        let c = Arc::new(Counting::new(None));
+        const CAP: usize = 64 * 1024;
+        assert!(c.set_cap(CAP));
+        let shrinkers: Vec<_> = (0..4)
+            .map(|_| {
+                let c = c.clone();
+                std::thread::spawn(move || unsafe {
+                    for _ in 0..500 {
+                        let p = c.alloc_with(&System, layout(4096), false);
+                        if p.is_null() {
+                            continue;
+                        }
+                        let p = c.realloc_with(&System, p, layout(4096), 64);
+                        assert!(c.live() <= CAP);
+                        c.dealloc_with(&System, p, layout(64));
+                    }
+                })
+            })
+            .collect();
+        let reservers: Vec<_> = (0..4)
+            .map(|_| {
+                let c = c.clone();
+                std::thread::spawn(move || {
+                    for _ in 0..2000 {
+                        if c.reserve(1024) {
+                            assert!(c.live() <= CAP);
+                            c.release(1024);
+                        }
+                    }
+                })
+            })
+            .collect();
+        for t in shrinkers.into_iter().chain(reservers) {
+            t.join().unwrap();
+        }
+        assert_eq!(c.live(), 0);
+        assert!(c.peak() <= CAP, "the counted peak never passed the cap");
     }
 
     #[test]

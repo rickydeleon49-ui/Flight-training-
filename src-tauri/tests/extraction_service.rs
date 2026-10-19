@@ -260,3 +260,103 @@ fn a_file_the_worker_cannot_read_is_could_not_process() {
         }
     );
 }
+
+/// Rewrite `path` in place with `bytes` of the same length, keeping its
+/// modification time (and so its whole stamp).
+fn rewrite_keeping_stamp(path: &Path, bytes: &[u8]) {
+    use std::io::Write;
+    let modified = std::fs::metadata(path).unwrap().modified().unwrap();
+    let mut f = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+    f.write_all(bytes).unwrap();
+    f.set_modified(modified).unwrap();
+}
+
+fn same_length(a: &[u8], mut b: Vec<u8>) -> Vec<u8> {
+    assert!(b.len() <= a.len());
+    b.resize(a.len(), b' ');
+    b
+}
+
+#[test]
+fn a_file_replaced_after_the_worker_read_it_never_shows_the_old_result() {
+    let root = Root::new("during");
+    let path = root.doc("live.pdf");
+    let a = pdf(Some("Original words AAAA"));
+    let b = same_length(&a, pdf(Some("Replaced BBBB")));
+    std::fs::write(&path, &a).unwrap();
+    let svc = Arc::new(root.session());
+    let worker = {
+        let svc = svc.clone();
+        std::thread::spawn(move || {
+            svc.prepare_with(
+                "live.pdf",
+                no_cancel(),
+                Some(serde_json::json!({ "test": { "sleepAfterRead": 800 } })),
+            )
+        })
+    };
+    std::thread::sleep(Duration::from_millis(300));
+    rewrite_keeping_stamp(&path, &b);
+    let after = worker.join().unwrap();
+    assert_eq!(
+        after,
+        Readiness::NotPrepared,
+        "A's result is not reported for B, even with the same stamp"
+    );
+}
+
+#[test]
+fn a_transient_identity_failure_is_not_cached_against_the_original_bytes() {
+    let root = Root::new("transient");
+    let path = root.doc("swap.pdf");
+    let a = pdf(Some("Stable AAAA"));
+    let b = same_length(&a, pdf(Some("Swap BBBB")));
+    std::fs::write(&path, &a).unwrap();
+    let svc = Arc::new(root.session());
+    let worker = {
+        let svc = svc.clone();
+        std::thread::spawn(move || {
+            svc.prepare_with(
+                "swap.pdf",
+                no_cancel(),
+                Some(serde_json::json!({ "test": { "sleep": 800 } })),
+            )
+        })
+    };
+    // Replaced after hashing but before the worker reads it.
+    std::thread::sleep(Duration::from_millis(300));
+    std::fs::write(&path, &b).unwrap();
+    assert_eq!(worker.join().unwrap(), Readiness::NotPrepared);
+    // Back to the original bytes: nothing failed was stored for them.
+    std::fs::write(&path, &a).unwrap();
+    let s = root.session();
+    verify(&s, &root, "swap.pdf");
+    assert_eq!(
+        s.readiness("swap.pdf"),
+        Readiness::NotPrepared,
+        "no cached failure for A"
+    );
+    assert_eq!(
+        s.prepare("swap.pdf", no_cancel()),
+        Readiness::Searchable { pages: 1 }
+    );
+}
+
+#[test]
+fn queued_work_is_deduplicated_serialized_and_completes() {
+    let root = Root::new("queue");
+    std::fs::write(root.doc("q.pdf"), pdf(Some("Queued"))).unwrap();
+    let svc = Arc::new(root.session());
+    for _ in 0..50 {
+        assert!(svc.enqueue_verify(root.doc("q.pdf")));
+    }
+    svc.wait_idle();
+    assert_eq!(svc.readiness("q.pdf"), Readiness::NotPrepared);
+    assert!(svc.enqueue_prepare("q.pdf".into()));
+    assert!(
+        svc.enqueue_prepare("q.pdf".into()),
+        "a duplicate is accepted but not queued twice"
+    );
+    svc.wait_idle();
+    assert_eq!(svc.readiness("q.pdf"), Readiness::Searchable { pages: 1 });
+}

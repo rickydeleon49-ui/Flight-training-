@@ -84,12 +84,118 @@ def case_shared(pages, decoded):
     return doc_with_pages([4] * pages, [stream(b"/Filter/FlateDecode", data)])
 
 
+def deflate_stream(head, pad_total, tail=b"", fill=b" "):
+    """Compress head + fill*... + tail, streaming, to `pad_total` decoded bytes."""
+    c = zlib.compressobj(6)
+    out = [c.compress(head)]
+    left = pad_total - len(head) - len(tail)
+    chunk = fill * MIB
+    while left > 0:
+        n = min(left, MIB)
+        out.append(c.compress(chunk[:n]))
+        left -= n
+    out.append(c.compress(tail))
+    out.append(c.flush())
+    return b"".join(out)
+
+
+def xref_stream_pdf(direct, in_objstm=None, xref_pad=0):
+    """Objects 1..n written directly, optionally one object (n+1) stored in
+    an object stream (n+2), and a cross-reference stream (last) whose data
+    may be padded with `xref_pad` zero bytes."""
+    body = [b"%PDF-1.5\n%\xe2\xe3\xcf\xd3\n"]
+    pos = len(body[0])
+    offsets = {}
+    n = len(direct)
+    for i, obj in enumerate(direct, start=1):
+        data = b"%d 0 obj\n" % i + obj + b"\nendobj\n"
+        offsets[i] = pos
+        body.append(data)
+        pos += len(data)
+    entries = {}
+    if in_objstm is not None:
+        inner_id, stm_id = n + 1, n + 2
+        head = b"%d 0 " % inner_id
+        data = in_objstm(head)
+        obj = b"%d 0 obj\n" % stm_id + stream(b"/Type/ObjStm/N 1/First %d/Filter/FlateDecode" % len(head), data) + b"\nendobj\n"
+        offsets[stm_id] = pos
+        body.append(obj)
+        pos += len(obj)
+        entries[inner_id] = (2, stm_id, 0)
+        xref_id = n + 3
+    else:
+        xref_id = n + 1
+    offsets[xref_id] = pos
+    size = xref_id + 1
+    rows = []
+    for i in range(size):
+        if i == 0:
+            rows.append(bytes([0]) + (0).to_bytes(4, "big") + (65535).to_bytes(2, "big"))
+        elif i in entries:
+            t, a2, b2 = entries[i]
+            rows.append(bytes([t]) + a2.to_bytes(4, "big") + b2.to_bytes(2, "big"))
+        else:
+            rows.append(bytes([1]) + offsets[i].to_bytes(4, "big") + (0).to_bytes(2, "big"))
+    raw = b"".join(rows)
+    data = deflate_stream(raw, len(raw) + xref_pad, fill=b"\0") if xref_pad else zlib.compress(raw, 6)
+    xref = b"%d 0 obj\n" % xref_id + stream(b"/Type/XRef/Size %d/W[1 4 2]/Root 1 0 R/Filter/FlateDecode" % size, data) + b"\nendobj\n"
+    body.append(xref)
+    return b"".join(body) + b"startxref\n%d\n%%%%EOF\n" % pos
+
+
+def basic_direct():
+    return [
+        b"<</Type/Catalog/Pages 2 0 R>>",
+        b"<</Type/Pages/Count 1/Kids[4 0 R]>>",
+        FONT,
+        b"<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R>>>>/Contents 5 0 R>>",
+        stream(b"", b"BT /F1 12 Tf 72 700 Td (ok) Tj ET"),
+    ]
+
+
+def case_objstm_bomb(decoded):
+    return xref_stream_pdf(basic_direct(), in_objstm=lambda head: deflate_stream(head + b"<</Filler (", decoded, tail=b")>>"))
+
+
+def case_xref_bomb(decoded):
+    return xref_stream_pdf(basic_direct(), xref_pad=decoded)
+
+
+def case_deep_nesting(depth):
+    nested = b"[" * depth + b"]" * depth
+    objs = basic_direct()
+    objs[0] = b"<</Type/Catalog/Pages 2 0 R/Deep " + nested + b">>"
+    return pdf(objs, 1)
+
+
+def case_many_objects(count):
+    filler = [b"<</K %d/V (small value %d)>>" % (i, i) for i in range(count)]
+    objs = basic_direct() + filler
+    return pdf(objs, 1)
+
+
+def case_many_pages(pages, text_bytes):
+    words = b"weight balance density altitude crosswind "
+    contents = []
+    for i in range(pages):
+        text = (b"BT /F1 9 Tf 20 800 Td (" + words * (text_bytes // len(words) // 4) + b" %d) Tj ET\n" % i) * 4
+        contents.append(stream(b"/Filter/FlateDecode", zlib.compress(text, 6)))
+    ids = list(range(4, 4 + pages))
+    return doc_with_pages(ids, contents)
+
+
 CASES = [
     ("text-1-page", case_text, None),
     ("content-bomb-64MiB-decoded", lambda: case_bomb(64 * MIB), None),
     ("content-bomb-1GiB-decoded", lambda: case_bomb(1024 * MIB), None),
     ("content-bomb-1GiB-cap-64MiB", lambda: case_bomb(1024 * MIB), 64 * MIB),
     ("shared-stream-400-pages-2MiB", lambda: case_shared(400, 2 * MIB), None),
+    ("object-stream-bomb-1GiB-at-load", lambda: case_objstm_bomb(1024 * MIB), None),
+    ("xref-stream-bomb-1GiB-at-load", lambda: case_xref_bomb(1024 * MIB), None),
+    ("deep-nesting-200000", lambda: case_deep_nesting(200_000), None),
+    ("many-objects-300000", lambda: case_many_objects(300_000), None),
+    ("churn-2000-distinct-pages", lambda: case_many_pages(2000, 3000), None),
+    ("text-1000-pages-3KB", lambda: case_many_pages(1000, 3000), None),
 ]
 
 
@@ -119,6 +225,7 @@ def run(worker, path, sha, memory):
         "peakRssBytes": rss,
         "peakRssMiB": round(rss / MIB, 1) if rss else None,
         "frames": kinds,
+        "countedPeakBytes": next((f.get("peakBytes") for f in frames if f.get("type") == "end"), None),
         "lastFrame": frames[-1] if frames else None,
     }
 
@@ -142,7 +249,7 @@ def main():
         if r["lastFrame"] and r["lastFrame"].get("type") == "page":
             r["lastFrame"] = {"type": "page", "outcome": r["lastFrame"].get("outcome")}
         results.append(r)
-        print(json.dumps({k: r[k] for k in ("case", "exit", "breachMarker", "peakRssMiB", "wallSeconds", "frames")}))
+        print(json.dumps({k: r[k] for k in ("case", "exit", "breachMarker", "peakRssMiB", "countedPeakBytes", "wallSeconds", "frames")}))
     with open(a.out, "w") as f:
         json.dump({"worker": a.worker, "results": results}, f, indent=2)
         f.write("\n")
