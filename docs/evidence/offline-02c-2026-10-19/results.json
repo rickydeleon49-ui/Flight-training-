@@ -1,0 +1,170 @@
+{
+ "run": 3,
+ "processes": 3,
+ "correctness": "all six queries exact and capped-prefix in all three processes",
+ "postEditReferenceChecks": 324,
+ "errors": [],
+ "percentiles": "nearest-rank; pooled over 45 samples, and the worst of the three per-process values over 15 samples; verdicts use the worst process",
+ "verdicts": {
+  "coldRebuild": {
+   "targetMs": 1000,
+   "worstProcessMs": 455.3,
+   "pass": true
+  },
+  "cachedP50": {
+   "targetMs": 20,
+   "pooledWorstMs": 27.99,
+   "worstProcessMs": 28.18,
+   "pass": false,
+   "missedBy": [
+    "the"
+   ]
+  },
+  "cachedP95": {
+   "targetMs": 50,
+   "pooledWorstMs": 28.53,
+   "worstProcessMs": 28.79,
+   "pass": true,
+   "missedBy": []
+  },
+  "rebuildP95": {
+   "targetMs": 1200,
+   "pooledWorstMs": 812.97,
+   "worstProcessMs": 815.03,
+   "pass": true,
+   "missedBy": []
+  },
+  "rss": {
+   "targetBytes": 268435456,
+   "worstProcessBytes": 73711616,
+   "pass": true
+  },
+  "responseBytes": {
+   "targetBytes": 65536,
+   "worstBytes": 18803,
+   "pass": true
+  }
+ },
+ "perQuery": [
+  {
+   "query": 0,
+   "text": "aircraft",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 16.54,
+   "pooledP95Ms": 16.97,
+   "worstProcessP50Ms": 16.66,
+   "worstProcessP95Ms": 17.2
+  },
+  {
+   "query": 0,
+   "text": "aircraft",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 704.31,
+   "pooledP95Ms": 799.61,
+   "worstProcessP50Ms": 706.1,
+   "worstProcessP95Ms": 804.75
+  },
+  {
+   "query": 1,
+   "text": "abreast",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 0.14,
+   "pooledP95Ms": 0.22,
+   "worstProcessP50Ms": 0.14,
+   "worstProcessP95Ms": 0.24
+  },
+  {
+   "query": 1,
+   "text": "abreast",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 700.59,
+   "pooledP95Ms": 780.21,
+   "worstProcessP50Ms": 703.81,
+   "worstProcessP95Ms": 784.75
+  },
+  {
+   "query": 2,
+   "text": "\"density altitude\"",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 0.8,
+   "pooledP95Ms": 0.88,
+   "worstProcessP50Ms": 0.8,
+   "worstProcessP95Ms": 0.9
+  },
+  {
+   "query": 2,
+   "text": "\"density altitude\"",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 706.96,
+   "pooledP95Ms": 780.09,
+   "worstProcessP50Ms": 711.86,
+   "worstProcessP95Ms": 782.53
+  },
+  {
+   "query": 3,
+   "text": "wind shear final approach runway landing pilot airspeed",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 0.94,
+   "pooledP95Ms": 1.05,
+   "worstProcessP50Ms": 0.95,
+   "worstProcessP95Ms": 1.14
+  },
+  {
+   "query": 3,
+   "text": "wind shear final approach runway landing pilot airspeed",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 711.83,
+   "pooledP95Ms": 782.96,
+   "worstProcessP50Ms": 717.0,
+   "worstProcessP95Ms": 788.04
+  },
+  {
+   "query": 4,
+   "text": "zzqxv",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 0.11,
+   "pooledP95Ms": 0.16,
+   "worstProcessP50Ms": 0.11,
+   "worstProcessP95Ms": 0.17
+  },
+  {
+   "query": 4,
+   "text": "zzqxv",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 699.49,
+   "pooledP95Ms": 780.69,
+   "worstProcessP50Ms": 708.65,
+   "worstProcessP95Ms": 788.68
+  },
+  {
+   "query": 5,
+   "text": "the",
+   "mode": "cached",
+   "samples": 45,
+   "pooledP50Ms": 27.99,
+   "pooledP95Ms": 28.53,
+   "worstProcessP50Ms": 28.18,
+   "worstProcessP95Ms": 28.79
+  },
+  {
+   "query": 5,
+   "text": "the",
+   "mode": "rebuild",
+   "samples": 45,
+   "pooledP50Ms": 739.92,
+   "pooledP95Ms": 812.97,
+   "worstProcessP50Ms": 743.65,
+   "worstProcessP95Ms": 815.03
+  }
+ ]
+}

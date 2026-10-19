@@ -16,10 +16,20 @@ This is the measurement for addendum revision 4, §6. See `../../OFFLINE_02C_REP
 
 **Run 1** (`receipts/run1-identity-key-bug/`) is preserved unchanged. It flagged queries 0 and 5 as inexact although the counts matched: the harness compared linked questions under their material, while the frozen identities group all questions under "". The harness fix touched only that comparison. No search code, target, query, corpus or schedule changed.
 
-**Run 2** gives the results:
+**Run 2** (`receipts/run2-before-admission-fix/`) is preserved unchanged. Codex's final review found two gaps in its harness:
+- it didn't enforce sample admission (it logged instead; no sample was affected);
+- it didn't run the post-edit reference check on the committed note.
+
+Both were fixed before run 3: the harness now uses `check_note.py`, which imports the frozen `generate.py` rules unchanged.
+
+**Run 3 gives the results:**
 - `receipts/process-{1,2,3}.{json,log,time}`, with `/usr/bin/time -l` for peak RSS;
-- `results.json`: verdicts, and nearest-rank p50/p95 over 45 samples per query and mode.
+- `results.json`:
+  - verdicts;
+  - nearest-rank p50/p95 per process (15 samples) and pooled (45 samples);
+  - 324 post-edit reference checks, all passing;
+  - no errors.
 
-**Hardware:** `receipts/system.txt`. This is a release build, with the harness binary's hash in `receipts/harness-2.sha256`.
+**Hardware:** `receipts/system.txt`. This is a release build, with the harness binary's hash in `receipts/harness-3.sha256`.
 
-**One target missed.** The cached p50 for the worst-case query, "the" (27,062 matches), is 28.3 ms against 20 ms. Its p95, 29.0 ms, is within 50 ms. Every other target passes.
+**One target missed.** The cached p50 for the worst-case query, "the" (27,062 matches), is 28.2 ms in the worst process (28.0 ms pooled) against 20 ms. Its p95, 28.8 ms, is within 50 ms. Every other target passes.

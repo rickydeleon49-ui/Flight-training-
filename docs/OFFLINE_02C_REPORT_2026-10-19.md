@@ -66,18 +66,32 @@ The generator, the harness and then the manifest were committed before any timin
 
 **Correctness, untimed:** in all three processes, all six queries returned exactly the reference-scan set, and the capped results were its exact prefix.
 
-| Target | Worst of 3 processes | Verdict |
+**Post-edit reference checks:** after each of the 324 committed slot edits, the edited note was re-checked against the independent reference scan, and its membership was unchanged every time.
+
+**Sample admission:** a rebuild sample counted only if the search rebuilt exactly once, and a cached sample only if it didn't rebuild. No sample was rejected.
+
+**Verdicts** come from run 3. They use the **worst single process** (nearest-rank over its 15 samples); the pooled value over all 45 samples is shown beside it.
+
+| Target | Worst process (pooled) | Verdict |
 | --- | --- | --- |
-| Cold rebuild ≤ 1 s | 457 ms | Pass |
-| Cached p50 ≤ 20 ms, every query | 28.3 ms ("the", 27,062 matches); ≤ 16.4 ms for every other query | **Missed** |
-| Cached p95 ≤ 50 ms | 29.0 ms | Pass |
-| Rebuild-inclusive p95 ≤ 1.2 s | 818 ms | Pass |
+| Cold rebuild ≤ 1 s | 455 ms | Pass |
+| Cached p50 ≤ 20 ms, every query | 28.2 ms (28.0) for "the", with 27,062 matches; ≤ 16.6 ms for every other query | **Missed** |
+| Cached p95 ≤ 50 ms | 28.8 ms (28.5) | Pass |
+| Rebuild-inclusive p95 ≤ 1.2 s | 815 ms (813) | Pass |
 | Peak RSS ≤ 256 MiB | 70.3 MiB | Pass |
 | Largest response ≤ 64 KiB | 18.4 KiB | Pass |
 
 **About the miss.** It is reported as missed, not retuned. Only the worst-case query misses: its 27,062 matches are ranked and capped at 2,000 candidates.
 
-**Run 1 is preserved.** Its harness compared linked instructor questions under their material, while the frozen identities group all questions together. That made queries 0 and 5 look inexact even though their counts matched. Only that comparison was fixed. No search code, target, query, corpus or schedule changed. Run 1's timings were within 3.5% of run 2's (largest relative difference over every p50 and p95 of at least 1 ms).
+**Earlier runs are preserved and superseded:**
+- **Run 1** (`receipts/run1-identity-key-bug/`): its harness compared linked instructor questions under their material, while the frozen identities group all questions together. That made queries 0 and 5 look inexact even though their counts matched. Only that comparison was fixed.
+- **Run 2** (`receipts/run2-before-admission-fix/`) satisfied every check, but Codex's final review found two gaps in the harness:
+  - it logged a wrong rebuild count instead of excluding that sample;
+  - it lacked the post-edit reference check on the committed note.
+
+  Both are fixed for run 3. The earlier report's table also mislabelled pooled percentiles as process maxima; this table labels both.
+
+No search code, target, query, corpus or schedule changed between runs. Timings agree across all three runs within 3.5%.
 
 **Rebuild timing.** A rebuild after an edit (about 0.7–0.8 s) costs more than the cold build (about 0.45 s), because the old temporary index is cleared first. Dropping and recreating it instead could close that gap. It is noted as a follow-up, not changed here.
 
