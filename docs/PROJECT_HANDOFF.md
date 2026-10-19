@@ -1,3 +1,15 @@
+## OFFLINE-02b merged; OFFLINE-02c saved-content search ready for PR, dormant — 19 October 2026
+
+OFFLINE-02b merged as PR #232 (`bfb8b04`). The same PR's CI fix gave the schema-14 parity test room on runners, which also clears `main`'s red run.
+
+**OFFLINE-02c** ([report](docs/OFFLINE_02C_REPORT_2026-10-19.md)) searches guides, current cards, practice stems (never answers), notes and instructor questions in their own section. Each result opens the actual item, digest-checked for guides and cards.
+- **Review:** Codex reviewed the addendum (rev 4 GREEN after 3 RED), the native code (GREEN after 1 RED) and the UI (GREEN after 1 RED), all locally.
+- **Measurement:** release build, frozen before timing. Every correctness check is exact, and every target passes **except** the cached p50 for the worst-case query "the" (28.3 ms against 20 ms; p95 29.0 ms).
+- **Tests:** 827 native, 3,775 frontend.
+- **Owner decision:** dormant behind the same switch as document search.
+
+**Next:** with the owner's go-ahead, one push for exact-head CI, then merge.
+
 ## OFFLINE-02b search UI implemented and reviewed; dormant — 19 October 2026
 
 With the build opt-in, the Study Library search box also searches the text of prepared PDFs among the materials the other filters select.
