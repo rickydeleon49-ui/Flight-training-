@@ -161,6 +161,7 @@
 }
 
 .ai-working__dot {
+  flex-shrink: 0;
   width: 0.75rem;
   height: 0.75rem;
   margin-top: 0.25rem;
@@ -168,6 +169,14 @@
   background: var(--accent-primary);
   animation: ai-pulse 1.2s ease-in-out infinite;
 }
+
+.ai-working > .stack,
+.ai-disclaimer > p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ai-disclaimer > svg { flex: none; }
 
 .ai-disclaimer {
   padding: var(--space-3);

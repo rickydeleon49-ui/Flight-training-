@@ -1,0 +1,18 @@
+[
+  {
+    "fallback": false,
+    "bottom": 406.875,
+    "dialogBottom": 432,
+    "focused": "Send to Gemini",
+    "top": 350.65625,
+    "visible": true
+  },
+  {
+    "fallback": true,
+    "bottom": 406.875,
+    "dialogBottom": 432,
+    "focused": "Send to Gemini",
+    "top": 350.65625,
+    "visible": true
+  }
+]

@@ -388,12 +388,21 @@ dialog:not([open]) { display: none; }
 
 .dialog__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-raised);
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* Every action stays reachable when labels or text size need more room. */
+.dialog__footer > .button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* --------------------------- Empty state -------------------------- */

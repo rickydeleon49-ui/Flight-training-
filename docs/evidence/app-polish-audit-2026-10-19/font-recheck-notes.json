@@ -1,0 +1,20 @@
+{
+  "initialPreview": "The symlinked dependency directory was outside the initial Vite fs allow list, so initial screenshots/geometry used fallback fonts. Those receipts and images are preserved explicitly as limited evidence.",
+  "correction": "A disposable dev-only Vite configuration allowed the exact shared dependency directory. Production Vite config, dependencies and source were unchanged.",
+  "browser": "Final recheck uses installed Chrome with a fresh Playwright browser context. The global Playwright version expected an unavailable downloaded browser; no browser or package was installed.",
+  "harnessCorrections": [
+    "The first font assertion incorrectly required Fraunces on an Inter-only progress heading. It now requires Inter everywhere and Fraunces on screens that use that font.",
+    "The network assertion originally rejected HTTP 304 cache revalidation; it now accepts 200 or 304 and independently requires document.fonts to report the expected fonts loaded."
+  ],
+  "final": {
+    "exit": 0,
+    "routes": 20,
+    "confirmations": 5,
+    "shortKeyboard": 2,
+    "errors": 0,
+    "fonts": [
+      "Fraunces Variable",
+      "Inter"
+    ]
+  }
+}
