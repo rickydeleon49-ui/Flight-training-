@@ -1,6 +1,6 @@
 # OFFLINE-03: study material she makes herself — inventory and proposal — 19 October 2026
 
-**Status: proposal for review and owner decisions, revision 2.** Codex round 1 was RED with six findings; §6 maps each to its answer. Nothing here is implemented.
+**Status: proposal for review and owner decisions, revision 3.** Codex rounds 1 and 2 were RED; §6 and §7 map each finding to its answer. Nothing here is implemented.
 
 The roadmap's [OFFLINE-03](OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) asks for two things:
 - **Manual content.** She can write a guide, create or edit cards and practice questions, and attach notes linked to a place in a document, all without Gemini.
@@ -59,7 +59,7 @@ Nothing changes for a set until then.
 
 An item without an `origin` keeps the set's origin (Gemini or import). Existing data stays valid unchanged.
 
-**The summary is an item like the others.** It has the same origin, preservation and export rules as sections and cards, so editing a Gemini summary marks it as hers.
+**The summary is an item like the others.** It has the same origin, preservation and export rules as sections and cards, so editing a Gemini summary marks it as hers. `summary` is a plain text column, so its origin has its own column (§2.2).
 
 **A correction says what it replaces.** It carries `replaces: <itemId>` of the original.
 - The original is no longer shown in the active set; it lives on in history (§2.2).
@@ -92,7 +92,28 @@ CREATE INDEX idx_study_set_history ON study_set_history(material_id, created_at)
 - each row bounded by the existing set size limits;
 - `ON DELETE CASCADE` with the material, like its other study data.
 
-**Deletions are recorded,** not just applied. The active set's JSON keeps a `deleted` list of `itemId`s, so a later regeneration can't bring a deleted item back silently (§2.4).
+**Deletions and corrected originals are recorded,** not just applied.
+
+**New columns.** Migration 0016 adds two columns to `ai_study_sets`; `ADD COLUMN` is add-only, and existing rows get the defaults:
+
+```sql
+ALTER TABLE ai_study_sets ADD COLUMN summary_origin TEXT
+  CHECK (summary_origin IS NULL OR summary_origin IN ('user', 'instructor'));
+ALTER TABLE ai_study_sets ADD COLUMN retired_json TEXT NOT NULL DEFAULT '[]';
+```
+
+**What `retired_json` holds.** It is a bounded list of at most 2,000 entries, one for every item she deleted and every original a correction replaced:
+`{ "itemId", "kind": "summary" | "section" | "card", "reason": "deleted" | "corrected", "textKey", "terms" }`.
+- **`textKey`:** the SHA-256 of the item's normalized text, meaning NFKC, lowercased, with whitespace collapsed.
+- **`terms`:** its sorted distinct word set, capped at 64 words, so a near-copy can be found later (§2.4).
+- **Not the text itself:** that is already preserved in `study_set_history`.
+
+**Study sets get an extended save contract,** like practice questions (§2.5):
+- **Two repository paths:**
+  - `saveStudySetEdit` keeps `provider`, writes per-item `origin`/`replaces`, `summary_origin` and `retired_json`, and writes the history row first, all in one transaction;
+  - the Gemini save path keeps working.
+- **The mapper:** `mapAiStudySet` returns `manual`, `summary_origin` and `retired_json` faithfully, no longer coercing unknown providers to `gemini`.
+- **Validation:** the schema validators and restore validate the new columns: their CHECK, JSON shape and bounds.
 
 ### 2.3 Card review snapshots and their fingerprints
 
@@ -129,25 +150,30 @@ CREATE TABLE card_item_origins (
 
 **Every reader of `card_versions.provider` is listed and fixed in 03a.** That covers the app, native code and backup. Display and export read origin only from the side tables, and a test asserts that no screen or export reads the legacy column.
 
-### 2.4 Regeneration: a preview, then her choice
+### 2.4 Regeneration: matching new items against what she retired
 
-When Gemini regenerates or an import replaces a set that contains her items or deletion records, nothing is saved until she has seen a **preview of the result**.
+**Why identity alone isn't enough.** New Gemini or imported items have no identity link to old ones. So whenever a set has retired entries, regeneration **reconciles** each new candidate against them **before** anything is saved.
 
-**The preview:**
-- **Lists:**
-  - new items;
-  - her items that will be kept;
-  - originals that her corrections replace, which stay hidden;
-  - items she deleted, which stay deleted.
-- **Has no diff library:** it is a plain list of what will be in the set. HUB-03's preview requirement is met without adopting jsdiff.
-- **Offers three choices:**
-  - **Keep my items** (default): her items, corrections and deletions carry over;
-  - **Replace everything:** the new set replaces it all;
-  - **Cancel.**
+**The rules are deterministic,** with no AI:
 
-**Either save writes the previous set to `study_set_history` first.** So "Replace everything" is recoverable.
+1. **Exact match:** a candidate whose `textKey` equals a retired entry's is **held back automatically**. The preview shows it under "Left out: matches something you deleted or corrected", and she can still choose to bring it back.
+2. **Near match:** a candidate whose word set overlaps a retired entry's by Jaccard ≥ 0.6 is **unresolved**. The preview shows it beside what it resembles, and she must choose for each:
+   - **Leave it out**;
+   - **Keep it**.
+3. **Everything else** is new, with nothing to compare it against, and listed as new.
 
-**How a correction carries over.** Its `replaces` target is an item of the *old* set, so it can't be matched to new Gemini text. It carries over as her item, marked "corrects an earlier version", and the preview shows it under her items. It never sits beside the original it replaced, because that original isn't in the new set.
+**Save stays disabled while anything is unresolved.** The preview says plainly: "Items worded differently from something you deleted or corrected can't always be recognised. Check the new items."
+
+**Choosing.** **Keep my items** (default) or **Replace everything**; either way, after reconciliation. Both write the previous set to `study_set_history` first. **Cancel** writes nothing.
+
+**Corrections carry over as her items,** marked "corrects an earlier version". Because a repeat of the original wrong text is caught by rule 1 or 2, the wrong answer can't quietly return beside her correction.
+
+**Tests:**
+- a regenerated set repeating a deleted card word for word, which is held back;
+- a reworded repeat of a corrected answer, which is unresolved and blocks save until she chooses;
+- an unrelated new item, which is new;
+- "bring it back" overriding a hold-back;
+- cancel, failure and restart.
 
 ### 2.5 Practice questions: an extended save contract
 
@@ -237,3 +263,10 @@ Editing creates a new version. Attempts keep pointing at their own version.
 | 4 | "Keep my items" resurrected corrected content and ignored deletions, and skipped the preview | Stable item ids; corrections carry `replaces`; deletion records; a mandatory plain-list preview of the result before saving; history written before either choice (§2.1, §2.4) |
 | 5 | No backward-compatible hash contract | `origin` is in the canonical JSON only when present, so legacy hashes are unchanged; one rule in `cardIdentity.ts`, `card_reviews.rs` and `backup.rs`, with shared vectors; restore checks side-table consistency; snapshot ids untouched (§2.3, §2.5) |
 | 6 | Instructor corrections exported without a deliberate choice | "Include my instructor's corrections" defaults to off, is applied before serialization, and is labelled in handouts (§2.6) |
+
+## 7. Codex round 2 corrections
+
+| # | Finding | Answer |
+| --- | --- | --- |
+| 1 | No storage for the summary's origin or for deletion records; the study-set mapper and save contract drop provenance | Migration 0016 adds `ai_study_sets.summary_origin` and `retired_json` (add-only, with defaults); `saveStudySetEdit` with history first; a faithful mapper; validation in the schema validators and restore (§2.2) |
+| 2 | Regeneration can't truly keep deleted or corrected content out | Deterministic reconciliation: exact `textKey` matches are held back, Jaccard ≥ 0.6 near-matches are unresolved and block save until she chooses, and the preview states the limit; tests for word-for-word and reworded returns (§2.4) |
