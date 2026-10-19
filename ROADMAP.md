@@ -17,6 +17,37 @@ The owner approved the expanded scope and explicitly selected **offline study �
 
 **Next implementer:** after the release/current assignment, start OFFLINE-01 only using the plan's entry point. Reuse P54-02 evidence; do not duplicate accepted proofs, change a dependency/migration without the applicable review, start a scheduler migration, or claim that saved content means new AI generation works offline. Detailed source/installed acceptance and one-review-slice stopping rules are in the plan. Earlier entries retain historical status.
 
+## v0.5.7 maintenance items made actionable — 19 October 2026
+
+The owner requested the three release observations be tracked as work. [Precise scope and acceptance](docs/V057_MAINTENANCE_FOLLOWUPS_2026-10-19.md):
+
+| ID | Task / completion rule |
+| --- | --- |
+| V057-UI-01 | Reproduce and fix the clipped Cancel action in Gemini Send confirmations; verify all footer actions, constrained sizes/enlarged text, keyboard/fallback dialogs and no provider call on Cancel. Installed usability remains to be independently verified. |
+| V057-DB-01 | Classify reported backup/restore `-shm`/`-wal` leftovers by exact database/path/lifecycle before changing cleanup. Active WAL can hold committed data. Clean only proven operation-owned disposable artifacts after safe closure; test WAL-only rows, busy/concurrent/crash cases and retained backups. Normal active sidecars can close as expected behavior with evidence. |
+| REL-CI-01 | Correct the release Check job's 20-minute cold-run budget while retaining all verification and release guards. v0.5.7 Rust tests passed; timeout cancelled the later lockfile check and skipped cache saving/build. Profile cold/warm stages/cache outcomes; evaluate a finite 45-minute Check budget and prove nonpublishing cold/warm completion. |
+
+These are planned maintenance, not completed fixes or a declaration that the released database is unsafe. Preserve offline study → homework → exports and current assignments. Confirmed data-integrity risk from the sidecar investigation would take precedence; otherwise app polish can join a bounded patch. Resolve REL-CI-01 before relying on the next release automation run. Do not delete active logs, retarget v0.5.7 or trigger publication as cleanup.
+
+## P54-06 phase B part 1: FSRS-6 comparison preregistered; pending review — 19 October 2026
+
+Claude froze the phase-B contract before writing any candidate code. It is pending Codex review.
+- **Algorithm:** FSRS-6 with 21 parameters.
+- **Oracle:** the unmodified FSRS4Anki scheduler, release v6.1.3, blob `724a2f4`. Its repository has 4,110 stars and an MIT license. ts-fsrs and fsrs-rs are below the star threshold and are not used.
+- **How the oracle runs:** in an isolated `vm` context, after checking its blob ID and SHA-256.
+- **Vectors:**
+  - 30 oracle scenarios over 66 steps (initial ratings, same-day, on-time chains, lapses, lateness, bounded and rounding-adjacent states, the stability ceiling);
+  - 42 hand-specified contract vectors (refusals for every prior field, counter overflow and their order, clocks, overflow, the 180-day product cap, the stability ceiling, Again policy).
+- **Tolerances:** difficulty and stability must be exactly equal. Intervals are checked in a range only, because the oracle fuzzes them.
+- **Recorded oracle quirks,** which become candidate deviations C1–C3:
+  - stability can round to 0;
+  - ordering pushes intervals past the cap;
+  - stability can grow past the accepted ceiling;
+  - a zero-day review throws.
+- **Checks:** the preregistration tests pass 10/10, and the reference check reproduces all vectors. Codex rounds 1 and 2 were RED on contract gaps (successor states above the stability bound; no prior-timestamp validation; counter overflow at the safe-integer maximum); all are closed.
+
+No candidate, production, dependency, migration or version change. Part 2 (the candidate, measurements against simple-v1 and transition simulations) follows only after this is accepted. [Preregistration](docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md). Earlier entries remain historical.
+
 ## v0.5.7 published; P54-06 phase A P54BASE-R1 correction pending review — 19 October 2026
 
 **v0.5.7 is published** (macOS, 06:40 UTC, marked Latest) from tag `v0.5.7` at main `e8f6808`. That commit combines GEN-REL-01–05, the #221 managed-source fix and the #222 version bump. The published asset is the exact locally built ad-hoc DMG that was installed and tested, as with v0.5.5. Its SHA-256 is `57a3c913071b4763bdb5d311e300273b66035e58c13840129cfae4ee84d36c30`. The tag-triggered release workflow hit its 20-minute Check timeout without a Rust cache and built nothing; publication did not depend on it.

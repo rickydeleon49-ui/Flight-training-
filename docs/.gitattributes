@@ -315,3 +315,4 @@ evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-proof-tests.txt -tex
 evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-existing-pure.txt -text -diff
 evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-existing-history.txt -text -diff
 evidence/p54-06-feasibility-baseline-2026-10-17/receipts/r1-helper.txt -text -diff
+evidence/p54-06-phase-b-2026-10-19/receipts/preregistration-tests.txt -text -diff

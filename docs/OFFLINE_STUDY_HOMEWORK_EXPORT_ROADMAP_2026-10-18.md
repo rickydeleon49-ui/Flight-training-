@@ -123,3 +123,7 @@ One-click direct PDF is a conditional follow-up only if the native/HTML print ro
 5. Installed acceptance uses a recorded synthetic lane and exact candidate identity. No source-suite result establishes native PDF navigation/printing, scan quality, accessibility, supported-Mac coverage or a real offline workflow. Do not launch into an everyday profile or make provider calls to implement this plan.
 
 Related plans: [Study Hub](STUDY_HUB_ROADMAP_2026-10-17.md), [existing OSS shortlist](STUDY_HUB_OSS_RESEARCH_2026-10-17.md), [new focused research and verified repository snapshot](OFFLINE_STUDY_OPEN_SOURCE_RESEARCH_2026-10-18.md), [P54-02 acceptance and open limits](P54_02_PHASE2_ACCEPTANCE_2026-10-17.md), [P54-04 implementation](P54_04_STUDY_EXPORT_REPORT_2026-10-16.md).
+
+## Related v0.5.7 maintenance
+
+[Three tracked follow-ups](V057_MAINTENANCE_FOLLOWUPS_2026-10-19.md) cover the clipped Cancel action, safe classification of backup/restore sidecars and the release Check job's cold-run budget. Preserve this document's approved feature priority and active assignments. Confirmed data-integrity risk is urgent; ordinary sidecars alone are not a feature-blocking defect. Release automation needs its bounded fix before its next use; no published version is rebuilt by this planning entry.

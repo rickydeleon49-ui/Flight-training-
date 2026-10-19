@@ -1,6 +1,29 @@
+## Three v0.5.7 maintenance follow-ups tracked — 19 October 2026
+
+[Actionable scope](docs/V057_MAINTENANCE_FOLLOWUPS_2026-10-19.md): **V057-UI-01** clipped Gemini-dialog Cancel; **V057-DB-01** classify backup/restore sidecars before any safe owned-temp cleanup; **REL-CI-01** cold/warm release Check budget and cache completion. GitHub confirms the 20-minute timeout occurred after Rust tests passed, during the lockfile check. These are planning/investigation items, not implemented fixes. Sidecars are not automatically cosmetic or disposable. Preserve offline study → homework → exports/current assignments; escalate only confirmed data risk. No application, database/profile or workflow was changed by this update.
+
 ## Offline study, homework and exports prioritized by owner — 18 October 2026 Pacific
 
 Planning approved, not implemented: after the current release and any already-assigned task, prioritize **offline study → homework → exports**. This replaces the older unstarted scheduler/weather/FAA next-task order; those items and accepted evidence remain queued. [Detailed plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md), [focused OSS research](docs/OFFLINE_STUDY_OPEN_SOURCE_RESEARCH_2026-10-18.md). Start OFFLINE-01 first; PDF passage search must cover saved study content with honest per-page/scan states and zero provider calls. Homework reuses actions/lessons/history; exports extend the existing one-material JSON/print route. Seven actual upstream repos rechecked above 1,000 stars; no dependency adopted. No app, schema, profile, installer or release changed by this planning task. Earlier entries remain historical; inspect live release/assignment status before starting.
+
+## P54-06 phase B part 1: FSRS-6 comparison preregistered; pending review — 19 October 2026
+
+Claude froze the phase-B contract before writing any candidate code. It is pending Codex review.
+- **Algorithm:** FSRS-6 with 21 parameters.
+- **Oracle:** the unmodified FSRS4Anki scheduler, release v6.1.3, blob `724a2f4`. Its repository has 4,110 stars and an MIT license. ts-fsrs and fsrs-rs are below the star threshold and are not used.
+- **How the oracle runs:** in an isolated `vm` context, after checking its blob ID and SHA-256.
+- **Vectors:**
+  - 30 oracle scenarios over 66 steps (initial ratings, same-day, on-time chains, lapses, lateness, bounded and rounding-adjacent states, the stability ceiling);
+  - 42 hand-specified contract vectors (refusals for every prior field, counter overflow and their order, clocks, overflow, the 180-day product cap, the stability ceiling, Again policy).
+- **Tolerances:** difficulty and stability must be exactly equal. Intervals are checked in a range only, because the oracle fuzzes them.
+- **Recorded oracle quirks,** which become candidate deviations C1–C3:
+  - stability can round to 0;
+  - ordering pushes intervals past the cap;
+  - stability can grow past the accepted ceiling;
+  - a zero-day review throws.
+- **Checks:** the preregistration tests pass 10/10, and the reference check reproduces all vectors. Codex rounds 1 and 2 were RED on contract gaps (successor states above the stability bound; no prior-timestamp validation; counter overflow at the safe-integer maximum); all are closed.
+
+No candidate, production, dependency, migration or version change. Part 2 (the candidate, measurements against simple-v1 and transition simulations) follows only after this is accepted. [Preregistration](docs/evidence/p54-06-phase-b-2026-10-19/PREREGISTRATION.md). Earlier entries remain historical.
 
 ## v0.5.7 published; P54-06 phase A P54BASE-R1 correction pending review — 19 October 2026
 

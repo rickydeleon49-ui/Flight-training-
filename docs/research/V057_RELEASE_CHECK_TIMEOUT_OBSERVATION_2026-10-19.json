@@ -1,0 +1,162 @@
+{
+  "observedAtUtc": "2026-10-19T07:08:43.976351+00:00",
+  "scope": "Read-only GitHub run metadata/annotations; no workflow dispatched",
+  "runUrl": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/39208626239",
+  "headSha": "e8f68080186331803f8f2578086e3f8258c8eff1",
+  "conclusion": "cancelled",
+  "checkJob": {
+    "completedAt": "2026-10-19T06:33:16Z",
+    "conclusion": "cancelled",
+    "databaseId": 117916839258,
+    "name": "Check",
+    "startedAt": "2026-10-19T06:13:00Z",
+    "status": "completed",
+    "steps": [
+      {
+        "completedAt": "2026-10-19T06:13:02Z",
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "startedAt": "2026-10-19T06:13:01Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:13:05Z",
+        "conclusion": "success",
+        "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "number": 2,
+        "startedAt": "2026-10-19T06:13:02Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:13:06Z",
+        "conclusion": "success",
+        "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+        "number": 3,
+        "startedAt": "2026-10-19T06:13:05Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:13:11Z",
+        "conclusion": "success",
+        "name": "Run npm ci",
+        "number": 4,
+        "startedAt": "2026-10-19T06:13:06Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:13:12Z",
+        "conclusion": "success",
+        "name": "Work out the version, and check everything agrees",
+        "number": 5,
+        "startedAt": "2026-10-19T06:13:11Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:23:39Z",
+        "conclusion": "success",
+        "name": "Run npm test",
+        "number": 6,
+        "startedAt": "2026-10-19T06:13:12Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:24:05Z",
+        "conclusion": "success",
+        "name": "Linux desktop libraries",
+        "number": 7,
+        "startedAt": "2026-10-19T06:23:39Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:24:15Z",
+        "conclusion": "success",
+        "name": "Run dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87",
+        "number": 8,
+        "startedAt": "2026-10-19T06:24:05Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:24:15Z",
+        "conclusion": "success",
+        "name": "Run swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c",
+        "number": 9,
+        "startedAt": "2026-10-19T06:24:15Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:31:10Z",
+        "conclusion": "success",
+        "name": "Run cargo test --locked --manifest-path src-tauri/Cargo.toml",
+        "number": 10,
+        "startedAt": "2026-10-19T06:24:15Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:33:13Z",
+        "conclusion": "cancelled",
+        "name": "Cargo lockfile synchronization check",
+        "number": 11,
+        "startedAt": "2026-10-19T06:31:10Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:33:13Z",
+        "conclusion": "skipped",
+        "name": "Post Run swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c",
+        "number": 20,
+        "startedAt": "2026-10-19T06:33:13Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:33:13Z",
+        "conclusion": "skipped",
+        "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+        "number": 21,
+        "startedAt": "2026-10-19T06:33:13Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:33:15Z",
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "number": 22,
+        "startedAt": "2026-10-19T06:33:13Z",
+        "status": "completed"
+      },
+      {
+        "completedAt": "2026-10-19T06:33:15Z",
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 23,
+        "startedAt": "2026-10-19T06:33:15Z",
+        "status": "completed"
+      }
+    ],
+    "url": "https://github.com/rickydeleon49-ui/Flight-training-/actions/runs/39208626239/job/117916839258"
+  },
+  "annotations": [
+    {
+      "level": "failure",
+      "title": "",
+      "message": "The job has exceeded the maximum execution time of 20m0s"
+    },
+    {
+      "level": "failure",
+      "title": "",
+      "message": "The operation was canceled."
+    },
+    {
+      "level": "notice",
+      "title": "",
+      "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\""
+    }
+  ],
+  "cacheLogObservation": {
+    "jobId": 117916839258,
+    "command": "gh run view 39208626239 --job 117916839258 --log",
+    "rustRestoreMessage": "No cache found.",
+    "postRustCacheSaveConclusion": "skipped"
+  },
+  "interpretation": "20m maximum exceeded; cargo test succeeded; cancellation during later cargo-lock check; downstream build/draft skipped. No app defect inferred."
+}
