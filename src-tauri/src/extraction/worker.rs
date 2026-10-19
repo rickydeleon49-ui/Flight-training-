@@ -263,9 +263,9 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
     let mut total = 0usize;
     for (number, page_id) in pages {
         let inspection = inspect_page(&doc, page_id);
-        // An outsized page is never handed to text extraction, which would
-        // decode and parse all of it again.
-        let text: String = if inspection.content_too_large {
+        // An outsized or unreadable page is never handed to text extraction:
+        // lopdf would decode it again without the page budget.
+        let text: String = if inspection.content_too_large || inspection.unreadable_page {
             String::new()
         } else {
             let chunks = doc.extract_text_chunks(&[number]);

@@ -1,6 +1,16 @@
 {
   "worker": "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
-  "memoryCap": 402653184,
+  "workerSha256": "608bb15d292353612216f6e356c39779367f6cac4969df9857726c9dff5b33f0",
+  "memoryCapBytes": 536870912,
+  "command": [
+    "docs/evidence/offline-01c-2026-10-19/corpus.py",
+    "--worker",
+    "/Users/rickymac/code/Flight-training-offline-01/src-tauri/target/release/her-flight-deck",
+    "--corpus",
+    "/Users/rickymac/code/.offline-01c-corpus",
+    "--out",
+    "docs/evidence/offline-01c-2026-10-19/receipts/corpus-results.json"
+  ],
   "results": [
     {
       "exit": 0,
@@ -17,8 +27,8 @@
       },
       "textBytes": 1863210,
       "countedPeakBytes": 401571949,
-      "peakRssMiB": 533.9,
-      "wallSeconds": 2.39,
+      "peakRssMiB": 534.0,
+      "wallSeconds": 2.37,
       "samples": [
         {
           "page": 2,
@@ -40,7 +50,8 @@
       "file": "pilot_handbook.pdf",
       "bytes": 56133125,
       "sha256": "9c07502b29fc1e2372bea1e9c8288250f88560a4d96afc097d7490f8d81a841c",
-      "url": "https://www.faa.gov/sites/faa.gov/files/2022-03/pilot_handbook.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/2022-03/pilot_handbook.pdf",
+      "memoryCapBytes": 536870912
     },
     {
       "exit": 3,
@@ -57,7 +68,8 @@
       "file": "00_afh_full.pdf",
       "bytes": 273248888,
       "sha256": "90dda95dcbe992bd798f1932b02b5a02d620d8344565c0516a6917f29dea1f8d",
-      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/00_afh_full.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/00_afh_full.pdf",
+      "memoryCapBytes": 536870912
     },
     {
       "exit": 0,
@@ -93,7 +105,8 @@
       "file": "02_afh_ch1.pdf",
       "bytes": 25470096,
       "sha256": "ff3e6c79397509c55c83a08d4cf1a36a7399eb4bab83d4bfdbe9415ab89c351d",
-      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/02_afh_ch1.pdf",
+      "memoryCapBytes": 536870912
     },
     {
       "exit": 0,
@@ -129,7 +142,8 @@
       "file": "05_afh_ch4.pdf",
       "bytes": 4685834,
       "sha256": "bcf790ff0cc591e2c84de93f03befe7a393501f3c2188ad81377574107a57fa9",
-      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/05_afh_ch4.pdf",
+      "memoryCapBytes": 536870912
     },
     {
       "exit": 0,
@@ -142,7 +156,7 @@
       "pageErrors": {},
       "textBytes": 99081,
       "countedPeakBytes": 10205961,
-      "peakRssMiB": 22.5,
+      "peakRssMiB": 22.6,
       "wallSeconds": 0.05,
       "samples": [
         {
@@ -165,7 +179,8 @@
       "file": "20_afh_glossary.pdf",
       "bytes": 1728744,
       "sha256": "a7f7946efd5859318c7630c303149aba1cae4e200f4b10cc8219e21da9214b6e",
-      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/20_afh_glossary.pdf",
+      "memoryCapBytes": 536870912
     },
     {
       "exit": 0,
@@ -178,7 +193,7 @@
       "pageErrors": {},
       "textBytes": 22303,
       "countedPeakBytes": 7264166,
-      "peakRssMiB": 18.3,
+      "peakRssMiB": 18.0,
       "wallSeconds": 0.02,
       "samples": [
         {
@@ -201,7 +216,8 @@
       "file": "21_afh_index.pdf",
       "bytes": 626771,
       "sha256": "06f303f4386e77ed07b335bbcc800c32f31d2186bcdb8a388ddd08c80f470446",
-      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/21_afh_index.pdf"
+      "url": "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/21_afh_index.pdf",
+      "memoryCapBytes": 536870912
     }
   ]
 }

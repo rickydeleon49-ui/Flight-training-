@@ -1,4 +1,4 @@
-## OFFLINE-01a merged; OFFLINE-01c real-document evidence pending review — 19 October 2026
+## OFFLINE-01a merged; OFFLINE-01c real-document evidence, round-1 corrections pending re-review — 19 October 2026
 
 OFFLINE-01a merged as PR #227 (`4941b05`) after Codex rounds 1–2 were RED and round 3 GREEN. Extraction stays dormant: Codex rejected both caps for release pending real-document evidence. Claude did **01c before 01b** to supply that evidence; it is pending Codex review.
 
@@ -11,7 +11,14 @@ OFFLINE-01a merged as PR #227 (`4941b05`) after Codex rounds 1–2 were RED and 
 - **The full Airplane Flying Handbook** (261 MiB) is refused by size; its chapters complete using 18–68 MiB.
 - **Fidelity limits are reported:** glyphs drawn twice come out doubled, and some word gaps are lost.
 
-Memory-pressure simulation was not run (it could terminate the owner's running apps). Native tests: 761 passed. [Report](docs/OFFLINE_01C_REPORT_2026-10-19.md). Earlier entries remain historical.
+Codex round 1 was RED on these, all now corrected:
+- an unreadable page could still be decoded without the budget;
+- the budget didn't stop the form walk once exhausted;
+- receipts recorded the wrong cap;
+- checksummed `.log` receipts were never committed (also for 01a, now fixed);
+- some claims overreached, including CID text without ToUnicode, which was wrongly reported as text and is now `text_unreadable`.
+
+**Codex rejected the 512 MiB cap for release enablement** until pressure testing on dedicated, supported test Macs (including minimum spec) during installed acceptance. Memory-pressure simulation was not run on the owner's Mac. Native tests: 766 passed. [Report](docs/OFFLINE_01C_REPORT_2026-10-19.md). Earlier entries remain historical.
 
 ## OFFLINE-01a: native extraction worker and content cache; round-2 corrections pending re-review — 19 October 2026
 

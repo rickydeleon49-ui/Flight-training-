@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-19T14:25:06.107000+00:00",
+  "generatedAt": "2026-10-19T14:34:23.555000+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 300032,
-      "sha256": "86e478af5c5778e7775f78d3a56e7a15b1d528d3274413e7f46c53e36458e7c7"
+      "bytes": 300612,
+      "sha256": "4b54dec97bb06dbaa2e765a927e34f32ad755c8248fdff3cdbcef5b1bd635396"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 184304,
-      "sha256": "11233bd34542ec5aa41f58766115d7d8bd462b45d33489813a659dd39a0d1732"
+      "bytes": 184884,
+      "sha256": "c0a02b65498ece984edce0bffcc9707729bf6dc65e731c55e11b5717d36877d4"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 208737,
-      "sha256": "8a1b9b848f8730820b6f73a19b73a4dd6779e44d1b04d152b049270bf7fbba4a"
+      "bytes": 209317,
+      "sha256": "d14d546a7845ee8683409870b66de85a54b0fb04b12e4ef234f076cf56aab200"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",

@@ -13,10 +13,10 @@ MIB = 1024 * 1024
 MARKER = b"HFD-EXTRACT-MEMORY-LIMIT\n"
 
 
-def run(worker, path, sha, memory=None):
-    request = {"path": path, "sha256": sha}
-    if memory:
-        request["limits"] = {"memoryBytes": memory}
+def run(worker, path, sha, memory):
+    # The cap is always sent explicitly, so every receipt names the cap it ran
+    # under rather than assuming the binary's default.
+    request = {"path": path, "sha256": sha, "limits": {"memoryBytes": memory}}
     started = time.monotonic()
     p = subprocess.run(
         ["/usr/bin/time", "-l", worker, "--hfd-extract-worker"],
@@ -63,7 +63,7 @@ def main():
     ap.add_argument("--worker", required=True)
     ap.add_argument("--corpus", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--memory", type=int, default=None, help="optional lower cap in bytes")
+    ap.add_argument("--memory", type=int, default=512 * MIB, help="cap in bytes, sent explicitly")
     a = ap.parse_args()
     entries = []
     with open(os.path.join(a.corpus, "corpus.txt")) as f:
@@ -76,11 +76,14 @@ def main():
         with open(path, "rb") as fh:
             assert hashlib.sha256(fh.read()).hexdigest() == sha, name
         r = run(a.worker, path, sha, a.memory)
-        r.update({"file": name, "bytes": size, "sha256": sha, "url": url})
+        r.update({"file": name, "bytes": size, "sha256": sha, "url": url, "memoryCapBytes": a.memory})
         results.append(r)
         print(json.dumps({k: r[k] for k in ("file", "result", "pages", "outcomes", "textBytes", "countedPeakBytes", "peakRssMiB", "wallSeconds")}), flush=True)
     with open(a.out, "w") as f:
-        json.dump({"worker": a.worker, "memoryCap": a.memory or 384 * MIB, "results": results}, f, indent=2)
+        with open(a.worker, "rb") as wf:
+            worker_sha = hashlib.sha256(wf.read()).hexdigest()
+        json.dump({"worker": a.worker, "workerSha256": worker_sha, "memoryCapBytes": a.memory,
+                   "command": sys.argv, "results": results}, f, indent=2)
         f.write("\n")
 
 

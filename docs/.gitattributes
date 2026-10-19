@@ -362,3 +362,13 @@ evidence/offline-01c-2026-10-19/receipts/phak-load.txt -text -diff
 evidence/offline-01c-2026-10-19/receipts/afh-load.txt -text -diff
 evidence/offline-01c-2026-10-19/receipts/phak-pages-222-230.txt -text -diff
 evidence/offline-01c-2026-10-19/receipts/phak-pages-440-460.txt -text -diff
+evidence/offline-01c-2026-10-19/receipts/r1-cid-before-fix.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/r1-unreadable-before-fix.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/cargo-lock.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/cargo-test.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/clippy.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/corpus-results.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/fmt.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/helper.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/release-build.log -text -diff
+evidence/offline-01c-2026-10-19/receipts/round0-superseded/synthetic-measurements.log -text -diff

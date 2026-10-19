@@ -1,6 +1,6 @@
 # OFFLINE-01c: real-document fidelity and memory evidence
 
-**Status: implemented, pending independent review.** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
+**Status: implemented; Codex round-1 corrections applied; pending re-review. The 512 MiB cap was rejected for release enablement pending pressure testing on dedicated machines (see the decision below).** Claude implemented it; Codex reviews. Base: main `4941b05` (OFFLINE-01a merged). This slice answers the evidence Codex required in its 01a release decision. **Extraction stays dormant:** no import trigger, no UI and no release enablement until a reviewer accepts a cap.
 
 **Slice order:** 01c comes before 01b. The 01a cap rejection was the only blocker, and a readiness UI would have had to stay disabled anyway.
 
@@ -28,7 +28,7 @@ Raw results: `receipts/corpus-results.json`. The harness is `corpus.py`; the bin
    - **The result:** the PHAK completes, losing exactly one page.
 2. **Loading costs more than the file.**
    - **The PHAK:** loading the 53 MB file holds **238 MiB live** for its 71,546 objects (`receipts/phak-load.txt`). That's about 3.3 KB per object in `lopdf`'s in-memory model; the document's streams account for only 55 MiB of it.
-   - **The AFH parts:** chapters with about 1,000 objects load at 2–2.3× their file size (`receipts/afh-load.txt`).
+   - **The AFH parts,** with roughly 900–1,300 objects each, vary widely (`receipts/afh-load.txt`): chapter 1 is 24.3 MiB of file and 56 MiB counted (2.3×); chapter 4 is 4.5 MiB and 16 MiB (3.6×); the glossary is 1.6 MiB and 9 MiB (5.6×). Small files carry a fixed overhead, so no single ratio applies.
    - **Why the cap rises:** with per-page work, the PHAK's counted peak is **383.0 MiB**, which completes under the old 384 MiB cap with almost no margin. **The cap is proposed at 512 MiB** (`worker.rs`): about 33% headroom over the largest handbook measured.
 3. **Content-stream bombs are now stopped earlier,** by the page budget. A 1 GiB content bomb fails only its own page and uses 30 MiB RSS (`receipts/synthetic-measurements.json`). Bombs that decode while **loading** (object streams, cross-reference streams) never reach page inspection and are still stopped by the cap: `memory_limit`, 523.6 MiB RSS against the 512 MiB cap.
 4. **Fidelity on real text** (samples in `corpus-results.json`):
@@ -39,14 +39,26 @@ Raw results: `receipts/corpus-results.json`. The harness is `corpus.py`; the bin
      - `lopdf` reads only page-level text, so text that lives only in forms is `text_unreadable`.
 
      These affect search quality and belong to OFFLINE-02's normalisation and matching decisions; extraction does not try to repair them.
-   - **Unicode and CID:** the FAA files use embedded fonts with ToUnicode maps, and their text (for example "°" and curly quotes) came through correctly. No separate CID fixture without ToUnicode was added; that case is covered by the `text_unreadable` rule.
+   - **Unicode, from samples only:** in the sampled PHAK text, characters such as "°" and curly quotes came through correctly. That is sampled evidence about these files, not a general fidelity claim.
+   - **A CID font without ToUnicode (round-1 correction):** a new regression showed `lopdf` returns *something* for such text, so the page was wrongly reported as `text`. Inspection now records the font each `Tf` selects. Text shown in a Type0 font with no `/ToUnicode` makes the page `text_unreadable`, even if other text on it is fine, because the garbage is interleaved. The failing run before the fix: `receipts/r1-cid-before-fix.log`, exit 101.
 5. **A diagnostic bug, found and fixed:** with an unlimited budget (`usize::MAX`), the decode limit `budget + 1` wrapped to 0 in release builds, so every page read as empty. The first page-222–230 diagnostic was therefore wrong and has been discarded. Production's 8 MiB budget never hit this, but the arithmetic is now saturating.
 
-## Cap proposal for the reviewer (§6)
+## Review round 1 corrections (Codex RED)
+
+| Finding | Correction | Evidence |
+| --- | --- | --- |
+| 1. An unreadable page bypassed the budget | The worker no longer runs `lopdf` text extraction when inspection found the page unreadable, as well as when it is over budget; `lopdf` would decode it again without the budget. | `an_unreadable_page_is_never_decoded_again_without_the_budget`: a double-Flate page of 12 MiB stays under 8 MiB counted. It fails before the fix: `receipts/r1-unreadable-before-fix.log`, exit 101. |
+| 2. Form traversal continued after the budget was exhausted, and errors weren't charged | The budget is terminal: once exhausted, every level of the walk stops. Output produced before a decoder error is charged. `Inspection.decoded_bytes` records the total. | `an_exhausted_budget_stops_the_whole_walk` (ten oversized forms: no second form is decoded), `an_exact_boundary_fits_and_one_more_byte_does_not` (raw and Flate), `decoder_errors_are_charged_and_still_unreadable` (bad checksum). |
+| 3. The receipts recorded the wrong cap | Both harnesses (`corpus.py` and a copy of `measure.py` in this folder; the merged 01a copy is unchanged) **always send the cap explicitly** and record it, together with the worker's SHA-256 and the command. | `receipts/corpus-results.json` and `synthetic-measurements.json`; superseded runs are in `receipts/round0-superseded/`. |
+| 4. Checksummed `.log` receipts were missing from Git | `*.log` is gitignored, so the logs had not been committed. They are now force-added, here and for the 25 missing from the **merged 01a evidence**, and verified from a clean checkout. | Both `SHA256SUMS` files verify from a fresh clone. |
+| 5. Claims exceeded the evidence | Load ratios are reported per file, fidelity is described as sampled, and CID without ToUnicode is now handled and tested (above). | This report. |
+
+## Cap proposal and the reviewer's decision (§6)
 
 - **Proposed cap:** 512 MiB of counted requested bytes, with the per-page content budget of 8 MiB, one worker at a time and a 120 s deadline.
 - **Observed RSS:** at most 533.9 MiB on real files (the PHAK) and 523.6 MiB on load-time bombs, about 1.0–1.4× counted.
 - **Still not a bound on RSS:** the residual risks from 01a apply unchanged. There is still no sampled RSS watchdog, under the revised contract from 01a.
+- **Codex round-1 decision: 512 MiB is rejected for release enablement.** The real documents support the 8 MiB page budget and more margin than 384 MiB, but they don't establish acceptable behaviour under memory pressure on supported, minimum-spec Macs, and the RSS figures are observations, not bounds. **Prerequisites for enabling extraction in a release:** pressure testing on a dedicated, supported test machine, including minimum-spec coverage, during installed acceptance. That doesn't block merging this dormant slice.
 - **Which documents are refused:** a dense PDF near the 128 MiB input limit could need more than 512 MiB to load. It would be refused as `memory_limit`, honestly, never partially published. The full 261 MiB AFH is already refused by size. The app's existing guidance is to split large handbooks into chapters, and every AFH chapter tested completes using 18–68 MiB.
 
 ## Not done, and not claimed

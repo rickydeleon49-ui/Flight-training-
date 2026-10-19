@@ -1,0 +1,22 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.74s
+     Running tests/extraction_service.rs (src-tauri/target/debug/deps/extraction_service-58063abc0239b763)
+
+running 1 test
+test same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time ... FAILED
+
+failures:
+
+---- same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time stdout ----
+
+thread 'same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time' (6045918) panicked at tests/extraction_service.rs:192:43:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.59s
+
+error: test failed, to rerun pass `--test extraction_service`

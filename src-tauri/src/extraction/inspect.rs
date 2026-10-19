@@ -42,11 +42,18 @@ pub enum Outcome {
 pub struct Inspection {
     pub shows_text: bool,
     pub draws_image: bool,
+    /// Text was shown in a composite (Type0) font with no `/ToUnicode` map.
+    /// `lopdf` still returns *something* for it (glyph ids), so the page's
+    /// text cannot be trusted.
+    pub unmapped_text: bool,
     pub complete: bool,
     /// The page's own content stream could not be read or parsed.
     pub unreadable_page: bool,
     /// The page's decoded content passed `MAX_PAGE_CONTENT_BYTES`.
     pub content_too_large: bool,
+    /// Decoded bytes charged to this page, including partial output before
+    /// a decoder error.
+    pub decoded_bytes: usize,
 }
 
 /// Why strict decoding gave up.
@@ -55,13 +62,36 @@ enum Refused {
     TooLarge,
 }
 
-/// Decoded bytes still allowed for the current page.
-struct Budget(usize);
+/// Decoded bytes still allowed for the current page. Once exhausted it
+/// stays exhausted: nothing more is decoded anywhere in the page's walk.
+struct Budget {
+    left: usize,
+    used: usize,
+    exhausted: bool,
+}
 
 impl Budget {
+    fn new(limit: usize) -> Self {
+        Self {
+            left: limit,
+            used: 0,
+            exhausted: false,
+        }
+    }
+
     fn take(&mut self, n: usize) -> Result<(), Refused> {
-        self.0 = self.0.checked_sub(n).ok_or(Refused::TooLarge)?;
-        Ok(())
+        self.used = self.used.saturating_add(n);
+        match self.left.checked_sub(n) {
+            Some(left) => {
+                self.left = left;
+                Ok(())
+            }
+            None => {
+                self.left = 0;
+                self.exhausted = true;
+                Err(Refused::TooLarge)
+            }
+        }
     }
 }
 
@@ -72,7 +102,7 @@ pub fn inspect_page(doc: &Document, page_id: ObjectId) -> Inspection {
 
 /// `inspect_page` with an explicit content budget, for tests.
 pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> Inspection {
-    let mut budget = Budget(budget);
+    let mut budget = Budget::new(budget);
     let mut found = Inspection {
         complete: true,
         ..Inspection::default()
@@ -88,6 +118,7 @@ pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> 
         Err(Refused::TooLarge) => {
             found.complete = false;
             found.content_too_large = true;
+            found.decoded_bytes = budget.used;
             return found;
         }
         Err(Refused::Unreadable) => None,
@@ -95,6 +126,7 @@ pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> 
     let Some(content) = content else {
         found.complete = false;
         found.unreadable_page = true;
+        found.decoded_bytes = budget.used;
         return found;
     };
     let mut stack = Vec::new();
@@ -107,6 +139,7 @@ pub fn inspect_page_within(doc: &Document, page_id: ObjectId, budget: usize) -> 
         &mut budget,
         &mut found,
     );
+    found.decoded_bytes = budget.used;
     found
 }
 
@@ -151,12 +184,13 @@ fn strict_stream_bytes(stream: &lopdf::Stream, budget: &mut Budget) -> Result<Ve
     use std::io::Read;
     let mut out = Vec::new();
     // Saturating: an unlimited budget (usize::MAX) must not wrap to 0.
-    let limit = (budget.0 as u64).saturating_add(1);
-    flate2::read::ZlibDecoder::new(stream.content.as_slice())
+    let limit = (budget.left as u64).saturating_add(1);
+    let read = flate2::read::ZlibDecoder::new(stream.content.as_slice())
         .take(limit)
-        .read_to_end(&mut out)
-        .map_err(|_| Refused::Unreadable)?;
+        .read_to_end(&mut out);
+    // Charge what was produced even when decoding then failed.
     budget.take(out.len())?;
+    read.map_err(|_| Refused::Unreadable)?;
     // Stopping at the limit leaves the zlib stream unfinished, so only a
     // stream that fit is known to be complete; the reader errors on a
     // truncated or corrupt one.
@@ -218,9 +252,26 @@ fn walk(
     budget: &mut Budget,
     found: &mut Inspection,
 ) {
+    let mut font_unmapped = false;
     for op in &content.operations {
+        if budget.exhausted {
+            return;
+        }
         match op.operator.as_str() {
-            "Tj" | "TJ" | "'" | "\"" => found.shows_text = true,
+            "Tf" => {
+                font_unmapped = op
+                    .operands
+                    .first()
+                    .and_then(|o| o.as_name().ok())
+                    .map(|name| is_unmapped_composite(doc, name, resources))
+                    .unwrap_or(false);
+            }
+            "Tj" | "TJ" | "'" | "\"" => {
+                found.shows_text = true;
+                if font_unmapped {
+                    found.unmapped_text = true;
+                }
+            }
             "BI" => found.draws_image = true,
             "Do" => {
                 let name = op.operands.first().and_then(|o| o.as_name().ok());
@@ -231,6 +282,30 @@ fn walk(
             }
             _ => {}
         }
+    }
+}
+
+/// A Type0 (composite) font without a `/ToUnicode` map: its glyph ids can't
+/// be turned into text reliably.
+fn is_unmapped_composite(doc: &Document, name: &[u8], resources: &[Dictionary]) -> bool {
+    let font = resources.iter().find_map(|r| {
+        let fonts = match r.get(b"Font").ok()? {
+            Object::Reference(id) => doc.get_dictionary(*id).ok()?,
+            Object::Dictionary(d) => d,
+            _ => return None,
+        };
+        match fonts.get(name).ok()? {
+            Object::Reference(id) => doc.get_dictionary(*id).ok(),
+            Object::Dictionary(d) => Some(d),
+            _ => None,
+        }
+    });
+    match font {
+        Some(f) => {
+            f.get(b"Subtype").and_then(Object::as_name).ok() == Some(b"Type0".as_slice())
+                && f.get(b"ToUnicode").is_err()
+        }
+        None => false,
     }
 }
 
@@ -317,6 +392,8 @@ fn invoke(
 pub fn outcome(inspection: &Inspection, text: &str) -> Outcome {
     if inspection.unreadable_page || inspection.content_too_large {
         Outcome::Failed
+    } else if inspection.unmapped_text {
+        Outcome::TextUnreadable
     } else if !text.trim().is_empty() {
         Outcome::Text
     } else if !inspection.complete {
@@ -445,7 +522,7 @@ pub(crate) mod tests {
             if n < lo || n > hi {
                 continue;
             }
-            let raw = strict_page_content(&doc, id, &mut Budget(usize::MAX)).ok();
+            let raw = strict_page_content(&doc, id, &mut Budget::new(usize::MAX)).ok();
             let bytes = raw.as_ref().map(|b| b.len()).unwrap_or(0);
             let ops = raw
                 .and_then(|b| Content::decode_strict(&b).ok())
@@ -747,6 +824,99 @@ pub(crate) mod tests {
             assert!(!roomy.content_too_large && roomy.complete);
             assert_eq!(outcome(&roomy, ""), Outcome::Blank);
         }
+    }
+
+    #[test]
+    fn an_exhausted_budget_stops_the_whole_walk() {
+        let mut b = PdfBuilder::new();
+        let big = "0 0 m 10 10 l S ".repeat(200);
+        let form = b.form(&big, dictionary! {});
+        // Ten invocations of a form larger than the whole budget.
+        b.page(
+            &"/Fm1 Do ".repeat(10),
+            dictionary! { "XObject" => dictionary! { "Fm1" => form } },
+        );
+        let doc = Document::load_mem(&b.bytes()).unwrap();
+        let i = inspect_page_within(&doc, first_page(&doc), 1024);
+        assert!(i.content_too_large);
+        assert!(
+            i.decoded_bytes < 2 * big.len(),
+            "decoded {} bytes: no form is decoded after exhaustion",
+            i.decoded_bytes
+        );
+    }
+
+    #[test]
+    fn an_exact_boundary_fits_and_one_more_byte_does_not() {
+        let content = "0 0 m 10 10 l S ".repeat(64);
+        for compress in [false, true] {
+            let mut b = PdfBuilder::new();
+            let mut s = Stream::new(dictionary! {}, content.as_bytes().to_vec());
+            if compress {
+                s.compress().unwrap();
+            } else {
+                s.allows_compression = false;
+            }
+            let id = b.doc.add_object(s);
+            page_with_contents(&mut b, Object::Reference(id));
+            let doc = Document::load_mem(&b.bytes()).unwrap();
+            let page = first_page(&doc);
+            let exact = inspect_page_within(&doc, page, content.len());
+            assert!(
+                !exact.content_too_large && exact.complete,
+                "compress={compress}"
+            );
+            let short = inspect_page_within(&doc, page, content.len() - 1);
+            assert!(short.content_too_large, "compress={compress}");
+        }
+    }
+
+    #[test]
+    fn decoder_errors_are_charged_and_still_unreadable() {
+        let mut b = PdfBuilder::new();
+        // Large enough to decode across many reads, so output exists before
+        // the error; a small stream can fail inside its only read.
+        let mut s = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(200_000));
+        s.compress().unwrap();
+        // A bad Adler-32 checksum: the data decodes, then the reader errors.
+        let last = s.content.len() - 1;
+        s.content[last] ^= 0xff;
+        s.allows_compression = false;
+        let id = b.doc.add_object(s);
+        page_with_contents(&mut b, Object::Reference(id));
+        let doc = Document::load_mem(&b.bytes()).unwrap();
+        let i = inspect_page_within(&doc, first_page(&doc), 8 << 20);
+        assert!(i.unreadable_page && !i.content_too_large);
+        assert!(
+            i.decoded_bytes > 0,
+            "partial output before the error was charged"
+        );
+        assert_eq!(outcome(&i, ""), Outcome::Failed);
+    }
+
+    #[test]
+    fn a_cid_font_without_tounicode_never_yields_text() {
+        let mut b = PdfBuilder::new();
+        let descendant = b.doc.add_object(dictionary! {
+            "Type" => "Font", "Subtype" => "CIDFontType2", "BaseFont" => "SyntheticCID",
+            "CIDSystemInfo" => dictionary! { "Registry" => Object::string_literal("Adobe"),
+                "Ordering" => Object::string_literal("Identity"), "Supplement" => 0 },
+        });
+        let font = b.doc.add_object(dictionary! {
+            "Type" => "Font", "Subtype" => "Type0", "BaseFont" => "SyntheticCID",
+            "Encoding" => "Identity-H", "DescendantFonts" => vec![descendant.into()],
+        });
+        b.page(
+            "BT /F1 12 Tf <00410042> Tj ET",
+            dictionary! { "Font" => dictionary! { "F1" => font } },
+        );
+        let (i, o) = classify(b);
+        assert!(i.shows_text);
+        assert_ne!(
+            o,
+            Outcome::Text,
+            "glyph ids without a ToUnicode map must not be reported as text"
+        );
     }
 
     #[test]

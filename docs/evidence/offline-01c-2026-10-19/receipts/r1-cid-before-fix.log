@@ -1,0 +1,24 @@
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-01/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.52s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-b1869e07bc678909)
+
+running 1 test
+test extraction::inspect::tests::a_cid_font_without_tounicode_never_yields_text ... FAILED
+
+failures:
+
+---- extraction::inspect::tests::a_cid_font_without_tounicode_never_yields_text stdout ----
+
+thread 'extraction::inspect::tests::a_cid_font_without_tounicode_never_yields_text' (6395046) panicked at src/extraction/inspect.rs:913:9:
+assertion `left != right` failed: glyph ids without a ToUnicode map must not be reported as text
+  left: Text
+ right: Text
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    extraction::inspect::tests::a_cid_font_without_tounicode_never_yields_text
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 747 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

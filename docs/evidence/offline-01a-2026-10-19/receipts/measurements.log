@@ -1,0 +1,11 @@
+{"case": "text-1-page", "exit": 0, "breachMarker": false, "peakRssMiB": 9.8, "countedPeakBytes": 32634, "wallSeconds": 0.262, "frames": {"verified": 1, "start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-64MiB-decoded", "exit": 0, "breachMarker": false, "peakRssMiB": 300.3, "countedPeakBytes": 201420294, "wallSeconds": 0.098, "frames": {"verified": 1, "start": 1, "page:text": 1, "end": 1}}
+{"case": "content-bomb-1GiB-decoded", "exit": -6, "breachMarker": true, "peakRssMiB": 524.8, "countedPeakBytes": null, "wallSeconds": 0.068, "frames": {"verified": 1}}
+{"case": "content-bomb-1GiB-cap-64MiB", "exit": -6, "breachMarker": true, "peakRssMiB": 77.9, "countedPeakBytes": null, "wallSeconds": 0.02, "frames": {"verified": 1}}
+{"case": "shared-stream-400-pages-2MiB", "exit": 0, "breachMarker": false, "peakRssMiB": 192.4, "countedPeakBytes": 46200011, "wallSeconds": 12.74, "frames": {"verified": 1, "start": 1, "page:failed": 400, "end": 1}}
+{"case": "object-stream-bomb-1GiB-at-load", "exit": -6, "breachMarker": true, "peakRssMiB": 268.8, "countedPeakBytes": null, "wallSeconds": 0.384, "frames": {"verified": 1}}
+{"case": "xref-stream-bomb-1GiB-at-load", "exit": 70, "breachMarker": true, "peakRssMiB": 268.7, "countedPeakBytes": null, "wallSeconds": 0.043, "frames": {"verified": 1}}
+{"case": "deep-nesting-200000", "exit": 3, "breachMarker": false, "peakRssMiB": 10.2, "countedPeakBytes": null, "wallSeconds": 0.009, "frames": {"verified": 1, "error": 1}}
+{"case": "many-objects-300000", "exit": 0, "breachMarker": false, "peakRssMiB": 300.5, "countedPeakBytes": 305324252, "wallSeconds": 0.404, "frames": {"verified": 1, "start": 1, "page:text": 1, "end": 1}}
+{"case": "churn-2000-distinct-pages", "exit": 0, "breachMarker": false, "peakRssMiB": 20.2, "countedPeakBytes": 9116726, "wallSeconds": 0.525, "frames": {"verified": 1, "start": 1, "page:text": 2000, "end": 1}}
+{"case": "text-1000-pages-3KB", "exit": 0, "breachMarker": false, "peakRssMiB": 15.3, "countedPeakBytes": 4570775, "wallSeconds": 0.16, "frames": {"verified": 1, "start": 1, "page:text": 1000, "end": 1}}

@@ -481,3 +481,40 @@ fn one_outsized_page_fails_alone_and_the_document_carries_on() {
         ]
     );
 }
+
+/// An unreadable page (here a filter chain strict inspection doesn't
+/// accept) is never handed to lopdf's unbudgeted text extraction.
+#[test]
+fn an_unreadable_page_is_never_decoded_again_without_the_budget() {
+    let s = Scratch::new("unreadable");
+    let mut pdf = Pdf::new();
+    pdf.text("Readable");
+    // Double Flate: 12 MiB of drawing, compressed twice.
+    let mut once = Stream::new(dictionary! {}, b"0 0 m 10 10 l S ".repeat(12 * MIB / 16));
+    once.compress().unwrap();
+    let mut twice = Stream::new(dictionary! {}, once.content.clone());
+    twice.compress().unwrap();
+    twice.dict.set(
+        "Filter",
+        Object::Array(vec![
+            Object::Name(b"FlateDecode".to_vec()),
+            Object::Name(b"FlateDecode".to_vec()),
+        ]),
+    );
+    twice.allows_compression = false;
+    let content_id = pdf.doc.add_object(twice);
+    let page = pdf.doc.add_object(dictionary! {
+        "Type" => "Page", "Parent" => pdf.pages_id, "Contents" => content_id,
+        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+    });
+    pdf.kids.push(page.into());
+    let (path, sha) = s.write("chain.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages[1].outcome, Outcome::Failed);
+    assert_eq!(out.pages[1].error.as_deref(), Some("page_content"));
+    assert!(
+        out.peak_bytes < 8 * MIB as u64,
+        "the chained page was never decoded in full (peak {} bytes)",
+        out.peak_bytes
+    );
+}
