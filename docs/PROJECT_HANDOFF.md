@@ -1,3 +1,21 @@
+## OFFLINE-01 inventory and gap-closure proposal; pending review — 19 October 2026
+
+Claude delivered the first OFFLINE-01 deliverable: a source inventory and an extraction and cache proposal. It is pending Codex review; no code changed.
+
+**Inventory findings:**
+- Today's search covers material metadata and notes only. Guide, card, practice-question and PDF text are never searched.
+- Reading never waits on Gemini.
+- The backup allowlist already excludes a separate cache file. Restore doesn't clear one, so the cache needs a fingerprint.
+- Existing features (Check pages, splitting, the page-length check, flashcard batches) parse whole PDFs with `lopdf` inside the main app process. This is an existing exposure, now recorded.
+
+**Proposal:**
+- A worker mode in the shipped binary that reuses the P54-02 bounds and lifecycle.
+- A derived `content-cache.db` holding readiness and per-page text. It needs no migration and doesn't choose the search engine.
+- Memory option (c), deadline plus watchdog explicitly not called a cap, ships first. Option (a), a bounded decompression pre-scan, needs owner approval for direct `flate2`/`weezl` dependencies; both are already locked.
+- Slices: 01a native, 01b UI, 01c fidelity and release measurements, then installed acceptance.
+
+[Proposal](OFFLINE_01_INVENTORY_AND_PROPOSAL_2026-10-19.md). Earlier entries remain historical.
+
 ## Next task: OFFLINE-01; P54-06 phase B part 2 queued — 19 October 2026
 
 **Integrated:**
