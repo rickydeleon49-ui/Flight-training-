@@ -2585,6 +2585,10 @@ mod tests {
 }
 
 #[cfg(test)]
+#[path = "gemini_slowlink_tests.rs"]
+mod slowlink_tests;
+
+#[cfg(test)]
 #[path = "gemini_generation_tests.rs"]
 mod generation_tests;
 
