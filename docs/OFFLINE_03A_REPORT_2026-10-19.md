@@ -1,6 +1,6 @@
 # OFFLINE-03a: study material she makes and edits herself — implementation report — 19 October 2026
 
-**Status: implemented locally, pending independent (Codex) review and exact-head CI.** Not self-accepted, not merged, not released.
+**Status: local source review GREEN after Qwen's round-6 correction and independent Codex testing.** Exact-head CI is required before integration; [current acceptance report](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md). No release work.
 
 **Branch:** `claude/offline-03a-core-fixes`.
 - **Base:** PR #236's head, `750c90c` (the Codex authoring core, itself based on accepted main `fc3ef34`).
@@ -173,6 +173,12 @@ Round 5 confirmed the round-4 fix and found one P2 (`codex-review-r5-result.md`)
 **Limit:** if browser storage is unavailable or cleared, a restart can still record one extra "regenerate" history row. The stored content is the same either way, since her items are merged from the current set and not duplicated.
 
 The regression fails on the pre-fix source (`codex-r5-regression-before-fix.log`) and passes now.
+
+## Codex review, round 6: RED, corrected by Qwen and locally GREEN
+
+The reviewed operation was being deleted as soon as a save reported success, before journal acknowledgement completed. A restart after failed acknowledgement could therefore save the same reviewed regeneration again. Qwen moved the checkpoint to a shared module owned by the job provider; it is retained until acknowledgement returns true. Codex also reproduced a false-return variant in the first correction pass; that was fixed before acceptance. Both rejected and false acknowledgements now survive restart without extra history or new item ids; discard/re-confirmation cleanup is covered.
+
+Four new integration tests fail on the original source; six affected suites pass 164 tests and the full frontend passes 3,925 with 6 skipped. Typecheck, build, lock and whitespace checks pass. [Exact source, evidence, integration boundary and next assignment](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md). Earlier RED reports and failed receipts remain unchanged.
 
 ## Behaviour changes worth checking in review
 

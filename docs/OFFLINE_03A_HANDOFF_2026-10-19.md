@@ -2,6 +2,16 @@
 
 This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. Then read [the report](OFFLINE_03A_REPORT_2026-10-19.md) and [the reviewer prompt](OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md).
 
+## CURRENT STOP POINT — Codex local review GREEN; integrate after exact-head CI
+
+The owner now directs **Qwen implementation → Codex review/test → correction loop → Codex merge after green exact-head CI**. Earlier ownership and stop-point instructions below are historical and superseded by this entry.
+
+- Code correction commit: `9d3a90c7832525cb831dacb1a41b2dbd3628b5ed`; same worktree and branch as below, initially local only.
+- [Current acceptance/integration report](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md): 164 focused and 3,925 full frontend tests passed, 6 skipped; typecheck/build/lock/whitespace passed. Four new maintained cases fail on original `7562324`.
+- The pending reviewed operation survives both rejected and false native journal acknowledgements, and successful discard/acknowledgement owns cleanup.
+- Next: reviewed replacement PR, close #236 as superseded, green exact-head CI, guarded merge, verify default-branch inclusion. Then an isolated Qwen OFFLINE-03b branch from accepted main; Codex continues review/testing.
+- No new provider tests, real profiles, keys, installers, releases, dependency adoption or 03c. Native receipts correspond to `f02e850` and remain applicable; the old `b50b7b5` wording below is imprecise.
+
 ## Who owns what now
 
 **OFFLINE-03a moved to Claude on the owner's instruction:** "you can review codex work and take it over for now".
@@ -58,7 +68,7 @@ The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix
 
 **Codex review of this branch, round 5: RED (fixed; round 6 not yet run).** The round-4 fix was confirmed. One P2 was found and fixed: a reviewed save that committed before a restart could apply again. The pending operation is now kept in local storage under its job id, and recognised when the review reopens. The regression fails on the pre-fix source (`codex-r5-regression-before-fix.log`).
 
-## STOP POINT (Claude's usage ran out here) — 19 October 2026
+## HISTORICAL STOP POINT (Claude's usage ran out here) — 19 October 2026
 
 - **Last commit:** see `git log -1` on `claude/offline-03a-core-fixes` (the round-5 fix plus notes). **Local only; nothing pushed; no PR yet.**
 - **Codex review rounds 1–5:** all RED, and every finding is fixed with a failing-first regression. The results are in `docs/evidence/offline-03a-2026-10-19/codex-review-r*-result.md`.

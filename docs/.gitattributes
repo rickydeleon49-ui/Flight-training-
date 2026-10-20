@@ -463,3 +463,14 @@ evidence/offline-03a-2026-10-19/r6-vitest-full.log -text -diff
 evidence/offline-03a-2026-10-19/r6-build.log -text -diff
 evidence/offline-03a-2026-10-19/r6-diff-check.log -text -diff
 evidence/offline-03a-2026-10-19/r6b-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r7-focused.log -text -diff
+evidence/offline-03a-2026-10-19/r7-typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/r7-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r7-build.log -text -diff
+evidence/offline-03a-2026-10-19/r7-cargo-lock.log -text -diff
+evidence/offline-03a-2026-10-19/r7-diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/codex-r6-regressions-before-fix.log -text -diff
+evidence/offline-03a-2026-10-19/codex-r6-false-ack-first-pass.log -text -diff
+evidence/offline-03a-2026-10-19/r7-independent-restart.log -text -diff
+evidence/offline-03a-2026-10-19/r7-schema14-helper-sandbox.log -text -diff
+evidence/offline-03a-2026-10-19/r7-schema14-helper-host.log -text -diff

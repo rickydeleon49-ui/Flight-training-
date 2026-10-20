@@ -1,3 +1,11 @@
+## OFFLINE-03a local source review GREEN; Qwen implements, Codex reviews and integrates — 19 October 2026
+
+**Current owner workflow:** Qwen implements; Codex independently reviews and tests, loops corrections, and merges only after accepted work and green CI on the exact submitted head. This supersedes earlier role defaults for this roadmap tranche.
+
+The final acknowledgement/restart correction is committed as `9d3a90c` on `claude/offline-03a-core-fixes`. The reviewed operation now survives rejected or false journal acknowledgements and is cleared only after successful acknowledgement. Four new integration regressions fail against Claude's original source and pass after the correction. Fresh checks: **164 focused; 3,925 full frontend passed / 6 skipped; typecheck/build/cargo-lock/whitespace exit 0**. Unchanged native receipts remain **844 passed / 11 ignored**. [Source acceptance and integration handoff](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md); [evidence](evidence/offline-03a-2026-10-19/README.md).
+
+**Integration rule:** this branch replaces draft #236. GitHub records its exact-head CI/merge state; no merge before those gates pass. **Next after verified merge: OFFLINE-03b manual practice questions**, then homework → exports. 03c remains deferred; extraction/search dormant; existing flake, performance and installed/minimum-spec release gates stay open. Entries below are history.
+
 ## OFFLINE-03a implemented locally (Claude); Codex review and exact-head CI pending — 19 October 2026
 
 **Role change.** At the owner's request, Claude took over OFFLINE-03a from Codex. Claude reviewed PR #236's authoring core locally (round 1 RED: an instructor correction could be relabelled and exported by default; three minor findings) and fixed all four. The owner approved proposal revision 5: ordinary rewrites also enter the retirement list. Branch: `claude/offline-03a-core-fixes`, which supersedes #236. [Report](OFFLINE_03A_REPORT_2026-10-19.md); [reviewer prompt](OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md).

@@ -69,3 +69,24 @@ Those two failures were test timing only; product code is unchanged since `ca8e3
 | `r6-typecheck.log`, `r6-build.log`, `r6-diff-check.log` | exit 0 |
 | `r6-vitest-full.log` | **failed**: one editing test waited the default 1 s for the editor panel under load |
 | `r6b-vitest-full.log` | **3,915 passed, 6 skipped; exit 0**, after this file's async wait limit was raised to 10 s |
+
+## Codex round 6 and Qwen correction, independently tested
+
+Source correction: `9d3a90c7832525cb831dacb1a41b2dbd3628b5ed`, based on Claude stop point `7562324`. Owner workflow is Qwen implementation, Codex independent review/test and gated integration. Both Qwen CLI runs were bounded; the first reached its turn limit and was resumed with feedback, and Codex ended the second edit pass after the finished patch passed the independent gates. Qwen did not run the checks or claim independent acceptance. Raw CLI transcripts stay local; the published receipts below are test/build evidence only.
+
+| Receipt | Result |
+| --- | --- |
+| `codex-review-r6-result.md` | original RED finding, preserved |
+| `codex-r6-false-ack-first-pass.log` | first correction still repeats a save after false acknowledgement: expected failure, exit 1 |
+| `codex-r6-regressions-before-fix.log` | four maintained UI cases over original `7562324`: 4 failed as expected, 14 unrelated skipped, exit 1 |
+| `r7-focused.log` | six suites, 164 passed, exit 0 |
+| `r7-independent-restart.log` | two independent rejected/false-ack restart cases passed, exit 0 |
+| `r7-typecheck.log`, `r7-build.log`, `r7-cargo-lock.log`, `r7-diff-check.log` | exit 0 |
+| `r7-vitest-full.log` | 3,925 passed, 6 skipped; no unhandled errors reported; exit 0 |
+| `r7-source.json` | exact code commit and five changed-file SHA256 values; source unchanged during fresh gate |
+
+The negative baseline source copy was created from `git archive 7562324 src src-tauri/migrations vite.config.ts package.json tsconfig.json`, with a shared dependency symlink and only the maintained `StudySetEditing.test.ts` overlaid. Command: Node22 `node_modules/vitest/vitest.mjs run src/pages/StudyLibrary/StudySetEditing.test.ts -t 'acknowledgement failed because|re-confirming a committed|discarding an answer she never' --reporter=verbose`. All four failed; the discard case times out waiting for cleanup absent in the old source. No source checkout was reset. Full gate command was Node22 `vitest run`, then `npm run build`, `npm run test:cargo-lock`, `git diff --check`; typecheck and focused commands are in the acceptance report/controller receipts.
+
+Native source has been unchanged since `f02e850`; original native 844/11-ignored, clippy and fmt receipts are reused. Schema helper is rerun after tracker/manifest changes and recorded separately. Exact-head CI and installed behavior are separate gates.
+
+**Schema helper after documentation updates:** `r7-schema14-helper-sandbox.log` records 25/26 and exit 1: sandbox `pgrep` errors preceded the expected refusal line. `r7-schema14-helper-host.log` records the same synthetic suite with host process visibility: 26/26, exit 0. No profile operation ran. `r7-commands.json` records focused/full/build/typecheck/lock/whitespace/helper commands and exits. The rebound 20-file manifest and all receipt checksums were verified before publication.
