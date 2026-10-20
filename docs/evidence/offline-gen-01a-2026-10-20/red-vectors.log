@@ -1,0 +1,121 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --manifest-path src-tauri/Cargo.toml pdf_study_kit
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+warning: unused imports: `EXTRACTOR_VERSION` and `canonical`
+ --> src/pdf_study_kit.rs:4:33
+  |
+4 | use crate::extraction::{cache::{canonical, EXTRACTOR_VERSION}, inspect::Outcome};
+  |                                 ^^^^^^^^^  ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `ObjectId` and `Object`
+ --> src/pdf_study_kit.rs:5:23
+  |
+5 | use lopdf::{Document, Object, ObjectId};
+  |                       ^^^^^^  ^^^^^^^^
+
+warning: unused imports: `BTreeMap` and `BTreeSet`
+ --> src/pdf_study_kit.rs:7:24
+  |
+7 | use std::collections::{BTreeMap, BTreeSet};
+  |                        ^^^^^^^^  ^^^^^^^^
+
+warning: `her-flight-deck` (lib) generated 3 warnings (run `cargo fix --lib -p her-flight-deck` to apply 3 suggestions)
+warning: `her-flight-deck` (lib test) generated 3 warnings (3 duplicates)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.07s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 11 tests
+test pdf_study_kit_tests::pdf_kit_module_has_zero_network_imports ... ok
+test pdf_study_kit_tests::acronym_explicit_only_and_conflicts_suppressed ... FAILED
+test pdf_study_kit_tests::number_unit_cloze_keeps_qualifiers_and_ranges ... FAILED
+test pdf_study_kit_tests::glossary_colon_dash_and_sentence_forms ... FAILED
+test pdf_study_kit_tests::questions_use_only_in_pdf_distractors_or_fall_back_to_cards ... FAILED
+test pdf_study_kit_tests::identity_page_bounds_and_unicode_raw_offsets ... FAILED
+test pdf_study_kit_tests::ambiguous_multicolumn_tables_and_image_pages_emit_nothing_fabricated ... FAILED
+test pdf_study_kit_tests::caps_are_enforced_without_quota_filling ... FAILED
+test pdf_study_kit_tests::label_is_pulled_from_your_pdf_never_ai_or_verified ... ok
+test pdf_study_kit_tests::repeat_same_bytes_same_candidates ... FAILED
+test pdf_study_kit_tests::outline_bookmarks_then_headings_then_page_ranges ... FAILED
+
+failures:
+
+---- pdf_study_kit_tests::acronym_explicit_only_and_conflicts_suppressed stdout ----
+
+thread 'pdf_study_kit_tests::acronym_explicit_only_and_conflicts_suppressed' (8788265) panicked at src/pdf_study_kit_tests.rs:54:5:
+assertion `left == right` failed
+  left: []
+ right: [("PIC", "Pilot In Command")]
+
+---- pdf_study_kit_tests::number_unit_cloze_keeps_qualifiers_and_ranges stdout ----
+
+thread 'pdf_study_kit_tests::number_unit_cloze_keeps_qualifiers_and_ranges' (8788271) panicked at src/pdf_study_kit_tests.rs:64:5:
+assertion `left == right` failed
+  left: []
+ right: [("Remain ____.", "at or below 3,000 ft AGL"), ("Wind is ____.", "10–15 kt"), ("Tolerance is ____.", "± 2 °C"), ("Frequency is ____.", "123.45 MHz"), ("Power is ____.", "75%")]
+
+---- pdf_study_kit_tests::glossary_colon_dash_and_sentence_forms stdout ----
+
+thread 'pdf_study_kit_tests::glossary_colon_dash_and_sentence_forms' (8788268) panicked at src/pdf_study_kit_tests.rs:38:5:
+assertion `left == right` failed
+  left: []
+ right: [("Lift", "An upward force."), ("Drag", "A resisting force."), ("Thrust", "a forward force."), ("Weight", "a downward force.")]
+
+---- pdf_study_kit_tests::questions_use_only_in_pdf_distractors_or_fall_back_to_cards stdout ----
+
+thread 'pdf_study_kit_tests::questions_use_only_in_pdf_distractors_or_fall_back_to_cards' (8788274) panicked at src/pdf_study_kit_tests.rs:132:5:
+assertion `left == right` failed
+  left: 0
+ right: 2
+
+---- pdf_study_kit_tests::identity_page_bounds_and_unicode_raw_offsets stdout ----
+
+thread 'pdf_study_kit_tests::identity_page_bounds_and_unicode_raw_offsets' (8788269) panicked at src/pdf_study_kit_tests.rs:188:26:
+index out of bounds: the len is 0 but the index is 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- pdf_study_kit_tests::ambiguous_multicolumn_tables_and_image_pages_emit_nothing_fabricated stdout ----
+
+thread 'pdf_study_kit_tests::ambiguous_multicolumn_tables_and_image_pages_emit_nothing_fabricated' (8788266) panicked at src/pdf_study_kit_tests.rs:121:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- pdf_study_kit_tests::caps_are_enforced_without_quota_filling stdout ----
+
+thread 'pdf_study_kit_tests::caps_are_enforced_without_quota_filling' (8788267) panicked at src/pdf_study_kit_tests.rs:161:5:
+assertion `left == right` failed
+  left: (0, 0, 0, 0)
+ right: (40, 40, 40, 20)
+
+---- pdf_study_kit_tests::repeat_same_bytes_same_candidates stdout ----
+
+thread 'pdf_study_kit_tests::repeat_same_bytes_same_candidates' (8788275) panicked at src/pdf_study_kit_tests.rs:151:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- pdf_study_kit_tests::outline_bookmarks_then_headings_then_page_ranges stdout ----
+
+thread 'pdf_study_kit_tests::outline_bookmarks_then_headings_then_page_ranges' (8788272) panicked at src/pdf_study_kit_tests.rs:99:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+
+failures:
+    pdf_study_kit_tests::acronym_explicit_only_and_conflicts_suppressed
+    pdf_study_kit_tests::ambiguous_multicolumn_tables_and_image_pages_emit_nothing_fabricated
+    pdf_study_kit_tests::caps_are_enforced_without_quota_filling
+    pdf_study_kit_tests::glossary_colon_dash_and_sentence_forms
+    pdf_study_kit_tests::identity_page_bounds_and_unicode_raw_offsets
+    pdf_study_kit_tests::number_unit_cloze_keeps_qualifiers_and_ranges
+    pdf_study_kit_tests::outline_bookmarks_then_headings_then_page_ranges
+    pdf_study_kit_tests::questions_use_only_in_pdf_distractors_or_fall_back_to_cards
+    pdf_study_kit_tests::repeat_same_bytes_same_candidates
+
+test result: FAILED. 2 passed; 9 failed; 0 ignored; 0 measured; 924 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101

@@ -1,0 +1,22 @@
+$ python3 -c import subprocess, sys
+for path in ["src-tauri/src/pdf_study_kit.rs", "src-tauri/src/pdf_study_kit_tests.rs", "docs/OFFLINE_GEN_01A_REPORT_2026-10-20.md", "docs/evidence/offline-gen-01a-2026-10-20/.gitignore"]:
+    command = ["git", "diff", "--no-index", "--check", "/dev/null", path]
+    result = subprocess.run(command, capture_output=True, text=True)
+    print("$ " + " ".join(command))
+    print("Git difference status:", result.returncode)
+    if result.stdout or result.stderr or result.returncode not in (0, 1):
+        print(result.stdout + result.stderr)
+        sys.exit(1)
+print("No whitespace diagnostics in any untracked delivery file.")
+
+$ git diff --no-index --check /dev/null src-tauri/src/pdf_study_kit.rs
+Git difference status: 1
+$ git diff --no-index --check /dev/null src-tauri/src/pdf_study_kit_tests.rs
+Git difference status: 1
+$ git diff --no-index --check /dev/null docs/OFFLINE_GEN_01A_REPORT_2026-10-20.md
+Git difference status: 1
+$ git diff --no-index --check /dev/null docs/evidence/offline-gen-01a-2026-10-20/.gitignore
+Git difference status: 1
+No whitespace diagnostics in any untracked delivery file.
+
+EXIT 0
