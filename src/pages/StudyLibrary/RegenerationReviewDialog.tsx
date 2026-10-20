@@ -17,57 +17,11 @@ import {
 import { storedStudySet } from "@/data/repositories/documentRepository";
 import type { GeneratedStudyAid } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
-import type { GeminiJob, ReviewedRegeneration } from "@/state/GeminiJobs";
+import { reviewedSaveOf, type ReviewedRegeneration } from "@/state/reviewedSaveCheckpoint";
+import type { GeminiJob } from "@/state/GeminiJobs";
 
 const describe = (entry: PreviewItem) =>
   entry.item.kind === "summary" ? "Summary" : entry.item.kind === "section" ? `Section: ${entry.item.fields[0]}` : `Card: ${entry.item.fields[0]}`;
-
-/**
- * A reviewed save in flight, kept on this computer under its Gemini job until
- * it is confirmed. If the app closes after the save commits but before the
- * answer arrives, reopening the review after a restart finds it and resends
- * exactly that operation, which is recognised instead of applied again.
- */
-const PENDING_PREFIX = "her-flight-deck.reviewed-regeneration.";
-
-function pendingStore(): Storage | null {
-  try {
-    return typeof window !== "undefined" ? window.localStorage : null;
-  } catch {
-    return null;
-  }
-}
-
-export function rememberPendingReview(jobId: string | null, reviewed: ReviewedRegeneration): void {
-  if (!jobId) return;
-  try {
-    pendingStore()?.setItem(PENDING_PREFIX + jobId, JSON.stringify(reviewed));
-  } catch {
-    // Storage full or unavailable: the in-memory retry still covers this session.
-  }
-}
-
-export function forgetPendingReview(jobId: string | null): void {
-  if (!jobId) return;
-  try {
-    pendingStore()?.removeItem(PENDING_PREFIX + jobId);
-  } catch {
-    // Nothing more to do; a stale entry is only used if its content is stored.
-  }
-}
-
-function pendingReview(jobId: string | null): ReviewedRegeneration | null {
-  if (!jobId) return null;
-  try {
-    const raw = pendingStore()?.getItem(PENDING_PREFIX + jobId);
-    if (!raw) return null;
-    const value = JSON.parse(raw) as Partial<ReviewedRegeneration>;
-    // Shape only; the save itself validates the whole operation again.
-    return typeof value.operationId === "string" && value.expected && value.next ? (value as ReviewedRegeneration) : null;
-  } catch {
-    return null;
-  }
-}
 
 /** An item's full text, so she can judge it before keeping or leaving it out. */
 function ItemContent({ kind, fields }: { kind: PreviewItem["item"]["kind"]; fields: readonly string[] }) {
@@ -142,15 +96,14 @@ export function RegenerationReviewDialog({
       try {
         const read = await repositories?.documents.readStudySetForEdit(materialId);
         if (!read) throw new Error("missing");
-        // Her last reviewed save got no answer, in this session or before a
-        // restart. If its content is what is stored now, it did commit: resend
-        // exactly that operation, which is recognised as already saved,
-        // instead of reviewing (and saving) again.
-        const pending = job.reviewed ?? pendingReview(job.jobId);
+        // Her last reviewed save has not been acknowledged by the journal, in
+        // this session or before a restart. If its content is what is stored
+        // now, it did commit: resend exactly that operation, which is
+        // recognised as already saved, instead of reviewing (and saving) again.
+        const pending = job.reviewed ?? reviewedSaveOf(job.jobId);
         if (pending && holds(read.stored, pending.next)) {
           if (live) setSettling(true);
           const saved = await onSave(pending);
-          if (saved) forgetPendingReview(job.jobId);
           if (live && !saved) {
             setSettling(false);
             setProblem("Your reviewed study guide may already be saved, but this couldn't be confirmed. Close this and try again.");
@@ -213,9 +166,10 @@ export function RegenerationReviewDialog({
       const key = JSON.stringify(next);
       if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
       const reviewed: ReviewedRegeneration = { operationId: operationRef.current.id, expected: opened.stored, next };
-      rememberPendingReview(job.jobId, reviewed);
       const saved = await onSave(reviewed);
-      if (saved) forgetPendingReview(job.jobId);
+      // A save that returned true is not finished business: the journal still
+      // holds the answer until it acknowledges it, and only that removes the
+      // checkpoint. So nothing is cleared here, whatever the save reported.
       if (!saved) {
         setProblem("The reviewed study guide wasn't saved. Your choices are still here; try saving again.");
       }

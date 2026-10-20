@@ -12,7 +12,7 @@ import {
 import type { AppData } from "./AppDataContext";
 import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
-import type { NextStudySet, StoredSetRow } from "@/data/studySetTransaction";
+import { forgetReviewedSave, rememberReviewedSave, type ReviewedRegeneration } from "./reviewedSaveCheckpoint";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   acknowledgeGeminiJob,
@@ -55,7 +55,10 @@ import {
  * "Save again" uses it without asking Gemini again. After a reload or restart,
  * the native journal is read back before anything new may start. A finished
  * answer waits for her to save or discard it. A generation cut off by the app
- * closing is shown as interrupted and never resent by itself.
+ * closing is shown as interrupted and never resent by itself. A save she
+ * reviewed keeps its exact operation on this computer until the journal
+ * acknowledges the answer, so a restart recognises that save instead of
+ * making it again under new item ids.
  */
 
 export type GeminiJobPhase =
@@ -140,14 +143,10 @@ export interface StartOptions {
 }
 
 /**
- * A regenerated study set as she reviewed it: the set she had open and the
- * merged set to store. Its operation id makes a retry safe.
+ * A regenerated study set as she reviewed it, and the checkpoint that keeps it
+ * until the journal acknowledges its answer. Shared with the review dialog.
  */
-export interface ReviewedRegeneration {
-  operationId: string;
-  expected: StoredSetRow;
-  next: NextStudySet;
-}
+export type { ReviewedRegeneration } from "./reviewedSaveCheckpoint";
 
 /** Whether earlier Gemini work has been read back from the journal yet. */
 export type GeminiRecovery = "pending" | "ready" | "failed";
@@ -298,17 +297,31 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   const syncPendingCount = useCallback(() => setPendingAckCount(pendingAcksRef.current.size), []);
 
-  /** Ask the journal to forget one job; true once it is written down. */
+  /**
+   * Ask the journal to forget one job. True only when the journal confirms the
+   * record is gone; a rejection or a `false` answer means the answer is still
+   * there (or could not be written down), so it stays on the retry list and
+   * anything that depends on it stays where it is.
+   */
   const acknowledgeNow = useCallback(
     async (id: string): Promise<boolean> => {
+      let acknowledged = false;
       try {
-        await acknowledgeGeminiJob(id);
-        pendingAcksRef.current.delete(id);
-        syncPendingCount();
-        return true;
+        acknowledged = await acknowledgeGeminiJob(id);
       } catch {
-        return false;
+        // The write did not go through. Nothing here may be treated as done.
       }
+      // `false` is not removal: the journal answers that while its own command
+      // is still finishing, while a damaged journal is quarantined, and when it
+      // cannot write. Only `true` says the answer can never come back.
+      if (!acknowledged) return false;
+      pendingAcksRef.current.delete(id);
+      syncPendingCount();
+      // The journal will never hand this answer back, so the reviewed save it
+      // was holding is finished with. This is the only place that checkpoint is
+      // dropped: a study-set write that succeeded says nothing about here.
+      forgetReviewedSave(id);
+      return true;
     },
     [syncPendingCount],
   );
@@ -317,7 +330,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
    * Retry acknowledgements that could not be written yet. They follow saves
    * whose content is already in the library: a restart before they succeed is
    * still safe, because an answer that is already the saved content is
-   * recognized and never saved twice.
+   * recognized and never saved twice, and a save she reviewed keeps its exact
+   * operation here until the acknowledgement lands.
    */
   const flushAcks = useCallback(async () => {
     for (const id of [...pendingAcksRef.current]) await acknowledgeNow(id);
@@ -346,6 +360,12 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       if (!job?.answer) return false;
       update(key, { phase: "saving", error: null });
       const answer = job.answer;
+      // A reviewed save is the one write the journal cannot re-check for her:
+      // record the exact operation before sending it, and let the
+      // acknowledgement (acknowledgeNow) be the only thing that removes it.
+      // Whether the study set stored is not the test — the answer stays in the
+      // journal until then, and a restart must recognise this save, not redo it.
+      if (reviewed) rememberReviewedSave(job.jobId, reviewed);
 
       let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
       try {
