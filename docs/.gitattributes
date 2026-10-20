@@ -452,3 +452,8 @@ evidence/offline-03a-2026-10-19/r4-typecheck.log -text -diff
 evidence/offline-03a-2026-10-19/r4-vitest-full.log -text -diff
 evidence/offline-03a-2026-10-19/r4-build.log -text -diff
 evidence/offline-03a-2026-10-19/r4-diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/codex-r4-regression-before-fix.log -text -diff
+evidence/offline-03a-2026-10-19/r5-typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/r5-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r5-build.log -text -diff
+evidence/offline-03a-2026-10-19/r5-diff-check.log -text -diff

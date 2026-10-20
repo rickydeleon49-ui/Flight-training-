@@ -372,4 +372,46 @@ describe("editing a generated study guide", () => {
     await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
     expect((await savedSet()).flashcards.find((card) => card.front === "When do you flare?")!.sourcePage).toBeNull();
   });
+
+  it("the review shows each item's full text and the earlier wording it resembles before she chooses", async () => {
+    // Her instructor corrects the rudder card, and she deletes the section.
+    const read = (await repos.documents.readStudySetForEdit("mat-a"))!;
+    const { authoringStateOf, frameOf, nextSetOf } = await import("@/logic/studySetEditing");
+    const { prepareStudyEdit } = await import("@/logic/studyAuthoring");
+    const state = authoringStateOf(read.set);
+    const corrected = await prepareStudyEdit(state, { kind: "correct", itemId: state.items[3]!.itemId, fields: ["What does the rudder do?", "Keeps the longitudinal axis aligned with the runway."], origin: "instructor" });
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-a", reason: "correct", expected: read.stored, next: nextSetOf(frameOf(read.set), corrected.next) });
+    const again = (await repos.documents.readStudySetForEdit("mat-a"))!;
+    const now = authoringStateOf(again.set);
+    const removed = await prepareStudyEdit(now, { kind: "delete", itemId: now.items[1]!.itemId });
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-a", reason: "delete", expected: again.stored, next: nextSetOf(frameOf(again.set), removed.next) });
+
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
+      ...AID,
+      summary: "A new summary.",
+      sections: [{ heading: "Crab", body: "Point the nose into the wind." }],
+      flashcards: [
+        { front: "What does the rudder do?", back: "It aligns the nose with runway.", sourcePage: null },
+        { front: "When do you flare?", back: "About ten feet up.", sourcePage: 7 },
+      ],
+      jobId: "job-777777777777777777777777",
+      contentSha256: "",
+    });
+    await open("/study/mat-a");
+    fireEvent.click(await screen.findByRole("button", { name: "Regenerate" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }));
+    const review = await dialog("Review the new study guide");
+    const choice = within(await review.findByRole("region", { name: "Needs your choice" }, SLOW_RUNNER));
+    // The proposed answer, and the wrong answer her instructor corrected, are both shown.
+    expect(choice.getByText("Answer: It aligns the nose with runway.")).toBeTruthy();
+    expect(choice.getByText("Answer: Aligns the nose with the runway.")).toBeTruthy();
+    expect(choice.getByText(/something you corrected or rewrote/)).toBeTruthy();
+    // The held-back section shows its text; new cards show their answers.
+    const left = within(review.getByRole("region", { name: "Left out" }));
+    expect(left.getByText("Point the nose into the wind.")).toBeTruthy();
+    const fresh = within(review.getByRole("region", { name: "New" }));
+    expect(fresh.getByText("Answer: About ten feet up.")).toBeTruthy();
+    expect(fresh.getByText("A new summary.")).toBeTruthy();
+  });
 });

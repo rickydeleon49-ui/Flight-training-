@@ -9,14 +9,46 @@ import {
   mergeRegeneration,
   nextSetOf,
   regenerationPreview,
+  retiredWording,
+  retiredWordingIndex,
+  type ItemText,
   type RegenerationMode,
 } from "@/logic/studySetEditing";
+import { storedStudySet } from "@/data/repositories/documentRepository";
 import type { GeneratedStudyAid } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
 import type { GeminiJob, ReviewedRegeneration } from "@/state/GeminiJobs";
 
 const describe = (entry: PreviewItem) =>
   entry.item.kind === "summary" ? "Summary" : entry.item.kind === "section" ? `Section: ${entry.item.fields[0]}` : `Card: ${entry.item.fields[0]}`;
+
+/** An item's full text, so she can judge it before keeping or leaving it out. */
+function ItemContent({ kind, fields }: { kind: PreviewItem["item"]["kind"]; fields: readonly string[] }) {
+  if (kind === "summary") return <p className="tiny wrap-anywhere ai-copy">{fields[0]}</p>;
+  return (
+    <div className="stack stack--1">
+      <p className="tiny wrap-anywhere">
+        <strong>{kind === "card" ? "Question: " : ""}{fields[0]}</strong>
+      </p>
+      <p className="tiny wrap-anywhere ai-copy">{kind === "card" ? `Answer: ${fields[1]}` : fields[1]}</p>
+    </div>
+  );
+}
+
+/** What a held or near-matching item resembles, from Previous versions when available. */
+function Resembles({ entry, wording }: { entry: PreviewItem; wording: ReadonlyMap<string, ItemText> }) {
+  const earlier = retiredWording(wording, entry.match);
+  return (
+    <div className="stack stack--1" style={{ paddingLeft: "var(--space-3)" }}>
+      <p className="tiny muted">It looks like {resembles(entry)}:</p>
+      {earlier ? (
+        <ItemContent kind={entry.item.kind} fields={earlier} />
+      ) : (
+        <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>
+      )}
+    </div>
+  );
+}
 
 const resembles = (entry: PreviewItem) =>
   entry.match?.reason === "deleted" ? "something you deleted" : "something you corrected or rewrote";
@@ -43,6 +75,8 @@ export function RegenerationReviewDialog({
   const answer = job.answer as GeneratedStudyAid;
   const [opened, setOpened] = useState<{ stored: StoredSetRow; state: AuthoringState } | null>(null);
   const [preview, setPreview] = useState<readonly PreviewItem[] | null>(null);
+  // Earlier wording behind each retirement fingerprint, from Previous versions.
+  const [wording, setWording] = useState<ReadonlyMap<string, ItemText>>(new Map());
   const [problem, setProblem] = useState<string | null>(null);
   const [mode, setMode] = useState<RegenerationMode>("keep");
   const [keepMySummary, setKeepMySummary] = useState(true);
@@ -75,7 +109,17 @@ export function RegenerationReviewDialog({
         }
         const state = authoringStateOf(read.set);
         const classified = await regenerationPreview(state, answer);
+        let earlier: ReadonlyMap<string, ItemText> = new Map();
+        try {
+          const entries = await repositories!.documents.listStudySetHistory(materialId);
+          earlier = await retiredWordingIndex(
+            entries.flatMap((entry) => (entry.previous ? [storedStudySet(materialId, entry.previous)] : [])),
+          );
+        } catch {
+          // Without history the review still works; it says the wording isn't available.
+        }
         if (!live) return;
+        setWording(earlier);
         setOpened({ stored: read.stored, state });
         setPreview(classified);
       } catch (failure) {
@@ -189,7 +233,8 @@ export function RegenerationReviewDialog({
                 {group("unresolved").map((entry) => (
                   <div className="stack stack--1" key={entry.item.itemId}>
                     <p className="small wrap-anywhere">{describe(entry)}</p>
-                    <p className="tiny muted">This looks like {resembles(entry)}.</p>
+                    <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
+                    <Resembles entry={entry} wording={wording} />
                     <div className="row row--wrap">
                       <label className="row">
                         <input type="radio" name={`choice-${entry.item.itemId}`} checked={choices.get(entry.item.itemId) === "omit"} onChange={() => choose(entry.item.itemId, "omit")} />
@@ -209,12 +254,14 @@ export function RegenerationReviewDialog({
               <section className="stack stack--2" aria-label="Left out">
                 <p className="small"><strong>Left out: matches something you deleted or corrected</strong></p>
                 {group("held").map((entry) => (
-                  <Checkbox
-                    key={entry.item.itemId}
-                    checked={choices.get(entry.item.itemId) === "keep"}
-                    onChange={(checked) => choose(entry.item.itemId, checked ? "keep" : undefined)}
-                    label={`Bring it back: ${describe(entry)}`}
-                  />
+                  <div className="stack stack--1" key={entry.item.itemId}>
+                    <Checkbox
+                      checked={choices.get(entry.item.itemId) === "keep"}
+                      onChange={(checked) => choose(entry.item.itemId, checked ? "keep" : undefined)}
+                      label={`Bring it back: ${describe(entry)}`}
+                    />
+                    <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
+                  </div>
                 ))}
               </section>
             ) : null}
@@ -222,7 +269,10 @@ export function RegenerationReviewDialog({
             <section className="stack stack--1" aria-label="New">
               <p className="small"><strong>New ({group("new").length})</strong></p>
               {group("new").map((entry) => (
-                <p className="tiny wrap-anywhere" key={entry.item.itemId}>{describe(entry)}</p>
+                <div className="stack stack--1" key={entry.item.itemId}>
+                  {entry.item.kind === "summary" ? <p className="tiny"><strong>Summary</strong></p> : null}
+                  <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
+                </div>
               ))}
             </section>
           </>

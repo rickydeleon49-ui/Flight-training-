@@ -52,3 +52,11 @@ Those two failures were test timing only; product code is unchanged since `ca8e3
 | `codex-r3-regressions-before-fix.log` | the 2 new regressions fail on the pre-fix source (2 failed, 31 passed) |
 | `r4-typecheck.log`, `r4-build.log`, `r4-diff-check.log` | exit 0 |
 | `r4-vitest-full.log` | **3,913 passed, 6 skipped; exit 0** |
+
+## After the Codex round-4 fix
+
+| Receipt | Result |
+| --- | --- |
+| `codex-r4-regression-before-fix.log` | the new regression fails on the pre-fix source (1 failed, 12 passed) |
+| `r5-typecheck.log`, `r5-build.log`, `r5-diff-check.log` | exit 0 |
+| `r5-vitest-full.log` | **3,914 passed, 6 skipped; exit 0** |

@@ -151,6 +151,17 @@ Two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix.log
 
 Round 3 confirmed both round-2 fixes and found one P2 (`codex-review-r3-result.md`): a plain Gemini save stores an out-of-range page as no page, but the "already saved?" check compared the raw answer. So a committed save whose response was lost was reported as "Something newer was saved", and after a restart it stayed an unrecognised checkpoint. **Fix:** `alreadySaved` compares exactly what a plain save stores: the same fields, with `generatedPage` applied. Two regressions, for a lost response after commit and for journal recovery after a restart, fail on the pre-fix source (`codex-r3-regressions-before-fix.log`) and pass now.
 
+## Codex review, round 4: RED, fixed
+
+Round 4 confirmed the round-3 fix and found one P2 (`codex-review-r4-result.md`): the regeneration review showed only a card's question, a section's heading or "Summary". She could not see the answer she was choosing to keep, or what it resembled.
+
+**Fix:**
+- Every candidate now shows its full text: summary; heading and body; question and answer.
+- Near matches and held-back items also show the earlier wording they resemble. That wording is recovered from Previous versions, since the retirement list keeps only a fingerprint: `retiredWordingIndex` hashes each item of each history version with the same `retirementTextKey`.
+- When the earlier wording is no longer in history, the review says so.
+
+The regression fails on the pre-fix source (`codex-r4-regression-before-fix.log`) and passes now.
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

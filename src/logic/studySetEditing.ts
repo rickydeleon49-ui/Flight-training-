@@ -10,6 +10,8 @@ import {
   appendRetirements,
   assignItemIds,
   previewRegeneration,
+  retirementTextKey,
+  type RetiredItem,
   type AuthoringState,
   type DraftItem,
   type PreviewItem,
@@ -172,4 +174,38 @@ export function itemAuthorLabel(origin: unknown): string | null {
   if (origin === "user") return "Written by you";
   if (origin === "instructor") return "Instructor correction";
   return "Author unknown";
+}
+
+/** The fields of an item as shown, by kind: [summary], [heading, body], [front, back]. */
+export type ItemText = readonly string[];
+
+/**
+ * The earlier wording behind each retirement fingerprint, recovered from the
+ * whole sets kept in history (the retirement list itself keeps only a
+ * fingerprint). Keyed by kind and text key, so it also finds items that had
+ * no id yet when that version was saved.
+ */
+export async function retiredWordingIndex(
+  previousSets: readonly Pick<AiStudySet, "summary" | "sections" | "flashcards">[],
+): Promise<ReadonlyMap<string, ItemText>> {
+  const index = new Map<string, ItemText>();
+  const add = async (kind: StudyItem["kind"], fields: string[]) => {
+    try {
+      const key = `${kind}\u0000${await retirementTextKey({ kind, itemId: kind === "summary" ? "summary" : "x", fields })}`;
+      if (!index.has(key)) index.set(key, fields);
+    } catch {
+      // An item the authoring rules can't read can't be the source of a fingerprint.
+    }
+  };
+  for (const set of previousSets) {
+    if (set.summary) await add("summary", [set.summary]);
+    for (const section of set.sections) await add("section", [section.heading, section.body]);
+    for (const card of set.flashcards) await add("card", [card.front, card.back]);
+  }
+  return index;
+}
+
+/** The earlier wording a retirement fingerprint stands for, when history still has it. */
+export function retiredWording(index: ReadonlyMap<string, ItemText>, entry: RetiredItem | null): ItemText | null {
+  return entry ? index.get(`${entry.kind}\u0000${entry.textKey}`) ?? null : null;
 }
