@@ -16,7 +16,9 @@
 
 **Local gates:** native 844 passed, clippy/fmt exit 0, schema-14 helper 26/26; frontend in the report. Nothing pushed yet, nothing merged, enabled or released.
 
-**Next:** Codex reviews locally, then one push for exact-head CI and a PR; then 03b practice questions. The FLAKE-CR-01, 02c p50, extraction/search and installed/minimum-spec gates remain open. Entries below are history.
+**Review state:** Codex round 1 was RED (the regeneration-review save could lose choices or apply twice; restore missed a stale check). Both are fixed, with failing-first regressions. **Where to resume, and the 03b plan:** [handoff](OFFLINE_03A_HANDOFF_2026-10-19.md).
+
+**Next:** full local gate, Codex round 2, then one push for exact-head CI and a PR (closing #236 as superseded); then 03b practice questions. The FLAKE-CR-01, 02c p50, extraction/search and installed/minimum-spec gates remain open. Entries below are history.
 
 ## OFFLINE-03a authoring rules implemented; persistence/editor still pending — 19 October 2026
 

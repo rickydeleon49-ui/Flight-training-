@@ -10,6 +10,7 @@ import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
+import { StudySetSaveError } from "@/data/persistenceErrors";
 
 /**
  * OFFLINE-03a in the material page: her own study guide, editing with
@@ -254,5 +255,85 @@ describe("editing a generated study guide", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
     await screen.findByRole("button", { name: "Review the new study guide and cards" });
     expect((await savedSet()).summary).toBe("Mine");
+  });
+
+  async function herEditThenRegenerate() {
+    const read = (await repos.documents.readStudySetForEdit("mat-a"))!;
+    const { authoringStateOf, frameOf, nextSetOf } = await import("@/logic/studySetEditing");
+    const { prepareStudyEdit } = await import("@/logic/studyAuthoring");
+    const state = authoringStateOf(read.set);
+    const edited = await prepareStudyEdit(state, { kind: "edit", itemId: state.items[2]!.itemId, fields: ["Which wing is lowered?", "The upwind wing."], origin: "user" });
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-a", reason: "edit", expected: read.stored, next: nextSetOf(frameOf(read.set), edited.next) });
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, summary: "A new summary.", jobId: "job-555555555555555555555555", contentSha256: "" });
+    await open("/study/mat-a");
+    fireEvent.click(await screen.findByRole("button", { name: "Regenerate" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }));
+    const review = await dialog("Review the new study guide");
+    await review.findByRole("button", { name: "Save the reviewed study guide" });
+    return review;
+  }
+
+  it("a failed reviewed save keeps the dialog and her choices open; saving again saves once", async () => {
+    const review = await herEditThenRegenerate();
+    fireEvent.click(review.getByLabelText(/Replace everything/));
+    let failures = 1;
+    db.beforeStatement = (sql) => {
+      if (failures && sql.includes("INSERT INTO ai_study_sets")) {
+        failures--;
+        throw new Error("synthetic disk full");
+      }
+    };
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    expect(await review.findByText(/Your choices are still here/)).toBeTruthy();
+    expect(review.getByLabelText(/Replace everything/)).toHaveProperty("checked", true);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."));
+    expect((await savedSet()).flashcards.every((card) => card.origin === undefined)).toBe(true);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+  });
+
+  it("a reviewed save that committed before its answer was lost is recognised on retry, not applied twice", async () => {
+    const review = await herEditThenRegenerate();
+    const save = db.saveStudySetAtomically!.bind(db);
+    let lose = 1;
+    db.saveStudySetAtomically = async (operation) => {
+      const result = await save(operation);
+      if (lose && operation.reason === "regenerate") {
+        lose--;
+        throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
+      }
+      return result;
+    };
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    expect(await review.findByText(/Your choices are still here/)).toBeTruthy();
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+    expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
+  });
+
+  it("restoring is refused when the guide changed after she opened the confirmation", async () => {
+    await open("/study/mat-a");
+    fireEvent.click(await screen.findByRole("button", { name: "Edit study guide" }));
+    const editor = within(await screen.findByRole("region", { name: "Edit this study guide" }));
+    fireEvent.click(editor.getAllByRole("button", { name: "Edit" })[0]!);
+    const edit = await dialog("Edit this summary");
+    await fill(edit, "Summary", "Mine.");
+    fireEvent.click(edit.getByRole("button", { name: "Save" }));
+    await waitFor(async () => expect((await savedSet()).summary).toBe("Mine."));
+    fireEvent.click(screen.getByRole("button", { name: "Previous versions" }));
+    const versions = within(await screen.findByRole("list", { name: "Previous versions" }));
+    fireEvent.click(versions.getByRole("button", { name: "Restore" }));
+    const confirm = await dialog("Restore this version?");
+    // The confirmation has read the set she is looking at.
+    await waitFor(async () => expect(await repos.documents.readStoredStudySet("mat-a")).toBeTruthy());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await db.execute("UPDATE ai_study_sets SET summary = 'Changed in another window.'");
+    fireEvent.click(confirm.getByRole("button", { name: "Restore" }));
+    expect(await confirm.findByText(/changed after you opened it/)).toBeTruthy();
+    expect((await savedSet()).summary).toBe("Changed in another window.");
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });
 });

@@ -361,6 +361,9 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
   const [entries, setEntries] = useState<StudySetHistoryEntry[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [restoring, setRestoring] = useState<StudySetHistoryEntry | null>(null);
+  // The set as it was when she opened the confirmation: a change made since
+  // is refused as stale rather than overwritten unseen. Undefined while read.
+  const [restoreExpected, setRestoreExpected] = useState<StoredSetRow | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -384,7 +387,8 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
 
   const restore = async () => {
     const entry = restoring;
-    if (!entry?.previous || busyRef.current) return;
+    const expected = restoreExpected;
+    if (!entry?.previous || expected === undefined || busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
     setError(null);
@@ -392,7 +396,7 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
       try {
         let operation = operationRef.current?.entryId === entry.id ? operationRef.current.operation : null;
         if (!operation) {
-          const current = await repos.documents.readStoredStudySet(material.id);
+          const current = expected;
           const previous = entry.previous!;
           const restoredRetired = JSON.parse(previous.retired_json);
           // What she retired since stays retired: the lists are joined.
@@ -462,7 +466,12 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
               onClick={() => {
                 setError(null);
                 operationRef.current = null;
+                setRestoreExpected(undefined);
                 setRestoring(entry);
+                repositories?.documents
+                  .readStoredStudySet(material.id)
+                  .then(setRestoreExpected)
+                  .catch(() => setError("Your study guide couldn't be read just now. Close this and try again."));
               }}
             >
               Restore

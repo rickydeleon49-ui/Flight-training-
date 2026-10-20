@@ -781,14 +781,18 @@ function MaterialDetailPage() {
                     onReview={setHasHerItems && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
                   />
                 ) : null}
-                {reviewingRegeneration && studyJob?.answer && (studyJob.phase === "recovered" || studyJob.phase === "save-failed") ? (
+                {reviewingRegeneration &&
+                studyJob?.answer &&
+                (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
                   <RegenerationReviewDialog
                     job={studyJob}
                     materialId={material.id}
                     onClose={() => setReviewingRegeneration(false)}
                     onSave={async (reviewed) => {
-                      await geminiJobs.saveReviewed(studyJob.key, reviewed);
-                      setReviewingRegeneration(false);
+                      // Closed only once saved; a failure keeps her choices open.
+                      const saved = await geminiJobs.saveReviewed(studyJob.key, reviewed);
+                      if (saved && isMountedRef.current) setReviewingRegeneration(false);
+                      return saved;
                     }}
                   />
                 ) : null}

@@ -1,0 +1,1011 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/.review-03a-prefix
+
+(node:86512) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts (10 tests | 3 failed) 4692ms
+     × a failed reviewed save keeps the dialog and her choices open; saving again saves once 1169ms
+     × a reviewed save that committed before its answer was lost is recognised on retry, not applied twice 1228ms
+     × restoring is refused when the guide changed after she opened the confirmation 1227ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed reviewed save keeps the dialog and her choices open; saving again saves once
+TestingLibraryElementError: Unable to find an element with the text: /Your choices are still here/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_6s_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_6s_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_6s_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_6s_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:288:25
+    286|     };
+    287|     fireEvent.click(review.getByRole("button", { name: "Save the revie…
+    288|     expect(await review.findByText(/Your choices are still here/)).toB…
+       |                         ^
+    289|     expect(review.getByLabelText(/Replace everything/)).toHaveProperty…
+    290|     expect((await history()).map((row) => row.reason)).toEqual(["edit"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+TestingLibraryElementError: Unable to find an element with the text: /Your choices are still here/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_7m_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_7m_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_7m_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_7m_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:311:25
+    309|     };
+    310|     fireEvent.click(review.getByRole("button", { name: "Save the revie…
+    311|     expect(await review.findByText(/Your choices are still here/)).toB…
+       |                         ^
+    312|     fireEvent.click(review.getByRole("button", { name: "Save the revie…
+    313|     await waitFor(() => expect(screen.queryByRole("dialog", { name: "R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > restoring is refused when the guide changed after she opened the confirmation
+TestingLibraryElementError: Unable to find an element with the text: /changed after you opened it/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_8j_"[39m
+  [33mclass[39m=[32m"dialog dialog--narrow"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_8j_"[39m
+      [36m>[39m
+        [0mRestore this version?[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"muted"[39m
+    [36m>[39m
+      [0mYour study guide goes back to this version. What you have now is kept in Previous versions first, so nothing is lost.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mRestore[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_8j_"[39m
+  [33mclass[39m=[32m"dialog dialog--narrow"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_8j_"[39m
+      [36m>[39m
+        [0mRestore this version?[0m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"muted"[39m
+    [36m>[39m
+      [0mYour study guide goes back to this version. What you have now is kept in Previous versions first, so nothing is lost.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mRestore[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:335:26
+    333|     await db.execute("UPDATE ai_study_sets SET summary = 'Changed in a…
+    334|     fireEvent.click(confirm.getByRole("button", { name: "Restore" }));
+    335|     expect(await confirm.findByText(/changed after you opened it/)).to…
+       |                          ^
+    336|     expect((await savedSet()).summary).toBe("Changed in another window…
+    337|     expect((await history()).map((row) => row.reason)).toEqual(["edit"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  17:12:29
+   Duration  5.46s (transform 349ms, setup 0ms, import 466ms, tests 4.69s, environment 220ms)
+
+exit 1

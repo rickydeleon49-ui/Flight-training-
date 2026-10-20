@@ -131,6 +131,14 @@ Every legacy snapshot keeps its hash, version id and history.
 
 **The schema-14 helper.** It stays frozen. Its test now pins the same four later-schema alarms, naming migrations 15 and 16. Among them, it records that 0016 adds columns to `ai_study_sets` and `material_bookmarks`. The helper itself is unchanged.
 
+## Codex review, round 1: RED, fixed
+
+The verdict is preserved in `docs/evidence/offline-03a-2026-10-19/codex-review-r1-result.md`. Its two findings are fixed:
+1. **Regeneration review save (P1).** The dialog now stays open while saving and closes only once saved. A failed reviewed save keeps her choices, and saving the same choices again resends the identical operation, so a save that had committed is recognised, not repeated.
+2. **Restore staleness (P2).** Restore reads the set when the confirmation opens; a change made since is refused as stale.
+
+Three regressions fail on the pre-fix source (`codex-r1-regressions-before-fix.log`) and pass now. **Where to resume:** [OFFLINE_03A_HANDOFF_2026-10-19.md](OFFLINE_03A_HANDOFF_2026-10-19.md).
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

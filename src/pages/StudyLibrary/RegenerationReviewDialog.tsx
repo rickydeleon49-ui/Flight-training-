@@ -36,7 +36,8 @@ export function RegenerationReviewDialog({
   job: GeminiJob;
   materialId: string;
   onClose: () => void;
-  onSave: (reviewed: ReviewedRegeneration) => Promise<void>;
+  /** True once saved; on false the dialog stays open with her choices. */
+  onSave: (reviewed: ReviewedRegeneration) => Promise<boolean>;
 }) {
   const { repositories } = useAppData();
   const answer = job.answer as GeneratedStudyAid;
@@ -99,8 +100,18 @@ export function RegenerationReviewDialog({
       const merged = mergeRegeneration(opened.state, resolved, mode, keepMySummary);
       const next = nextSetOf({ title: answer.title, sourceNotes: answer.sourceNotes, provider: "gemini", model: answer.model }, merged);
       const key = JSON.stringify(next);
-      if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
-      await onSave({ operationId: operationRef.current.id, expected: opened.stored, next });
+      let reviewed: ReviewedRegeneration;
+      if (job.reviewed && JSON.stringify(job.reviewed.next) === key) {
+        // The same choices as a save that failed, perhaps after committing:
+        // resend exactly that operation so it is recognised, not repeated.
+        reviewed = job.reviewed;
+      } else {
+        if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
+        reviewed = { operationId: operationRef.current.id, expected: opened.stored, next };
+      }
+      if (!(await onSave(reviewed))) {
+        setProblem("The reviewed study guide wasn't saved. Your choices are still here; try saving again.");
+      }
     } catch (failure) {
       setProblem(
         failure instanceof StudyAuthoringError
