@@ -41,6 +41,9 @@ async function open(path: string) {
 }
 
 let repos: ReturnType<typeof createRepositories>;
+// A reviewed save runs the whole job path; under a loaded full-suite run it can
+// outlast the default one-second wait.
+const SLOW_RUNNER = { timeout: 10_000 };
 
 const AID = {
   title: "Synthetic guide",
@@ -231,7 +234,7 @@ describe("editing a generated study guide", () => {
     expect(review.getByLabelText(/Keep my items/)).toHaveProperty("checked", true);
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
 
-    await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."));
+    await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
     const set = await savedSet();
     expect(set.flashcards.map((card) => [card.front, card.origin ?? null])).toEqual([
       ["When do you flare?", null],
@@ -270,7 +273,8 @@ describe("editing a generated study guide", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
     fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }));
     const review = await dialog("Review the new study guide");
-    await review.findByRole("button", { name: "Save the reviewed study guide" });
+    // The Save button shows before the comparison loads; wait for the choices.
+    await review.findByLabelText(/Keep my items/, undefined, SLOW_RUNNER);
     return review;
   }
 
@@ -285,14 +289,14 @@ describe("editing a generated study guide", () => {
       }
     };
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
-    expect(await review.findByText(/Your choices are still here/)).toBeTruthy();
+    expect(await review.findByText(/Your choices are still here/, undefined, SLOW_RUNNER)).toBeTruthy();
     expect(review.getByLabelText(/Replace everything/)).toHaveProperty("checked", true);
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
-    await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."));
+    await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
     expect((await savedSet()).flashcards.every((card) => card.origin === undefined)).toBe(true);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
   });
 
   it("a reviewed save that committed before its answer was lost is recognised on retry, not applied twice", async () => {
@@ -308,9 +312,9 @@ describe("editing a generated study guide", () => {
       return result;
     };
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
-    expect(await review.findByText(/Your choices are still here/)).toBeTruthy();
+    expect(await review.findByText(/Your choices are still here/, undefined, SLOW_RUNNER)).toBeTruthy();
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
   });
 
@@ -332,7 +336,7 @@ describe("editing a generated study guide", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     await db.execute("UPDATE ai_study_sets SET summary = 'Changed in another window.'");
     fireEvent.click(confirm.getByRole("button", { name: "Restore" }));
-    expect(await confirm.findByText(/changed after you opened it/)).toBeTruthy();
+    expect(await confirm.findByText(/changed after you opened it/, undefined, SLOW_RUNNER)).toBeTruthy();
     expect((await savedSet()).summary).toBe("Changed in another window.");
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });

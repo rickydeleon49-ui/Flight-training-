@@ -434,3 +434,10 @@ evidence/offline-03a-2026-10-19/schema14-helper.log -text -diff
 evidence/offline-03a-2026-10-19/typecheck.log -text -diff
 evidence/offline-03a-2026-10-19/vitest-full.log -text -diff
 evidence/offline-03a-2026-10-19/codex-r1-regressions-before-fix.log -text -diff
+evidence/offline-03a-2026-10-19/r2-typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/r2-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r2-build.log -text -diff
+evidence/offline-03a-2026-10-19/r2-diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/r2-schema14-helper.log -text -diff
+evidence/offline-03a-2026-10-19/r2b-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r2c-vitest-full.log -text -diff

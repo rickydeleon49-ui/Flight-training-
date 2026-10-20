@@ -1,0 +1,609 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+(node:86706) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86702) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86701) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86704) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86699) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86698) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86700) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86703) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86705) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts (10 tests | 1 failed) 4893ms
+     × a reviewed save that committed before its answer was lost is recognised on retry, not applied twice 1443ms
+(node:86709) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86711) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86712) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86713) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86727) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86728) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86729) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86731) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86730) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86743) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86746) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86757) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:86763) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87017) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87019) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87022) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87021) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87023) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87024) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87027) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87025) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87028) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87029) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87031) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87032) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87034) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87033) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87035) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87036) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87037) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87038) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87040) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87042) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87047) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87045) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87046) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87048) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87049) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87054) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87057) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87093) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87081) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87108) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87109) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87110) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87111) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87112) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87115) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87116) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87117) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87119) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87118) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87120) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87131) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87127) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87129) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87135) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87130) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87136) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87137) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87140) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87143) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87142) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87149) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87147) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87148) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87152) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87154) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87156) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87160) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87155) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87169) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87171) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87174) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:87179) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+TestingLibraryElementError: Unable to find an element with the text: /Your choices are still here/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_7m_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_7m_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_7m_"[39m
+  [33mclass[39m=[32m"dialog"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_7m_"[39m
+      [36m>[39m
+        [0mReview the new study guide[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mYour study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--3"[39m
+    [36m>[39m
+      [36m<fieldset[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<legend[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mYour own items[0m
+          [36m</strong>[39m
+        [36m</legend>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mchecked[39m=[32m""[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mKeep my items ([0m
+            [0m1[0m
+            [0m) and add the new ones[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mname[39m=[32m"regeneration-mode"[39m
+            [33mtype[39m=[32m"radio"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"small"[39m
+          [36m>[39m
+            [0mReplace everything with the new study guide[0m
+          [36m</span>[39m
+        [36m</label>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny muted"[39m
+        [36m>[39m
+          [0mEither way, what you have now is kept in Previous versions.[0m
+        [36m</p>[39m
+      [36m</fieldset>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"tiny"[39m
+      [36m>[39m
+        [0mItems worded differently from something you deleted or corrected can't always be recognised. Check the new items.[0m
+      [36m</p>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Left out"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mLeft out: matches something you deleted or corrected[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"checkbox"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33mtype[39m=[32m"checkbox"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"checkbox__mark"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"3.5"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 12.5 9.5 17.5 19.5 6.5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"checkbox__body"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"checkbox__label"[39m
+            [36m>[39m
+              [0mBring it back: Card: Which wing is lowered?[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</label>[39m
+      [36m</section>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"New"[39m
+        [33mclass[39m=[32m"stack stack--1"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [36m<strong>[39m
+            [0mNew ([0m
+            [0m3[0m
+            [0m)[0m
+          [36m</strong>[39m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSummary[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mSection: Crab[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny wrap-anywhere"[39m
+        [36m>[39m
+          [0mCard: What does the rudder do?[0m
+        [36m</p>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__footer"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--secondary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mCancel[0m
+    [36m</button>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"button button--primary"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [0mSave the reviewed study guide[0m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</dialog>[39m
+ ❯ waitForWrapper ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:311:25
+    309|     };
+    310|     fireEvent.click(review.getByRole("button", { name: "Save the revie…
+    311|     expect(await review.findByText(/Your choices are still here/)).toB…
+       |                         ^
+    312|     fireEvent.click(review.getByRole("button", { name: "Save the revie…
+    313|     await waitFor(() => expect(screen.queryByRole("dialog", { name: "R…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 185 passed | 4 skipped (190)
+      Tests  1 failed | 3908 passed | 6 skipped (3915)
+   Start at  17:13:36
+   Duration  67.74s (transform 6.95s, setup 0ms, import 28.60s, tests 336.09s, environment 37.04s)
+
+exit 1

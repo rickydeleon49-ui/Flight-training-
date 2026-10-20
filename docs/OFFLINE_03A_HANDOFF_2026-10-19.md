@@ -49,7 +49,9 @@ This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. T
 ## Exactly where it stopped, and what comes next
 
 1. **Done:** both Codex round-1 fixes and their regressions, plus this handoff.
-2. **Next:** rerun the full local gate in sequence and record receipts in `docs/evidence/offline-03a-2026-10-19/`:
+2. **Done:** the gate after the fixes (`r2*` receipts). Its final run (`r2c-vitest-full.log`) passed 3,909 with 6 skipped. Two earlier runs failed on test timing in the new regressions, which was then fixed; see the evidence README. The steps the gate covers, kept for any later rerun, are below.
+
+   Rerun the full local gate in sequence and record receipts in `docs/evidence/offline-03a-2026-10-19/`:
    - typecheck;
    - the full vitest run (expect zero failures);
    - build;
@@ -59,7 +61,7 @@ This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. T
    - `node --test scripts/mac-schema14-profile-snapshot.test.mjs` (26/26).
 
    Then update `SHA256SUMS` and commit.
-3. **Codex review round 2:**
+3. **In progress, Codex review round 2:** the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
    - Prompt: `docs/OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md`, plus a note naming the round-1 findings and their fix commit.
    - Run: `codex exec -s read-only -C <worktree> -o <result.md> "$(cat <prompt>)" < /dev/null`.
    - On RED: fix locally, add a failing-first regression and repeat.

@@ -21,3 +21,15 @@ Run sequentially on this Mac, with Node 22 and `SDKROOT=…/MacOSX26.5.sdk`, on 
 Both were corrected, and the run above is clean.
 
 No provider, real profile, key, installer or release was involved.
+
+## After the Codex round-1 fixes (`ca8e319` plus test-timing fixes)
+
+| Receipt | Result |
+| --- | --- |
+| `r2-typecheck.log`, `r2-build.log`, `r2-diff-check.log` | exit 0 |
+| `r2-schema14-helper.log` | 26/26 |
+| `r2-vitest-full.log` | **failed**: 1 of the new regressions timed out under full-suite load (it waited for the default 1 s) |
+| `r2b-vitest-full.log` | **failed**: another new regression clicked a choice before the review's comparison loaded (the Save button renders first) |
+| `r2c-vitest-full.log` | **3,909 passed, 6 skipped; exit 0** — after the tests waited for the choices themselves, with slow-runner timeouts |
+
+Those two failures were test timing only; product code is unchanged since `ca8e319`. The round-1 fixes are TypeScript only, so the native receipts above still apply.
