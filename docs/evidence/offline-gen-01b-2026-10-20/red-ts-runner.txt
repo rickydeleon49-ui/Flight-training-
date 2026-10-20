@@ -1,0 +1,191 @@
+$ npm test -- --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:23133) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/pdfKitUpgrade.test.ts (3 tests | 2 failed) 217ms
+     × upgrades and reopens the browser library preserving every older row 123ms
+     × upgrades and reopens the node library preserving every older row 33ms
+(node:23132) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/pdfKitValidationParity.test.ts (48 tests | 47 failed) 2203ms
+     × sql.js gives the listed outcome for every case 55ms
+     × node:sqlite: 'valid all item kinds' gives 'accept' 54ms
+     × node:sqlite: 'empty kit tables' gives 'accept' 52ms
+     × node:sqlite: 'unicode quote at 2000 characters' gives 'accept' 50ms
+     × node:sqlite: 'astral quote at 2000 characters' gives 'accept' 50ms
+     × node:sqlite: 'empty selection is an array' gives 'accept' 48ms
+     × node:sqlite: 'cascading material removal' gives 'accept' 46ms
+     × node:sqlite: 'dangling run' gives 'refuse' 48ms
+     × node:sqlite: 'missing material' gives 'refuse' 47ms
+     × node:sqlite: 'bad run UUID' gives 'refuse' 47ms
+     × node:sqlite: 'pdf_kit_runs uppercase hash' gives 'refuse' 47ms
+     × node:sqlite: 'pdf_kit_runs short hash' gives 'refuse' 46ms
+     × node:sqlite: 'pdf_kit_runs nonhex hash' gives 'refuse' 47ms
+     × node:sqlite: 'pdf_kit_item_sources uppercase hash' gives 'refuse' 47ms
+     × node:sqlite: 'pdf_kit_item_sources short hash' gives 'refuse' 47ms
+     × node:sqlite: 'pdf_kit_item_sources nonhex hash' gives 'refuse' 47ms
+     × node:sqlite: 'pages invalid' gives 'refuse' 47ms
+     × node:sqlite: 'pages object' gives 'refuse' 46ms
+     × node:sqlite: 'pages null' gives 'refuse' 51ms
+     × node:sqlite: 'pages descending' gives 'refuse' 46ms
+     × node:sqlite: 'pages duplicate' gives 'refuse' 47ms
+     × node:sqlite: 'pages zero' gives 'refuse' 46ms
+     × node:sqlite: 'pages high' gives 'refuse' 47ms
+     × node:sqlite: 'pages fraction' gives 'refuse' 47ms
+     × node:sqlite: 'pages string' gives 'refuse' 47ms
+     × node:sqlite: 'pages boolean' gives 'refuse' 47ms
+     × node:sqlite: 'pages whitespace' gives 'refuse' 47ms
+     × node:sqlite: 'pages float spelling' gives 'refuse' 48ms
+     × node:sqlite: 'zero page' gives 'refuse' 47ms
+     × node:sqlite: 'high page' gives 'refuse' 46ms
+     × node:sqlite: 'fraction page' gives 'refuse' 44ms
+     × node:sqlite: 'negative offset' gives 'refuse' 45ms
+     × node:sqlite: 'equal offsets' gives 'refuse' 45ms
+     × node:sqlite: 'reversed offsets' gives 'refuse' 44ms
+     × node:sqlite: 'fraction offset' gives 'refuse' 45ms
+     × node:sqlite: 'empty quote' gives 'refuse' 45ms
+     × node:sqlite: 'long quote' gives 'refuse' 45ms
+     × node:sqlite: 'unknown item kind' gives 'refuse' 45ms
+     × node:sqlite: 'missing pdf_kit_runs' gives 'refuse' 45ms
+     × node:sqlite: 'missing FK pdf_kit_runs' gives 'refuse' 45ms
+     × node:sqlite: 'missing pdf_kit_item_sources' gives 'refuse' 45ms
+     × node:sqlite: 'missing FK pdf_kit_item_sources' gives 'refuse' 45ms
+     × node:sqlite: 'missing quote check' gives 'refuse' 46ms
+     × node:sqlite: 'wrong source column type' gives 'refuse' 45ms
+     × node:sqlite: 'missing material index' gives 'refuse' 46ms
+     × node:sqlite: 'wrong material index' gives 'refuse' 45ms
+     × node:sqlite: 'wrong primary key' gives 'refuse' 46ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 49 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/pdfKitUpgrade.test.ts > schema 17 to 18 > upgrades and reopens the browser library preserving every older row
+AssertionError: expected [ { v: 17 } ] to deeply equal [ { v: 18 } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "v": 18,
++     "v": 17,
+    },
+  ]
+
+ ❯ src/data/pdfKitUpgrade.test.ts:55:81
+     53|     const reopened = await openSqlJsEngine(Uint8Array.from(atob(stored…
+     54|     try {
+     55|       expect(reopened.query("SELECT MAX(version) AS v FROM schema_migr…
+       |                                                                                 ^
+     56|       assertUpgrade(before, dumpTables(reopened, { exclude: ["schema_m…
+     57|     } finally { reopened.close(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/49]⎯
+
+ FAIL  src/data/pdfKitUpgrade.test.ts > schema 17 to 18 > upgrades and reopens the node library preserving every older row
+AssertionError: expected [ { v: 17 } ] to deeply equal [ { v: 18 } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "v": 18,
++     "v": 17,
+    },
+  ]
+
+ ❯ src/data/pdfKitUpgrade.test.ts:69:85
+     67|       db.close();
+     68|       const again = await createNodeSqliteDatabase(path);
+     69|       expect(await again.select("SELECT MAX(version) AS v FROM schema_…
+       |                                                                                     ^
+     70|       again.close();
+     71|       const reopened = await openNodeEngine(path);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/49]⎯
+
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > sql.js gives the listed outcome for every case
+Error: no such table: pdf_kit_runs
+ ❯ e.handleError ../Flight-training-p54-06/node_modules/sql.js/dist/sql-wasm.js:90:226
+ ❯ e.run ../Flight-training-p54-06/node_modules/sql.js/dist/sql-wasm.js:87:256
+ ❯ src/data/pdfKitValidationParity.test.ts:54:78
+     52|       build.run("PRAGMA foreign_keys = ON");
+     53|       await applyMigrations((sql) => build.run(sql), new Set());
+     54|       for (const statement of [...CONTRACT.baseline, ...testCase.sql])…
+       |                                                                              ^
+     55|       const reopened = new SQL.Database(build.export());
+     56|       build.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/49]⎯
+
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'valid all item kinds' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'empty kit tables' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'unicode quote at 2000 characters' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'astral quote at 2000 characters' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'empty selection is an array' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'cascading material removal' gives 'accept'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'dangling run' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing material' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'bad run UUID' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_runs uppercase hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_runs short hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_runs nonhex hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_item_sources uppercase hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_item_sources short hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pdf_kit_item_sources nonhex hash' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages invalid' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages object' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages null' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages descending' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages duplicate' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages zero' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages high' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages fraction' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages string' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages boolean' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages whitespace' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'pages float spelling' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'zero page' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'high page' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'fraction page' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'negative offset' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'equal offsets' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'reversed offsets' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'fraction offset' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'empty quote' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'long quote' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'unknown item kind' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing pdf_kit_runs' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing FK pdf_kit_runs' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing pdf_kit_item_sources' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing FK pdf_kit_item_sources' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing quote check' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'wrong source column type' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'missing material index' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'wrong material index' gives 'refuse'
+ FAIL  src/data/pdfKitValidationParity.test.ts > shared schema-18 PDF-kit validation contract > node:sqlite: 'wrong primary key' gives 'refuse'
+Error: no such table: pdf_kit_runs
+ ❯ src/data/pdfKitValidationParity.test.ts:84:80
+     82|         build.exec("PRAGMA foreign_keys = ON");
+     83|         await applyMigrations((sql) => build.exec(sql), new Set());
+     84|         for (const statement of [...CONTRACT.baseline, ...testCase.sql…
+       |                                                                                ^
+     85|       } finally {
+     86|         build.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/49]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  49 failed | 2 passed (51)
+   Start at  15:38:41
+   Duration  2.43s (transform 236ms, setup 85ms, import 302ms, tests 2.42s, environment 0ms)
+
+
+EXIT 1

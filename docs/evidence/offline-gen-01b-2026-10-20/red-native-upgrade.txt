@@ -1,0 +1,24 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked schema_17_archive_restores_and_upgrades_to_18
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 1 test
+test backup::tests::schema_17_archive_restores_and_upgrades_to_18 ... FAILED
+
+failures:
+
+---- backup::tests::schema_17_archive_restores_and_upgrades_to_18 stdout ----
+
+thread 'backup::tests::schema_17_archive_restores_and_upgrades_to_18' (8859804) panicked at src/backup.rs:14557:80:
+called `Result::unwrap()` on an `Err` value: "Choose a backup location outside the application's data folder."
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    backup::tests::schema_17_archive_restores_and_upgrades_to_18
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 943 filtered out; finished in 0.39s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101

@@ -24,6 +24,7 @@ import {
   dumpTables,
   MANUAL_STUDY_NEW_TABLES,
   PRACTICE_AUTHORING_NEW_TABLES,
+  PDF_KIT_NEW_TABLES,
   withoutSchema16And17Columns,
   migrate,
   openNodeEngine,
@@ -102,7 +103,7 @@ describe("the browser driver opening a schema-14 library", () => {
     const rows = withoutSchema16And17Columns(dumpTables(after, { exclude: ["schema_migrations"] }));
     for (const [table, content] of Object.entries(before)) expect(rows[table], table).toEqual(content);
     const added = Object.keys(rows).filter((t) => !(t in before)).sort();
-    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES].sort());
+    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES, ...PDF_KIT_NEW_TABLES].sort());
     for (const table of added) expect(rows[table], table).toEqual([]);
   });
 

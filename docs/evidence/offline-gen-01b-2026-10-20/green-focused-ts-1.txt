@@ -1,0 +1,62 @@
+$ npm test -- --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts src/data/navigationUpgrade.test.ts src/data/skillEvidenceUpgrade.test.ts
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts src/data/navigationUpgrade.test.ts src/data/skillEvidenceUpgrade.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:23217) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23214) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23215) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/data/pdfKitUpgrade.test.ts (3 tests | 2 failed) 132ms
+     × upgrades and reopens the browser library preserving every older row 41ms
+     × upgrades and reopens the node library preserving every older row 16ms
+(node:23216) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/pdfKitUpgrade.test.ts > schema 17 to 18 > upgrades and reopens the browser library preserving every older row
+Error: table schema_migrations has no column named description
+ ❯ e.handleError ../Flight-training-p54-06/node_modules/sql.js/dist/sql-wasm.js:90:226
+ ❯ e.run ../Flight-training-p54-06/node_modules/sql.js/dist/sql-wasm.js:87:256
+ ❯ src/data/sqlJsDb.ts:182:39
+    180|       // No migrations table yet — this is a fresh database.
+    181|     }
+    182|     await applyMigrations((sql) => db.run(sql), applied);
+       |                                       ^
+    183|
+    184|     const reference = await createReference(SQL);
+ ❯ applyMigrations src/data/migrations.ts:76:5
+ ❯ Module.createSqlJsDatabase src/data/sqlJsDb.ts:182:11
+ ❯ src/data/pdfKitUpgrade.test.ts:51:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data/pdfKitUpgrade.test.ts > schema 17 to 18 > upgrades and reopens the node library preserving every older row
+Error: table schema_migrations has no column named description
+ ❯ src/data/testing/nodeSqliteDb.ts:98:39
+     96|
+     97|   try {
+     98|     await applyMigrations((sql) => db.exec(sql), applied);
+       |                                       ^
+     99|   } catch (error) {
+    100|     refuseUnchanged(error);
+ ❯ applyMigrations src/data/migrations.ts:76:5
+ ❯ Module.createNodeSqliteDatabase src/data/testing/nodeSqliteDb.ts:98:11
+ ❯ src/data/pdfKitUpgrade.test.ts:66:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 61 passed (63)
+   Start at  15:39:40
+   Duration  4.17s (transform 557ms, setup 195ms, import 769ms, tests 5.09s, environment 0ms)
+
+
+EXIT 1

@@ -1,0 +1,33 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked pdf_kit
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.65s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 4 tests
+test pdf_study_kit_tests::pdf_kit_module_has_zero_network_imports ... ok
+test backup::tests::schema_18_pdf_kit_archive_round_trip ... ok
+test backup::tests::tampered_schema_18_pdf_kit_archive_refused ... ok
+test backup::tests::shared_pdf_kit_validation_contract_native_outcomes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 940 filtered out; finished in 12.71s
+
+     Running unittests src/main.rs (target/debug/deps/her_flight_deck-610b7bf094c74fb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/extraction_service.rs (target/debug/deps/extraction_service-10fef342138f8a99)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/extraction_worker.rs (target/debug/deps/extraction_worker-68f5c1eda9f1481c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+
+EXIT 0

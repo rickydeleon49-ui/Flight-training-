@@ -1,0 +1,962 @@
+$ node scripts/mac-schema14-verification-proof.mjs self-check
+{
+  "schema": "hfd-mac-profile-snapshot-selfcheck/4",
+  "node": "v22.23.3",
+  "contract": "hfd-schema14-contract/1",
+  "pinnedCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
+  "syntheticLedger": "scratch libraries carry a synthetic SQLx ledger written by this helper (exact SQLx table definition, shipped descriptions and SHA-384 checksums); it is not SQLx itself",
+  "counts": {
+    "checks": 102,
+    "passed": 98,
+    "failed": 4
+  },
+  "inventory": {
+    "knownTables": 41,
+    "pinnedObjects": 98,
+    "migrations": 14
+  },
+  "checks": [
+    {
+      "name": "capture: a populated schema-13 library records the synthetic SQLx ledger 1–13 and meets the pinned schema-13 contract",
+      "pass": true,
+      "detail": {
+        "versions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "objects": 80,
+        "contract": []
+      }
+    },
+    {
+      "name": "capture: the six M3 tables are absent at schema 13 and no M3 evidence facts are claimed",
+      "pass": true
+    },
+    {
+      "name": "capture: retained population, split lineage and two managed documents are present",
+      "pass": true,
+      "detail": [
+        "practice_attempts=1",
+        "practice_responses=1",
+        "card_review_state=1",
+        "card_review_events=1",
+        "journal_entries=2",
+        "debrief_operations=2",
+        "material_split_lineage=1"
+      ]
+    },
+    {
+      "name": "capture: the snapshot records a confirmed stopped app and read-only permission facts",
+      "pass": true
+    },
+    {
+      "name": "capture: the receipt names the pinned commit, contract and ceiling",
+      "pass": true
+    },
+    {
+      "name": "metadata: __proto__, constructor, toString and a Unicode key are captured as own digests and counts agree",
+      "pass": true,
+      "detail": {
+        "keys": [
+          "__proto__",
+          "constructor",
+          "daily_plan_session",
+          "préférence_✈️_キー",
+          "toString"
+        ],
+        "rowCount": 5
+      }
+    },
+    {
+      "name": "metadata: digests only — no metadata value enters the receipt",
+      "pass": true
+    },
+    {
+      "name": "metadata: special keys are never receipt exclusions",
+      "pass": true
+    },
+    {
+      "name": "digest: each storage type hashes distinctly (NULL, INTEGER, REAL, TEXT, BLOB, empty TEXT)",
+      "pass": true
+    },
+    {
+      "name": "digest: full 64-bit INTEGERs and -0.0 vs 0.0 are distinguished",
+      "pass": true
+    },
+    {
+      "name": "digest: TEXT differing only after an embedded NUL changes its digest",
+      "pass": true
+    },
+    {
+      "name": "digest: a table without a primary key is refused",
+      "pass": true
+    },
+    {
+      "name": "guard: only the documented pgrep no-match status is stopped",
+      "pass": true,
+      "detail": [
+        {
+          "expected": "stopped",
+          "got": "stopped"
+        },
+        {
+          "expected": "running",
+          "got": "running"
+        },
+        {
+          "expected": "error",
+          "got": "error"
+        },
+        {
+          "expected": "error",
+          "got": "error"
+        },
+        {
+          "expected": "unavailable",
+          "got": "unavailable"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        },
+        {
+          "expected": "malformed",
+          "got": "malformed"
+        }
+      ]
+    },
+    {
+      "name": "guard: inspection state \"running\" refuses before any read and writes no receipt",
+      "pass": true,
+      "detail": "REFUSED: an app is still running (pid(s) 4321) — quit the app and confirm before snapshotting"
+    },
+    {
+      "name": "guard: inspection state \"error\" refuses before any read and writes no receipt",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (error) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: inspection state \"unavailable\" refuses before any read and writes no receipt",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (unavailable) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: inspection state \"malformed\" refuses before any read and writes no receipt",
+      "pass": true,
+      "detail": "REFUSED: process inspection did not confirm a stopped app (malformed) — inability to inspect is not proof that nothing is running"
+    },
+    {
+      "name": "guard: with the database unreadable a running-app refusal still comes from the guard (no open/copy attempted)",
+      "pass": true,
+      "detail": "REFUSED: an app is still running (pid(s) 4321) — quit the app and confirm before snapshotting"
+    },
+    {
+      "name": "copy: a failed WAL copy refuses and removes its scratch directory",
+      "pass": true,
+      "detail": "REFUSED: her-flight-deck.db-wal could not be opened read-only without following links (EACCES)"
+    },
+    {
+      "name": "wal: committed frames are read from a copy while the original database bytes stay unchanged",
+      "pass": true,
+      "detail": {
+        "mode": "wal-copy-snapshot (12392 bytes of WAL read from a copy; originals re-hashed unchanged)",
+        "tags": 1
+      }
+    },
+    {
+      "name": "guard: a scratch root that is not a data root is refused",
+      "pass": true
+    },
+    {
+      "name": "guard: a symlinked profile root is refused",
+      "pass": true
+    },
+    {
+      "name": "guard: a mismatched owner uid is refused",
+      "pass": true
+    },
+    {
+      "name": "guard: a symlinked managed document is refused",
+      "pass": true
+    },
+    {
+      "name": "guard: a hard-linked managed document is refused",
+      "pass": true,
+      "detail": "REFUSED: managed file documents/mat.pdf has 2 hard links — refusing an aliased document"
+    },
+    {
+      "name": "guard: a symlinked backups/ runtime root is refused before listing it",
+      "pass": true,
+      "detail": "REFUSED: backups/ is a symlink — refusing to follow it outside the profile"
+    },
+    {
+      "name": "guard: a symlinked .restore-staging/ runtime root is refused before listing it",
+      "pass": true,
+      "detail": "REFUSED: .restore-staging/ is a symlink — refusing to follow it outside the profile"
+    },
+    {
+      "name": "guard: a symlinked .restore-pending/ runtime root is refused before listing it",
+      "pass": true,
+      "detail": "REFUSED: .restore-pending/ is a symlink — refusing to follow it outside the profile"
+    },
+    {
+      "name": "output: --json cannot overwrite the input database",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/upgrade/com.herflightdeck.app/her-flight-deck.db aliases protected input <scratch>/upgrade/com.herflightdeck.app"
+    },
+    {
+      "name": "output: --json inside the profile root is refused",
+      "pass": true
+    },
+    {
+      "name": "output: a relative --json path is refused",
+      "pass": true
+    },
+    {
+      "name": "output: a hard link to the database is detected as an alias",
+      "pass": true,
+      "detail": "REFUSED: snapshot output <scratch>/db-hardlink is a hard link to protected input <scratch>/upgrade/com.herflightdeck.app/her-flight-deck.db"
+    },
+    {
+      "name": "output: a symlinked destination is refused",
+      "pass": true
+    },
+    {
+      "name": "output: an existing destination is refused when freshness is required, and the evidence is intact",
+      "pass": true
+    },
+    {
+      "name": "operator: the isolation guard refuses a root that is not the approved lane, whatever account runs it",
+      "pass": true,
+      "detail": "REFUSED: must run as uid 502 (hfdtest), got uid 501 — never run this against the everyday account"
+    },
+    {
+      "name": "operator: nothing on argv can retarget the approved uid",
+      "pass": true
+    },
+    {
+      "name": "operator: --profile is refused and parseArgs yields only the documented options",
+      "pass": true
+    },
+    {
+      "name": "contract upgrade: real migration 14 keeps every retained row, metadata key and document, and adds only the seeded catalog and empty evidence tables",
+      "pass": true,
+      "detail": {
+        "verdict": "PASS",
+        "diffs": [],
+        "tables": {
+          "compared": 41,
+          "changed": [],
+          "identityDrift": [],
+          "seededAdditions": [
+            "skill_catalog_entries",
+            "skill_catalog_revisions"
+          ],
+          "emptyAdditions": [
+            "skill_observations",
+            "skill_observation_revisions",
+            "skill_self_assessments",
+            "skill_evidence_operations"
+          ],
+          "receiptOnlyDifference": []
+        }
+      }
+    },
+    {
+      "name": "contract upgrade: no receipt key is set aside outside restore",
+      "pass": true
+    },
+    {
+      "name": "contract unchanged: two captures of the same schema-14 library pass",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "contract unchanged: a real migration is not \"nothing changed\"",
+      "pass": true,
+      "detail": [
+        "ledger: schema version changed 13 -> 14",
+        "ledger: recorded version list changed 1,2,3,4,5,6,7,8,9,10,11,12,13 -> 1,2,3,4,5,6,7,8,9,10,11,12,13,14",
+        "ledger: rows changed",
+        "skill_catalog_entries: before absent after 15/19448a3d4c19c7cc2f0e7523e82bb0401f1e88914937e1fcef70f66a9711b970",
+        "skill_catalog_revisions: before absent after 15/619c60a1e0290deba2fa9ef78ba78c2baf263493fe9e7af36388d617be00c1f1",
+        "skill_observations: before absent after 0/4e1c7d5a63425c7978e0b252c07be2114007b7a5a2ad978b31ad3c90755c3695",
+        "skill_observation_revisions: before absent after 0/e3ef0ba4e596513afc7ff267f4b0190d8a1d847d49d194ecbe7f1547e57a507b",
+        "skill_self_assessments: before absent after 0/5c9877dc6839d2a135ac35a1fef614079c2bb3e1b39f889e02a62abce3f0b31e",
+        "skill_evidence_operations: before absent after 0/065d487aa9f2dc8e90091ba7aae62b3ec7eff5858bfe7323a7c7d6f9bd48ad74"
+      ]
+    },
+    {
+      "name": "contract upgrade: a no-op upgrade (already schema 14) cannot pass",
+      "pass": true,
+      "detail": [
+        "ledger: upgrade baseline library is version 14, expected 13",
+        "ledger: no migration was actually applied between these snapshots (no-op upgrade)",
+        "population: baseline has no skill_observations, skill_observation_revisions, skill_self_assessments, skill_evidence_operations rows — an empty library cannot prove populated-data retention",
+        "population: baseline has no erased-observation tombstone, so tombstone retention would be unproven"
+      ]
+    },
+    {
+      "name": "contract restore: a schema-13 archive state restored and migrated to 14 passes, disclosing the receipt policy",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "contract restore: a schema-12 archive state restored into 14 passes with empty split tables and the exact catalog seed",
+      "pass": true,
+      "detail": {
+        "diffs": [],
+        "tables": {
+          "compared": 41,
+          "changed": [],
+          "identityDrift": [],
+          "seededAdditions": [
+            "skill_catalog_entries",
+            "skill_catalog_revisions"
+          ],
+          "emptyAdditions": [
+            "material_split_lineage",
+            "split_operation_log",
+            "skill_observations",
+            "skill_observation_revisions",
+            "skill_self_assessments",
+            "skill_evidence_operations"
+          ],
+          "receiptOnlyDifference": []
+        }
+      }
+    },
+    {
+      "name": "contract upgrade: a schema-12 baseline is not the accepted 13 -> 14 upgrade",
+      "pass": true,
+      "detail": [
+        "ledger: upgrade baseline library is version 12, expected 13"
+      ]
+    },
+    {
+      "name": "capture: writer-created observations, revisions, status/confidence, links and erased-operation tombstones are inventoried",
+      "pass": true,
+      "detail": {
+        "builtinCatalogEntries": 15,
+        "customCatalogEntries": 1,
+        "catalogSeedRevisions": 15,
+        "userCatalogRevisions": 6,
+        "observations": 1,
+        "observationRevisions": 6,
+        "statusAssessments": 2,
+        "confidenceAssessments": 1,
+        "operations": 18,
+        "erasedOperations": 2,
+        "operationsByAction": [
+          [
+            "create_custom_skill",
+            1
+          ],
+          [
+            "create_observation",
+            2
+          ],
+          [
+            "edit_custom_skill",
+            1
+          ],
+          [
+            "edit_observation",
+            2
+          ],
+          [
+            "erase_observation",
+            1
+          ],
+          [
+            "link_action",
+            1
+          ],
+          [
+            "restore_skill",
+            2
+          ],
+          [
+            "retire_skill",
+            2
+          ],
+          [
+            "set_addressed",
+            2
+          ],
+          [
+            "set_confidence",
+            1
+          ],
+          [
+            "set_status",
+            2
+          ],
+          [
+            "unlink_action",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "name": "contract restore: a populated schema-14 library passes against a post-export baseline when only the three receipt keys differ, and says so",
+      "pass": true,
+      "detail": {
+        "diffs": [],
+        "receipt": {
+          "applied": true,
+          "scope": "restore only",
+          "excludedKeys": [
+            "last_complete_backup_at",
+            "last_complete_backup_path",
+            "last_complete_backup_version"
+          ],
+          "policy": "restore compares the archive contents: the three backup-receipt keys the export writes after creating the archive are set aside by exact name; every other app_metadata key is compared row by row",
+          "receiptKeysBefore": [
+            "last_complete_backup_at",
+            "last_complete_backup_path",
+            "last_complete_backup_version"
+          ],
+          "receiptKeysAfter": [],
+          "receiptKeysDiffering": [
+            "last_complete_backup_at",
+            "last_complete_backup_path",
+            "last_complete_backup_version"
+          ],
+          "otherKeysCompared": 5,
+          "otherKeysChanged": [],
+          "otherKeysIdentical": true,
+          "receiptOnlyDifference": true
+        }
+      }
+    },
+    {
+      "name": "receipt: the unchanged contract still protects the backup receipt (exclusion is restore-only)",
+      "pass": true,
+      "detail": [
+        "app_metadata: before 8/ce8755bc3c4303475bdf3200be898143c96b88fa7c73775099271609be516e2f after 5/d9ceb11f511376f4dcfe3d49187df2aec2650ade6fca519b759ca907de7ec075",
+        "app_metadata: keys differ (last_complete_backup_at, last_complete_backup_path, last_complete_backup_version)"
+      ]
+    },
+    {
+      "name": "receipt: the history contract still protects the backup receipt (exclusion is restore-only)",
+      "pass": true,
+      "detail": [
+        "app_metadata: before 8/ce8755bc3c4303475bdf3200be898143c96b88fa7c73775099271609be516e2f after 5/d9ceb11f511376f4dcfe3d49187df2aec2650ade6fca519b759ca907de7ec075",
+        "app_metadata: keys differ (last_complete_backup_at, last_complete_backup_path, last_complete_backup_version)"
+      ]
+    },
+    {
+      "name": "contract history: explicitly partial and never gate eligible, even when clean",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "receipt: a changed protected metadata key fails restore, naming the key",
+      "pass": true,
+      "detail": [
+        "app_metadata: keys other than the backup receipt differ (__proto__)"
+      ]
+    },
+    {
+      "name": "receipt: a removed protected metadata key fails restore, naming the key",
+      "pass": true,
+      "detail": [
+        "app_metadata: keys other than the backup receipt differ (constructor)"
+      ]
+    },
+    {
+      "name": "receipt: a added protected metadata key fails restore, naming the key",
+      "pass": true,
+      "detail": [
+        "app_metadata: keys other than the backup receipt differ (toString_extra_🌟)"
+      ]
+    },
+    {
+      "name": "receipt: a changed-unicode protected metadata key fails restore, naming the key",
+      "pass": true,
+      "detail": [
+        "app_metadata: keys other than the backup receipt differ (préférence_✈️_キー)"
+      ]
+    },
+    {
+      "name": "ledger: an upgrade whose migration 14 row is missing cannot pass",
+      "pass": true,
+      "detail": [
+        "after schema: unexpected object(s) not created by migrations 1–13: idx_skill_evidence_operations_subject,idx_skill_observations_action,idx_skill_observations_journal,idx_skill_observations_page,idx_skill_observations_skill_page,idx_skill_observations_source_journal,skill_catalog_entries,skill_catalog_revisions,skill_evidence_operations,skill_observation_revisions,skill_observations,skill_self_assessments,trg_skill_catalog_revisions_no_delete,trg_skill_catalog_revisions_no_update,trg_skill_observation_revisions_no_partial_delete,trg_skill_observation_revisions_no_update,trg_skill_self_assessments_no_delete,trg_skill_self_assessments_no_update",
+        "ledger: upgraded library is version 13, expected exactly 14",
+        "ledger: expected migration(s) 14 applied after the baseline, found none",
+        "ledger: no migration was actually applied between these snapshots (no-op upgrade)"
+      ]
+    },
+    {
+      "name": "ledger: an unsuccessful migration 14 cannot pass",
+      "pass": true,
+      "detail": [
+        "after ledger: migration 14 is recorded as unsuccessful"
+      ]
+    },
+    {
+      "name": "ledger: a wrong migration 14 checksum cannot pass",
+      "pass": true,
+      "detail": [
+        "after ledger: migration 14 checksum does not match the shipped SQLx SHA-384"
+      ]
+    },
+    {
+      "name": "ledger: a newer, unregistered migration 15 cannot pass",
+      "pass": true,
+      "detail": [
+        "after ledger: library is at schema 15, newer than this helper's pinned ceiling 14 — a newer format is never certified",
+        "after ledger: unregistered migration version(s) 15 — not part of the pinned contract",
+        "ledger: upgraded library is version 15, expected exactly 14",
+        "ledger: expected migration(s) 14 applied after the baseline, found 14,15"
+      ]
+    },
+    {
+      "name": "ledger: a gap in the registered sequence cannot pass",
+      "pass": true,
+      "detail": [
+        "after ledger: registered migration(s) 7 are missing from the SQLx ledger",
+        "ledger: retained migration 7 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 8 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 9 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 10 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 11 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 12 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: retained migration 13 row changed (description, timestamp, success, checksum or execution facts)",
+        "ledger: expected migration(s) 14 applied after the baseline, found none",
+        "ledger: no migration was actually applied between these snapshots (no-op upgrade)"
+      ]
+    },
+    {
+      "name": "ledger: a retained migration row whose timestamp changed cannot pass",
+      "pass": true,
+      "detail": [
+        "ledger: retained migration 3 row changed (description, timestamp, success, checksum or execution facts)"
+      ]
+    },
+    {
+      "name": "schema: an unexpected extra table cannot pass",
+      "pass": true,
+      "detail": [
+        "after schema: unexpected object(s) not created by migrations 1–14: extra_probe"
+      ]
+    },
+    {
+      "name": "schema: a sqlitex_ user table is inventoried, not hidden by a LIKE wildcard",
+      "pass": true,
+      "detail": [
+        "after schema: unexpected object(s) not created by migrations 1–14: sqlitex_user_evidence"
+      ]
+    },
+    {
+      "name": "schema: sqlite-like index and trigger names are inventoried",
+      "pass": true,
+      "detail": [
+        "after schema: unexpected object(s) not created by migrations 1–14: sqlite1_probe_trg,sqlitex_probe_idx"
+      ]
+    },
+    {
+      "name": "schema: a missing M3 index cannot pass",
+      "pass": true,
+      "detail": [
+        "after schema: object(s) missing for schema 14: idx_skill_observations_journal"
+      ]
+    },
+    {
+      "name": "schema: an altered retained index definition cannot pass",
+      "pass": true,
+      "detail": [
+        "after schema: object idx_split_lineage_parent definition differs from shipped migration 13"
+      ]
+    },
+    {
+      "name": "catalog: a seed row changed with the count unchanged cannot pass",
+      "pass": true,
+      "detail": [
+        "skill_catalog_entries: expected exactly the migration-14 catalog seed (15 rows, 19448a3d4c19c7cc2f0e7523e82bb0401f1e88914937e1fcef70f66a9711b970), found 15/746d636889ea38fcbc276173953a74c7dfed55cdd880ddf0cc41b06584cfcfcf"
+      ]
+    },
+    {
+      "name": "evidence: user evidence present right after an upgrade cannot pass",
+      "pass": true,
+      "detail": [
+        "next_actions: before 2/a37af917462790725299801efef1d64033ad61b55f7ab7586a361dcd570c3e76 after 3/66f5c2723b6e582350dac721d2f6650ace2a6e83e99c46eab6b5426dddd92033",
+        "journal_entries: before 2/80e7888b1b4d3ca8adf73f9ed42135e5471c9428352f2f398290da81743a2b0d after 3/3115636a9873cda623d5c873035d268ae80d3b4ea904930cdfca308d192080e3",
+        "skill_catalog_entries: expected exactly the migration-14 catalog seed (15 rows, 19448a3d4c19c7cc2f0e7523e82bb0401f1e88914937e1fcef70f66a9711b970), found 16/61a703c71b93268bda94b58df5f2fe98a60d122363ac0bb5465b596b8a31ad22",
+        "skill_catalog_revisions: expected exactly the migration-14 catalog seed (15 rows, 619c60a1e0290deba2fa9ef78ba78c2baf263493fe9e7af36388d617be00c1f1), found 21/23c1c16cf4b3ea0aea42955f0c41dec6221d953c4f8dee8169f7c993d3499628",
+        "skill_observations: introduced by migration 14 after the baseline, so it must be empty; found 1/ff165b814d2284b849b79902e050344fbe5569ccabc13452035b377cb0b5e13f",
+        "skill_observation_revisions: introduced by migration 14 after the baseline, so it must be empty; found 6/8b03d7f79c11b9dfcca3b8499bb7d635099746c7dc47d1800b14a41f60ff1c96",
+        "skill_self_assessments: introduced by migration 14 after the baseline, so it must be empty; found 3/a0ae67437b995ea3227d295f289cfb388268aba25edc2a0483612b41bae11c24",
+        "skill_evidence_operations: introduced by migration 14 after the baseline, so it must be empty; found 18/d0b2f62e05b846cdab516179f69b455e01bc70e3ffb0b72bc84adc33d47615c8"
+      ]
+    },
+    {
+      "name": "retained: a changed practice response cannot pass",
+      "pass": true,
+      "detail": [
+        "practice_responses: before 1/f9364c9534aef6b442870c5eba06bf9a9f490196c332163ffddbbdbbaaac5bef after 1/ffeb2b0c6c748292257a0c610f64ae037f73616711654deb35cf4818e34aab3e"
+      ]
+    },
+    {
+      "name": "retained: a changed split-lineage row cannot pass",
+      "pass": true,
+      "detail": [
+        "material_split_lineage: before 1/bc63ce8dd39ca46825a60c09c35556c24a54d01ca8d2023322a5d4849697b810 after 1/436ad5560140b0b5d8058773945af46b296e1e32ece19ef7cf6a74a99cdb5228"
+      ]
+    },
+    {
+      "name": "files: changed managed-document bytes cannot pass",
+      "pass": true,
+      "detail": [
+        "files: file bytes changed documents/mat.pdf (28B -> 8B)"
+      ]
+    },
+    {
+      "name": "files: a missing managed document cannot pass",
+      "pass": true,
+      "detail": [
+        "files: file removed documents/part.pdf"
+      ]
+    },
+    {
+      "name": "files: an added managed document cannot pass",
+      "pass": true,
+      "detail": [
+        "files: file added documents/extra.pdf"
+      ]
+    },
+    {
+      "name": "m3: a changed observation cannot pass unchanged",
+      "pass": true,
+      "detail": [
+        "skill_observations: before 1/ff165b814d2284b849b79902e050344fbe5569ccabc13452035b377cb0b5e13f after 1/0076de7493ed90e65e4448ad2db8ffe44fe0990aadf21de0010a6b71434cfb23"
+      ]
+    },
+    {
+      "name": "m3: an added observation revision cannot pass unchanged",
+      "pass": true,
+      "detail": [
+        "skill_observation_revisions: before 6/8b03d7f79c11b9dfcca3b8499bb7d635099746c7dc47d1800b14a41f60ff1c96 after 7/085e1d85f03aea90e2c8cf0d4672d22daaeef8a9de2c0799cd17d14d20ad149c"
+      ]
+    },
+    {
+      "name": "m3: an appended self-assessment cannot pass unchanged",
+      "pass": true,
+      "detail": [
+        "skill_self_assessments: before 3/a0ae67437b995ea3227d295f289cfb388268aba25edc2a0483612b41bae11c24 after 4/ed67cd3232c7eef67f1b50c6ba942de28af22389b4103b6b13a0023de48c938a"
+      ]
+    },
+    {
+      "name": "m3: a changed erased-operation tombstone cannot pass unchanged",
+      "pass": true,
+      "detail": [
+        "skill_evidence_operations: before 18/d0b2f62e05b846cdab516179f69b455e01bc70e3ffb0b72bc84adc33d47615c8 after 18/875b6aa81b27a53b484167de111dfbda4417e6a440793788562bee6acab3e544"
+      ]
+    },
+    {
+      "name": "m3: a changed custom catalog entry cannot pass unchanged",
+      "pass": true,
+      "detail": [
+        "skill_catalog_entries: before 16/61a703c71b93268bda94b58df5f2fe98a60d122363ac0bb5465b596b8a31ad22 after 16/68d8514cfdf270154272bd35861624b07a561598f4335ebf64a22ae22a21aebe"
+      ]
+    },
+    {
+      "name": "permissions: an unrecovered write block fails unchanged, and the recovered mode passes",
+      "pass": true,
+      "detail": {
+        "blocked": [
+          "permissions: backups changed directory 0755 uid 501 -> directory 0555 uid 501 — an operation-bound write block was not recovered, or ownership changed"
+        ],
+        "recovered": []
+      }
+    },
+    {
+      "name": "population: an empty library cannot certify populated-data retention",
+      "pass": true,
+      "detail": [
+        "population: baseline has no practice_attempts, practice_responses, card_review_state, card_review_events, journal_entries, debrief_operations, material_split_lineage rows — an empty library cannot prove populated-data retention",
+        "population: baseline has no managed document files"
+      ]
+    },
+    {
+      "name": "validation: a legacy schema-13-helper receipt is refused, never reinterpreted",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: legacy hfd-mac-profile-snapshot/3 receipt from the historical schema-13 helper — it cannot certify the schema-14 contract and is never reinterpreted; capture both sides with this helper (the historical helper still replays it strictly)"
+    },
+    {
+      "name": "validation: a snapshot without its table inventory is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: table inventory is missing"
+    },
+    {
+      "name": "validation: a snapshot with empty object definitions is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: schema object inventory is incomplete"
+    },
+    {
+      "name": "validation: a blanked object definition is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: schema object skill_observations lacks a complete definition; after: schema object definitions and object inventory disagree"
+    },
+    {
+      "name": "validation: a snapshot whose ledger rows were removed is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: ledger rows/versions/rowCount are missing or disagree"
+    },
+    {
+      "name": "validation: a snapshot missing an M3 table entry is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: table entries missing: skill_evidence_operations; after: m3Evidence is recorded although an M3 table is absent"
+    },
+    {
+      "name": "validation: per-key digests that omit __proto__ while the row count includes it are refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: app_metadata.keyDigests lists 4 keys but the table has 5 rows"
+    },
+    {
+      "name": "validation: a snapshot bound to another commit is refused",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: snapshot is bound to commit \"0000000000000000000000000000000000000000\", not the pinned 8a260c0b32bc213850ed85bf9488d6ef571354a9"
+    },
+    {
+      "name": "validation: a forged ledger row is refused by its digest",
+      "pass": true,
+      "detail": "REFUSED: snapshot(s) are not usable for a verdict — after: ledger row digest does not match its recorded rows"
+    },
+    {
+      "name": "input: an oversized receipt is refused before it is read",
+      "pass": true,
+      "detail": "REFUSED: --after <scratch>/oversized.json is 67108865 bytes, over the 67108864-byte receipt bound"
+    },
+    {
+      "name": "input: a symlinked receipt is refused",
+      "pass": true
+    },
+    {
+      "name": "input: a relative receipt path is refused",
+      "pass": true
+    },
+    {
+      "name": "input: an unknown purpose is refused",
+      "pass": true
+    },
+    {
+      "name": "anchor: CURRENT_SCHEMA_VERSION in the shipped source equals this helper's pinned ceiling",
+      "pass": false,
+      "detail": {
+        "found": "18"
+      }
+    },
+    {
+      "name": "anchor: the registered migrations are exactly the pinned 1–14 with their descriptions",
+      "pass": false,
+      "detail": {
+        "registered": [
+          "1:initial_schema",
+          "2:profile_details",
+          "3:personal_note",
+          "4:app_metadata",
+          "5:flight_log",
+          "6:pilot_toolkit",
+          "7:ai_study",
+          "8:notes",
+          "9:practice_tests",
+          "10:debrief_links",
+          "11:practice_sessions",
+          "12:card_reviews",
+          "13:split_source_lineage",
+          "14:skills_evidence",
+          "15:document_navigation",
+          "16:manual_study",
+          "17:practice_authoring",
+          "18:pdf_kit_provenance"
+        ]
+      }
+    },
+    {
+      "name": "anchor: shipped migration files match migration-checksums.json and the pinned SHA-256/SQLx SHA-384 checksums",
+      "pass": false,
+      "detail": [
+        {
+          "version": 15,
+          "description": "document_navigation",
+          "sha256": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f",
+          "sqlx": "4b54389da8ce6c4375b4af5634b4017c7d7f36538b9df1f64f6274122a66465a8bd1d4f1612ec2c96af03b462b3e5545",
+          "recorded": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f"
+        },
+        {
+          "version": 16,
+          "description": "manual_study",
+          "sha256": "e255d0bf4c7141f55bc99b2aa489b9d2f148b7d20bd4b632fea7a78bd20526bf",
+          "sqlx": "3f9a647a657b37bbd2933bc8b6e24e37e6014deaabda945e3f1bbe9de5aedb99ca9c5f87087bcc2dc64f4a7c3f407d9f",
+          "recorded": "e255d0bf4c7141f55bc99b2aa489b9d2f148b7d20bd4b632fea7a78bd20526bf"
+        },
+        {
+          "version": 17,
+          "description": "practice_authoring",
+          "sha256": "7b66bdfa0829cd9c9f03d177a01bc014063041341298730673d1520a176acd78",
+          "sqlx": "0ec4643c0b0d7ebc1616d5428d0b35d70d95e60f22914feed359863191eb96dc2955df7cdddb77e4fa94f5056be2535e",
+          "recorded": "7b66bdfa0829cd9c9f03d177a01bc014063041341298730673d1520a176acd78"
+        },
+        {
+          "version": 18,
+          "description": "pdf_kit_provenance",
+          "sha256": "ee2b9bdb47c777b16d61bb9581c94551d7c7d8da7741741b00a0b2ca9a30443f",
+          "sqlx": "55f765e27995340da962c83cc960f17d047d7bfafa6be8883fe0ffceb34f02e693bde46b72d2745ce6c9d58978019059",
+          "recorded": "ee2b9bdb47c777b16d61bb9581c94551d7c7d8da7741741b00a0b2ca9a30443f"
+        }
+      ]
+    },
+    {
+      "name": "anchor: every pinned object definition equals what the shipped migrations create (97 objects, none redefined after schema 12)",
+      "pass": false,
+      "detail": {
+        "drift": [
+          "ai_study_sets",
+          "practice_tests",
+          "practice_test_items",
+          "material_content_identities",
+          "idx_material_content_sha",
+          "material_reading_state",
+          "idx_material_reading_state_owner",
+          "material_bookmarks",
+          "idx_material_bookmarks_material",
+          "idx_material_bookmarks_page",
+          "idx_material_bookmarks_hash",
+          "material_operation_claims",
+          "study_set_history",
+          "idx_study_set_history",
+          "card_version_origins",
+          "card_item_origins",
+          "practice_item_origins",
+          "practice_save_operations",
+          "idx_practice_save_ops_material",
+          "pdf_kit_runs",
+          "pdf_kit_item_sources",
+          "idx_pdf_kit_runs_material"
+        ],
+        "redefinedAfterBaseline": [
+          "ai_study_sets@16",
+          "material_bookmarks@16",
+          "practice_tests@17",
+          "practice_test_items@17"
+        ]
+      }
+    },
+    {
+      "name": "anchor: the pinned catalog seed digests equal a fresh migration 14",
+      "pass": true,
+      "detail": {
+        "skill_catalog_entries": {
+          "rowCount": 15,
+          "sha256": "19448a3d4c19c7cc2f0e7523e82bb0401f1e88914937e1fcef70f66a9711b970"
+        },
+        "skill_catalog_revisions": {
+          "rowCount": 15,
+          "sha256": "619c60a1e0290deba2fa9ef78ba78c2baf263493fe9e7af36388d617be00c1f1"
+        }
+      }
+    },
+    {
+      "name": "anchor: the pinned SQLx ledger definition digest matches its text",
+      "pass": true
+    },
+    {
+      "name": "anchor: the pinned M3 tables, indexes and triggers equal the production validator's schema-14 lists",
+      "pass": true,
+      "detail": {
+        "m3Tables": [
+          "skill_catalog_entries",
+          "skill_catalog_revisions",
+          "skill_observations",
+          "skill_observation_revisions",
+          "skill_self_assessments",
+          "skill_evidence_operations"
+        ],
+        "m3Indexes": [
+          "idx_skill_observations_page",
+          "idx_skill_observations_skill_page",
+          "idx_skill_observations_journal",
+          "idx_skill_observations_source_journal",
+          "idx_skill_observations_action",
+          "idx_skill_evidence_operations_subject"
+        ],
+        "m3Triggers": [
+          "trg_skill_catalog_revisions_no_update",
+          "trg_skill_catalog_revisions_no_delete",
+          "trg_skill_observation_revisions_no_update",
+          "trg_skill_observation_revisions_no_partial_delete",
+          "trg_skill_self_assessments_no_update",
+          "trg_skill_self_assessments_no_delete"
+        ]
+      }
+    },
+    {
+      "name": "anchor: the excluded receipt keys are exactly the backup keys appRepository.ts writes",
+      "pass": true,
+      "detail": {
+        "written": [
+          "last_complete_backup_at",
+          "last_complete_backup_path",
+          "last_complete_backup_version"
+        ]
+      }
+    },
+    {
+      "name": "environment: real process inspection result is recorded (never assumed stopped)",
+      "pass": true,
+      "detail": {
+        "state": "error",
+        "controlled": false,
+        "probes": [
+          {
+            "label": "bundle-path",
+            "state": "error",
+            "detail": "inspection exited 3: Command failed: /usr/bin/pgrep -f Her Flight Deck.app/Contents/MacOS/her-flight-deck"
+          },
+          {
+            "label": "executable-name",
+            "state": "error",
+            "detail": "inspection exited 3: Command failed: /usr/bin/pgrep -x her-flight-deck"
+          }
+        ],
+        "pids": [],
+        "detail": "bundle-path: inspection exited 3: Command failed: /usr/bin/pgrep -f Her Flight Deck.app/Contents/MacOS/her-flight-deck; executable-name: inspection exited 3: Command failed: /usr/bin/pgrep -x her-flight-deck"
+      }
+    },
+    {
+      "name": "scratch leak check: no WAL-copy scratch directory survived the run",
+      "pass": true,
+      "detail": {
+        "before": 0,
+        "after": 0
+      }
+    }
+  ],
+  "allPassed": false
+}
+
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+sysmon request failed with error: sysmond service not found
+pgrep: Cannot get process list
+
+EXIT 1

@@ -42,15 +42,17 @@ const SCHEMA16_OBJECTS = ['study_set_history', 'idx_study_set_history', 'card_ve
 // Migration 17 (OFFLINE-03b) adds a table and an index, and adds columns to
 // practice_tests and practice_test_items (schema 9).
 const SCHEMA17_OBJECTS = ['practice_save_operations', 'idx_practice_save_ops_material'];
+// Migration 18 adds only the two PDF-kit source tables and their material index.
+const SCHEMA18_OBJECTS = ['pdf_kit_runs', 'pdf_kit_item_sources', 'idx_pdf_kit_runs_material'];
 
-/** Each alarm's detail names only the later schemas 15, 16 and 17: migrations 1–14 and their objects still match. */
+/** Each alarm's detail names only the later schemas 15, 16, 17 and 18: migrations 1–14 and their objects still match. */
 function assertOnlyLaterSchemas(checks) {
   for (const c of checks) {
-    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '17');
-    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation', '16:manual_study', '17:practice_authoring']);
-    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15, 16, 17]);
+    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '18');
+    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation', '16:manual_study', '17:practice_authoring', '18:pdf_kit_provenance']);
+    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15, 16, 17, 18]);
     else if (c.name === LATER_SCHEMA_ALARMS[3]) {
-      assert.deepEqual(c.detail.drift, ['ai_study_sets', 'practice_tests', 'practice_test_items', ...SCHEMA15_OBJECTS, ...SCHEMA16_OBJECTS, ...SCHEMA17_OBJECTS]);
+      assert.deepEqual(c.detail.drift, ['ai_study_sets', 'practice_tests', 'practice_test_items', ...SCHEMA15_OBJECTS, ...SCHEMA16_OBJECTS, ...SCHEMA17_OBJECTS, ...SCHEMA18_OBJECTS]);
       assert.deepEqual(c.detail.redefinedAfterBaseline, ['ai_study_sets@16', 'material_bookmarks@16', 'practice_tests@17', 'practice_test_items@17']);
     } else assert.fail(`unexpected failing check: ${c.name}`);
   }
@@ -108,7 +110,7 @@ describe('distributed helper', () => {
     assert.match(refused.stderr, /runs only in a disposable repository copy/);
     const r = cli(['self-check'], RUNNER);
     const report = JSON.parse(r.stdout);
-    // The helper stays frozen at schema 14. Since migrations 15, 16 and 17 shipped in source, exactly its
+    // The helper stays frozen at schema 14. Since migrations 15, 16, 17 and 18 shipped in source, exactly its
     // four live-source anchors alarm, and each names only those later schemas (the historical-ceiling
     // alarm, in the manner of the schema-13 helper's). Every other regression must still pass.
     const failed = report.checks.filter(c => !c.pass);
@@ -144,7 +146,7 @@ describe('full self-check reporting', () => {
     assert.equal(named('comparison: upgrade accepts its snapshots for upgrade').pass, false);
     assert.match(named('comparison: upgrade accepts its snapshots for upgrade').detail.refusal, /keyDigests lists 4 keys but the table has 5 rows/);
     assert.equal(named('contract upgrade: no receipt key is set aside outside restore').pass, false);
-    // A later-schema alarm since migrations 15, 16 and 17 (see LATER_SCHEMA_ALARMS), not caused by this edit.
+    // A later-schema alarm since migrations 15, 16, 17 and 18 (see LATER_SCHEMA_ALARMS), not caused by this edit.
     assert.equal(named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions').pass, false);
     assertOnlyLaterSchemas([named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions')]);
     assert.equal(named('scratch leak check: no WAL-copy scratch directory survived the run').pass, true);

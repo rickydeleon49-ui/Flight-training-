@@ -23,6 +23,8 @@ import documentNavigation from "../../src-tauri/migrations/0015_document_navigat
 import manualStudy from "../../src-tauri/migrations/0016_manual_study.sql?raw";
 import practiceAuthoring from "../../src-tauri/migrations/0017_practice_authoring.sql?raw";
 
+import pdfKitProvenance from "../../src-tauri/migrations/0018_pdf_kit_provenance.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -47,6 +49,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 15, description: "document_navigation", sql: documentNavigation },
   { version: 16, description: "manual_study", sql: manualStudy },
   { version: 17, description: "practice_authoring", sql: practiceAuthoring },
+  { version: 18, description: "pdf_kit_provenance", sql: pdfKitProvenance },
 ];
 
 /**

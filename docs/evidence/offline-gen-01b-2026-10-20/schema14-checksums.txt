@@ -1,0 +1,24 @@
+$ shasum -a 256 -c docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS
+STATUS.md: OK
+ROADMAP.md: OK
+docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md: OK
+docs/evidence/mac-schema14-completion-2026-10-15/baseline.json: OK
+docs/evidence/mac-schema14-completion-2026-10-15/execution-receipts.json: OK
+docs/evidence/mac-schema14-completion-2026-10-15/proof-receipt.json: OK
+docs/evidence/mac-schema14-completion-2026-10-15/README.md: OK
+docs/evidence/mac-schema14-completion-2026-10-15/RUNBOOK.md: OK
+scripts/mac-schema13-profile-snapshot.mjs: OK
+scripts/mac-schema14-profile-snapshot.mjs: OK
+scripts/mac-schema14-profile-snapshot.test.mjs: OK
+scripts/mac-schema14-verification-proof.mjs: OK
+src/logic/currentSchemaVerification.test.ts: OK
+docs/MAC_SCHEMA14_VERIFICATION_PREPARATION_REPORT_2026-10-11.md: OK
+docs/PROJECT_HANDOFF.md: OK
+docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md: OK
+docs/evidence/mac-schema14-verification-preparation-2026-10-11/RUNBOOK.md: OK
+docs/evidence/mac-schema14-verification-preparation-2026-10-11/verification-receipts.json: OK
+docs/evidence/mac-schema14-verification-preparation-2026-10-11/source-manifest.json: OK
+docs/evidence/mac-schema14-verification-preparation-2026-10-11/SHA256SUMS: OK
+docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json: OK
+
+EXIT 0
