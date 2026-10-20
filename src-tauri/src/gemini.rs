@@ -653,8 +653,8 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
     let root = app_root(&app)?;
     let previous = current_key(&root).ok().flatten();
     secrets::save_key(&root, trimmed)?;
-    // A new key is a new context: nothing prepared with the old one is
-    // reused, and the old key's uploads are retired while it is still known.
+    // A new key ends in-flight work. Native guide references stay retained;
+    // their fingerprint requires explicit Continue with a different key.
     end_prepared_context(previous).await;
     Ok(GeminiStatus::new(true, load_choice(&root)))
 }
@@ -682,7 +682,9 @@ async fn end_prepared_context(previous_key: Option<String>) {
         return;
     };
     if let Ok(http) = client(VERIFY_TIMEOUT) {
-        prepared_sources().retire(&http, &key, retired).await;
+        tauri::async_runtime::spawn(async move {
+            prepared_sources().retire(&http, &key, retired).await;
+        });
     }
 }
 
@@ -915,7 +917,10 @@ async fn run_generation_inner(
             .await
             {
                 Ok(file) if file.state == gemini_files::FileState::Active => Err(failure.message),
-                Err(gemini_files::LookupFailure::Other(message)) => Err(message),
+                Err(
+                    gemini_files::LookupFailure::Other(message)
+                    | gemini_files::LookupFailure::Auth(message),
+                ) => Err(message),
                 _ => {
                     ctx.cache
                         .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
@@ -1378,9 +1383,27 @@ pub fn cancel_gemini_job(
 
 /// The window saved or dismissed a finished job.
 #[tauri::command]
-pub fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
+pub async fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
     let root = app_root(&app)?;
-    gemini_jobs::with(&root, |journal| journal.acknowledge(&job_id))
+    let key = current_key(&root).ok().flatten();
+    let (removed, descriptor) = sections::take_discard_at(&root, &job_id, prepared_sources())?;
+    if let (true, Some((descriptor, sha)), Some(key), Ok(http)) =
+        (removed, descriptor, key, client(VERIFY_TIMEOUT))
+    {
+        tauri::async_runtime::spawn(async move {
+            prepared_sources()
+                .discard_reference(
+                    &descriptor,
+                    &job_id,
+                    &http,
+                    gemini_files::GOOGLE_BASE,
+                    &key,
+                    &sha,
+                )
+                .await;
+        });
+    }
+    Ok(removed)
 }
 
 #[tauri::command]

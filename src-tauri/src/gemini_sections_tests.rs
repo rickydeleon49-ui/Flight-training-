@@ -36,6 +36,8 @@ struct Rig {
     cache: std::sync::Mutex<Arc<PreparedSources>>,
     http: Client,
     request: SectionRequest,
+    clock: Arc<std::sync::atomic::AtomicI64>,
+    messages: std::sync::Mutex<Vec<String>>,
 }
 impl Rig {
     fn new(pages: u32) -> Self {
@@ -46,12 +48,16 @@ impl Rig {
             generation_tests::pdf(pages, "sections"),
         )
         .unwrap();
+        let clock = Arc::new(std::sync::atomic::AtomicI64::new(1_700_000_000));
+        let now = clock.clone();
         Self {
+            clock,
+            messages: std::sync::Mutex::new(vec![]),
             dir,
             fake: FakeGemini::start(),
             cache: std::sync::Mutex::new(Arc::new(PreparedSources::new(
                 gemini_files::Policy::default(),
-                gemini_files::system_clock(),
+                Arc::new(move || now.load(Ordering::SeqCst)),
             ))),
             http: generation_client().unwrap(),
             request: SectionRequest {
@@ -72,17 +78,26 @@ impl Rig {
         req: &SectionRequest,
         hook: &(dyn Fn(&str) + Sync),
     ) -> Result<JobAnswer<GeneratedStudyAid>, SectionError> {
+        self.run_key(id, req, hook, "synthetic-only")
+    }
+    fn run_key(
+        &self,
+        id: Option<&str>,
+        req: &SectionRequest,
+        hook: &(dyn Fn(&str) + Sync),
+        key: &str,
+    ) -> Result<JobAnswer<GeneratedStudyAid>, SectionError> {
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let cache = self.cache.lock().unwrap().clone();
         let ctx = GenContext {
             http: &self.http,
             base: &self.fake.base,
-            api_key: "synthetic-only",
+            api_key: key,
             choice: ModelChoice::Standard,
             cache: &cache,
             epoch: cache.epoch(),
             budget: &budget,
-            say: &|_| {},
+            say: &|m| self.messages.lock().unwrap().push(m),
         };
         tauri::async_runtime::block_on(activate(&ctx, self.dir.path(), req, id, hook))
     }
@@ -106,9 +121,10 @@ impl Rig {
     }
     fn reopen(&self) {
         gemini_jobs::forget(self.dir.path());
+        let now = self.clock.clone();
         *self.cache.lock().unwrap() = Arc::new(PreparedSources::new(
             gemini_files::Policy::default(),
-            gemini_files::system_clock(),
+            Arc::new(move || now.load(Ordering::SeqCst)),
         ));
     }
 }
@@ -173,14 +189,12 @@ fn finish_3_kill_reopen_retry_only_section_4() {
     assert_eq!(result.answer.sections.len(), 4);
     let after = r.requests();
     assert_eq!(after.len(), 5);
-    let mut expected_retry = after[3].clone();
-    expected_retry["contents"][0]["parts"][1]["file_data"]["file_uri"] =
-        json!(format!("{}/v1beta/files/synthetic-2", r.fake.base));
     assert_eq!(
-        after[4], expected_retry,
-        "only the fresh upload reference changes"
+        after[4], after[3],
+        "the exact unfinished request uses the retained PDF"
     );
-    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 2);
+    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
+    assert_eq!(r.fake.count(|q| q.is_lookup()), 1);
     for (i, body) in after[..4].iter().enumerate() {
         let first = i as u32 * 5 + 1;
         let last = first + 4;
@@ -597,11 +611,9 @@ fn selected_pdf_hash_and_request_page_mapping_survive_reopen() {
     assert!(r.run_with(Some(&id), &req, &|_| {}).is_ok());
     let bodies = r.requests();
     assert_eq!(bodies.len(), 3);
-    let mut expected_retry = bodies[1].clone();
-    expected_retry["contents"][0]["parts"][1]["file_data"]["file_uri"] =
-        json!(format!("{}/v1beta/files/synthetic-2", r.fake.base));
-    assert_eq!(expected_retry, bodies[2]);
-    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 2);
+    assert_eq!(bodies[1], bodies[2]);
+    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
+    assert_eq!(r.fake.count(|q| q.is_lookup()), 1);
     let prompt = bodies[2]["contents"][0]["parts"][0]["text"]
         .as_str()
         .unwrap();
@@ -679,4 +691,466 @@ fn legacy_retry_cannot_replace_a_later_section_draft() {
     ))
     .is_err());
     assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list()), before);
+}
+
+fn paused_reference(r: &Rig) -> (String, Value) {
+    r.fake
+        .behave(|b| b.generate_answers = vec![reply("Finished first", 1), "bad".into()]);
+    assert!(r.run(None).is_err());
+    let id = r.id();
+    let disk: Value =
+        serde_json::from_slice(&std::fs::read(r.dir.path().join("gemini-jobs.json")).unwrap())
+            .unwrap();
+    let descriptor = disk["jobs"][0]["draft"]["preparedFile"].clone();
+    assert!(
+        descriptor.is_object(),
+        "successful preparation must commit its descriptor"
+    );
+    (id, descriptor)
+}
+fn counts(r: &Rig) -> (usize, usize, usize) {
+    (
+        r.fake.count(|q| q.is_upload_finalize()),
+        r.fake.count(|q| q.is_lookup()),
+        r.requests().len(),
+    )
+}
+fn edit_descriptor(r: &Rig, edit: impl FnOnce(&mut Value)) {
+    gemini_jobs::forget(r.dir.path());
+    let path = r.dir.path().join("gemini-jobs.json");
+    let mut disk: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    edit(&mut disk["jobs"][0]["draft"]["preparedFile"]);
+    std::fs::write(path, serde_json::to_vec(&disk).unwrap()).unwrap();
+}
+#[test]
+fn valid_remote_reference_survives_reopen_zero_uploads() {
+    let r = Rig::new(10);
+    let (id, _) = paused_reference(&r);
+    let first = r.requests();
+    assert_eq!(counts(&r), (1, 0, 2));
+    r.reopen();
+    assert_eq!(counts(&r), (1, 0, 2));
+    r.fake
+        .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+    r.run(Some(&id)).unwrap();
+    assert_eq!(counts(&r), (1, 1, 3));
+    assert_eq!(r.requests()[2], first[1]);
+}
+#[test]
+fn expired_reference_one_upload_no_finished_requests() {
+    for missing in [false, true] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        let first = r.requests();
+        if missing {
+            r.fake.vanish("files/synthetic-1");
+        } else {
+            r.clock.store(4_070_908_801, Ordering::SeqCst); // after 2099 expiry
+            r.fake
+                .behave(|b| b.expiration_time = Some("2100-01-01T00:00:00Z".into()));
+        }
+        r.reopen();
+        r.fake
+            .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+        r.run(Some(&id)).unwrap();
+        assert_eq!(counts(&r), (2, usize::from(missing), 3));
+        let mut expected = first[1].clone();
+        expected["contents"][0]["parts"][1]["file_data"]["file_uri"] =
+            json!(format!("{}/v1beta/files/synthetic-2", r.fake.base));
+        assert_eq!(r.requests()[2], expected);
+    }
+}
+#[test]
+fn lookup_failure_no_reupload() {
+    for transport in [false, true] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        r.reopen();
+        r.fake.behave(|b| {
+            b.lookup_status = (!transport).then_some(503);
+            b.drop_lookups = transport;
+        });
+        assert_eq!(
+            r.run(Some(&id)).unwrap_err().code,
+            "REFERENCE_LOOKUP_FAILED"
+        );
+        assert_eq!(counts(&r), (1, 1, 2));
+    }
+}
+#[test]
+fn auth_error_pauses_without_upload() {
+    for status in [401, 403] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        r.reopen();
+        r.fake.behave(|b| b.lookup_status = Some(status));
+        assert_eq!(r.run(Some(&id)).unwrap_err().code, "REFERENCE_AUTH_FAILED");
+        assert_eq!(counts(&r), (1, 1, 2));
+    }
+}
+#[test]
+fn tampered_descriptor_fails_closed() {
+    for (field, value) in [
+        (
+            "uri",
+            json!("https://foreign.invalid/v1beta/files/foreign?key=secret"),
+        ),
+        ("name", json!("files/other-owned-looking-name")),
+        ("allowedHost", json!("foreign.invalid")),
+        ("mime", json!("text/plain")),
+        ("expiresAt", json!(4_000_000_000i64)),
+        ("selectedSha256", json!("a".repeat(64))),
+        ("integrity", json!("a".repeat(64))),
+        ("credentialFingerprint", json!("broken")),
+        ("unknown", json!("secret")),
+        ("null", Value::Null),
+    ] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        edit_descriptor(&r, |d| {
+            if field == "null" {
+                *d = Value::Null;
+            } else {
+                d[field] = value;
+            }
+        });
+        r.reopen();
+        assert_eq!(
+            r.run(Some(&id)).unwrap_err().code,
+            "DESCRIPTOR_INVALID",
+            "{field}"
+        );
+        assert_eq!(counts(&r), (1, 0, 2), "{field}");
+    }
+}
+#[test]
+fn key_change_requires_continue_no_upload() {
+    let r = Rig::new(10);
+    let (id, _) = paused_reference(&r);
+    r.reopen();
+    assert_eq!(
+        r.run_key(Some(&id), &r.request, &|_| {}, "synthetic-changed")
+            .unwrap_err()
+            .code,
+        "KEY_CHANGED"
+    );
+    assert_eq!(counts(&r), (1, 0, 2));
+}
+#[test]
+fn descriptor_never_in_ipc_logs_exports_backups() {
+    use std::io::Read;
+    let r = Rig::new(10);
+    let (id, descriptor) = paused_reference(&r);
+    assert_eq!(
+        descriptor
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        vec![
+            "allowedHost",
+            "credentialFingerprint",
+            "expiresAt",
+            "integrity",
+            "mime",
+            "name",
+            "selectedSha256",
+            "uri"
+        ]
+    );
+    let descriptor_json = descriptor.to_string();
+    for secret in [
+        "synthetic-only",
+        "upload_id=",
+        "X-Goog-Upload",
+        "Authorization",
+        "Bearer ",
+        "?",
+    ] {
+        assert!(
+            !descriptor_json.contains(secret),
+            "persisted secret {secret}"
+        );
+    }
+    let records = gemini_jobs::with(r.dir.path(), |j| j.list());
+    let ipc = serde_json::to_string(&records).unwrap();
+    let debug = format!("{records:?}");
+    let logs = serde_json::to_string(&*r.messages.lock().unwrap()).unwrap();
+    r.fake
+        .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+    let answer = r.run(Some(&id)).unwrap();
+    let export = serde_json::to_string(&answer).unwrap();
+    init_database(r.dir.path());
+    let out = TempDir::new();
+    let archive = out.path().join("synthetic.hfdbackup");
+    crate::backup::create_consistent_complete_backup_with_retry(r.dir.path(), &archive, "0.5.7")
+        .unwrap();
+    let mut zip = zip::ZipArchive::new(std::fs::File::open(archive).unwrap()).unwrap();
+    let mut backup = vec![];
+    for i in 0..zip.len() {
+        let mut entry = zip.by_index(i).unwrap();
+        assert!(!entry.name().contains("gemini-jobs"));
+        entry.read_to_end(&mut backup).unwrap();
+    }
+    let backup = String::from_utf8_lossy(&backup);
+    for output in [&ipc, &debug, &logs, &export, backup.as_ref()] {
+        for field in [
+            "preparedFile",
+            "allowedHost",
+            "credentialFingerprint",
+            "integrity",
+            "expiresAt",
+        ] {
+            assert!(!output.contains(field), "leaked {field}");
+        }
+        for field in [
+            "name",
+            "uri",
+            "allowedHost",
+            "credentialFingerprint",
+            "integrity",
+        ] {
+            assert!(
+                !output.contains(descriptor[field].as_str().unwrap()),
+                "leaked {field}"
+            );
+        }
+    }
+    let disk = std::fs::read_to_string(r.dir.path().join("gemini-jobs.json")).unwrap();
+    assert!(!disk.contains("synthetic-only"));
+    assert!(!disk.contains("upload_id="));
+    assert!(!disk.contains("X-Goog-Upload"));
+    assert!(!disk.contains("Bearer "));
+}
+#[test]
+fn paused_reference_retained_until_expiry_or_discard() {
+    for expire in [false, true] {
+        let r = Rig::new(10);
+        let (_, _) = paused_reference(&r);
+        let cache = r.cache.lock().unwrap().clone();
+        let retired = cache.invalidate_all();
+        tauri::async_runtime::block_on(cache.retire(&r.http, "synthetic-only", retired));
+        assert_eq!(r.fake.count(|q| q.is_delete()), 0);
+        assert!(r.fake.exists("files/synthetic-1"));
+        // Invalidate twice: retained ownership must not disappear with ready entries.
+        if expire {
+            r.clock.store(4_070_908_801, Ordering::SeqCst);
+        }
+        let retired = cache.invalidate_all();
+        tauri::async_runtime::block_on(cache.retire(&r.http, "synthetic-only", retired));
+        assert_eq!(r.fake.count(|q| q.is_delete()), usize::from(expire));
+    }
+}
+#[test]
+fn delete_only_owned_with_matching_key() {
+    let r = Rig::new(10);
+    let (id, _) = paused_reference(&r);
+    let cache = r.cache.lock().unwrap().clone();
+    let retired = cache.invalidate_all();
+    tauri::async_runtime::block_on(cache.retire(&r.http, "synthetic-changed", retired));
+    assert_eq!(r.fake.count(|q| q.is_delete()), 0);
+    assert!(r.fake.exists("files/synthetic-1"));
+    // Discard commits before the best-effort authenticated deletion.
+    assert!(tauri::async_runtime::block_on(discard_at(
+        r.dir.path(),
+        &id,
+        &cache,
+        &r.http,
+        &r.fake.base,
+        Some("synthetic-only")
+    ))
+    .unwrap());
+    assert_eq!(r.fake.count(|q| q.is_delete()), 1);
+    let deletes: Vec<_> = r.fake.log().into_iter().filter(|q| q.is_delete()).collect();
+    assert_eq!(deletes[0].path, "/v1beta/files/synthetic-1");
+}
+#[test]
+fn crash_before_and_after_descriptor_commit() {
+    for point in ["before-descriptor-commit", "after-descriptor-commit"] {
+        let r = Rig::new(5);
+        r.answer(1);
+        let crashed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            r.run_with(None, &r.request, &|at| {
+                if at == point {
+                    panic!("synthetic descriptor crash");
+                }
+            })
+        }));
+        assert!(crashed.is_err(), "hook {point} must run");
+        assert_eq!(counts(&r), (1, 0, 0));
+        let id = r.id();
+        let disk: Value =
+            serde_json::from_slice(&std::fs::read(r.dir.path().join("gemini-jobs.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            disk["jobs"][0]["draft"].get("preparedFile").is_some(),
+            point == "after-descriptor-commit"
+        );
+        r.reopen();
+        assert_eq!(counts(&r), (1, 0, 0));
+        r.run(Some(&id)).unwrap();
+        assert_eq!(
+            counts(&r),
+            if point == "after-descriptor-commit" {
+                (1, 1, 1)
+            } else {
+                (2, 0, 1)
+            }
+        );
+    }
+}
+
+#[test]
+fn descriptor_checkpoint_failure_no_section_request() {
+    let r = Rig::new(5);
+    r.answer(1);
+    let error = r.run_with(None, &r.request, &|point| {
+        if point == "before-descriptor-commit" {
+            std::fs::create_dir(r.dir.path().join("gemini-jobs.json.writing")).unwrap();
+        }
+    });
+    assert!(error.is_err());
+    assert_eq!(counts(&r), (1, 0, 0));
+    std::fs::remove_dir(r.dir.path().join("gemini-jobs.json.writing")).unwrap();
+    r.reopen();
+    let disk: Value =
+        serde_json::from_slice(&std::fs::read(r.dir.path().join("gemini-jobs.json")).unwrap())
+            .unwrap();
+    assert!(disk["jobs"][0]["draft"].get("preparedFile").is_none());
+    assert_eq!(counts(&r), (1, 0, 0));
+}
+#[test]
+fn shared_reference_retains_other_draft_on_discard() {
+    let r = Rig::new(10);
+    let (first, _) = paused_reference(&r);
+    let mut req = r.request.clone();
+    req.material_id = "mat-b".into();
+    r.fake.behave(|b| b.generate_answer = Some("bad".into()));
+    assert!(r.run_with(None, &req, &|_| {}).is_err());
+    let second = gemini_jobs::with(r.dir.path(), |j| {
+        j.list()
+            .into_iter()
+            .find(|j| j.material_id == "mat-b")
+            .unwrap()
+            .id
+    });
+    let cache = r.cache.lock().unwrap().clone();
+    assert!(tauri::async_runtime::block_on(discard_at(
+        r.dir.path(),
+        &first,
+        &cache,
+        &r.http,
+        &r.fake.base,
+        Some("synthetic-only")
+    ))
+    .unwrap());
+    assert_eq!(r.fake.count(|q| q.is_delete()), 0);
+    assert!(tauri::async_runtime::block_on(discard_at(
+        r.dir.path(),
+        &second,
+        &cache,
+        &r.http,
+        &r.fake.base,
+        Some("synthetic-only")
+    ))
+    .unwrap());
+    assert_eq!(r.fake.count(|q| q.is_delete()), 1);
+}
+#[test]
+fn discard_reference_wrong_key_or_tampering_never_deletes() {
+    for tamper in [false, true] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        if tamper {
+            edit_descriptor(&r, |d| {
+                d["name"] = json!("files/foreign");
+                d["uri"] = json!(format!("{}/v1beta/files/foreign", r.fake.base));
+            });
+        }
+        r.reopen();
+        let cache = r.cache.lock().unwrap().clone();
+        assert!(tauri::async_runtime::block_on(discard_at(
+            r.dir.path(),
+            &id,
+            &cache,
+            &r.http,
+            &r.fake.base,
+            Some(if tamper {
+                "synthetic-only"
+            } else {
+                "synthetic-changed"
+            })
+        ))
+        .unwrap());
+        assert_eq!(r.fake.count(|q| q.is_delete()), 0);
+        assert!(r.fake.exists("files/synthetic-1"));
+    }
+}
+#[test]
+fn nonactive_reference_pauses_without_replacement() {
+    for state in ["PROCESSING", "FAILED", "UNKNOWN"] {
+        let r = Rig::new(10);
+        let (id, _) = paused_reference(&r);
+        r.fake.set_state("files/synthetic-1", state);
+        r.reopen();
+        assert_eq!(
+            r.run(Some(&id)).unwrap_err().code,
+            "REFERENCE_LOOKUP_FAILED"
+        );
+        assert_eq!(counts(&r), (1, 1, 2));
+    }
+}
+
+#[test]
+fn descriptor_public_fingerprint_cannot_forge_ownership() {
+    use sha2::{Digest, Sha256};
+    let r = Rig::new(10);
+    let (id, _) = paused_reference(&r);
+    edit_descriptor(&r, |d| {
+        d["name"] = json!("files/foreign");
+        d["uri"] = json!(format!("{}/v1beta/files/foreign", r.fake.base));
+        // Attack using only persisted public metadata. The authentication key
+        // must be derived separately from the fingerprint stored in the file.
+        let public_hash = hex::decode(d["credentialFingerprint"].as_str().unwrap()).unwrap();
+        let mut ip = [0x36u8; 64];
+        let mut op = [0x5cu8; 64];
+        for (i, b) in public_hash.iter().enumerate() {
+            ip[i] ^= b;
+            op[i] ^= b;
+        }
+        let mut inner = Sha256::new();
+        inner.update(ip);
+        inner.update(b"hfd-native-prepared-file-v1\0");
+        inner.update(
+            serde_json::to_vec(&json!([
+                d["name"],
+                d["uri"],
+                d["allowedHost"],
+                d["mime"],
+                d["expiresAt"],
+                d["selectedSha256"],
+                d["credentialFingerprint"]
+            ]))
+            .unwrap(),
+        );
+        let mut outer = Sha256::new();
+        outer.update(op);
+        outer.update(inner.finalize());
+        d["integrity"] = json!(hex::encode(outer.finalize()));
+    });
+    r.reopen();
+    assert_eq!(r.run(Some(&id)).unwrap_err().code, "DESCRIPTOR_INVALID");
+    assert_eq!(counts(&r), (1, 0, 2));
+    let cache = r.cache.lock().unwrap().clone();
+    assert!(tauri::async_runtime::block_on(discard_at(
+        r.dir.path(),
+        &id,
+        &cache,
+        &r.http,
+        &r.fake.base,
+        Some("synthetic-only")
+    ))
+    .unwrap());
+    assert_eq!(r.fake.count(|q| q.is_delete()), 0);
 }
