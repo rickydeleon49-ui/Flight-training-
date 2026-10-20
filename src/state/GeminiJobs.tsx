@@ -16,7 +16,10 @@ import { forgetReviewedSave, rememberReviewedSave, reviewedSaveOf, type Reviewed
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/data/persistenceErrors";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
+import { inspectPdf } from "@/services/pdf";
 import {
+  resumeStudyGuide, restartStudyGuide, sectionGuideError,
+  SectionGuideError, type SectionGuideRequest, type SectionGuideErrorCode,
   acknowledgeGeminiJob,
   generatePracticeTest,
   generateStudyAid,
@@ -40,6 +43,32 @@ function cardDraft(record: GeminiJobRecord): { target: number; cards: unknown[] 
   return draft && typeof draft.target === "number" && Array.isArray(draft.cards)
     ? { target: draft.target, cards: draft.cards }
     : undefined;
+}
+
+export interface SectionGuideDraft {
+  ready: number;
+  total: number;
+  heading?: string;
+  request: SectionGuideRequest;
+}
+function sectionDraft(record: GeminiJobRecord): SectionGuideDraft | undefined {
+  const d = record.draft;
+  if (d?.kind !== "guide-sections-v1" || !d.identity || !d.results) return undefined;
+  const manifest = d.identity.manifest;
+  if (!Array.isArray(manifest) || !Array.isArray(d.identity.chosenPages)) return undefined;
+  return {
+    ready: manifest.filter(s => d.results?.[s.id]?.status === "complete").length,
+    total: manifest.length,
+    heading: manifest.find(s => d.results?.[s.id]?.status !== "complete")?.heading,
+    request: { materialId: record.materialId, relativePath: record.relativePath,
+      chosenPages: d.identity.chosenPages, baseRevision: d.identity.baseRevision ?? null },
+  };
+}
+
+function recoveredSectionError(record: GeminiJobRecord): SectionGuideErrorCode | undefined {
+  if (record.draft?.kind !== "guide-sections-v1" || !record.error) return undefined;
+  const error = sectionGuideError(record.error);
+  return error.code === "GUIDE_PAUSED" ? undefined : error.code;
 }
 
 /**
@@ -86,6 +115,9 @@ export type GeminiJobPhase =
 type Answer = GeneratedStudyAid | GeneratedPracticeTest;
 
 export interface GeminiJob {
+  sectionGuide?: boolean;
+  sections?: SectionGuideDraft;
+  sectionError?: SectionGuideErrorCode;
   draft?: { target: number; cards: unknown[] };
   /** This window's own identity for the job. */
   key: string;
@@ -170,6 +202,7 @@ interface GeminiJobsValue {
   recovery: GeminiRecovery;
   retryRecovery(): void;
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
+  continueGuide(key: string, restart?: boolean): Promise<void>;
   saveAgain(key: string): Promise<void>;
   /** Save a regenerated study set as she reviewed it, keeping what she chose (OFFLINE-03a). */
   /** True once saved; false leaves the answer, and her review, in place. */
@@ -390,6 +423,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     async (key: string, reviewed?: ReviewedRegeneration): Promise<boolean> => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
       if (!job?.answer) return false;
+      if (job.sectionGuide && !job.jobId) {
+        update(key, { phase: "save-failed", error: SAVE_FAILED_MESSAGE });
+        return false;
+      }
       update(key, { phase: "saving", error: null });
       const answer = job.answer;
       // A reviewed save is the one write the journal cannot re-check for her:
@@ -401,35 +438,37 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
       let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
       let practiceError: string | null = null;
+      const guideFailure: { error?: SectionGuideError } = {};
       try {
         outcome = await mutate(async (repos) => {
-          // Every check is made here, inside the write queue, immediately
-          // before the write, so no queued change can slip in between.
-          const materials = await repos.documents.list();
-          const current = materials.find((material) => material.id === job.materialId);
-          if (!current || current.filePath !== job.filePath) return "superseded" as const;
-          if (job.contentSha256) {
-            const fingerprints = await repos.documents.fingerprintDocuments([job.filePath]);
-            if (fingerprints && fingerprints.get(job.filePath) !== job.contentSha256) {
-              return "superseded" as const;
+          try {
+            // Every check is made here, inside the write queue, immediately
+            // before the write, so no queued change can slip in between.
+            const materials = await repos.documents.list();
+            const current = materials.find((material) => material.id === job.materialId);
+            if (!current || current.filePath !== job.filePath) return "superseded" as const;
+            if (job.contentSha256 && !job.sectionGuide) {
+              const fingerprints = await repos.documents.fingerprintDocuments([job.filePath]);
+              if (fingerprints && fingerprints.get(job.filePath) !== job.contentSha256) {
+                return "superseded" as const;
+              }
             }
-          }
-          if (reviewed?.kind === "study-set" && job.kind === "study-aid") {
-            // The set she reviewed is named column for column, so a change made
-            // since refuses as stale; the same id makes a retry safe.
-            await repos.documents.saveStudySet({
-              operationId: reviewed.operationId,
-              materialId: job.materialId,
-              reason: "regenerate",
-              expected: reviewed.expected,
-              next: reviewed.next,
-            });
-            return "saved" as const;
-          }
-          if (reviewed?.kind === "practice" && job.kind === "practice-test") {
-            try {
-              await repos.documents.savePracticeAuthoring(reviewed.operation);
+            if (reviewed?.kind === "study-set" && job.kind === "study-aid") {
+              // The set she reviewed is named column for column, so a change made
+              // since refuses as stale; the same id makes a retry safe.
+              await repos.documents.saveStudySet({
+                operationId: reviewed.operationId,
+                materialId: job.materialId,
+                reason: "regenerate",
+                expected: reviewed.expected,
+                next: reviewed.next,
+              }, job.sectionGuide ? job.jobId ?? undefined : undefined);
               return "saved" as const;
+            }
+            if (reviewed?.kind === "practice" && job.kind === "practice-test") {
+              try {
+                await repos.documents.savePracticeAuthoring(reviewed.operation);
+                return "saved" as const;
             } catch (failure) {
               practiceError = failure instanceof PracticeAuthoringError ? failure.message : PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR;
               throw failure;
@@ -452,7 +491,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               flashcards: aid.flashcards,
               sourceNotes: aid.sourceNotes,
               model: aid.model,
-            });
+            }, job.sectionGuide ? job.jobId ?? undefined : undefined);
           } else {
             const test = answer as GeneratedPracticeTest;
             await repos.documents.savePracticeTest({
@@ -464,14 +503,23 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             });
           }
           return "saved" as const;
+          } catch (failure) {
+            if (job.sectionGuide && failure instanceof SectionGuideError) guideFailure.error = failure;
+            throw failure;
+          }
         });
       } catch (failure) {
+        if (job.sectionGuide && failure instanceof SectionGuideError) guideFailure.error = failure;
         if (reviewed?.kind === "practice") {
           practiceError = failure instanceof PracticeAuthoringError ? failure.message : PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR;
         }
         outcome = null;
       }
 
+      if (guideFailure.error) {
+        update(key, { phase: "failed", sectionError: guideFailure.error.code, error: guideFailure.error.message });
+        return false;
+      }
       if (outcome === "saved" || outcome === "already") {
         const onSaved = onSavedRef.current.get(key);
         forget(key);
@@ -548,6 +596,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // Take the shared lock synchronously, before anything awaits. Nothing
       // new starts until earlier work has been read back from the journal.
       if (activeRef.current !== null || recoveryRef.current !== "ready") return;
+      if (jobsRef.current.some(job => job.materialId === target.materialId && job.kind === kind && job.sectionGuide)) return;
       // A draft waiting to be saved is never overwritten by asking again.
       const waiting = jobsRef.current.find(
         (job) =>
@@ -559,6 +608,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             job.phase === "discard-failed"),
       );
       if (waiting) return;
+      const useSections = kind === "study-aid" && target.filePath.toLowerCase().endsWith(".pdf") && !jobsRef.current.some(job => job.materialId === target.materialId && job.draft);
       const key = newKey();
       activeRef.current = key;
       // Asking again replaces this material's older outcome of the same kind.
@@ -595,6 +645,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           requestId: newRequestId(),
           invoked: false,
           local: true,
+          sectionGuide: useSections,
         },
       ]);
       if (options?.onSaved) onSavedRef.current.set(key, options.onSaved);
@@ -604,7 +655,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       try {
         const refusal = (await options?.preflight?.()) ?? null;
         if (refusal) {
-          update(key, { phase: "failed", error: refusal });
+          update(key, { phase: "failed", error: refusal, sectionGuide: false });
           return;
         }
         try {
@@ -633,16 +684,28 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         update(key, { invoked: true });
         let answer: Awaited<ReturnType<typeof generate>>;
         try {
-          answer = kind === "study-aid"
+          if (useSections) {
+            const pdf = await inspectPdf(target.filePath);
+            const request: SectionGuideRequest = { materialId: target.materialId, relativePath: target.filePath,
+              chosenPages: Array.from({ length: pdf.pages }, (_, i) => i + 1), baseRevision, requestId: current()?.requestId };
+            update(key, { sections: { ready: 0, total: 0, request } });
+            if (current()?.cancelRequested) {
+              update(key, { phase: "cancelled", error: sectionGuideError({ code: "CANCELLED" }).message, stage: null });
+              return;
+            }
+            answer = await resumeStudyGuide(request);
+          } else answer = kind === "study-aid"
             ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40)
             : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.
-          const message = geminiErrorMessage(error);
-          const cancelled = message === GEMINI_CANCELLED_MESSAGE;
+          const safe = useSections ? sectionGuideError(error) : null;
+          const message = safe?.message ?? geminiErrorMessage(error);
+          const cancelled = safe?.code === "CANCELLED" || message === GEMINI_CANCELLED_MESSAGE;
           update(key, {
             phase: cancelled ? "cancelled" : "failed",
-            error: geminiErrorMessage(error),
+            error: message,
+            sectionError: safe?.code,
             progress: null,
             stage: null,
           });
@@ -655,7 +718,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                 (record.stage === "failed" || record.stage === "cancelled")
               ) {
                 if (record.draft) {
-                  update(key, { jobId: record.id, draft: cardDraft(record) });
+                  update(key, { jobId: record.id, draft: cardDraft(record), sections: sectionDraft(record) ?? current()?.sections });
                   continue;
                 }
                 forgottenRef.current.add(record.id);
@@ -681,6 +744,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             progress: null,
             stage: null,
             phase: "recovered",
+            needsReview: kind === "study-aid" && needsRegenerationReview(dataRef.current.aiStudySets.find(set => set.sourceMaterialId === target.materialId)),
           });
           return;
         }
@@ -700,6 +764,55 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     },
     [commit, flushAcks, forget, persist, release, syncPendingCount, update],
   );
+
+  const continueGuide = useCallback(async (key: string, restart = false) => {
+    const job = jobsRef.current.find(j => j.key === key);
+    if (!job?.sectionGuide || !job.sections || !job.jobId || activeRef.current !== null || recoveryRef.current !== "ready"
+      || !["failed", "interrupted", "cancelled"].includes(job.phase)) return;
+    activeRef.current = key; // synchronous: a double click can never dispatch twice
+    const requestId = newRequestId();
+    const retainedKey = restart ? newKey() : null;
+    if (retainedKey) commit([...jobsRef.current, { ...job, key: retainedKey, local: false }]);
+    update(key, { phase: "running", error: null, sectionError: undefined, local: true, invoked: true,
+      cancelRequested: false, cancelAttempted: false, cancelError: null, requestId, startedAt: Date.now(), ...(restart ? { jobId: null, sections: { ready: 0, total: 0, request: job.sections.request } } : {}) });
+    let stop = () => {};
+    try {
+      try { stop = await watchGeminiProgress(event => {
+        const current = jobsRef.current.find(j => j.key === key);
+        if (current?.phase === "running" && belongsTo(current, event)) update(key, { stage: event.stage, attempt: event.attempt, maxAttempts: event.maxAttempts });
+      }); } catch { /* counts still come from the journal */ }
+      let request = { ...job.sections.request, requestId };
+      if (restart) {
+        // A new guide uses today's file and saved revision. The earlier draft stays.
+        const material = dataRef.current.materials.find(m => m.id === job.materialId);
+        if (!material?.filePath) throw sectionGuideError({ code: "SOURCE_CHANGED" });
+        const pdf = await inspectPdf(material.filePath);
+        request = { materialId: job.materialId, relativePath: material.filePath, chosenPages: Array.from({ length: pdf.pages }, (_, i) => i + 1),
+          baseRevision: dataRef.current.aiStudySets.find(set => set.sourceMaterialId === job.materialId)?.updatedAt ?? null, requestId };
+      }
+      if (jobsRef.current.find(j => j.key === key)?.cancelRequested) throw sectionGuideError({ code: "CANCELLED" });
+      const answer = restart ? await restartStudyGuide(job.jobId, true, request) : await resumeStudyGuide(request, job.jobId);
+      const { jobId = job.jobId, contentSha256 = null, checkpointed = false, ...rest } = answer;
+      update(key, { jobId, answer: rest, contentSha256, checkpointed, baseRevision: request.baseRevision ?? null,
+        filePath: request.relativePath, sections: { ...(jobsRef.current.find(j => j.key === key)?.sections ?? job.sections), request }, phase: "recovered", stage: null, progress: null,
+        needsReview: needsRegenerationReview(dataRef.current.aiStudySets.find(set => set.sourceMaterialId === job.materialId)) });
+    } catch (error) {
+      const safe = sectionGuideError(error);
+      update(key, { phase: safe.code === "CANCELLED" ? "cancelled" : "failed", error: safe.message, sectionError: safe.code, stage: null, progress: null });
+      try {
+        const records = await listGeminiJobs();
+        const record = records.find(r => r.id === job.jobId && !restart) ?? (restart ? records.find(r => r.requestId === requestId) : undefined);
+        if (record) {
+          update(key, { jobId: record.id, sections: sectionDraft(record) ?? job.sections,
+            baseRevision: record.baseRevision ?? null, filePath: record.relativePath });
+        } else if (retainedKey) {
+          // Admission was refused: there is still just the original draft.
+          commit(jobsRef.current.filter(j => j.key !== retainedKey));
+          update(key, { jobId: job.jobId, sections: job.sections });
+        }
+      } catch { /* the earlier durable draft remains available on reopen */ }
+    } finally { stop(); release(key); }
+  }, [commit, release, update]);
 
   const saveAgain = useCallback(
     async (key: string) => {
@@ -781,6 +894,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         }
         // Merge against the state as it is now.
         let next = jobsRef.current.map((job): GeminiJob => {
+          if (job.sectionGuide && job.phase === "running") {
+            const record = records.find(r => job.requestId && r.requestId === job.requestId) ?? records.find(r => r.id === job.jobId);
+            if (record) job = { ...job, jobId: record.id, sections: sectionDraft(record) ?? job.sections };
+          }
           if (job.phase !== "running" || job.jobId === null || job.local) return job;
           const record = records.find((candidate) => candidate.id === job.jobId);
           if (record?.stage === "running") return job;
@@ -806,6 +923,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
             checkpointed: record.stage === "ready",
             draft: cardDraft(record),
+            sectionGuide: record.draft?.kind === "guide-sections-v1",
+            sections: sectionDraft(record),
+            sectionError: recoveredSectionError(record),
           };
         });
         const known = new Set(next.map((job) => job.jobId).filter(Boolean));
@@ -847,6 +967,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               checkpointed: record.stage === "ready",
               ...(record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice" ? { needsReview: true } : {}),
               draft: cardDraft(record),
+              sectionGuide: record.draft?.kind === "guide-sections-v1",
+              sections: sectionDraft(record),
+              sectionError: recoveredSectionError(record),
             },
           ];
         }
@@ -911,7 +1034,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   // A job found running after a reload is also checked on a timer, in case
   // its one change event is missed.
-  const followingRunning = jobs.some((job) => job.phase === "running" && job.jobId !== null && !job.local);
+  const followingRunning = jobs.some((job) => job.phase === "running" && (job.sectionGuide || (job.jobId !== null && !job.local)));
   useEffect(() => {
     if (!followingRunning) return;
     const timer = window.setInterval(() => void follow(), FOLLOW_INTERVAL_MS);
@@ -936,6 +1059,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       recovery,
       retryRecovery,
       start,
+      continueGuide,
       saveAgain,
       saveReviewed,
       dismiss,
@@ -943,7 +1067,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, recovery, retryRecovery, start, saveAgain, saveReviewed, dismiss, cancel, lockTick],
+    [jobs, recovery, retryRecovery, start, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

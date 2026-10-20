@@ -475,6 +475,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
     ).rejects.toThrow(PracticeSessionError);
   });
 
+  // Heavy 200-question conversion that exceeded the 5 s default on a loaded CI runner.
   it("REQ-10: legacy conversion converts up to 200 questions without truncation, quarantines corrupt rows, and avoids duplicate conversion", async () => {
     const { mkdtempSync, rmSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
@@ -547,7 +548,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
     reopenedDb.close();
 
     rmSync(tmpDir, { recursive: true, force: true });
-  });
+  }, 30_000);
 
   it("REQ-11: practice test removal prunes unfinished attempts and receipts, preserving completed review history", async () => {
     const matId = "mat-del";

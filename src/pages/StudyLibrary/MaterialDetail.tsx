@@ -145,7 +145,7 @@ function MaterialDetailPage() {
   const working = (phase: GeminiJobPhase | undefined) => phase === "running" || phase === "saving";
   const generating = working(studyJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
-  const generationError = studyJob?.phase === "failed" ? studyJob.error : null;
+  const generationError = studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
   const practiceGenerationError = practiceJob?.phase === "failed" ? practiceJob.error : null;
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
@@ -627,7 +627,7 @@ function MaterialDetailPage() {
                       <Button
                         size="small"
                         variant={studySet ? "secondary" : "primary"}
-                        disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase)}
+                        disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
                         onClick={() => {
                           if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
                         }}
@@ -793,9 +793,12 @@ function MaterialDetailPage() {
                     job={studyJob}
                     jobs={geminiJobs}
                     onRetry={retryStudy}
-                    onReview={setHasHerItems && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
+                    onReview={(setHasHerItems || studyJob.needsReview) && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
                   />
                 ) : null}
+                {geminiJobs.jobs.filter(job => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key).map(job => (
+                  <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
+                ))}
                 {reviewingRegeneration &&
                 studyJob?.answer &&
                 (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
@@ -1226,12 +1229,12 @@ function MaterialDetailPage() {
         }}
         onCancel={() => setConfirmingAi(false)}
       >
-        <label className="field">Target cards
+        {!isPdf ? <><label className="field">Target cards
           <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
             {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
-        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p>
+        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p></> : <p className="tiny dim">Your guide is built section by section. Finished sections are kept if you stop, and the completed guide waits for you to save it.</p>}
       </ConfirmDialog>
 
       <ConfirmDialog

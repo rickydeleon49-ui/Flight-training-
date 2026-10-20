@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { AlertIcon, Button } from "@/components/ui";
-import type { GeminiWorkStage } from "@/services/gemini";
+import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
+import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
 import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
@@ -29,6 +29,10 @@ export function GeminiJobNotice({
 }) {
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
+
+  if (job.sectionGuide && ["failed", "interrupted", "cancelled"].includes(job.phase)) {
+    return <SectionGuideNotice job={job} jobs={jobs} />;
+  }
 
   if (job.draft && ["failed", "interrupted", "cancelled"].includes(job.phase)) {
     return (
@@ -82,9 +86,11 @@ export function GeminiJobNotice({
               Save the new {what}
             </Button>
           )}
+          {job.sectionGuide ? <SectionDraftDiscard job={job} jobs={jobs} label="Discard it" /> : (
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard it
           </Button>
+          )}
         </div>
       </div>
     );
@@ -106,9 +112,11 @@ export function GeminiJobNotice({
               Save again
             </Button>
           )}
+          {job.sectionGuide ? <SectionDraftDiscard job={job} jobs={jobs} label={`Discard the new ${what}`} /> : (
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard the new {what}
           </Button>
+          )}
         </div>
       </div>
     );
@@ -164,6 +172,66 @@ export function GeminiJobNotice({
   }
 
   return null;
+}
+
+/** Section drafts never share the legacy retry or one-click discard path. */
+function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<typeof useGeminiJobs> }) {
+  const [keeping, setKeeping] = useState(false);
+  const [pending, setPending] = useState(false);
+  const intent = useRef(false);
+  const code = job.sectionError;
+  const sourceChanged = code === "SOURCE_CHANGED" || code === "CONSENT_REQUIRED";
+  const activate = (restart = false) => {
+    if (intent.current || jobs.locked()) return;
+    intent.current = true;
+    setPending(true);
+    void jobs.continueGuide(job.key, restart).finally(() => { intent.current = false; setPending(false); });
+  };
+  const saved = job.sections?.ready ?? 0;
+  const message = job.phase === "cancelled" ? SECTION_GUIDE_MESSAGES.CANCELLED
+    : keeping || !job.local ? "Your finished sections are here. Continue when you're ready."
+    : saved === 1 ? "Your 1 finished section is saved. Try again to continue with section 2."
+    : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
+  return (
+    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+      <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div>
+      {code && code !== "CANCELLED" && !keeping ? <p className="tiny" role="alert">{SECTION_GUIDE_MESSAGES[code]}</p> : null}
+      <div className="row row--wrap">
+        {sourceChanged && !keeping ? <>
+          <Button size="small" variant="secondary" onClick={() => setKeeping(true)}>Keep my earlier work</Button>
+          <Button size="small" disabled={jobs.busy || pending} onClick={() => activate(true)}>Start a new guide</Button>
+        </> : code === "KEY_CHANGED" ? (
+          <Button size="small" disabled={jobs.busy || pending} onClick={() => activate(true)}>Continue</Button>
+        ) : code !== "TOO_MANY_SECTIONS" && job.jobId && job.sections ? (
+          <Button size="small" disabled={jobs.busy || pending} onClick={() => activate()}>Try again</Button>
+        ) : null}
+        <SectionDraftDiscard job={job} jobs={jobs} disabled={pending} />
+      </div>
+    </div>
+  );
+}
+
+export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = false }: {
+  job: GeminiJob;
+  jobs: ReturnType<typeof useGeminiJobs>;
+  label?: string;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const intent = useRef(false);
+  return <>
+    <Button size="small" variant="secondary" disabled={jobs.busy || disabled || pending} onClick={() => setOpen(true)}>{label}</Button>
+    <ConfirmDialog open={open} title="Discard this guide draft?"
+      message="This deletes the finished sections in this draft. Your saved study guide stays as it is."
+      confirmLabel="Discard draft" pending={pending} pendingLabel="Discarding…"
+      onCancel={() => setOpen(false)} onConfirm={() => {
+        if (intent.current) return;
+        intent.current = true;
+        setPending(true);
+        void jobs.dismiss(job.key).finally(() => { intent.current = false; setPending(false); setOpen(false); });
+      }} />
+  </>;
 }
 
 /** Earlier Gemini work could not be read back, so nothing new may start yet. */
@@ -243,7 +311,11 @@ export function GeminiProgressView({
         {job.stage === "uploading" && !job.cancelRequested && job.startedAt !== undefined && now - job.startedAt >= 1000 ? (
           <p className="tiny dim">Your PDF is still uploading. A slower connection can take a little longer.</p>
         ) : null}
-        {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
+        {job.sectionGuide && job.sections && job.sections.total > 0 ? (
+          <p className="tiny" role="status">{job.sections.ready} of {job.sections.total} {job.sections.total === 1 ? "section" : "sections"} ready</p>
+        ) : null}
+        {job.sectionGuide && job.sections?.heading && !/files\/|https?:\/\//i.test(job.sections.heading) ? <p className="tiny dim">{job.sections.heading}</p> : null}
+        {job.progress && !job.sectionGuide && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
         {job.cancelError ? (
           <p className="field__error" role="alert">
             {job.cancelError}

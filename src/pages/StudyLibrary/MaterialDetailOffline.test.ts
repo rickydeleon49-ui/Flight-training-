@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 /**
  * A4: a saved study guide, its flashcards and a saved practice test stay
  * readable and usable when Gemini is disconnected, its status is still loading
@@ -75,8 +77,8 @@ async function seed(material: Partial<NewMaterial> = {}) {
   const created = await repos.documents.create({
     id: "mat-saved",
     title: "VOR navigation handout",
-    filePath: "documents/vor.pdf",
-    originalFileName: "vor.pdf",
+    filePath: "documents/vor.txt",
+    originalFileName: "vor.txt",
     fileSize: 4096,
     ...material,
   });
@@ -272,7 +274,7 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     geminiStatus("connected");
     await seed();
     await repos.documents.create({
-      id: "mat-other", title: "Weather handout", filePath: "documents/wx.pdf", originalFileName: "wx.pdf", fileSize: 2048,
+      id: "mat-other", title: "Weather handout", filePath: "documents/wx.txt", originalFileName: "wx.txt", fileSize: 2048,
     });
     let finish!: (aid: geminiService.GeneratedStudyAid) => void;
     studyAid.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));

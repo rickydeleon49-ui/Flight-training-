@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -95,7 +97,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     localStorage.clear();
     db = await createNodeSqliteDatabase();
     repos = createRepositories(db);
-    await repos.documents.create({ id: "mat-a", title: "Material A", filePath: "documents/a.pdf", originalFileName: "a.pdf", fileSize: 1024 });
+    await repos.documents.create({ id: "mat-a", title: "Material A", filePath: "documents/a.txt", originalFileName: "a.txt", fileSize: 1024 });
     HTMLDialogElement.prototype.showModal = function () {
       this.setAttribute("open", "");
     };
@@ -242,7 +244,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
         id: JOB,
         kind: "study-aid",
         materialId: "mat-a",
-        relativePath: "documents/a.pdf",
+        relativePath: "documents/a.txt",
         contentSha256: "",
         stage: "cancelled",
         createdAt: 0,
@@ -374,7 +376,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
       id: JOB,
       kind: "study-aid" as const,
       materialId: "mat-a",
-      relativePath: "documents/a.pdf",
+      relativePath: "documents/a.txt",
       contentSha256: "",
       stage: "running" as const,
       createdAt: 0,

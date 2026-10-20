@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 /**
  * The Gemini model choice as she sees it on a material: the "Send this file
  * to Google?" message names the model that will read the file, and a saved
@@ -51,8 +53,8 @@ async function seedMaterial() {
   return createRepositories(db).documents.create({
     id: "mat-model",
     title: "Synthetic handbook",
-    filePath: "documents/handbook.pdf",
-    originalFileName: "handbook.pdf",
+    filePath: "documents/handbook.txt",
+    originalFileName: "handbook.txt",
     fileSize: 2048,
   });
 }
