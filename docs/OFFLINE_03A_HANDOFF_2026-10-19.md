@@ -56,6 +56,20 @@ The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix
 
 **Codex review of this branch, round 4: RED.** The round-3 fix was confirmed. One P2 was found and fixed: the review didn't show full content or the earlier wording an item resembles; it now shows both, the earlier wording coming from Previous versions. The regression fails on the pre-fix source (`codex-r4-regression-before-fix.log`).
 
+**Codex review of this branch, round 5: RED (fixed; round 6 not yet run).** The round-4 fix was confirmed. One P2 was found and fixed: a reviewed save that committed before a restart could apply again. The pending operation is now kept in local storage under its job id, and recognised when the review reopens. The regression fails on the pre-fix source (`codex-r5-regression-before-fix.log`).
+
+## STOP POINT (Claude's usage ran out here) — 19 October 2026
+
+- **Last commit:** see `git log -1` on `claude/offline-03a-core-fixes` (the round-5 fix plus notes). **Local only; nothing pushed; no PR yet.**
+- **Codex review rounds 1–5:** all RED, and every finding is fixed with a failing-first regression. The results are in `docs/evidence/offline-03a-2026-10-19/codex-review-r*-result.md`.
+- **Gate after the round-5 fix:** full frontend 3,915 passed, 0 failed (`r6b-vitest-full.log`); typecheck, build and diff-check exit 0.
+- **Native:** Rust has been unchanged since `b50b7b5`, so the native receipts (844 passed, clippy, fmt) still apply.
+- **The very next step is Codex round 6.** The prompt is not written yet. Copy `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r5.md` to `…-r6.md`, change its last section to "Round 6: verify the round-5 fix (`git diff 9c6c544..HEAD`)", then run:
+  `codex exec -s read-only -C /Users/rickymac/code/Flight-training-offline-03a-fixes -o /Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r6-result.md "$(cat …-r6.md)" < /dev/null`
+- **On GREEN:** push the branch once, open a PR against `main` (title "OFFLINE-03a: study material she makes and edits herself"; body from the report, ending with the Claude Code attribution), and close draft #236 as superseded. Merge only after green exact-head CI, with `gh pr merge --merge --match-head-commit <sha>`.
+- **On RED:** fix it locally, add a regression that fails first, rerun the gate, and record receipts in the evidence README and `SHA256SUMS`.
+- **If you edit STATUS, ROADMAP or PROJECT_HANDOFF,** rebind the schema-14 manifest (see the rules below).
+
 ## Exactly where it stopped, and what comes next
 
 1. **Done:** both Codex round-1 fixes and their regressions, plus this handoff.
@@ -71,7 +85,7 @@ The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix
    - `node --test scripts/mac-schema14-profile-snapshot.test.mjs` (26/26).
 
    Then update `SHA256SUMS` and commit.
-3. **Codex rounds 2–4 were RED and are fixed. Next is round 5:** run the gate, commit, then review with `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r5.md`. The round-2 prompt was the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
+3. **Codex rounds 2–5 were RED and are fixed. Next is round 6:** run the gate, commit, then review with `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r6.md`. The round-2 prompt was the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
    - Prompt: `docs/OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md`, plus a note naming the round-1 findings and their fix commit.
    - Run: `codex exec -s read-only -C <worktree> -o <result.md> "$(cat <prompt>)" < /dev/null`.
    - On RED: fix locally, add a failing-first regression and repeat.

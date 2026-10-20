@@ -457,3 +457,9 @@ evidence/offline-03a-2026-10-19/r5-typecheck.log -text -diff
 evidence/offline-03a-2026-10-19/r5-vitest-full.log -text -diff
 evidence/offline-03a-2026-10-19/r5-build.log -text -diff
 evidence/offline-03a-2026-10-19/r5-diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/codex-r5-regression-before-fix.log -text -diff
+evidence/offline-03a-2026-10-19/r6-typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/r6-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r6-build.log -text -diff
+evidence/offline-03a-2026-10-19/r6-diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/r6b-vitest-full.log -text -diff

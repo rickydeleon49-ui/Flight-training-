@@ -60,3 +60,12 @@ Those two failures were test timing only; product code is unchanged since `ca8e3
 | `codex-r4-regression-before-fix.log` | the new regression fails on the pre-fix source (1 failed, 12 passed) |
 | `r5-typecheck.log`, `r5-build.log`, `r5-diff-check.log` | exit 0 |
 | `r5-vitest-full.log` | **3,914 passed, 6 skipped; exit 0** |
+
+## After the Codex round-5 fix
+
+| Receipt | Result |
+| --- | --- |
+| `codex-r5-regression-before-fix.log` | the new regression fails on the pre-fix source (1 failed, 13 passed) |
+| `r6-typecheck.log`, `r6-build.log`, `r6-diff-check.log` | exit 0 |
+| `r6-vitest-full.log` | **failed**: one editing test waited the default 1 s for the editor panel under load |
+| `r6b-vitest-full.log` | **3,915 passed, 6 skipped; exit 0**, after this file's async wait limit was raised to 10 s |

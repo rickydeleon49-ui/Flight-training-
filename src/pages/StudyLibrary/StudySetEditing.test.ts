@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -41,6 +41,9 @@ async function open(path: string) {
 }
 
 let repos: ReturnType<typeof createRepositories>;
+// Every step here runs the real save path; under a loaded full-suite run a
+// default one-second wait is not enough. Scoped to this file's worker.
+configure({ asyncUtilTimeout: 10_000 });
 // A reviewed save runs the whole job path; under a loaded full-suite run it can
 // outlast the default one-second wait.
 const SLOW_RUNNER = { timeout: 10_000 };
@@ -413,5 +416,34 @@ describe("editing a generated study guide", () => {
     const fresh = within(review.getByRole("region", { name: "New" }));
     expect(fresh.getByText("Answer: About ten feet up.")).toBeTruthy();
     expect(fresh.getByText("A new summary.")).toBeTruthy();
+  });
+
+  it("a reviewed save that committed before a restart is recognised after the restart, not applied again", async () => {
+    const review = await herEditThenRegenerate();
+    const save = db.saveStudySetAtomically!.bind(db);
+    db.saveStudySetAtomically = async (operation) => {
+      const result = await save(operation);
+      // Committed, then the app closes before the answer arrives.
+      if (operation.reason === "regenerate") throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
+      return result;
+    };
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    expect(await review.findByText(/Your choices are still here/, undefined, SLOW_RUNNER)).toBeTruthy();
+    expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
+
+    // Restart: a fresh window, the same database, the journal still holding the answer.
+    cleanup();
+    db.saveStudySetAtomically = save;
+    vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue([
+      {
+        id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.pdf",
+        contentSha256: "", createdAt: 0, updatedAt: 0, stage: "ready", result: { ...AID, summary: "A new summary." },
+      },
+    ]);
+    await open("/study/mat-a");
+    fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
+    expect(localStorage.getItem("her-flight-deck.reviewed-regeneration.job-555555555555555555555555")).toBeNull();
   });
 });

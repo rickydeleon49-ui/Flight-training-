@@ -162,6 +162,18 @@ Round 4 confirmed the round-3 fix and found one P2 (`codex-review-r4-result.md`)
 
 The regression fails on the pre-fix source (`codex-r4-regression-before-fix.log`) and passes now.
 
+## Codex review, round 5: RED, fixed
+
+Round 5 confirmed the round-4 fix and found one P2 (`codex-review-r5-result.md`): the record of a reviewed save in flight lived only in memory. If the app closed after the save committed but before its answer arrived, reviewing again after a restart saved a second time.
+
+**Fix:**
+- Before sending a reviewed save, the dialog keeps the exact operation on this computer, under its Gemini journal job id (`her-flight-deck.reviewed-regeneration.<jobId>`), and removes it once the save is confirmed.
+- When the review reopens, in the same session or after a restart, it checks whether the stored set already holds that operation's content. If so, it resends the exact operation, which is recognised as already saved.
+
+**Limit:** if browser storage is unavailable or cleared, a restart can still record one extra "regenerate" history row. The stored content is the same either way, since her items are merged from the current set and not duplicated.
+
+The regression fails on the pre-fix source (`codex-r5-regression-before-fix.log`) and passes now.
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

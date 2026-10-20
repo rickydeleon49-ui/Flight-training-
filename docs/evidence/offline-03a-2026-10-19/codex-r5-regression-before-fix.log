@@ -1,0 +1,30 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/.review-03a-prefix5
+
+(node:96686) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts (14 tests | 1 failed) 7352ms
+     × a reviewed save that committed before a restart is recognised after the restart, not applied again 5024ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before a restart is recognised after the restart, not applied again
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:418:3
+    416|   });
+    417|
+    418|   it("a reviewed save that committed before a restart is recognised af…
+       |   ^
+    419|     const review = await herEditThenRegenerate();
+    420|     const save = db.saveStudySetAtomically!.bind(db);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  17:44:37
+   Duration  8.15s (transform 376ms, setup 0ms, import 496ms, tests 7.35s, environment 221ms)
+
+exit 1
