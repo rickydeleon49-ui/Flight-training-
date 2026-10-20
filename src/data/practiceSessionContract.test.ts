@@ -12,6 +12,7 @@ import { practiceSessionRepository } from "./repositories/practiceSessionReposit
 import { documentRepository } from "./repositories/documentRepository";
 import { applyMigrations } from "./migrations";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
+import { seedPracticeTest as seedPracticeTestViaAuthoring } from "./testing/practiceTestFixtures";
 import { PracticeSessionError } from "./persistenceErrors";
 import type {
   PracticeCompletedResult,
@@ -63,7 +64,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
     title: string,
     questions: PracticeQuestion[],
   ): Promise<void> {
-    await db.savePracticeTestAtomically!({
+    await seedPracticeTestViaAuthoring(db, {
       sourceMaterialId: materialId,
       title,
       questions,
@@ -486,8 +487,11 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
 
     // 1. Create a pre-migration-11 database with legacy practice_tests
     const rawDb = new DatabaseSync(dbPath);
-    // Apply migrations 1..10
-    const applied10 = new Set<number>([11]); // skip 11
+    // Apply migrations 1..10 only: skip 11 and everything after it, so this
+    // is a genuine pre-practice-sessions database. (0012–0016 would mostly
+    // tolerate the missing tables through FK leniency, but 0017's ALTER on
+    // the practice tables must not run before 0011 exists.)
+    const applied10 = new Set<number>([11, 12, 13, 14, 15, 16, 17]);
     await applyMigrations((sql) => rawDb.exec(sql), applied10);
 
     const cleanMatId = "mat-clean-legacy";
@@ -675,7 +679,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
         `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
          VALUES ('${matId}', 'Browser Material', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
       );
-      await browserDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(browserDb, {
         sourceMaterialId: matId,
         title: "Browser Test",
         questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
@@ -742,7 +746,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       await regDb.execute(
         "INSERT INTO study_materials(id,title,created_at,updated_at) VALUES ('mat','Synthetic','2026-10-04','2026-10-04')",
       );
-      await regDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(regDb!, {
         sourceMaterialId: "mat",
         title: "Synthetic",
         questions: qs,
@@ -808,7 +812,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       await regDb.execute(
         "INSERT INTO study_materials(id,title,created_at,updated_at) VALUES ('mat','Synthetic','2026-10-04','2026-10-04')",
       );
-      await regDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(regDb!, {
         sourceMaterialId: "mat",
         title: "Synthetic",
         questions: qs,
@@ -836,7 +840,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       await regDb.execute(
         "INSERT INTO study_materials(id,title,created_at,updated_at) VALUES ('mat','Synthetic','2026-10-04','2026-10-04')",
       );
-      await regDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(regDb!, {
         sourceMaterialId: "mat",
         title: "Synthetic",
         questions: qs,
@@ -897,6 +901,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       };
       await expect(
         documentRepository(unsupported).savePracticeTest({
+          provider: "gemini",
           sourceMaterialId: "mat",
           title: "Changed",
           questions: [{ ...qs[0]!, correctIndex: 1 }],
@@ -1087,38 +1092,44 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       expect(resAbandon).toEqual(validAbandon);
     });
 
-    it("invokePracticeTestSave and invokeRemovePracticeTest adhere to unit-return contract (M2P1-R3)", async () => {
-      const { invokePracticeTestSave, invokeRemovePracticeTest } = await import("./tauriDb");
-
-      let saveCalledWith: any = null;
-      const mockSaveInvoke = async (_cmd: string, args: any) => {
-        saveCalledWith = args;
-        return; // void return
+    it("invokePracticeAuthoringSave adheres to the fixed wire contract (OFFLINE-03b)", async () => {
+      const { invokePracticeAuthoringSave } = await import("./tauriDb");
+      const { PRACTICE_AUTHORING_ERROR_MESSAGES } = await import("./persistenceErrors");
+      const operation: import("@/domain/types").PracticeSaveOperation = {
+        operationId: "66666666-6666-4666-8666-666666666666",
+        sourceMaterialId: "mat",
+        reason: "remove",
+        expected: null,
+        next: null,
       };
 
-      await expect(
-        invokePracticeTestSave(
-          {
-            sourceMaterialId: "mat",
-            title: "Test",
-            questions: [{ question: "Q", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
-            model: "synthetic",
-          },
-          mockSaveInvoke as any,
-        ),
-      ).resolves.toBeUndefined();
-      expect(saveCalledWith).toBeDefined();
-
-      let removeCalledWith: any = null;
-      const mockRemoveInvoke = async (_cmd: string, args: any) => {
-        removeCalledWith = args;
-        return; // void return
+      let calledWith: unknown = null;
+      const mockInvoke = async <T>(_cmd: string, args?: unknown): Promise<T> => {
+        calledWith = args;
+        return { status: "saved" } as T;
       };
+      await expect(invokePracticeAuthoringSave(operation, mockInvoke)).resolves.toEqual({ status: "saved" });
+      expect(calledWith).toEqual({ operation });
 
-      await expect(
-        invokeRemovePracticeTest("mat", mockRemoveInvoke as any),
-      ).resolves.toBeUndefined();
-      expect(removeCalledWith).toEqual({ sourceMaterialId: "mat" });
+      const mockRetry = async <T>(): Promise<T> => ({ status: "already_saved" } as T);
+      await expect(invokePracticeAuthoringSave(operation, mockRetry)).resolves.toEqual({ status: "already_saved" });
+
+      const mockRefusal = async () => {
+        throw { code: "STALE_CONTENT", message: PRACTICE_AUTHORING_ERROR_MESSAGES.STALE_CONTENT };
+      };
+      await expect(invokePracticeAuthoringSave(operation, mockRefusal)).rejects.toMatchObject({ code: "STALE_CONTENT" });
+
+      const mockEngineText = async () => {
+        throw { code: "STALE_CONTENT", message: "rusqlite: UNIQUE constraint failed" };
+      };
+      await expect(invokePracticeAuthoringSave(operation, mockEngineText)).rejects.toMatchObject({
+        code: "IPC_TRANSPORT_ERROR",
+      });
+
+      const mockBadResult = async <T>() => ({ status: "half-saved" } as T);
+      await expect(invokePracticeAuthoringSave(operation, mockBadResult)).rejects.toMatchObject({
+        code: "IPC_TRANSPORT_ERROR",
+      });
     });
 
     it("PR2: atomic history erasure prunes attempts, responses, inactive versions, and tombstones receipts", async () => {
@@ -1127,7 +1138,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       await seedMaterial(matId, "Erase Test");
 
       // Save v1 test
-      await db.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(db, {
         sourceMaterialId: matId,
         title: "Erase Test V1",
         questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "E1", sourcePage: 1 }],
@@ -1164,7 +1175,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
       });
 
       // Regenerate test: creates v2, v1 becomes inactive
-      await db.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(db, {
         sourceMaterialId: matId,
         title: "Erase Test V2",
         questions: [{ question: "Q2", options: ["C", "D"], correctIndex: 1, explanation: "E2", sourcePage: 2 }],
@@ -1297,7 +1308,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
         `INSERT INTO study_materials (id, title, material_type, topic, review_status, priority, created_at, updated_at)
          VALUES ('${matId}', 'Browser Erase', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
       );
-      await browserDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(browserDb, {
         sourceMaterialId: matId,
         title: "Browser Erase Test",
         questions: [{ question: "Q1", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
@@ -1364,14 +1375,14 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
                 ('${matB}', 'Browser B', 'study_guide', 'general', 'needs_review', 'later', '${now}', '${now}')`,
       );
 
-      await browserDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(browserDb, {
         sourceMaterialId: matA,
         title: "Test A",
         questions: [{ question: "QA", options: ["1", "2"], correctIndex: 0, explanation: "", sourcePage: null }],
         model: "test-model",
       });
 
-      await browserDb.savePracticeTestAtomically!({
+      await seedPracticeTestViaAuthoring(browserDb, {
         sourceMaterialId: matB,
         title: "Test B",
         questions: [{ question: "QB", options: ["3", "4"], correctIndex: 1, explanation: "", sourcePage: null }],

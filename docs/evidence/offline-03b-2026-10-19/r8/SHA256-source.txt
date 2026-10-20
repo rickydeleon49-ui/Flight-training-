@@ -1,0 +1,10 @@
+$ shasum -a 256 src/data/practiceAuthoringDraft.ts src/data/practiceAuthoringDraft.test.ts src/data/repositories/documentRepository.ts src/pages/StudyLibrary/PracticeTestEditing.tsx src/pages/StudyLibrary/PracticeTestEditing.test.ts src/pages/StudyLibrary/MaterialDetail.tsx src/pages/StudyLibrary/PracticeTestPanel.tsx
+f8e6045e33b60030146aed4b1af5d095b6631afa7e135a99e0288cc63135a8ab  src/data/practiceAuthoringDraft.ts
+b2353d7bc7c6d7475117fb1e744af5f20aa96d61a7f445fc0e717497d55248b4  src/data/practiceAuthoringDraft.test.ts
+930311d54e05ab5d4a731426e8fad999b9c684be4cab11b7d264af3f69f04747  src/data/repositories/documentRepository.ts
+143d5e913e8f9b98582760eff34aaf8746c89e9b9fe8f8870f33a1a89a173770  src/pages/StudyLibrary/PracticeTestEditing.tsx
+8cf74d8dc8324a37723f777f5880caf3c0a83c82cb424bfe3ca6040a9f584197  src/pages/StudyLibrary/PracticeTestEditing.test.ts
+eedc4a11ffc74543c98760abdcab9344a567fe6397163ac8055765adffed8fea  src/pages/StudyLibrary/MaterialDetail.tsx
+c9c40bed9d6ea8714b667ccfb605e7b6611342e12e55f94d367d5ed03e7a1a9b  src/pages/StudyLibrary/PracticeTestPanel.tsx
+
+EXIT 0

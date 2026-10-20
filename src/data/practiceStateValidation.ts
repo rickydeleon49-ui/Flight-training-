@@ -12,10 +12,11 @@
  * contract in `src-tauri/fixtures/practice-validation/cases.json`.
  */
 import { storedSetProblem } from "./studySetTransaction";
+import { decodePracticeOperation, decodePracticeRetirements, decodePracticeSnapshot, readCurrentSnapshot } from "./practiceAuthoring";
 import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex, versionOrigin, type CanonicalCard } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, stepDelayMs } from "@/logic/cardScheduler";
 
-import type { SkillEvidenceActionName } from "@/domain/types";
+import type { PracticeSaveOperation, SkillEvidenceActionName } from "@/domain/types";
 
 import type { SqlValue } from "./db";
 import { MIGRATIONS } from "./migrations";
@@ -242,6 +243,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 14) await validateSkillEvidenceState(query, reference);
   if (newest >= 15) await validateNavigationState(query, reference);
   if (newest >= 16) await validateManualStudyState(query, reference);
+  if (newest >= 17) await validatePracticeAuthoringState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -261,6 +263,10 @@ export async function validatePracticeState(query: ValidationQuery, reference: V
     for (const ref of await reference(columnsSql, [])) {
       const name = text(ref, "name");
       if (table === "practice_tests" && !["legacy_migrated_at", "legacy_error"].includes(name)) continue;
+      // 0017 adds authoring columns to the immutable items table; historical
+      // databases are checked against their own version, and databases that
+      // have them are checked by the schema-17 gate below.
+      if (table === "practice_test_items" && (name === "logical_id" || name === "replaces_id")) continue;
       const column = actual.get(name);
       if (!column) refuse(`Table ${table} is missing required column: ${name}`);
       if (text(column, "type").toLowerCase() !== text(ref, "type").toLowerCase()) refuse(`Table ${table} column ${name} type mismatch.`);
@@ -1512,4 +1518,217 @@ export async function validateManualStudyState(query: ValidationQuery, reference
   }
   const problem = await storedSetProblem(query);
   if (problem) refuse(problem);
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 17: the practice questions she writes herself                */
+/* (native twin: `verify_schema_17_practice_authoring_semantics`)      */
+/* ------------------------------------------------------------------ */
+
+export const PRACTICE_AUTHORING_TABLES = ["practice_save_operations"] as const;
+
+const AUTHORING_UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const AUTHORING_ACTIONS = new Set(["create", "edit", "correct", "regenerate", "restore", "remove"]);
+
+/**
+ * The OFFLINE-03b contract: the receipts table exactly as migration 0017
+ * defines it; the new columns on the two extended tables; receipts binding
+ * material, action and the exact canonical payload bytes with a digest that
+ * recomputes; retirement lists, historical envelopes and editor metadata
+ * that decode strictly; identities that are unique per version and owned by
+ * one living material; and a current mirror that agrees with the active
+ * version. Column registration alone proves nothing.
+ */
+export async function validatePracticeAuthoringState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  for (const table of PRACTICE_AUTHORING_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+    if (!same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) {
+      refuse(`Table ${table} keys do not match the registered migration contract.`);
+    }
+    if ((await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length !== 0) {
+      refuse(`Table ${table} has rows that point at nothing.`);
+    }
+  }
+  if (
+    (await navigationIndexShape(query, "practice_save_operations", "idx_practice_save_ops_material")) !==
+    (await navigationIndexShape(reference, "practice_save_operations", "idx_practice_save_ops_material"))
+  ) {
+    refuse("The database is missing required index: idx_practice_save_ops_material");
+  }
+
+  // The 0017 columns on the tables earlier migrations made.
+  for (const [table, column, type, required] of [
+    ["practice_tests", "retired_json", "TEXT", 1],
+    ["practice_test_items", "logical_id", "TEXT", 0],
+    ["practice_test_items", "replaces_id", "TEXT", 0],
+  ] as const) {
+    const [found] = await query(`SELECT type, "notnull" AS required FROM pragma_table_info('${table}') WHERE name = ?`, [column]);
+    if (!found) refuse(`Table ${table} is missing required column: ${column}`);
+    if (text(found, "type").toUpperCase() !== type) refuse(`Table ${table} column ${column} type mismatch.`);
+    if (int(found, "required") !== required) refuse(`Table ${table} column ${column} notnull mismatch.`);
+  }
+
+  // Receipts: exact canonical payload bytes, a digest that recomputes, a
+  // typed result, and the whole operation decoded by the writer's own strict
+  // decoder, bound row-for-row to the operation id, material and action it is
+  // keyed by. A reused operation id is only ever the same committed operation.
+  for (const row of await query(
+    "SELECT operation_id, material_id, action, payload_json, payload_hash, result_json FROM practice_save_operations",
+    [],
+  )) {
+    const action = text(row, "action");
+    if (!AUTHORING_ACTIONS.has(action)) refuse("A practice save receipt names an unknown action.");
+    const payload = text(row, "payload_json");
+    let operation: Record<string, unknown>;
+    try {
+      operation = JSON.parse(payload);
+    } catch {
+      refuse("A practice save receipt does not hold JSON.");
+    }
+    if (canonicalJson(operation) !== payload) {
+      refuse("A practice save receipt does not hold its exact canonical payload bytes.");
+    }
+    let decoded: PracticeSaveOperation;
+    try {
+      decoded = decodePracticeOperation(operation);
+    } catch {
+      refuse("A practice save receipt does not hold a complete authoring operation.");
+    }
+    if (decoded.operationId !== text(row, "operation_id")) {
+      refuse("A practice save receipt does not bind its operation id to its row key.");
+    }
+    if (decoded.sourceMaterialId !== text(row, "material_id") || decoded.reason !== action) {
+      refuse("A practice save receipt does not bind its material and action.");
+    }
+    if (text(row, "payload_hash") !== (await sha256Hex(payload))) {
+      refuse("A practice save receipt digest does not match its payload.");
+    }
+    let result: Record<string, unknown>;
+    try {
+      result = JSON.parse(text(row, "result_json"));
+    } catch {
+      refuse("A practice save receipt does not hold a typed result.");
+    }
+    const keys = Object.keys(result).sort().join(",");
+    if (result["status"] !== "saved" || keys !== (action === "remove" ? "status" : "status,versionId")) {
+      refuse("A practice save receipt does not hold a typed result.");
+    }
+    if (action !== "remove" && (typeof result["versionId"] !== "string" || !AUTHORING_UUID_V4.test(result["versionId"]))) {
+      refuse("A practice save receipt does not name the version it saved.");
+    }
+  }
+
+  // Editor metadata: identities and replacements are UUID v4, unique per
+  // version, never shared by two living materials, and a recorded
+  // replacement always sits beside an origin.
+  for (const row of await query(
+    "SELECT logical_id, replaces_id FROM practice_test_items WHERE logical_id IS NOT NULL OR replaces_id IS NOT NULL",
+    [],
+  )) {
+    for (const column of ["logical_id", "replaces_id"] as const) {
+      const value = row[column];
+      if (value !== null && value !== undefined && !AUTHORING_UUID_V4.test(String(value))) {
+        refuse(`A practice item carries a malformed ${column}.`);
+      }
+    }
+  }
+  if (
+    (await count(query, `SELECT COUNT(*) AS n FROM (
+        SELECT version_id, logical_id FROM practice_test_items
+         WHERE logical_id IS NOT NULL GROUP BY version_id, logical_id HAVING COUNT(*) > 1)`, [])) !== 0
+  ) {
+    refuse("A practice version repeats one logical identity.");
+  }
+  if (
+    (await count(query, `SELECT COUNT(*) AS n FROM (
+        SELECT i.logical_id FROM practice_test_items i
+          JOIN practice_test_versions v ON v.id = i.version_id
+         WHERE i.logical_id IS NOT NULL AND v.source_material_id IS NOT NULL
+         GROUP BY i.logical_id HAVING COUNT(DISTINCT v.source_material_id) > 1)`, [])) !== 0
+  ) {
+    refuse("Two study materials share one practice question identity.");
+  }
+  if (
+    (await count(query, `SELECT COUNT(*) AS n FROM practice_test_items i
+        WHERE i.replaces_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM practice_item_origins o WHERE o.item_id = i.id)`, [])) !== 0
+  ) {
+    refuse("A practice item records a replacement without an origin.");
+  }
+
+  // Stored retirement lists and historical envelopes decode strictly.
+  for (const row of await query("SELECT retired_json FROM practice_tests", [])) {
+    try {
+      decodePracticeRetirements(JSON.parse(text(row, "retired_json")));
+    } catch {
+      refuse("A practice test carries a damaged retirement list.");
+    }
+  }
+  for (const row of await query("SELECT previous_json FROM study_set_history WHERE kind = 'practice'", [])) {
+    try {
+      decodePracticeSnapshot(JSON.parse(text(row, "previous_json")));
+    } catch {
+      refuse("A saved practice history entry is not a valid snapshot.");
+    }
+  }
+
+  // The current mirror agrees with the active version, and every active
+  // version of a living material has its mirror row.
+  if (
+    (await count(query, `SELECT COUNT(*) AS n FROM practice_test_versions v
+        WHERE v.is_active = 1 AND v.source_material_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM practice_tests t WHERE t.source_material_id = v.source_material_id)`, [])) !== 0
+  ) {
+    refuse("An active practice version has no current test row.");
+  }
+  for (const row of await query(
+    "SELECT source_material_id, title, questions_json, provider, model, legacy_migrated_at FROM practice_tests",
+    [],
+  )) {
+    const snapshot = await readCurrentSnapshot(query, text(row, "source_material_id"));
+    if (!snapshot) {
+      // A mirror with no active version is legitimate only while the legacy
+      // row is unconverted or quarantined (established schema-11 states).
+      // Once marked migrated — the state the authoring contract always
+      // writes together with its version — the version must exist.
+      if (row["legacy_migrated_at"] !== null && row["legacy_migrated_at"] !== undefined) {
+        refuse("A migrated current practice test has no active version.");
+      }
+      continue;
+    }
+    if (
+      snapshot.title !== text(row, "title") ||
+      snapshot.provider !== text(row, "provider") ||
+      snapshot.model !== text(row, "model")
+    ) {
+      refuse("The current practice test disagrees with its active version.");
+    }
+    let mirrored: unknown;
+    try {
+      mirrored = JSON.parse(text(row, "questions_json"));
+    } catch {
+      refuse("The current practice test does not hold JSON questions.");
+    }
+    const projected = snapshot.questions.map(({ question, options, correctIndex, explanation, sourcePage }) => ({
+      question,
+      options,
+      correctIndex,
+      explanation,
+      sourcePage,
+    }));
+    if (canonicalJson(mirrored) !== canonicalJson(projected)) {
+      refuse("The current practice test questions disagree with the active version.");
+    }
+  }
 }

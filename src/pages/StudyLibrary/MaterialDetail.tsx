@@ -70,6 +70,9 @@ import { useGeminiJobs, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
 import { AuthorBadge, StartManualStudySet, StudySetEditor } from "./StudySetEditor";
+import { PracticeTestEditor, PracticeTestHistory, StartManualPracticeTest } from "./PracticeTestEditing";
+import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
+import { PracticeRegenerationReviewDialog } from "./PracticeRegenerationReviewDialog";
 import { RegenerationReviewDialog } from "./RegenerationReviewDialog";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
@@ -81,6 +84,7 @@ export function MaterialDetail() {
 }
 
 function MaterialDetailPage() {
+  const [activePracticeAttempt, setActivePracticeAttempt] = useState<boolean | null>(null);
   const { materialId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -93,7 +97,7 @@ function MaterialDetailPage() {
   useEffect(() => {
     if (startCardReview) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, []);
-  const { data, mutate, deleteWithUndo, repositories } = useAppData();
+  const { data, mutate, deleteWithUndo, repositories, dataRevision } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
 
@@ -116,6 +120,8 @@ function MaterialDetailPage() {
   const [cardRevealed, setCardRevealed] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
   const [editingSet, setEditingSet] = useState(false);
+  const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
+  const [reviewingPracticeRegeneration, setReviewingPracticeRegeneration] = useState(false);
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
 
   // One Gemini generation at a time across the whole app, whichever page asked;
@@ -127,6 +133,15 @@ function MaterialDetailPage() {
   const practiceJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "practice-test",
   );
+  useEffect(() => {
+    let live = true;
+    if (materialId && repositories) {
+      void repositories.documents.readPracticeSnapshot(materialId).then((snapshot) => {
+        if (live) setPracticeNeedsReview(needsPracticeRegenerationReview(snapshot));
+      }).catch(() => { if (live) setPracticeNeedsReview(true); });
+    }
+    return () => { live = false; };
+  }, [repositories, materialId, dataRevision]);
   const working = (phase: GeminiJobPhase | undefined) => phase === "running" || phase === "saving";
   const generating = working(studyJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
@@ -803,7 +818,7 @@ function MaterialDetailPage() {
             </Card>
           ) : null}
 
-          {practiceTest || (material.filePath && canOfferGemini) ? (
+          {material ? (
             <Card>
               <CardHeader
                 title="Practice test"
@@ -834,6 +849,9 @@ function MaterialDetailPage() {
                 }
               />
               <CardBody>
+                <StartManualPracticeTest material={material} />
+                <PracticeTestEditor material={material} activeAttempt={activePracticeAttempt} />
+                <PracticeTestHistory material={material} />
                 {generationNotice && practiceTest ? (
                   <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
                 ) : null}
@@ -894,6 +912,8 @@ function MaterialDetailPage() {
                         <p className="tiny">
                           {importedTest
                             ? IMPORTED_CONTENT_DISCLAIMER
+                            : practiceTest.provider === "manual"
+                              ? "Practice questions you wrote. Check them against your source and your instructor's guidance."
                             : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
                         </p>
                       </div>
@@ -914,9 +934,9 @@ function MaterialDetailPage() {
                       kind="practice-test"
                     />
 
-                    <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} />
+                    <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} onAttemptChange={setActivePracticeAttempt} />
                   </div>
-                ) : !generatingPractice && !hasImported ? (
+                ) : !generatingPractice && !hasImported && material.filePath && canOfferGemini ? (
                   <p className="small muted">
                     Gemini will read only this file and create a multiple-choice practice test with
                     explanations. The result will be saved locally with your other data.
@@ -937,7 +957,21 @@ function MaterialDetailPage() {
                     ) : null}
                   </div>
                 ) : null}
-                {practiceJob ? <GeminiJobNotice job={practiceJob} jobs={geminiJobs} onRetry={retryPractice} /> : null}
+                {practiceJob ? <GeminiJobNotice job={practiceJob} jobs={geminiJobs} onRetry={retryPractice}
+                  onReview={practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
+                    ? () => { if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true); } : undefined}
+                  reviewDisabled={activePracticeAttempt !== false}
+                /> : null}
+                {reviewingPracticeRegeneration && practiceJob?.answer &&
+                  (practiceJob.phase === "recovered" || practiceJob.phase === "save-failed" || practiceJob.phase === "saving") ? (
+                  <PracticeRegenerationReviewDialog job={practiceJob} materialId={material.id}
+                    onClose={() => setReviewingPracticeRegeneration(false)}
+                    onSave={async (reviewed) => {
+                      const saved = await geminiJobs.saveReviewed(practiceJob.key, reviewed);
+                      if (saved && isMountedRef.current) setReviewingPracticeRegeneration(false);
+                      return saved;
+                    }} />
+                ) : null}
               </CardBody>
             </Card>
           ) : null}

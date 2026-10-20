@@ -14,5 +14,6 @@
   "0013_split_source_lineage.sql": "4118a7896c501ae06a5dbe739c89ba084d72c5b928b4bc15c7c7f2c601c6b106",
   "0014_skills_evidence.sql": "34acb4c4cd22826512c1cd3d331675be6d2b223abe2322af8977769bcb3c048a",
   "0015_document_navigation.sql": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f",
-  "0016_manual_study.sql": "e255d0bf4c7141f55bc99b2aa489b9d2f148b7d20bd4b632fea7a78bd20526bf"
+  "0016_manual_study.sql": "e255d0bf4c7141f55bc99b2aa489b9d2f148b7d20bd4b632fea7a78bd20526bf",
+  "0017_practice_authoring.sql": "7b66bdfa0829cd9c9f03d177a01bc014063041341298730673d1520a176acd78"
 }

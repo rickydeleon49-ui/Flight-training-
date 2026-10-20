@@ -199,3 +199,43 @@ export class StudySetSaveError extends Error {
     this.code = code;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Practice-question authoring (OFFLINE-03b round 1)                   */
+/* ------------------------------------------------------------------ */
+
+export type PracticeAuthoringErrorCode =
+  | "INVALID_ARGUMENT"
+  | "STALE_CONTENT"
+  | "CONFLICT"
+  | "ATTEMPT_ACTIVE"
+  | "RETIREMENT_LIMIT"
+  | "NOT_FOUND"
+  | "STORAGE_ERROR"
+  | "IPC_TRANSPORT_ERROR";
+
+/** Word for word the native `PracticeAuthoringErrorCode::message`. */
+export const PRACTICE_AUTHORING_ERROR_MESSAGES: Readonly<Record<PracticeAuthoringErrorCode, string>> = Object.freeze({
+  INVALID_ARGUMENT: "These practice questions couldn't be saved because part of them isn't valid. Nothing has been saved.",
+  STALE_CONTENT: "This practice test changed after you opened it. Nothing has been saved; look at it again first.",
+  CONFLICT: "This save request was already used for different practice content. Nothing has been saved.",
+  ATTEMPT_ACTIVE: "Finish or abandon your current practice attempt before editing these questions. Nothing has been saved.",
+  RETIREMENT_LIMIT: "This practice test has reached its deletion and correction history limit. Your changes haven't been saved.",
+  NOT_FOUND: "That study material no longer exists. Nothing has been saved.",
+  STORAGE_ERROR: "A storage problem stopped these practice questions from saving. Nothing has been saved.",
+  IPC_TRANSPORT_ERROR: "The app couldn't confirm whether these practice questions were saved. Try again; a retry is safe.",
+});
+
+export function isPracticeAuthoringErrorCode(value: unknown): value is PracticeAuthoringErrorCode {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(PRACTICE_AUTHORING_ERROR_MESSAGES, value);
+}
+
+/** A practice-authoring save refusal. Its message is always the allowlisted one. */
+export class PracticeAuthoringError extends Error {
+  readonly code: PracticeAuthoringErrorCode;
+  constructor(code: PracticeAuthoringErrorCode, options?: { cause?: unknown }) {
+    super(PRACTICE_AUTHORING_ERROR_MESSAGES[code], options);
+    this.name = "PracticeAuthoringError";
+    this.code = code;
+  }
+}

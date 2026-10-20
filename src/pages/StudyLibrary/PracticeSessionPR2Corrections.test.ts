@@ -30,7 +30,7 @@ function wrap(child: ReturnType<typeof h>, route = '/') {
 }
 async function seed(id: string): Promise<PracticeTest> {
  await repos.documents.create({ id, title: `Material ${id}` });
- await repos.documents.savePracticeTest({ sourceMaterialId: id, title: id, model: 'synthetic', questions: [
+ await repos.documents.savePracticeTest({ provider: "gemini",  sourceMaterialId: id, title: id, model: 'synthetic', questions: [
   { question: `Frozen ${id} question 1`, options: ['First', 'Second'], correctIndex: 0, explanation: `Confirmed ${id} explanation`, sourcePage: null },
   { question: `Frozen ${id} question 2`, options: ['Third', 'Fourth'], correctIndex: 1, explanation: 'Second explanation', sourcePage: null },
  ] });
@@ -140,7 +140,7 @@ describe('Codex PR2 review: actual UI and disposable persisted state', () => {
 
  it('[R1] displayed questions come from the frozen repository version', async () => {
   const stale = await seed('frozen');
-  await repos.documents.savePracticeTest({ sourceMaterialId: 'frozen', title: 'New version', model: 'synthetic', questions: [
+  await repos.documents.savePracticeTest({ provider: "gemini",  sourceMaterialId: 'frozen', title: 'New version', model: 'synthetic', questions: [
    { question: 'Current frozen version question', options: ['Current A', 'Current B'], correctIndex: 1, explanation: 'Current explanation', sourcePage: null },
   ] });
   await panel(stale);

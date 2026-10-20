@@ -154,7 +154,7 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
         const choices = question.options
           .map((option, choice) => `<li>${LETTERS[choice] ?? choice + 1}. ${escapeHtml(option)}</li>`)
           .join("");
-        return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
+        return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${authorRef(question.origin)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
       })
       .join("");
     sections.push(`<section><h2>Practice questions</h2>${questions}</section>`);

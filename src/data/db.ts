@@ -52,11 +52,14 @@ export interface SqlDatabase {
     action: import("@/domain/types").PracticeSessionAction,
   ): Promise<import("@/domain/types").PracticeSessionActionResult>;
   /**
-   * Single-connection atomic transaction for saving or regenerating a practice test.
+   * Single-connection atomic authoring save (OFFLINE-03b): receipt, whole
+   * previous state in history, a new immutable version, per-item origins,
+   * retirement and the current mirror, all in one transaction. There is
+   * deliberately no fallback: without it, authoring saves refuse.
    */
-  savePracticeTestAtomically?(
-    operation: PracticeTestSaveOperation,
-  ): Promise<void>;
+  savePracticeAuthoringAtomically?(
+    operation: import("@/domain/types").PracticeSaveOperation,
+  ): Promise<import("@/domain/types").PracticeSaveResult>;
   /**
    * One atomic study-set save (OFFLINE-03a): the whole previous set goes to
    * history first, in the same transaction. No fallback: without it, saving
@@ -65,12 +68,6 @@ export interface SqlDatabase {
   saveStudySetAtomically?(
     operation: import("./studySetTransaction").StudySetSaveOperation,
   ): Promise<import("./studySetTransaction").StudySetSaveResult>;
-  /**
-   * Single-connection atomic transaction for removing a practice test.
-   */
-  removePracticeTestAtomically?(
-    sourceMaterialId: string,
-  ): Promise<void>;
   /**
    * Single-connection atomic transaction for erasing practice history for a history key (M2 PR 2).
    */
@@ -136,13 +133,6 @@ export interface SqlDatabase {
    * It cannot jump to a page or control the reader afterwards.
    */
   openNavigationDocument?(materialId: string, expectedContentSha256: string): Promise<void>;
-}
-
-export interface PracticeTestSaveOperation {
-  sourceMaterialId: string;
-  title: string;
-  questions: import("@/domain/types").PracticeQuestion[];
-  model: string;
 }
 
 /**

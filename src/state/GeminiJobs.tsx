@@ -12,7 +12,9 @@ import {
 import type { AppData } from "./AppDataContext";
 import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
-import { forgetReviewedSave, rememberReviewedSave, type ReviewedRegeneration } from "./reviewedSaveCheckpoint";
+import { forgetReviewedSave, rememberReviewedSave, reviewedSaveOf, type ReviewedRegeneration } from "./reviewedSaveCheckpoint";
+import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
+import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/data/persistenceErrors";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   acknowledgeGeminiJob,
@@ -390,6 +392,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       if (reviewed) rememberReviewedSave(job.jobId, reviewed);
 
       let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
+      let practiceError: string | null = null;
       try {
         outcome = await mutate(async (repos) => {
           // Every check is made here, inside the write queue, immediately
@@ -403,7 +406,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               return "superseded" as const;
             }
           }
-          if (reviewed && job.kind === "study-aid") {
+          if (reviewed?.kind === "study-set" && job.kind === "study-aid") {
             // The set she reviewed is named column for column, so a change made
             // since refuses as stale; the same id makes a retry safe.
             await repos.documents.saveStudySet({
@@ -415,12 +418,22 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             });
             return "saved" as const;
           }
+          if (reviewed?.kind === "practice" && job.kind === "practice-test") {
+            try {
+              await repos.documents.savePracticeAuthoring(reviewed.operation);
+              return "saved" as const;
+            } catch (failure) {
+              practiceError = failure instanceof PracticeAuthoringError ? failure.message : PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR;
+              throw failure;
+            }
+          }
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
           if ((saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
           // Her own items, corrections and deletions are never replaced
           // without her review (OFFLINE-03a).
           if (job.kind === "study-aid" && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
+          if (job.kind === "practice-test" && needsPracticeRegenerationReview(await repos.documents.readPracticeSnapshot(job.materialId))) return "review" as const;
           if (job.kind === "study-aid") {
             const aid = answer as GeneratedStudyAid;
             await repos.documents.saveAiStudySet({
@@ -438,12 +451,16 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               sourceMaterialId: job.materialId,
               title: test.title,
               questions: test.questions,
+              provider: "gemini",
               model: test.model,
             });
           }
           return "saved" as const;
         });
-      } catch {
+      } catch (failure) {
+        if (reviewed?.kind === "practice") {
+          practiceError = failure instanceof PracticeAuthoringError ? failure.message : PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR;
+        }
         outcome = null;
       }
 
@@ -462,9 +479,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       } else {
         update(key, {
           phase: "save-failed",
-          error: reviewed
+          error: practiceError ?? (reviewed?.kind === "practice" ? PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR : reviewed
             ? REVIEWED_SAVE_FAILED_MESSAGE
-            : job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE,
+            : job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE),
           ...(reviewed ? { reviewed } : {}),
         });
       }
@@ -694,7 +711,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const saveReviewed = useCallback(
     async (key: string, reviewed: ReviewedRegeneration) => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
-      if (!job || !job.answer || job.kind !== "study-aid" || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
+      if (!job || !job.answer || ((job.kind === "study-aid") !== (reviewed.kind === "study-set")) || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
       if (activeRef.current !== null) return false;
       activeRef.current = key;
       try {
@@ -745,6 +762,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           if (record.stage !== "ready" || !record.result || !repositoriesRef.current) continue;
           if (forgottenRef.current.has(record.id)) continue;
           try {
+            // A reviewed practice save settles through its receipt, even if
+            // Replace everything happened to equal the provider's whole answer.
+            if (record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice") continue;
             const saved = await savedContent(repositoriesRef.current, record.kind, record.materialId);
             if (alreadySaved(record.kind, saved, record.result)) applied.add(record.id);
           } catch {
@@ -817,6 +837,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               contentSha256: record.contentSha256 || null,
               baseRevision: record.baseRevision ?? null,
               checkpointed: record.stage === "ready",
+              ...(record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice" ? { needsReview: true } : {}),
               draft: record.draft,
             },
           ];

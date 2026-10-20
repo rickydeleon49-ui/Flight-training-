@@ -55,12 +55,36 @@ const NEXT: NextStudySet = {
   retired: [],
 };
 
-const reviewed = (operationId: string): ReviewedRegeneration => ({ operationId, expected: EXPECTED, next: NEXT });
+const reviewed = (operationId: string): ReviewedRegeneration => ({ kind: "study-set", operationId, expected: EXPECTED, next: NEXT });
+
+describe("practice checkpoints and legacy study-set checkpoints", () => {
+  it("reads a legacy study-set record without kind", () => {
+    window.localStorage.setItem("her-flight-deck.reviewed-regeneration.legacy", JSON.stringify({ operationId: "legacy", expected: EXPECTED, next: NEXT }));
+    expect(reviewedSaveOf("legacy")).toEqual({ kind: "study-set", operationId: "legacy", expected: EXPECTED, next: NEXT });
+  });
+  it("round-trips a practice operation and refuses mismatched ids or unknown kinds", () => {
+    const checkpoint: ReviewedRegeneration = { kind: "practice", operationId: "op", operation: {
+      operationId: "op", sourceMaterialId: "mat", reason: "regenerate", expected: null, next: null,
+    } };
+    rememberReviewedSave("practice", checkpoint);
+    expect(reviewedSaveOf("practice")).toEqual(checkpoint);
+    window.localStorage.setItem("her-flight-deck.reviewed-regeneration.bad", JSON.stringify({ ...checkpoint, operationId: "other" }));
+    expect(reviewedSaveOf("bad")).toBeNull();
+    window.localStorage.setItem("her-flight-deck.reviewed-regeneration.bad", JSON.stringify({ ...checkpoint, kind: "other" }));
+    expect(reviewedSaveOf("bad")).toBeNull();
+  });
+  it("returns null when storage getItem throws", () => {
+    vi.spyOn(storage, "getItem").mockImplementation(() => { throw new Error("blocked"); });
+    expect(() => reviewedSaveOf("practice")).not.toThrow();
+    expect(reviewedSaveOf("practice")).toBeNull();
+  });
+});
 
 describe("the reviewed save that is still outstanding", () => {
   it("gives back exactly the operation that was sent, so a retry sends the same one", () => {
     rememberReviewedSave("job-1", reviewed("00000000-0000-4000-8000-000000000001"));
     expect(reviewedSaveOf("job-1")).toEqual({
+      kind: "study-set",
       operationId: "00000000-0000-4000-8000-000000000001",
       expected: EXPECTED,
       next: NEXT,

@@ -29,6 +29,9 @@ mod pdf;
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
 // comment for why.
 mod platform;
+mod practice_authoring;
+#[cfg(test)]
+mod practice_authoring_tests;
 mod practice_sessions;
 mod secrets;
 mod skill_evidence;
@@ -42,7 +45,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 16;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 17;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -146,6 +149,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0016_manual_study.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 17,
+            description: "practice_authoring",
+            sql: include_str!("../migrations/0017_practice_authoring.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -224,8 +233,7 @@ pub fn run() {
             study_packet::save_structured_study_material_atomically,
             practice_sessions::save_practice_session_atomically,
             practice_sessions::erase_practice_history_atomically,
-            practice_sessions::save_practice_test_atomically,
-            practice_sessions::remove_practice_test_atomically,
+            practice_authoring::save_practice_authoring_atomically,
             study_sets::save_study_set_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,

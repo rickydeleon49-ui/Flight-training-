@@ -179,3 +179,40 @@ it("a validation refusal releases the lock before a corrected selection is saved
   expect((await screen.findByRole("status")).textContent).toContain("cards.json");
   expect(saveStudyExport).toHaveBeenCalledTimes(1);
 });
+
+
+it("offers test-only corrections and exports only the filtered questions by default", async () => {
+  const authored = { ...source, studySet: null, practiceTest: { ...test, questions: [
+    test.questions[0]!,
+    { ...test.questions[0]!, question: "Private CFI stem", explanation: "Private CFI explanation", origin: "instructor" as const },
+  ] } };
+  saveStudyExport.mockResolvedValue({ fileName: "Aviation Weather.json", byteLength: 10 });
+  render(h(ExportStudyDialog, { open: true, source: authored, onClose: () => {} }));
+  const corrections = screen.getByLabelText(/^Include my instructor's corrections/) as HTMLInputElement;
+  expect(corrections.checked).toBe(false);
+  expect(screen.getByText("· 1 question")).toBeTruthy();
+  fireEvent.click(screen.getByLabelText(/Study packet \(\.json\)/));
+  expect(screen.getByText(/Study packets don't record who wrote each item/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  await screen.findByRole("status");
+  const contents = saveStudyExport.mock.calls[0]![2] as string;
+  expect(contents).not.toContain("Private CFI");
+  const validation = validatePacketText(contents);
+  if (!validation.ok) throw new Error("invalid packet");
+  expect(validation.payload.practiceTest?.questions).toHaveLength(1);
+  fireEvent.click(corrections);
+  expect(screen.getByText("· 2 questions")).toBeTruthy();
+});
+
+it("selects an instructor-only practice test once she deliberately includes corrections", async () => {
+  const authored = { ...source, studySet: null, practiceTest: { ...test, questions: [{ ...test.questions[0]!, origin: "instructor" as const }] } };
+  saveStudyExport.mockResolvedValue({ fileName: "Aviation Weather.html", byteLength: 10 });
+  render(h(ExportStudyDialog, { open: true, source: authored, onClose: () => {} }));
+  expect(screen.queryByLabelText(/^Practice questions/)).toBeNull();
+  expect(screen.getByRole("button", { name: "Save…" }).hasAttribute("disabled")).toBe(true);
+  fireEvent.click(screen.getByLabelText(/^Include my instructor's corrections/));
+  expect((screen.getByLabelText(/^Practice questions/) as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+  await screen.findByRole("status");
+  expect(saveStudyExport.mock.calls[0]![2]).toContain("(instructor correction)");
+});

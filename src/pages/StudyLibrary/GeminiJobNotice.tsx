@@ -14,6 +14,7 @@ export function GeminiJobNotice({
   jobs,
   onRetry,
   onReview,
+  reviewDisabled = false,
 }: {
   job: GeminiJob;
   jobs: ReturnType<typeof useGeminiJobs>;
@@ -24,6 +25,7 @@ export function GeminiJobNotice({
    * saved only after she reviews it (OFFLINE-03a), never as is.
    */
   onReview?: () => void;
+  reviewDisabled?: boolean;
 }) {
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
@@ -64,14 +66,15 @@ export function GeminiJobNotice({
                 ? `A completed new ${what} is ready for this document. It has not been saved yet.`
                 : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
             {onReview
-              ? "Your study guide has items you wrote, corrected or deleted, so you choose what to keep before anything is saved."
+              ? `Your ${job.kind === "study-aid" ? "study guide has items" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>
+        {onReview && reviewDisabled ? <p className="tiny muted">Finish or abandon your current practice attempt before reviewing these questions.</p> : null}
         {job.answer && "sourceNotes" in job.answer ? <p className="tiny">{job.answer.sourceNotes}</p> : null}
         <div className="row row--wrap">
           {onReview ? (
-            <Button size="small" disabled={busy} onClick={onReview}>
+            <Button size="small" disabled={busy || reviewDisabled} onClick={onReview}>
               Review the new {what}
             </Button>
           ) : (
@@ -95,7 +98,7 @@ export function GeminiJobNotice({
         </p>
         <div className="row row--wrap">
           {onReview ? (
-            <Button size="small" disabled={busy} onClick={onReview}>
+            <Button size="small" disabled={busy || reviewDisabled} onClick={onReview}>
               Review again
             </Button>
           ) : (

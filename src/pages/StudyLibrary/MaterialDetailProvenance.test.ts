@@ -130,6 +130,7 @@ describe("MaterialDetail saved content provenance integration", () => {
 
     vi.setSystemTime(new Date("2026-10-02T16:00:00.000Z"));
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat.id,
       title: "Instrument Crosscheck Practice",
       questions: [
@@ -197,6 +198,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
 
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat.id,
       title: "Airspace Practice Quiz",
       questions: [
@@ -263,6 +265,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
 
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat.id,
       title: "Systems Review Practice",
       questions: [
@@ -327,6 +330,7 @@ describe("MaterialDetail saved content provenance integration", () => {
 
     vi.setSystemTime(new Date("2026-10-02T16:00:00.000Z"));
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat.id,
       title: "Offline Practice Test",
       questions: [
@@ -426,6 +430,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
     vi.setSystemTime(new Date("2026-10-01T11:00:00Z"));
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat1.id,
       title: "Weather Practice",
       questions: [
@@ -452,6 +457,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
     vi.setSystemTime(new Date("2026-10-02T13:00:00Z"));
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat2.id,
       title: "Planning Practice",
       questions: [
@@ -548,6 +554,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     await act(async () => {
       await context.mutate(async (r) => {
         await r.documents.savePracticeTest({
+      provider: "gemini",
           sourceMaterialId: mat2.id,
           title: "Advanced Planning Practice Test",
           questions: [
@@ -611,6 +618,7 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
 
     await repos.documents.savePracticeTest({
+      provider: "gemini",
       sourceMaterialId: mat.id,
       title: "CG Calculations Practice",
       questions: [

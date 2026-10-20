@@ -126,3 +126,26 @@ describe("authorship in a handout (OFFLINE-03a)", () => {
     expect(included).toContain("(instructor correction)");
   });
 });
+
+
+it("filters and labels authored practice questions without adding answer-key labels or leaking excluded answers", () => {
+  const authored = source({ studySet: null, practiceTest: { ...test, questions: [
+    { ...test.questions[0]!, origin: "user" },
+    { ...test.questions[0]!, question: "Private CFI stem", options: ["Private CFI answer", "Other"], correctIndex: 0, explanation: "Private CFI explanation", origin: "instructor" },
+  ] } });
+  const html = buildHandoutHtml(authored, ALL, { answerKey: true }, NOW);
+  for (const text of ["Private CFI stem", "Private CFI answer", "Private CFI explanation"]) expect(html).not.toContain(text);
+  const left = page(html);
+  expect(left.querySelectorAll(".question")).toHaveLength(1);
+  expect(left.querySelector(".question")?.textContent).toContain("(written by hand)");
+  expect(left.querySelectorAll(".answer-key li")).toHaveLength(1);
+  const included = page(buildHandoutHtml(authored, { ...ALL, instructorCorrections: true }, { answerKey: true }, NOW));
+  expect(included.querySelectorAll(".question")).toHaveLength(2);
+  expect(included.querySelectorAll(".question")[1]?.textContent).toContain("(instructor correction)");
+  expect(included.querySelector(".answer-key")?.textContent).toContain("Private CFI answer");
+  expect(included.querySelector(".answer-key")?.textContent).toContain("Private CFI explanation");
+  expect(included.querySelector(".answer-key")?.textContent).not.toMatch(/written by hand|instructor correction/);
+  const withoutKey = page(buildHandoutHtml(authored, { ...ALL, instructorCorrections: true }, { answerKey: false }, NOW));
+  expect(withoutKey.querySelector(".answer-key")).toBeNull();
+  expect(withoutKey.body.textContent).not.toContain("Private CFI explanation");
+});

@@ -275,7 +275,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         history_key: string;
         source_material_title: string;
         version_number: number;
-        provider: import("@/domain/types").StudyAidProvider;
+        provider: import("@/domain/types").StudySetProvider;
         model: string;
         title: string;
         content_hash: string;
@@ -317,7 +317,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         history_key: string;
         source_material_title: string;
         version_number: number;
-        provider: import("@/domain/types").StudyAidProvider;
+        provider: import("@/domain/types").StudySetProvider;
         model: string;
         title: string;
         content_hash: string;
@@ -359,12 +359,17 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         correct_index: number;
         explanation: string;
         source_page: number | null;
+        logical_id: string | null;
+        replaces_id: string | null;
+        origin: string | null;
       }>(
-        `SELECT id, version_id, ordinal, question_text, options_json,
-                correct_index, explanation, source_page
-         FROM practice_test_items
-         WHERE version_id = ?
-         ORDER BY ordinal ASC`,
+        `SELECT i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
+                i.correct_index, i.explanation, i.source_page,
+                i.logical_id, i.replaces_id, o.origin
+         FROM practice_test_items i
+         LEFT JOIN practice_item_origins o ON o.item_id = i.id
+         WHERE i.version_id = ?
+         ORDER BY i.ordinal ASC`,
         [versionId],
       );
 
@@ -377,6 +382,9 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         correctIndex: Number(r.correct_index),
         explanation: r.explanation,
         sourcePage: r.source_page !== null ? Number(r.source_page) : null,
+        logicalId: r.logical_id,
+        replaces: r.replaces_id,
+        ...(r.origin === "user" || r.origin === "instructor" ? { origin: r.origin } : {}),
       }));
     },
 

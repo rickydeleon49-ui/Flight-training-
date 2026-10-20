@@ -50,24 +50,26 @@ export const EXPORT_MESSAGES = {
   mismatch: "The exported packet would not import exactly as chosen, so it wasn't saved. Nothing was written.",
 } as const;
 
-/** Whether a set holds any of her instructor's corrections. */
-export function hasInstructorCorrections(set: AiStudySet | null): boolean {
+/** Whether either study aid holds any of her instructor's corrections. */
+export function hasInstructorCorrections(set: AiStudySet | null, test?: PracticeTest | null): boolean {
   return Boolean(
-    set &&
+    (set &&
       (set.summaryOrigin === "instructor" ||
         set.sections.some((section) => section.origin === "instructor") ||
-        set.flashcards.some((card) => card.origin === "instructor")),
+        set.flashcards.some((card) => card.origin === "instructor"))) ||
+      test?.questions.some((question) => question.origin === "instructor"),
   );
 }
 
-/** Whether a set holds items she wrote or corrected (so a packet would lose their labels). */
-export function hasHandwrittenItems(set: AiStudySet | null): boolean {
+/** Whether either study aid holds handwritten items (so a packet would lose their labels). */
+export function hasHandwrittenItems(set: AiStudySet | null, test?: PracticeTest | null): boolean {
   return Boolean(
-    set &&
+    (set &&
       (set.provider === "manual" ||
         set.summaryOrigin ||
         set.sections.some((section) => section.origin !== undefined) ||
-        set.flashcards.some((card) => card.origin !== undefined)),
+        set.flashcards.some((card) => card.origin !== undefined))) ||
+      (test && (test.provider === "manual" || test.questions.some((question) => question.origin !== undefined))),
   );
 }
 
@@ -77,17 +79,20 @@ export function hasHandwrittenItems(set: AiStudySet | null): boolean {
  */
 export function exportSourceFor(source: ExportSource, selection: Pick<ExportSelection, "instructorCorrections">): ExportSource {
   const set = source.studySet;
-  if (!set || selection.instructorCorrections || !hasInstructorCorrections(set)) return source;
-  const summaryIsCorrection = set.summaryOrigin === "instructor";
+  const test = source.practiceTest;
+  if (selection.instructorCorrections === true || !hasInstructorCorrections(set, test)) return source;
+  const summaryIsCorrection = set?.summaryOrigin === "instructor";
+  const questions = test?.questions.filter((question) => question.origin !== "instructor");
   return {
     ...source,
-    studySet: {
+    studySet: set ? {
       ...set,
       summary: summaryIsCorrection ? "" : set.summary,
       summaryOrigin: summaryIsCorrection ? null : set.summaryOrigin,
       sections: set.sections.filter((section) => section.origin !== "instructor"),
       flashcards: set.flashcards.filter((card) => card.origin !== "instructor"),
-    },
+    } : null,
+    practiceTest: test && questions?.length ? { ...test, questions } : null,
   };
 }
 
@@ -114,7 +119,9 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection)
       ? [`${capitalize(first.origin)}.`]
       : origins.map((entry) => `${entry.what}: ${entry.origin}.`);
   // Per-item authorship can't travel in a packet; say that some was handwritten.
-  if (set && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set)) {
+  const handwrittenSet = set && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set);
+  const handwrittenTest = test && test.provider !== "manual" && selection.questions && test.questions.some((question) => question.origin !== undefined);
+  if (handwrittenSet || handwrittenTest) {
     parts.push("Some items were written or corrected by hand in Her Flight Deck, not generated.");
   }
   parts.push("Verify everything against current FAA material, aircraft documents and an instructor.");

@@ -28,7 +28,6 @@ import {
 import {
   toNumberedPlaceholders,
   type NativeImportSaveResult,
-  type PracticeTestSaveOperation,
   type SqlDatabase,
   type SqlValue,
   type StructuredImportSaveOperation,
@@ -44,9 +43,12 @@ import {
   IMPORT_SAVE_MESSAGES,
   isImportSaveErrorCode,
   isNativeCardReviewErrorCode,
+  isPracticeAuthoringErrorCode,
   isPracticeSessionErrorCode,
   isStudySetErrorCode,
+  PRACTICE_AUTHORING_ERROR_MESSAGES,
   PRACTICE_SESSION_ERROR_MESSAGES,
+  PracticeAuthoringError,
   PracticeSessionError,
   STUDY_SET_ERROR_MESSAGES,
   StructuredImportSaveError,
@@ -210,26 +212,32 @@ function validatePracticeActionResult(
 }
 
 /**
- * Invoke the native practice test save/regeneration.
- * Unit return contract: awaits native completion without wire result object.
+ * Invoke the native practice-authoring save (OFFLINE-03b). A refusal keeps
+ * its fixed code and message; anything else is a transport failure, where a
+ * retry with the same operation id is safe — the durable receipt recognises
+ * it and returns `already_saved` without a second write.
  */
-export async function invokePracticeTestSave(
-  operation: PracticeTestSaveOperation,
+export async function invokePracticeAuthoringSave(
+  operation: import("@/domain/types").PracticeSaveOperation,
   call: typeof invoke = invoke,
-): Promise<void> {
+): Promise<import("@/domain/types").PracticeSaveResult> {
+  let result: unknown;
   try {
-    await call("save_practice_test_atomically", { operation });
+    result = await call("save_practice_authoring_atomically", { operation });
   } catch (rejection) {
     const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
     if (
-      isPracticeSessionErrorCode(code) &&
+      isPracticeAuthoringErrorCode(code) &&
       code !== "IPC_TRANSPORT_ERROR" &&
-      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
+      message === PRACTICE_AUTHORING_ERROR_MESSAGES[code]
     ) {
-      throw new PracticeSessionError(code);
+      throw new PracticeAuthoringError(code);
     }
-    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
+    throw new PracticeAuthoringError("IPC_TRANSPORT_ERROR", { cause: rejection });
   }
+  const status = (result as { status?: unknown } | null)?.status;
+  if (status !== "saved" && status !== "already_saved") throw new PracticeAuthoringError("IPC_TRANSPORT_ERROR");
+  return { status };
 }
 
 /**
@@ -254,28 +262,6 @@ export async function invokeStudySetSave(
   const status = (result as { status?: unknown } | null)?.status;
   if (status !== "saved" && status !== "already_saved") throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
   return { status };
-}
-
-/**
- * Invoke the native practice test removal.
- */
-export async function invokeRemovePracticeTest(
-  sourceMaterialId: string,
-  call: typeof invoke = invoke,
-): Promise<void> {
-  try {
-    await call("remove_practice_test_atomically", { sourceMaterialId });
-  } catch (rejection) {
-    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
-    if (
-      isPracticeSessionErrorCode(code) &&
-      code !== "IPC_TRANSPORT_ERROR" &&
-      message === PRACTICE_SESSION_ERROR_MESSAGES[code]
-    ) {
-      throw new PracticeSessionError(code);
-    }
-    throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
-  }
 }
 
 /**
@@ -541,15 +527,10 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     ): Promise<PracticeSessionActionResult> {
       return invokePracticeSessionSave(action);
     },
-    savePracticeTestAtomically(
-      operation: PracticeTestSaveOperation,
-    ): Promise<void> {
-      return invokePracticeTestSave(operation);
-    },
-    removePracticeTestAtomically(
-      sourceMaterialId: string,
-    ): Promise<void> {
-      return invokeRemovePracticeTest(sourceMaterialId);
+    savePracticeAuthoringAtomically(
+      operation: import("@/domain/types").PracticeSaveOperation,
+    ): Promise<import("@/domain/types").PracticeSaveResult> {
+      return invokePracticeAuthoringSave(operation);
     },
     saveStudySetAtomically: (operation) => invokeStudySetSave(operation),
     erasePracticeHistoryAtomically(

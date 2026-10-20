@@ -93,6 +93,7 @@ async function seed(material: Partial<NewMaterial> = {}) {
     model: "gemini-3.5-flash",
   });
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: created.id,
     title: "Saved practice test",
     questions: [

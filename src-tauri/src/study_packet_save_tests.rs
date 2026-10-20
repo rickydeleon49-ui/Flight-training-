@@ -1181,3 +1181,182 @@ fn sb_r2_combining_sequences_that_do_not_compose_are_retained() {
         "non-composing sequence must be preserved"
     );
 }
+
+/// OFFLINE-03b r7 §4: the native create-new packet path writes practice rows
+/// outside the authoring API, so its output has to land inside the schema-17
+/// contract anyway — plan §8 "Import parity". The TypeScript half of this
+/// behaviour is `IP-17-01` in `src/data/repositories/importStudyPacket.test.ts`.
+#[test]
+fn imported_packet_satisfies_the_schema_17_authoring_contract() {
+    use crate::practice_authoring::{
+        practice_content_hash, practice_retirement_record, read_current_snapshot,
+        retirement_record_value, save_practice_authoring_at, snapshot_value, AuthoringQuestion,
+    };
+
+    let dir = TestDir::new();
+    let conn = setup_db(dir.path());
+    // The wire form of one snapshot question, as `decode_question` accepts it:
+    // five content fields plus the identity, with `origin`/`replaces` only when
+    // the row actually carries them.
+    let question_json = |item: &AuthoringQuestion| {
+        let mut value = json!({
+            "question": item.question,
+            "options": item.options,
+            "correctIndex": item.correct_index,
+            "explanation": item.explanation,
+            "sourcePage": item.source_page,
+            "identity": item.identity,
+        });
+        let map = value.as_object_mut().unwrap();
+        if let Some(origin) = &item.origin {
+            map.insert("origin".to_string(), json!(origin));
+        }
+        if let Some(replaces) = &item.replaces {
+            map.insert("replaces".to_string(), json!(replaces));
+        }
+        value
+    };
+    assert_eq!(
+        save(dir.path(), &operation(ID)).unwrap(),
+        NativeImportSaveResult::Saved {
+            material_id: ID.into()
+        }
+    );
+
+    // The ledger defaults to empty and the mirror keeps the imported provenance.
+    let (retired_json, provider, model): (String, String, String) = conn
+        .query_row(
+            "SELECT retired_json, provider, model FROM practice_tests WHERE source_material_id = ?1",
+            [ID],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .unwrap();
+    assert_eq!(retired_json, "[]");
+    assert_eq!(provider, "import");
+    assert_eq!(model, "");
+
+    // Imported items carry no authoring ids — so each one's immutable row id is
+    // its deterministic identity.
+    let imported: Vec<(String, Option<String>, Option<String>)> = {
+        let mut stmt = conn
+            .prepare(
+                "SELECT i.id, i.logical_id, i.replaces_id FROM practice_test_items i
+                   JOIN practice_test_versions v ON v.id = i.version_id
+                  WHERE v.source_material_id = ?1 AND v.is_active = 1 ORDER BY i.ordinal",
+            )
+            .unwrap();
+        stmt.query_map([ID], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap()
+    };
+    assert_eq!(imported.len(), 1);
+    for (_, logical, replaces) in &imported {
+        assert!(logical.is_none(), "an imported item gains no identity");
+        assert!(
+            replaces.is_none(),
+            "an imported item records no replacement"
+        );
+    }
+
+    let stored_hash: String = conn
+        .query_row(
+            "SELECT content_hash FROM practice_test_versions WHERE source_material_id = ?1 AND is_active = 1",
+            [ID],
+            |r| r.get(0),
+        )
+        .unwrap();
+
+    // The schema-17 validator accepts exactly what the importer wrote.
+    crate::backup::verify_schema_17_practice_authoring_semantics(&conn)
+        .expect("an imported packet must satisfy the schema-17 authoring contract");
+
+    let current = read_current_snapshot(&conn, ID)
+        .unwrap()
+        .expect("the imported test reads back as the current snapshot");
+    assert_eq!(
+        practice_content_hash(&current.questions),
+        stored_hash,
+        "the legacy five-field content hash must survive the authoring reader unchanged"
+    );
+    assert_eq!(current.provider, "import");
+    assert_eq!(current.version_number, 1);
+    assert!(current.retired.is_empty());
+    assert_eq!(
+        current
+            .questions
+            .iter()
+            .map(|question| question.identity.clone())
+            .collect::<Vec<_>>(),
+        imported
+            .iter()
+            .map(|(id, _, _)| id.clone())
+            .collect::<Vec<_>>(),
+        "the snapshot's identities are the imported row ids"
+    );
+
+    // An authoring edit of the imported test goes through, keeping the fallback
+    // identities and the imported provenance.
+    let before = current.questions[0].clone();
+    let record = retirement_record_value(&practice_retirement_record(&before, "corrected"));
+    let rewritten = {
+        let mut value = question_json(&before);
+        value["question"] = json!("What must you hold before entering Class B?");
+        value
+    };
+    let edit = json!({
+        "operationId": "7d1f4a90-3c2b-4e5f-8a90-0b1c2d3e4f50",
+        "sourceMaterialId": ID,
+        "reason": "edit",
+        "expected": snapshot_value(&current),
+        "next": {
+            "title": current.title,
+            "provider": current.provider,
+            "model": current.model,
+            "questions": [rewritten],
+            "retired": [record.clone()],
+        },
+    });
+    assert_eq!(
+        save_practice_authoring_at(dir.path(), &edit)
+            .unwrap()
+            .status,
+        "saved"
+    );
+
+    let after = read_current_snapshot(&conn, ID)
+        .unwrap()
+        .expect("the edited imported test still reads back");
+    assert_eq!(after.version_number, 2);
+    assert_eq!(after.provider, "import");
+    assert_eq!(after.model, "");
+    assert_eq!(after.retired.len(), 1);
+    assert_eq!(
+        after
+            .questions
+            .iter()
+            .map(|question| question.identity.clone())
+            .collect::<Vec<_>>(),
+        current
+            .questions
+            .iter()
+            .map(|question| question.identity.clone())
+            .collect::<Vec<_>>(),
+        "the fallback identities travel into the new version unchanged"
+    );
+    let (provider_after, retired_after): (String, String) = conn
+        .query_row(
+            "SELECT provider, retired_json FROM practice_tests WHERE source_material_id = ?1",
+            [ID],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(provider_after, "import");
+    assert_eq!(
+        serde_json::from_str::<Value>(&retired_after).unwrap(),
+        Value::Array(vec![record]),
+        "the mirror's ledger holds exactly the one retirement the edit carried"
+    );
+    crate::backup::verify_schema_17_practice_authoring_semantics(&conn)
+        .expect("the edited imported packet must still satisfy the schema-17 contract");
+}

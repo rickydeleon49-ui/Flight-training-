@@ -89,6 +89,7 @@ function show(route: string) {
 async function completedAttempt(completedAt: string) {
   await repos.documents.create({ id: "m1", title: "Airspace basics" });
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: "m1",
     title: "Airspace basics",
     model: "synthetic",

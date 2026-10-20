@@ -24,6 +24,8 @@ import "./studyLibrary.css";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export interface PracticeTestPanelProps {
+  /** Lets adjacent authoring controls follow this panel's live attempt state. */
+  onAttemptChange?: (active: boolean) => void;
   practiceTest: PracticeTest;
   materialId?: string;
   materialTitle?: string;
@@ -377,6 +379,7 @@ export function PracticeTestPanel({
   materialId: propMaterialId,
   materialTitle: _materialTitle,
   onComplete,
+  onAttemptChange,
 }: PracticeTestPanelProps) {
   const appData = useContext(AppDataContext);
   const repositories = appData?.repositories?.practiceSessions;
@@ -388,6 +391,9 @@ export function PracticeTestPanel({
     () => initialPanelState(materialId, 1),
   );
   const [confirmingAbandon, setConfirmingAbandon] = useState(false);
+  useEffect(() => {
+    onAttemptChange?.(state.attempt !== null && state.completedResult === null);
+  }, [onAttemptChange, state.attempt, state.completedResult]);
 
   // Synchronous authority. React state cannot be read before the next render,
   // so two events inside one render are gated by these refs instead.

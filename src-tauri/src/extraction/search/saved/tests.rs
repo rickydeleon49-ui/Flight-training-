@@ -217,6 +217,66 @@ fn searches_current_content_and_never_answers_or_old_versions() {
 }
 
 #[test]
+fn saved_search_authored_practice_indexes_only_stems() {
+    let root = std::env::temp_dir().join(format!(
+        "hfd-saved-authored-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&root).unwrap();
+    let f = Fixture { root };
+    Cache::open(&f.root).unwrap();
+    let db = f.db();
+    db.pragma_update(None, "foreign_keys", "ON").unwrap();
+    for migration in crate::migrations() {
+        db.execute_batch(migration.sql).unwrap();
+    }
+    db.execute(
+        "INSERT INTO study_materials (id, title, created_at, updated_at)
+         VALUES ('authored', 'Handbook', '2026-10-20T00:00:00Z', '2026-10-20T00:00:00Z')",
+        [],
+    )
+    .unwrap();
+    drop(db);
+    crate::practice_authoring::save_practice_authoring_at(
+        &f.root,
+        &serde_json::json!({
+            "operationId": "fa000000-0000-4000-8000-0000000000e0",
+            "sourceMaterialId": "authored",
+            "reason": "create",
+            "expected": null,
+            "next": {
+                "title": "Handwritten practice", "provider": "manual", "model": "",
+                "retired": [],
+                "questions": [{
+                    "identity": "fa000000-0000-4000-8000-0000000000e1",
+                    "origin": "user", "question": "Stemprivacyword?",
+                    "options": ["Optionprivacyword", "Other"], "correctIndex": 0,
+                    "explanation": "Explanationprivacyword", "sourcePage": null
+                }]
+            }
+        }),
+    )
+    .unwrap();
+    let host = f.host();
+    let response = f
+        .search(&host, "Stemprivacyword", ALL, &["authored"])
+        .unwrap();
+    let found = hits(&response);
+    assert_eq!(found.len(), 1);
+    assert_eq!(found[0].0, "authored");
+    assert_eq!(found[0].1, "practice");
+    let stem_response = serde_json::to_string(&response).unwrap();
+    for word in ["Optionprivacyword", "Explanationprivacyword"] {
+        assert!(!stem_response.contains(word), "snippet leaked {word}");
+        assert!(hits(&f.search(&host, word, ALL, &["authored"]).unwrap()).is_empty());
+    }
+}
+
+#[test]
 fn filters_follow_materials_and_categories() {
     let f = Fixture::new();
     f.material("m1", "Handbook");

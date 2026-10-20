@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { SqlDatabase, SqlValue } from "@/data/db";
+import type { PracticeAuthoringQuestion } from "@/domain/types";
+import { exportStudyPacket } from "@/logic/studyExport";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "./index";
 import { documentRepository } from "./documentRepository";
@@ -155,7 +157,7 @@ describe("practice tests", () => {
     const documents = createRepositories(db).documents;
     const material = await documents.create({ title: "Airplane Flying Handbook" });
 
-    await documents.savePracticeTest({
+    await documents.savePracticeTest({ provider: "gemini",
       sourceMaterialId: material.id,
       title: "Traffic patterns",
       questions: [
@@ -197,13 +199,13 @@ describe("practice tests", () => {
       sourcePage: null,
     };
 
-    await documents.savePracticeTest({
+    await documents.savePracticeTest({ provider: "gemini",
       sourceMaterialId: material.id,
       title: "First attempt",
       questions: [question],
       model: "gemini-3.5-flash",
     });
-    await documents.savePracticeTest({
+    await documents.savePracticeTest({ provider: "gemini",
       sourceMaterialId: material.id,
       title: "Regenerated",
       questions: [question, question],
@@ -219,7 +221,7 @@ describe("practice tests", () => {
   it("removes a saved test when its source material is deleted", async () => {
     const documents = createRepositories(db).documents;
     const material = await documents.create({ title: "Deletable" });
-    await documents.savePracticeTest({
+    await documents.savePracticeTest({ provider: "gemini",
       sourceMaterialId: material.id,
       title: "Test",
       questions: [
@@ -236,7 +238,7 @@ describe("practice tests", () => {
   it("removes a saved test directly without touching its source material", async () => {
     const documents = createRepositories(db).documents;
     const material = await documents.create({ title: "Keep me" });
-    await documents.savePracticeTest({
+    await documents.savePracticeTest({ provider: "gemini",
       sourceMaterialId: material.id,
       title: "Test",
       questions: [
@@ -249,6 +251,93 @@ describe("practice tests", () => {
 
     expect(await documents.listPracticeTests()).toEqual([]);
     expect((await documents.list()).map((item) => item.id)).toContain(material.id);
+  });
+
+  const corrected = {
+    question: "Corrected synthetic stem",
+    options: ["First", "Second"],
+    correctIndex: 0,
+    explanation: "Synthetic explanation",
+    sourcePage: null,
+  };
+  const plain = {
+    question: "Plain synthetic stem",
+    options: ["A", "B"],
+    correctIndex: 1,
+    explanation: "Synthetic explanation",
+    sourcePage: null,
+  };
+
+  /** One authoring save through the real transaction, origins and all. */
+  async function saveAuthoredTest(materialId: string, questions: PracticeAuthoringQuestion[]): Promise<void> {
+    const saved = await db.savePracticeAuthoringAtomically!({
+      operationId: crypto.randomUUID(),
+      sourceMaterialId: materialId,
+      reason: "create",
+      expected: null,
+      next: { title: "Authored test", provider: "manual", model: "", questions, retired: [] },
+    });
+    expect(saved).toEqual({ status: "saved" });
+  }
+
+  it("reads back an instructor correction with its real origin", async () => {
+    const documents = createRepositories(db).documents;
+    const material = await documents.create({ title: "Instructor corrections" });
+    await saveAuthoredTest(material.id, [
+      { ...corrected, identity: crypto.randomUUID(), origin: "instructor" },
+      { ...plain, identity: crypto.randomUUID() },
+    ]);
+
+    const test = (await documents.listPracticeTests()).find((t) => t.sourceMaterialId === material.id)!;
+    expect(test.questions[0]!.origin).toBe("instructor");
+    expect(test.questions[1]!.question).toBe(plain.question);
+  });
+
+  it("omits the origin key entirely for a question with no stored origin", async () => {
+    const documents = createRepositories(db).documents;
+    const material = await documents.create({ title: "Generated set" });
+    await documents.savePracticeTest({ provider: "gemini",
+      sourceMaterialId: material.id,
+      title: "Generated",
+      questions: [plain],
+      model: "gemini-3.5-flash",
+    });
+
+    const test = (await documents.listPracticeTests()).find((t) => t.sourceMaterialId === material.id)!;
+    expect("origin" in test.questions[0]!).toBe(false);
+    expect(test.questions[0]).toEqual(plain);
+  });
+
+  it("keeps packet v1 export unchanged: exported questions carry no origin key", async () => {
+    const documents = createRepositories(db).documents;
+    const material = await documents.create({ title: "Packet source" });
+    await saveAuthoredTest(material.id, [
+      { ...corrected, identity: crypto.randomUUID(), origin: "instructor" },
+      { ...plain, identity: crypto.randomUUID() },
+    ]);
+
+    const test = (await documents.listPracticeTests()).find((t) => t.sourceMaterialId === material.id)!;
+    expect(test.questions[0]!.origin).toBe("instructor");
+
+    const result = exportStudyPacket(
+      { material: { title: material.title }, studySet: null, practiceTest: test },
+      { guide: false, flashcards: false, questions: true, instructorCorrections: true },
+      new Date("2026-10-19T12:00:00.000Z"),
+    );
+    if (!result.ok) throw new Error(`packet export refused: ${result.message}`);
+    const packet = JSON.parse(result.text) as { questions: Record<string, unknown>[] };
+    expect(packet.questions).toHaveLength(2);
+    for (const exported of packet.questions) {
+      expect("origin" in exported).toBe(false);
+      expect(Object.keys(exported).sort()).toEqual([
+        "choices",
+        "correctChoiceId",
+        "explanation",
+        "id",
+        "question",
+        "type",
+      ]);
+    }
   });
 });
 

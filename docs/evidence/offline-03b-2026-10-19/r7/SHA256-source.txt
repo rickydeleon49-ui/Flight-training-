@@ -1,0 +1,12 @@
+$ shasum -a 256 src-tauri/fixtures/practice-authoring-validation/cases.json src/data/practiceAuthoringValidationParity.test.ts src-tauri/src/backup.rs src-tauri/src/practice_authoring_tests.rs src-tauri/src/study_packet_save_tests.rs src/data/repositories/importStudyPacket.test.ts src/data/testing/skillEvidenceEngines.ts src/data/navigationUpgrade.test.ts src/data/skillEvidenceUpgrade.test.ts
+f9bbd4f7e8bc7d048560797ec3819680ecc66e6c20503b5f5cbcc0a761466367  src-tauri/fixtures/practice-authoring-validation/cases.json
+f426b0f9d85aa571aa9a5d15eda544e5315d2d8dc73d972b868c69ad39c8705c  src/data/practiceAuthoringValidationParity.test.ts
+6d5d7b813264d41dffec540152929def06fb80d10efac70168b8765f0b7bc911  src-tauri/src/backup.rs
+99cf3e7ba5dbfb8bd441489f155edd6b3b71bc6eaefc89a1c317982a4e578c47  src-tauri/src/practice_authoring_tests.rs
+ad1707ce0612977be7af213453b9829e79f9b2f000c9a4bb008972a9bfa51993  src-tauri/src/study_packet_save_tests.rs
+f694dfa2feac3f520c743efa05e65d5fb1f830600515f6382822c42da1f4f531  src/data/repositories/importStudyPacket.test.ts
+eeaa1c3f3864bda42ad078cf262ec5510f52eabaf0d76dc6f349d7a5fb2cb237  src/data/testing/skillEvidenceEngines.ts
+747d0099c9ca657b08bfc66a5381efa780a661f84db4aff360e55961a48b5a8b  src/data/navigationUpgrade.test.ts
+f9dc1edf4fc5a257738436be08f9c904e2a62511ab263f73ff13d2113bec874f  src/data/skillEvidenceUpgrade.test.ts
+
+EXIT 0
