@@ -1,0 +1,34 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked pdf_kit
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.46s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 4 tests
+test pdf_study_kit_tests::pdf_kit_module_has_zero_network_imports ... ok
+test backup::tests::schema_18_pdf_kit_archive_round_trip ... FAILED
+test backup::tests::tampered_schema_18_pdf_kit_archive_refused ... FAILED
+test backup::tests::shared_pdf_kit_validation_contract_native_outcomes ... ok
+
+failures:
+
+---- backup::tests::schema_18_pdf_kit_archive_round_trip stdout ----
+
+thread 'backup::tests::schema_18_pdf_kit_archive_round_trip' (8861528) panicked at src/backup.rs:14683:80:
+called `Result::unwrap()` on an `Err` value: "Choose a backup location outside the application's data folder."
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- backup::tests::tampered_schema_18_pdf_kit_archive_refused stdout ----
+
+thread 'backup::tests::tampered_schema_18_pdf_kit_archive_refused' (8861530) panicked at src/backup.rs:14721:84:
+called `Result::unwrap()` on an `Err` value: "Choose a backup location outside the application's data folder."
+
+
+failures:
+    backup::tests::schema_18_pdf_kit_archive_round_trip
+    backup::tests::tampered_schema_18_pdf_kit_archive_refused
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 940 filtered out; finished in 8.91s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101

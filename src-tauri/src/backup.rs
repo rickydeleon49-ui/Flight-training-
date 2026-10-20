@@ -643,6 +643,9 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 17 {
         verify_schema_17_practice_authoring_semantics(connection)?;
     }
+    if newest_migration >= 18 {
+        verify_schema_18_pdf_kit_semantics(connection)?;
+    }
     Ok(())
 }
 
@@ -670,6 +673,129 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
             |row| row.get(0),
         )
         .map_err(|e| format!("Could not inspect the database version: {e}"))
+}
+
+/// Schema 18's additive provenance contract; TS twin: `validatePdfKitState`.
+/// All three engines exercise `fixtures/pdf-kit-validation/cases.json` after reopening.
+pub(crate) fn verify_schema_18_pdf_kit_semantics(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in ["pdf_kit_runs", "pdf_kit_item_sources"] {
+        if m3_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[m3_value(table)],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+        if m3_count(
+            connection,
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )? != 0
+        {
+            return Err(format!("Table {table} has rows that point at nothing."));
+        }
+    }
+    if m3_index_shape(connection, "pdf_kit_runs", "idx_pdf_kit_runs_material")?
+        != m3_index_shape(&reference, "pdf_kit_runs", "idx_pdf_kit_runs_material")?
+    {
+        return Err(
+            "The database is missing required index: idx_pdf_kit_runs_material".to_string(),
+        );
+    }
+
+    let is_hash = |value: &str| {
+        value.len() == 64
+            && value
+                .bytes()
+                .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+    };
+    let mut runs = connection.prepare("SELECT run_id, content_sha256, selected_pages_json, extractor_version, algorithm_version, created_at FROM pdf_kit_runs").map_err(|e| e.to_string())?;
+    let rows = runs
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+    for row in rows {
+        let (run_id, hash, encoded, _, _, _) = row.map_err(|e| e.to_string())?;
+        if !is_valid_uuid_v4(&run_id) || run_id.bytes().any(|c| c.is_ascii_uppercase()) {
+            return Err("A PDF kit has an invalid run identity.".to_string());
+        }
+        if !is_hash(&hash) {
+            return Err("A PDF kit has an invalid source hash.".to_string());
+        }
+        let pages: Vec<u16> = serde_json::from_str(&encoded)
+            .map_err(|_| "A PDF kit has invalid selected pages.".to_string())?;
+        if serde_json::to_string(&pages).map_err(|e| e.to_string())? != encoded
+            || pages.iter().any(|p| !(1..=1000).contains(p))
+            || pages.windows(2).any(|p| p[0] >= p[1])
+        {
+            return Err("A PDF kit has invalid selected pages.".to_string());
+        }
+    }
+    if m3_count(connection, "SELECT COUNT(*) FROM pdf_kit_item_sources s LEFT JOIN pdf_kit_runs r ON r.run_id = s.run_id LEFT JOIN study_materials m ON m.id = r.material_id WHERE r.run_id IS NULL OR m.id IS NULL", &[])? != 0 {
+        return Err("A PDF kit source has no material.".to_string());
+    }
+    let mut sources = connection.prepare("SELECT item_kind, logical_id, content_hash, page, start_offset, end_offset, quote FROM pdf_kit_item_sources").map_err(|e| e.to_string())?;
+    let rows = sources
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, i64>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| e.to_string())?;
+    for row in rows {
+        let (kind, _, hash, page, start, end, quote) = row.map_err(|e| e.to_string())?;
+        if !is_hash(&hash) {
+            return Err("A PDF kit item has an invalid content hash.".to_string());
+        }
+        if !["summary", "section", "card", "question"].contains(&kind.as_str()) {
+            return Err("A PDF kit item has an invalid kind.".to_string());
+        }
+        if !(1..=1000).contains(&page) || start < 0 || end <= start {
+            return Err("A PDF kit source has invalid page offsets.".to_string());
+        }
+        if !(1..=2000).contains(&quote.chars().count()) {
+            return Err("A PDF kit source has an invalid quote.".to_string());
+        }
+    }
+    Ok(())
 }
 
 /* ------------------------------------------------------------------ */
@@ -14491,6 +14617,244 @@ mod tests {
         let _ = std::fs::remove_dir_all(&source_root);
         let _ = std::fs::remove_dir_all(&backup_dir);
         let _ = std::fs::remove_dir_all(&target_root);
+    }
+
+    // GEN-01b: disposable databases only; the same contract runs in both TS engines.
+    fn pdf_kit_test_database(path: &Path, through: i64) {
+        let conn = Connection::open(path).unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        conn.execute_batch("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);")
+            .unwrap();
+        for migration in crate::migrations()
+            .into_iter()
+            .filter(|m| m.version <= through)
+        {
+            conn.execute_batch(migration.sql).unwrap();
+            conn.execute(
+                "INSERT INTO _sqlx_migrations VALUES (?1)",
+                [migration.version],
+            )
+            .unwrap();
+        }
+    }
+
+    fn pdf_kit_contract() -> serde_json::Value {
+        serde_json::from_str(include_str!("../fixtures/pdf-kit-validation/cases.json")).unwrap()
+    }
+
+    fn pdf_kit_seed(conn: &Connection) {
+        for sql in pdf_kit_contract()["baseline"].as_array().unwrap() {
+            conn.execute_batch(sql.as_str().unwrap()).unwrap();
+        }
+    }
+
+    #[test]
+    fn shared_pdf_kit_validation_contract_native_outcomes() {
+        let contract = pdf_kit_contract();
+        let mut mismatches = Vec::new();
+        for case in contract["cases"].as_array().unwrap() {
+            let root = scratch("pdf-kit-contract");
+            let path = root.join(DB_FILES[0]);
+            pdf_kit_test_database(&path, 18);
+            {
+                let conn = Connection::open(&path).unwrap();
+                conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+                pdf_kit_seed(&conn);
+                for sql in case["sql"].as_array().unwrap() {
+                    conn.execute_batch(sql.as_str().unwrap()).unwrap();
+                }
+            }
+            // Reopen: schema edits must take effect just as they do on app launch.
+            let conn = Connection::open(&path).unwrap();
+            let result = verify_schema_18_pdf_kit_semantics(&conn);
+            let application = verify_application_database(&path);
+            assert_eq!(
+                application.is_ok(),
+                result.is_ok(),
+                "application ladder disagrees: {}",
+                case["name"]
+            );
+            drop(conn);
+            let outcome = if result.is_ok() { "accept" } else { "refuse" };
+            if outcome != case["expect"].as_str().unwrap() {
+                mismatches.push(format!("{}: {result:?}", case["name"]));
+            }
+            std::fs::remove_dir_all(root).unwrap();
+        }
+        assert!(mismatches.is_empty(), "{mismatches:#?}");
+        assert!(contract["cases"].as_array().unwrap().len() >= 12);
+    }
+
+    #[test]
+    fn schema_17_archive_restores_and_upgrades_to_18() {
+        let root = scratch("kit17-source");
+        let target = scratch("kit17-target");
+        let path = root.join(DB_FILES[0]);
+        pdf_kit_test_database(&path, 17);
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('old','Synthetic','x','x')").unwrap();
+        }
+        assert!(verify_application_database(&path).is_ok());
+        let backup_dir = scratch("kit-backup");
+        let archive = backup_dir.join("schema17.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+        stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        let restored = target.join(DB_FILES[0]);
+        assert!(verify_application_database(&restored).is_ok());
+        {
+            let conn = Connection::open(&restored).unwrap();
+            assert_eq!(newest_migration_version(&conn).unwrap(), 17);
+            assert_eq!(
+                m3_count(
+                    &conn,
+                    "SELECT COUNT(*) FROM sqlite_master WHERE name LIKE 'pdf_kit_%'",
+                    &[]
+                )
+                .unwrap(),
+                0
+            );
+            for migration in crate::migrations().into_iter().filter(|m| m.version > 17) {
+                conn.execute_batch(migration.sql).unwrap();
+                conn.execute(
+                    "INSERT INTO _sqlx_migrations VALUES (?1)",
+                    [migration.version],
+                )
+                .unwrap();
+            }
+            assert_eq!(newest_migration_version(&conn).unwrap(), 18);
+            assert_eq!(
+                m3_count(
+                    &conn,
+                    "SELECT COUNT(*) FROM study_materials WHERE id = 'old'",
+                    &[]
+                )
+                .unwrap(),
+                1
+            );
+            for table in ["pdf_kit_runs", "pdf_kit_item_sources"] {
+                assert_eq!(
+                    m3_count(&conn, &format!("SELECT COUNT(*) FROM {table}"), &[]).unwrap(),
+                    0
+                );
+            }
+        }
+        assert!(verify_application_database(&restored).is_ok());
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(backup_dir).unwrap();
+        std::fs::remove_dir_all(target).unwrap();
+    }
+
+    #[test]
+    fn schema_18_pdf_kit_archive_round_trip() {
+        let root = scratch("kit18-source");
+        let target = scratch("kit18-target");
+        let path = root.join(DB_FILES[0]);
+        pdf_kit_test_database(&path, 18);
+        let before = {
+            let conn = Connection::open(&path).unwrap();
+            pdf_kit_seed(&conn);
+            ["pdf_kit_runs", "pdf_kit_item_sources"].map(|table| {
+                m3_rows(&conn, &format!("SELECT * FROM {table} ORDER BY rowid"), &[]).unwrap()
+            })
+        };
+        let backup_dir = scratch("kit-backup");
+        let archive = backup_dir.join("schema18.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+        stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        let restored = target.join(DB_FILES[0]);
+        assert!(verify_application_database(&restored).is_ok());
+        {
+            let conn = Connection::open(&restored).unwrap();
+            assert_eq!(newest_migration_version(&conn).unwrap(), 18);
+            let after = ["pdf_kit_runs", "pdf_kit_item_sources"].map(|table| {
+                m3_rows(&conn, &format!("SELECT * FROM {table} ORDER BY rowid"), &[]).unwrap()
+            });
+            assert_eq!(before, after);
+            conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+            conn.execute("DELETE FROM study_materials WHERE id = 'mat-kit'", [])
+                .unwrap();
+            for table in ["pdf_kit_runs", "pdf_kit_item_sources"] {
+                assert_eq!(
+                    m3_count(&conn, &format!("SELECT COUNT(*) FROM {table}"), &[]).unwrap(),
+                    0
+                );
+            }
+        }
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(backup_dir).unwrap();
+        std::fs::remove_dir_all(target).unwrap();
+    }
+
+    #[test]
+    fn tampered_schema_18_pdf_kit_archive_refused() {
+        for sql in [
+            "UPDATE pdf_kit_item_sources SET run_id = 'missing'",
+            "UPDATE pdf_kit_runs SET content_sha256 = 'bad'",
+            "UPDATE pdf_kit_item_sources SET content_hash = 'bad'",
+            "UPDATE pdf_kit_item_sources SET page = 1001",
+            "UPDATE pdf_kit_item_sources SET end_offset = start_offset",
+        ] {
+            let root = scratch("kit18-tampered");
+            let target = scratch("kit18-refused-target");
+            let path = root.join(DB_FILES[0]);
+            pdf_kit_test_database(&path, 18);
+            let backup_dir = scratch("kit-backup");
+            let archive = backup_dir.join("tampered.hfdbackup");
+            {
+                let conn = Connection::open(&path).unwrap();
+                pdf_kit_seed(&conn);
+            }
+            create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+            {
+                let conn = Connection::open(&path).unwrap();
+                conn.pragma_update(None, "foreign_keys", "OFF").unwrap();
+                conn.pragma_update(None, "ignore_check_constraints", "ON")
+                    .unwrap();
+                conn.execute_batch(sql).unwrap();
+            }
+            // Rebind archive integrity so refusal reaches database semantics,
+            // rather than merely detecting changed ZIP bytes.
+            let bytes = std::fs::read(&path).unwrap();
+            rewrite_entry(&archive, DB_FILES[0], &bytes);
+            let mut integrity: CompleteBackupIntegrity = {
+                let mut zip = ZipArchive::new(File::open(&archive).unwrap()).unwrap();
+                serde_json::from_reader(zip.by_name(ARCHIVE_INTEGRITY).unwrap()).unwrap()
+            };
+            let entry = integrity
+                .files
+                .iter_mut()
+                .find(|e| e.path == DB_FILES[0])
+                .unwrap();
+            entry.bytes = bytes.len() as u64;
+            entry.sha256 = sha256_digest(&bytes);
+            rewrite_entry(
+                &archive,
+                ARCHIVE_INTEGRITY,
+                &serde_json::to_vec(&integrity).unwrap(),
+            );
+            let conn = Connection::open(&path).unwrap();
+            assert!(
+                verify_schema_18_pdf_kit_semantics(&conn).is_err(),
+                "accepted semantics: {sql}"
+            );
+            drop(conn);
+            let error = inspect_archive(&target, &archive, "0.6.0").unwrap_err();
+            assert!(
+                !error.contains("integrity"),
+                "did not reach the native database verifier: {error}"
+            );
+            assert!(
+                stage_complete_restore_in(&target, &archive, "0.6.0").is_err(),
+                "staged tampering: {sql}"
+            );
+            assert!(!target.join(DB_FILES[0]).exists());
+            std::fs::remove_dir_all(root).unwrap();
+            std::fs::remove_dir_all(backup_dir).unwrap();
+            std::fs::remove_dir_all(target).unwrap();
+        }
     }
 
     /// OFFLINE-03b r7 (b): an authored schema-17 archive round-trips whole.

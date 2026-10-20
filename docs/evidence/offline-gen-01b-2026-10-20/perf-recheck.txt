@@ -1,0 +1,18 @@
+$ npm test -- --configLoader runner src/perf/studyLibraryScenarios.test.ts
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/perf/studyLibraryScenarios.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:26306) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  31 passed (31)
+   Start at  15:51:11
+   Duration  20.04s (transform 289ms, setup 38ms, import 367ms, tests 19.33s, environment 227ms)
+
+
+EXIT 0

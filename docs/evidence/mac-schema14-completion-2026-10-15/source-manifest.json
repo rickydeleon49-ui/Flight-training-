@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-20T22:13:51.602414+00:00",
+  "generatedAt": "2026-10-20T22:43:01.173367+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -58,8 +58,8 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 32185,
-      "sha256": "18b1724023989882493a608b1c17b78c3707ddc91a9ce87c989030e40b3d07bd"
+      "bytes": 32425,
+      "sha256": "91cbbbbd7e25ecee76492d8f05731e1066de95d83e5851a5a447a0158d198c20"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",

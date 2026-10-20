@@ -244,6 +244,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 15) await validateNavigationState(query, reference);
   if (newest >= 16) await validateManualStudyState(query, reference);
   if (newest >= 17) await validatePracticeAuthoringState(query, reference);
+  if (newest >= 18) await validatePdfKitState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -1730,5 +1731,71 @@ export async function validatePracticeAuthoringState(query: ValidationQuery, ref
     if (canonicalJson(mirrored) !== canonicalJson(projected)) {
       refuse("The current practice test questions disagree with the active version.");
     }
+  }
+}
+
+/* Schema 18: PDF-kit provenance (native twin: verify_schema_18_pdf_kit_semantics). */
+export const PDF_KIT_TABLES = ["pdf_kit_runs", "pdf_kit_item_sources"] as const;
+
+export async function validatePdfKitState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  for (const table of PDF_KIT_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+    if (!same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) {
+      refuse(`Table ${table} keys do not match the registered migration contract.`);
+    }
+    if ((await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length !== 0) {
+      refuse(`Table ${table} has rows that point at nothing.`);
+    }
+  }
+  if (
+    (await navigationIndexShape(query, "pdf_kit_runs", "idx_pdf_kit_runs_material")) !==
+    (await navigationIndexShape(reference, "pdf_kit_runs", "idx_pdf_kit_runs_material"))
+  ) {
+    refuse("The database is missing required index: idx_pdf_kit_runs_material");
+  }
+
+  if ((await count(query, `SELECT COUNT(*) FROM pdf_kit_runs
+      WHERE typeof(extractor_version) != 'integer' OR typeof(algorithm_version) != 'integer'`)) !== 0) {
+    refuse("A PDF kit has invalid versions.");
+  }
+  for (const row of await query("SELECT run_id, content_sha256, selected_pages_json, created_at FROM pdf_kit_runs", [])) {
+    if (!AUTHORING_UUID_V4.test(text(row, "run_id"))) refuse("A PDF kit has an invalid run identity.");
+    if (!/^[0-9a-f]{64}$/.test(text(row, "content_sha256"))) refuse("A PDF kit has an invalid source hash.");
+    text(row, "created_at");
+    const encoded = text(row, "selected_pages_json");
+    let pages: unknown;
+    try { pages = JSON.parse(encoded); } catch { refuse("A PDF kit has invalid selected pages."); }
+    if (!Array.isArray(pages) || JSON.stringify(pages) !== encoded ||
+        !pages.every((page: unknown, index: number) => typeof page === "number" && Number.isInteger(page) &&
+          page >= 1 && page <= 1000 && (index === 0 || page > pages[index - 1]))) {
+      refuse("A PDF kit has invalid selected pages.");
+    }
+  }
+  if ((await count(query, `SELECT COUNT(*) FROM pdf_kit_item_sources s
+      LEFT JOIN pdf_kit_runs r ON r.run_id = s.run_id
+      LEFT JOIN study_materials m ON m.id = r.material_id
+      WHERE r.run_id IS NULL OR m.id IS NULL`)) !== 0) refuse("A PDF kit source has no material.");
+  if ((await count(query, `SELECT COUNT(*) FROM pdf_kit_item_sources
+      WHERE typeof(page) != 'integer' OR typeof(start_offset) != 'integer' OR typeof(end_offset) != 'integer'
+         OR page < 1 OR page > 1000 OR start_offset < 0 OR end_offset <= start_offset`)) !== 0) {
+    refuse("A PDF kit source has invalid page offsets.");
+  }
+  for (const row of await query("SELECT item_kind, logical_id, content_hash, quote FROM pdf_kit_item_sources", [])) {
+    if (!/^[0-9a-f]{64}$/.test(text(row, "content_hash"))) refuse("A PDF kit item has an invalid content hash.");
+    if (!["summary", "section", "card", "question"].includes(text(row, "item_kind"))) refuse("A PDF kit item has an invalid kind.");
+    text(row, "logical_id");
+    const length = codePointLength(text(row, "quote"));
+    if (length < 1 || length > 2000) refuse("A PDF kit source has an invalid quote.");
   }
 }

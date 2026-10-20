@@ -348,3 +348,6 @@ export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Re
   if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null });
   return out;
 }
+
+/** Tables migration 18 adds; no older columns change. */
+export const PDF_KIT_NEW_TABLES = ["pdf_kit_runs", "pdf_kit_item_sources"] as const;

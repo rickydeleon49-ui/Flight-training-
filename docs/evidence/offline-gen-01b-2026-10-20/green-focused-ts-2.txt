@@ -1,0 +1,24 @@
+$ npm test -- --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts src/data/navigationUpgrade.test.ts src/data/skillEvidenceUpgrade.test.ts
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/data/pdfKitValidationParity.test.ts src/data/pdfKitUpgrade.test.ts src/data/navigationUpgrade.test.ts src/data/skillEvidenceUpgrade.test.ts
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:23320) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23317) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23318) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23319) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  4 passed (4)
+      Tests  65 passed (65)
+   Start at  15:40:30
+   Duration  4.95s (transform 567ms, setup 188ms, import 778ms, tests 6.02s, environment 0ms)
+
+
+EXIT 0

@@ -1,0 +1,421 @@
+{
+  "baseline": [
+    "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('mat-kit','Synthetic','x','x')",
+    "INSERT INTO pdf_kit_runs VALUES ('a0000000-0000-4000-8000-000000000001','mat-kit','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','[1,2,1000]',1,1,'2026-10-20')",
+    "INSERT INTO pdf_kit_item_sources VALUES ('a0000000-0000-4000-8000-000000000001','summary','summary','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1,0,12,'Source quote')",
+    "INSERT INTO pdf_kit_item_sources VALUES ('a0000000-0000-4000-8000-000000000001','section','section','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1,0,12,'Source quote')",
+    "INSERT INTO pdf_kit_item_sources VALUES ('a0000000-0000-4000-8000-000000000001','card','card','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1,0,12,'Source quote')",
+    "INSERT INTO pdf_kit_item_sources VALUES ('a0000000-0000-4000-8000-000000000001','question','question','bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',1,0,12,'Source quote')"
+  ],
+  "cases": [
+    {
+      "name": "valid all item kinds",
+      "category": "control",
+      "sql": [],
+      "expect": "accept"
+    },
+    {
+      "name": "empty kit tables",
+      "category": "control",
+      "sql": [
+        "DELETE FROM pdf_kit_runs"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "unicode quote at 2000 characters",
+      "category": "quote",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET quote = replace(hex(zeroblob(1000)), '0', '✈')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "astral quote at 2000 characters",
+      "category": "quote",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET quote = replace(hex(zeroblob(1000)), '0', '😀')"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "empty selection is an array",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[]'"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "cascading material removal",
+      "category": "control",
+      "sql": [
+        "DELETE FROM study_materials WHERE id = 'mat-kit'"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "dangling run",
+      "category": "fk",
+      "sql": [
+        "PRAGMA foreign_keys = OFF",
+        "UPDATE pdf_kit_item_sources SET run_id = 'missing'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing material",
+      "category": "fk",
+      "sql": [
+        "PRAGMA foreign_keys = OFF",
+        "UPDATE pdf_kit_runs SET material_id = 'missing'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "bad run UUID",
+      "category": "identity",
+      "sql": [
+        "PRAGMA foreign_keys = OFF",
+        "UPDATE pdf_kit_runs SET run_id = 'bad'",
+        "UPDATE pdf_kit_item_sources SET run_id = 'bad'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_runs uppercase hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_runs SET content_sha256 = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_runs short hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_runs SET content_sha256 = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_runs nonhex hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_runs SET content_sha256 = 'gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_item_sources uppercase hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET content_hash = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_item_sources short hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET content_hash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pdf_kit_item_sources nonhex hash",
+      "category": "hash",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET content_hash = 'gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages invalid",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '['"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages object",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '{}'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages null",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = 'null'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages descending",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[2,1]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages duplicate",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[1,1]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages zero",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[0]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages high",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[1001]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages fraction",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[1.5]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages string",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[\"1\"]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages boolean",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[true]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages whitespace",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[1, 2]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "pages float spelling",
+      "category": "pages",
+      "sql": [
+        "UPDATE pdf_kit_runs SET selected_pages_json = '[1.0]'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "zero page",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET page = 0"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "high page",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET page = 1001"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "fraction page",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET page = 1.5"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "negative offset",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET start_offset = -1"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "equal offsets",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET end_offset = start_offset"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "reversed offsets",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET end_offset = -1"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "fraction offset",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET start_offset = 0.5"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "empty quote",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET quote = ''"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "long quote",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET quote = replace(hex(zeroblob(1001)), '0', 'x')"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "unknown item kind",
+      "category": "source",
+      "sql": [
+        "PRAGMA ignore_check_constraints = ON",
+        "UPDATE pdf_kit_item_sources SET item_kind = 'other'"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing pdf_kit_runs",
+      "category": "schema",
+      "sql": [
+        "PRAGMA foreign_keys = OFF",
+        "DROP TABLE pdf_kit_runs"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing FK pdf_kit_runs",
+      "category": "schema-fk",
+      "sql": [
+        "PRAGMA writable_schema = ON",
+        "UPDATE sqlite_master SET sql = replace(sql, 'ON DELETE CASCADE', 'ON DELETE SET NULL') WHERE name = 'pdf_kit_runs'",
+        "PRAGMA writable_schema = OFF"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing pdf_kit_item_sources",
+      "category": "schema",
+      "sql": [
+        "PRAGMA foreign_keys = OFF",
+        "DROP TABLE pdf_kit_item_sources"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing FK pdf_kit_item_sources",
+      "category": "schema-fk",
+      "sql": [
+        "PRAGMA writable_schema = ON",
+        "UPDATE sqlite_master SET sql = replace(sql, 'ON DELETE CASCADE', 'ON DELETE SET NULL') WHERE name = 'pdf_kit_item_sources'",
+        "PRAGMA writable_schema = OFF"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing quote check",
+      "category": "schema-check",
+      "sql": [
+        "PRAGMA writable_schema = ON",
+        "UPDATE sqlite_master SET sql = replace(sql, 'BETWEEN 1 AND 2000', 'BETWEEN 1 AND 3000') WHERE name = 'pdf_kit_item_sources'",
+        "PRAGMA writable_schema = OFF"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "wrong source column type",
+      "category": "schema-column",
+      "sql": [
+        "PRAGMA writable_schema = ON",
+        "UPDATE sqlite_master SET sql = replace(sql, 'logical_id TEXT', 'logical_id BLOB') WHERE name = 'pdf_kit_item_sources'",
+        "PRAGMA writable_schema = OFF"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "missing material index",
+      "category": "schema-index",
+      "sql": [
+        "DROP INDEX idx_pdf_kit_runs_material"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "wrong material index",
+      "category": "schema-index",
+      "sql": [
+        "DROP INDEX idx_pdf_kit_runs_material",
+        "CREATE INDEX idx_pdf_kit_runs_material ON pdf_kit_runs(content_sha256)"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "wrong primary key",
+      "category": "schema-index",
+      "sql": [
+        "PRAGMA writable_schema = ON",
+        "UPDATE sqlite_master SET sql = replace(sql, 'page, start_offset)', 'page, end_offset)') WHERE name = 'pdf_kit_item_sources'",
+        "PRAGMA writable_schema = OFF"
+      ],
+      "expect": "refuse"
+    },
+    {
+      "name": "adjacent large integer offsets",
+      "category": "source",
+      "sql": [
+        "UPDATE pdf_kit_item_sources SET start_offset = 9007199254740992, end_offset = 9007199254740993"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "fraction version",
+      "category": "versions",
+      "sql": [
+        "UPDATE pdf_kit_runs SET extractor_version = 1.5"
+      ],
+      "expect": "refuse"
+    }
+  ]
+}

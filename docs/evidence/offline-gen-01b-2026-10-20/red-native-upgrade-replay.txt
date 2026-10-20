@@ -1,0 +1,63 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked schema_17_archive_restores_and_upgrades_to_18
+   Compiling her-flight-deck v0.5.7 (/private/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hfd-gen01b-baseline-5yiywgqc/src-tauri)
+error: couldn't read `src/../../src/logic/cardLibrary.ts`: No such file or directory (os error 2)
+   --> src/card_library_tests.rs:149:22
+    |
+149 |     let typescript = include_str!("../../src/logic/cardLibrary.ts");
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `src/../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/identity-golden.json`: No such file or directory (os error 2)
+   --> src/card_reviews_tests.rs:277:46
+    |
+277 |       let golden: Value = serde_json::from_str(include_str!(
+    |  ______________________________________________^
+278 | |         "../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/identity-golden.json"
+279 | |     ))
+    | |_____^
+
+error: couldn't read `src/../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/synthetic-material.json`: No such file or directory (os error 2)
+   --> src/card_reviews_tests.rs:281:48
+    |
+281 |       let material: Value = serde_json::from_str(include_str!(
+    |  ________________________________________________^
+282 | |         "../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/synthetic-material.json"
+283 | |     ))
+    | |_____^
+
+error: couldn't read `src/../../src/data/repositories/cardReviewRepository.ts`: No such file or directory (os error 2)
+   --> src/card_reviews_tests.rs:965:18
+    |
+965 |     let source = include_str!("../../src/data/repositories/cardReviewRepository.ts");
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `src/../../src/data/persistenceErrors.ts`: No such file or directory (os error 2)
+    --> src/card_reviews_tests.rs:1161:22
+     |
+1161 |     let typescript = include_str!("../../src/data/persistenceErrors.ts");
+     |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `src/../../src/testing/cardOriginVectors.json`: No such file or directory (os error 2)
+    --> src/card_reviews_tests.rs:1202:30
+     |
+1202 |         serde_json::from_str(include_str!("../../src/testing/cardOriginVectors.json")).unwrap();
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: couldn't read `src/../../src/testing/practiceAuthoringVectors.json`: No such file or directory (os error 2)
+  --> src/practice_authoring_tests.rs:94:26
+   |
+94 |       serde_json::from_str(include_str!(
+   |  __________________________^
+95 | |         "../../src/testing/practiceAuthoringVectors.json"
+96 | |     ))
+   | |_____^
+
+error: couldn't read `src/../../src/data/persistenceErrors.ts`: No such file or directory (os error 2)
+   --> src/practice_authoring_tests.rs:315:22
+    |
+315 |     let typescript = include_str!("../../src/data/persistenceErrors.ts");
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `her-flight-deck` (lib test) due to 8 previous errors
+warning: build failed, waiting for other jobs to finish...
+
+EXIT 101

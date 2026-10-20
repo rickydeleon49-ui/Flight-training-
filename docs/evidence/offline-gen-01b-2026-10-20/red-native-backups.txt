@@ -1,0 +1,31 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked schema_18_pdf_kit
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 2 tests
+test backup::tests::tampered_schema_18_pdf_kit_archive_refused ... FAILED
+test backup::tests::schema_18_pdf_kit_archive_round_trip ... FAILED
+
+failures:
+
+---- backup::tests::tampered_schema_18_pdf_kit_archive_refused stdout ----
+
+thread 'backup::tests::tampered_schema_18_pdf_kit_archive_refused' (8859682) panicked at src/backup.rs:14513:55:
+called `Result::unwrap()` on an `Err` value: SqliteFailure(Error { code: Unknown, extended_code: 1 }, Some("no such table: pdf_kit_runs"))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- backup::tests::schema_18_pdf_kit_archive_round_trip stdout ----
+
+thread 'backup::tests::schema_18_pdf_kit_archive_round_trip' (8859681) panicked at src/backup.rs:14513:55:
+called `Result::unwrap()` on an `Err` value: SqliteFailure(Error { code: Unknown, extended_code: 1 }, Some("no such table: pdf_kit_runs"))
+
+
+failures:
+    backup::tests::schema_18_pdf_kit_archive_round_trip
+    backup::tests::tampered_schema_18_pdf_kit_archive_refused
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 942 filtered out; finished in 0.08s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101
