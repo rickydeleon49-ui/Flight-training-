@@ -252,6 +252,23 @@ async function savedContent(repos: Repositories, kind: GeminiJobKind, materialId
     : (await repos.documents.listPracticeTests()).find((test) => test.sourceMaterialId === materialId);
 }
 
+/**
+ * Whether the journal cannot see this answer any more.
+ *
+ * The native journal answers `false` to an acknowledgement both for a record it
+ * will not let go of and for one already gone — removed by another window, say
+ * (src-tauri/src/gemini_jobs.rs). Only reading it back tells the two apart, and
+ * a read that fails answers nothing: the answer counts as still there.
+ */
+async function goneFromJournal(id: string): Promise<boolean> {
+  try {
+    const records = await listGeminiJobs();
+    return !records.some((record) => record.id === id);
+  } catch {
+    return false;
+  }
+}
+
 interface Props {
   children: ReactNode;
   data: AppData;
@@ -298,10 +315,13 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const syncPendingCount = useCallback(() => setPendingAckCount(pendingAcksRef.current.size), []);
 
   /**
-   * Ask the journal to forget one job. True only when the journal confirms the
-   * record is gone; a rejection or a `false` answer means the answer is still
-   * there (or could not be written down), so it stays on the retry list and
-   * anything that depends on it stays where it is.
+   * Ask the journal to forget one job. True only when the answer is confirmed
+   * gone from it: `true` says so directly, and a `false` answer is settled by
+   * reading the journal back, because the native journal answers `false` both
+   * for a record it cannot remove and for one another window has already
+   * removed. A rejection, a record that is still there, or a read that fails
+   * keeps this on the retry list and keeps anything that depends on it where it
+   * is.
    */
   const acknowledgeNow = useCallback(
     async (id: string): Promise<boolean> => {
@@ -309,12 +329,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       try {
         acknowledged = await acknowledgeGeminiJob(id);
       } catch {
-        // The write did not go through. Nothing here may be treated as done.
+        // The write did not go through, so the journal was never heard from.
+        // Nothing here may be treated as done, and no read may say otherwise.
+        return false;
       }
-      // `false` is not removal: the journal answers that while its own command
-      // is still finishing, while a damaged journal is quarantined, and when it
-      // cannot write. Only `true` says the answer can never come back.
-      if (!acknowledged) return false;
+      // `false` is not removal on its own: the journal also answers that while
+      // its own command is still finishing, while a damaged journal is
+      // quarantined, and when it cannot write. Absence, once confirmed, is.
+      if (!acknowledged && !(await goneFromJournal(id))) return false;
       pendingAcksRef.current.delete(id);
       syncPendingCount();
       // The journal will never hand this answer back, so the reviewed save it

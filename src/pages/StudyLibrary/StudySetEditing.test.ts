@@ -281,6 +281,19 @@ describe("editing a generated study guide", () => {
     return review;
   }
 
+  /**
+   * The journal's own record of the answer `herEditThenRegenerate` just made:
+   * unacknowledged, so it is still there and can come back after a restart.
+   * Only set this after she has regenerated — before the window opens, it would
+   * recover this very answer as a second job.
+   */
+  const journalHoldsTheAnswer = (): geminiService.GeminiJobRecord[] => [
+    {
+      id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.pdf",
+      contentSha256: "", createdAt: 0, updatedAt: 0, stage: "ready", result: { ...AID, summary: "A new summary." },
+    },
+  ];
+
   it("a failed reviewed save keeps the dialog and her choices open; saving again saves once", async () => {
     const review = await herEditThenRegenerate();
     fireEvent.click(review.getByLabelText(/Replace everything/));
@@ -434,12 +447,7 @@ describe("editing a generated study guide", () => {
     // Restart: a fresh window, the same database, the journal still holding the answer.
     cleanup();
     db.saveStudySetAtomically = save;
-    vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue([
-      {
-        id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.pdf",
-        contentSha256: "", createdAt: 0, updatedAt: 0, stage: "ready", result: { ...AID, summary: "A new summary." },
-      },
-    ]);
+    vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue(journalHoldsTheAnswer());
     await open("/study/mat-a");
     fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
@@ -458,12 +466,7 @@ describe("editing a generated study guide", () => {
   function restartWithTheAnswerStillThere() {
     cleanup();
     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(true);
-    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([
-      {
-        id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.pdf",
-        contentSha256: "", createdAt: 0, updatedAt: 0, stage: "ready", result: { ...AID, summary: "A new summary." },
-      },
-    ]);
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue(journalHoldsTheAnswer());
   }
 
   /** Her items as stored, ids included: merging a second time would give new ones. */
@@ -472,13 +475,23 @@ describe("editing a generated study guide", () => {
 
   const notAcknowledged: ReadonlyArray<readonly [string, () => void]> = [
     ["the journal could not write it down", () => vi.mocked(geminiService.acknowledgeGeminiJob).mockRejectedValue(new Error("synthetic journal write failure"))],
-    ["the journal would not forget the answer", () => vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false)],
+    [
+      "the journal would not forget the answer",
+      () => {
+        // It really does still hold it: a `false` for an entry that is gone is
+        // told apart from this by reading the journal back.
+        vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false);
+        vi.mocked(geminiService.listGeminiJobs).mockResolvedValue(journalHoldsTheAnswer());
+      },
+    ],
   ];
 
-  for (const [why, failToAcknowledge] of notAcknowledged) {
+  for (const [why, refuseToForget] of notAcknowledged) {
     it(`a reviewed save whose acknowledgement failed because ${why} is recognised after a restart, not saved again`, async () => {
-      failToAcknowledge();
       const review = await herEditThenRegenerate();
+      // Set only now: her answer is this window's own generation, and the
+      // journal's copy of it must not be recovered as a second job.
+      refuseToForget();
       fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
       await waitFor(() => expect(geminiService.acknowledgeGeminiJob).toHaveBeenCalled(), SLOW_RUNNER);
@@ -533,6 +546,10 @@ describe("editing a generated study guide", () => {
 
   it("discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it", async () => {
     const review = await herEditThenRegenerate();
+    // Its stated scenario: the journal still holds her answer, which is what a
+    // `false` acknowledgement then means. The read-back is only asked for when
+    // the journal answers `false`, and it answers that the answer is still there.
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue(journalHoldsTheAnswer());
     let failures = 1;
     db.beforeStatement = (sql) => {
       if (failures && sql.includes("INSERT INTO ai_study_sets")) {
@@ -561,6 +578,64 @@ describe("editing a generated study guide", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
     await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+  });
+
+  /**
+   * A reviewed save that did not go through, with the review closed: the answer
+   * still waits on the page and her exact operation is still checkpointed,
+   * because nothing has acknowledged it yet.
+   */
+  async function aReviewSheLeftUncommitted() {
+    const review = await herEditThenRegenerate();
+    let failures = 1;
+    db.beforeStatement = (sql) => {
+      if (failures && sql.includes("INSERT INTO ai_study_sets")) {
+        failures--;
+        throw new Error("synthetic disk full");
+      }
+    };
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    expect(await review.findByText(/Your choices are still here/, undefined, SLOW_RUNNER)).toBeTruthy();
+    fireEvent.click(review.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
+    expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+  }
+
+  it("a false answer for an entry another window already removed finishes the discard and clears her checkpoint", async () => {
+    await aReviewSheLeftUncommitted();
+    // The journal says `false`, which it also says for a record it cannot let go
+    // of; reading it back is what shows this answer was removed elsewhere.
+    vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false);
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([]);
+    fireEvent.click(await screen.findByRole("button", { name: "Discard the new study guide and cards" }, SLOW_RUNNER));
+    await waitFor(() => expect(geminiService.acknowledgeGeminiJob).toHaveBeenCalled(), SLOW_RUNNER);
+    // Confirmed absence is the answer being gone for good: the discard finishes,
+    // so the operation it held is dropped and nothing is left to come back.
+    await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
+    expect(screen.queryByText(/might come back after the app restarts/)).toBeNull();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+  });
+
+  it("a false answer the journal cannot be read back for keeps the discard failed and her checkpoint", async () => {
+    await aReviewSheLeftUncommitted();
+    vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false);
+    vi.mocked(geminiService.listGeminiJobs).mockRejectedValue(new Error("synthetic journal read failure"));
+    fireEvent.click(await screen.findByRole("button", { name: "Discard the new study guide and cards" }, SLOW_RUNNER));
+    expect(await screen.findByText(/might come back after the app restarts/, undefined, SLOW_RUNNER)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    // A read that failed proves nothing: the answer may still be in the journal,
+    // and her operation is only safe to forget once it is known not to be.
+    expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+
+    // Absence confirmed on the retry is what finishes it.
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([]);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });
 });
