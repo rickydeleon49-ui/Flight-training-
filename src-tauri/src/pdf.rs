@@ -154,6 +154,29 @@ fn write_page_range_from_document(
     Ok(kept)
 }
 
+/// Select ordered source pages using the same pruned page-tree writer as splits.
+/// The caller validates ascending, unique, nonempty pages before this function.
+pub(crate) fn selected_bytes(bytes: &[u8], pages: &[u32]) -> Result<Vec<u8>, String> {
+    let mut document = Document::load_mem(bytes).map_err(unreadable_pdf)?;
+    let numbers: Vec<u32> = document.get_pages().into_keys().collect();
+    if pages.is_empty()
+        || pages.windows(2).any(|p| p[0] >= p[1])
+        || pages.iter().any(|p| !numbers.contains(p))
+    {
+        return Err("Choose valid PDF pages in source order.".into());
+    }
+    if pages == numbers {
+        return Ok(bytes.to_vec());
+    }
+    let removing: Vec<u32> = numbers.into_iter().filter(|p| !pages.contains(p)).collect();
+    delete_pages_batch(&mut document, &removing);
+    document.prune_objects();
+    document.compress();
+    let mut selected = Vec::new();
+    document.save_to(&mut selected).map_err(|e| e.to_string())?;
+    Ok(selected)
+}
+
 /// Binary-search the largest page range starting at `first` that still fits
 /// `max_bytes`, trying at most `max_pages` pages.
 ///

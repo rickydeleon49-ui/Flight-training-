@@ -738,12 +738,16 @@ pub fn save_on(conn: &mut Connection, operation: &SaveOperation, now: &str) -> C
 pub async fn save_study_set_atomically(
     app: AppHandle,
     operation: Value,
-) -> Result<SaveResult, StudySetErrorWire> {
+    guide_job_id: Option<String>,
+) -> Result<SaveResult, crate::gemini::sections::GuideSaveError> {
     let root =
         crate::storage::app_root(&app).map_err(|_| StudySetErrorCode::StorageError.error())?;
-    tauri::async_runtime::spawn_blocking(move || save_study_set_at(&root, &operation))
-        .await
-        .map_err(|_| StudySetErrorCode::StorageError.error())?
+    tauri::async_runtime::spawn_blocking(move || match guide_job_id {
+        Some(id) => crate::gemini::sections::save_guide_at(&root, &id, &operation),
+        None => save_study_set_at(&root, &operation).map_err(Into::into),
+    })
+    .await
+    .map_err(|_| StudySetErrorCode::StorageError.error())?
 }
 
 /* ------------------------------------------------------------------ */

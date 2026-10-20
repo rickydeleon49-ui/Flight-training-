@@ -25,6 +25,8 @@ mod gemini_jobs;
 mod lineage;
 mod navigation;
 mod pdf;
+#[cfg(test)]
+mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
 // comment for why.
@@ -257,6 +259,8 @@ pub fn run() {
             gemini::disconnect_gemini,
             gemini::set_gemini_model,
             gemini::generate_study_aid,
+            gemini::sections::resume_study_guide,
+            gemini::sections::restart_study_guide,
             gemini::generate_practice_test,
             gemini::gemini_jobs,
             gemini::acknowledge_gemini_job,

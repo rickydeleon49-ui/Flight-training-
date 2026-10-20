@@ -186,7 +186,7 @@ impl Journal {
     /// Read the journal as a freshly started app does: anything still
     /// `running` was cut off by the app closing, so it becomes `interrupted`.
     pub(crate) fn open(root: &Path) -> Journal {
-        let mut jobs = read(root);
+        let (mut jobs, unreadable) = read(root);
         let mut changed = false;
         for job in &mut jobs {
             if job.stage == JobStage::Running {
@@ -205,7 +205,9 @@ impl Journal {
             jobs,
             // A restore marker beside the journal means a restore committed
             // and has not finished tidying up: its old jobs are not trusted.
-            quarantined: root.join(crate::backup::RESTORE_JOURNAL_FILE).exists(),
+            quarantined: unreadable
+                || root.join(crate::backup::RESTORE_JOURNAL_FILE).exists()
+                || root.join(JOURNAL_UNREADABLE).exists(),
             pending_cancels: Vec::new(),
             live: std::collections::HashSet::new(),
         }
@@ -331,6 +333,13 @@ impl Journal {
             .iter()
             .find(|j| j.material_id == material_id && j.kind == kind && j.draft.is_some())
             .cloned();
+        if self.jobs.iter().any(|j| {
+            j.material_id == material_id
+                && j.kind == kind
+                && j.draft.as_ref().is_some_and(|d| d.get("kind").is_some())
+        }) {
+            return Err("Resume or explicitly discard the earlier versioned draft first.".into());
+        }
         if let Some(old) = &carried {
             if old.relative_path != relative_path
                 || old.content_sha256 != content_sha256
@@ -385,6 +394,149 @@ impl Journal {
         self.commit(next)?;
         self.live.insert(id.clone());
         Ok(id)
+    }
+
+    /// Section drafts never evict another outcome, including an earlier partial
+    /// draft explicitly retained by Start a new guide.
+    pub(crate) fn begin_sections(
+        &mut self,
+        material: &str,
+        path: &str,
+        hash: &str,
+        revision: Option<&str>,
+        request: Option<&str>,
+        draft: Value,
+    ) -> Result<String, String> {
+        if self.quarantined {
+            return Err(RESTORING.into());
+        }
+        if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
+            return Err(BUSY.into());
+        }
+        let supersedes = draft.get("supersedes").and_then(Value::as_str);
+        let prior = self.jobs.iter().any(|j| {
+            j.material_id == material
+                && j.kind == JobKind::StudyAid
+                && j.draft.as_ref().and_then(|d| d.get("kind")).is_some()
+        });
+        let consented_restart = supersedes.is_some_and(|id| {
+            self.jobs.iter().any(|j| {
+                j.id == id
+                    && j.material_id == material
+                    && j.kind == JobKind::StudyAid
+                    && j.draft.is_some()
+            })
+        });
+        if prior && !consented_restart {
+            return Err(
+                "Resume the earlier guide or explicitly consent to start a new one.".into(),
+            );
+        }
+        if self.jobs.iter().any(|j| {
+            j.material_id == material
+                && j.kind == JobKind::StudyAid
+                && j.stage == JobStage::Ready
+                && j.draft.is_none()
+        }) {
+            return Err(WAITING.into());
+        }
+        if self.jobs.len() >= MAX_JOBS {
+            return Err(FULL.into());
+        }
+        if !valid_identity(material)
+            || !valid_identity(path)
+            || revision.is_some_and(|v| !valid_identity(v))
+            || request.is_some_and(|v| !valid_identity(v))
+        {
+            return Err("Invalid study-guide identity.".into());
+        }
+        if request.is_some_and(|r| self.pending_cancels.iter().any(|v| v == r)) {
+            return Err(crate::gemini_cancel::CANCELLED.into());
+        }
+        if serde_json::to_vec(&draft).map_err(|e| e.to_string())?.len() > MAX_RESULT_BYTES {
+            return Err("The draft is too large to keep.".into());
+        }
+        let id = new_id();
+        let mut next = self.jobs.clone();
+        next.push(JobRecord {
+            id: id.clone(),
+            kind: JobKind::StudyAid,
+            material_id: material.into(),
+            relative_path: path.into(),
+            content_sha256: hash.into(),
+            base_revision: revision.map(str::to_string),
+            request_id: request.map(str::to_string),
+            stage: JobStage::Interrupted,
+            created_at: now(),
+            updated_at: now(),
+            result: None,
+            draft: Some(draft),
+            error: None,
+        });
+        self.commit(next)?;
+        Ok(id)
+    }
+
+    /// One worker owns an activation until its guard settles, even after Cancel.
+    pub(crate) fn activate_sections(&mut self, id: &str) -> Result<(), String> {
+        if self.quarantined {
+            return Err(RESTORING.into());
+        }
+        if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
+            return Err(BUSY.into());
+        }
+        let mut next = self.jobs.clone();
+        let job = next
+            .iter_mut()
+            .find(|j| j.id == id)
+            .ok_or("Draft record missing")?;
+        if job
+            .draft
+            .as_ref()
+            .and_then(|v| v.get("kind"))
+            .and_then(Value::as_str)
+            != Some("guide-sections-v1")
+        {
+            return Err("Unknown study-guide draft; kept for recovery.".into());
+        }
+        job.stage = JobStage::Running;
+        job.error = None;
+        job.updated_at = now();
+        self.commit(next)?;
+        self.live.insert(id.into());
+        Ok(())
+    }
+
+    pub(crate) fn sections_ready(&mut self, id: &str, result: Value) -> Result<(), String> {
+        if serde_json::to_vec(&result)
+            .map_err(|e| e.to_string())?
+            .len()
+            > MAX_RESULT_BYTES
+        {
+            return Err("The guide is too large to keep.".into());
+        }
+        if !self.admits(id) {
+            return Err(crate::gemini_cancel::CANCELLED.into());
+        }
+        self.settle(id, |job| {
+            job.stage = JobStage::Ready;
+            job.result = Some(result);
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_expire_sections(&mut self, id: &str) {
+        let mut next = self.jobs.clone();
+        let draft = next
+            .iter_mut()
+            .find(|j| j.id == id)
+            .unwrap()
+            .draft
+            .as_mut()
+            .unwrap();
+        draft["timing"]["deadlineUtc"] = serde_json::json!(1);
+        draft["timing"]["remainingMillis"] = serde_json::json!(0);
+        self.commit(next).unwrap();
     }
 
     /// May this job send its next request (GENREL04-R8/R9)? Only while it is
@@ -650,17 +802,28 @@ fn write(root: &Path, jobs: &[JobRecord]) -> Result<(), String> {
                 .to_string(),
         );
     }
+    use std::io::Write;
     let writing = root.join(JOURNAL_WRITING);
-    std::fs::write(&writing, &bytes)
+    let mut file = std::fs::File::create(&writing)
         .map_err(|e| format!("Could not keep track of this study aid: {e}"))?;
+    file.write_all(&bytes)
+        .and_then(|()| file.sync_all())
+        .map_err(|e| format!("Could not sync this study aid: {e}"))?;
+    drop(file);
     std::fs::rename(&writing, root.join(JOURNAL_FILE)).map_err(|e| {
         let _ = std::fs::remove_file(&writing);
         format!("Could not keep track of this study aid: {e}")
-    })
+    })?;
+    // A successful checkpoint includes the directory entry, not just file bytes.
+    #[cfg(unix)]
+    std::fs::File::open(root)
+        .and_then(|dir| dir.sync_all())
+        .map_err(|e| format!("Could not sync the study-aid directory: {e}"))?;
+    Ok(())
 }
 
 /// The jobs on disk; an unreadable journal is set aside, never trusted.
-fn read(root: &Path) -> Vec<JobRecord> {
+fn read(root: &Path) -> (Vec<JobRecord>, bool) {
     let path = root.join(JOURNAL_FILE);
     let too_large = std::fs::metadata(&path)
         .map(|m| m.len() > MAX_JOURNAL_BYTES)
@@ -669,27 +832,36 @@ fn read(root: &Path) -> Vec<JobRecord> {
         None
     } else {
         match std::fs::read(&path) {
-            Ok(bytes) => serde_json::from_slice::<File>(&bytes)
-                .ok()
-                .filter(|f| f.schema == SCHEMA),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Vec::new(),
+            Ok(bytes) => serde_json::from_slice::<File>(&bytes).ok().filter(|f| {
+                f.schema == SCHEMA
+                    && f.jobs.len() <= MAX_JOBS
+                    && f.jobs.iter().all(|j| {
+                        valid_job_id(&j.id)
+                            && valid_identity(&j.material_id)
+                            && valid_identity(&j.relative_path)
+                            && j.draft.as_ref().map_or(true, |d| {
+                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                            })
+                            && j.result.as_ref().map_or(true, |d| {
+                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                            })
+                    })
+                    && f.jobs
+                        .iter()
+                        .map(|j| &j.id)
+                        .collect::<std::collections::HashSet<_>>()
+                        .len()
+                        == f.jobs.len()
+            }),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return (Vec::new(), false),
             Err(_) => None,
         }
     };
     match parsed {
-        Some(file) => file
-            .jobs
-            .into_iter()
-            .filter(|j| {
-                valid_job_id(&j.id)
-                    && valid_identity(&j.material_id)
-                    && valid_identity(&j.relative_path)
-            })
-            .take(MAX_JOBS)
-            .collect(),
+        Some(file) => (file.jobs, false),
         None => {
             let _ = std::fs::rename(&path, root.join(JOURNAL_UNREADABLE));
-            Vec::new()
+            (Vec::new(), true)
         }
     }
 }
@@ -747,3 +919,8 @@ pub(crate) fn forget_open_for_tests(root: &Path) {
 #[cfg(test)]
 #[path = "gemini_jobs_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+pub(crate) fn forget(root: &Path) {
+    OPEN.lock().unwrap().as_mut().unwrap().remove(root);
+}

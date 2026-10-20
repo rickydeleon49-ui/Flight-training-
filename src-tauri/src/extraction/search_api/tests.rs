@@ -5,17 +5,14 @@ use sha2::{Digest, Sha256};
 use std::fs;
 
 fn wait_ready(svc: &Service) {
-    let until = Instant::now() + Duration::from_secs(5);
-    loop {
-        match search_initialization(svc).unwrap() {
-            Initialization::Ready => return,
+    crate::test_wait::wait_for(
+        "search API initialization ready",
+        || match search_initialization(svc).unwrap() {
+            Initialization::Ready => true,
             Initialization::Failed => panic!("index initialization failed"),
-            Initialization::Preparing => {
-                assert!(Instant::now() < until);
-                std::thread::yield_now();
-            }
-        }
-    }
+            Initialization::Preparing => false,
+        },
+    );
 }
 
 struct Fixture {

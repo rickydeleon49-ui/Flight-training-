@@ -733,13 +733,13 @@ mod tests {
         // A real preparation holds this lock while the worker runs. Search
         // must complete while it is held, not merely after it is released.
         let held = svc.slot.lock().unwrap();
-        let until = std::time::Instant::now() + Duration::from_secs(5);
-        while super::super::search_api::search_initialization(&svc).unwrap()
-            != super::super::search::Initialization::Ready
-        {
-            assert!(std::time::Instant::now() < until);
-            std::thread::yield_now();
-        }
+        crate::test_wait::wait_for(
+            "search initialization while preparation slot is held",
+            || {
+                super::super::search_api::search_initialization(&svc).unwrap()
+                    == super::super::search::Initialization::Ready
+            },
+        );
         let ticket = super::super::search_api::submit_search(
             svc.clone(),
             "wind".into(),
@@ -815,11 +815,9 @@ mod tests {
             "no SQL can run before setup completes"
         );
         release.send(()).unwrap();
-        let until = std::time::Instant::now() + Duration::from_secs(5);
-        while search_api::search_initialization(&svc).unwrap() != Initialization::Ready {
-            assert!(std::time::Instant::now() < until);
-            std::thread::yield_now();
-        }
+        crate::test_wait::wait_for("released search initialization gate", || {
+            search_api::search_initialization(&svc).unwrap() == Initialization::Ready
+        });
         drop(svc);
         let _ = std::fs::remove_dir_all(root);
     }

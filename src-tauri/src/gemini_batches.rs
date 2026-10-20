@@ -298,6 +298,7 @@ mod tests {
     use super::*;
     use crate::fake_gemini::{FakeGemini, Gate};
     use crate::gemini_budget::testing::fake_budget;
+    use crate::test_wait::wait_for;
     use std::time::Duration;
 
     fn envelope(value: Value) -> String {
@@ -642,13 +643,7 @@ mod tests {
         });
         std::thread::scope(|scope| {
             let worker = scope.spawn(|| r.run(20));
-            for _ in 0..2000 {
-                if gate.waiting() > 0 {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
-            assert!(gate.waiting() > 0);
+            wait_for("source-removal generation gate", || gate.waiting() > 0);
             std::fs::remove_file(
                 r.root
                     .path()
@@ -806,12 +801,7 @@ mod tests {
         });
         std::thread::scope(|s| {
             let worker = s.spawn(|| r.run(20));
-            for _ in 0..1000 {
-                if r.count() > 0 {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
+            wait_for("source-change generation request counter", || r.count() > 0);
             std::fs::write(
                 r.root
                     .path()
@@ -836,6 +826,15 @@ mod tests {
     }
     #[test]
     fn cancellable_drop_restart_resume_preserves_ledger_and_unique_batches() {
+        cancel_restart_resume(true);
+    }
+
+    #[test]
+    fn journal_cancel_before_token_wake_preserves_draft_without_post_cancel_write() {
+        cancel_restart_resume(false);
+    }
+
+    fn cancel_restart_resume(wake_before_probe: bool) {
         let r = Rig::new();
         let id = r.begin();
         let gate = Arc::new(Gate::default());
@@ -847,8 +846,16 @@ mod tests {
         budget.attach_admission(Arc::new(move || {
             gemini_jobs::with(&path, |j| j.admit_bounded(&admit_id))
         }));
+        // Match the command: polling checks cancellation without spending a
+        // dispatch reservation or repeatedly writing the journal.
+        let (path, probe_id) = (r.root.path().to_path_buf(), id.clone());
+        budget.attach_probe(Arc::new(move || {
+            gemini_jobs::with(&path, |j| j.admits(&probe_id))
+        }));
         let say = |message: String| {
             if message.contains(" / ") {
+                // Synchronous with the guide checkpoint, before generate can
+                // start its first card request.
                 r.fake.behave(|b| b.generate_gate = Some(gate.clone()));
             }
         };
@@ -870,33 +877,56 @@ mod tests {
                     token,
                 ))
             });
-            for _ in 0..2000 {
-                if gate.waiting() > 0 {
-                    break;
+            wait_for("cancel/restart generation gate", || gate.waiting() > 0);
+            assert_eq!(r.count(), 2, "the guide and the held first card request");
+            assert_eq!(read(r.root.path(), &id).unwrap().next, 1);
+            let journal_path = r.root.path().join("gemini-jobs.json");
+            let cancelled_journal = gemini_jobs::with(r.root.path(), |j| {
+                assert!(j.cancel(&id).unwrap().cancelled);
+                if wake_before_probe {
+                    // Select token-driven cancellation deterministically. A
+                    // budget probe cannot observe the cancelled journal until
+                    // this lock is released, after the token has been signalled.
+                    registration.token.cancel();
                 }
-                std::thread::sleep(Duration::from_millis(1));
+                std::fs::read(&journal_path).unwrap()
+            });
+            let result = worker.join().unwrap();
+            if wake_before_probe {
+                assert!(
+                    matches!(result, Err(gemini_cancel::Cancelled)),
+                    "cancelled worker returned {result:?}"
+                );
+            } else {
+                // Force the other valid ordering: the journal stops the work
+                // before the token is signalled. Outer Ok is not a successful
+                // generation: its payload must be the cancellation error.
+                assert!(
+                    matches!(&result, Ok(Err(message)) if message == gemini_cancel::CANCELLED),
+                    "journal-cancelled worker returned {result:?}"
+                );
+                registration.token.cancel();
             }
-            assert!(gate.waiting() > 0);
-            gemini_jobs::with(r.root.path(), |j| j.cancel(&id)).unwrap();
-            registration.token.cancel();
-            assert!(worker.join().unwrap().is_err());
+            assert_eq!(std::fs::read(&journal_path).unwrap(), cancelled_journal);
             // The abandoned request is still held at the gate. Give it its own
             // answer and wait until it has taken it, so it cannot take one of
             // the answers queued for the resume below.
             r.fake
                 .behave(|b| b.generate_answers = vec![envelope(aid(90, 10))]);
             gate.open();
-            for _ in 0..2000 {
+            wait_for("abandoned generation answer queue to be consumed", || {
                 let mut taken = false;
                 r.fake.behave(|b| taken = b.generate_answers.is_empty());
-                if taken {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
-            let mut taken = false;
-            r.fake.behave(|b| taken = b.generate_answers.is_empty());
-            assert!(taken, "the abandoned request was never answered");
+                taken
+            });
+            assert_eq!(std::fs::read(&journal_path).unwrap(), cancelled_journal);
+            assert_eq!(r.count(), 2, "cancellation dispatched nothing else");
+            let job = gemini_jobs::with(r.root.path(), |j| j.list()[0].clone());
+            assert_eq!(job.stage, JobStage::Cancelled);
+            assert!(
+                job.result.is_none(),
+                "cancellation kept no publishable result"
+            );
         });
         gemini_jobs::with(r.root.path(), |j| j.failed(&id, "cancelled")).unwrap();
         let reopened = gemini_jobs::Journal::open(r.root.path());

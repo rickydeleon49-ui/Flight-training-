@@ -1,0 +1,11 @@
+{
+  "src-tauri/src/test_wait.rs": "7cd561fa3e9496351e3cccc2bc360a8a757b5dc3bdd26851d6c60042fd53fb30",
+  "src-tauri/src/lib.rs": "fe3ba8b00108e9a8ebfc862a892cd26ed85aacafcc8295699b95b1001ecde522",
+  "src-tauri/src/gemini_batches.rs": "13885f5109fc850f35d2ac35561176a2aea7a977abba72af58a4393724d686c6",
+  "src-tauri/src/gemini_files_tests.rs": "636788141aa3fb5681135eee93cb6ce74d6329ccf8121f7fd52ab0e56f5bfdef",
+  "src-tauri/src/gemini_recovery_tests.rs": "1a6ff72ce4614f6d32bec3be8bfd4d05ccd51ca890209393177161aaa6361d1c",
+  "src-tauri/src/extraction/search.rs": "c46dafff089511944caad4c90922049a4c1a7021fd44c16623d90a341ca258ef",
+  "src-tauri/src/extraction/search/saved/tests.rs": "e704cd458e48b41439af2e4ac921d8858aa0ed19ccd7d87fdd0b50b4bc4703fe",
+  "src-tauri/src/extraction/service.rs": "7b1c2549e31924bd347b69e3ab8bdc84992a21fc3d60932d16373af2edc24053",
+  "src-tauri/src/extraction/search_api/tests.rs": "9ec2a28905c7e59fa395d54a669cb46eea599f702be612832ff17123fbca3df0"
+}
