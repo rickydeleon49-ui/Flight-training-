@@ -14,7 +14,8 @@
 //!   whether Google finished or charged for that request, so nothing is resent
 //!   by itself: she decides whether to try again.
 //!
-//! The journal holds no key, no provider file reference and no source bytes:
+//! The journal holds no key or source bytes. A guide draft may hold a native-only
+//! authenticated prepared-file reference; public serialization redacts it. Otherwise:
 //! only the job's identity (which material, which stored file, the SHA-256 of
 //! the bytes that were sent), its stage and the validated answer. It is not part
 //! of a backup (backups carry only the database, its log, the manifest and
@@ -90,7 +91,7 @@ pub(crate) struct CancelOutcome {
 /// Cancels held for requests whose job has not begun yet.
 const MAX_PENDING_CANCELS: usize = 32;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct JobRecord {
     pub id: String,
@@ -117,10 +118,31 @@ pub(crate) struct JobRecord {
     pub result: Option<Value>,
     /// Partial batches are never a publishable result.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(serialize_with = "serialize_public_draft")]
     pub draft: Option<Value>,
     /// What went wrong, once `failed`; already written for her.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+}
+
+fn serialize_public_draft<S: serde::Serializer>(
+    draft: &Option<Value>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let mut public = draft.clone();
+    if let Some(Value::Object(d)) = public.as_mut() {
+        d.remove("preparedFile");
+    }
+    public.serialize(serializer)
+}
+impl std::fmt::Debug for JobRecord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Use the same redaction boundary for diagnostic formatting and IPC.
+        match serde_json::to_string(self) {
+            Ok(public) => f.write_str(&public),
+            Err(_) => f.write_str("[generation job]"),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -792,7 +814,16 @@ fn write(root: &Path, jobs: &[JobRecord]) -> Result<(), String> {
         schema: SCHEMA.to_string(),
         jobs: jobs.to_vec(),
     };
-    let bytes = serde_json::to_vec(&file)
+    // The only private serializer: IPC/Debug always use JobRecord's redacted
+    // draft. Durability must retain the native descriptor across every write.
+    let mut private = serde_json::to_value(&file)
+        .map_err(|_| "Could not keep track of this study aid.".to_string())?;
+    for (index, job) in jobs.iter().enumerate() {
+        if let Some(draft) = &job.draft {
+            private["jobs"][index]["draft"] = draft.clone();
+        }
+    }
+    let bytes = serde_json::to_vec(&private)
         .map_err(|_| "Could not keep track of this study aid.".to_string())?;
     // Never write a journal the reader would refuse: the earlier one, and
     // every checkpoint in it, stays as it was.

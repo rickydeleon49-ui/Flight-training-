@@ -1,4 +1,4 @@
-//! Native, explicit-activation section guides. No UI, remote descriptor or queue.
+//! Native, explicit-activation section guides. No UI or queue.
 use super::*;
 use std::collections::BTreeMap;
 
@@ -104,6 +104,77 @@ struct Draft {
     timing: Value,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     supersedes: Option<String>,
+    #[serde(
+        default,
+        rename = "preparedFile",
+        skip_serializing_if = "Option::is_none"
+    )]
+    prepared_file: Option<gemini_files::Descriptor>,
+}
+
+fn reference_error(error: gemini_files::ReferenceError) -> SectionError {
+    SectionError::new(error.code(), error.message())
+}
+
+/// Acknowledgement is also deliberate discard. First commit removal; only
+/// then attempt cleanup, authenticated with the key that created the file.
+type DiscardedReference = Option<(gemini_files::Descriptor, String)>;
+pub(super) fn take_discard_at(
+    root: &Path,
+    id: &str,
+    cache: &PreparedSources,
+) -> Result<(bool, DiscardedReference), String> {
+    let (removed, descriptor) = gemini_jobs::with(root, |j| {
+        let records = j.list();
+        let raw = records
+            .iter()
+            .find(|r| r.id == id)
+            .and_then(|r| r.draft.as_ref());
+        let descriptor = raw.and_then(|d| {
+            let descriptor: gemini_files::Descriptor =
+                serde_json::from_value(d.get("preparedFile")?.clone()).ok()?;
+            let sha = d
+                .get("identity")?
+                .get("selectedSha256")?
+                .as_str()?
+                .to_string();
+            Some((descriptor, sha))
+        });
+        let removed = j.acknowledge(id)?;
+        let descriptor = descriptor.filter(|(d, _)| {
+            !j.list().iter().any(|r| {
+                r.draft
+                    .as_ref()
+                    .and_then(|v| v.get("preparedFile"))
+                    .and_then(|v| {
+                        serde_json::from_value::<gemini_files::Descriptor>(v.clone()).ok()
+                    })
+                    .is_some_and(|other| d.same_remote(&other))
+            })
+        });
+        Ok::<_, String>((removed, descriptor))
+    })?;
+    if removed {
+        cache.release_owner(id);
+    }
+    Ok((removed, descriptor))
+}
+#[cfg(test)]
+async fn discard_at(
+    root: &Path,
+    id: &str,
+    cache: &PreparedSources,
+    http: &Client,
+    base: &str,
+    key: Option<&str>,
+) -> Result<bool, String> {
+    let (removed, descriptor) = take_discard_at(root, id, cache)?;
+    if let (true, Some((descriptor, sha)), Some(key)) = (removed, descriptor, key) {
+        cache
+            .discard_reference(&descriptor, id, http, base, key, &sha)
+            .await;
+    }
+    Ok(removed)
 }
 
 fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
@@ -251,6 +322,7 @@ fn new_draft(identity: Identity) -> Draft {
         activations: vec![],
         timing: Value::Null,
         supersedes: None,
+        prepared_file: None,
     }
 }
 fn read_draft(root: &Path, id: &str) -> Result<Draft, SectionError> {
@@ -266,6 +338,11 @@ fn read_draft(root: &Path, id: &str) -> Result<Draft, SectionError> {
             "The draft is unavailable or quarantined; nothing was sent.",
         )
     })?;
+    // A present-but-null/malformed descriptor is not an absent reference.
+    if let Some(raw) = value.get("preparedFile") {
+        serde_json::from_value::<gemini_files::Descriptor>(raw.clone())
+            .map_err(|_| reference_error(gemini_files::ReferenceError::Invalid))?;
+    }
     let d: Draft = serde_json::from_value(value).map_err(|_| {
         SectionError::new(
             "INVALID_DRAFT",
@@ -502,19 +579,56 @@ pub(super) async fn activate(
             })) {
                 return Err(gemini_budget::CHECKPOINT_FAILED.into());
             }
-            let lease = ctx
-                .cache
-                .prepare(
-                    ctx.http,
-                    ctx.base,
-                    ctx.api_key,
-                    &selected.as_source(),
-                    ctx.epoch,
-                    None,
-                    ctx.budget,
-                    ctx.say,
-                )
-                .await?;
+            let restored = match d.prepared_file.as_ref() {
+                Some(descriptor) => ctx
+                    .cache
+                    .resume_reference(
+                        descriptor,
+                        ctx.http,
+                        ctx.base,
+                        ctx.api_key,
+                        &selected.as_source(),
+                        ctx.epoch,
+                        ctx.budget,
+                    )
+                    .await
+                    .map_err(reference_error)?,
+                None => None,
+            };
+            let lease = match restored {
+                Some(lease) => lease,
+                None => {
+                    ctx.cache
+                        .prepare(
+                            ctx.http,
+                            ctx.base,
+                            ctx.api_key,
+                            &selected.as_source(),
+                            ctx.epoch,
+                            d.prepared_file.as_ref().map(|d| d.name()),
+                            ctx.budget,
+                            ctx.say,
+                        )
+                        .await?
+                }
+            };
+            let descriptor = gemini_files::Descriptor::from_lease(
+                &lease,
+                ctx.base,
+                ctx.api_key,
+                &identity.selected_sha256,
+            )
+            .map_err(reference_error)?;
+            hook("before-descriptor-commit");
+            if !ctx.cache.retain_committed(&lease, &id, || {
+                // Timing checkpoints may have advanced while preparation ran.
+                let mut latest = read_draft(root, &id)?;
+                latest.prepared_file = Some(descriptor);
+                store(root, &id, &latest)
+            })? {
+                return Err(gemini_files::STALE_CONTEXT.into());
+            }
+            hook("after-descriptor-commit");
             for section in &identity.manifest {
                 if read_draft(root, &id)?.results[&section.id].status == Status::Complete {
                     continue;

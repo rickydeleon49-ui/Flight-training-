@@ -106,6 +106,8 @@ pub(crate) struct Behaviour {
     pub polls_until_active: Option<u32>,
     pub expiration_time: Option<String>,
     pub lookup_status: Option<u16>,
+    /// Interrupt files.get before response headers (loopback transport fault).
+    pub drop_lookups: bool,
     /// Statuses for the next generateContent calls, then normal answers.
     pub generate_statuses: Vec<(u16, String)>,
     pub generate_retry_after: Option<String>,
@@ -150,6 +152,7 @@ impl Default for Behaviour {
             polls_until_active: None,
             expiration_time: Some("2099-01-01T00:00:00Z".to_string()),
             lookup_status: None,
+            drop_lookups: false,
             generate_statuses: Vec::new(),
             generate_retry_after: None,
             drop_generations: 0,
@@ -500,6 +503,9 @@ fn respond(request: &Recorded, sim: &Arc<Mutex<Sim>>, base: &str) -> Reply {
         return ok(json!({ "file": file }));
     }
     if request.is_lookup() {
+        if s.behaviour.drop_lookups {
+            return Reply::Drop;
+        }
         if let Some(status) = s.behaviour.lookup_status {
             return err(status);
         }

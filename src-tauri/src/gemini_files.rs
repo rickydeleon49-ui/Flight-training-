@@ -9,9 +9,9 @@
 //!
 //! What is kept, and where:
 //!
-//! - Only native, session-local metadata: the provider file's name, URI,
-//!   expiry and the identity it was prepared for. Never the key itself (only
-//!   its SHA-256), never SQLite, never a backup. Quitting the app forgets it.
+//! - Native metadata: the provider file's name, URI, expiry and identity.
+//!   Section guides persist an authenticated descriptor in the draft journal;
+//!   other callers use a session cache. Never the key, SQLite or a backup.
 //! - At most `Policy::ready_entries` prepared sources (16 by default). The
 //!   least recently used one is retired when another is added.
 //!
@@ -34,14 +34,18 @@
 //! Ownership: a caller holds a [`Lease`] on the copy it is using. Replacing
 //! changed content or evicting the least recently used entry only defers the
 //! deletion of a leased copy until its last lease is released. Ending the
-//! context deletes at once instead; its leases are no longer current, so their
-//! holders fail rather than use them.
+//! context invalidates leases immediately. Durable draft owners retain their
+//! copies until expiry or deliberate discard; other copies are retired.
 //!
 //! Cleanup: only files this cache created are deleted, by name, bounded and
 //! best effort, and only with the key that created them. Anything not removed
 //! (an app quit, a key that is no longer available, a failed delete) expires on
 //! Google's side after its retention period (48 hours when this was written).
 //! Nothing here lists or deletes other files in the project.
+
+#[path = "gemini_file_descriptor.rs"]
+mod descriptor;
+pub(crate) use descriptor::{Descriptor, ReferenceError};
 
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
@@ -200,6 +204,8 @@ impl NotReady {
 /// Why asking about a file did not give an answer.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum LookupFailure {
+    /// The current key/project cannot access the reference; never missing.
+    Auth(String),
     /// Google says it does not exist (deleted or expired) or is not ours.
     Missing,
     /// Anything else: a message she can read.
@@ -568,7 +574,7 @@ pub(crate) async fn lookup(
         return Err(LookupFailure::Missing);
     }
     if matches!(status, 401 | 403) {
-        return Err(LookupFailure::Other(
+        return Err(LookupFailure::Auth(
             "Google did not allow this key to check the uploaded PDF, so nothing was sent again. Check the key and its project in Google AI Studio.".to_string(),
         ));
     }
@@ -668,6 +674,8 @@ struct Ready {
 #[derive(Default)]
 struct Inner {
     epoch: u64,
+    // Durable draft owners survive context invalidation; no API keys.
+    retained: HashMap<Retired, HashMap<String, i64>>,
     tick: u64,
     ready: HashMap<PrepKey, Ready>,
     flights: HashMap<PrepKey, Flight>,
@@ -781,7 +789,7 @@ pub(crate) struct Stats {
     pub stale_discarded: u64,
 }
 
-/// The session-local cache of prepared PDFs.
+/// Prepared PDFs, with retention pins for native durable draft owners.
 pub(crate) struct PreparedSources {
     inner: Mutex<Inner>,
     stats: Mutex<Stats>,
@@ -884,6 +892,7 @@ impl PreparedSources {
     /// nothing prepared before now is reused, published or handed out. Returns
     /// what this cache created, for retirement with the key that created it.
     /// Leased copies are included: their leases are no longer current.
+    /// Retirement skips unexpired durable draft owners.
     pub(crate) fn invalidate_all(&self) -> Vec<Retired> {
         let mut inner = self.lock();
         inner.epoch += 1;
@@ -899,6 +908,16 @@ impl PreparedSources {
             .collect();
         retired.extend(inner.deferred.drain());
         retired.append(&mut inner.orphaned);
+        retired.extend(inner.retained.keys().cloned());
+        let now = (self.clock)();
+        inner.retained.retain(|_, owners| {
+            owners.retain(|_, expiry| now < *expiry);
+            !owners.is_empty()
+        });
+        retired.sort_by(|a, b| {
+            (&a.credential, &a.base, &a.name).cmp(&(&b.credential, &b.base, &b.name))
+        });
+        retired.dedup();
         retired
     }
 
@@ -913,6 +932,9 @@ impl PreparedSources {
         let credential = credential_of(api_key);
         let mut removed = 0;
         for r in retired.into_iter().filter(|r| r.credential == credential) {
+            if self.retained(&r) {
+                continue;
+            }
             if delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout).await {
                 removed += 1;
             }
@@ -966,6 +988,9 @@ impl PreparedSources {
             // No await between taking this entry and polling its DELETE.
             // Every later entry remains guarded throughout that wait.
             let r = pending.unsent.pop_front().expect("nonempty cleanup queue");
+            if self.retained(&r) {
+                continue;
+            }
             let timeout = self.policy.delete_timeout.min(budget.remaining());
             if matches!(
                 budget
@@ -1192,7 +1217,9 @@ impl PreparedSources {
             Ok(_) | Err(LookupFailure::Missing) => Err(NotReady::Unusable(
                 "The prepared copy of this PDF is no longer usable at Google.".to_string(),
             )),
-            Err(LookupFailure::Other(message)) => Err(NotReady::Other(message)),
+            Err(LookupFailure::Other(message) | LookupFailure::Auth(message)) => {
+                Err(NotReady::Other(message))
+            }
         }
     }
 
@@ -1438,7 +1465,7 @@ impl PreparedSources {
                 Err(LookupFailure::Missing) => {
                     return Err(NotReady::Unusable("The uploaded copy of this PDF disappeared from Google before it was ready. Try again.".to_string()))
                 }
-                Err(LookupFailure::Other(message)) => return Err(NotReady::Other(message)),
+                Err(LookupFailure::Other(message) | LookupFailure::Auth(message)) => return Err(NotReady::Other(message)),
             };
         }
     }
