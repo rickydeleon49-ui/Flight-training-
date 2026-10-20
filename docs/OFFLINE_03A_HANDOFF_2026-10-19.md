@@ -46,6 +46,12 @@ This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. T
 - Three regressions were added to `StudySetEditing.test.ts`: a failed reviewed save; commit followed by a transport failure; a stale restore.
 - All three fail on the pre-fix source (`docs/evidence/offline-03a-2026-10-19/codex-r1-regressions-before-fix.log`: 3 failed, 7 passed) and pass after the fix.
 
+**Codex review of this branch, round 2: RED.** Restore was confirmed fixed. Two P2s were found and fixed:
+1. A reopened review could save a committed regeneration again. It now detects a committed save on open and resends the exact operation.
+2. An out-of-range Gemini page blocked the review. `generatedPage` is now shared by plain saves and the review.
+
+The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix.log`). See the report's "Codex review, round 2" section.
+
 ## Exactly where it stopped, and what comes next
 
 1. **Done:** both Codex round-1 fixes and their regressions, plus this handoff.
@@ -61,7 +67,7 @@ This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. T
    - `node --test scripts/mac-schema14-profile-snapshot.test.mjs` (26/26).
 
    Then update `SHA256SUMS` and commit.
-3. **In progress, Codex review round 2:** the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
+3. **Codex review round 2 was RED and is fixed. Next is round 3:** run the gate, commit, then review with the round-3 prompt `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r3.md`. The round-2 prompt was the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
    - Prompt: `docs/OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md`, plus a note naming the round-1 findings and their fix commit.
    - Run: `codex exec -s read-only -C <worktree> -o <result.md> "$(cat <prompt>)" < /dev/null`.
    - On RED: fix locally, add a failing-first regression and repeat.

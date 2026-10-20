@@ -1,0 +1,12 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+(node:92578) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  17:27:36
+   Duration  5.51s (transform 395ms, setup 0ms, import 517ms, tests 4.69s, environment 225ms)
+
+exit 0

@@ -322,7 +322,7 @@ function parsed(text: string | null): string {
 }
 
 /** Whether the stored row already holds this content (timestamps aside). */
-function holds(row: StoredSetRow, next: NextStudySet): boolean {
+export function holds(row: StoredSetRow, next: NextStudySet): boolean {
   return (
     row.title === next.title &&
     row.summary === next.summary &&

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button, Checkbox, Dialog } from "@/components/ui";
-import type { StoredSetRow } from "@/data/studySetTransaction";
+import { holds, type StoredSetRow } from "@/data/studySetTransaction";
 import { newId } from "@/lib/id";
 import { resolveRegeneration, StudyAuthoringError, type AuthoringState, type PreviewChoice, type PreviewItem } from "@/logic/studyAuthoring";
 import {
@@ -48,6 +48,8 @@ export function RegenerationReviewDialog({
   const [keepMySummary, setKeepMySummary] = useState(true);
   const [choices, setChoices] = useState<Map<string, PreviewChoice>>(new Map());
   const [busy, setBusy] = useState(false);
+  // Confirming that an earlier reviewed save already committed.
+  const [settling, setSettling] = useState(false);
   const busyRef = useRef(false);
   // One operation per set of choices, so saving again after an uncertain
   // failure can't apply it twice.
@@ -59,6 +61,18 @@ export function RegenerationReviewDialog({
       try {
         const read = await repositories?.documents.readStudySetForEdit(materialId);
         if (!read) throw new Error("missing");
+        // Her last reviewed save failed with no answer. If its content is what
+        // is stored now, it did commit: resend exactly that operation, which is
+        // recognised as already saved, instead of reviewing (and saving) again.
+        if (job.reviewed && holds(read.stored, job.reviewed.next)) {
+          if (live) setSettling(true);
+          const saved = await onSave(job.reviewed);
+          if (live && !saved) {
+            setSettling(false);
+            setProblem("Your reviewed study guide may already be saved, but this couldn't be confirmed. Close this and try again.");
+          }
+          return;
+        }
         const state = authoringStateOf(read.set);
         const classified = await regenerationPreview(state, answer);
         if (!live) return;
@@ -99,16 +113,12 @@ export function RegenerationReviewDialog({
       const resolved = resolveRegeneration(preview, choices);
       const merged = mergeRegeneration(opened.state, resolved, mode, keepMySummary);
       const next = nextSetOf({ title: answer.title, sourceNotes: answer.sourceNotes, provider: "gemini", model: answer.model }, merged);
+      // Within this review, the same choices reuse one operation, so saving
+      // again after an unanswered save is recognised rather than repeated. A
+      // save that committed before a reopen is caught when the review opens.
       const key = JSON.stringify(next);
-      let reviewed: ReviewedRegeneration;
-      if (job.reviewed && JSON.stringify(job.reviewed.next) === key) {
-        // The same choices as a save that failed, perhaps after committing:
-        // resend exactly that operation so it is recognised, not repeated.
-        reviewed = job.reviewed;
-      } else {
-        if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
-        reviewed = { operationId: operationRef.current.id, expected: opened.stored, next };
-      }
+      if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
+      const reviewed: ReviewedRegeneration = { operationId: operationRef.current.id, expected: opened.stored, next };
       if (!(await onSave(reviewed))) {
         setProblem("The reviewed study guide wasn't saved. Your choices are still here; try saving again.");
       }
@@ -146,7 +156,11 @@ export function RegenerationReviewDialog({
     >
       <div className="stack stack--3">
         {problem ? <p className="field__error" role="alert">{problem}</p> : null}
-        {!preview && !problem ? <p className="tiny dim" role="status">Comparing with your study guide…</p> : null}
+        {!preview && !problem ? (
+          <p className="tiny dim" role="status">
+            {settling ? "Checking whether your reviewed study guide was saved…" : "Comparing with your study guide…"}
+          </p>
+        ) : null}
         {preview ? (
           <>
             <fieldset className="stack stack--2">

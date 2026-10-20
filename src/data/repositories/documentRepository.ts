@@ -37,8 +37,7 @@ import {
   type StructuredImportSaveOperation,
 } from "../db";
 import { AtomicPersistenceUnsupportedError } from "../persistenceErrors";
-import { MAX_SOURCE_PAGE } from "@/logic/cardIdentity";
-import { needsRegenerationReview } from "@/logic/studySetEditing";
+import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   decodeStoredRow,
   SET_COLUMNS,
@@ -407,11 +406,7 @@ export function documentRepository(db: SqlDatabase) {
           summaryOrigin: null,
           sections: input.sections.map(({ heading, body }) => ({ heading, body })),
           // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
-          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({
-            front,
-            back,
-            sourcePage: Number.isInteger(sourcePage) && sourcePage! >= 1 && sourcePage! <= MAX_SOURCE_PAGE ? sourcePage : null,
-          })),
+          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) })),
           sourceNotes: input.sourceNotes,
           provider: "gemini",
           model: input.model,

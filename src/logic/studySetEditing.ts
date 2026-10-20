@@ -5,6 +5,7 @@
  */
 import type { AiStudySet, StudySetProvider } from "@/domain/types";
 import type { NextStudySet } from "@/data/studySetTransaction";
+import { MAX_SOURCE_PAGE } from "./cardIdentity";
 import {
   appendRetirements,
   assignItemIds,
@@ -106,6 +107,15 @@ export function needsRegenerationReview(set: Pick<AiStudySet, "provider" | "summ
   );
 }
 
+/**
+ * A generated card's page as it can be stored: a page outside the PDF range
+ * can't be opened or reviewed, so it becomes no page. Plain saves and
+ * reviewed regenerations use this one rule.
+ */
+export function generatedPage(page: number | null | undefined): number | null {
+  return typeof page === "number" && Number.isInteger(page) && page >= 1 && page <= MAX_SOURCE_PAGE ? page : null;
+}
+
 /** Generated or imported content offered to replace part of a set. */
 export interface GeneratedContent {
   summary: string;
@@ -118,7 +128,7 @@ export async function regenerationPreview(current: AuthoringState, generated: Ge
   const candidates = assignItemIds([
     ...(generated.summary.trim() ? [{ kind: "summary" as const, itemId: "summary", fields: [generated.summary] }] : []),
     ...generated.sections.map((section) => ({ kind: "section" as const, fields: [section.heading, section.body] })),
-    ...generated.flashcards.map((card) => ({ kind: "card" as const, fields: [card.front, card.back], sourcePage: card.sourcePage })),
+    ...generated.flashcards.map((card) => ({ kind: "card" as const, fields: [card.front, card.back], sourcePage: generatedPage(card.sourcePage) })),
   ]);
   return previewRegeneration(candidates, current.retired);
 }

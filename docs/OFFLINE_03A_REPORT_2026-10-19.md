@@ -139,6 +139,14 @@ The verdict is preserved in `docs/evidence/offline-03a-2026-10-19/codex-review-r
 
 Three regressions fail on the pre-fix source (`codex-r1-regressions-before-fix.log`) and pass now. **Where to resume:** [OFFLINE_03A_HANDOFF_2026-10-19.md](OFFLINE_03A_HANDOFF_2026-10-19.md).
 
+## Codex review, round 2: RED, fixed
+
+Round 2 confirmed the restore fix and found two P2s (`codex-review-r2-result.md`):
+1. **A reopened review could save a committed regeneration again.** Item ids are assigned afresh on reopen, so identical choices no longer matched the failed operation. **Fix:** when the review opens after a failed reviewed save, it checks the stored set; if the stored set already holds that save's content, the save committed, and the exact earlier operation is resent and recognised as already saved. Otherwise nothing committed, so a fresh review is safe. Within one review, the same choices still reuse one operation.
+2. **An out-of-range Gemini page blocked the review.** The page went straight into strict authoring validation, and the dialog wrongly called her saved guide damaged. **Fix:** one shared rule, `generatedPage`, turns a page outside 1–1,000 into no page, for both plain saves and the review.
+
+Two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix.log`) and pass now.
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

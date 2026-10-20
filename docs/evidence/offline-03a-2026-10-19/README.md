@@ -33,3 +33,14 @@ No provider, real profile, key, installer or release was involved.
 | `r2c-vitest-full.log` | **3,909 passed, 6 skipped; exit 0** — after the tests waited for the choices themselves, with slow-runner timeouts |
 
 Those two failures were test timing only; product code is unchanged since `ca8e319`. The round-1 fixes are TypeScript only, so the native receipts above still apply.
+
+## After the Codex round-2 fixes
+
+| Receipt | Result |
+| --- | --- |
+| `codex-r2-regressions-before-fix.log` | the 2 new regressions fail on the pre-fix source (2 failed, 10 passed) |
+| `r3-typecheck.log`, `r3-build.log`, `r3-diff-check.log` | exit 0 |
+| `r3-vitest-full.log` | 3,910 passed, 6 skipped, **1 failed: C1-R2 in `CardReviewPanel.test.ts`** |
+| `r3-flake-cr-01-isolated.log` | that file alone: 29/29 |
+
+**About the C1-R2 failure.** C1-R2 is the pre-existing load-sensitive card-review test, tracked as FLAKE-CR-01. It also fails on a clean main under load. This branch does not change `CardReviewPanel.tsx` or its tests. Per the workflow, the failure is recorded rather than rerun until it passes; every OFFLINE-03a test passed in this run.
