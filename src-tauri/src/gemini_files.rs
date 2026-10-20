@@ -46,6 +46,7 @@
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll, Waker};
 use std::time::Duration;
@@ -368,8 +369,41 @@ fn upload_refusal(status: u16) -> String {
     }
 }
 
-/// Upload one PDF with the resumable protocol (start, then upload+finalize in
-/// one request).
+/// Counts bytes as reqwest polls frames under transport backpressure. This is
+/// a send-side estimate, not proof of delivery; buffered/unstable samples use
+/// the 600 s fallback in Budget. Frames do not create separate HTTP requests.
+struct UploadBody {
+    remaining: bytes::Bytes,
+    polled: Arc<AtomicU64>,
+}
+
+impl http_body::Body for UploadBody {
+    type Data = bytes::Bytes;
+    type Error = std::convert::Infallible;
+
+    fn poll_frame(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
+        if self.remaining.is_empty() {
+            return Poll::Ready(None);
+        }
+        let len = self.remaining.len().min(256 * 1024);
+        let frame = self.remaining.split_to(len);
+        self.polled.fetch_add(len as u64, Ordering::Relaxed);
+        Poll::Ready(Some(Ok(http_body::Frame::data(frame))))
+    }
+
+    fn is_end_stream(&self) -> bool {
+        self.remaining.is_empty()
+    }
+
+    fn size_hint(&self) -> http_body::SizeHint {
+        http_body::SizeHint::with_exact(self.remaining.len() as u64)
+    }
+}
+
+/// Upload one PDF in the documented offset-0 `upload, finalize` request.
 pub(crate) async fn upload(
     http: &Client,
     base: &str,
@@ -383,9 +417,9 @@ pub(crate) async fn upload(
         return Err(crate::gemini_cancel::CANCELLED.to_string());
     }
     let timeout = budget
-        .request_timeout()
+        .upload_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
-    let start = http
+    let start_request = http
         .post(format!("{base}/upload/v1beta/files"))
         .header("x-goog-api-key", api_key)
         .header("X-Goog-Upload-Protocol", "resumable")
@@ -397,8 +431,11 @@ pub(crate) async fn upload(
         .header("X-Goog-Upload-Header-Content-Type", mime)
         .json(&json!({ "file": { "display_name": DISPLAY_NAME } }))
         .timeout(timeout)
-        .send()
+        .send();
+    let start = budget
+        .run(start_request)
         .await
+        .map_err(|_| out_of_time(budget, "starting the upload"))?
         .map_err(|e| transport(e, "starting the upload", budget))?;
     let status = start.status().as_u16();
     budget.saw_status(status);
@@ -416,33 +453,54 @@ pub(crate) async fn upload(
             "Google did not return a usable upload address, so the PDF was not sent.".to_string()
         })?;
 
+    if bytes.is_empty() {
+        return Err("The selected PDF is empty.".to_string());
+    }
+    let started = budget.elapsed();
+    let polled = Arc::new(AtomicU64::new(0));
+    let body = UploadBody {
+        remaining: bytes::Bytes::copy_from_slice(bytes),
+        polled: polled.clone(),
+    };
     let timeout = budget
-        .request_timeout()
+        .upload_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
-    // Checked again before the PDF itself is sent.
     if !budget.admit() {
         return Err(crate::gemini_cancel::CANCELLED.to_string());
     }
-    let finished = http
-        .post(session)
-        .header("x-goog-api-key", api_key)
-        .header("X-Goog-Upload-Offset", "0")
-        .header("X-Goog-Upload-Command", "upload, finalize")
-        .body(bytes.to_vec())
-        .timeout(timeout)
-        .send()
+    let request = async {
+        let finished = http
+            .post(&session)
+            .header("x-goog-api-key", api_key)
+            .header("X-Goog-Upload-Offset", "0")
+            .header("X-Goog-Upload-Command", "upload, finalize")
+            .header(reqwest::header::CONTENT_LENGTH, bytes.len())
+            .body(reqwest::Body::wrap(body))
+            .timeout(timeout)
+            .send()
+            .await
+            .map_err(|e| transport(e, "uploading the PDF", budget))?;
+        let status = finished.status().as_u16();
+        budget.saw_status(status);
+        if !(200..300).contains(&status) {
+            budget.categorize("upload refused");
+            return Err(upload_refusal(status));
+        }
+        finished
+            .text()
+            .await
+            .map_err(|e| transport(e, "confirming the upload", budget))
+    };
+    let raw = budget
+        .during_upload(request, started, &polled, bytes.len() as u64)
         .await
-        .map_err(|e| transport(e, "uploading the PDF", budget))?;
-    let status = finished.status().as_u16();
-    budget.saw_status(status);
-    let raw = finished
-        .text()
-        .await
-        .map_err(|e| transport(e, "confirming the upload", budget))?;
-    if !(200..300).contains(&status) {
-        budget.categorize("upload refused");
-        return Err(upload_refusal(status));
-    }
+        .map_err(|_| {
+            if budget.cancelled() {
+                crate::gemini_cancel::CANCELLED.to_string()
+            } else {
+                out_of_time(budget, "uploading the PDF")
+            }
+        })??;
     let value: Value = serde_json::from_str(&raw).map_err(|_| {
         "Google's answer about the uploaded file was unreadable, so it was not used.".to_string()
     })?;

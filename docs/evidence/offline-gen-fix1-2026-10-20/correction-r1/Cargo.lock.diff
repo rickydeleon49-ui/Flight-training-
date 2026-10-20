@@ -1,0 +1,56 @@
+diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
+index a9d0b58..719c8a9 100644
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -3514,6 +3514,7 @@ dependencies = [
+  "base64 0.22.1",
+  "bytes",
+  "futures-core",
++ "futures-util",
+  "http",
+  "http-body",
+  "http-body-util",
+@@ -3533,12 +3534,14 @@ dependencies = [
+  "sync_wrapper",
+  "tokio",
+  "tokio-rustls",
++ "tokio-util",
+  "tower",
+  "tower-http",
+  "tower-service",
+  "url",
+  "wasm-bindgen",
+  "wasm-bindgen-futures",
++ "wasm-streams 0.4.2",
+  "web-sys",
+  "webpki-roots",
+ ]
+@@ -3573,7 +3576,7 @@ dependencies = [
+  "url",
+  "wasm-bindgen",
+  "wasm-bindgen-futures",
+- "wasm-streams",
++ "wasm-streams 0.5.0",
+  "web-sys",
+ ]
+ 
+@@ -5534,6 +5537,19 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "wasm-streams"
++version = "0.4.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "15053d8d85c7eccdbefef60f06769760a563c7f0a9d6902a13d35c7800b0ad65"
++dependencies = [
++ "futures-util",
++ "js-sys",
++ "wasm-bindgen",
++ "wasm-bindgen-futures",
++ "web-sys",
++]
++
+ [[package]]
+ name = "wasm-streams"
+ version = "0.5.0"

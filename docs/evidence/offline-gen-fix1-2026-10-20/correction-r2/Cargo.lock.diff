@@ -1,0 +1,12 @@
+diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
+index a9d0b58..a9dbc93 100644
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -1774,6 +1774,7 @@ dependencies = [
+  "base64 0.22.1",
+  "flate2",
+  "hex",
++ "http-body",
+  "keyring",
+  "lopdf",
+  "reqwest 0.12.28",

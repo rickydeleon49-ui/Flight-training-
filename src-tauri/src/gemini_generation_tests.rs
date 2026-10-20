@@ -677,11 +677,22 @@ fn a_large_pdf_is_uploaded_once_and_never_inlined() {
     assert_eq!(r.uploads(), 1);
     assert_never_inline(&r, &bytes);
     let log = r.fake.log();
-    let uploaded: usize = log
+    let uploads: Vec<_> = log
         .iter()
-        .filter(|q| q.is_upload_finalize())
-        .map(|q| q.body.len())
-        .sum();
+        .filter(|q| q.header("x-goog-upload-offset").is_some())
+        .collect();
+    assert_eq!(uploads.len(), 1, "exactly one body request per PDF");
+    assert_eq!(uploads[0].header("x-goog-upload-offset"), Some("0"));
+    assert_eq!(
+        uploads[0].header("x-goog-upload-command"),
+        Some("upload, finalize")
+    );
+    assert_eq!(
+        uploads[0].header("content-length"),
+        Some(bytes.len().to_string().as_str())
+    );
+    assert_eq!(uploads[0].body, bytes);
+    let uploaded = uploads[0].body.len();
     let generate_max = log
         .iter()
         .filter(|q| q.is_generate())
@@ -714,22 +725,27 @@ fn r5_redirects_are_never_followed_with_the_key_or_the_pdf() {
     let elsewhere = FakeGemini::start();
     let target = format!("{}/upload/v1beta/files?upload_id=u99", elsewhere.base);
 
-    // The fixture is meaningful: a client with reqwest's default policy
-    // follows this redirect, carrying the key to the other server.
+    // Positive control uses replayable bytes: reqwest cannot replay a polled
+    // streaming Body on a 307, even with its default redirect policy. Keep
+    // proving the fixture redirects and carries the key when replay is possible.
     let default_client = Client::builder().build().unwrap();
     r.fake
         .behave(|b| b.finalize_redirect = Some(target.clone()));
-    let _ = tauri::async_runtime::block_on(gemini_files::upload(
-        &default_client,
-        &r.fake.base,
-        KEY,
-        b"%PDF-synthetic-redirect-probe",
-        "application/pdf",
-        &Budget::new(gemini_budget::ACTIVE_BUDGET),
-    ));
+    let probe = b"%PDF-synthetic-redirect-probe";
+    tauri::async_runtime::block_on(
+        default_client
+            .post(format!("{}/upload/v1beta/files?upload_id=u0", r.fake.base))
+            .header("x-goog-api-key", KEY)
+            .header("X-Goog-Upload-Offset", "0")
+            .header("X-Goog-Upload-Command", "upload, finalize")
+            .body(probe.to_vec())
+            .send(),
+    )
+    .unwrap();
     let leaked = elsewhere.log();
     assert_eq!(leaked.len(), 1, "the default policy follows the redirect");
     assert_eq!(leaked[0].header("x-goog-api-key"), Some(KEY));
+    assert_eq!(leaked[0].body, probe);
 
     // The application's client refuses it: nothing reaches the other server.
     let before = elsewhere.log().len();

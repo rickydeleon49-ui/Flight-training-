@@ -1114,3 +1114,44 @@ fn r12_cancellable_drop_keeps_only_unsent_entries_without_transport() {
         .collect();
     assert_eq!(queued, ["files/second", "files/third"]);
 }
+
+#[test]
+fn upload_body_counts_only_polled_frames_with_exact_remaining_size() {
+    use http_body::Body;
+    use std::task::Wake;
+    struct Noop;
+    impl Wake for Noop {
+        fn wake(self: Arc<Self>) {}
+    }
+    let waker = Waker::from(Arc::new(Noop));
+    let mut cx = Context::from_waker(&waker);
+    let original = vec![42; 2 * 256 * 1024 + 7];
+    let polled = Arc::new(AtomicU64::new(0));
+    let mut body = UploadBody {
+        remaining: bytes::Bytes::copy_from_slice(&original),
+        polled: polled.clone(),
+    };
+    let mut received = Vec::new();
+    assert_eq!(polled.load(Ordering::Relaxed), 0);
+    for len in [256 * 1024, 256 * 1024, 7] {
+        assert_eq!(
+            body.size_hint().exact(),
+            Some((original.len() - received.len()) as u64)
+        );
+        let Poll::Ready(Some(Ok(frame))) = Pin::new(&mut body).poll_frame(&mut cx) else {
+            panic!("expected a data frame");
+        };
+        let data = frame.into_data().unwrap();
+        assert_eq!(data.len(), len);
+        received.extend_from_slice(&data);
+        assert_eq!(polled.load(Ordering::Relaxed), received.len() as u64);
+    }
+    assert_eq!(received, original);
+    assert_eq!(body.size_hint().exact(), Some(0));
+    assert!(body.is_end_stream());
+    assert!(matches!(
+        Pin::new(&mut body).poll_frame(&mut cx),
+        Poll::Ready(None)
+    ));
+    assert_eq!(polled.load(Ordering::Relaxed), original.len() as u64);
+}

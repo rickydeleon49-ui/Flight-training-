@@ -1,0 +1,9 @@
+0fc6bfbefecf96bb25c708bf3d724b10b1a8effd1a5b444f9610b210884616b8  src-tauri/Cargo.toml
+451be3995e08ec17d6f0fe56ebeda2cff73a9dd1eb48877211fbac88748595eb  src-tauri/Cargo.lock
+3be3b6e3bacdcaf2d4f84a76b332f5903049adf274e0b5419b8a77f94846d234  docs/OFFLINE_GEN_FIX1_REPORT_2026-10-20.md
+16d51db2f08896bfb660b2eabdea18162f2012d5ca4999f7667907ae5c68a3b5  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/Cargo.lock.diff
+3e074568cc9c5acd029eb93bacf0c7b58cd7a4f85d11f907b052f6fe483498a5  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/audit.py
+9c342709cc5727e585804e2baf8587d58512a54ef2f384ad5af74db833d21f82  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/cargo-dependency-update.log
+851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/diff-check.log
+83e77e884ada9448d7a0c7bd299bccfe63d422ec5ef2f8f3ea41de949127bd5d  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/git-checkout.log
+2db4d534050aba9acca9e854cf0437e36edc2f10abc35dea3e88331854cdceac  docs/evidence/offline-gen-fix1-2026-10-20/correction-r2/lockfile-package-audit.txt

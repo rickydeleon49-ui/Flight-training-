@@ -18,6 +18,8 @@ pub(super) fn target(value: Option<u32>) -> Result<u32, String> {
 #[serde(rename_all = "camelCase")]
 struct Draft {
     target: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    timing: Option<Value>,
     deadline: u64,
     #[serde(default = "initial_remaining_millis")]
     remaining_millis: u64,
@@ -79,6 +81,9 @@ fn reserve(root: &Path, id: &str, unit: usize, remaining_millis: u64) -> Option<
             return None;
         }
         draft.remaining_millis = draft.remaining_millis.min(remaining_millis);
+        if let Some(timing) = &mut draft.timing {
+            timing["remainingMillis"] = json!(draft.remaining_millis);
+        }
         draft.requests[unit] += 1;
         let attempt = draft.requests[unit];
         journal
@@ -172,7 +177,7 @@ pub(super) async fn generate(
         j.list()
             .into_iter()
             .find(|j| j.id == id)
-            .is_some_and(|j| j.draft.is_some())
+            .is_some_and(|j| j.draft.as_ref().is_some_and(|d| d.get("target").is_some()))
     });
     if !has_draft {
         write(
@@ -180,8 +185,9 @@ pub(super) async fn generate(
             &id,
             &Draft {
                 target,
-                deadline: seconds() + 300,
-                remaining_millis: initial_remaining_millis(),
+                timing: (!ctx.budget.timing_value().is_null()).then(|| ctx.budget.timing_value()),
+                deadline: seconds() + ctx.budget.remaining().as_secs(),
+                remaining_millis: ctx.budget.remaining().as_millis() as u64,
                 requests: [0; 7],
                 next: 0,
                 complete: false,
@@ -201,10 +207,14 @@ pub(super) async fn generate(
         return Err(format!("This draft has a target of {} cards. Choose that target to resume, or discard the draft first.", draft.target));
     }
     ctx.budget.restore_attempts(draft.requests.iter().sum());
-    ctx.budget.shorten(
-        std::time::Duration::from_secs(draft.deadline.saturating_sub(seconds()))
-            .min(std::time::Duration::from_millis(draft.remaining_millis)),
-    );
+    if has_draft {
+        ctx.budget
+            .restore_draft(&serde_json::to_value(&draft).map_err(|e| e.to_string())?);
+        ctx.budget.shorten(
+            std::time::Duration::from_secs(draft.deadline.saturating_sub(seconds()))
+                .min(std::time::Duration::from_millis(draft.remaining_millis)),
+        );
+    }
     let pages = if source.mime == "application/pdf" {
         Some(
             lopdf::Document::load_mem(&source.bytes)
@@ -259,6 +269,9 @@ pub(super) async fn generate(
         draft.remaining_millis = draft
             .remaining_millis
             .min(ctx.budget.remaining().as_millis() as u64);
+        if let Some(timing) = &mut draft.timing {
+            timing["remainingMillis"] = json!(draft.remaining_millis);
+        }
         write(root, &id, &draft)?;
         (ctx.say)(format!(
             "{} / {target} distinct cards checked and kept as a draft.",
@@ -438,6 +451,67 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn selected_policy_is_persisted_and_used_by_card_reservations() {
+        let r = Rig::new();
+        let id = r.begin();
+        r.script(vec![aid(0, 0), aid(0, 10), aid(10, 10)]);
+        let (budget, time) = fake_budget(Duration::from_secs(300));
+        let (root, timing_id) = (r.root.path().to_path_buf(), id.clone());
+        budget.enable_rate(Arc::new(move |timing| {
+            gemini_jobs::with(&root, |j| j.checkpoint_timing(&timing_id, timing.clone())).is_ok()
+        }));
+        let ctx = GenContext {
+            http: &r.http,
+            base: &r.fake.base,
+            api_key: "synthetic-only",
+            choice: ModelChoice::Standard,
+            cache: &r.cache,
+            epoch: r.cache.epoch(),
+            budget: &budget,
+            say: &|_| {},
+        };
+        tauri::async_runtime::block_on(generate(&ctx, &r.source, r.root.path(), "material", 20))
+            .unwrap();
+        let draft = read(r.root.path(), &id).unwrap();
+        assert_eq!(draft.timing.as_ref().unwrap()["allowedMillis"], 600_000);
+        assert!(draft.remaining_millis > 300_000);
+        assert_eq!(draft.requests.iter().sum::<u32>(), 3);
+        // Reopening is Interrupted, not running, and performs no network.
+        let before = r.fake.log().len();
+        let reopened = gemini_jobs::Journal::open(r.root.path());
+        let job = &reopened.list()[0];
+        assert_eq!(job.stage, JobStage::Interrupted);
+        assert_eq!(r.fake.log().len(), before);
+        let (resumed, _) = fake_budget(Duration::from_secs(300));
+        resumed.restore_draft(job.draft.as_ref().unwrap());
+        assert!(resumed.remaining().as_millis() <= draft.remaining_millis as u128);
+        time.advance(Duration::from_secs(301));
+        assert!(
+            budget.remaining().as_secs() > 0,
+            "card initialization must not retain a 300-second shortening"
+        );
+    }
+
+    #[test]
+    fn failed_rate_checkpoint_keeps_prior_allowance_and_card_ledger() {
+        let r = Rig::new();
+        let id = r.begin();
+        let (budget, _) = fake_budget(Duration::from_secs(300));
+        let (root, timing_id) = (r.root.path().to_path_buf(), id.clone());
+        budget.enable_rate(Arc::new(move |timing| {
+            gemini_jobs::with(&root, |j| j.checkpoint_timing(&timing_id, timing.clone())).is_ok()
+        }));
+        let prior = gemini_jobs::with(r.root.path(), |j| j.list()[0].draft.clone());
+        std::fs::create_dir(r.root.path().join("gemini-jobs.json.writing")).unwrap();
+        assert!(budget.rate_sample(Duration::from_secs(1), 0, 50_000_000));
+        assert_eq!(budget.total().as_secs(), 300);
+        assert_eq!(
+            gemini_jobs::with(r.root.path(), |j| j.list()[0].draft.clone()),
+            prior
+        );
     }
 
     #[test]

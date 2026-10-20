@@ -1,5 +1,7 @@
 ## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
 
+OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 implemented, pending review.
+
 ### Workflow (owner, 19–20 October 2026)
 
 - **Codex implements** every project change.

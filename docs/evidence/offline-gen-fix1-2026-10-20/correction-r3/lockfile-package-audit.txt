@@ -1,0 +1,7 @@
+$ python3 docs/evidence/offline-gen-fix1-2026-10-20/correction-r3/audit.py
+PASS: exact baseline lockfile plus only the her-flight-deck bytes and http-body dependency edges.
+Package entries added: 0; removed: 0; version changes: 0.
+http-body remains at 1.1.0; wasm-streams 0.4.2 absent.
+bytes remains at 1.12.1; both direct edges owner-approved 20 October 2026.
+
+EXIT 0

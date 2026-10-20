@@ -34,6 +34,14 @@ import {
   type GeneratedStudyAid,
 } from "@/services/gemini";
 
+/** Timing-only native drafts are recovery metadata, not unfinished card sets. */
+function cardDraft(record: GeminiJobRecord): { target: number; cards: unknown[] } | undefined {
+  const draft = record.draft;
+  return draft && typeof draft.target === "number" && Array.isArray(draft.cards)
+    ? { target: draft.target, cards: draft.cards }
+    : undefined;
+}
+
 /**
  * Gemini generations that outlive the page that started them (GEN-REL-02).
  *
@@ -647,7 +655,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                 (record.stage === "failed" || record.stage === "cancelled")
               ) {
                 if (record.draft) {
-                  update(key, { jobId: record.id, draft: record.draft });
+                  update(key, { jobId: record.id, draft: cardDraft(record) });
                   continue;
                 }
                 forgottenRef.current.add(record.id);
@@ -797,7 +805,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             answer: record.stage === "ready" ? (record.result ?? null) : null,
             error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
             checkpointed: record.stage === "ready",
-            draft: record.draft,
+            draft: cardDraft(record),
           };
         });
         const known = new Set(next.map((job) => job.jobId).filter(Boolean));
@@ -838,7 +846,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               baseRevision: record.baseRevision ?? null,
               checkpointed: record.stage === "ready",
               ...(record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice" ? { needsReview: true } : {}),
-              draft: record.draft,
+              draft: cardDraft(record),
             },
           ];
         }

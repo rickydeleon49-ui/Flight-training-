@@ -1,0 +1,12 @@
+6d529700a0a44c13864aaae5839b170df0d079f509623e5b69ac3ba9f9ada4c8  src-tauri/src/fake_gemini.rs
+cac14aba41aaa9fdf35eda19e0ea9e6ec2e820d3b3a11e4fcf6cea95818aa7a8  src-tauri/src/gemini.rs
+8671f191560e4b3c780ade2a697ba6e1dbe3a75e1d3ba9404a8e87aad2cf807b  src-tauri/src/gemini_slowlink_tests.rs
+d8f25c1e70929e590343d5561df3268cd31139a9b055f2f848a7d3cee953a5a0  docs/OFFLINE_GEN_00_DIAGNOSIS_2026-10-20.md
+2a0e729de1691ad46f062b62466ce8f9011343a0cdf0581ba306d206788e7a24  docs/evidence/offline-gen-00-2026-10-20/build-runner.log
+dfdfa5fccb6fa3e1ae2f6bfeaa362af48f9c3d9911f0da8db69f0dd2d74a573b  docs/evidence/offline-gen-00-2026-10-20/build.log
+14eb01a69d5da4105ab23955318ac224b4a759e0a542e312381e17dec69cb635  docs/evidence/offline-gen-00-2026-10-20/cargo-full.log
+962ca459f21b8d674dc22e469e3085cde8b571f169d2c1e06a69d277fb3352c5  docs/evidence/offline-gen-00-2026-10-20/cargo-gemini.log
+47162ef7a2e034a0f8196b2c8c49eed12916972ce5ce8fb26a54f188925729cb  docs/evidence/offline-gen-00-2026-10-20/clippy.log
+ee40fa40c93fb885f8e18624674a43b48bd38dad0db2fe8a9f43a0397c1ac247  docs/evidence/offline-gen-00-2026-10-20/estimates.log
+e489231dba96011484ddeede81b0b121ac1e755b66d112e0a131aa23c5ae6c56  docs/evidence/offline-gen-00-2026-10-20/fmt.log
+c743c84fe933a1808b2e3d4ce9c3cc34fcea937e225511309761a12b6d92dcc6  docs/evidence/offline-gen-00-2026-10-20/slowlink.log

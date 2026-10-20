@@ -193,7 +193,7 @@ const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
 /// Generating reads a whole document, so it is given room — but not forever.
 /// Without a bound, a stalled connection leaves "Creating study aid…" spinning
 /// with nothing to cancel it.
-const GENERATE_TIMEOUT: Duration = Duration::from_secs(300);
+const GENERATE_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// The client for generation. Its overall timeout is only a backstop: every
 /// request is given what remains of the generation's one budget, and a
@@ -1149,6 +1149,10 @@ where
         if let Some(budget) = hooks.budget {
             // Every later request asks the journal, under the lock the cancel
             // is recorded under.
+            let (probe_root, probe_id) = (root.to_path_buf(), id.to_string());
+            budget.attach_probe(Arc::new(move || {
+                gemini_jobs::with(&probe_root, |journal| journal.admits(&probe_id))
+            }));
             let (root, id) = (root.to_path_buf(), id.to_string());
             budget.attach_admission(Arc::new(move || {
                 gemini_jobs::with(&root, |journal| journal.admit_bounded(&id))
@@ -1170,6 +1174,27 @@ where
         }
         registration
     });
+    if let (Some(budget), Some(job_id)) = (hooks.budget, id.as_deref()) {
+        let draft = gemini_jobs::with(root, |journal| {
+            journal
+                .list()
+                .into_iter()
+                .find(|j| j.id == job_id)
+                .and_then(|j| j.draft)
+        });
+        if let Some(draft) = draft {
+            budget.restore_draft(&draft);
+        } else {
+            let (path, timing_id) = (root.to_path_buf(), job_id.to_string());
+            budget.enable_rate(Arc::new(move |timing| {
+                gemini_jobs::with(&path, |journal| {
+                    journal
+                        .checkpoint_timing(&timing_id, timing.clone())
+                        .is_ok()
+                })
+            }));
+        }
+    }
     let running = RunningJob { root, id, changed };
     let outcome = match registration.flatten() {
         Some(registration) => {
@@ -2583,6 +2608,10 @@ mod tests {
             .contains("trying the standard Gemini model"));
     }
 }
+
+#[cfg(test)]
+#[path = "gemini_slowlink_tests.rs"]
+mod slowlink_tests;
 
 #[cfg(test)]
 #[path = "gemini_generation_tests.rs"]

@@ -166,7 +166,10 @@ export interface GeminiJobRecord {
   createdAt: number;
   updatedAt: number;
   result?: GeneratedStudyAid | GeneratedPracticeTest;
-  draft?: { target: number; cards: StudyFlashcard[] };
+  draft?: { target?: number; cards?: StudyFlashcard[]; timing?: {
+    policy: string; ceilingMillis: number; allowedMillis: number; remainingMillis: number;
+    deadlineUtc: number; uploadBytes: number; sampleMillis: number; sampleBytes: number;
+  } };
   error?: string;
 }
 

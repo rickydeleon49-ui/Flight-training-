@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
+use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
@@ -31,7 +32,11 @@ impl Recorded {
         self.method == "POST" && self.path == "/upload/v1beta/files"
     }
     pub fn is_upload_finalize(&self) -> bool {
-        self.method == "POST" && self.path.starts_with("/upload/v1beta/files?upload_id=")
+        self.method == "POST"
+            && self.path.starts_with("/upload/v1beta/files?upload_id=")
+            && self
+                .header("x-goog-upload-command")
+                .is_some_and(|c| c.contains("finalize"))
     }
     pub fn is_generate(&self) -> bool {
         self.method == "POST" && self.path.ends_with(":generateContent")
@@ -83,6 +88,12 @@ struct SimFile {
 
 /// What the stand-in does; tests change these between calls.
 pub(crate) struct Behaviour {
+    /// Pace reads of the upload+finalize body (not upload metadata).
+    pub upload_bytes_per_sec: Option<u64>,
+    /// Model thinking time, before even the response headers arrive.
+    pub generate_first_byte_delay: Option<Duration>,
+    /// Pace response body writes after sending headers immediately.
+    pub generate_trickle_bytes_per_sec: Option<u64>,
     pub start_status: Option<u16>,
     pub omit_upload_url: bool,
     pub foreign_upload_url: bool,
@@ -126,6 +137,9 @@ pub(crate) struct Behaviour {
 impl Default for Behaviour {
     fn default() -> Self {
         Behaviour {
+            upload_bytes_per_sec: None,
+            generate_first_byte_delay: None,
+            generate_trickle_bytes_per_sec: None,
             start_status: None,
             omit_upload_url: false,
             foreign_upload_url: false,
@@ -230,7 +244,7 @@ impl FakeGemini {
     }
 }
 
-fn read_request(reader: &mut BufReader<TcpStream>) -> Option<Recorded> {
+fn read_request(reader: &mut BufReader<TcpStream>, sim: &Mutex<Sim>) -> Option<Recorded> {
     let mut line = String::new();
     if reader.read_line(&mut line).ok()? == 0 {
         return None;
@@ -256,7 +270,22 @@ fn read_request(reader: &mut BufReader<TcpStream>) -> Option<Recorded> {
         }
     }
     let mut body = vec![0; length];
-    reader.read_exact(&mut body).ok()?;
+    let rate = if method == "POST" && path.starts_with("/upload/v1beta/files?upload_id=") {
+        sim.lock().unwrap().behaviour.upload_bytes_per_sec
+    } else {
+        None
+    };
+    if let Some(rate) = rate.filter(|rate| *rate > 0) {
+        let started = Instant::now();
+        let mut received = 0;
+        for chunk in body.chunks_mut(pacing_chunk(rate)) {
+            reader.read_exact(chunk).ok()?;
+            received += chunk.len();
+            pace(started, received, rate);
+        }
+    } else {
+        reader.read_exact(&mut body).ok()?;
+    }
     Some(Recorded {
         method,
         path,
@@ -266,6 +295,26 @@ fn read_request(reader: &mut BufReader<TcpStream>) -> Option<Recorded> {
 }
 
 fn write_reply(stream: &mut TcpStream, status: u16, headers: &[(String, String)], body: &[u8]) {
+    write_paced_reply(stream, status, headers, body, None);
+}
+
+// About twenty chunks per second, bounded for both tiny and large fixtures.
+fn pacing_chunk(rate: u64) -> usize {
+    (rate / 20).clamp(1, 16 * 1024) as usize
+}
+
+fn pace(started: Instant, bytes: usize, rate: u64) {
+    let due = Duration::from_secs_f64(bytes as f64 / rate as f64);
+    std::thread::sleep(due.saturating_sub(started.elapsed()));
+}
+
+fn write_paced_reply(
+    stream: &mut TcpStream,
+    status: u16,
+    headers: &[(String, String)],
+    body: &[u8],
+    rate: Option<u64>,
+) {
     let mut head = format!(
         "HTTP/1.1 {status} X\r\nContent-Length: {}\r\nContent-Type: application/json\r\n",
         body.len()
@@ -275,7 +324,21 @@ fn write_reply(stream: &mut TcpStream, status: u16, headers: &[(String, String)]
     }
     head.push_str("\r\n");
     let _ = stream.write_all(head.as_bytes());
-    let _ = stream.write_all(body);
+    if let Some(rate) = rate.filter(|rate| *rate > 0) {
+        let _ = stream.flush();
+        let started = Instant::now();
+        let mut sent = 0;
+        for chunk in body.chunks(pacing_chunk(rate)) {
+            // Headers arrive immediately; body bytes follow at the chosen rate.
+            sent += chunk.len();
+            pace(started, sent, rate);
+            if stream.write_all(chunk).is_err() || stream.flush().is_err() {
+                return;
+            }
+        }
+    } else {
+        let _ = stream.write_all(body);
+    }
     let _ = stream.flush();
 }
 
@@ -289,7 +352,7 @@ enum Reply {
 fn serve(stream: TcpStream, sim: &Arc<Mutex<Sim>>, base: &str) {
     let mut writer = stream.try_clone().unwrap();
     let mut reader = BufReader::new(stream);
-    while let Some(request) = read_request(&mut reader) {
+    while let Some(request) = read_request(&mut reader, sim) {
         let gate = {
             let mut s = sim.lock().unwrap();
             s.log.push(request.clone());
@@ -309,7 +372,25 @@ fn serve(stream: TcpStream, sim: &Arc<Mutex<Sim>>, base: &str) {
             gate.pass();
         }
         match respond(&request, sim, base) {
-            Reply::Send(status, headers, body) => write_reply(&mut writer, status, &headers, &body),
+            Reply::Send(status, headers, body) => {
+                if request.is_generate() {
+                    let (delay, rate) = {
+                        let s = sim.lock().unwrap();
+                        (
+                            s.behaviour.generate_first_byte_delay,
+                            s.behaviour.generate_trickle_bytes_per_sec,
+                        )
+                    };
+                    // Never hold Sim's lock during a delay: logs and other
+                    // requests must remain observable while this link is slow.
+                    if let Some(delay) = delay {
+                        std::thread::sleep(delay);
+                    }
+                    write_paced_reply(&mut writer, status, &headers, &body, rate);
+                } else {
+                    write_reply(&mut writer, status, &headers, &body);
+                }
+            }
             Reply::Partial => {
                 let _ = writer.write_all(
                     b"HTTP/1.1 200 OK\r\nContent-Length: 100000\r\n\r\n{\"candidates\":",
