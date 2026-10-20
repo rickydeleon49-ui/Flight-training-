@@ -424,3 +424,12 @@ evidence/offline-02c-2026-10-19/receipts/run2-before-admission-fix/process-2.log
 evidence/offline-02c-2026-10-19/receipts/run2-before-admission-fix/process-2.time -text -diff
 evidence/offline-02c-2026-10-19/receipts/run2-before-admission-fix/process-3.log -text -diff
 evidence/offline-02c-2026-10-19/receipts/run2-before-admission-fix/process-3.time -text -diff
+evidence/offline-03a-2026-10-19/build.log -text -diff
+evidence/offline-03a-2026-10-19/cargo-lock.log -text -diff
+evidence/offline-03a-2026-10-19/cargo-test.log -text -diff
+evidence/offline-03a-2026-10-19/clippy.log -text -diff
+evidence/offline-03a-2026-10-19/diff-check.log -text -diff
+evidence/offline-03a-2026-10-19/fmt.log -text -diff
+evidence/offline-03a-2026-10-19/schema14-helper.log -text -diff
+evidence/offline-03a-2026-10-19/typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/vitest-full.log -text -diff

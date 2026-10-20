@@ -12,6 +12,8 @@ import {
 import type { AppData } from "./AppDataContext";
 import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
+import type { NextStudySet, StoredSetRow } from "@/data/studySetTransaction";
+import { needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   acknowledgeGeminiJob,
   generatePracticeTest,
@@ -107,6 +109,11 @@ export interface GeminiJob {
   /** Whether the generation request has been sent to the native side. */
   invoked?: boolean;
   /**
+   * Her study set holds items she wrote, corrected or deleted, so this answer
+   * is saved only through the regeneration review (OFFLINE-03a), never as is.
+   */
+  needsReview?: boolean;
+  /**
    * Started by this window, whose own request decides its outcome. Recovery
    * after a reload follows only jobs it found, never these, even once they
    * have their native id.
@@ -127,6 +134,16 @@ export interface StartOptions {
   onSaved?: () => void;
 }
 
+/**
+ * A regenerated study set as she reviewed it: the set she had open and the
+ * merged set to store. Its operation id makes a retry safe.
+ */
+export interface ReviewedRegeneration {
+  operationId: string;
+  expected: StoredSetRow;
+  next: NextStudySet;
+}
+
 /** Whether earlier Gemini work has been read back from the journal yet. */
 export type GeminiRecovery = "pending" | "ready" | "failed";
 
@@ -140,6 +157,8 @@ interface GeminiJobsValue {
   retryRecovery(): void;
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
   saveAgain(key: string): Promise<void>;
+  /** Save a regenerated study set as she reviewed it, keeping what she chose (OFFLINE-03a). */
+  saveReviewed(key: string, reviewed: ReviewedRegeneration): Promise<void>;
   dismiss(key: string): Promise<void>;
   /** Ask to cancel a running generation (GEN-REL-04). */
   cancel(key: string): Promise<void>;
@@ -155,6 +174,8 @@ const SAVE_FAILED_MESSAGE =
   "Gemini finished, but saving the answer did not work. Anything already saved is unchanged. Save again uses the same answer and does not ask Gemini again.";
 export const DISCARD_FAILED_MESSAGE =
   "That could not be recorded just now, so it might come back after the app restarts. Try again.";
+const REVIEWED_SAVE_FAILED_MESSAGE =
+  "Saving the reviewed study guide did not work, or this guide changed after you reviewed it. Anything already saved is unchanged. Review it again to save.";
 const SAVE_FAILED_NOT_KEPT_MESSAGE =
   "Gemini finished, but saving the answer did not work, and it could not be kept on this Mac either. Anything already saved is unchanged. Save again uses the same answer while the app stays open.";
 
@@ -309,13 +330,13 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   /** Save an answer to the material it was made from, if that is still right. */
   const persist = useCallback(
-    async (key: string): Promise<void> => {
+    async (key: string, reviewed?: ReviewedRegeneration): Promise<void> => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
       if (!job?.answer) return;
       update(key, { phase: "saving", error: null });
       const answer = job.answer;
 
-      let outcome: "saved" | "already" | "superseded" | "newer" | null;
+      let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
       try {
         outcome = await mutate(async (repos) => {
           // Every check is made here, inside the write queue, immediately
@@ -329,9 +350,24 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               return "superseded" as const;
             }
           }
+          if (reviewed && job.kind === "study-aid") {
+            // The set she reviewed is named column for column, so a change made
+            // since refuses as stale; the same id makes a retry safe.
+            await repos.documents.saveStudySet({
+              operationId: reviewed.operationId,
+              materialId: job.materialId,
+              reason: "regenerate",
+              expected: reviewed.expected,
+              next: reviewed.next,
+            });
+            return "saved" as const;
+          }
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
           if ((saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
+          // Her own items, corrections and deletions are never replaced
+          // without her review (OFFLINE-03a).
+          if (job.kind === "study-aid" && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
           if (job.kind === "study-aid") {
             const aid = answer as GeneratedStudyAid;
             await repos.documents.saveAiStudySet({
@@ -362,6 +398,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         const onSaved = onSavedRef.current.get(key);
         forget(key);
         if (outcome === "saved") onSaved?.();
+      } else if (outcome === "review") {
+        update(key, { phase: "recovered", needsReview: true, error: null });
       } else if (outcome === "superseded" || outcome === "newer") {
         update(key, {
           phase: "superseded",
@@ -370,7 +408,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       } else {
         update(key, {
           phase: "save-failed",
-          error: job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE,
+          error: reviewed
+            ? REVIEWED_SAVE_FAILED_MESSAGE
+            : job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE,
         });
       }
     },
@@ -595,6 +635,21 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     [persist, release],
   );
 
+  const saveReviewed = useCallback(
+    async (key: string, reviewed: ReviewedRegeneration) => {
+      const job = jobsRef.current.find((candidate) => candidate.key === key);
+      if (!job || !job.answer || job.kind !== "study-aid" || (job.phase !== "save-failed" && job.phase !== "recovered")) return;
+      if (activeRef.current !== null) return;
+      activeRef.current = key;
+      try {
+        await persist(key, reviewed);
+      } finally {
+        release(key);
+      }
+    },
+    [persist, release],
+  );
+
   /**
    * Her decision to discard or dismiss: shown as done only once the journal
    * has recorded it, so a discarded answer cannot quietly come back.
@@ -797,12 +852,13 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       retryRecovery,
       start,
       saveAgain,
+      saveReviewed,
       dismiss,
       cancel,
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, recovery, retryRecovery, start, saveAgain, dismiss, cancel, lockTick],
+    [jobs, recovery, retryRecovery, start, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

@@ -316,3 +316,28 @@ export function observation(
     ...overrides,
   };
 }
+
+/** Tables migration 16 (OFFLINE-03a) adds, all empty after an upgrade. */
+export const MANUAL_STUDY_NEW_TABLES = ["study_set_history", "card_version_origins", "card_item_origins", "practice_item_origins"] as const;
+
+/**
+ * An upgraded dump with the columns migration 16 adds to existing tables
+ * removed, after checking each holds its default: `ai_study_sets` gains
+ * `summary_origin` (NULL) and `retired_json` ('[]'), and `material_bookmarks`
+ * gains `quote` (NULL). Every older value is then compared as it was.
+ */
+export function withoutSchema16Columns(rows: Record<string, unknown[]>): Record<string, unknown[]> {
+  const strip = (table: string, columns: Record<string, unknown>) =>
+    (rows[table] ?? []).map((row) => {
+      const copy = { ...(row as Record<string, unknown>) };
+      for (const [column, value] of Object.entries(columns)) {
+        if (copy[column] !== value) throw new Error(`${table}.${column} is not its migration-16 default`);
+        delete copy[column];
+      }
+      return copy;
+    });
+  const out = { ...rows };
+  if ("ai_study_sets" in rows) out.ai_study_sets = strip("ai_study_sets", { summary_origin: null, retired_json: "[]" });
+  if ("material_bookmarks" in rows) out.material_bookmarks = strip("material_bookmarks", { quote: null });
+  return out;
+}

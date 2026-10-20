@@ -68,6 +68,9 @@ import "./studyLibrary.css";
 import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
 import { useGeminiJobs, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
+import { needsRegenerationReview } from "@/logic/studySetEditing";
+import { AuthorBadge, StartManualStudySet, StudySetEditor } from "./StudySetEditor";
+import { RegenerationReviewDialog } from "./RegenerationReviewDialog";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export function MaterialDetail() {
@@ -112,6 +115,8 @@ function MaterialDetailPage() {
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
+  const [editingSet, setEditingSet] = useState(false);
+  const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
 
   // One Gemini generation at a time across the whole app, whichever page asked;
   // the lock is taken synchronously before anything awaits (src/state/GeminiJobs).
@@ -206,6 +211,9 @@ function MaterialDetailPage() {
   );
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
+  // A set she wrote herself is labelled as hers, never as Gemini output.
+  const manualSet = studySet?.provider === "manual";
+  const setHasHerItems = needsRegenerationReview(studySet);
   const importedTest = practiceTest?.provider === "import";
   const hasImported = importedSet || importedTest;
 
@@ -556,39 +564,63 @@ function MaterialDetailPage() {
 
           {material.filePath ? <OfflineStudyPanel material={material} /> : null}
 
+          {!material.filePath && !studySet ? (
+            <Card>
+              <CardHeader title="Study guide and flashcards" eyebrow="Your own" action={<StartManualStudySet material={material} />} />
+              <CardBody>
+                <p className="small muted">
+                  Write your own summary, sections and flashcards for this material. Nothing is sent anywhere.
+                </p>
+              </CardBody>
+            </Card>
+          ) : null}
+
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
-                title={importedSet ? "Imported study packet" : "Gemini study assistant"}
+                title={importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
                 eyebrow={
                   importedSet
                     ? "Imported from a file you selected"
-                    : studySet
-                      ? "Saved on this computer"
-                      : "Guide and flashcards"
+                    : manualSet
+                      ? "Written by you, saved on this computer"
+                      : studySet
+                        ? "Saved on this computer"
+                        : "Guide and flashcards"
                 }
                 action={
-                  canOfferGemini || studySet || practiceTest ? (
-                    <div className="row row--wrap">
-                      {studySet || practiceTest ? (
-                        <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
-                          Share or print
-                        </Button>
-                      ) : null}
-                      {canOfferGemini ? (
-                        <Button
-                          size="small"
-                          variant={studySet ? "secondary" : "primary"}
-                          disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase)}
-                          onClick={() => {
-                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
-                          }}
-                        >
-                          {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
-                        </Button>
-                      ) : null}
-                    </div>
-                  ) : undefined
+                  <div className="row row--wrap">
+                    {studySet ? (
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        aria-pressed={editingSet}
+                        disabled={isGeneratingAny}
+                        onClick={() => setEditingSet((open) => !open)}
+                      >
+                        {editingSet ? "Done editing" : "Edit study guide"}
+                      </Button>
+                    ) : (
+                      <StartManualStudySet material={material} />
+                    )}
+                    {studySet || practiceTest ? (
+                      <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
+                        Share or print
+                      </Button>
+                    ) : null}
+                    {canOfferGemini ? (
+                      <Button
+                        size="small"
+                        variant={studySet ? "secondary" : "primary"}
+                        disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase)}
+                        onClick={() => {
+                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
+                        }}
+                      >
+                        {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
+                      </Button>
+                    ) : null}
+                  </div>
                 }
               />
               <CardBody>
@@ -609,9 +641,14 @@ function MaterialDetailPage() {
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
                       <p className="tiny">
-                        {importedSet
-                          ? IMPORTED_CONTENT_DISCLAIMER
-                          : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
+                        {manualSet
+                          ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
+                          : importedSet
+                            ? IMPORTED_CONTENT_DISCLAIMER
+                            : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
+                        {!manualSet && setHasHerItems
+                          ? " Items marked as yours or as an instructor correction were written here, not generated."
+                          : ""}
                       </p>
                     </div>
 
@@ -626,6 +663,7 @@ function MaterialDetailPage() {
                         <p className="eyebrow">Study guide</p>
                         <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
                       </div>
+                      {studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
                       <p
                         id="search-target-summary"
                         className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
@@ -638,7 +676,7 @@ function MaterialDetailPage() {
                           className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
                           key={`${section.heading}-${index}`}
                         >
-                          <h4>{section.heading}</h4>
+                          <h4>{section.heading} <AuthorBadge origin={section.origin} /></h4>
                           <GuideBody className="small" text={section.body} />
                         </div>
                       ))}
@@ -660,7 +698,10 @@ function MaterialDetailPage() {
                               Card {cardIndex + 1} of {studySet.flashcards.length}
                             </h3>
                           </div>
-                          <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
+                          <div className="row row--wrap">
+                            <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />
+                            <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
+                          </div>
                         </div>
                         <button
                           className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
@@ -690,6 +731,8 @@ function MaterialDetailPage() {
                         </div>
                       </section>
                     ) : null}
+
+                    {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
 
                     <CardReviewPanel
                       materialId={material.id}
@@ -730,7 +773,25 @@ function MaterialDetailPage() {
                     ) : null}
                   </div>
                 ) : null}
-                {studyJob ? <GeminiJobNotice job={studyJob} jobs={geminiJobs} onRetry={retryStudy} /> : null}
+                {studyJob ? (
+                  <GeminiJobNotice
+                    job={studyJob}
+                    jobs={geminiJobs}
+                    onRetry={retryStudy}
+                    onReview={setHasHerItems && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
+                  />
+                ) : null}
+                {reviewingRegeneration && studyJob?.answer && (studyJob.phase === "recovered" || studyJob.phase === "save-failed") ? (
+                  <RegenerationReviewDialog
+                    job={studyJob}
+                    materialId={material.id}
+                    onClose={() => setReviewingRegeneration(false)}
+                    onSave={async (reviewed) => {
+                      await geminiJobs.saveReviewed(studyJob.key, reviewed);
+                      setReviewingRegeneration(false);
+                    }}
+                  />
+                ) : null}
                 {canOfferGemini && geminiJobs.recovery === "failed" ? (
                   <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
                 ) : null}

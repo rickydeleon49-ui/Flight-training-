@@ -36,16 +36,19 @@ const SCHEMA15_OBJECTS = [
   'material_bookmarks', 'idx_material_bookmarks_material', 'idx_material_bookmarks_page', 'idx_material_bookmarks_hash',
   'material_operation_claims',
 ];
+// Migration 16 (OFFLINE-03a) adds four tables and an index, and adds columns to
+// ai_study_sets (schema 7) and material_bookmarks (schema 15).
+const SCHEMA16_OBJECTS = ['study_set_history', 'idx_study_set_history', 'card_version_origins', 'card_item_origins', 'practice_item_origins'];
 
-/** Each alarm's detail names schema 15 alone: migrations 1–14 and their objects still match. */
-function assertOnlySchema15(checks) {
+/** Each alarm's detail names only the later schemas 15 and 16: migrations 1–14 and their objects still match. */
+function assertOnlyLaterSchemas(checks) {
   for (const c of checks) {
-    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '15');
-    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation']);
-    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15]);
+    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '16');
+    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation', '16:manual_study']);
+    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15, 16]);
     else if (c.name === LATER_SCHEMA_ALARMS[3]) {
-      assert.deepEqual(c.detail.drift, SCHEMA15_OBJECTS);
-      assert.deepEqual(c.detail.redefinedAfterBaseline, []);
+      assert.deepEqual(c.detail.drift, ['ai_study_sets', ...SCHEMA15_OBJECTS, ...SCHEMA16_OBJECTS]);
+      assert.deepEqual(c.detail.redefinedAfterBaseline, ['ai_study_sets@16', 'material_bookmarks@16']);
     } else assert.fail(`unexpected failing check: ${c.name}`);
   }
 }
@@ -102,12 +105,12 @@ describe('distributed helper', () => {
     assert.match(refused.stderr, /runs only in a disposable repository copy/);
     const r = cli(['self-check'], RUNNER);
     const report = JSON.parse(r.stdout);
-    // The helper stays frozen at schema 14. Since migration 15 shipped in source, exactly its four
-    // live-source anchors alarm, and each names only schema 15 (the historical-ceiling alarm,
-    // in the manner of the schema-13 helper's). Every other regression must still pass.
+    // The helper stays frozen at schema 14. Since migrations 15 and 16 shipped in source, exactly its
+    // four live-source anchors alarm, and each names only those later schemas (the historical-ceiling
+    // alarm, in the manner of the schema-13 helper's). Every other regression must still pass.
     const failed = report.checks.filter(c => !c.pass);
     assert.deepEqual(failed.map(c => c.name), LATER_SCHEMA_ALARMS, failed.map(c => c.name).join('; '));
-    assertOnlySchema15(failed);
+    assertOnlyLaterSchemas(failed);
     assert.equal(r.status, 1);
     assert.equal(report.counts.failed, LATER_SCHEMA_ALARMS.length);
     assert.ok(report.counts.checks >= 97, `${report.counts.checks} checks`);
@@ -138,9 +141,9 @@ describe('full self-check reporting', () => {
     assert.equal(named('comparison: upgrade accepts its snapshots for upgrade').pass, false);
     assert.match(named('comparison: upgrade accepts its snapshots for upgrade').detail.refusal, /keyDigests lists 4 keys but the table has 5 rows/);
     assert.equal(named('contract upgrade: no receipt key is set aside outside restore').pass, false);
-    // A later-schema alarm since migration 15 (see LATER_SCHEMA_ALARMS), not caused by this edit.
+    // A later-schema alarm since migrations 15 and 16 (see LATER_SCHEMA_ALARMS), not caused by this edit.
     assert.equal(named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions').pass, false);
-    assertOnlySchema15([named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions')]);
+    assertOnlyLaterSchemas([named('anchor: the registered migrations are exactly the pinned 1–14 with their descriptions')]);
     assert.equal(named('scratch leak check: no WAL-copy scratch directory survived the run').pass, true);
     assert.doesNotMatch(result.stderr, /Error: REFUSED:|at selfCheck \(/);
   });

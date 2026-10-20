@@ -21,6 +21,11 @@ export interface ExportSelection {
   guide: boolean;
   flashcards: boolean;
   questions: boolean;
+  /**
+   * Her instructor's corrections stay private unless she includes them
+   * (OFFLINE-03 §2.6); applied before anything is written.
+   */
+  instructorCorrections?: boolean;
 }
 
 export interface ExportSource {
@@ -45,6 +50,47 @@ export const EXPORT_MESSAGES = {
   mismatch: "The exported packet would not import exactly as chosen, so it wasn't saved. Nothing was written.",
 } as const;
 
+/** Whether a set holds any of her instructor's corrections. */
+export function hasInstructorCorrections(set: AiStudySet | null): boolean {
+  return Boolean(
+    set &&
+      (set.summaryOrigin === "instructor" ||
+        set.sections.some((section) => section.origin === "instructor") ||
+        set.flashcards.some((card) => card.origin === "instructor")),
+  );
+}
+
+/** Whether a set holds items she wrote or corrected (so a packet would lose their labels). */
+export function hasHandwrittenItems(set: AiStudySet | null): boolean {
+  return Boolean(
+    set &&
+      (set.provider === "manual" ||
+        set.summaryOrigin ||
+        set.sections.some((section) => section.origin !== undefined) ||
+        set.flashcards.some((card) => card.origin !== undefined)),
+  );
+}
+
+/**
+ * What may be exported: her instructor's corrections are removed unless she
+ * chose to include them. Every export path starts here, before serializing.
+ */
+export function exportSourceFor(source: ExportSource, selection: Pick<ExportSelection, "instructorCorrections">): ExportSource {
+  const set = source.studySet;
+  if (!set || selection.instructorCorrections || !hasInstructorCorrections(set)) return source;
+  const summaryIsCorrection = set.summaryOrigin === "instructor";
+  return {
+    ...source,
+    studySet: {
+      ...set,
+      summary: summaryIsCorrection ? "" : set.summary,
+      summaryOrigin: summaryIsCorrection ? null : set.summaryOrigin,
+      sections: set.sections.filter((section) => section.origin !== "instructor"),
+      flashcards: set.flashcards.filter((card) => card.origin !== "instructor"),
+    },
+  };
+}
+
 /** What a choice of parts actually contains, for the dialog's labels and checks. */
 export function exportableParts(source: ExportSource): ExportSelection {
   const set = source.studySet;
@@ -67,12 +113,17 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection)
     first && origins.every((entry) => entry.origin === first.origin)
       ? [`${capitalize(first.origin)}.`]
       : origins.map((entry) => `${entry.what}: ${entry.origin}.`);
+  // Per-item authorship can't travel in a packet; say that some was handwritten.
+  if (set && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set)) {
+    parts.push("Some items were written or corrected by hand in Her Flight Deck, not generated.");
+  }
   parts.push("Verify everything against current FAA material, aircraft documents and an instructor.");
   return parts.join(" ");
 }
 
 function origin(provider: string, model: string): string {
   if (provider === "import") return "imported into Her Flight Deck from a study packet; not checked by the app";
+  if (provider === "manual") return "written by hand in Her Flight Deck; not checked by the app";
   return `AI-generated study aid${model ? ` (${model})` : ""}`;
 }
 
@@ -195,7 +246,8 @@ function describeErrors(errors: PacketError[]): string {
  * The packet file for the chosen parts, validated by the import's own
  * validator and checked against what an import would save.
  */
-export function exportStudyPacket(source: ExportSource, selection: ExportSelection, createdAt: Date): ExportPacketResult {
+export function exportStudyPacket(allContent: ExportSource, selection: ExportSelection, createdAt: Date): ExportPacketResult {
+  const source = exportSourceFor(allContent, selection);
   const available = exportableParts(source);
   const chosen = {
     guide: selection.guide && available.guide,

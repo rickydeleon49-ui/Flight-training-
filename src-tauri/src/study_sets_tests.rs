@@ -14,8 +14,11 @@ fn database() -> Connection {
         .unwrap();
     for m in crate::migrations() {
         conn.execute_batch(m.sql).unwrap();
-        conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (?1)", [m.version])
-            .unwrap();
+        conn.execute(
+            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+            [m.version],
+        )
+        .unwrap();
     }
     conn.execute(
         "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?1, 'Synthetic', ?2, ?2)",
@@ -70,7 +73,12 @@ fn history(conn: &Connection) -> Vec<(String, String, String)> {
 #[test]
 fn a_set_she_writes_herself_is_saved_without_history() {
     let mut conn = database();
-    let result = save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    let result = save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     assert_eq!(result.status, "saved");
     let stored = row(&mut conn);
     assert_eq!(stored["provider"], "manual");
@@ -84,11 +92,21 @@ fn a_set_she_writes_herself_is_saved_without_history() {
 #[test]
 fn an_edit_keeps_the_whole_previous_set_first() {
     let mut conn = database();
-    save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     let before = row(&mut conn);
     let mut next = manual_set();
     next["flashcards"][0]["back"] = json!("The upwind wing, always.");
-    save_on(&mut conn, &operation(2, "edit", before.clone(), next), LATER).unwrap();
+    save_on(
+        &mut conn,
+        &operation(2, "edit", before.clone(), next),
+        LATER,
+    )
+    .unwrap();
     let after = row(&mut conn);
     assert_eq!(after["generated_at"], NOW);
     assert_eq!(after["updated_at"], LATER);
@@ -104,7 +122,12 @@ fn an_edit_keeps_the_whole_previous_set_first() {
 #[test]
 fn a_change_made_elsewhere_is_refused_and_nothing_is_written() {
     let mut conn = database();
-    save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     let mut stale = row(&mut conn);
     stale["summary"] = json!("What she saw before another window saved.");
     let error = save_on(&mut conn, &operation(2, "edit", stale, manual_set()), LATER).unwrap_err();
@@ -113,7 +136,12 @@ fn a_change_made_elsewhere_is_refused_and_nothing_is_written() {
     // Creating over an existing set is stale too.
     let mut other = manual_set();
     other["title"] = json!("Another");
-    let error = save_on(&mut conn, &operation(3, "create", Value::Null, other), LATER).unwrap_err();
+    let error = save_on(
+        &mut conn,
+        &operation(3, "create", Value::Null, other),
+        LATER,
+    )
+    .unwrap_err();
     assert_eq!(error, StudySetErrorCode::StaleContent);
 }
 
@@ -122,13 +150,19 @@ fn a_retry_is_recognised_instead_of_applied_twice() {
     let mut conn = database();
     let create = operation(1, "create", Value::Null, manual_set());
     save_on(&mut conn, &create, NOW).unwrap();
-    assert_eq!(save_on(&mut conn, &create, LATER).unwrap().status, "already_saved");
+    assert_eq!(
+        save_on(&mut conn, &create, LATER).unwrap().status,
+        "already_saved"
+    );
     let before = row(&mut conn);
     let mut next = manual_set();
     next["title"] = json!("Renamed");
     let edit = operation(2, "edit", before, next);
     save_on(&mut conn, &edit, LATER).unwrap();
-    assert_eq!(save_on(&mut conn, &edit, LATER).unwrap().status, "already_saved");
+    assert_eq!(
+        save_on(&mut conn, &edit, LATER).unwrap().status,
+        "already_saved"
+    );
     assert_eq!(history(&conn).len(), 1);
     // The same id with different content is not a retry.
     let current = row(&mut conn);
@@ -144,12 +178,20 @@ fn a_retry_is_recognised_instead_of_applied_twice() {
 #[test]
 fn removing_a_set_keeps_it_in_history_until_the_material_is_deleted() {
     let mut conn = database();
-    save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     let before = row(&mut conn);
     let remove = operation(2, "remove", before.clone(), Value::Null);
     save_on(&mut conn, &remove, LATER).unwrap();
     assert_eq!(row(&mut conn), Value::Null);
-    assert_eq!(save_on(&mut conn, &remove, LATER).unwrap().status, "already_saved");
+    assert_eq!(
+        save_on(&mut conn, &remove, LATER).unwrap().status,
+        "already_saved"
+    );
     let entries = history(&conn);
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].1, "delete");
@@ -164,7 +206,12 @@ fn removing_a_set_keeps_it_in_history_until_the_material_is_deleted() {
 #[test]
 fn a_failed_write_rolls_back_the_history_row_too() {
     let mut conn = database();
-    save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     let before = row(&mut conn);
     conn.execute_batch(
         "CREATE TRIGGER fail_update BEFORE UPDATE ON ai_study_sets BEGIN SELECT RAISE(ABORT, 'injected'); END;",
@@ -172,7 +219,12 @@ fn a_failed_write_rolls_back_the_history_row_too() {
     .unwrap();
     let mut next = manual_set();
     next["title"] = json!("Never saved");
-    let error = save_on(&mut conn, &operation(2, "edit", before.clone(), next), LATER).unwrap_err();
+    let error = save_on(
+        &mut conn,
+        &operation(2, "edit", before.clone(), next),
+        LATER,
+    )
+    .unwrap_err();
     assert_eq!(error, StudySetErrorCode::StorageError);
     assert!(history(&conn).is_empty());
     assert_eq!(row(&mut conn), before);
@@ -185,7 +237,10 @@ fn a_missing_material_is_not_found() {
         "operationId": op_id(9), "materialId": "gone", "reason": "create", "expected": null, "next": manual_set(),
     }))
     .unwrap();
-    assert_eq!(save_on(&mut conn, &op, NOW).unwrap_err(), StudySetErrorCode::NotFound);
+    assert_eq!(
+        save_on(&mut conn, &op, NOW).unwrap_err(),
+        StudySetErrorCode::NotFound
+    );
 }
 
 fn retired(n: usize) -> Value {
@@ -233,31 +288,67 @@ fn malformed_operations_are_refused_before_any_database_work() {
         cases.push(op);
     };
     with(&["operationId"], json!("not-a-uuid"));
-    with(&["operationId"], json!("5E700000-0000-4000-8000-000000000001"));
+    with(
+        &["operationId"],
+        json!("5E700000-0000-4000-8000-000000000001"),
+    );
     with(&["reason"], json!("overwrite"));
     with(&["reason"], json!("edit"));
     with(&["next", "provider"], json!("other"));
     with(&["next", "summaryOrigin"], json!("gemini"));
     with(&["next", "title"], json!("x".repeat(MAX_TITLE + 1)));
     with(&["next", "summary"], json!("x".repeat(MAX_SUMMARY + 1)));
-    with(&["next", "flashcards"], json!([{"front": "", "back": "B", "sourcePage": null}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B"}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B", "sourcePage": 0}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B", "sourcePage": null, "origin": "gemini"}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B", "sourcePage": null, "replaces": "c-0"}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B", "sourcePage": null, "extra": 1}]));
-    with(&["next", "flashcards"], json!([{"front": "F", "back": "B", "sourcePage": null, "itemId": "summary"}]));
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "", "back": "B", "sourcePage": null}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B"}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B", "sourcePage": 0}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B", "sourcePage": null, "origin": "gemini"}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B", "sourcePage": null, "replaces": "c-0"}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B", "sourcePage": null, "extra": 1}]),
+    );
+    with(
+        &["next", "flashcards"],
+        json!([{"front": "F", "back": "B", "sourcePage": null, "itemId": "summary"}]),
+    );
     with(
         &["next", "sections"],
         json!([{"heading": "H", "body": "B", "itemId": "c-1"}]),
     );
-    with(&["next", "retired"], json!([{"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "x", "terms": []}]));
-    with(&["next", "retired"], json!([{"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": ["b", "a"]}]));
-    with(&["next", "retired"], json!([{"kind": "card", "itemId": "summary", "reason": "deleted", "textKey": "0".repeat(64), "terms": []}]));
-    with(&["next", "retired"], json!([
-        {"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": []},
-        {"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": []}
-    ]));
+    with(
+        &["next", "retired"],
+        json!([{"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "x", "terms": []}]),
+    );
+    with(
+        &["next", "retired"],
+        json!([{"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": ["b", "a"]}]),
+    );
+    with(
+        &["next", "retired"],
+        json!([{"kind": "card", "itemId": "summary", "reason": "deleted", "textKey": "0".repeat(64), "terms": []}]),
+    );
+    with(
+        &["next", "retired"],
+        json!([
+            {"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": []},
+            {"kind": "card", "itemId": "c", "reason": "deleted", "textKey": "0".repeat(64), "terms": []}
+        ]),
+    );
     for case in cases {
         assert_eq!(
             decode_operation(&case).unwrap_err(),
@@ -274,7 +365,12 @@ fn malformed_operations_are_refused_before_any_database_work() {
 #[test]
 fn restore_refuses_a_damaged_retirement_list_or_history_entry() {
     let mut conn = database();
-    save_on(&mut conn, &operation(1, "create", Value::Null, manual_set()), NOW).unwrap();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, manual_set()),
+        NOW,
+    )
+    .unwrap();
     crate::backup::verify_application_connection(&conn).unwrap();
     conn.execute("UPDATE ai_study_sets SET retired_json = '{}'", [])
         .unwrap();
@@ -301,8 +397,11 @@ fn a_schema_15_backup_still_restores_under_schema_16() {
         .unwrap();
     for m in crate::migrations().into_iter().filter(|m| m.version <= 15) {
         conn.execute_batch(m.sql).unwrap();
-        conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (?1)", [m.version])
-            .unwrap();
+        conn.execute(
+            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+            [m.version],
+        )
+        .unwrap();
     }
     crate::backup::verify_application_connection(&conn).unwrap();
 }
@@ -310,10 +409,8 @@ fn a_schema_15_backup_still_restores_under_schema_16() {
 #[test]
 fn an_altered_history_table_is_refused() {
     let conn = database();
-    conn.execute_batch(
-        "DROP INDEX idx_study_set_history;",
-    )
-    .unwrap();
+    conn.execute_batch("DROP INDEX idx_study_set_history;")
+        .unwrap();
     assert!(crate::backup::verify_application_connection(&conn)
         .unwrap_err()
         .contains("idx_study_set_history"));

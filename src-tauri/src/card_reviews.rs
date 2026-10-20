@@ -701,7 +701,10 @@ fn read_state(tx: &Transaction, item_id: &str) -> Check<Option<StateRow>> {
 /// A snapshot's own origin: `manual` when she wrote every card, `mixed` when
 /// she wrote some, none when all are generated or imported (`versionOrigin`).
 pub fn version_origin(items: &[CardItem]) -> Option<&'static str> {
-    let mine = items.iter().filter(|item| item.card.origin.is_some()).count();
+    let mine = items
+        .iter()
+        .filter(|item| item.card.origin.is_some())
+        .count();
     match mine {
         0 => None,
         n if n == items.len() => Some("manual"),

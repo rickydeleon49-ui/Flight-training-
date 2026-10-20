@@ -13,11 +13,17 @@ export function GeminiJobNotice({
   job,
   jobs,
   onRetry,
+  onReview,
 }: {
   job: GeminiJob;
   jobs: ReturnType<typeof useGeminiJobs>;
   /** Start again, through the usual confirmation. Absent when that is not possible now. */
   onRetry?: () => void;
+  /**
+   * Her study set holds items she wrote, corrected or deleted: the new one is
+   * saved only after she reviews it (OFFLINE-03a), never as is.
+   */
+  onReview?: () => void;
 }) {
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
@@ -57,14 +63,22 @@ export function GeminiJobNotice({
               : job.local
                 ? `A completed new ${what} is ready for this document. It has not been saved yet.`
                 : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
-            Saving it replaces what is saved now; completed practice history is kept.
+            {onReview
+              ? "Your study guide has items you wrote, corrected or deleted, so you choose what to keep before anything is saved."
+              : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>
         {job.answer && "sourceNotes" in job.answer ? <p className="tiny">{job.answer.sourceNotes}</p> : null}
         <div className="row row--wrap">
-          <Button size="small" disabled={busy} onClick={() => void jobs.saveAgain(job.key)}>
-            Save the new {what}
-          </Button>
+          {onReview ? (
+            <Button size="small" disabled={busy} onClick={onReview}>
+              Review the new {what}
+            </Button>
+          ) : (
+            <Button size="small" disabled={busy} onClick={() => void jobs.saveAgain(job.key)}>
+              Save the new {what}
+            </Button>
+          )}
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard it
           </Button>
@@ -80,9 +94,15 @@ export function GeminiJobNotice({
           {job.error}
         </p>
         <div className="row row--wrap">
-          <Button size="small" disabled={busy} onClick={() => void jobs.saveAgain(job.key)}>
-            Save again
-          </Button>
+          {onReview ? (
+            <Button size="small" disabled={busy} onClick={onReview}>
+              Review again
+            </Button>
+          ) : (
+            <Button size="small" disabled={busy} onClick={() => void jobs.saveAgain(job.key)}>
+              Save again
+            </Button>
+          )}
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard the new {what}
           </Button>

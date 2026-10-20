@@ -105,3 +105,24 @@ describe("a printable handout", () => {
     expect(escapeHtml(`<a href="x" title='y'>&</a>`)).toBe("&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;&amp;&lt;/a&gt;");
   });
 });
+
+describe("authorship in a handout (OFFLINE-03a)", () => {
+  const withOrigins: AiStudySet = {
+    ...set,
+    summaryOrigin: "user",
+    flashcards: [
+      { ...set.flashcards[0]!, itemId: "c-1", origin: "user" },
+      { front: "Corrected?", back: "Yes, by my CFI.", sourcePage: null, itemId: "c-2", origin: "instructor" },
+    ],
+  };
+  const source = { material: { title: "Weather" }, studySet: withOrigins, practiceTest: null };
+
+  it("labels who wrote each item and leaves instructor corrections out by default", () => {
+    const html = buildHandoutHtml(source, { guide: true, flashcards: true, questions: false }, { answerKey: false }, new Date("2026-10-19T12:00:00Z"));
+    expect(html).toContain("(written by hand)");
+    expect(html).not.toContain("by my CFI");
+    const included = buildHandoutHtml(source, { guide: true, flashcards: true, questions: false, instructorCorrections: true }, { answerKey: false }, new Date("2026-10-19T12:00:00Z"));
+    expect(included).toContain("Yes, by my CFI.");
+    expect(included).toContain("(instructor correction)");
+  });
+});

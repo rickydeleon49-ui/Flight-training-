@@ -137,7 +137,10 @@ pub fn is_item_id(value: &str) -> bool {
 }
 
 fn is_lower_hex_64(value: &str) -> bool {
-    value.len() == 64 && value.bytes().all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
 }
 
 /// Text whose trimmed length is `min..=max` code points (`trimmedCodePoints`).
@@ -244,14 +247,18 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
         let source_page = match map.get("sourcePage") {
             Some(Value::Null) => Value::Null,
             Some(Value::Number(n))
-                if n.as_i64().is_some_and(|p| (1..=MAX_SOURCE_PAGE).contains(&p)) =>
+                if n.as_i64()
+                    .is_some_and(|p| (1..=MAX_SOURCE_PAGE).contains(&p)) =>
             {
                 json!(n.as_i64())
             }
             _ => return invalid(),
         };
         let mut stored = Map::new();
-        stored.insert("front".into(), json!(bounded(map.get("front"), 1, MAX_FRONT)?));
+        stored.insert(
+            "front".into(),
+            json!(bounded(map.get("front"), 1, MAX_FRONT)?),
+        );
         stored.insert("back".into(), json!(bounded(map.get("back"), 1, MAX_BACK)?));
         stored.insert("sourcePage".into(), source_page);
         stored.extend(identity(map, ids)?);
@@ -321,7 +328,12 @@ pub fn validate_retired(value: &Value) -> Check<Value> {
             }
             previous = Some(term);
         }
-        let key = (kind.clone(), item_id.clone(), reason.clone(), text_key.clone());
+        let key = (
+            kind.clone(),
+            item_id.clone(),
+            reason.clone(),
+            text_key.clone(),
+        );
         if keys.contains(&key) {
             return invalid();
         }
@@ -697,8 +709,12 @@ pub fn save_study_set_at(root: &Path, operation: &Value) -> Result<SaveResult, S
         .map_err(|_| StudySetErrorCode::StorageError.error())?;
     conn.pragma_update(None, "foreign_keys", "ON")
         .map_err(|_| StudySetErrorCode::StorageError.error())?;
-    save_on(&mut conn, &operation, &crate::card_reviews::format_iso_ms(now_ms()))
-        .map_err(StudySetErrorCode::error)
+    save_on(
+        &mut conn,
+        &operation,
+        &crate::card_reviews::format_iso_ms(now_ms()),
+    )
+    .map_err(StudySetErrorCode::error)
 }
 
 fn now_ms() -> i64 {

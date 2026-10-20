@@ -1208,7 +1208,10 @@ fn origin_vectors_keep_legacy_hashes_and_match_independent_values() {
             vector["canonical"].as_str().unwrap()
         );
         let version = card_version(material, &cards);
-        assert_eq!(version.content_hash, vector["contentHash"].as_str().unwrap());
+        assert_eq!(
+            version.content_hash,
+            vector["contentHash"].as_str().unwrap()
+        );
         assert_eq!(version.version_id, vector["versionId"].as_str().unwrap());
         assert_eq!(
             version.items[0].item_id,
@@ -1242,7 +1245,8 @@ fn origin_cards_json(cards: &[CanonicalCard]) -> String {
         &cards
             .iter()
             .map(|c| {
-                let mut value = json!({"front": c.front, "back": c.back, "sourcePage": c.source_page});
+                let mut value =
+                    json!({"front": c.front, "back": c.back, "sourcePage": c.source_page});
                 if let Some(origin) = &c.origin {
                     value["origin"] = json!(origin);
                 }

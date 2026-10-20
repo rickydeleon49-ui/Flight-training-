@@ -37,6 +37,8 @@ import {
   type StructuredImportSaveOperation,
 } from "../db";
 import { AtomicPersistenceUnsupportedError } from "../persistenceErrors";
+import { MAX_SOURCE_PAGE } from "@/logic/cardIdentity";
+import { needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   decodeStoredRow,
   SET_COLUMNS,
@@ -208,6 +210,14 @@ const mapAiStudySet = (row: AiRow): AiStudySet => ({
   generatedAt: toText(row.generated_at),
   updatedAt: toText(row.updated_at),
 });
+
+/** Said if anything tries to replace her own items without the regeneration review. */
+export const REVIEW_FIRST_MESSAGE =
+  "This study guide has items you wrote, corrected or deleted, so a new one is saved only after you review it. Nothing has been saved.";
+
+/** A stored row, or a history entry, as the set it shows. */
+export const storedStudySet = (materialId: Id, row: StoredSetRow): AiStudySet =>
+  mapAiStudySet({ source_material_id: materialId, ...row });
 
 const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
   sourceMaterialId: row.source_material_id,
@@ -382,6 +392,9 @@ export function documentRepository(db: SqlDatabase) {
      */
     async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">): Promise<void> {
       const current = await readStoredSet(input.sourceMaterialId);
+      if (current && needsRegenerationReview(storedStudySet(input.sourceMaterialId, current))) {
+        throw new Error(REVIEW_FIRST_MESSAGE);
+      }
       const retired = current ? validateRetiredList(JSON.parse(current.retired_json)) : [];
       await saveStudySet({
         operationId: newId(),
@@ -393,7 +406,12 @@ export function documentRepository(db: SqlDatabase) {
           summary: input.summary,
           summaryOrigin: null,
           sections: input.sections.map(({ heading, body }) => ({ heading, body })),
-          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage })),
+          // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
+          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({
+            front,
+            back,
+            sourcePage: Number.isInteger(sourcePage) && sourcePage! >= 1 && sourcePage! <= MAX_SOURCE_PAGE ? sourcePage : null,
+          })),
           sourceNotes: input.sourceNotes,
           provider: "gemini",
           model: input.model,
@@ -411,6 +429,12 @@ export function documentRepository(db: SqlDatabase) {
 
     /** The set exactly as stored, to name it as the one a save replaces. */
     readStoredStudySet: readStoredSet,
+
+    /** The set she is about to edit: as stored (for the save) and as shown. */
+    async readStudySetForEdit(materialId: Id): Promise<{ stored: StoredSetRow; set: AiStudySet } | null> {
+      const stored = await readStoredSet(materialId);
+      return stored ? { stored, set: storedStudySet(materialId, stored) } : null;
+    },
 
     /** One atomic study-set save, history first (OFFLINE-03a). */
     saveStudySet,

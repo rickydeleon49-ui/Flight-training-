@@ -1,3 +1,23 @@
+## OFFLINE-03a implemented locally (Claude); Codex review and exact-head CI pending — 19 October 2026
+
+**Role change.** At the owner's request, Claude took over OFFLINE-03a from Codex. Claude reviewed PR #236's authoring core locally (round 1 RED: an instructor correction could be relabelled and exported by default; three minor findings) and fixed all four. The owner approved proposal revision 5: ordinary rewrites also enter the retirement list. Branch: `claude/offline-03a-core-fixes`, which supersedes #236. [Report](OFFLINE_03A_REPORT_2026-10-19.md); [reviewer prompt](OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md).
+
+**What she can now do:**
+- write her own study guide;
+- edit, correct or delete its summary, sections and cards;
+- see and restore Previous versions;
+- review a regenerated guide that would otherwise replace her items: Keep my items is the default, and what she deleted is held back.
+
+**How it is built:**
+- **Migration 0016:** add-only.
+- **One atomic save in both engines:** the whole previous set goes to history first; a change made elsewhere is refused as stale; a retry is recognised.
+- **Card review snapshots:** they carry who wrote each card. Legacy hashes are unchanged, checked against independent vectors.
+- **Exports:** instructor corrections stay out unless she includes them.
+
+**Local gates:** native 844 passed, clippy/fmt exit 0, schema-14 helper 26/26; frontend in the report. Nothing pushed yet, nothing merged, enabled or released.
+
+**Next:** Codex reviews locally, then one push for exact-head CI and a PR; then 03b practice questions. The FLAKE-CR-01, 02c p50, extraction/search and installed/minimum-spec gates remain open. Entries below are history.
+
 ## OFFLINE-03a authoring rules implemented; persistence/editor still pending — 19 October 2026
 
 PRs #234 and #235 were reviewed/revalidated under the owner’s direct merge request and merged with green exact-head CI (`4ff7c9d`, `fc3ef34`); author review was disclosed rather than represented as independent-model approval. The first bounded OFFLINE-03a implementation is on `codex/offline-03a-authoring-core`. It prepares immutable add/edit/correct/delete plans with prior logical content retained, stable IDs/source pages, retirement overflow refusal, exact/near-match review, truthful origin labels and private-by-default instructor export selection. **55 focused cases pass; full frontend 3,835 passed / 6 skipped with zero unhandled errors, and typecheck/build/hygiene pass.** This is an in-process core, not a raw parser, persisted history or finished manual-editing feature. No production screen imports it and no migration/release flag changed. [Report](OFFLINE_03A_AUTHORING_CORE_REPORT_2026-10-19.md); [reviewer assignment](OFFLINE_03A_AUTHORING_CORE_REVIEWER_PROMPT_2026-10-19.md).

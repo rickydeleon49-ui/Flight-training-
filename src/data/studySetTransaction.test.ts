@@ -296,3 +296,28 @@ describe("who wrote each card, in the review snapshot", () => {
     await expect(validateApplicationDatabase(query, ref)).rejects.toThrow(/origin does not match/);
   });
 });
+
+it("a Gemini page reference outside the PDF range is saved as no page instead of refusing the guide", async () => {
+  const db = await createNodeSqliteDatabase();
+  opened.push(db);
+  await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?, 'Synthetic', ?, ?)", [M, T0, T0]);
+  const docs = documentRepository(db);
+  await docs.saveAiStudySet({
+    sourceMaterialId: M, title: "G", summary: "", sections: [], sourceNotes: "", model: "m",
+    flashcards: [{ front: "A?", back: "B", sourcePage: 0 }, { front: "C?", back: "D", sourcePage: 1_200 }, { front: "E?", back: "F", sourcePage: 7 }],
+  });
+  expect((await docs.listAiStudySets())[0]!.flashcards.map((card) => card.sourcePage)).toEqual([null, null, 7]);
+});
+
+it("a plain Gemini save refuses to replace a set holding her items, whoever calls it", async () => {
+  const db = await createNodeSqliteDatabase();
+  opened.push(db);
+  await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?, 'Synthetic', ?, ?)", [M, T0, T0]);
+  const docs = documentRepository(db);
+  await docs.saveStudySet(op("create", null, manualSet()));
+  const before = await docs.readStoredStudySet(M);
+  await expect(
+    docs.saveAiStudySet({ sourceMaterialId: M, title: "G", summary: "S", sections: [], flashcards: [], sourceNotes: "", model: "m" }),
+  ).rejects.toThrow(/only after you review it/);
+  expect(await docs.readStoredStudySet(M)).toEqual(before);
+});
