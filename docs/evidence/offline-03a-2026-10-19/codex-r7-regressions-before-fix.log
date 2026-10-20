@@ -1,0 +1,66 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-03a-r7-baseline-m43mimu4
+
+(node:3757) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > a study guide she writes herself > starts on a material with no file, is labelled as hers, and takes her cards
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > an edit is marked as hers and keeps the earlier wording, which she can restore
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > an instructor's correction replaces the original and stays out of exports by default
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed save keeps her text, and saving again records one change
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a change saved elsewhere after she opened the dialog is refused, not overwritten
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > regenerating over her items waits for her review, holds back what she deleted, and keeps her items
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a plain save never replaces her items, even without the page asking
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed reviewed save keeps the dialog and her choices open; saving again saves once
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > restoring is refused when the guide changed after she opened the confirmation
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed is recognised even after she closes and reopens the review
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a regenerated card with a page outside the PDF range is reviewed and saved with no page
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > the review shows each item's full text and the earlier wording it resembles before she chooses
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before a restart is recognised after the restart, not applied again
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal could not write it down is recognised after a restart, not saved again
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal would not forget the answer is recognised after a restart, not saved again
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > re-confirming a committed reviewed save keeps its checkpoint until the journal acknowledges it
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a false answer for an entry another window already removed finishes the discard and clears her checkpoint 5043ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a false answer the journal cannot be read back for keeps the discard failed and her checkpoint 5044ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a false answer for an entry another window already removed finishes the discard and clears her checkpoint
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:606:3
+    604|   }
+    605|
+    606|   it("a false answer for an entry another window already removed finis…
+       |   ^
+    607|     await aReviewSheLeftUncommitted();
+    608|     // The journal says `false`, which it also says for a record it ca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a false answer the journal cannot be read back for keeps the discard failed and her checkpoint
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:622:3
+    620|   });
+    621|
+    622|   it("a false answer the journal cannot be read back for keeps the dis…
+       |   ^
+    623|     await aReviewSheLeftUncommitted();
+    624|     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(fa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 skipped (20)
+   Start at  18:46:56
+   Duration  10.87s (transform 362ms, setup 0ms, import 480ms, tests 10.09s, environment 224ms)
+
+
+exit 1

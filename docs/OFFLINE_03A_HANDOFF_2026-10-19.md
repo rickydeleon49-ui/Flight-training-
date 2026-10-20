@@ -2,7 +2,15 @@
 
 This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. Then read [the report](OFFLINE_03A_REPORT_2026-10-19.md) and [the reviewer prompt](OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md).
 
-## CURRENT STOP POINT — Codex local review GREEN; integrate after exact-head CI
+## CURRENT STOP POINT — round-7 follow-up GREEN; fresh CI before merge
+
+- Owner: **Qwen implements → Codex reviews/tests and loops corrections → Codex merges after exact-head green CI**. No repeated workflow sign-off. Earlier role/stop-point text is historical.
+- Latest code `d6ce015370dae0acfa81ba4b18a80c46925640cf`; [current source acceptance](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md): **166 focused; 3,927 full frontend passed / 6 skipped**; typecheck/build/lock/whitespace pass. The two new cases fail against prior published `72f2be2`.
+- Confirmed absence after false acknowledgement completes cleanup; a rejection, present entry or failed journal read retains the operation. All earlier lost-response/restart protections remain.
+- PR #237 is the replacement; #236 is closed without branch deletion. Superseded CI 39353697326 was cancelled after the new P2 was reproduced, before merge. Publish this correction and wait for fresh exact-head CI, then guarded merge and main inclusion verification.
+- After verified merge, create/reuse `/Users/rickymac/code/Flight-training-offline-03b`, branch `qwen/offline-03b`, from accepted main. A model-neutral planning prompt is at `/Users/rickymac/code/.gen-rel-loop/offline/OFFLINE_03B_PLAN_PROMPT.template.md` (fill identity placeholders). Codex reviews that storage/API plan before Qwen implements the coupled backend/UI. Preserve owner decisions, defer03c and do not touch real profiles, keys or releases.
+
+## Historical local acceptance before the round-7 follow-up
 
 The owner now directs **Qwen implementation → Codex review/test → correction loop → Codex merge after green exact-head CI**. Earlier ownership and stop-point instructions below are historical and superseded by this entry.
 

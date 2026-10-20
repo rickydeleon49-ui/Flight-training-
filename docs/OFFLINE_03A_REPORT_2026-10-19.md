@@ -180,6 +180,10 @@ The reviewed operation was being deleted as soon as a save reported success, bef
 
 Four new integration tests fail on the original source; six affected suites pass 164 tests and the full frontend passes 3,925 with 6 skipped. Typecheck, build, lock and whitespace checks pass. [Exact source, evidence, integration boundary and next assignment](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md). Earlier RED reports and failed receipts remain unchanged.
 
+## Codex review, round 7: already-absent entry, corrected and locally GREEN
+
+After initial publication, Codex reproduced a false acknowledgement for a journal entry another window had already removed. Qwen's final correction (`d6ce015`) verifies absence before completing cleanup, preserves failed reads/present entries, and returns immediately after a rejected acknowledgement. Five failures in the intermediate patch were corrected without changing timeouts or weakening assertions. The two new maintained cases fail on prior published `72f2be2`; final six-suite gate passes 166 and full frontend passes 3,927 with 6 skipped. Exact-head CI must be fresh for this correction; the superseded run was cancelled before any merge. [Current acceptance and evidence](OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md).
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

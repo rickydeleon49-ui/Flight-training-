@@ -1,3 +1,11 @@
+## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
+
+Qwen implements; Codex independently reviews/tests, loops corrections and integrates after green CI on the exact current head. The owner has authorized this ongoing workflow and gated merges; no repeated workflow sign-off is needed. Tool sandbox boundaries still apply.
+
+Before merging PR #237, Codex reproduced an already-absent journal case and returned it to Qwen. The corrected provider now distinguishes confirmed absence from a present or unreadable journal and preserves immediate failure/retry on rejected acknowledgement. Code: `d6ce015`. **166 focused and 3,927 full frontend tests passed / 6 skipped; typecheck/build/lock/whitespace pass.** Two new cases fail against prior published `72f2be2`. Prior failed runs and cancelled superseded CI are preserved. [Current acceptance report](docs/OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md).
+
+**Integration:** PR #237 replaces closed draft #236. Wait for green CI on its corrected exact head, merge with a head-match guard, and verify main inclusion. Then start isolated **OFFLINE-03b practice-question authoring** from accepted main; a bounded implementation-plan assignment is prepared. Keep 03c deferred, extraction/search dormant and existing release/installed/performance gates open. Entries below are history.
+
 ## OFFLINE-03a local source review GREEN; Qwen implements, Codex reviews and integrates — 19 October 2026
 
 **Current owner workflow:** Qwen implements; Codex independently reviews and tests, loops corrections, and merges only after accepted work and green CI on the exact submitted head. This supersedes earlier role defaults for this roadmap tranche.

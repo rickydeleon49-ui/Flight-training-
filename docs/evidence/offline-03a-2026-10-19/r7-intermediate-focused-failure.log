@@ -1,0 +1,442 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+(node:3412) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3413) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+······························x··x·x······xx·······
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R3: an acknowledgement that fails is retried later
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"page-header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"page-header__title"[39m
+            [36m>[39m
+              [0mMaterial A[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"page-header__subtitle"[39m
+            [36m>[39m
+              [0mStudy Guide · General[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"button button--ghost"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/study"[39m
+            [36m>[39m
+              [0mBack[0m
+            [36m</a>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEdit[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--danger"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDelete[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"detail__column"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"card"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"card__body"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row file-row--actions"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"file-row__details"[39m
+                  [36m>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"small truncate"[39m
+                    [36m>[39m
+                      [0mmat-a.pdf[0m
+                    [36m</p>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"tiny"[39m
+                    [36m>[39m
+                      [0m1 KB[0m
+                    [36m</p>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"file-row__actions"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"button button--secondary"[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [36m<svg[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mfill[39m=[32m"none"[39m
+                        [33mfocusable[39m=[32m"false"[39m
+                        [33mheight[39m=[32m"15"[39m
+                        [33mstroke[39m=[32m"currentColor"[39m
+                        [33mstroke-linecap[39m=[32m"round"[39m
+                        [33mstroke-linejoin[39m=[32m"round"[39m
+                        [33mstroke-width[39m=[32m"1.6"[39m
+                        [33mviewBox[39m=[32m"0 0 24 24"[39m
+                        [33mwidth[39m=[32m"15"[39m
+                      [36m>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                        [36m/>[39m
+                      [36m</svg>[39m
+                      [0m Open[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"card"[39m
+            [36m>[39m
+              [36m<header[39m
+                [33mclass[39m=[32m"card__header"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"card__eyebrow"[39m
+                  [36m>[39m
+                    [0mPages[0m
+                  [36m</p>[39m
+                  [36m<h2[39m
+                    [33mclass[39m=[32m"card__title"[39m
+                  [36m>[39m
+                    [0mFind your place[0m
+                  [36m</h2>[39m
+                [36m</div>[39m
+              [36m</header>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"card__body"[39m
+              [36m>[39m
+                [36m<section[39m
+                  [33maria-labelledby[39m=[32m"_r_eh_"[39m
+                  [33mclass[39m=[32m"stack stack--3"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"visually-hidden"[39m
+                    [33mid[39m=[32m"_r_eh_"[39m
+                  [36m>[39m
+                    [0mPages of [0m
+                    [0mMaterial A[0m
+                  [36m</h4>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny muted"[39m
+                  [36m>[39m
+                    [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                  [36m</p>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"stack stack--2"[39m
+                  [36m>[39m
+                    [36m<div...
+ ❯ src/pages/StudyLibrary/MaterialDetailJobs.test.ts:476:45
+    474|       for (const handler of jobEvents) handler({ id: "job-555555555555…
+    475|     });
+    476|     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(2));
+       |                                             ^
+    477|     expect(acknowledge).toHaveBeenLastCalledWith("job-5555555555555555…
+    478|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/pages/StudyLibrary/MaterialDetailJobs.test.ts > Gemini generations outlive their page (GEN-REL-02) > R9: after a save, a failed acknowledgement is retried on its own, without any event
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"page-header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"page-header__title"[39m
+            [36m>[39m
+              [0mMaterial A[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"page-header__subtitle"[39m
+            [36m>[39m
+              [0mStudy Guide · General[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"row"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"button button--ghost"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/study"[39m
+            [36m>[39m
+              [0mBack[0m
+            [36m</a>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--secondary"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEdit[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"button button--danger"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mDelete[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"detail__column"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"card"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"card__body"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row file-row--actions"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"18"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.6"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"18"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"file-row__details"[39m
+                  [36m>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"small truncate"[39m
+                    [36m>[39m
+                      [0mmat-a.pdf[0m
+                    [36m</p>[39m
+                    [36m<p[39m
+                      [33mclass[39m=[32m"tiny"[39m
+                    [36m>[39m
+                      [0m1 KB[0m
+                    [36m</p>[39m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"file-row__actions"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"button button--secondary"[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [36m<svg[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mfill[39m=[32m"none"[39m
+                        [33mfocusable[39m=[32m"false"[39m
+                        [33mheight[39m=[32m"15"[39m
+                        [33mstroke[39m=[32m"currentColor"[39m
+                        [33mstroke-linecap[39m=[32m"round"[39m
+                        [33mstroke-linejoin[39m=[32m"round"[39m
+                        [33mstroke-width[39m=[32m"1.6"[39m
+                        [33mviewBox[39m=[32m"0 0 24 24"[39m
+                        [33mwidth[39m=[32m"15"[39m
+                      [36m>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                        [36m/>[39m
+                        [36m<path[39m
+                          [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                        [36m/>[39m
+                      [36m</svg>[39m
+                      [0m Open[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</section>[39m
+            [36m<section[39m
+              [33mclass[39m=[32m"card"[39m
+            [36m>[39m
+              [36m<header[39m
+                [33mclass[39m=[32m"card__header"[39m
+              [36m>[39m
+                [36m<div>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"card__eyebrow"[39m
+                  [36m>[39m
+                    [0mPages[0m
+                  [36m</p>[39m
+                  [36m<h2[39m
+                    [33mclass[39m=[32m"card__title"[39m
+                  [36m>[39m
+                    [0mFind your place[0m
+                  [36m</h2>[39m
+                [36m</div>[39m
+              [36m</header>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"card__body"[39m
+              [36m>[39m
+                [36m<section[39m
+                  [33maria-labelledby[39m=[32m"_r_ki_"[39m
+                  [33mclass[39m=[32m"stack stack--3"[39m
+                [36m>[39m
+                  [36m<h4[39m
+                    [33mclass[39m=[32m"visually-hidden"[39m
+                    [33mid[39m=[32m"_r_ki_"[39m
+                  [36m>[39m
+                    [0mPages of [0m
+                    [0mMaterial A[0m
+                  [36m</h4>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny muted"[39m
+                  [36m>[39m
+                    [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                  [36m</p>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"stack stack--2"[39m
+                  [36m>[39m
+                    [36m<div...
+ ❯ waitFor.timeout src/pages/StudyLibrary/MaterialDetailJobs.test.ts:623:45
+    621|     await screen.findByRole("heading", { name: "Synthetic guide" });
+    622|     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(1));
+    623|     await waitFor(() => expect(acknowledge).toHaveBeenCalledTimes(2), …
+       |                                             ^
+    624|     expect(acknowledge).toHaveBeenLastCalledWith("job-7777777777777777…
+    625|   }, 10000);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal could not write it down is recognised after a restart, not saved again
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:501:48
+    499|       // Saved, but the journal is not finished with its answer: her e…
+    500|       // operation stays on this computer where a restart can find it.
+    501|       expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+       |                                                ^
+    502|       const before = herItems(await savedSet());
+    503|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > re-confirming a committed reviewed save keeps its checkpoint until the journal acknowledges it
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:541:46
+    539|     expect((await history()).map((row) => row.reason)).toEqual(["edit"…
+    540|     // Confirmed, not acknowledged: her operation is still needed.
+    541|     expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+       |                                              ^
+    542|     // The retried acknowledgement is what finishes the job.
+    543|     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:547:3
+    545|   });
+    546|
+    547|   it("discarding an answer she never committed is recorded, and cleane…
+       |   ^
+    548|     const review = await herEditThenRegenerate();
+    549|     let failures = 1;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 46 passed (51)
+   Start at  18:41:55
+   Duration  14.39s (transform 789ms, setup 0ms, import 1.06s, tests 21.99s, environment 509ms)
+
+
+exit 1

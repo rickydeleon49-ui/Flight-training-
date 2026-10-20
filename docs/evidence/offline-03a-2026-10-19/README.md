@@ -90,3 +90,21 @@ The negative baseline source copy was created from `git archive 7562324 src src-
 Native source has been unchanged since `f02e850`; original native 844/11-ignored, clippy and fmt receipts are reused. Schema helper is rerun after tracker/manifest changes and recorded separately. Exact-head CI and installed behavior are separate gates.
 
 **Schema helper after documentation updates:** `r7-schema14-helper-sandbox.log` records 25/26 and exit 1: sandbox `pgrep` errors preceded the expected refusal line. `r7-schema14-helper-host.log` records the same synthetic suite with host process visibility: 26/26, exit 0. No profile operation ran. `r7-commands.json` records focused/full/build/typecheck/lock/whitespace/helper commands and exits. The rebound 20-file manifest and all receipt checksums were verified before publication.
+
+## Round-7 already-absent journal correction (latest code `d6ce015370dae0acfa81ba4b18a80c46925640cf`)
+
+The initial PR head `72f2be2` was not merged. Codex independently reproduced an already-removed journal entry leaving discard-failed; the PR stayed draft and CI run 39353697326 was cancelled as superseded (terminal conclusion verified: cancelled, no failed steps). Qwen corrected it. Its intermediate fallback incorrectly handled rejection too: **5 failed / 46 passed** in `r7-intermediate-focused-failure.log`; preserved, then fixed. No test weakening or timeout changes.
+
+| Receipt | Result |
+| --- | --- |
+| `codex-review-r7-result.md`, `codex-r7-independent-before-fix.log` | original P2 and independently failing UI diagnostic |
+| `codex-r7-regressions-before-fix.log` | two new maintained cases over `72f2be2`: 2 expected failures, 18 unrelated skipped, exit1 |
+| `r8-focused.log`, `r8-typecheck.log` | 166 passed; typecheck exit0 |
+| `r8-independent-absent.log` | independent missing-entry case passed |
+| `r8-vitest-full.log` | 3,927 passed / 6 skipped; no unhandled errors reported; exit0 |
+| `r8-build.log`, `r8-cargo-lock.log`, `r8-diff-check.log` | exit0 |
+| `r8-source.json`, `r8-commands.json` | final code identity, source hashes and current commands/exits |
+
+The two new baseline cases use the same owned temporary-source-copy method as round6, with production at `72f2be2` and the maintained editing test file overlaid. Command: Node22 vitest run `src/pages/StudyLibrary/StudySetEditing.test.ts -t 'a false answer' --reporter=verbose`. Both old-source cases time out waiting for cleanup the prior code never completes. Source stayed unchanged during the fresh gate. False-with-present fixtures now include the actual ready journal record after regeneration; they retain every existing safety assertion. The native restore quarantine's hidden old jobs are treated according to its existing logical journal view, without native/profile changes. Native844/11-ignored receipts remain applicable. Final schema-helper rerun follows tracker/manifest rebinding.
+
+**Final round-7 helper:** `r8-schema14-helper-host.log` records 26/26, exit0, after the latest tracker/source-manifest rebinding. `r8-commands.json` includes that exact command and boundary. All73 receipt checksums and all20 frozen inventory entries match.

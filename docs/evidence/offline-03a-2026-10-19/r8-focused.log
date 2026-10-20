@@ -1,0 +1,19 @@
+command: ["/opt/homebrew/opt/node@22/bin/node", "node_modules/vitest/vitest.mjs", "run", "src/state/reviewedSaveCheckpoint.test.ts", "src/pages/StudyLibrary/StudySetEditing.test.ts", "src/pages/StudyLibrary/MaterialDetailJobs.test.ts", "src/data/studySetTransaction.test.ts", "src/logic/studySetEditing.test.ts", "src/logic/studyAuthoring.test.ts", "--reporter=dot"]
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+················································································(node:3715) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+····(node:3714) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3713) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+··················································································
+
+ Test Files  6 passed (6)
+      Tests  166 passed (166)
+   Start at  18:46:17
+   Duration  10.59s (transform 1.03s, setup 0ms, import 1.48s, tests 18.11s, environment 543ms)
+
+
+exit 0
