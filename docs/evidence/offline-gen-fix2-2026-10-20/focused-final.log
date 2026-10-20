@@ -1,0 +1,277 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --manifest-path src-tauri/Cargo.toml gemini -- --nocapture
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.76s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 231 tests
+test extraction::service::tests::extraction_never_reaches_gemini_or_the_key ... ok
+test debrief::tests::listed_modules_do_not_reference_reqwest_directly_outside_gemini ... ok
+test gemini::batches::tests::failed_rate_checkpoint_keeps_prior_allowance_and_card_ledger ... ok
+Could not forget Gemini jobs after restoring: synthetic failure to clear the Gemini jobs; will try again at the next launch.
+test gemini::batches::tests::one_active_budget_covers_later_batches_and_failed_final_journal_write_keeps_draft ... ok
+test gemini::batches::tests::remaining_allowance_is_checkpointed_from_monotonic_time ... ok
+test backup::tests::a_committed_restore_forgets_gemini_jobs_even_after_an_interruption ... ok
+test gemini::batches::tests::removing_managed_source_while_response_is_held_keeps_draft_unpublished ... ok
+test gemini::batches::tests::empty_source_and_transport_admission_cap_dispatch_nothing ... ok
+test gemini::batches::tests::source_checks_reject_unsafe_stored_paths ... ok
+test gemini::batches::tests::source_checks_use_managed_nested_paths_and_ignore_app_root_decoys ... ok
+test gemini::batches::tests::targets_default_and_invalid_counts ... ok
+test gemini::batches::tests::selected_policy_is_persisted_and_used_by_card_reservations ... ok
+test gemini::batches::tests::source_change_between_batches_and_resume_are_refused ... ok
+test gemini::cancel_flow_tests::a_job_that_finished_first_keeps_its_answer_and_cancel_says_so ... ok
+test gemini::cancel_flow_tests::a_cancel_recorded_first_wins_over_an_answer_that_has_just_arrived ... ok
+test gemini::batches::tests::resumed_allowance_cannot_exceed_persisted_remaining_time ... ok
+test gemini::cancel_flow_tests::cancelling_during_the_upload_never_reaches_generation ... ok
+test gemini::cancel_flow_tests::cancelling_while_gemini_works_stops_the_job_and_sends_nothing_more ... ok
+test gemini::batches::tests::cancellable_drop_restart_resume_preserves_ledger_and_unique_batches ... ok
+test gemini::cancel_flow_tests::progress_names_its_job_and_reports_the_stages_actually_reached ... ok
+test gemini::cancel_flow_tests::r1_a_cancel_the_moment_the_job_is_announced_stops_it_before_any_work ... ok
+test gemini::cancel_flow_tests::r1_a_refused_file_check_names_its_own_stage_and_status ... ok
+test gemini::cancel_flow_tests::r3_a_cancel_by_request_after_the_job_finished_reports_its_outcome ... ok
+test gemini::cancel_flow_tests::r3_a_cancel_by_request_before_the_job_begins_is_held_and_nothing_is_sent ... ok
+MEASURE target=20 upload_bytes=427 source_bytes=427 generation_requests=3 all_http=7 admission_checks=137
+test gemini::batches::tests::durable_request_cap_retry_exhaustion_and_shared_deadline ... ok
+test gemini::cancel_flow_tests::r3_a_cancel_by_request_reaches_a_running_job_without_knowing_its_id ... ok
+test gemini::cancel_flow_tests::r5_a_cancel_recorded_as_gemini_is_about_to_be_asked_prevents_the_request ... ok
+test gemini::cancel_flow_tests::r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_generation ... ok
+test gemini::generation_tests::a_copy_deleted_at_google_is_detected_before_reuse_and_prepared_once_more ... ok
+test gemini::generation_tests::a_copy_lost_during_generation_is_prepared_again_exactly_once ... ok
+test gemini::generation_tests::a_different_selected_source_or_key_never_shares_a_prepared_copy ... ok
+test gemini::generation_tests::a_failed_generation_is_recorded_and_frees_the_lock ... ok
+test gemini::cancel_flow_tests::r5_a_cancel_recorded_as_the_upload_begins_prevents_the_upload ... ok
+MEASURE guide_then_test pdf_bytes=3466 upload_requests=1 uploaded_bytes=3466 generate_requests=2 generate_body_bytes=3157 legacy_two_inline_requests_bytes~=533536 lookups=1
+test gemini::generation_tests::a_guide_then_a_practice_test_upload_the_pdf_once_and_refer_to_it ... ok
+test gemini::generation_tests::a_finished_generation_is_checkpointed_with_its_source_identity_and_nothing_secret ... ok
+test gemini::generation_tests::a_locally_expired_copy_is_not_reused_and_is_prepared_once_more ... ok
+test gemini::generation_tests::a_lookup_failure_is_reported_without_uploading_again ... ok
+test gemini::generation_tests::a_processing_file_is_waited_for_boundedly_before_it_is_used ... ok
+test gemini::generation_tests::a_refusal_while_the_copy_is_healthy_stands_and_is_not_turned_into_a_reupload ... ok
+test gemini::generation_tests::a_throttled_upload_is_explained_once_without_generation ... ok
+test gemini::generation_tests::an_interrupted_upload_is_explained_caches_nothing_and_the_next_try_uploads_again ... ok
+test gemini::generation_tests::an_unusable_generation_answer_is_refused_and_the_valid_copy_stays_reusable ... ok
+test gemini::generation_tests::changed_bytes_at_the_same_path_and_size_are_prepared_again_and_the_old_copy_retired ... ok
+test gemini::generation_tests::failed_processing_is_explained_without_generation_or_a_retry_loop ... ok
+test gemini::generation_tests::malformed_upload_answers_are_refused_and_never_followed ... ok
+test gemini::generation_tests::messages_and_cache_identity_never_carry_the_key_locators_or_paths ... ok
+MEASURE split_first parent_bytes=2666 child_bytes=366 child_pages=1
+MEASURE split_last parent_bytes=2666 child_bytes=368 child_pages=1
+MEASURE target=60 with_recoveries=2 generation_requests=9 all_http=17
+test gemini::batches::tests::sixty_cards_with_two_recoveries_has_exactly_nine_submissions ... ok
+test gemini::cancel_flow_tests::r9_once_the_journal_records_a_cancel_no_request_is_admitted_even_before_the_work_is_woken ... ok
+MEASURE split_chapter parent_bytes=2666 child_bytes=1095 child_pages=10
+test gemini::generation_tests::only_the_selected_split_part_is_sent_first_page_and_last_page ... ok
+test gemini::generation_tests::r10_a_permission_refusal_after_a_refused_generation_never_uploads_again ... ok
+test gemini::generation_tests::r1_a_generation_begun_before_disconnect_is_refused_without_any_request ... ok
+test gemini::generation_tests::processing_that_never_finishes_stops_at_the_poll_bound_and_retires_the_upload ... ok
+test gemini::generation_tests::r5_redirects_are_never_followed_with_the_key_or_the_pdf ... ok
+test gemini::generation_tests::r13_every_generation_is_recorded_so_none_can_bypass_the_lock ... ok
+test gemini::generation_tests::r2_an_answer_that_cannot_be_checkpointed_is_handed_over_marked_as_not_kept ... ok
+test gemini::generation_tests::r9_an_unclassified_refusal_never_repeats_googles_message_text ... ok
+test gemini::generation_tests::text_and_images_still_go_inline_and_are_held_to_the_encoded_request_limit ... ok
+test gemini::generation_tests::r8_a_result_is_refused_if_the_context_ends_during_the_final_cleanup ... ok
+test gemini::generation_tests::the_window_receives_the_answer_job_and_content_identity_in_one_shape ... ok
+test gemini::generation_tests::while_one_job_runs_another_is_refused_before_anything_is_sent ... ok
+test gemini::batches::tests::short_empty_duplicate_and_repeated_batches_never_pad_or_commit_twice ... ok
+test gemini::recovery_tests::blocked_and_truncated_output_is_refused_without_a_provider_retry ... ok
+test gemini::recovery_tests::capable_model_fallback_also_honors_retry_after ... ok
+test gemini::generation_tests::work_that_stops_without_an_outcome_does_not_hold_the_lock ... ok
+test gemini::recovery_tests::connection_refusal_retries_are_bounded_without_reaching_a_provider ... ok
+test gemini::recovery_tests::diagnostic_details_cannot_include_request_secrets_source_text_or_paths ... ok
+test gemini::recovery_tests::daily_quota_including_mixed_per_minute_violations_is_not_retried ... ok
+test gemini::recovery_tests::dropped_submission_can_recover_but_discloses_uncertain_cost ... ok
+test gemini::recovery_tests::invalid_model_404_is_not_silently_changed_to_a_different_model ... ok
+test gemini::recovery_tests::permanent_status_matrix_does_not_retry_or_switch_models ... ok
+test gemini::recovery_tests::readiness_wait_uses_the_generation_budget_not_a_new_allowance ... ok
+test gemini::recovery_tests::repeatedly_dropped_submissions_stop_without_claiming_exactly_once ... ok
+test gemini::recovery_tests::retry_after_is_paid_before_every_retry_including_fallback ... ok
+test gemini::recovery_tests::retry_after_outside_remaining_budget_stops_without_another_call ... ok
+test gemini::recovery_tests::journal_failure_keeps_sanitized_diagnostics_and_restart_does_not_repeat_work ... ok
+MEASURE target=40 upload_bytes=427 source_bytes=427 generation_requests=5 all_http=11 admission_checks=213
+test gemini::recovery_tests::a_coalesced_waiter_has_its_own_deadline_without_cancelling_the_owner ... ok
+test gemini::recovery_tests::source_repreparation_does_not_reset_generation_attempts ... ok
+test gemini::recovery_tests::spent_budget_makes_no_request_and_allocates_no_attempt ... ok
+test gemini::recovery_tests::three_attempts_include_fallback_and_exhaustion_is_finite ... ok
+test gemini::recovery_tests::slow_body_is_distinct_from_failure_to_connect_and_never_resets_the_budget ... ok
+test gemini::recovery_tests::transient_status_matrix_is_bounded_and_recovers_on_the_backup ... ok
+test gemini::recovery_tests::slow_headers_spend_one_budget_and_are_not_retried ... ok
+test gemini::recovery_tests::truncated_response_transport_is_retried_with_the_same_shared_cap ... ok
+test gemini::batches::tests::guide_cards_are_discarded_without_extra_requests ... ok
+test gemini::slowlink_tests::legacy_measured_rate_cached_pdf_keeps_initial_allowance_without_an_upload ... ok
+MEASURE target=60 upload_bytes=427 source_bytes=427 generation_requests=7 all_http=15 admission_checks=295
+test gemini::batches::tests::targets_use_ten_card_batches_single_upload_and_bounded_tokens ... ok
+test gemini::slowlink_tests::one_upload_request_keeps_offset_length_bytes_and_one_finalization ... ok
+test gemini::batches::tests::missing_bad_pages_malformed_truncated_and_oversized_batches_keep_draft ... ok
+test gemini::recovery_tests::upload_stall_is_bounded_without_issuing_any_generation_or_duplicate_upload ... ok
+MEASURE large_pdf pdf_bytes=8405146 uploaded_bytes=8405146 largest_generate_body_bytes=1624 all_request_body_bytes=8408359 legacy_two_inline_requests_bytes~=22938016
+test gemini::generation_tests::a_large_pdf_is_uploaded_once_and_never_inlined ... ok
+test gemini::slowlink_tests::finalize_wait_stops_after_60s_without_generation ... ok
+test gemini::slowlink_tests::legacy_cancellation_at_upload_sample_stops_the_body_and_prevents_generation ... ok
+test gemini::slowlink_tests::processing_polls_stop_at_120s_without_resetting ... ok
+test gemini::cancel_flow_tests::cancelling_during_a_retry_pause_makes_no_further_attempt ... ok
+test gemini::cancel_flow_tests::progress_counts_the_attempt_in_progress ... ok
+test gemini::generation_tests::r8_a_retry_after_a_pause_is_not_sent_once_the_context_has_ended ... ok
+MEASURE 61s-gap stage=reading attempts=1 elapsed_ms=603 unscaled_s=60.38 error=The rest of the answer stopped arriving.
+test gemini::slowlink_tests::s3_a_61s_body_gap_fails_in_reading ... ok
+test gemini::slowlink_tests::s4_absolute_expiry_prevents_any_retry ... ok
+test gemini::tests::a6_a_single_refusal_without_retry_context_stays_generic ... ok
+test gemini::tests::a6_connection_check_refusals_do_not_claim_a_backup_model_or_retry_count ... ok
+test gemini::tests::a6_the_exhausted_busy_message_makes_no_elapsed_time_claim ... ok
+test gemini::tests::a6_the_exhausted_messages_still_say_what_generation_actually_tried ... ok
+test gemini::tests::a_403_from_argon_explains_billing_and_the_standard_choice ... ok
+test gemini::tests::a_correct_index_past_the_end_of_its_own_options_is_dropped ... ok
+test gemini::tests::a_missing_damaged_or_unknown_choice_means_the_standard_model ... ok
+test gemini::tests::a_pdf_is_held_to_googles_document_limit ... ok
+test gemini::tests::a_pdf_is_held_to_googles_page_limit_as_well_as_its_size ... ok
+test gemini::tests::a_question_with_fewer_than_two_options_is_dropped ... ok
+test gemini::tests::a_saved_choice_survives_and_can_be_changed_back ... ok
+test gemini::tests::a_test_left_with_no_usable_questions_is_an_error_not_an_empty_test ... ok
+test gemini::tests::a_wait_says_how_long_and_which_attempt_is_next ... ok
+test gemini::tests::a_well_formed_practice_test_passes_through_untouched ... ok
+test gemini::tests::access_denied_403_mentions_restrictions_enablement_permissions_or_billing ... ok
+test gemini::tests::auth_401_reports_authentication_not_accepted ... ok
+test gemini::tests::blank_question_or_explanation_text_is_dropped ... ok
+test gemini::tests::each_choice_names_its_models_and_round_trips_its_label ... ok
+test gemini::tests::each_pause_is_longer_than_the_last_until_the_cap ... ok
+test gemini::tests::extract_text_refuses_an_envelope_with_no_answer ... ok
+test gemini::tests::generic_400_in_generation_rejects_as_invalid_and_mentions_document ... ok
+test gemini::tests::generic_400_in_verification_rejects_connection_check_without_blaming_key_or_document ... ok
+test gemini::tests::jitter_spreads_retries_without_stretching_them ... ok
+test gemini::tests::missing_model_404_mentions_availability_and_update_without_inventing_retirement ... ok
+test gemini::tests::only_argons_rate_limit_skips_straight_to_the_standard_model ... ok
+test gemini::tests::only_googles_own_capacity_is_worth_waiting_out ... ok
+test gemini::tests::only_the_file_types_google_reads_are_offered ... ok
+test gemini::tests::other_files_are_not_held_to_the_pdf_limit ... ok
+test gemini::tests::rate_limit_429_returns_rate_limit_guidance ... ok
+test gemini::tests::rate_limit_error_does_not_invent_a_free_tier_or_blame_the_key ... ok
+test gemini::tests::retryable_5xx_returns_transient_busy_message ... ok
+test gemini::tests::sizes_are_reported_the_way_she_would_say_them ... ok
+test gemini::tests::status_reports_the_model_her_choice_sends_documents_to ... ok
+test gemini::tests::structured_invalid_key_reason_asks_to_check_key ... ok
+test gemini::tests::text_is_held_to_what_the_model_can_read_at_once ... ok
+test gemini::tests::the_busy_message_blames_google_not_the_key ... ok
+test gemini::tests::the_fallback_notices_name_what_is_happening ... ok
+test gemini_budget::rate_tests::allowance_never_exceeds_600_from_original_start ... ok
+test gemini_budget::rate_tests::cancel_during_rate_sample_stops_dispatch ... ok
+test gemini_budget::rate_tests::card_batches_use_selected_policy ... ok
+test gemini_budget::rate_tests::outer_guard_observes_extension ... ok
+test gemini_budget::rate_tests::rate_allowance_covers_estimate_table ... ok
+test gemini_budget::rate_tests::rate_zero_missing_buffered_and_changing_samples ... ok
+test gemini_budget::rate_tests::restart_keeps_persisted_remaining ... ok
+test gemini_budget::stage_tests::a_failed_timing_checkpoint_cannot_dispatch_or_upgrade_legacy_drafts ... ok
+test gemini_budget::stage_tests::cancel_at_each_stage ... ok
+test gemini_budget::stage_tests::cancellation_versus_final_checkpoint_race ... ok
+test gemini_budget::stage_tests::header_grace_not_transfer_stall ... ok
+test gemini_budget::stage_tests::processing_120s_not_reset_by_polls ... ok
+test gemini_budget::stage_tests::progress_cannot_extend_900s ... ok
+test gemini_budget::stage_tests::restart_clock_rollback ... ok
+test gemini_budget::stage_tests::stage_checkpoint_records_elapsed_and_inactivity_without_replenishing_absolute ... ok
+test gemini_budget::stage_tests::upload_stall_61s ... ok
+test gemini_budget::stage_tests::validation_and_control_boundaries_clip_to_absolute_remaining ... ok
+test gemini_budget::tests::automatic_attempt_limit_is_shared_not_per_model ... ok
+test gemini_budget::tests::delays_consume_the_same_budget_and_require_room_to_continue ... ok
+test gemini_budget::tests::remaining_time_never_resets_across_stages_or_attempts ... ok
+test gemini_budget::tests::retry_after_accepts_seconds_and_http_dates_and_handles_invalid_input ... ok
+test gemini_budget::tests::timeout_guard_covers_an_await_with_no_http_timeout ... ok
+test gemini_cancel::tests::a_cancelled_token_drops_the_work_and_reports_it ... ok
+test gemini_cancel::tests::a_finished_registration_is_forgotten ... ok
+test gemini_cancel::tests::work_that_finishes_first_is_returned ... ok
+test gemini_files::tests::a_preparation_that_finishes_after_disconnect_is_never_published_and_its_upload_is_retired ... ok
+test gemini_files::tests::an_abandoned_preparation_releases_its_waiters_and_the_key ... ok
+test gemini_files::tests::concurrent_preparations_of_the_same_source_coalesce_into_one_upload ... ok
+test gemini_files::tests::credentials_are_kept_only_as_a_hash ... ok
+test gemini_files::tests::distinct_sources_and_credentials_are_never_coalesced ... ok
+test gemini_files::tests::late_work_from_an_old_key_cannot_replace_the_new_keys_copy ... ok
+test gemini_files::tests::provider_file_resources_are_held_to_the_documented_contract ... ok
+test gemini_files::tests::r10_a_permission_refusal_on_the_reuse_check_never_uploads_again ... ok
+test gemini_files::tests::r10_a_permission_refusal_while_processing_never_uploads_again ... ok
+test gemini_files::tests::r11_file_names_follow_the_documented_pattern ... ok
+test gemini_files::tests::r11_finishing_admits_each_delete_and_stops_at_a_cancel ... ok
+test gemini_files::tests::r11_retiring_admits_each_delete_and_stops_at_a_cancel ... ok
+test gemini_files::tests::r12_cancellable_drop_keeps_only_unsent_entries_without_transport ... ok
+test gemini_files::tests::r12_dropped_finish_returns_unsent_copies_to_orphaned ... ok
+test gemini_files::tests::r12_dropped_retire_returns_unsent_copies_to_orphaned ... ok
+test gemini_files::tests::r12_expiry_is_rechecked_after_a_slow_cached_confirmation ... ok
+test gemini_files::tests::r12_shared_copy_crossing_expiry_margin_is_not_adopted ... ok
+test gemini_files::tests::r1_a_cached_copy_confirmed_after_disconnect_is_refused_not_returned ... ok
+test gemini_files::tests::r1_a_lease_from_an_ended_context_is_no_longer_current ... ok
+test gemini_files::tests::r1_a_shared_result_taken_up_after_disconnect_is_refused ... ok
+test gemini_files::tests::r1_an_operation_begun_before_disconnect_never_uploads_after_it ... ok
+test gemini_files::tests::r2_a_shared_copy_retired_before_it_is_taken_up_is_not_handed_out ... ok
+test gemini_files::tests::r2_eviction_defers_deleting_a_copy_a_generation_still_uses ... ok
+test gemini_files::tests::r2_replacing_content_defers_deleting_a_copy_still_in_use ... ok
+test gemini_files::tests::r3_choosing_a_copy_and_owning_an_upload_are_one_step ... ok
+test gemini_files::tests::r3_concurrent_revalidations_of_a_lost_copy_upload_it_once ... ok
+test gemini_files::tests::r4_a_cached_copy_google_reports_failed_is_prepared_again_once ... ok
+test gemini_files::tests::r4_a_failed_check_while_a_cached_copy_is_processing_is_reported_without_uploading ... ok
+test gemini_files::tests::r6_cancelling_during_cleanup_before_the_upload_releases_the_flight_and_its_waiters ... ok
+test gemini_files::tests::r7_cancelling_during_eviction_cleanup_leaves_no_ownership_behind ... ok
+test gemini_files::tests::r8_a_fresh_copy_whose_context_ends_during_eviction_cleanup_is_refused ... ok
+test gemini_files::tests::r8_an_owner_whose_context_ends_during_cleanup_never_starts_its_upload ... ok
+test gemini_files::tests::the_cache_holds_at_most_sixteen_and_retires_the_least_recently_used ... ok
+test gemini_files::tests::timestamps_are_read_exactly ... ok
+test gemini_files::tests::upload_body_counts_only_polled_frames_with_exact_remaining_size ... ok
+test gemini_jobs::tests::a_cancel_that_cannot_be_written_changes_nothing ... ok
+test gemini_jobs::tests::a_cancelled_job_stays_cancelled_after_a_restart_and_is_never_resent ... ok
+test gemini_jobs::tests::a_job_running_when_the_app_closed_is_interrupted_not_resent ... ok
+test gemini_jobs::tests::a_validated_answer_survives_a_restart_as_a_checkpoint ... ok
+test gemini_jobs::tests::acknowledging_forgets_a_finished_job_but_never_a_running_one ... ok
+test gemini_jobs::tests::an_answer_too_large_to_keep_fails_honestly ... ok
+test gemini_jobs::tests::an_unreadable_journal_is_set_aside_not_trusted_or_deleted ... ok
+test gemini_jobs::tests::asking_again_replaces_that_materials_older_outcome_and_the_journal_is_bounded ... ok
+test gemini_jobs::tests::cancellation_versus_final_checkpoint_is_atomic_and_survives_reopen ... ok
+test gemini_jobs::tests::cancelled_jobs_make_room_like_failed_ones ... ok
+test gemini_jobs::tests::only_one_job_runs_at_a_time_whatever_page_asked ... ok
+test gemini_jobs::tests::r10_a_full_journal_of_waiting_answers_refuses_a_new_request_and_loses_none ... ok
+test gemini_jobs::tests::r11_clearing_succeeds_only_when_no_old_job_can_be_read_back ... ok
+test gemini_jobs::tests::r14_a_clear_that_really_fails_keeps_the_launch_quarantined ... ok
+test gemini_jobs::tests::r14_a_journal_beside_an_unfinished_restore_offers_nothing_until_cleared ... ok
+test gemini::slowlink_tests::s1_upload_alone_succeeds_with_qualifying_allowance ... ok
+test gemini_jobs::tests::r1_a_job_that_cannot_be_written_down_never_holds_the_lock ... ok
+test gemini_jobs::tests::r2_a_checkpoint_that_cannot_be_written_is_reported_and_releases_the_lock ... ok
+test gemini_jobs::tests::r3_an_acknowledgement_that_cannot_be_written_can_be_retried ... ok
+test gemini_jobs::tests::r3_the_revision_a_job_was_asked_to_replace_is_kept_with_it ... ok
+test gemini_jobs::tests::r6_a_cancelled_job_keeps_its_record_until_its_command_settles ... ok
+test gemini_jobs::tests::r6_a_waiting_answer_is_never_replaced_by_asking_again ... ok
+test gemini_jobs::tests::r8_restoring_a_backup_forgets_every_job_of_the_replaced_library ... ok
+test gemini_jobs::tests::recorded_identities_are_checked_on_the_way_in_and_out ... ok
+test gemini_jobs::tests::the_journal_is_replaced_whole_and_leaves_no_partial_file ... ok
+test pdf::tests::gemini_local_preparation_benchmark ... ignored, manual performance measurement; slow by design
+test gemini::slowlink_tests::s1_upload_and_model_share_the_extended_allowance ... ok
+test study_packet::save_tests::tb_def_03_a_gemini_provider_or_a_model_name ... ok
+test gemini::slowlink_tests::s2_headers_succeed_under_qualifying_allowance ... ok
+MEASURE 481s-headers stage=generating attempts=1 elapsed_ms=4800 unscaled_s=480.10 error=Gemini is taking longer to answer. You can try again.
+test gemini::slowlink_tests::s2_headers_481s_fail_in_generating_without_a_late_submission ... ok
+test gemini::slowlink_tests::s3_trickling_answer_succeeds_under_qualifying_allowance ... ok
+MEASURE S5-upload stage=validating attempts=1 elapsed_ms=3605 unscaled_s=360.50 error=none
+test gemini_jobs::tests::r16_a_journal_too_large_to_read_back_is_never_written ... ok
+test gemini::slowlink_tests::s4_early_drop_replays_identical_request_and_headers_succeed ... ok
+test gemini::slowlink_tests::s4_early_drop_replays_identical_request_and_body_succeeds ... ok
+MEASURE S5-headers stage=validating attempts=1 elapsed_ms=3607 unscaled_s=360.71 error=none
+MEASURE S5-body stage=validating attempts=1 elapsed_ms=4008 unscaled_s=400.83 error=none
+test gemini::slowlink_tests::s5_identical_content_and_slow_numbers_succeed_with_a_larger_budget ... ok
+BACKPRESSURE server_bytes_per_sec=1048576 samples=13 conservative_min_bytes_per_sec=209297
+BACKPRESSURE server_bytes_per_sec=4194304 samples=3 conservative_min_bytes_per_sec=3139449
+test gemini::slowlink_tests::legacy_paced_server_backpressure_drives_polled_byte_rate ... ok
+
+test result: ok. 230 passed; 0 failed; 1 ignored; 0 measured; 648 filtered out; finished in 20.88s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-610b7bf094c74fb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/extraction_service.rs (src-tauri/target/debug/deps/extraction_service-10fef342138f8a99)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/extraction_worker.rs (src-tauri/target/debug/deps/extraction_worker-68f5c1eda9f1481c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+
+EXIT 0

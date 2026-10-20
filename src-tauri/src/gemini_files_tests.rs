@@ -1130,6 +1130,7 @@ fn upload_body_counts_only_polled_frames_with_exact_remaining_size() {
     let mut body = UploadBody {
         remaining: bytes::Bytes::copy_from_slice(&original),
         polled: polled.clone(),
+        allowed: Arc::new(|| true),
     };
     let mut received = Vec::new();
     assert_eq!(polled.load(Ordering::Relaxed), 0);

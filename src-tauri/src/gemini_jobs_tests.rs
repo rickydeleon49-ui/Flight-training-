@@ -621,3 +621,47 @@ fn r6_a_cancelled_job_keeps_its_record_until_its_command_settles() {
     assert_eq!(journal.list()[0].stage, JobStage::Cancelled);
     assert_eq!(journal.acknowledge(&id), Ok(true));
 }
+
+#[test]
+fn cancellation_versus_final_checkpoint_is_atomic_and_survives_reopen() {
+    for turn in 0..20 {
+        let dir = TempDir::new("fix2-checkpoint-race");
+        let id = with(dir.path(), |j| {
+            j.begin(JobKind::StudyAid, "mat-race", "documents/a.pdf", SHA, None)
+        })
+        .unwrap();
+        with(dir.path(), |j| {
+            j.checkpoint_draft(&id, json!({"earlier":"validated draft"}))
+        })
+        .unwrap();
+        let gate = std::sync::Barrier::new(2);
+        std::thread::scope(|scope| {
+            let id = &id;
+            let dir = &dir;
+            let gate = &gate;
+            scope.spawn(move || {
+                gate.wait();
+                if turn % 2 == 0 {
+                    std::thread::yield_now();
+                }
+                with(dir.path(), |j| j.cancel(id)).unwrap();
+            });
+            gate.wait();
+            if turn % 2 == 1 {
+                std::thread::yield_now();
+            }
+            with(dir.path(), |j| j.ready(id, answer("Completed"))).unwrap();
+        });
+        let reopened = Journal::open(dir.path());
+        let record = &reopened.list()[0];
+        match record.stage {
+            JobStage::Cancelled => {
+                assert!(record.result.is_none());
+                assert_eq!(record.draft.as_ref().unwrap()["earlier"], "validated draft");
+            }
+            JobStage::Ready => assert_eq!(record.result, Some(answer("Completed"))),
+            _ => panic!("race left an unsettled job"),
+        }
+        assert!(!reopened.admits(&id));
+    }
+}

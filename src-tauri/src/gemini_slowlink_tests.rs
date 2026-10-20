@@ -1,4 +1,4 @@
-//! GEN-FIX-1: the GEN-00 fixtures under the selected allowance. Synthetic PDF/key,
+//! GEN-FIX-2: the GEN-00 fixtures under stage-aware deadlines. Synthetic PDF/key,
 //! the real study_aid_with -> run_generation -> generate_with_retries_at path,
 //! and loopback HTTP, following gemini_generation_tests' GenContext harness.
 //!
@@ -14,7 +14,14 @@ use crate::fake_gemini::{Behaviour, FakeGemini};
 use std::time::Instant;
 
 const KEY: &str = "synthetic-slowlink-key-never-a-real-credential";
-const TOTAL: Duration = Duration::from_secs(3);
+const TOTAL: Duration = Duration::from_secs(9);
+
+fn stage_budget() -> Budget {
+    let b = Budget::new(TOTAL);
+    b.scale_stages(0.01);
+    assert!(b.enable_stages(Arc::new(|_| true)));
+    b
+}
 
 struct Rig {
     fake: FakeGemini,
@@ -44,7 +51,10 @@ fn rig() -> Rig {
 }
 
 impl Rig {
-    fn upload_for(&self, seconds: f64) {
+    fn upload_for(&mut self, seconds: f64) {
+        // Same synthetic two-page PDF, padded beyond socket buffers: FIX-2
+        // measures producer progress, not the fake server's receipt of buffered bytes.
+        self.source.bytes.resize(32 * 1024 * 1024, b' ');
         let rate = (self.source.bytes.len() as f64 / seconds) as u64;
         self.fake.behave(|b| b.upload_bytes_per_sec = Some(rate));
     }
@@ -64,8 +74,7 @@ impl Rig {
     }
 
     fn success(&self, label: &str, attempts: usize) {
-        let budget = Budget::new(TOTAL);
-        budget.enable_rate(Arc::new(|_| true));
+        let budget = stage_budget();
         let answer = self.run(&budget).unwrap();
         assert_eq!(answer.title, "Synthetic airspace", "{label}");
         assert_eq!(budget.stage(), Stage::Validating);
@@ -76,31 +85,24 @@ impl Rig {
     }
 
     fn failure(&self, label: &str, stage: Stage, attempts: usize) {
-        let budget = Budget::new(TOTAL);
-        budget.enable_rate(Arc::new(|_| true));
+        let budget = stage_budget();
         let start = Instant::now();
         let error = self.run(&budget).unwrap_err();
         let elapsed = start.elapsed();
         assert_eq!(budget.stage(), stage, "{error}");
-        // Literal expected closing text: do not use lost_message to derive it.
+        // FIX-2: timeout text identifies the stalled stage, independently of the absolute cap.
         let expected = match stage {
-            Stage::Generating => "Gemini did not answer within the 6 seconds Her Flight Deck allows for one study aid. Google may still have been working on it. Repeating the request may incur additional charges. Nothing was saved. Large documents take longest: choosing a chapter or fewer pages first usually helps. If short documents also stop like this, check the connection.",
-            Stage::Reading => "Gemini started answering, but the rest did not arrive within the 6 seconds Her Flight Deck allows for one study aid. Nothing was saved. Google may have processed this request; repeating it may incur additional charges. Try a chapter or fewer pages to reduce the wait.",
-            Stage::Uploading => {
-                // The outer total guard and reqwest's same deadline race;
-                // both are current valid diagnostics for this exact stage.
-                let outer = "Her Flight Deck stopped before finishing this study aid: the 6 seconds it allows for one study aid had run out. Nothing was saved. Choosing a chapter or fewer pages first usually helps.";
-                let transport = "Google did not finish uploading the PDF within the 6 seconds Her Flight Deck allows for one study aid, so no complete study aid was saved. On a slow connection, choosing a chapter or fewer pages first sends less; otherwise try again later.";
-                assert!(error == outer || error == transport, "{error}");
-                error.as_str()
-            }
+            Stage::Generating => "Gemini is taking longer to answer. You can try again.",
+            Stage::Reading => "The rest of the answer stopped arriving.",
+            Stage::Uploading => "The upload stopped moving. Your saved work is still here.",
             _ => panic!("unexpected test stage"),
         };
         assert_eq!(error, expected);
         assert_eq!(self.fake.count(|r| r.is_generate()), attempts);
         assert_eq!(budget.attempts() as usize, attempts);
+        // FIX-2: a stage stall can expire before the absolute cap.
         assert!(
-            elapsed >= budget.total() && elapsed < budget.total() + Duration::from_secs(1),
+            elapsed < budget.total() + Duration::from_secs(1),
             "{elapsed:?}"
         );
         println!("MEASURE {label} stage={} attempts={attempts} elapsed_ms={} unscaled_s={:.2} error={error}", stage.key(), elapsed.as_millis(), elapsed.as_secs_f64() * 100.0);
@@ -109,19 +111,19 @@ impl Rig {
 
 #[test]
 fn s1_upload_alone_succeeds_with_qualifying_allowance() {
-    // FIX-1: unknown-rate fallback covers the 360 s upload and one answer.
-    let r = rig();
+    // FIX-2: moving upload bytes may consume 360 s without any 60 s stall.
+    let mut r = rig();
     r.upload_for(3.6);
     r.success("S1-upload", 1);
     assert_eq!(r.fake.count(|q| q.is_upload_start()), 1);
-    // FIX-1: the upload now completes before the extended total expires.
+    // FIX-2: one moving upload completes within the immutable 900 s cap.
     assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
 }
 
 #[test]
 fn s1_upload_and_model_share_the_extended_allowance() {
-    // FIX-1: 240 s upload + 120 s thinking fit the shared 600 s fallback.
-    let r = rig();
+    // FIX-2: 240 s upload + 120 s thinking share one immutable 900 s cap.
+    let mut r = rig();
     r.upload_for(2.4);
     r.fake
         .behave(|b| b.generate_first_byte_delay = Some(Duration::from_millis(1200)));
@@ -131,7 +133,7 @@ fn s1_upload_and_model_share_the_extended_allowance() {
 
 #[test]
 fn s2_headers_succeed_under_qualifying_allowance() {
-    // FIX-1: a buffered upload has no trustworthy rate; its fallback covers 360 s.
+    // FIX-2: 360 s thinking fits 480 s headers; no transfer-stall timer applies.
     let r = rig();
     r.fake
         .behave(|b| b.generate_first_byte_delay = Some(Duration::from_millis(3600)));
@@ -140,7 +142,7 @@ fn s2_headers_succeed_under_qualifying_allowance() {
 
 #[test]
 fn s3_trickling_answer_succeeds_under_qualifying_allowance() {
-    // FIX-1: 400 s of body transfer fits the same upload-selected fallback.
+    // FIX-2: a 400 s body succeeds because every inter-chunk gap is below 60 s.
     let r = rig();
     r.fake
         .behave(|b| b.generate_trickle_bytes_per_sec = Some(100));
@@ -154,7 +156,7 @@ fn replay_after_drop(label: &str, _stage: Stage, slow: impl FnOnce(&mut Behaviou
         b.partial_generations = 1;
         slow(b);
     });
-    // FIX-1: retry backoff plus attempt two fit 600 s; bodies and upload counts stay identical.
+    // FIX-2: unchanged real 1.5–1.875 s backoff plus attempt two fit 9 s (900 s scaled).
     r.success(label, 2);
     let log = r.fake.log();
     let generations: Vec<_> = log.iter().filter(|q| q.is_generate()).collect();
@@ -171,7 +173,7 @@ fn replay_after_drop(label: &str, _stage: Stage, slow: impl FnOnce(&mut Behaviou
 
 #[test]
 fn s4_early_drop_replays_identical_request_and_headers_succeed() {
-    // FIX-1: first early cut + unchanged backoff + 360 s thinking fit 600 s.
+    // FIX-2: early drop + unscaled backoff + 360 s headers fit 900 s.
     replay_after_drop("S4-headers", Stage::Generating, |b| {
         b.generate_first_byte_delay = Some(Duration::from_millis(3600));
     });
@@ -179,7 +181,7 @@ fn s4_early_drop_replays_identical_request_and_headers_succeed() {
 
 #[test]
 fn s4_early_drop_replays_identical_request_and_body_succeeds() {
-    // FIX-1: first early cut + unchanged backoff + 400 s body fit 600 s.
+    // FIX-2: early drop + unscaled backoff + 400 s moving body fit 900 s.
     replay_after_drop("S4-body", Stage::Reading, |b| {
         b.generate_trickle_bytes_per_sec = Some(100);
     });
@@ -192,7 +194,7 @@ fn s5_identical_content_and_slow_numbers_succeed_with_a_larger_budget() {
         ("S5-headers", Stage::Generating, 3.6),
         ("S5-body", Stage::Reading, 4.0),
     ] {
-        let r = rig();
+        let mut r = rig();
         match stage {
             Stage::Uploading => r.upload_for(seconds),
             Stage::Generating => r
@@ -203,7 +205,7 @@ fn s5_identical_content_and_slow_numbers_succeed_with_a_larger_budget() {
                 .behave(|b| b.generate_trickle_bytes_per_sec = Some(100)),
             _ => unreachable!(),
         }
-        let budget = Budget::new(Duration::from_secs(6)); // 600 s unscaled.
+        let budget = stage_budget(); // FIX-2: S5 still succeeds with identical content under 900 s.
         let started = Instant::now();
         let answer = r.run(&budget).unwrap();
         let elapsed = started.elapsed();
@@ -226,11 +228,12 @@ fn s5_identical_content_and_slow_numbers_succeed_with_a_larger_budget() {
 }
 
 #[test]
-fn deliberately_over_cap_headers_fail_without_a_late_submission() {
+fn s2_headers_481s_fail_in_generating_without_a_late_submission() {
     let r = rig();
     r.fake
-        .behave(|b| b.generate_first_byte_delay = Some(Duration::from_secs(7)));
-    r.failure("over-cap", Stage::Generating, 1);
+        .behave(|b| b.generate_first_byte_delay = Some(Duration::from_millis(4810)));
+    // FIX-2: 481 s exceeds the 480 s stage grace; existing timeout classification is terminal.
+    r.failure("481s-headers", Stage::Generating, 1);
     assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
 }
 
@@ -264,7 +267,7 @@ fn one_upload_request_keeps_offset_length_bytes_and_one_finalization() {
 }
 
 #[test]
-fn cached_pdf_keeps_initial_allowance_without_an_upload() {
+fn legacy_measured_rate_cached_pdf_keeps_initial_allowance_without_an_upload() {
     let r = rig();
     let first = Budget::new(Duration::from_secs(300));
     first.enable_rate(Arc::new(|_| true));
@@ -280,7 +283,7 @@ fn cached_pdf_keeps_initial_allowance_without_an_upload() {
 }
 
 #[test]
-fn cancellation_at_upload_sample_stops_the_body_and_prevents_generation() {
+fn legacy_cancellation_at_upload_sample_stops_the_body_and_prevents_generation() {
     let mut r = rig();
     r.source.bytes.resize(600_000, b' ');
     r.fake.behave(|b| b.upload_bytes_per_sec = Some(100_000));
@@ -301,7 +304,7 @@ fn cancellation_at_upload_sample_stops_the_body_and_prevents_generation() {
 }
 
 #[test]
-fn paced_server_backpressure_drives_polled_byte_rate() {
+fn legacy_paced_server_backpressure_drives_polled_byte_rate() {
     let mut rates = Vec::new();
     for server_rate in [1024 * 1024_u64, 4 * 1024 * 1024] {
         let mut r = rig();
@@ -323,6 +326,10 @@ fn paced_server_backpressure_drives_polled_byte_rate() {
         let mut minimum_rate = f64::INFINITY;
         let mut qualifying = 0;
         for sample in samples.iter().skip(1) {
+            // FIX-2 persists before requests as well as samples; identical sample clocks are checkpoints.
+            if sample["sampleMillis"].as_u64().unwrap() == previous_ms {
+                continue;
+            }
             let ms = sample["sampleMillis"].as_u64().unwrap();
             let bytes = sample["sampleBytes"].as_u64().unwrap();
             assert!(
@@ -375,4 +382,87 @@ fn paced_server_backpressure_drives_polled_byte_rate() {
         rates[1] > rates[0] * 1.5,
         "reader pacing must change the sampled rate: {rates:?}"
     );
+}
+
+#[test]
+fn s3_a_61s_body_gap_fails_in_reading() {
+    let r = rig();
+    let gate = Arc::new(crate::fake_gemini::Gate::default());
+    r.fake.behave(|b| b.generate_body_gate = Some(gate.clone()));
+    std::thread::scope(|scope| {
+        scope.spawn(|| {
+            while gate.waiting() == 0 {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            std::thread::sleep(Duration::from_millis(610));
+            gate.open();
+        });
+        // FIX-2: 61 s with no response bytes expires Reading despite ample absolute time.
+        r.failure("61s-gap", Stage::Reading, 1);
+    });
+}
+
+#[test]
+fn s4_absolute_expiry_prevents_any_retry() {
+    let r = rig();
+    r.fake.behave(|b| b.partial_generations = 3);
+    let budget = stage_budget();
+    // FIX-2: prior stages consumed 850 s, leaving less than unchanged real retry backoff.
+    budget.shorten(Duration::from_millis(500));
+    assert!(r.run(&budget).is_err());
+    assert_eq!(r.fake.count(|q| q.is_generate()), 1);
+    std::thread::sleep(Duration::from_millis(510));
+    assert!(r.run(&budget).is_err());
+    assert_eq!(
+        r.fake.count(|q| q.is_generate()),
+        1,
+        "absolute expiry forbids dispatch"
+    );
+    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
+}
+
+#[test]
+fn processing_polls_stop_at_120s_without_resetting() {
+    let mut r = rig();
+    r.cache = PreparedSources::new(
+        gemini_files::Policy {
+            poll_interval: Duration::from_millis(100),
+            poll_cap: Duration::from_millis(100),
+            max_polls: 100,
+            ..Default::default()
+        },
+        Arc::new(|| 1_700_000_000),
+    );
+    r.fake.behave(|b| {
+        b.initial_state = "PROCESSING";
+        b.polls_until_active = None;
+    });
+    let b = stage_budget();
+    let start = Instant::now();
+    assert!(r.run(&b).unwrap_err().contains("still preparing"));
+    assert!(start.elapsed() >= Duration::from_millis(1200));
+    assert!(start.elapsed() < Duration::from_secs(2));
+    assert!(r.fake.count(|q| q.is_lookup()) > 1);
+    assert_eq!(r.fake.count(|q| q.is_generate()), 0);
+    assert_eq!(r.fake.count(|q| q.is_upload_start()), 1);
+}
+
+#[test]
+fn finalize_wait_stops_after_60s_without_generation() {
+    let r = rig();
+    let gate = Arc::new(crate::fake_gemini::Gate::default());
+    r.fake.behave(|b| b.finalize_gate = Some(gate.clone()));
+    let b = stage_budget();
+    let start = Instant::now();
+    let outcome = r.run(&b);
+    gate.open();
+    assert_eq!(
+        outcome.unwrap_err(),
+        "The upload stopped moving. Your saved work is still here."
+    );
+    assert!(start.elapsed() >= Duration::from_millis(600));
+    assert!(start.elapsed() < Duration::from_millis(1200));
+    assert_eq!(r.fake.count(|q| q.is_generate()), 0);
+    assert_eq!(r.fake.count(|q| q.is_upload_start()), 1);
+    assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
 }

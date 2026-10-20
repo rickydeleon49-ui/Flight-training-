@@ -11,7 +11,7 @@ fn rate_allowance_covers_estimate_table() {
     for mb in [5_u64, 20, 50] {
         for mbps in [1_u64, 3, 10] {
             for thinking in [30_u64, 90, 180] {
-                let (b, time) = fake_budget(ACTIVE_BUDGET);
+                let (b, time) = fake_budget(Duration::from_secs(300));
                 enable(&b);
                 time.advance(Duration::from_secs(1));
                 let bytes = mbps * 1_000_000 / 8;
@@ -32,12 +32,12 @@ fn rate_allowance_covers_estimate_table() {
 #[test]
 fn rate_zero_missing_buffered_and_changing_samples() {
     for (ms, bytes) in [(1000, 0), (1000, 1024), (0, 50_000_000)] {
-        let (b, _) = fake_budget(ACTIVE_BUDGET);
+        let (b, _) = fake_budget(Duration::from_secs(300));
         enable(&b);
         assert!(b.rate_sample(Duration::from_millis(ms), bytes, 50_000_000));
         assert_eq!(b.total().as_secs(), 600);
     }
-    let (b, time) = fake_budget(ACTIVE_BUDGET);
+    let (b, time) = fake_budget(Duration::from_secs(300));
     enable(&b);
     time.advance(Duration::from_secs(1));
     b.rate_sample(Duration::from_secs(1), 1_000_000, 50_000_000);
@@ -45,14 +45,14 @@ fn rate_zero_missing_buffered_and_changing_samples() {
     time.advance(Duration::from_secs(1));
     b.rate_sample(Duration::from_secs(2), 1_065_536, 50_000_000);
     assert_eq!(b.total().as_secs(), 600);
-    let (b, _) = fake_budget(ACTIVE_BUDGET);
+    let (b, _) = fake_budget(Duration::from_secs(300));
     b.enable_rate(Arc::new(|_| false));
     b.rate_sample(Duration::from_secs(1), 0, 50_000_000);
     assert_eq!(b.total().as_secs(), 300, "failed checkpoint cannot extend");
 }
 #[test]
 fn allowance_never_exceeds_600_from_original_start() {
-    let (b, time) = fake_budget(ACTIVE_BUDGET);
+    let (b, time) = fake_budget(Duration::from_secs(300));
     enable(&b);
     time.advance(Duration::from_secs(299));
     b.rate_sample(Duration::from_secs(299), 65_536, 50_000_000);
@@ -81,7 +81,7 @@ fn outer_guard_observes_extension() {
 }
 #[test]
 fn restart_keeps_persisted_remaining() {
-    let (b, time) = fake_budget(ACTIVE_BUDGET);
+    let (b, time) = fake_budget(Duration::from_secs(300));
     let saved = json!({"policy":"measured-rate-v1", "ceilingMillis":600000,"allowedMillis":500000,"remainingMillis":42000,"deadlineUtc":1_000_000,"uploadBytes":100000,"sampleMillis":1000,"sampleBytes":65536});
     b.restore_timing_value(&saved, 900_000); // rollback: wall remainder 100s, persisted only 42s
     assert_eq!(b.remaining().as_secs(), 42);
@@ -99,7 +99,7 @@ fn restart_keeps_persisted_remaining() {
 }
 #[test]
 fn card_batches_use_selected_policy() {
-    let (b, time) = fake_budget(ACTIVE_BUDGET);
+    let (b, time) = fake_budget(Duration::from_secs(300));
     enable(&b);
     time.advance(Duration::from_secs(1));
     b.rate_sample(Duration::from_secs(1), 65536, 50_000_000);
@@ -110,7 +110,7 @@ fn card_batches_use_selected_policy() {
 }
 #[test]
 fn cancel_during_rate_sample_stops_dispatch() {
-    let (b, _) = fake_budget(ACTIVE_BUDGET);
+    let (b, _) = fake_budget(Duration::from_secs(300));
     let admitted = Arc::new(std::sync::atomic::AtomicBool::new(true));
     let check = admitted.clone();
     b.attach_admission(Arc::new(move || {

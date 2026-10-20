@@ -169,6 +169,8 @@ export interface GeminiJobRecord {
   draft?: { target?: number; cards?: StudyFlashcard[]; timing?: {
     policy: string; ceilingMillis: number; allowedMillis: number; remainingMillis: number;
     deadlineUtc: number; uploadBytes: number; sampleMillis: number; sampleBytes: number;
+    activeStage?: GeminiWorkStage;
+    stages?: Record<string, { elapsedMillis: number; remainingMillis: number }>;
   } };
   error?: string;
 }
