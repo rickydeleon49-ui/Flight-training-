@@ -4,6 +4,7 @@
  * The file lives in the application data directory chosen by Tauri, never
  * inside the project, so private training data is never near the repository.
  */
+import { sectionGuideError } from "@/services/gemini";
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
 import type {
@@ -248,12 +249,14 @@ export async function invokePracticeAuthoringSave(
 export async function invokeStudySetSave(
   operation: import("./studySetTransaction").StudySetSaveOperation,
   call: typeof invoke = invoke,
+  guideJobId?: string,
 ): Promise<import("./studySetTransaction").StudySetSaveResult> {
   let result: unknown;
   try {
-    result = await call("save_study_set_atomically", { operation });
+    result = await call("save_study_set_atomically", { operation, ...(guideJobId ? { guideJobId } : {}) });
   } catch (rejection) {
     const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (guideJobId && code === "SOURCE_CHANGED") throw sectionGuideError(rejection);
     if (isStudySetErrorCode(code) && code !== "IPC_TRANSPORT_ERROR" && message === STUDY_SET_ERROR_MESSAGES[code]) {
       throw new StudySetSaveError(code);
     }
@@ -532,7 +535,7 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     ): Promise<import("@/domain/types").PracticeSaveResult> {
       return invokePracticeAuthoringSave(operation);
     },
-    saveStudySetAtomically: (operation) => invokeStudySetSave(operation),
+    saveStudySetAtomically: (operation, guideJobId) => invokeStudySetSave(operation, invoke, guideJobId),
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,
     ): Promise<import("@/domain/types").EraseHistoryResult> {

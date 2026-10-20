@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 import { createElement as h } from "react";
 import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -125,7 +127,7 @@ describe("a study guide she writes herself", () => {
 
 describe("editing a generated study guide", () => {
   beforeEach(async () => {
-    await repos.documents.create({ id: "mat-a", title: "Material A", filePath: "documents/mat-a.pdf", originalFileName: "a.pdf", fileSize: 1 });
+    await repos.documents.create({ id: "mat-a", title: "Material A", filePath: "documents/mat-a.txt", originalFileName: "a.txt", fileSize: 1 });
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", ...AID });
   });
 
@@ -289,7 +291,7 @@ describe("editing a generated study guide", () => {
    */
   const journalHoldsTheAnswer = (): geminiService.GeminiJobRecord[] => [
     {
-      id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.pdf",
+      id: "job-555555555555555555555555", kind: "study-aid", materialId: "mat-a", relativePath: "documents/mat-a.txt",
       contentSha256: "", createdAt: 0, updatedAt: 0, stage: "ready", result: { ...AID, summary: "A new summary." },
     },
   ];

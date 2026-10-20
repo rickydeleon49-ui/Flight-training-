@@ -65,7 +65,7 @@ const STUDY_AID: geminiService.GeneratedStudyAid = {
   model: "gemini-3.5-flash",
 };
 
-let generateStudyAid: ReturnType<typeof vi.spyOn>;
+let resumeStudyGuide: ReturnType<typeof vi.spyOn>;
 let generatePracticeTest: ReturnType<typeof vi.spyOn>;
 
 beforeEach(async () => {
@@ -75,12 +75,12 @@ beforeEach(async () => {
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
   vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.spyOn(geminiService, "watchGeminiProgress").mockResolvedValue(() => {});
-  generateStudyAid = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue(STUDY_AID);
+  resumeStudyGuide = vi.spyOn(geminiService, "resumeStudyGuide").mockResolvedValue({ ...STUDY_AID, jobId: "section-source-choice", checkpointed: true });
   generatePracticeTest = vi.spyOn(geminiService, "generatePracticeTest");
   vi.spyOn(documentService, "canHandleFiles").mockReturnValue(true);
   vi.spyOn(documentService, "documentExists").mockResolvedValue(true);
   vi.spyOn(pdfService, "canSplitPdfs").mockReturnValue(true);
-  vi.spyOn(pdfService, "inspectPdf").mockResolvedValue({ pages: 300, maxPagesPerSplit: 1000 });
+  vi.spyOn(pdfService, "inspectPdf").mockImplementation(async path => ({ pages: path.endsWith("ch3.pdf") ? 20 : 300, maxPagesPerSplit: 1000 }));
   await materialRow("root", "Synthetic Handbook", "documents/handbook.pdf");
 });
 
@@ -100,7 +100,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Choose a chapter or pages first" }));
     expect(await screen.findByRole("dialog", { name: "Take out a chapter" })).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull();
-    expect(generateStudyAid).not.toHaveBeenCalled();
+    expect(resumeStudyGuide).not.toHaveBeenCalled();
     expect(generatePracticeTest).not.toHaveBeenCalled();
   });
 
@@ -128,14 +128,14 @@ describe("choosing what to send (GEN-REL-01)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());
-    expect(generateStudyAid).not.toHaveBeenCalled();
+    expect(resumeStudyGuide).not.toHaveBeenCalled();
   });
 
   it("whole-document generation is still available and sends the whole document", async () => {
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined, expect.stringMatching(/^req-/), 40));
+    await waitFor(() => expect(resumeStudyGuide).toHaveBeenCalledWith({ relativePath: "documents/handbook.pdf", materialId: "root", baseRevision: null, requestId: expect.stringMatching(/^req-/), chosenPages: Array.from({ length: 300 }, (_, i) => i + 1) }));
   });
 
   it("a part sends only that part, names its pages, and saves to the part, not the original", async () => {
@@ -145,8 +145,8 @@ describe("choosing what to send (GEN-REL-01)", () => {
     const dialog = await waitFor(sendDialog);
     expect(dialog.textContent).toMatch(/Only “ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac/);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledTimes(1));
-    expect(generateStudyAid).toHaveBeenCalledWith("documents/ch3.pdf", "ch3", undefined, expect.stringMatching(/^req-/), 40);
+    await waitFor(() => expect(resumeStudyGuide).toHaveBeenCalledTimes(1));
+    expect(resumeStudyGuide).toHaveBeenCalledWith({ relativePath: "documents/ch3.pdf", materialId: "ch3", baseRevision: null, requestId: expect.stringMatching(/^req-/), chosenPages: Array.from({ length: 20 }, (_, i) => i + 1) });
     const repos = createRepositories(db);
     expect(await repos.documents.listAiStudySets()).toHaveLength(0);
     fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
@@ -180,13 +180,13 @@ describe("choosing what to send (GEN-REL-01)", () => {
       model: "gemini-3.5-flash",
     } as never);
     const before = await repos.documents.listAiStudySets();
-    generateStudyAid.mockRejectedValueOnce("Google could not process this PDF, so no study aid was made.");
+    resumeStudyGuide.mockRejectedValueOnce("Google could not process this PDF, so no study aid was made.");
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: /Regenerate|Create study aid/ }));
     await act(async () => {
       fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
     });
-    expect(await screen.findByText(/Google could not process this PDF/)).toBeTruthy();
+    expect(await screen.findByText(/Your guide could not be finished/)).toBeTruthy();
     expect(await repos.documents.listAiStudySets()).toEqual(before);
     expect(screen.getAllByText("Existing guide").length).toBeGreaterThan(0);
   });
@@ -195,6 +195,9 @@ describe("choosing what to send (GEN-REL-01)", () => {
 // GEN-REL-05 target selection uses the same consent flow for new sets.
 describe("GEN-REL-05 card targets", () => {
   it.each([20, 40, 60])("sends target %i and leaves practice question count alone", async (target) => {
+    // Non-PDF study aids retain the existing card-target contract.
+    await db.execute("UPDATE study_materials SET file_path = 'documents/notes.txt', original_file_name = 'notes.txt' WHERE id = 'root'");
+    const legacyGenerate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue(STUDY_AID);
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const dialog = await waitFor(sendDialog);
@@ -203,7 +206,7 @@ describe("GEN-REL-05 card targets", () => {
     expect([...choice.options].map((option) => option.value)).toEqual(["20", "40", "60"]);
     fireEvent.change(choice, { target: { value: String(target) } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(generateStudyAid).toHaveBeenCalledWith("documents/handbook.pdf", "root", undefined, expect.stringMatching(/^req-/), target));
+    await waitFor(() => expect(legacyGenerate).toHaveBeenCalledWith("documents/notes.txt", "root", undefined, expect.stringMatching(/^req-/), target));
     expect(generatePracticeTest).not.toHaveBeenCalled();
   });
 });

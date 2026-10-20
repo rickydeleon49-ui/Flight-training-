@@ -345,9 +345,9 @@ export function documentRepository(db: SqlDatabase) {
     ) as StoredSetRow;
   }
 
-  async function saveStudySet(operation: StudySetSaveOperation): Promise<StudySetSaveResult> {
+  async function saveStudySet(operation: StudySetSaveOperation, guideJobId?: string): Promise<StudySetSaveResult> {
     if (typeof db.saveStudySetAtomically !== "function") throw new AtomicPersistenceUnsupportedError();
-    return db.saveStudySetAtomically(operation);
+    return db.saveStudySetAtomically(operation, guideJobId);
   }
 
   async function lineageByMaterial(): Promise<Map<string, SplitLineage>> {
@@ -430,7 +430,7 @@ export function documentRepository(db: SqlDatabase) {
      * she retired is carried over. A set holding her own items is never
      * replaced here: regeneration reviews it with her first.
      */
-    async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">): Promise<void> {
+    async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">, guideJobId?: string): Promise<void> {
       const current = await readStoredSet(input.sourceMaterialId);
       if (current && needsRegenerationReview(storedStudySet(input.sourceMaterialId, current))) {
         throw new Error(REVIEW_FIRST_MESSAGE);
@@ -453,7 +453,7 @@ export function documentRepository(db: SqlDatabase) {
           model: input.model,
           retired,
         },
-      });
+      }, guideJobId);
     },
 
     /** Remove a study set; the whole set stays in history until its material is deleted. */

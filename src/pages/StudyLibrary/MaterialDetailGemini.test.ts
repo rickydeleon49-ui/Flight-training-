@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -92,8 +94,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-1",
       title: "Navigation Handbook",
-      filePath: "documents/nav.pdf",
-      originalFileName: "nav.pdf",
+      filePath: "documents/nav.txt",
+      originalFileName: "nav.txt",
       fileSize: 1024,
     });
 
@@ -145,8 +147,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-practice",
       title: "Weather Handbook",
-      filePath: "documents/weather.pdf",
-      originalFileName: "weather.pdf",
+      filePath: "documents/weather.txt",
+      originalFileName: "weather.txt",
       fileSize: 1024,
     });
 
@@ -200,15 +202,15 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material1 = await repos.documents.create({
       id: "mat-old",
       title: "Old Material",
-      filePath: "documents/old.pdf",
-      originalFileName: "old.pdf",
+      filePath: "documents/old.txt",
+      originalFileName: "old.txt",
       fileSize: 1024,
     });
     const material2 = await repos.documents.create({
       id: "mat-new",
       title: "New Material",
-      filePath: "documents/new.pdf",
-      originalFileName: "new.pdf",
+      filePath: "documents/new.txt",
+      originalFileName: "new.txt",
       fileSize: 1024,
     });
 
@@ -254,8 +256,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-replace",
       title: "Replaceable Material",
-      filePath: "documents/first.pdf",
-      originalFileName: "first.pdf",
+      filePath: "documents/first.txt",
+      originalFileName: "first.txt",
       fileSize: 1024,
     });
 
@@ -268,13 +270,13 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const confirmButton = await screen.findByRole("button", { name: "Send to Gemini" });
     fireEvent.click(confirmButton);
 
-    // In-flight generation is now pending for first.pdf.
+    // In-flight generation is now pending for first.txt.
     // Replace the attachment on the material.
     await act(async () => {
       await context.mutate((r) =>
         r.documents.update(material.id, {
-          filePath: "documents/second.pdf",
-          originalFileName: "second.pdf",
+          filePath: "documents/second.txt",
+          originalFileName: "second.txt",
         }),
       );
     });
@@ -304,8 +306,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-missing",
       title: "Missing Document",
-      filePath: "documents/missing.pdf",
-      originalFileName: "missing.pdf",
+      filePath: "documents/missing.txt",
+      originalFileName: "missing.txt",
       fileSize: 1024,
     });
 
@@ -339,15 +341,15 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const materialA = await repos.documents.create({
       id: "mat-lock-a",
       title: "Material A",
-      filePath: "documents/a.pdf",
-      originalFileName: "a.pdf",
+      filePath: "documents/a.txt",
+      originalFileName: "a.txt",
       fileSize: 1024,
     });
     const materialB = await repos.documents.create({
       id: "mat-lock-b",
       title: "Material B",
-      filePath: "documents/b.pdf",
-      originalFileName: "b.pdf",
+      filePath: "documents/b.txt",
+      originalFileName: "b.txt",
       fileSize: 1024,
     });
 
@@ -447,15 +449,15 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const materialA = await repos.documents.create({
       id: "mat-rev-a",
       title: "Material A Reverse",
-      filePath: "documents/rev-a.pdf",
-      originalFileName: "rev-a.pdf",
+      filePath: "documents/rev-a.txt",
+      originalFileName: "rev-a.txt",
       fileSize: 1024,
     });
     const materialB = await repos.documents.create({
       id: "mat-rev-b",
       title: "Material B Reverse",
-      filePath: "documents/rev-b.pdf",
-      originalFileName: "rev-b.pdf",
+      filePath: "documents/rev-b.txt",
+      originalFileName: "rev-b.txt",
       fileSize: 1024,
     });
 
@@ -553,8 +555,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-guard",
       title: "Guard Test Material",
-      filePath: "documents/guard.pdf",
-      originalFileName: "guard.pdf",
+      filePath: "documents/guard.txt",
+      originalFileName: "guard.txt",
       fileSize: 1024,
     });
 
@@ -617,8 +619,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-shared-lock-1",
       title: "Navigation Handbook",
-      filePath: "documents/nav.pdf",
-      originalFileName: "nav.pdf",
+      filePath: "documents/nav.txt",
+      originalFileName: "nav.txt",
       fileSize: 1024,
     });
 
@@ -679,8 +681,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     const material = await repos.documents.create({
       id: "mat-shared-lock-2",
       title: "Weather Handbook",
-      filePath: "documents/weather.pdf",
-      originalFileName: "weather.pdf",
+      filePath: "documents/weather.txt",
+      originalFileName: "weather.txt",
       fileSize: 1024,
     });
 

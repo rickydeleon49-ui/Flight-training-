@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+// Text-source fixtures retain coverage of the legacy generation path.
+// PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -89,8 +91,8 @@ let repos: ReturnType<typeof createRepositories>;
 let jobEvents: Array<(change: { id: string; stage: geminiService.GeminiJobStage }) => void>;
 let acknowledge: ReturnType<typeof vi.fn<(jobId: string) => Promise<boolean>>>;
 
-async function material(id: string, title: string, filePath = `documents/${id}.pdf`) {
-  return repos.documents.create({ id, title, filePath, originalFileName: `${id}.pdf`, fileSize: 1024 });
+async function material(id: string, title: string, filePath = `documents/${id}.txt`) {
+  return repos.documents.create({ id, title, filePath, originalFileName: `${id}.txt`, fileSize: 1024 });
 }
 
 async function startStudyAid() {
@@ -112,7 +114,7 @@ function record(
     id: "job-aaaaaaaaaaaaaaaaaaaaaaaa",
     kind: "study-aid",
     materialId: "mat-a",
-    relativePath: "documents/mat-a.pdf",
+    relativePath: "documents/mat-a.txt",
     contentSha256: "",
     createdAt: 0,
     updatedAt: 0,
@@ -163,7 +165,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
     await open("/study/mat-a");
     await startStudyAid();
-    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.pdf", "mat-a", undefined, expect.stringMatching(/^req-/), 40));
+    await waitFor(() => expect(generate).toHaveBeenCalledWith("documents/mat-a.txt", "mat-a", undefined, expect.stringMatching(/^req-/), 40));
 
     await act(async () => navigate("/study/mat-b"));
     await screen.findByRole("heading", { name: "Material B" });
@@ -339,9 +341,9 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
   });
 
   it("a recovered answer for a material whose file was replaced is not saved", async () => {
-    await material("mat-a", "Material A", "documents/replacement.pdf");
+    await material("mat-a", "Material A", "documents/replacement.txt");
     vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue([
-      record({ stage: "ready", result: AID, relativePath: "documents/mat-a.pdf" }),
+      record({ stage: "ready", result: AID, relativePath: "documents/mat-a.txt" }),
     ]);
     await open("/study/mat-a");
     fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));

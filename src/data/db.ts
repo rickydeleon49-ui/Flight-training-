@@ -67,6 +67,7 @@ export interface SqlDatabase {
    */
   saveStudySetAtomically?(
     operation: import("./studySetTransaction").StudySetSaveOperation,
+    guideJobId?: string,
   ): Promise<import("./studySetTransaction").StudySetSaveResult>;
   /**
    * Single-connection atomic transaction for erasing practice history for a history key (M2 PR 2).

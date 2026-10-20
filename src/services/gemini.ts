@@ -156,6 +156,7 @@ export const GEMINI_CANCELLED_MESSAGE =
 /** One recorded generation, as the native journal keeps it. */
 export interface GeminiJobRecord {
   id: string;
+  requestId?: string;
   kind: GeminiJobKind;
   materialId: string;
   relativePath: string;
@@ -166,7 +167,7 @@ export interface GeminiJobRecord {
   createdAt: number;
   updatedAt: number;
   result?: GeneratedStudyAid | GeneratedPracticeTest;
-  draft?: { target?: number; cards?: StudyFlashcard[]; timing?: {
+  draft?: { kind?: string; identity?: { chosenPages: number[]; baseRevision?: string | null; manifest: Array<{ id: string; heading: string; pageStart: number; pageEnd: number }> }; results?: Record<string, { status: "pending" | "in-flight" | "complete" }>; target?: number; cards?: StudyFlashcard[]; timing?: {
     policy: string; ceilingMillis: number; allowedMillis: number; remainingMillis: number;
     deadlineUtc: number; uploadBytes: number; sampleMillis: number; sampleBytes: number;
     activeStage?: GeminiWorkStage;
@@ -264,4 +265,72 @@ export function geminiErrorMessage(error: unknown): string {
   if (typeof error === "string" && error.trim()) return error;
   if (error instanceof Error && error.message.trim()) return error.message;
   return "Gemini could not complete that request.";
+}
+
+/** Only these safe messages cross the section-guide error boundary. */
+export const SECTION_GUIDE_MESSAGES = {
+  SOURCE_CHANGED: "This PDF or your chosen pages changed. Keep your earlier work, or start a new guide?",
+  CONSENT_REQUIRED: "Choose whether to keep your earlier work or start a new guide.",
+  TOO_MANY_SECTIONS: "Choose fewer pages so your guide has at most 40 sections.",
+  KEY_CHANGED: "Your Gemini key changed. Continue starts a new guide and may upload the PDF again. Your earlier sections are kept.",
+  REFERENCE_AUTH_FAILED: "Google could not open the saved PDF with this key. Your sections are kept; nothing was uploaded.",
+  REFERENCE_LOOKUP_FAILED: "The saved PDF could not be checked. Your sections are kept; nothing was uploaded.",
+  DESCRIPTOR_INVALID: "The saved PDF reference could not be checked. Your sections are kept; nothing was uploaded.",
+  CANCELLED: "Stopped. Your finished sections are kept.",
+  UPLOAD_TIMEOUT: "The upload stopped moving. Your finished sections are kept.",
+  PROCESSING_TIMEOUT: "Google is taking longer to prepare the PDF. Your finished sections are kept.",
+  GENERATION_TIMEOUT: "Gemini is taking longer to answer. Your finished sections are kept.",
+  READING_TIMEOUT: "The rest of the answer stopped arriving. Your finished sections are kept.",
+  STAGE_TIMEOUT: "This step took longer than expected. Your finished sections are kept.",
+  GUIDE_PAUSED: "Your guide could not be finished. Your saved sections are kept. Try again when you're ready.",
+} as const;
+export type SectionGuideErrorCode = keyof typeof SECTION_GUIDE_MESSAGES;
+export class SectionGuideError extends Error {
+  constructor(readonly code: SectionGuideErrorCode) {
+    super(SECTION_GUIDE_MESSAGES[code]);
+    this.name = "SectionGuideError";
+  }
+}
+export function sectionGuideError(error: unknown): SectionGuideError {
+  if (error instanceof SectionGuideError) return error;
+  const wire = error && typeof error === "object" ? error as { code?: unknown; message?: unknown } : null;
+  if (typeof wire?.code === "string" && Object.hasOwn(SECTION_GUIDE_MESSAGES, wire.code) && wire.code !== "GUIDE_PAUSED") {
+    return new SectionGuideError(wire.code as SectionGuideErrorCode);
+  }
+  // Legacy stage failures arrive inside GUIDE_PAUSED, as fixed native sentences.
+  const message = typeof error === "string" ? error : wire?.message;
+  const known: Record<string, SectionGuideErrorCode> = {
+    [GEMINI_CANCELLED_MESSAGE]: "CANCELLED",
+    "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide.": "SOURCE_CHANGED",
+    "The Gemini key or project changed. Explicit Continue is required before preparing this PDF again.": "KEY_CHANGED",
+    "The saved PDF reference could not be validated. Your sections are kept; nothing was uploaded.": "DESCRIPTOR_INVALID",
+    "Google refused access to the saved PDF. Check the key and project; nothing was uploaded.": "REFERENCE_AUTH_FAILED",
+    "The saved PDF could not be checked. Your sections are kept; nothing was uploaded.": "REFERENCE_LOOKUP_FAILED",
+    "The upload stopped moving. Your saved work is still here.": "UPLOAD_TIMEOUT",
+    "The rest of the answer stopped arriving.": "READING_TIMEOUT",
+    "Google was still preparing this PDF after waiting, so no study aid was made. Try again in a few minutes.": "PROCESSING_TIMEOUT",
+    "Gemini is taking longer to answer. You can try again.": "GENERATION_TIMEOUT",
+  };
+  if (typeof message === "string" && Object.hasOwn(known, message)) return new SectionGuideError(known[message]!);
+  if (typeof message === "string" && /^Her Flight Deck stopped before [^:]+: the 15 minutes it allows for one study aid had run out\./.test(message)) return new SectionGuideError("STAGE_TIMEOUT");
+  return new SectionGuideError("GUIDE_PAUSED");
+}
+export interface SectionGuideRequest {
+  materialId: string;
+  relativePath: string;
+  chosenPages: number[];
+  baseRevision?: string | null;
+  requestId?: string;
+}
+export async function resumeStudyGuide(request: SectionGuideRequest, jobId?: string): Promise<GeneratedStudyAid & GenerationJobIdentity> {
+  if (!isTauri()) throw new SectionGuideError("GUIDE_PAUSED");
+  try {
+    return await invoke<GeneratedStudyAid & GenerationJobIdentity>("resume_study_guide", { request, jobId });
+  } catch (error) { throw sectionGuideError(error); }
+}
+export async function restartStudyGuide(jobId: string, consent: boolean, request: SectionGuideRequest): Promise<GeneratedStudyAid & GenerationJobIdentity> {
+  if (!isTauri()) throw new SectionGuideError("GUIDE_PAUSED");
+  try {
+    return await invoke<GeneratedStudyAid & GenerationJobIdentity>("restart_study_guide", { jobId, consent, request });
+  } catch (error) { throw sectionGuideError(error); }
 }
