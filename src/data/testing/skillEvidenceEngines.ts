@@ -320,18 +320,23 @@ export function observation(
 /** Tables migration 16 (OFFLINE-03a) adds, all empty after an upgrade. */
 export const MANUAL_STUDY_NEW_TABLES = ["study_set_history", "card_version_origins", "card_item_origins", "practice_item_origins"] as const;
 
+/** Tables migration 17 (OFFLINE-03b) adds, all empty after an upgrade. */
+export const PRACTICE_AUTHORING_NEW_TABLES = ["practice_save_operations"] as const;
+
 /**
- * An upgraded dump with the columns migration 16 adds to existing tables
+ * An upgraded dump with the columns migrations 16 and 17 add to existing tables
  * removed, after checking each holds its default: `ai_study_sets` gains
  * `summary_origin` (NULL) and `retired_json` ('[]'), and `material_bookmarks`
- * gains `quote` (NULL). Every older value is then compared as it was.
+ * gains `quote` (NULL); migration 17 then gives `practice_tests` its own
+ * `retired_json` ('[]') and `practice_test_items` `logical_id` and `replaces_id`
+ * (both NULL). Every older value is then compared as it was.
  */
-export function withoutSchema16Columns(rows: Record<string, unknown[]>): Record<string, unknown[]> {
+export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Record<string, unknown[]> {
   const strip = (table: string, columns: Record<string, unknown>) =>
     (rows[table] ?? []).map((row) => {
       const copy = { ...(row as Record<string, unknown>) };
       for (const [column, value] of Object.entries(columns)) {
-        if (copy[column] !== value) throw new Error(`${table}.${column} is not its migration-16 default`);
+        if (copy[column] !== value) throw new Error(`${table}.${column} is not its upgrade default`);
         delete copy[column];
       }
       return copy;
@@ -339,5 +344,7 @@ export function withoutSchema16Columns(rows: Record<string, unknown[]>): Record<
   const out = { ...rows };
   if ("ai_study_sets" in rows) out.ai_study_sets = strip("ai_study_sets", { summary_origin: null, retired_json: "[]" });
   if ("material_bookmarks" in rows) out.material_bookmarks = strip("material_bookmarks", { quote: null });
+  if ("practice_tests" in rows) out.practice_tests = strip("practice_tests", { retired_json: "[]" });
+  if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null });
   return out;
 }

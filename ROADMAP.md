@@ -1,3 +1,54 @@
+## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
+
+### Workflow (owner, 19–20 October 2026)
+
+- **Codex implements** every project change.
+- **Qwen Flash is the backup implementer only.** It is used only when Codex is out of usage.
+- **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
+- After a GREEN review and green exact-head CI, Claude merges with `--match-head-commit` and verifies the work is on main.
+- From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.
+- This replaces the earlier arrangements.
+
+### OFFLINE-03b status
+
+- Persistence, native parity, schema-17 validation and backup are done locally and reviewed. That covers r4–r6c; r7 was reviewed GREEN on 20 October; a schema-14 helper-test update for schema 17 is queued before publishing.
+- The UI rounds come next:
+  - r8: the editor and Previous versions;
+  - r9: regeneration review and the checkpoint;
+  - r10: exports and labels.
+- Then one coherent PR. Nothing is published yet.
+
+### New tranche, OFFLINE-GEN, right after OFFLINE-03b and before HOMEWORK-01 (owner, 20 October 2026)
+
+**Why:** on her slow internet, Gemini generation often fails, apparently while waiting for results. She has not yet used the update that shows generation progress (GEN-REL-04). The owner wants study material to keep working with just the PDF.
+
+| Order | ID | Outcome |
+| --- | --- | --- |
+| 0 | OFFLINE-GEN-00 | **Diagnose before building.** Get her onto the current build, which shows progress, and record which stage fails and the exact message. Then reproduce slow-link failures with the existing fake Gemini server (`fake_gemini.rs`): slow uploads, a slow first byte, and responses that trickle in. Measure them against today's single non-streaming `generateContent` request and its 300-second generation cap. Evaluate streaming responses and smaller per-section requests. No real key, profile or provider call. |
+| 1 | OFFLINE-GEN-01 | **Study kit made from her PDF, with no AI and fully offline,** built from the OFFLINE-01 per-page text cache: glossary and definition flashcards; fill-in-the-blank cards for key terms and numbers; an outline guide from the PDF's bookmarks and headings, with key sentences and page links; and draft practice questions that open in the OFFLINE-03b editor for her review before saving. Every item is labelled as pulled from her PDF on this Mac, never as AI-written. How that provenance is stored is decided at plan review. Instant, with no network. |
+| 2 | OFFLINE-GEN-02 | **Generate-later queue.** A generation she requests while offline or on a slow link waits in a visible queue, which she can cancel. It runs in small per-chapter pieces once the connection is good, with each piece checkpointed (reusing GEN-REL-02), so finished pieces are kept if a later one fails. It never uploads anything she did not ask for. **Resume where she left off (owner, 20 October 2026):** if a step-by-step study-guide generation times out or fails partway, every section already finished stays saved durably, across closing the app and restarting. Pressing Try again continues from the first unfinished section; it never starts over and never re-requests finished sections. It reuses the uploaded PDF reference (GEN-REL-01) instead of uploading again while that reference is still valid. Progress shows which sections are done ("3 of 7 sections ready"). If the PDF or its chosen pages changed since she started, she is told, and the work restarts only with her agreement. |
+| 3 | OFFLINE-GEN-03 | **Packet hand-off.** The owner generates on a fast connection, exports a study packet and sends it to her, and she imports it. Verify that packet v1 import carries the guide, cards and practice test, close any gaps, and add short plain-language how-to steps. |
+
+**Excluded by the owner:** a local AI model. It is not planned.
+
+### New features after EXPORT-02 (owner, 20 October 2026), in this order
+
+| Order | ID | Outcome |
+| --- | --- | --- |
+| 1 | ACS-READY-01 | She is studying for the FAA knowledge test now. Tag practice questions, cards and study sets to FAA ACS areas, and show a calm per-area readiness view that feeds Study Focus. |
+| 2 | SCHOOL-01 | A school scorecard comparing schools side by side: cost per hour, aircraft, Part 61 or 141, availability, and how her discovery flight felt, linked to Finances. School stays optional. |
+| 3 | FLIGHTLOG-01 | A discovery flight log: an entry per flight now (date, aircraft, school, instructor, time, what she did) that carries into her real logbook later. |
+
+**Context recorded:** she has not started her FAA medical or her student pilot certificate. A pre-solo paperwork checklist was offered and not chosen; it can be proposed again later.
+
+### Updated overall order
+
+OFFLINE-03b → OFFLINE-GEN-00…03 → HOMEWORK-01 → EXPORT-01 → EXPORT-02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01. After those, the earlier queued scheduler, weather and FAA work. OFFLINE-03c stays deferred.
+
+### Housekeeping
+
+PR #164 (old controller-recovery docs) is superseded by main and conflicts with it. The owner is closing it, with its branch kept.
+
 ## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
 
 Qwen implements; Codex independently reviews/tests, loops corrections and integrates after green CI on the exact current head. The owner has authorized this ongoing workflow and gated merges; no repeated workflow sign-off is needed. Tool sandbox boundaries still apply.

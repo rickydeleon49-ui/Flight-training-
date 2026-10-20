@@ -13,6 +13,8 @@ import { join } from "node:path";
 import initSqlJs, { type BindParams } from "sql.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { seedPracticeTest } from "./testing/practiceTestFixtures";
+
 vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
   default: `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm`,
 }));
@@ -435,7 +437,7 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       const repo = cardReviewRepository(db);
       await seedMaterial(db, M, cardsA);
       await seedMaterial(db, OTHER, cardsA);
-      await db.savePracticeTestAtomically!({
+      await seedPracticeTest(db, {
         sourceMaterialId: M,
         title: "Synthetic test",
         model: "synthetic",

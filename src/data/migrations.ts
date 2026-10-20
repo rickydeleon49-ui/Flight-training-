@@ -21,6 +21,7 @@ import splitSourceLineage from "../../src-tauri/migrations/0013_split_source_lin
 import skillsEvidence from "../../src-tauri/migrations/0014_skills_evidence.sql?raw";
 import documentNavigation from "../../src-tauri/migrations/0015_document_navigation.sql?raw";
 import manualStudy from "../../src-tauri/migrations/0016_manual_study.sql?raw";
+import practiceAuthoring from "../../src-tauri/migrations/0017_practice_authoring.sql?raw";
 
 export interface Migration {
   version: number;
@@ -45,6 +46,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 14, description: "skills_evidence", sql: skillsEvidence },
   { version: 15, description: "document_navigation", sql: documentNavigation },
   { version: 16, description: "manual_study", sql: manualStudy },
+  { version: 17, description: "practice_authoring", sql: practiceAuthoring },
 ];
 
 /**

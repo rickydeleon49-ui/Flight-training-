@@ -18,17 +18,16 @@
  * again. A lost checkpoint can cost one extra history row; it can never lose
  * her wording.
  */
+import type { PracticeSaveOperation } from "@/domain/types";
 import type { NextStudySet, StoredSetRow } from "@/data/studySetTransaction";
 
 /**
  * Her study set as she reviewed it: the set she had open and the merged set to
  * store. Its operation id makes a retry safe.
  */
-export interface ReviewedRegeneration {
-  operationId: string;
-  expected: StoredSetRow;
-  next: NextStudySet;
-}
+export type ReviewedRegeneration =
+  | { kind: "study-set"; operationId: string; expected: StoredSetRow; next: NextStudySet }
+  | { kind: "practice"; operationId: string; operation: PracticeSaveOperation };
 
 const PREFIX = "her-flight-deck.reviewed-regeneration.";
 
@@ -71,9 +70,19 @@ export function reviewedSaveOf(jobId: string | null): ReviewedRegeneration | nul
   try {
     const raw = store()?.getItem(PREFIX + jobId);
     if (!raw) return null;
-    const value = JSON.parse(raw) as Partial<ReviewedRegeneration>;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const record = value as Record<string, unknown>;
+    if (typeof record.operationId !== "string") return null;
     // Shape only; the save itself validates the whole operation again.
-    return typeof value.operationId === "string" && value.expected && value.next ? (value as ReviewedRegeneration) : null;
+    if ((record.kind === undefined || record.kind === "study-set") && record.expected && record.next) {
+      return { ...record, kind: "study-set" } as ReviewedRegeneration;
+    }
+    if (record.kind === "practice" && record.operation && typeof record.operation === "object" &&
+        !Array.isArray(record.operation) && (record.operation as Record<string, unknown>).operationId === record.operationId) {
+      return record as ReviewedRegeneration;
+    }
+    return null;
   } catch {
     return null;
   }

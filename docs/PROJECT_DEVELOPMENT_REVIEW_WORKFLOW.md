@@ -2,6 +2,8 @@
 
 ## Roles
 
+- **Owner assignment — 20 October 2026:** from this date, **Codex implements** every project change; **Qwen Flash is backup only when Codex is out of usage**. **Claude assigns precise rounds, reviews, independently tests with mutation checks, and merges** after GREEN review and green exact-head CI, using `--match-head-commit` and verifying inclusion on main. UI rounds also require a browser-mode walkthrough with Playwright and the `run` skill. Claude may implement directly only from 2:00 to 3:00 AM on 20 October before the weekly usage reset. This assignment replaces the earlier arrangements retained below as history.
+
 - **Claude** implements roadmap features in the agreed local clone or worktree. Claude leaves changes uncommitted and unpushed for review.
 - **Gemini** handles security hardening or a focused security audit only when explicitly assigned. Gemini does not independently start roadmap features.
 - **Codex** is the senior software developer and final independent reviewer. Codex owns technical direction, review quality, scope control and delivery pace within the owner's priorities, and gives the assigned implementation model clear, complete tasks. When the work is ready, Codex commits, pushes, opens the pull request, watches required checks, and merges.

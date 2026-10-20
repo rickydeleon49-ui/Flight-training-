@@ -640,6 +640,9 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 16 {
         verify_schema_16_manual_study_semantics(connection)?;
     }
+    if newest_migration >= 17 {
+        verify_schema_17_practice_authoring_semantics(connection)?;
+    }
     Ok(())
 }
 
@@ -667,6 +670,351 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
             |row| row.get(0),
         )
         .map_err(|e| format!("Could not inspect the database version: {e}"))
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 17: authoring practice questions she writes herself          */
+/* (TS twin: `validatePracticeAuthoringState`)                         */
+/* ------------------------------------------------------------------ */
+
+pub(crate) const PRACTICE_AUTHORING_TABLES: [&str; 1] = ["practice_save_operations"];
+
+/// `AUTHORING_ACTIONS` in the TypeScript twin. Migration 0017 also declares a
+/// CHECK over exactly these values, so no row can reach the receipts loop with
+/// any other action.
+const PRACTICE_AUTHORING_ACTIONS: [&str; 6] = [
+    "create",
+    "edit",
+    "correct",
+    "regenerate",
+    "restore",
+    "remove",
+];
+
+/// The OFFLINE-03b contract: the receipts table exactly as migration 0017
+/// defines it; the new columns on the two extended tables; receipts binding
+/// material, action and the exact canonical payload bytes with a digest that
+/// recomputes, decoded by the writer's own strict decoder; identities that are
+/// unique per version and owned by one living material; retirement lists,
+/// historical envelopes and the current mirror that decode and agree. Column
+/// registration alone proves nothing. This is the native twin of
+/// `validatePracticeAuthoringState` in `src/data/practiceStateValidation.ts`,
+/// in the same order with the same checks; the shared accept/refuse fixture is
+/// `src-tauri/fixtures/practice-authoring-validation/cases.json`.
+pub(crate) fn verify_schema_17_practice_authoring_semantics(
+    connection: &Connection,
+) -> Result<(), String> {
+    use crate::card_reviews::sha256_hex;
+    use crate::practice_authoring::{
+        decode_practice_operation, decode_practice_retirements, decode_practice_snapshot,
+        read_current_snapshot,
+    };
+    use crate::practice_sessions::canonical_json;
+    use rusqlite::types::Value as SqlValue;
+    use serde_json::Value;
+
+    // The authoring contract's UUID pattern is lowercase, so `is_valid_uuid_v4`
+    // alone is not enough (TS `AUTHORING_UUID_V4` has no `i` flag).
+    let is_authoring_uuid = |value: &str| {
+        is_valid_uuid_v4(value) && !value.bytes().any(|byte| byte.is_ascii_uppercase())
+    };
+    let field = |row: &M3Row, key: &str| m3_field(row, key).unwrap_or_default();
+
+    // 1. The receipt table, exactly as the registered migration defines it.
+    let reference = get_reference_schema_connection()?;
+    for table in PRACTICE_AUTHORING_TABLES {
+        if m3_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[m3_value(table)],
+        )? != 1
+        {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)? {
+            return Err(format!(
+                "Table {table} columns do not match the registered migration contract."
+            ));
+        }
+        if foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)? {
+            return Err(format!(
+                "Table {table} foreign keys do not match the registered migration contract."
+            ));
+        }
+        if check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        {
+            return Err(format!(
+                "Table {table} CHECK constraints do not match the registered migration contract."
+            ));
+        }
+        if m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)? {
+            return Err(format!(
+                "Table {table} keys do not match the registered migration contract."
+            ));
+        }
+        if m3_count(
+            connection,
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )? != 0
+        {
+            return Err(format!("Table {table} has rows that point at nothing."));
+        }
+    }
+    if m3_index_shape(
+        connection,
+        "practice_save_operations",
+        "idx_practice_save_ops_material",
+    )? != m3_index_shape(
+        &reference,
+        "practice_save_operations",
+        "idx_practice_save_ops_material",
+    )? {
+        return Err(
+            "The database is missing required index: idx_practice_save_ops_material".to_string(),
+        );
+    }
+
+    // 2. The 0017 columns on the tables earlier migrations made.
+    for (table, col_name, col_type, notnull) in [
+        ("practice_tests", "retired_json", "TEXT", 1),
+        ("practice_test_items", "logical_id", "TEXT", 0),
+        ("practice_test_items", "replaces_id", "TEXT", 0),
+    ] {
+        let found: Option<(String, i64)> = connection
+            .query_row(
+                &format!(
+                    "SELECT type, [notnull] FROM pragma_table_info('{table}') WHERE name = ?1"
+                ),
+                [col_name],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()
+            .map_err(|e| format!("Failed to read actual columns for {table}: {e}"))?;
+        let Some((actual_type, actual_notnull)) = found else {
+            return Err(format!("Table {table} missing required column: {col_name}"));
+        };
+        if !actual_type.eq_ignore_ascii_case(col_type) {
+            return Err(format!(
+                "Table {table} column {col_name} type mismatch: expected {col_type}, found {actual_type}"
+            ));
+        }
+        if actual_notnull != notnull {
+            return Err(format!(
+                "Table {table} column {col_name} notnull mismatch: expected {notnull}, found {actual_notnull}"
+            ));
+        }
+    }
+
+    // 3. Receipts: exact canonical payload bytes, a digest that recomputes, a
+    // typed result, and the whole operation decoded by the writer's own strict
+    // decoder, bound row-for-row to the operation id, material and action it is
+    // keyed by. A reused operation id is only ever the same committed
+    // operation.
+    for row in m3_rows(
+        connection,
+        "SELECT operation_id, material_id, action, payload_json, payload_hash, result_json \
+         FROM practice_save_operations",
+        &[],
+    )? {
+        let action = field(&row, "action");
+        if !PRACTICE_AUTHORING_ACTIONS.contains(&action.as_str()) {
+            return Err("A practice save receipt names an unknown action.".to_string());
+        }
+        let payload = field(&row, "payload_json");
+        let Ok(operation) = serde_json::from_str::<Value>(&payload) else {
+            return Err("A practice save receipt does not hold JSON.".to_string());
+        };
+        if canonical_json(&operation) != payload {
+            return Err(
+                "A practice save receipt does not hold its exact canonical payload bytes."
+                    .to_string(),
+            );
+        }
+        // Strict decode through the authoring writer's own decoder — one
+        // decoder, not a second one that could drift.
+        let Ok(decoded) = decode_practice_operation(&operation) else {
+            return Err(
+                "A practice save receipt does not hold a complete authoring operation.".to_string(),
+            );
+        };
+        if decoded.operation_id != field(&row, "operation_id") {
+            return Err(
+                "A practice save receipt does not bind its operation id to its row key."
+                    .to_string(),
+            );
+        }
+        if decoded.material_id != field(&row, "material_id") || decoded.reason.as_str() != action {
+            return Err(
+                "A practice save receipt does not bind its material and action.".to_string(),
+            );
+        }
+        if field(&row, "payload_hash") != sha256_hex(&payload) {
+            return Err("A practice save receipt digest does not match its payload.".to_string());
+        }
+        let result = match serde_json::from_str::<Value>(&field(&row, "result_json")) {
+            Ok(Value::Object(map)) => map,
+            _ => return Err("A practice save receipt does not hold a typed result.".to_string()),
+        };
+        let mut keys: Vec<&str> = result.keys().map(String::as_str).collect();
+        keys.sort_unstable();
+        let expected_keys = if action == "remove" {
+            "status"
+        } else {
+            "status,versionId"
+        };
+        if result.get("status").and_then(Value::as_str) != Some("saved")
+            || keys.join(",") != expected_keys
+        {
+            return Err("A practice save receipt does not hold a typed result.".to_string());
+        }
+        if action != "remove"
+            && !result
+                .get("versionId")
+                .and_then(Value::as_str)
+                .is_some_and(is_authoring_uuid)
+        {
+            return Err("A practice save receipt does not name the version it saved.".to_string());
+        }
+    }
+
+    // 4. Editor metadata: identities and replacements are UUID v4, unique per
+    // version, never shared by two living materials, and a recorded
+    // replacement always sits beside an origin.
+    for row in m3_rows(
+        connection,
+        "SELECT logical_id, replaces_id FROM practice_test_items \
+         WHERE logical_id IS NOT NULL OR replaces_id IS NOT NULL",
+        &[],
+    )? {
+        for column in ["logical_id", "replaces_id"] {
+            if let SqlValue::Null = m3_get(&row, column) {
+                continue;
+            }
+            if !is_authoring_uuid(&field(&row, column)) {
+                return Err(format!("A practice item carries a malformed {column}."));
+            }
+        }
+    }
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM (
+            SELECT version_id, logical_id FROM practice_test_items
+             WHERE logical_id IS NOT NULL GROUP BY version_id, logical_id HAVING COUNT(*) > 1)",
+        &[],
+    )? != 0
+    {
+        return Err("A practice version repeats one logical identity.".to_string());
+    }
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM (
+            SELECT i.logical_id FROM practice_test_items i
+              JOIN practice_test_versions v ON v.id = i.version_id
+             WHERE i.logical_id IS NOT NULL AND v.source_material_id IS NOT NULL
+             GROUP BY i.logical_id HAVING COUNT(DISTINCT v.source_material_id) > 1)",
+        &[],
+    )? != 0
+    {
+        return Err("Two study materials share one practice question identity.".to_string());
+    }
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM practice_test_items i
+          WHERE i.replaces_id IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM practice_item_origins o WHERE o.item_id = i.id)",
+        &[],
+    )? != 0
+    {
+        return Err("A practice item records a replacement without an origin.".to_string());
+    }
+
+    // 5. Stored retirement lists and historical envelopes decode strictly.
+    for row in m3_rows(connection, "SELECT retired_json FROM practice_tests", &[])? {
+        let damaged = match serde_json::from_str::<Value>(&field(&row, "retired_json")) {
+            Ok(value) => decode_practice_retirements(&value).is_err(),
+            Err(_) => true,
+        };
+        if damaged {
+            return Err("A practice test carries a damaged retirement list.".to_string());
+        }
+    }
+    for row in m3_rows(
+        connection,
+        "SELECT previous_json FROM study_set_history WHERE kind = 'practice'",
+        &[],
+    )? {
+        let damaged = match serde_json::from_str::<Value>(&field(&row, "previous_json")) {
+            Ok(value) => decode_practice_snapshot(&value).is_err(),
+            Err(_) => true,
+        };
+        if damaged {
+            return Err("A saved practice history entry is not a valid snapshot.".to_string());
+        }
+    }
+
+    // 6. The current mirror agrees with the active version, and every active
+    // version of a living material has its mirror row.
+    if m3_count(
+        connection,
+        "SELECT COUNT(*) FROM practice_test_versions v
+          WHERE v.is_active = 1 AND v.source_material_id IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM practice_tests t WHERE t.source_material_id = v.source_material_id)",
+        &[],
+    )? != 0
+    {
+        return Err("An active practice version has no current test row.".to_string());
+    }
+    for row in m3_rows(
+        connection,
+        "SELECT source_material_id, title, questions_json, provider, model, legacy_migrated_at \
+         FROM practice_tests",
+        &[],
+    )? {
+        let material_id = field(&row, "source_material_id");
+        let current = read_current_snapshot(connection, &material_id)
+            .map_err(|_| "The current practice test does not decode as a saved snapshot.")?;
+        let Some(snapshot) = current else {
+            // A mirror with no active version is legitimate only while the
+            // legacy row is unconverted or quarantined (established
+            // schema-11 states). Once marked migrated — the state the
+            // authoring contract always writes together with its version —
+            // the version must exist.
+            if let SqlValue::Null = m3_get(&row, "legacy_migrated_at") {
+                continue;
+            }
+            return Err("A migrated current practice test has no active version.".to_string());
+        };
+        if snapshot.title != field(&row, "title")
+            || snapshot.provider != field(&row, "provider")
+            || snapshot.model != field(&row, "model")
+        {
+            return Err("The current practice test disagrees with its active version.".to_string());
+        }
+        let Ok(mirrored) = serde_json::from_str::<Value>(&field(&row, "questions_json")) else {
+            return Err("The current practice test does not hold JSON questions.".to_string());
+        };
+        let projected: Vec<Value> = snapshot
+            .questions
+            .iter()
+            .map(|question| {
+                serde_json::json!({
+                    "question": question.question,
+                    "options": question.options,
+                    "correctIndex": question.correct_index,
+                    "explanation": question.explanation,
+                    "sourcePage": question.source_page,
+                })
+            })
+            .collect();
+        if canonical_json(&mirrored) != canonical_json(&Value::Array(projected)) {
+            return Err(
+                "The current practice test questions disagree with the active version.".to_string(),
+            );
+        }
+    }
+    Ok(())
 }
 
 /* ------------------------------------------------------------------ */
@@ -1789,6 +2137,11 @@ pub(crate) fn verify_schema_11_semantics(connection: &Connection) -> Result<(), 
                 && !["legacy_migrated_at", "legacy_error"].contains(&col_name.as_str())
             {
                 continue;
+            }
+            if table == "practice_test_items"
+                && ["logical_id", "replaces_id"].contains(&col_name.as_str())
+            {
+                continue; // added by 0017; required by verify_schema_17_practice_authoring_semantics
             }
             let Some((actual_type, actual_notnull, actual_pk)) = conn_cols.get(&col_name) else {
                 return Err(format!("Table {table} missing required column: {col_name}"));
@@ -13926,6 +14279,428 @@ mod tests {
             )
             .unwrap();
         assert_eq!(is_active, 1);
+
+        let _ = std::fs::remove_dir_all(&source_root);
+        let _ = std::fs::remove_dir_all(&backup_dir);
+        let _ = std::fs::remove_dir_all(&target_root);
+    }
+
+    /// OFFLINE-03b r7 (a): her pre-authoring library survives the upgrade path.
+    /// A schema-16 archive — one Gemini practice test with one completed
+    /// attempt and one instructor-origin row — is backed up, staged, applied,
+    /// and then takes the migrations it has not seen yet exactly as the app
+    /// does on the next launch. The whole verification ladder passes on the
+    /// upgraded database, the practice test reads back through the authoring
+    /// reader with the content hash its version row already carried, the
+    /// attempt survives and an authored test starts with an empty ledger.
+    #[test]
+    fn schema_16_archive_restores_and_upgrades_to_17() {
+        let v1_questions = r#"[{"question":"Synthetic one","options":["A","B"],"correctIndex":0,"explanation":"","sourcePage":null}]"#;
+        let v2_questions = r#"[{"question":"Synthetic two","options":["A","B","C"],"correctIndex":2,"explanation":"Because C.","sourcePage":4}]"#;
+
+        let source_root = scratch("schema-16-03b-source");
+        let source_db = source_root.join(DB_FILES[0]);
+        {
+            let conn = Connection::open(&source_db).unwrap();
+            conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+            for migration in crate::migrations().iter().filter(|m| m.version <= 16) {
+                conn.execute_batch(migration.sql).unwrap();
+            }
+            conn.execute_batch(
+                "CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
+                 INSERT INTO _sqlx_migrations (version) VALUES (16);
+                 INSERT INTO study_materials (id, title, created_at, updated_at)
+                 VALUES ('mat-16', 'Synthetic sixteen', '2026-10-16T09:00:00.000Z', '2026-10-16T09:00:00.000Z');",
+            )
+            .unwrap();
+        }
+
+        // The test, one completed attempt against its first version, then a
+        // regeneration. The instructor origin lands on the superseded version's
+        // question, so the current test's hash stays the stored legacy hash.
+        crate::practice_sessions::mark_root_ready(&source_root);
+        crate::practice_sessions::save_practice_test_at(
+            &source_root,
+            "mat-16",
+            "Synthetic sixteen",
+            v1_questions,
+            "synthetic",
+        )
+        .unwrap();
+        let v1_id = {
+            let conn = Connection::open(&source_db).unwrap();
+            conn.query_row(
+                "SELECT id FROM practice_test_versions WHERE source_material_id = 'mat-16' AND is_active = 1",
+                [],
+                |r| r.get::<_, String>(0),
+            )
+            .unwrap()
+        };
+        let start = crate::practice_sessions::save_practice_session_at(
+            &source_root,
+            &serde_json::json!({
+                "action": "start_or_resume",
+                "operationId": "20000000-0000-4000-8000-000000000001",
+                "materialId": "mat-16",
+                "versionId": v1_id,
+            }),
+        )
+        .unwrap();
+        let v1_item = {
+            let conn = Connection::open(&source_db).unwrap();
+            conn.query_row(
+                "SELECT id FROM practice_test_items WHERE version_id = ?1 ORDER BY ordinal",
+                [&v1_id],
+                |r| r.get::<_, String>(0),
+            )
+            .unwrap()
+        };
+        crate::practice_sessions::save_practice_session_at(
+            &source_root,
+            &serde_json::json!({
+                "action": "record_response",
+                "operationId": "20000000-0000-4000-8000-000000000002",
+                "attemptId": start["attemptId"],
+                "itemId": v1_item.clone(),
+                "expectedRevision": 0,
+                "selectedIndex": 0,
+                "isDontKnow": false,
+            }),
+        )
+        .unwrap();
+        crate::practice_sessions::save_practice_session_at(
+            &source_root,
+            &serde_json::json!({
+                "action": "complete_attempt",
+                "operationId": "20000000-0000-4000-8000-000000000003",
+                "attemptId": start["attemptId"],
+                "expectedRevision": 1,
+            }),
+        )
+        .unwrap();
+        crate::practice_sessions::save_practice_test_at(
+            &source_root,
+            "mat-16",
+            "Synthetic sixteen",
+            v2_questions,
+            "synthetic",
+        )
+        .unwrap();
+        let stored_hash = {
+            let conn = Connection::open(&source_db).unwrap();
+            let stored_hash: String = conn
+                .query_row(
+                    "SELECT content_hash FROM practice_test_versions WHERE source_material_id = 'mat-16' AND is_active = 1",
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            let v1_hash: String = conn
+                .query_row(
+                    "SELECT content_hash FROM practice_test_versions WHERE id = ?1",
+                    [&v1_id],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_ne!(
+                stored_hash, v1_hash,
+                "the fixture must really span two versions"
+            );
+            conn.execute(
+                "INSERT INTO practice_item_origins (item_id, origin) VALUES (?1, 'instructor')",
+                [&v1_item],
+            )
+            .unwrap();
+            stored_hash
+        };
+
+        // Still a schema-16 library: the ladder up to 16 accepts it.
+        assert!(verify_application_database(&source_db).is_ok());
+
+        let backup_dir = scratch("schema-16-03b-backup");
+        let archive = backup_dir.join("schema16.hfdbackup");
+        create_consistent_complete_backup_with_retry(&source_root, &archive, "0.6.0").unwrap();
+        let target_root = scratch("schema-16-03b-target");
+        stage_complete_restore_in(&target_root, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target_root).unwrap();
+        let restored_db = target_root.join(DB_FILES[0]);
+        assert!(restored_db.is_file());
+        assert!(verify_application_database(&restored_db).is_ok());
+
+        // The app's own upgrade step: every migration above the newest the
+        // restored library records, in order, each one recorded as it lands.
+        {
+            let conn = Connection::open(&restored_db).unwrap();
+            let applied: i64 = conn
+                .query_row(
+                    "SELECT COALESCE(MAX(version), 0) FROM _sqlx_migrations",
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(applied, 16);
+            for migration in crate::migrations()
+                .into_iter()
+                .filter(|m| m.version > applied)
+            {
+                conn.execute_batch(migration.sql).unwrap();
+                conn.execute(
+                    "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+                    [migration.version],
+                )
+                .unwrap();
+            }
+        }
+
+        // The whole ladder now runs the schema-17 authoring semantics too.
+        assert!(
+            verify_application_database(&restored_db).is_ok(),
+            "a schema-16 archive upgraded to 17 must pass the application ladder"
+        );
+
+        let conn = Connection::open(&restored_db).unwrap();
+        let current = crate::practice_authoring::read_current_snapshot(&conn, "mat-16")
+            .unwrap()
+            .expect("the restored practice test reads back through the authoring reader");
+        assert_eq!(current.version_number, 2);
+        assert_eq!(current.questions.len(), 1);
+        assert_eq!(
+            crate::practice_authoring::practice_content_hash(&current.questions),
+            stored_hash,
+            "the content hash must survive the archive and the upgrade unchanged"
+        );
+        let completed: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM practice_attempts WHERE source_material_id = 'mat-16' AND status = 'completed'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(completed, 1, "her completed attempt must survive");
+        let origins: i64 = conn
+            .query_row("SELECT COUNT(*) FROM practice_item_origins", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(origins, 1);
+        assert!(
+            current.retired.is_empty(),
+            "a test she never authored starts with an empty ledger"
+        );
+
+        let _ = std::fs::remove_dir_all(&source_root);
+        let _ = std::fs::remove_dir_all(&backup_dir);
+        let _ = std::fs::remove_dir_all(&target_root);
+    }
+
+    /// OFFLINE-03b r7 (b): an authored schema-17 archive round-trips whole.
+    /// Create, edit (carrying the exact retirement record) and an instructor
+    /// correction all go through `practice_authoring::save_practice_authoring_at`.
+    /// The restored library reads back the same snapshot field for field and
+    /// keeps every receipt and history row, and replaying the exact edit
+    /// operation there is recognised as the same committed operation —
+    /// `already_saved`, not a second version.
+    #[test]
+    fn schema_17_authored_archive_round_trip() {
+        use crate::practice_authoring::{
+            decode_question, practice_retirement_record, read_current_snapshot,
+            retirement_record_value, save_practice_authoring_at, snapshot_value,
+        };
+
+        let identity_one = "e1000000-0000-4000-8000-000000000001";
+        let identity_two = "e2000000-0000-4000-8000-000000000002";
+        let question = |identity: &str, stem: &str, origin: Option<&str>| {
+            let mut value = serde_json::json!({
+                "question": stem,
+                "options": ["An ATC clearance", "A flight plan only", "Nothing"],
+                "correctIndex": 0,
+                "explanation": "Clearance before entering.",
+                "sourcePage": 12,
+                "identity": identity,
+            });
+            if let Some(origin) = origin {
+                value
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("origin".to_string(), serde_json::json!(origin));
+            }
+            value
+        };
+        let next = |questions: Vec<serde_json::Value>, retired: Vec<serde_json::Value>| {
+            serde_json::json!({
+                "title": "Class B study aid",
+                "provider": "manual",
+                "model": "",
+                "questions": questions,
+                "retired": retired,
+            })
+        };
+        let operation = |operation_id: &str,
+                         reason: &str,
+                         expected: serde_json::Value,
+                         next: Option<serde_json::Value>| {
+            serde_json::json!({
+                "operationId": operation_id,
+                "sourceMaterialId": "mat-a",
+                "reason": reason,
+                "expected": expected,
+                "next": next.unwrap_or(serde_json::Value::Null),
+            })
+        };
+        let retirement = |question: &serde_json::Value, reason: &str| {
+            retirement_record_value(&practice_retirement_record(
+                &decode_question(question).unwrap(),
+                reason,
+            ))
+        };
+        let current_json = |root: &Path| -> serde_json::Value {
+            let conn = Connection::open(root.join(DB_FILES[0])).unwrap();
+            let value = read_current_snapshot(&conn, "mat-a")
+                .unwrap()
+                .map(|snapshot| snapshot_value(&snapshot))
+                .unwrap_or(serde_json::Value::Null);
+            drop(conn);
+            value
+        };
+        let count = |conn: &Connection, sql: &str| -> i64 {
+            conn.query_row(sql, [], |r| r.get(0)).unwrap()
+        };
+
+        let source_root = scratch("schema-17-03b-source");
+        let source_db = source_root.join(DB_FILES[0]);
+        {
+            let conn = Connection::open(&source_db).unwrap();
+            conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+            for migration in crate::migrations() {
+                conn.execute_batch(migration.sql).unwrap();
+            }
+            conn.execute_batch("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);")
+                .unwrap();
+            for migration in crate::migrations() {
+                conn.execute(
+                    "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+                    [migration.version],
+                )
+                .unwrap();
+            }
+            conn.execute(
+                "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat-a', 'Class B clearances', '2026-10-19T09:00:00.000Z', '2026-10-19T09:00:00.000Z')",
+                [],
+            )
+            .unwrap();
+        }
+
+        let first = question(identity_one, "What does entry into Class B require?", None);
+        let second = question(identity_two, "What is the usual vertical limit?", None);
+        save_practice_authoring_at(
+            &source_root,
+            &operation(
+                "e0000000-0000-4000-8000-000000000001",
+                "create",
+                serde_json::Value::Null,
+                Some(next(vec![first.clone(), second.clone()], vec![])),
+            ),
+        )
+        .unwrap();
+
+        let first_rewritten = question(
+            identity_one,
+            "What must you have before entering Class B?",
+            None,
+        );
+        let edit = operation(
+            "e0000000-0000-4000-8000-000000000002",
+            "edit",
+            current_json(&source_root),
+            Some(next(
+                vec![first_rewritten.clone(), second.clone()],
+                vec![retirement(&first, "corrected")],
+            )),
+        );
+        save_practice_authoring_at(&source_root, &edit).unwrap();
+
+        let second_rewritten = question(
+            identity_two,
+            "Class B normally tops out at what altitude?",
+            Some("instructor"),
+        );
+        save_practice_authoring_at(
+            &source_root,
+            &operation(
+                "e0000000-0000-4000-8000-000000000003",
+                "correct",
+                current_json(&source_root),
+                Some(next(
+                    vec![first_rewritten, second_rewritten],
+                    vec![
+                        retirement(&first, "corrected"),
+                        retirement(&second, "corrected"),
+                    ],
+                )),
+            ),
+        )
+        .unwrap();
+
+        let source_conn = Connection::open(&source_db).unwrap();
+        let source_snapshot = read_current_snapshot(&source_conn, "mat-a").unwrap();
+        let source_receipts = count(
+            &source_conn,
+            "SELECT COUNT(*) FROM practice_save_operations",
+        );
+        let source_history = count(
+            &source_conn,
+            "SELECT COUNT(*) FROM study_set_history WHERE kind = 'practice'",
+        );
+        drop(source_conn);
+        assert!(verify_application_database(&source_db).is_ok());
+
+        let backup_dir = scratch("schema-17-03b-backup");
+        let archive = backup_dir.join("schema17.hfdbackup");
+        create_consistent_complete_backup_with_retry(&source_root, &archive, "0.6.0").unwrap();
+        let target_root = scratch("schema-17-03b-target");
+        stage_complete_restore_in(&target_root, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target_root).unwrap();
+        let restored_db = target_root.join(DB_FILES[0]);
+        assert!(verify_application_database(&restored_db).is_ok());
+
+        let restored_conn = Connection::open(&restored_db).unwrap();
+        let restored_snapshot = read_current_snapshot(&restored_conn, "mat-a").unwrap();
+        assert_eq!(
+            restored_snapshot, source_snapshot,
+            "the restored authored test must equal the source field for field"
+        );
+        assert_eq!(
+            count(
+                &restored_conn,
+                "SELECT COUNT(*) FROM practice_save_operations"
+            ),
+            source_receipts
+        );
+        assert_eq!(
+            count(
+                &restored_conn,
+                "SELECT COUNT(*) FROM study_set_history WHERE kind = 'practice'"
+            ),
+            source_history
+        );
+        assert_eq!(source_receipts, 3);
+        assert_eq!(source_history, 2);
+        drop(restored_conn);
+
+        // The exact edit operation replayed against the restored library is the
+        // same committed operation, so it changes nothing and says so.
+        let replay = save_practice_authoring_at(&target_root, &edit).unwrap();
+        assert_eq!(replay.status, "already_saved");
+        let after = Connection::open(&restored_db).unwrap();
+        assert_eq!(
+            count(&after, "SELECT COUNT(*) FROM practice_save_operations"),
+            source_receipts
+        );
+        assert_eq!(
+            read_current_snapshot(&after, "mat-a").unwrap(),
+            restored_snapshot
+        );
+        drop(after);
 
         let _ = std::fs::remove_dir_all(&source_root);
         let _ = std::fs::remove_dir_all(&backup_dir);

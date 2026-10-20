@@ -91,6 +91,7 @@ async function renderPanel(test: PracticeTest) {
 async function seed(id: string, prefix: string): Promise<PracticeTest> {
   await repos.documents.create({ id, title: `${prefix} material` });
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: id,
     title: `${prefix} material`,
     model: "synthetic",
@@ -346,6 +347,7 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     await seed("m1", "Frozen");
     const { historyKey, attemptId } = await completeAttempt("m1", ["correct", "dont_know", "skip", "incorrect"]);
     await repos.documents.savePracticeTest({
+    provider: "gemini",
       sourceMaterialId: "m1",
       title: "Replacement",
       model: "synthetic",

@@ -101,7 +101,7 @@ export function RegenerationReviewDialog({
         // now, it did commit: resend exactly that operation, which is
         // recognised as already saved, instead of reviewing (and saving) again.
         const pending = job.reviewed ?? reviewedSaveOf(job.jobId);
-        if (pending && holds(read.stored, pending.next)) {
+        if (pending?.kind === "study-set" && holds(read.stored, pending.next)) {
           if (live) setSettling(true);
           const saved = await onSave(pending);
           if (live && !saved) {
@@ -165,7 +165,7 @@ export function RegenerationReviewDialog({
       // save that committed before a reopen is caught when the review opens.
       const key = JSON.stringify(next);
       if (operationRef.current?.key !== key) operationRef.current = { key, id: newId() };
-      const reviewed: ReviewedRegeneration = { operationId: operationRef.current.id, expected: opened.stored, next };
+      const reviewed: ReviewedRegeneration = { kind: "study-set", operationId: operationRef.current.id, expected: opened.stored, next };
       const saved = await onSave(reviewed);
       // A save that returned true is not finished business: the journal still
       // holds the answer until it acknowledges it, and only that removes the

@@ -83,6 +83,7 @@ async function seedMaterialAndTest(matId = "mat-1", title = "Traffic Pattern Gui
   });
 
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: matId,
     title: `${title} Test`,
     questions: sampleQuestions,

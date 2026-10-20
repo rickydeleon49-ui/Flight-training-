@@ -31,12 +31,11 @@ import { readLibraryRecentReviews, readLibraryReviewDue } from "../cardLibraryRe
 import { executeSkillEvidenceAction } from "../skillEvidenceTransaction";
 import { listSkills, readEvidencePage, readObservationHistory, readSkillSummary } from "../skillEvidenceReader";
 import { executeNavigationOperation } from "../navigationTransaction";
+import { executePracticeAuthoring } from "../practiceAuthoring";
 import {
   executeEraseHistoryAction,
   executeLegacyConversion,
   executePracticeSessionAction,
-  executeRemovePracticeTest,
-  executeSavePracticeTest,
 } from "../practiceSessionTransaction";
 import { applyMigrations } from "../migrations";
 import { validateApplicationDatabase, type ValidationQuery } from "../practiceStateValidation";
@@ -168,15 +167,10 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     ): Promise<import("@/domain/types").PracticeSessionActionResult> {
       return owner.exclusive(() => executePracticeSessionAction(exec, run, query, action));
     },
-    savePracticeTestAtomically(
-      operation: import("../db").PracticeTestSaveOperation,
-    ): Promise<void> {
-      return owner.exclusive(() => executeSavePracticeTest(exec, run, query, operation));
-    },
-    removePracticeTestAtomically(
-      sourceMaterialId: string,
-    ): Promise<void> {
-      return owner.exclusive(() => executeRemovePracticeTest(exec, run, query, sourceMaterialId));
+    savePracticeAuthoringAtomically(
+      operation: import("@/domain/types").PracticeSaveOperation,
+    ): Promise<import("@/domain/types").PracticeSaveResult> {
+      return owner.exclusive(() => executePracticeAuthoring(exec, run, query, operation));
     },
     saveStudySetAtomically(
       operation: import("../studySetTransaction").StudySetSaveOperation,

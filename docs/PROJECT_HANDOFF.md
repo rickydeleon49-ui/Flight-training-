@@ -1,3 +1,14 @@
+## Current owner workflow — 20 October 2026
+
+- **Codex implements** every project change.
+- **Qwen Flash is the backup implementer only.** It is used only when Codex is out of usage.
+- **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
+- After a GREEN review and green exact-head CI, Claude merges with `--match-head-commit` and verifies the work is on main.
+- From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.
+- This replaces the earlier arrangements.
+
+Earlier entries below are history. Current priorities are recorded in the [20 October roadmap entry](../ROADMAP.md).
+
 ## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
 
 Qwen implements; Codex independently reviews/tests, loops corrections and integrates after green CI on the exact current head. The owner has authorized this ongoing workflow and gated merges; no repeated workflow sign-off is needed. Tool sandbox boundaries still apply.

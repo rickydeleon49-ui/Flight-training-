@@ -1,0 +1,10 @@
+$ shasum -a 256 src/logic/studyExport.ts src/logic/studyExport.test.ts src/logic/studyHandout.ts src/logic/studyHandout.test.ts src/pages/StudyLibrary/ExportStudyDialog.tsx src/pages/StudyLibrary/ExportStudyDialog.test.ts src-tauri/src/extraction/search/saved/tests.rs
+2c6f4115fae80dc59d401594217aa8d7a9a90bd7fe29accdadfa2fe36f832ab4  src/logic/studyExport.ts
+db3b756f35aac885e9ba6f1c1c5913d02d9733ce147fccf6f61f569d770cb217  src/logic/studyExport.test.ts
+7089c7a44bc21297bc92127c40cf4e0df7a467fb9021c1380316e5b480f6677d  src/logic/studyHandout.ts
+2c7f51bf5c68fbb2dc307c9e11056b85829688186407237b702d5764672c2655  src/logic/studyHandout.test.ts
+1a6cfcd843eafd3d2784c45e9dcbd599816a726bbd1fce4ab343268627b5496d  src/pages/StudyLibrary/ExportStudyDialog.tsx
+269ec1fa5183ff13b03f00a2519c2b71cede4d4f8bcb43f32ea5eed4842aac47  src/pages/StudyLibrary/ExportStudyDialog.test.ts
+bf724f77b4cc592db85929635b5951394a7c623f0a6a5d7a5bcdddeb3c5c4e55  src-tauri/src/extraction/search/saved/tests.rs
+
+EXIT 0

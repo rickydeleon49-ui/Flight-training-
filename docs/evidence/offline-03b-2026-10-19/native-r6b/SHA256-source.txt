@@ -1,0 +1,7 @@
+$ shasum -a 256 /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_authoring.rs /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_authoring_tests.rs /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/lib.rs /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_sessions.rs
+5c31e892f1627aa787001b2ef8b8a49cf02f3853f626190599bafb54965b4c5e  /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_authoring.rs
+991bc24f23686c2058e78fbfde84e859b4529ac2cc1ba5903c482e958eadf677  /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_authoring_tests.rs
+b195fc07dde5a063c3989f34b22a25bff71a39e256e48064cc3a1811f1d0220b  /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/lib.rs
+53539070165da17e24dc005f85afaf50cafe5a23f59b502de1960e05e005d3b9  /Users/rickymac/code/Flight-training-offline-03b/src-tauri/src/practice_sessions.rs
+
+EXIT 0

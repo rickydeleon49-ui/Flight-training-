@@ -17,10 +17,15 @@ import {
   type SplitPartPresentation,
   type SplitSourceReceipt,
   type AiStudySet,
+  type PracticeAuthoringQuestion,
+  type PracticeHistoryEntry,
   type PracticeQuestion,
+  type PracticeRetirementRecord,
+  type PracticeSaveResult,
+  type PracticeSaveOperation,
+  type PracticeSnapshot,
   type PracticeTest,
   type StudyFlashcard,
-  type StudyAidProvider,
   type StudyGuideSection,
   type StudyItemOrigin,
   type StudySetProvider,
@@ -37,6 +42,12 @@ import {
   type StructuredImportSaveOperation,
 } from "../db";
 import { AtomicPersistenceUnsupportedError } from "../persistenceErrors";
+import {
+  appendPracticeRetirements,
+  practiceRetirementRecord,
+  readCurrentSnapshot,
+  snapshotFromHistoryRow,
+} from "../practiceAuthoring";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   decodeStoredRow,
@@ -171,10 +182,12 @@ function jsonArray<T>(value: unknown): T[] {
 }
 
 /**
- * Stored provenance through an allowlist: only "import" is recognized besides
- * the default, so a legacy, malformed or unknown value reads as "gemini".
+ * Practice provenance: "manual" (a test she wrote herself) and "import" read
+ * back faithfully and are never turned into "gemini"; legacy rows default to
+ * it because only Gemini could write them before OFFLINE-03b.
  */
-const toProvider = (value: unknown): StudyAidProvider => (value === "import" ? "import" : "gemini");
+const toPracticeProvider = (value: unknown): StudySetProvider =>
+  value === "import" || value === "manual" ? value : "gemini";
 
 /**
  * A study set's provenance: "manual" (her own set) and "import" read back
@@ -222,11 +235,39 @@ const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
   sourceMaterialId: row.source_material_id,
   title: toText(row.title),
   questions: jsonArray<PracticeQuestion>(row.questions_json),
-  provider: toProvider(row.provider),
+  provider: toPracticeProvider(row.provider),
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
   updatedAt: toText(row.updated_at),
 });
+
+/**
+ * The mirror stores the five content fields only, so a question's real
+ * origin comes from the material's active version — the same authoritative
+ * rows `readCurrentSnapshot` reads. An origin is copied only onto the mirror
+ * question it belongs to (same ordinal, same five fields); when no origin is
+ * stored the key stays absent, so legacy and quarantined rows keep their
+ * exact mirror output.
+ */
+function withStoredOrigins(test: PracticeTest, snapshot: PracticeSnapshot | null): PracticeTest {
+  if (!snapshot || snapshot.questions.length !== test.questions.length) return test;
+  const questions = test.questions.map((question, index) => {
+    const stored = snapshot.questions[index]!;
+    if (stored.origin === undefined) return question;
+    if (
+      question.question !== stored.question ||
+      question.correctIndex !== stored.correctIndex ||
+      question.explanation !== stored.explanation ||
+      question.sourcePage !== stored.sourcePage ||
+      question.options.length !== stored.options.length ||
+      question.options.some((option, position) => option !== stored.options[position])
+    ) {
+      return question;
+    }
+    return { ...question, origin: stored.origin };
+  });
+  return { ...test, questions };
+}
 
 const map = (row: Row, tags: string[]): StudyMaterial => ({
   id: row.id,
@@ -462,33 +503,111 @@ export function documentRepository(db: SqlDatabase) {
       const rows = await db.select<PracticeTestRow>(
         "SELECT * FROM practice_tests ORDER BY updated_at DESC",
       );
-      return rows.map(mapPracticeTest);
+      const tests: PracticeTest[] = [];
+      for (const row of rows) {
+        const test = mapPracticeTest(row);
+        const snapshot = await readCurrentSnapshot(
+          (sql, params) => db.select(sql, params),
+          test.sourceMaterialId,
+        );
+        tests.push(withStoredOrigins(test, snapshot));
+      }
+      return tests;
     },
 
-    /** Save a Gemini practice test; requires atomic writer support. */
-    async savePracticeTest(
-      input: Omit<PracticeTest, "provider" | "generatedAt" | "updatedAt">,
-    ): Promise<void> {
-      if (typeof db.savePracticeTestAtomically !== "function") {
+    /** The exact stored state of one material's current test, for authoring callers. */
+    async readPracticeSnapshot(materialId: Id): Promise<PracticeSnapshot | null> {
+      return readCurrentSnapshot((sql, params) => db.select(sql, params), materialId);
+    },
+
+    async savePracticeAuthoring(operation: PracticeSaveOperation): Promise<PracticeSaveResult> {
+      if (typeof db.savePracticeAuthoringAtomically !== "function") {
         throw new Error(
           "Atomic practice test persistence requires a database driver with atomic transaction support.",
         );
       }
-      await db.savePracticeTestAtomically({
+      return db.savePracticeAuthoringAtomically(operation);
+    },
+
+    /** Every saved earlier state of one material's test, newest first. */
+    async listPracticeHistory(materialId: Id): Promise<PracticeHistoryEntry[]> {
+      const rows = await db.select<{
+        id: string; reason: string; provider: string; created_at: string; previous_json: string;
+      }>(
+        `SELECT id, reason, provider, created_at, previous_json
+           FROM study_set_history
+          WHERE material_id = ? AND kind = 'practice'
+          ORDER BY created_at DESC, id DESC`,
+        [materialId],
+      );
+      return rows.map((row) => ({
+        id: row.id,
+        reason: row.reason as PracticeHistoryEntry["reason"],
+        provider: row.provider,
+        createdAt: row.created_at,
+        snapshot: snapshotFromHistoryRow(row),
+      }));
+    },
+
+    /**
+     * Save a generated, imported or hand-written practice test through the
+     * authoring contract (OFFLINE-03b): the provider is explicit, the exact
+     * stored state is the expected snapshot, incoming questions receive fresh
+     * logical identities, and any question of hers that this replacement
+     * drops is retired with its exact earlier wording first. Requires atomic
+     * writer support; there is no fallback.
+     */
+    async savePracticeTest(
+      input: Omit<PracticeTest, "generatedAt" | "updatedAt">,
+    ): Promise<PracticeSaveResult> {
+      if (typeof db.savePracticeAuthoringAtomically !== "function") {
+        throw new Error(
+          "Atomic practice test persistence requires a database driver with atomic transaction support.",
+        );
+      }
+      const current = await readCurrentSnapshot((sql, params) => db.select(sql, params), input.sourceMaterialId);
+      const questions: PracticeAuthoringQuestion[] = input.questions.map((question) => ({
+        question: question.question,
+        options: [...question.options],
+        correctIndex: question.correctIndex,
+        explanation: question.explanation,
+        sourcePage: question.sourcePage,
+        identity: newId(),
+      }));
+      const dropped: PracticeRetirementRecord[] = [];
+      for (const before of current?.questions ?? []) {
+        if (before.origin === undefined) continue;
+        dropped.push(await practiceRetirementRecord(before, "deleted"));
+      }
+      return db.savePracticeAuthoringAtomically({
+        operationId: newId(),
         sourceMaterialId: input.sourceMaterialId,
-        title: input.title,
-        questions: input.questions,
-        model: input.model,
+        reason: current ? "regenerate" : "create",
+        expected: current,
+        next: {
+          title: input.title,
+          provider: input.provider,
+          model: input.model,
+          questions,
+          retired: appendPracticeRetirements(current?.retired ?? [], dropped),
+        },
       });
     },
 
     async removePracticeTest(sourceMaterialId: Id): Promise<void> {
-      if (typeof db.removePracticeTestAtomically !== "function") {
+      if (typeof db.savePracticeAuthoringAtomically !== "function") {
         throw new Error(
           "Atomic practice test removal requires a database driver with atomic transaction support.",
         );
       }
-      await db.removePracticeTestAtomically(sourceMaterialId);
+      const current = await readCurrentSnapshot((sql, params) => db.select(sql, params), sourceMaterialId);
+      await db.savePracticeAuthoringAtomically({
+        operationId: newId(),
+        sourceMaterialId,
+        reason: "remove",
+        expected: current,
+        next: null,
+      });
     },
 
     /**

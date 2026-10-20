@@ -436,18 +436,99 @@ export interface PracticeQuestion {
   correctIndex: number;
   explanation: string;
   sourcePage: number | null;
+  /** Who wrote the question, only when stored authoring data names one; absent otherwise. */
+  origin?: StudyItemOrigin;
 }
 
-/** A saved Gemini or imported practice test, tied to its material. */
+/** A saved Gemini, imported or hand-written practice test, tied to its material. */
 export interface PracticeTest {
   sourceMaterialId: Id;
   title: string;
   questions: PracticeQuestion[];
-  provider: StudyAidProvider;
-  /** The Gemini model name; "" for imported content. */
+  provider: StudySetProvider;
+  /** The Gemini model name; "" for imported or hand-written content. */
   model: string;
   generatedAt: IsoDateTime;
   updatedAt: IsoDateTime;
+}
+
+/* ------------------------------------------------------------------ */
+/* Practice authoring (OFFLINE-03b): one exact-key contract shared by  */
+/* the save wire, the expected-state check, history rows and both      */
+/* state/backup validators. Editor metadata (identity, replaces,       */
+/* retired) never enters the canonical question hash.                  */
+/* ------------------------------------------------------------------ */
+
+/** One question with its stable logical identity and optional provenance. */
+export interface PracticeAuthoringQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  sourcePage: number | null;
+  /** Stable logical identity; for pre-03b items it is the immutable item id. */
+  identity: string;
+  origin?: StudyItemOrigin;
+  /** Only beside an origin: the logical identity this correction replaces. */
+  replaces?: string;
+}
+
+/** One deletion/correction protection record for a question's earlier wording. */
+export interface PracticeRetirementRecord {
+  kind: "question";
+  itemId: string;
+  reason: "deleted" | "corrected";
+  textKey: string;
+  terms: readonly string[];
+}
+
+/** The exact stored state of one material's current test, editor metadata included. */
+export interface PracticeSnapshot {
+  schemaVersion: 1;
+  versionId: string;
+  versionNumber: number;
+  title: string;
+  provider: StudySetProvider;
+  model: string;
+  savedAt: IsoDateTime;
+  questions: PracticeAuthoringQuestion[];
+  retired: PracticeRetirementRecord[];
+}
+
+/** What a save wants to store: content and editor metadata, never server state. */
+export interface PracticeNext {
+  title: string;
+  provider: StudySetProvider;
+  model: string;
+  questions: PracticeAuthoringQuestion[];
+  retired: PracticeRetirementRecord[];
+}
+
+export type PracticeSaveReason = "create" | "edit" | "correct" | "regenerate" | "restore" | "remove";
+
+/** One authoring save; the operation id makes an exact retry safe. */
+export interface PracticeSaveOperation {
+  operationId: string;
+  sourceMaterialId: string;
+  reason: PracticeSaveReason;
+  /** The test she has open, exactly as stored; null when there is none. */
+  expected: PracticeSnapshot | null;
+  /** The state to store; null removes it. */
+  next: PracticeNext | null;
+}
+
+export interface PracticeSaveResult {
+  status: "saved" | "already_saved";
+}
+
+/** One saved earlier state of a practice test, newest first. */
+export interface PracticeHistoryEntry {
+  id: string;
+  reason: "edit" | "delete" | "correct" | "regenerate" | "import" | "restore";
+  provider: string;
+  createdAt: string;
+  /** The whole test as it was stored, or null when that entry is damaged. */
+  snapshot: PracticeSnapshot | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -460,7 +541,7 @@ export interface PracticeTestVersion {
   historyKey: string;
   sourceMaterialTitle: string;
   versionNumber: number;
-  provider: StudyAidProvider;
+  provider: StudySetProvider;
   model: string;
   title: string;
   contentHash: string;
@@ -477,6 +558,12 @@ export interface PracticeTestItem {
   correctIndex: number;
   explanation: string;
   sourcePage: number | null;
+  /** Stable logical identity (OFFLINE-03b); null on pre-03b immutable rows, where the item id itself is the identity. */
+  logicalId?: string | null;
+  /** Who wrote this exact question, when it is known. */
+  origin?: StudyItemOrigin;
+  /** The logical identity a correction replaced, when this item records one. */
+  replaces?: string | null;
 }
 
 export type PracticeAttemptStatus = "in_progress" | "completed" | "abandoned";

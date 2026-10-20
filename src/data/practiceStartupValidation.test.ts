@@ -16,10 +16,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SqlDatabase } from "./db";
 import { applyMigrations } from "./migrations";
 import { DatabaseDisabledError, StorageDurabilityError } from "./persistenceErrors";
-import { PracticeStateValidationError, validatePracticeState } from "./practiceStateValidation";
+import { readCurrentSnapshot } from "./practiceAuthoring";
+import {
+  PracticeStateValidationError,
+  validatePracticeAuthoringState,
+  validatePracticeState,
+} from "./practiceStateValidation";
+import { canonicalJson, sha256Hex } from "@/logic/cardIdentity";
 import { practiceSessionRepository } from "./repositories/practiceSessionRepository";
 import { createSqlJsDatabase } from "./sqlJsDb";
-import { createNodeSqliteDatabase } from "./testing/nodeSqliteDb";
+import { seedPracticeTest } from "./testing/practiceTestFixtures";
+import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
 
 const WASM = `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm`;
 vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
@@ -93,7 +100,7 @@ async function seedSession(db: SqlDatabase) {
   await db.execute(
     "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat', 'Synthetic', '2026-10-04', '2026-10-04')",
   );
-  await db.savePracticeTestAtomically!({
+  await seedPracticeTest(db, {
     sourceMaterialId: "mat",
     title: "Synthetic",
     questions: [{ question: "Synthetic", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
@@ -361,5 +368,124 @@ describe("node:sqlite test driver initialization", () => {
     const again = await createNodeSqliteDatabase(path);
     expect(await again.select("SELECT id FROM practice_test_versions WHERE source_material_id = 'legacy'")).toEqual(converted);
     again.close();
+  });
+});
+
+/* ---------------- schema-17 receipts: the validator decodes the whole operation ---------------- */
+
+describe("authoring receipt validation decodes the whole operation", () => {
+  const stamp = "2026-10-20T04:00:00.000Z";
+  let opened: TestDatabase[];
+
+  beforeEach(() => {
+    opened = [];
+  });
+  afterEach(() => {
+    for (const db of opened) db.close();
+  });
+
+  /** A data database with one material, plus a pristine twin as the schema reference. */
+  async function pair(): Promise<{ db: TestDatabase; reference: TestDatabase; materialId: string }> {
+    const db = await createNodeSqliteDatabase();
+    const reference = await createNodeSqliteDatabase();
+    opened.push(db, reference);
+    const materialId = crypto.randomUUID();
+    await db.execute(
+      "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
+      [materialId, "Synthetic material", stamp, stamp],
+    );
+    return { db, reference, materialId };
+  }
+
+  function validate(db: TestDatabase, reference: TestDatabase): Promise<void> {
+    return validatePracticeAuthoringState(
+      (sql, params) => db.select(sql, params),
+      (sql, params) => reference.select(sql, params),
+    );
+  }
+
+  function createOperation(materialId: string) {
+    return {
+      operationId: crypto.randomUUID(),
+      sourceMaterialId: materialId,
+      reason: "create" as const,
+      expected: null,
+      next: {
+        title: "Synthetic test",
+        provider: "manual" as const,
+        model: "",
+        questions: [
+          {
+            question: "Synthetic stem",
+            options: ["First", "Second"],
+            correctIndex: 0,
+            explanation: "Synthetic explanation",
+            sourcePage: null,
+            identity: crypto.randomUUID(),
+          },
+        ],
+        retired: [],
+      },
+    };
+  }
+
+  /** Rewrite one receipt's payload with a recomputed digest, as an outside repair would. */
+  async function tamperReceipt(db: TestDatabase, payload: string): Promise<void> {
+    await db.execute("UPDATE practice_save_operations SET payload_json = ?, payload_hash = ?", [
+      payload,
+      await sha256Hex(payload),
+    ]);
+  }
+
+  it("accepts a real receipt holding its complete canonical operation", async () => {
+    const { db, reference, materialId } = await pair();
+    expect(await db.savePracticeAuthoringAtomically!(createOperation(materialId))).toEqual({ status: "saved" });
+    await expect(validate(db, reference)).resolves.toBeUndefined();
+  });
+
+  it("refuses a receipt whose payload drops operationId, expected and next, even with a recomputed digest", async () => {
+    const { db, reference, materialId } = await pair();
+    await db.savePracticeAuthoringAtomically!(createOperation(materialId));
+    await tamperReceipt(db, JSON.stringify({ reason: "create", sourceMaterialId: materialId }));
+    const error = await validate(db, reference).then(
+      () => null,
+      (cause: unknown) => cause,
+    );
+    expect(error).toBeInstanceOf(PracticeStateValidationError);
+    expect((error as Error).message).toBe("A practice save receipt does not hold a complete authoring operation.");
+  });
+
+  it("refuses a complete receipt payload naming a different operation id than its row key, with the digest recomputed", async () => {
+    const { db, reference, materialId } = await pair();
+    await db.savePracticeAuthoringAtomically!(createOperation(materialId));
+    const [row] = await db.select<{ payload_json: string }>("SELECT payload_json FROM practice_save_operations");
+    const payload = JSON.parse(row!.payload_json) as Record<string, unknown>;
+    payload["operationId"] = crypto.randomUUID();
+    await tamperReceipt(db, canonicalJson(payload));
+    const error = await validate(db, reference).then(
+      () => null,
+      (cause: unknown) => cause,
+    );
+    expect(error).toBeInstanceOf(PracticeStateValidationError);
+    expect((error as Error).message).toBe("A practice save receipt does not bind its operation id to its row key.");
+  });
+
+  it("accepts a real receipt whose result version was later pruned by remove", async () => {
+    const { db, reference, materialId } = await pair();
+    await db.savePracticeAuthoringAtomically!(createOperation(materialId));
+    const current = await readCurrentSnapshot((sql, params) => db.select(sql, params), materialId);
+    expect(current).not.toBeNull();
+    expect(await db.savePracticeAuthoringAtomically!({
+      operationId: crypto.randomUUID(),
+      sourceMaterialId: materialId,
+      reason: "remove",
+      expected: current,
+      next: null,
+    })).toEqual({ status: "saved" });
+    // The receipt survives precisely because a receipt never requires its
+    // version row to exist: the prune leaves the create receipt's versionId
+    // naming a gone version, and that stays valid.
+    expect(await db.select("SELECT id FROM practice_test_versions WHERE source_material_id = ?", [materialId])).toEqual([]);
+    await expect(validate(db, reference)).resolves.toBeUndefined();
   });
 });

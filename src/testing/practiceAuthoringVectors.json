@@ -1,0 +1,1878 @@
+{
+  "hashVectors": [
+    {
+      "name": "legacy-five-field-pair",
+      "questions": [
+        {
+          "question": "Legacy five-field stem one",
+          "options": [
+            "First",
+            "Second",
+            "Third"
+          ],
+          "correctIndex": 2,
+          "explanation": "Synthetic explanation for Legacy five-field stem one.",
+          "sourcePage": 4,
+          "identity": "00000001-0000-4000-8000-000000000001"
+        },
+        {
+          "question": "Legacy five-field stem two",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Plain legacy explanation.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-000000000002"
+        }
+      ],
+      "contentHash": "dd4756cc3e8c005f5e39c2dbc5802c7b1097b3272bf97942acb248b7d95549c1"
+    },
+    {
+      "name": "legacy-five-field-trio",
+      "questions": [
+        {
+          "question": "Legacy trio stem a",
+          "options": [
+            "A",
+            "B"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Legacy trio stem a.",
+          "sourcePage": 1,
+          "identity": "00000001-0000-4000-8000-000000000003"
+        },
+        {
+          "question": "Legacy trio stem b",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "correctIndex": 3,
+          "explanation": "",
+          "sourcePage": 7,
+          "identity": "00000001-0000-4000-8000-000000000004"
+        },
+        {
+          "question": "Legacy trio stem c",
+          "options": [
+            "Solo pair left",
+            "Solo pair right"
+          ],
+          "correctIndex": 1,
+          "explanation": "Synthetic explanation for Legacy trio stem c.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-000000000005"
+        }
+      ],
+      "contentHash": "efabd823f1c4d91621d67e8384304f0fd5e6ef62ec3d2c237f11d6e6cef8e041"
+    },
+    {
+      "name": "origin-user-set",
+      "questions": [
+        {
+          "question": "Origin user stem one",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Origin user stem one.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-000000000006",
+          "origin": "user"
+        },
+        {
+          "question": "Origin user stem two",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Origin user stem two.",
+          "sourcePage": 12,
+          "identity": "00000001-0000-4000-8000-000000000007",
+          "origin": "user"
+        }
+      ],
+      "contentHash": "654ba77160f33a4456b985cbe2d2979ab7af9c45b63a4eab0f5e38d5e39f38dd"
+    },
+    {
+      "name": "origin-instructor-set",
+      "questions": [
+        {
+          "question": "Origin instructor stem",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Origin instructor stem.",
+          "sourcePage": 3,
+          "identity": "00000001-0000-4000-8000-000000000008",
+          "origin": "instructor"
+        }
+      ],
+      "contentHash": "936a948d1f8c15f688ec80ace84faedd3c245867d9712074cd192542ee714632"
+    },
+    {
+      "name": "origin-mixed-set",
+      "questions": [
+        {
+          "question": "Mixed origin plain stem",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Mixed origin plain stem.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-000000000009"
+        },
+        {
+          "question": "Mixed origin user stem",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Mixed origin user stem.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-00000000000a",
+          "origin": "user"
+        },
+        {
+          "question": "Mixed origin instructor stem",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Mixed origin instructor stem.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-00000000000b",
+          "origin": "instructor"
+        }
+      ],
+      "contentHash": "60fdd5b01b750b582fe30f8fdf616d01b251aa624d7efd4e56f4c17916d43da2"
+    },
+    {
+      "name": "identity-and-replaces-present",
+      "questions": [
+        {
+          "question": "Identity carries stem one",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Identity carries stem one.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-00000000000c",
+          "origin": "user"
+        },
+        {
+          "question": "Identity carries stem two",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Identity carries stem two.",
+          "sourcePage": 9,
+          "identity": "00000001-0000-4000-8000-00000000000d",
+          "origin": "user",
+          "replaces": "00000001-0000-4000-8000-00000000000c"
+        }
+      ],
+      "contentHash": "2a00e6e366657a79f20600c533c74b0d3b43a97a8f865f26db37284efe4ad4c8"
+    },
+    {
+      "name": "identity-and-replaces-removed",
+      "questions": [
+        {
+          "question": "Identity carries stem one",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Identity carries stem one.",
+          "sourcePage": null,
+          "origin": "user"
+        },
+        {
+          "question": "Identity carries stem two",
+          "options": [
+            "Alpha option",
+            "Bravo option"
+          ],
+          "correctIndex": 0,
+          "explanation": "Synthetic explanation for Identity carries stem two.",
+          "sourcePage": 9,
+          "origin": "user"
+        }
+      ],
+      "contentHash": "2a00e6e366657a79f20600c533c74b0d3b43a97a8f865f26db37284efe4ad4c8"
+    },
+    {
+      "name": "non-ascii-content",
+      "questions": [
+        {
+          "question": "Elève 🛩️ 航空学生 — vent latéral?",
+          "options": [
+            "Sí, maintenir",
+            "Non, 復航する"
+          ],
+          "correctIndex": 1,
+          "explanation": "Cross-check 風速, altimeter and the énglish briefing.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-00000000000e"
+        },
+        {
+          "question": "Ünïcode stem with 漢字 and 🎚️",
+          "options": [
+            "Sí",
+            "Non"
+          ],
+          "correctIndex": 0,
+          "explanation": "説明 — café ☕ ok.",
+          "sourcePage": null,
+          "identity": "00000001-0000-4000-8000-00000000000f",
+          "origin": "instructor"
+        }
+      ],
+      "contentHash": "1c092bc8bbf245092b75c241ba7247f5150384aa98d66d9f090939a04f5980ec"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "create-first-test",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000001",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem alpha",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem alpha.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000010"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "599f4e58708c23820e6eb0689343859e535a298aa1a93ff2c7f2a8bec812795b",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "exact-retry-returns-already-saved",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000002",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem beta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem beta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000011"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "d687ed7ee4480ec93ffcb7a8d7057cdb42f8604247ccf231eee07836f86b28a1",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000002",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem beta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem beta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000011"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "already_saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "d687ed7ee4480ec93ffcb7a8d7057cdb42f8604247ccf231eee07836f86b28a1",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reused-operation-id-with-different-content-conflicts",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000003",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem gamma",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem gamma.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000012"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "5597c7750f6c7d8206876eb73615a18d196c0d5e732b2ee5dc21d4b634cd9901",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000003",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem gamma altered",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem gamma altered.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000012"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "CONFLICT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000003",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem gamma",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem gamma.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000012"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "already_saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "5597c7750f6c7d8206876eb73615a18d196c0d5e732b2ee5dc21d4b634cd9901",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "stale-expected-from-another-material",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000004",
+            "sourceMaterialId": "mat-b",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem delta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem delta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000013"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "7ccdf9a6cf785bd5a7d8f817eb4c0d41e761cfbc1e7510f0a603025cc7c19ae7",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000005",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current:mat-b",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem delta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem delta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000013"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "STALE_CONTENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "edit-with-the-exact-retirement-record",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000006",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem epsilon",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem epsilon.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000014",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "62d4802740cb1144abcbecf8d4d72c1d822e2a3c0f90eb8d661e237c930d28a6",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000007",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem epsilon revised",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem epsilon.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000014",
+                  "origin": "user"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-000000000014",
+                  "reason": "corrected",
+                  "textKey": "f4746651aa8a46477d6df256bd29673b4f5c71406f7daf0cf2070ea211c82c6d",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "epsilon",
+                    "explanation",
+                    "for",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "16f79de37cddab321fa02dea800ce335b3399275dcf8e2c9e5954ea57d994bdc",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "wrong-retirement-digest-refused",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000008",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem zeta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem zeta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000015",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "41144f0f9a56b6365c76d36d92b2db963a3fe750cb7ff9edad2c52a3f6e4906f",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000009",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem zeta revised",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem zeta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000015",
+                  "origin": "user"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-000000000015",
+                  "reason": "corrected",
+                  "textKey": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "explanation",
+                    "for",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic",
+                    "zeta"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "instructor-correction-cannot-be-relabelled",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000a",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem eta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem eta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000016",
+                  "origin": "instructor"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "2008e649f69b6bae03eea16a4ef63fd01bbc35718237373349e7fea40a2b49eb",
+              "questionCount": 1,
+              "origins": [
+                "instructor"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000b",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem eta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem eta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000016",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000c",
+            "sourceMaterialId": "mat-a",
+            "reason": "correct",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem eta sharpened",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem eta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000016",
+                  "origin": "instructor"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-000000000016",
+                  "reason": "corrected",
+                  "textKey": "f893519516214fcfc00d4417cd6d6b758dba5cf158950a93a4195cfe4fe68657",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "eta",
+                    "explanation",
+                    "for",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "a9e08881bebe183bcee5741a2a1a28c0e8ba157b9ba9b31d7c4cd60022b6da8a",
+              "questionCount": 1,
+              "origins": [
+                "instructor"
+              ],
+              "retiredCount": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "plain-regeneration-replaces-without-records",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000d",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "gemini",
+              "model": "synthetic-model",
+              "questions": [
+                {
+                  "question": "Parity stem theta",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem theta.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000017"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "f1e03ec805d8dbe3567fd3db9619b26d3fbddca87ffd375b52d236e67ff8df2d",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000e",
+            "sourceMaterialId": "mat-a",
+            "reason": "regenerate",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "gemini",
+              "model": "synthetic-model",
+              "questions": [
+                {
+                  "question": "Parity stem theta regenerated",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem theta regenerated.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000018"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "b5459a23a8523ab12e576b89a57f585d53133ee05a8ebbd92efc554812029c3f",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "remove-then-recreate-keeps-version-numbers-rising",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000000f",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem iota",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem iota.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000019"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "f4c5c52b7835e48215073369eab312c0e364294fe3634279a05f028d65bbd4d2",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000010",
+            "sourceMaterialId": "mat-a",
+            "reason": "remove",
+            "expected": "$current",
+            "next": null
+          },
+          "expect": {
+            "status": "saved",
+            "current": null
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000011",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem iota",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem iota.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000019"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "f4c5c52b7835e48215073369eab312c0e364294fe3634279a05f028d65bbd4d2",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000012",
+            "sourceMaterialId": "mat-a",
+            "reason": "remove",
+            "expected": "$current",
+            "next": null
+          },
+          "expect": {
+            "status": "saved",
+            "current": null
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000013",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem iota reborn",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem iota reborn.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001a"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 3,
+              "contentHash": "8889b0d432017722c14044df31a5236f4a305e509be9b4282231b010fbeb6767",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "history-only-identity-blocks-another-material",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000014",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem kappa",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem kappa.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001b",
+                  "origin": "instructor"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "868af8f8e442395243bf44d64c438b8b05c029a40b654404ef5794586dfc5efd",
+              "questionCount": 1,
+              "origins": [
+                "instructor"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000015",
+            "sourceMaterialId": "mat-a",
+            "reason": "remove",
+            "expected": "$current",
+            "next": null
+          },
+          "expect": {
+            "status": "saved",
+            "current": null
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000016",
+            "sourceMaterialId": "mat-b",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem kappa",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem kappa.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001b",
+                  "origin": "instructor"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "restore-after-removal-carries-the-union-ledger",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000017",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem lambda keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem lambda keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001c",
+                  "origin": "user"
+                },
+                {
+                  "question": "Parity stem lambda doomed",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem lambda doomed.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001d",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "de1baefc68e186b20cc9f949f0419ed6ca7da3419eb1ee0a6dbd5331dc9af7c4",
+              "questionCount": 2,
+              "origins": [
+                "user",
+                "user"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000018",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem lambda keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem lambda keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001c",
+                  "origin": "user"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-00000000001d",
+                  "reason": "deleted",
+                  "textKey": "f5647ecd1e4a00db4d743a5a2895a3a02a33def6662fda6eca922d7cc88dc3bc",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "doomed",
+                    "explanation",
+                    "for",
+                    "lambda",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "290c72e06771fc9dc4986e42e5544b64e785ed0c06f2f64528575aea1a1180d3",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 1
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000019",
+            "sourceMaterialId": "mat-a",
+            "reason": "remove",
+            "expected": "$current",
+            "next": null
+          },
+          "expect": {
+            "status": "saved",
+            "current": null
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001a",
+            "sourceMaterialId": "mat-a",
+            "reason": "restore",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem lambda keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem lambda keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001c",
+                  "origin": "user"
+                },
+                {
+                  "question": "Parity stem lambda doomed",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem lambda doomed.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001d",
+                  "origin": "user"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-00000000001d",
+                  "reason": "deleted",
+                  "textKey": "f5647ecd1e4a00db4d743a5a2895a3a02a33def6662fda6eca922d7cc88dc3bc",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "doomed",
+                    "explanation",
+                    "for",
+                    "lambda",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 3,
+              "contentHash": "de1baefc68e186b20cc9f949f0419ed6ca7da3419eb1ee0a6dbd5331dc9af7c4",
+              "questionCount": 2,
+              "origins": [
+                "user",
+                "user"
+              ],
+              "retiredCount": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "restore-after-removal-missing-a-retirement-refused",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001b",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem mu keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem mu keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001e",
+                  "origin": "user"
+                },
+                {
+                  "question": "Parity stem mu doomed",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem mu doomed.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001f",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "aec9179dc9af6e9e81fd9929c52f1f66c43d6865fe03e449d83db47a2a2d6117",
+              "questionCount": 2,
+              "origins": [
+                "user",
+                "user"
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001c",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem mu keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem mu keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001e",
+                  "origin": "user"
+                }
+              ],
+              "retired": [
+                {
+                  "kind": "question",
+                  "itemId": "00000001-0000-4000-8000-00000000001f",
+                  "reason": "deleted",
+                  "textKey": "b1d48b626f86383d9df7500f7a5ebde7d332ad85b7f695fa99eb393a1e678904",
+                  "terms": [
+                    "0",
+                    "alpha",
+                    "answer",
+                    "bravo",
+                    "doomed",
+                    "explanation",
+                    "for",
+                    "mu",
+                    "option",
+                    "parity",
+                    "stem",
+                    "synthetic"
+                  ]
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "a3c69603ba2573c8611e3686dcf1d8ac13a11b863c2850ba946cc0eb9247c2bb",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 1
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001d",
+            "sourceMaterialId": "mat-a",
+            "reason": "remove",
+            "expected": "$current",
+            "next": null
+          },
+          "expect": {
+            "status": "saved",
+            "current": null
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001e",
+            "sourceMaterialId": "mat-a",
+            "reason": "restore",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem mu keeper",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem mu keeper.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001e",
+                  "origin": "user"
+                },
+                {
+                  "question": "Parity stem mu doomed",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem mu doomed.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-00000000001f",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "restore-with-null-expected-while-current-exists",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-00000000001f",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem nu",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem nu.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000020"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "c635c68574e484f5b7692f23bec7f0ff5aedb9b0e4a8f995029fa81ecd285a0e",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000020",
+            "sourceMaterialId": "mat-a",
+            "reason": "restore",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem nu",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem nu.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000020"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "STALE_CONTENT"
+          }
+        }
+      ]
+    },
+    {
+      "name": "fabricated-replaces-target-refused",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000021",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem xi",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem xi.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000021",
+                  "origin": "user",
+                  "replaces": "fe000000-0000-4000-8000-00000000fe00"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000022",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem xi",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem xi.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000021",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "118a9ab94b67b4f53bba91d2d8e99c0ceaa4ff2a5a3e6a07dab94ed36ea593c7",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "exact-retry-still-already-saved-after-later-operations",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000023",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem omicron",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem omicron.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000022"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "8ab8681da19b19704069875bf25590515bb6e8f7a1b88e519163b9ddca296bb2",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000024",
+            "sourceMaterialId": "mat-a",
+            "reason": "regenerate",
+            "expected": "$current",
+            "next": {
+              "title": "Parity test",
+              "provider": "gemini",
+              "model": "synthetic-model",
+              "questions": [
+                {
+                  "question": "Parity stem omicron regenerated",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem omicron regenerated.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000023"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "e2d7f59966c1798ebf08b215b851a9ffa16611d5f205e72c8174b5367e5ea369",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "00000000-0000-4000-8000-000000000023",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "Parity test",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Parity stem omicron",
+                  "options": [
+                    "Alpha option",
+                    "Bravo option"
+                  ],
+                  "correctIndex": 0,
+                  "explanation": "Synthetic explanation for Parity stem omicron.",
+                  "sourcePage": null,
+                  "identity": "00000001-0000-4000-8000-000000000022"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "already_saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "e2d7f59966c1798ebf08b215b851a9ffa16611d5f205e72c8174b5367e5ea369",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

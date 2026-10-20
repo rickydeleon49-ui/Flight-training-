@@ -68,6 +68,7 @@ function wrap(child: ReturnType<typeof h>, route = "/") {
 async function seed(id: string): Promise<PracticeTest> {
   await repos.documents.create({ id, title: `Material ${id}` });
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: id,
     title: id,
     model: "synthetic",
@@ -961,6 +962,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
       const result = await save(action);
       if (action.action === "record_response") {
         await repos.documents.savePracticeTest({
+    provider: "gemini",
           sourceMaterialId: "replacement-read",
           title: "New test",
           model: "synthetic",
@@ -1009,6 +1011,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
       const result = await save(action);
       if (action.action === "record_response") {
         await repos.documents.savePracticeTest({
+    provider: "gemini",
           sourceMaterialId: "replacement-items-read",
           title: "New test",
           model: "synthetic",
@@ -1046,6 +1049,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
       const result = await realSave(action);
       if (action.action === "record_response") {
         await repos.documents.savePracticeTest({
+    provider: "gemini",
           sourceMaterialId: "replacement-recovery",
           title: "New test",
           model: "synthetic",
@@ -1092,6 +1096,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
 
     // Save a replacement version before starting
     await repos.documents.savePracticeTest({
+    provider: "gemini",
       sourceMaterialId: "held-start-read-recovery",
       title: "New version",
       model: "synthetic",
@@ -1157,6 +1162,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
 
     // Save replacement version before retake
     await repos.documents.savePracticeTest({
+    provider: "gemini",
       sourceMaterialId: "retake-read-recovery",
       title: "New retake version",
       model: "synthetic",
@@ -1219,6 +1225,7 @@ describe("M2UI-R12: catch the complete read/adoption pipeline, not only its firs
     // A replacement version becomes active while the panel still shows the old
     // frozen content, so the acknowledged start resolves onto that new version.
     await repos.documents.savePracticeTest({
+    provider: "gemini",
       sourceMaterialId: "held-start-settle",
       title: "Replacement",
       model: "synthetic",

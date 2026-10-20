@@ -362,24 +362,21 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         }),
       );
     },
-    savePracticeTestAtomically(
-      operation: import("./db").PracticeTestSaveOperation,
-    ): Promise<void> {
+    savePracticeAuthoringAtomically(
+      operation: import("@/domain/types").PracticeSaveOperation,
+    ): Promise<import("@/domain/types").PracticeSaveResult> {
       return owner.exclusive(() =>
-        durableWrite(async () => {
-          const { executeSavePracticeTest } = await import("./practiceSessionTransaction");
-          await executeSavePracticeTest(exec, run, query, operation);
-        }),
-      );
-    },
-    removePracticeTestAtomically(
-      sourceMaterialId: string,
-    ): Promise<void> {
-      return owner.exclusive(() =>
-        durableWrite(async () => {
-          const { executeRemovePracticeTest } = await import("./practiceSessionTransaction");
-          await executeRemovePracticeTest(exec, run, query, sourceMaterialId);
-        }),
+        durableWrite(
+          async () => {
+            const { executePracticeAuthoring } = await import("./practiceAuthoring");
+            return executePracticeAuthoring(exec, run, query, operation);
+          },
+          (cause) =>
+            new StorageDurabilityError(
+              "The browser storage refused the committed practice save; the live database was restored.",
+              { cause },
+            ),
+        ),
       );
     },
     saveStudySetAtomically(

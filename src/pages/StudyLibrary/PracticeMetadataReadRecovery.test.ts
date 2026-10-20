@@ -41,6 +41,7 @@ async function savedTest(id: string, title: string) {
   const repos = createRepositories(db);
   await repos.documents.create({ id, title });
   await repos.documents.savePracticeTest({
+    provider: "gemini",
     sourceMaterialId: id,
     title: "Saved test",
     model: "synthetic",
@@ -204,7 +205,7 @@ describe("M2UI-R14 MaterialDetail practice metadata reads", () => {
 
     const execute = vi.spyOn(db, "execute");
     const sessionWrite = vi.spyOn(db, "savePracticeSessionAtomically");
-    const testWrite = vi.spyOn(db, "savePracticeTestAtomically");
+    const testWrite = vi.spyOn(db, "savePracticeAuthoringAtomically");
     const importWrite = vi.spyOn(db, "saveStructuredImportAtomically");
     const generateTest = vi.spyOn(geminiService, "generatePracticeTest");
     const generateAid = vi.spyOn(geminiService, "generateStudyAid");

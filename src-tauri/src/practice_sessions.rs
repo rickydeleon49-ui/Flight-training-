@@ -1723,6 +1723,13 @@ fn convert_and_validate_at(root: &Path) -> Result<usize, String> {
 /* Gemini Save / Regeneration & Remove Practice Test                  */
 /* ------------------------------------------------------------------ */
 
+/// OFFLINE-03b: the production entry points these once backed
+/// (`save_practice_test_atomically` / `remove_practice_test_atomically`) are
+/// unregistered — every write now goes through
+/// `practice_authoring::save_practice_authoring_atomically`, so a save can
+/// never skip receipts, retirement and provenance. These direct writers
+/// remain for the native tests that seed practice rows.
+#[cfg(test)]
 pub fn save_practice_test_at(
     root: &Path,
     source_material_id: &str,
@@ -1870,6 +1877,7 @@ pub fn save_practice_test_at(
     Ok(())
 }
 
+#[cfg(test)]
 pub fn remove_practice_test_at(
     root: &Path,
     source_material_id: &str,
@@ -1969,54 +1977,6 @@ pub async fn erase_practice_history_atomically(
     tauri::async_runtime::spawn_blocking(move || erase_practice_history_at(&root, &action))
         .await
         .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
-}
-
-#[tauri::command]
-pub async fn save_practice_test_atomically(
-    app: AppHandle,
-    operation: Value,
-) -> Result<(), PracticeSessionErrorWire> {
-    let root = app_root(&app).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
-    let map = operation
-        .as_object()
-        .ok_or_else(|| PracticeSessionErrorCode::InvalidArgument.error())?;
-    let source_material_id = map
-        .get("sourceMaterialId")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| PracticeSessionErrorCode::InvalidArgument.error())?;
-    let title = map
-        .get("title")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| PracticeSessionErrorCode::InvalidArgument.error())?;
-    let questions_val = map
-        .get("questions")
-        .ok_or_else(|| PracticeSessionErrorCode::InvalidArgument.error())?;
-    let questions_json = serde_json::to_string(questions_val)
-        .map_err(|_| PracticeSessionErrorCode::InvalidArgument.error())?;
-    let model = map.get("model").and_then(|v| v.as_str()).unwrap_or("");
-
-    let sm_id = source_material_id.to_string();
-    let t = title.to_string();
-    let m = model.to_string();
-
-    tauri::async_runtime::spawn_blocking(move || {
-        save_practice_test_at(&root, &sm_id, &t, &questions_json, &m)
-    })
-    .await
-    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
-}
-
-#[tauri::command]
-pub async fn remove_practice_test_atomically(
-    app: AppHandle,
-    source_material_id: String,
-) -> Result<(), PracticeSessionErrorWire> {
-    let root = app_root(&app).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
-    tauri::async_runtime::spawn_blocking(move || {
-        remove_practice_test_at(&root, &source_material_id)
-    })
-    .await
-    .map_err(|_| PracticeSessionErrorCode::StorageError.error())?
 }
 
 #[tauri::command]

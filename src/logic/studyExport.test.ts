@@ -4,7 +4,7 @@ import type { AiStudySet, PracticeTest } from "@/domain/types";
 import { canonicalPersistenceJson, validatePacketText } from "@/logic/studyPacket";
 import { makeMaterial } from "@/testing/factories";
 
-import { EXPORT_MESSAGES, exportFileName, exportStudyPacket, exportableParts, type ExportSource } from "./studyExport";
+import { EXPORT_MESSAGES, exportSourceFor, hasHandwrittenItems, hasInstructorCorrections, provenanceNote, exportFileName, exportStudyPacket, exportableParts, type ExportSource } from "./studyExport";
 
 const NOW = new Date("2026-10-16T18:00:00Z");
 const ALL = { guide: true, flashcards: true, questions: true };
@@ -275,5 +275,78 @@ describe("her own items and her instructor's corrections (OFFLINE-03a)", () => {
     const onlyCorrection = studySet({ summary: "", sections: [], flashcards: [{ front: "Q", back: "A", sourcePage: null, itemId: "c", origin: "instructor" }] });
     expect(exportStudyPacket(source(onlyCorrection), ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.nothingChosen });
     expect(exportStudyPacket(source(onlyCorrection), { ...ALL, instructorCorrections: true }, NOW).ok).toBe(true);
+  });
+});
+
+
+describe("practice authorship export privacy (OFFLINE-03b)", () => {
+  const mixed = () => practiceTest({ questions: [
+    { ...practiceTest().questions[0]!, origin: "user" },
+    { ...practiceTest().questions[1]!, origin: "instructor", explanation: "Private CFI explanation" },
+  ] });
+
+  it("detects authorship in a test while preserving set-only calls", () => {
+    expect(hasInstructorCorrections(null)).toBe(false);
+    expect(hasHandwrittenItems(null)).toBe(false);
+    expect(hasInstructorCorrections(studySet())).toBe(false);
+    expect(hasHandwrittenItems(studySet())).toBe(false);
+    expect(hasInstructorCorrections(null, mixed())).toBe(true);
+    expect(hasHandwrittenItems(null, mixed())).toBe(true);
+    expect(hasHandwrittenItems(null, practiceTest({ provider: "manual" }))).toBe(true);
+  });
+
+  it("excludes instructor questions before serialization unless deliberately included", () => {
+    const input = source({ studySet: null, practiceTest: mixed() });
+    const left = exportStudyPacket(input, ALL, NOW);
+    if (!left.ok) throw new Error(left.message);
+    expect(left.counts.questions).toBe(1);
+    expect(left.text).not.toContain("A TAF");
+    expect(left.text).not.toContain("Private CFI explanation");
+    const included = exportStudyPacket(input, { ...ALL, instructorCorrections: true }, NOW);
+    if (!included.ok) throw new Error(included.message);
+    expect(included.counts.questions).toBe(2);
+    expect(included.text).toContain("Private CFI explanation");
+    expect(input.practiceTest?.questions).toHaveLength(2);
+  });
+
+  it("has no exportable questions when every question is an instructor correction", () => {
+    const input = source({ studySet: null, practiceTest: practiceTest({ questions: [mixed().questions[1]!] }) });
+    const effective = exportSourceFor(input, {});
+    expect(effective.practiceTest).toBeNull();
+    expect(exportableParts(effective).questions).toBe(false);
+    expect(exportStudyPacket(input, ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.nothingChosen });
+    expect(exportableParts(exportSourceFor(input, { instructorCorrections: true })).questions).toBe(true);
+  });
+
+  it.each(["gemini", "import"] as const)("adds the handwritten supplement exactly once for a %s test", (provider) => {
+    const input = source({ practiceTest: { ...mixed(), provider } });
+    const supplement = "Some items were written or corrected by hand in Her Flight Deck, not generated.";
+    for (const handwrittenSet of [null, studySet({ summaryOrigin: "user" })]) {
+      const result = exportStudyPacket({ ...input, studySet: handwrittenSet }, ALL, NOW);
+      if (!result.ok) throw new Error(result.message);
+      const note = JSON.parse(result.text).source.note as string;
+      expect(note.split(supplement)).toHaveLength(2);
+    }
+    const filtered = exportSourceFor(source({ studySet: null, practiceTest: practiceTest({ questions: [practiceTest().questions[0]!, mixed().questions[1]!] }) }), {});
+    expect(provenanceNote(filtered, ALL)).not.toContain(supplement);
+  });
+
+  it("describes a manual test as handwritten without calling it AI-generated", () => {
+    const result = exportStudyPacket(source({ studySet: null, practiceTest: practiceTest({ provider: "manual", model: "" }) }), ALL, NOW);
+    if (!result.ok) throw new Error(result.message);
+    expect(result.text).toContain("Written by hand in Her Flight Deck; not checked by the app.");
+    expect(result.text).not.toContain("AI-generated");
+  });
+
+  it("keeps v1 strict even when authored practice questions carry lineage", () => {
+    const questions = mixed().questions.map((question, index) => ({ ...question, identity: `private-identity-${index}`, replaces: `private-replacement-${index}` }));
+    const result = exportStudyPacket(source({ practiceTest: practiceTest({ questions }) }), { ...ALL, instructorCorrections: true }, NOW);
+    if (!result.ok) throw new Error(result.message);
+    expect(result.text.match(/"(?:origin|identity|replaces)"\s*:/g)).toBeNull();
+    const validation = validatePacketText(result.text);
+    if (!validation.ok) throw new Error("invalid packet");
+    for (const question of validation.payload.practiceTest!.questions) {
+      expect(Object.keys(question).sort()).toEqual(["correctIndex", "explanation", "options", "question", "sourcePage"]);
+    }
   });
 });

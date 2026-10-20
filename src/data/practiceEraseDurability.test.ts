@@ -13,6 +13,7 @@ vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
 import { DatabaseDisabledError } from "./persistenceErrors";
 import { practiceSessionRepository } from "./repositories/practiceSessionRepository";
 import { createSqlJsDatabase } from "./sqlJsDb";
+import { seedPracticeTest } from "./testing/practiceTestFixtures";
 
 const WASM = `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm`;
 const MAT = "mat-erase-disabled";
@@ -44,7 +45,7 @@ async function seedErasureTarget() {
     `INSERT INTO study_materials (id, title, created_at, updated_at)
      VALUES ('${MAT}', 'Disabled Erase Material', '${stamp}', '${stamp}')`,
   );
-  await db.savePracticeTestAtomically!({
+  await seedPracticeTest(db, {
     sourceMaterialId: MAT,
     title: "Disabled Erase Test",
     questions: [

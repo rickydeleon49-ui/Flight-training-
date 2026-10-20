@@ -15,6 +15,7 @@ import type { SqlDatabase } from "./db";
 import { MIGRATIONS } from "./migrations";
 import { createRepositories } from "./repositories";
 import { SplitNeedsDesktopError } from "./repositories/documentRepository";
+import { seedPracticeTest } from "./testing/practiceTestFixtures";
 import { practiceSessionRepository } from "./repositories/practiceSessionRepository";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
 
@@ -89,7 +90,7 @@ describe("upgrading a populated schema-12 library", () => {
 
     // Practice history: a saved test and an attempt with an answer.
     await insertMaterial(db, "mat");
-    await db.savePracticeTestAtomically!({
+    await seedPracticeTest(db, {
       sourceMaterialId: "mat",
       title: "Synthetic",
       questions: [{ question: "Synthetic", options: ["A", "B"], correctIndex: 0, explanation: "", sourcePage: null }],
@@ -145,7 +146,7 @@ describe("upgrading a populated schema-12 library", () => {
     expect(await upgraded.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([
       { v: MIGRATIONS.at(-1)!.version },
     ]);
-    expect(MIGRATIONS.at(-1)!.version).toBe(16);
+    expect(MIGRATIONS.at(-1)!.version).toBe(17);
     expect(await snapshot(upgraded)).toEqual(before);
     expect(await upgraded.select("SELECT COUNT(*) AS n FROM material_split_lineage")).toEqual([{ n: 0 }]);
     expect(await upgraded.select("SELECT COUNT(*) AS n FROM split_operation_log")).toEqual([{ n: 0 }]);

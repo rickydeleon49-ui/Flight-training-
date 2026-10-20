@@ -61,9 +61,9 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
 
   const chosen = (selection.guide && available.guide) || (selection.flashcards && available.flashcards) || (selection.questions && available.questions);
   const set = effective.studySet;
-  const corrections = hasInstructorCorrections(source.studySet);
-  const handwritten = hasHandwrittenItems(source.studySet);
-  const questionCount = source.practiceTest?.questions.length ?? 0;
+  const corrections = hasInstructorCorrections(source.studySet, source.practiceTest);
+  const handwritten = hasHandwrittenItems(source.studySet, source.practiceTest);
+  const questionCount = effective.practiceTest?.questions.length ?? 0;
 
   const save = async () => {
     // State disables the controls on render; this lock also covers two events
@@ -141,7 +141,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
                   const next = { ...current, instructorCorrections: checked };
                   const parts = exportableParts(exportSourceFor(source, next));
                   // A part that only had corrections in it is chosen once it has content.
-                  return { ...next, guide: current.guide || (checked && parts.guide), flashcards: current.flashcards || (checked && parts.flashcards) };
+                  return { ...next, guide: current.guide || (checked && parts.guide), flashcards: current.flashcards || (checked && parts.flashcards), questions: current.questions || (checked && parts.questions) };
                 })
               }
               label="Include my instructor's corrections"
