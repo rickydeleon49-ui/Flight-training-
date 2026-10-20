@@ -1,0 +1,7 @@
+$ npm run typecheck
+
+> her-flight-deck@0.5.7 typecheck
+> tsc --noEmit
+
+
+EXIT 0

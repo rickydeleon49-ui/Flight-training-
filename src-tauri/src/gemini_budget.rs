@@ -1,27 +1,5 @@
-//! One bounded budget per generation (GEN-REL-03, GEN-FIX-1).
-//! New jobs start at 300 s. Upload estimates may durably increase this to at
-//! most 600 s from the same start; restored drafts never acquire a new policy.
-//!
-//! Before this, each request had its own 300-second timeout and up to five
-//! requests could be made, so "Creating study aid…" could spin for well over
-//! twenty minutes and still end with "Gemini did not answer in time". Now one
-//! generation has one active budget that every step draws from: uploading the
-//! PDF, waiting for Google to prepare it, every generation attempt, every pause
-//! between attempts and the backup model. No step is given a fresh allowance.
-//!
-//! - At most `MAX_GENERATION_ATTEMPTS` generation requests, the backup model
-//!   included.
-//! - A pause (backoff, or Google's own `Retry-After`) is taken only if it fits
-//!   in what remains; otherwise the generation stops and says why.
-//! - Each request's timeout is what remains, so a request that times out has
-//!   used the whole budget.
-//! - Time is measured on a monotonic clock, so a change to the Mac's clock
-//!   neither extends nor cuts the budget.
-//!
-//! The budget also keeps a short, sanitized trace for the failure message:
-//! the stage reached, the attempts made, the time spent, the last HTTP status
-//! and a category. It never holds a key, a document, a path or a provider
-//! body.
+//! Stage-aware deadlines within one immutable 900-second invocation budget.
+//! Legacy journal policies retain their frozen total allowance.
 
 use std::future::Future;
 use std::pin::Pin;
@@ -30,11 +8,13 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// The active budget for one generation, upload included.
-pub(crate) const ACTIVE_BUDGET: Duration = Duration::from_secs(300);
+pub(crate) const ACTIVE_BUDGET: Duration = Duration::from_secs(900);
 /// How long to wait for a connection to Google before calling it unreachable.
 pub(crate) const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 /// Generation requests per generation, the backup model included.
 pub(crate) const MAX_GENERATION_ATTEMPTS: u32 = 3;
+/// Existing reservation/checkpoint refusal wording, shared by the timing guard.
+pub(crate) const CHECKPOINT_FAILED: &str = "The job reached its request allowance, or its request reservation could not be kept. The earlier draft is kept; nothing was published.";
 
 pub(crate) type Now = Arc<dyn Fn() -> Instant + Send + Sync>;
 pub(crate) type Sleep =
@@ -107,6 +87,7 @@ pub(crate) struct Budget {
     /// one poll of the work runs.
     admission: Mutex<Option<Admission>>,
     probe: Mutex<Option<Admission>>,
+    stages: Mutex<StageClock>,
 }
 
 /// Versioned metadata lives only in this job's journal draft. UTC is millis.
@@ -121,6 +102,10 @@ struct Timing {
     upload_bytes: u64,
     sample_millis: u64,
     sample_bytes: u64,
+    #[serde(default)]
+    active_stage: String,
+    #[serde(default)]
+    stages: std::collections::BTreeMap<String, StageTiming>,
 }
 type TimingWriter = Arc<dyn Fn(&serde_json::Value) -> bool + Send + Sync>;
 struct Limit {
@@ -129,6 +114,49 @@ struct Limit {
     timing: Option<Timing>,
     writer: Option<TimingWriter>,
     frozen: bool,
+    stage_policy: bool,
+}
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StageTiming {
+    elapsed_millis: u64,
+    remaining_millis: u64,
+}
+struct StageClock {
+    active: Stage,
+    segment: Instant,
+    deadline: Option<Instant>,
+    processing: Option<Instant>,
+    elapsed: std::collections::BTreeMap<String, u64>,
+    scale: f64,
+}
+impl StageClock {
+    fn duration(&self, seconds: u64) -> Duration {
+        Duration::from_secs_f64(seconds as f64 * self.scale)
+    }
+    fn boundary(&self, stage: Stage) -> Option<Duration> {
+        Some(self.duration(match stage {
+            Stage::Uploading | Stage::CheckingFile | Stage::Reading => 60,
+            Stage::WaitingForFile => 120,
+            Stage::Generating => 480,
+            Stage::Validating => 30,
+            _ => return None,
+        }))
+    }
+    fn remaining(&self, now: Instant, absolute: Duration) -> Duration {
+        let mut left = self.deadline.map_or(absolute, |end| {
+            end.saturating_duration_since(now).min(absolute)
+        });
+        if matches!(
+            self.active,
+            Stage::WaitingForFile | Stage::CheckingFile | Stage::Pausing
+        ) {
+            if let Some(end) = self.processing {
+                left = left.min(end.saturating_duration_since(now));
+            }
+        }
+        left
+    }
 }
 fn wall_millis() -> u64 {
     std::time::SystemTime::now()
@@ -166,13 +194,14 @@ impl Budget {
         Budget {
             started: now(),
             limit: Arc::new(Mutex::new(Limit {
-                allowed: total,
+                allowed: total.min(ACTIVE_BUDGET),
                 deadline: None,
                 timing: None,
                 writer: None,
                 frozen: false,
+                stage_policy: true,
             })),
-            now,
+            now: now.clone(),
             sleep,
             attempts: Mutex::new(0),
             allocator: Mutex::new(None),
@@ -184,6 +213,14 @@ impl Budget {
             observer: Mutex::new(None),
             admission: Mutex::new(None),
             probe: Mutex::new(None),
+            stages: Mutex::new(StageClock {
+                active: Stage::Preparing,
+                segment: now(),
+                deadline: None,
+                processing: None,
+                elapsed: Default::default(),
+                scale: 1.0,
+            }),
         }
     }
 
@@ -201,11 +238,39 @@ impl Budget {
     pub(crate) fn attach_probe(&self, probe: Admission) {
         *self.probe.lock().unwrap_or_else(|e| e.into_inner()) = Some(probe);
     }
-    fn can_continue(&self) -> bool {
+    pub(crate) fn can_continue(&self) -> bool {
         let probe = self.probe.lock().unwrap_or_else(|e| e.into_inner()).clone();
         probe.map_or_else(|| self.admit(), |probe| probe())
     }
 
+    pub(crate) fn producer_probe(&self) -> Admission {
+        self.probe
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+            .or_else(|| {
+                self.admission
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .clone()
+            })
+            .unwrap_or_else(|| Arc::new(|| true))
+    }
+    pub(crate) fn validation_checkpoint(&self) -> Result<(), String> {
+        if !self.can_continue() {
+            return Err(crate::gemini_cancel::CANCELLED.into());
+        }
+        if self.request_timeout().is_none() {
+            return Err(crate::gemini_files::out_of_time(
+                self,
+                "checking Gemini's answer",
+            ));
+        }
+        if !self.checkpoint() {
+            return Err(CHECKPOINT_FAILED.into());
+        }
+        Ok(())
+    }
     pub(crate) fn total(&self) -> Duration {
         self.limit.lock().unwrap_or_else(|e| e.into_inner()).allowed
     }
@@ -228,7 +293,7 @@ impl Budget {
         )
     }
 
-    /// Live control, not a captured deadline: later reservations see extensions.
+    /// One absolute clock shared by every request reservation and checkpoint.
     pub(crate) fn remaining_clock(&self) -> impl Fn() -> Duration + Send + Sync + 'static {
         let (now, started, limit) = (self.now.clone(), self.started, self.limit.clone());
         move || {
@@ -240,11 +305,123 @@ impl Budget {
         }
     }
 
+    fn remaining_unlocked(&self, limit: &Limit) -> Duration {
+        left(limit, self.started, (self.now)())
+    }
+    pub(crate) fn stage_policy(&self) -> bool {
+        self.limit
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .stage_policy
+    }
+    pub(crate) fn enable_stages(&self, writer: TimingWriter) -> bool {
+        {
+            let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+            if limit.frozen {
+                limit.writer = Some(writer);
+                drop(limit);
+                return self.checkpoint();
+            }
+            limit.stage_policy = true;
+            let allowed = limit.allowed.as_millis() as u64;
+            limit.timing = Some(Timing {
+                policy: "stage-v1".into(),
+                ceiling_millis: allowed.min(900_000),
+                allowed_millis: allowed.min(900_000),
+                remaining_millis: self.total_remaining(&limit),
+                deadline_utc: wall_millis().saturating_add(self.total_remaining(&limit)),
+                upload_bytes: 0,
+                sample_millis: 0,
+                sample_bytes: 0,
+                active_stage: self.stage().key().into(),
+                stages: Default::default(),
+            });
+            limit.writer = Some(writer);
+        }
+        self.checkpoint()
+    }
+    /// Persist before dispatch/checkpoints. A failed write stops work, never grants time.
+    pub(crate) fn persist_timing(&self) -> bool {
+        let writer = self
+            .limit
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .writer
+            .clone();
+        writer.map_or(true, |writer| writer(&self.timing_value()))
+    }
+    pub(crate) fn checkpoint(&self) -> bool {
+        if !self.can_continue() || self.remaining().is_zero() {
+            return false;
+        }
+        self.persist_timing() && self.can_continue() && !self.remaining().is_zero()
+    }
+    #[cfg(test)]
+    pub(crate) fn scale_stages(&self, scale: f64) {
+        self.stages.lock().unwrap().scale = scale;
+    }
+    /// Start a fresh admitted attempt or reset only a positive-byte inactivity timer.
+    pub(crate) fn reset_stage(&self, stage: Stage) {
+        self.at(stage);
+        let mut clock = self.stages.lock().unwrap_or_else(|e| e.into_inner());
+        clock.deadline = clock
+            .boundary(stage)
+            .map(|duration| (self.now)() + duration);
+    }
+    pub(crate) fn control_timeout(&self) -> Option<Duration> {
+        let remaining = self.request_timeout()?;
+        let control = self
+            .stages
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .duration(60);
+        Some(if self.stage_policy() {
+            remaining.min(control)
+        } else {
+            remaining
+        })
+    }
+    pub(crate) async fn guard_stage<F: Future>(&self, work: F) -> Result<F::Output, ()> {
+        self.run(async {
+            let mut work = std::pin::pin!(work);
+            let mut timer = Box::pin(tokio::time::sleep(Duration::ZERO));
+            std::future::poll_fn(|cx| {
+                if !self.can_continue() || self.request_timeout().is_none() {
+                    return std::task::Poll::Ready(Err(()));
+                }
+                if let std::task::Poll::Ready(value) = work.as_mut().poll(cx) {
+                    return std::task::Poll::Ready(
+                        if self.can_continue() && self.request_timeout().is_some() {
+                            Ok(value)
+                        } else {
+                            Err(())
+                        },
+                    );
+                }
+                if timer.as_mut().poll(cx).is_ready() {
+                    timer.as_mut().reset(
+                        tokio::time::Instant::now()
+                            + self
+                                .request_timeout()
+                                .unwrap_or_default()
+                                .min(Duration::from_millis(10)),
+                    );
+                    let _ = timer.as_mut().poll(cx);
+                }
+                std::task::Poll::Pending
+            })
+            .await
+        })
+        .await?
+    }
+
+    #[cfg(test)]
     pub(crate) fn enable_rate(&self, writer: TimingWriter) {
         let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
         if limit.frozen || limit.timing.is_some() {
             return;
         }
+        limit.stage_policy = false;
         let allowed = limit.allowed.as_millis() as u64;
         let timing = Timing {
             policy: "measured-rate-v1".into(),
@@ -256,6 +433,8 @@ impl Budget {
             upload_bytes: 0,
             sample_millis: 0,
             sample_bytes: 0,
+            active_stage: String::new(),
+            stages: Default::default(),
         };
         if writer(&serde_json::to_value(&timing).expect("timing serializes")) {
             limit.timing = Some(timing);
@@ -270,6 +449,49 @@ impl Budget {
         match limit.timing.clone() {
             Some(mut timing) => {
                 timing.remaining_millis = self.total_remaining(&limit);
+                if limit.stage_policy {
+                    let now = (self.now)();
+                    let stages = self.stages.lock().unwrap_or_else(|e| e.into_inner());
+                    timing.active_stage = stages.active.key().into();
+                    for stage in [
+                        Stage::Preparing,
+                        Stage::Uploading,
+                        Stage::WaitingForFile,
+                        Stage::CheckingFile,
+                        Stage::Generating,
+                        Stage::Reading,
+                        Stage::Validating,
+                        Stage::Pausing,
+                    ] {
+                        let elapsed = stages.elapsed.get(stage.key()).copied().unwrap_or(0)
+                            + if stages.active == stage {
+                                now.saturating_duration_since(stages.segment).as_millis() as u64
+                            } else {
+                                0
+                            };
+                        let remaining = if stage == stages.active {
+                            stages.remaining(now, self.remaining_unlocked(&limit))
+                        } else if stage == Stage::WaitingForFile {
+                            stages.processing.map_or(stages.duration(120), |end| {
+                                end.saturating_duration_since(now)
+                            })
+                        } else {
+                            stages
+                                .boundary(stage)
+                                .unwrap_or(self.remaining_unlocked(&limit))
+                        };
+                        timing.stages.insert(
+                            stage.key().into(),
+                            StageTiming {
+                                elapsed_millis: elapsed,
+                                remaining_millis: remaining
+                                    .min(self.remaining_unlocked(&limit))
+                                    .as_millis()
+                                    as u64,
+                            },
+                        );
+                    }
+                }
                 serde_json::to_value(timing).expect("timing serializes")
             }
             None => serde_json::Value::Null,
@@ -278,32 +500,86 @@ impl Budget {
     pub(crate) fn restore_timing_value(&self, value: &serde_json::Value, wall_now: u64) {
         let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
         limit.frozen = true; // Also freeze legacy/unknown drafts; never upgrade.
+        limit.stage_policy = false;
         if let Ok(mut timing) = serde_json::from_value::<Timing>(value.clone()) {
+            let cap = if timing.policy == "stage-v1" {
+                900_000
+            } else {
+                600_000
+            };
+            limit.stage_policy = timing.policy == "stage-v1";
             let remaining = timing
                 .remaining_millis
                 .min(timing.deadline_utc.saturating_sub(wall_now))
                 .min(timing.allowed_millis)
                 .min(timing.ceiling_millis)
-                .min(600_000);
+                .min(cap);
             timing.remaining_millis = remaining;
-            limit.allowed = Duration::from_millis(timing.allowed_millis.min(600_000));
+            limit.allowed = Duration::from_millis(timing.allowed_millis.min(cap));
             let end = (self.now)() + Duration::from_millis(remaining);
             limit.deadline = Some(limit.deadline.map_or(end, |prior| prior.min(end)));
+            if limit.stage_policy {
+                let now = (self.now)();
+                let mut stages = self.stages.lock().unwrap_or_else(|e| e.into_inner());
+                let active_key = stages.active.key().to_string();
+                let elapsed = now.saturating_duration_since(stages.segment).as_millis() as u64;
+                *stages.elapsed.entry(active_key).or_default() += elapsed;
+                stages.segment = now;
+                for (stage, saved) in &timing.stages {
+                    let prior = stages.elapsed.entry(stage.clone()).or_default();
+                    *prior = (*prior).max(saved.elapsed_millis);
+                }
+                if let Some(saved) = timing.stages.get("waiting-for-file") {
+                    if saved.elapsed_millis > 0
+                        || timing.active_stage == "waiting-for-file"
+                        || timing.active_stage == "checking-file"
+                    {
+                        let end = now
+                            + Duration::from_millis(saved.remaining_millis)
+                                .min(stages.duration(120));
+                        stages.processing = Some(stages.processing.map_or(end, |old| old.min(end)));
+                    }
+                }
+                // Reopening never resets the interrupted stage's remaining time.
+                let active = [
+                    Stage::Preparing,
+                    Stage::Uploading,
+                    Stage::WaitingForFile,
+                    Stage::CheckingFile,
+                    Stage::Generating,
+                    Stage::Reading,
+                    Stage::Validating,
+                    Stage::Pausing,
+                ]
+                .into_iter()
+                .find(|s| s.key() == timing.active_stage);
+                if let Some(active) = active {
+                    if let Some(saved) = timing.stages.get(active.key()) {
+                        let end = now
+                            + Duration::from_millis(saved.remaining_millis)
+                                .min(Duration::from_millis(remaining));
+                        stages.deadline = Some(stages.deadline.map_or(end, |old| old.min(end)));
+                        stages.active = active;
+                        stages.segment = now;
+                    }
+                }
+            }
             limit.timing = Some(timing);
+        } else {
+            limit.allowed = limit.allowed.min(Duration::from_secs(300));
         }
     }
     pub(crate) fn restore_draft(&self, value: &serde_json::Value) {
         self.restore_timing_value(&value["timing"], wall_millis());
     }
-    /// Polled upload frames give a send-side estimate of transfer rate,
-    /// never a claim about model progress. Missing/buffered windows use the cap.
+    /// Legacy FIX-1 instrumentation. Restored drafts are frozen; stage-v1 never extends.
     pub(crate) fn rate_sample(&self, elapsed: Duration, bytes: u64, upload_total: u64) -> bool {
         if !self.can_continue() || self.remaining().is_zero() {
             return false;
         }
         {
             let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
-            if limit.frozen {
+            if limit.frozen || limit.stage_policy {
                 return true;
             }
             let Some(mut timing) = limit.timing.clone() else {
@@ -365,6 +641,29 @@ impl Budget {
         bytes: &AtomicU64,
         total: u64,
     ) -> Result<F::Output, ()> {
+        if self.stage_policy() {
+            self.reset_stage(Stage::Uploading);
+            let mut work = std::pin::pin!(work);
+            let mut last = 0;
+            return self
+                .guard_stage(std::future::poll_fn(|cx| {
+                    let result = work.as_mut().poll(cx);
+                    let sent = bytes.load(Ordering::Relaxed);
+                    if sent > last {
+                        last = sent;
+                        self.reset_stage(Stage::Uploading); // final byte starts the 60 s finalize wait
+                        let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+                        if let Some(timing) = &mut limit.timing {
+                            timing.upload_bytes = total;
+                            timing.sample_bytes = sent;
+                            timing.sample_millis =
+                                self.elapsed().saturating_sub(started).as_millis() as u64;
+                        }
+                    }
+                    result
+                }))
+                .await;
+        }
         let mut work = std::pin::pin!(work);
         let mut timer = Box::pin(tokio::time::sleep(Duration::from_secs(1)));
         let mut sampled = false;
@@ -404,7 +703,14 @@ impl Budget {
 
     /// The timeout for the next request: what remains, or `None` if nothing does.
     pub(crate) fn request_timeout(&self) -> Option<Duration> {
-        let remaining = self.remaining();
+        let mut remaining = self.remaining();
+        if self.stage_policy() {
+            remaining = self
+                .stages
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .remaining((self.now)(), remaining);
+        }
         (!remaining.is_zero()).then_some(remaining)
     }
 
@@ -413,15 +719,17 @@ impl Budget {
         let mut work = std::pin::pin!(work);
         let mut timer = Box::pin(tokio::time::sleep(Duration::ZERO));
         std::future::poll_fn(|cx| {
-            if self.remaining().is_zero() {
+            if !self.can_continue() || self.remaining().is_zero() {
                 return std::task::Poll::Ready(Err(()));
             }
             if let std::task::Poll::Ready(answer) = work.as_mut().poll(cx) {
-                return std::task::Poll::Ready(if self.remaining().is_zero() {
-                    Err(())
-                } else {
-                    Ok(answer)
-                });
+                return std::task::Poll::Ready(
+                    if !self.can_continue() || self.remaining().is_zero() {
+                        Err(())
+                    } else {
+                        Ok(answer)
+                    },
+                );
             }
             if timer.as_mut().poll(cx).is_ready() {
                 timer.as_mut().reset(
@@ -460,9 +768,10 @@ impl Budget {
         if self.cancelled() || needed >= self.remaining() {
             return false;
         }
-        self.at(Stage::Pausing);
-        (self.sleep)(pause).await;
-        true
+        if self.stage() != Stage::WaitingForFile {
+            self.at(Stage::Pausing);
+        }
+        self.guard_stage((self.sleep)(pause)).await.is_ok()
     }
 
     pub(crate) fn restore_attempts(&self, count: u32) {
@@ -498,6 +807,21 @@ impl Budget {
     }
 
     pub(crate) fn at(&self, stage: Stage) {
+        {
+            let now = (self.now)();
+            let mut clock = self.stages.lock().unwrap_or_else(|e| e.into_inner());
+            if clock.active != stage {
+                let previous = clock.active.key().to_string();
+                let elapsed = now.saturating_duration_since(clock.segment).as_millis() as u64;
+                *clock.elapsed.entry(previous).or_default() += elapsed;
+                clock.active = stage;
+                clock.segment = now;
+                clock.deadline = clock.boundary(stage).map(|duration| now + duration);
+                if stage == Stage::WaitingForFile && clock.processing.is_none() {
+                    clock.processing = Some(now + clock.duration(120));
+                }
+            }
+        }
         let changed = {
             let mut trace = self.trace.lock().unwrap_or_else(|e| e.into_inner());
             let changed = trace.stage != stage;
@@ -744,3 +1068,7 @@ mod tests {
 #[cfg(test)]
 #[path = "gemini_rate_tests.rs"]
 mod rate_tests;
+
+#[cfg(test)]
+#[path = "gemini_stage_tests.rs"]
+mod stage_tests;

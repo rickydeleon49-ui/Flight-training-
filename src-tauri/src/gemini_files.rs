@@ -91,7 +91,7 @@ impl Default for Policy {
     fn default() -> Self {
         Policy {
             ready_entries: 16,
-            max_polls: 12,
+            max_polls: 30, // FIX-2: the 120 s processing deadline wins at the default poll cadence.
             poll_interval: Duration::from_millis(1_000),
             poll_cap: Duration::from_millis(5_000),
             reuse_margin_secs: 15 * 60,
@@ -370,21 +370,28 @@ fn upload_refusal(status: u16) -> String {
 }
 
 /// Counts bytes as reqwest polls frames under transport backpressure. This is
-/// a send-side estimate, not proof of delivery; buffered/unstable samples use
-/// the 600 s fallback in Budget. Frames do not create separate HTTP requests.
+/// a send-side estimate, not proof of delivery; positive progress resets only
+/// the upload inactivity timer. Frames do not create separate HTTP requests.
 struct UploadBody {
     remaining: bytes::Bytes,
     polled: Arc<AtomicU64>,
+    allowed: crate::gemini_budget::Admission,
 }
 
 impl http_body::Body for UploadBody {
     type Data = bytes::Bytes;
-    type Error = std::convert::Infallible;
+    type Error = std::io::Error;
 
     fn poll_frame(
         mut self: Pin<&mut Self>,
         _cx: &mut Context<'_>,
     ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
+        if !(self.allowed)() {
+            return Poll::Ready(Some(Err(std::io::Error::new(
+                std::io::ErrorKind::Interrupted,
+                "cancelled",
+            ))));
+        }
         if self.remaining.is_empty() {
             return Poll::Ready(None);
         }
@@ -412,12 +419,15 @@ pub(crate) async fn upload(
     mime: &str,
     budget: &Budget,
 ) -> Result<RemoteFile, String> {
-    budget.at(Stage::Uploading);
+    budget.reset_stage(Stage::Uploading);
+    if !budget.checkpoint() {
+        return Err(crate::gemini_budget::CHECKPOINT_FAILED.into());
+    }
     if !budget.admit() {
         return Err(crate::gemini_cancel::CANCELLED.to_string());
     }
     let timeout = budget
-        .upload_timeout()
+        .control_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
     let start_request = http
         .post(format!("{base}/upload/v1beta/files"))
@@ -433,7 +443,7 @@ pub(crate) async fn upload(
         .timeout(timeout)
         .send();
     let start = budget
-        .run(start_request)
+        .guard_stage(start_request)
         .await
         .map_err(|_| out_of_time(budget, "starting the upload"))?
         .map_err(|e| transport(e, "starting the upload", budget))?;
@@ -456,17 +466,22 @@ pub(crate) async fn upload(
     if bytes.is_empty() {
         return Err("The selected PDF is empty.".to_string());
     }
+    budget.reset_stage(Stage::Uploading); // upload starts after its separate start-control response
     let started = budget.elapsed();
     let polled = Arc::new(AtomicU64::new(0));
     let body = UploadBody {
         remaining: bytes::Bytes::copy_from_slice(bytes),
         polled: polled.clone(),
+        allowed: budget.producer_probe(),
     };
     let timeout = budget
         .upload_timeout()
         .ok_or_else(|| out_of_time(budget, "uploading the PDF"))?;
     if !budget.admit() {
         return Err(crate::gemini_cancel::CANCELLED.to_string());
+    }
+    if !budget.checkpoint() {
+        return Err(crate::gemini_budget::CHECKPOINT_FAILED.into());
     }
     let request = async {
         let finished = http
@@ -498,7 +513,11 @@ pub(crate) async fn upload(
             if budget.cancelled() {
                 crate::gemini_cancel::CANCELLED.to_string()
             } else {
-                out_of_time(budget, "uploading the PDF")
+                if budget.stage_policy() {
+                    "The upload stopped moving. Your saved work is still here.".into()
+                } else {
+                    out_of_time(budget, "uploading the PDF")
+                }
             }
         })??;
     let value: Value = serde_json::from_str(&raw).map_err(|_| {
@@ -520,14 +539,19 @@ pub(crate) async fn lookup(
         return Err(LookupFailure::Missing);
     }
     // GENREL03-R1: a file check is its own stage in the failure details.
-    budget.at(Stage::CheckingFile);
+    budget.reset_stage(Stage::CheckingFile);
+    if !budget.checkpoint() {
+        return Err(LookupFailure::Other(
+            crate::gemini_budget::CHECKPOINT_FAILED.into(),
+        ));
+    }
     if !budget.admit() {
         return Err(LookupFailure::Other(
             crate::gemini_cancel::CANCELLED.to_string(),
         ));
     }
     let timeout = budget
-        .request_timeout()
+        .control_timeout()
         .ok_or_else(|| LookupFailure::Other(out_of_time(budget, "checking the uploaded PDF")))?;
     let response = http
         .get(format!("{base}/v1beta/{name}"))
@@ -936,13 +960,19 @@ impl PreparedSources {
                 .collect(),
         };
         while !pending.unsent.is_empty() {
-            if !budget.admit() {
+            if budget.remaining().is_zero() || !budget.checkpoint() || !budget.admit() {
                 break;
             }
             // No await between taking this entry and polling its DELETE.
             // Every later entry remains guarded throughout that wait.
             let r = pending.unsent.pop_front().expect("nonempty cleanup queue");
-            if delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout).await {
+            let timeout = self.policy.delete_timeout.min(budget.remaining());
+            if matches!(
+                budget
+                    .run(delete(http, &r.base, api_key, &r.name, timeout))
+                    .await,
+                Ok(true)
+            ) {
                 removed += 1;
             }
         }
@@ -1368,6 +1398,9 @@ impl PreparedSources {
     ) -> Result<RemoteFile, NotReady> {
         let mut pause = self.policy.poll_interval;
         let mut polls = 0;
+        if file.state != FileState::Active {
+            budget.at(Stage::WaitingForFile);
+        }
         loop {
             match file.state {
                 FileState::Active => return Ok(file),
@@ -1382,12 +1415,16 @@ impl PreparedSources {
             if polls == 0 {
                 say("Google is preparing the uploaded PDF…".to_string());
             }
+            budget.at(Stage::WaitingForFile);
             // The wait is paid for out of the same budget as everything else.
             if !budget.pause(pause).await {
                 if budget.cancelled() {
                     return Err(NotReady::Other(crate::gemini_cancel::CANCELLED.to_string()));
                 }
                 budget.categorize("time limit reached");
+                if budget.stage_policy() && !budget.remaining().is_zero() {
+                    return Err(NotReady::Other("Google was still preparing this PDF after waiting, so no study aid was made. Try again in a few minutes.".into()));
+                }
                 return Err(NotReady::Other(format!(
                     "Google was still preparing this PDF when the {} Her Flight Deck allows for one study aid ran out, so no study aid was made. Choosing a chapter or fewer pages first usually helps.",
                     crate::gemini_budget::describe(budget.total())

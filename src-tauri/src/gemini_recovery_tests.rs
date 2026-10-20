@@ -208,7 +208,10 @@ fn slow_headers_spend_one_budget_and_are_not_retried() {
     gate.open();
     let error = outcome.unwrap_err();
     assert_eq!(r.count(), 1);
-    assert!(error.contains("may still have been working"), "{error}");
+    assert_eq!(
+        error,
+        "Gemini is taking longer to answer. You can try again."
+    );
 }
 
 #[test]
@@ -221,7 +224,7 @@ fn slow_body_is_distinct_from_failure_to_connect_and_never_resets_the_budget() {
     gate.open();
     let error = outcome.unwrap_err();
     assert_eq!(r.count(), 1);
-    assert!(error.contains("started answering"), "{error}");
+    assert_eq!(error, "The rest of the answer stopped arriving.");
     assert!(!error.contains("Check the internet"));
 }
 

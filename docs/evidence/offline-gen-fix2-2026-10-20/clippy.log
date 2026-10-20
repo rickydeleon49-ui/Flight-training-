@@ -1,0 +1,17 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+    Checking her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+error: current MSRV (Minimum Supported Rust Version) is `1.77.2` but this item is stable since `1.82.0`
+   --> src/gemini_budget.rs:351:16
+    |
+351 |         writer.is_none_or(|writer| writer(&self.timing_value()))
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#incompatible_msrv
+    = note: `-D clippy::incompatible-msrv` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::incompatible_msrv)]`
+
+error: could not compile `her-flight-deck` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `her-flight-deck` (lib test) due to 1 previous error
+
+EXIT 101

@@ -1,11 +1,11 @@
 ## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
 
-OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 implemented, pending review.
+OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 merged (PR #239).
 
 ### Workflow (owner, 19–20 October 2026)
 
 - **Codex implements** every project change.
-- **Qwen Flash is the backup implementer only.** It is used only when Codex is out of usage.
+- Implementer order (owner, 20 October 2026): Codex first, then Gemini (Gemini CLI, model gemini-3.8-flash), then Qwen Flash only as the last backup.
 - **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
 - After a GREEN review and green exact-head CI, Claude merges with `--match-head-commit` and verifies the work is on main.
 - From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.

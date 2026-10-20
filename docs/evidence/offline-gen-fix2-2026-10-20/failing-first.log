@@ -1,0 +1,64 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --manifest-path src-tauri/Cargo.toml gemini_budget::stage_tests -- --nocapture
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.18s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 7 tests
+
+thread 'gemini_budget::stage_tests::progress_cannot_extend_900s' (8273387) panicked at src/gemini_stage_tests.rs:27:5:
+assertion `left == right` failed
+  left: 300s
+ right: 900s
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'gemini_budget::stage_tests::processing_120s_not_reset_by_polls' (8273386) panicked at src/gemini_stage_tests.rs:22:5:
+assertion `left == right` failed: polls cannot replenish processing time
+  left: Some(780s)
+ right: None
+
+thread 'gemini_budget::stage_tests::header_grace_not_transfer_stall' (8273385) panicked at src/gemini_stage_tests.rs:40:5:
+assertion `left == right` failed
+  left: Some(540s)
+ right: Some(120s)
+
+thread 'gemini_budget::stage_tests::upload_stall_61s' (8273389) panicked at src/gemini_stage_tests.rs:11:5:
+assertion `left == right` failed: stopped upload expires before absolute cap
+  left: Some(839s)
+ right: None
+test gemini_budget::stage_tests::progress_cannot_extend_900s ... FAILED
+test gemini_budget::stage_tests::upload_stall_61s ... FAILED
+test gemini_budget::stage_tests::header_grace_not_transfer_stall ... FAILED
+test gemini_budget::stage_tests::processing_120s_not_reset_by_polls ... FAILED
+
+thread 'gemini_budget::stage_tests::restart_clock_rollback' (8273388) panicked at src/gemini_stage_tests.rs:49:5:
+assertion `left == right` failed: rollback cannot restore more than persisted
+  left: 600
+ right: 720
+test gemini_budget::stage_tests::restart_clock_rollback ... FAILED
+
+thread 'gemini_budget::stage_tests::cancel_at_each_stage' (8273383) panicked at src/gemini_stage_tests.rs:62:9:
+preparing must stop before completion
+
+thread 'gemini_budget::stage_tests::cancellation_versus_final_checkpoint_race' (8273384) panicked at src/gemini_stage_tests.rs:75:5:
+assertion `left == right` failed: cancel must win before a final checkpoint escapes
+  left: Ok(7)
+ right: Err(Cancelled)
+test gemini_budget::stage_tests::cancellation_versus_final_checkpoint_race ... FAILED
+test gemini_budget::stage_tests::cancel_at_each_stage ... FAILED
+
+failures:
+
+failures:
+    gemini_budget::stage_tests::cancel_at_each_stage
+    gemini_budget::stage_tests::cancellation_versus_final_checkpoint_race
+    gemini_budget::stage_tests::header_grace_not_transfer_stall
+    gemini_budget::stage_tests::processing_120s_not_reset_by_polls
+    gemini_budget::stage_tests::progress_cannot_extend_900s
+    gemini_budget::stage_tests::restart_clock_rollback
+    gemini_budget::stage_tests::upload_stall_61s
+
+test result: FAILED. 0 passed; 7 failed; 0 ignored; 0 measured; 864 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101

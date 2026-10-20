@@ -193,7 +193,7 @@ const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
 /// Generating reads a whole document, so it is given room — but not forever.
 /// Without a bound, a stalled connection leaves "Creating study aid…" spinning
 /// with nothing to cancel it.
-const GENERATE_TIMEOUT: Duration = Duration::from_secs(600);
+const GENERATE_TIMEOUT: Duration = Duration::from_secs(900);
 
 /// The client for generation. Its overall timeout is only a backstop: every
 /// request is given what remains of the generation's one budget, and a
@@ -853,6 +853,9 @@ async fn run_generation(
         Ok(result) if ctx.current() => result,
         Ok(_) => Err(gemini_files::STALE_CONTEXT.to_string()),
         Err(()) => {
+            if ctx.budget.cancelled() {
+                return Err(gemini_cancel::CANCELLED.into());
+            }
             let stage = ctx.budget.stage();
             if matches!(stage, Stage::Generating | Stage::Reading) {
                 let lost = if stage == Stage::Reading {
@@ -1184,18 +1187,49 @@ where
         });
         if let Some(draft) = draft {
             budget.restore_draft(&draft);
-        } else {
+        }
+        {
             let (path, timing_id) = (root.to_path_buf(), job_id.to_string());
-            budget.enable_rate(Arc::new(move |timing| {
+            if !budget.enable_stages(Arc::new(move |timing| {
                 gemini_jobs::with(&path, |journal| {
                     journal
                         .checkpoint_timing(&timing_id, timing.clone())
                         .is_ok()
                 })
-            }));
+            })) {
+                if budget.cancelled() {
+                    return Err(gemini_cancel::CANCELLED.into());
+                }
+                gemini_jobs::with(root, |journal| {
+                    journal.failed(job_id, gemini_budget::CHECKPOINT_FAILED)
+                })?;
+                return Err(gemini_budget::CHECKPOINT_FAILED.into());
+            }
         }
     }
     let running = RunningJob { root, id, changed };
+    let work = async {
+        let outcome = if let Some(budget) = hooks.budget {
+            match budget.run(work).await {
+                Ok(value) => value,
+                Err(()) if budget.cancelled() => Err(gemini_cancel::CANCELLED.into()),
+                Err(()) => Err(gemini_files::out_of_time(
+                    budget,
+                    "finishing this study aid",
+                )),
+            }
+        } else {
+            work.await
+        };
+        if let Some(budget) = hooks.budget {
+            if outcome.is_ok() {
+                budget.validation_checkpoint()?;
+            } else {
+                let _ = budget.persist_timing();
+            }
+        }
+        outcome
+    };
     let outcome = match registration.flatten() {
         Some(registration) => {
             match gemini_cancel::Cancellable::new(work, registration.token.clone()).await {
@@ -1361,13 +1395,16 @@ pub async fn generate_study_aid(
     let target = batches::target(target_cards)?;
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let epoch = prepared_sources().epoch();
-    let (api_key, source) = prepare_submission(&app, &relative_path).await?;
+    let (api_key, source) = budget
+        .run(prepare_submission(&app, &relative_path))
+        .await
+        .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
     let http = generation_client()?;
-    // One budget for everything this generation does (GEN-REL-03).
-    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
+    // The invocation budget already includes source preparation.
     // Progress names this job and reports the stages actually reached.
     let reporter = reporter_for(&app, &material_id, JobKind::StudyAid);
     reporter.limit.store(9, Ordering::SeqCst);
@@ -1488,7 +1525,8 @@ async fn study_aid_request(
     };
     let (raw, model_used) = run_generation(ctx, source, &build).await?;
 
-    ctx.budget.at(Stage::Validating);
+    ctx.budget.reset_stage(Stage::Validating);
+    ctx.budget.validation_checkpoint()?;
     ctx.budget.categorize("invalid or incomplete output");
     let text = extract_text(&raw)?;
     let mut value: Value = serde_json::from_str(&text)
@@ -1503,6 +1541,7 @@ async fn study_aid_request(
     let mut result: GeneratedStudyAid = serde_json::from_value(value)
         .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
     result.model = model_used.to_string();
+    ctx.budget.validation_checkpoint()?;
     Ok(result)
 }
 
@@ -1607,13 +1646,16 @@ pub async fn generate_practice_test(
 ) -> Result<JobAnswer<GeneratedPracticeTest>, String> {
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let epoch = prepared_sources().epoch();
-    let (api_key, source) = prepare_submission(&app, &relative_path).await?;
+    let (api_key, source) = budget
+        .run(prepare_submission(&app, &relative_path))
+        .await
+        .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
     let http = generation_client()?;
-    // One budget for everything this generation does (GEN-REL-03).
-    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
+    // The invocation budget already includes source preparation.
     // Progress names this job and reports the stages actually reached.
     let reporter = reporter_for(&app, &material_id, JobKind::PracticeTest);
     reporter.follow(&budget);
@@ -1705,7 +1747,8 @@ async fn practice_test_with(
         })
     };
     let (raw, model_used) = run_generation(ctx, source, &build).await?;
-    ctx.budget.at(Stage::Validating);
+    ctx.budget.reset_stage(Stage::Validating);
+    ctx.budget.validation_checkpoint()?;
     ctx.budget.categorize("invalid or incomplete output");
     let text = extract_text(&raw)?;
     let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
@@ -1713,6 +1756,7 @@ async fn practice_test_with(
     })?;
     let mut result = sanitize_practice_test(result)?;
     result.model = model_used.to_string();
+    ctx.budget.validation_checkpoint()?;
     Ok(result)
 }
 
@@ -1723,10 +1767,13 @@ async fn generate_once(
     body: &Value,
 ) -> Result<Attempt, Failure> {
     // Every request has only what remains of the generation's one budget.
-    let Some(timeout) = ctx.budget.request_timeout() else {
+    ctx.budget.reset_stage(Stage::Generating);
+    let Some(timeout) = ctx.budget.upload_timeout() else {
         return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
     };
-    ctx.budget.at(Stage::Generating);
+    if !ctx.budget.checkpoint() {
+        return Err(gemini_budget::CHECKPOINT_FAILED.to_string().into());
+    }
     // Immediately before the request: a cancel recorded by now prevents it,
     // however far one poll of the work has run (GENREL04-R5).
     if !ctx.budget.admit() {
@@ -1734,20 +1781,29 @@ async fn generate_once(
     }
     let url = format!("{}/v1beta/models/{model}:generateContent", ctx.base);
     let sent = ctx
-        .http
-        .post(url)
-        .header("x-goog-api-key", ctx.api_key)
-        .json(body)
-        .timeout(timeout)
-        .send()
+        .budget
+        .guard_stage(
+            ctx.http
+                .post(url)
+                .header("x-goog-api-key", ctx.api_key)
+                .json(body)
+                .timeout(timeout)
+                .send(),
+        )
         .await;
     let mut response = match sent {
-        Ok(response) => response,
-        // Checked first: a connect timeout is also a timeout, but nothing
-        // reached Google, so it is safe to try again.
-        Err(error) if error.is_connect() => return Ok(Attempt::Lost(Lost::Unreachable)),
-        Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
-        Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+        Err(()) if ctx.budget.cancelled() => {
+            return Err(gemini_cancel::CANCELLED.to_string().into())
+        }
+        Err(()) => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
+        Ok(sent) => match sent {
+            Ok(response) => response,
+            // Checked first: a connect timeout is also a timeout, but nothing
+            // reached Google, so it is safe to try again.
+            Err(error) if error.is_connect() => return Ok(Attempt::Lost(Lost::Unreachable)),
+            Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
+            Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+        },
     };
 
     let status = response.status().as_u16();
@@ -1758,20 +1814,32 @@ async fn generate_once(
             .get("retry-after")
             .and_then(|v| v.to_str().ok()),
     );
-    ctx.budget.at(Stage::Reading);
+    ctx.budget.reset_stage(Stage::Reading);
+    if !ctx.budget.checkpoint() {
+        return Err(gemini_budget::CHECKPOINT_FAILED.to_string().into());
+    }
     const MAX_ANSWER_BYTES: usize = 1024 * 1024;
     let mut bytes = Vec::new();
     loop {
-        match response.chunk().await {
-            Ok(Some(chunk)) => {
-                if bytes.len().saturating_add(chunk.len()) > MAX_ANSWER_BYTES {
-                    return Err("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string().into());
-                }
-                bytes.extend_from_slice(&chunk);
+        match ctx.budget.guard_stage(response.chunk()).await {
+            Err(()) if ctx.budget.cancelled() => {
+                return Err(gemini_cancel::CANCELLED.to_string().into())
             }
-            Ok(None) => break,
-            Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
-            Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+            Err(()) => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
+            Ok(chunk) => match chunk {
+                Ok(Some(chunk)) => {
+                    if bytes.len().saturating_add(chunk.len()) > MAX_ANSWER_BYTES {
+                        return Err("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string().into());
+                    }
+                    if !chunk.is_empty() {
+                        ctx.budget.reset_stage(Stage::Reading);
+                    }
+                    bytes.extend_from_slice(&chunk);
+                }
+                Ok(None) => break,
+                Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
+                Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
+            },
         }
     }
     let raw = String::from_utf8(bytes)
@@ -1992,6 +2060,15 @@ fn retry_after_message(asked: Duration, budget: &Budget) -> String {
 /// Said when no complete reply arrived. Only a connection that was never made
 /// points at the internet connection.
 fn lost_message(lost: Lost, budget: &Budget) -> String {
+    if budget.stage_policy() {
+        match lost {
+            Lost::NoAnswerInTime => {
+                return "Gemini is taking longer to answer. You can try again.".into()
+            }
+            Lost::AnswerCutShort => return "The rest of the answer stopped arriving.".into(),
+            _ => {}
+        }
+    }
     let limit = gemini_budget::describe(budget.total());
     match lost {
         Lost::Unreachable => "Could not reach Google, even after trying again. Check the internet connection. No complete answer was received; an earlier attempt may still have reached Google.".to_string(),

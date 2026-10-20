@@ -81,7 +81,11 @@ impl<F: Future> Future for Cancellable<F> {
         match inner.as_mut().poll(cx) {
             Poll::Ready(output) => {
                 self.inner = None;
-                Poll::Ready(Ok(output))
+                Poll::Ready(if self.token.is_cancelled() {
+                    Err(Cancelled)
+                } else {
+                    Ok(output)
+                })
             }
             Poll::Pending => Poll::Pending,
         }

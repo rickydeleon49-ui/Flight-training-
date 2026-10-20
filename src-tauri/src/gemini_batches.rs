@@ -246,7 +246,9 @@ pub(super) async fn generate(
             } else { message }
         })?;
         unchanged(root, source)?;
+        ctx.budget.validation_checkpoint()?;
         validate(&answer, pages, if unit == 0 { 0 } else { BATCH })?;
+        ctx.budget.validation_checkpoint()?;
         // Reload reservations so a checkpoint cannot erase the request ledger.
         draft = read(root, &id)?;
         if draft.next != unit {
@@ -269,7 +271,9 @@ pub(super) async fn generate(
         draft.remaining_millis = draft
             .remaining_millis
             .min(ctx.budget.remaining().as_millis() as u64);
-        if let Some(timing) = &mut draft.timing {
+        if ctx.budget.stage_policy() {
+            draft.timing = Some(ctx.budget.timing_value());
+        } else if let Some(timing) = &mut draft.timing {
             timing["remainingMillis"] = json!(draft.remaining_millis);
         }
         write(root, &id, &draft)?;
