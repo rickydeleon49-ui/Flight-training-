@@ -423,13 +423,7 @@ fn a_coalesced_waiter_has_its_own_deadline_without_cancelling_the_owner() {
             ModelChoice::Standard,
         )
     });
-    for _ in 0..1000 {
-        if gate.waiting() == 1 {
-            break;
-        }
-        std::thread::sleep(Duration::from_millis(2));
-    }
-    assert_eq!(gate.waiting(), 1);
+    crate::test_wait::wait_for("coalesced owner upload gate", || gate.waiting() == 1);
     let budget = Budget::new(Duration::from_millis(120));
     let outcome = r.run_with(&budget, "application/pdf", ModelChoice::Standard);
     gate.open();

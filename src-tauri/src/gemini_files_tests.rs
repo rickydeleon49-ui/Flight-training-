@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use super::*;
 use crate::fake_gemini::{FakeGemini, Gate};
+use crate::test_wait::wait_for;
 
 const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
 const OTHER_KEY: &str = "synthetic-key-BBBBBBBBBBBBBBBBBBBB";
@@ -73,16 +74,6 @@ fn spawn_prepare(
             .await
             .map(|lease| lease.prepared().clone())
     })
-}
-
-fn wait_for(what: &str, f: impl Fn() -> bool) {
-    for _ in 0..2_000 {
-        if f() {
-            return;
-        }
-        std::thread::sleep(Duration::from_millis(2));
-    }
-    panic!("timed out waiting for {what}");
 }
 
 fn join<T>(handle: tauri::async_runtime::JoinHandle<T>) -> T {

@@ -533,19 +533,13 @@ fn a_tick_interrupts_a_rebuild_query_that_is_already_running() {
     assert!(started.elapsed() <= RACE_DEADLINE + Duration::from_millis(150));
     // The caller's wait ends at the deadline; the search thread sees the
     // watchdog's interrupt a tick later, so wait for its report.
-    assert!(
-        tick_rx.recv_timeout(Duration::from_secs(2)).is_ok(),
-        "the query was running when the tick landed"
-    );
+    crate::test_wait::wait_for("running rebuild watchdog tick report", || {
+        tick_rx.try_recv().is_ok()
+    });
     let interrupted = interrupted.lock().unwrap().clone().unwrap();
-    let until = Instant::now() + Duration::from_secs(2);
-    while !interrupted.load(Ordering::SeqCst) && Instant::now() < until {
-        std::thread::sleep(Duration::from_millis(1));
-    }
-    assert!(
-        interrupted.load(Ordering::SeqCst),
-        "SQLite reported SQLITE_INTERRUPT"
-    );
+    crate::test_wait::wait_for("SQLite reported SQLITE_INTERRUPT", || {
+        interrupted.load(Ordering::SeqCst)
+    });
     assert_eq!(hits(&f.search(&host, "alpha", ALL, &[]).unwrap()).len(), 1);
 }
 

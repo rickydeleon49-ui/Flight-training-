@@ -1634,14 +1634,9 @@ mod tests {
                     // has issued a second interrupt, which lands while this
                     // statement is provably active.
                     if gate.swap(false, Ordering::SeqCst) {
-                        let limit = Instant::now() + Duration::from_secs(2);
-                        while g.interrupts.load(Ordering::SeqCst) < 2 {
-                            assert!(
-                                Instant::now() < limit,
-                                "watchdog failed to repeat interrupt"
-                            );
-                            std::thread::sleep(Duration::from_millis(1));
-                        }
+                        crate::test_wait::wait_for("watchdog repeated interrupt counter", || {
+                            g.interrupts.load(Ordering::SeqCst) >= 2
+                        });
                         recorded.store(g.interrupts.load(Ordering::SeqCst), Ordering::SeqCst);
                     }
                     Ok(1)
@@ -1654,14 +1649,9 @@ mod tests {
                     // After the re-check: wait for the deadline and for the
                     // watchdog's first interrupt, a no-op with no statement
                     // running, before letting SQLite start.
-                    let limit = Instant::now() + Duration::from_secs(2);
-                    while g.interrupts.load(Ordering::SeqCst) < 1 {
-                        assert!(
-                            Instant::now() < limit,
-                            "watchdog did not acknowledge deadline"
-                        );
-                        std::thread::sleep(Duration::from_millis(1));
-                    }
+                    crate::test_wait::wait_for("watchdog deadline interrupt counter", || {
+                        g.interrupts.load(Ordering::SeqCst) >= 1
+                    });
                 }
             }));
         });
@@ -1756,7 +1746,7 @@ mod tests {
             control.check()?;
             Err(Stop::Failed)
         });
-        started.recv_timeout(Duration::from_secs(2)).unwrap();
+        crate::test_wait::wait_for("first resolver started gate", || started.try_recv().is_ok());
         let second = host.submit(Instant::now(), |_, _| {
             panic!("replaced waiter must never resolve")
         });
@@ -1822,11 +1812,9 @@ mod tests {
         }
         std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).unwrap();
         assert_eq!(host.initialization(), Initialization::Preparing);
-        let until = Instant::now() + Duration::from_secs(5);
-        while host.initialization() != Initialization::Ready {
-            assert!(Instant::now() < until);
-            std::thread::yield_now();
-        }
+        crate::test_wait::wait_for("replacement cache initialization ready", || {
+            host.initialization() == Initialization::Ready
+        });
 
         assert!(search(&host, &targets, "old", 0).unwrap().groups.is_empty());
         assert_eq!(search(&host, &targets, "new", 0).unwrap().groups.len(), 1);
@@ -1860,18 +1848,15 @@ mod tests {
         let root = temp();
         std::fs::remove_dir(&root).unwrap();
         let host = Host::start(root.join(CACHE_FILE));
-        let until = Instant::now() + Duration::from_secs(5);
-        while host.initialization() == Initialization::Preparing {
-            assert!(Instant::now() < until);
-            std::thread::yield_now();
-        }
+        crate::test_wait::wait_for("missing-root initialization finished", || {
+            host.initialization() != Initialization::Preparing
+        });
         assert_eq!(host.initialization(), Initialization::Failed);
         std::fs::create_dir(&root).unwrap();
         host.retry_initialization();
-        while host.initialization() != Initialization::Ready {
-            assert!(Instant::now() < until);
-            std::thread::yield_now();
-        }
+        crate::test_wait::wait_for("retried cache initialization ready", || {
+            host.initialization() == Initialization::Ready
+        });
         assert!(search(&host, &[], "wind", 0).unwrap().groups.is_empty());
         drop(host);
         let _ = std::fs::remove_dir_all(root);

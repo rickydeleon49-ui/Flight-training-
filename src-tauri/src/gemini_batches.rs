@@ -298,6 +298,7 @@ mod tests {
     use super::*;
     use crate::fake_gemini::{FakeGemini, Gate};
     use crate::gemini_budget::testing::fake_budget;
+    use crate::test_wait::wait_for;
     use std::time::Duration;
 
     fn envelope(value: Value) -> String {
@@ -642,13 +643,7 @@ mod tests {
         });
         std::thread::scope(|scope| {
             let worker = scope.spawn(|| r.run(20));
-            for _ in 0..2000 {
-                if gate.waiting() > 0 {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
-            assert!(gate.waiting() > 0);
+            wait_for("source-removal generation gate", || gate.waiting() > 0);
             std::fs::remove_file(
                 r.root
                     .path()
@@ -806,12 +801,7 @@ mod tests {
         });
         std::thread::scope(|s| {
             let worker = s.spawn(|| r.run(20));
-            for _ in 0..1000 {
-                if r.count() > 0 {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
+            wait_for("source-change generation request counter", || r.count() > 0);
             std::fs::write(
                 r.root
                     .path()
@@ -870,13 +860,7 @@ mod tests {
                     token,
                 ))
             });
-            for _ in 0..2000 {
-                if gate.waiting() > 0 {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
-            assert!(gate.waiting() > 0);
+            wait_for("cancel/restart generation gate", || gate.waiting() > 0);
             gemini_jobs::with(r.root.path(), |j| j.cancel(&id)).unwrap();
             registration.token.cancel();
             assert!(worker.join().unwrap().is_err());
@@ -886,17 +870,11 @@ mod tests {
             r.fake
                 .behave(|b| b.generate_answers = vec![envelope(aid(90, 10))]);
             gate.open();
-            for _ in 0..2000 {
+            wait_for("abandoned generation answer queue to be consumed", || {
                 let mut taken = false;
                 r.fake.behave(|b| taken = b.generate_answers.is_empty());
-                if taken {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(1));
-            }
-            let mut taken = false;
-            r.fake.behave(|b| taken = b.generate_answers.is_empty());
-            assert!(taken, "the abandoned request was never answered");
+                taken
+            });
         });
         gemini_jobs::with(r.root.path(), |j| j.failed(&id, "cancelled")).unwrap();
         let reopened = gemini_jobs::Journal::open(r.root.path());

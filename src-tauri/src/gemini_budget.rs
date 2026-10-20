@@ -1,6 +1,8 @@
 //! Stage-aware deadlines within one immutable 900-second invocation budget.
 //! Legacy journal policies retain their frozen total allowance.
 
+const PROCESSING_SECONDS: u64 = 120;
+
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -137,7 +139,7 @@ impl StageClock {
     fn boundary(&self, stage: Stage) -> Option<Duration> {
         Some(self.duration(match stage {
             Stage::Uploading | Stage::CheckingFile | Stage::Reading => 60,
-            Stage::WaitingForFile => 120,
+            Stage::WaitingForFile => PROCESSING_SECONDS,
             Stage::Generating => 480,
             Stage::Validating => 30,
             _ => return None,
@@ -472,9 +474,11 @@ impl Budget {
                         let remaining = if stage == stages.active {
                             stages.remaining(now, self.remaining_unlocked(&limit))
                         } else if stage == Stage::WaitingForFile {
-                            stages.processing.map_or(stages.duration(120), |end| {
-                                end.saturating_duration_since(now)
-                            })
+                            stages
+                                .processing
+                                .map_or(stages.duration(PROCESSING_SECONDS), |end| {
+                                    end.saturating_duration_since(now)
+                                })
                         } else {
                             stages
                                 .boundary(stage)
@@ -536,7 +540,7 @@ impl Budget {
                     {
                         let end = now
                             + Duration::from_millis(saved.remaining_millis)
-                                .min(stages.duration(120));
+                                .min(stages.duration(PROCESSING_SECONDS));
                         stages.processing = Some(stages.processing.map_or(end, |old| old.min(end)));
                     }
                 }
@@ -818,7 +822,7 @@ impl Budget {
                 clock.segment = now;
                 clock.deadline = clock.boundary(stage).map(|duration| now + duration);
                 if stage == Stage::WaitingForFile && clock.processing.is_none() {
-                    clock.processing = Some(now + clock.duration(120));
+                    clock.processing = Some(now + clock.duration(PROCESSING_SECONDS));
                 }
             }
         }

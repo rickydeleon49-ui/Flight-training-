@@ -2704,3 +2704,6 @@ mod cancel_flow_tests;
 
 #[path = "gemini_batches.rs"]
 mod batches;
+
+#[path = "gemini_sections.rs"]
+pub(crate) mod sections;
