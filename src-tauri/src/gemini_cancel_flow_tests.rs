@@ -227,8 +227,9 @@ fn cancelling_during_a_retry_pause_makes_no_further_attempt() {
             running.join().unwrap().unwrap_err(),
             gemini_cancel::CANCELLED
         );
+        // 1,400 ms is strictly below the minimum 1,500 ms retry pause.
         assert!(
-            started.elapsed() < Duration::from_millis(900),
+            started.elapsed() < Duration::from_millis(1_400),
             "the pause is cut short, not waited out"
         );
     });

@@ -216,6 +216,16 @@ impl Journal {
                 job.updated_at = now();
                 changed = true;
             }
+            if let Some(draft) = job.draft.as_mut() {
+                if draft.get("kind").and_then(Value::as_str) == Some("guide-sections-v1") {
+                    if let Some(state) = draft.get("queueState").and_then(Value::as_str) {
+                        if state == "running" || state == "paused" {
+                            draft["queueState"] = serde_json::json!("waiting-for-her");
+                            changed = true;
+                        }
+                    }
+                }
+            }
         }
         if changed {
             // If this cannot be written, the disk still says `running`, and the
@@ -418,9 +428,8 @@ impl Journal {
         Ok(id)
     }
 
-    /// Section drafts never evict another outcome, including an earlier partial
-    /// draft explicitly retained by Start a new guide.
-    pub(crate) fn begin_sections(
+    /// Queue study guide sections without starting or requiring an idle engine.
+    pub(crate) fn queue_sections(
         &mut self,
         material: &str,
         path: &str,
@@ -431,9 +440,6 @@ impl Journal {
     ) -> Result<String, String> {
         if self.quarantined {
             return Err(RESTORING.into());
-        }
-        if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
-            return Err(BUSY.into());
         }
         let supersedes = draft.get("supersedes").and_then(Value::as_str);
         let prior = self.jobs.iter().any(|j| {
@@ -497,6 +503,23 @@ impl Journal {
         });
         self.commit(next)?;
         Ok(id)
+    }
+
+    /// Section drafts never evict another outcome, including an earlier partial
+    /// draft explicitly retained by Start a new guide.
+    pub(crate) fn begin_sections(
+        &mut self,
+        material: &str,
+        path: &str,
+        hash: &str,
+        revision: Option<&str>,
+        request: Option<&str>,
+        draft: Value,
+    ) -> Result<String, String> {
+        if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
+            return Err(BUSY.into());
+        }
+        self.queue_sections(material, path, hash, revision, request, draft)
     }
 
     /// One worker owns an activation until its guard settles, even after Cancel.
@@ -695,6 +718,24 @@ impl Journal {
                 pending: false,
             });
         }
+        let is_waiting = self.jobs.iter().any(|j| {
+            j.id == id
+                && j.draft
+                    .as_ref()
+                    .and_then(|d| d.get("queueState"))
+                    .and_then(Value::as_str)
+                    == Some("waiting-for-her")
+        });
+        if is_waiting {
+            let mut next = self.jobs.clone();
+            next.retain(|j| j.id != id);
+            self.commit(next)?;
+            return Ok(CancelOutcome {
+                cancelled: true,
+                stage: None,
+                pending: false,
+            });
+        }
         let stage = self.jobs.iter().find(|j| j.id == id).map(|j| j.stage);
         if stage != Some(JobStage::Running) {
             return Ok(CancelOutcome {
@@ -708,6 +749,11 @@ impl Journal {
             job.stage = JobStage::Cancelled;
             job.error = Some(crate::gemini_cancel::CANCELLED.to_string());
             job.updated_at = now();
+            if let Some(draft) = job.draft.as_mut() {
+                if draft.get("queueState").is_some() {
+                    draft["queueState"] = serde_json::json!("cancelled");
+                }
+            }
         }
         self.commit(next)?;
         Ok(CancelOutcome {

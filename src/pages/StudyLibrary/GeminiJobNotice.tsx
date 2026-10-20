@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
 import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
+import { useAppData } from "@/state/AppDataContext";
 import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
@@ -30,7 +31,19 @@ export function GeminiJobNotice({
   const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const busy = jobs.busy;
 
-  if (job.sectionGuide && ["failed", "interrupted", "cancelled"].includes(job.phase)) {
+  if (
+    job.sectionGuide &&
+    job.phase !== "cancelled" &&
+    job.queueState !== "cancelled" &&
+    (job.phase === "waiting-for-her" || job.queueState === "waiting-for-her")
+  ) {
+    return <QueuedSectionGuideNotice job={job} jobs={jobs} />;
+  }
+
+  if (
+    job.sectionGuide &&
+    (["failed", "interrupted", "cancelled"].includes(job.phase) || job.queueState === "cancelled")
+  ) {
     return <SectionGuideNotice job={job} jobs={jobs} />;
   }
 
@@ -174,6 +187,64 @@ export function GeminiJobNotice({
   return null;
 }
 
+function QueuedSectionGuideNotice({
+  job,
+  jobs,
+}: {
+  job: GeminiJob;
+  jobs: ReturnType<typeof useGeminiJobs>;
+}) {
+  const [pending, setPending] = useState(false);
+  const intent = useRef(false);
+  const { data } = useAppData();
+  const material = data.materials.find((m) => m.id === job.materialId);
+  const materialTitle = material?.title ?? "";
+  const total = job.sections?.total ?? 0;
+
+  const activate = () => {
+    if (intent.current || jobs.locked()) return;
+    intent.current = true;
+    setPending(true);
+    void jobs.continueGuide(job.key, false).finally(() => {
+      intent.current = false;
+      setPending(false);
+    });
+  };
+
+  const cancel = () => {
+    if (pending) return;
+    setPending(true);
+    void jobs.cancel(job.key).finally(() => {
+      setPending(false);
+    });
+  };
+
+  return (
+    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+      <div className="ai-disclaimer" role="status">
+        <AlertIcon size={16} />
+        <p className="tiny">
+          Waiting for you to start. Press Start now when you have a good connection.
+        </p>
+      </div>
+      <div className="stack stack--1">
+        {materialTitle ? <p className="small strong">{materialTitle}</p> : null}
+        <p className="tiny dim">
+          {total} {total === 1 ? "section planned" : "sections planned"}
+        </p>
+      </div>
+      <div className="row row--wrap">
+        <Button size="small" disabled={jobs.busy || pending} onClick={activate}>
+          Start now
+        </Button>
+        <Button size="small" variant="secondary" disabled={pending} onClick={cancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Section drafts never share the legacy retry or one-click discard path. */
 function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<typeof useGeminiJobs> }) {
   const [keeping, setKeeping] = useState(false);
@@ -188,10 +259,14 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
     void jobs.continueGuide(job.key, restart).finally(() => { intent.current = false; setPending(false); });
   };
   const saved = job.sections?.ready ?? 0;
-  const message = job.phase === "cancelled" ? SECTION_GUIDE_MESSAGES.CANCELLED
-    : keeping || !job.local ? "Your finished sections are here. Continue when you're ready."
-    : saved === 1 ? "Your 1 finished section is saved. Try again to continue with section 2."
-    : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
+  const message =
+    job.phase === "cancelled" || job.queueState === "cancelled"
+      ? SECTION_GUIDE_MESSAGES.CANCELLED
+      : keeping || !job.local
+        ? "Your finished sections are here. Continue when you're ready."
+        : saved === 1
+          ? "Your 1 finished section is saved. Try again to continue with section 2."
+          : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
   return (
     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
       <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div>

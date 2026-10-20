@@ -114,6 +114,7 @@ interface ConfirmDialogProps {
   /** An alternative to confirming, such as narrowing what will be sent. */
   secondaryLabel?: string;
   onSecondary?: () => void;
+  extraActions?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -130,6 +131,7 @@ export function ConfirmDialog({
   pendingLabel,
   secondaryLabel,
   onSecondary,
+  extraActions,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -150,6 +152,7 @@ export function ConfirmDialog({
               {secondaryLabel}
             </Button>
           ) : null}
+          {extraActions}
           <Button
             variant={destructive ? "danger" : "primary"}
             onClick={onConfirm}

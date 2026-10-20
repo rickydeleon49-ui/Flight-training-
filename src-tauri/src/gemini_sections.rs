@@ -94,10 +94,25 @@ struct Activation {
     submissions: u32,
     reservations: BTreeMap<String, u32>,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum QueueState {
+    WaitingForHer,
+    Running,
+    Paused,
+    Cancelled,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Draft {
     kind: String,
     version: u32,
+    #[serde(
+        default,
+        rename = "queueState",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub(crate) queue_state: Option<QueueState>,
     identity: Identity,
     results: BTreeMap<String, SectionResult>,
     activations: Vec<Activation>,
@@ -317,6 +332,7 @@ fn new_draft(identity: Identity) -> Draft {
     Draft {
         kind: KIND.into(),
         version: 1,
+        queue_state: None,
         identity,
         results,
         activations: vec![],
@@ -324,6 +340,27 @@ fn new_draft(identity: Identity) -> Draft {
         supersedes: None,
         prepared_file: None,
     }
+}
+
+pub(crate) fn queue_study_guide_at(
+    root: &Path,
+    req: &SectionRequest,
+    choice: ModelChoice,
+) -> Result<String, SectionError> {
+    let (identity, _) = source(root, req, choice.primary())?;
+    let mut draft = new_draft(identity);
+    draft.queue_state = Some(QueueState::WaitingForHer);
+    gemini_jobs::with(root, |j| {
+        j.queue_sections(
+            &req.material_id,
+            &req.relative_path,
+            &draft.identity.selected_sha256,
+            req.base_revision.as_deref(),
+            req.request_id.as_deref(),
+            serde_json::to_value(&draft).map_err(|e| e.to_string())?,
+        )
+    })
+    .map_err(Into::into)
 }
 fn read_draft(root: &Path, id: &str) -> Result<Draft, SectionError> {
     let value = gemini_jobs::with(root, |j| {
@@ -572,6 +609,9 @@ pub(super) async fn activate(
             });
             // A new explicit activation intentionally never restores old wall time.
             d.timing = Value::Null;
+            if d.queue_state.is_some() {
+                d.queue_state = Some(QueueState::Running);
+            }
             store(root, &id, &d)?;
             let (path, job) = (root.to_path_buf(), id.clone());
             if !ctx.budget.enable_stages(Arc::new(move |timing| {
@@ -708,6 +748,12 @@ pub(super) async fn activate(
             })
         }
         Err(error) => {
+            if let Ok(mut d) = read_draft(root, &id) {
+                if d.queue_state.is_some() {
+                    d.queue_state = Some(QueueState::Paused);
+                    let _ = store(root, &id, &d);
+                }
+            }
             gemini_jobs::with(root, |j| j.failed(&id, &error.message))?;
             running.id = None;
             Err(error)
@@ -844,6 +890,23 @@ pub(crate) fn save_guide_at(
             .into());
     }
     crate::study_sets::save_study_set_at(root, operation).map_err(Into::into)
+}
+
+#[tauri::command]
+pub async fn queue_study_guide(
+    app: AppHandle,
+    request: SectionRequest,
+) -> Result<String, SectionError> {
+    let root = app_root(&app)?;
+    let id = queue_study_guide_at(&root, &request, load_choice(&root))?;
+    let _ = app.emit(
+        JOB_EVENT,
+        JobChanged {
+            id: id.clone(),
+            stage: JobStage::Interrupted,
+        },
+    );
+    Ok(id)
 }
 
 #[tauri::command]

@@ -18,7 +18,7 @@ import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/dat
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import { inspectPdf } from "@/services/pdf";
 import {
-  resumeStudyGuide, restartStudyGuide, sectionGuideError,
+  resumeStudyGuide, restartStudyGuide, sectionGuideError, queueStudyGuide,
   SectionGuideError, type SectionGuideRequest, type SectionGuideErrorCode,
   acknowledgeGeminiJob,
   generatePracticeTest,
@@ -110,12 +110,14 @@ export type GeminiJobPhase =
   | "interrupted"
   | "discarding"
   | "discard-failed"
-  | "cancelled";
+  | "cancelled"
+  | "waiting-for-her";
 
 type Answer = GeneratedStudyAid | GeneratedPracticeTest;
 
 export interface GeminiJob {
   sectionGuide?: boolean;
+  queueState?: "waiting-for-her" | "running" | "paused" | "cancelled";
   sections?: SectionGuideDraft;
   sectionError?: SectionGuideErrorCode;
   draft?: { target: number; cards: unknown[] };
@@ -202,6 +204,7 @@ interface GeminiJobsValue {
   recovery: GeminiRecovery;
   retryRecovery(): void;
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
+  queueGuide(target: GeminiJobTarget): Promise<string | null>;
   continueGuide(key: string, restart?: boolean): Promise<void>;
   saveAgain(key: string): Promise<void>;
   /** Save a regenerated study set as she reviewed it, keeping what she chose (OFFLINE-03a). */
@@ -564,7 +567,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const cancel = useCallback(
     async (key: string) => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
-      if (!job || job.phase !== "running" || job.cancelRequested) return;
+      if (!job || (job.phase !== "running" && job.phase !== "waiting-for-her") || job.cancelRequested) return;
       update(key, { cancelRequested: true, cancelAttempted: true, cancelError: null });
       // Only this window's own request, not yet sent, is stopped by the flag
       // alone. A job recovered after a reload is cancelled by its job id.
@@ -573,7 +576,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         // Not recorded and not held: say so, and let her try again while it
         // still runs.
         const now = jobsRef.current.find((candidate) => candidate.key === key);
-        if (now?.phase === "running") update(key, { cancelRequested: false, cancelError: CANCEL_FAILED_MESSAGE });
+        if (now?.phase === "running" || now?.phase === "waiting-for-her") update(key, { cancelRequested: false, cancelError: CANCEL_FAILED_MESSAGE });
       };
       let outcome: Awaited<ReturnType<typeof cancelGeminiJob>>;
       try {
@@ -582,13 +585,17 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         notAccepted();
         return;
       }
+      if (outcome.cancelled && job.phase === "waiting-for-her") {
+        forget(key);
+        return;
+      }
       // Recorded, or held until its job begins: the request's own result
       // will say how it ended. Already finished (ready, failed…): likewise.
       // Anything else means the cancel did not take.
       const settled = outcome.stage !== null && outcome.stage !== "running";
       if (!outcome.cancelled && !outcome.pending && !settled) notAccepted();
     },
-    [update],
+    [forget, update],
   );
 
   const start = useCallback(
@@ -768,7 +775,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const continueGuide = useCallback(async (key: string, restart = false) => {
     const job = jobsRef.current.find(j => j.key === key);
     if (!job?.sectionGuide || !job.sections || !job.jobId || activeRef.current !== null || recoveryRef.current !== "ready"
-      || !["failed", "interrupted", "cancelled"].includes(job.phase)) return;
+      || !["failed", "interrupted", "cancelled", "waiting-for-her"].includes(job.phase)) return;
     activeRef.current = key; // synchronous: a double click can never dispatch twice
     const requestId = newRequestId();
     const retainedKey = restart ? newKey() : null;
@@ -909,16 +916,23 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               error: "Creating this study aid stopped before Gemini's answer arrived. Nothing was saved; try again.",
             };
           }
+          const isWaiting =
+            record.draft?.kind === "guide-sections-v1" &&
+            record.draft?.queueState === "waiting-for-her" &&
+            record.stage !== "cancelled";
           return {
             ...job,
             phase:
-              record.stage === "ready"
-                ? "recovered"
-                : record.stage === "interrupted"
-                  ? "interrupted"
-                  : record.stage === "cancelled"
+              isWaiting
+                ? "waiting-for-her"
+                : record.stage === "ready"
+                  ? "recovered"
+                  : record.stage === "cancelled" || record.draft?.queueState === "cancelled"
                     ? "cancelled"
-                    : "failed",
+                    : record.stage === "interrupted"
+                      ? "interrupted"
+                      : "failed",
+            queueState: record.draft?.queueState,
             answer: record.stage === "ready" ? (record.result ?? null) : null,
             error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
             checkpointed: record.stage === "ready",
@@ -941,6 +955,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             (job) => job.jobId === null && job.materialId === record.materialId && job.kind === record.kind,
           );
           if (local) continue;
+          const isWaiting =
+            record.draft?.kind === "guide-sections-v1" &&
+            record.draft?.queueState === "waiting-for-her" &&
+            record.stage !== "cancelled";
           next = [
             ...next,
             {
@@ -950,15 +968,18 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               materialId: record.materialId,
               filePath: record.relativePath,
               phase:
-                record.stage === "running"
-                  ? "running"
-                  : record.stage === "ready"
-                    ? "recovered"
-                    : record.stage === "interrupted"
-                      ? "interrupted"
-                      : record.stage === "cancelled"
+                isWaiting
+                  ? "waiting-for-her"
+                  : record.stage === "running"
+                    ? "running"
+                    : record.stage === "ready"
+                      ? "recovered"
+                      : record.stage === "cancelled" || record.draft?.queueState === "cancelled"
                         ? "cancelled"
-                        : "failed",
+                        : record.stage === "interrupted"
+                          ? "interrupted"
+                          : "failed",
+              queueState: record.draft?.queueState,
               progress: null,
               error: record.stage === "failed" || record.stage === "cancelled" ? (record.error ?? null) : null,
               answer: record.stage === "ready" ? (record.result ?? null) : null,
@@ -993,6 +1014,34 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // Tried again on the next change or tick.
     }
   }, [reconcile]);
+
+  const queueGuide = useCallback(
+    async (target: GeminiJobTarget) => {
+      if (activeRef.current !== null || recoveryRef.current !== "ready") return null;
+      if (jobsRef.current.some((job) => job.materialId === target.materialId && job.kind === "study-aid" && job.sectionGuide)) {
+        return null;
+      }
+      try {
+        const pdf = await inspectPdf(target.filePath);
+        const saved = dataRef.current.aiStudySets.find((set) => set.sourceMaterialId === target.materialId);
+        const baseRevision = saved?.updatedAt ?? null;
+        const requestId = newRequestId();
+        const request: SectionGuideRequest = {
+          materialId: target.materialId,
+          relativePath: target.filePath,
+          chosenPages: Array.from({ length: pdf.pages }, (_, i) => i + 1),
+          baseRevision,
+          requestId,
+        };
+        const jobId = await queueStudyGuide(request);
+        await follow();
+        return jobId;
+      } catch {
+        return null;
+      }
+    },
+    [follow],
+  );
 
   // Read earlier work back once the data is ready. The change listener is in
   // place before the snapshot is taken, and a final reconciliation follows it,
@@ -1059,6 +1108,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       recovery,
       retryRecovery,
       start,
+      queueGuide,
       continueGuide,
       saveAgain,
       saveReviewed,
@@ -1067,7 +1117,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, recovery, retryRecovery, start, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
+    [jobs, recovery, retryRecovery, start, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;
