@@ -85,3 +85,19 @@ Test-only: `pdf_changed_between_sections_stops_before_next_request` rewrites the
 `correction-r2/cargo-test.log`: EXIT 0; 917 passed / 0 failed / 11 ignored; `cargo test --locked --no-fail-fast`, default parallel mode, one run.
 `correction-r2/fmt.log`, `clippy.log` (`-D warnings`), `diff-check.log`: EXIT 0 each. Receipts under `docs/evidence/offline-gen-02a-2026-10-20/correction-r2/`.
 SHA256 `src-tauri/src/gemini_sections_tests.rs`: `90390aa036222e7b125c4ff735cb33659c5e821f5282acc2ce58c1497c127daa`. All changes uncommitted; GEN-02a and correction r1 retained.
+
+## Correction r3
+Test-only race; production unchanged. No local natural reproduction: `repro.log` EXIT 0, 200 attempts / 200 passed / 0 failures under overlapping default-parallel suites.
+Baseline `stress-before.log` and `stress-before-2.log`: EXIT 0 each; each 917 passed / 0 failed / 11 ignored.
+Root cause: original `b258f51` batch test lines 864-865 unlock after journal cancel before signalling the token; budget polling can finish first with inner `Err(CANCELLED)`, so the wrapper returns `Ok(Err(CANCELLED))` (`gemini_budget.rs:726`, `gemini.rs:1795`, `gemini_cancel.rs:65,81`).
+The held request is the first card batch, not the guide: synchronous progress installs the gate after the guide checkpoint and before dispatch (`gemini_batches.rs:279,855`; fake gate snapshot `fake_gemini.rs:352`); no late gate installation.
+GEN-02a added durable syncs (`gemini_jobs.rs:810,820`), increasing shared-lock work; legacy admission/cancel ordering is unchanged. The test now installs the production-style read-only probe and signals under the journal lock before a probe can observe cancellation (`gemini_batches.rs:849,884`).
+Original token-driven test still requires outer `Err(Cancelled)` (`gemini_batches.rs:895`); no assertion weakened. Both orderings check unchanged journal bytes, no new dispatch, no publishable result, and preserved restart/resume ledger and unique cards.
+Regression: `journal_cancel_before_token_wake_preserves_draft_without_post_cancel_write` forces journal-first completion before token signalling and requires inner cancellation; `ordering-proof.log` EXIT 101 expected, 0 passed / 1 failed with the old outer-Err assertion, printing `Ok(Err(CANCELLED))`.
+`batches.log`: EXIT 0; 19 passed / 0 failed / 0 ignored. `repro-after.log`: EXIT 0; 200 attempts / 200 passed / 0 failures; each attempt EXIT 0.
+Default-parallel `cargo test --locked --no-fail-fast`, `cargo-test-1.log`, `cargo-test-2.log`, `cargo-test-3.log`: EXIT 0 each; each 918 passed / 0 failed / 11 ignored.
+`fmt-before-format.log`: EXIT 1 (one required line wrap); `format.log`: EXIT 0; final `fmt.log`: EXIT 0; `clippy.log` (`--all-targets -- -D warnings`): EXIT 0; final `diff-check.log`: EXIT 0.
+Sandbox process observation: `pgrep` EXIT 3 recorded; exploratory `ps` EXIT 127 recorded in the root-cause note; continued without escalation. No socket failures. Cargo used the supplied SDKROOT/target and offline environment; HTTP fixtures were loopback only.
+Full explanation and proof replay: [root-cause.md](evidence/offline-gen-02a-2026-10-20/correction-r3/root-cause.md); receipts and drivers are in the same evidence directory.
+SHA256 `src-tauri/src/gemini_batches.rs`: `52bdbe33b7be01c4e7209166ac37fea6bf4a167663de67cb82859ca6dde4f9a7`. SHA256 of the report and every correction artifact is in `correction-r3/SHA256SUMS` (manifest excludes itself).
+All work remains uncommitted; pre-existing `node_modules` preserved; HEAD remains `b258f5103ce43301a2f2fcdab386e0199da43659`.
