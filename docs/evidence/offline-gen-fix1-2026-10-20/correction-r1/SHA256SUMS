@@ -1,0 +1,6 @@
+9a1af5d409485610566412ea3189eee85dc224f9a116771cb5661411e0775bee  src-tauri/Cargo.toml
+4ba71a5d7f9935fc062f2c61337862735f7504e0b0da0159db993e0fd2c10f6f  src-tauri/Cargo.lock
+485de6fbdded760f6c5402c3e1dc832344a08bf573d359b3c2a9b74abfc39e77  docs/OFFLINE_GEN_FIX1_REPORT_2026-10-20.md
+4189ae82439ba7230fe1a4481c23ff75e6ea79a48945aad4f7dec94f5d88ac16  docs/evidence/offline-gen-fix1-2026-10-20/correction-r1/Cargo.lock.diff
+8ec81ced7a948d1ce1ded3c6b2fb245f06ee523a493e825510544b649eab3adb  docs/evidence/offline-gen-fix1-2026-10-20/correction-r1/cargo-feature-update.log
+053c5793384b43cd914ab8c8c11bb2dced0fe7208d6f80641bfa6e2364a75fcb  docs/evidence/offline-gen-fix1-2026-10-20/correction-r1/lockfile-package-audit.txt

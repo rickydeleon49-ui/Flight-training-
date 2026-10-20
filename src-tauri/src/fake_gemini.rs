@@ -32,7 +32,11 @@ impl Recorded {
         self.method == "POST" && self.path == "/upload/v1beta/files"
     }
     pub fn is_upload_finalize(&self) -> bool {
-        self.method == "POST" && self.path.starts_with("/upload/v1beta/files?upload_id=")
+        self.method == "POST"
+            && self.path.starts_with("/upload/v1beta/files?upload_id=")
+            && self
+                .header("x-goog-upload-command")
+                .is_some_and(|c| c.contains("finalize"))
     }
     pub fn is_generate(&self) -> bool {
         self.method == "POST" && self.path.ends_with(":generateContent")

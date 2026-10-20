@@ -240,6 +240,9 @@ export function GeminiProgressView({
           </span>
           {elapsed ? <><span aria-hidden="true"> · </span><span className="dim">{elapsed}</span></> : null}
         </p>
+        {job.stage === "uploading" && !job.cancelRequested && job.startedAt !== undefined && now - job.startedAt >= 1000 ? (
+          <p className="tiny dim">Your PDF is still uploading. A slower connection can take a little longer.</p>
+        ) : null}
         {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
         {job.cancelError ? (
           <p className="field__error" role="alert">

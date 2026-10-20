@@ -1,0 +1,15 @@
+diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
+index a9d0b58..281cd08 100644
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -1772,8 +1772,10 @@ name = "her-flight-deck"
+ version = "0.5.7"
+ dependencies = [
+  "base64 0.22.1",
++ "bytes",
+  "flate2",
+  "hex",
++ "http-body",
+  "keyring",
+  "lopdf",
+  "reqwest 0.12.28",

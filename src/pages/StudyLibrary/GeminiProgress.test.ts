@@ -40,3 +40,17 @@ it("announces actual stage and cancellation changes while preserving Cancel beha
   expect(screen.getByRole("status").textContent).toBe("Cancelling…");
   expect(screen.getByRole("button", { name: "Cancelling…" }).hasAttribute("disabled")).toBe(true);
 });
+
+
+it("shows exactly one slow-upload line while preserving Cancel and stage text", () => {
+  const current = { ...job(), stage: "uploading" as const, startedAt: Date.now() };
+  const words = "Your PDF is still uploading. A slower connection can take a little longer.";
+  const { rerender } = render(h(GeminiProgressView, { job: current, title: "Creating your study guide", onCancel: vi.fn() }));
+  expect(screen.queryByText(words)).toBeNull();
+  act(() => { vi.advanceTimersByTime(2000); });
+  expect(screen.getAllByText(words)).toHaveLength(1);
+  expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toBe("Sending the PDF to Google");
+  rerender(h(GeminiProgressView, { job: { ...current, stage: "generating" }, title: "Creating your study guide", onCancel: vi.fn() }));
+  expect(screen.queryByText(words)).toBeNull();
+});

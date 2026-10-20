@@ -235,6 +235,26 @@ impl Journal {
         self.jobs.clone()
     }
 
+    /// Merge timing atomically with the latest card reservations, never a stale draft.
+    pub(crate) fn checkpoint_timing(&mut self, id: &str, timing: Value) -> Result<(), String> {
+        if !self.admits(id) {
+            return Err("The generation is no longer running.".into());
+        }
+        let mut draft = self
+            .jobs
+            .iter()
+            .find(|j| j.id == id)
+            .and_then(|j| j.draft.clone())
+            .unwrap_or_else(|| serde_json::json!({"admissions": 0}));
+        if draft.get("target").is_some() {
+            draft["remainingMillis"] = timing["remainingMillis"].clone();
+            draft["deadline"] =
+                serde_json::json!(timing["deadlineUtc"].as_u64().unwrap_or(0) / 1000);
+        }
+        draft["timing"] = timing;
+        self.checkpoint_draft(id, draft)
+    }
+
     /// Start a job. Only one runs at a time, whatever page asked.
     #[cfg(test)]
     pub(crate) fn begin(

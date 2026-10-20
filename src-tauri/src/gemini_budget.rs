@@ -1,4 +1,6 @@
-//! One bounded budget per generation (GEN-REL-03).
+//! One bounded budget per generation (GEN-REL-03, GEN-FIX-1).
+//! New jobs start at 300 s. Upload estimates may durably increase this to at
+//! most 600 s from the same start; restored drafts never acquire a new policy.
 //!
 //! Before this, each request had its own 300-second timeout and up to five
 //! requests could be made, so "Creating study aid…" could spin for well over
@@ -23,6 +25,7 @@
 
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -89,8 +92,7 @@ struct Trace {
 
 pub(crate) struct Budget {
     started: Instant,
-    total: Duration,
-    deadline: Mutex<Option<Instant>>,
+    limit: Arc<Mutex<Limit>>,
     now: Now,
     sleep: Sleep,
     attempts: Mutex<u32>,
@@ -104,6 +106,43 @@ pub(crate) struct Budget {
     /// a cancel recorded before the next submission prevents it, however far
     /// one poll of the work runs.
     admission: Mutex<Option<Admission>>,
+    probe: Mutex<Option<Admission>>,
+}
+
+/// Versioned metadata lives only in this job's journal draft. UTC is millis.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Timing {
+    policy: String,
+    ceiling_millis: u64,
+    allowed_millis: u64,
+    remaining_millis: u64,
+    deadline_utc: u64,
+    upload_bytes: u64,
+    sample_millis: u64,
+    sample_bytes: u64,
+}
+type TimingWriter = Arc<dyn Fn(&serde_json::Value) -> bool + Send + Sync>;
+struct Limit {
+    allowed: Duration,
+    deadline: Option<Instant>,
+    timing: Option<Timing>,
+    writer: Option<TimingWriter>,
+    frozen: bool,
+}
+fn wall_millis() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+fn left(limit: &Limit, started: Instant, current: Instant) -> Duration {
+    let remaining = limit
+        .allowed
+        .saturating_sub(current.saturating_duration_since(started));
+    limit.deadline.map_or(remaining, |end| {
+        remaining.min(end.saturating_duration_since(current))
+    })
 }
 
 pub(crate) type Admission = Arc<dyn Fn() -> bool + Send + Sync>;
@@ -126,8 +165,13 @@ impl Budget {
     pub(crate) fn with(total: Duration, now: Now, sleep: Sleep) -> Budget {
         Budget {
             started: now(),
-            total,
-            deadline: Mutex::new(None),
+            limit: Arc::new(Mutex::new(Limit {
+                allowed: total,
+                deadline: None,
+                timing: None,
+                writer: None,
+                frozen: false,
+            })),
             now,
             sleep,
             attempts: Mutex::new(0),
@@ -139,6 +183,7 @@ impl Budget {
             }),
             observer: Mutex::new(None),
             admission: Mutex::new(None),
+            probe: Mutex::new(None),
         }
     }
 
@@ -152,8 +197,17 @@ impl Budget {
         *self.admission.lock().unwrap_or_else(|e| e.into_inner()) = Some(admission);
     }
 
+    /// Sampling checks cancellation without spending a dispatch reservation.
+    pub(crate) fn attach_probe(&self, probe: Admission) {
+        *self.probe.lock().unwrap_or_else(|e| e.into_inner()) = Some(probe);
+    }
+    fn can_continue(&self) -> bool {
+        let probe = self.probe.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        probe.map_or_else(|| self.admit(), |probe| probe())
+    }
+
     pub(crate) fn total(&self) -> Duration {
-        self.total
+        self.limit.lock().unwrap_or_else(|e| e.into_inner()).allowed
     }
 
     pub(crate) fn elapsed(&self) -> Duration {
@@ -161,30 +215,191 @@ impl Budget {
     }
 
     pub(crate) fn shorten(&self, remaining: Duration) {
-        *self.deadline.lock().unwrap_or_else(|e| e.into_inner()) = Some((self.now)() + remaining);
+        let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+        let end = (self.now)() + remaining;
+        limit.deadline = Some(limit.deadline.map_or(end, |prior| prior.min(end)));
     }
 
     pub(crate) fn remaining(&self) -> Duration {
-        let original = self.total.saturating_sub(self.elapsed());
-        match *self.deadline.lock().unwrap_or_else(|e| e.into_inner()) {
-            Some(deadline) => original.min(deadline.saturating_duration_since((self.now)())),
-            None => original,
+        left(
+            &self.limit.lock().unwrap_or_else(|e| e.into_inner()),
+            self.started,
+            (self.now)(),
+        )
+    }
+
+    /// Live control, not a captured deadline: later reservations see extensions.
+    pub(crate) fn remaining_clock(&self) -> impl Fn() -> Duration + Send + Sync + 'static {
+        let (now, started, limit) = (self.now.clone(), self.started, self.limit.clone());
+        move || {
+            left(
+                &limit.lock().unwrap_or_else(|e| e.into_inner()),
+                started,
+                now(),
+            )
         }
     }
 
-    /// Snapshot the active monotonic deadline for durable request reservations.
-    pub(crate) fn remaining_clock(&self) -> impl Fn() -> Duration + Send + Sync + 'static {
-        let now = self.now.clone();
-        let started = self.started;
-        let total = self.total;
-        let deadline = *self.deadline.lock().unwrap_or_else(|e| e.into_inner());
-        move || {
-            let current = now();
-            let original = total.saturating_sub(current.saturating_duration_since(started));
-            deadline.map_or(original, |end| {
-                original.min(end.saturating_duration_since(current))
-            })
+    pub(crate) fn enable_rate(&self, writer: TimingWriter) {
+        let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+        if limit.frozen || limit.timing.is_some() {
+            return;
         }
+        let allowed = limit.allowed.as_millis() as u64;
+        let timing = Timing {
+            policy: "measured-rate-v1".into(),
+            ceiling_millis: (allowed * 2).min(600_000),
+            allowed_millis: allowed,
+            remaining_millis: self.total_remaining(&limit),
+            deadline_utc: wall_millis()
+                .saturating_add(allowed.saturating_sub(self.elapsed().as_millis() as u64)),
+            upload_bytes: 0,
+            sample_millis: 0,
+            sample_bytes: 0,
+        };
+        if writer(&serde_json::to_value(&timing).expect("timing serializes")) {
+            limit.timing = Some(timing);
+            limit.writer = Some(writer);
+        }
+    }
+    fn total_remaining(&self, limit: &Limit) -> u64 {
+        left(limit, self.started, (self.now)()).as_millis() as u64
+    }
+    pub(crate) fn timing_value(&self) -> serde_json::Value {
+        let limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+        match limit.timing.clone() {
+            Some(mut timing) => {
+                timing.remaining_millis = self.total_remaining(&limit);
+                serde_json::to_value(timing).expect("timing serializes")
+            }
+            None => serde_json::Value::Null,
+        }
+    }
+    pub(crate) fn restore_timing_value(&self, value: &serde_json::Value, wall_now: u64) {
+        let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+        limit.frozen = true; // Also freeze legacy/unknown drafts; never upgrade.
+        if let Ok(mut timing) = serde_json::from_value::<Timing>(value.clone()) {
+            let remaining = timing
+                .remaining_millis
+                .min(timing.deadline_utc.saturating_sub(wall_now))
+                .min(timing.allowed_millis)
+                .min(timing.ceiling_millis)
+                .min(600_000);
+            timing.remaining_millis = remaining;
+            limit.allowed = Duration::from_millis(timing.allowed_millis.min(600_000));
+            let end = (self.now)() + Duration::from_millis(remaining);
+            limit.deadline = Some(limit.deadline.map_or(end, |prior| prior.min(end)));
+            limit.timing = Some(timing);
+        }
+    }
+    pub(crate) fn restore_draft(&self, value: &serde_json::Value) {
+        self.restore_timing_value(&value["timing"], wall_millis());
+    }
+    /// Polled upload frames give a send-side estimate of transfer rate,
+    /// never a claim about model progress. Missing/buffered windows use the cap.
+    pub(crate) fn rate_sample(&self, elapsed: Duration, bytes: u64, upload_total: u64) -> bool {
+        if !self.can_continue() || self.remaining().is_zero() {
+            return false;
+        }
+        {
+            let mut limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+            if limit.frozen {
+                return true;
+            }
+            let Some(mut timing) = limit.timing.clone() else {
+                return true;
+            };
+            let ms = elapsed.as_millis() as u64;
+            if ms > 0 && ms.saturating_sub(timing.sample_millis) < 1000 {
+                return true;
+            }
+            let window = ms.saturating_sub(timing.sample_millis);
+            let delta = bytes.saturating_sub(timing.sample_bytes);
+            let trusted =
+                ms >= 1000 && bytes >= 65536 && bytes <= upload_total && delta > 0 && window > 0;
+            let desired = if trusted {
+                let rate = 0.8
+                    * (bytes as f64 / elapsed.as_secs_f64())
+                        .min(delta as f64 / (window as f64 / 1000.0));
+                (self.elapsed().as_secs_f64() + (upload_total - bytes) as f64 / rate + 210.0).ceil()
+                    * 1000.0
+            } else {
+                timing.ceiling_millis as f64
+            };
+            let allowed = (desired as u64).clamp(timing.allowed_millis, timing.ceiling_millis);
+            timing.allowed_millis = allowed;
+            timing.remaining_millis = allowed.saturating_sub(self.elapsed().as_millis() as u64);
+            // Derive from the original monotonic start, including after a wall-clock change.
+            timing.deadline_utc = timing
+                .deadline_utc
+                .saturating_add(allowed.saturating_sub(limit.allowed.as_millis() as u64));
+            timing.upload_bytes = upload_total;
+            timing.sample_millis = ms;
+            timing.sample_bytes = bytes;
+            if let Some(writer) = &limit.writer {
+                if writer(&serde_json::to_value(&timing).expect("timing serializes")) {
+                    limit.allowed = Duration::from_millis(allowed);
+                    limit.timing = Some(timing);
+                }
+            }
+        }
+        self.can_continue()
+    }
+
+    /// Upload requests may span a rate sample. The live guard enforces the
+    /// selected allowance; reqwest's immutable timeout is only the absolute cap.
+    pub(crate) fn upload_timeout(&self) -> Option<Duration> {
+        let limit = self.limit.lock().unwrap_or_else(|e| e.into_inner());
+        let remaining = if limit.writer.is_some() && !limit.frozen {
+            Duration::from_millis(limit.timing.as_ref()?.ceiling_millis)
+                .saturating_sub(self.elapsed())
+        } else {
+            left(&limit, self.started, (self.now)())
+        };
+        (!remaining.is_zero()).then_some(remaining)
+    }
+    pub(crate) async fn during_upload<F: Future>(
+        &self,
+        work: F,
+        started: Duration,
+        bytes: &AtomicU64,
+        total: u64,
+    ) -> Result<F::Output, ()> {
+        let mut work = std::pin::pin!(work);
+        let mut timer = Box::pin(tokio::time::sleep(Duration::from_secs(1)));
+        let mut sampled = false;
+        self.run(std::future::poll_fn(|cx| {
+            if timer.as_mut().poll(cx).is_ready() {
+                let sent = bytes.load(Ordering::Relaxed);
+                // All bytes polled before the first tick means socket buffering,
+                // not a measured transfer window. Use the unknown-rate fallback.
+                let elapsed = if !sampled && sent == total {
+                    Duration::ZERO
+                } else {
+                    self.elapsed().saturating_sub(started)
+                };
+                if !self.rate_sample(elapsed, sent, total) {
+                    return std::task::Poll::Ready(Err(()));
+                }
+                sampled = true;
+                timer
+                    .as_mut()
+                    .reset(tokio::time::Instant::now() + Duration::from_secs(1));
+                let _ = timer.as_mut().poll(cx);
+            }
+            match work.as_mut().poll(cx) {
+                std::task::Poll::Ready(result) => {
+                    if !sampled
+                        && !self.rate_sample(Duration::ZERO, bytes.load(Ordering::Relaxed), total)
+                    {
+                        return std::task::Poll::Ready(Err(()));
+                    }
+                    std::task::Poll::Ready(Ok(result))
+                }
+                std::task::Poll::Pending => std::task::Poll::Pending,
+            }
+        }))
+        .await?
     }
 
     /// The timeout for the next request: what remains, or `None` if nothing does.
@@ -195,15 +410,28 @@ impl Budget {
 
     /// Bound all awaits, including joining another preparation and cleanup.
     pub(crate) async fn run<F: Future>(&self, work: F) -> Result<F::Output, ()> {
-        let remaining = self.request_timeout().ok_or(())?;
-        let answer = tokio::time::timeout(remaining, work)
-            .await
-            .map_err(|_| ())?;
-        if self.remaining().is_zero() {
-            Err(())
-        } else {
-            Ok(answer)
-        }
+        let mut work = std::pin::pin!(work);
+        let mut timer = Box::pin(tokio::time::sleep(Duration::ZERO));
+        std::future::poll_fn(|cx| {
+            if self.remaining().is_zero() {
+                return std::task::Poll::Ready(Err(()));
+            }
+            if let std::task::Poll::Ready(answer) = work.as_mut().poll(cx) {
+                return std::task::Poll::Ready(if self.remaining().is_zero() {
+                    Err(())
+                } else {
+                    Ok(answer)
+                });
+            }
+            if timer.as_mut().poll(cx).is_ready() {
+                timer.as_mut().reset(
+                    tokio::time::Instant::now() + self.remaining().min(Duration::from_millis(50)),
+                );
+                let _ = timer.as_mut().poll(cx);
+            }
+            std::task::Poll::Pending
+        })
+        .await
     }
 
     /// May the next request be sent? Asked immediately before each request.
@@ -512,3 +740,7 @@ mod tests {
         assert_eq!(*time.pauses.lock().unwrap(), vec![Duration::from_secs(2)]);
     }
 }
+
+#[cfg(test)]
+#[path = "gemini_rate_tests.rs"]
+mod rate_tests;
