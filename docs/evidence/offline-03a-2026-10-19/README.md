@@ -44,3 +44,11 @@ Those two failures were test timing only; product code is unchanged since `ca8e3
 | `r3-flake-cr-01-isolated.log` | that file alone: 29/29 |
 
 **About the C1-R2 failure.** C1-R2 is the pre-existing load-sensitive card-review test, tracked as FLAKE-CR-01. It also fails on a clean main under load. This branch does not change `CardReviewPanel.tsx` or its tests. Per the workflow, the failure is recorded rather than rerun until it passes; every OFFLINE-03a test passed in this run.
+
+## After the Codex round-3 fix
+
+| Receipt | Result |
+| --- | --- |
+| `codex-r3-regressions-before-fix.log` | the 2 new regressions fail on the pre-fix source (2 failed, 31 passed) |
+| `r4-typecheck.log`, `r4-build.log`, `r4-diff-check.log` | exit 0 |
+| `r4-vitest-full.log` | **3,913 passed, 6 skipped; exit 0** |

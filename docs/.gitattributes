@@ -447,3 +447,8 @@ evidence/offline-03a-2026-10-19/r3-vitest-full.log -text -diff
 evidence/offline-03a-2026-10-19/r3-build.log -text -diff
 evidence/offline-03a-2026-10-19/r3-diff-check.log -text -diff
 evidence/offline-03a-2026-10-19/r3-flake-cr-01-isolated.log -text -diff
+evidence/offline-03a-2026-10-19/codex-r3-regressions-before-fix.log -text -diff
+evidence/offline-03a-2026-10-19/r4-typecheck.log -text -diff
+evidence/offline-03a-2026-10-19/r4-vitest-full.log -text -diff
+evidence/offline-03a-2026-10-19/r4-build.log -text -diff
+evidence/offline-03a-2026-10-19/r4-diff-check.log -text -diff

@@ -13,7 +13,7 @@ import type { AppData } from "./AppDataContext";
 import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
 import type { NextStudySet, StoredSetRow } from "@/data/studySetTransaction";
-import { needsRegenerationReview } from "@/logic/studySetEditing";
+import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   acknowledgeGeminiJob,
   generatePracticeTest,
@@ -232,9 +232,14 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   if (kind === "study-aid") {
     const s = saved as AiStudySet;
     const a = answer as GeneratedStudyAid;
+    // Compared as a plain save stores it: only these fields, and a page outside
+    // the PDF range as no page, so a committed save is recognised on retry.
+    const sections = (list: AiStudySet["sections"]) => list.map(({ heading, body }) => ({ heading, body }));
+    const cards = (list: AiStudySet["flashcards"]) =>
+      list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
     return (
-      canonical([s.title, s.summary, s.sections, s.flashcards, s.sourceNotes, s.model]) ===
-      canonical([a.title, a.summary, a.sections, a.flashcards, a.sourceNotes, a.model])
+      canonical([s.title, s.summary, sections(s.sections), cards(s.flashcards), s.sourceNotes, s.model]) ===
+      canonical([a.title, a.summary, sections(a.sections), cards(a.flashcards), a.sourceNotes, a.model])
     );
   }
   const s = saved as PracticeTest;

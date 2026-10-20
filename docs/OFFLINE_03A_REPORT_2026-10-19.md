@@ -147,6 +147,10 @@ Round 2 confirmed the restore fix and found two P2s (`codex-review-r2-result.md`
 
 Two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix.log`) and pass now.
 
+## Codex review, round 3: RED, fixed
+
+Round 3 confirmed both round-2 fixes and found one P2 (`codex-review-r3-result.md`): a plain Gemini save stores an out-of-range page as no page, but the "already saved?" check compared the raw answer. So a committed save whose response was lost was reported as "Something newer was saved", and after a restart it stayed an unrecognised checkpoint. **Fix:** `alreadySaved` compares exactly what a plain save stores: the same fields, with `generatedPage` applied. Two regressions, for a lost response after commit and for journal recovery after a restart, fail on the pre-fix source (`codex-r3-regressions-before-fix.log`) and pass now.
+
 ## Behaviour changes worth checking in review
 
 1. **Strict validation of Gemini saves.** A Gemini study set is now saved through the strict validator:

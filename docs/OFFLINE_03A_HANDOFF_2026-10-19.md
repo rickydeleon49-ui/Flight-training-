@@ -52,6 +52,8 @@ This is for whoever picks OFFLINE-03a up next, Codex or Claude. Read it first. T
 
 The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix.log`). See the report's "Codex review, round 2" section.
 
+**Codex review of this branch, round 3: RED.** Both round-2 fixes were confirmed, and one P2 was found and fixed. The "already saved?" check compared the raw Gemini page, while the save had stored an out-of-range page as no page. It now applies `generatedPage` to both sides. Its regressions fail on the pre-fix source (`codex-r3-regressions-before-fix.log`).
+
 ## Exactly where it stopped, and what comes next
 
 1. **Done:** both Codex round-1 fixes and their regressions, plus this handoff.
@@ -67,7 +69,7 @@ The two regressions fail on the pre-fix source (`codex-r2-regressions-before-fix
    - `node --test scripts/mac-schema14-profile-snapshot.test.mjs` (26/26).
 
    Then update `SHA256SUMS` and commit.
-3. **Codex review round 2 was RED and is fixed. Next is round 3:** run the gate, commit, then review with the round-3 prompt `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r3.md`. The round-2 prompt was the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
+3. **Codex rounds 2 and 3 were RED and are fixed. Next is round 4:** run the gate, commit, then review with `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r4.md`. The round-2 prompt was the prompt is `/Users/rickymac/code/.gen-rel-loop/offline/codex-review-03a-r2.md`, and the result lands in `…-r2-result.md`.
    - Prompt: `docs/OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md`, plus a note naming the round-1 findings and their fix commit.
    - Run: `codex exec -s read-only -C <worktree> -o <result.md> "$(cat <prompt>)" < /dev/null`.
    - On RED: fix locally, add a failing-first regression and repeat.
