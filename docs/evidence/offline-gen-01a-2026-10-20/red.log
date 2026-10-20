@@ -1,0 +1,274 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --manifest-path src-tauri/Cargo.toml pdf_study_kit
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+error[E0583]: file not found for module `pdf_study_kit`
+  --> src/lib.rs:28:1
+   |
+28 | pub mod pdf_study_kit;
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: to create the module `pdf_study_kit`, create file "src/pdf_study_kit.rs" or "src/pdf_study_kit/mod.rs"
+   = note: if there is a `mod pdf_study_kit` elsewhere in the crate already, import it with `use crate::...` instead
+
+error: couldn't read `src/pdf_study_kit.rs`: No such file or directory (os error 2)
+   --> src/pdf_study_kit_tests.rs:169:18
+    |
+169 |     let source = include_str!("pdf_study_kit.rs");
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0425]: cannot find type `KitInput` in this scope
+ --> src/pdf_study_kit_tests.rs:5:40
+  |
+5 | fn input(texts: &[(Outcome, &str)]) -> KitInput {
+  |                                        ^^^^^^^^ not found in this scope
+
+error[E0422]: cannot find struct, variant or union type `KitInput` in this scope
+ --> src/pdf_study_kit_tests.rs:7:5
+  |
+7 |     KitInput {
+  |     ^^^^^^^^ not found in this scope
+
+error[E0422]: cannot find struct, variant or union type `CachedPage` in this scope
+  --> src/pdf_study_kit_tests.rs:11:68
+   |
+11 |         pages: texts.iter().enumerate().map(|(i, (outcome, text))| CachedPage {
+   |                                                                    ^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `KitCandidates` in this scope
+  --> src/pdf_study_kit_tests.rs:17:23
+   |
+17 | fn kit(text: &str) -> KitCandidates {
+   |                       ^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:18:5
+    |
+ 18 |     extract(&input(&[(Outcome::Text, text)]), None).unwrap()
+    |     ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find type `Evidence` in this scope
+  --> src/pdf_study_kit_tests.rs:20:17
+   |
+20 | fn evidence(e: &Evidence, page: u32, start: usize, quote: &str) {
+   |                 ^^^^^^^^ not found in this scope
+
+error[E0422]: cannot find struct, variant or union type `Evidence` in this scope
+  --> src/pdf_study_kit_tests.rs:21:20
+   |
+21 |     assert_eq!(e, &Evidence { page, start_offset: start, end_offset: start + quote.len(), quote: quote.into() });
+   |                    ^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `KitCandidates` in this scope
+  --> src/pdf_study_kit_tests.rs:23:23
+   |
+23 | fn assert_sources(k: &KitCandidates, src: &KitInput) {
+   |                       ^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `KitInput` in this scope
+  --> src/pdf_study_kit_tests.rs:23:44
+   |
+23 | fn assert_sources(k: &KitCandidates, src: &KitInput) {
+   |                                            ^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:53:13
+    |
+ 53 |     let k = extract(&src, None).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:98:13
+    |
+ 98 |     let k = extract(&src, Some(&doc)).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:104:13
+    |
+104 |     let h = extract(&src, None).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:111:16
+    |
+111 |     assert_eq!(extract(&src, Some(&doc)).unwrap().outline[0].heading, "1. Forces");
+    |                ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:119:13
+    |
+119 |     let k = extract(&src, None).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:147:17
+    |
+147 |     let first = extract(&src, None).unwrap();
+    |                 ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:148:90
+    |
+148 |     for _ in 0..10 { assert_eq!(serde_json::to_vec(&first).unwrap(), serde_json::to_vec(&extract(&src, None).unwrap()).unwrap()); }
+    |                                                                                          ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:150:23
+    |
+150 |     assert_eq!(first, extract(&shuffled, None).unwrap());
+    |                       ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:160:13
+    |
+160 |     let k = extract(&src, None).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find value `PROVENANCE_LABEL` in this scope
+   --> src/pdf_study_kit_tests.rs:177:16
+    |
+177 |     assert_eq!(PROVENANCE_LABEL, "Pulled from your PDF on this Mac");
+    |                ^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `PROVENANCE_LABEL` in this scope
+   --> src/pdf_study_kit_tests.rs:178:78
+    |
+178 |     for word in ["ai", "generated", "verified", "written by you"] { assert!(!PROVENANCE_LABEL.to_lowercase().contains(word)); }
+    |                                                                              ^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:187:13
+    |
+187 |     let k = extract(&src, None).unwrap();
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:192:13
+    |
+192 |     assert!(extract(&src,None).unwrap().glossary.is_empty());
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:195:13
+    |
+195 |     assert!(extract(&src,None).unwrap().glossary.is_empty());
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:198:13
+    |
+198 |     assert!(extract(&src,None).unwrap().glossary.is_empty());
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+error[E0425]: cannot find function `extract` in this scope
+   --> src/pdf_study_kit_tests.rs:200:13
+    |
+200 |     assert!(extract(&src,None).is_err());
+    |             ^^^^^^^ not found in this scope
+    |
+note: function `crate::extraction::worker::extract` exists but is inaccessible
+   --> src/extraction/worker.rs:218:1
+    |
+218 | fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not accessible
+
+warning: unused import: `crate::pdf_study_kit::*`
+ --> src/pdf_study_kit_tests.rs:3:5
+  |
+3 | use crate::pdf_study_kit::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+For more information about this error, try `rustc --explain E0583`.
+error: could not compile `her-flight-deck` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+Some errors have detailed explanations: E0422, E0425, E0583.
+For more information about an error, try `rustc --explain E0422`.
+warning: `her-flight-deck` (lib test) generated 1 warning
+error: could not compile `her-flight-deck` (lib test) due to 27 previous errors; 1 warning emitted
+
+EXIT 101

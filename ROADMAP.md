@@ -7,6 +7,7 @@ OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX
 - **Codex implements** every project change.
 - Implementer order (owner, 20 October 2026): Codex first, then Gemini (Gemini CLI, model gemini-3.8-flash), then Qwen Flash only as the last backup.
 - **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
+- When Claude is out of usage (owner, 20 October 2026): Codex takes over review, testing and merging with the same workflow; Gemini, then Qwen Flash, implement in the meantime.
 - After a GREEN review and green exact-head CI, Claude merges with `--match-head-commit` and verifies the work is on main.
 - From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.
 - This replaces the earlier arrangements.

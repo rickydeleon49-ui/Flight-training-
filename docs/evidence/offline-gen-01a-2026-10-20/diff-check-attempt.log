@@ -1,0 +1,14 @@
+$ python3 -c import subprocess, sys
+commands = [["git", "diff", "--check"]]
+for path in ["src-tauri/src/pdf_study_kit.rs", "src-tauri/src/pdf_study_kit_tests.rs", "docs/OFFLINE_GEN_01A_REPORT_2026-10-20.md", "docs/evidence/offline-gen-01a-2026-10-20/.gitignore"]:
+    commands.append(["git", "diff", "--no-index", "--check", "/dev/null", path])
+for command in commands:
+    print("$ " + " ".join(command), flush=True)
+    result = subprocess.run(command)
+    if result.returncode:
+        sys.exit(result.returncode)
+
+$ git diff --check
+$ git diff --no-index --check /dev/null src-tauri/src/pdf_study_kit.rs
+
+EXIT 1

@@ -1,13 +1,20 @@
 ## Current owner workflow — 20 October 2026
 
-- **Codex implements** every project change.
-- **Qwen Flash is the backup implementer only.** It is used only when Codex is out of usage.
-- **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
+- **Implementers, in order:** Codex first. If Codex is out of usage, Gemini (Gemini CLI, model `gemini-3.8-flash`). Qwen Flash only as the last backup.
+- When Codex's usage resets, new rounds go back to Codex. An in-flight round by another implementer is allowed to finish.
+- **Claude** assigns precise rounds, reviews, independently tests and merges. The owner wants **full reviews** every round, including independent gate reruns and mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
+- When Claude is out of usage (owner, 20 October 2026), Codex takes over review, testing and merging with the same reviewer recipe, records reviews in `codex-review*/REVIEW.md` and updates `CURRENT_QWEN_REVIEW_LOOP.json`; Gemini (`gemini-3.8-flash`), then Qwen Flash, implement without reviewing or merging their own round. Claude takes the role back when its usage returns, starting with the loop file and latest round folder.
+- **Rule:** an implementer never approves or merges its own round.
 - After a GREEN review and green exact-head CI, Claude merges with `--match-head-commit` and verifies the work is on main.
-- From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.
 - This replaces the earlier arrangements.
 
+See [AGENTS.md](../AGENTS.md) for the shared workflow, implementer rules and reviewer recipe.
+
 Earlier entries below are history. Current priorities are recorded in the [20 October roadmap entry](../ROADMAP.md).
+
+## Temporary owner workflow exception (history) — 20 October 2026
+
+- From 2:00 to 3:00 AM on 20 October only, Claude may implement directly before the weekly usage reset.
 
 ## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
 

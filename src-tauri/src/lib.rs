@@ -25,6 +25,9 @@ mod gemini_jobs;
 mod lineage;
 mod navigation;
 mod pdf;
+pub mod pdf_study_kit;
+#[cfg(test)]
+mod pdf_study_kit_tests;
 #[cfg(test)]
 mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any

@@ -1,0 +1,25 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test distractors_never_mix_patterns
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.67s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 1 test
+test pdf_study_kit_tests::distractors_never_mix_patterns ... FAILED
+
+failures:
+
+---- pdf_study_kit_tests::distractors_never_mix_patterns stdout ----
+
+thread 'pdf_study_kit_tests::distractors_never_mix_patterns' (8827599) panicked at src/pdf_study_kit_tests.rs:286:13:
+choice "Air Traffic Control" must share source pattern "definition"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    pdf_study_kit_tests::distractors_never_mix_patterns
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 939 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`
+
+EXIT 101

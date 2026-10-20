@@ -1,0 +1,44 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --manifest-path src-tauri/Cargo.toml pdf_study_kit
+   Compiling her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.82s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 15 tests
+test pdf_study_kit_tests::ambiguous_multicolumn_tables_and_image_pages_emit_nothing_fabricated ... ok
+test pdf_study_kit_tests::label_is_pulled_from_your_pdf_never_ai_or_verified ... ok
+test pdf_study_kit_tests::identity_page_bounds_and_unicode_raw_offsets ... ok
+test pdf_study_kit_tests::named_destinations_and_malformed_or_cyclic_trees_are_bounded ... ok
+test pdf_study_kit_tests::pdf_kit_module_has_zero_network_imports ... ok
+test pdf_study_kit_tests::number_unit_cloze_keeps_qualifiers_and_ranges ... ok
+test pdf_study_kit_tests::acronym_explicit_only_and_conflicts_suppressed ... ok
+test pdf_study_kit_tests::matching_view_preserves_nfkc_and_combining_mark_evidence ... ok
+test pdf_study_kit_tests::unsafe_fragments_duplicate_pages_and_question_stems_are_refused ... ok
+test pdf_study_kit_tests::numeric_units_signs_decimals_and_bounds_are_literal ... ok
+test pdf_study_kit_tests::outline_bookmarks_then_headings_then_page_ranges ... ok
+test pdf_study_kit_tests::questions_use_only_in_pdf_distractors_or_fall_back_to_cards ... ok
+test pdf_study_kit_tests::glossary_colon_dash_and_sentence_forms ... ok
+test pdf_study_kit_tests::repeat_same_bytes_same_candidates ... ok
+test pdf_study_kit_tests::caps_are_enforced_without_quota_filling ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 924 filtered out; finished in 0.03s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/her_flight_deck-610b7bf094c74fb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/extraction_service.rs (src-tauri/target/debug/deps/extraction_service-10fef342138f8a99)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/extraction_worker.rs (src-tauri/target/debug/deps/extraction_worker-68f5c1eda9f1481c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+
+EXIT 0
