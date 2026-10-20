@@ -22,6 +22,9 @@ import {
   type StudyFlashcard,
   type StudyAidProvider,
   type StudyGuideSection,
+  type StudyItemOrigin,
+  type StudySetProvider,
+  type RetiredStudyItem,
   type Topic,
 } from "@/domain/types";
 import {
@@ -34,6 +37,15 @@ import {
   type StructuredImportSaveOperation,
 } from "../db";
 import { AtomicPersistenceUnsupportedError } from "../persistenceErrors";
+import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
+import {
+  decodeStoredRow,
+  SET_COLUMNS,
+  validateRetiredList,
+  type StoredSetRow,
+  type StudySetSaveOperation,
+  type StudySetSaveResult,
+} from "../studySetTransaction";
 
 interface Row {
   id: string; title: unknown; material_type: unknown; topic: unknown;
@@ -86,6 +98,17 @@ interface AiRow {
   source_material_id: string; title: unknown; summary: unknown;
   sections_json: unknown; flashcards_json: unknown; source_notes: unknown;
   provider: unknown; model: unknown; generated_at: unknown; updated_at: unknown;
+  summary_origin?: unknown; retired_json?: unknown;
+}
+
+/** One saved earlier version of a study set, newest first. */
+export interface StudySetHistoryEntry {
+  id: string;
+  reason: "edit" | "delete" | "correct" | "regenerate" | "import" | "restore";
+  provider: string;
+  createdAt: string;
+  /** The whole set as it was stored, or null when that entry is damaged. */
+  previous: StoredSetRow | null;
 }
 
 interface PracticeTestRow {
@@ -153,18 +176,47 @@ function jsonArray<T>(value: unknown): T[] {
  */
 const toProvider = (value: unknown): StudyAidProvider => (value === "import" ? "import" : "gemini");
 
+/**
+ * A study set's provenance: "manual" (her own set) and "import" read back
+ * faithfully and are never turned into "gemini"; legacy rows default to it.
+ */
+const toSetProvider = (value: unknown): StudySetProvider =>
+  value === "import" || value === "manual" ? value : "gemini";
+
+const toOrigin = (value: unknown): StudyItemOrigin | null =>
+  value === "user" || value === "instructor" ? value : null;
+
+function retiredList(value: unknown): RetiredStudyItem[] {
+  try {
+    return validateRetiredList(JSON.parse(toText(value) || "[]"));
+  } catch {
+    // Startup validation refuses a damaged list; editing re-reads strictly.
+    return [];
+  }
+}
+
 const mapAiStudySet = (row: AiRow): AiStudySet => ({
   sourceMaterialId: row.source_material_id,
   title: toText(row.title),
   summary: toText(row.summary),
+  summaryOrigin: toOrigin(row.summary_origin),
   sections: jsonArray<StudyGuideSection>(row.sections_json),
   flashcards: jsonArray<StudyFlashcard>(row.flashcards_json),
   sourceNotes: toText(row.source_notes),
-  provider: toProvider(row.provider),
+  provider: toSetProvider(row.provider),
+  retired: retiredList(row.retired_json),
   model: toText(row.model),
   generatedAt: toText(row.generated_at),
   updatedAt: toText(row.updated_at),
 });
+
+/** Said if anything tries to replace her own items without the regeneration review. */
+export const REVIEW_FIRST_MESSAGE =
+  "This study guide has items you wrote, corrected or deleted, so a new one is saved only after you review it. Nothing has been saved.";
+
+/** A stored row, or a history entry, as the set it shows. */
+export const storedStudySet = (materialId: Id, row: StoredSetRow): AiStudySet =>
+  mapAiStudySet({ source_material_id: materialId, ...row });
 
 const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
   sourceMaterialId: row.source_material_id,
@@ -239,6 +291,22 @@ export function documentRepository(db: SqlDatabase) {
       grouped.set(row.material_id, list);
     }
     return grouped;
+  }
+
+  async function readStoredSet(materialId: Id): Promise<StoredSetRow | null> {
+    const [row] = await db.select<Record<string, unknown>>(
+      `SELECT ${SET_COLUMNS.join(", ")} FROM ai_study_sets WHERE source_material_id = ?`,
+      [materialId],
+    );
+    if (!row) return null;
+    return Object.fromEntries(
+      SET_COLUMNS.map((column) => [column, row[column] === null || row[column] === undefined ? null : String(row[column])]),
+    ) as StoredSetRow;
+  }
+
+  async function saveStudySet(operation: StudySetSaveOperation): Promise<StudySetSaveResult> {
+    if (typeof db.saveStudySetAtomically !== "function") throw new AtomicPersistenceUnsupportedError();
+    return db.saveStudySetAtomically(operation);
   }
 
   async function lineageByMaterial(): Promise<Map<string, SplitLineage>> {
@@ -316,30 +384,78 @@ export function documentRepository(db: SqlDatabase) {
 
     /**
      * Save a Gemini study set. Replacing an imported set also replaces its
-     * provenance, so regenerated content is never labelled as imported.
+     * provenance, so regenerated content is never labelled as imported. The
+     * set it replaces goes to history first, in the same transaction; what
+     * she retired is carried over. A set holding her own items is never
+     * replaced here: regeneration reviews it with her first.
      */
     async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">): Promise<void> {
-      const timestamp = nowIso();
-      await db.execute(
-        `INSERT INTO ai_study_sets
-           (source_material_id, title, summary, sections_json, flashcards_json,
-            source_notes, provider, model, generated_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'gemini', ?, ?, ?)
-         ON CONFLICT(source_material_id) DO UPDATE SET
-           title = excluded.title, summary = excluded.summary,
-           sections_json = excluded.sections_json, flashcards_json = excluded.flashcards_json,
-           source_notes = excluded.source_notes, provider = excluded.provider, model = excluded.model,
-           generated_at = excluded.generated_at, updated_at = excluded.updated_at`,
-        [
-          input.sourceMaterialId, input.title, input.summary,
-          JSON.stringify(input.sections), JSON.stringify(input.flashcards), input.sourceNotes,
-          input.model, timestamp, timestamp,
-        ],
-      );
+      const current = await readStoredSet(input.sourceMaterialId);
+      if (current && needsRegenerationReview(storedStudySet(input.sourceMaterialId, current))) {
+        throw new Error(REVIEW_FIRST_MESSAGE);
+      }
+      const retired = current ? validateRetiredList(JSON.parse(current.retired_json)) : [];
+      await saveStudySet({
+        operationId: newId(),
+        materialId: input.sourceMaterialId,
+        reason: current ? "regenerate" : "create",
+        expected: current,
+        next: {
+          title: input.title,
+          summary: input.summary,
+          summaryOrigin: null,
+          sections: input.sections.map(({ heading, body }) => ({ heading, body })),
+          // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
+          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) })),
+          sourceNotes: input.sourceNotes,
+          provider: "gemini",
+          model: input.model,
+          retired,
+        },
+      });
     },
 
+    /** Remove a study set; the whole set stays in history until its material is deleted. */
     async removeAiStudySet(sourceMaterialId: Id): Promise<void> {
-      await db.execute("DELETE FROM ai_study_sets WHERE source_material_id = ?", [sourceMaterialId]);
+      const current = await readStoredSet(sourceMaterialId);
+      if (!current) return;
+      await saveStudySet({ operationId: newId(), materialId: sourceMaterialId, reason: "remove", expected: current, next: null });
+    },
+
+    /** The set exactly as stored, to name it as the one a save replaces. */
+    readStoredStudySet: readStoredSet,
+
+    /** The set she is about to edit: as stored (for the save) and as shown. */
+    async readStudySetForEdit(materialId: Id): Promise<{ stored: StoredSetRow; set: AiStudySet } | null> {
+      const stored = await readStoredSet(materialId);
+      return stored ? { stored, set: storedStudySet(materialId, stored) } : null;
+    },
+
+    /** One atomic study-set save, history first (OFFLINE-03a). */
+    saveStudySet,
+
+    /** Earlier versions of a material's study set, newest first. */
+    async listStudySetHistory(materialId: Id): Promise<StudySetHistoryEntry[]> {
+      const rows = await db.select<{ id: string; reason: string; provider: string; created_at: string; previous_json: string }>(
+        `SELECT id, reason, provider, created_at, previous_json FROM study_set_history
+          WHERE material_id = ? AND kind = 'study_set' ORDER BY created_at DESC, id DESC`,
+        [materialId],
+      );
+      return rows.map((row) => {
+        let previous: StoredSetRow | null = null;
+        try {
+          previous = decodeStoredRow(JSON.parse(row.previous_json));
+        } catch {
+          previous = null;
+        }
+        return {
+          id: row.id,
+          reason: row.reason as StudySetHistoryEntry["reason"],
+          provider: toText(row.provider),
+          createdAt: toText(row.created_at),
+          previous,
+        };
+      });
     },
 
     async listPracticeTests(): Promise<PracticeTest[]> {

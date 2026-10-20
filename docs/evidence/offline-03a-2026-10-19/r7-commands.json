@@ -1,0 +1,101 @@
+{
+  "focused": {
+    "checks": [
+      {
+        "log": "focused-final.log",
+        "command": [
+          "/opt/homebrew/opt/node@22/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "src/state/reviewedSaveCheckpoint.test.ts",
+          "src/pages/StudyLibrary/StudySetEditing.test.ts",
+          "src/pages/StudyLibrary/MaterialDetailJobs.test.ts",
+          "src/data/studySetTransaction.test.ts",
+          "src/logic/studySetEditing.test.ts",
+          "src/logic/studyAuthoring.test.ts",
+          "--reporter=dot"
+        ],
+        "exit_code": 0
+      },
+      {
+        "log": "typecheck-final.log",
+        "command": [
+          "/opt/homebrew/opt/node@22/bin/node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit"
+        ],
+        "exit_code": 0
+      }
+    ],
+    "source_changed_during_checks": []
+  },
+  "gate": {
+    "checks": [
+      {
+        "log": "vitest-full.log",
+        "command": [
+          "/opt/homebrew/opt/node@22/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run"
+        ],
+        "exit_code": 0,
+        "changed_source": []
+      },
+      {
+        "log": "build.log",
+        "command": [
+          "npm",
+          "run",
+          "build"
+        ],
+        "exit_code": 0,
+        "changed_source": []
+      },
+      {
+        "log": "cargo-lock.log",
+        "command": [
+          "npm",
+          "run",
+          "test:cargo-lock"
+        ],
+        "exit_code": 0,
+        "changed_source": []
+      },
+      {
+        "log": "diff-check.log",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "changed_source": []
+      }
+    ]
+  },
+  "schema_helper": [
+    {
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "--test",
+        "scripts/mac-schema14-profile-snapshot.test.mjs"
+      ],
+      "boundary": "workspace sandbox",
+      "exit_code": 1,
+      "pass": 25,
+      "fail": 1,
+      "cause": "sandbox pgrep diagnostics preceded the expected REFUSED line"
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/node@22/bin/node",
+        "--test",
+        "scripts/mac-schema14-profile-snapshot.test.mjs"
+      ],
+      "boundary": "host process visibility; synthetic test suite",
+      "exit_code": 0,
+      "pass": 26,
+      "fail": 0
+    }
+  ]
+}

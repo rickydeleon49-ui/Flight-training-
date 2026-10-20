@@ -11,6 +11,7 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
+import { StudySetSaveError } from "@/data/persistenceErrors";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -244,15 +245,13 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
       sourceNotes: "",
       model: "gemini-3.5-flash",
     });
-    const execute = db.execute.bind(db);
     let failures = 1;
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (failures > 0 && sql.includes("INSERT INTO ai_study_sets")) {
         failures -= 1;
         throw new Error("synthetic disk full");
       }
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     const generate = vi
       .spyOn(geminiService, "generateStudyAid")
       .mockResolvedValue({ ...AID, title: "New guide", jobId: "job-333333333333333333333333" });
@@ -300,6 +299,43 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-aaaaaaaaaaaaaaaaaaaaaaaa"));
     expect(await repos.documents.listPracticeTests()).toEqual([]);
     expect(screen.queryByText(/before the app was closed or reloaded/)).toBeNull();
+  });
+
+  it("OFFLINE-03a: a committed save with an out-of-range page is recognised after its answer is lost", async () => {
+    await material("mat-a", "Material A");
+    const wide = { ...AID, flashcards: [{ front: "Q", back: "A", sourcePage: 1001 }] };
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...wide, jobId: "job-666666666666666666666666", contentSha256: "" });
+    const save = db.saveStudySetAtomically!.bind(db);
+    let lose = 1;
+    db.saveStudySetAtomically = async (operation) => {
+      const result = await save(operation);
+      if (lose) {
+        lose--;
+        throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
+      }
+      return result;
+    };
+    await open("/study/mat-a");
+    await startStudyAid();
+    await acceptStudyAid();
+    fireEvent.click(await screen.findByRole("button", { name: "Save again" }));
+    await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-666666666666666666666666"));
+    expect(screen.queryByText(/Something newer was saved/)).toBeNull();
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]!.sourcePage).toBeNull();
+    expect(await db.select("SELECT id FROM study_set_history")).toEqual([]);
+  });
+
+  it("OFFLINE-03a: after a restart, an answer already saved with a normalized page is recognised, not saved again", async () => {
+    await material("mat-a", "Material A");
+    const wide = { ...AID, flashcards: [{ front: "Q", back: "A", sourcePage: 1001 }] };
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", ...wide });
+    vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue([record({ stage: "ready", result: wide })]);
+    await open("/study/mat-a");
+    // Recognised as already saved while recovering: never offered again.
+    await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-aaaaaaaaaaaaaaaaaaaaaaaa"));
+    expect(screen.queryByRole("button", { name: "Save the new study guide and cards" })).toBeNull();
+    expect(screen.queryByText(/Something newer was saved/)).toBeNull();
+    expect(await db.select("SELECT id FROM study_set_history")).toEqual([]);
   });
 
   it("a recovered answer for a material whose file was replaced is not saved", async () => {
@@ -544,11 +580,9 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
   it("R2: an answer that could not be kept natively says Save again works only while the app stays open", async () => {
     await material("mat-a", "Material A");
-    const execute = db.execute.bind(db);
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (sql.includes("INSERT INTO ai_study_sets")) throw new Error("synthetic disk full");
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, jobId: null, checkpointed: false });
     await open("/study/mat-a");
     await startStudyAid();
@@ -699,12 +733,10 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await startStudyAid();
     const accept = await screen.findByRole("button", { name: "Save the new study guide and cards" });
     expect(await repos.documents.listAiStudySets()).toEqual(before);
-    const execute = db.execute.bind(db);
     let failures = 1;
-    db.execute = (async (sql: string, params?: unknown[]) => {
+    db.beforeStatement = (sql: string) => {
       if (failures && sql.includes("INSERT INTO ai_study_sets")) { failures--; throw new Error("synthetic final-save failure"); }
-      return execute(sql, params as never);
-    }) as typeof db.execute;
+    };
     fireEvent.click(accept);
     await screen.findByRole("button", { name: "Save again" });
     expect(await repos.documents.listAiStudySets()).toEqual(before);

@@ -1,0 +1,418 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+(node:2906) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > a study guide she writes herself > starts on a material with no file, is labelled as hers, and takes her cards
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > an edit is marked as hers and keeps the earlier wording, which she can restore
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > an instructor's correction replaces the original and stays out of exports by default
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a failed save keeps her text, and saving again records one change
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a change saved elsewhere after she opened the dialog is refused, not overwritten
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > regenerating over her items waits for her review, holds back what she deleted, and keeps her items
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a plain save never replaces her items, even without the page asking
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a failed reviewed save keeps the dialog and her choices open; saving again saves once
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > restoring is refused when the guide changed after she opened the confirmation
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a reviewed save that committed is recognised even after she closes and reopens the review
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a regenerated card with a page outside the PDF range is reviewed and saved with no page
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > the review shows each item's full text and the earlier wording it resembles before she chooses
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a reviewed save that committed before a restart is recognised after the restart, not applied again
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal could not write it down is recognised after a restart, not saved again
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal would not forget the answer is recognised after a restart, not saved again
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > re-confirming a committed reviewed save keeps its checkpoint until the journal acknowledges it
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it
+ × ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > R7 diagnostic: discarding a journal entry already removed elsewhere succeeds after verifying absence 1411ms
+   → expected [ 'discard-failed' ] to deeply equal []
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial A[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0ma.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 B[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_0_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial A[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+       ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts > editing a generated study guide > R7 diagnostic: discarding a journal entry already removed elsewhere succeeds after verifying absence
+AssertionError: expected [ 'discard-failed' ] to deeply equal []
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-header__title"[39m
+          [36m>[39m
+            [0mMaterial A[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"page-header__subtitle"[39m
+          [36m>[39m
+            [0mStudy Guide · General[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"row"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"button button--ghost"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/study"[39m
+          [36m>[39m
+            [0mBack[0m
+          [36m</a>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--secondary"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mEdit[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--danger"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mDelete[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"detail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"detail__column"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"file-row file-row--actions"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"18"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.6"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"18"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M6 3.5h7.5L19 9v11.5H6z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M13.2 3.6V9H18.8"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__details"[39m
+                [36m>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"small truncate"[39m
+                  [36m>[39m
+                    [0ma.pdf[0m
+                  [36m</p>[39m
+                  [36m<p[39m
+                    [33mclass[39m=[32m"tiny"[39m
+                  [36m>[39m
+                    [0m1 B[0m
+                  [36m</p>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"file-row__actions"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"button button--secondary"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"15"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.6"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"15"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M13.5 4.5H19.5V10.5"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19.5 4.5 11 13"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open[0m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"card"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"card__header"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"card__eyebrow"[39m
+                [36m>[39m
+                  [0mPages[0m
+                [36m</p>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"card__title"[39m
+                [36m>[39m
+                  [0mFind your place[0m
+                [36m</h2>[39m
+              [36m</div>[39m
+            [36m</header>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"card__body"[39m
+            [36m>[39m
+              [36m<section[39m
+                [33maria-labelledby[39m=[32m"_r_0_"[39m
+                [33mclass[39m=[32m"stack stack--3"[39m
+              [36m>[39m
+                [36m<h4[39m
+                  [33mclass[39m=[32m"visually-hidden"[39m
+                  [33mid[39m=[32m"_r_0_"[39m
+                [36m>[39m
+                  [0mPages of [0m
+                  [0mMaterial A[0m
+                [36m</h4>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"tiny muted"[39m
+                [36m>[39m
+                  [0mOpening a file at a page needs the desktop app. Your bookmarks are still listed here.[0m
+                [36m</p>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"stack stack--2"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"row row--between row--wrap"[39m
+                  [36m>[39m
+                    [36m<h4[39m
+                      [33mclass[39m=[32m"small strong"[39m
+                    [36m>[39m
+                      [0mBookmarks[0m
+                    [36m</h4>[39m
+                  [36m</div>[39m
+       ...
+
+- Expected
++ Received
+
+- []
++ [
++   "discard-failed",
++ ]
+
+ ❯ waitFor.timeout ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AlreadyAbsentAcknowledgement.test.ts:578:74
+    576|     vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([]);
+    577|     fireEvent.click(await screen.findByRole("button", { name: "Discard…
+    578|     await waitFor(() => expect(jobsContext.jobs.map((job) => job.phase…
+       |                                                                          ^
+    579|   });
+    580|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  18:33:16
+   Duration  2.21s (transform 381ms, setup 0ms, import 500ms, tests 1.41s, environment 223ms)
+
+
+exit 1

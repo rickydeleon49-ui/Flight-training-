@@ -1,7 +1,8 @@
 /**
  * Content-addressed card identity (approved default C-D3).
  *
- * For material `m` with ordered cards `C` (only front, back, sourcePage):
+ * For material `m` with ordered cards `C` (only front, back, sourcePage, and
+ * `origin` when a card has one — OFFLINE-03):
  *
  *   content_hash = sha256(canonical_json(C))
  *   version_id   = sha256(m + "\u0000" + content_hash)
@@ -12,6 +13,8 @@
  * identical text maps back to the same version and its retained history.
  * The native twin in `src-tauri/src/card_reviews.rs` reproduces the same
  * golden vectors (`docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/identity-golden.json`).
+ * A card without `origin` hashes exactly as before, so every legacy snapshot
+ * keeps its hash, version id and history.
  */
 
 export const MAX_CARDS = 500;
@@ -19,10 +22,14 @@ export const MAX_FRONT_CHARS = 1_000;
 export const MAX_BACK_CHARS = 2_000;
 export const MAX_SOURCE_PAGE = 1_000;
 
+/** Who wrote a card she made or edited; absent for generated or imported cards. */
+export type CardOrigin = "user" | "instructor";
+
 export interface CanonicalCard {
   front: string;
   back: string;
   sourcePage: number | null;
+  origin?: CardOrigin;
 }
 
 export interface CardItem extends CanonicalCard {
@@ -122,14 +129,20 @@ export function parseSavedCards(flashcardsJson: string | null | undefined): Save
     ) {
       return { status: "malformed" };
     }
-    cards.push({ front, back, sourcePage: sourcePage as number | null });
+    let origin: CardOrigin | undefined;
+    if (Object.prototype.hasOwnProperty.call(card, "origin")) {
+      const value = (card as Record<string, unknown>).origin;
+      if (value !== "user" && value !== "instructor") return { status: "malformed" };
+      origin = value;
+    }
+    cards.push({ front, back, sourcePage: sourcePage as number | null, ...(origin ? { origin } : {}) });
   }
   return { status: "ok", cards };
 }
 
 /** The content-addressed version of a material's ordered cards. */
 export async function cardVersion(materialId: string, cards: readonly CanonicalCard[]): Promise<CardVersion> {
-  const canonical = cards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage }));
+  const canonical = cards.map(({ front, back, sourcePage, origin }) => (origin ? { front, back, sourcePage, origin } : { front, back, sourcePage }));
   const contentHash = await sha256Hex(canonicalJson(canonical));
   const versionId = await sha256Hex(`${materialId}\u0000${contentHash}`);
   const items = await Promise.all(
@@ -140,6 +153,15 @@ export async function cardVersion(materialId: string, cards: readonly CanonicalC
     })),
   );
   return { versionId, contentHash, items };
+}
+
+/**
+ * A snapshot's own origin (native `version_origin`): `manual` when she wrote
+ * every card, `mixed` when she wrote some, `null` when none.
+ */
+export function versionOrigin(cards: readonly CanonicalCard[]): "manual" | "mixed" | null {
+  const mine = cards.filter((card) => card.origin !== undefined).length;
+  return mine === 0 ? null : mine === cards.length ? "manual" : "mixed";
 }
 
 /** Derive the current version from the saved raw cards. Reads nothing, writes nothing. */

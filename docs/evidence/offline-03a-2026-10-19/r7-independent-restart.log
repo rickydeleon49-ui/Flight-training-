@@ -1,0 +1,27 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-03a-fixes
+
+(node:409) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > a study guide she writes herself > starts on a material with no file, is labelled as hers, and takes her cards
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > an edit is marked as hers and keeps the earlier wording, which she can restore
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > an instructor's correction replaces the original and stays out of exports by default
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a failed save keeps her text, and saving again records one change
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a change saved elsewhere after she opened the dialog is refused, not overwritten
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > regenerating over her items waits for her review, holds back what she deleted, and keeps her items
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a plain save never replaces her items, even without the page asking
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a failed reviewed save keeps the dialog and her choices open; saving again saves once
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > restoring is refused when the guide changed after she opened the confirmation
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a reviewed save that committed is recognised even after she closes and reopens the review
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a regenerated card with a page outside the PDF range is reviewed and saved with no page
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > the review shows each item's full text and the earlier wording it resembles before she chooses
+ ↓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > a reviewed save that committed before a restart is recognised after the restart, not applied again
+ ✓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > R6 acceptance: reject acknowledgement retains the operation through restart 521ms
+ ✓ ../../../../private/tmp/hfd-03a-r6-review-jzgbv6yq/AcknowledgementRecovery.test.ts > editing a generated study guide > R6 acceptance: false acknowledgement retains the operation through restart 339ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 14 skipped (16)
+   Start at  18:13:51
+   Duration  1.63s (transform 350ms, setup 0ms, import 468ms, tests 861ms, environment 221ms)
+

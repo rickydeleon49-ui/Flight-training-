@@ -108,7 +108,9 @@ export function cardReviewRepository(db: SqlDatabase) {
           status: "ok",
           versionId: current.versionId,
           contentHash: current.contentHash,
-          items: current.items.map(({ itemId, ordinal, front, back, sourcePage }) => ({ itemId, ordinal, front, back, sourcePage })),
+          items: current.items.map(({ itemId, ordinal, front, back, sourcePage, origin }) => ({
+            itemId, ordinal, front, back, sourcePage, ...(origin ? { origin } : {}),
+          })),
         },
         states,
       };

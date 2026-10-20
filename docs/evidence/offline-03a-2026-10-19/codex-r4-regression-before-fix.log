@@ -1,0 +1,93 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/.review-03a-prefix4
+
+(node:95223) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts (13 tests | 1 failed) 2293ms
+     × the review shows each item's full text and the earlier wording it resembles before she chooses 156ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > the review shows each item's full text and the earlier wording it resembles before she chooses
+TestingLibraryElementError: Unable to find an element with the text: Answer: It aligns the nose with runway.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Needs your choice"[39m
+  [33mclass[39m=[32m"stack stack--2"[39m
+[36m>[39m
+  [36m<p[39m
+    [33mclass[39m=[32m"small"[39m
+  [36m>[39m
+    [36m<strong>[39m
+      [0mNeeds your choice[0m
+    [36m</strong>[39m
+  [36m</p>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"stack stack--1"[39m
+  [36m>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"small wrap-anywhere"[39m
+    [36m>[39m
+      [0mCard: What does the rudder do?[0m
+    [36m</p>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"tiny muted"[39m
+    [36m>[39m
+      [0mThis looks like [0m
+      [0msomething you corrected or rewrote[0m
+      [0m.[0m
+    [36m</p>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"row row--wrap"[39m
+    [36m>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33mname[39m=[32m"choice-418b337c-fd89-439d-b144-df8e8bf51f99"[39m
+          [33mtype[39m=[32m"radio"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [0mLeave it out[0m
+        [36m</span>[39m
+      [36m</label>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"row"[39m
+      [36m>[39m
+        [36m<input[39m
+          [33mname[39m=[32m"choice-418b337c-fd89-439d-b144-df8e8bf51f99"[39m
+          [33mtype[39m=[32m"radio"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [0mKeep it[0m
+        [36m</span>[39m
+      [36m</label>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:407:19
+    405|     const choice = within(await review.findByRole("region", { name: "N…
+    406|     // The proposed answer, and the wrong answer her instructor correc…
+    407|     expect(choice.getByText("Answer: It aligns the nose with runway.")…
+       |                   ^
+    408|     expect(choice.getByText("Answer: Aligns the nose with the runway."…
+    409|     expect(choice.getByText(/something you corrected or rewrote/)).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  17:39:41
+   Duration  3.07s (transform 352ms, setup 0ms, import 472ms, tests 2.29s, environment 222ms)
+
+exit 1

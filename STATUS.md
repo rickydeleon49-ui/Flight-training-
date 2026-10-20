@@ -1,3 +1,47 @@
+## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
+
+Qwen implements; Codex independently reviews/tests, loops corrections and integrates after green CI on the exact current head. The owner has authorized this ongoing workflow and gated merges; no repeated workflow sign-off is needed. Tool sandbox boundaries still apply.
+
+Before merging PR #237, Codex reproduced an already-absent journal case and returned it to Qwen. The corrected provider now distinguishes confirmed absence from a present or unreadable journal and preserves immediate failure/retry on rejected acknowledgement. Code: `d6ce015`. **166 focused and 3,927 full frontend tests passed / 6 skipped; typecheck/build/lock/whitespace pass.** Two new cases fail against prior published `72f2be2`. Prior failed runs and cancelled superseded CI are preserved. [Current acceptance report](docs/OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md).
+
+**Integration:** PR #237 replaces closed draft #236. Wait for green CI on its corrected exact head, merge with a head-match guard, and verify main inclusion. Then start isolated **OFFLINE-03b practice-question authoring** from accepted main; a bounded implementation-plan assignment is prepared. Keep 03c deferred, extraction/search dormant and existing release/installed/performance gates open. Entries below are history.
+
+## OFFLINE-03a local source review GREEN; Qwen implements, Codex reviews and integrates — 19 October 2026
+
+**Current owner workflow:** Qwen implements; Codex independently reviews and tests, loops corrections, and merges only after accepted work and green CI on the exact submitted head. This supersedes earlier role defaults for this roadmap tranche.
+
+The final acknowledgement/restart correction is committed as `9d3a90c` on `claude/offline-03a-core-fixes`. The reviewed operation now survives rejected or false journal acknowledgements and is cleared only after successful acknowledgement. Four new integration regressions fail against Claude's original source and pass after the correction. Fresh checks: **164 focused; 3,925 full frontend passed / 6 skipped; typecheck/build/cargo-lock/whitespace exit 0**. Unchanged native receipts remain **844 passed / 11 ignored**. [Source acceptance and integration handoff](docs/OFFLINE_03A_SOURCE_ACCEPTANCE_2026-10-19.md); [evidence](docs/evidence/offline-03a-2026-10-19/README.md).
+
+**Integration rule:** this branch replaces draft #236. GitHub records its exact-head CI/merge state; no merge before those gates pass. **Next after verified merge: OFFLINE-03b manual practice questions**, then homework → exports. 03c remains deferred; extraction/search dormant; existing flake, performance and installed/minimum-spec release gates stay open. Entries below are history.
+
+## OFFLINE-03a implemented locally (Claude); Codex review and exact-head CI pending — 19 October 2026
+
+**Role change.** At the owner's request, Claude took over OFFLINE-03a from Codex. Claude reviewed PR #236's authoring core locally (round 1 RED: an instructor correction could be relabelled and exported by default; three minor findings) and fixed all four. The owner approved proposal revision 5: ordinary rewrites also enter the retirement list. Branch: `claude/offline-03a-core-fixes`, which supersedes #236. [Report](docs/OFFLINE_03A_REPORT_2026-10-19.md); [reviewer prompt](docs/OFFLINE_03A_REVIEWER_PROMPT_2026-10-19.md).
+
+**What she can now do:**
+- write her own study guide;
+- edit, correct or delete its summary, sections and cards;
+- see and restore Previous versions;
+- review a regenerated guide that would otherwise replace her items: Keep my items is the default, and what she deleted is held back.
+
+**How it is built:**
+- **Migration 0016:** add-only.
+- **One atomic save in both engines:** the whole previous set goes to history first; a change made elsewhere is refused as stale; a retry is recognised.
+- **Card review snapshots:** they carry who wrote each card. Legacy hashes are unchanged, checked against independent vectors.
+- **Exports:** instructor corrections stay out unless she includes them.
+
+**Local gates:** native 844 passed, clippy/fmt exit 0, schema-14 helper 26/26; frontend in the report. Nothing pushed yet, nothing merged, enabled or released.
+
+**Review state:** Codex round 1 was RED (the regeneration-review save could lose choices or apply twice; restore missed a stale check). Both are fixed, with failing-first regressions. **Where to resume, and the 03b plan:** [handoff](docs/OFFLINE_03A_HANDOFF_2026-10-19.md).
+
+**Next:** full local gate, Codex round 2, then one push for exact-head CI and a PR (closing #236 as superseded); then 03b practice questions. The FLAKE-CR-01, 02c p50, extraction/search and installed/minimum-spec gates remain open. Entries below are history.
+
+## OFFLINE-03a authoring rules implemented; persistence/editor still pending — 19 October 2026
+
+PRs #234 and #235 were reviewed/revalidated under the owner’s direct merge request and merged with green exact-head CI (`4ff7c9d`, `fc3ef34`); author review was disclosed rather than represented as independent-model approval. The first bounded OFFLINE-03a implementation is on `codex/offline-03a-authoring-core`. It prepares immutable add/edit/correct/delete plans with prior logical content retained, stable IDs/source pages, retirement overflow refusal, exact/near-match review, truthful origin labels and private-by-default instructor export selection. **55 focused cases pass; full frontend 3,835 passed / 6 skipped with zero unhandled errors, and typecheck/build/hygiene pass.** This is an in-process core, not a raw parser, persisted history or finished manual-editing feature. No production screen imports it and no migration/release flag changed. [Report](docs/OFFLINE_03A_AUTHORING_CORE_REPORT_2026-10-19.md); [reviewer assignment](docs/OFFLINE_03A_AUTHORING_CORE_REVIEWER_PROMPT_2026-10-19.md).
+
+**Next:** review the core, then the remaining coupled 03a migration/browser-native persistence, canonical-origin/backup parity and editor/history/regeneration/export integration. Preserve the owner’s five approved defaults. Complete and review 03a before 03b manual practice questions; 03c remains deferred. Then homework → exports. Do not mark OFFLINE-03a complete or expose a partial writer. Existing release/installed/pressure gates remain open; earlier entries below are history.
+
 ## App audit and polish: four source/browser corrections pending review — 19 October 2026
 
 A bounded audit of ten app screens at desktop/narrow widths and synthetic material creation reproduced the clipped Gemini confirmation **Cancel** (V057-UI-01), long progress-text overflow, every-second live-status updates and dangling form hint references. Shared layout/accessibility corrections and regression coverage are supplied on `codex/app-polish-audit`, based on accepted main `fdbf290`; no unmerged PR #234 code was copied. [Audit and reviewer handoff](docs/APP_POLISH_AUDIT_2026-10-19.md); [evidence](docs/evidence/app-polish-audit-2026-10-19/README.md).

@@ -45,9 +45,12 @@ import {
   isImportSaveErrorCode,
   isNativeCardReviewErrorCode,
   isPracticeSessionErrorCode,
+  isStudySetErrorCode,
   PRACTICE_SESSION_ERROR_MESSAGES,
   PracticeSessionError,
+  STUDY_SET_ERROR_MESSAGES,
   StructuredImportSaveError,
+  StudySetSaveError,
 } from "./persistenceErrors";
 import {
   invokeListSkills,
@@ -227,6 +230,30 @@ export async function invokePracticeTestSave(
     }
     throw new PracticeSessionError("IPC_TRANSPORT_ERROR", { cause: rejection });
   }
+}
+
+/**
+ * Invoke the native study-set save (OFFLINE-03a). A refusal keeps its fixed
+ * code and message; anything else is a transport failure, where a retry with
+ * the same operation id is safe.
+ */
+export async function invokeStudySetSave(
+  operation: import("./studySetTransaction").StudySetSaveOperation,
+  call: typeof invoke = invoke,
+): Promise<import("./studySetTransaction").StudySetSaveResult> {
+  let result: unknown;
+  try {
+    result = await call("save_study_set_atomically", { operation });
+  } catch (rejection) {
+    const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
+    if (isStudySetErrorCode(code) && code !== "IPC_TRANSPORT_ERROR" && message === STUDY_SET_ERROR_MESSAGES[code]) {
+      throw new StudySetSaveError(code);
+    }
+    throw new StudySetSaveError("IPC_TRANSPORT_ERROR", { cause: rejection });
+  }
+  const status = (result as { status?: unknown } | null)?.status;
+  if (status !== "saved" && status !== "already_saved") throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
+  return { status };
 }
 
 /**
@@ -524,6 +551,7 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     ): Promise<void> {
       return invokeRemovePracticeTest(sourceMaterialId);
     },
+    saveStudySetAtomically: (operation) => invokeStudySetSave(operation),
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,
     ): Promise<import("@/domain/types").EraseHistoryResult> {

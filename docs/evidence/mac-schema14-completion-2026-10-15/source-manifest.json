@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-19T20:22:52.059000+00:00",
+  "generatedAt": "2026-10-20T01:52:13.191134+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "STATUS.md",
-      "bytes": 312149,
-      "sha256": "ea881bfd93384ec826c008e890f4c687df7f547ec5657144f63dca31ce23ed76"
+      "bytes": 322230,
+      "sha256": "647b7a020c2ed32104a66edc2d4850a0babc6c16b865eb97833fe7a235be3644"
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 196421,
-      "sha256": "39d34c8ee5c8b23eb5e2836c1c33f2b6215de38429d01a2684dc7a77df1fe01a"
+      "bytes": 206502,
+      "sha256": "dec20306b4f2eb5078c53c16b689bc0842550a60103c780483ca94076151e239"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -58,8 +58,8 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 31363,
-      "sha256": "5088ed83c15236b155f4a57a18be58ba4b492b900f8fb0eef0f90e16094f2534"
+      "bytes": 31815,
+      "sha256": "a4816b768dd929a78b4276752f02e1dfaa2f0918f2256059d84d458c552ffc0b"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",
@@ -78,8 +78,8 @@
     },
     {
       "path": "docs/PROJECT_HANDOFF.md",
-      "bytes": 220824,
-      "sha256": "cc51562df9476a3944b28834728774fcd09a2d82d3e4d75af64aafb244c6643b"
+      "bytes": 230840,
+      "sha256": "624787b693e493e4a92074ac296920f2966623e4da1262d9f95c108619254eec"
     },
     {
       "path": "docs/evidence/mac-schema14-verification-preparation-2026-10-11/README.md",
@@ -107,7 +107,7 @@
       "sha256": "f329ca092b1ed4eab95f0de2584cbc7ca458457c9a7f4e262f06d7fdd1c886b1"
     }
   ],
-  "historicalReceipts": "Original accepted executions remain unchanged; F1\u2013F3 executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json; QA-01/QA-02 executions are in docs/evidence/mac-local-v054-qa-followup-2026-10-15/.",
+  "historicalReceipts": "Original accepted executions remain unchanged; F1–F3 executions are in docs/evidence/mac-schema14-followup-2026-10-15/verification.json; QA-01/QA-02 executions are in docs/evidence/mac-local-v054-qa-followup-2026-10-15/.",
   "exclusions": {
     "self": "listed in SHA256SUMS",
     "SHA256SUMS": "never hashes itself"

@@ -11,7 +11,8 @@
  * migrations. Native and browser outcomes are held equal by the shared
  * contract in `src-tauri/fixtures/practice-validation/cases.json`.
  */
-import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex } from "@/logic/cardIdentity";
+import { storedSetProblem } from "./studySetTransaction";
+import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex, versionOrigin, type CanonicalCard } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, stepDelayMs } from "@/logic/cardScheduler";
 
 import type { SkillEvidenceActionName } from "@/domain/types";
@@ -240,6 +241,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 13) await validateSplitLineageState(query, reference);
   if (newest >= 14) await validateSkillEvidenceState(query, reference);
   if (newest >= 15) await validateNavigationState(query, reference);
+  if (newest >= 16) await validateManualStudyState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -777,7 +779,15 @@ export async function validateCardReviewState(query: ValidationQuery, reference:
     if ((await count(query, sql)) > 0) refuse(`The database contains ${problem}.`);
   }
 
-  // 5. Identity: every snapshot is recomputable from its stored text.
+  // 5. Identity: every snapshot is recomputable from its stored text. Schema 16
+  //    keeps who wrote each card beside it; that origin is part of the hash.
+  const hasOrigins =
+    (await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'card_item_origins'")) === 1;
+  const itemSql = hasOrigins
+    ? `SELECT i.id, i.ordinal, i.front, i.back, i.source_page, o.origin FROM card_items i
+       LEFT JOIN card_item_origins o ON o.item_id = i.id
+       WHERE i.version_id = ? ORDER BY i.ordinal ASC`
+    : "SELECT id, ordinal, front, back, source_page, NULL AS origin FROM card_items WHERE version_id = ? ORDER BY ordinal ASC";
   for (const version of await query(
     "SELECT id, source_material_id, content_hash, card_count, created_at, first_reviewed_at FROM card_versions",
     [],
@@ -791,12 +801,9 @@ export async function validateCardReviewState(query: ValidationQuery, reference:
     if ((await sha256Hex(`${text(version, "source_material_id")}\u0000${contentHash}`)) !== versionId) {
       refuse(`${owner} cannot be recomputed from its material and content.`);
     }
-    const items = await query(
-      "SELECT id, ordinal, front, back, source_page FROM card_items WHERE version_id = ? ORDER BY ordinal ASC",
-      [versionId],
-    );
+    const items = await query(itemSql, [versionId]);
     if (items.length !== int(version, "card_count")) refuse(`${owner} card_count does not match its cards.`);
-    const cards: { front: string; back: string; sourcePage: number | null }[] = [];
+    const cards: CanonicalCard[] = [];
     for (const [expected, item] of items.entries()) {
       const itemId = text(item, "id");
       if (int(item, "ordinal") !== expected) refuse(`Card ${itemId} has a non-contiguous ordinal.`);
@@ -806,9 +813,15 @@ export async function validateCardReviewState(query: ValidationQuery, reference:
       const sourcePage = optInt(item, "source_page");
       if (!isValidCardText(front, MAX_FRONT_CHARS) || !isValidCardText(back, MAX_BACK_CHARS)) refuse(`Card ${itemId} has invalid text.`);
       if (sourcePage !== null && (sourcePage < 1 || sourcePage > MAX_SOURCE_PAGE)) refuse(`Card ${itemId} has an out-of-bounds source page.`);
-      cards.push({ front, back, sourcePage });
+      const origin = optText(item, "origin");
+      if (origin !== null && origin !== "user" && origin !== "instructor") refuse(`Card ${itemId} has an unknown origin.`);
+      cards.push(origin ? { front, back, sourcePage, origin } : { front, back, sourcePage });
     }
     if ((await sha256Hex(canonicalJson(cards))) !== contentHash) refuse(`${owner} content hash does not match its cards.`);
+    if (hasOrigins) {
+      const [stored] = await query("SELECT origin FROM card_version_origins WHERE version_id = ?", [versionId]);
+      if ((stored ? text(stored, "origin") : null) !== versionOrigin(cards)) refuse(`${owner} origin does not match its cards.`);
+    }
   }
 
   // 6. Generations of existing materials (a missing row is generation 0).
@@ -1449,4 +1462,54 @@ export async function validateNavigationState(query: ValidationQuery, reference:
   ) {
     refuse("A study material has more bookmarks than the app supports.");
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Schema 16: study material she makes herself                         */
+/* (native twin: `verify_schema_16_manual_study_semantics`)            */
+/* ------------------------------------------------------------------ */
+
+export const MANUAL_STUDY_TABLES = [
+  "study_set_history",
+  "card_version_origins",
+  "card_item_origins",
+  "practice_item_origins",
+  "ai_study_sets",
+] as const;
+
+/**
+ * The OFFLINE-03 contract: the history and origin tables, and the two new
+ * study-set columns, exactly as migration 0016 defines them; rows that point
+ * at real materials, cards and questions; and well-formed stored provenance.
+ * Card origins are checked against their snapshot hashes in schema 12.
+ */
+export async function validateManualStudyState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  for (const table of MANUAL_STUDY_TABLES) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table))) {
+      refuse(`Table ${table} columns do not match the registered migration contract.`);
+    }
+    if (!same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table))) {
+      refuse(`Table ${table} foreign keys do not match the registered migration contract.`);
+    }
+    if (!same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table)))) {
+      refuse(`Table ${table} CHECK constraints do not match the registered migration contract.`);
+    }
+    if (!same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) {
+      refuse(`Table ${table} keys do not match the registered migration contract.`);
+    }
+    if ((await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length !== 0) {
+      refuse(`Table ${table} has rows that point at nothing.`);
+    }
+  }
+  if (
+    (await navigationIndexShape(query, "study_set_history", "idx_study_set_history")) !==
+    (await navigationIndexShape(reference, "study_set_history", "idx_study_set_history"))
+  ) {
+    refuse("The database is missing required index: idx_study_set_history");
+  }
+  const problem = await storedSetProblem(query);
+  if (problem) refuse(problem);
 }

@@ -12,6 +12,8 @@ import {
 import type { AppData } from "./AppDataContext";
 import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
+import { forgetReviewedSave, rememberReviewedSave, type ReviewedRegeneration } from "./reviewedSaveCheckpoint";
+import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import {
   acknowledgeGeminiJob,
   generatePracticeTest,
@@ -53,7 +55,10 @@ import {
  * "Save again" uses it without asking Gemini again. After a reload or restart,
  * the native journal is read back before anything new may start. A finished
  * answer waits for her to save or discard it. A generation cut off by the app
- * closing is shown as interrupted and never resent by itself.
+ * closing is shown as interrupted and never resent by itself. A save she
+ * reviewed keeps its exact operation on this computer until the journal
+ * acknowledges the answer, so a restart recognises that save instead of
+ * making it again under new item ids.
  */
 
 export type GeminiJobPhase =
@@ -107,6 +112,16 @@ export interface GeminiJob {
   /** Whether the generation request has been sent to the native side. */
   invoked?: boolean;
   /**
+   * Her study set holds items she wrote, corrected or deleted, so this answer
+   * is saved only through the regeneration review (OFFLINE-03a), never as is.
+   */
+  needsReview?: boolean;
+  /**
+   * The reviewed save that last failed. Saving the same choices again resends
+   * exactly this operation, so a save that did commit is recognised, not repeated.
+   */
+  reviewed?: ReviewedRegeneration;
+  /**
    * Started by this window, whose own request decides its outcome. Recovery
    * after a reload follows only jobs it found, never these, even once they
    * have their native id.
@@ -127,6 +142,12 @@ export interface StartOptions {
   onSaved?: () => void;
 }
 
+/**
+ * A regenerated study set as she reviewed it, and the checkpoint that keeps it
+ * until the journal acknowledges its answer. Shared with the review dialog.
+ */
+export type { ReviewedRegeneration } from "./reviewedSaveCheckpoint";
+
 /** Whether earlier Gemini work has been read back from the journal yet. */
 export type GeminiRecovery = "pending" | "ready" | "failed";
 
@@ -140,6 +161,9 @@ interface GeminiJobsValue {
   retryRecovery(): void;
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
   saveAgain(key: string): Promise<void>;
+  /** Save a regenerated study set as she reviewed it, keeping what she chose (OFFLINE-03a). */
+  /** True once saved; false leaves the answer, and her review, in place. */
+  saveReviewed(key: string, reviewed: ReviewedRegeneration): Promise<boolean>;
   dismiss(key: string): Promise<void>;
   /** Ask to cancel a running generation (GEN-REL-04). */
   cancel(key: string): Promise<void>;
@@ -155,6 +179,8 @@ const SAVE_FAILED_MESSAGE =
   "Gemini finished, but saving the answer did not work. Anything already saved is unchanged. Save again uses the same answer and does not ask Gemini again.";
 export const DISCARD_FAILED_MESSAGE =
   "That could not be recorded just now, so it might come back after the app restarts. Try again.";
+const REVIEWED_SAVE_FAILED_MESSAGE =
+  "Saving the reviewed study guide did not work, or this guide changed after you reviewed it. Anything already saved is unchanged. Review it again to save.";
 const SAVE_FAILED_NOT_KEPT_MESSAGE =
   "Gemini finished, but saving the answer did not work, and it could not be kept on this Mac either. Anything already saved is unchanged. Save again uses the same answer while the app stays open.";
 
@@ -205,9 +231,14 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   if (kind === "study-aid") {
     const s = saved as AiStudySet;
     const a = answer as GeneratedStudyAid;
+    // Compared as a plain save stores it: only these fields, and a page outside
+    // the PDF range as no page, so a committed save is recognised on retry.
+    const sections = (list: AiStudySet["sections"]) => list.map(({ heading, body }) => ({ heading, body }));
+    const cards = (list: AiStudySet["flashcards"]) =>
+      list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
     return (
-      canonical([s.title, s.summary, s.sections, s.flashcards, s.sourceNotes, s.model]) ===
-      canonical([a.title, a.summary, a.sections, a.flashcards, a.sourceNotes, a.model])
+      canonical([s.title, s.summary, sections(s.sections), cards(s.flashcards), s.sourceNotes, s.model]) ===
+      canonical([a.title, a.summary, sections(a.sections), cards(a.flashcards), a.sourceNotes, a.model])
     );
   }
   const s = saved as PracticeTest;
@@ -219,6 +250,23 @@ async function savedContent(repos: Repositories, kind: GeminiJobKind, materialId
   return kind === "study-aid"
     ? (await repos.documents.listAiStudySets()).find((set) => set.sourceMaterialId === materialId)
     : (await repos.documents.listPracticeTests()).find((test) => test.sourceMaterialId === materialId);
+}
+
+/**
+ * Whether the journal cannot see this answer any more.
+ *
+ * The native journal answers `false` to an acknowledgement both for a record it
+ * will not let go of and for one already gone — removed by another window, say
+ * (src-tauri/src/gemini_jobs.rs). Only reading it back tells the two apart, and
+ * a read that fails answers nothing: the answer counts as still there.
+ */
+async function goneFromJournal(id: string): Promise<boolean> {
+  try {
+    const records = await listGeminiJobs();
+    return !records.some((record) => record.id === id);
+  } catch {
+    return false;
+  }
 }
 
 interface Props {
@@ -266,17 +314,36 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   const syncPendingCount = useCallback(() => setPendingAckCount(pendingAcksRef.current.size), []);
 
-  /** Ask the journal to forget one job; true once it is written down. */
+  /**
+   * Ask the journal to forget one job. True only when the answer is confirmed
+   * gone from it: `true` says so directly, and a `false` answer is settled by
+   * reading the journal back, because the native journal answers `false` both
+   * for a record it cannot remove and for one another window has already
+   * removed. A rejection, a record that is still there, or a read that fails
+   * keeps this on the retry list and keeps anything that depends on it where it
+   * is.
+   */
   const acknowledgeNow = useCallback(
     async (id: string): Promise<boolean> => {
+      let acknowledged = false;
       try {
-        await acknowledgeGeminiJob(id);
-        pendingAcksRef.current.delete(id);
-        syncPendingCount();
-        return true;
+        acknowledged = await acknowledgeGeminiJob(id);
       } catch {
+        // The write did not go through, so the journal was never heard from.
+        // Nothing here may be treated as done, and no read may say otherwise.
         return false;
       }
+      // `false` is not removal on its own: the journal also answers that while
+      // its own command is still finishing, while a damaged journal is
+      // quarantined, and when it cannot write. Absence, once confirmed, is.
+      if (!acknowledged && !(await goneFromJournal(id))) return false;
+      pendingAcksRef.current.delete(id);
+      syncPendingCount();
+      // The journal will never hand this answer back, so the reviewed save it
+      // was holding is finished with. This is the only place that checkpoint is
+      // dropped: a study-set write that succeeded says nothing about here.
+      forgetReviewedSave(id);
+      return true;
     },
     [syncPendingCount],
   );
@@ -285,7 +352,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
    * Retry acknowledgements that could not be written yet. They follow saves
    * whose content is already in the library: a restart before they succeed is
    * still safe, because an answer that is already the saved content is
-   * recognized and never saved twice.
+   * recognized and never saved twice, and a save she reviewed keeps its exact
+   * operation here until the acknowledgement lands.
    */
   const flushAcks = useCallback(async () => {
     for (const id of [...pendingAcksRef.current]) await acknowledgeNow(id);
@@ -309,13 +377,19 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   /** Save an answer to the material it was made from, if that is still right. */
   const persist = useCallback(
-    async (key: string): Promise<void> => {
+    async (key: string, reviewed?: ReviewedRegeneration): Promise<boolean> => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
-      if (!job?.answer) return;
+      if (!job?.answer) return false;
       update(key, { phase: "saving", error: null });
       const answer = job.answer;
+      // A reviewed save is the one write the journal cannot re-check for her:
+      // record the exact operation before sending it, and let the
+      // acknowledgement (acknowledgeNow) be the only thing that removes it.
+      // Whether the study set stored is not the test — the answer stays in the
+      // journal until then, and a restart must recognise this save, not redo it.
+      if (reviewed) rememberReviewedSave(job.jobId, reviewed);
 
-      let outcome: "saved" | "already" | "superseded" | "newer" | null;
+      let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
       try {
         outcome = await mutate(async (repos) => {
           // Every check is made here, inside the write queue, immediately
@@ -329,9 +403,24 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               return "superseded" as const;
             }
           }
+          if (reviewed && job.kind === "study-aid") {
+            // The set she reviewed is named column for column, so a change made
+            // since refuses as stale; the same id makes a retry safe.
+            await repos.documents.saveStudySet({
+              operationId: reviewed.operationId,
+              materialId: job.materialId,
+              reason: "regenerate",
+              expected: reviewed.expected,
+              next: reviewed.next,
+            });
+            return "saved" as const;
+          }
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
           if ((saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
+          // Her own items, corrections and deletions are never replaced
+          // without her review (OFFLINE-03a).
+          if (job.kind === "study-aid" && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
           if (job.kind === "study-aid") {
             const aid = answer as GeneratedStudyAid;
             await repos.documents.saveAiStudySet({
@@ -362,6 +451,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         const onSaved = onSavedRef.current.get(key);
         forget(key);
         if (outcome === "saved") onSaved?.();
+        return true;
+      } else if (outcome === "review") {
+        update(key, { phase: "recovered", needsReview: true, error: null });
       } else if (outcome === "superseded" || outcome === "newer") {
         update(key, {
           phase: "superseded",
@@ -370,9 +462,13 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       } else {
         update(key, {
           phase: "save-failed",
-          error: job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE,
+          error: reviewed
+            ? REVIEWED_SAVE_FAILED_MESSAGE
+            : job.checkpointed ? SAVE_FAILED_MESSAGE : SAVE_FAILED_NOT_KEPT_MESSAGE,
+          ...(reviewed ? { reviewed } : {}),
         });
       }
+      return false;
     },
     [forget, mutate, update],
   );
@@ -595,6 +691,21 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     [persist, release],
   );
 
+  const saveReviewed = useCallback(
+    async (key: string, reviewed: ReviewedRegeneration) => {
+      const job = jobsRef.current.find((candidate) => candidate.key === key);
+      if (!job || !job.answer || job.kind !== "study-aid" || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
+      if (activeRef.current !== null) return false;
+      activeRef.current = key;
+      try {
+        return await persist(key, reviewed);
+      } finally {
+        release(key);
+      }
+    },
+    [persist, release],
+  );
+
   /**
    * Her decision to discard or dismiss: shown as done only once the journal
    * has recorded it, so a discarded answer cannot quietly come back.
@@ -797,12 +908,13 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       retryRecovery,
       start,
       saveAgain,
+      saveReviewed,
       dismiss,
       cancel,
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, recovery, retryRecovery, start, saveAgain, dismiss, cancel, lockTick],
+    [jobs, recovery, retryRecovery, start, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

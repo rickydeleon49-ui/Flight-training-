@@ -58,6 +58,14 @@ export interface SqlDatabase {
     operation: PracticeTestSaveOperation,
   ): Promise<void>;
   /**
+   * One atomic study-set save (OFFLINE-03a): the whole previous set goes to
+   * history first, in the same transaction. No fallback: without it, saving
+   * a set refuses.
+   */
+  saveStudySetAtomically?(
+    operation: import("./studySetTransaction").StudySetSaveOperation,
+  ): Promise<import("./studySetTransaction").StudySetSaveResult>;
+  /**
    * Single-connection atomic transaction for removing a practice test.
    */
   removePracticeTestAtomically?(

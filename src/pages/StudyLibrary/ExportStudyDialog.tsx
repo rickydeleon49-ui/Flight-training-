@@ -14,7 +14,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Button, Dialog } from "@/components/ui";
-import { exportFileName, exportStudyPacket, exportableParts, type ExportSelection, type ExportSource } from "@/logic/studyExport";
+import {
+  exportFileName,
+  exportSourceFor,
+  exportStudyPacket,
+  exportableParts,
+  hasHandwrittenItems,
+  hasInstructorCorrections,
+  type ExportSelection,
+  type ExportSource,
+} from "@/logic/studyExport";
 import { buildHandoutHtml } from "@/logic/studyHandout";
 import { DesktopOnlyError } from "@/services/documents";
 import { saveStudyExport, StudyExportError } from "@/services/studyExport";
@@ -31,8 +40,10 @@ export const EXPORT_DESKTOP_ONLY = "Saving a file needs the desktop application.
 
 export function ExportStudyDialog({ open, source, onClose }: Props) {
   const ids = useId();
-  const available = exportableParts(source);
-  const [selection, setSelection] = useState<ExportSelection>(available);
+  // Off by default: her instructor's corrections are included only deliberately.
+  const [selection, setSelection] = useState<ExportSelection>(() => ({ ...exportableParts(exportSourceFor(source, {})), instructorCorrections: false }));
+  const effective = exportSourceFor(source, selection);
+  const available = exportableParts(effective);
   const [output, setOutput] = useState<Output>("handout");
   const [answerKey, setAnswerKey] = useState(true);
   const [working, setWorking] = useState(false);
@@ -42,14 +53,16 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    setSelection(exportableParts(source));
+    setSelection({ ...exportableParts(exportSourceFor(source, {})), instructorCorrections: false });
     setError(null);
     setSaved(null);
     // Reset only when the dialog opens; the source is read again at save time.
   }, [open]);
 
   const chosen = (selection.guide && available.guide) || (selection.flashcards && available.flashcards) || (selection.questions && available.questions);
-  const set = source.studySet;
+  const set = effective.studySet;
+  const corrections = hasInstructorCorrections(source.studySet);
+  const handwritten = hasHandwrittenItems(source.studySet);
   const questionCount = source.practiceTest?.questions.length ?? 0;
 
   const save = async () => {
@@ -120,6 +133,21 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
           {available.questions ? (
             <Choice checked={selection.questions} onChange={toggle("questions")} label="Practice questions" detail={plural(questionCount, "question")} />
           ) : null}
+          {corrections ? (
+            <Choice
+              checked={Boolean(selection.instructorCorrections)}
+              onChange={(checked) =>
+                setSelection((current) => {
+                  const next = { ...current, instructorCorrections: checked };
+                  const parts = exportableParts(exportSourceFor(source, next));
+                  // A part that only had corrections in it is chosen once it has content.
+                  return { ...next, guide: current.guide || (checked && parts.guide), flashcards: current.flashcards || (checked && parts.flashcards) };
+                })
+              }
+              label="Include my instructor's corrections"
+              detail="Left out unless you include them"
+            />
+          ) : null}
         </fieldset>
 
         <fieldset className="export-study__choices" disabled={working}>
@@ -142,6 +170,11 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
             label="Add an answer key at the end"
             detail="On its own page, so you can quiz yourself first."
           />
+        ) : null}
+        {output === "packet" && handwritten ? (
+          <p className="tiny dim">
+            Study packets don't record who wrote each item. When imported, everything shows as imported.
+          </p>
         ) : null}
         {output === "packet" && selection.questions && available.questions ? (
           <p className="tiny dim">A study packet always includes the answers, so it can be practiced after importing.</p>

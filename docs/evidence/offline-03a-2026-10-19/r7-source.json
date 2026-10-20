@@ -1,0 +1,16 @@
+{
+  "code_commit": "9d3a90c7832525cb831dacb1a41b2dbd3628b5ed",
+  "correction_base": "75623243d1ec7232bbcc548fd34563c1e6a49ff7",
+  "implementation_base": "750c90ce80784d36598f594bfbe1bd78ce9a44e2",
+  "files": {
+    "src/state/reviewedSaveCheckpoint.ts": "23844d64768fc04f1ef8df0a2c75a573ad8bb57fed18c3343f77add8e6f830a0",
+    "src/state/reviewedSaveCheckpoint.test.ts": "cd52a559d7e10c65205fec0ed5babcfa600869b07bef02ec1bab3839346e45ca",
+    "src/state/GeminiJobs.tsx": "9158e0acb9e370c7d02ce66e758b1388f16ed207ff476c5840c9419af96c364d",
+    "src/pages/StudyLibrary/RegenerationReviewDialog.tsx": "a9a8adfb962a5442ccba1622b20c004a38d50d7aed207a31720be625ef9269b4",
+    "src/pages/StudyLibrary/StudySetEditing.test.ts": "32e72b57b0a2ed44f3bcfdf2eec41d9b0c7799fe3e4fca47765146d62b31cb8a"
+  },
+  "node": "v22.23.3",
+  "implementer": "Qwen Code 0.25.3; qwen/qwen3.8-flash via configured OpenRouter provider",
+  "reviewer": "Codex",
+  "source_changes_during_gate": []
+}

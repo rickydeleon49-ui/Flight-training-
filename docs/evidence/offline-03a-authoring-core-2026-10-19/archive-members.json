@@ -1,0 +1,32 @@
+[
+  {
+    "path": "build.txt",
+    "bytes": 7739,
+    "sha256": "d71c287ce3982afcc8137b6d2f1dd6d1ea3e9cb89ad0de77ca1d8f2ea63337d8"
+  },
+  {
+    "path": "focused.txt",
+    "bytes": 309,
+    "sha256": "5a0cc0cbae6962adb9687fe441df8e6f8d70220885fb48af2bb2fe110b5cedf0"
+  },
+  {
+    "path": "frontend.txt",
+    "bytes": 14852,
+    "sha256": "2c187787ba421e8b8c453bf1b80db04c0f43cf5662a8751bc27dcb9810630654"
+  },
+  {
+    "path": "gate-exits.json",
+    "bytes": 71,
+    "sha256": "ec65c631af0966b9a4184404866d73fb720259b01e00eb90a0dae1ff8a05dc02"
+  },
+  {
+    "path": "typecheck.txt",
+    "bytes": 51,
+    "sha256": "f05679482d7566eea51ded8daf0e7626af4e0231d71715cbcdefd2928f5e19f1"
+  },
+  {
+    "path": "whitespace.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

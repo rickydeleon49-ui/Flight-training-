@@ -11,7 +11,7 @@
  * formatter never produces links or images.
  */
 import { parseGuideBody, type GuideBlock, type GuideInline } from "@/logic/guideFormat";
-import { exportableParts, provenanceNote, type ExportSelection, type ExportSource } from "@/logic/studyExport";
+import { exportableParts, exportSourceFor, provenanceNote, type ExportSelection, type ExportSource } from "@/logic/studyExport";
 
 export interface HandoutOptions {
   answerKey: boolean;
@@ -80,6 +80,13 @@ export function guideBlocksHtml(blocks: GuideBlock[]): string {
     .join("");
 }
 
+/** Who wrote an item, for a handout others may read; nothing for generated items. */
+function authorRef(origin: unknown): string {
+  if (origin === "instructor") return ` <span class="ref">(instructor correction)</span>`;
+  if (origin === "user") return ` <span class="ref">(written by hand)</span>`;
+  return "";
+}
+
 function pageRef(page: number | null): string {
   return page ? ` <span class="ref">(source p. ${page})</span>` : "";
 }
@@ -113,7 +120,9 @@ th { background: #f3f4f6; }
 `;
 
 /** The handout page for the chosen parts. */
-export function buildHandoutHtml(source: ExportSource, selection: ExportSelection, options: HandoutOptions, createdAt: Date): string {
+export function buildHandoutHtml(allContent: ExportSource, selection: ExportSelection, options: HandoutOptions, createdAt: Date): string {
+  // Her instructor's corrections are left out unless she included them.
+  const source = exportSourceFor(allContent, selection);
   const available = exportableParts(source);
   const set = source.studySet;
   const test = source.practiceTest;
@@ -122,9 +131,9 @@ export function buildHandoutHtml(source: ExportSource, selection: ExportSelectio
 
   if (set && selection.guide && available.guide) {
     const parts = [`<h2>Study guide</h2>`];
-    if (set.summary.trim()) parts.push(`<p>${lines(set.summary)}</p>`);
+    if (set.summary.trim()) parts.push(`<p>${lines(set.summary)}${authorRef(set.summaryOrigin)}</p>`);
     for (const section of set.sections) {
-      parts.push(`<h3>${escapeHtml(section.heading)}</h3>${guideBlocksHtml(parseGuideBody(section.body))}`);
+      parts.push(`<h3>${escapeHtml(section.heading)}${authorRef(section.origin)}</h3>${guideBlocksHtml(parseGuideBody(section.body))}`);
     }
     if (set.sourceNotes.trim()) parts.push(`<p class="meta">${lines(set.sourceNotes)}</p>`);
     sections.push(`<section>${parts.join("")}</section>`);
@@ -132,7 +141,7 @@ export function buildHandoutHtml(source: ExportSource, selection: ExportSelectio
 
   if (set && selection.flashcards && available.flashcards) {
     const rows = set.flashcards
-      .map((card) => `<tr><td>${lines(card.front)}</td><td>${lines(card.back)}${pageRef(card.sourcePage)}</td></tr>`)
+      .map((card) => `<tr><td>${lines(card.front)}${authorRef(card.origin)}</td><td>${lines(card.back)}${pageRef(card.sourcePage)}</td></tr>`)
       .join("");
     sections.push(
       `<section><h2>Flashcards</h2><table class="cards"><thead><tr><th scope="col">Front</th><th scope="col">Back</th></tr></thead><tbody>${rows}</tbody></table></section>`,

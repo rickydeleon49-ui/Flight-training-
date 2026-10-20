@@ -1,0 +1,91 @@
+
+ RUN  v4.1.11 /private/tmp/hfd-03a-r6-baseline-e2eh4ock
+
+(node:1836) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > a study guide she writes herself > starts on a material with no file, is labelled as hers, and takes her cards
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > an edit is marked as hers and keeps the earlier wording, which she can restore
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > an instructor's correction replaces the original and stays out of exports by default
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed save keeps her text, and saving again records one change
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a change saved elsewhere after she opened the dialog is refused, not overwritten
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > regenerating over her items waits for her review, holds back what she deleted, and keeps her items
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a plain save never replaces her items, even without the page asking
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed reviewed save keeps the dialog and her choices open; saving again saves once
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before its answer was lost is recognised on retry, not applied twice
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > restoring is refused when the guide changed after she opened the confirmation
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed is recognised even after she closes and reopens the review
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a regenerated card with a page outside the PDF range is reviewed and saved with no page
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > the review shows each item's full text and the earlier wording it resembles before she chooses
+ ↓ src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed before a restart is recognised after the restart, not applied again
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal could not write it down is recognised after a restart, not saved again 368ms
+   → expected null to be truthy
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal would not forget the answer is recognised after a restart, not saved again 270ms
+   → expected null to be truthy
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > re-confirming a committed reviewed save keeps its checkpoint until the journal acknowledges it 237ms
+   → expected null to be truthy
+ × src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it 5019ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal could not write it down is recognised after a restart, not saved again
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save whose acknowledgement failed because the journal would not forget the answer is recognised after a restart, not saved again
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:488:48
+    486|       // Saved, but the journal is not finished with its answer: her e…
+    487|       // operation stays on this computer where a restart can find it.
+    488|       expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+       |                                                ^
+    489|       const before = herItems(await savedSet());
+    490|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > re-confirming a committed reviewed save keeps its checkpoint until the journal acknowledges it
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:528:46
+    526|     expect((await history()).map((row) => row.reason)).toEqual(["edit"…
+    527|     // Confirmed, not acknowledged: her operation is still needed.
+    528|     expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
+       |                                              ^
+    529|     // The retried acknowledgement is what finishes the job.
+    530|     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(tr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > discarding an answer she never committed is recorded, and cleaned up, only once the journal acknowledges it
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:534:3
+    532|   });
+    533|
+    534|   it("discarding an answer she never committed is recorded, and cleane…
+       |   ^
+    535|     const review = await herEditThenRegenerate();
+    536|     let failures = 1;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 14 skipped (18)
+   Start at  18:19:48
+   Duration  6.70s (transform 374ms, setup 0ms, import 498ms, tests 5.90s, environment 226ms)
+
+
+exit 1 (expected failing regression)

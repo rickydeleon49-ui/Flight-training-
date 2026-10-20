@@ -84,6 +84,15 @@ Before current data moves, restore performs all of these checks:
 10. Versions 2 and 3 hashes must match the complete integrity inventory.
 11. The staged database must have a SQLite header, pass `PRAGMA quick_check`, contain `settings` and `study_materials`, carry either desktop `_sqlx_migrations` or fallback `schema_migrations` history, and not declare a schema version newer than this build supports.
 
+12. A schema-16 database (OFFLINE-03a) also keeps its study-set history and card origins consistent:
+   - `study_set_history`, `card_version_origins`, `card_item_origins`, `practice_item_origins` and the two new `ai_study_sets` columns match migration 0016 exactly;
+   - every row points at an existing material, card or question;
+   - each `retired_json` list is well-formed and has at most 2,000 entries;
+   - each history row holds a whole previous set;
+   - a card's side-table origin is part of its snapshot hash. A tampered or missing origin therefore fails the hash check, and a snapshot's own origin must match its cards.
+
+   Backups from schema 15 and earlier are checked against their own version's contract, so they still restore.
+
 Validation and extraction happen in `.restore-staging`. A successful stage is atomically renamed to `.restore-pending`. Current data remains untouched until activation.
 
 ## Replace activation

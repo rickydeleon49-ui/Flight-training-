@@ -382,6 +382,23 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         }),
       );
     },
+    saveStudySetAtomically(
+      operation: import("./studySetTransaction").StudySetSaveOperation,
+    ): Promise<import("./studySetTransaction").StudySetSaveResult> {
+      return owner.exclusive(() =>
+        durableWrite(
+          async () => {
+            const { executeStudySetSave } = await import("./studySetTransaction");
+            return executeStudySetSave(exec, run, query, operation);
+          },
+          (cause) =>
+            new StorageDurabilityError(
+              "The study set could not be saved to browser storage, so nothing was saved. Free some browser storage and try again.",
+              { cause },
+            ),
+        ),
+      );
+    },
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,
     ): Promise<import("@/domain/types").EraseHistoryResult> {

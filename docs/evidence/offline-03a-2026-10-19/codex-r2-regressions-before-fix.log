@@ -1,0 +1,44 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/.review-03a-prefix2
+
+(node:91631) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts (12 tests | 2 failed) 11758ms
+     × a reviewed save that committed is recognised even after she closes and reopens the review 5021ms
+     × a regenerated card with a page outside the PDF range is reviewed and saved with no page 5033ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a reviewed save that committed is recognised even after she closes and reopens the review
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:344:3
+    342|   });
+    343|
+    344|   it("a reviewed save that committed is recognised even after she clos…
+       |   ^
+    345|     const review = await herEditThenRegenerate();
+    346|     const save = db.saveStudySetAtomically!.bind(db);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a regenerated card with a page outside the PDF range is reviewed and saved with no page
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/pages/StudyLibrary/StudySetEditing.test.ts:367:3
+    365|   });
+    366|
+    367|   it("a regenerated card with a page outside the PDF range is reviewed…
+       |   ^
+    368|     const review = await herEditThenRegenerate({
+    369|       flashcards: [{ front: "When do you flare?", back: "About ten fee…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  17:25:41
+   Duration  12.55s (transform 355ms, setup 0ms, import 475ms, tests 11.76s, environment 222ms)
+
+exit 1

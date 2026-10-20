@@ -19,6 +19,8 @@ import {
   appliedVersions,
   createRequest,
   dumpTables,
+  MANUAL_STUDY_NEW_TABLES,
+  withoutSchema16Columns,
   migrate,
   openNodeEngine,
   openSqlJsEngine,
@@ -79,11 +81,12 @@ describe("upgrading a populated schema-13 library", () => {
     expect(await db.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: MIGRATIONS.at(-1)!.version }]);
     const after = await openNodeEngine(path);
     engines.push(after);
-    // Later migrations only add tables: schema 15's four navigation tables, all empty.
-    const retained = RETAINED(after) as Record<string, unknown>;
+    // Later migrations only add: schema 15's four navigation tables and schema 16's
+    // four history and origin tables, all empty, and defaulted columns.
+    const retained = withoutSchema16Columns(RETAINED(after)) as Record<string, unknown>;
     expect(Object.fromEntries(Object.keys(before).map((k) => [k, retained[k]]))).toEqual(before);
     const added = Object.keys(retained).filter((k) => !Object.hasOwn(before, k)).sort();
-    expect(added).toEqual([...NAVIGATION_TABLES].sort());
+    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES].sort());
     for (const table of added) expect(retained[table], table).toEqual([]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_catalog_entries")).toEqual([{ n: 15 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 0 }]);

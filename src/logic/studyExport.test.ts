@@ -228,3 +228,52 @@ describe("export helpers", () => {
     expect(exportFileName("   ", "json")).toBe("Study packet.json");
   });
 });
+
+describe("her own items and her instructor's corrections (OFFLINE-03a)", () => {
+  const mixed = () =>
+    studySet({
+      summaryOrigin: "instructor",
+      sections: [
+        { heading: "Reading a METAR", body: "Station, time, wind.", itemId: "s-1" },
+        { heading: "My mnemonic", body: "Wind before weather.", itemId: "s-2", origin: "user" },
+      ],
+      flashcards: [
+        { front: "What is a METAR?", back: "A routine observation.", sourcePage: 12, itemId: "c-1" },
+        { front: "BKN means?", back: "Broken, per my CFI.", sourcePage: null, itemId: "c-2", origin: "instructor", replaces: "c-0" },
+      ],
+    });
+  const source = (set: AiStudySet): ExportSource => ({ material: makeMaterial({ title: "Weather" }), studySet: set, practiceTest: null });
+
+  it("leaves instructor corrections out unless she includes them", () => {
+    const left = exportStudyPacket(source(mixed()), ALL, NOW);
+    if (!left.ok) throw new Error(left.message);
+    expect(left.text).not.toContain("per my CFI");
+    expect(left.text).not.toContain("How METARs and TAFs");
+    expect(left.counts).toMatchObject({ sections: 2, flashcards: 1 });
+    const included = exportStudyPacket(source(mixed()), { ...ALL, instructorCorrections: true }, NOW);
+    if (!included.ok) throw new Error(included.message);
+    expect(included.text).toContain("per my CFI");
+    expect(included.counts.flashcards).toBe(2);
+  });
+
+  it("writes a strict v1 packet: no ids, origins or replacements travel, and the note says some was handwritten", () => {
+    const result = exportStudyPacket(source(mixed()), { ...ALL, instructorCorrections: true }, NOW);
+    if (!result.ok) throw new Error(result.message);
+    for (const key of ["itemId", "origin", "replaces", "summaryOrigin"]) expect(result.text).not.toContain(`"${key}"`);
+    expect(validatePacketText(result.text).ok).toBe(true);
+    expect(result.text).toContain("Some items were written or corrected by hand in Her Flight Deck, not generated.");
+  });
+
+  it("never calls a set she wrote AI-generated", () => {
+    const result = exportStudyPacket(source(studySet({ provider: "manual", model: "", summaryOrigin: "user" })), ALL, NOW);
+    if (!result.ok) throw new Error(result.message);
+    expect(result.text).toContain("Written by hand in Her Flight Deck; not checked by the app.");
+    expect(result.text).not.toContain("AI-generated");
+  });
+
+  it("a part holding only instructor corrections has nothing to export until she includes them", () => {
+    const onlyCorrection = studySet({ summary: "", sections: [], flashcards: [{ front: "Q", back: "A", sourcePage: null, itemId: "c", origin: "instructor" }] });
+    expect(exportStudyPacket(source(onlyCorrection), ALL, NOW)).toEqual({ ok: false, message: EXPORT_MESSAGES.nothingChosen });
+    expect(exportStudyPacket(source(onlyCorrection), { ...ALL, instructorCorrections: true }, NOW).ok).toBe(true);
+  });
+});
