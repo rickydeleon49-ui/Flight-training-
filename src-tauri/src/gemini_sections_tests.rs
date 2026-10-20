@@ -1154,3 +1154,206 @@ fn descriptor_public_fingerprint_cannot_forge_ownership() {
     .unwrap());
     assert_eq!(r.fake.count(|q| q.is_delete()), 0);
 }
+
+#[test]
+fn queue_creates_waiting_draft_with_zero_network() {
+    let r = Rig::new(10);
+    let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    assert_eq!(r.fake.count(|r| r.is_generate()), 0);
+    assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
+    assert_eq!(r.fake.count(|r| r.is_lookup()), 0);
+    assert_eq!(r.fake.log().len(), 0);
+    let d = read_draft(r.dir.path(), &job_id).unwrap();
+    assert_eq!(d.queue_state, Some(QueueState::WaitingForHer));
+    assert_eq!(d.identity.manifest.len(), 2);
+    assert!(d.results.values().all(|res| res.status == Status::Pending));
+}
+
+#[test]
+fn queue_reopen_no_network() {
+    let r = Rig::new(10);
+    let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    assert_eq!(r.fake.log().len(), 0);
+    r.reopen();
+    assert_eq!(r.fake.count(|r| r.is_generate()), 0);
+    assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
+    assert_eq!(r.fake.count(|r| r.is_lookup()), 0);
+    assert_eq!(r.fake.log().len(), 0);
+    let d = read_draft(r.dir.path(), &job_id).unwrap();
+    assert_eq!(d.queue_state, Some(QueueState::WaitingForHer));
+}
+
+#[test]
+fn running_and_paused_queue_items_wait_for_her_after_reopen() {
+    let r = Rig::new(10);
+    let mut queued = Vec::new();
+    for state in ["running", "paused", "cancelled"] {
+        let mut req = r.request.clone();
+        req.material_id = format!("mat-{state}");
+        let id = queue_study_guide_at(r.dir.path(), &req, ModelChoice::Standard).unwrap();
+        queued.push((id, state));
+    }
+    let path = r.dir.path().join("gemini-jobs.json");
+    let mut persisted: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    for (id, state) in &queued {
+        let job = persisted["jobs"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|j| j["id"].as_str() == Some(id.as_str()))
+            .unwrap();
+        job["draft"]["queueState"] = json!(state);
+    }
+    std::fs::write(&path, serde_json::to_vec(&persisted).unwrap()).unwrap();
+    assert!(r.fake.log().is_empty());
+
+    r.reopen();
+    let journal = gemini_jobs::Journal::open(r.dir.path());
+    let jobs = journal.list();
+    for (id, state) in &queued {
+        let draft = jobs
+            .iter()
+            .find(|j| j.id == *id)
+            .unwrap()
+            .draft
+            .as_ref()
+            .unwrap();
+        if *state == "cancelled" {
+            let original = persisted["jobs"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|j| j["id"].as_str() == Some(id.as_str()))
+                .unwrap();
+            assert_eq!(draft, &original["draft"], "cancelled draft is unchanged");
+        } else {
+            assert_eq!(draft["queueState"], "waiting-for-her", "was {state}");
+        }
+    }
+    assert!(
+        r.fake.log().is_empty(),
+        "reopen sends zero network requests"
+    );
+}
+
+#[test]
+fn start_now_resumes_through_existing_rules() {
+    let r = Rig::new(10);
+    let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    assert_eq!(r.fake.log().len(), 0);
+    r.fake.behave(|b| {
+        b.generate_answers = vec![reply("First", 1), reply("Second", 6)];
+    });
+    let outcome = r.run(Some(&job_id)).unwrap();
+    assert_eq!(outcome.job_id.as_deref(), Some(job_id.as_str()));
+    assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 1);
+    assert_eq!(r.requests().len(), 2);
+    let d = read_draft(r.dir.path(), &job_id).unwrap();
+    assert_eq!(d.results["section-01"].status, Status::Complete);
+    assert_eq!(d.results["section-02"].status, Status::Complete);
+}
+
+#[test]
+fn unrequested_material_never_uploads() {
+    let r = Rig::new(10);
+    let _job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    std::fs::write(
+        r.dir.path().join("documents/b.pdf"),
+        generation_tests::pdf(5, "other"),
+    )
+    .unwrap();
+    let other_req = SectionRequest {
+        material_id: "mat-b".into(),
+        relative_path: "b.pdf".into(),
+        chosen_pages: vec![1, 2, 3, 4, 5],
+        base_revision: None,
+        request_id: None,
+    };
+    let (other_id, _) = source(r.dir.path(), &other_req, "gemini-2.5-flash").unwrap();
+    assert_eq!(other_id.material_id, "mat-b");
+    r.reopen();
+    assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
+    assert_eq!(r.fake.count(|r| r.is_generate()), 0);
+    assert_eq!(r.fake.count(|r| r.is_lookup()), 0);
+}
+
+#[test]
+fn queue_overflow_refused_without_eviction() {
+    let r = Rig::new(5);
+    let mut queued_ids = Vec::new();
+    for i in 1..=8 {
+        let pdf_name = format!("mat-{i}.pdf");
+        std::fs::write(
+            r.dir.path().join("documents").join(&pdf_name),
+            generation_tests::pdf(5, &format!("doc-{i}")),
+        )
+        .unwrap();
+        let req = SectionRequest {
+            material_id: format!("mat-{i}"),
+            relative_path: pdf_name,
+            chosen_pages: vec![1, 2, 3, 4, 5],
+            base_revision: None,
+            request_id: None,
+        };
+        let id = queue_study_guide_at(r.dir.path(), &req, ModelChoice::Standard).unwrap();
+        queued_ids.push(id);
+    }
+    assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list().len()), 8);
+    let pdf_9 = "mat-9.pdf";
+    std::fs::write(
+        r.dir.path().join("documents").join(pdf_9),
+        generation_tests::pdf(5, "doc-9"),
+    )
+    .unwrap();
+    let req_9 = SectionRequest {
+        material_id: "mat-9".into(),
+        relative_path: pdf_9.into(),
+        chosen_pages: vec![1, 2, 3, 4, 5],
+        base_revision: None,
+        request_id: None,
+    };
+    let err = queue_study_guide_at(r.dir.path(), &req_9, ModelChoice::Standard).unwrap_err();
+    assert_eq!(err.message, gemini_jobs::FULL);
+    let current_ids: Vec<String> = gemini_jobs::with(r.dir.path(), |j| {
+        j.list().into_iter().map(|job| job.id).collect()
+    });
+    assert_eq!(current_ids, queued_ids);
+}
+
+#[test]
+fn cancel_waiting_item_removes_it_without_network() {
+    let r = Rig::new(10);
+    let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list().len()), 1);
+    let outcome = cancel_job(r.dir.path(), &job_id, &|_| {}).unwrap();
+    assert!(outcome.cancelled);
+    assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list().len()), 0);
+    assert_eq!(r.fake.count(|r| r.is_generate()), 0);
+    assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
+    assert_eq!(r.fake.count(|r| r.is_lookup()), 0);
+    assert_eq!(r.fake.log().len(), 0);
+}
+
+#[test]
+fn cancelled_queue_item_stays_cancelled_after_reopen() {
+    let r = Rig::new(10);
+    r.answer(2);
+    let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
+    let root = r.dir.path().to_path_buf();
+    let id_for_cancel = job_id.clone();
+    let outcome = r.run_with(Some(&job_id), &r.request, &move |at| {
+        if at == "before-reservation" {
+            let _ = cancel_job(&root, &id_for_cancel, &|_| {});
+        }
+    });
+    assert!(outcome.is_err());
+    let requests_before = r.fake.log().len();
+
+    r.reopen();
+    let journal = gemini_jobs::Journal::open(r.dir.path());
+    let job = journal.list().into_iter().find(|j| j.id == job_id).unwrap();
+    assert_eq!(job.stage, JobStage::Cancelled);
+    let d = read_draft(r.dir.path(), &job_id).unwrap();
+    assert_eq!(d.queue_state, Some(QueueState::Cancelled));
+    assert_eq!(r.fake.log().len(), requests_before);
+}

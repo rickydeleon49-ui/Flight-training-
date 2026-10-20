@@ -259,6 +259,7 @@ pub fn run() {
             gemini::disconnect_gemini,
             gemini::set_gemini_model,
             gemini::generate_study_aid,
+            gemini::sections::queue_study_guide,
             gemini::sections::resume_study_guide,
             gemini::sections::restart_study_guide,
             gemini::generate_practice_test,

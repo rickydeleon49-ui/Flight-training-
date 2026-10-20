@@ -167,7 +167,7 @@ export interface GeminiJobRecord {
   createdAt: number;
   updatedAt: number;
   result?: GeneratedStudyAid | GeneratedPracticeTest;
-  draft?: { kind?: string; identity?: { chosenPages: number[]; baseRevision?: string | null; manifest: Array<{ id: string; heading: string; pageStart: number; pageEnd: number }> }; results?: Record<string, { status: "pending" | "in-flight" | "complete" }>; target?: number; cards?: StudyFlashcard[]; timing?: {
+  draft?: { kind?: string; queueState?: "waiting-for-her" | "running" | "paused" | "cancelled"; identity?: { chosenPages: number[]; baseRevision?: string | null; manifest: Array<{ id: string; heading: string; pageStart: number; pageEnd: number }> }; results?: Record<string, { status: "pending" | "in-flight" | "complete" }>; target?: number; cards?: StudyFlashcard[]; timing?: {
     policy: string; ceilingMillis: number; allowedMillis: number; remainingMillis: number;
     deadlineUtc: number; uploadBytes: number; sampleMillis: number; sampleBytes: number;
     activeStage?: GeminiWorkStage;
@@ -322,6 +322,13 @@ export interface SectionGuideRequest {
   baseRevision?: string | null;
   requestId?: string;
 }
+export async function queueStudyGuide(request: SectionGuideRequest): Promise<string> {
+  if (!isTauri()) return "mock-queue-id";
+  try {
+    return await invoke<string>("queue_study_guide", { request });
+  } catch (error) { throw sectionGuideError(error); }
+}
+
 export async function resumeStudyGuide(request: SectionGuideRequest, jobId?: string): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new SectionGuideError("GUIDE_PAUSED");
   try {

@@ -329,7 +329,10 @@ function MaterialDetailPage() {
       : fileMissing
         ? { text: "This study file is missing from app storage. Restore or re-attach the file to regenerate or create study aids from it." }
         : geminiStatusFailed
-          ? { text: "Could not check the Gemini connection, so new study aids cannot be requested right now. Anything already saved stays available." }
+          ? {
+              text: "Could not check the Gemini connection, so new study aids cannot be requested right now. Anything already saved stays available.",
+              queueLater: isPdf && fileForAi.ready && !studyJob?.sectionGuide,
+            }
           : gemini === null
             ? { text: "Checking the Gemini connection…" }
             : !gemini.configured
@@ -450,6 +453,13 @@ function MaterialDetailPage() {
         },
       },
     );
+  };
+
+  const queueStudyAid = async () => {
+    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+      return;
+    }
+    await geminiJobs.queueGuide({ materialId: material.id, filePath: material.filePath });
   };
 
   const createPracticeTest = async () => {
@@ -634,13 +644,26 @@ function MaterialDetailPage() {
                       >
                         {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
                       </Button>
+                    ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        disabled={isGeneratingAny || fileMissing}
+                        onClick={() => void queueStudyAid()}
+                      >
+                        Generate later
+                      </Button>
                     ) : null}
                   </div>
                 }
               />
               <CardBody>
                 {generationNotice ? (
-                  <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
+                  <GenerationNoticeView
+                    notice={generationNotice}
+                    onSplit={() => setSplitting(true)}
+                    onQueueLater={() => void queueStudyAid()}
+                  />
                 ) : null}
                 {generating ? (
                   studyJob ? (
@@ -1222,6 +1245,20 @@ function MaterialDetailPage() {
         confirmLabel="Send to Gemini"
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingAi(false))}
+        extraActions={
+          isPdf ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setConfirmingAi(false);
+                if (isGeneratingAny || geminiJobs.locked()) return;
+                void queueStudyAid();
+              }}
+            >
+              Generate later
+            </Button>
+          ) : null
+        }
         onConfirm={() => {
           setConfirmingAi(false);
           if (isGeneratingAny || geminiJobs.locked()) return;
@@ -1307,9 +1344,19 @@ interface GenerationNotice {
   split?: boolean;
   /** Link to Settings, where Gemini is connected. */
   settings?: boolean;
+  /** Offer queueing a study guide for later when offline. */
+  queueLater?: boolean;
 }
 
-function GenerationNoticeView({ notice, onSplit }: { notice: GenerationNotice; onSplit: () => void }) {
+function GenerationNoticeView({
+  notice,
+  onSplit,
+  onQueueLater,
+}: {
+  notice: GenerationNotice;
+  onSplit: () => void;
+  onQueueLater?: () => void;
+}) {
   return (
     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
       <div className="ai-disclaimer" role="note">
@@ -1320,6 +1367,13 @@ function GenerationNoticeView({ notice, onSplit }: { notice: GenerationNotice; o
         <div>
           <Button variant="secondary" onClick={onSplit}>
             Create study-size parts
+          </Button>
+        </div>
+      ) : null}
+      {notice.queueLater && onQueueLater ? (
+        <div>
+          <Button variant="secondary" onClick={onQueueLater}>
+            Generate later
           </Button>
         </div>
       ) : null}

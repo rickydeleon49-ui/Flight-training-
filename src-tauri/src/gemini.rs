@@ -65,7 +65,7 @@ const MODEL_CHOICE_WRITING: &str = "gemini-model.writing";
 
 /// Which Gemini model her documents go to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ModelChoice {
+pub(crate) enum ModelChoice {
     /// `MODEL`: fast, inexpensive and available on Google's free tier.
     Standard,
     /// `CAPABLE_MODEL`: slower and costlier, for long or complex material.
@@ -1374,11 +1374,23 @@ pub fn cancel_gemini_job(
     request_id: Option<String>,
 ) -> Result<CancelOutcome, String> {
     let root = app_root(&app)?;
-    match (request_id, job_id) {
+    let outcome = match (request_id, job_id.clone()) {
         (Some(request_id), _) => cancel_request(&root, &request_id, &job_changed(&app)),
         (None, Some(job_id)) => cancel_job(&root, &job_id, &job_changed(&app)),
         (None, None) => Err("There was nothing to cancel.".to_string()),
+    }?;
+    if outcome.cancelled && outcome.stage.is_none() {
+        if let Some(id) = job_id {
+            let _ = app.emit(
+                JOB_EVENT,
+                JobChanged {
+                    id,
+                    stage: JobStage::Cancelled,
+                },
+            );
+        }
     }
+    Ok(outcome)
 }
 
 /// The window saved or dismissed a finished job.
