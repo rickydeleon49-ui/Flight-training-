@@ -124,3 +124,6 @@ temp/
 
 # Browser-mode screenshots from .claude/skills/run
 screenshots/
+
+# Python bytecode caches
+__pycache__/
