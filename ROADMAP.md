@@ -1,6 +1,7 @@
 ## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
 
 OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 merged (PR #239).
+HW-01a's [Homework schema/domain proposal](docs/HOMEWORK_01_PROPOSAL_2026-10-21.md) is awaiting the owner's decisions; migration 0020 remains proposed only.
 GEN-01 is complete (#245–#248). GEN-03, packet hand-off and the plain how-to,
 is the last OFFLINE-GEN slice; its local implementation awaits Claude's review.
 

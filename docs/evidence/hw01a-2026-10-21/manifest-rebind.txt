@@ -1,0 +1,4 @@
+$ python3 docs/evidence/offline-gen-fix2-2026-10-20/rebind_manifest.py
+VERIFIED 20 manifest entries and 21 checksum entries
+
+EXIT 0
