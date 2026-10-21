@@ -172,6 +172,9 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
             detail="On its own page, so you can quiz yourself first."
           />
         ) : null}
+        {output === "packet" ? (
+          <p className="tiny dim">Page links and per-item ‘edited by’ details don't travel in a study packet.</p>
+        ) : null}
         {output === "packet" && handwritten ? (
           <p className="tiny dim">
             Study packets don't record who wrote each item. When imported, everything shows as imported.

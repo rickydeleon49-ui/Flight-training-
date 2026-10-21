@@ -1,0 +1,82 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked study_packet::save_tests --no-fail-fast
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (target/debug/deps/her_flight_deck_lib-8a564795f62fa24e)
+
+running 54 tests
+test study_packet::save_tests::results_and_errors_serialize_to_the_accepted_wire_shapes ... ok
+test study_packet::save_tests::sb_r2_combining_sequences_that_do_not_compose_are_retained ... ok
+test study_packet::save_tests::sb_r2_canonically_equivalent_material_and_aid_titles_match ... ok
+test study_packet::save_tests::a_missing_database_is_a_storage_failure_not_a_new_file ... ok
+test study_packet::save_tests::sb_r2_nfc_equivalent_choices_are_rejected ... ok
+test study_packet::save_tests::sb_r2_nfc_title_limit_is_applied_after_composition ... ok
+test study_packet::save_tests::tb_atom_01_commits_material_guide_and_test_together ... ok
+test study_packet::save_tests::normalization_matches_the_typescript_validator ... ok
+test study_packet::save_tests::sb_r2_stored_content_is_canonical_and_equivalent_retry_is_already_saved ... ok
+test study_packet::save_tests::import_commit_ack_crash_idempotent ... ok
+test study_packet::save_tests::an_empty_study_set_beside_a_real_test_is_malformed ... ok
+test study_packet::save_tests::all_three_parts_export_import_reopen_match ... ok
+test study_packet::save_tests::tb_conf_01_same_id_with_different_content_conflicts ... ok
+test study_packet::save_tests::tb_conf_02_title_only_change_conflicts ... ok
+test study_packet::save_tests::tb_conf_03_notes_only_change_conflicts ... ok
+test study_packet::save_tests::imported_packet_satisfies_the_schema_17_authoring_contract ... ok
+test study_packet::save_tests::tb_conf_04_adding_a_practice_test_conflicts ... ok
+test study_packet::save_tests::tb_cont_01_guide_only ... ok
+test study_packet::save_tests::tb_conf_05_a_pre_existing_unrelated_material_with_the_id_conflicts ... ok
+test study_packet::save_tests::guide_only_cards_only_test_only_roundtrip ... ok
+test study_packet::save_tests::stored_provenance_or_material_type_changes_conflict ... ok
+test study_packet::save_tests::tb_conf_06_a_forged_hash_cannot_hide_changed_content ... ok
+test study_packet::save_tests::tb_cont_02_test_only ... ok
+test study_packet::save_tests::tb_cont_03_source_notes_are_kept_normalized ... ok
+test study_packet::save_tests::tb_cont_04_summary_only_guide ... ok
+test study_packet::save_tests::tb_def_01_correct_index_outside_the_choices ... ok
+test study_packet::save_tests::tb_cont_05_summary_plus_notes ... ok
+test study_packet::save_tests::tb_idem_01_an_identical_retry_is_already_saved_and_writes_nothing ... ok
+test study_packet::save_tests::import_midwrite_failure_rolls_back_every_part ... ok
+test study_packet::save_tests::tb_ipc_01_an_unknown_root_key_is_refused_without_echo ... ok
+test study_packet::save_tests::tb_def_03_a_gemini_provider_or_a_model_name ... ok
+test study_packet::save_tests::tb_ipc_06_a_changed_stored_guide_title_conflicts ... ok
+test study_packet::save_tests::tb_ipc_07_a_changed_stored_test_title_conflicts ... ok
+test study_packet::save_tests::tb_def_04_an_empty_guide_and_no_test ... ok
+test study_packet::save_tests::tb_def_02_a_flashcard_with_a_source_page ... ok
+test study_packet::save_tests::tb_ipc_08_a_stored_question_with_a_source_page_conflicts ... ok
+test study_packet::save_tests::tb_ipc_09_changed_stored_source_notes_conflict ... ok
+test study_packet::save_tests::tb_ipc_04_malformed_or_mismatched_operation_ids ... ok
+test study_packet::save_tests::tb_ipc_11_out_of_range_correct_index ... ok
+test study_packet::save_tests::tb_ipc_12_aid_titles_must_match_the_material_title ... ok
+test study_packet::save_tests::tb_ipc_05_hash_format ... ok
+test study_packet::save_tests::tb_ipc_10_negative_or_fractional_correct_index ... ok
+test study_packet::save_tests::tb_roll_01_study_set_failure_rolls_back_the_material ... ok
+test study_packet::save_tests::the_command_takes_untyped_json_and_is_registered ... ok
+test study_packet::save_tests::tb_roll_02_practice_test_failure_rolls_back_material_and_guide ... ok
+test study_packet::save_tests::tb_ipc_02_an_unknown_nested_key_is_refused_without_echo ... ok
+test study_packet::save_tests::tb_roll_04_material_failure_creates_nothing ... ok
+test study_packet::save_tests::tb_ipc_15_duplicate_options_under_case_folding ... ok
+test study_packet::save_tests::tb_ipc_03_missing_fields_and_wrong_types ... ok
+test study_packet::save_tests::tb_ipc_13_whitespace_only_required_strings ... ok
+test study_packet::save_tests::tb_ipc_14_exact_boundaries_pass_and_one_more_is_refused ... ok
+test study_packet::save_tests::tb_back_01_complete_backup_and_restore_keep_import_provenance ... ok
+test study_packet::save_tests::the_shared_contract_cases_give_the_same_outcome_as_the_browser_transaction ... ok
+test study_packet::save_tests::tb_lock_01_a_held_write_lock_waits_within_the_busy_timeout_then_fails_cleanly ... ok
+
+test result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 907 filtered out; finished in 9.85s
+
+     Running unittests src/main.rs (target/debug/deps/her_flight_deck-610b7bf094c74fb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/extraction_service.rs (target/debug/deps/extraction_service-10fef342138f8a99)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/extraction_worker.rs (target/debug/deps/extraction_worker-68f5c1eda9f1481c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+
+EXIT 0

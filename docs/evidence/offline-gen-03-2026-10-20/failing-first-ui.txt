@@ -1,0 +1,257 @@
+$ npx vitest run src/pages/StudyLibrary/ExportStudyDialog.test.ts src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts --configLoader runner -t export_dialog_counts_and_fidelity_note|import_preview_counts_before_add
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts (14 tests | 1 failed | 13 skipped) 23ms
+   × export_dialog_counts_and_fidelity_note 23ms
+(node:65109) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts (22 tests | 1 failed | 21 skipped) 186ms
+   × import_preview_counts_before_add 185ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > export_dialog_counts_and_fidelity_note
+AssertionError: expected '' to contain '1 section'
+
+- Expected
++ Received
+
+- 1 section
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:222:61
+    220| it("export_dialog_counts_and_fidelity_note", () => {
+    221|   open();
+    222|   expect(screen.getByLabelText(/^Study guide/).textContent).toContain(…
+       |                                                             ^
+    223|   expect(screen.getByLabelText(/^Flashcards/).textContent).toContain("…
+    224|   expect(screen.getByLabelText(/^Practice questions/).textContent).toC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts > import_preview_counts_before_add
+TestingLibraryElementError: Unable to find an element with the text: Imported from a study packet. Please check it against your PDF and current guidance.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_a_"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"dialog modal-fallback"[39m
+  [33mopen[39m=[32m""[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mstyle[39m=[32m"z-index: 1002;"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__header"[39m
+  [36m>[39m
+    [36m<div>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"dialog__title"[39m
+        [33mid[39m=[32m"_r_a_"[39m
+      [36m>[39m
+        [0mImport study packet[0m
+      [36m</h2>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"dialog__description"[39m
+      [36m>[39m
+        [0mCheck what's inside before anything is saved.[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"icon-button"[39m
+      [33mtitle[39m=[32m"Close"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"18"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"18"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"visually-hidden"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"dialog__body"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"stack stack--4"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mWill be imported as a new material[0m
+        [36m</p>[39m
+        [36m<h3[39m
+          [33mclass[39m=[32m"ai-guide__title"[39m
+        [36m>[39m
+          [0mLetters and labels[0m
+        [36m</h3>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"tiny dim"[39m
+        [36m>[39m
+          [0mFrom [0m
+          [0mletters.json[0m
+          [0m · SHA-256[0m
+          [0m [0m
+          [36m<abbr[39m
+            [33maria-label[39m=[32m"Full SHA-256: d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99"[39m
+            [33mstyle[39m=[32m"text-decoration: none; cursor: help;"[39m
+            [33mtitle[39m=[32m"d5101e8c58c70c21943295bb22ec5c88394c8db81aeec402bd8f7836612e1f99"[39m
+          [36m>[39m
+            [0md5101e8c58c7[0m
+            [0m…[0m
+          [36m</abbr>[39m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"What this packet holds"[39m
+        [33mclass[39m=[32m"row row--wrap"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0mStudy guide[0m
+          [0m, 1 section[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0m3 flashcards[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0m2 practice questions[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0m6 choices[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"badge badge--study"[39m
+        [36m>[39m
+          [0m2 source references[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Creation status"[39m
+        [33mclass[39m=[32m"stack stack--1 small"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"dim"[39m
+        [36m>[39m
+          [0mA study guide will be created.[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"dim"[39m
+        [36m>[39m
+          [0mA practice test will be created.[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ai-disclaimer"[39m
+        [33mrole[39m=[32m"note"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"16"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.6"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"16"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 3.8 21 19.5H3z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 10v4.2M12 17.2h.01"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"stack stack--1"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"tiny"[39m
+          [36m>[39m
+            [0mImported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"tiny"[39m
+          [36m>[39m
+            [0mNothing is uploaded. Questions, answers, and explanations come from the packet, rather than Her Flight Deck or Gemini.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"Source details from the file"[39m
+        [33mclass[39m=[32m"stack stack--2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"eyebrow"[39m
+        [36m>[39m
+          [0mSource details from the file (not checked)[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [0mMade with: [0m
+          [0mExample assistant (claim)[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small"[39m
+        [36m>[39m
+          [0mCreated: [0m
+          [0m2026-10-03T12:00:00Z[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"small ai-copy"[39m
+        [36m>[39m
+          [0mSynthetic packet for contract tests.[0m
+ ...
+ ❯ Object.getElementError ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../Flight-training-p54-06/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts:504:25
+    502|   expect(within(dialog).getByText("3 flashcards")).toBeTruthy();
+    503|   expect(within(dialog).getByText("2 practice questions")).toBeTruthy(…
+    504|   expect(within(dialog).getByText("Imported from a study packet. Pleas…
+       |                         ^
+    505|   expect(within(dialog).getByRole("button", { name: "Add to my Study L…
+    506|   expect(saveSpy).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 34 skipped (36)
+   Start at  19:48:56
+   Duration  1.08s (transform 494ms, setup 91ms, import 626ms, tests 209ms, environment 516ms)
+
+
+EXIT 1

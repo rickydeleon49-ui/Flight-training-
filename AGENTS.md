@@ -98,9 +98,18 @@
 - **Gemini CLI:**
   - don't use `-s` (sandbox mode needs a `GEMINI_API_KEY` env var and exits
     with code 41);
-  - pass one `--allowed-tools run_shell_command(<cmd>)` per command;
+  - launch with `--policy /Users/rickymac/code/.gen-rel-loop/offline/gemini-implementer-policy.toml`
+    instead of `--allowed-tools`. The policy allows build, test and inspect
+    commands; it denies git writes, installs, destructive commands and network;
+  - headless Gemini always denies `>` redirection; use the receipt runner and
+    its `write_file` tool;
   - use `--approval-mode auto_edit` and
-    `--include-directories /Users/rickymac/code/.gen-rel-loop/offline`.
+    `--include-directories /Users/rickymac/code/.gen-rel-loop/offline`;
+  - Gemini itself must run on the default Node. Export
+    `PATH=/opt/homebrew/opt/node@22/bin:$PATH` for its child commands, then invoke
+    `/opt/homebrew/bin/node /opt/homebrew/bin/gemini …`. Running Gemini under
+    Node 22 hangs;
+  - a `PATH=…` command prefix is denied.
 - macOS has no `timeout` command.
 - An `Ok(Err(CANCELLED))` from a cancelled worker means cancellation was
   honoured; it isn't a lost cancel.

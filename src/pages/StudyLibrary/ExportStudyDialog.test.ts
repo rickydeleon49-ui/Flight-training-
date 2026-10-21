@@ -216,3 +216,13 @@ it("selects an instructor-only practice test once she deliberately includes corr
   await screen.findByRole("status");
   expect(saveStudyExport.mock.calls[0]![2]).toContain("(instructor correction)");
 });
+
+it("export_dialog_counts_and_fidelity_note", () => {
+  open();
+  expect(screen.getByLabelText(/^Study guide/).parentElement!.textContent).toContain("1 section");
+  expect(screen.getByLabelText(/^Flashcards/).parentElement!.textContent).toContain("1 card");
+  expect(screen.getByLabelText(/^Practice questions/).parentElement!.textContent).toContain("1 question");
+  fireEvent.click(screen.getByLabelText(/Study packet \(\.json\)/));
+  expect(screen.getByText("Page links and per-item ‘edited by’ details don't travel in a study packet.")).toBeTruthy();
+  expect(saveStudyExport).not.toHaveBeenCalled();
+});

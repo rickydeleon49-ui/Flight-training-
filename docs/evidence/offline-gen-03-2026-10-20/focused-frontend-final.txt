@@ -1,0 +1,20 @@
+$ npx vitest run src/data/studyPacketHandoff.test.ts src/data/pdfStudyKitDraft.test.ts src/data/structuredImport.test.ts src/data/repositories/importStudyPacket.test.ts src/logic/studyExport.test.ts src/pages/StudyLibrary/ExportStudyDialog.test.ts src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts --configLoader runner
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:65264) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65268) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65270) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65265) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  7 passed (7)
+      Tests  161 passed (161)
+   Start at  19:50:28
+   Duration  2.97s (transform 1.48s, setup 383ms, import 2.19s, tests 6.53s, environment 620ms)
+
+
+EXIT 0

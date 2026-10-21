@@ -1,0 +1,43 @@
+$ npx vitest run src/data/studyPacketHandoff.test.ts src/data/pdfStudyKitDraft.test.ts src/data/structuredImport.test.ts src/data/repositories/importStudyPacket.test.ts src/logic/studyExport.test.ts src/pages/StudyLibrary/ExportStudyDialog.test.ts src/pages/StudyLibrary/ImportStudyPacketDialog.test.ts --configLoader runner
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+(node:65175) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65179) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:65181) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts (14 tests | 1 failed) 287ms
+   × export_dialog_counts_and_fidelity_note 4ms
+(node:65176) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/StudyLibrary/ExportStudyDialog.test.ts > export_dialog_counts_and_fidelity_note
+AssertionError: expected '' to contain '1 section'
+
+- Expected
++ Received
+
+- 1 section
+
+ ❯ src/pages/StudyLibrary/ExportStudyDialog.test.ts:222:61
+    220| it("export_dialog_counts_and_fidelity_note", () => {
+    221|   open();
+    222|   expect(screen.getByLabelText(/^Study guide/).textContent).toContain(…
+       |                                                             ^
+    223|   expect(screen.getByLabelText(/^Flashcards/).textContent).toContain("…
+    224|   expect(screen.getByLabelText(/^Practice questions/).textContent).toC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 160 passed (161)
+   Start at  19:50:04
+   Duration  2.97s (transform 1.49s, setup 429ms, import 2.23s, tests 6.45s, environment 622ms)
+
+
+EXIT 1
