@@ -102,10 +102,47 @@ export function actionRepository(db: SqlDatabase) {
       return action;
     },
 
+    async complete(id: Id): Promise<void> {
+      const bound = await db.select<{ count: number }>(
+        "SELECT COUNT(*) AS count FROM homework_assignments WHERE action_id = ?",
+        [id],
+      );
+      if (bound[0] && Number(bound[0].count) > 0) {
+        throw new Error("Cannot complete bound homework action directly");
+      }
+      const now = nowIso();
+      await db.execute(
+        "UPDATE next_actions SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
+        [now, now, id],
+      );
+    },
+
     async update(id: Id, changes: Partial<NextAction>): Promise<void> {
       const rows = await db.select<Row>("SELECT * FROM next_actions WHERE id = ?", [id]);
       const existing = rows[0];
       if (!existing) throw new Error("That action no longer exists.");
+      const bound = await db.select<{ count: number }>(
+        "SELECT COUNT(*) AS count FROM homework_assignments WHERE action_id = ?",
+        [id],
+      );
+      if (bound[0] && Number(bound[0].count) > 0) {
+        if (changes.status === "completed") {
+          throw new Error("Cannot complete bound homework action directly");
+        }
+        const boundKeys = ["title", "category", "status", "dueDate", "completedAt"] as const;
+        for (const k of boundKeys) {
+          if (k in changes && changes[k] !== undefined) {
+            throw new Error(`Cannot mutate bound field '${k}' of homework action`);
+          }
+        }
+        // Update only unowned fields; a concurrent homework projection must not be overwritten.
+        const allowed = { description: "description", priority: "priority", estimatedMinutes: "estimated_minutes",
+          relatedType: "related_type", relatedId: "related_id", materialId: "material_id" } as const;
+        const keys = (Object.keys(allowed) as (keyof typeof allowed)[]).filter(k => changes[k] !== undefined);
+        if (keys.length) await db.execute(`UPDATE next_actions SET ${keys.map(k => `${allowed[k]} = ?`).join(", ")}, updated_at = ? WHERE id = ?`,
+          [...keys.map(k => changes[k]!), nowIso(), id]);
+        return;
+      }
       const previous = map(existing);
       const next = { ...previous, ...changes, updatedAt: nowIso() };
       // Choosing a different (or no) material replaces the deleted-source provenance.
@@ -127,6 +164,8 @@ export function actionRepository(db: SqlDatabase) {
     },
 
     async remove(id: Id): Promise<void> {
+      const bound = await db.select<{ id: string }>("SELECT id FROM homework_assignments WHERE action_id = ?", [id]);
+      if (bound.length) throw new Error("Open homework to archive or remove its activities.");
       await db.execute("DELETE FROM next_actions WHERE id = ?", [id]);
     },
   };

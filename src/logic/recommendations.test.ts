@@ -607,5 +607,118 @@ describe("D2 — Pure Recommendation Selector", () => {
       expect(questionCandidates).toHaveLength(1);
       expect(questionCandidates[0]?.precedence).toBe("lesson_prep");
     });
+
+    it("no_duplicate_prep_candidate_for_owned_action", () => {
+      const lesson = mockLesson({ id: "ev-1", title: "Crosswind Landings", date: "2026-09-06" });
+      const action = mockAction({
+        id: "act-hw-1",
+        title: "Pattern work checklist",
+        dueDate: "2026-09-06",
+        category: "prepare",
+        status: "open",
+      });
+      const hwSnapshot = {
+        version: 1,
+        assignment: {
+          id: "hw-1",
+          title: "Crosswind Homework",
+          instructions: "",
+          school: null,
+          instructor: null,
+          lesson_id: "ev-1" as string | null,
+          source_lesson_id: null,
+          due_date: "2026-09-06" as string | null,
+          state: "upcoming",
+          revision: 1,
+          action_id: "act-hw-1",
+          archived: 0,
+          created_at: "2026-09-01T10:00:00.000Z",
+          updated_at: "2026-09-01T10:00:00.000Z",
+          completed_at: null,
+        },
+        activities: [
+          {
+            record: {
+              id: "act-entry-1",
+              assignment_id: "hw-1",
+              position: 0,
+              kind: "checklist",
+              title: "Pattern work checklist",
+              body: "",
+              material_id: null,
+              source_material_id: null,
+              source_revision: null,
+              card_set_id: null,
+              test_version_id: null,
+              source_test_version_id: null,
+              page_start: null,
+              page_end: null,
+              state: "upcoming",
+              cycle: 1,
+              revision: 1,
+              created_at: "2026-09-01T10:00:00.000Z",
+              updated_at: "2026-09-01T10:00:00.000Z",
+              completed_at: null,
+              removed_at: null,
+            },
+            source: null,
+            evidence: null,
+          },
+        ],
+        runs: [],
+      };
+
+      const candidates = buildRecommendationCandidates({
+        today: "2026-09-05",
+        actions: [action],
+        events: [lesson],
+        homework: [hwSnapshot as any],
+      });
+
+      // Exactly one candidate emitted for the homework: the action
+      const hwCandidates = candidates.filter(
+        (c) => c.id === "action:act-hw-1" || c.title === "Pattern work checklist",
+      );
+      expect(hwCandidates).toHaveLength(1);
+      expect(hwCandidates[0]!.id).toBe("action:act-hw-1");
+      expect(hwCandidates[0]!.reason.summary).toBe("Preparation for Crosswind Landings");
+
+      // Check "Homework due today"
+      const dueTodayCandidates = buildRecommendationCandidates({
+        today: "2026-09-06",
+        actions: [action],
+        events: [lesson],
+        homework: [hwSnapshot as any],
+      });
+      expect(dueTodayCandidates.find((c) => c.id === "action:act-hw-1")!.reason.summary).toBe(
+        "Homework due today",
+      );
+
+      // Check "Homework overdue since …"
+      const overdueCandidates = buildRecommendationCandidates({
+        today: "2026-09-07",
+        actions: [action],
+        events: [lesson],
+        homework: [hwSnapshot as any],
+      });
+      expect(overdueCandidates.find((c) => c.id === "action:act-hw-1")!.reason.summary).toBe(
+        "Homework overdue since 2026-09-06",
+      );
+
+      // Check "Self-directed homework"
+      const selfDirectedSnapshot = structuredClone(hwSnapshot);
+      selfDirectedSnapshot.assignment.lesson_id = null;
+      selfDirectedSnapshot.assignment.due_date = null;
+      const selfDirectedAction = { ...action, dueDate: null };
+      const selfDirectedCandidates = buildRecommendationCandidates({
+        today: "2026-09-05",
+        actions: [selfDirectedAction],
+        events: [],
+        homework: [selfDirectedSnapshot as any],
+      });
+      expect(selfDirectedCandidates.find((c) => c.id === "action:act-hw-1")!.reason.summary).toBe(
+        "Self-directed homework",
+      );
+    });
   });
 });

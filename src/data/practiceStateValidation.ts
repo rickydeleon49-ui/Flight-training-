@@ -1837,13 +1837,21 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
     const [actual] = await query("SELECT sql FROM sqlite_master WHERE type=? AND name=?", [text(object, "type"), text(object, "name")]);
     if (!actual || normalizeSql(text(actual, "sql")) !== normalizeSql(text(object, "sql"))) refuse("Homework indexes or history guards are missing.");
   }
-  const { validateHomeworkCardRows, checkCardEvents } = await import("./homeworkCards");
+  const { validateHomeworkCardRows, checkRunEvents } = await import("./homeworkCards");
   const seenRuns = new Set<string>();
+  const seenActions = new Set<string>();
   const assignments = await query("SELECT * FROM homework_assignments ORDER BY id", []);
   let historyCount = 0;
   const seenActivities = new Set<string>();
   for (const assignment of assignments) {
     const id = text(assignment, "id");
+    if (assignment.action_id !== null) {
+      const actionId = String(assignment.action_id);
+      homeworkAssert(!seenActions.has(actionId));
+      seenActions.add(actionId);
+      const [action] = await query("SELECT * FROM next_actions WHERE id=?", [actionId]);
+      homeworkAssert(action && action.category === "prepare" && action.due_date === assignment.due_date);
+    }
     const history = await query("SELECT * FROM homework_history WHERE assignment_id=? ORDER BY revision", [id]);
     let previous: import("@/domain/homework").HomeworkSnapshot | null = null;
     for (const row of history) {
@@ -1860,12 +1868,27 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
       homeworkAssert(text(receipt, "result_json") === canonicalJson({ version: 1, assignmentId: id, revision: row.revision }));
       previous = validateHomeworkTransition(previous, operation);
       await validateHomeworkSources(query, previous, false);
-      for(const r of previous.runs) await checkCardEvents(query,previous,r);
+      for(const r of previous.runs) await checkRunEvents(query,previous,r);
       for (const e of previous.activities) {
         homeworkAssert(!seenActivities.has(e.record.id));
       }
     }
     homeworkAssert(previous && previous.assignment.revision === assignment.revision);
+    if (assignment.action_id !== null) {
+      const [action] = await query("SELECT * FROM next_actions WHERE id=?", [assignment.action_id as string]);
+      homeworkAssert(action);
+      const active = previous.activities.filter(a => !a.record.removed_at).sort((a,b) => a.record.position - b.record.position);
+      if (assignment.archived === 1 || active.length === 0) {
+        homeworkAssert(action.status === "dismissed");
+      } else {
+        const nextIncomplete = active.find(a => a.record.state !== "completed");
+        if (nextIncomplete) {
+          homeworkAssert(action.status === "open" && action.title === nextIncomplete.record.title);
+        } else {
+          homeworkAssert(action.status === "completed" && action.title === active[active.length - 1]!.record.title);
+        }
+      }
+    }
     const activities = await query("SELECT * FROM homework_activities WHERE assignment_id=? ORDER BY id", [id]);
     homeworkAssert(homeworkLiveMatches(previous, assignment, activities));
     await validateHomeworkCardRows(query,previous);

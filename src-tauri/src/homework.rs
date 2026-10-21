@@ -190,7 +190,7 @@ fn validate_record(v: &Value, activity: bool) -> Result<(), String> {
         }
         opt_check(v, "due_date", date)?;
         ensure(
-            v["action_id"].is_null()
+            (v["action_id"].is_null() || uuid(s(v, "action_id")?))
                 && [0, 1].contains(&n(v, "archived")?)
                 && pointers(v, "lesson_id", "source_lesson_id"),
         )?;
@@ -241,7 +241,6 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
         }
         ensure((r["state"] == "completed") == !e["evidence"].is_null())?;
         if !e["evidence"].is_null() {
-            ensure(r["kind"] != "test")?;
             let mut evidence = json!({"version":1,"activity_id":r["id"]});
             for k in [
                 "revision",
@@ -260,16 +259,21 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
             if r["kind"] == "read" {
                 ensure(!r["source_revision"].is_null() && !r["page_end"].is_null())?;
             }
+            if ["cards", "test"].contains(&s(r, "kind")?) {
+                ensure(!r["source_revision"].is_null())?;
+            }
             if ["reflection", "questions"].contains(&s(r, "kind")?) {
                 ensure(text(s(r, "body")?, 20000, true))?;
             }
         }
         if r["state"] == "in_progress" {
             ensure(
-                r["kind"] != "test"
-                    && (r["kind"] != "read"
-                        || (!r["source_revision"].is_null() && !r["page_end"].is_null())),
+                r["kind"] != "read"
+                    || (!r["source_revision"].is_null() && !r["page_end"].is_null()),
             )?;
+            if ["cards", "test"].contains(&s(r, "kind")?) {
+                ensure(!r["source_revision"].is_null())?;
+            }
         }
     }
     ensure(ids.windows(2).all(|p| p[0] < p[1]) && positions.len() <= 100)?;
@@ -357,6 +361,11 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
                 }
             }
         }
+    }
+    if normalized["assignment"]["action_id"].is_null()
+        && a["action_id"] == normalized["assignment"]["id"]
+    {
+        normalized["assignment"]["action_id"] = a["action_id"].clone();
     }
     let previous = &normalized;
     let old = &previous["assignment"];
@@ -456,7 +465,7 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
             }
             "start" | "record_evidence" => {
                 ensure(
-                    p["kind"] == "cards"
+                    ["cards", "test"].contains(&s(p, "kind")?)
                         && except(p, r, &["state", "completed_at", "updated_at"])
                         && e["source"] == prior["source"],
                 )?;
@@ -559,6 +568,7 @@ pub(crate) fn rows(
                             Box::new(e),
                         )
                     })?),
+                    ValueRef::Real(f) => json!(f),
                     _ => {
                         return Err(rusqlite::Error::InvalidColumnType(
                             i,
@@ -729,6 +739,31 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
         }
         let previous = previous.ok_or(INVALID)?;
         ensure(previous["assignment"]["revision"] == assignment["revision"])?;
+        if !assignment["action_id"].is_null() {
+            let action_id = s(&assignment, "action_id")?;
+            let act_rows = rows(conn, "SELECT * FROM next_actions WHERE id=?", &[&action_id])?;
+            let act = act_rows.first().ok_or(INVALID)?;
+            ensure(act["category"] == "prepare" && act["due_date"] == assignment["due_date"])?;
+            let mut active: Vec<&Value> = list(&previous, "activities")?
+                .iter()
+                .map(|e| &e["record"])
+                .filter(|r| r["removed_at"].is_null())
+                .collect();
+            active.sort_by_key(|r| r["position"].as_i64().unwrap_or(0));
+            if assignment["archived"] == 1 || active.is_empty() {
+                ensure(act["status"] == "dismissed")?;
+            } else {
+                let next_incomplete = active.iter().find(|r| r["state"] != "completed");
+                if let Some(inc) = next_incomplete {
+                    ensure(act["status"] == "open" && act["title"] == inc["title"])?;
+                } else {
+                    ensure(
+                        act["status"] == "completed"
+                            && act["title"] == active.last().unwrap()["title"],
+                    )?;
+                }
+            }
+        }
         let activities = rows(
             conn,
             "SELECT * FROM homework_activities WHERE assignment_id=? ORDER BY id",
@@ -741,6 +776,15 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
             seen.insert(s(&e["record"], "id")?.to_string());
         }
     }
+    ensure(
+        n(
+            &rows(conn, "SELECT COUNT(DISTINCT action_id) AS n FROM homework_assignments WHERE action_id IS NOT NULL", &[])?[0],
+            "n",
+        )? == n(
+            &rows(conn, "SELECT COUNT(action_id) AS n FROM homework_assignments WHERE action_id IS NOT NULL", &[])?[0],
+            "n",
+        )?,
+    )?;
     ensure(
         n(
             &rows(conn, "SELECT COUNT(*) AS n FROM homework_runs", &[])?[0],
@@ -861,10 +905,10 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
     }
     transition(previous.as_ref(), op).map_err(|_| error("INVALID"))?;
     cards::writes(conn, previous.as_ref(), op).map_err(|_| error("INVALID"))?;
-    let next = &op["next"];
+    let next = op["next"].clone();
     let mut checked = next.clone();
     checked["activities"] = Value::Array(
-        list(next, "activities")
+        list(&next, "activities")
             .unwrap()
             .iter()
             .filter(|e| {
@@ -890,17 +934,40 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
             .collect(),
     );
     sources(conn, &checked, true).map_err(|_| error("SOURCE"))?;
+    {
+        // A quiz run always starts its own attempt: an attempt already in progress is never adopted.
+        for r in list(&next, "runs").map_err(|_| error("INVALID"))? {
+            let prior = previous
+                .as_ref()
+                .and_then(|p| p["runs"].as_array())
+                .and_then(|ps| ps.iter().find(|p| p["id"] == r["id"]));
+            if prior.is_none() && r["kind"] == "test" {
+                let material = s(&r["scope"], "material_id").map_err(|_| error("INVALID"))?;
+                let in_progress = rows(
+                    conn,
+                    "SELECT id FROM practice_attempts WHERE source_material_id=? AND status='in_progress'",
+                    &[&material],
+                )
+                .map_err(|_| error("STORAGE"))?;
+                if !in_progress.is_empty() {
+                    return Err(error("CONFLICT"));
+                }
+            }
+        }
+    }
     let perform = || -> Result<Value, String> {
         let maximum = rows(
             conn,
             "SELECT COALESCE(MAX(position),0) AS n FROM homework_activities WHERE assignment_id=?",
             &[&id],
         )?;
-        let offset = n(&maximum[0], "n")? + list(next, "activities")?.len() as i64 + 1;
+        let offset = n(&maximum[0], "n")? + list(&next, "activities")?.len() as i64 + 1;
         ensure(offset <= 4_503_599_627_370_495)?;
         conn.execute("UPDATE homework_activities SET position=position+? WHERE assignment_id=? AND removed_at IS NULL",params![offset,id]).map_err(|e|e.to_string())?;
+        let acts = list(&next, "activities")?.to_vec();
+        project_action(conn, &next["assignment"], &acts, s(op, "at")?)?;
         put(conn, "homework_assignments", &next["assignment"])?;
-        for e in list(next, "activities")? {
+        for e in list(&next, "activities")? {
             let owner = rows(
                 conn,
                 "SELECT assignment_id FROM homework_activities WHERE id=?",
@@ -909,7 +976,42 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
             ensure(owner.first().map_or(true, |o| o["assignment_id"] == id))?;
             put(conn, "homework_activities", &e["record"])?;
         }
-        for r in list(next, "runs")? {
+        for r in list(&next, "runs")? {
+            let prior = previous
+                .as_ref()
+                .and_then(|p| p["runs"].as_array())
+                .and_then(|ps| ps.iter().find(|p| p["id"] == r["id"]));
+            if prior.is_none() && r["kind"] == "test" {
+                let items = rows(
+                    conn,
+                    "SELECT COUNT(*) AS count FROM practice_test_items WHERE version_id=?",
+                    &[&s(&r["scope"], "test_version_id")?],
+                )?;
+                let total_questions = items
+                    .first()
+                    .and_then(|row| n(row, "count").ok())
+                    .unwrap_or(0);
+                let mats = rows(
+                    conn,
+                    "SELECT title FROM study_materials WHERE id=?",
+                    &[&s(&r["scope"], "material_id")?],
+                )?;
+                let title = mats
+                    .first()
+                    .and_then(|row| s(row, "title").ok())
+                    .unwrap_or("Practice Quiz");
+                conn.execute(
+                    "INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title, started_at, completed_at, status, revision, total_questions, answered_count, correct_count, incorrect_count, dont_know_count, score_percent) VALUES (?1, ?2, ?3, ?4, ?5, NULL, 'in_progress', 0, ?6, 0, 0, 0, 0, NULL)",
+                    params![
+                        s(&r["scope"], "attempt_id")?,
+                        s(&r["scope"], "test_version_id")?,
+                        s(&r["scope"], "material_id")?,
+                        title,
+                        s(r, "started_at")?,
+                        total_questions,
+                    ],
+                ).map_err(|e| e.to_string())?;
+            }
             let owner = rows(
                 conn,
                 "SELECT activity_id FROM homework_runs WHERE id=?",
@@ -920,7 +1022,18 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
                     .first()
                     .map_or(true, |o| o["activity_id"] == r["activity_id"]),
             )?;
-            put(conn, "homework_runs", &cards::row(r))?;
+            let mut run_row = cards::row(r);
+            if r["kind"] == "test"
+                && rows(
+                    conn,
+                    "SELECT id FROM practice_attempts WHERE id=?",
+                    &[&s(&r["scope"], "attempt_id")?],
+                )?
+                .is_empty()
+            {
+                run_row["attempt_id"] = Value::Null;
+            }
+            put(conn, "homework_runs", &run_row)?;
         }
         let result =
             json!({"version":1,"assignmentId":id,"revision":next["assignment"]["revision"]});
@@ -943,7 +1056,7 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
                 n(&next["assignment"], "revision")?,
                 s(op, "operationId")?,
                 s(op, "changeKind")?,
-                canonical_json(next),
+                canonical_json(&next),
                 s(op, "at")?
             ],
         )
@@ -981,4 +1094,228 @@ pub(crate) async fn save_homework_atomically(
     })
     .await
     .map_err(|_| error("STORAGE"))?
+}
+
+fn project_action(
+    conn: &Connection,
+    assignment: &Value,
+    activities: &[Value],
+    at: &str,
+) -> Result<(), String> {
+    let Some(action_id) = assignment["action_id"].as_str() else {
+        return Ok(());
+    };
+    let mut active: Vec<&Value> = activities
+        .iter()
+        .map(|e| &e["record"])
+        .filter(|r| r["removed_at"].is_null())
+        .collect();
+    active.sort_by_key(|r| r["position"].as_i64().unwrap_or(0));
+    let dismissed = active.is_empty() || assignment["archived"] == 1;
+    let next_incomplete = active.iter().find(|r| r["state"] != "completed");
+    let status = if dismissed {
+        "dismissed"
+    } else if next_incomplete.is_some() {
+        "open"
+    } else {
+        "completed"
+    };
+    let title = next_incomplete
+        .or_else(|| active.last())
+        .map(|r| s(r, "title"))
+        .unwrap_or_else(|| s(assignment, "title"))?;
+    let completed_at = if status == "completed" {
+        if assignment["completed_at"].is_null() {
+            Value::String(at.to_string())
+        } else {
+            assignment["completed_at"].clone()
+        }
+    } else {
+        Value::Null
+    };
+
+    let existing = rows(
+        conn,
+        "SELECT id FROM next_actions WHERE id=?",
+        &[&action_id],
+    )?;
+    if !existing.is_empty() {
+        let owners = rows(
+            conn,
+            "SELECT id FROM homework_assignments WHERE action_id=?",
+            &[&action_id],
+        )?;
+        ensure(owners.first().map(|o| &o["id"]) == Some(&assignment["id"]))?;
+        conn.execute(
+            "UPDATE next_actions SET title=?1, category='prepare', status=?2, due_date=?3, updated_at=?4, completed_at=?5 WHERE id=?6",
+            params![
+                title,
+                status,
+                assignment["due_date"].as_str(),
+                at,
+                completed_at.as_str(),
+                action_id
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    } else {
+        conn.execute(
+            "INSERT INTO next_actions (id, title, description, category, priority, status, due_date, estimated_minutes, related_type, related_id, material_id, source_material_id, created_at, updated_at, completed_at) VALUES (?1, ?2, '', 'prepare', 'important', ?3, ?4, NULL, NULL, NULL, NULL, NULL, ?5, ?6, ?7)",
+            params![
+                action_id,
+                title,
+                status,
+                assignment["due_date"].as_str(),
+                at,
+                at,
+                completed_at.as_str()
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn record_test_completion(
+    conn: &Connection,
+    attempt_id: &str,
+    completed_at: &str,
+    score_percent: f64,
+    total_questions: i64,
+    answered_count: i64,
+    correct_count: i64,
+    incorrect_count: i64,
+    dont_know_count: i64,
+) -> Result<(), String> {
+    let has_homework = rows(
+        conn,
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='homework_runs'",
+        &[],
+    )?;
+    if has_homework.is_empty() {
+        return Ok(());
+    }
+    let linked = rows(
+        conn,
+        "SELECT r.id, r.activity_id, a.assignment_id, a.created_at AS activity_created_at, a.cycle AS activity_cycle \
+         FROM homework_runs r \
+         JOIN homework_activities a ON a.id = r.activity_id \
+         WHERE r.kind = 'test' AND r.source_attempt_id = ? AND r.finished_at IS NULL AND r.invalidated_at IS NULL",
+        &[&attempt_id],
+    )?;
+    let attempts = rows(
+        conn,
+        "SELECT started_at, version_id FROM practice_attempts WHERE id=?",
+        &[&attempt_id],
+    )?;
+    let Some(attempt) = attempts.first() else {
+        return Ok(());
+    };
+    let started_at = s(attempt, "started_at")?;
+    let version_id = s(attempt, "version_id")?;
+
+    for lr in linked {
+        let act_created = s(&lr, "activity_created_at")?;
+        let act_cycle = n(&lr, "activity_cycle")?;
+        if started_at > act_created && act_cycle >= 1 {
+            let assignment_id = s(&lr, "assignment_id")?;
+            let history = rows(
+                conn,
+                "SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1",
+                &[&assignment_id],
+            )?;
+            if let Some(h) = history.first() {
+                let prev_snapshot = parse(s(h, "snapshot_json")?)?;
+                if prev_snapshot["assignment"]["archived"] == 1 {
+                    continue;
+                }
+                let mut next_snapshot = prev_snapshot.clone();
+                let run_id = s(&lr, "id")?;
+                let act_id = s(&lr, "activity_id")?;
+
+                let runs = next_snapshot["runs"].as_array_mut().ok_or(INVALID)?;
+                let Some(r) = runs.iter_mut().find(|r| r["id"] == run_id) else {
+                    continue;
+                };
+                if r["cycle"] != act_cycle || !r["invalidated_at"].is_null() {
+                    continue;
+                };
+                r["finished_at"] = Value::String(completed_at.to_string());
+                r["evidence"] = json!({
+                    "version": 1,
+                    "attempt_id": attempt_id,
+                    "version_id": version_id,
+                    "started_at": started_at,
+                    "completed_at": completed_at,
+                    "score_percent": score_percent,
+                    "total_questions": total_questions,
+                    "answered_count": answered_count,
+                    "correct_count": correct_count,
+                    "incorrect_count": incorrect_count,
+                    "dont_know_count": dont_know_count,
+                });
+
+                let all_done;
+                {
+                    let activities = next_snapshot["activities"].as_array_mut().ok_or(INVALID)?;
+                    let Some(entry) = activities.iter_mut().find(|e| e["record"]["id"] == act_id)
+                    else {
+                        continue;
+                    };
+                    let rec = &mut entry["record"];
+                    if !rec["removed_at"].is_null() {
+                        continue;
+                    }
+                    rec["state"] = Value::String("completed".to_string());
+                    rec["completed_at"] = Value::String(completed_at.to_string());
+                    rec["updated_at"] = Value::String(completed_at.to_string());
+                    let act_rec = rec.clone();
+                    entry["evidence"] = json!({
+                        "version": 1,
+                        "activity_id": act_rec["id"],
+                        "revision": act_rec["revision"],
+                        "cycle": act_rec["cycle"],
+                        "kind": "test",
+                        "completed_at": completed_at,
+                        "body": act_rec["body"],
+                        "source_material_id": act_rec["source_material_id"],
+                        "source_revision": act_rec["source_revision"],
+                        "page_start": Value::Null,
+                        "page_end": Value::Null,
+                    });
+                    all_done = activities
+                        .iter()
+                        .filter(|e| e["record"]["removed_at"].is_null())
+                        .all(|e| e["record"]["state"] == "completed");
+                }
+
+                let current_rev = n(&next_snapshot["assignment"], "revision")?;
+                next_snapshot["assignment"]["revision"] = Value::Number((current_rev + 1).into());
+                next_snapshot["assignment"]["updated_at"] = Value::String(completed_at.to_string());
+                if all_done {
+                    next_snapshot["assignment"]["state"] = Value::String("completed".to_string());
+                    next_snapshot["assignment"]["completed_at"] =
+                        Value::String(completed_at.to_string());
+                } else {
+                    next_snapshot["assignment"]["state"] = Value::String("in_progress".to_string());
+                    next_snapshot["assignment"]["completed_at"] = Value::Null;
+                }
+
+                let op_id =
+                    crate::practice_sessions::generate_uuid_v4(conn).map_err(|e| e.to_string())?;
+                let op = json!({
+                    "version": 1,
+                    "operationId": op_id,
+                    "assignmentId": assignment_id,
+                    "baseRevision": current_rev,
+                    "changeKind": "record_evidence",
+                    "at": completed_at,
+                    "next": next_snapshot
+                });
+                apply(conn, &op).map_err(|e| e.message.to_string())?;
+            }
+        }
+    }
+    Ok(())
 }

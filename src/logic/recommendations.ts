@@ -140,6 +140,7 @@ export interface RecommendationSources {
   notes?: readonly Note[];
   journalEntries?: readonly JournalEntry[];
   pinnedActionIds?: ReadonlySet<Id> | readonly Id[];
+  homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
 }
 
 const PRECEDENCE_RANK: Record<RecommendationPrecedence, number> = {
@@ -352,7 +353,29 @@ export function buildRecommendationCandidates(
     let sourceType: SourceType = "action";
     let sourceId: Id = action.id;
 
-    if (isPinned) {
+    const homework = (sources.homework ?? []).find((h) => h.assignment.action_id === action.id);
+    if (homework) {
+      if (isPinned) {
+        precedence = "pinned";
+        summary = "User-pinned action";
+      } else if (isDueToday) {
+        precedence = "due_action";
+        summary = "Homework due today";
+      } else if (isOverdue) {
+        precedence = "due_action";
+        summary = `Homework overdue since ${action.dueDate}`;
+      } else if (homework.assignment.lesson_id || homework.assignment.source_lesson_id) {
+        const lessonId = (homework.assignment.lesson_id ?? homework.assignment.source_lesson_id)!;
+        const lesson = (sources.events ?? []).find((e) => e.id === lessonId);
+        precedence = "lesson_prep";
+        summary = lesson ? `Preparation for ${lesson.title}` : "Preparation for lesson";
+        sourceType = "event";
+        sourceId = lessonId;
+      } else {
+        precedence = "open_action";
+        summary = "Self-directed homework";
+      }
+    } else if (isPinned) {
       precedence = "pinned";
       summary = "User-pinned action";
     } else if (isOverdue) {

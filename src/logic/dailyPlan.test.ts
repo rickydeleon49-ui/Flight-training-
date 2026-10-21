@@ -722,5 +722,143 @@ describe("D4 — Daily Plan State & Logic", () => {
       expect(getStartTarget(rec("a-material"), sources).path).toBe("/study/mat-1");
       expect(getStartTarget(rec("a-event"), sources).path).toBe("/schedule/event-1");
     });
+
+    it("navigates bound homework action to /study/homework/:id?activity=...", () => {
+      const hwAction = mockAction({ id: "act-hw-1", title: "Weather quiz" });
+      const hwSnapshot = {
+        version: 1,
+        assignment: {
+          id: "hw-99",
+          title: "Weather Prep",
+          action_id: "act-hw-1",
+          state: "upcoming",
+        },
+        activities: [
+          {
+            record: { id: "entry-1", title: "Weather quiz", state: "upcoming", removed_at: null },
+          },
+        ],
+      };
+      const sources: RecommendationSources = {
+        today: TODAY,
+        actions: [hwAction],
+        homework: [hwSnapshot as any],
+      };
+      const target = getStartTarget(rec("act-hw-1"), sources);
+      expect(target.path).toBe("/study/homework/hw-99?activity=entry-1");
+      expect(target.label).toBe("Open homework for Linked action");
+      expect(target.isLocalAction).toBeUndefined();
+    });
+  });
+
+  describe("Session stability & date rollover", () => {
+    it("pinned_and_locked_session_stable_until_refresh", () => {
+      const act1 = mockAction({ id: "act-1", title: "Task 1", estimatedMinutes: 15 });
+      const act2 = mockAction({ id: "act-2", title: "Task 2", estimatedMinutes: 15 });
+      const pinnedAct = mockAction({ id: "act-pinned", title: "Pinned Task", estimatedMinutes: 15 });
+
+      const initialSources: RecommendationSources = {
+        today: TODAY,
+        actions: [act1, act2, pinnedAct],
+        pinnedActionIds: new Set(["act-pinned"]),
+      };
+
+      const lockedState = createInitialDailyPlanState(TODAY, null);
+      lockedState.suggestedIds = ["action:act-pinned", "action:act-1", "action:act-2"];
+      const initialPlan = computeDailyPlan(initialSources, lockedState);
+      expect(initialPlan.result.suggested.map((s) => s.id)).toEqual([
+        "action:act-pinned",
+        "action:act-1",
+        "action:act-2",
+      ]);
+
+      // Newly urgent overdue homework arrives
+      const urgentHwAction = mockAction({
+        id: "act-hw-urgent",
+        title: "Urgent Homework",
+        dueDate: "2026-09-01",
+        estimatedMinutes: 20,
+      });
+      const hwSnapshot = {
+        version: 1,
+        assignment: {
+          id: "hw-urgent",
+          title: "Urgent Homework",
+          action_id: "act-hw-urgent",
+          due_date: "2026-09-01",
+          state: "upcoming",
+        },
+        activities: [
+          { record: { id: "e-1", title: "Urgent Homework", state: "upcoming", removed_at: null } },
+        ],
+      };
+
+      const updatedSources: RecommendationSources = {
+        today: TODAY,
+        actions: [act1, act2, pinnedAct, urgentHwAction],
+        pinnedActionIds: new Set(["act-pinned"]),
+        homework: [hwSnapshot as any],
+      };
+
+      // Before refresh: locked session remains stable; newly urgent homework waits
+      const stablePlan = computeDailyPlan(updatedSources, lockedState);
+      expect(stablePlan.result.suggested.map((s) => s.id)).toEqual([
+        "action:act-pinned",
+        "action:act-1",
+        "action:act-2",
+      ]);
+      expect(stablePlan.result.suggested.some((s) => s.id === "action:act-hw-urgent")).toBe(false);
+
+      // After user clicks Refresh: locked session recomputes and includes urgent homework
+      const refreshedState = applyRefresh(lockedState);
+      const refreshedPlan = computeDailyPlan(updatedSources, refreshedState);
+      expect(refreshedPlan.result.suggested.some((s) => s.id === "action:act-hw-urgent")).toBe(true);
+      expect(refreshedPlan.result.suggested.some((s) => s.id === "action:act-pinned")).toBe(true);
+    });
+
+    it("date_rollover_dst_and_travel_recompute", () => {
+      const state: DailyPlanState = {
+        version: 1,
+        date: "2026-09-25",
+        timeBudget: null,
+        suggestedIds: ["action:act-1"],
+        decisions: {
+          "action:act-old": { type: "skip", date: "2026-09-25" },
+          "action:act-deferred": { type: "defer", date: "2026-09-25" },
+        },
+        updatedAt: "2026-09-25T10:00:00.000Z",
+      };
+
+      // Date advances across midnight / DST / travel to a new date
+      const rolledState = rolloverDailyPlanState(state, "2026-09-26");
+      expect(rolledState.date).toBe("2026-09-26");
+      // Expired decisions are cleared
+      expect(rolledState.decisions["action:act-old"]).toBeUndefined();
+      expect(rolledState.decisions["action:act-deferred"]).toBeUndefined();
+
+      // Actions evaluated against the new date reflect new overdue/due status
+      const action = mockAction({ id: "act-due", dueDate: "2026-09-26" });
+      const hwSnapshot = {
+        version: 1,
+        assignment: {
+          id: "hw-1",
+          title: "HW",
+          action_id: "act-due",
+          due_date: "2026-09-26",
+          state: "upcoming",
+        },
+        activities: [{ record: { id: "e-1", title: "HW", state: "upcoming", removed_at: null } }],
+      };
+
+      const sources: RecommendationSources = {
+        today: "2026-09-26",
+        actions: [action],
+        homework: [hwSnapshot as any],
+      };
+      const plan = computeDailyPlan(sources, rolledState);
+      const hwRec = plan.result.suggested.find((s) => s.id === "action:act-due");
+      expect(hwRec).toBeDefined();
+      expect(hwRec!.reason.summary).toBe("Homework due today");
+    });
   });
 });

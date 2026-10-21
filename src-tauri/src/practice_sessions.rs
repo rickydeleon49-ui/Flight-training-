@@ -329,6 +329,7 @@ pub enum PracticeActionPayload {
         operation_id: String,
         attempt_id: String,
         expected_revision: i64,
+        homework: Option<Value>,
     },
     RetakeAttempt {
         operation_id: String,
@@ -451,10 +452,23 @@ pub fn decode_practice_action(value: &Value) -> ResultCheck<PracticeActionPayloa
             })
         }
         "complete_attempt" => {
-            exact_keys_check(
-                map,
-                &["action", "operationId", "attemptId", "expectedRevision"],
-            )?;
+            if map.contains_key("homework") {
+                exact_keys_check(
+                    map,
+                    &[
+                        "action",
+                        "operationId",
+                        "attemptId",
+                        "expectedRevision",
+                        "homework",
+                    ],
+                )?;
+            } else {
+                exact_keys_check(
+                    map,
+                    &["action", "operationId", "attemptId", "expectedRevision"],
+                )?;
+            }
             let attempt_id = parse_string_field(map, "attemptId")?;
             if !is_valid_id(attempt_id) {
                 return Err(PracticeSessionErrorCode::InvalidArgument);
@@ -463,10 +477,16 @@ pub fn decode_practice_action(value: &Value) -> ResultCheck<PracticeActionPayloa
             if !(0..=2_147_483_647).contains(&expected_revision) {
                 return Err(PracticeSessionErrorCode::InvalidArgument);
             }
+            let homework = map.get("homework").filter(|v| !v.is_null()).cloned();
+            if let Some(hw) = &homework {
+                crate::homework::cards::context(hw)
+                    .map_err(|_| PracticeSessionErrorCode::InvalidArgument)?;
+            }
             Ok(PracticeActionPayload::CompleteAttempt {
                 operation_id: operation_id.to_string(),
                 attempt_id: attempt_id.to_string(),
                 expected_revision,
+                homework,
             })
         }
         "retake_attempt" => {
@@ -981,8 +1001,56 @@ pub fn execute_action_transaction(
         PracticeActionPayload::CompleteAttempt {
             attempt_id,
             expected_revision,
+            homework,
             ..
         } => {
+            if let Some(hw) = homework {
+                if let Some(aid) = hw.get("assignmentId").and_then(|v| v.as_str()) {
+                    let rows = tx.query_row(
+                        "SELECT snapshot_json FROM homework_history WHERE assignment_id=?1 ORDER BY revision DESC LIMIT 1",
+                        [aid],
+                        |r| r.get::<_, String>(0),
+                    ).optional().map_err(|_| PracticeSessionErrorCode::StorageError)?;
+                    let Some(snap_str) = rows else {
+                        return Err(PracticeSessionErrorCode::InvalidState);
+                    };
+                    let snap: Value = serde_json::from_str(&snap_str)
+                        .map_err(|_| PracticeSessionErrorCode::InvalidState)?;
+                    if hw.get("expectedRevision").and_then(|v| v.as_i64())
+                        != snap["assignment"]["revision"].as_i64()
+                    {
+                        return Err(PracticeSessionErrorCode::InvalidState);
+                    }
+                    if let Some(rid) = hw.get("runId").and_then(|v| v.as_str()) {
+                        let runs = snap["runs"]
+                            .as_array()
+                            .ok_or(PracticeSessionErrorCode::InvalidState)?;
+                        let r = runs
+                            .iter()
+                            .find(|r| r["id"] == rid)
+                            .ok_or(PracticeSessionErrorCode::InvalidState)?;
+                        let entry = snap["activities"]
+                            .as_array()
+                            .and_then(|items| {
+                                items.iter().find(|e| e["record"]["id"] == r["activity_id"])
+                            })
+                            .ok_or(PracticeSessionErrorCode::InvalidState)?;
+                        if r["kind"] != "test"
+                            || r["scope"]["attempt_id"] != *attempt_id
+                            || r["activity_revision"] != hw["activityRevision"]
+                            || snap["assignment"]["archived"] != 0
+                            || !entry["record"]["removed_at"].is_null()
+                            || entry["record"]["cycle"] != hw["cycle"]
+                            || entry["record"]["revision"] != hw["activityRevision"]
+                            || r["cycle"] != hw["cycle"]
+                            || !r["invalidated_at"].is_null()
+                            || !r["finished_at"].is_null()
+                        {
+                            return Err(PracticeSessionErrorCode::InvalidState);
+                        }
+                    }
+                }
+            }
             // Verify attempt exists and is in_progress
             let attempt_row: Option<(String, String, i64, i64, String)> = tx
                 .query_row(
@@ -1098,6 +1166,19 @@ pub fn execute_action_transaction(
                     score_percent,
                     attempt_id,
                 ],
+            )
+            .map_err(|_| PracticeSessionErrorCode::StorageError)?;
+
+            crate::homework::record_test_completion(
+                tx,
+                attempt_id,
+                &now,
+                score_percent,
+                actual_total,
+                answered_count,
+                correct_count,
+                incorrect_count,
+                dont_know_count,
             )
             .map_err(|_| PracticeSessionErrorCode::StorageError)?;
 

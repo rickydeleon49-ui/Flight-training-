@@ -15,6 +15,7 @@ export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSna
     const next = structuredClone(draft);
     // Completion must be later than creation even for a very fast click.
     const at = new Date(Math.max(Date.now(), Date.parse(previous.assignment.updated_at) + 1)).toISOString();
+    next.assignment.action_id ??= next.assignment.id;
     next.assignment.revision = creating ? 1 : previous.assignment.revision + 1;
     next.assignment.updated_at = at;
     if (creating)

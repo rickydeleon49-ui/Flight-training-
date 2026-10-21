@@ -113,11 +113,60 @@ it("reflection_requires_nonblank_then_mark", async () => {
     fireEvent.click(await screen.findByRole("button", { name: "Mark complete" }));
     await waitFor(() => expect(records[0]!.assignment.state).toBe("completed"));
 });
-it("quiz_completion_waits_for_the_next_slice", async () => {
-    const s = assignment(["cards", "test"]);
+it("quiz_score_shown_separately_no_pass_rule", async () => {
+    const s = assignment(["test"]);
+    const testAct = s.activities[0]!;
+    testAct.record.state = "completed";
+    testAct.record.completed_at = "2026-10-21T10:05:00.000Z";
+    testAct.evidence = {
+        version: 1,
+        activity_id: testAct.record.id,
+        revision: testAct.record.revision,
+        cycle: testAct.record.cycle,
+        kind: "test",
+        completed_at: "2026-10-21T10:05:00.000Z",
+        body: "",
+        source_material_id: testAct.record.source_material_id,
+        source_revision: testAct.record.source_revision,
+        page_start: null,
+        page_end: null,
+    };
+    s.runs.push({
+        id: "00000000-0000-4000-8000-000000000099",
+        activity_id: testAct.record.id,
+        cycle: testAct.record.cycle,
+        activity_revision: testAct.record.revision,
+        kind: "test",
+        started_at: "2026-10-21T10:01:00.000Z",
+        finished_at: "2026-10-21T10:05:00.000Z",
+        invalidated_at: null,
+        scope: {
+            version: 1,
+            material_id: testAct.record.material_id!,
+            source_revision: testAct.record.source_revision!,
+            test_version_id: testAct.record.source_test_version_id!,
+            attempt_id: "00000000-0000-4000-8000-000000000088",
+        },
+        evidence: {
+            version: 1,
+            attempt_id: "00000000-0000-4000-8000-000000000088",
+            version_id: testAct.record.source_test_version_id!,
+            started_at: "2026-10-21T10:01:00.000Z",
+            completed_at: "2026-10-21T10:05:00.000Z",
+            score_percent: 25,
+            total_questions: 4,
+            answered_count: 4,
+            correct_count: 1,
+            incorrect_count: 3,
+            dont_know_count: 0,
+        },
+    });
+    s.assignment.state = "completed";
+    s.assignment.completed_at = "2026-10-21T10:05:00.000Z";
     view(s.assignment.id);
-    await screen.findByText("cards work");
-    expect(screen.getAllByText("Completion is recorded automatically in a later update")).toHaveLength(1);
+    await screen.findByText("test work");
+    expect(screen.getByText(/Quiz completed · Score: 25% \(1 of 4 correct\)/)).toBeTruthy();
+    expect(screen.queryByText("Completion is recorded automatically in a later update")).toBeNull();
     expect(screen.queryByRole("button", { name: "Mark complete" })).toBeNull();
 });
 it("reopen_and_archive_keep_history", async () => {
@@ -253,4 +302,21 @@ it("completed homework accepts more work and retains earlier evidence", async ()
     await waitFor(() => expect(records[0]!.assignment.state).toBe("in_progress"));
     expect(records[0]!.activities.find(e => e.record.id === prior!.record.id)).toEqual(prior);
     expect(screen.queryByText("Reopen an activity before adding more work.")).toBeNull();
+});
+
+
+it("failed_quiz_start_stays_on_homework_and_explains_existing_attempt", async () => {
+    const s = assignment(["test"]), r = s.activities[0]!.record;
+    Object.assign(r, { material_id: sourceId, source_material_id: sourceId, test_version_id: quizId, source_test_version_id: quizId, source_revision: "b".repeat(64) });
+    s.activities[0]!.source = { title: "Synthetic source", total_pages: null };
+    appData.materials = [makeMaterial({ id: sourceId })];
+    fail = "CONFLICT";
+    render(h(MemoryRouter, { initialEntries: [`/study/homework/${s.assignment.id}`] }, h(Routes, null,
+      h(Route, { path: "/study/homework/:assignmentId", element: h(HomeworkView) }),
+      h(Route, { path: "/study/:materialId", element: h("p", null, "Quiz source page") }),
+    )));
+    fireEvent.click(await screen.findByRole("button", { name: "Start quiz" }));
+    await screen.findByText("Finish or abandon the in-progress quiz first.");
+    expect(screen.queryByText("Quiz source page")).toBeNull();
+    expect(records[0]!.runs).toEqual([]);
 });

@@ -6,7 +6,7 @@
  */
 import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
@@ -14,6 +14,7 @@ import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/node
 import type { NextAction } from "@/domain/types";
 import { addDays, todayIso } from "@/lib/dates";
 import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
+import { newHomework, newHomeworkActivity, homeworkOperation } from "@/pages/StudyLibrary/homeworkUi";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 let db: TestDatabase;
@@ -93,4 +94,28 @@ describe("Daily Flight Plan Start on Flight Deck", () => {
       );
     });
   });
+});
+
+
+it("live homework reaches the plan, and Complete opens its evidence flow", async () => {
+  const previous = newHomework();
+  const draft = structuredClone(previous);
+  draft.assignment.title = "Synthetic homework";
+  draft.assignment.due_date = addDays(today, -1);
+  draft.activities = [newHomeworkActivity(draft.assignment.id, 0, "checklist", draft.assignment.created_at)];
+  draft.activities[0]!.record.title = "Review the synthetic checklist";
+  const operation = homeworkOperation(previous, draft, "create", true);
+  await repos.homework.save(operation);
+  render(h(AppDataProvider, null, h(MemoryRouter, null, h(Routes, null,
+    h(Route, { path: "/", element: h(Ready) }),
+    h(Route, { path: "/study/homework/:assignmentId", element: h("p", null, "Homework evidence flow") }),
+  ))));
+  await screen.findByText("Daily Flight Plan");
+  const link = await screen.findByRole("link", { name: /Open homework for Review the synthetic checklist/ });
+  expect(link.getAttribute("href")).toBe(`/study/homework/${draft.assignment.id}?activity=${draft.activities[0]!.record.id}`);
+  fireEvent.click(screen.getByRole("button", { name: "Why recommend Review the synthetic checklist?" }));
+  expect(screen.getByText(`Homework overdue since ${draft.assignment.due_date}`)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Complete" }));
+  await screen.findByText("Homework evidence flow");
+  expect((await repos.actions.get(operation.next.assignment.action_id!))?.status).toBe("open");
 });

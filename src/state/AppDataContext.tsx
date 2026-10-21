@@ -63,6 +63,7 @@ export interface AppData {
   fundGoals: FundGoal[];
   toolkit: ToolkitState;
   dailyPlan: DailyPlanState | null;
+  homework?: import("@/domain/homework").HomeworkSnapshot[];
 }
 
 type Status = "loading" | "ready" | "error";
@@ -156,6 +157,7 @@ export const EMPTY_DATA: AppData = {
   fundGoals: [],
   toolkit: defaultToolkitState(),
   dailyPlan: null,
+  homework: [],
 };
 
 export const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -180,6 +182,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     fundGoals,
     toolkit,
     dailyPlan,
+    homework,
   ] = await Promise.all([
     repositories.profile.get(),
     repositories.milestones.list(),
@@ -199,6 +202,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.finance.listFundGoals(),
     repositories.toolkit.get(),
     repositories.app.getDailyPlanState(),
+    repositories.homework.listSnapshots(),
   ]);
 
   return {
@@ -220,6 +224,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     fundGoals,
     toolkit,
     dailyPlan,
+    homework,
   };
 }
 

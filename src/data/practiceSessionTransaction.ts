@@ -25,6 +25,8 @@ import type {
 
 import type { SqlValue } from "./db";
 import { PracticeSessionError, type PracticeSessionErrorCode } from "./persistenceErrors";
+import { homeworkCardContextCodec, parseHomeworkJson, type HomeworkSnapshot } from "@/domain/homework";
+import { applyHomeworkOperation } from "./homeworkTransaction";
 
 export type Query = (sql: string, params: SqlValue[]) => Promise<Record<string, unknown>[]> | Record<string, unknown>[];
 
@@ -180,11 +182,19 @@ export function decodePracticeAction(value: unknown): PracticeSessionAction {
       };
     }
     case "complete_attempt": {
-      exactObject(value, ["action", "operationId", "attemptId", "expectedRevision"]);
+      exactObject(value, "homework" in obj
+        ? ["action", "operationId", "attemptId", "expectedRevision", "homework"]
+        : ["action", "operationId", "attemptId", "expectedRevision"]);
       const attemptId = stringAt(obj, "attemptId");
       if (!isValidId(attemptId)) refuse("INVALID_ARGUMENT");
       const expectedRevision = integerAt(obj, "expectedRevision", 0, 2_147_483_647);
-      return { action, operationId, attemptId, expectedRevision };
+      let homework: import("@/domain/homework").HomeworkCardContext | undefined;
+      if ("homework" in obj && obj["homework"] !== undefined && obj["homework"] !== null) {
+        const context = homeworkCardContextCodec.safeParse(obj["homework"]);
+        if (!context.success) refuse("INVALID_ARGUMENT");
+        homework = context.data;
+      }
+      return { action, operationId, attemptId, expectedRevision, ...(homework ? { homework } : {}) };
     }
     case "retake_attempt": {
       exactObject(value, [
@@ -599,6 +609,94 @@ export async function executePracticeSessionAction(
             attemptId,
           ],
         );
+
+        const hasHomework = (await query("SELECT name FROM sqlite_master WHERE type='table' AND name='homework_runs'", [])).length > 0;
+        if (hasHomework) {
+          const hwContext = action.homework;
+          if (hwContext) {
+            const [hRow] = await query("SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1", [hwContext.assignmentId]);
+            if (!hRow) refuse("INVALID_STATE");
+            const prev = parseHomeworkJson(String(hRow.snapshot_json)) as HomeworkSnapshot;
+            if (prev.assignment.revision !== hwContext.expectedRevision) refuse("INVALID_STATE");
+            const r = prev.runs.find(run => run.id === hwContext.runId);
+            const entry = prev.activities.find(e => e.record.id === r?.activity_id)?.record;
+            if (!r || r.kind !== "test" || r.scope.attempt_id !== attemptId || r.activity_revision !== hwContext.activityRevision ||
+                prev.assignment.archived || !entry || entry.removed_at || entry.cycle !== hwContext.cycle || entry.revision !== hwContext.activityRevision ||
+                r.cycle !== hwContext.cycle || r.invalidated_at || r.finished_at) refuse("INVALID_STATE");
+          }
+          const linkedRuns = await query(
+            `SELECT r.id, r.activity_id, a.assignment_id, a.created_at AS activity_created_at, a.cycle AS activity_cycle
+             FROM homework_runs r
+             JOIN homework_activities a ON a.id = r.activity_id
+             WHERE r.kind = 'test' AND r.source_attempt_id = ? AND r.finished_at IS NULL AND r.invalidated_at IS NULL`,
+            [attemptId],
+          );
+          for (const lr of linkedRuns) {
+            const startedAt = String(attempt["started_at"]);
+            if (startedAt > String(lr.activity_created_at) && Number(lr.activity_cycle) >= 1) {
+              const [h] = await query(
+                "SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1",
+                [String(lr.assignment_id)],
+              );
+              if (h) {
+                const prevSnapshot = parseHomeworkJson(String(h.snapshot_json)) as HomeworkSnapshot;
+                const nextSnapshot = structuredClone(prevSnapshot);
+                const runToFinish = nextSnapshot.runs.find((r) => r.id === String(lr.id));
+                const entryToFinish = nextSnapshot.activities.find((e) => e.record.id === String(lr.activity_id));
+                if (runToFinish?.kind === "test" && entryToFinish && !prevSnapshot.assignment.archived && !entryToFinish.record.removed_at && runToFinish.cycle === entryToFinish.record.cycle && !runToFinish.invalidated_at) {
+                  runToFinish.finished_at = timestamp;
+                  runToFinish.evidence = {
+                    version: 1,
+                    attempt_id: attemptId,
+                    version_id: String(attempt["version_id"]),
+                    started_at: startedAt,
+                    completed_at: timestamp,
+                    score_percent: scorePercent,
+                    total_questions: totalQuestions,
+                    answered_count: answeredCount,
+                    correct_count: correctCount,
+                    incorrect_count: incorrectCount,
+                    dont_know_count: dontKnowCount,
+                  };
+                  entryToFinish.record.state = "completed";
+                  entryToFinish.record.completed_at = timestamp;
+                  entryToFinish.record.updated_at = timestamp;
+                  const actRec = entryToFinish.record;
+                  entryToFinish.evidence = {
+                    version: 1,
+                    activity_id: actRec.id,
+                    revision: actRec.revision,
+                    cycle: actRec.cycle,
+                    kind: "test",
+                    completed_at: timestamp,
+                    body: actRec.body,
+                    source_material_id: actRec.source_material_id,
+                    source_revision: actRec.source_revision,
+                    page_start: null,
+                    page_end: null,
+                  };
+                  nextSnapshot.assignment.revision++;
+                  nextSnapshot.assignment.updated_at = timestamp;
+                  const activeActivities = nextSnapshot.activities.filter((e) => !e.record.removed_at);
+                  nextSnapshot.assignment.state = activeActivities.every((e) => e.record.state === "completed")
+                    ? "completed"
+                    : "in_progress";
+                  nextSnapshot.assignment.completed_at =
+                    nextSnapshot.assignment.state === "completed" ? timestamp : null;
+                  await applyHomeworkOperation(run, query, {
+                    version: 1,
+                    operationId: action.operationId,
+                    assignmentId: nextSnapshot.assignment.id,
+                    baseRevision: prevSnapshot.assignment.revision,
+                    changeKind: "record_evidence",
+                    at: timestamp,
+                    next: nextSnapshot,
+                  });
+                }
+              }
+            }
+          }
+        }
 
         resultVal = {
           attemptId,

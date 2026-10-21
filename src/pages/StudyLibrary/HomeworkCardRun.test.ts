@@ -24,8 +24,9 @@ it("previews and freezes the bounded linked queue before Start",async()=>{
   fireEvent.click(screen.getByRole("button",{name:"Start card review"}));
   await waitFor(()=>expect(save).toHaveBeenCalledTimes(1));
   const op=save.mock.calls[0]![0];
-  expect(op.changeKind).toBe("start");expect(op.next.runs[0]!.scope.item_ids).toEqual(current.items.map(x=>x.itemId));
-  expect(op.next.runs[0]!.scope.generation).toBe(0);expect(op.next.runs[0]!.ratings).toEqual([]);
+  const run = op.next.runs[0] as import("@/domain/homework").HomeworkCardRun;
+  expect(op.changeKind).toBe("start");expect(run.scope.item_ids).toEqual(current.items.map(x=>x.itemId));
+  expect(run.scope.generation).toBe(0);expect(run.ratings).toEqual([]);
 });
 it("restart resumes the frozen queue even when no cards are due now",async()=>{
   await setup("card_partial",true);

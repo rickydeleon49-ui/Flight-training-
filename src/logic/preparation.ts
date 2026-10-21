@@ -13,7 +13,8 @@ export interface PreparationLine {
   label: string;
   done: boolean;
   /** Where the line came from, so the UI can link back to it. */
-  source: "checklist" | "question";
+  source: "checklist" | "question" | "homework";
+  assignmentId?: string;
 }
 
 export interface PreparationState {
@@ -38,6 +39,7 @@ export function lessonPreparation(
   sources: {
     prepItems: PrepItem[];
     questions: Question[];
+    homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
   },
 ): PreparationState {
   const lines: PreparationLine[] = [];
@@ -53,6 +55,22 @@ export function lessonPreparation(
       done: question.status === "asked" || question.status === "answered",
       source: "question",
     });
+  }
+
+  for (const hw of sources.homework ?? []) {
+    if (hw.assignment.archived === 1) continue;
+    if (hw.assignment.lesson_id === event.id || hw.assignment.source_lesson_id === event.id) {
+      const active = hw.activities.filter((a) => !a.record.removed_at);
+      for (const a of active) {
+        lines.push({
+          id: a.record.id,
+          label: a.record.title,
+          done: a.record.state === "completed",
+          source: "homework",
+          assignmentId: hw.assignment.id,
+        });
+      }
+    }
   }
 
   const completed = lines.filter((line) => line.done).length;

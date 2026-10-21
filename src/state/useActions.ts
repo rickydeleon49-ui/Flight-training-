@@ -1,4 +1,6 @@
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { homeworkActionTarget } from "@/logic/actions";
 
 import { useAppData } from "./AppDataContext";
 import { completionChanges, reopenChanges, rescheduleChanges } from "@/logic/actions";
@@ -11,17 +13,21 @@ import type { Id, NextAction } from "@/domain/types";
  * behaviour of completing or rescheduling is defined exactly once.
  */
 export function useActionOperations() {
-  const { mutate, deleteWithUndo } = useAppData();
+  const { data, mutate, deleteWithUndo } = useAppData();
+  const navigate = useNavigate();
 
   const toggle = useCallback(
-    (action: NextAction) =>
-      mutate((repos) =>
+    (action: NextAction) => {
+      const target = homeworkActionTarget(action.id, data.homework);
+      if (target) { navigate(target); return Promise.resolve(undefined); }
+      return mutate((repos) =>
         repos.actions.update(
           action.id,
           action.status === "completed" ? reopenChanges() : completionChanges(nowIso()),
         ),
-      ),
-    [mutate],
+      );
+    },
+    [mutate, data.homework, navigate],
   );
 
   const reschedule = useCallback(
