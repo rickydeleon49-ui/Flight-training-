@@ -1,0 +1,1663 @@
+{
+  "schema": "hfd-competitive-review-sample/1",
+  "researchDatePacific": "2026-10-21",
+  "method": {
+    "country": "us",
+    "source": "Apple public customer-review RSS JSON",
+    "requestedSort": "mostRecent",
+    "selection": "First eight review-bearing entries returned per app; all available when fewer than eight. No star filtering. Checkride.bot returned zero textual entries.",
+    "applicationsWithReviews": 15,
+    "applicationsWithoutText": 1,
+    "totalSelected": 120,
+    "totalUnique": 120,
+    "earliest": "2025-01-19T14:34:13-08:00",
+    "latest": "2026-10-20T08:16:27-07:00",
+    "coding": "One author manually read and coded every selected review. Multiple themes allowed. Stars are retained but never converted automatically into sentiment. Chinese/Spanish entries were paraphrased into English; translations have not been independently checked.",
+    "limitations": [
+      "Small purposive app sample and short recent-review slice; not random, representative, verified-purchase, or market-share evidence.",
+      "Dates span different periods because app review volumes differ; apps get equal eight-entry samples regardless of rating volume.",
+      "Themes mix praise, complaints, and requests; a theme count is not a satisfaction statistic.",
+      "Self-reported defects, subscriptions, outcomes, accusations, and device claims were not independently reproduced or adjudicated.",
+      "Vague praise and conflicting stars/text are retained as low_information; no demand inferred.",
+      "Featured App Store reviews and two web discussions are separate qualitative context, not part of the 120-count sample.",
+      "No reviewers were contacted, identified, or profiled; no handles or full review bodies are published.",
+      "Feed content/order can change, and numeric Apple metadata can differ from cached product pages."
+    ]
+  },
+  "taxonomy": {
+    "content_fit": "Source accuracy, coverage, category fit, faithful capture, or applied-question quality",
+    "explanations": "Clear teaching, explanations, or answer reasoning",
+    "short_sessions": "Short lessons, bounded sessions, convenient practice, or scheduling",
+    "integration": "Notes, documents, and studying connected in one workflow",
+    "source_context": "Context, references, reading state, or exact review content",
+    "retrieval": "Cards, quizzes, spaced recall, or rehearsal",
+    "portability": "Device transfer, sync, export, or durable accessible state",
+    "reliability": "Crashes, latency, interrupted tasks, or missing content",
+    "value_access": "Pricing expectations, entitlement, advertising, or access barriers",
+    "visuals": "Images, charts, diagram study, or visual editing",
+    "accessibility": "Text size, language, screen reader, speech, or input needs",
+    "privacy": "User control of private content",
+    "guidance": "Navigation, discoverability, workflow learning, or interaction friction",
+    "support": "Human support, recoverability, or actionable help",
+    "motivation": "Encouragement, reward requests, or enjoyable review",
+    "ai_control": "Optional AI versus intrusive or unnecessary AI"
+  },
+  "themeCounts": [
+    {
+      "theme": "value_access",
+      "description": "Pricing expectations, entitlement, advertising, or access barriers",
+      "reviews": 31,
+      "apps": 12
+    },
+    {
+      "theme": "reliability",
+      "description": "Crashes, latency, interrupted tasks, or missing content",
+      "reviews": 24,
+      "apps": 9
+    },
+    {
+      "theme": "guidance",
+      "description": "Navigation, discoverability, workflow learning, or interaction friction",
+      "reviews": 21,
+      "apps": 10
+    },
+    {
+      "theme": "portability",
+      "description": "Device transfer, sync, export, or durable accessible state",
+      "reviews": 20,
+      "apps": 9
+    },
+    {
+      "theme": "retrieval",
+      "description": "Cards, quizzes, spaced recall, or rehearsal",
+      "reviews": 18,
+      "apps": 8
+    },
+    {
+      "theme": "content_fit",
+      "description": "Source accuracy, coverage, category fit, faithful capture, or applied-question quality",
+      "reviews": 13,
+      "apps": 9
+    },
+    {
+      "theme": "support",
+      "description": "Human support, recoverability, or actionable help",
+      "reviews": 13,
+      "apps": 8
+    },
+    {
+      "theme": "explanations",
+      "description": "Clear teaching, explanations, or answer reasoning",
+      "reviews": 8,
+      "apps": 4
+    },
+    {
+      "theme": "integration",
+      "description": "Notes, documents, and studying connected in one workflow",
+      "reviews": 7,
+      "apps": 6
+    },
+    {
+      "theme": "source_context",
+      "description": "Context, references, reading state, or exact review content",
+      "reviews": 7,
+      "apps": 6
+    },
+    {
+      "theme": "visuals",
+      "description": "Images, charts, diagram study, or visual editing",
+      "reviews": 7,
+      "apps": 5
+    },
+    {
+      "theme": "accessibility",
+      "description": "Text size, language, screen reader, speech, or input needs",
+      "reviews": 6,
+      "apps": 5
+    },
+    {
+      "theme": "short_sessions",
+      "description": "Short lessons, bounded sessions, convenient practice, or scheduling",
+      "reviews": 5,
+      "apps": 5
+    },
+    {
+      "theme": "ai_control",
+      "description": "Optional AI versus intrusive or unnecessary AI",
+      "reviews": 5,
+      "apps": 3
+    },
+    {
+      "theme": "motivation",
+      "description": "Encouragement, reward requests, or enjoyable review",
+      "reviews": 2,
+      "apps": 1
+    },
+    {
+      "theme": "privacy",
+      "description": "User control of private content",
+      "reviews": 1,
+      "apps": 1
+    }
+  ],
+  "applications": [
+    {
+      "appId": "334278376",
+      "appName": "Prepware Private Pilot",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=334278376/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:03:36.3618520Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14662646595",
+          "date": "2026-10-13T11:06:41-07:00",
+          "appVersion": "1.63",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Alleges dated questions; not verified exam evidence"
+        },
+        {
+          "reviewId": "14544531191",
+          "date": "2026-09-13T03:39:52-07:00",
+          "appVersion": "1.60",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Alleges outdated question coverage"
+        },
+        {
+          "reviewId": "14239145146",
+          "date": "2026-06-28T19:25:42-07:00",
+          "appVersion": "1.60",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "visuals",
+            "retrieval"
+          ],
+          "paraphrase": "Values harder figure-based practice"
+        },
+        {
+          "reviewId": "14187131151",
+          "date": "2026-06-15T14:19:03-07:00",
+          "appVersion": "1.60",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Reports wrong category questions"
+        },
+        {
+          "reviewId": "13244468264",
+          "date": "2025-10-09T08:00:05-07:00",
+          "appVersion": "1.60",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "visuals",
+            "short_sessions"
+          ],
+          "paraphrase": "Values mobile practice; struggles with small charts"
+        },
+        {
+          "reviewId": "12961764682",
+          "date": "2025-07-31T23:09:05-07:00",
+          "appVersion": "1.60",
+          "stars": 3,
+          "interpretation": "mixed",
+          "themes": [
+            "retrieval",
+            "content_fit"
+          ],
+          "paraphrase": "Questions memorization versus conceptual transfer"
+        },
+        {
+          "reviewId": "12839998186",
+          "date": "2025-07-01T09:45:22-07:00",
+          "appVersion": "1.60",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval"
+          ],
+          "paraphrase": "Reports favorable preparation experience"
+        },
+        {
+          "reviewId": "12205583376",
+          "date": "2025-01-19T14:34:13-08:00",
+          "appVersion": "1.59",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "portability"
+          ],
+          "paraphrase": "Reports missing desktop study state; mobile unused"
+        }
+      ]
+    },
+    {
+      "appId": "373493387",
+      "appName": "AnkiMobile Flashcards",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=373493387/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:33.8655434Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14670068589",
+          "date": "2026-10-15T09:02:16-07:00",
+          "appVersion": "25.09",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Questions value and mobile feature parity"
+        },
+        {
+          "reviewId": "14656551211",
+          "date": "2026-10-11T22:18:51-07:00",
+          "appVersion": "25.09",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "retrieval",
+            "guidance",
+            "portability"
+          ],
+          "paraphrase": "Values repetition; struggles with setup and sync"
+        },
+        {
+          "reviewId": "14647692238",
+          "date": "2026-10-09T16:45:39-07:00",
+          "appVersion": "25.09",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic positive rating"
+        },
+        {
+          "reviewId": "14642279077",
+          "date": "2026-10-08T07:44:24-07:00",
+          "appVersion": "25.09",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "visuals",
+            "portability",
+            "reliability"
+          ],
+          "paraphrase": "Reports missing mobile images"
+        },
+        {
+          "reviewId": "14608465664",
+          "date": "2026-09-29T13:26:00-07:00",
+          "appVersion": "25.09",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "guidance",
+            "content_fit"
+          ],
+          "paraphrase": "Struggles locating suitable trustworthy beginner decks"
+        },
+        {
+          "reviewId": "14607957674",
+          "date": "2026-09-29T10:30:13-07:00",
+          "appVersion": "25.09",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "portability"
+          ],
+          "paraphrase": "Wants desktop editing capability on iPad"
+        },
+        {
+          "reviewId": "14577008499",
+          "date": "2026-09-21T10:25:56-07:00",
+          "appVersion": "25.09",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "guidance"
+          ],
+          "paraphrase": "Values card organization after learning workflow"
+        },
+        {
+          "reviewId": "14542704445",
+          "date": "2026-09-12T15:21:41-07:00",
+          "appVersion": "25.09",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "portability"
+          ],
+          "paraphrase": "Values decks and device sync"
+        }
+      ]
+    },
+    {
+      "appId": "546473125",
+      "appName": "Quizlet: More than Flashcards",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=546473125/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:35.0748666Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14689610618",
+          "date": "2026-10-20T07:45:03-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "value_access"
+          ],
+          "paraphrase": "Values paid range of study options"
+        },
+        {
+          "reviewId": "14689455014",
+          "date": "2026-10-20T07:00:28-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Non-specific positive entry"
+        },
+        {
+          "reviewId": "14688812192",
+          "date": "2026-10-20T03:38:25-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Non-specific positive entry"
+        },
+        {
+          "reviewId": "14688247732",
+          "date": "2026-10-19T23:29:25-07:00",
+          "appVersion": "10.56",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "guidance"
+          ],
+          "paraphrase": "Cannot select desired material; Spanish entry"
+        },
+        {
+          "reviewId": "14686941872",
+          "date": "2026-10-19T14:18:01-07:00",
+          "appVersion": "10.56",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "guidance",
+            "value_access"
+          ],
+          "paraphrase": "Reports repeated disruptive bot checks"
+        },
+        {
+          "reviewId": "14686832050",
+          "date": "2026-10-19T13:36:55-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "short_sessions"
+          ],
+          "paraphrase": "Values quick study in different modes"
+        },
+        {
+          "reviewId": "14686605583",
+          "date": "2026-10-19T12:16:33-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic study endorsement"
+        },
+        {
+          "reviewId": "14683500083",
+          "date": "2026-10-18T16:47:49-07:00",
+          "appVersion": "10.56",
+          "stars": 5,
+          "interpretation": "request",
+          "themes": [
+            "visuals",
+            "guidance"
+          ],
+          "paraphrase": "Requests easier image-card editing"
+        }
+      ]
+    },
+    {
+      "appId": "922765270",
+      "appName": "LiquidText",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=922765270/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.5489392Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14583717880",
+          "date": "2026-09-23T05:08:22-07:00",
+          "appVersion": "7.3.14",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "support"
+          ],
+          "paraphrase": "Disputes refund outcome"
+        },
+        {
+          "reviewId": "14478560241",
+          "date": "2026-08-27T08:19:00-07:00",
+          "appVersion": "7.3.12",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Dislikes extra AI subscription requirement"
+        },
+        {
+          "reviewId": "14316531370",
+          "date": "2026-07-17T19:01:32-07:00",
+          "appVersion": "7.3.12",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Feels purchase expectations changed"
+        },
+        {
+          "reviewId": "14099367479",
+          "date": "2026-05-23T22:12:20-07:00",
+          "appVersion": "7.1.9",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "source_context",
+            "value_access",
+            "ai_control"
+          ],
+          "paraphrase": "Values document work; wants licensing basics fixed"
+        },
+        {
+          "reviewId": "13985648391",
+          "date": "2026-04-22T09:15:28-07:00",
+          "appVersion": "7.3.4",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Reports changed purchase expectations"
+        },
+        {
+          "reviewId": "13928938626",
+          "date": "2026-04-06T07:47:17-07:00",
+          "appVersion": "7.3.0",
+          "stars": 3,
+          "interpretation": "request",
+          "themes": [
+            "accessibility",
+            "guidance"
+          ],
+          "paraphrase": "Requests smoother specialist input workflow"
+        },
+        {
+          "reviewId": "13838079274",
+          "date": "2026-03-11T13:56:42-07:00",
+          "appVersion": "7.1.16",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "guidance",
+            "accessibility",
+            "ai_control",
+            "value_access"
+          ],
+          "paraphrase": "Values workspace; requests accessibility and ownership options"
+        },
+        {
+          "reviewId": "13791745074",
+          "date": "2026-02-26T07:22:52-08:00",
+          "appVersion": "7.1.9",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "source_context",
+            "integration"
+          ],
+          "paraphrase": "Values organization across many documents"
+        }
+      ]
+    },
+    {
+      "appId": "998722803",
+      "appName": "FlightReady Academy",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=998722803/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:03:37.0660172Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14457757226",
+          "date": "2026-08-22T00:27:49-07:00",
+          "appVersion": "3.51.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "support"
+          ],
+          "paraphrase": "Reports registration restriction without useful resolution"
+        },
+        {
+          "reviewId": "14392137913",
+          "date": "2026-08-05T12:24:41-07:00",
+          "appVersion": "3.50.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "support"
+          ],
+          "paraphrase": "Disputes account restriction"
+        },
+        {
+          "reviewId": "14251861458",
+          "date": "2026-07-01T19:06:58-07:00",
+          "appVersion": "3.48.0",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval"
+          ],
+          "paraphrase": "Uses app for practice"
+        },
+        {
+          "reviewId": "14061599037",
+          "date": "2026-05-13T16:43:26-07:00",
+          "appVersion": "3.39.0",
+          "stars": 2,
+          "interpretation": "mixed",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Likes app but disputes restriction"
+        },
+        {
+          "reviewId": "14059818568",
+          "date": "2026-05-13T06:11:42-07:00",
+          "appVersion": "3.39.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Disputes account restriction"
+        },
+        {
+          "reviewId": "13985756166",
+          "date": "2026-04-22T09:52:11-07:00",
+          "appVersion": "3.38.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "support"
+          ],
+          "paraphrase": "Reports entitlement and support access issue"
+        },
+        {
+          "reviewId": "13548476615",
+          "date": "2025-12-23T19:29:59-08:00",
+          "appVersion": "3.31.0",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Reports positive course experience"
+        },
+        {
+          "reviewId": "12808451494",
+          "date": "2025-06-23T09:36:16-07:00",
+          "appVersion": "3.21.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "support"
+          ],
+          "paraphrase": "Reports unhelpful question-feedback response"
+        }
+      ]
+    },
+    {
+      "appId": "1272775528",
+      "appName": "Sporty's Pilot Training",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1272775528/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.4183246Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14675304122",
+          "date": "2026-10-16T16:37:43-07:00",
+          "appVersion": "10.5.5",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "reliability",
+            "explanations"
+          ],
+          "paraphrase": "Reports smoother updates and accessible content"
+        },
+        {
+          "reviewId": "14610741148",
+          "date": "2026-09-30T05:17:53-07:00",
+          "appVersion": "10.5.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "support"
+          ],
+          "paraphrase": "Reports unavailable videos and broken support link"
+        },
+        {
+          "reviewId": "14596744061",
+          "date": "2026-09-26T12:07:22-07:00",
+          "appVersion": "10.4.6",
+          "stars": 4,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "portability"
+          ],
+          "paraphrase": "Reports Mac flashcard crashes despite iPad working"
+        },
+        {
+          "reviewId": "14237337126",
+          "date": "2026-06-28T08:43:21-07:00",
+          "appVersion": "10.2",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability"
+          ],
+          "paraphrase": "Reports update breaking question flow"
+        },
+        {
+          "reviewId": "13759255406",
+          "date": "2026-02-17T05:56:47-08:00",
+          "appVersion": "9.14.1",
+          "stars": 3,
+          "interpretation": "mixed",
+          "themes": [
+            "explanations",
+            "reliability"
+          ],
+          "paraphrase": "Praises content; reports playback interruptions"
+        },
+        {
+          "reviewId": "13681864666",
+          "date": "2026-01-27T06:41:28-08:00",
+          "appVersion": "9.13",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "support"
+          ],
+          "paraphrase": "Reports hangs and switches to browser"
+        },
+        {
+          "reviewId": "13378727420",
+          "date": "2025-11-09T16:28:25-08:00",
+          "appVersion": "9.11",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "portability"
+          ],
+          "paraphrase": "Values multiple device options"
+        },
+        {
+          "reviewId": "13372982288",
+          "date": "2025-11-08T08:31:22-08:00",
+          "appVersion": "9.11",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Questions practice coverage; not verified exam evidence"
+        }
+      ]
+    },
+    {
+      "appId": "1444383602",
+      "appName": "Goodnotes: AI Notes, Docs, PDF",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1444383602/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:35.7987800Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14687184111",
+          "date": "2026-10-19T15:54:49-07:00",
+          "appVersion": "7.1.28",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "visuals",
+            "reliability",
+            "support"
+          ],
+          "paraphrase": "Reports annotation problems and inadequate equation formatting"
+        },
+        {
+          "reviewId": "14687107005",
+          "date": "2026-10-19T15:23:35-07:00",
+          "appVersion": "7.1.30",
+          "stars": 1,
+          "interpretation": "mixed",
+          "themes": [
+            "portability",
+            "support"
+          ],
+          "paraphrase": "Values notes; reports inaccessible former school account"
+        },
+        {
+          "reviewId": "14687073396",
+          "date": "2026-10-19T15:10:05-07:00",
+          "appVersion": "7.1.30",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Reports license carryover issue"
+        },
+        {
+          "reviewId": "14686592381",
+          "date": "2026-10-19T12:12:06-07:00",
+          "appVersion": "7.1.28",
+          "stars": 4,
+          "interpretation": "request",
+          "themes": [
+            "source_context"
+          ],
+          "paraphrase": "Requests explicit per-page reading states"
+        },
+        {
+          "reviewId": "14684905392",
+          "date": "2026-10-19T03:15:14-07:00",
+          "appVersion": "7.1.30",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Non-specific positive entry"
+        },
+        {
+          "reviewId": "14684430330",
+          "date": "2026-10-18T23:40:34-07:00",
+          "appVersion": "7.1.30",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "guidance"
+          ],
+          "paraphrase": "Objects to upgrade prompts"
+        },
+        {
+          "reviewId": "14683943527",
+          "date": "2026-10-18T19:50:26-07:00",
+          "appVersion": "7.0.26",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "integration",
+            "portability",
+            "guidance"
+          ],
+          "paraphrase": "Values flexible notebooks and lasting local exports"
+        },
+        {
+          "reviewId": "14683904020",
+          "date": "2026-10-18T19:33:29-07:00",
+          "appVersion": "7.1.30",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "portability"
+          ],
+          "paraphrase": "Reports upgrade-related missing work and crashes"
+        }
+      ]
+    },
+    {
+      "appId": "1444387206",
+      "appName": "Ground School",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1444387206/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.2423836Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14629247331",
+          "date": "2026-10-04T21:02:06-07:00",
+          "appVersion": "6.5.12",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "explanations"
+          ],
+          "paraphrase": "Values instructor"
+        },
+        {
+          "reviewId": "14549272066",
+          "date": "2026-09-14T08:11:34-07:00",
+          "appVersion": "6.5.11",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "guidance",
+            "integration"
+          ],
+          "paraphrase": "Values organized ground and flight lessons"
+        },
+        {
+          "reviewId": "14474598740",
+          "date": "2026-08-26T08:02:56-07:00",
+          "appVersion": "6.5.11",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Values supplement to instructor"
+        },
+        {
+          "reviewId": "14308887897",
+          "date": "2026-07-15T22:08:23-07:00",
+          "appVersion": "6.5.9",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic study endorsement"
+        },
+        {
+          "reviewId": "14262231654",
+          "date": "2026-07-04T07:12:49-07:00",
+          "appVersion": "6.5.8",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic preparation endorsement"
+        },
+        {
+          "reviewId": "14191695085",
+          "date": "2026-06-16T18:45:05-07:00",
+          "appVersion": "6.5.6",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "short_sessions",
+            "explanations",
+            "content_fit"
+          ],
+          "paraphrase": "Values short clear lessons and refreshed content"
+        },
+        {
+          "reviewId": "14134631792",
+          "date": "2026-06-02T03:16:31-07:00",
+          "appVersion": "6.5.6",
+          "stars": 3,
+          "interpretation": "mixed",
+          "themes": [
+            "value_access",
+            "guidance"
+          ],
+          "paraphrase": "Questions recurring cost and polish"
+        },
+        {
+          "reviewId": "13983067625",
+          "date": "2026-04-21T15:13:40-07:00",
+          "appVersion": "6.4.4",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "source_context",
+            "explanations"
+          ],
+          "paraphrase": "Values fast embedded reference access"
+        }
+      ]
+    },
+    {
+      "appId": "1461037185",
+      "appName": "PlaneEnglish: ARSim",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1461037185/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:03:36.7043768Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14456165013",
+          "date": "2026-08-21T13:32:26-07:00",
+          "appVersion": "1.5.14",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "content_fit"
+          ],
+          "paraphrase": "Reports speech recognition and phraseology trouble"
+        },
+        {
+          "reviewId": "14431670713",
+          "date": "2026-08-15T10:39:04-07:00",
+          "appVersion": "1.5.14",
+          "stars": 5,
+          "interpretation": "mixed",
+          "themes": [
+            "portability",
+            "support"
+          ],
+          "paraphrase": "Device access issue reportedly resolved"
+        },
+        {
+          "reviewId": "14183720138",
+          "date": "2026-06-14T17:22:27-07:00",
+          "appVersion": "1.5.13",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval"
+          ],
+          "paraphrase": "Values communication practice"
+        },
+        {
+          "reviewId": "13973556444",
+          "date": "2026-04-18T22:23:42-07:00",
+          "appVersion": "1.5.13",
+          "stars": 2,
+          "interpretation": "request",
+          "themes": [
+            "guidance",
+            "accessibility"
+          ],
+          "paraphrase": "Requests fewer speech-control taps"
+        },
+        {
+          "reviewId": "13829995276",
+          "date": "2026-03-09T05:27:46-07:00",
+          "appVersion": "1.5.13",
+          "stars": 4,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "portability"
+          ],
+          "paraphrase": "Reports inability to launch offline"
+        },
+        {
+          "reviewId": "13667858084",
+          "date": "2026-01-23T13:03:44-08:00",
+          "appVersion": "1.5.13",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval"
+          ],
+          "paraphrase": "Values practicing clearance readbacks"
+        },
+        {
+          "reviewId": "13385395912",
+          "date": "2025-11-11T07:56:35-08:00",
+          "appVersion": "1.5.12",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic endorsement"
+        },
+        {
+          "reviewId": "13214369679",
+          "date": "2025-10-02T09:17:39-07:00",
+          "appVersion": "1.5.11",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "retrieval",
+            "guidance",
+            "reliability"
+          ],
+          "paraphrase": "Values local scenarios; wants guidance and better recognition"
+        }
+      ]
+    },
+    {
+      "appId": "1531657269",
+      "appName": "MarginNote 4: AI Notes·MindMap",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1531657269/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.7605288Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14594071325",
+          "date": "2026-09-25T20:23:46-07:00",
+          "appVersion": "4.4.6",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "guidance",
+            "reliability"
+          ],
+          "paraphrase": "Reports drifting layout and accidental gesture changes"
+        },
+        {
+          "reviewId": "14584818596",
+          "date": "2026-09-23T10:38:00-07:00",
+          "appVersion": "4.4.6",
+          "stars": 3,
+          "interpretation": "mixed",
+          "themes": [
+            "portability",
+            "reliability",
+            "source_context"
+          ],
+          "paraphrase": "Likes iPad workflow; reports Mac grouping trouble"
+        },
+        {
+          "reviewId": "14511034066",
+          "date": "2026-09-04T14:05:03-07:00",
+          "appVersion": "4.4.6",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "integration"
+          ],
+          "paraphrase": "Values independent textbook study"
+        },
+        {
+          "reviewId": "14468626244",
+          "date": "2026-08-24T19:07:23-07:00",
+          "appVersion": "4.4.6",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "portability",
+            "value_access"
+          ],
+          "paraphrase": "Reports failed sync despite premium purchase"
+        },
+        {
+          "reviewId": "14427561997",
+          "date": "2026-08-14T10:20:17-07:00",
+          "appVersion": "4.4.5",
+          "stars": 4,
+          "interpretation": "request",
+          "themes": [
+            "accessibility"
+          ],
+          "paraphrase": "Requests Spanish interface"
+        },
+        {
+          "reviewId": "14410559482",
+          "date": "2026-08-10T06:35:51-07:00",
+          "appVersion": "4.4.5",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "portability"
+          ],
+          "paraphrase": "Reports flattened export failure"
+        },
+        {
+          "reviewId": "14177067776",
+          "date": "2026-06-13T01:45:30-07:00",
+          "appVersion": "4.4.2",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability"
+          ],
+          "paraphrase": "Alleges update problems; moderation claim unverified"
+        },
+        {
+          "reviewId": "14134492088",
+          "date": "2026-06-02T02:17:25-07:00",
+          "appVersion": "4.4.1",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "portability"
+          ],
+          "paraphrase": "Questions separate Mac payment"
+        }
+      ]
+    },
+    {
+      "appId": "1545429784",
+      "appName": "RemNote - Notes & Flashcards",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1545429784/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.0520753Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14684364876",
+          "date": "2026-10-18T23:08:39-07:00",
+          "appVersion": "1.28.50",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "motivation"
+          ],
+          "paraphrase": "Enjoys daily spaced review"
+        },
+        {
+          "reviewId": "14632433780",
+          "date": "2026-10-05T16:59:45-07:00",
+          "appVersion": "1.28.37",
+          "stars": 5,
+          "interpretation": "request",
+          "themes": [
+            "motivation",
+            "guidance"
+          ],
+          "paraphrase": "Requests rewards and visible progress"
+        },
+        {
+          "reviewId": "14621251191",
+          "date": "2026-10-02T20:27:08-07:00",
+          "appVersion": "1.28.37",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "General Spanish-language enthusiasm"
+        },
+        {
+          "reviewId": "14531467739",
+          "date": "2026-09-09T19:26:23-07:00",
+          "appVersion": "1.28.14",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "integration",
+            "portability",
+            "guidance"
+          ],
+          "paraphrase": "Values combined workflow despite learning curve"
+        },
+        {
+          "reviewId": "14529738111",
+          "date": "2026-09-09T09:09:02-07:00",
+          "appVersion": "1.28.14",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "short_sessions"
+          ],
+          "paraphrase": "Values scheduling and easy card creation"
+        },
+        {
+          "reviewId": "14528019454",
+          "date": "2026-09-08T23:00:05-07:00",
+          "appVersion": "1.28.14",
+          "stars": 4,
+          "interpretation": "request",
+          "themes": [
+            "accessibility"
+          ],
+          "paraphrase": "Requests larger iPad text"
+        },
+        {
+          "reviewId": "14465206017",
+          "date": "2026-08-23T22:24:10-07:00",
+          "appVersion": "1.28.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "ai_control"
+          ],
+          "paraphrase": "Objects to cost and AI emphasis"
+        },
+        {
+          "reviewId": "14447902657",
+          "date": "2026-08-19T11:52:09-07:00",
+          "appVersion": "1.28.0",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Likes app; questions credit limits"
+        }
+      ]
+    },
+    {
+      "appId": "1567599761",
+      "appName": "Readwise Reader",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=1567599761/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:34.9489575Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14411386836",
+          "date": "2026-08-10T10:39:57-07:00",
+          "appVersion": "8.16",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "guidance",
+            "ai_control"
+          ],
+          "paraphrase": "Values design, tags, and optional AI"
+        },
+        {
+          "reviewId": "14245569120",
+          "date": "2026-06-30T08:22:29-07:00",
+          "appVersion": "8.7",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "accessibility",
+            "support",
+            "source_context",
+            "ai_control"
+          ],
+          "paraphrase": "Values voice choice, search, support, optional AI"
+        },
+        {
+          "reviewId": "14124789894",
+          "date": "2026-05-30T13:51:03-07:00",
+          "appVersion": "8.4.1",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "integration"
+          ],
+          "paraphrase": "Values single reading destination"
+        },
+        {
+          "reviewId": "14098640023",
+          "date": "2026-05-23T17:11:44-07:00",
+          "appVersion": "8.4.1",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "integration",
+            "portability"
+          ],
+          "paraphrase": "Values save-now, read-later device workflow"
+        },
+        {
+          "reviewId": "13994632951",
+          "date": "2026-04-25T01:08:43-07:00",
+          "appVersion": "8.3.2",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access",
+            "guidance"
+          ],
+          "paraphrase": "Cannot evaluate app after expired linked trial"
+        },
+        {
+          "reviewId": "13981590978",
+          "date": "2026-04-21T06:05:52-07:00",
+          "appVersion": "8.2.2",
+          "stars": 3,
+          "interpretation": "mixed",
+          "themes": [
+            "reliability"
+          ],
+          "paraphrase": "Values concept; reports slow inbox"
+        },
+        {
+          "reviewId": "13933456719",
+          "date": "2026-04-07T13:47:33-07:00",
+          "appVersion": "7.39.1",
+          "stars": 4,
+          "interpretation": "request",
+          "themes": [
+            "guidance"
+          ],
+          "paraphrase": "Requests widget access"
+        },
+        {
+          "reviewId": "13882001707",
+          "date": "2026-03-24T06:49:34-07:00",
+          "appVersion": "7.39.1",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit",
+            "reliability"
+          ],
+          "paraphrase": "Reports incomplete saved article extraction"
+        }
+      ]
+    },
+    {
+      "appId": "6463744184",
+      "appName": "Knowt: AI Flashcards & Notes",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=6463744184/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:35.3191009Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14685790438",
+          "date": "2026-10-19T07:58:30-07:00",
+          "appVersion": "4.1.0",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval"
+          ],
+          "paraphrase": "Values refreshing forgotten material"
+        },
+        {
+          "reviewId": "14683559173",
+          "date": "2026-10-18T17:12:17-07:00",
+          "appVersion": "4.1.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "privacy"
+          ],
+          "paraphrase": "Requests private folders"
+        },
+        {
+          "reviewId": "14679271796",
+          "date": "2026-10-17T15:37:07-07:00",
+          "appVersion": "4.0.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Objects to ads and changed access"
+        },
+        {
+          "reviewId": "14674309673",
+          "date": "2026-10-16T10:38:28-07:00",
+          "appVersion": "4.0.0",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "retrieval",
+            "value_access"
+          ],
+          "paraphrase": "Values available study features"
+        },
+        {
+          "reviewId": "14656960553",
+          "date": "2026-10-12T01:25:46-07:00",
+          "appVersion": "3.25.0",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "retrieval",
+            "reliability",
+            "source_context"
+          ],
+          "paraphrase": "Values tests; reports incorrect review choices"
+        },
+        {
+          "reviewId": "14645829463",
+          "date": "2026-10-09T06:19:55-07:00",
+          "appVersion": "3.25.0",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Reports blocked practice access"
+        },
+        {
+          "reviewId": "14635395042",
+          "date": "2026-10-06T11:45:37-07:00",
+          "appVersion": "3.25.0",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Wants cost shown before recording"
+        },
+        {
+          "reviewId": "14627260498",
+          "date": "2026-10-04T08:56:41-07:00",
+          "appVersion": "3.25.0",
+          "stars": 2,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Positive text conflicts with low star score"
+        }
+      ]
+    },
+    {
+      "appId": "6737527615",
+      "appName": "Gemini Notebook",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=6737527615/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:35.4566486Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14689719136",
+          "date": "2026-10-20T08:16:27-07:00",
+          "appVersion": "1.63.1",
+          "stars": 5,
+          "interpretation": "praise",
+          "themes": [
+            "explanations"
+          ],
+          "paraphrase": "Values informative answers"
+        },
+        {
+          "reviewId": "14687401981",
+          "date": "2026-10-19T17:22:10-07:00",
+          "appVersion": "1.63.1",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "portability",
+            "value_access"
+          ],
+          "paraphrase": "Reports personal/school account-switch failure"
+        },
+        {
+          "reviewId": "14685258785",
+          "date": "2026-10-19T05:19:44-07:00",
+          "appVersion": "1.61.7",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic positive entry"
+        },
+        {
+          "reviewId": "14683775255",
+          "date": "2026-10-18T18:40:14-07:00",
+          "appVersion": "1.61.7",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "portability",
+            "reliability"
+          ],
+          "paraphrase": "Reports browser/account-switch loop"
+        },
+        {
+          "reviewId": "14680211527",
+          "date": "2026-10-17T21:45:49-07:00",
+          "appVersion": "1.61.7",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Generic endorsement"
+        },
+        {
+          "reviewId": "14675284457",
+          "date": "2026-10-16T16:29:59-07:00",
+          "appVersion": "1.61.7",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "support",
+            "value_access"
+          ],
+          "paraphrase": "Reports persistent provider error despite payment"
+        },
+        {
+          "reviewId": "14674464912",
+          "date": "2026-10-16T11:28:27-07:00",
+          "appVersion": "1.61.7",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "content_fit"
+          ],
+          "paraphrase": "Alleges inaccurate source interpretation; not reproduced"
+        },
+        {
+          "reviewId": "14674024132",
+          "date": "2026-10-16T09:12:06-07:00",
+          "appVersion": "1.61.7",
+          "stars": 5,
+          "interpretation": "low_information",
+          "themes": [],
+          "paraphrase": "Non-specific positive entry"
+        }
+      ]
+    },
+    {
+      "appId": "6663574866",
+      "appName": "StudyFetch: AI Tutor",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=6663574866/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:02:35.6474365Z",
+      "selected": 8,
+      "reviews": [
+        {
+          "reviewId": "14683691557",
+          "date": "2026-10-18T18:06:10-07:00",
+          "appVersion": "3.1.1",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "short_sessions",
+            "visuals",
+            "retrieval",
+            "guidance"
+          ],
+          "paraphrase": "Values brief study; wants audio queue and flexible practice"
+        },
+        {
+          "reviewId": "14663929633",
+          "date": "2026-10-13T19:07:08-07:00",
+          "appVersion": "3.1.0",
+          "stars": 2,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability",
+            "visuals"
+          ],
+          "paraphrase": "Reports increasing lag; requests pictures"
+        },
+        {
+          "reviewId": "14655708294",
+          "date": "2026-10-11T16:34:12-07:00",
+          "appVersion": "3.0.9",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Wants handwritten-note access without upgrade"
+        },
+        {
+          "reviewId": "14631401640",
+          "date": "2026-10-05T10:30:43-07:00",
+          "appVersion": "3.0.9",
+          "stars": 3,
+          "interpretation": "complaint",
+          "themes": [
+            "reliability"
+          ],
+          "paraphrase": "Reports slow app"
+        },
+        {
+          "reviewId": "14629783278",
+          "date": "2026-10-05T01:14:16-07:00",
+          "appVersion": "3.0.9",
+          "stars": 5,
+          "interpretation": "mixed",
+          "themes": [
+            "explanations",
+            "reliability"
+          ],
+          "paraphrase": "Values explanations despite tutor issues"
+        },
+        {
+          "reviewId": "14629657615",
+          "date": "2026-10-05T00:15:05-07:00",
+          "appVersion": "3.0.9",
+          "stars": 1,
+          "interpretation": "complaint",
+          "themes": [
+            "explanations",
+            "reliability",
+            "support"
+          ],
+          "paraphrase": "Reports changed tutor behavior and slow update"
+        },
+        {
+          "reviewId": "14629024970",
+          "date": "2026-10-04T19:26:29-07:00",
+          "appVersion": "3.0.9",
+          "stars": 4,
+          "interpretation": "mixed",
+          "themes": [
+            "retrieval",
+            "content_fit"
+          ],
+          "paraphrase": "Wants varied applied questions rather than repetition"
+        },
+        {
+          "reviewId": "14628952881",
+          "date": "2026-10-04T18:57:04-07:00",
+          "appVersion": "3.0.9",
+          "stars": 5,
+          "interpretation": "mixed",
+          "themes": [
+            "value_access"
+          ],
+          "paraphrase": "Likes study; cannot justify cost"
+        }
+      ]
+    },
+    {
+      "appId": "6759470447",
+      "appName": "Checkride.bot — Oral Exam Prep",
+      "feedUrl": "https://itunes.apple.com/us/rss/customerreviews/id=6759470447/sortBy=mostRecent/json",
+      "retrievedAtUtc": "2026-10-21T19:03:37.2621487Z",
+      "selected": 0,
+      "reviews": []
+    }
+  ]
+}

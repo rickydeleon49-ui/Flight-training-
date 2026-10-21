@@ -1,0 +1,66 @@
+{
+  "schema": "hfd-competitive-research-documentation-validation/1",
+  "checkedAtUtc": "2026-10-21T19:13:22.123Z",
+  "baseline": "f2cf79f76ec295ce2cd3cc0ac0315374484e64fa",
+  "branch": "docs/competitive-app-research-2026-10-21",
+  "runtime": "v24.16.0",
+  "runtimeScope": "Built-in Node filesystem/JSON/Git documentation checks only; no app dependency/test/build invocation",
+  "checks": {
+    "pass": true,
+    "documentationFiles": 8,
+    "metadataApps": 18,
+    "reviewFeedApps": 16,
+    "appsWithText": 15,
+    "uniqueReadReviews": 120,
+    "lowInformation": 13,
+    "reviewProvenance": "matches selected local public-feed snapshots",
+    "paraphrases": "bounded; no full review bodies or handles",
+    "themeCounts": "recomputed from observations",
+    "localLinks": 23,
+    "externalUrlSyntax": 37,
+    "sourceAndConfigurationChanges": 0,
+    "whitespace": "pass"
+  },
+  "correctionsBeforeFinalValidation": [
+    "Removed an unused syntax-invalid helper from the outside-repository documentation checker before it could run.",
+    "Checker then found an undefined content_fit taxonomy key; defined it, regenerated counts, and added the corresponding report row."
+  ],
+  "limitations": "No app, competitor installation, provider, performance, installed-platform, representative-market, or learning-efficacy test was run. External URL syntax is not a fetch-availability assertion.",
+  "filesExcludingThisReceipt": [
+    {
+      "path": "ROADMAP.md",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "a749984fde6bfa0737acc27c256424f2f93b26787540f890c83a5f3527d5ab39"
+    },
+    {
+      "path": "STATUS.md",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "9384e5a474d4abe1db6d26a661302c19c3a41c3b4d0d612c12b0cbd928fbf80e"
+    },
+    {
+      "path": "docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "06368ecf63185b3dcc1ac812892ee700081b0720aacb83294960699f4c8846ab"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "aee7d91cdd6d1fc273fa17ea334f943314980337d738ad4aef8a7920e779e283"
+    },
+    {
+      "path": "docs/research/competitive-apps-2026-10-21/README.md",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "275857e12beccb26224195531ba991a21875f4c031d2f1767247be693b3b565c"
+    },
+    {
+      "path": "docs/research/competitive-apps-2026-10-21/apple-metadata.json",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "b571f9643d17ecb5d3db7732197f91698df4d356c143acc080c7685d09764a6f"
+    },
+    {
+      "path": "docs/research/competitive-apps-2026-10-21/review-observations.json",
+      "hashEncoding": "UTF-8 text with CRLF normalized to LF",
+      "normalizedSha256": "fe89b8f4ced28344d8fa22f42d3168ec15f32762dfdbacb70a945709fb52955d"
+    }
+  ]
+}
