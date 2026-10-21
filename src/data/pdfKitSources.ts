@@ -149,9 +149,11 @@ export async function readPdfItemProvenance(
       const prior = content.get(kind === "summary" ? logicalId : item.logicalId) ?? [];
       const hashes = await Promise.all(prior.map(v => pdfKitContentHash(kind, v)));
       if (!hashes.includes(item.contentHash)) return invalid();
-      if (!editOrigin && await pdfKitContentHash(kind, current) !== item.contentHash) return invalid();
+      // An immutable older question may share its logical id with a later edit.
+      // Valid evidence for that later stored version is not evidence for this one.
+      if (!editOrigin && await pdfKitContentHash(kind, current) !== item.contentHash) continue;
       sources.push({ ...item, runId: s.runId });
     } catch { return invalid(); }
   }
-  return sources.length ? { status: "valid", label: "Pulled from your PDF on this Mac", sources, ...(editOrigin ? { editOrigin } : {}) } : undefined;
+  return sources.length ? { status: "valid", label: "Pulled from your PDF on this Mac", sources, ...(editOrigin ? { editOrigin } : {}) } : invalid();
 }

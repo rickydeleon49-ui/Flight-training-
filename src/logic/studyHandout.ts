@@ -1,3 +1,5 @@
+import { PDF_KIT_LABEL, pdfEditLabel } from "./pdfKitLabels";
+import type { PdfItemProvenance } from "@/data/pdfKitSources";
 /**
  * A printable study handout (P54-04).
  *
@@ -81,7 +83,11 @@ export function guideBlocksHtml(blocks: GuideBlock[]): string {
 }
 
 /** Who wrote an item, for a handout others may read; nothing for generated items. */
-function authorRef(origin: unknown): string {
+function authorRef(origin: unknown, pdf?: PdfItemProvenance): string {
+  if (pdf) {
+    const label = pdf.status === "valid" ? [PDF_KIT_LABEL, pdfEditLabel(origin)].filter(Boolean).join(" · ") : "Source details unavailable";
+    return ` <span class="ref">${escapeHtml(label)}</span>`;
+  }
   if (origin === "instructor") return ` <span class="ref">(instructor correction)</span>`;
   if (origin === "user") return ` <span class="ref">(written by hand)</span>`;
   return "";
@@ -131,9 +137,9 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
 
   if (set && selection.guide && available.guide) {
     const parts = [`<h2>Study guide</h2>`];
-    if (set.summary.trim()) parts.push(`<p>${lines(set.summary)}${authorRef(set.summaryOrigin)}</p>`);
+    if (set.summary.trim()) parts.push(`<p>${lines(set.summary)}${authorRef(set.summaryOrigin, set.summaryPdfProvenance)}</p>`);
     for (const section of set.sections) {
-      parts.push(`<h3>${escapeHtml(section.heading)}${authorRef(section.origin)}</h3>${guideBlocksHtml(parseGuideBody(section.body))}`);
+      parts.push(`<h3>${escapeHtml(section.heading)}${authorRef(section.origin, section.pdfProvenance)}</h3>${guideBlocksHtml(parseGuideBody(section.body))}`);
     }
     if (set.sourceNotes.trim()) parts.push(`<p class="meta">${lines(set.sourceNotes)}</p>`);
     sections.push(`<section>${parts.join("")}</section>`);
@@ -141,7 +147,7 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
 
   if (set && selection.flashcards && available.flashcards) {
     const rows = set.flashcards
-      .map((card) => `<tr><td>${lines(card.front)}${authorRef(card.origin)}</td><td>${lines(card.back)}${pageRef(card.sourcePage)}</td></tr>`)
+      .map((card) => `<tr><td>${lines(card.front)}${authorRef(card.origin, card.pdfProvenance)}</td><td>${lines(card.back)}${pageRef(card.sourcePage)}</td></tr>`)
       .join("");
     sections.push(
       `<section><h2>Flashcards</h2><table class="cards"><thead><tr><th scope="col">Front</th><th scope="col">Back</th></tr></thead><tbody>${rows}</tbody></table></section>`,
@@ -154,7 +160,7 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
         const choices = question.options
           .map((option, choice) => `<li>${LETTERS[choice] ?? choice + 1}. ${escapeHtml(option)}</li>`)
           .join("");
-        return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${authorRef(question.origin)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
+        return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${authorRef(question.origin, question.pdfProvenance)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
       })
       .join("");
     sections.push(`<section><h2>Practice questions</h2>${questions}</section>`);

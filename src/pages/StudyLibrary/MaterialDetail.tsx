@@ -74,6 +74,9 @@ import { PracticeTestEditor, PracticeTestHistory, StartManualPracticeTest } from
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeRegenerationReviewDialog } from "./PracticeRegenerationReviewDialog";
 import { RegenerationReviewDialog } from "./RegenerationReviewDialog";
+import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
+import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
+import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export function MaterialDetail() {
@@ -302,6 +305,8 @@ function MaterialDetailPage() {
   const isPdf = (material.originalFileName ?? material.filePath ?? "")
     .toLowerCase()
     .endsWith(".pdf");
+  const pdfSet = pdfLabelState(studySet);
+  const pdfTest = pdfLabelState(practiceTest);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
   // Before a PDF is sent, narrowing it to a chapter is a deliberate choice
   // (GEN-REL-01): it opens the existing page chooser and sends nothing. The
@@ -587,6 +592,8 @@ function MaterialDetailPage() {
             />
           ) : null}
 
+          {isPdf && material.filePath ? <PdfStudyKitPanel material={material} /> : null}
+
           {material.filePath ? <OfflineStudyPanel material={material} /> : null}
 
           {!material.filePath && !studySet ? (
@@ -603,9 +610,9 @@ function MaterialDetailPage() {
           {material.filePath || studySet ? (
             <Card>
               <CardHeader
-                title={importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
+                title={pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
                 eyebrow={
-                  importedSet
+                  pdfSet ? "Saved on this computer" : importedSet
                     ? "Imported from a file you selected"
                     : manualSet
                       ? "Written by you, saved on this computer"
@@ -679,12 +686,12 @@ function MaterialDetailPage() {
                     <div className="ai-disclaimer">
                       <AlertIcon size={16} />
                       <p className="tiny">
-                        {manualSet
+                        {pdfSet ? PDF_KIT_REMINDER : manualSet
                           ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
                           : importedSet
                             ? IMPORTED_CONTENT_DISCLAIMER
                             : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
-                        {!manualSet && setHasHerItems
+                        {!pdfSet && !manualSet && setHasHerItems
                           ? " Items marked as yours or as an instructor correction were written here, not generated."
                           : ""}
                       </p>
@@ -701,7 +708,7 @@ function MaterialDetailPage() {
                         <p className="eyebrow">Study guide</p>
                         <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
                       </div>
-                      {studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
+                      {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
                       <p
                         id="search-target-summary"
                         className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
@@ -714,7 +721,7 @@ function MaterialDetailPage() {
                           className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
                           key={`${section.heading}-${index}`}
                         >
-                          <h4>{section.heading} <AuthorBadge origin={section.origin} /></h4>
+                          <h4>{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</h4>
                           <GuideBody className="small" text={section.body} />
                         </div>
                       ))}
@@ -737,7 +744,7 @@ function MaterialDetailPage() {
                             </h3>
                           </div>
                           <div className="row row--wrap">
-                            <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />
+                            {studySet.flashcards[cardIndex]?.pdfProvenance ? <PdfItemLabel provenance={studySet.flashcards[cardIndex]?.pdfProvenance} origin={studySet.flashcards[cardIndex]?.origin} /> : <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />}
                             <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
                           </div>
                         </div>
@@ -936,7 +943,7 @@ function MaterialDetailPage() {
                       <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
                         <AlertIcon size={16} />
                         <p className="tiny">
-                          {importedTest
+                          {pdfTest ? PDF_KIT_REMINDER : importedTest
                             ? IMPORTED_CONTENT_DISCLAIMER
                             : practiceTest.provider === "manual"
                               ? "Practice questions you wrote. Check them against your source and your instructor's guidance."

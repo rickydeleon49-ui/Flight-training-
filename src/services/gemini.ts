@@ -211,7 +211,8 @@ export async function generatePracticeTest(
 /** Every recorded generation: what the window rebuilds itself from. */
 export async function listGeminiJobs(): Promise<GeminiJobRecord[]> {
   if (!isTauri()) return [];
-  return invoke<GeminiJobRecord[]>("gemini_jobs");
+  const jobs = await invoke<GeminiJobRecord[]>("gemini_jobs");
+  return jobs.filter(job => job.kind === "study-aid" || job.kind === "practice-test");
 }
 
 /** A finished generation was saved or dismissed: the journal forgets it. */

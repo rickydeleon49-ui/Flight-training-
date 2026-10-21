@@ -13,6 +13,7 @@
  * Page references go along as unverified claims, which an import shows and
  * then discards, as it does for any outside packet.
  */
+import { pdfLabelState, PDF_KIT_LABEL, PDF_KIT_REMINDER, pdfEditLabel } from "./pdfKitLabels";
 import type { AiStudySet, PracticeTest, StudyMaterial } from "@/domain/types";
 import { FORMAT, FORMAT_VERSION, LIMITS, validatePacketText, type ImportPayload, type PacketError } from "@/logic/studyPacket";
 import { normalizeBlock, normalizeLine } from "@/logic/studyPacket/schema";
@@ -111,20 +112,22 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection)
   const origins: { what: string; origin: string }[] = [];
   const set = source.studySet;
   const test = source.practiceTest;
-  if (set && (selection.guide || selection.flashcards)) origins.push({ what: "Study guide and flashcards", origin: origin(set.provider, set.model) });
-  if (test && selection.questions) origins.push({ what: "Practice test", origin: origin(test.provider, test.model) });
+  if (set && (selection.guide || selection.flashcards)) origins.push({ what: "Study guide and flashcards", origin: pdfLabelState(set) ? pdfLabelState(set) === "valid" ? PDF_KIT_LABEL : "source details unavailable" : origin(set.provider, set.model) });
+  if (test && selection.questions) origins.push({ what: "Practice test", origin: pdfLabelState(test) ? pdfLabelState(test) === "valid" ? PDF_KIT_LABEL : "source details unavailable" : origin(test.provider, test.model) });
   const first = origins[0];
   const parts =
     first && origins.every((entry) => entry.origin === first.origin)
       ? [`${capitalize(first.origin)}.`]
       : origins.map((entry) => `${entry.what}: ${entry.origin}.`);
   // Per-item authorship can't travel in a packet; say that some was handwritten.
-  const handwrittenSet = set && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set);
-  const handwrittenTest = test && test.provider !== "manual" && selection.questions && test.questions.some((question) => question.origin !== undefined);
+  const handwrittenSet = set && !pdfLabelState(set) && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set);
+  const handwrittenTest = test && !pdfLabelState(test) && test.provider !== "manual" && selection.questions && test.questions.some((question) => question.origin !== undefined);
   if (handwrittenSet || handwrittenTest) {
     parts.push("Some items were written or corrected by hand in Her Flight Deck, not generated.");
   }
-  parts.push("Verify everything against current FAA material, aircraft documents and an instructor.");
+  const pdfItems = [{ pdfProvenance: set?.summaryPdfProvenance, origin: set?.summaryOrigin }, ...(set?.sections ?? []), ...(set?.flashcards ?? []), ...(test?.questions ?? [])];
+  for (const label of new Set(pdfItems.filter(i => i.pdfProvenance?.status === "valid").map(i => pdfEditLabel(i.origin)).filter(Boolean))) parts.push(`${label}.`);
+  parts.push(pdfLabelState(set) || pdfLabelState(test) ? PDF_KIT_REMINDER : "Verify everything against current FAA material, aircraft documents and an instructor.");
   return parts.join(" ");
 }
 
@@ -132,6 +135,12 @@ function origin(provider: string, model: string): string {
   if (provider === "import") return "imported into Her Flight Deck from a study packet; not checked by the app";
   if (provider === "manual") return "written by hand in Her Flight Deck; not checked by the app";
   return `AI-generated study aid${model ? ` (${model})` : ""}`;
+}
+
+function disclosed(text: string, item: { pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance; origin?: unknown }): string {
+  if (!item.pdfProvenance) return text;
+  const label = item.pdfProvenance.status === "valid" ? [PDF_KIT_LABEL, pdfEditLabel(item.origin)].filter(Boolean).join(" · ") : "Source details unavailable";
+  return `${text}\n\n${label}.`;
 }
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
@@ -173,15 +182,15 @@ export function buildExportPacket(source: ExportSource, selection: ExportSelecti
   };
   if (set && selection.guide && available.guide) {
     packet.guide = {
-      ...(set.summary.trim() ? { summary: set.summary } : {}),
-      sections: set.sections.map((section) => ({ heading: section.heading, body: section.body })),
+      ...(set.summary.trim() ? { summary: disclosed(set.summary, { pdfProvenance: set.summaryPdfProvenance, origin: set.summaryOrigin }) } : {}),
+      sections: set.sections.map((section) => ({ heading: section.heading, body: disclosed(section.body, section) })),
       ...(set.sourceNotes.trim() ? { sourceNotes: set.sourceNotes } : {}),
     };
   }
   if (set && selection.flashcards && available.flashcards) {
     packet.flashcards = set.flashcards.map((card, index) => {
       const refs = sourceRefs(title, card.sourcePage);
-      return { id: `card-${index + 1}`, front: card.front, back: card.back, ...(refs ? { sourceRefs: refs } : {}) };
+      return { id: `card-${index + 1}`, front: card.front, back: disclosed(card.back, card), ...(refs ? { sourceRefs: refs } : {}) };
     });
   }
   if (test && selection.questions && available.questions) {
@@ -193,7 +202,7 @@ export function buildExportPacket(source: ExportSource, selection: ExportSelecti
         question: question.question,
         choices: question.options.map((text, choice) => ({ id: CHOICE_IDS[choice] ?? `choice-${choice + 1}`, text })),
         correctChoiceId: CHOICE_IDS[question.correctIndex] ?? `choice-${question.correctIndex + 1}`,
-        explanation: question.explanation,
+        explanation: disclosed(question.explanation, question),
         ...(refs ? { sourceRefs: refs } : {}),
       };
     });
@@ -215,9 +224,9 @@ function expectedPayload(source: ExportSource, selection: ExportSelection, title
       set && (guide || cards.length)
         ? {
             title,
-            summary: guide ? normalizeBlock(set.summary) : "",
-            sections: guide ? set.sections.map((s) => ({ heading: normalizeLine(s.heading), body: normalizeBlock(s.body) })) : [],
-            flashcards: cards.map((card) => ({ front: normalizeBlock(card.front), back: normalizeBlock(card.back), sourcePage: null })),
+            summary: guide ? normalizeBlock(disclosed(set.summary, { pdfProvenance: set.summaryPdfProvenance, origin: set.summaryOrigin })) : "",
+            sections: guide ? set.sections.map((s) => ({ heading: normalizeLine(s.heading), body: normalizeBlock(disclosed(s.body, s)) })) : [],
+            flashcards: cards.map((card) => ({ front: normalizeBlock(card.front), back: normalizeBlock(disclosed(card.back, card)), sourcePage: null })),
             sourceNotes: guide ? normalizeBlock(set.sourceNotes) : "",
             provider: "import",
             model: "",
@@ -230,7 +239,7 @@ function expectedPayload(source: ExportSource, selection: ExportSelection, title
             question: normalizeBlock(q.question),
             options: q.options.map((option) => normalizeLine(option)),
             correctIndex: q.correctIndex,
-            explanation: normalizeBlock(q.explanation),
+            explanation: normalizeBlock(disclosed(q.explanation, q)),
             sourcePage: null,
           })),
           provider: "import",

@@ -1,3 +1,4 @@
+import { PdfItemLabel } from "./PdfItemLabel";
 import { useEffect, useRef, useState } from "react";
 
 import { Badge, Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
@@ -193,6 +194,7 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
 
   const noun = action ? (action.mode === "add" ? NOUN[action.kind] : NOUN[action.target.kind]) : "item";
   const current = action && action.mode !== "add" && opened ? locate(opened.state, action.target) : undefined;
+  const currentPdf = action && action.mode !== "add" ? action.target.kind === "summary" ? studySet.summaryPdfProvenance : action.target.kind === "section" ? studySet.sections[action.target.index]?.pdfProvenance : studySet.flashcards[action.target.index]?.pdfProvenance : undefined;
   const title = !action
     ? ""
     : action.mode === "add"
@@ -236,12 +238,12 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
 
       <div className="stack stack--2">
         <div className="row row--between row--wrap">
-          <p className="small"><strong>Summary</strong> <AuthorBadge origin={studySet.summaryOrigin ?? undefined} /></p>
+          <p className="small"><strong>Summary</strong> {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : <AuthorBadge origin={studySet.summaryOrigin ?? undefined} />}</p>
           {itemActions({ kind: "summary" }, studySet.summaryOrigin ?? undefined)}
         </div>
         {studySet.sections.map((section, index) => (
           <div className="row row--between row--wrap" key={`section-${index}`}>
-            <p className="small wrap-anywhere">{section.heading} <AuthorBadge origin={section.origin} /></p>
+            <p className="small wrap-anywhere">{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</p>
             {itemActions({ kind: "section", index }, section.origin)}
           </div>
         ))}
@@ -250,7 +252,7 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
         </Button>
         {studySet.flashcards.map((card, index) => (
           <div className="row row--between row--wrap" key={`card-${index}`}>
-            <p className="small wrap-anywhere">{card.front} <AuthorBadge origin={card.origin} /></p>
+            <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
             {itemActions({ kind: "card", index }, card.origin)}
           </div>
         ))}
@@ -305,7 +307,7 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
                 <Checkbox checked={fromInstructor} onChange={setFromInstructor} label="This came from my instructor" />
               ) : null}
               <p className="tiny muted">
-                {action?.mode === "correct"
+                {currentPdf ? "Your PDF source stays with this edit. Compare your changes with the PDF and your instructor." : action?.mode === "correct"
                   ? "Your instructor's correction replaces this one. The original is kept in Previous versions and stays out of shared handouts unless you include corrections."
                   : current?.origin === "instructor"
                     ? "This stays marked as your instructor's correction."

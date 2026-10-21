@@ -665,3 +665,37 @@ fn cancellation_versus_final_checkpoint_is_atomic_and_survives_reopen() {
         assert!(!reopened.admits(&id));
     }
 }
+
+#[test]
+fn kits_on_eight_pdfs_then_saved_do_not_block_gemini() {
+    let dir = TempDir::new("kits-gemini");
+    let mut journal = Journal::open(dir.path());
+    let mut ids = Vec::new();
+    for i in 0..MAX_JOBS {
+        let id = journal
+            .begin_pdf_kit(
+                &format!("mat-{i}"),
+                &format!("documents/{i}.pdf"),
+                SHA,
+                json!({"runId": format!("run-{i}")}),
+            )
+            .unwrap();
+        journal
+            .finish_pdf_kit(&id, json!({"runId": format!("run-{i}"), "candidates": {}}))
+            .unwrap();
+        ids.push(id);
+    }
+    // 8 unacknowledged kit drafts fill the journal and block Gemini generations with FULL.
+    assert_eq!(
+        journal.begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None),
+        Err(FULL.to_string())
+    );
+    // Once saved, the kits are acknowledged and removed from the journal.
+    for id in &ids {
+        assert_eq!(journal.acknowledge(id), Ok(true));
+    }
+    // With slots freed, Gemini generations proceed.
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None)
+        .is_ok());
+}
