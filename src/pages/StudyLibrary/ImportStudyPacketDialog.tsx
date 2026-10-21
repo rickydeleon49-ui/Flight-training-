@@ -19,7 +19,7 @@ export const IMPORT_REFRESH_WARNING =
   "Imported, but the screen could not refresh. Your study packet is saved; reopen the Study Library to see it.";
 
 export const IMPORTED_CONTENT_DISCLAIMER =
-  "Imported from a file you selected. Its answers and source references have not been checked by Her Flight Deck. Verify against current FAA material, aircraft documents and your instructor.";
+  "Imported from a study packet. Please check it against your PDF and current guidance.";
 
 type Phase =
   | { kind: "idle" }
@@ -174,7 +174,7 @@ export function ImportStudyPacketDialog({ open, onClose, onImported }: ImportStu
         Cancel
       </Button>
       <Button variant="primary" disabled={saving} onClick={() => void save(preview)}>
-        {saving ? "Importing…" : phase.kind === "failed" ? "Try again" : "Import as new material"}
+        {saving ? "Importing…" : phase.kind === "failed" ? "Try again" : "Add to my Study Library"}
       </Button>
     </>
   ) : (
@@ -228,6 +228,7 @@ export function ImportStudyPacketDialog({ open, onClose, onImported }: ImportStu
 function PreviewView({ preview }: { preview: Preview }) {
   const { packet } = preview;
   const { counts, data, discardedOnSave } = packet;
+  const hasGuide = Boolean(data.guide && (data.guide.summary || data.guide.sections.length));
   const notSaved = [
     discardedOnSave.sourceRefs ? plural(discardedOnSave.sourceRefs, "source reference", "source references") : null,
     discardedOnSave.sourceClaims.length ? "the file's source details" : null,
@@ -253,10 +254,10 @@ function PreviewView({ preview }: { preview: Preview }) {
       </div>
 
       <div className="row row--wrap" aria-label="What this packet holds">
-        {packet.createsStudySet ? (
+        {hasGuide ? (
           <Badge tone="study">
             Study guide
-            {counts.sections ? `, ${plural(counts.sections, "section", "sections")}` : ""}
+            {`, ${plural(counts.sections, "section", "sections")}`}
           </Badge>
         ) : null}
         {counts.flashcards ? <Badge tone="study">{plural(counts.flashcards, "flashcard", "flashcards")}</Badge> : null}
@@ -269,9 +270,11 @@ function PreviewView({ preview }: { preview: Preview }) {
 
       <div className="stack stack--1 small" aria-label="Creation status">
         <p className="dim">
-          {packet.createsStudySet
+          {hasGuide
             ? "A study guide will be created."
-            : "No study guide: this packet has no study guide or flashcards."}
+            : counts.flashcards
+              ? "No study guide: this packet contains cards without a guide."
+              : "No study guide: this packet has no study guide or flashcards."}
         </p>
         <p className="dim">
           {packet.createsPracticeTest

@@ -1,0 +1,252 @@
+$ npx vitest run src/data/studyPacketHandoff.test.ts --configLoader runner
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+ ❯ src/data/studyPacketHandoff.test.ts (12 tests | 5 failed) 1477ms
+   × all_three_parts_export_import_reopen_match (PDF kit: true) 138ms
+   × pdf_kit_packet_labels_no_ai_claim 79ms
+   × receiver_without_pdf_has_no_false_links 128ms
+   × import_commit_ack_crash_idempotent 151ms
+   × import_midwrite_failure_rolls_back_every_part 141ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data/studyPacketHandoff.test.ts > all_three_parts_export_import_reopen_match (PDF kit: true)
+AssertionError: expected { …(6) } to deeply equal { …(6) }
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "contentHash": "c3528ae5df977fad7e219074490300ecc5f17ef9930cd95ec8f35ef5c1b57031",
++   "contentHash": "dee07bf5fcdc6f697234c47136c905564889621971657444e7d89295e458046a",
+    "material": {
+      "title": "Synthetic PDF kit",
+    },
+    "materialId": "13000000-0000-4000-8000-000000000003",
+    "operationId": "13000000-0000-4000-8000-000000000003",
+@@ -9,11 +9,13 @@
+      "model": "",
+      "provider": "import",
+      "questions": [
+        {
+          "correctIndex": 0,
+-         "explanation": "A source line.",
++         "explanation": "A source line.
++
++ Pulled from your PDF on this Mac.",
+          "options": [
+            "A source line.",
+            "Another line.",
+          ],
+          "question": "Define lift",
+@@ -23,23 +25,29 @@
+      "title": "Synthetic PDF kit",
+    },
+    "studySet": {
+      "flashcards": [
+        {
+-         "back": "A source line.",
++         "back": "A source line.
++
++ Pulled from your PDF on this Mac.",
+          "front": "Define lift",
+          "sourcePage": null,
+        },
+      ],
+      "model": "",
+      "provider": "import",
+      "sections": [
+        {
+-         "body": "Lift: A source line.",
++         "body": "Lift: A source line.
++
++ Pulled from your PDF on this Mac.",
+          "heading": "Lift",
+        },
+      ],
+      "sourceNotes": "Synthetic source notes.",
+-     "summary": "A synthetic kit summary.",
++     "summary": "A synthetic kit summary.
++
++ Pulled from your PDF on this Mac.",
+      "title": "Synthetic PDF kit",
+    },
+  }
+
+ ❯ src/data/studyPacketHandoff.test.ts:90:23
+     88|   const { op, exported } = await operation(input, ALL, fixture.materia…
+     89|   expect(exported.counts).toEqual({ sections: 1, flashcards: 1, questi…
+     90|   if (pdf) expect(op).toEqual(fixture); // Shared native fixture is pr…
+       |                       ^
+     91|   await createRepositories(db).documents.importStudyPacket(op);
+     92|   await assertReopened(input, op);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/data/studyPacketHandoff.test.ts > pdf_kit_packet_labels_no_ai_claim
+AssertionError: expected 'Pulled from your PDF on this Mac. Com…' to contain 'Pulled from a PDF on the sender\'s Mac'
+
+Expected: "Pulled from a PDF on the sender's Mac"
+Received: "Pulled from your PDF on this Mac. Compare this kit with your PDF, current FAA guidance and your instructor."
+
+ ❯ src/data/studyPacketHandoff.test.ts:104:32
+    102|   for (const selection of [ALL, { guide: false, flashcards: true, ques…
+    103|     const { exported } = await operation(input, selection); const pack…
+    104|     expect(packet.source.note).toContain("Pulled from a PDF on the sen…
+       |                                ^
+    105|     expect(exported.text).not.toMatch(/on this Mac|AI-generated|verifi…
+    106|     expect(packet.flashcards?.[0]?.back ?? "A source line.").toBe("A s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/data/studyPacketHandoff.test.ts > receiver_without_pdf_has_no_false_links
+AssertionError: expected { …(12) } to match object { provider: 'import', model: '', …(4) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "flashcards": [
+      {
+-       "back": "A source line.",
++       "back": "A source line.
++
++ Pulled from your PDF on this Mac.",
+        "front": "Define lift",
+        "sourcePage": null,
+      },
+    ],
+    "model": "",
+    "provider": "import",
+    "sections": [
+      {
+-       "body": "Lift: A source line.",
++       "body": "Lift: A source line.
++
++ Pulled from your PDF on this Mac.",
+        "heading": "Lift",
+      },
+    ],
+    "sourceNotes": "Synthetic source notes.",
+-   "summary": "A synthetic kit summary.",
++   "summary": "A synthetic kit summary.
++
++ Pulled from your PDF on this Mac.",
+  }
+
+ ❯ assertReopened src/data/studyPacketHandoff.test.ts:73:17
+     71|   const set = (await docs.listAiStudySets()).find(s => s.sourceMateria…
+     72|   if (selection.guide || selection.flashcards) {
+     73|     expect(set).toMatchObject({ provider: "import", model: "", summary…
+       |                 ^
+     74|       sections: selection.guide ? input.studySet!.sections.map(s => ({…
+     75|       flashcards: selection.flashcards ? input.studySet!.flashcards.ma…
+ ❯ src/data/studyPacketHandoff.test.ts:113:65
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/data/studyPacketHandoff.test.ts > import_commit_ack_crash_idempotent
+AssertionError: expected { …(12) } to match object { provider: 'import', model: '', …(4) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "flashcards": [
+      {
+-       "back": "A source line.",
++       "back": "A source line.
++
++ Pulled from your PDF on this Mac.",
+        "front": "Define lift",
+        "sourcePage": null,
+      },
+    ],
+    "model": "",
+    "provider": "import",
+    "sections": [
+      {
+-       "body": "Lift: A source line.",
++       "body": "Lift: A source line.
++
++ Pulled from your PDF on this Mac.",
+        "heading": "Lift",
+      },
+    ],
+    "sourceNotes": "Synthetic source notes.",
+-   "summary": "A synthetic kit summary.",
++   "summary": "A synthetic kit summary.
++
++ Pulled from your PDF on this Mac.",
+  }
+
+ ❯ assertReopened src/data/studyPacketHandoff.test.ts:73:17
+     71|   const set = (await docs.listAiStudySets()).find(s => s.sourceMateria…
+     72|   if (selection.guide || selection.flashcards) {
+     73|     expect(set).toMatchObject({ provider: "import", model: "", summary…
+       |                 ^
+     74|       sections: selection.guide ? input.studySet!.sections.map(s => ({…
+     75|       flashcards: selection.flashcards ? input.studySet!.flashcards.ma…
+ ❯ src/data/studyPacketHandoff.test.ts:124:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/data/studyPacketHandoff.test.ts > import_midwrite_failure_rolls_back_every_part
+AssertionError: expected { …(12) } to match object { provider: 'import', model: '', …(4) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "flashcards": [
+      {
+-       "back": "A source line.",
++       "back": "A source line.
++
++ Pulled from your PDF on this Mac.",
+        "front": "Define lift",
+        "sourcePage": null,
+      },
+    ],
+    "model": "",
+    "provider": "import",
+    "sections": [
+      {
+-       "body": "Lift: A source line.",
++       "body": "Lift: A source line.
++
++ Pulled from your PDF on this Mac.",
+        "heading": "Lift",
+      },
+    ],
+    "sourceNotes": "Synthetic source notes.",
+-   "summary": "A synthetic kit summary.",
++   "summary": "A synthetic kit summary.
++
++ Pulled from your PDF on this Mac.",
+  }
+
+ ❯ assertReopened src/data/studyPacketHandoff.test.ts:73:17
+     71|   const set = (await docs.listAiStudySets()).find(s => s.sourceMateria…
+     72|   if (selection.guide || selection.flashcards) {
+     73|     expect(set).toMatchObject({ provider: "import", model: "", summary…
+       |                 ^
+     74|       sections: selection.guide ? input.studySet!.sections.map(s => ({…
+     75|       flashcards: selection.flashcards ? input.studySet!.flashcards.ma…
+ ❯ src/data/studyPacketHandoff.test.ts:138:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 passed (12)
+   Start at  19:48:28
+   Duration  1.83s (transform 197ms, setup 38ms, import 243ms, tests 1.48s, environment 0ms)
+
+
+EXIT 1

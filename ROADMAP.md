@@ -1,12 +1,20 @@
 ## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
 
 OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 merged (PR #239).
+GEN-01 is complete (#245–#248). GEN-03, packet hand-off and the plain how-to,
+is the last OFFLINE-GEN slice; its local implementation awaits Claude's review.
+
+**SEARCH-ON comes immediately after GEN-03, before HOMEWORK-01:** turn on the dormant
+offline document and saved-content search (#231–#233). The owner accepts the saved-content
+p50 of 28.2 ms (the target was 20 ms). What remains: fix FLAKE-CR-01, finish
+installed/minimum-spec acceptance, then flip the release switch. These gates are still open.
 
 Migration 0019 `study_set_save_operations` approved by the owner (20 October 2026): receipts for study-set saves that come from the PDF kit only; ordinary saves are unchanged.
 
 ### Workflow (owner, 19–20 October 2026)
 
 - **Codex implements** every project change.
+- When Codex is out of usage, work goes straight to the next implementer instead of waiting.
 - Implementer order (owner, 20 October 2026): Codex first, then Gemini (Gemini CLI, model gemini-3.8-flash), then Qwen Flash only as the last backup.
 - **Claude** assigns precise rounds, reviews, and independently re-runs the gates with mutation checks. For UI rounds that also means a browser-mode walkthrough with Playwright and the `run` skill.
 - When Claude is out of usage (owner, 20 October 2026): Codex takes over review, testing and merging with the same workflow; Gemini, then Qwen Flash, implement in the meantime.
@@ -48,7 +56,7 @@ Migration 0019 `study_set_save_operations` approved by the owner (20 October 202
 
 ### Updated overall order
 
-OFFLINE-03b → OFFLINE-GEN-00…03 → HOMEWORK-01 → EXPORT-01 → EXPORT-02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01. After those, the earlier queued scheduler, weather and FAA work. OFFLINE-03c stays deferred.
+GEN-03 → SEARCH-ON → HOMEWORK-01 → EXPORT-01/02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01. After those, the earlier queued scheduler, weather and FAA work. OFFLINE-03c stays deferred.
 
 ### Housekeeping
 

@@ -1,0 +1,25 @@
+$ npx vitest run src/data/studyPacketHandoff.test.ts
+failed to load config from /Users/rickymac/code/Flight-training-offline-gen-00/vite.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: EPERM: operation not permitted, open '/Users/rickymac/code/Flight-training-offline-gen-00/node_modules/.vite-temp/vite.config.ts.timestamp-1792550903779-b26cd9f39ab29.mjs'
+    at async open (node:internal/fs/promises:639:25)
+    at async Object.writeFile (node:internal/fs/promises:1222:14)
+    at async loadConfigFromBundledFile (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vite/dist/node/chunks/config.js:35994:3)
+    at async bundleAndLoadConfigFile (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vite/dist/node/chunks/config.js:35884:17)
+    at async loadConfigFromFile (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vite/dist/node/chunks/config.js:35851:42)
+    at async resolveConfig (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vite/dist/node/chunks/config.js:35500:22)
+    at async _createServer (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vite/dist/node/chunks/config.js:25441:67)
+    at async createViteServer (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:8902:17)
+    at async createVitest (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14288:18)
+    at async prepareVitest (file:///Users/rickymac/code/Flight-training-p54-06/node_modules/vitest/dist/chunks/cli-api.CnMVyzaz.js:14655:14) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'open',
+  path: '/Users/rickymac/code/Flight-training-offline-gen-00/node_modules/.vite-temp/vite.config.ts.timestamp-1792550903779-b26cd9f39ab29.mjs'
+}
+
+
+
+
+EXIT 1

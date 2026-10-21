@@ -1,0 +1,45 @@
+{
+  "operationId": "13000000-0000-4000-8000-000000000003",
+  "materialId": "13000000-0000-4000-8000-000000000003",
+  "contentHash": "c3528ae5df977fad7e219074490300ecc5f17ef9930cd95ec8f35ef5c1b57031",
+  "material": {
+    "title": "Synthetic PDF kit"
+  },
+  "studySet": {
+    "title": "Synthetic PDF kit",
+    "summary": "A synthetic kit summary.",
+    "sections": [
+      {
+        "heading": "Lift",
+        "body": "Lift: A source line."
+      }
+    ],
+    "flashcards": [
+      {
+        "front": "Define lift",
+        "back": "A source line.",
+        "sourcePage": null
+      }
+    ],
+    "sourceNotes": "Synthetic source notes.",
+    "provider": "import",
+    "model": ""
+  },
+  "practiceTest": {
+    "title": "Synthetic PDF kit",
+    "questions": [
+      {
+        "question": "Define lift",
+        "options": [
+          "A source line.",
+          "Another line."
+        ],
+        "correctIndex": 0,
+        "explanation": "A source line.",
+        "sourcePage": null
+      }
+    ],
+    "provider": "import",
+    "model": ""
+  }
+}

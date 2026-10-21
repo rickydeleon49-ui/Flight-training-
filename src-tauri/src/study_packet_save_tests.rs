@@ -1360,3 +1360,158 @@ fn imported_packet_satisfies_the_schema_17_authoring_contract() {
     crate::backup::verify_schema_17_practice_authoring_semantics(&conn)
         .expect("the edited imported packet must still satisfy the schema-17 contract");
 }
+
+// GEN-03: these operations are independently asserted against real PDF-kit/03b
+// authoring -> export -> validation -> operation preparation by studyPacketHandoff.test.ts.
+fn gen03_fixtures() -> Vec<Value> {
+    [
+        include_str!("../fixtures/import-contract/gen03-operation.json"),
+        include_str!("../fixtures/import-contract/gen03-handwritten-operation.json"),
+    ]
+    .iter()
+    .map(|text| serde_json::from_str(text).unwrap())
+    .collect()
+}
+
+fn assert_gen03_reopened(root: &Path, op: &Value) {
+    let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+    let material: (String, Option<String>) = conn
+        .query_row(
+            "SELECT title, file_path FROM study_materials WHERE id = ?1",
+            [ID],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(material.0, op["material"]["title"].as_str().unwrap());
+    assert_eq!(material.1, None);
+    if !op["studySet"].is_null() {
+        let row: (String, String, String, String, String, String, String) = conn.query_row(
+            "SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model FROM ai_study_sets WHERE source_material_id = ?1", [ID],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?)),
+        ).unwrap();
+        let set = &op["studySet"];
+        assert_eq!(row.0, set["title"].as_str().unwrap());
+        assert_eq!(row.1, set["summary"].as_str().unwrap());
+        assert_eq!(
+            serde_json::from_str::<Value>(&row.2).unwrap(),
+            set["sections"]
+        );
+        assert_eq!(
+            serde_json::from_str::<Value>(&row.3).unwrap(),
+            set["flashcards"]
+        );
+        assert_eq!(row.4, set["sourceNotes"].as_str().unwrap());
+        assert_eq!((row.5.as_str(), row.6.as_str()), ("import", ""));
+    } else {
+        assert_eq!(count(&conn, "ai_study_sets"), 0);
+    }
+    if !op["practiceTest"].is_null() {
+        let row: (String, String, String, String) = conn.query_row(
+            "SELECT title, questions_json, provider, model FROM practice_tests WHERE source_material_id = ?1", [ID],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        ).unwrap();
+        assert_eq!(row.0, op["practiceTest"]["title"].as_str().unwrap());
+        assert_eq!(
+            serde_json::from_str::<Value>(&row.1).unwrap(),
+            op["practiceTest"]["questions"]
+        );
+        assert_eq!((row.2.as_str(), row.3.as_str()), ("import", ""));
+        let items: Vec<Value> = conn.prepare("SELECT question_text, options_json, correct_index, explanation, source_page FROM practice_test_items ORDER BY ordinal").unwrap()
+            .query_map([], |r| Ok(json!({ "question": r.get::<_, String>(0)?, "options": serde_json::from_str::<Value>(&r.get::<_, String>(1)?).unwrap(), "correctIndex": r.get::<_, i64>(2)?, "explanation": r.get::<_, String>(3)?, "sourcePage": r.get::<_, Option<i64>>(4)? }))).unwrap()
+            .map(Result::unwrap).collect();
+        assert_eq!(json!(items), op["practiceTest"]["questions"]);
+        assert_eq!(count(&conn, "practice_test_versions"), 1);
+        assert_eq!(count(&conn, "practice_attempts"), 0);
+    } else {
+        assert_eq!(count(&conn, "practice_tests"), 0);
+    }
+}
+
+fn gen03_operation(mut op: Value) -> Value {
+    op["materialId"] = json!(ID);
+    op["operationId"] = json!(ID);
+    op
+}
+
+#[test]
+fn all_three_parts_export_import_reopen_match() {
+    for fixture in gen03_fixtures() {
+        let dir = TestDir::new();
+        drop(setup_db(dir.path()));
+        let op = gen03_operation(fixture);
+        assert!(matches!(
+            save(dir.path(), &op).unwrap(),
+            NativeImportSaveResult::Saved { .. }
+        ));
+        assert_gen03_reopened(dir.path(), &op);
+    }
+}
+
+#[test]
+fn guide_only_cards_only_test_only_roundtrip() {
+    for part in ["guide", "cards", "test"] {
+        let dir = TestDir::new();
+        drop(setup_db(dir.path()));
+        let mut op = gen03_operation(gen03_fixtures().remove(0));
+        if part == "test" {
+            op["studySet"] = Value::Null;
+        } else {
+            op["practiceTest"] = Value::Null;
+            if part == "guide" {
+                op["studySet"]["flashcards"] = json!([]);
+            } else {
+                op["studySet"]["summary"] = json!("");
+                op["studySet"]["sections"] = json!([]);
+                op["studySet"]["sourceNotes"] = json!("");
+            }
+        }
+        save(dir.path(), &op).unwrap();
+        assert_gen03_reopened(dir.path(), &op);
+    }
+}
+
+#[test]
+fn import_commit_ack_crash_idempotent() {
+    let dir = TestDir::new();
+    let conn = setup_db(dir.path());
+    let op = gen03_operation(gen03_fixtures().remove(0));
+    // The command commits, but its acknowledgement is lost. Reopen and resend.
+    save(dir.path(), &op).unwrap();
+    let before = snapshot(&conn);
+    drop(conn);
+    assert!(matches!(
+        save(dir.path(), &op).unwrap(),
+        NativeImportSaveResult::AlreadySaved { .. }
+    ));
+    let reopened = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
+    assert_eq!(snapshot(&reopened), before);
+    assert_gen03_reopened(dir.path(), &op);
+}
+
+#[test]
+fn import_midwrite_failure_rolls_back_every_part() {
+    for table in [
+        "ai_study_sets",
+        "practice_tests",
+        "practice_test_versions",
+        "practice_test_items",
+    ] {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+        let op = gen03_operation(gen03_fixtures().remove(0));
+        abort_trigger(&conn, table);
+        assert_eq!(code(save(dir.path(), &op)), "STORAGE_FAILURE");
+        for table in [
+            "study_materials",
+            "ai_study_sets",
+            "practice_tests",
+            "practice_test_versions",
+            "practice_test_items",
+        ] {
+            assert_eq!(count(&conn, table), 0);
+        }
+        conn.execute_batch("DROP TRIGGER synthetic_abort").unwrap();
+        save(dir.path(), &op).unwrap();
+        assert_gen03_reopened(dir.path(), &op);
+    }
+}

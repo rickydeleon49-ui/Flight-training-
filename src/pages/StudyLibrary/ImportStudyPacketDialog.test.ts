@@ -69,7 +69,7 @@ async function openLibrary() {
 
 const importButton = () => screen.getByRole("button", { name: /Import study packet/ });
 const importDialog = () => screen.getByRole("dialog", { name: "Import study packet" });
-const confirmButton = () => screen.getByRole("button", { name: "Import as new material" });
+const confirmButton = () => screen.getByRole("button", { name: "Add to my Study Library" });
 /** Materials holding imported content (the app also seeds starter materials). */
 const importedCount = async () =>
   (
@@ -489,4 +489,40 @@ describe("SB-R1 confirmation preview regressions", () => {
     expect((operation.studySet?.flashcards[1] as Record<string, unknown>).sourceRefs).toBeUndefined();
     expect((operation.practiceTest?.questions[0] as Record<string, unknown>).sourceRefs).toBeUndefined();
   });
+});
+
+
+it("import_preview_counts_before_add", async () => {
+  const packet = JSON.parse(PACKET_TEXT);
+  packet.guide = { summary: "Synthetic summary", sections: [{ heading: "One", body: "Synthetic body" }] };
+  vi.mocked(studyPackets.pickStudyPacket).mockResolvedValue(picked(JSON.stringify(packet)));
+  await openLibrary(); await openPreview();
+  const dialog = importDialog();
+  expect(within(dialog).getByText("Study guide, 1 section")).toBeTruthy();
+  expect(within(dialog).getByText("3 flashcards")).toBeTruthy();
+  expect(within(dialog).getByText("2 practice questions")).toBeTruthy();
+  expect(within(dialog).getByText("Imported from a study packet. Please check it against your PDF and current guidance.")).toBeTruthy();
+  expect(within(dialog).getByRole("button", { name: "Add to my Study Library" })).toBeTruthy();
+  expect(saveSpy).not.toHaveBeenCalled();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(await importedCount()).toBe(0);
+});
+
+
+it("a cards-only preview does not count a guide", async () => {
+  const packet = JSON.parse(PACKET_TEXT); delete packet.guide; delete packet.questions;
+  vi.mocked(studyPackets.pickStudyPacket).mockResolvedValue(picked(JSON.stringify(packet)));
+  await openLibrary(); await openPreview();
+  expect(within(importDialog()).getByText("No study guide: this packet contains cards without a guide.")).toBeTruthy();
+  expect(within(importDialog()).getByText("3 flashcards")).toBeTruthy();
+  expect(saveSpy).not.toHaveBeenCalled();
+});
+
+it.each(["oversize", "credential"])("refuses %s content before Add", async kind => {
+  const text = kind === "oversize" ? " ".repeat(4 * 1024 * 1024 + 1) : PACKET_TEXT.replace("Letters and labels", `AIza${"A".repeat(35)}`);
+  vi.mocked(studyPackets.pickStudyPacket).mockResolvedValue(picked(text));
+  await openLibrary(); fireEvent.click(importButton());
+  await screen.findByRole("dialog", { name: "This study packet can't be imported" });
+  expect(screen.queryByRole("button", { name: "Add to my Study Library" })).toBeNull();
+  expect(saveSpy).not.toHaveBeenCalled(); expect(await importedCount()).toBe(0);
 });

@@ -1,0 +1,5 @@
+$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo clippy --locked --all-targets -- -D warnings
+    Checking her-flight-deck v0.5.7 (/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.91s
+
+EXIT 0
