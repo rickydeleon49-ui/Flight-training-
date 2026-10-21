@@ -38,11 +38,12 @@ pub struct Categories {
     pub practice: bool,
     pub notes: bool,
     pub questions: bool,
+    pub homework: bool,
 }
 
 impl Categories {
     pub fn any(&self) -> bool {
-        self.guides || self.cards || self.practice || self.notes || self.questions
+        self.guides || self.cards || self.practice || self.notes || self.questions || self.homework
     }
 }
 
@@ -53,6 +54,7 @@ pub struct SavedRequest {
     /// The materials the filters select; guides, cards, practice and
     /// linked questions follow these (§3).
     pub material_ids: Vec<String>,
+    pub material_filters_active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -84,6 +86,7 @@ pub struct SavedCoverage {
     pub practice_versions: u32,
     pub notes: u32,
     pub questions: u32,
+    pub homework: u32,
     pub too_large_items: u32,
 }
 
@@ -250,7 +253,9 @@ impl Searcher {
                           JOIN app.practice_test_versions v ON v.id = i.version_id AND v.is_active = 1)
                      + (SELECT coalesce(sum(octet_length(title) + octet_length(body)), 0) FROM app.notes)
                      + (SELECT coalesce(sum(octet_length(text) + octet_length(answer)), 0) FROM app.questions)
-                     + (SELECT coalesce(sum(min(octet_length(title), ?1)), 0) FROM app.study_materials)",
+                     + (SELECT coalesce(sum(min(octet_length(title), ?1)), 0) FROM app.study_materials)
+                     + (SELECT coalesce(sum(octet_length(title)+octet_length(instructions)),0) FROM app.homework_assignments WHERE archived=0)
+                     + (SELECT coalesce(sum(octet_length(h.title)+octet_length(h.body)),0) FROM app.homework_activities h JOIN app.homework_assignments a ON a.id=h.assignment_id WHERE a.archived=0 AND h.removed_at IS NULL)",
                     [MAX_TITLE_BYTES],
                     |r| r.get(0),
                 )
@@ -444,6 +449,34 @@ impl Searcher {
                 coverage.practice_versions = versions.len() as u32;
             }
 
+            // Homework shares the same temporary, bounded index and read snapshot.
+            // No history, receipts, evidence or copied source answers are read.
+            for (sql_text, kind) in [
+                ("SELECT id,NULL,CASE WHEN octet_length(title)<=?1 THEN title END,
+                    CASE WHEN octet_length(instructions)<=?1 THEN instructions END
+                  FROM app.homework_assignments WHERE archived=0 AND octet_length(id)<=?2", "homework"),
+                ("SELECT h.assignment_id || ':' || h.id,h.material_id,
+                    CASE WHEN octet_length(h.title)<=?1 THEN h.title END,
+                    CASE WHEN octet_length(h.body)<=?1 THEN h.body END
+                  FROM app.homework_activities h JOIN app.homework_assignments a ON a.id=h.assignment_id
+                  WHERE a.archived=0 AND h.removed_at IS NULL AND octet_length(h.id)<=?2
+                    AND octet_length(h.assignment_id)<=?2 AND (h.material_id IS NULL OR octet_length(h.material_id)<=?2)", "homework_activity"),
+            ] {
+                let mut stmt = self.conn.prepare(sql_text).map_err(|e| self.note(control,e))?;
+                let mut rows = stmt.query(params![MAX_TEXT_FIELD_BYTES,MAX_ID_BYTES]).map_err(|e|self.note(control,e))?;
+                while let Some(r) = rows.next().map_err(|e|self.note(control,e))? {
+                    control.check()?;
+                    let id:String=r.get(0).map_err(|_|Stop::Failed)?;
+                    let material:Option<String>=r.get(1).map_err(|_|Stop::Failed)?;
+                    if kind=="homework" {coverage.homework+=1;}
+                    let first:Option<String>=r.get(2).map_err(|_|Stop::Failed)?;
+                    let second:Option<String>=r.get(3).map_err(|_|Stop::Failed)?;
+                    let (Some(first),Some(second))=(first,second) else {coverage.too_large_items+=1;continue;};
+                    let rev=Some(item_digest(&[&first,&second]));
+                    if !put(Row{text:format!("{first}\n{second}"),kind,material_id:material,record_id:id,rev},&mut records)? {too_large=true;}
+                }
+            }
+
             // Notes and instructor questions.
             for (sql_text, kind, linked) in [
                 (
@@ -530,6 +563,9 @@ impl Searcher {
         if c.notes {
             kinds.push("note");
         }
+        if c.homework {
+            kinds.extend(["homework", "homework_activity"]);
+        }
         if c.questions {
             kinds.push("question");
         }
@@ -539,7 +575,15 @@ impl Searcher {
                     "CREATE TEMP TABLE IF NOT EXISTS saved_scope (id TEXT PRIMARY KEY);
                      DELETE FROM temp.saved_scope;
                      CREATE TEMP TABLE IF NOT EXISTS saved_kinds (kind TEXT PRIMARY KEY);
-                     DELETE FROM temp.saved_kinds;",
+                     DELETE FROM temp.saved_kinds;
+                     CREATE TEMP TABLE IF NOT EXISTS saved_options (filtered INTEGER NOT NULL);
+                     DELETE FROM temp.saved_options;",
+                )
+                .map_err(|e| self.note(control, e))?;
+            self.conn
+                .execute(
+                    "INSERT INTO temp.saved_options VALUES (?1)",
+                    [request.material_filters_active],
                 )
                 .map_err(|e| self.note(control, e))?;
             let mut scope = self
@@ -581,7 +625,13 @@ impl Searcher {
                      LEFT JOIN temp.saved_title AS t ON t.material_id = f.material_id
                      WHERE record_fts MATCH ?1
                        AND f.kind IN (SELECT kind FROM temp.saved_kinds)
-                       AND  (f.kind = 'note'
+                       AND  ((f.kind IN ('homework','homework_activity') AND
+                              ((SELECT filtered FROM temp.saved_options)=0
+                               OR (f.kind='homework_activity' AND f.material_id IN (SELECT id FROM temp.saved_scope))
+                               OR (f.kind='homework' AND EXISTS (SELECT 1 FROM temp.record_fts h
+                                   WHERE h.kind='homework_activity' AND substr(h.record_id,1,instr(h.record_id,':')-1)=f.record_id
+                                   AND h.material_id IN (SELECT id FROM temp.saved_scope)))))
+                            OR f.kind = 'note'
                             OR  (f.kind = 'question' AND (f.material_id IS NULL
                                  OR f.material_id IN (SELECT id FROM temp.saved_scope)))
                             OR (f.kind IN ('summary', 'guide', 'card', 'practice')
@@ -673,6 +723,12 @@ impl Searcher {
         for h in hits.iter().take(CANDIDATE_LIMIT) {
             control.check()?;
             let (kind, key, material_id, title) = match h.kind.as_str() {
+                "homework" | "homework_activity" => (
+                    "homework",
+                    "homework".to_string(),
+                    None,
+                    "Homework".to_string(),
+                ),
                 "note" => ("notes", "notes".to_string(), None, "Your notes".to_string()),
                 "question" => (
                     "questions",
@@ -735,6 +791,8 @@ impl Searcher {
                     "guide" => "guide",
                     "card" => "card",
                     "practice" => "practice",
+                    "homework" => "homework",
+                    "homework_activity" => "homework_activity",
                     "note" => "note",
                     _ => "question",
                 };

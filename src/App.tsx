@@ -8,6 +8,7 @@ import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 // Keep the first screen small; each section loads when it is first opened.
+const HomeworkView = lazy(() => import("@/pages/StudyLibrary/HomeworkView").then((m) => ({ default: m.HomeworkView })));
 const Finances = lazy(() => import("@/pages/Finances/Finances").then((m) => ({ default: m.Finances })));
 const FlightJournal = lazy(() => import("@/pages/FlightJournal/FlightJournal").then((m) => ({ default: m.FlightJournal })));
 const JournalEntryDetail = lazy(() => import("@/pages/FlightJournal/JournalEntryDetail").then((m) => ({ default: m.JournalEntryDetail })));
@@ -64,6 +65,8 @@ function Gate() {
           <Route path="study/history" element={<PracticeHistory />} />
           <Route path="study/history/:historyKey" element={<PracticeHistory />} />
           <Route path="study/history/:historyKey/:attemptId" element={<PracticeHistory />} />
+          <Route path="study/homework" element={<HomeworkView />} />
+          <Route path="study/homework/:assignmentId" element={<HomeworkView />} />
           <Route path="study/:materialId" element={<MaterialDetail />} />
           <Route path="schedule" element={<Schedule />} />
           <Route path="schedule/:eventId" element={<EventDetail />} />

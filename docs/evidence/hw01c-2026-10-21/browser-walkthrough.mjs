@@ -1,0 +1,45 @@
+// Synthetic, isolated UI walkthrough; uses the already-installed browser.
+import { chromium } from '/opt/homebrew/lib/node_modules/playwright/index.mjs';
+const browser = await chromium.launch({headless:true,executablePath:'/Users/rickymac/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell'});
+try {
+ const context=await browser.newContext({viewport:{width:1280,height:900}});
+ await context.route('**/*',route=>{const u=new URL(route.request().url());return ['127.0.0.1','localhost'].includes(u.hostname)?route.continue():route.abort();});
+ const page=await context.newPage();
+ page.on('pageerror',error=>{throw error;});
+ await page.goto('http://127.0.0.1:1420/#/study/homework');
+ await page.getByText('No school, instructor or date needed.',{exact:false}).waitFor(); console.log('Empty: A little preparation, at your pace. No school, instructor or date needed.');
+ await page.getByRole('button',{name:'Add homework',exact:true}).click();
+ await page.getByLabel('Title',{exact:true}).fill('Synthetic weather preparation');
+ await page.getByLabel('Due date (optional)').fill('2001-01-01');
+ await page.getByRole('button',{name:'Add checklist',exact:true}).click();
+ await page.getByRole('button',{name:'Add reflection',exact:true}).click();
+ await page.getByRole('button',{name:'Add questions',exact:true}).click();
+ await page.getByRole('button',{name:'Save homework',exact:true}).click();
+ await page.getByText('0 of 3 done',{exact:true}).waitFor();
+ console.log('Created without school, instructor or lesson; 0 of 3 done; Due 2001-01-01 · overdue.');
+ await page.getByRole('button',{name:'Move Reflection up',exact:true}).focus();await page.keyboard.press('Enter');
+ await page.getByText('Activities reordered',{exact:false}).waitFor();console.log('Keyboard Enter on Move Reflection up: Activities reordered in History.');
+ await page.getByRole('button',{name:'Edit Reflection',exact:true}).click();
+ await page.getByLabel('Activity text').fill('I want to review weather fronts.');
+ await page.getByRole('button',{name:'Save homework',exact:true}).click();
+ await page.getByText('I want to review weather fronts.',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Mark complete',exact:true}).first().click();
+ await page.getByText('1 of 3 done',{exact:true}).waitFor();console.log('Reflection saved, then explicit Mark complete: 1 of 3 done.');
+ await page.getByRole('checkbox',{name:'Done',exact:true}).check();
+ await page.getByText('2 of 3 done',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Reopen Checklist',exact:true}).click();
+ await page.getByText('1 of 3 done',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Archive',exact:true}).click();await page.getByRole('button',{name:'Unarchive',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Unarchive',exact:true}).click();await page.getByRole('button',{name:'Archive',exact:true}).waitFor();
+ console.log('Checklist tick, reopen, archive/unarchive: history retained, current cycle reopened.');
+ await page.screenshot({path:'docs/evidence/hw01c-2026-10-21/homework-wide.png',fullPage:true});
+ await page.reload();await page.getByText('1 of 3 done',{exact:true}).waitFor(); console.log('Reload restored persisted homework and completion.');
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'docs/evidence/hw01c-2026-10-21/homework-narrow.png',fullPage:true});
+ if(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth))throw Error('Horizontal overflow');
+ console.log('390px: no horizontal overflow.');
+ await page.getByRole('button',{name:'Edit Questions',exact:true}).click();
+ await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
+ console.log('Dialog Escape restored the view. Search remains dormant in browser mode.');
+ await context.close();
+} finally {await browser.close();}

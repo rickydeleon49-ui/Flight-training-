@@ -146,6 +146,26 @@ pub fn submit_search(
     offset: usize,
     entered: Instant,
 ) -> Result<Ticket, String> {
+    submit_search_scoped(
+        svc,
+        query,
+        material_ids,
+        content_types,
+        offset,
+        entered,
+        false,
+    )
+}
+
+pub fn submit_search_scoped(
+    svc: Arc<Service>,
+    query: String,
+    material_ids: Vec<String>,
+    content_types: Vec<String>,
+    offset: usize,
+    entered: Instant,
+    material_filters_active: bool,
+) -> Result<Ticket, String> {
     if !service::extraction_enabled() {
         return Err("offline_extraction_disabled".into());
     }
@@ -166,6 +186,7 @@ pub fn submit_search(
             "practice" => categories.practice = true,
             "notes" => categories.notes = true,
             "questions" => categories.questions = true,
+            "homework" => categories.homework = true,
             _ => return Err("unsupported_content_type".into()),
         }
     }
@@ -198,6 +219,7 @@ pub fn submit_search(
             saved: categories.any().then_some(SavedRequest {
                 categories,
                 material_ids,
+                material_filters_active,
             }),
             saved_available,
         })
@@ -211,18 +233,20 @@ pub async fn search_offline_content(
     material_ids: Vec<String>,
     content_types: Vec<String>,
     offset: usize,
+    material_filters_active: Option<bool>,
 ) -> Result<search::Response, String> {
     let entered = Instant::now();
     if !service::extraction_enabled() {
         return Err("offline_extraction_disabled".into());
     }
-    let ticket = submit_search(
+    let ticket = submit_search_scoped(
         service::service(&app)?,
         query,
         material_ids,
         content_types,
         offset,
         entered,
+        material_filters_active.unwrap_or(false),
     )?;
     tauri::async_runtime::spawn_blocking(move || ticket.wait().map_err(|s| s.code().to_string()))
         .await

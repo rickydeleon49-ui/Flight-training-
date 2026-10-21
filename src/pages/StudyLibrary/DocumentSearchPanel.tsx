@@ -95,19 +95,20 @@ type Phase =
  * opens a match only after re-checking it. Renders nothing unless this
  * build opted in.
  */
-export function DocumentSearchPanel(props: { query: string; materials: StudyMaterial[] }) {
+export function DocumentSearchPanel(props: { query: string; materials: StudyMaterial[]; materialFiltersActive?: boolean }) {
   // Whether the build opted in never changes while the app runs, so a
   // dormant build does no work here at all: no hooks, no requests.
   return offlineStudyEnabled() ? <DocumentSearch {...props} /> : null;
 }
 
-function DocumentSearch({ query, materials }: { query: string; materials: StudyMaterial[] }) {
+function DocumentSearch({ query, materials, materialFiltersActive = false }: { query: string; materials: StudyMaterial[]; materialFiltersActive?: boolean }) {
   const trimmed = query.trim();
   // Documents need a file; guides, cards and practice follow every
   // selected material. The native side tells the two apart.
   const ids = materials.map((m) => m.id);
   const scope = ids.join("\n");
-  const data = useOptionalAppData()?.data;
+  const app = useOptionalAppData();
+  const data = app?.data;
   const navigate = useNavigate();
   const [results, setResults] = useState<Results | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -145,7 +146,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
       paging = false,
     ): Promise<void> => {
       try {
-        const response = await searchOfflineContent(text, materialIds, offset, types);
+        const response = await searchOfflineContent(text, materialIds, offset, types, materialFiltersActive);
         if (generation.current !== mine) return;
         const documents = types.includes("documentPages");
         setResults((previous) => {
@@ -185,7 +186,7 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
         setPhase(message ? { kind: "problem", message } : { kind: "idle" });
       }
     },
-    [],
+    [materialFiltersActive],
   );
 
   // Search after a pause in typing, and again whenever the filters change.
@@ -235,10 +236,12 @@ function DocumentSearch({ query, materials }: { query: string; materials: StudyM
       setNotes((n) => ({ ...n, [key]: { text: savedProblem("gone"), error: true } }));
       return;
     }
-    const check = await checkSavedHit(data, passage, group.materialId);
+    let check;
+    try { check = await checkSavedHit(data, passage, group.materialId, app?.repositories?.homework.get); }
+    catch { if (opening.current === mine) setNotes((n) => ({ ...n, [key]: { text: "This item could not be checked. Try again.", error: true } })); return; }
     if (opening.current !== mine) return;
     if (check !== "ok") {
-      setNotes((n) => ({ ...n, [key]: { text: savedProblem(check), error: true } }));
+      setNotes((n) => ({ ...n, [key]: { text: check === "changed" && (passage.kind === "homework" || passage.kind === "homework_activity") ? "This homework has changed since you searched. Search again to find it." : savedProblem(check), error: true } }));
       return;
     }
     navigate(destination);

@@ -1,0 +1,366 @@
+{
+  "receipts": [
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/browser-walkthrough-existing-browser.log",
+      "exit": 1,
+      "counts": "no test count",
+      "command": "$ node docs/evidence/hw01c-2026-10-21/browser-walkthrough.mjs",
+      "sha256": "f8e8a1e5913a49c5d87aa7860660a14e083b9519e4e8ef7fa2662da23787715d"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/browser-walkthrough.log",
+      "exit": 1,
+      "counts": "no test count",
+      "command": "$ node docs/evidence/hw01c-2026-10-21/browser-walkthrough.mjs",
+      "sha256": "215fe7dbc7173a6916a468469b022b35a1dd4299355aa6a843ccc442b2535622"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build-2.log",
+      "exit": 2,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "b65b902a9b1df35e6e7d886b2633d6234f46638d44641b2a257787acd95ecce2"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build-3.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "5f3aa20a4110a222ea3f403cac989949b707354837ea372a45f66c2507e0864e"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build-final-2.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "e140219b09e4991c6e5946a7ab9e5280a2eb30e27eccb8aa0100875350dc6704"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build-final-3.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "9611da814d9004347cdfe8150899ef8ecf1a9b2bb65805a13cccee589132aa4a"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build-final.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "60faea9ad6a18aeb5cf5e10b425f01175667b402fef0094514cccf6b5323211d"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/build.log",
+      "exit": 2,
+      "counts": "no test count",
+      "command": "$ npm run build -- --configLoader runner",
+      "sha256": "54c89a67fa3f1d468148a9b47813219b23468139413e5c938dbdfba35edf8c34"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/cargo-lock.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run test:cargo-lock",
+      "sha256": "880db6e032958427e2b7d3349233234d9c769ff42220fbf2120302afb5c7f0cb"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/cargo-test-1.log",
+      "exit": 101,
+      "counts": "no test count",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+      "sha256": "6ef71fe65db3125abb66c8317cb0cf6dd176f8abd0e9486b7967f0eddfb3de47"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/cargo-test-2.log",
+      "exit": 0,
+      "counts": "998P/0F/11I",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+      "sha256": "e77144c149c3556f4cdea090d991b6badbe39483bdc58d42e56561fc890594c1"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/cargo-test-3.log",
+      "exit": 0,
+      "counts": "998P/0F/11I",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+      "sha256": "c6177423b437e34bdb3199b79cade3d9bd3bf971aa61294399994d60d7c7ff8c"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/clippy.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo clippy --locked --all-targets -- -D warnings",
+      "sha256": "153e98b67cedfec43adb9df87f769bac82f0b72b06a3ac197966c61dfe7ef85f"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/diff-check-final.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ git diff --check",
+      "sha256": "851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/diff-check-report.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ git diff --check",
+      "sha256": "851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/diff-check.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ git diff --check",
+      "sha256": "851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/fmt-check.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt --check",
+      "sha256": "6a6c1da58a9a615b45ea7ec3162d6a6d3db474238edf3885a0ed3114f63f0622"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-1.log",
+      "exit": 1,
+      "counts": "3P/10F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts",
+      "sha256": "9fa5188728d9f004ebfaa743bea21c3029274104699d982cd8c539af3f588bcc"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-2.log",
+      "exit": 1,
+      "counts": "14P/1F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/logic/homeworkSearch.test.ts",
+      "sha256": "fb10ee61506d3901a0b3aa39ddff6b4ed17c1d259247d3d452d2abcc40758f43"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-3.log",
+      "exit": 1,
+      "counts": "42P/6F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/logic/homeworkSearch.test.ts src/logic/savedSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "da6681b3ee9820bfa304d7dadeebca49f69f4ace912bb8bebcb19e99425d62a3"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-4.log",
+      "exit": 1,
+      "counts": "43P/5F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/logic/homeworkSearch.test.ts src/logic/savedSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "d4f67037e95e0b1208375cffea07172e018776f482f681d5176a494436069231"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-5.log",
+      "exit": 0,
+      "counts": "48P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/logic/homeworkSearch.test.ts src/logic/savedSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "47717b214e6fcec339110cb797b12e5ede85db9494bebf07be9ab8cc3516ef00"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-6.log",
+      "exit": 1,
+      "counts": "39P/2F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "260cf44e36cda9a429d6fd3cf82626031ad43c18eb9dff24c112d46177c3449c"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-7.log",
+      "exit": 1,
+      "counts": "45P/1F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "29411b4c79c0cb0bf3be6b8f3b074e80e943b1ed74bf9ee1c9d35cab6bb2c830"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-8.log",
+      "exit": 0,
+      "counts": "46P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "aa78cb09fed01ea3dc7ec4737c4e77e9f4e6a14fe2d9d2eee3afe5ff51ecf6c6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-9.log",
+      "exit": 0,
+      "counts": "49P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/services/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "1ed147b35ab4ed08e1ef7811128d7a6fc3538c8d7cbfd7331dc481e5475c5ce3"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-final-2.log",
+      "exit": 0,
+      "counts": "49P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/services/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "1082936ea20029f36ad06cf9b828ee8c5fa7dd560f31304a8c2a9e8509d0ea6f"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-focused-final.log",
+      "exit": 0,
+      "counts": "49P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts src/pages/StudyLibrary/homeworkUi.test.ts src/logic/homeworkSearch.test.ts src/services/homeworkSearch.test.ts src/pages/StudyLibrary/DocumentSearchPanel.test.ts",
+      "sha256": "95db7cad5cccc8192febe11e667cbfd6541a7d266f9df35cf90d1798839a42f1"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-red-runner.log",
+      "exit": 1,
+      "counts": "0P/0F/0S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts",
+      "sha256": "93366ee4e54c072d9358e16c67581ce03b78a8c7b2ddd10412bf2706d595e91f"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/frontend-red.log",
+      "exit": 1,
+      "counts": "no test count",
+      "command": "$ npm test -- src/pages/StudyLibrary/Homework.test.ts",
+      "sha256": "ec1ff2dd5dfdc9f9220b2e90ef3ce9c79847d27a53929fe725b3b9a663fa7b79"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/native-focused-1.log",
+      "exit": 0,
+      "counts": "41P/0F/0I",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked extraction::search",
+      "sha256": "409640a2cf7103ad76242da2e788a39ad54f6adb0b950806898f6bb67883166a"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/native-red-real.log",
+      "exit": 101,
+      "counts": "0P/1F/0I",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked homework_search_current_uuid_digest_scope_and_rebuild",
+      "sha256": "3b1db5910209d26a153a8ef05fb639197b60d176ef564971391b27794d46201a"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/native-red.log",
+      "exit": 0,
+      "counts": "0P/0F/0I",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked homework_search_current_uuid_digest_scope_and_rebuild",
+      "sha256": "cd052b0f0427be4e33a28f27b96244df9d2fa75ea5380030450a3d4eecd886bb"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-1.log",
+      "exit": 1,
+      "counts": "4442P/1F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "1547b007d4056791fad3f3ad10f9b0a566af96ce231645f90d99dfff63fda57f"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-2.log",
+      "exit": 0,
+      "counts": "4454P/0F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "fde76720050a6a07c8c9749e00577ad9155438caa5ee826cf3636245bca48a5d"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-3.log",
+      "exit": 0,
+      "counts": "4454P/0F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "822a7f91ea38613d25c015b92c9741b576cf53a84e5897fe85602eac72620b67"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-final-1.log",
+      "exit": 0,
+      "counts": "4454P/0F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "4fa96be6bf49e35238eaabfdddf3768b39a232f21acd5811b4ba1e3ad56b00a8"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-final-2.log",
+      "exit": 0,
+      "counts": "4454P/0F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "10dd11f77a5668c6debc023892336241659ef7b6870ebf3d1853e0413276b075"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/npm-test-final-3.log",
+      "exit": 0,
+      "counts": "4454P/0F/6S",
+      "command": "$ npm test -- --configLoader runner",
+      "sha256": "4ffa4d4fc9302363764f4f2f47fa29f069a9b635a11c8286830073589f30aa1c"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/rust-format.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt",
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/schema14.log",
+      "exit": 1,
+      "counts": "25P/1F of 26",
+      "command": "$ node --test scripts/mac-schema14-profile-snapshot.test.mjs",
+      "sha256": "abecbcbe8030e974623e2b31e5602427d4a539cde70e5be72f0e65b717f94a35"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/search-red.log",
+      "exit": 1,
+      "counts": "0P/2F/0S",
+      "command": "$ npm test -- --configLoader runner src/logic/homeworkSearch.test.ts",
+      "sha256": "c73534163fa95ed0459e061fe83c08420ac7501cbd269f05939b9fb738621b8e"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/source-drafts-red.log",
+      "exit": 1,
+      "counts": "0P/1F/17S",
+      "command": "$ npm test -- --configLoader runner src/pages/StudyLibrary/Homework.test.ts -t editor_all_six_kinds_and_optional_fields",
+      "sha256": "13f5c46fdc2c41d9623e6877881e70b5f2f347c86f6586dbb11870d567ca81f0"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-1.log",
+      "exit": 2,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "8d771755983fe2990081af9d1223bbc972f43fc75f9b7a08f8ab2e59930580e5"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-2.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-3.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-final-2.log",
+      "exit": 2,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "2aa64fd5196bd7addfa23a19e7db3e33959446cf57f428d45adc588f714d4c01"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-final-3.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-final-4.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-final-5.log",
+      "exit": 0,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    },
+    {
+      "log": "docs/evidence/hw01c-2026-10-21/typecheck-final.log",
+      "exit": 2,
+      "counts": "no test count",
+      "command": "$ npm run typecheck",
+      "sha256": "5aee20342419ac72005d26905c059963e3bc4af03430634576ed3de2d532b224"
+    }
+  ],
+  "server_attempt": {
+    "tool_exit": 130,
+    "receipt_completed": false,
+    "reason": "Stopped with Ctrl-C after Chromium launch was refused; port 1420 no longer answers."
+  }
+}

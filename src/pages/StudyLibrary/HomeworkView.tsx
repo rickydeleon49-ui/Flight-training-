@@ -1,0 +1,227 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { AlertIcon, Button, Card, CardBody, ConfirmDialog } from "@/components/ui";
+import { PageHeader } from "@/components/layout/PageHeader";
+import type { HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
+import { cardVersion } from "@/logic/cardIdentity";
+import { todayIso } from "@/lib/dates";
+import { useAppData } from "@/state/AppDataContext";
+import { useNavigationController } from "@/state/navigation/useDocumentNavigation";
+import { HomeworkEditor } from "./HomeworkEditor";
+import { ACTIVITY_KINDS, activeHomework, homeworkOperation, homeworkSaveMessage, newHomework, type Entry, homeworkHistoryLabel, type HomeworkHistoryEntry } from "./homeworkUi";
+import "./homework.css";
+type Editor = {
+    snapshot: HomeworkSnapshot;
+    creating?: boolean;
+    activityId?: string;
+    relink?: boolean;
+    adding?: boolean;
+};
+const filters = { upcoming: "Upcoming", in_progress: "In progress", completed: "Completed", archived: "Archived" } as const;
+
+export function HomeworkView() {
+    const { assignmentId } = useParams();
+    const navigate = useNavigate();
+    const { repositories, data, dataRevision, refresh } = useAppData();
+    const { controller, status } = useNavigationController();
+    const [snapshots, setSnapshots] = useState<HomeworkSnapshot[]>([]);
+    const [current, setCurrent] = useState<HomeworkSnapshot | null>(null);
+    const [history, setHistory] = useState<HomeworkHistoryEntry[]>([]);
+    const [sourceStates, setSourceStates] = useState<Record<string, "changed" | "missing" | "unavailable">>({});
+    const [checkedSources,setCheckedSources] = useState<HomeworkSnapshot | null>(null);
+    const [announcement, setAnnouncement] = useState("");
+    const focusActivity = useRef<string | null>(null);
+    const [filter, setFilter] = useState<keyof typeof filters>("upcoming");
+    const [editor, setEditor] = useState<Editor | null>(null);
+    const [removing, setRemoving] = useState<Entry | null>(null);
+    const [error, setError] = useState<{
+        text: string;
+        stale: boolean;
+    } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [busy, setBusy] = useState(false);
+    const [reload, setReload] = useState(0);
+    const [today, setToday] = useState(todayIso);
+    const pending = useRef<HomeworkOperation | null>(null);
+    const lock = useRef(false);
+    const saveScope = useRef(0);
+    useEffect(() => { saveScope.current++; return () => { saveScope.current++; }; }, [repositories, assignmentId]);
+    const lease = useRef(0);
+    const started = useRef<number | null>(null);
+    useEffect(() => { const update = () => setToday(todayIso()); const timer = window.setInterval(update, 30000); window.addEventListener("focus", update); document.addEventListener("visibilitychange", update); return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); }; }, []);
+    useEffect(() => {
+        const mine = ++lease.current;
+        setLoading(true);
+        if(!pending.current) setError(null);
+        if (!repositories)
+            return;
+        const load = async () => {
+            if (assignmentId) {
+                const [s, h] = await Promise.all([repositories.homework.get(assignmentId), repositories.homework.history(assignmentId)]);
+                if (mine !== lease.current)
+                    return;
+                setCurrent(s);
+                setHistory(h.map(row=>({change_kind:String(row.change_kind),created_at:String(row.created_at),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
+            }
+            else {
+                const rows = await repositories.homework.list(true);
+                const loaded: HomeworkSnapshot[] = [];
+                for (const row of rows) {
+                    const s = await repositories.homework.get(String(row.id));
+                    if (mine !== lease.current)
+                        return;
+                    if (s)
+                        loaded.push(s);
+                }
+                setSnapshots(loaded);
+            }
+        };
+        void load().catch(() => { if (mine === lease.current)
+            setError({ text: "Homework couldn't be loaded. Try reloading.", stale: false }); }).finally(() => { if (mine === lease.current)
+            setLoading(false); });
+        return () => { lease.current++; };
+    }, [repositories, assignmentId, dataRevision, reload]);
+    useEffect(() => () => { if (controller && started.current === controller.status().epoch && controller.status().kind === 'working')
+        controller.abort(); started.current = null; }, [controller, assignmentId]);
+    useEffect(() => {
+        let live = true;
+        setSourceStates({});
+        if (!current || !repositories)
+            return;
+        void Promise.all(activeHomework(current).map(async (e) => {
+            const r = e.record;
+            if (!r.material_id || !["read", "cards", "test"].includes(r.kind))
+                return;
+            try {
+                let hash: string | null = null;
+                if (r.kind === 'cards') {
+                    const set = data.aiStudySets.find(s => s.sourceMaterialId === r.material_id);
+                    hash = set?.flashcards.length ? (await cardVersion(r.material_id, set.flashcards)).contentHash : null;
+                }
+                else if (r.kind === 'test') {
+                    const v = r.test_version_id ? await repositories.practiceSessions.getVersion(r.test_version_id) : null;
+                    if (!v) {
+                        if (live)
+                            setSourceStates(s => ({ ...s, [r.id]: "missing" }));
+                        return;
+                    }
+                    // The ordinary quiz screen opens the current version. Refuse a silent replacement.
+                    const active = await repositories.practiceSessions.getActiveVersion(r.material_id);
+                    hash = active?.version.id === r.test_version_id ? v.contentHash : null;
+                }
+                else if (repositories.navigation.canCheckFiles())
+                    hash = (await repositories.navigation.inspect(r.material_id)).contentSha256;
+                else
+                    return;
+                if (live && hash !== r.source_revision)
+                    setSourceStates(s => ({ ...s, [r.id]: "changed" }));
+            }
+            catch {
+                if (live)
+                    setSourceStates(s => ({ ...s, [r.id]: "unavailable" }));
+            }
+        })).then(()=>{if(live)setCheckedSources(current);});
+        return () => { live = false; };
+    }, [current, repositories, data.aiStudySets, dataRevision]);
+    useEffect(() => { if (!busy && !loading && focusActivity.current) {
+        document.getElementById(`homework-${focusActivity.current}`)?.focus();
+        focusActivity.current = null;
+    } }, [loading,busy]);
+    const loadAgain = () => { pending.current = null; setEditor(null); setReload(n => n + 1); };
+    const perform = async (op: HomeworkOperation) => {
+        if (lock.current || !repositories)
+            return;
+        lock.current = true;
+        setBusy(true);
+        setError(null);
+        const mine = saveScope.current;
+        pending.current = op;
+        try {
+            await repositories.homework.save(op);
+            try {
+                await refresh();
+            }
+            catch { /* The repository read below still confirms the saved homework. */ }
+            const [saved, entries] = await Promise.all([repositories.homework.get(op.assignmentId), repositories.homework.history(op.assignmentId)]);
+            if (mine === saveScope.current) {
+                pending.current = null;
+                setCurrent(saved);
+                setHistory(entries.map(row=>({change_kind:String(row.change_kind),created_at:String(row.created_at),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
+                setRemoving(null);
+            }
+        }
+        catch (e) {
+            if (mine === saveScope.current)
+                setError(homeworkSaveMessage(e));
+        }
+        finally {
+            lock.current = false;
+            setBusy(false);
+        }
+    };
+    const change = (kind: HomeworkOperation['changeKind'], edit: (draft: HomeworkSnapshot) => void) => {
+        if (!current)
+            return;
+        const draft = structuredClone(current);
+        edit(draft);
+        void perform(homeworkOperation(current, draft, kind));
+    };
+    const finished = (id: string) => { setEditor(null); setReload(n => n + 1); navigate(`/study/homework/${id}`); };
+    const sourceMissing = (e: Entry) => ["read", "cards", "test"].includes(e.record.kind) && (!e.record.material_id || !data.materials.some(m => m.id === e.record.material_id) || !e.record.source_revision || (e.record.kind === 'test' && !e.record.test_version_id) || (e.record.kind === 'cards' && !e.record.card_set_id) || (e.record.kind === 'read' && (!e.record.page_start || !e.record.page_end || !e.source?.total_pages)));
+    const openReading = async (e: Entry) => { if (!controller || !e.record.material_id || !e.record.page_start)
+        return; const result = controller.openSaved({ materialId: e.record.material_id, contentSha256: e.record.source_revision, physicalPage: e.record.page_start, pageLabel: null }); started.current = controller.status().epoch; await result; };
+    const active = current ? activeHomework(current) : [];
+    const editable = !busy && !pending.current;
+    return <div className="homework-view stack stack--4">
+    <PageHeader title="Homework" subtitle="A little preparation, at your pace." action={<Button variant="primary" onClick={() => setEditor({ snapshot: newHomework(), creating: true })} disabled={busy}>Add homework</Button>}/>
+    <Link to="/study">Study Library</Link>
+    <p role="status" className="small muted">{announcement}</p>
+    {error ? <div role="alert"><p>{error.text}</p><Button onClick={loadAgain}>Reload</Button>{pending.current && !error.stale ? <Button disabled={busy} onClick={() => void perform(pending.current!)}>Retry save</Button> : null}</div> : null}
+    {loading ? <p role="status">Loading homework…</p> : assignmentId ? !current ? <p>That homework isn't here any more.</p> : <>
+      <Link to="/study/homework">All homework</Link>
+      <Card><CardBody><div className="stack stack--3"><h2 className="wrap-anywhere">{current.assignment.title}</h2>
+        <p>{active.filter(e => e.record.state === 'completed').length} of {active.length} done{current.assignment.archived ? ' · Archived' : ''}</p>
+        {current.assignment.due_date ? <p>Due {current.assignment.due_date}{!current.assignment.archived && current.assignment.state !== 'completed' && current.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}
+        {current.assignment.instructions ? <p className="homework-text">{current.assignment.instructions}</p> : null}
+        {current.assignment.school ? <p>School: {current.assignment.school}</p> : null}{current.assignment.instructor ? <p>Instructor: {current.assignment.instructor}</p> : null}
+        {current.assignment.source_lesson_id ? (() => { const lesson = data.events.find(e => e.id === current.assignment.lesson_id); return <p>{lesson ? `${lesson.title} · ${lesson.date}${lesson.startTime ? ` · ${lesson.startTime}` : ''}${lesson.status === 'cancelled' ? ' · Lesson cancelled' : ''}` : 'Lesson missing — edit homework to choose a lesson or unlink it.'} Your homework due date stays as you set it.</p>; })() : null}
+        <div className="row row--wrap"><Button disabled={!editable} onClick={() => setEditor({ snapshot: current })}>Edit homework</Button><Button disabled={!editable || current.assignment.state === 'completed'} onClick={() => setEditor({ snapshot: current, adding: true })}>Add activities</Button><Button disabled={!editable} onClick={() => change('archive', s => { s.assignment.archived = s.assignment.archived ? 0 : 1; })}>{current.assignment.archived ? 'Unarchive' : 'Archive'}</Button></div>
+      </div></CardBody></Card>
+      {current.assignment.state === 'completed' ? <p>Reopen an activity before adding more work.</p> : null}
+      {active.length === 0 ? <p>Add an activity whenever you're ready.</p> : null}
+      <ol className="homework-activities">
+        {active.map((e, index) => {
+                const r = e.record;
+                const missing = sourceMissing(e) || !!sourceStates[r.id];
+                const done = r.state === 'completed';
+                return <li key={r.id} className="homework-activity stack stack--3">
+          <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : r.state === 'reopened' ? 'Reopened' : 'To do'}</p>
+          {r.body ? <p className="homework-text">{r.body}</p> : null}
+          {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
+          <div className="row row--wrap">
+            {r.kind === 'read' ? <><Button disabled={missing || !controller || status.kind === 'working'} onClick={() => void openReading(e)}>Open PDF at page {r.page_start ?? 1}</Button>{!done ? <Button disabled={!editable || missing} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark reading complete</Button> : null}</> : null}
+            {['reflection', 'questions'].includes(r.kind) && !done ? <Button disabled={!editable || !r.body.trim()} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark complete</Button> : null}
+            {r.kind === 'checklist' && !done ? <label className="row"><input type="checkbox" checked={false} disabled={!editable} onChange={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}/>Done</label> : null}
+            {r.kind === 'cards' || r.kind === 'test' ? <>{!missing && checkedSources===current ? <Link className="button button--secondary" to={`/study/${r.material_id}`} state={r.kind === 'cards' ? { startCardReview: true } : undefined}>{r.kind === 'cards' ? 'Open cards' : 'Open quiz'}</Link> : <span>{r.kind === 'cards' ? 'Open cards' : 'Open quiz'} · {missing?'choose a source first':'checking source…'}</span>}<p className="small muted">Completion is recorded automatically in a later update</p></> : null}
+            {done ? <Button disabled={!editable} onClick={() => change('reopen', s => { s.activities.find(x => x.record.id === r.id)!.record.cycle++; })}>Reopen {r.title}</Button> : null}
+            <Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit {r.title}</Button>
+            <Button aria-label={`Move ${r.title} up`} disabled={!editable || index === 0} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position--; s.activities.find(x => x.record.id === active[index - 1]!.record.id)!.record.position++; }); }}>Move up</Button>
+            <Button aria-label={`Move ${r.title} down`} disabled={!editable || index === active.length - 1} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position++; s.activities.find(x => x.record.id === active[index + 1]!.record.id)!.record.position--; }); }}>Move down</Button>
+            <Button disabled={!editable} onClick={() => setRemoving(e)}>Remove {r.title}</Button>
+          </div>
+        </li>;
+            })}
+      </ol>
+      {status.kind === 'failed' || status.kind === 'refused' || status.kind === 'opened_unsaved' || status.kind === 'guidance' ? <p role="status">{status.message}</p> : status.kind === 'saved' ? <p role="status">Opened in your PDF reader. Go to PDF page {status.destination.physicalPage} there; your reader may not jump to it by itself. Mark reading complete when you're finished.</p> : null}
+      <section><h2>History</h2><ol>{history.map((h,index) => <li key={h.revision}>{homeworkHistoryLabel(h,history[index-1])} · {new Date(h.created_at).toLocaleString()}</li>)}</ol></section>
+    </> : <>
+      <div className="row row--wrap" aria-label="Homework filters">{Object.entries(filters).map(([key, label]) => <Button key={key} aria-pressed={filter === key} onClick={() => setFilter(key as keyof typeof filters)}>{label}</Button>)}</div>
+      {snapshots.filter(s => filter === 'archived' ? s.assignment.archived : !s.assignment.archived && (filter === 'in_progress' ? ['in_progress', 'reopened'].includes(s.assignment.state) : s.assignment.state === filter)).map(s => <Card key={s.assignment.id}><CardBody><Link to={`/study/homework/${s.assignment.id}`} className="wrap-anywhere">{s.assignment.title}</Link><p>{activeHomework(s).filter(e => e.record.state === 'completed').length} of {activeHomework(s).length} done</p>{s.assignment.due_date ? <p>Due {s.assignment.due_date}{!s.assignment.archived && s.assignment.state !== 'completed' && s.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}</CardBody></Card>)}
+      {snapshots.length === 0 ? <p>No school, instructor or date needed. Add homework for whatever you'd like to work on next.</p> : null}
+      {snapshots.length > 0 && !snapshots.some(s => filter === 'archived' ? s.assignment.archived : !s.assignment.archived && (filter === 'in_progress' ? ['in_progress', 'reopened'].includes(s.assignment.state) : s.assignment.state === filter)) ? <p>No homework in this view yet.</p> : null}
+    </>}
+    {editor ? <HomeworkEditor key={`${editor.snapshot.assignment.id}-${editor.activityId ?? 'assignment'}-${editor.adding ?? false}`} {...editor} onClose={() => {setEditor(null);setReload(n=>n+1);}} onSaved={finished} onReload={loadAgain}/> : null}
+    <ConfirmDialog open={!!removing} title="Remove activity?" message="Your earlier work stays in homework history." confirmLabel="Remove activity" pending={busy} onCancel={() => setRemoving(null)} onConfirm={() => { if (!removing)
+        return; change('remove_activity', s => { s.activities.find(e => e.record.id === removing.record.id)!.record.removed_at = new Date().toISOString(); activeHomework(s).forEach((e, i) => { e.record.position = i; }); }); }}/>
+  </div>;
+}

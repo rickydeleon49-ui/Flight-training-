@@ -170,6 +170,7 @@ export function StudyLibrary() {
         subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
         action={
           <div className="row row--wrap">
+            <Link to="/study/homework" className="button button--secondary">Homework</Link>
             <Link to="/study/history" className="button button--secondary">
               Practice history
             </Link>
@@ -222,7 +223,7 @@ export function StudyLibrary() {
       {hasAny && cardLibrary ? (
         <BinderReviewStatus repository={cardLibrary} dataRevision={dataRevision} onStatus={setBinderStatus} />
       ) : null}
-      {hasAny ? (
+      {(
         <div className="library__toolbar">
           <div className="search-field">
             <span className="search-field__icon">
@@ -259,7 +260,7 @@ export function StudyLibrary() {
             style={{ width: "auto" }}
           />
         </div>
-      ) : null}
+      )}
 
       {hasAny ? (
         <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
@@ -277,7 +278,7 @@ export function StudyLibrary() {
         </div>
       ) : null}
 
-      {hasAny ? <DocumentSearchPanel query={search} materials={filtered} /> : null}
+      <DocumentSearchPanel query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
 
       {!hasAny ? (
         <Card>

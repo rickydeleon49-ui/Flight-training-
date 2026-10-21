@@ -94,7 +94,7 @@ export interface SearchCoverage {
 
 /** Mirrors `extraction::search::saved::SavedPassage`. */
 export interface SavedPassage {
-  kind: "summary" | "guide" | "card" | "practice" | "note" | "question";
+  kind: "summary" | "guide" | "card" | "practice" | "note" | "question" | "homework" | "homework_activity";
   /** A section or card index, or a record id. */
   recordId: string;
   /** Guides and cards: the digest of the item's own text. */
@@ -104,7 +104,7 @@ export interface SavedPassage {
 
 /** Mirrors `SavedGroup`: one material, or her notes, or instructor questions. */
 export interface SavedGroup {
-  kind: "material" | "notes" | "questions";
+  kind: "material" | "notes" | "questions" | "homework";
   materialId: string | null;
   title: string;
   passages: SavedPassage[];
@@ -116,6 +116,7 @@ export interface SavedCoverage {
   practiceVersions: number;
   notes: number;
   questions: number;
+  homework?: number;
   tooLargeItems: number;
 }
 
@@ -139,8 +140,8 @@ export interface SearchResponse {
 }
 
 /** Everything one search covers (documents and saved study content). */
-export const ALL_CONTENT_TYPES = ["documentPages", "guides", "cards", "practice", "notes", "questions"] as const;
-export const SAVED_CONTENT_TYPES = ["guides", "cards", "practice", "notes", "questions"] as const;
+export const ALL_CONTENT_TYPES = ["documentPages", "guides", "cards", "practice", "notes", "questions", "homework"] as const;
+export const SAVED_CONTENT_TYPES = ["guides", "cards", "practice", "notes", "questions", "homework"] as const;
 export type ContentType = (typeof ALL_CONTENT_TYPES)[number];
 
 export type DestinationCheck = "ok" | "changed" | "missing";
@@ -163,12 +164,14 @@ export async function searchOfflineContent(
   materialIds: string[],
   offset: number,
   contentTypes: readonly ContentType[] = ALL_CONTENT_TYPES,
+  materialFiltersActive = false,
 ): Promise<SearchResponse> {
   try {
     return await invoke<SearchResponse>("search_offline_content", {
       query,
       materialIds,
       contentTypes: [...contentTypes],
+      materialFiltersActive,
       offset,
     });
   } catch (error) {
