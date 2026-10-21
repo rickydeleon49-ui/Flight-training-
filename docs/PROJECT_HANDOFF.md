@@ -1,3 +1,7 @@
+## Research handoff: offline training differentiation — 21 October 2026
+
+Codex prepared the owner's requested [research](OFFLINE_TRAINING_RESEARCH_2026-10-21.md) and [six-feature roadmap](OFFLINE_TRAINING_ROADMAP_2026-10-21.md) against main `2b5b146` (PR #256). Documentation only, prepared for owner-requested GitHub publication on Windows branch `docs/offline-training-research-2026-10-21`; no feature/priority/dependency/migration/release change. [Review/publication instructions](OFFLINE_TRAINING_RESEARCH_HANDOFF_2026-10-21.md) include the cross-machine bundle procedure and exact source/validation boundaries. The owner explicitly authorized Codex to commit/push these documents and open a review PR on 21 October; Claude remains the independent reviewer and merger under current AGENTS rules; this author does not approve or merge its own documentation round. The active Mac homework/offline implementation and loop file were not touched.
+
 ## Current owner workflow — 20 October 2026
 
 - **Implementers, in order:** Codex first. If Codex is out of usage, Gemini (Gemini CLI, model `gemini-3.8-flash`). Qwen Flash only as the last backup.
