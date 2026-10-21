@@ -279,6 +279,76 @@ describe("her own items and her instructor's corrections (OFFLINE-03a)", () => {
 });
 
 
+describe("the packet note says which items came from a PDF", () => {
+  const validPdf = () => ({ status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] });
+
+  /** Some of the set came from Gemini, some from the PDF kit. */
+  const mixedKit = () =>
+    studySet({
+      summary: "How METARs and TAFs describe the weather.",
+      sections: [
+        { heading: "Reading a METAR", body: "- Station\n- Time\n- **Wind** first" },
+        { heading: "Ceilings", body: "The lowest broken or overcast layer.", pdfProvenance: validPdf() },
+      ],
+      flashcards: [
+        { front: "What is a METAR?", back: "A routine surface weather observation.", sourcePage: 12, pdfProvenance: validPdf() },
+        { front: "BKN means?", back: "Broken: 5/8 to 7/8 sky cover.", sourcePage: null },
+      ],
+    });
+
+  /** Every item in the set came from the PDF kit. */
+  const allKit = () =>
+    studySet({
+      summary: "How METARs and TAFs describe the weather.",
+      summaryPdfProvenance: validPdf(),
+      sections: [
+        { heading: "Reading a METAR", body: "- Station\n- Time\n- **Wind** first", pdfProvenance: validPdf() },
+        { heading: "Ceilings", body: "The lowest broken or overcast layer.", pdfProvenance: validPdf() },
+      ],
+      flashcards: [
+        { front: "What is a METAR?", back: "A routine surface weather observation.", sourcePage: 12, pdfProvenance: validPdf() },
+        { front: "BKN means?", back: "Broken: 5/8 to 7/8 sky cover.", sourcePage: null, pdfProvenance: validPdf() },
+      ],
+    });
+
+  /** Only the flashcards came from the kit; the guide did not. */
+  const kitCardsOnly = () =>
+    studySet({
+      summary: "How METARs and TAFs describe the weather.",
+      sections: [{ heading: "Reading a METAR", body: "- Station\n- Time\n- **Wind** first" }],
+      flashcards: [
+        { front: "What is a METAR?", back: "A routine surface weather observation.", sourcePage: 12, pdfProvenance: validPdf() },
+      ],
+    });
+
+  const noteOf = (input: ExportSource, selection = ALL) =>
+    (JSON.parse(exported(input, selection).text) as { source: { note: string } }).source.note;
+
+  it("mixed_set_packet_note_says_some_items", () => {
+    const note = noteOf(source({ studySet: mixedKit() }));
+    expect(note).toContain("Some items pulled from a PDF on the sender's Mac.");
+    expect(note).not.toContain("Pulled from a PDF on the sender's Mac.");
+    expect(note).toContain("AI-generated study aid (gemini-3.5-flash).");
+    expect(note).not.toContain("on this Mac");
+  });
+
+  it("all_kit_set_packet_note_unchanged", () => {
+    const note = noteOf(source({ studySet: allKit() }));
+    expect(note).toContain("Pulled from a PDF on the sender's Mac.");
+    expect(note).not.toContain("Some items pulled");
+    expect(note).not.toContain("on this Mac");
+  });
+
+  it("selection_scopes_pdf_note", () => {
+    const input = source({ studySet: kitCardsOnly() });
+    const guideOnly = noteOf(input, { guide: true, flashcards: false, questions: false });
+    expect(guideOnly).not.toContain("on the sender's Mac");
+    expect(guideOnly).not.toContain("your PDF");
+    const withCards = noteOf(input, { guide: true, flashcards: true, questions: false });
+    expect(withCards).toContain("Some items pulled from a PDF on the sender's Mac.");
+  });
+});
+
 describe("practice authorship export privacy (OFFLINE-03b)", () => {
   const mixed = () => practiceTest({ questions: [
     { ...practiceTest().questions[0]!, origin: "user" },

@@ -1,0 +1,47 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+ ❯ src/logic/studyExport.test.ts (29 tests | 2 failed) 20ms
+     × mixed_set_packet_note_says_some_items 3ms
+     × selection_scopes_pdf_note 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/studyExport.test.ts > the packet note says which items came from a PDF > mixed_set_packet_note_says_some_items
+AssertionError: expected 'AI-generated study aid (gemini-3.5-fl…' to contain 'Some items pulled from a PDF on the s…'
+
+Expected: "Some items pulled from a PDF on the sender's Mac."
+Received: "AI-generated study aid (gemini-3.5-flash). Pulled from a PDF on the sender's Mac. Verify everything against current FAA material, aircraft documents and an instructor."
+
+ ❯ src/logic/studyExport.test.ts:329:18
+    327|   it("mixed_set_packet_note_says_some_items", () => {
+    328|     const note = noteOf(source({ studySet: mixedKit() }));
+    329|     expect(note).toContain("Some items pulled from a PDF on the sender…
+       |                  ^
+    330|     expect(note).not.toContain("Pulled from a PDF on the sender's Mac.…
+    331|     expect(note).toContain("AI-generated study aid (gemini-3.5-flash).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/logic/studyExport.test.ts > the packet note says which items came from a PDF > selection_scopes_pdf_note
+AssertionError: expected 'AI-generated study aid (gemini-3.5-fl…' to contain 'Some items pulled from a PDF on the s…'
+
+Expected: "Some items pulled from a PDF on the sender's Mac."
+Received: "AI-generated study aid (gemini-3.5-flash). Pulled from a PDF on the sender's Mac. Verify everything against current FAA material, aircraft documents and an instructor."
+
+ ❯ src/logic/studyExport.test.ts:348:23
+    346|     expect(guideOnly).not.toContain("your PDF");
+    347|     const withCards = noteOf(input, { guide: true, flashcards: true, q…
+    348|     expect(withCards).toContain("Some items pulled from a PDF on the s…
+       |                       ^
+    349|   });
+    350| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 passed (29)
+   Start at  21:42:53
+   Duration  209ms (transform 51ms, setup 42ms, import 66ms, tests 20ms, environment 0ms)
+

@@ -14,6 +14,7 @@
  * then discards, as it does for any outside packet.
  */
 import { pdfLabelState, PDF_KIT_LABEL, PDF_KIT_REMINDER, pdfEditLabel } from "./pdfKitLabels";
+import type { PdfItemProvenance } from "@/data/pdfKitSources";
 import type { AiStudySet, PracticeTest, StudyMaterial } from "@/domain/types";
 import { FORMAT, FORMAT_VERSION, LIMITS, validatePacketText, type ImportPayload, type PacketError } from "@/logic/studyPacket";
 import { normalizeBlock, normalizeLine } from "@/logic/studyPacket/schema";
@@ -107,14 +108,55 @@ export function exportableParts(source: ExportSource): ExportSelection {
   };
 }
 
+/** An item that may carry PDF provenance. */
+type PdfProvenanceItem = { pdfProvenance?: PdfItemProvenance };
+
+/**
+ * How a part's items came from the PDF: none of them, some of them, or all
+ * of them (with their source details still known, or not).
+ */
+type PdfShare = "none" | "some" | "all" | "allValid";
+
+function pdfShare(items: PdfProvenanceItem[]): PdfShare {
+  if (items.length === 0) return "none";
+  const fromPdf = items.filter((item) => item.pdfProvenance).length;
+  if (fromPdf === 0) return "none";
+  if (fromPdf < items.length) return "some";
+  return items.every((item) => item.pdfProvenance?.status === "valid") ? "allValid" : "all";
+}
+
 /** Where the content came from, said plainly for whoever opens the file. */
 export function provenanceNote(source: ExportSource, selection: ExportSelection, portable = false): string {
   const pdfLabel = portable ? "Pulled from a PDF on the sender's Mac" : PDF_KIT_LABEL;
   const origins: { what: string; origin: string }[] = [];
   const set = source.studySet;
   const test = source.practiceTest;
-  if (set && (selection.guide || selection.flashcards)) origins.push({ what: "Study guide and flashcards", origin: pdfLabelState(set) ? pdfLabelState(set) === "valid" ? pdfLabel : "source details unavailable" : origin(set.provider, set.model) });
-  if (test && selection.questions) origins.push({ what: "Practice test", origin: pdfLabelState(test) ? pdfLabelState(test) === "valid" ? pdfLabel : "source details unavailable" : origin(test.provider, test.model) });
+  // Only the parts she chose travel in the packet, so only they can be claimed.
+  const chosenSetItems = (): PdfProvenanceItem[] => {
+    if (!set) return [];
+    const items: PdfProvenanceItem[] = [];
+    if (selection.guide) {
+      if (set.summary.trim()) items.push({ pdfProvenance: set.summaryPdfProvenance });
+      items.push(...(set.sections ?? []));
+    }
+    if (selection.flashcards) items.push(...(set.flashcards ?? []));
+    return items;
+  };
+  const chosenTestItems = (): PdfProvenanceItem[] => (test && selection.questions ? [...(test.questions ?? [])] : []);
+  const setShare = pdfShare(chosenSetItems());
+  const testShare = pdfShare(chosenTestItems());
+  if (set && (selection.guide || selection.flashcards)) {
+    const label = portable
+      ? setShare === "allValid" ? pdfLabel : origin(set.provider, set.model)
+      : pdfLabelState(set) ? pdfLabelState(set) === "valid" ? pdfLabel : "source details unavailable" : origin(set.provider, set.model);
+    origins.push({ what: "Study guide and flashcards", origin: label });
+  }
+  if (test && selection.questions) {
+    const label = portable
+      ? testShare === "allValid" ? pdfLabel : origin(test.provider, test.model)
+      : pdfLabelState(test) ? pdfLabelState(test) === "valid" ? pdfLabel : "source details unavailable" : origin(test.provider, test.model);
+    origins.push({ what: "Practice test", origin: label });
+  }
   const first = origins[0];
   const parts =
     first && origins.every((entry) => entry.origin === first.origin)
@@ -127,7 +169,14 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection,
     parts.push("Some items were written or corrected by hand in Her Flight Deck, not generated.");
   }
   const pdfItems = [...(selection.guide ? [{ pdfProvenance: set?.summaryPdfProvenance, origin: set?.summaryOrigin }, ...(set?.sections ?? [])] : []), ...(selection.flashcards ? set?.flashcards ?? [] : []), ...(selection.questions ? test?.questions ?? [] : [])];
-  if (portable && pdfItems.some(i => i.pdfProvenance) && !parts.some(p => p.includes(pdfLabel))) parts.push(`${pdfLabel}.`);
+  if (portable) {
+    // The PDF sentence describes the chosen items: when only some of them came
+    // from the PDF, saying all of them did would be wrong.
+    if (setShare === "some" || testShare === "some") parts.push("Some items pulled from a PDF on the sender's Mac.");
+    else if (setShare === "all" || testShare === "all") {
+      if (!parts.some((part) => part.includes(pdfLabel))) parts.push(`${pdfLabel}.`);
+    }
+  }
   if (!portable) for (const label of new Set(pdfItems.filter(i => i.pdfProvenance?.status === "valid").map(i => pdfEditLabel(i.origin)).filter(Boolean))) parts.push(`${label}.`);
   parts.push(pdfLabelState(set) || pdfLabelState(test) ? PDF_KIT_REMINDER : "Verify everything against current FAA material, aircraft documents and an instructor.");
   return parts.join(" ");

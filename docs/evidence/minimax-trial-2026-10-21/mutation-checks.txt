@@ -1,0 +1,24 @@
+Mutation checks for the portable PDF note (MiniMax trial, 2026-10-21)
+
+Each mutation was applied to src/logic/studyExport.ts, the suite
+`npx vitest run src/logic/studyExport.test.ts` was run, and the file was
+restored from a copy afterwards. Node 22 via
+PATH=/opt/homebrew/opt/node@22/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+1. The "some items" sentence reverted to the whole-set wording
+   ("Pulled from a PDF on the sender's Mac.")
+     -> mixed_set_packet_note_says_some_items   FAILED
+     -> selection_scopes_pdf_note               FAILED
+     Tests  2 failed | 27 passed (29)
+
+2. The selection scoping removed from the chosen items (every item of the
+   set and the test counted, chosen or not)
+     -> selection_scopes_pdf_note               FAILED
+     Tests  1 failed | 28 passed (29)
+
+3. The all-kit case also given the "some items" sentence
+     -> all_kit_set_packet_note_unchanged       FAILED
+     Tests  1 failed | 28 passed (29)
+
+Every guard is load-bearing: each mutation is caught by the test that covers
+it, and the restored file passes all 29 tests in the file.
