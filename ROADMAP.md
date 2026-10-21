@@ -2,6 +2,8 @@
 
 OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 merged (PR #239).
 
+Migration 0019 `study_set_save_operations` approved by the owner (20 October 2026): receipts for study-set saves that come from the PDF kit only; ordinary saves are unchanged.
+
 ### Workflow (owner, 19–20 October 2026)
 
 - **Codex implements** every project change.

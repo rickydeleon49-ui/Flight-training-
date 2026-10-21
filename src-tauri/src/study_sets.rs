@@ -53,6 +53,8 @@ pub const SET_COLUMNS: [&str; 11] = [
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StudySetErrorCode {
     InvalidArgument,
+    Conflict,
+    SourceChanged,
     StaleContent,
     RetirementLimit,
     NotFound,
@@ -62,6 +64,8 @@ pub enum StudySetErrorCode {
 impl StudySetErrorCode {
     pub fn message(self) -> &'static str {
         match self {
+            Self::Conflict => "This save request was already used for different study content. Nothing has been saved.",
+            Self::SourceChanged => "This PDF or your chosen pages changed. Nothing has been saved; review the source first.",
             Self::InvalidArgument => {
                 "This study set couldn't be saved because part of it isn't valid. Nothing has been saved."
             }
@@ -457,6 +461,8 @@ impl SaveReason {
 /// A decoded save request.
 #[derive(Debug, Clone)]
 pub struct SaveOperation {
+    pub pdf_kit_sources: Option<crate::pdf_kit_sources::Sources>,
+    pub payload: Value,
     pub operation_id: String,
     pub material_id: String,
     pub reason: SaveReason,
@@ -486,7 +492,7 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
     exact_keys(
         map,
         &["operationId", "materialId", "reason", "expected", "next"],
-        &[],
+        &["pdfKitSources"],
     )?;
     let operation_id = match map.get("operationId") {
         Some(Value::String(id)) if is_lower_uuid_v4(id) => id.clone(),
@@ -517,7 +523,20 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
     if !consistent {
         return invalid();
     }
+    let pdf_kit_sources = map
+        .get("pdfKitSources")
+        .map(|v| {
+            crate::pdf_kit_sources::decode(v, &material_id)
+                .map_err(|_| StudySetErrorCode::InvalidArgument)
+        })
+        .transpose()?;
+    if let Some(sources) = &pdf_kit_sources {
+        crate::pdf_kit_sources::validate_content(sources, &value["next"])
+            .map_err(|_| StudySetErrorCode::InvalidArgument)?;
+    }
     Ok(SaveOperation {
+        pdf_kit_sources,
+        payload: value.clone(),
         operation_id,
         material_id,
         reason,
@@ -595,6 +614,33 @@ pub fn apply_operation(
     if material.is_none() {
         return Err(StudySetErrorCode::NotFound);
     }
+    let payload_json = crate::practice_sessions::canonical_json(&operation.payload);
+    let payload_hash = crate::practice_sessions::compute_canonical_hash(&operation.payload);
+    let has_receipts: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='study_set_save_operations')", [], |r|r.get(0)).map_err(storage)?;
+    if has_receipts {
+        let receipt: Option<(String,String,String)> = tx.query_row("SELECT material_id, payload_json, payload_hash FROM study_set_save_operations WHERE operation_id=?1", [&operation.operation_id], |r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(storage)?;
+        if let Some((material, payload, hash)) = receipt {
+            if material != operation.material_id || payload != payload_json || hash != payload_hash
+            {
+                return Err(StudySetErrorCode::Conflict);
+            }
+            return Ok(SaveResult {
+                status: "already_saved",
+            });
+        }
+    }
+    if let Some(sources) = &operation.pdf_kit_sources {
+        if !has_receipts {
+            return Err(StudySetErrorCode::StorageError);
+        }
+        crate::pdf_kit_sources::write(tx, sources).map_err(|e| {
+            if e == "SOURCE_CHANGED" {
+                StudySetErrorCode::SourceChanged
+            } else {
+                StudySetErrorCode::StorageError
+            }
+        })?;
+    }
     let current = read_row(tx, &operation.material_id)?;
 
     // A retry of a save that already happened.
@@ -613,7 +659,7 @@ pub fn apply_operation(
         (None, None) => recorded.is_some(),
         _ => false,
     };
-    if already {
+    if already && operation.pdf_kit_sources.is_none() {
         if recorded.is_some_and(|m| m != operation.material_id) {
             return Err(StudySetErrorCode::StaleContent);
         }
@@ -693,6 +739,9 @@ pub fn apply_operation(
             .map_err(storage)?;
         }
     }
+    if operation.pdf_kit_sources.is_some() {
+        tx.execute("INSERT INTO study_set_save_operations (operation_id,material_id,payload_json,payload_hash) VALUES (?1,?2,?3,?4)",params![operation.operation_id,operation.material_id,payload_json,payload_hash]).map_err(storage)?;
+    }
     Ok(SaveResult { status: "saved" })
 }
 
@@ -709,6 +758,18 @@ pub fn save_study_set_at(root: &Path, operation: &Value) -> Result<SaveResult, S
         .map_err(|_| StudySetErrorCode::StorageError.error())?;
     conn.pragma_update(None, "foreign_keys", "ON")
         .map_err(|_| StudySetErrorCode::StorageError.error())?;
+    let has_receipt: bool = conn.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='study_set_save_operations')",[],|r|r.get(0)).unwrap_or(false) && conn.query_row("SELECT EXISTS(SELECT 1 FROM study_set_save_operations WHERE operation_id=?1)",[&operation.operation_id],|r|r.get(0)).unwrap_or(false);
+    if !has_receipt {
+        if let Some(sources) = &operation.pdf_kit_sources {
+            crate::pdf_kit::validate_save_at(root, sources).map_err(|e| {
+                if e.code == "INVALID_ARGUMENT" {
+                    StudySetErrorCode::InvalidArgument.error()
+                } else {
+                    StudySetErrorCode::SourceChanged.error()
+                }
+            })?;
+        }
+    }
     save_on(
         &mut conn,
         &operation,

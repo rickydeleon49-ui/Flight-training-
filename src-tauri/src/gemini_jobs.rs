@@ -61,6 +61,7 @@ pub(crate) const WAITING: &str =
 pub(crate) enum JobKind {
     StudyAid,
     PracticeTest,
+    PdfKit,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -426,6 +427,86 @@ impl Journal {
         self.commit(next)?;
         self.live.insert(id.clone());
         Ok(id)
+    }
+
+    /// Local PDF work has its own slot and never enters provider admission.
+    pub(crate) fn begin_pdf_kit(
+        &mut self,
+        material: &str,
+        path: &str,
+        hash: &str,
+        draft: Value,
+    ) -> Result<String, String> {
+        if self.quarantined {
+            return Err("The local draft journal needs recovery first.".into());
+        }
+        if self.jobs.len() >= MAX_JOBS {
+            return Err(FULL.into());
+        }
+        if self.jobs.iter().any(|j| {
+            j.kind == JobKind::PdfKit && (j.stage == JobStage::Running || j.material_id == material)
+        }) {
+            return Err("Save or explicitly discard the earlier PDF kit first.".into());
+        }
+        if !valid_identity(material)
+            || !valid_identity(path)
+            || serde_json::to_vec(&draft)
+                .map_err(|_| "Invalid PDF kit")?
+                .len()
+                > MAX_RESULT_BYTES
+        {
+            return Err("The PDF kit is too large to keep.".into());
+        }
+        let id = new_id();
+        let mut next = self.jobs.clone();
+        next.push(JobRecord {
+            id: id.clone(),
+            kind: JobKind::PdfKit,
+            material_id: material.into(),
+            relative_path: path.into(),
+            content_sha256: hash.into(),
+            base_revision: None,
+            request_id: None,
+            stage: JobStage::Running,
+            created_at: now(),
+            updated_at: now(),
+            result: None,
+            draft: Some(draft),
+            error: None,
+        });
+        self.commit(next)?;
+        self.live.insert(id.clone());
+        Ok(id)
+    }
+    pub(crate) fn pdf_kit_running(&self, id: &str) -> bool {
+        !self.quarantined
+            && self
+                .jobs
+                .iter()
+                .any(|j| j.id == id && j.kind == JobKind::PdfKit && j.stage == JobStage::Running)
+    }
+    pub(crate) fn finish_pdf_kit(&mut self, id: &str, draft: Value) -> Result<(), String> {
+        if !self.pdf_kit_running(id) {
+            return Err("PDF kit cancelled.".into());
+        }
+        if serde_json::to_vec(&draft)
+            .map_err(|_| "Invalid PDF kit")?
+            .len()
+            > MAX_RESULT_BYTES
+        {
+            return Err("The PDF kit is too large to keep. Choose fewer pages.".into());
+        }
+        self.settle(id, |j| {
+            j.draft = Some(draft);
+            j.stage = JobStage::Ready;
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_replace_pdf_draft(&mut self, id: &str, draft: Value) -> Result<(), String> {
+        let mut next = self.jobs.clone();
+        next.iter_mut().find(|j| j.id == id).ok_or("missing")?.draft = Some(draft);
+        self.commit(next)
     }
 
     /// Queue study guide sections without starting or requiring an idle engine.

@@ -1,0 +1,355 @@
+[
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000001",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      },
+      "pdfKitSources": {
+        "runId": "001c0001-0000-4000-8000-000000000099",
+        "run": {
+          "materialId": "mat-a",
+          "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "selectedPages": [
+            1
+          ],
+          "extractorVersion": 1,
+          "algorithmVersion": 1,
+          "createdAt": "2026-10-20T02:00:00.000Z"
+        },
+        "items": [
+          {
+            "itemKind": "card",
+            "logicalId": "kit-card",
+            "contentHash": "7a48780a8d3e259d15ca8a6d3a12b02918a6f2ab057bba782082d6f9d1f94ac5",
+            "page": 1,
+            "startOffset": 0,
+            "endOffset": 16,
+            "quote": "Synthetic quote."
+          }
+        ]
+      }
+    },
+    "expect": {
+      "status": "saved"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000001",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      },
+      "pdfKitSources": {
+        "runId": "001c0001-0000-4000-8000-000000000099",
+        "run": {
+          "materialId": "mat-a",
+          "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "selectedPages": [
+            1
+          ],
+          "extractorVersion": 1,
+          "algorithmVersion": 1,
+          "createdAt": "2026-10-20T02:00:00.000Z"
+        },
+        "items": [
+          {
+            "itemKind": "card",
+            "logicalId": "kit-card",
+            "contentHash": "7a48780a8d3e259d15ca8a6d3a12b02918a6f2ab057bba782082d6f9d1f94ac5",
+            "page": 1,
+            "startOffset": 0,
+            "endOffset": 16,
+            "quote": "Synthetic quote."
+          }
+        ]
+      }
+    },
+    "expect": {
+      "status": "already_saved"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000001",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      },
+      "pdfKitSources": {
+        "runId": "001c0001-0000-4000-8000-000000000099",
+        "run": {
+          "materialId": "mat-a",
+          "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "selectedPages": [
+            1
+          ],
+          "extractorVersion": 1,
+          "algorithmVersion": 1,
+          "createdAt": "2026-10-20T02:00:00.000Z"
+        },
+        "items": [
+          {
+            "itemKind": "card",
+            "logicalId": "kit-card",
+            "contentHash": "7a48780a8d3e259d15ca8a6d3a12b02918a6f2ab057bba782082d6f9d1f94ac5",
+            "page": 1,
+            "startOffset": 0,
+            "endOffset": 16,
+            "quote": "Different quote."
+          }
+        ]
+      }
+    },
+    "expect": {
+      "error": "CONFLICT"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000001",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      }
+    },
+    "expect": {
+      "error": "CONFLICT"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000044",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      },
+      "pdfKitSources": {
+        "runId": "001c0001-0000-4000-8000-000000000099",
+        "run": {
+          "materialId": "mat-a",
+          "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "selectedPages": [
+            1
+          ],
+          "extractorVersion": 1,
+          "algorithmVersion": 1,
+          "createdAt": "2026-10-20T02:00:00.000Z"
+        },
+        "items": [
+          {
+            "itemKind": "card",
+            "logicalId": "kit-card",
+            "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "page": 1,
+            "startOffset": 0,
+            "endOffset": 16,
+            "quote": "Synthetic quote."
+          }
+        ]
+      }
+    },
+    "expect": {
+      "error": "INVALID_ARGUMENT"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000045",
+      "materialId": "mat-b",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      }
+    },
+    "expect": {
+      "status": "saved"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000046",
+      "materialId": "mat-a",
+      "reason": "edit",
+      "expected": "$current",
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card",
+            "origin": "instructor"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      }
+    },
+    "expect": {
+      "status": "saved"
+    }
+  },
+  {
+    "operation": {
+      "operationId": "001c0001-0000-4000-8000-000000000001",
+      "materialId": "mat-a",
+      "reason": "create",
+      "expected": null,
+      "next": {
+        "title": "Kit",
+        "summary": "",
+        "summaryOrigin": null,
+        "sections": [],
+        "flashcards": [
+          {
+            "front": "Lift",
+            "back": "A synthetic upward force.",
+            "sourcePage": 1,
+            "itemId": "kit-card"
+          }
+        ],
+        "sourceNotes": "",
+        "provider": "manual",
+        "model": "",
+        "retired": []
+      },
+      "pdfKitSources": {
+        "runId": "001c0001-0000-4000-8000-000000000099",
+        "run": {
+          "materialId": "mat-a",
+          "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "selectedPages": [
+            1
+          ],
+          "extractorVersion": 1,
+          "algorithmVersion": 1,
+          "createdAt": "2026-10-20T02:00:00.000Z"
+        },
+        "items": [
+          {
+            "itemKind": "card",
+            "logicalId": "kit-card",
+            "contentHash": "7a48780a8d3e259d15ca8a6d3a12b02918a6f2ab057bba782082d6f9d1f94ac5",
+            "page": 1,
+            "startOffset": 0,
+            "endOffset": 16,
+            "quote": "Synthetic quote."
+          }
+        ]
+      }
+    },
+    "expect": {
+      "status": "already_saved"
+    }
+  }
+]

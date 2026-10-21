@@ -6,7 +6,7 @@ use crate::extraction::{
     inspect::Outcome,
 };
 use lopdf::{Document, Object, ObjectId};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const ALGORITHM_VERSION: u32 = 1;
@@ -33,7 +33,7 @@ pub struct KitInput {
     pub pages: Vec<CachedPage>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Evidence {
     pub page: u32,
@@ -42,7 +42,7 @@ pub struct Evidence {
     pub quote: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Rule {
     Definition,
@@ -51,7 +51,7 @@ pub enum Rule {
     NumberCloze,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CardCandidate {
     pub term: String,
@@ -64,7 +64,7 @@ pub struct CardCandidate {
     pub pattern: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SourceSentence {
     pub text: String,
@@ -72,7 +72,7 @@ pub struct SourceSentence {
     pub evidence: Evidence,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OutlineSection {
     pub heading: String,
@@ -81,7 +81,7 @@ pub struct OutlineSection {
     pub evidence: Vec<Evidence>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuestionCandidate {
     pub prompt: String,
@@ -93,7 +93,7 @@ pub struct QuestionCandidate {
     pub choice_evidence: Vec<Vec<Evidence>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KitCandidates {
     pub algorithm_version: u32,
@@ -1021,6 +1021,22 @@ fn questions(cards: &[CardCandidate], ambiguous: &BTreeSet<String>) -> Vec<Quest
 /// version. Duplicate page indexes are refused as a group, not resolved by input
 /// order. All emitted arrays follow page/offset/rule order before capping.
 pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandidates, String> {
+    extract_cancellable(input, document, &|| true)
+}
+
+pub fn extract_cancellable(
+    input: &KitInput,
+    document: Option<&Document>,
+    keep_going: &dyn Fn() -> bool,
+) -> Result<KitCandidates, String> {
+    let check = || {
+        if keep_going() {
+            Ok(())
+        } else {
+            Err("cancelled".to_string())
+        }
+    };
+    check()?;
     if input.content_sha256.len() != 64
         || !input
             .content_sha256
@@ -1061,6 +1077,7 @@ pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandi
     let mut pages = vec![];
     let mut bytes: usize = 0;
     for group in selected.values() {
+        check()?;
         if group.len() != 1 {
             result.pages_skipped_ambiguous += 1;
             continue;
@@ -1099,6 +1116,7 @@ pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandi
     }
     let mut boundary_counts: BTreeMap<String, BTreeSet<u32>> = BTreeMap::new();
     for page in &pages {
+        check()?;
         for line in page.lines.first().into_iter().chain(page.lines.last()) {
             if heading_line(line) {
                 boundary_counts
@@ -1117,7 +1135,9 @@ pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandi
     }
     let mut glossary = vec![];
     for page in &pages {
+        check()?;
         for line in &page.lines {
+            check()?;
             if let Some(card) = glossary_line(line) {
                 glossary.push(card);
             }
@@ -1125,6 +1145,7 @@ pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandi
         }
     }
     let glossary = dedup_cards(suppress_conflicts(glossary));
+    check()?;
     result.cloze = cloze_cards(&pages, &glossary[..glossary.len().min(40)]);
     let mut prompt_answers: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for c in glossary.iter().chain(&result.cloze) {
@@ -1141,10 +1162,12 @@ pub fn extract(input: &KitInput, document: Option<&Document>) -> Result<KitCandi
     result.glossary = glossary;
     result.glossary.truncate(40);
     result.cloze.truncate(40);
+    check()?;
     result.outline = outline(&pages, document, input.page_count);
     let mut cards = result.glossary.clone();
     cards.extend(result.cloze.clone());
     cards.sort_by_key(card_key);
     result.questions = questions(&cards, &ambiguous);
+    check()?;
     Ok(result)
 }

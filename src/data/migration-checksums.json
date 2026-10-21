@@ -16,5 +16,6 @@
   "0015_document_navigation.sql": "960c28858d52d4296ecf78b58f7a76a7c28d6552b24716a18cd7b04f2828c98f",
   "0016_manual_study.sql": "e255d0bf4c7141f55bc99b2aa489b9d2f148b7d20bd4b632fea7a78bd20526bf",
   "0017_practice_authoring.sql": "7b66bdfa0829cd9c9f03d177a01bc014063041341298730673d1520a176acd78",
-  "0018_pdf_kit_provenance.sql": "ee2b9bdb47c777b16d61bb9581c94551d7c7d8da7741741b00a0b2ca9a30443f"
+  "0018_pdf_kit_provenance.sql": "ee2b9bdb47c777b16d61bb9581c94551d7c7d8da7741741b00a0b2ca9a30443f",
+  "0019_study_set_save_receipts.sql": "8cf352ced82256f7418306f721664e105e526ba94dafc85358c20f19dc4c68b1"
 }

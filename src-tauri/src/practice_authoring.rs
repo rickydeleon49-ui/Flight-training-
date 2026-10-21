@@ -49,6 +49,7 @@ pub enum PracticeAuthoringErrorCode {
     InvalidArgument,
     StaleContent,
     Conflict,
+    SourceChanged,
     AttemptActive,
     RetirementLimit,
     NotFound,
@@ -64,6 +65,7 @@ impl PracticeAuthoringErrorCode {
             Self::StaleContent => {
                 "This practice test changed after you opened it. Nothing has been saved; look at it again first."
             }
+            Self::SourceChanged => "This PDF or your chosen pages changed. Nothing has been saved; review the source first.",
             Self::Conflict => {
                 "This save request was already used for different practice content. Nothing has been saved."
             }
@@ -215,6 +217,7 @@ pub struct PracticeNext {
 /// `PracticeSaveOperation`.
 #[derive(Debug, Clone)]
 pub struct SaveOperation {
+    pub pdf_kit_sources: Option<crate::pdf_kit_sources::Sources>,
     pub operation_id: String,
     pub material_id: String,
     pub reason: Reason,
@@ -582,7 +585,7 @@ pub fn decode_practice_operation(value: &Value) -> Check<SaveOperation> {
             "expected",
             "next",
         ],
-        &[],
+        &["pdfKitSources"],
     )?;
     let Value::String(operation_id) = &map["operationId"] else {
         return invalid();
@@ -618,7 +621,18 @@ pub fn decode_practice_operation(value: &Value) -> Check<SaveOperation> {
     if !consistent {
         return invalid();
     }
+    let pdf_kit_sources = map
+        .get("pdfKitSources")
+        .map(|v| {
+            crate::pdf_kit_sources::decode(v, material_id)
+                .map_err(|_| PracticeAuthoringErrorCode::InvalidArgument)
+        })
+        .transpose()?;
+    if pdf_kit_sources.is_some() && next.is_none() {
+        return invalid();
+    }
     Ok(SaveOperation {
+        pdf_kit_sources,
         operation_id: operation_id.clone(),
         material_id: material_id.clone(),
         reason,
@@ -897,13 +911,17 @@ pub fn next_value(next: &PracticeNext) -> Value {
 
 /// Mirrors the TS `decodePracticeOperation` output shape.
 pub fn operation_value(operation: &SaveOperation) -> Value {
-    json!({
+    let mut value = json!({
         "operationId": operation.operation_id,
         "sourceMaterialId": operation.material_id,
         "reason": operation.reason.as_str(),
         "expected": operation.expected.as_ref().map(snapshot_value).unwrap_or(Value::Null),
         "next": operation.next.as_ref().map(next_value).unwrap_or(Value::Null),
-    })
+    });
+    if let Some(sources) = &operation.pdf_kit_sources {
+        value["pdfKitSources"] = serde_json::to_value(sources).expect("validated sources");
+    }
+    value
 }
 
 /* ------------------------------------------------------------------ */
@@ -1173,6 +1191,15 @@ pub fn apply_operation(
         });
     }
 
+    if let Some(sources) = &operation.pdf_kit_sources {
+        crate::pdf_kit_sources::write(tx, sources).map_err(|e| {
+            if e == "SOURCE_CHANGED" {
+                PracticeAuthoringErrorCode::SourceChanged
+            } else {
+                PracticeAuthoringErrorCode::StorageError
+            }
+        })?;
+    }
     let current = read_current_snapshot(tx, &operation.material_id)?;
     if !same_snapshot(current.as_ref(), operation.expected.as_ref()) {
         return Err(PracticeAuthoringErrorCode::StaleContent);
@@ -1463,6 +1490,17 @@ pub fn execute_practice_authoring(
         validate_protection(expected, next, operation.reason)
             .map_err(PracticeAuthoringErrorCode::error)?;
     }
+    if let Some(sources) = &operation.pdf_kit_sources {
+        crate::pdf_kit_sources::validate_content(
+            sources,
+            &operation
+                .next
+                .as_ref()
+                .map(next_value)
+                .unwrap_or(Value::Null),
+        )
+        .map_err(|_| PracticeAuthoringErrorCode::InvalidArgument.error())?;
+    }
     let payload = operation_value(&operation);
     let payload_json = canonical_json(&payload);
     let payload_hash = compute_canonical_hash(&payload);
@@ -1493,6 +1531,27 @@ pub fn save_practice_authoring_at(
         .map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
     conn.pragma_update(None, "foreign_keys", "ON")
         .map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
+    let has_receipt: bool = conn
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM practice_save_operations WHERE operation_id=?1)",
+            [operation["operationId"].as_str().unwrap_or("")],
+            |r| r.get(0),
+        )
+        .unwrap_or(false);
+    if let Some(value) = operation.get("pdfKitSources").filter(|_| !has_receipt) {
+        let material = operation["sourceMaterialId"]
+            .as_str()
+            .ok_or_else(|| PracticeAuthoringErrorCode::InvalidArgument.error())?;
+        let sources = crate::pdf_kit_sources::decode(value, material)
+            .map_err(|_| PracticeAuthoringErrorCode::InvalidArgument.error())?;
+        crate::pdf_kit::validate_save_at(root, &sources).map_err(|e| {
+            if e.code == "INVALID_ARGUMENT" {
+                PracticeAuthoringErrorCode::InvalidArgument.error()
+            } else {
+                PracticeAuthoringErrorCode::SourceChanged.error()
+            }
+        })?;
+    }
     execute_practice_authoring(&mut conn, operation)
 }
 

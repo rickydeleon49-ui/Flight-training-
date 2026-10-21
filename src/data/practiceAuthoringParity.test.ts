@@ -46,6 +46,7 @@ interface CurrentSummary {
   questionCount: number;
   origins: (string | null)[];
   retiredCount: number;
+  pdfSourceCount?: number;
 }
 
 interface ParityFixture {
@@ -168,7 +169,12 @@ describe("shared parity fixture — scenarios", () => {
         let actual: Record<string, unknown>;
         try {
           const result = await db.savePracticeAuthoringAtomically!(operation);
-          actual = { status: result.status, current: await currentSummary(query, materialId) };
+          const current = await currentSummary(query, materialId);
+          if (current && step.expect.current?.pdfSourceCount !== undefined) {
+            const [row] = await query("SELECT COUNT(*) AS n FROM pdf_kit_item_sources s JOIN pdf_kit_runs r ON r.run_id = s.run_id WHERE r.material_id = ?", [materialId]);
+            current.pdfSourceCount = Number(row!.n);
+          }
+          actual = { status: result.status, current };
         } catch (error) {
           actual =
             error instanceof PracticeAuthoringError

@@ -1873,6 +1873,365 @@
           }
         }
       ]
+    },
+    {
+      "name": "pdf-kit-receipt-and-edit-lineage",
+      "steps": [
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000001",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001"
+                }
+              ],
+              "retired": []
+            },
+            "pdfKitSources": {
+              "runId": "001c0001-0000-4000-8000-000000000099",
+              "run": {
+                "materialId": "mat-a",
+                "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "selectedPages": [
+                  1
+                ],
+                "extractorVersion": 1,
+                "algorithmVersion": 1,
+                "createdAt": "2026-10-20T02:00:00.000Z"
+              },
+              "items": [
+                {
+                  "itemKind": "question",
+                  "logicalId": "00000001-0000-4000-8000-000000000001",
+                  "contentHash": "9deae15031ecaf219cdc6fd7fd72cc0d0bca84fdb6d96bb27e08d925072b0437",
+                  "page": 1,
+                  "startOffset": 0,
+                  "endOffset": 16,
+                  "quote": "Synthetic quote."
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "515d14e9d64660e02c9c512214943068c07fa4962461dd3b2f79255552b3fa2b",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0,
+              "pdfSourceCount": 1
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000001",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001"
+                }
+              ],
+              "retired": []
+            },
+            "pdfKitSources": {
+              "runId": "001c0001-0000-4000-8000-000000000099",
+              "run": {
+                "materialId": "mat-a",
+                "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "selectedPages": [
+                  1
+                ],
+                "extractorVersion": 1,
+                "algorithmVersion": 1,
+                "createdAt": "2026-10-20T02:00:00.000Z"
+              },
+              "items": [
+                {
+                  "itemKind": "question",
+                  "logicalId": "00000001-0000-4000-8000-000000000001",
+                  "contentHash": "9deae15031ecaf219cdc6fd7fd72cc0d0bca84fdb6d96bb27e08d925072b0437",
+                  "page": 1,
+                  "startOffset": 0,
+                  "endOffset": 16,
+                  "quote": "Synthetic quote."
+                }
+              ]
+            }
+          },
+          "expect": {
+            "status": "already_saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "515d14e9d64660e02c9c512214943068c07fa4962461dd3b2f79255552b3fa2b",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0,
+              "pdfSourceCount": 1
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000001",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001"
+                }
+              ],
+              "retired": []
+            },
+            "pdfKitSources": {
+              "runId": "001c0001-0000-4000-8000-000000000099",
+              "run": {
+                "materialId": "mat-a",
+                "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "selectedPages": [
+                  1
+                ],
+                "extractorVersion": 1,
+                "algorithmVersion": 1,
+                "createdAt": "2026-10-20T02:00:00.000Z"
+              },
+              "items": [
+                {
+                  "itemKind": "question",
+                  "logicalId": "00000001-0000-4000-8000-000000000001",
+                  "contentHash": "9deae15031ecaf219cdc6fd7fd72cc0d0bca84fdb6d96bb27e08d925072b0437",
+                  "page": 1,
+                  "startOffset": 0,
+                  "endOffset": 16,
+                  "quote": "Different quote."
+                }
+              ]
+            }
+          },
+          "expect": {
+            "error": "CONFLICT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000002",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001"
+                }
+              ],
+              "retired": []
+            },
+            "pdfKitSources": {
+              "runId": "001c0001-0000-4000-8000-000000000099",
+              "run": {
+                "materialId": "mat-a",
+                "contentSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "selectedPages": [
+                  1
+                ],
+                "extractorVersion": 1,
+                "algorithmVersion": 1,
+                "createdAt": "2026-10-20T02:00:00.000Z"
+              },
+              "items": [
+                {
+                  "itemKind": "question",
+                  "logicalId": "00000001-0000-4000-8000-000000000001",
+                  "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "page": 1,
+                  "startOffset": 0,
+                  "endOffset": 16,
+                  "quote": "Synthetic quote."
+                }
+              ]
+            }
+          },
+          "expect": {
+            "error": "INVALID_ARGUMENT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000001",
+            "sourceMaterialId": "mat-a",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "error": "CONFLICT"
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000003",
+            "sourceMaterialId": "mat-a",
+            "reason": "edit",
+            "expected": "$current",
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "00000001-0000-4000-8000-000000000001",
+                  "origin": "user"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 2,
+              "contentHash": "f9f2e89650d5a9a48bf56e4bf99a36fc037befe05753d1b00948a00fa3d01934",
+              "questionCount": 1,
+              "origins": [
+                "user"
+              ],
+              "retiredCount": 0,
+              "pdfSourceCount": 1
+            }
+          }
+        },
+        {
+          "operation": {
+            "operationId": "001c0001-0000-4000-8000-000000000004",
+            "sourceMaterialId": "mat-b",
+            "reason": "create",
+            "expected": null,
+            "next": {
+              "title": "PDF kit",
+              "provider": "manual",
+              "model": "",
+              "questions": [
+                {
+                  "question": "Legacy five-field stem one",
+                  "options": [
+                    "First",
+                    "Second",
+                    "Third"
+                  ],
+                  "correctIndex": 2,
+                  "explanation": "Synthetic explanation for Legacy five-field stem one.",
+                  "sourcePage": 1,
+                  "identity": "001c0001-0000-4000-8000-000000000010"
+                }
+              ],
+              "retired": []
+            }
+          },
+          "expect": {
+            "status": "saved",
+            "current": {
+              "versionNumber": 1,
+              "contentHash": "515d14e9d64660e02c9c512214943068c07fa4962461dd3b2f79255552b3fa2b",
+              "questionCount": 1,
+              "origins": [
+                null
+              ],
+              "retiredCount": 0,
+              "pdfSourceCount": 0
+            }
+          }
+        }
+      ]
     }
   ]
 }

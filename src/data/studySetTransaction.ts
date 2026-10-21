@@ -9,6 +9,8 @@
  * Its id becomes the history row's id, so a retry after an uncertain answer
  * is recognised instead of applied twice.
  */
+import { decodePdfKitSources, validatePdfKitContent, writePdfKitSources, type PdfKitSources } from "./pdfKitSources";
+import { sha256Hex } from "@/logic/cardIdentity";
 import type { SqlValue } from "./db";
 import { StudySetSaveError } from "./persistenceErrors";
 import { canonicalJson, trimmedCodePoints } from "@/logic/cardIdentity";
@@ -88,6 +90,7 @@ export interface NextStudySet {
 }
 
 export interface StudySetSaveOperation {
+  pdfKitSources?: PdfKitSources;
   operationId: string;
   materialId: string;
   reason: StudySetSaveReason;
@@ -277,7 +280,7 @@ const REASONS: readonly StudySetSaveReason[] = ["create", "edit", "correct", "de
 
 export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   if (!isRecord(value)) return invalid();
-  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"]);
+  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"], ["pdfKitSources"]);
   const { operationId, materialId, reason } = value;
   if (typeof operationId !== "string" || !UUID_V4_LOWER.test(operationId)) invalid();
   if (typeof materialId !== "string" || !materialId || new TextEncoder().encode(materialId).length > 200) invalid();
@@ -289,7 +292,12 @@ export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   const consistent =
     reason === "create" ? expected === null && next !== null : reason === "remove" ? expected !== null && next === null : expected !== null && next !== null;
   if (!consistent) invalid();
-  return { operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next };
+  let pdfKitSources;
+  if (has(value, "pdfKitSources")) {
+    if (!next) invalid();
+    try { pdfKitSources = decodePdfKitSources(value.pdfKitSources, materialId as string); } catch { invalid(); }
+  }
+  return { operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
 }
 
 const HISTORY_REASON: Readonly<Record<StudySetSaveReason, string>> = {
@@ -354,6 +362,9 @@ export async function executeStudySetSave(
   now: string = new Date().toISOString(),
 ): Promise<StudySetSaveResult> {
   const operation = decodeStudySetOperation(input);
+  if (operation.pdfKitSources) {
+    try { await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>); } catch { invalid(); }
+  }
   try {
     await exec("BEGIN IMMEDIATE");
   } catch (cause) {
@@ -383,6 +394,23 @@ async function apply(
   if ((await query("SELECT 1 AS found FROM study_materials WHERE id = ?", [operation.materialId])).length === 0) {
     throw new StudySetSaveError("NOT_FOUND");
   }
+  const payloadJson = canonicalJson(operation);
+  const payloadHash = await sha256Hex(payloadJson);
+  const receiptTable = await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'study_set_save_operations'", []);
+  if (receiptTable.length) {
+    const [receipt] = await query("SELECT material_id, payload_json, payload_hash FROM study_set_save_operations WHERE operation_id = ?", [operation.operationId]);
+    if (receipt) {
+      if (receipt.material_id !== operation.materialId || receipt.payload_json !== payloadJson || receipt.payload_hash !== payloadHash) throw new StudySetSaveError("CONFLICT");
+      return { status: "already_saved" };
+    }
+  }
+  if (operation.pdfKitSources) {
+    if (!receiptTable.length) throw new StudySetSaveError("STORAGE_ERROR");
+    try { await writePdfKitSources(run, query, operation.pdfKitSources); } catch (e) {
+      if (e instanceof Error && e.message === "SOURCE_CHANGED") throw new StudySetSaveError("SOURCE_CHANGED");
+      throw e;
+    }
+  }
   const current = await readRow(query, operation.materialId);
   const [recorded] = await query("SELECT material_id FROM study_set_history WHERE id = ?", [operation.operationId]);
 
@@ -391,7 +419,7 @@ async function apply(
     current && operation.next
       ? holds(current, operation.next) && (recorded !== undefined || operation.reason === "create")
       : !current && !operation.next && recorded !== undefined;
-  if (already) {
+  if (already && !operation.pdfKitSources) {
     if (recorded && recorded.material_id !== operation.materialId) throw new StudySetSaveError("STALE_CONTENT");
     return { status: "already_saved" };
   }
@@ -428,6 +456,7 @@ async function apply(
       ],
     );
   }
+  if (operation.pdfKitSources) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
   return { status: "saved" };
 }
 

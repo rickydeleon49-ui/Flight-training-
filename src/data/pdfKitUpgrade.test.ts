@@ -1,4 +1,4 @@
-/** Schema 17 -> 18 through both real startup drivers, preserving older rows. */
+/** Schema 17 -> 19 through both real startup drivers, preserving older rows. */
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,11 +29,11 @@ async function schema17() {
 function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, unknown[]>) {
   for (const [table, rows] of Object.entries(before)) expect(after[table], table).toEqual(rows);
   const added = Object.keys(after).filter((t) => !(t in before)).sort();
-  expect(added).toEqual(["pdf_kit_item_sources", "pdf_kit_runs"]);
+  expect(added).toEqual(["pdf_kit_item_sources", "pdf_kit_runs", "study_set_save_operations"]);
   for (const table of added) expect(after[table]).toEqual([]);
 }
 
-describe("schema 17 to 18", () => {
+describe("schema 17 to 19", () => {
   it("accepts a schema-17 library without the new tables in the validation ladder", async () => {
     const { bytes } = await schema17();
     const old = await openSqlJsEngine(bytes);
@@ -52,7 +52,7 @@ describe("schema 17 to 18", () => {
     await createSqlJsDatabase();
     const reopened = await openSqlJsEngine(Uint8Array.from(atob(stored), (c) => c.charCodeAt(0)));
     try {
-      expect(reopened.query("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 18 }]);
+      expect(reopened.query("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 19 }]);
       assertUpgrade(before, dumpTables(reopened, { exclude: ["schema_migrations"] }));
     } finally { reopened.close(); }
   });
@@ -66,7 +66,7 @@ describe("schema 17 to 18", () => {
       const db = await createNodeSqliteDatabase(path);
       db.close();
       const again = await createNodeSqliteDatabase(path);
-      expect(await again.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 18 }]);
+      expect(await again.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([{ v: 19 }]);
       again.close();
       const reopened = await openNodeEngine(path);
       try { assertUpgrade(before, dumpTables(reopened, { exclude: ["schema_migrations"] })); }

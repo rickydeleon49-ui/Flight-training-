@@ -228,3 +228,23 @@ export async function trashUnlinkedFile(relativePath: string): Promise<StagedDel
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<StagedDeletion>("trash_unlinked_file", { relativePath });
 }
+
+/** Local PDF kits never configure a provider or submit a generation request. */
+export async function preparePdfStudyKit(materialId: string, pages?: number[]): Promise<string> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke("prepare_pdf_study_kit", { materialId, ...(pages ? { pages } : {}) });
+}
+export interface PdfStudyKitDraft {
+  kind: "pdf-kit";
+  version: 1;
+  runId: string;
+  editorOperationId: string;
+  createdAt: string;
+  reviewState: "review-required";
+  identity: { materialId: string; contentSha256: string; selectedPages: number[]; extractorVersion: number; algorithmVersion: number; pageCount: number };
+  candidates: Record<string, unknown>;
+}
+export async function getPdfStudyKit(jobId: string): Promise<PdfStudyKitDraft> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke("get_pdf_study_kit", { jobId });
+}

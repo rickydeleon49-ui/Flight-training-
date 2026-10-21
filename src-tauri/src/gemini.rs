@@ -1308,7 +1308,13 @@ fn job_changed(app: &AppHandle) -> impl Fn(&JobRecord) + Sync + '_ {
 #[tauri::command]
 pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
     let root = app_root(&app)?;
-    Ok(gemini_jobs::with(&root, |journal| journal.list()))
+    Ok(gemini_jobs::with(&root, |journal| {
+        journal
+            .list()
+            .into_iter()
+            .filter(|r| r.kind != JobKind::PdfKit)
+            .collect()
+    }))
 }
 
 /// She asked to cancel a running job (GEN-REL-04). The journal decides first:
