@@ -64,7 +64,6 @@ pub(super) fn snapshot(v: &Value) -> Result<(), String> {
                 && n(r, "cycle")? >= 1
                 && n(r, "activity_revision")? >= 1
                 && instant(s(r, "started_at")?)
-                && s(r, "started_at")? > s(a, "created_at")?
                 && s(r, "started_at")? <= s(&v["assignment"], "updated_at")?
                 && n(r, "cycle")? <= n(a, "cycle")?
                 && n(r, "activity_revision")? <= n(a, "revision")?,

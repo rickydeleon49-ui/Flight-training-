@@ -19,6 +19,7 @@
  * - Pure: zero database writes, zero silent action acceptance, zero skill proficiency mutations.
  */
 
+import { formatShortDate } from "@/lib/dates";
 import type {
   ActionCategory,
   Id,
@@ -363,7 +364,7 @@ export function buildRecommendationCandidates(
         summary = "Homework due today";
       } else if (isOverdue) {
         precedence = "due_action";
-        summary = `Homework overdue since ${action.dueDate}`;
+        summary = `Homework overdue since ${formatShortDate(action.dueDate!, today)}`;
       } else if (homework.assignment.lesson_id || homework.assignment.source_lesson_id) {
         const lessonId = (homework.assignment.lesson_id ?? homework.assignment.source_lesson_id)!;
         const lesson = (sources.events ?? []).find((e) => e.id === lessonId);

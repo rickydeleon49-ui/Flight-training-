@@ -702,7 +702,7 @@ describe("D2 — Pure Recommendation Selector", () => {
         homework: [hwSnapshot as any],
       });
       expect(overdueCandidates.find((c) => c.id === "action:act-hw-1")!.reason.summary).toBe(
-        "Homework overdue since 2026-09-06",
+        "Homework overdue since Sep 6",
       );
 
       // Check "Self-directed homework"

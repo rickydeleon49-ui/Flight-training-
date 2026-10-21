@@ -17,10 +17,11 @@ export function ReminderPopup() {
         events: data.events,
         credentials: data.toolkit.credentials,
         profile: data.profile,
+        homework: data.homework,
         today,
         leadDays: data.toolkit.reminderLeadDays,
       }),
-    [data.actions, data.events, data.profile, data.toolkit, today],
+    [data.actions, data.events, data.profile, data.toolkit, data.homework, today],
   );
   const sessionKey = `her-flight-deck-reminders-${today}`;
   const notifiedRef = useRef(false);
@@ -80,20 +81,41 @@ export function ReminderPopup() {
       footer={
         <>
           <Button onClick={dismiss}>Close</Button>
-          <Link className="button button--primary" to="/toolkit" onClick={dismiss}>
-            Open toolkit
-          </Link>
+          {reminders.length === 1 && reminders[0]?.homeworkId ? (
+            <Link
+              className="button button--primary"
+              to={`/study/homework/${reminders[0].homeworkId}`}
+              onClick={dismiss}
+            >
+              Open homework
+            </Link>
+          ) : (
+            <Link className="button button--primary" to="/toolkit" onClick={dismiss}>
+              Open toolkit
+            </Link>
+          )}
         </>
       }
     >
       <div className="stack stack--3">
         {reminders.slice(0, 8).map((item) => (
-          <div className="row row--between" key={item.id}>
-            <div>
+          <div className="row row--between" key={item.id} style={{ alignItems: "center" }}>
+            <div style={{ minWidth: 0 }}>
               <p className="small strong wrap-anywhere">{item.title}</p>
               <p className="tiny dim">{item.detail}</p>
             </div>
-            <Badge tone={item.urgent ? "overdue" : "due"}>{formatShortDate(item.date)}</Badge>
+            <div className="row row--center gap--2" style={{ flexShrink: 0 }}>
+              <Badge tone={item.urgent ? "overdue" : "due"}>{formatShortDate(item.date)}</Badge>
+              {item.homeworkId ? (
+                <Link
+                  className="button button--secondary button--small"
+                  to={`/study/homework/${item.homeworkId}`}
+                  onClick={dismiss}
+                >
+                  Open homework
+                </Link>
+              ) : null}
+            </div>
           </div>
         ))}
         {reminders.length > 8 ? (

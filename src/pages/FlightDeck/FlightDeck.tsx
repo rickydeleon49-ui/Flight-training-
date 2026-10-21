@@ -150,9 +150,24 @@ export function FlightDeck() {
               <p className="top-action__title wrap-anywhere">{model.topAction.title}</p>
               {model.topAction.dueDate ? (
                 <p className="small muted" style={{ marginTop: "var(--space-2)" }}>
-                  {describeRelativeDate(model.topAction.dueDate, model.today)}
+                  {data.homework?.some(h => h.assignment.action_id === model.topAction!.id && !h.assignment.archived)
+                    ? (model.topAction.dueDate < model.today ? "Homework overdue" : "Homework due")
+                    : describeRelativeDate(model.topAction.dueDate, model.today)}
                 </p>
               ) : null}
+              {(() => {
+                const boundHw = data.homework?.find(h => h.assignment.action_id === model.topAction!.id && !h.assignment.archived);
+                return boundHw ? (
+                  <div style={{ marginTop: "var(--space-3)" }}>
+                    <Link
+                      className="button button--secondary button--small"
+                      to={`/study/homework/${boundHw.assignment.id}`}
+                    >
+                      Open homework
+                    </Link>
+                  </div>
+                ) : null;
+              })()}
             </div>
           ) : null}
 
@@ -170,28 +185,42 @@ export function FlightDeck() {
                 <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
                   This didn&rsquo;t get finished. Choose a realistic new time, or mark it done.
                 </p>
-                {model.needsAttention.map((action) => (
-                  <div className="attention-row" key={action.id} id={`attention-${action.id}`}>
-                    <div style={{ minWidth: 0 }}>
-                      <p className="attention-row__title wrap-anywhere">{action.title}</p>
-                      <p className="tiny" style={{ color: "var(--status-overdue)" }}>
-                        {describeRelativeDate(action.dueDate as string, model.today)}
-                      </p>
+                {model.needsAttention.map((action) => {
+                  const boundHw = data.homework?.find(h => h.assignment.action_id === action.id && !h.assignment.archived);
+                  return (
+                    <div className="attention-row" key={action.id} id={`attention-${action.id}`}>
+                      <div style={{ minWidth: 0 }}>
+                        <p className="attention-row__title wrap-anywhere">{action.title}</p>
+                        <p className="tiny" style={{ color: "var(--status-overdue)" }}>
+                          {boundHw ? "Homework overdue" : describeRelativeDate(action.dueDate as string, model.today)}
+                        </p>
+                      </div>
+                      <div className="row" style={{ flex: "none" }}>
+                        {boundHw ? (
+                          <Link
+                            className="button button--secondary button--small"
+                            to={`/study/homework/${boundHw.assignment.id}`}
+                          >
+                            Open homework
+                          </Link>
+                        ) : (
+                          <>
+                            <Button size="small" onClick={() => setRescheduling(action)}>
+                              Reschedule
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="primary"
+                              onClick={() => operations.toggle(action)}
+                            >
+                              Complete
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="row" style={{ flex: "none" }}>
-                      <Button size="small" onClick={() => setRescheduling(action)}>
-                        Reschedule
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="primary"
-                        onClick={() => operations.toggle(action)}
-                      >
-                        Complete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CardBody>
             </Card>
           ) : null}

@@ -241,6 +241,8 @@ export interface ReminderItem {
   detail: string;
   date: IsoDate;
   urgent: boolean;
+  actionId?: string;
+  homeworkId?: string;
 }
 
 export function buildReminders(input: {
@@ -248,6 +250,7 @@ export function buildReminders(input: {
   events: ScheduleEvent[];
   credentials: CredentialRecord[];
   profile: Profile;
+  homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
   today?: IsoDate;
   leadDays: number;
 }): ReminderItem[] {
@@ -256,7 +259,19 @@ export function buildReminders(input: {
   const reminders: ReminderItem[] = [];
   for (const action of input.actions) {
     if (action.status !== "open" || !action.dueDate || action.dueDate > through) continue;
-    reminders.push({ id: `action-${action.id}`, title: action.title, detail: action.dueDate < today ? "Action overdue" : "Action due", date: action.dueDate, urgent: action.dueDate < today });
+    const boundHw = input.homework?.find(h => h.assignment.action_id === action.id && !h.assignment.archived);
+    const detail = boundHw
+      ? (action.dueDate < today ? "Homework overdue" : "Homework due")
+      : (action.dueDate < today ? "Action overdue" : "Action due");
+    reminders.push({
+      id: `action-${action.id}`,
+      title: action.title,
+      detail,
+      date: action.dueDate,
+      urgent: action.dueDate < today,
+      actionId: action.id,
+      homeworkId: boundHw?.assignment.id,
+    });
   }
   for (const event of input.events) {
     if (event.status !== "scheduled" || event.date < today || event.date > through) continue;

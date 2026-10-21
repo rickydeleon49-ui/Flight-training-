@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import { useAppData } from "@/state/AppDataContext";
 import {
   ACTION_CATEGORY_DESCRIPTIONS,
   ACTION_CATEGORY_OPTIONS,
@@ -60,6 +62,9 @@ export function ActionFormDialog({
   relatedId = null,
   defaultCategory = "prepare",
 }: ActionFormDialogProps) {
+  const { data } = useAppData();
+  const boundHw = action ? data.homework?.find((h) => h.assignment.action_id === action.id && !h.assignment.archived) : undefined;
+
   const [draft, setDraft] = useState<ActionDraft>(() =>
     emptyDraft(relatedType, relatedId, defaultCategory),
   );
@@ -95,6 +100,34 @@ export function ActionFormDialog({
     }
     onSave({ ...draft, title: draft.title.trim(), description: draft.description.trim() });
   };
+
+  if (boundHw) {
+    return (
+      <Dialog
+        open={open}
+        onClose={onClose}
+        title="Edit action"
+        description="This action is managed by your homework."
+        narrow
+        footer={
+          <>
+            <Button onClick={onClose}>Close</Button>
+            <Link
+              className="button button--primary"
+              to={`/study/homework/${boundHw.assignment.id}`}
+              onClick={onClose}
+            >
+              Open homework
+            </Link>
+          </>
+        }
+      >
+        <div className="stack stack--3">
+          <p>This comes from your homework. Open the homework to change it.</p>
+        </div>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog

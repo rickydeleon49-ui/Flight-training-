@@ -4,7 +4,7 @@ import { AlertIcon, Button, Card, CardBody, ConfirmDialog } from "@/components/u
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
 import { cardVersion } from "@/logic/cardIdentity";
-import { todayIso } from "@/lib/dates";
+import { formatDateTime, formatShortDate, todayIso } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import { useNavigationController } from "@/state/navigation/useDocumentNavigation";
 import { HomeworkCardRun } from "./HomeworkCardRun";
@@ -20,6 +20,18 @@ type Editor = {
 };
 const filters = { upcoming: "Upcoming", in_progress: "In progress", completed: "Completed", archived: "Archived" } as const;
 
+function matchesHomeworkFilter(s: HomeworkSnapshot, currentFilter: keyof typeof filters, today: string): boolean {
+  if (currentFilter === "archived") return Boolean(s.assignment.archived);
+  if (s.assignment.archived) return false;
+  if (currentFilter === "in_progress") return ["in_progress", "reopened"].includes(s.assignment.state);
+  if (currentFilter === "completed") return s.assignment.state === "completed";
+  return (
+    s.assignment.state === "upcoming" ||
+    (["in_progress", "reopened"].includes(s.assignment.state) &&
+      Boolean(s.assignment.due_date && s.assignment.due_date < today))
+  );
+}
+
 export function HomeworkView() {
     const { assignmentId } = useParams();
     const [searchParams] = useSearchParams();
@@ -29,6 +41,7 @@ export function HomeworkView() {
     const [snapshots, setSnapshots] = useState<HomeworkSnapshot[]>([]);
     const [current, setCurrent] = useState<HomeworkSnapshot | null>(null);
     const [history, setHistory] = useState<HomeworkHistoryEntry[]>([]);
+    const [activityDrafts, setActivityDrafts] = useState<Record<string, string>>({});
     const [sourceStates, setSourceStates] = useState<Record<string, "changed" | "missing" | "unavailable">>({});
     const [checkedSources,setCheckedSources] = useState<HomeworkSnapshot | null>(null);
     const [announcement, setAnnouncement] = useState("");
@@ -72,7 +85,7 @@ export function HomeworkView() {
                 if (mine !== lease.current)
                     return;
                 setCurrent(s);
-                setHistory(h.map(row=>({change_kind:String(row.change_kind),created_at:String(row.created_at),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
+                setHistory(h.map(row=>({change_kind:String(row.change_kind),recorded_at:String(row.recorded_at ?? row.created_at ?? ""),created_at:String(row.created_at ?? row.recorded_at ?? ""),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
             }
             else {
                 const rows = await repositories.homework.list(true);
@@ -157,7 +170,7 @@ export function HomeworkView() {
             if (mine === saveScope.current) {
                 pending.current = null;
                 setCurrent(saved);
-                setHistory(entries.map(row=>({change_kind:String(row.change_kind),created_at:String(row.created_at),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
+                setHistory(entries.map(row=>({change_kind:String(row.change_kind),recorded_at:String(row.recorded_at ?? row.created_at ?? ""),created_at:String(row.created_at ?? row.recorded_at ?? ""),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
                 setRemoving(null);
             }
             return true;
@@ -197,7 +210,7 @@ export function HomeworkView() {
       <Link to="/study/homework">All homework</Link>
       <Card><CardBody><div className="stack stack--3"><h2 className="wrap-anywhere">{current.assignment.title}</h2>
         <p>{active.filter(e => e.record.state === 'completed').length} of {active.length} done{current.assignment.archived ? ' · Archived' : ''}</p>
-        {current.assignment.due_date ? <p>Due {current.assignment.due_date}{!current.assignment.archived && current.assignment.state !== 'completed' && current.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}
+        {current.assignment.due_date ? <p>Due {formatShortDate(current.assignment.due_date, today)}{!current.assignment.archived && current.assignment.state !== 'completed' && current.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}
         {current.assignment.instructions ? <p className="homework-text">{current.assignment.instructions}</p> : null}
         {current.assignment.school ? <p>School: {current.assignment.school}</p> : null}{current.assignment.instructor ? <p>Instructor: {current.assignment.instructor}</p> : null}
         {current.assignment.source_lesson_id ? (() => { const lesson = data.events.find(e => e.id === current.assignment.lesson_id); return <p>{lesson ? `${lesson.title} · ${lesson.date}${lesson.startTime ? ` · ${lesson.startTime}` : ''}${lesson.status === 'cancelled' ? ' · Lesson cancelled' : ''}` : 'Lesson missing — edit homework to choose a lesson or unlink it.'} Your homework due date stays as you set it.</p>; })() : null}
@@ -211,7 +224,50 @@ export function HomeworkView() {
                 const done = r.state === 'completed';
                 return <li key={r.id} className="homework-activity stack stack--3">
           <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : r.state === 'reopened' ? 'Reopened' : 'To do'}</p>
-          {r.body ? <p className="homework-text">{r.body}</p> : null}
+          {['reflection', 'questions'].includes(r.kind) && !done ? (
+            <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
+              <textarea
+                className="textarea"
+                rows={3}
+                disabled={!editable}
+                placeholder={r.kind === "questions" ? "Write questions for your instructor (one per line)…" : "Write your reflection…"}
+                aria-label={`Answer for ${r.title}`}
+                value={activityDrafts[r.id] ?? r.body}
+                onChange={(event) => {
+                  const val = event.target.value;
+                  setActivityDrafts((prev) => ({ ...prev, [r.id]: val }));
+                }}
+              />
+              <div className="row" style={{ alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                <Button
+                  disabled={!editable || (activityDrafts[r.id] !== undefined && activityDrafts[r.id] === r.body)}
+                  onClick={() => {
+                    const text = activityDrafts[r.id] ?? r.body;
+                    change("edit", (s) => {
+                      s.activities.find((x) => x.record.id === r.id)!.record.body = text;
+                    });
+                  }}
+                >
+                  Save
+                </Button>
+                <Button
+                  disabled={!editable || !r.body.trim()}
+                  onClick={() =>
+                    change("complete", (s) => {
+                      s.activities.find((x) => x.record.id === r.id)!.record.state = "completed";
+                    })
+                  }
+                >
+                  Mark complete
+                </Button>
+                {!r.body.trim() ? (
+                  <span className="tiny muted">Write your answer first</span>
+                ) : null}
+              </div>
+            </div>
+          ) : r.body ? (
+            <p className="homework-text">{r.body}</p>
+          ) : null}
           {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
           {done && r.kind==='cards' ? <p>Historical review · {(current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle && run.kind==='cards') as import("@/domain/homework").HomeworkCardRun | undefined)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
           {done && r.kind==='test' ? (() => {
@@ -221,7 +277,6 @@ export function HomeworkView() {
           })() : null}
           <div className="row row--wrap">
             {r.kind === 'read' ? <><Button disabled={missing || !controller || status.kind === 'working'} onClick={() => void openReading(e)}>Open PDF at page {r.page_start ?? 1}</Button>{!done ? <Button disabled={!editable || missing} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark reading complete</Button> : null}</> : null}
-            {['reflection', 'questions'].includes(r.kind) && !done ? <Button disabled={!editable || !r.body.trim()} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark complete</Button> : null}
             {r.kind === 'checklist' && !done ? <label className="row"><input type="checkbox" checked={false} disabled={!editable} onChange={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}/>Done</label> : null}
             {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={async op => { await perform(op); }} reload={() => setReload(n=>n+1)} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
             {r.kind === 'test' && !done ? (() => {
@@ -280,22 +335,22 @@ export function HomeworkView() {
                 }
               }}>Start quiz</Button>;
             })() : null}
-            {done ? <Button disabled={!editable} onClick={() => change('reopen', s => { s.activities.find(x => x.record.id === r.id)!.record.cycle++; })}>Reopen {r.title}</Button> : null}
-            <Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit {r.title}</Button>
+            {done ? <Button disabled={!editable} aria-label={`Reopen ${r.title}`} onClick={() => change('reopen', s => { s.activities.find(x => x.record.id === r.id)!.record.cycle++; })}>Reopen</Button> : null}
+            <Button disabled={!editable} aria-label={`Edit ${r.title}`} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit</Button>
             <Button aria-label={`Move ${r.title} up`} disabled={!editable || index === 0} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position--; s.activities.find(x => x.record.id === active[index - 1]!.record.id)!.record.position++; }); }}>Move up</Button>
             <Button aria-label={`Move ${r.title} down`} disabled={!editable || index === active.length - 1} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position++; s.activities.find(x => x.record.id === active[index + 1]!.record.id)!.record.position--; }); }}>Move down</Button>
-            <Button disabled={!editable} onClick={() => setRemoving(e)}>Remove {r.title}</Button>
+            <Button disabled={!editable} aria-label={`Remove ${r.title}`} onClick={() => setRemoving(e)}>Remove</Button>
           </div>
         </li>;
             })}
       </ol>
       {status.kind === 'failed' || status.kind === 'refused' || status.kind === 'opened_unsaved' || status.kind === 'guidance' ? <p role="status">{status.message}</p> : status.kind === 'saved' ? <p role="status">Opened in your PDF reader. Go to PDF page {status.destination.physicalPage} there; your reader may not jump to it by itself. Mark reading complete when you're finished.</p> : null}
-      <section><h2>History</h2><ol>{history.map((h,index) => <li key={h.revision}>{homeworkHistoryLabel(h,history[index-1])} · {new Date(h.created_at).toLocaleString()}</li>)}</ol></section>
+      <section><h2>History</h2><ol>{history.map((h,index) => <li key={h.revision}>{homeworkHistoryLabel(h,history[index-1])} · {formatDateTime(h.recorded_at ?? h.created_at)}</li>)}</ol></section>
     </> : <>
-      <div className="row row--wrap" aria-label="Homework filters">{Object.entries(filters).map(([key, label]) => <Button key={key} aria-pressed={filter === key} onClick={() => setFilter(key as keyof typeof filters)}>{label}</Button>)}</div>
-      {snapshots.filter(s => filter === 'archived' ? s.assignment.archived : !s.assignment.archived && (filter === 'in_progress' ? ['in_progress', 'reopened'].includes(s.assignment.state) : s.assignment.state === filter)).map(s => <Card key={s.assignment.id}><CardBody><Link to={`/study/homework/${s.assignment.id}`} className="wrap-anywhere">{s.assignment.title}</Link><p>{activeHomework(s).filter(e => e.record.state === 'completed').length} of {activeHomework(s).length} done</p>{s.assignment.due_date ? <p>Due {s.assignment.due_date}{!s.assignment.archived && s.assignment.state !== 'completed' && s.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}</CardBody></Card>)}
+      <div className="row row--wrap" aria-label="Homework filters">{Object.entries(filters).map(([key, label]) => <Button key={key} variant={filter === key ? "primary" : "secondary"} aria-pressed={filter === key} onClick={() => setFilter(key as keyof typeof filters)}>{label}</Button>)}</div>
+      {snapshots.filter(s => matchesHomeworkFilter(s, filter, today)).map(s => <Card key={s.assignment.id}><CardBody><Link to={`/study/homework/${s.assignment.id}`} className="wrap-anywhere">{s.assignment.title}</Link><p>{activeHomework(s).filter(e => e.record.state === 'completed').length} of {activeHomework(s).length} done</p>{s.assignment.due_date ? <p>Due {formatShortDate(s.assignment.due_date, today)}{!s.assignment.archived && s.assignment.state !== 'completed' && s.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}</CardBody></Card>)}
       {snapshots.length === 0 ? <p>No school, instructor or date needed. Add homework for whatever you'd like to work on next.</p> : null}
-      {snapshots.length > 0 && !snapshots.some(s => filter === 'archived' ? s.assignment.archived : !s.assignment.archived && (filter === 'in_progress' ? ['in_progress', 'reopened'].includes(s.assignment.state) : s.assignment.state === filter)) ? <p>No homework in this view yet.</p> : null}
+      {snapshots.length > 0 && !snapshots.some(s => matchesHomeworkFilter(s, filter, today)) ? <p>No homework in this view yet.</p> : null}
     </>}
     {editor ? <HomeworkEditor key={`${editor.snapshot.assignment.id}-${editor.activityId ?? 'assignment'}-${editor.adding ?? false}`} {...editor} onClose={() => {setEditor(null);setReload(n=>n+1);}} onSaved={finished} onReload={loadAgain}/> : null}
     <ConfirmDialog open={!!removing} title="Remove activity?" message="Your earlier work stays in homework history." confirmLabel="Remove activity" pending={busy} onCancel={() => setRemoving(null)} onConfirm={() => { if (!removing)

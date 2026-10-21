@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button, Dialog, Field, TextInput } from "@/components/ui";
 import { addDays, todayIso } from "@/lib/dates";
+import { useAppData } from "@/state/AppDataContext";
 import type { NextAction } from "@/domain/types";
 
 interface RescheduleDialogProps {
@@ -17,6 +19,8 @@ interface RescheduleDialogProps {
  * for a realistic time rather than treating the slip as a failure.
  */
 export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDialogProps) {
+  const { data } = useAppData();
+  const boundHw = action ? data.homework?.find((h) => h.assignment.action_id === action.id && !h.assignment.archived) : undefined;
   const [date, setDate] = useState(todayIso());
 
   useEffect(() => {
@@ -24,6 +28,34 @@ export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDi
   }, [action?.id]);
 
   if (!action) return null;
+
+  if (boundHw) {
+    return (
+      <Dialog
+        open={Boolean(action)}
+        onClose={onClose}
+        title="Choose a new time"
+        description="This action is managed by your homework."
+        narrow
+        footer={
+          <>
+            <Button onClick={onClose}>Close</Button>
+            <Link
+              className="button button--primary"
+              to={`/study/homework/${boundHw.assignment.id}`}
+              onClick={onClose}
+            >
+              Open homework
+            </Link>
+          </>
+        }
+      >
+        <div className="stack stack--3">
+          <p>This comes from your homework. Open the homework to change it.</p>
+        </div>
+      </Dialog>
+    );
+  }
 
   const quickChoices = [
     { label: "Today", value: todayIso() },

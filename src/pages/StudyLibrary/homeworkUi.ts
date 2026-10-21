@@ -80,7 +80,7 @@ export function homeworkSaveMessage(error: unknown): {
     return { stale, text: stale ? "This changed elsewhere. Reload to see the latest" : "This homework couldn't be saved. Your draft is still here to retry." };
 }
 
-export interface HomeworkHistoryEntry { change_kind: string; created_at: string; revision: number; snapshot_json?: unknown }
+export interface HomeworkHistoryEntry { change_kind: string; created_at?: string; recorded_at?: string; revision: number; snapshot_json?: unknown }
 const HISTORY_LABELS: Record<string,string> = {create:"Homework added",edit:"Homework edited",complete:"Work completed",reopen:"Work reopened",reorder:"Activities reordered",remove_activity:"Activity removed",relink:"Source replaced",archive:"Archive changed"};
 export function homeworkHistoryLabel(row: HomeworkHistoryEntry, previous?: HomeworkHistoryEntry): string {
   const label=HISTORY_LABELS[row.change_kind]??"Homework changed";

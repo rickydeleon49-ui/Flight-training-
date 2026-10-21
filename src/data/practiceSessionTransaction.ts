@@ -625,7 +625,7 @@ export async function executePracticeSessionAction(
                 r.cycle !== hwContext.cycle || r.invalidated_at || r.finished_at) refuse("INVALID_STATE");
           }
           const linkedRuns = await query(
-            `SELECT r.id, r.activity_id, a.assignment_id, a.created_at AS activity_created_at, a.cycle AS activity_cycle
+            `SELECT r.id, r.activity_id, r.started_at AS run_started_at, r.source_attempt_id, a.assignment_id, a.cycle AS activity_cycle
              FROM homework_runs r
              JOIN homework_activities a ON a.id = r.activity_id
              WHERE r.kind = 'test' AND r.source_attempt_id = ? AND r.finished_at IS NULL AND r.invalidated_at IS NULL`,
@@ -633,7 +633,7 @@ export async function executePracticeSessionAction(
           );
           for (const lr of linkedRuns) {
             const startedAt = String(attempt["started_at"]);
-            if (startedAt > String(lr.activity_created_at) && Number(lr.activity_cycle) >= 1) {
+            if (String(lr.source_attempt_id) === attemptId && Number(lr.activity_cycle) >= 1 && timestamp >= startedAt && timestamp >= String(lr.run_started_at)) {
               const [h] = await query(
                 "SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1",
                 [String(lr.assignment_id)],
@@ -643,13 +643,13 @@ export async function executePracticeSessionAction(
                 const nextSnapshot = structuredClone(prevSnapshot);
                 const runToFinish = nextSnapshot.runs.find((r) => r.id === String(lr.id));
                 const entryToFinish = nextSnapshot.activities.find((e) => e.record.id === String(lr.activity_id));
-                if (runToFinish?.kind === "test" && entryToFinish && !prevSnapshot.assignment.archived && !entryToFinish.record.removed_at && runToFinish.cycle === entryToFinish.record.cycle && !runToFinish.invalidated_at) {
+                if (runToFinish?.kind === "test" && runToFinish.scope.attempt_id === attemptId && entryToFinish && !prevSnapshot.assignment.archived && !entryToFinish.record.removed_at && runToFinish.cycle === entryToFinish.record.cycle && !runToFinish.invalidated_at) {
                   runToFinish.finished_at = timestamp;
                   runToFinish.evidence = {
                     version: 1,
                     attempt_id: attemptId,
                     version_id: String(attempt["version_id"]),
-                    started_at: startedAt,
+                    started_at: runToFinish.started_at,
                     completed_at: timestamp,
                     score_percent: scorePercent,
                     total_questions: totalQuestions,
