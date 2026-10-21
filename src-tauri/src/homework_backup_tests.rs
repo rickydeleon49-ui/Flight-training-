@@ -1017,6 +1017,43 @@ fn homework_context_is_strict_and_bound_to_its_exact_attempt() {
 }
 
 #[test]
+fn backwards_clock_between_create_and_start_still_completes() {
+    let (root, mut conn) = hw_quiz_database("hw-backwards-clock");
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+
+    // Clock skew: activity was created at 10:05, but attempt was started at 10:01
+    let skew = "2026-10-21T10:05:00.000Z";
+    conn.execute("UPDATE homework_activities SET created_at=? WHERE id=?", params![skew, hw_id(2)]).unwrap();
+    conn.execute_batch("DROP TRIGGER homework_history_no_update").unwrap();
+    let history: String = conn.query_row("SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1", params![hw_id(1)], |r| r.get(0)).unwrap();
+    let mut snapshot: Value = serde_json::from_str(&history).unwrap();
+    snapshot["activities"][0]["record"]["created_at"] = json!(skew);
+    conn.execute("UPDATE homework_history SET snapshot_json=? WHERE assignment_id=? AND revision=2", params![serde_json::to_string(&snapshot).unwrap(), hw_id(1)]).unwrap();
+    conn.execute_batch("CREATE TRIGGER homework_history_no_update BEFORE UPDATE ON homework_history BEGIN SELECT RAISE(ABORT,'Homework history is append-only'); END;").unwrap();
+
+    let act_created: String = conn.query_row("SELECT created_at FROM homework_activities WHERE id=?", params![hw_id(2)], |r| r.get(0)).unwrap();
+    let att_started: String = conn.query_row("SELECT started_at FROM practice_attempts WHERE id=?", params![hw_id(30)], |r| r.get(0)).unwrap();
+    assert!(act_created > att_started, "clock moved backwards between create and start");
+
+    let context = hw_context(&hw_id(111), 2, 1, 1);
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 201);
+    let outcome = hw_complete(&mut conn, &hw_id(30), revision, Some(&context)).unwrap();
+    assert_eq!(outcome["status"], "completed");
+
+    let history: String = conn.query_row("SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1", params![hw_id(1)], |r| r.get(0)).unwrap();
+    let snapshot: Value = serde_json::from_str(&history).unwrap();
+    let run = &snapshot["runs"][0];
+    assert_eq!(run["evidence"]["attempt_id"], hw_id(30));
+    assert!(!run["finished_at"].is_null());
+
+    drop(conn); std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn zero_score_completes_and_detached_evidence_survives_later_edits() {
     let (root, mut conn) = hw_quiz_database("hw-detached-quiz");
     let path = root.join(DB_FILES[0]);

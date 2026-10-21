@@ -21,7 +21,7 @@ const save = vi.fn(async (op: HomeworkOperation) => {
     history.push(op);
     return { version: 1, assignmentId: op.assignmentId, revision: next.assignment.revision };
 });
-const repository = { save, list: async () => records.map(s => s.assignment), get: async (id: string) => structuredClone(records.find(s => s.assignment.id === id) ?? null), history: async () => history.map(op => ({ change_kind: op.changeKind, created_at: op.at, revision: op.next.assignment.revision })) };
+const repository = { save, list: async () => records.map(s => s.assignment), get: async (id: string) => structuredClone(records.find(s => s.assignment.id === id) ?? null), history: async () => history.map(op => ({ change_kind: op.changeKind, recorded_at: op.at, created_at: op.at, revision: op.next.assignment.revision })) };
 const refresh = vi.fn(async () => { });
 const sourceId = "10000000-0000-4000-8000-000000000001";
 const quizId = "10000000-0000-4000-8000-000000000002";
@@ -319,4 +319,110 @@ it("failed_quiz_start_stays_on_homework_and_explains_existing_attempt", async ()
     await screen.findByText("Finish or abandon the in-progress quiz first.");
     expect(screen.queryByText("Quiz source page")).toBeNull();
     expect(records[0]!.runs).toEqual([]);
+});
+
+it("history_shows_readable_dates", async () => {
+    const s = assignment();
+    history = [{
+        version: 1,
+        operationId: "op-1",
+        assignmentId: s.assignment.id,
+        baseRevision: 0,
+        changeKind: "create",
+        at: "2026-10-21T10:30:00.000Z",
+        next: s,
+    }];
+    view(s.assignment.id);
+    await screen.findByRole("heading", { name: "History" });
+    const historyItem = await screen.findByText(/Homework added ·/);
+    expect(historyItem.textContent).not.toContain("Invalid Date");
+    expect(historyItem.textContent).toMatch(/Homework added · Oct 21/);
+});
+
+it("homework_dates_are_friendly", async () => {
+    const s = assignment();
+    s.assignment.due_date = "2026-10-20";
+    view(s.assignment.id);
+    await screen.findByText("Weather preparation");
+    expect(screen.getByText(/Due Oct 20/)).toBeTruthy();
+    expect(screen.queryByText("Due 2026-10-20")).toBeNull();
+
+    cleanup();
+    view();
+    await screen.findByText("Weather preparation");
+    expect(screen.getByText(/Due Oct 20/)).toBeTruthy();
+    expect(screen.queryByText("Due 2026-10-20")).toBeNull();
+});
+
+it("activity_buttons_short_visible_labels_full_aria", async () => {
+    const s = assignment(["checklist"]);
+    s.activities[0]!.record.title = "Preflight checklist walk-through";
+    view(s.assignment.id);
+    await screen.findByText("Preflight checklist walk-through");
+
+    const editBtn = screen.getByRole("button", { name: "Edit Preflight checklist walk-through" });
+    expect(editBtn.textContent).toBe("Edit");
+
+    const removeBtn = screen.getByRole("button", { name: "Remove Preflight checklist walk-through" });
+    expect(removeBtn.textContent).toBe("Remove");
+
+    const moveUpBtn = screen.getByRole("button", { name: "Move Preflight checklist walk-through up" });
+    expect(moveUpBtn.textContent).toBe("Move up");
+
+    const moveDownBtn = screen.getByRole("button", { name: "Move Preflight checklist walk-through down" });
+    expect(moveDownBtn.textContent).toBe("Move down");
+});
+
+it("reflection_and_questions_complete_inline", async () => {
+    const s = assignment(["reflection"]);
+    s.activities[0]!.record.title = "Self reflection";
+    s.activities[0]!.record.body = "";
+    view(s.assignment.id);
+    await screen.findByText("Self reflection");
+
+    const textarea = screen.getByRole("textbox", { name: "Answer for Self reflection" }) as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    expect(textarea.value).toBe("");
+
+    const completeBtn = screen.getByRole("button", { name: "Mark complete" }) as HTMLButtonElement;
+    expect(completeBtn.disabled).toBe(true);
+    expect(screen.getByText("Write your answer first")).toBeTruthy();
+
+    fireEvent.change(textarea, { target: { value: "My debrief notes" } });
+
+    const saveBtn = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveBtn);
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save.mock.calls[0]![0].changeKind).toBe("edit");
+    expect(records[0]!.activities[0]!.record.body).toBe("My debrief notes");
+
+    await waitFor(() => expect((screen.getByRole("button", { name: "Mark complete" }) as HTMLButtonElement).disabled).toBe(false));
+    expect(screen.queryByText("Write your answer first")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save.mock.calls[1]![0].changeKind).toBe("complete");
+    expect(records[0]!.activities[0]!.record.state).toBe("completed");
+});
+
+it("homework_filter_selected_state_visible", async () => {
+    const a = assignment();
+    a.assignment.title = "Overdue in progress";
+    a.assignment.state = "in_progress";
+    a.assignment.due_date = "2026-10-15";
+    records = [a];
+
+    view();
+    await screen.findByText("A little preparation, at your pace.");
+
+    const upcomingChip = screen.getByRole("button", { name: "Upcoming" });
+    expect(upcomingChip.getAttribute("aria-pressed")).toBe("true");
+
+    expect(screen.getByText("Overdue in progress")).toBeTruthy();
+
+    const inProgressChip = screen.getByRole("button", { name: "In progress" });
+    expect(inProgressChip.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(inProgressChip);
+    expect(inProgressChip.getAttribute("aria-pressed")).toBe("true");
+    expect(upcomingChip.getAttribute("aria-pressed")).toBe("false");
 });

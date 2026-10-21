@@ -1192,9 +1192,10 @@ function ReminderTool({ state, save }: ToolProps) {
         events: data.events,
         credentials: state.credentials,
         profile: data.profile,
+        homework: data.homework,
         leadDays: reminderLeadDays(leadDays, 0),
       }),
-    [data.actions, data.events, data.profile, leadDays, state.credentials],
+    [data.actions, data.events, data.profile, data.homework, leadDays, state.credentials],
   );
 
   const setEnabled = async (enabled: boolean) => {
@@ -1262,14 +1263,24 @@ function ReminderTool({ state, save }: ToolProps) {
           {reminders.length ? (
             <div className="stack stack--3">
               {reminders.slice(0, 10).map((item) => (
-                <div className="row row--between" key={item.id}>
+                <div className="row row--between" key={item.id} style={{ alignItems: "center" }}>
                   <div>
                     <p className="small">{item.title}</p>
                     <p className="tiny dim">{item.detail}</p>
                   </div>
-                  <Badge tone={item.urgent ? "overdue" : "due"}>
-                    {formatShortDate(item.date)}
-                  </Badge>
+                  <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+                    {item.homeworkId ? (
+                      <Link
+                        className="button button--secondary button--small"
+                        to={`/study/homework/${item.homeworkId}`}
+                      >
+                        Open homework
+                      </Link>
+                    ) : null}
+                    <Badge tone={item.urgent ? "overdue" : "due"}>
+                      {formatShortDate(item.date)}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>

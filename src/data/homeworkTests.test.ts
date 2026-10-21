@@ -325,6 +325,66 @@ describe.each(ENGINES)("homework test runs and actions: %s", (name) => {
     }
   });
 
+  it("backwards_clock_between_create_and_start_still_completes", async () => {
+    const { e, act, sess, create, startOp } = await setup();
+    try {
+      await act(create);
+      await act(startOp);
+
+      // Clock skew: activity was created at 10:01:30, but attempt/run was started at 10:01:00
+      const T_SKEW = "2026-10-21T10:01:30.000Z";
+      e.run("UPDATE homework_activities SET created_at = ? WHERE id = ?", [T_SKEW, id(2)]);
+      e.run("DROP TRIGGER homework_history_no_update", []);
+      const historyRows = await e.query("SELECT snapshot_json FROM homework_history WHERE assignment_id = ? ORDER BY revision DESC LIMIT 1", [id(1)]);
+      const historySnap = JSON.parse(String(historyRows[0]!["snapshot_json"]));
+      historySnap.activities[0].record.created_at = T_SKEW;
+      const snapJson = JSON.stringify(historySnap);
+      e.run("UPDATE homework_history SET snapshot_json = ? WHERE assignment_id = ? AND revision = 2", [snapJson, id(1)]);
+      e.run("CREATE TRIGGER homework_history_no_update BEFORE UPDATE ON homework_history BEGIN SELECT RAISE(ABORT,'Homework history is append-only'); END;", []);
+
+      const actRows = await e.query("SELECT created_at FROM homework_activities WHERE id=?", [id(2)]);
+      const attRows = await e.query("SELECT started_at FROM practice_attempts WHERE id=?", [id(30)]);
+      expect(String(actRows[0]!["created_at"]) > String(attRows[0]!["started_at"])).toBe(true);
+
+      // Answer items and complete attempt 30
+      await sess({
+        action: "record_response",
+        operationId: id(201),
+        attemptId: id(30),
+        itemId: id(21),
+        expectedRevision: 0,
+        selectedIndex: 0,
+        isDontKnow: false,
+      });
+      await sess({
+        action: "record_response",
+        operationId: id(202),
+        attemptId: id(30),
+        itemId: id(22),
+        expectedRevision: 1,
+        selectedIndex: 1,
+        isDontKnow: false,
+      });
+      await sess({
+        action: "complete_attempt",
+        operationId: id(203),
+        attemptId: id(30),
+        expectedRevision: 2,
+      });
+
+      const acts = await e.query("SELECT state, completed_at FROM homework_activities WHERE id=?", [
+        id(2),
+      ]);
+      expect(acts[0]!.state).toBe("completed");
+      expect(acts[0]!.completed_at).toBe(T2);
+
+      const runs = await e.query("SELECT finished_at FROM homework_runs WHERE id=?", [id(111)]);
+      expect(runs[0]!.finished_at).toBe(T2);
+    } finally {
+      e.close();
+    }
+  });
+
   it("stale_callback_after_reopen_refused", async () => {
     const { e, act, sess, create, startOp, testRun } = await setup();
     try {
@@ -521,18 +581,18 @@ describe.each(ENGINES)("homework test runs and actions: %s", (name) => {
 
       // Verify bound action cannot be completed generically
       await expect(actionRepo.complete(id(50))).rejects.toThrow(
-        "Cannot complete bound homework action directly",
+        "This comes from your homework. Open the homework to change it.",
       );
 
       // Verify bound fields cannot be mutated directly
       await expect(actionRepo.update(id(50), { status: "completed" })).rejects.toThrow(
-        "Cannot complete bound homework action directly",
+        "This comes from your homework. Open the homework to change it.",
       );
       await expect(actionRepo.update(id(50), { title: "Mutated Title" })).rejects.toThrow(
-        "Cannot mutate bound field 'title' of homework action",
+        "This comes from your homework. Open the homework to change it.",
       );
       await expect(actionRepo.update(id(50), { dueDate: "2026-10-30" })).rejects.toThrow(
-        "Cannot mutate bound field 'dueDate' of homework action",
+        "This comes from your homework. Open the homework to change it.",
       );
 
       // Updating estimatedMinutes is permitted
@@ -543,6 +603,21 @@ describe.each(ENGINES)("homework test runs and actions: %s", (name) => {
       expect(actions[0]!.estimated_minutes).toBe(45);
 
       await validate();
+    } finally {
+      e.close();
+    }
+  });
+
+  it("bound_action_refusal_message_is_plain", async () => {
+    const { e, act, actionRepo, create } = await setup();
+    try {
+      await act(create);
+      const msg = "This comes from your homework. Open the homework to change it.";
+      await expect(actionRepo.complete(id(50))).rejects.toThrow(msg);
+      await expect(actionRepo.update(id(50), { status: "completed" })).rejects.toThrow(msg);
+      await expect(actionRepo.update(id(50), { title: "New title" })).rejects.toThrow(msg);
+      await expect(actionRepo.update(id(50), { dueDate: "2026-10-30" })).rejects.toThrow(msg);
+      await expect(actionRepo.remove(id(50))).rejects.toThrow(msg);
     } finally {
       e.close();
     }

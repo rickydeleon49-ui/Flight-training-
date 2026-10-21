@@ -117,6 +117,20 @@ export function formatMonthYear(date: IsoDate): string {
   return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+/** Stored timestamp as friendly local date and time, e.g. "Oct 21 at 12:35 PM". */
+export function formatDateTime(
+  timestamp: string | null | undefined,
+  today: IsoDate = todayIso(),
+): string {
+  if (!timestamp) return "";
+  const day = localDayOf(timestamp);
+  if (!day) return "";
+  const d = new Date(timestamp.includes("T") ? timestamp : timestamp.replace(" ", "T") + "Z");
+  if (Number.isNaN(d.getTime())) return formatShortDate(day, today);
+  const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${formatShortDate(day, today)} at ${formatTime(time)}`;
+}
+
 /** Turn 24-hour '10:30' into '10:30 AM'. */
 export function formatTime(time: string | null): string {
   if (!time) return "";

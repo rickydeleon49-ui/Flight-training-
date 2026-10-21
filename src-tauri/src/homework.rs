@@ -1198,7 +1198,7 @@ pub(crate) fn record_test_completion(
     }
     let linked = rows(
         conn,
-        "SELECT r.id, r.activity_id, a.assignment_id, a.created_at AS activity_created_at, a.cycle AS activity_cycle \
+        "SELECT r.id, r.activity_id, r.started_at AS run_started_at, r.source_attempt_id, a.assignment_id, a.cycle AS activity_cycle \
          FROM homework_runs r \
          JOIN homework_activities a ON a.id = r.activity_id \
          WHERE r.kind = 'test' AND r.source_attempt_id = ? AND r.finished_at IS NULL AND r.invalidated_at IS NULL",
@@ -1216,9 +1216,14 @@ pub(crate) fn record_test_completion(
     let version_id = s(attempt, "version_id")?;
 
     for lr in linked {
-        let act_created = s(&lr, "activity_created_at")?;
+        let run_started = s(&lr, "run_started_at")?;
+        let run_source_attempt = s(&lr, "source_attempt_id")?;
         let act_cycle = n(&lr, "activity_cycle")?;
-        if started_at > act_created && act_cycle >= 1 {
+        if run_source_attempt == attempt_id
+            && act_cycle >= 1
+            && completed_at >= started_at
+            && completed_at >= run_started
+        {
             let assignment_id = s(&lr, "assignment_id")?;
             let history = rows(
                 conn,
@@ -1238,7 +1243,10 @@ pub(crate) fn record_test_completion(
                 let Some(r) = runs.iter_mut().find(|r| r["id"] == run_id) else {
                     continue;
                 };
-                if r["cycle"] != act_cycle || !r["invalidated_at"].is_null() {
+                if r["cycle"] != act_cycle
+                    || !r["invalidated_at"].is_null()
+                    || r["scope"]["attempt_id"] != attempt_id
+                {
                     continue;
                 };
                 r["finished_at"] = Value::String(completed_at.to_string());
@@ -1246,7 +1254,7 @@ pub(crate) fn record_test_completion(
                     "version": 1,
                     "attempt_id": attempt_id,
                     "version_id": version_id,
-                    "started_at": started_at,
+                    "started_at": r["started_at"].clone(),
                     "completed_at": completed_at,
                     "score_percent": score_percent,
                     "total_questions": total_questions,

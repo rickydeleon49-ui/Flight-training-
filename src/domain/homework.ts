@@ -248,7 +248,7 @@ function validateRuns(s: HomeworkSnapshot) {
     for (const run of s.runs) {
         const r = s.activities.find(e => e.record.id === run.activity_id)?.record;
         homeworkAssert(r);
-        homeworkAssert(run.started_at > r.created_at && run.started_at <= s.assignment.updated_at && run.cycle <= r.cycle && run.activity_revision <= r.revision);
+        homeworkAssert(run.started_at <= s.assignment.updated_at && run.cycle <= r.cycle && run.activity_revision <= r.revision);
         if (run.kind === "cards") {
             homeworkAssert(new Set(run.scope.item_ids).size === run.scope.item_ids.length && run.scope.next_local_midnight > run.started_at && Date.parse(run.scope.next_local_midnight) - Date.parse(run.started_at) <= 27 * 3600000);
             homeworkAssert(new Set(run.ratings.map(x => x.item_id)).size === run.ratings.length && new Set(run.ratings.map(x => x.operation_id)).size === run.ratings.length);

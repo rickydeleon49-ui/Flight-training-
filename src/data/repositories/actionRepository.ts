@@ -108,7 +108,7 @@ export function actionRepository(db: SqlDatabase) {
         [id],
       );
       if (bound[0] && Number(bound[0].count) > 0) {
-        throw new Error("Cannot complete bound homework action directly");
+        throw new Error("This comes from your homework. Open the homework to change it.");
       }
       const now = nowIso();
       await db.execute(
@@ -127,12 +127,12 @@ export function actionRepository(db: SqlDatabase) {
       );
       if (bound[0] && Number(bound[0].count) > 0) {
         if (changes.status === "completed") {
-          throw new Error("Cannot complete bound homework action directly");
+          throw new Error("This comes from your homework. Open the homework to change it.");
         }
         const boundKeys = ["title", "category", "status", "dueDate", "completedAt"] as const;
         for (const k of boundKeys) {
           if (k in changes && changes[k] !== undefined) {
-            throw new Error(`Cannot mutate bound field '${k}' of homework action`);
+            throw new Error("This comes from your homework. Open the homework to change it.");
           }
         }
         // Update only unowned fields; a concurrent homework projection must not be overwritten.
@@ -165,7 +165,7 @@ export function actionRepository(db: SqlDatabase) {
 
     async remove(id: Id): Promise<void> {
       const bound = await db.select<{ id: string }>("SELECT id FROM homework_assignments WHERE action_id = ?", [id]);
-      if (bound.length) throw new Error("Open homework to archive or remove its activities.");
+      if (bound.length) throw new Error("This comes from your homework. Open the homework to change it.");
       await db.execute("DELETE FROM next_actions WHERE id = ?", [id]);
     },
   };
