@@ -1,0 +1,5 @@
+$ shasum -a 256 /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/her-flight-deck /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/examples/offline_pressure_probe
+e1ab82963ee99453b407a8968114a2e2d3cf0449dcea6f8a64a195850c6e0ec5  /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/her-flight-deck
+a1e914eab362129174cd2091c63ad10915945bc01c1758bb8a6d0f04ab062436  /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/examples/offline_pressure_probe
+
+EXIT 0

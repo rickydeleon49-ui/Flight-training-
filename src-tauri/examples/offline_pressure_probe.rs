@@ -8,6 +8,15 @@ use std::{
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
+    if args.len() == 2 && args[1] == "--check-build" {
+        let enabled = her_flight_deck_lib::extraction::worker::extraction_enabled();
+        println!(
+            "{}",
+            serde_json::json!({"extractionEnabled": enabled, "debugAssertions": cfg!(debug_assertions)})
+        );
+        assert!(enabled, "this build did not opt into extraction");
+        return;
+    }
     assert_eq!(args.len(), 4, "probe WORKER SYNTHETIC_PDF SHA256");
     let started = Instant::now();
     let result = supervisor::run(supervisor::Job {

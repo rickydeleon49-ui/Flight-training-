@@ -1289,3 +1289,31 @@ describe("release version policy and validation", () => {
     });
   });
 });
+
+describe("offline release opt-in", () => {
+  it("release_workflow_sets_offline_extraction_opt_in", () => {
+    const workflow = YAML.parse(readFileSync(WORKFLOW_PATH, "utf8"));
+    const build = workflow.jobs.build.steps.find((step: { run?: string }) => step.run?.startsWith("npm run tauri build"));
+    expect(build.env?.HFD_OFFLINE_EXTRACTION).toBe("1");
+    const desktop = YAML.parse(readFileSync(".github/workflows/build-desktop.yml", "utf8"));
+    for (const job of Object.values(desktop.jobs) as Array<{ steps: Array<{ run?: string; env?: Record<string, string> }> }>) {
+      const installer = job.steps.find(step => step.run?.startsWith("npm run tauri build"));
+      expect(installer?.env?.HFD_OFFLINE_EXTRACTION).toBe("1");
+    }
+    expect(workflow.jobs.check.env?.HFD_OFFLINE_EXTRACTION).toBeUndefined();
+    const script = readFileSync(RELEASE_SH_PATH, "utf8");
+    expect(script).toMatch(/^export HFD_OFFLINE_EXTRACTION=1$/m);
+    const tauri = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
+    expect(tauri.build.beforeDevCommand).toBe("npm run dev");
+    expect(tauri.build.beforeBuildCommand).toBe("npm run build");
+  });
+
+  it("debug_and_release_gates_are_documented_in_one_place", () => {
+    const readme = readFileSync("README.md", "utf8");
+    const section = readme.split("## Offline PDF reading and search\n")[1]?.split("\n## ")[0];
+    expect(section).toBeDefined();
+    for (const detail of ["HFD_OFFLINE_EXTRACTION=1", "VITE_OFFLINE_EXTRACTION=1", "debug", "release", "512 MiB", "128 MiB", "384 MiB", ".github/workflows/release.yml", "scripts/release.sh", "tauri.conf.json"]) {
+      expect(section).toContain(detail);
+    }
+  });
+});

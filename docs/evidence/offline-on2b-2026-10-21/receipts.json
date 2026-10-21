@@ -1,0 +1,239 @@
+{
+  "base": "f6ba13a259fcb6203eafb797638ab35f4336cfd2",
+  "role": "Codex implementer validation; Claude reviews independently",
+  "cargoCwd": "src-tauri/",
+  "node": "22 via receipt runner",
+  "finalInventoryVerification": "evidence-checksums.txt is separate to avoid a checksum cycle",
+  "receipts": [
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/build.txt",
+      "command": "npm run build -- --configLoader runner",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 13477,
+      "sha256": "dc636fdee8eb61c115bbe6f30d7086ff6b642a71d0affddd6482a8a0d000b1ed"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/cargo-lock.txt",
+      "command": "npm run test:cargo-lock",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 288,
+      "sha256": "880db6e032958427e2b7d3349233234d9c769ff42220fbf2120302afb5c7f0cb"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/cargo-test-1.txt",
+      "command": "env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+      "exit": 0,
+      "summaries": [
+        "test result: ok. 987 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 269.24s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.19s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.62s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ],
+      "bytes": 90484,
+      "sha256": "b48633b652ce672be57a57861f3e66eaf0ebb5147b69aa052a6014ca8f28d151"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/cargo-test-2.txt",
+      "command": "env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+      "exit": 0,
+      "summaries": [
+        "test result: ok. 987 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 274.56s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s",
+        "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.14s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ],
+      "bytes": 90623,
+      "sha256": "827dd9130dfdd8cb6af7c01b3cffb782b3adafad246265da40dd4c3c1beaca97"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/clippy.txt",
+      "command": "env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo clippy --locked --all-targets -- -D warnings",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 411,
+      "sha256": "47a46ce971f8c02ef3f31290cf5e8604c048643f9302dceecf9526f34a6ec8e8"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/diff-check.txt",
+      "command": "git diff --check",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 27,
+      "sha256": "851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/fmt.txt",
+      "command": "env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt --check",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 205,
+      "sha256": "6a6c1da58a9a615b45ea7ec3162d6a6d3db474238edf3885a0ed3114f63f0622"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/focused.txt",
+      "command": "npm test -- --configLoader runner src/logic/releaseSafety.test.ts src/services/offlineContent.test.ts src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts",
+      "exit": 0,
+      "summaries": [
+        "Test Files  3 passed (3)",
+        "Tests  102 passed | 1 skipped (103)"
+      ],
+      "bytes": 606,
+      "sha256": "241364f161f7401ea3b20bddabc1450faaed13c922cc2acaae7849bafd8a5cf3"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/format.txt",
+      "command": "env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 197,
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/npm-test-1.txt",
+      "command": "npm test -- --configLoader runner",
+      "exit": 0,
+      "summaries": [
+        "Test Files  215 passed | 4 skipped (219)",
+        "Tests  4547 passed | 6 skipped (4553)"
+      ],
+      "bytes": 18476,
+      "sha256": "46eaab289655934d9fe06db1842ecdbeaf8f048413748277d0f3aee785c0adf8"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/npm-test-2.txt",
+      "command": "npm test -- --configLoader runner",
+      "exit": 0,
+      "summaries": [
+        "Test Files  215 passed | 4 skipped (219)",
+        "Tests  4547 passed | 6 skipped (4553)"
+      ],
+      "bytes": 18476,
+      "sha256": "3cfe5f12d85eb847a06b9b86b22383a4cd6e1d0a461a821b35340c36747fa9e8"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/npm-test-3.txt",
+      "command": "npm test -- --configLoader runner",
+      "exit": 0,
+      "summaries": [
+        "Test Files  215 passed | 4 skipped (219)",
+        "Tests  4547 passed | 6 skipped (4553)"
+      ],
+      "bytes": 18477,
+      "sha256": "86664bd2ba9ef30dd31d6ba694ccce2c354443de32cbd06ea46ed791355fba8c"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/red-desktop-guards.txt",
+      "command": "npm test -- --configLoader runner src/logic/releaseSafety.test.ts -t release_workflow_sets_offline_extraction_opt_in",
+      "exit": 1,
+      "summaries": [
+        "Test Files  1 failed (1)",
+        "Tests  1 failed | 55 skipped (56)"
+      ],
+      "bytes": 1484,
+      "sha256": "6c4535d371bac3f04a5bf5d4d3707e8d1b2957f1dd73ddc90ca59ad332785448"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/red-guards-runner.txt",
+      "command": "npm test -- --configLoader runner src/logic/releaseSafety.test.ts src/services/offlineContent.test.ts src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts -t release_workflow_sets_offline_extraction_opt_in|release_build_enables_search_ui|debug_and_release_gates_are_documented_in_one_place|extraction_enabled_success_never_shows_unavailable_message",
+      "exit": 1,
+      "summaries": [
+        "Test Files  2 failed | 1 passed (3)",
+        "Tests  3 failed | 1 passed | 101 skipped (105)"
+      ],
+      "bytes": 3137,
+      "sha256": "a2530a115c37ad444d724567dbfe1c7aaf52e8310af17c0172038e60230cc8c7"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/red-guards.txt",
+      "command": "npm test -- src/logic/releaseSafety.test.ts src/services/offlineContent.test.ts src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts -t release_workflow_sets_offline_extraction_opt_in|release_build_enables_search_ui|debug_and_release_gates_are_documented_in_one_place|extraction_enabled_success_never_shows_unavailable_message",
+      "exit": 1,
+      "summaries": [],
+      "bytes": 2467,
+      "sha256": "380cd6ef10febec6c88ade23be48b16e5381e8256693733913bede41c4131cd6"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/release-binary-sha256.txt",
+      "command": "shasum -a 256 /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/her-flight-deck /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/examples/offline_pressure_probe",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 460,
+      "sha256": "bb2b1583bf3ef3d354399dae1de7c7d48356f46ec0c5e1f3bad6730ddd1f1f7d"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/release-build.txt",
+      "command": "env HFD_OFFLINE_EXTRACTION=1 SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/private/tmp/hfd-offline-on2b-target.Vm6VQN CARGO_NET_OFFLINE=true cargo build --locked --release --bin her-flight-deck --example offline_pressure_probe",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 11093,
+      "sha256": "bfbf37db8d1c7c7b12b651c38bc9d9698cdefdb2559b50a3d63bfc2fdb0c246f"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/release-frontend-build.txt",
+      "command": "env HFD_OFFLINE_EXTRACTION=1 npm run build -- --configLoader runner",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 13506,
+      "sha256": "709302cfdcd4215047b49bd5d26ab74413e31d368459e8f40ba192bfa95f37a3"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/release-gate-proof.txt",
+      "command": "env -u HFD_OFFLINE_EXTRACTION /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/examples/offline_pressure_probe --check-build",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 189,
+      "sha256": "ba00f05a01a9362be396b178fcf2ff75f9f69834c330b1a56c53fc41142eeaa4"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/schema14-checksums.txt",
+      "command": "shasum -a 256 -c docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 1347,
+      "sha256": "2d67ba7ee432170f397043b3d1d0af9eb160a1ef5ad9a8bc5d45734e3e5d8229"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/schema14-helper.txt",
+      "command": "node --test scripts/mac-schema14-profile-snapshot.test.mjs",
+      "exit": 1,
+      "summaries": [
+        "# tests 26",
+        "# pass 25",
+        "# fail 1",
+        "# cancelled 0",
+        "# skipped 0"
+      ],
+      "bytes": 10308,
+      "sha256": "f4e4bf85a3efd2dedd7c7ec1e2fe84307df8a4572be9b679f183e1dc5f9bf231"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/schema14-rebind.txt",
+      "command": "python3 docs/evidence/offline-gen-fix2-2026-10-20/rebind_manifest.py",
+      "exit": 0,
+      "summaries": [
+        "VERIFIED 20 manifest entries and 21 checksum entries"
+      ],
+      "bytes": 132,
+      "sha256": "c1896134cfe810ecff788c95df8ab82a97e8530054453edf7055df0a9320635f"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/source-checksums.txt",
+      "command": "shasum -a 256 -c docs/evidence/offline-on2b-2026-10-21/SOURCE_SHA256SUMS",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 659,
+      "sha256": "e83252fa6fa09fb7783ccbd4a2892f672c604c6a14dbea3226063bb6a28461d2"
+    },
+    {
+      "log": "docs/evidence/offline-on2b-2026-10-21/typecheck.txt",
+      "command": "npm run typecheck",
+      "exit": 0,
+      "summaries": [],
+      "bytes": 79,
+      "sha256": "029e9741c7e43e97cf58421a4935f6009ed8cea9f0b57049407bd6de1f6642e6"
+    }
+  ]
+}

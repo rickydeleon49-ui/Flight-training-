@@ -82,6 +82,9 @@ node -e '
 
 echo
 echo "Checks"
+# Match the installer workflow; this script prepares a tag, it does not build.
+# README.md: Offline PDF reading and search documents both build gates.
+export HFD_OFFLINE_EXTRACTION=1
 npm run typecheck
 npm test
 npm run test:cargo-lock

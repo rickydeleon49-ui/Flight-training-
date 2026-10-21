@@ -78,12 +78,17 @@ A nonzero exit is a failed check, not release authorization. The probe reports
 counted peak only on success; its zero on `memory_limit` is a placeholder, not
 a measured zero or the attempted allocation size.
 
-Only baseline mode is run by this implementation round. In Codex's sandbox,
+Historical implementation limitation: only baseline mode was run in OFFLINE-ON-1. In Codex's sandbox,
 `/usr/bin/time -l` can fail with `sysctl kern.clockrate: Operation not permitted`
 after the worker succeeds. Such a run keeps the worker outcome/counts but marks
 RSS unavailable and fails acceptance. The reviewer must rerun outside that
 sandbox; counted allocator bytes are not an RSS substitute. Measurements on this
 M5 / 32 GiB Mac are weaker evidence than measurements on a minimum-spec Mac;
 synthetic documents also do not establish every real-document workload. The
-release switch enables both local PDF study kits and offline search and stays
-off until the reviewer accepts the evidence in OFFLINE-ON-2.
+release switch enables both local PDF study kits and offline search. The owner
+accepted the baseline and the [21 October warning-pressure pass](evidence/offline-on2b-2026-10-21/RESULT.md)
+for OFFLINE-ON-2b. All five synthetic fixtures passed at warning level; near-cap
+RSS was 269 MiB and over-cap refusal was 428 MiB. See the single
+[debug/release build-gate reference](../README.md#offline-pdf-reading-and-search).
+Her 8 GB Mac still needs a real chapter check after updating, with her usual
+apps open; if slow, follow up with a 384 MiB cap. This round changes no cap.

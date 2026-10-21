@@ -32,8 +32,8 @@ pub const EXIT_MEMORY: i32 = 70;
 pub const EXIT_DISABLED: i32 = 69;
 
 /// Whether this build may run extraction at all. Release builds are opted in
-/// only by compiling with `HFD_OFFLINE_EXTRACTION=1`, which happens once a
-/// reviewer has accepted the worker's memory cap (OFFLINE-01c §6). Debug
+/// only by compiling with `HFD_OFFLINE_EXTRACTION=1` (the release workflow).
+/// See README.md, Offline PDF reading and search, for both build gates. Debug
 /// builds may, for development and tests. Both the app's commands and worker
 /// mode itself check this.
 pub fn extraction_enabled() -> bool {

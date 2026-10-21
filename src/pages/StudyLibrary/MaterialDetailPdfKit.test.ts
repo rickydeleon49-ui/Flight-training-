@@ -352,3 +352,15 @@ it.each(["offline_extraction_disabled", new Error("offline_extraction_disabled")
   expect(prepare).toHaveBeenCalledTimes(1);
   expect(offline.prepareOfflineContent).toHaveBeenCalledTimes(1);
 });
+
+
+it("extraction_enabled_success_never_shows_unavailable_message", async () => {
+  prepare.mockRejectedValueOnce({ code: "CACHE_MISSING" });
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Read this PDF’s text" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Try making the kit again" }));
+  await screen.findByRole("dialog", { name: "Review your PDF study kit" });
+  expect(screen.queryByText(/isn't available in this version yet/)).toBeNull();
+  expect(offline.prepareOfflineContent).toHaveBeenCalledWith(material.id);
+});
