@@ -325,3 +325,30 @@ it.each(["acknowledged", "journal-absent"])("discard_success_clears_mirrors_and_
   expect(prepare).toHaveBeenCalledTimes(2);
   expect(save).not.toHaveBeenCalled();
 });
+
+const UNAVAILABLE = "Making a study kit from your PDF isn't available in this version yet. It's coming in a later update.";
+function expectNoExtractionRetry() {
+  expect(screen.queryByRole("button", { name: /Try again|Try making|Read this PDF/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Make a study kit from this PDF" })).toBeNull();
+  expect(document.body.textContent).not.toMatch(/EXTRACTION_UNAVAILABLE|offline_extraction_disabled/);
+}
+it("kit_shows_not_available_yet_without_retry", async () => {
+  prepare.mockRejectedValue({ code: "EXTRACTION_UNAVAILABLE" });
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  await screen.findByText(UNAVAILABLE);
+  expectNoExtractionRetry();
+  expect(prepare).toHaveBeenCalledTimes(1);
+  expect(offline.prepareOfflineContent).not.toHaveBeenCalled();
+});
+it.each(["offline_extraction_disabled", new Error("offline_extraction_disabled"), { code: "offline_extraction_disabled" }])("read_text_disabled_maps_to_not_available_yet (%#)", async failure => {
+  prepare.mockRejectedValue({ code: "CACHE_MISSING" });
+  vi.mocked(offline.prepareOfflineContent).mockRejectedValue(failure);
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Read this PDF’s text" }));
+  await screen.findByText(UNAVAILABLE);
+  expectNoExtractionRetry();
+  expect(prepare).toHaveBeenCalledTimes(1);
+  expect(offline.prepareOfflineContent).toHaveBeenCalledTimes(1);
+});
