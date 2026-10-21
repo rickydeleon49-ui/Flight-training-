@@ -1,3 +1,79 @@
+# Her Flight Deck roadmap
+
+**Current plan, organized 21 October 2026.** This top section is the single place to see where things stand and what comes next. Everything below "History" is the dated decision log, newest first, kept unchanged for provenance. Where the two disagree, this section and later owner decisions win.
+
+## Where things stand
+
+**Released:** v0.5.7. The next release is **0.5.8**; 0.5.2 and 0.5.6 are retired.
+
+**Done since 0.5.7, in `main`:**
+- **Offline reading and search foundations:** OFFLINE-01, OFFLINE-02 and its saved-content search, and OFFLINE-03a/b, so she can write and edit her own summaries, cards and practice questions.
+- **OFFLINE-GEN:** a study kit made from her PDF with no AI (#238–#249).
+- **HOMEWORK-01:** homework with six kinds of activity. Cards and quizzes complete themselves; homework shows in the daily plan and in search (#253–#257).
+
+**Finishing now:** OFFLINE-ON (#260). It switches PDF study kits and offline search on in the installed app. The memory check passed; a real-world check on her 8 GB Mac comes after the update.
+
+## The queue
+
+Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
+
+| # | Item | What she gets | Includes | Plan |
+| --- | --- | --- | --- | --- |
+| 1 | **OFFLINE-ON** | PDF study kits and offline search in the installed app | — | [runbook](docs/OFFLINE_ON_PRESSURE_CHECK.md) |
+| 2 | **POLISH-01** | The new screens polished; a visual check at desktop and narrow widths; small fixes (FLAKE-GEN-01, the "overdue since" date format) | — | owner scope set 21 Oct |
+| 3 | **Release 0.5.8** | Everything above, installable. Claude prepares it; the owner tags and publishes | — | `scripts/release.sh` |
+| 4 | **EXPORT-01/02** | One clear Export / Print place: handouts across materials, flashcard CSV, better print / Save as PDF, separate answer keys | COMP-10; the export half of DIFF-06 | [plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) |
+| 5 | **ACS-READY-01** | An ACS-linked view of what she has studied. **Plus:** she types in the missed-topic codes from her knowledge-test report (AKTR) to get matching reading, cards and instructor questions; she never uploads the report itself | AKTR code entry | [research](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) |
+| 6 | **SCHOOL-01** | A scorecard to compare flight schools | — | 20 Oct entry below |
+| 7 | **FLIGHTLOG-01** | A discovery-flight log that carries into her real logbook later | — | 20 Oct entry below |
+| 8 | **STUDY-FLOW-01** | **Prepare for my next flight:** a short session she can finish or pause; one dependable Continue; a calm, large-text, keyboard-friendly review screen | DIFF-01, COMP-01, COMP-04, COMP-07; HUB-04/07 | [DIFF plan §2](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) |
+| 9 | **MISTAKES-01** | **Practice that remembers mistakes:** missed question → explanation → source → small follow-up; an optional "what confused me" note; her own terms as cards | DIFF-03, COMP-02, COMP-08; HUB-05 | [DIFF plan §4](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) |
+| 10 | **PACKS-01** | **Offline lesson packs:** a homework assignment shows exactly what works offline before she travels, and repairs what's missing | DIFF-02, COMP-05; HUB-08 | [DIFF plan §3](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) |
+| 11 | **PDF-STUDY-01** | **Study from the PDF:** page notes become study items; the source sits beside the question. Highlights and an embedded reader only after a feasibility decision that keeps macOS 12 working | DIFF-05, COMP-03; HUB-01/03; OSS-01 | [DIFF plan §6](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) |
+| 12 | **VISUAL-01** | **Visual recall:** hide a label on her own diagram, answer, reveal. A small proof first | COMP-06 | [research §5](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) |
+| 13 | **ORAL-01** | **Oral-exam scenarios:** typed answers compared with a reviewed outline, with self-review kept separate. Voice is a later, separately approved experiment | DIFF-04, COMP-09; M6 | [DIFF plan §5](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) |
+
+**After the queue,** still approved and waiting, in this order:
+1. **The scheduler: P54-06** phase B part 2. This is the FSRS comparison; production stays on `simple-v1` until the owner decides otherwise.
+2. **Weather: P54-07 / WX-01**, airport weather in lesson preparation.
+3. **The FAA reference shelf: P54-08 / FAA-01/02.**
+4. **Study Hub HUB-02/06**, connected topics and grounded questions. The other HUB items are absorbed into rows 8–11 above.
+
+**Other lanes:**
+- **iOS:** verified Mac-to-iPhone restore of the current schema; the portability half of DIFF-06.
+- **OFFLINE-02-OCR:** search for scanned pages. Gated.
+- **OFFLINE-03c:** deferred.
+- **Open-source evaluations OSS-01–08:** evaluate only; nothing is adopted without the owner.
+
+## Rules every item keeps
+
+- **School, instructor, a lesson and an account stay optional.** No guilt mechanics, streak penalties or pass/readiness scores. Completion never claims mastery.
+- **Her data is protected:**
+  - migrations only add;
+  - the bundle id never changes;
+  - backups and restores stay guarded;
+  - saved work survives a restart while offline.
+- **No local AI models.** No new dependency or migration without the owner. An embedded PDF reader and voice each need their own approval.
+- **Aviation content** is labelled as a study aid to check against FAA guidance and her instructor. The app never claims to have the real FAA question bank.
+- **Workflow:** Codex implements, then Antigravity, then Qwen Flash. Claude reviews, tests and merges. The owner tags and publishes releases.
+
+## Owner-only items
+
+- Rotate the exposed OpenRouter key.
+- After 0.5.8, the real-world PDF check on her 8 GB Mac. If it's slow, the follow-up is a 384 MiB cap.
+- The FAA medical and student pilot certificate are not started. A pre-solo paperwork checklist can be offered again.
+
+## Research behind the queue
+
+- [Offline training research](docs/OFFLINE_TRAINING_RESEARCH_2026-10-21.md) and its [six-feature plan](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) (#258).
+- [Competitive app research](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) (#259): 18 apps and 120 public reviews.
+- Main lesson: finish and polish the connected routine before adding new feature families. That routine runs from her material, to a short session, to an explained mistake, to a follow-up, to her next lesson.
+- Earlier research: [Study Hub](docs/STUDY_HUB_ROADMAP_2026-10-17.md), [open-source shortlist](docs/STUDY_HUB_OSS_RESEARCH_2026-10-17.md), [offline-study open source](docs/OFFLINE_STUDY_OPEN_SOURCE_RESEARCH_2026-10-18.md).
+
+---
+
+# History (dated decisions, newest first)
+
 ## Owner decision: the researched features join the roadmap — 21 October 2026
 
 The owner approved adding the proposed features from the [six-feature roadmap](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) (DIFF-01–06, #258) and the [competitive research](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) (COMP-01–10, #259) to the roadmap. They are now **planned work, in the order below**. Each slice still gets its own bounded prompt, failing-first tests, Claude's review and exact-head CI before it merges. The gates written in those documents still apply:
