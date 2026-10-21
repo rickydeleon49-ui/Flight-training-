@@ -42,6 +42,8 @@ impl Fixture {
                explanation TEXT NOT NULL DEFAULT '');
              CREATE TABLE card_versions (id TEXT PRIMARY KEY, source_material_id TEXT NOT NULL, is_active INTEGER NOT NULL);
              CREATE TABLE card_items (id TEXT PRIMARY KEY, version_id TEXT NOT NULL, front TEXT NOT NULL, back TEXT NOT NULL);
+             CREATE TABLE homework_assignments (id TEXT PRIMARY KEY,title TEXT,instructions TEXT,archived INTEGER);
+             CREATE TABLE homework_activities (id TEXT PRIMARY KEY,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT);
              CREATE TABLE notes (id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '');
              CREATE TABLE questions (id TEXT PRIMARY KEY, text TEXT NOT NULL, material_id TEXT,
                answer TEXT NOT NULL DEFAULT '');",
@@ -100,6 +102,7 @@ impl Fixture {
             coverage: Coverage::default(),
             saved: Some(SavedRequest {
                 categories,
+                material_filters_active: false,
                 material_ids: materials.iter().map(|s| s.to_string()).collect(),
             }),
             saved_available: true,
@@ -119,6 +122,7 @@ const ALL: Categories = Categories {
     practice: true,
     notes: true,
     questions: true,
+    homework: true,
 };
 
 fn hits(r: &Response) -> Vec<(String, &'static str, String)> {
@@ -411,6 +415,7 @@ fn storage_not_ready_reports_unavailable() {
             coverage: Coverage::default(),
             saved: Some(SavedRequest {
                 categories: ALL,
+                material_filters_active: false,
                 material_ids: vec![],
             }),
             saved_available: false,
@@ -611,4 +616,192 @@ fn a_huge_title_is_never_read_or_repeated_per_passage() {
     // Under it: clipped once, for the group.
     assert_eq!(title_of("long").chars().count(), LABEL_CHARS);
     assert!(serde_json::to_vec(&r).unwrap().len() <= super::super::MAX_RESPONSE_BYTES);
+}
+
+#[test]
+fn homework_search_current_uuid_digest_scope_and_rebuild() {
+    let f = Fixture::new();
+    let db = f.db();
+    db.execute_batch("INSERT INTO homework_assignments VALUES ('a','Fronts','Prepare privately',0),('b','ArchivedFronts','hidden',1);
+        INSERT INTO homework_activities VALUES ('x','a','Clouds','Write reflection',NULL,NULL),('y','a','Linked','Linked fronts','m1',NULL),('z','a','RemovedFronts','hidden',NULL,'gone');").unwrap();
+    let host = f.host();
+    let response = f.search(&host, "fronts", ALL, &[]).unwrap();
+    let saved = response.saved.unwrap();
+    let group = saved.groups.iter().find(|g| g.kind == "homework").unwrap();
+    assert_eq!(group.title, "Homework");
+    let heading = group.passages.iter().find(|p| p.record_id == "a").unwrap();
+    assert_eq!(
+        heading.rev,
+        Some(item_digest(&["Fronts", "Prepare privately"]))
+    );
+    assert!(!group
+        .passages
+        .iter()
+        .any(|p| p.record_id == "b" || p.record_id == "a:z"));
+    let reflection = f.search(&host, "reflection", ALL, &[]).unwrap();
+    assert!(reflection
+        .saved
+        .unwrap()
+        .groups
+        .iter()
+        .any(|g| g.passages.iter().any(|p| p.record_id == "a:x")));
+    db.execute(
+        "UPDATE homework_activities SET body='New reflection' WHERE id='x'",
+        [],
+    )
+    .unwrap();
+    let changed = f.search(&host, "reflection", ALL, &[]).unwrap();
+    let p = changed
+        .saved
+        .unwrap()
+        .groups
+        .into_iter()
+        .flat_map(|g| g.passages)
+        .find(|p| p.record_id == "a:x")
+        .unwrap();
+    assert_eq!(p.rev, Some(item_digest(&["Clouds", "New reflection"])));
+    db.execute(
+        "UPDATE homework_assignments SET archived=1 WHERE id='a'",
+        [],
+    )
+    .unwrap();
+    assert!(f
+        .search(&host, "reflection", ALL, &[])
+        .unwrap()
+        .saved
+        .unwrap()
+        .groups
+        .is_empty());
+}
+
+#[test]
+fn homework_search_excludes_archived_assignments_and_removed_activities() {
+    let f = Fixture::new();
+    let db = f.db();
+    db.execute_batch(
+        "INSERT INTO homework_assignments VALUES
+           ('active', 'Activeword', '', 0),
+           ('archived', 'Archivedword', '', 1);
+         INSERT INTO homework_activities VALUES
+           ('archived-activity', 'archived', 'Archivedactivityword', '', NULL, NULL),
+           ('removed-activity', 'active', 'Removedactivityword', '', NULL, 'gone');",
+    )
+    .unwrap();
+    let host = f.host();
+    let expected_coverage = SavedCoverage {
+        homework: 1,
+        ..SavedCoverage::default()
+    };
+    let expected_hits = vec![("homework".into(), "homework", "active".into())];
+    let response = f.search(&host, "activeword", ALL, &[]).unwrap();
+    assert_eq!(hits(&response), expected_hits);
+    assert_eq!(response.saved.as_ref().unwrap().state, "ok");
+    assert_eq!(response.saved.as_ref().unwrap().coverage, expected_coverage);
+    for word in [
+        "archivedword",
+        "archivedactivityword",
+        "removedactivityword",
+    ] {
+        let response = f.search(&host, word, ALL, &[]).unwrap();
+        assert!(hits(&response).is_empty(), "{word} must not be indexed");
+        assert_eq!(response.saved.as_ref().unwrap().state, "ok", "{word}");
+        assert_eq!(
+            response.saved.as_ref().unwrap().coverage,
+            expected_coverage,
+            "{word} must not count toward coverage"
+        );
+    }
+
+    // Each excluded row alone exceeds the preflight total-byte limit.
+    // Search must still index the active assignment, without oversized items.
+    let oversized = "x".repeat(MAX_SAVED_BYTES as usize + 1);
+    for sql in [
+        "UPDATE homework_assignments SET instructions=?1 WHERE id='archived'",
+        "UPDATE homework_activities SET body=?1 WHERE id='archived-activity'",
+        "UPDATE homework_activities SET body=?1 WHERE id='removed-activity'",
+    ] {
+        db.execute(sql, [&oversized]).unwrap();
+        let response = f.search(&host, "activeword", ALL, &[]).unwrap();
+        assert_eq!(response.saved.as_ref().unwrap().state, "ok", "{sql}");
+        assert_eq!(hits(&response), expected_hits, "{sql}");
+        assert_eq!(
+            response.saved.as_ref().unwrap().coverage,
+            expected_coverage,
+            "{sql}"
+        );
+        db.execute(sql, [""]).unwrap();
+    }
+}
+
+#[test]
+fn homework_material_filters_never_include_unrelated_bodies() {
+    let f = Fixture::new();
+    f.db().execute_batch("INSERT INTO homework_assignments VALUES ('a','Scopeword heading','',0),('b','Scopeword unlinked','',0);
+      INSERT INTO homework_activities VALUES ('x','a','Scopeword linked','Body','m1',NULL),('y','a','Scopeword unrelated','Body','m2',NULL),('z','b','Scopeword unlinked','Body',NULL,NULL);").unwrap();
+    let host = f.host();
+    let scoped = |ids: Vec<String>| {
+        host.search(Request {
+            targets: vec![],
+            terms: parse("scopeword").unwrap(),
+            offset: 0,
+            coverage: Coverage::default(),
+            saved: Some(SavedRequest {
+                categories: ALL,
+                material_ids: ids,
+                material_filters_active: true,
+            }),
+            saved_available: true,
+        })
+        .unwrap()
+    };
+    let response = scoped(vec!["m1".into()]);
+    let ids: Vec<_> = response
+        .saved
+        .unwrap()
+        .groups
+        .into_iter()
+        .flat_map(|g| g.passages)
+        .map(|p| p.record_id)
+        .collect();
+    assert!(ids.contains(&"a".to_string()));
+    assert!(ids.contains(&"a:x".to_string()));
+    assert!(!ids.contains(&"a:y".to_string()));
+    assert!(!ids.contains(&"b".to_string()));
+    assert!(scoped(vec![]).saved.unwrap().groups.is_empty());
+    f.db()
+        .execute(
+            "UPDATE homework_activities SET removed_at='gone' WHERE id='x'",
+            [],
+        )
+        .unwrap();
+    assert!(scoped(vec!["m1".into()]).saved.unwrap().groups.is_empty());
+}
+
+#[test]
+fn homework_obeys_field_and_total_byte_bounds() {
+    let f = Fixture::new();
+    let db = f.db();
+    db.execute(
+        "INSERT INTO homework_assignments VALUES ('a','bounded',?1,0)",
+        ["x".repeat(MAX_TEXT_FIELD_BYTES as usize + 1)],
+    )
+    .unwrap();
+    let host = f.host();
+    let saved = f.search(&host, "bounded", ALL, &[]).unwrap().saved.unwrap();
+    assert_eq!(saved.state, "ok");
+    assert_eq!(saved.coverage.too_large_items, 1);
+    assert!(saved.groups.is_empty());
+    db.execute(
+        "UPDATE homework_assignments SET instructions=?1",
+        ["x".repeat(MAX_SAVED_BYTES as usize + 1)],
+    )
+    .unwrap();
+    assert_eq!(
+        f.search(&host, "bounded", ALL, &[])
+            .unwrap()
+            .saved
+            .unwrap()
+            .state,
+        "too_large"
+    );
 }

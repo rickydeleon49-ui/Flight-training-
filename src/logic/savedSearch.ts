@@ -6,6 +6,7 @@
  * index plus a digest of its own text, so a link from a search made before
  * she regenerated the guide never opens different text.
  */
+import type { HomeworkSnapshot } from "@/domain/homework";
 import type { AppData } from "@/state/AppDataContext";
 import type { SavedCoverage, SavedPassage } from "@/services/offlineContent";
 
@@ -32,6 +33,8 @@ export async function itemDigest(fields: string[]): Promise<string> {
 }
 
 const KIND_LABELS: Record<SavedPassage["kind"], string> = {
+  homework: "Homework",
+  homework_activity: "Homework activity",
   summary: "Guide summary",
   guide: "Study guide",
   card: "Flashcard",
@@ -49,6 +52,9 @@ export function savedDestination(passage: SavedPassage, materialId: string | nul
   const rev = passage.rev ? `&rev=${encodeURIComponent(passage.rev)}` : "";
   const id = encodeURIComponent(passage.recordId);
   switch (passage.kind) {
+    case "homework":
+    case "homework_activity":
+      return `/study/homework/${encodeURIComponent(passage.recordId.split(":")[0]!)}`;
     case "summary":
       return materialId ? `/study/${encodeURIComponent(materialId)}?guide=summary${rev}` : null;
     case "guide":
@@ -70,8 +76,18 @@ export type SavedCheck = "ok" | "changed" | "gone";
  * Confirm against the app's loaded data that a hit still points at what
  * matched (§4). Practice items aren't in the loaded data; their page checks.
  */
-export async function checkSavedHit(data: Pick<AppData, "aiStudySets" | "notes" | "questions">, passage: SavedPassage, materialId: string | null): Promise<SavedCheck> {
+export async function checkSavedHit(data: Pick<AppData, "aiStudySets" | "notes" | "questions">, passage: SavedPassage, materialId: string | null, loadHomework?: (id: string) => Promise<HomeworkSnapshot | null>): Promise<SavedCheck> {
   switch (passage.kind) {
+    case "homework":
+    case "homework_activity": {
+      const [assignmentId, activityId] = passage.recordId.split(":");
+      const s = assignmentId && loadHomework ? await loadHomework(assignmentId) : null;
+      if (!s || s.assignment.archived) return "gone";
+      const entry = activityId ? s.activities.find(e => e.record.id === activityId && !e.record.removed_at) : null;
+      if (passage.kind === "homework_activity" && !entry) return "gone";
+      const fields = entry ? [entry.record.title, entry.record.body] : [s.assignment.title, s.assignment.instructions];
+      return (await itemDigest(fields)) === passage.rev ? "ok" : "changed";
+    }
     case "note":
       return data.notes.some((n) => n.id === passage.recordId) ? "ok" : "gone";
     case "question":
@@ -113,6 +129,7 @@ export function savedCoverageSentence(state: string, c: SavedCoverage, found: nu
   const searched = [
     c.studySets > 0 ? count(c.studySets, "study guide", "study guides") : null,
     c.practiceVersions > 0 ? count(c.practiceVersions, "practice test", "practice tests") : null,
+    (c.homework ?? 0) > 0 ? count(c.homework!, "homework assignment", "homework assignments") : null,
     c.notes > 0 ? count(c.notes, "note", "notes") : null,
     c.questions > 0 ? count(c.questions, "instructor question", "instructor questions") : null,
   ].filter(Boolean);

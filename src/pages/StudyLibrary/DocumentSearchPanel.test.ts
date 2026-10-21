@@ -9,7 +9,8 @@ import { makeMaterial } from "@/testing/factories";
 
 const service = vi.hoisted(() => ({
   enabled: true,
-  search: vi.fn<(q: string, ids: string[], offset: number, types?: readonly string[]) => Promise<SearchResponse>>(),
+  getHomework: vi.fn(),
+  search: vi.fn<(q: string, ids: string[], offset: number, types?: readonly string[], filtered?: boolean) => Promise<SearchResponse>>(),
   verify: vi.fn<(id: string, sha: string) => Promise<"ok" | "changed" | "missing">>(),
 }));
 const nav = vi.hoisted(() => {
@@ -33,8 +34,8 @@ vi.mock("@/services/offlineContent", async (original) => {
   return {
     ...real,
     offlineStudyEnabled: () => service.enabled,
-    searchOfflineContent: (q: string, ids: string[], offset: number, types?: readonly string[]) =>
-      service.search(q, ids, offset, types),
+    searchOfflineContent: (q: string, ids: string[], offset: number, types?: readonly string[], filtered?: boolean) =>
+      service.search(q, ids, offset, types, filtered),
     verifyOfflineDestination: (id: string, sha: string) => service.verify(id, sha),
   };
 });
@@ -42,7 +43,7 @@ const appData = vi.hoisted(() => ({
   data: { aiStudySets: [] as unknown[], notes: [] as unknown[], questions: [] as unknown[] },
 }));
 vi.mock("@/state/AppDataContext", () => ({
-  useOptionalAppData: () => ({ data: appData.data }),
+  useOptionalAppData: () => ({ data: appData.data, repositories: { homework: { get: service.getHomework } } }),
 }));
 vi.mock("@/state/navigation/useDocumentNavigation", () => ({
   useNavigationController: () => ({
@@ -153,7 +154,8 @@ describe("Searching inside documents", () => {
       "practice",
       "notes",
       "questions",
-    ]);
+      "homework",
+    ], false);
     expect(await screen.findByText("Pilot's Handbook")).toBeTruthy();
     expect(screen.getByText("PDF page 58")).toBeTruthy();
     const mark = screen.getByText("crosswind");
@@ -232,7 +234,7 @@ describe("Searching inside documents", () => {
     await typed();
     fireEvent.click(await screen.findByRole("button", { name: "Show more matches" }));
     expect(await screen.findByText("Weather")).toBeTruthy();
-    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["documentPages"]);
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["documentPages"], false);
     const [first, next] = screen.getAllByRole("button", { name: /open the document/ });
     first!.focus();
     fireEvent.keyDown(first!, { key: "ArrowDown" });
@@ -493,7 +495,7 @@ describe("saved study content", () => {
     await typed();
     fireEvent.click(await view.findByRole("button", { name: "Show more saved matches" }));
     await waitFor(() => expect(view.getAllByRole("button", { name: "Your notes, Note: open it" })).toHaveLength(2));
-    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["guides", "cards", "practice", "notes", "questions"]);
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 20, ["guides", "cards", "practice", "notes", "questions", "homework"], false);
     // The documents section is unchanged by saved paging.
     expect(view.getByText("Pilot's Handbook")).toBeTruthy();
     view.unmount();
@@ -516,7 +518,7 @@ describe("saved study content", () => {
     expect(await view.findByText("Searched your saved study content (1 study guide, 2 notes).")).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "Show more saved matches" }));
     await waitFor(() => expect(view.getAllByRole("button", { name: "Your notes, Note: open it" })).toHaveLength(1));
-    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions"]);
+    expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions", "homework"], false);
     // The documents section and its coverage are kept.
     expect(view.getByText("Pilot's Handbook")).toBeTruthy();
     expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
@@ -531,4 +533,27 @@ describe("saved study content", () => {
     });
     expect(appendSavedGroups([g(["a"])], [g(["a", "b"])])[0]!.passages.map((p) => p.recordId)).toEqual(["a", "b"]);
   });
+});
+
+
+it("Homework results open the UUID after a fresh repository and digest check",async()=>{
+ const { newHomework }=await import("./homeworkUi");const s=newHomework();s.assignment.title="Crosswind homework";
+ const passage={kind:"homework" as const,recordId:s.assignment.id,rev:await itemDigest([s.assignment.title,s.assignment.instructions]),snippet:"Crosswind homework"};
+ service.getHomework.mockResolvedValue(s);
+ service.search.mockResolvedValue(response({groups:[],saved:{state:"ok",coverage:{studySets:0,practiceVersions:0,notes:0,questions:0,homework:1,tooLargeItems:0},groups:[{kind:"homework",title:"Homework",materialId:null,passages:[passage]}],nextOffset:null,moreBeyondCap:false}}));
+ render(inRouter(h(DocumentSearchPanel,{query:"crosswind",materials:[],materialFiltersActive:true})));await typed();
+ expect(service.search.mock.calls[0]![4]).toBe(true);
+ fireEvent.click(await screen.findByRole("button",{name:"Homework, Homework: open it"}));
+ await waitFor(()=>expect(screen.getByTestId("location").textContent).toBe(`/study/homework/${s.assignment.id}`));
+ expect(service.getHomework).toHaveBeenCalledWith(s.assignment.id);
+});
+it("Homework stale or archived hits never navigate",async()=>{
+ const { newHomework }=await import("./homeworkUi");const s=newHomework();s.assignment.title="Changed homework";
+ service.getHomework.mockResolvedValue(s);
+ service.search.mockResolvedValue(response({groups:[],saved:{state:"ok",coverage:{studySets:0,practiceVersions:0,notes:0,questions:0,homework:1,tooLargeItems:0},groups:[{kind:"homework",title:"Homework",materialId:null,passages:[{kind:"homework",recordId:s.assignment.id,rev:await itemDigest(["Old title",""]),snippet:"Crosswind"}]}],nextOffset:null,moreBeyondCap:false}}));
+ render(inRouter(h(DocumentSearchPanel,{query:"crosswind",materials:[]})));await typed();
+ fireEvent.click(await screen.findByRole("button",{name:"Homework, Homework: open it"}));await screen.findByText("This homework has changed since you searched. Search again to find it.");
+ expect(screen.getByTestId("location").textContent).toBe("/study");
+ s.assignment.archived=1;fireEvent.click(screen.getByRole("button",{name:"Homework, Homework: open it"}));await screen.findByText("That item isn't here any more.");
+ expect(screen.getByTestId("location").textContent).toBe("/study");
 });

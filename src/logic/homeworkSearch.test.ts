@@ -1,0 +1,32 @@
+import { expect, it } from "vitest";
+import { newHomework, newHomeworkActivity } from "@/pages/StudyLibrary/homeworkUi";
+import { checkSavedHit, itemDigest, savedDestination } from "./savedSearch";
+import type { SavedPassage } from "@/services/offlineContent";
+const data = { aiStudySets: [], notes: [], questions: [] };
+it("search_finds_homework_and_opens_by_uuid", async () => {
+    const s = newHomework();
+    s.assignment.title = "Weather";
+    s.assignment.instructions = "Review fronts";
+    const p: SavedPassage = { kind: "homework", recordId: s.assignment.id, rev: await itemDigest(["Weather", "Review fronts"]), snippet: "" };
+    expect(savedDestination(p, null)).toBe(`/study/homework/${s.assignment.id}`);
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("ok");
+    s.assignment.instructions = "Changed";
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("changed");
+    expect(await checkSavedHit(data, p, null, async () => null)).toBe("gone");
+});
+it("search_excludes_archived_and_removed", async () => {
+    const s = newHomework();
+    const e = newHomeworkActivity(s.assignment.id, 0, "reflection", s.assignment.created_at);
+    s.activities = [e];
+    const p: SavedPassage = { kind: "homework_activity", recordId: `${s.assignment.id}:${e.record.id}`, rev: await itemDigest([e.record.title, e.record.body]), snippet: "" };
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("ok");
+    e.record.position = 4;
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("ok");
+    e.record.body = "Changed";
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("changed");
+    e.record.removed_at = new Date().toISOString();
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("gone");
+    e.record.removed_at = null;
+    s.assignment.archived = 1;
+    expect(await checkSavedHit(data, p, null, async () => s)).toBe("gone");
+});

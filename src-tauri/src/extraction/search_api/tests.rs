@@ -305,3 +305,51 @@ fn validates_limits_and_never_queries_unready_storage() {
         Err("storage_not_ready".into())
     );
 }
+
+#[test]
+fn homework_content_type_has_api_parity_and_remains_feature_gated() {
+    let f = Fixture::new();
+    Connection::open(f.root.join("her-flight-deck.db")).unwrap().execute_batch(
+        "CREATE TABLE ai_study_sets (source_material_id TEXT,summary TEXT,sections_json TEXT,flashcards_json TEXT);
+         CREATE TABLE practice_test_versions (id TEXT,source_material_id TEXT,is_active INTEGER);
+         CREATE TABLE practice_test_items (id TEXT,version_id TEXT,question_text TEXT);
+         CREATE TABLE notes (id TEXT,title TEXT,body TEXT);
+         CREATE TABLE questions (id TEXT,material_id TEXT,text TEXT,answer TEXT);
+         CREATE TABLE homework_assignments (id TEXT,title TEXT,instructions TEXT,archived INTEGER);
+         CREATE TABLE homework_activities (id TEXT,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT);
+         INSERT INTO homework_assignments VALUES ('00000000-0000-4000-8000-000000000001','Cloud homework','Review clouds',0);"
+    ).unwrap();
+    wait_ready(&f.svc);
+    let response = submit_search_scoped(
+        f.svc.clone(),
+        "cloud".into(),
+        vec![],
+        vec!["homework".into()],
+        0,
+        Instant::now(),
+        false,
+    )
+    .unwrap()
+    .wait()
+    .unwrap();
+    let saved = response.saved.unwrap();
+    assert_eq!(saved.coverage.homework, 1);
+    assert_eq!(saved.groups[0].title, "Homework");
+    assert_eq!(
+        saved.groups[0].passages[0].record_id,
+        "00000000-0000-4000-8000-000000000001"
+    );
+    let filtered = submit_search_scoped(
+        f.svc.clone(),
+        "cloud".into(),
+        vec![],
+        vec!["homework".into()],
+        0,
+        Instant::now(),
+        true,
+    )
+    .unwrap()
+    .wait()
+    .unwrap();
+    assert!(filtered.saved.unwrap().groups.is_empty());
+}

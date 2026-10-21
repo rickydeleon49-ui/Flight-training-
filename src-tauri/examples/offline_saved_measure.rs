@@ -24,6 +24,7 @@ const ALL: Categories = Categories {
     practice: true,
     notes: true,
     questions: true,
+    homework: false,
 };
 
 fn read(path: &Path) -> Value {
@@ -38,6 +39,7 @@ fn request(query: &str, categories: Categories, materials: &[String]) -> Request
         coverage: Coverage::default(),
         saved: Some(SavedRequest {
             categories,
+            material_filters_active: false,
             material_ids: materials.to_vec(),
         }),
         saved_available: true,
@@ -135,6 +137,7 @@ fn main() {
     let mut correctness = Vec::new();
     let saved_request = SavedRequest {
         categories: ALL,
+        material_filters_active: false,
         material_ids: materials.clone(),
     };
     for (qi, q) in queries.iter().enumerate() {
