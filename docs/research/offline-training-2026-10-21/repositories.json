@@ -1,0 +1,98 @@
+{
+  "researchDatePacific": "2026-10-21",
+  "retrievedAtUtc": "2026-10-21T18:35:50.312Z",
+  "source": "GitHub REST API via authenticated gh; public repository metadata and pinned license bytes only",
+  "note": "Counts are observations, not compatibility or security evidence. No source copied, package installed, or dependency adopted.",
+  "repositories": [
+    {
+      "repository": "mozilla/pdf.js",
+      "url": "https://github.com/mozilla/pdf.js",
+      "stars": 54031,
+      "archived": false,
+      "defaultBranch": "master",
+      "apiLicense": "Apache-2.0",
+      "observedHead": "d2f432753a9d2bb3faeaa78ca79fc07277807c18",
+      "inspectedLicense": {
+        "path": "LICENSE",
+        "url": "https://github.com/mozilla/pdf.js/blob/d2f432753a9d2bb3faeaa78ca79fc07277807c18/LICENSE",
+        "gitBlob": "f433b1a53f5b830a205fd2df78e2b34974656c7b",
+        "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "declared": "Apache-2.0"
+      },
+      "meetsOwnerStarThreshold": true,
+      "adoptionApprovedByThisResearch": false
+    },
+    {
+      "repository": "open-spaced-repetition/fsrs4anki",
+      "url": "https://github.com/open-spaced-repetition/fsrs4anki",
+      "stars": 4111,
+      "archived": false,
+      "defaultBranch": "main",
+      "apiLicense": "MIT",
+      "observedHead": "ff7c85cee735472d1c9cec0b9252d184087f74d8",
+      "inspectedLicense": {
+        "path": "LICENSE",
+        "url": "https://github.com/open-spaced-repetition/fsrs4anki/blob/ff7c85cee735472d1c9cec0b9252d184087f74d8/LICENSE",
+        "gitBlob": "200c20b56e6bb4aa6739450acf1fb9ba26d082c1",
+        "sha256": "2ec9e6e61ed82af824583c0f91c6103948ed527b727281bc9f51de46780ee4d7",
+        "declared": "MIT"
+      },
+      "meetsOwnerStarThreshold": true,
+      "adoptionApprovedByThisResearch": false
+    },
+    {
+      "repository": "open-spaced-repetition/fsrs-rs",
+      "url": "https://github.com/open-spaced-repetition/fsrs-rs",
+      "stars": 449,
+      "archived": false,
+      "defaultBranch": "main",
+      "apiLicense": "BSD-3-Clause",
+      "observedHead": "0a5737406a0c5c7a5259b144738cbe4a0b649d76",
+      "inspectedLicense": {
+        "path": "LICENSE",
+        "url": "https://github.com/open-spaced-repetition/fsrs-rs/blob/0a5737406a0c5c7a5259b144738cbe4a0b649d76/LICENSE",
+        "gitBlob": "dc2aa193b36022182575184bee396d8b438a8000",
+        "sha256": "2604c7d519c6a579a7e24f09b218460b12d0d27da2eb0aa3fee09d5891511fa1",
+        "declared": "BSD-3-Clause"
+      },
+      "meetsOwnerStarThreshold": false,
+      "adoptionApprovedByThisResearch": false
+    },
+    {
+      "repository": "open-spaced-repetition/ts-fsrs",
+      "url": "https://github.com/open-spaced-repetition/ts-fsrs",
+      "stars": 829,
+      "archived": false,
+      "defaultBranch": "main",
+      "apiLicense": "MIT",
+      "observedHead": "8800fefd61bd95e55b9a9c20228ff686d0b159ad",
+      "inspectedLicense": {
+        "path": "LICENSE",
+        "url": "https://github.com/open-spaced-repetition/ts-fsrs/blob/8800fefd61bd95e55b9a9c20228ff686d0b159ad/LICENSE",
+        "gitBlob": "ba030f520ac6576497f8d43424108f9f4eaf05d6",
+        "sha256": "8b83a73dd2894ff553d6de6113064b3ad9dfad3f839837b61f3b183881131d01",
+        "declared": "MIT"
+      },
+      "meetsOwnerStarThreshold": false,
+      "adoptionApprovedByThisResearch": false
+    },
+    {
+      "repository": "ankitects/anki",
+      "url": "https://github.com/ankitects/anki",
+      "stars": 32188,
+      "archived": false,
+      "defaultBranch": "main",
+      "apiLicense": "NOASSERTION",
+      "observedHead": "8d6e0a0f462f016889896ceaaab1be2aba182588",
+      "inspectedLicense": {
+        "path": "LICENSE",
+        "url": "https://github.com/ankitects/anki/blob/8d6e0a0f462f016889896ceaaab1be2aba182588/LICENSE",
+        "gitBlob": "6aa37a76547f179fec9893a6f4b6064b2681bacb",
+        "sha256": "bde7d05790a05f1d1776b77a93ac32765310c8e6e578136183c2560475c500ef",
+        "declared": "AGPL-3.0-or-later with component exceptions listed in LICENSE"
+      },
+      "meetsOwnerStarThreshold": true,
+      "adoptionApprovedByThisResearch": false
+    }
+  ]
+}

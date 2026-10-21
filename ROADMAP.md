@@ -1,3 +1,24 @@
+## Offline training differentiation: researched roadmap addition — 21 October 2026
+
+The owner requested a deep research pass and a roadmap for the six discussed features. [Research, primary sources and current-code inventory](docs/OFFLINE_TRAINING_RESEARCH_2026-10-21.md) and [implementation slices/acceptance criteria](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) now define that follow-on work. **Planning addition only:** no feature, migration, dependency, model, release switch or implementation-priority change is authorized by publishing these documents.
+
+The product focus is a private training routine that connects lessons, source-linked study, corrections and durable offline progress. Google's current documentation already describes remembered card progress and missed-card practice; those alone are not differentiators. The research does not claim NotebookLM has no offline features or that it lacks every proposed workflow.
+
+**Reconciled baseline: main `2b5b146` (PR #256), version 0.5.7/schema 20.** GEN-03 (#249), OFFLINE-ON-1/pressure tooling (#250/#252), homework storage/UI (#254/#255) and card-run evidence (#256) are merged. The older entry below still calls migration 0020 proposed and GEN-03 local; those statements are historical. HW-01d test-run/daily-plan integration and OFFLINE-ON pressure/activation acceptance remain open at this baseline. Source presence is not installed or release acceptance.
+
+| Acceptance group | Deliverable to complete | Build on / boundary |
+| --- | --- | --- |
+| DIFF-01 — Next-flight preparation | A short, explainable, editable session tied to selected homework, missed topics and instructor questions | Extend existing M1 recommendations, P54-05 briefs and HUB-04/07. Remain useful without a school, instructor or next lesson; private debrief content is not exported automatically. |
+| DIFF-02 — Offline lesson packs | One assignment collects exact reading/card/quiz versions with checked capability-specific availability and restart-safe resume | Extend HOMEWORK-01 and existing kits/readiness. Distinguish local PDF, saved content and searchable text; no duplicate pack generator or automatic queued upload. |
+| DIFF-03 — Mistake-based practice | Exact-version missed/skipped review leads to a bounded, source-linked follow-up | Reuse M2 history/card queues and HUB-04/05. `simple-v1` remains production; the existing FSRS feasibility/transition/owner gates still apply. |
+| DIFF-04 — Offline oral scenarios | Saved text/free-response practice with visible source-linked discussion criteria and separate self-review | M6 follow-on after source/content review. No certification score; recording/recognition is later and separately scoped, with no silent cloud fallback. |
+| DIFF-05 — Study from the PDF | Connect existing page/bookmark notes to study; selected text/highlights after a reader feasibility decision | Extend M4/HUB-01/03/08. The existing external-reader opener cannot guarantee a page jump. Preserve originals, macOS 12 and Windows fallback; no renderer/dependency adopted here. |
+| DIFF-06 — Portable training history | Clear packet/handout/CSV/backup choices and verified current-schema Mac-to-iPhone restore | Finish EXPORT-01/02 and the separate iOS lane. Packet v1 is not a full backup; retain v3 backup integrity and v1/v2 compatibility. No automatic merge/sync or unversioned portable-pack extension. |
+
+**Sequence remains:** active homework and unresolved OFFLINE-ON gates → remaining HOMEWORK-01 → EXPORT-01/02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01; existing scheduler/weather/FAA/Study Hub queues remain. These six groups refine overlapping approved work and queue genuinely new gaps; they do not preempt an in-flight assignment. Later connected-session, bookmark-to-study/highlight and text-oral slices need bounded reviewer assignments. Mobile compatibility can be audited separately without blocking desktop sessions.
+
+Keep the owner's exclusion of local AI models. No new provider, package, permission, format, migration number, minimum OS or efficacy claim is adopted. The owner explicitly requested GitHub publication of this research on 21 October; Codex may commit/push this documentation branch and open its review PR. Claude retains independent review and merge ownership; publication is not approval. [Cross-machine handoff](docs/OFFLINE_TRAINING_RESEARCH_HANDOFF_2026-10-21.md).
+
 ## Owner decisions: review workflow, offline-generation fallback and next features — 20 October 2026
 
 OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX-1 merged (PR #239).
