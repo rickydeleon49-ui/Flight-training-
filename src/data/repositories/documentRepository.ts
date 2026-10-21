@@ -337,7 +337,7 @@ export function documentRepository(db: SqlDatabase) {
 
   async function withPdfSources(set: AiStudySet): Promise<AiStudySet> {
     const query = (sql: string, params: import("../db").SqlValue[]) => db.select<Record<string, unknown>>(sql, params);
-    const summaryPdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "summary", "summary", set.summary, set.summaryOrigin ?? undefined);
+    const summaryPdfProvenance = set.summary.trim() ? await readPdfItemProvenance(query, set.sourceMaterialId, "summary", "summary", set.summary, set.summaryOrigin ?? undefined) : undefined;
     const sections = await Promise.all(set.sections.map(async item => {
       if (!item.itemId) return item;
       const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "section", item.itemId, item as unknown as Record<string, unknown>, item.origin);

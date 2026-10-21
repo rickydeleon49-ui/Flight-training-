@@ -62,6 +62,16 @@ export function StudyContentProvenance({
         <span className="study-provenance__item">
           <span className="study-provenance__value">{provenance.dateText}</span>
         </span>
+        {provenance.pdfNote ? (
+          <>
+            <span className="study-provenance__sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="study-provenance__item">
+              <span className="study-provenance__value">{provenance.pdfNote}</span>
+            </span>
+          </>
+        ) : null}
       </div>
     </div>
   );

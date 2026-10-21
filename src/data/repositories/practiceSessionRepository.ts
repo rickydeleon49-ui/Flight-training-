@@ -1,3 +1,4 @@
+import { readPdfItemProvenance } from "../pdfKitSources";
 /**
  * Repository for Practice Sessions (M2 PR 1).
  *
@@ -351,6 +352,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
 
     async getItems(versionId: string): Promise<PracticeTestItem[]> {
       const rows = await db.select<{
+        material_id: string | null;
         id: string;
         version_id: string;
         ordinal: number;
@@ -363,17 +365,19 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         replaces_id: string | null;
         origin: string | null;
       }>(
-        `SELECT i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
+        `SELECT v.source_material_id AS material_id, i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
                 i.correct_index, i.explanation, i.source_page,
                 i.logical_id, i.replaces_id, o.origin
          FROM practice_test_items i
+         JOIN practice_test_versions v ON v.id = i.version_id
          LEFT JOIN practice_item_origins o ON o.item_id = i.id
          WHERE i.version_id = ?
          ORDER BY i.ordinal ASC`,
         [versionId],
       );
 
-      return rows.map((r) => ({
+      return Promise.all(rows.map(async (r): Promise<PracticeTestItem> => {
+        const item: PracticeTestItem = {
         id: r.id,
         versionId: r.version_id,
         ordinal: Number(r.ordinal),
@@ -385,6 +389,11 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         logicalId: r.logical_id,
         replaces: r.replaces_id,
         ...(r.origin === "user" || r.origin === "instructor" ? { origin: r.origin } : {}),
+        };
+        if (!r.material_id) return item;
+        const current = { question: item.questionText, options: item.options, correctIndex: item.correctIndex, explanation: item.explanation, sourcePage: item.sourcePage };
+        const pdfProvenance = await readPdfItemProvenance((sql, params) => db.select(sql, params), r.material_id, "question", item.logicalId ?? item.id, current, item.origin);
+        return pdfProvenance ? { ...item, pdfProvenance } : item;
       }));
     },
 

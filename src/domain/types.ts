@@ -554,6 +554,7 @@ export interface PracticeTestVersion {
 }
 
 export interface PracticeTestItem {
+  pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   id: string;
   versionId: string;
   ordinal: number;

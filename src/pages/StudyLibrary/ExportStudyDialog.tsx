@@ -1,3 +1,4 @@
+import { pdfLabelState, PDF_KIT_REMINDER } from "@/logic/pdfKitLabels";
 /**
  * Share or print one material's study aid (P54-04).
  *
@@ -181,8 +182,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
         ) : null}
 
         <p className="tiny dim">
-          The file says where this content came from. AI-generated and imported content is still a study aid: check it against current FAA
-          material and your instructor.
+          {pdfLabelState(source.studySet) || pdfLabelState(source.practiceTest) ? PDF_KIT_REMINDER : "The file says where this content came from. AI-generated and imported content is still a study aid: check it against current FAA material and your instructor."}
         </p>
 
         {error ? (

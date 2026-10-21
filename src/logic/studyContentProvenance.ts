@@ -6,10 +6,11 @@
  * Shows source material, origin, stored model when applicable, and locally
  * formatted creation date without modifying shared date helpers or persistence.
  */
+import { hasOnlyPdfContent, isAllPdfKit, isMixedPdfKit, PDF_KIT_LABEL, type PdfLabelContent } from "./pdfKitLabels";
 import type { StudySetProvider } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
 
-export interface StudyContentProvenanceInput {
+export interface StudyContentProvenanceInput extends PdfLabelContent {
   provider?: StudySetProvider | null;
   model?: string | null;
   generatedAt?: string | null;
@@ -22,6 +23,7 @@ export interface FormattedStudyContentProvenance {
   modelLabel: string | null;
   dateText: string;
   summaryText: string;
+  pdfNote?: string | null;
 }
 
 /**
@@ -47,9 +49,23 @@ export function formatStudyContentProvenance(
       modelLabel: "Model unavailable",
       dateText: "Date unavailable",
       summaryText: `Source material: ${resolvedSourceTitle} · Origin: Origin unavailable · Model: Model unavailable · Date unavailable`,
+      pdfNote: null,
     };
   }
 
+  const allSourcesValid = isAllPdfKit(content);
+  if (allSourcesValid || (content.provider === "manual" && hasOnlyPdfContent(content))) {
+    const pdfNote = allSourcesValid ? null : "Some source details are unavailable";
+    return {
+      sourceMaterialTitle: resolvedSourceTitle,
+      isImported: false,
+      originLabel: PDF_KIT_LABEL,
+      modelLabel: null,
+      dateText: "Saved on this computer",
+      summaryText: `Source material: ${resolvedSourceTitle} · ${PDF_KIT_LABEL}${pdfNote ? ` · ${pdfNote}` : ""}`,
+      pdfNote,
+    };
+  }
   const isImported = content.provider === "import";
   // A set she wrote herself never borrows Gemini's or an import's wording.
   const isManual = content.provider === "manual";
@@ -81,6 +97,12 @@ export function formatStudyContentProvenance(
   }
   parts.push(dateText);
 
+  let pdfNote: string | null = null;
+  if (isMixedPdfKit(content)) {
+    pdfNote = "Some items pulled from your PDF on this Mac";
+    parts.push(pdfNote);
+  }
+
   return {
     sourceMaterialTitle: resolvedSourceTitle,
     isImported,
@@ -88,5 +110,6 @@ export function formatStudyContentProvenance(
     modelLabel,
     dateText,
     summaryText: parts.join(" · "),
+    pdfNote,
   };
 }

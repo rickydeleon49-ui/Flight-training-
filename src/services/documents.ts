@@ -248,3 +248,9 @@ export async function getPdfStudyKit(jobId: string): Promise<PdfStudyKitDraft> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke("get_pdf_study_kit", { jobId });
 }
+
+export async function listPdfStudyKitJobs(): Promise<{ id: string; materialId: string; stage: string; createdAt: number }[]> {
+  if (!isTauri()) return [];
+  const jobs = await invoke<{ id: string; materialId: string; kind: string; stage: string; createdAt: number }[]>("gemini_jobs");
+  return jobs.filter(job => job.kind === "pdf-kit");
+}

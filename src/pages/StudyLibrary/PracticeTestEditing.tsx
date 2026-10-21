@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import { appendPracticeRetirements } from "@/data/practiceAuthoring";
-import { buildPracticeEditOperation, draftFromSnapshot, type PracticeDraftQuestion } from "@/data/practiceAuthoringDraft";
+import { bindPdfQuestions, buildPracticeEditOperation, draftFromSnapshot, draftWithPdfQuestions, type PracticeDraftQuestion } from "@/data/practiceAuthoringDraft";
 import { PRACTICE_AUTHORING_ERROR_MESSAGES, PracticeAuthoringError } from "@/data/persistenceErrors";
 import type { PracticeHistoryEntry, PracticeSaveOperation, PracticeSnapshot, StudyMaterial } from "@/domain/types";
 import { formatLocalDay } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
+import type { PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
+import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { AuthorBadge } from "./StudySetEditor";
 
 // Mirrors the decoder bounds in practiceAuthoring.ts without changing that contract.
@@ -17,6 +19,10 @@ type UiQuestion = PracticeDraftQuestion & { pageInput: string };
 const emptyQuestion = (): UiQuestion => ({ pageInput: "", identity: null, question: "", options: ["", ""], correctIndex: 0, explanation: "", sourcePage: null, instructor: false });
 const problemText = (error: unknown) => error instanceof PracticeAuthoringError
   ? PRACTICE_AUTHORING_ERROR_MESSAGES[error.code] : PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR;
+
+function samePdfQuestion(a: PracticeDraftQuestion, b: PracticeDraftQuestion) {
+  return a.question === b.question && JSON.stringify(a.options) === JSON.stringify(b.options) && a.correctIndex === b.correctIndex && a.explanation === b.explanation && a.sourcePage === b.sourcePage;
+}
 
 function questionErrors(question: PracticeDraftQuestion) {
   return {
@@ -30,9 +36,9 @@ function questionErrors(question: PracticeDraftQuestion) {
 }
 
 /** One dialog for a first manual test and for editing an existing test. */
-function PracticeEditing({ material, creating, activeAttempt }: { material: StudyMaterial; creating: boolean; activeAttempt?: boolean | null }) {
+function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onSourceChanged, onSaved, onLeaveOut }: { material: StudyMaterial; creating: boolean; activeAttempt?: boolean | null; seed?: PdfQuestionSeed; onClose?: () => void; onSourceChanged?: () => void; onSaved?: () => void; onLeaveOut?: () => void }) {
   const { repositories, mutate, dataRevision, data } = useAppData();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(seed));
   const [expected, setExpected] = useState<PracticeSnapshot | null | undefined>();
   const [title, setTitle] = useState(material.title);
   const [draft, setDraft] = useState<UiQuestion[]>([]);
@@ -46,6 +52,13 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
   const busyRef = useRef(false);
   const readRef = useRef(0);
   const pending = useRef<{ key: string; operation: PracticeSaveOperation } | null>(null);
+  const mirrorKey = seed ? `hfd:pdf-kit-questions:${seed.journal.runId}` : null;
+  const remember = () => {
+    if (!mirrorKey || expected === undefined) return;
+    try { localStorage.setItem(mirrorKey, JSON.stringify({ title, draft, expected, pending: pending.current })); }
+    catch { setError("Draft recovery is unavailable. Keep this window open until your questions are saved."); }
+  };
+  useEffect(() => { if (open && mirrorKey) remember(); }, [title, draft, expected, busy, open, mirrorKey]);
   const titleRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (open && expected !== undefined) titleRef.current?.focus();
@@ -65,9 +78,11 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
     setOpen(false);
     setDeleting(null);
     setReloading(false);
-    pending.current = null;
+    remember();
+    if (!seed) pending.current = null;
+    onClose?.();
   };
-  const load = async () => {
+  const load = async (useMirror = true) => {
     if (!repositories || busyRef.current) return;
     const request = ++readRef.current;
     setExpected(undefined);
@@ -75,9 +90,17 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
     try {
       const current = await repositories.documents.readPracticeSnapshot(material.id);
       if (readRef.current !== request) return;
+      if (mirrorKey && useMirror) {
+        try {
+          const mirror = JSON.parse(localStorage.getItem(mirrorKey) ?? "null");
+          if (mirror && typeof mirror.title === "string" && Array.isArray(mirror.draft) && mirror.draft.length <= MAX_QUESTIONS && mirror.draft.every((q: UiQuestion) => typeof q.question === "string" && Array.isArray(q.options) && q.options.every(o => typeof o === "string") && typeof q.explanation === "string" && typeof q.pageInput === "string")) {
+            setExpected(mirror.expected); setTitle(mirror.title); setDraft(mirror.draft); pending.current = mirror.pending; setValidate(false); setStale(false); return;
+          }
+        } catch { /* Reopen the authoritative journal when the typing mirror is unavailable. */ }
+      }
       setExpected(current);
       setTitle(current?.title ?? material.title);
-      setDraft(current ? draftFromSnapshot(current).map((item) => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : [emptyQuestion()]);
+      setDraft(seed ? draftWithPdfQuestions(current, seed).map(item => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : current ? draftFromSnapshot(current).map((item) => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : [emptyQuestion()]);
       pending.current = null;
       setValidate(false);
       setStale(false);
@@ -85,6 +108,7 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
       if (readRef.current === request) setError(problemText(failure));
     }
   };
+  useEffect(() => { if (seed) void load(); }, [seed, repositories]);
   const change = (index: number, update: Partial<UiQuestion>) => {
     pending.current = null;
     setDraft((items) => items.map((item, at) => at === index ? { ...item, ...update } : item));
@@ -104,20 +128,26 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
     try {
       const result = await mutate(async (repos) => {
         try {
-          const operation = pending.current?.key === key ? pending.current.operation : await buildPracticeEditOperation({
+          let operation = pending.current?.key === key ? pending.current.operation : await buildPracticeEditOperation({
             operationId: crypto.randomUUID(), materialId: material.id, expected, title, draft,
           });
+          if (seed && pending.current?.key !== key) operation = await bindPdfQuestions(operation, draft, seed);
           pending.current = { key, operation };
+          remember();
           await repos.documents.savePracticeAuthoring(operation);
           return { ok: true as const };
         } catch (failure) {
-          return { ok: false as const, message: problemText(failure), stale: failure instanceof PracticeAuthoringError && failure.code === "STALE_CONTENT" };
+          return { ok: false as const, sourceChanged: failure instanceof PracticeAuthoringError && failure.code === "SOURCE_CHANGED", message: problemText(failure), stale: failure instanceof PracticeAuthoringError && failure.code === "STALE_CONTENT" };
         }
       });
       if (result?.ok) {
         setOpen(false);
-        pending.current = null;
+        if (!seed) pending.current = null;
+        remember();
+        onSaved?.();
+        onClose?.();
       } else {
+        if (result?.sourceChanged) onSourceChanged?.();
         setError(result?.message ?? PRACTICE_AUTHORING_ERROR_MESSAGES.STORAGE_ERROR);
         setStale(result?.stale ?? false);
       }
@@ -127,9 +157,9 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
     }
   };
   const blocked = activeAttempt === true || attempt === true;
-  const label = creating ? "Write your own practice questions" : "Edit questions";
+  const label = seed ? "Review draft questions" : creating ? "Write your own practice questions" : "Edit questions";
   const hasTest = data.practiceTests.some((test) => test.sourceMaterialId === material.id);
-  const applicable = creating ? !hasTest : hasTest;
+  const applicable = !seed && (creating ? !hasTest : hasTest);
   const wasOpen = useRef(false);
   useEffect(() => {
     // A successful first save replaces its opener with Edit questions.
@@ -145,17 +175,22 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
     {!creating && blocked ? <p className="tiny muted">Finish your current attempt, or use Abandon attempt below, before editing questions.</p> : null}
     <Dialog open={open} onClose={close} title={label} dismissible={!busy} initialFocus={() => titleRef.current} footer={<>
       <Button onClick={close} disabled={busy}>Cancel</Button>
-      <Button variant="primary" disabled={busy || expected === undefined} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
+      {seed ? <Button disabled={busy} onClick={() => { onLeaveOut?.(); close(); }}>Leave questions out</Button> : null}
+      <Button variant="primary" disabled={busy || expected === undefined || Boolean(seed && (blocked || attempt === null))} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
     </>}>
       <div className="stack stack--3" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+        {seed ? <p className="tiny muted">{PDF_KIT_REMINDER} Your saved questions stay here; these drafts are added only when you save.</p> : null}
+        {seed && blocked ? <p role="alert">Finish or abandon your current attempt before saving these questions.</p> : null}
         {expected === undefined ? <p role="status">Opening…</p> : <fieldset disabled={busy} className="stack stack--3" style={{ minWidth: 0, border: 0, padding: 0 }}>
           <Field label="Practice test title" error={validate ? titleError : null}><input className="input" ref={titleRef} value={title} onChange={(event) => { pending.current = null; setTitle(event.target.value); }} /></Field>
           {draft.map((question, index) => {
             const messages = errors[index]!;
             const instructor = expected?.questions.find((item) => item.identity === question.identity)?.origin === "instructor";
             const origin = instructor || question.instructor ? "instructor" : expected?.questions.find((item) => item.identity === question.identity)?.origin ?? (question.identity === null ? "user" : undefined);
+            const savedIndex = expected?.questions.findIndex(q => q.identity === question.identity) ?? -1;
+            const savedPdf = data.practiceTests.find(test => test.sourceMaterialId === material.id)?.questions[savedIndex]?.pdfProvenance;
             return <fieldset key={index} className="stack stack--2" style={{ minWidth: 0 }}>
-              <legend>Question {index + 1}</legend><AuthorBadge origin={origin} />
+              <legend>Question {index + 1}</legend>{seed?.questions.some(q => q.identity === question.identity) ? <PdfItemLabel provenance={{ status: "valid", label: "Pulled from your PDF on this Mac", sources: [] }} origin={question.instructor ? "instructor" : !samePdfQuestion(question, seed.questions.find(q => q.identity === question.identity)!) ? "user" : undefined} /> : savedPdf ? <PdfItemLabel provenance={savedPdf} origin={question.instructor ? "instructor" : expected?.questions[savedIndex] && !samePdfQuestion(question, draftFromSnapshot(expected)[savedIndex]!) ? "user" : origin} /> : <AuthorBadge origin={origin} />}
               <Field label={`Question ${index + 1} wording`} error={validate ? messages.question : null}><TextArea rows={3} value={question.question} onChange={(event) => change(index, { question: event.target.value })} /></Field>
               <div role="group" aria-label={`Question ${index + 1} answer options`} className="stack stack--2">
                 {question.options.map((option, at) => <div key={at} className="stack stack--2" style={{ minWidth: 0 }}>
@@ -187,8 +222,12 @@ function PracticeEditing({ material, creating, activeAttempt }: { material: Stud
       setDraft((items) => items.filter((_, index) => index !== deleting));
       setDeleting(null);
     }} />
-    <ConfirmDialog open={reloading} title="Load the latest version?" message="This replaces your unsaved draft with the latest saved questions." confirmLabel="Load latest" destructive={false} onCancel={() => setReloading(false)} onConfirm={() => { setReloading(false); void load(); }} />
+    <ConfirmDialog open={reloading} title="Load the latest version?" message="This replaces your unsaved draft with the latest saved questions." confirmLabel="Load latest" destructive={false} onCancel={() => setReloading(false)} onConfirm={() => { setReloading(false); void load(false); }} />
   </div>;
+}
+
+export function PdfPracticeQuestions({ material, seed, onClose, onSourceChanged, onSaved, onLeaveOut }: { material: StudyMaterial; seed: PdfQuestionSeed; onClose: () => void; onSourceChanged: () => void; onSaved?: () => void; onLeaveOut?: () => void }) {
+  return <PracticeEditing material={material} creating seed={seed} onClose={onClose} onSourceChanged={onSourceChanged} onSaved={onSaved} onLeaveOut={onLeaveOut} />;
 }
 
 export function StartManualPracticeTest({ material }: { material: StudyMaterial }) {

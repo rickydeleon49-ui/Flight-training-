@@ -261,4 +261,108 @@ describe("studyContentProvenance pure helper", () => {
       });
     });
   });
+
+  describe("PDF kit provenance and mixed sets", () => {
+    it("mixed_gemini_set_header_keeps_gemini_label_and_model", () => {
+      withTimezone("UTC", () => {
+        const validPdf = { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] };
+        const result = formatStudyContentProvenance("Crosswind Theory", {
+          provider: "gemini",
+          model: "gemini-1.5-flash",
+          generatedAt: "2026-10-03T12:00:00Z",
+          sections: [{ heading: "Section 1", body: "Text 1" }],
+          flashcards: [{ front: "Q1", back: "A1", pdfProvenance: validPdf }],
+        });
+
+        expect(result.originLabel).toBe("Gemini");
+        expect(result.modelLabel).toBe("gemini-1.5-flash");
+        expect(result.dateText).toBe("Generated Saturday, October 3");
+        expect(result.summaryText).toContain("Origin: Gemini");
+        expect(result.summaryText).toContain("Model: gemini-1.5-flash");
+        expect(result.summaryText).toContain("Some items pulled from your PDF on this Mac");
+      });
+    });
+
+    it("all_kit_set_header_is_pdf_label_never_written_by_you", () => {
+      withTimezone("UTC", () => {
+        const validPdf = { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] };
+        const result = formatStudyContentProvenance("Crosswind Theory", {
+          provider: "manual",
+          model: "",
+          generatedAt: "2026-10-03T12:00:00Z",
+          sections: [{ heading: "Section 1", body: "Text 1", pdfProvenance: validPdf }],
+          flashcards: [{ front: "Q1", back: "A1", pdfProvenance: validPdf }],
+        });
+
+        expect(result.originLabel).toBe("Pulled from your PDF on this Mac");
+        expect(result.originLabel).not.toBe("Written by you");
+        expect(result.modelLabel).toBeNull();
+        expect(result.summaryText).toContain("Pulled from your PDF on this Mac");
+        expect(result.summaryText).not.toContain("Written by you");
+      });
+    });
+
+    it("invalid_item_source_never_changes_set_header", () => {
+      withTimezone("UTC", () => {
+        const invalidPdf = { status: "invalid" as const, label: "PDF source details unavailable" as const, sources: [] };
+        const geminiResult = formatStudyContentProvenance("Crosswind Theory", {
+          provider: "gemini",
+          model: "gemini-1.5-flash",
+          generatedAt: "2026-10-03T12:00:00Z",
+          sections: [{ heading: "Section 1", body: "Text 1" }],
+          flashcards: [{ front: "Q1", back: "A1", pdfProvenance: invalidPdf }],
+        });
+
+        expect(geminiResult.originLabel).toBe("Gemini");
+        expect(geminiResult.modelLabel).toBe("gemini-1.5-flash");
+        expect(geminiResult.dateText).toBe("Generated Saturday, October 3");
+        expect(geminiResult.summaryText).toBe(
+          "Source material: Crosswind Theory · Origin: Gemini · Model: gemini-1.5-flash · Generated Saturday, October 3",
+        );
+        expect(geminiResult.summaryText).not.toContain("Source details unavailable");
+
+        const manualResult = formatStudyContentProvenance("Manual Notes", {
+          provider: "manual",
+          model: "",
+          generatedAt: "2026-10-03T12:00:00Z",
+          questions: [{ pdfProvenance: invalidPdf }],
+        });
+
+        expect(manualResult.originLabel).toBe("Pulled from your PDF on this Mac");
+        expect(manualResult.summaryText).not.toContain("Written by you");
+        expect(manualResult.pdfNote).toBe("Some source details are unavailable");
+      });
+    });
+  });
+});
+
+it.each([false, true])("all_kit_manual_set_with_invalid_source_never_written_by_you (all invalid: %s)", allInvalid => {
+  const invalid = { status: "invalid" as const, label: "PDF source details unavailable" as const, sources: [] };
+  const valid = { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] };
+  const result = formatStudyContentProvenance("Synthetic PDF", {
+    provider: "manual", model: "", summary: "Kit summary", summaryPdfProvenance: invalid,
+    sections: [{ heading: "Kit section", body: "Kit text", pdfProvenance: allInvalid ? invalid : valid }],
+    flashcards: [{ front: "Kit question", back: "Kit answer", pdfProvenance: invalid }],
+  });
+  expect(result.originLabel).toBe("Pulled from your PDF on this Mac");
+  expect(result.pdfNote).toBe("Some source details are unavailable");
+  expect(result.summaryText).toContain("Some source details are unavailable");
+  expect(result.summaryText).not.toMatch(/Written by you|Some items pulled/);
+  expect(result.modelLabel).toBeNull();
+});
+
+it.each(["gemini", "import"] as const)("invalid PDF sources preserve the %s provider header", provider => {
+  const pdfProvenance = { status: "invalid" as const, label: "PDF source details unavailable" as const, sources: [] };
+  const base = { provider, model: "stored-model", generatedAt: "2026-10-03T12:00:00Z" };
+  expect(formatStudyContentProvenance("Synthetic PDF", { ...base, questions: [{ pdfProvenance }] }))
+    .toEqual(formatStudyContentProvenance("Synthetic PDF", base));
+});
+
+it.each([{}, { summary: "My summary" }, { questions: [{}] }])("manual content without PDF provenance keeps human authorship (%j)", items => {
+  const pdfProvenance = { status: "invalid" as const, label: "PDF source details unavailable" as const, sources: [] };
+  const result = formatStudyContentProvenance("Synthetic PDF", {
+    provider: "manual", ...items,
+    sections: [{ pdfProvenance }, ...(Object.keys(items).length ? [] : [{}])],
+  });
+  expect(result.originLabel).toBe("Written by you");
 });

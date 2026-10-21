@@ -1,3 +1,4 @@
+import { PdfItemLabel } from "./PdfItemLabel";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -696,6 +697,7 @@ function AttemptReviewPage({
               />
               <CardBody>
                 <div className="stack stack--3">
+                  <PdfItemLabel provenance={item.pdfProvenance} origin={item.origin} />
                   <p className="small strong">{item.questionText}</p>
 
                   <div

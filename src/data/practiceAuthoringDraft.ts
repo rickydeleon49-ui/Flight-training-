@@ -43,7 +43,7 @@ export async function buildPracticeEditOperation(args: {
     }
     const origin = item.instructor || before?.origin === "instructor" ? "instructor" : "user";
     if (origin === "instructor") correction = true;
-    questions.push({ ...before, ...fields, identity: before?.identity ?? crypto.randomUUID(), origin });
+    questions.push({ ...before, ...fields, identity: before?.identity ?? item.identity ?? crypto.randomUUID(), origin });
     // validateProtection requires exact records for rewritten generated items too.
     if (before && (before.origin !== undefined || !sameFields)) {
       records.push(await practiceRetirementRecord(before, "corrected"));
@@ -62,4 +62,29 @@ export async function buildPracticeEditOperation(args: {
       questions, retired: appendPracticeRetirements(expected?.retired ?? [], records),
     },
   };
+}
+
+/** Hydrate journal candidates as unsaved questions, retaining every existing edit. */
+export function draftWithPdfQuestions(snapshot: PracticeSnapshot | null, seed: import("./pdfStudyKitDraft").PdfQuestionSeed): PracticeDraftQuestion[] {
+  return [...(snapshot ? draftFromSnapshot(snapshot) : []), ...seed.questions.filter(q => !snapshot?.questions.some(i => i.identity === q.identity)).map(q => ({ ...q, options: [...q.options] }))];
+}
+
+export async function bindPdfQuestions(operation: PracticeSaveOperation, draft: PracticeDraftQuestion[], seed: import("./pdfStudyKitDraft").PdfQuestionSeed): Promise<PracticeSaveOperation> {
+  const { kitCandidates, kitSources } = await import("./pdfStudyKitDraft");
+  const candidates = kitCandidates(seed.journal).questions;
+  const kept = seed.questions.filter(q => draft.some(d => d.identity === q.identity));
+  for (const original of kept) {
+    const current = draft.find(d => d.identity === original.identity)!;
+    const result = operation.next!.questions.find(q => q.identity === original.identity);
+    if (!result) continue;
+    // New extracted candidates are not human-authored. Only actual edits acquire an origin.
+    const same = current.question === original.question && JSON.stringify(current.options) === JSON.stringify(original.options) && current.correctIndex === original.correctIndex && current.explanation === original.explanation && current.sourcePage === original.sourcePage;
+    if (same && !current.instructor && !operation.expected?.questions.some(q => q.identity === result.identity)) delete result.origin;
+  }
+  if (!kept.length) return operation;
+  operation.pdfKitSources = await kitSources(seed.journal, kept.map(q => {
+    const index = seed.questions.indexOf(q); const c = candidates[index]!;
+    return { kind: "question", id: q.identity!, content: operation.next!.questions.find(i => i.identity === q.identity)! as unknown as Record<string, unknown>, evidence: [...c.evidence, ...c.choiceEvidence.flat()] };
+  }));
+  return operation;
 }
