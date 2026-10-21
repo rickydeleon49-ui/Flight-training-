@@ -1,0 +1,11 @@
+$ python3 -c import hashlib,pathlib,subprocess; root=pathlib.Path("/tmp/on2a-codex-tuning"); target=pathlib.Path("/tmp/hfd-on2a-target/release"); [(print(p.name, p.stat().st_size, flush=True), subprocess.run(["/usr/bin/time", "-l", str(target/"examples/offline_pressure_probe"), str(target/"her-flight-deck"), str(p),hashlib.sha256(p.read_bytes()).hexdigest()],timeout=120)) for p in sorted(root.glob("*.pdf"))]
+synthetic-near-cap.pdf 1676036
+{"countedPeakBytes":432783873,"detail":"","outcome":"ok","pages":1,"partialPublish":false,"seconds":0.412326291}
+        0.58 real         0.20 user         0.02 sys
+time: sysctl kern.clockrate: Operation not permitted
+synthetic-over-cap.pdf 6614022
+{"countedPeakBytes":0,"detail":"","outcome":"memory_limit","pages":0,"partialPublish":false,"seconds":0.315616667}
+        0.31 real         0.28 user         0.02 sys
+time: sysctl kern.clockrate: Operation not permitted
+
+EXIT 0

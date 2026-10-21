@@ -1,3 +1,4 @@
+import { inflateSync } from "node:zlib";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -17,7 +18,7 @@ import { generateChecksumManifest, normalizeInstallerFilename, prepareReleaseIns
 // @ts-expect-error -- scripts/inspect-backup-credentials.mjs is an untyped ESM script
 import { inspectBackupArchive, readZipEntries } from "../../scripts/inspect-backup-credentials.mjs";
 // @ts-expect-error -- scripts/generate-pdf-fixtures.mjs is an untyped ESM script
-import { buildPdf, generateFixtures, FIXTURE_SPECS } from "../../scripts/generate-pdf-fixtures.mjs";
+import { buildPdf, buildXrefPadPdf, deflateZeros, generateFixtures, FIXTURE_SPECS } from "../../scripts/generate-pdf-fixtures.mjs";
 
 const SCRIPT_PATH = resolve(process.cwd(), "scripts/check-release-version.mjs");
 const WORKFLOW_PATH = resolve(process.cwd(), ".github/workflows/release.yml");
@@ -1225,16 +1226,44 @@ describe("release version policy and validation", () => {
       expect(text).toContain("Synthetic Charts - Page 60 of 60 (ID: P0060)");
     });
 
-    it("verifies generateFixtures produces all three standard fixtures matching FIXTURE_SPECS", () => {
+    it("decodes deterministic Flate streams with an independent decoder, including short tails", () => {
+      const prefix = Buffer.from(Array.from({ length: 256 }, (_, i) => i));
+      // Every length-code boundary and the 0/1/2-byte tails after a 258-byte copy.
+      for (const zeros of [...Array.from({ length: 530 }, (_, i) => i), 65537]) {
+        expect(inflateSync(deflateZeros(prefix, zeros))).toEqual(Buffer.concat([prefix, Buffer.alloc(zeros)]));
+      }
+      expect(inflateSync(deflateZeros(Buffer.alloc(0), 0))).toEqual(Buffer.alloc(0));
+    });
+
+    it("keeps cross-reference offsets, row widths and the free-entry count consistent", () => {
+      const pdf = buildXrefPadPdf(3, "xref-test");
+      const text = pdf.toString("latin1");
+      const xref = text.indexOf("6 0 obj\n");
+      expect(text).toContain(`startxref\n${xref}\n`);
+      expect(text.slice(xref)).toContain("/Size 10 /W [1 4 2]");
+      const start = text.indexOf("stream\n", xref) + "stream\n".length;
+      const length = Number(text.slice(xref, start).match(/\/Length (\d+)/)?.[1]);
+      const rows = inflateSync(pdf.subarray(start, start + length));
+      expect(rows.length).toBe(10 * 7);
+      expect(rows.subarray(0, 7)).toEqual(Buffer.from([0, 0, 0, 0, 0, 255, 255]));
+      for (let id = 1; id <= 6; id++) {
+        expect(rows[id * 7]).toBe(1);
+        expect(rows.readUInt32BE(id * 7 + 1)).toBe(text.indexOf(`${id} 0 obj\n`));
+      }
+      expect(rows.subarray(7 * 7)).toEqual(Buffer.alloc(3 * 7));
+    });
+
+    it("verifies generateFixtures produces all five standard fixtures matching FIXTURE_SPECS", () => {
       const tempDir = mkdtempSync(join(tmpdir(), "hfd-fixtures-test-"));
       try {
         const results = generateFixtures(tempDir);
-        expect(results).toHaveLength(3);
+        expect(results).toHaveLength(5);
         for (let i = 0; i < FIXTURE_SPECS.length; i++) {
           const spec = FIXTURE_SPECS[i];
           const res = results[i];
           expect(res.filename).toBe(spec.filename);
           expect(res.bytes).toBe(spec.expectedBytes);
+          expect(res.bytes).toBeLessThan(128 * 1024**2);
           expect(res.sha256).toBe(spec.expectedSha256);
           expect(existsSync(res.filePath)).toBe(true);
         }
@@ -1252,6 +1281,8 @@ describe("release version policy and validation", () => {
         expect(stdout).toContain("synthetic-small-checklist.pdf: 3360 bytes, SHA-256: f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134");
         expect(stdout).toContain("synthetic-long-manual.pdf: 330934 bytes, SHA-256: 0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1");
         expect(stdout).toContain("synthetic-illustrated-charts.pdf: 54032644 bytes, SHA-256: b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d");
+        expect(stdout).toContain("synthetic-near-cap.pdf: 1676036 bytes, SHA-256: 8f4a80561972412da5a2847eb569620d8d4ef6876676f3be205481d379a5f8d3");
+        expect(stdout).toContain("synthetic-over-cap.pdf: 6614022 bytes, SHA-256: 89a874dd7465187c67cf1948347906f70953b554afcf117bc08045a4d9ba41ec");
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }

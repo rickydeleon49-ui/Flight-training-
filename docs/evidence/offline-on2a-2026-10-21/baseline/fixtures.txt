@@ -1,0 +1,5 @@
+synthetic-small-checklist.pdf: 3360 bytes, SHA-256: f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134
+synthetic-long-manual.pdf: 330934 bytes, SHA-256: 0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1
+synthetic-illustrated-charts.pdf: 54032644 bytes, SHA-256: b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d
+synthetic-near-cap.pdf: 1676036 bytes, SHA-256: 8f4a80561972412da5a2847eb569620d8d4ef6876676f3be205481d379a5f8d3
+synthetic-over-cap.pdf: 6614022 bytes, SHA-256: 89a874dd7465187c67cf1948347906f70953b554afcf117bc08045a4d9ba41ec
