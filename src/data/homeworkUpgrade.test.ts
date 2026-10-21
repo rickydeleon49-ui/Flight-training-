@@ -14,7 +14,7 @@ import { dumpTables, openNodeEngine, openSqlJsEngine } from "./testing/skillEvid
 
 vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({ default: `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm` }));
 afterEach(() => vi.unstubAllGlobals());
-const fixture = JSON.parse(readFileSync("src-tauri/fixtures/homework-validation/cases.json", "utf8")) as { baseline: string[]; operations: Record<string, HomeworkOperation> };
+const fixture = JSON.parse(readFileSync("src-tauri/fixtures/homework-validation/cases.json", "utf8")) as { baseline: string[]; card_seed: string[]; operations: Record<string, HomeworkOperation> };
 const encode = (bytes: Uint8Array) => btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(""));
 const decode = (bytes: string) => Uint8Array.from(atob(bytes), (c) => c.charCodeAt(0));
 async function schema19() {
@@ -102,4 +102,24 @@ describe("homework schema upgrade and driver durability", () => {
     expect(await reopened.get(result.assignmentId)).toEqual(await repo.get(result.assignmentId));
     expect(await reopened.history(result.assignmentId)).toEqual(await repo.history(result.assignmentId));
   });
+  it("homework card persistence refusal restores rating, run and history; restart resumes saved evidence", async () => {
+    let stored:string|null=null,fail=false;
+    vi.stubGlobal("localStorage",{getItem:()=>stored,setItem:(_key:string,value:string)=>{if(fail)throw new Error("synthetic quota");stored=value;}});
+    const db=await createSqlJsDatabase();
+    for(const sql of [...fixture.baseline,...fixture.card_seed])await db.execute(sql);
+    const repo=homeworkRepository(db);
+    await repo.save(structuredClone(fixture.operations.card_create!));await repo.save(structuredClone(fixture.operations.card_start!));
+    const start=fixture.operations.card_start!,run=start.next.runs[0]!;
+    const action:import("@/domain/types").CardReviewAction={action:"rate",operationId:"00000000-0000-4000-8000-0000000000dc",materialId:run.scope.material_id,versionContentHash:run.scope.source_revision,itemId:run.scope.item_ids[0]!,expectedGeneration:0,expectedRevision:0,rating:"again",homework:{assignmentId:start.assignmentId,runId:run.id,expectedRevision:2,activityRevision:1,cycle:1}};
+    const before=stored!,original=await openSqlJsEngine(decode(before));let tables:ReturnType<typeof dumpTables>;
+    try{tables=dumpTables(original);}finally{original.close();}
+    fail=true;await expect(db.saveCardReviewAtomically!(action)).rejects.toBeInstanceOf(StorageDurabilityError);
+    expect(stored).toBe(before);
+    for(const [table,rows] of Object.entries(tables))expect(await db.select(`SELECT * FROM "${table}" ORDER BY rowid`),table).toEqual(rows);
+    fail=false;const result=await db.saveCardReviewAtomically!(action);expect(await db.saveCardReviewAtomically!(action)).toEqual(result);
+    const reopened=homeworkRepository(await createSqlJsDatabase());const current=await reopened.get(start.assignmentId);
+    expect(current).toEqual(await repo.get(start.assignmentId));expect(current!.runs[0]!.ratings).toHaveLength(1);
+    expect(current!.runs[0]!.scope.item_ids).toEqual(run.scope.item_ids);expect(current!.activities[0]!.record.state).toBe("in_progress");
+  });
+
 });

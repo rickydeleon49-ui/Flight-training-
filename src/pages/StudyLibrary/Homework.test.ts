@@ -113,11 +113,11 @@ it("reflection_requires_nonblank_then_mark", async () => {
     fireEvent.click(await screen.findByRole("button", { name: "Mark complete" }));
     await waitFor(() => expect(records[0]!.assignment.state).toBe("completed"));
 });
-it("cards_and_test_not_completable_in_this_slice", async () => {
+it("quiz_completion_waits_for_the_next_slice", async () => {
     const s = assignment(["cards", "test"]);
     view(s.assignment.id);
     await screen.findByText("cards work");
-    expect(screen.getAllByText("Completion is recorded automatically in a later update")).toHaveLength(2);
+    expect(screen.getAllByText("Completion is recorded automatically in a later update")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Mark complete" })).toBeNull();
 });
 it("reopen_and_archive_keep_history", async () => {
@@ -239,4 +239,18 @@ it("filters isolate completed and archived homework", async () => {
     expect(screen.queryByText("Upcoming work")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Archived" }));
     expect(screen.getByText("Archived work")).toBeTruthy();
+});
+
+it("completed homework accepts more work and retains earlier evidence", async () => {
+    const s = assignment();
+    view(s.assignment.id);
+    fireEvent.click(await screen.findByRole("checkbox"));
+    await waitFor(() => expect(records[0]!.assignment.state).toBe("completed"));
+    const prior = structuredClone(records[0]!.activities[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Add activities" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add checklist" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
+    await waitFor(() => expect(records[0]!.assignment.state).toBe("in_progress"));
+    expect(records[0]!.activities.find(e => e.record.id === prior!.record.id)).toEqual(prior);
+    expect(screen.queryByText("Reopen an activity before adding more work.")).toBeNull();
 });

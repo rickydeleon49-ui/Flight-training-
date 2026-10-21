@@ -211,6 +211,15 @@ fn homework_scenario(name: &str) {
                     2
                 );
             }
+            "add_completed" => {
+                crate::homework::execute_homework(&mut conn, &homework_operation("complete")).unwrap();
+                let before = m3_rows(&conn, "SELECT * FROM homework_history ORDER BY revision", &[]).unwrap();
+                let evidence = crate::homework::rows(&conn, "SELECT * FROM homework_activities ORDER BY id", &[]).unwrap();
+                crate::homework::execute_homework(&mut conn, &homework_operation("add_to_completed")).unwrap();
+                assert_eq!(crate::homework::rows(&conn, "SELECT state,completed_at FROM homework_assignments", &[]).unwrap(), json!([{"state":"in_progress","completed_at":null}]).as_array().unwrap().clone());
+                assert_eq!(&crate::homework::rows(&conn, "SELECT * FROM homework_activities ORDER BY id", &[]).unwrap()[..3], evidence);
+                assert_eq!(m3_rows(&conn, "SELECT * FROM homework_history WHERE revision<=2 ORDER BY revision", &[]).unwrap(), before);
+            }
             "empty" => {
                 let mut op = homework_operation("complete");
                 op["next"]["activities"] = json!([]);
@@ -479,4 +488,115 @@ fn older_app_rejects_schema_20_backup() {
     for p in [root, target, backup] {
         std::fs::remove_dir_all(p).unwrap();
     }
+}
+
+#[test]
+fn adding_activity_to_completed_assignment_reopens_it() {
+    homework_scenario("add_completed");
+}
+
+#[test]
+fn card_run_completes_only_with_all_frozen_items_rated_in_run() {
+    let root = scratch("hw-cards");
+    let path = root.join(DB_FILES[0]);
+    pdf_kit_test_database(&path, 20);
+    let mut conn = Connection::open(&path).unwrap();
+    conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+    homework_seed(&conn);
+    for sql in homework_contract()["card_seed"].as_array().unwrap() {
+        conn.execute_batch(sql.as_str().unwrap()).unwrap();
+    }
+    crate::homework::execute_homework(&mut conn, &homework_operation("card_create")).unwrap();
+    let start = homework_operation("card_start");
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    let scope = &start["next"]["runs"][0]["scope"];
+    for i in 0..2 {
+        let request = json!({"action":"rate","operationId":format!("00000000-0000-4000-8000-{:012x}",220+i),"materialId":scope["material_id"],"versionContentHash":scope["source_revision"],"itemId":scope["item_ids"][i],"expectedGeneration":0,"expectedRevision":0,"rating":"again","homework":{"assignmentId":start["assignmentId"],"runId":start["next"]["runs"][0]["id"],"expectedRevision":2+i,"activityRevision":1,"cycle":1}});
+        let action = crate::card_reviews::decode_card_action(&request).unwrap();
+        let tx = conn.transaction().unwrap();
+        crate::card_reviews::execute_card_review_transaction(&tx,&action,&request).unwrap();
+        tx.commit().unwrap();
+        let states=crate::homework::rows(&conn,"SELECT state FROM homework_activities",&[]).unwrap();
+        assert_eq!(states[0]["state"],if i==0 {"in_progress"} else {"completed"});
+        verify_schema_20_homework_semantics(&conn).unwrap();
+    }
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+fn homework_card_action(start:&Value,index:usize,revision:i64)->Value {
+    let scope=&start["next"]["runs"][0]["scope"];
+    json!({"action":"rate","operationId":format!("00000000-0000-4000-8000-{:012x}",220+index),"materialId":scope["material_id"],"versionContentHash":scope["source_revision"],"itemId":scope["item_ids"][index],"expectedGeneration":0,"expectedRevision":0,"rating":"again","homework":{"assignmentId":start["assignmentId"],"runId":start["next"]["runs"][0]["id"],"expectedRevision":revision,"activityRevision":1,"cycle":1}})
+}
+fn homework_card_write(conn:&mut Connection,request:&Value)->Result<Value,crate::card_reviews::CardReviewErrorCode> {
+    let action=crate::card_reviews::decode_card_action(request)?;
+    let tx=conn.transaction().unwrap();
+    let result=crate::card_reviews::execute_card_review_transaction(&tx,&action,request)?;
+    tx.commit().unwrap();Ok(result)
+}
+fn homework_card_scenario(name:&str) {
+    let root=scratch(name);let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,20);
+    let mut conn=Connection::open(&path).unwrap();conn.pragma_update(None,"foreign_keys","ON").unwrap();homework_seed(&conn);
+    for sql in homework_contract()["card_seed"].as_array().unwrap(){conn.execute_batch(sql.as_str().unwrap()).unwrap();}
+    crate::homework::execute_homework(&mut conn,&homework_operation("card_create")).unwrap();
+    let start=homework_operation("card_start");crate::homework::execute_homework(&mut conn,&start).unwrap();
+    match name {
+        "outside"=>{
+            for i in 0..2 {let mut request=homework_card_action(&start,i,2);request.as_object_mut().unwrap().remove("homework");homework_card_write(&mut conn,&request).unwrap();}
+            assert_eq!(crate::homework::rows(&conn,"SELECT state FROM homework_activities",&[]).unwrap()[0]["state"],"in_progress");
+            assert_eq!(crate::homework::rows(&conn,"SELECT COUNT(*) AS n FROM homework_history",&[]).unwrap()[0]["n"],2);
+        }
+        "reset"|"drift"|"restart"=>{
+            homework_card_write(&mut conn,&homework_card_action(&start,0,2)).unwrap();
+            if name=="restart" {
+                drop(conn);conn=Connection::open(&path).unwrap();conn.pragma_update(None,"foreign_keys","ON").unwrap();
+                let rows=crate::homework::rows(&conn,"SELECT snapshot_json FROM homework_history ORDER BY revision DESC LIMIT 1",&[]).unwrap();
+                let saved:Value=serde_json::from_str(rows[0]["snapshot_json"].as_str().unwrap()).unwrap();
+                assert_eq!(saved["runs"][0]["scope"],start["next"]["runs"][0]["scope"]);assert_eq!(saved["runs"][0]["ratings"].as_array().unwrap().len(),1);
+                homework_card_write(&mut conn,&homework_card_action(&start,1,3)).unwrap();
+            }else{
+                if name=="reset" {
+                    homework_card_write(&mut conn,&json!({"action":"reset","operationId":"00000000-0000-4000-8000-0000000000ef","materialId":start["next"]["runs"][0]["scope"]["material_id"],"expectedGeneration":0})).unwrap();
+                }else{
+                    let rows=crate::homework::rows(&conn,"SELECT * FROM ai_study_sets",&[]).unwrap();let row=&rows[0];
+                    let expected:serde_json::Map<String,Value>=crate::study_sets::SET_COLUMNS.iter().map(|k|(k.to_string(),row[k].clone())).collect();
+                    let op=crate::study_sets::decode_operation(&json!({"operationId":"00000000-0000-4000-8000-0000000000ef","materialId":row["source_material_id"],"reason":"edit","expected":expected,"next":{"title":"Changed","summary":"","summaryOrigin":null,"sections":[],"flashcards":[{"front":"New","back":"Changed","sourcePage":null}],"sourceNotes":"","provider":"import","model":"","retired":[]}})).unwrap();
+                    let at=crate::practice_sessions::db_now_iso(&conn).unwrap();crate::study_sets::save_on(&mut conn,&op,&at).unwrap();
+                }
+                let rows=crate::homework::rows(&conn,"SELECT invalidated_at FROM homework_runs",&[]).unwrap();assert!(!rows[0]["invalidated_at"].is_null());
+                assert_eq!(crate::homework::rows(&conn,"SELECT cycle FROM homework_activities",&[]).unwrap()[0]["cycle"],2);
+            }
+        }
+        "stale"=>{
+            let mut reopen=start.clone();reopen["operationId"]=json!("00000000-0000-4000-8000-0000000000ee");reopen["baseRevision"]=json!(2);reopen["changeKind"]=json!("reopen");reopen["at"]=json!("2026-10-21T10:02:00.000Z");
+            reopen["next"]["assignment"]["revision"]=json!(3);reopen["next"]["assignment"]["updated_at"]=reopen["at"].clone();reopen["next"]["assignment"]["state"]=json!("reopened");
+            reopen["next"]["activities"][0]["record"]["cycle"]=json!(2);reopen["next"]["activities"][0]["record"]["state"]=json!("reopened");reopen["next"]["activities"][0]["record"]["updated_at"]=reopen["at"].clone();reopen["next"]["runs"][0]["invalidated_at"]=reopen["at"].clone();
+            crate::homework::execute_homework(&mut conn,&reopen).unwrap();let before=homework_dump(&conn);
+            assert!(homework_card_write(&mut conn,&homework_card_action(&start,0,2)).is_err());assert_eq!(homework_dump(&conn),before);
+        }
+        "rating_rollback"=>{
+            conn.execute_batch("CREATE TRIGGER reject_evidence BEFORE INSERT ON homework_history WHEN NEW.change_kind='record_evidence' BEGIN SELECT RAISE(ABORT,'synthetic'); END").unwrap();
+            let before=homework_dump(&conn);assert!(homework_card_write(&mut conn,&homework_card_action(&start,0,2)).is_err());assert_eq!(homework_dump(&conn),before);
+        }
+        _=>panic!("unknown card scenario")
+    }
+    verify_schema_20_homework_semantics(&conn).unwrap();drop(conn);verify_application_database(&path).unwrap();std::fs::remove_dir_all(root).unwrap();
+}
+#[test] fn ratings_elsewhere_never_complete_homework(){homework_card_scenario("outside");}
+#[test] fn card_run_reset_or_drift_invalidates(){homework_card_scenario("reset");homework_card_scenario("drift");}
+#[test] fn card_run_restart_resumes_frozen_queue(){homework_card_scenario("restart");}
+#[test] fn stale_callback_after_reopen_refused(){homework_card_scenario("stale");}
+#[test] fn homework_rating_and_evidence_roll_back_together(){homework_card_scenario("rating_rollback");}
+#[test]
+fn backup_round_trip_keeps_card_runs_and_evidence() {
+    let root=scratch("hw-cards-backup");let target=scratch("hw-cards-target");let archive_root=scratch("hw-cards-archive");let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,20);
+    let before={
+        let conn=Connection::open(&path).unwrap();conn.pragma_update(None,"foreign_keys","ON").unwrap();homework_seed(&conn);
+        let contract=homework_contract();let case=contract["cases"].as_array().unwrap().iter().find(|c|c["name"]=="detached card evidence keeps accepted event associations").unwrap();
+        for sql in case["sql"].as_array().unwrap(){conn.execute_batch(sql.as_str().unwrap()).unwrap();}homework_dump(&conn)
+    };
+    let archive=archive_root.join("cards.hfdbackup");create_consistent_complete_backup_with_retry(&root,&archive,"0.5.7").unwrap();stage_complete_restore_in(&target,&archive,"0.5.7").unwrap();apply_pending_restore_in(&target).unwrap();
+    let conn=Connection::open(target.join(DB_FILES[0])).unwrap();assert_eq!(homework_dump(&conn),before);verify_application_connection(&conn).unwrap();drop(conn);
+    for p in [root,target,archive_root]{std::fs::remove_dir_all(p).unwrap();}
 }

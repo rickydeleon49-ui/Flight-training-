@@ -96,11 +96,15 @@ Before current data moves, restore performs all of these checks:
 Schema 20 adds five homework tables to the same SQLite snapshot: `homework_assignments`
 (titles, instructions, optional school/instructor/lesson/due date, state and revision),
 `homework_activities` (ordered tasks, bodies including reflections/questions, retained source
-identities and manual completion state), `homework_runs` (reserved for bound card/test runs),
+identities and completion state), `homework_runs` (frozen card queues, rating associations and
+completion/invalidation times; test runs remain reserved),
 `homework_operations` (canonical requests, hashes and replay results), and `homework_history`
-(append-only snapshots including completion evidence and prior cycles). Codec 1 permits no
-runs or action links; HW-01d must expand validation before producing them. No new archive
-format is needed. Missing or deleted sources retain captured identity, wording and evidence.
+(append-only snapshots including completion evidence and prior cycles). Codec 1 accepts bound
+card runs; partial rating associations live in history snapshots, and a finished run also keeps
+their frozen aggregate in `evidence_json`. Action links remain reserved until planner integration.
+Validators cross-check live card events and attributed receipts when present, retaining accepted
+historical associations after source/event deletion. No new archive format is needed. Missing
+or deleted sources retain captured identity, wording and evidence.
 
 Startup and staged restore compare schema-20 columns, constraints, foreign keys, indexes and
 history triggers with migration 0020, then independently recompute aggregate completion,

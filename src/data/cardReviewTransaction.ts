@@ -29,6 +29,8 @@ import type {
 import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, versionOrigin, type CardVersion } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, scheduleCard, SchedulerRefusal, type CardSchedule } from "@/logic/cardScheduler";
 
+import { homeworkCardContextCodec } from "@/domain/homework";
+import { recordHomeworkCardRating, invalidateHomeworkCardRuns } from "./homeworkCards";
 import type { SqlValue } from "./db";
 import { CardReviewError, type CardReviewErrorCode } from "./persistenceErrors";
 
@@ -90,7 +92,7 @@ export function decodeCardReviewAction(value: unknown): CardReviewAction {
   if (action === "reset") {
     exactKeys(object, RESET_KEYS);
   } else if (typeof action === "string" && (ITEM_ACTIONS as readonly string[]).includes(action)) {
-    const extra = action === "rate" ? ["rating"] : action === "flag" ? ["reason"] : [];
+    const extra = action === "rate" ? ["rating", ...(Object.hasOwn(object,"homework") ? ["homework"] : [])] : action === "flag" ? ["reason"] : [];
     exactKeys(object, [...ITEM_KEYS, ...extra]);
   } else {
     refuse("INVALID_ARGUMENT");
@@ -112,7 +114,9 @@ export function decodeCardReviewAction(value: unknown): CardReviewAction {
   };
   if (action === "rate") {
     if (typeof object.rating !== "string" || !(RATINGS as readonly string[]).includes(object.rating)) refuse("INVALID_ARGUMENT");
-    return { ...base, action, rating: object.rating as CardRating };
+    const context=Object.hasOwn(object,"homework") ? homeworkCardContextCodec.safeParse(object.homework) : null;
+    if(context && !context.success) refuse("INVALID_ARGUMENT");
+    return { ...base, action, rating: object.rating as CardRating, ...(context?.success ? {homework:context.data} : {}) };
   }
   if (action === "flag") {
     if (typeof object.reason !== "string" || !(FLAG_REASONS as readonly string[]).includes(object.reason)) refuse("INVALID_ARGUMENT");
@@ -445,6 +449,8 @@ export async function executeCardReviewAction(
       action.action === "reset"
         ? await applyReset(run, query, action, generation, requestHash, timestamp)
         : await applyItem(run, query, action, generation, requestHash, timestamp);
+    if(action.action==="rate" && action.homework) await recordHomeworkCardRating(run,query,action,timestamp);
+    if(action.action==="reset") await invalidateHomeworkCardRuns(run,query,action.materialId,timestamp);
     await exec("COMMIT");
     return result;
   } catch (error) {

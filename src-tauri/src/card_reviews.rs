@@ -600,7 +600,15 @@ pub fn decode_card_action(value: &Value) -> Check<CardAction> {
             map,
             &["action", "operationId", "materialId", "expectedGeneration"],
         )?,
-        "rate" => exact_keys(map, &[&ITEM_KEYS[..], &["rating"]].concat())?,
+        "rate" => {
+            let mut keys = [&ITEM_KEYS[..], &["rating"]].concat();
+            if let Some(context) = map.get("homework") {
+                crate::homework::cards::context(context)
+                    .map_err(|_| CardReviewErrorCode::InvalidArgument)?;
+                keys.push("homework");
+            }
+            exact_keys(map, &keys)?;
+        }
         "flag" => exact_keys(map, &[&ITEM_KEYS[..], &["reason"]].concat())?,
         "suspend" | "resume" | "unflag" => exact_keys(map, &ITEM_KEYS)?,
         _ => return Err(CardReviewErrorCode::InvalidArgument),
@@ -1108,7 +1116,7 @@ pub fn execute_card_review_transaction(
         return Err(CardReviewErrorCode::StaleGeneration);
     }
     let now = db_now_iso(tx).map_err(storage)?;
-    match action {
+    let result = match action {
         CardAction::Reset {
             operation_id,
             material_id,
@@ -1141,7 +1149,16 @@ pub fn execute_card_review_transaction(
             &request_hash,
             &now,
         ),
+    }?;
+    if action_value["action"] == "rate" && action_value.get("homework").is_some() {
+        crate::homework::cards::record_rating(tx, action_value, &now)
+            .map_err(|_| CardReviewErrorCode::InvalidState)?;
     }
+    if action_value["action"] == "reset" {
+        crate::homework::cards::invalidate(tx, action.material_id(), &now)
+            .map_err(|_| CardReviewErrorCode::InvalidState)?;
+    }
+    Ok(result)
 }
 
 /// `save_card_review_atomically` at a database root: decode, readiness, one

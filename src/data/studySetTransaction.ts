@@ -457,6 +457,8 @@ async function apply(
     );
   }
   if (operation.pdfKitSources) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
+  const { invalidateHomeworkCardRuns } = await import("./homeworkCards");
+  await invalidateHomeworkCardRuns(run,query,operation.materialId,now,true);
   return { status: "saved" };
 }
 

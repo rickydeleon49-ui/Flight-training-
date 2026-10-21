@@ -54,7 +54,7 @@ describe.each(ENGINES)("Homework UI requests through HW-01b: %s", name => {
         }
     });
 });
-it("documents the existing completed-assignment add constraint without changing validators", () => {
+it("adding_activity_to_completed_assignment_reopens_it", () => {
     const base = newHomework();
     base.assignment.title = "Synthetic";
     base.activities = [newHomeworkActivity(base.assignment.id, 0, "checklist", base.assignment.created_at)];
@@ -66,5 +66,8 @@ it("documents the existing completed-assignment add constraint without changing 
     const completed = validateHomeworkTransition(previous, complete);
     const adding = structuredClone(completed);
     adding.activities.push(newHomeworkActivity(completed.assignment.id, 1, "checklist", completed.assignment.created_at));
-    expect(() => validateHomeworkTransition(completed, homeworkOperation(completed, adding, "edit"))).toThrow();
+    const next = validateHomeworkTransition(completed, homeworkOperation(completed, adding, "edit"));
+    expect(next.assignment.state).toBe("in_progress");
+    expect(next.assignment.completed_at).toBeNull();
+    expect(next.activities.find(e => e.record.id === completed.activities[0]!.record.id)).toEqual(completed.activities[0]);
 });

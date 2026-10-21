@@ -742,6 +742,8 @@ pub fn apply_operation(
     if operation.pdf_kit_sources.is_some() {
         tx.execute("INSERT INTO study_set_save_operations (operation_id,material_id,payload_json,payload_hash) VALUES (?1,?2,?3,?4)",params![operation.operation_id,operation.material_id,payload_json,payload_hash]).map_err(storage)?;
     }
+    crate::homework::cards::invalidate_drift(tx, &operation.material_id, now)
+        .map_err(|_| StudySetErrorCode::StorageError)?;
     Ok(SaveResult { status: "saved" })
 }
 

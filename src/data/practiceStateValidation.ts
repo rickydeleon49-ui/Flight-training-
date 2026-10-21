@@ -1837,8 +1837,8 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
     const [actual] = await query("SELECT sql FROM sqlite_master WHERE type=? AND name=?", [text(object, "type"), text(object, "name")]);
     if (!actual || normalizeSql(text(actual, "sql")) !== normalizeSql(text(object, "sql"))) refuse("Homework indexes or history guards are missing.");
   }
-  // Reserved HW-01d entities have no permitted producer in codec 1.
-  homeworkAssert((await query("SELECT * FROM homework_runs", [])).length === 0);
+  const { validateHomeworkCardRows, checkCardEvents } = await import("./homeworkCards");
+  const seenRuns = new Set<string>();
   const assignments = await query("SELECT * FROM homework_assignments ORDER BY id", []);
   let historyCount = 0;
   const seenActivities = new Set<string>();
@@ -1860,6 +1860,7 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
       homeworkAssert(text(receipt, "result_json") === canonicalJson({ version: 1, assignmentId: id, revision: row.revision }));
       previous = validateHomeworkTransition(previous, operation);
       await validateHomeworkSources(query, previous, false);
+      for(const r of previous.runs) await checkCardEvents(query,previous,r);
       for (const e of previous.activities) {
         homeworkAssert(!seenActivities.has(e.record.id));
       }
@@ -1867,8 +1868,11 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
     homeworkAssert(previous && previous.assignment.revision === assignment.revision);
     const activities = await query("SELECT * FROM homework_activities WHERE assignment_id=? ORDER BY id", [id]);
     homeworkAssert(homeworkLiveMatches(previous, assignment, activities));
+    await validateHomeworkCardRows(query,previous);
+    for(const r of previous.runs) { homeworkAssert(!seenRuns.has(r.id)); seenRuns.add(r.id); }
     for (const e of previous.activities) seenActivities.add(e.record.id);
   }
+  homeworkAssert((await count(query, "SELECT COUNT(*) FROM homework_runs")) === seenRuns.size);
   homeworkAssert((await count(query, "SELECT COUNT(*) FROM homework_operations")) === historyCount);
   homeworkAssert((await count(query, "SELECT COUNT(*) FROM homework_activities")) === seenActivities.size);
 }
@@ -1895,7 +1899,7 @@ export async function validateHomeworkSources(query: ValidationQuery, snapshot: 
     }
     if (r.kind === "cards" && r.source_revision) {
       const { deriveCurrentCards } = await import("@/logic/cardIdentity");
-      const [set] = await query("SELECT flashcards_json FROM ai_study_sets WHERE material_id=?", [r.material_id]);
+      const [set] = await query("SELECT flashcards_json FROM ai_study_sets WHERE source_material_id=?", [r.material_id]);
       const cards = await deriveCurrentCards(r.material_id, typeof set?.flashcards_json === "string" ? set.flashcards_json : null);
       if (cards.status !== "ok" || cards.contentHash !== r.source_revision || cards.versionId !== r.card_set_id) throw new HomeworkError("SOURCE");
     }
