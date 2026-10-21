@@ -1,3 +1,7 @@
+## Offline training differentiation research and roadmap — 21 October 2026
+
+Owner-requested **documentation only**, prepared by Codex on inspected main `2b5b146` (PR #256). [Research and primary sources](docs/OFFLINE_TRAINING_RESEARCH_2026-10-21.md), [six-feature implementation roadmap](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) and [review/publication handoff](docs/OFFLINE_TRAINING_RESEARCH_HANDOFF_2026-10-21.md). Current code already supplies attempts/reviews, `simple-v1`, navigation, PDF kits and homework card runs; the plan extends these and preserves the owner queue. It corrects the earlier competitive comparison: Google documents resumed card progress/missed-card review, so the proposed advantage is the complete offline training loop and trustworthy provenance. No feature, dependency, migration, runtime switch or release changed; no new app/device/performance result is claimed. Owner explicitly requested GitHub publication on 21 October: Codex may commit/push this documentation review branch and open its PR; Claude retains independent review and merge ownership. Earlier status entries below retain historical states, not current Git integration claims.
+
 ## OFFLINE-03a round-7 correction locally GREEN; exact-head CI required — 19 October 2026
 
 Qwen implements; Codex independently reviews/tests, loops corrections and integrates after green CI on the exact current head. The owner has authorized this ongoing workflow and gated merges; no repeated workflow sign-off is needed. Tool sandbox boundaries still apply.

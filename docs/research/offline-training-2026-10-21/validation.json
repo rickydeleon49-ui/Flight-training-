@@ -1,0 +1,72 @@
+{
+  "schema": "hfd-documentation-research-validation/1",
+  "researchDatePacific": "2026-10-21",
+  "checkedAtUtc": "2026-10-21T18:51:32.733Z",
+  "authorRole": "implementer; independent review/publication pending",
+  "baseline": "2b5b146543e1dfa30e056ab416ee9067a3b6fe5e",
+  "runtime": "v24.16.0",
+  "runtimeScope": "built-in Node filesystem/JSON/Git documentation checks only; no application gate or dependency invocation",
+  "exitCode": 0,
+  "checks": {
+    "documentationOnly": true,
+    "trackedFiles": 4,
+    "newFiles": 5,
+    "relativeLinks": 44,
+    "localAnchors": 1,
+    "externalLinkSyntax": 32,
+    "upstreamRepositoryRecords": 5,
+    "featureGroups": 6,
+    "whitespace": "pass",
+    "credentialPatterns": "no matches",
+    "sourceAndConfigurationChanges": 0
+  },
+  "externalNetworkValidation": "Primary sources fetched separately; URL syntax checks are not assertions that all sites were accessible. Access limits recorded in research.",
+  "applicationTests": "Not run: this is a documentation-only planning task; no fresh app, provider, installed-device, performance, or release acceptance is claimed.",
+  "commands": [
+    "git -c core.longpaths=true diff --check",
+    "git -c core.longpaths=true diff HEAD --name-only -- <source/configuration paths>",
+    "node <task-output>/validate-documents.mjs"
+  ],
+  "filesExcludingThisReceipt": [
+    {
+      "path": "ROADMAP.md",
+      "bytes": 219374,
+      "sha256": "5d853901b113bb4fb596da9ecb2e1f2ebb4c665f103c6363fc1a795cc3f9bd1c"
+    },
+    {
+      "path": "STATUS.md",
+      "bytes": 325206,
+      "sha256": "3c75ac94b8d29a60a9815038e536f4b11274f6adfad3acc15ac3dc755f36ea51"
+    },
+    {
+      "path": "docs/MAC_PARITY_CHECKLIST.md",
+      "bytes": 69687,
+      "sha256": "e06daeafe6f8300e5f30bda3282625a6662a0bc134cdee36d7860317aeb86bcd"
+    },
+    {
+      "path": "docs/OFFLINE_TRAINING_RESEARCH_2026-10-21.md",
+      "bytes": 25810,
+      "sha256": "bbb95da291d1196cb73790440ec39f6e3302add77fc02eca179f95f5df7045e2"
+    },
+    {
+      "path": "docs/OFFLINE_TRAINING_RESEARCH_HANDOFF_2026-10-21.md",
+      "bytes": 8999,
+      "sha256": "8934e5d8146d6a29b4f28a491c3d97c18867958165f6b253fbe3e2266652bfaa"
+    },
+    {
+      "path": "docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md",
+      "bytes": 23941,
+      "sha256": "ce037fc4c8c5fc0a626e736a385f5cb3f022fbaf24bbc1c7e9f46810d9d953d3"
+    },
+    {
+      "path": "docs/PROJECT_HANDOFF.md",
+      "bytes": 234665,
+      "sha256": "b983db1e676e8f5b3dbe0b158af39a420e4dcd13c131a938650682558b16ab7a"
+    },
+    {
+      "path": "docs/research/offline-training-2026-10-21/repositories.json",
+      "bytes": 4119,
+      "sha256": "1ce981c8f784edb6485e78aa7dafd58a6104209f4834487104ba5f4008b439fc"
+    }
+  ]
+}
