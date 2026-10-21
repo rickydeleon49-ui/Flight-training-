@@ -22,6 +22,7 @@ mod gemini_budget;
 mod gemini_cancel;
 mod gemini_files;
 mod gemini_jobs;
+mod homework;
 mod lineage;
 mod navigation;
 mod pdf;
@@ -52,7 +53,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 19;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 20;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -174,6 +175,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0019_study_set_save_receipts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 20,
+            description: "homework",
+            sql: include_str!("../migrations/0020_homework.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -253,6 +260,7 @@ pub fn run() {
             practice_sessions::save_practice_session_atomically,
             practice_sessions::erase_practice_history_atomically,
             practice_authoring::save_practice_authoring_atomically,
+            homework::save_homework_atomically,
             study_sets::save_study_set_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,

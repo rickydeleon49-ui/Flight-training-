@@ -43,16 +43,20 @@ const SCHEMA16_OBJECTS = ['study_set_history', 'idx_study_set_history', 'card_ve
 // practice_tests and practice_test_items (schema 9).
 const SCHEMA17_OBJECTS = ['practice_save_operations', 'idx_practice_save_ops_material'];
 // Migration 18 adds only the two PDF-kit source tables and their material index.
+const SCHEMA20_OBJECTS = ['homework_assignments', 'homework_activities', 'homework_runs', 'idx_homework_run_open',
+  'homework_operations', 'homework_history', 'homework_history_no_update', 'homework_history_no_delete',
+  'idx_homework_activity_order', 'idx_homework_due', 'idx_homework_lesson', 'idx_homework_material',
+  'idx_homework_test', 'idx_homework_operations_assignment'];
 const SCHEMA18_OBJECTS = ['pdf_kit_runs', 'pdf_kit_item_sources', 'idx_pdf_kit_runs_material'];
 
-/** Each alarm's detail names only the later schemas 15, 16, 17 and 18: migrations 1–14 and their objects still match. */
+/** Each alarm's detail names only the later schemas 15 through 20: migrations 1–14 and their objects still match. */
 function assertOnlyLaterSchemas(checks) {
   for (const c of checks) {
-    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '19');
-    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation', '16:manual_study', '17:practice_authoring', '18:pdf_kit_provenance', '19:study_set_save_receipts']);
-    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15, 16, 17, 18, 19]);
+    if (c.name === LATER_SCHEMA_ALARMS[0]) assert.equal(c.detail.found, '20');
+    else if (c.name === LATER_SCHEMA_ALARMS[1]) assert.deepEqual(c.detail.registered.slice(14), ['15:document_navigation', '16:manual_study', '17:practice_authoring', '18:pdf_kit_provenance', '19:study_set_save_receipts', '20:homework']);
+    else if (c.name === LATER_SCHEMA_ALARMS[2]) assert.deepEqual(c.detail.map(m => m.version), [15, 16, 17, 18, 19, 20]);
     else if (c.name === LATER_SCHEMA_ALARMS[3]) {
-      assert.deepEqual(c.detail.drift, ['ai_study_sets', 'practice_tests', 'practice_test_items', ...SCHEMA15_OBJECTS, ...SCHEMA16_OBJECTS, ...SCHEMA17_OBJECTS, ...SCHEMA18_OBJECTS, 'study_set_save_operations']);
+      assert.deepEqual(c.detail.drift, ['ai_study_sets', 'practice_tests', 'practice_test_items', ...SCHEMA15_OBJECTS, ...SCHEMA16_OBJECTS, ...SCHEMA17_OBJECTS, ...SCHEMA18_OBJECTS, 'study_set_save_operations', ...SCHEMA20_OBJECTS]);
       assert.deepEqual(c.detail.redefinedAfterBaseline, ['ai_study_sets@16', 'material_bookmarks@16', 'practice_tests@17', 'practice_test_items@17']);
     } else assert.fail(`unexpected failing check: ${c.name}`);
   }

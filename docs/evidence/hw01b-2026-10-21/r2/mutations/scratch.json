@@ -1,0 +1,13 @@
+{
+  "scratch": "/var/folders/lr/l9w24zhd5vldfmhs79b8847w0000gn/T/hw01b-r2-4ivs02gh",
+  "original_sha256": {
+    "src-tauri/src/homework.rs": "4c419859e1d1adce313a0dc33e223611a27fdedafd66615636752ecb7f659505",
+    "src-tauri/src/backup.rs": "ac89bc5b8041837911494c1ce301baa67d10f4f89f71eb6a7bf86a5420cac979",
+    "src-tauri/src/lib.rs": "af12281baea8bec10b6a94c3976f222abe528d89580bc77a20909a7f6dc6dae6",
+    "src/data/homeworkTransaction.ts": "47dcd9ea11f4eb7fcec1e5dc6241c54c3b1a6cb4de1c41f4e9f97615f5ad765b",
+    "src/domain/homework.ts": "3acd663eb9461a346338620bb700811c44347283da315616959341a9e8f8c055",
+    "src/data/practiceStateValidation.ts": "1dc6395a1b5b92064672b38ba5c5cadeaaa1c0ae486eadfebe498a2dee805f8d",
+    "src/data/migrations.ts": "0b074e0f5ba7028bda153a885057a26db8ced3b073b0411dc63941d295f7681c",
+    "src/data/sqlJsDb.ts": "449bb2647a72ffd9bbee49f681da96f233f6a93b89f6f2b8fe1ba0b30863a514"
+  }
+}

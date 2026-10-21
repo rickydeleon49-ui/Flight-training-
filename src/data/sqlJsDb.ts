@@ -379,6 +379,12 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
         ),
       );
     },
+    saveHomeworkAtomically(operation) {
+      return owner.exclusive(() => durableWrite(async () => {
+        const { executeHomeworkOperation } = await import("./homeworkTransaction");
+        return executeHomeworkOperation(exec, run, query, operation);
+      }, (cause) => new StorageDurabilityError("Homework could not be saved to browser storage, so nothing was saved.", { cause })));
+    },
     saveStudySetAtomically(
       operation: import("./studySetTransaction").StudySetSaveOperation,
     ): Promise<import("./studySetTransaction").StudySetSaveResult> {

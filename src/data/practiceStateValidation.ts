@@ -1,3 +1,4 @@
+import { homeworkAssert } from "@/domain/homework";
 /**
  * Initialization validation for the single-connection drivers (sql.js in the
  * plain browser, node:sqlite in tests): the TypeScript twin of the native
@@ -246,6 +247,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 17) await validatePracticeAuthoringState(query, reference);
   if (newest >= 18) await validatePdfKitState(query, reference);
   if (newest >= 19) await validateStudySetReceiptState(query, reference);
+  if (newest >= 20) await validateHomeworkState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -1817,5 +1819,85 @@ export async function validateStudySetReceiptState(query: ValidationQuery, refer
       if (!operation.pdfKitSources || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
       await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>);
     } catch { refuse("A study set save receipt is damaged."); }
+  }
+}
+
+/** Schema 20. Structural comparison includes partial indexes and append-only triggers. */
+export async function validateHomeworkState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  const { HOMEWORK_TABLES, parseHomeworkJson, decodeHomeworkOperation, validateHomeworkTransition, homeworkLiveMatches } = await import("@/domain/homework");
+  for (const table of HOMEWORK_TABLES) {
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+        !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+        !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+        !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
+        (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Homework tables do not match the migration contract.");
+  }
+  const objects = await reference("SELECT type,name,sql FROM sqlite_master WHERE tbl_name LIKE 'homework_%' AND type IN ('index','trigger') AND sql IS NOT NULL ORDER BY name", []);
+  for (const object of objects) {
+    const [actual] = await query("SELECT sql FROM sqlite_master WHERE type=? AND name=?", [text(object, "type"), text(object, "name")]);
+    if (!actual || normalizeSql(text(actual, "sql")) !== normalizeSql(text(object, "sql"))) refuse("Homework indexes or history guards are missing.");
+  }
+  // Reserved HW-01d entities have no permitted producer in codec 1.
+  homeworkAssert((await query("SELECT * FROM homework_runs", [])).length === 0);
+  const assignments = await query("SELECT * FROM homework_assignments ORDER BY id", []);
+  let historyCount = 0;
+  const seenActivities = new Set<string>();
+  for (const assignment of assignments) {
+    const id = text(assignment, "id");
+    const history = await query("SELECT * FROM homework_history WHERE assignment_id=? ORDER BY revision", [id]);
+    let previous: import("@/domain/homework").HomeworkSnapshot | null = null;
+    for (const row of history) {
+      historyCount++;
+      const [receipt] = await query("SELECT * FROM homework_operations WHERE operation_id=?", [text(row, "operation_id")]);
+      homeworkAssert(receipt);
+      const raw = text(receipt, "request_json");
+      const operation = decodeHomeworkOperation(parseHomeworkJson(raw));
+      homeworkAssert(operation.operationId === row.operation_id && operation.assignmentId === id && receipt.assignment_id === id);
+      homeworkAssert(operation.baseRevision === (previous?.assignment.revision ?? 0) && row.revision === operation.baseRevision + 1);
+      homeworkAssert(operation.changeKind === row.change_kind && row.recorded_at === operation.at && receipt.applied_at === operation.at);
+      homeworkAssert(await sha256Hex(raw) === receipt.request_hash);
+      homeworkAssert(canonicalJson(parseHomeworkJson(text(row, "snapshot_json"))) === canonicalJson(operation.next));
+      homeworkAssert(text(receipt, "result_json") === canonicalJson({ version: 1, assignmentId: id, revision: row.revision }));
+      previous = validateHomeworkTransition(previous, operation);
+      await validateHomeworkSources(query, previous, false);
+      for (const e of previous.activities) {
+        homeworkAssert(!seenActivities.has(e.record.id));
+      }
+    }
+    homeworkAssert(previous && previous.assignment.revision === assignment.revision);
+    const activities = await query("SELECT * FROM homework_activities WHERE assignment_id=? ORDER BY id", [id]);
+    homeworkAssert(homeworkLiveMatches(previous, assignment, activities));
+    for (const e of previous.activities) seenActivities.add(e.record.id);
+  }
+  homeworkAssert((await count(query, "SELECT COUNT(*) FROM homework_operations")) === historyCount);
+  homeworkAssert((await count(query, "SELECT COUNT(*) FROM homework_activities")) === seenActivities.size);
+}
+
+/** Live immutable identities are cross-checked; missing/drifted historical sources survive. */
+export async function validateHomeworkSources(query: ValidationQuery, snapshot: import("@/domain/homework").HomeworkSnapshot, writing: boolean): Promise<void> {
+  const { HomeworkError } = await import("@/domain/homework");
+  const a = snapshot.assignment;
+  if (writing && a.lesson_id) homeworkAssert((await query("SELECT id FROM schedule_events WHERE id=?", [a.lesson_id])).length === 1);
+  for (const e of snapshot.activities) {
+    const r = e.record;
+    if (r.card_set_id) homeworkAssert(r.card_set_id === await sha256Hex(`${r.source_material_id}\0${r.source_revision}`));
+    if (r.source_test_version_id) {
+      const [v] = await query("SELECT source_material_id,history_key,content_hash FROM practice_test_versions WHERE id=?", [r.source_test_version_id]);
+      if (v) homeworkAssert((v.source_material_id === r.source_material_id || v.source_material_id === null) && v.history_key === r.source_material_id && v.content_hash === r.source_revision);
+      else if (writing && r.test_version_id) throw new HomeworkError("SOURCE");
+    }
+    if (writing && r.kind === "read" && r.state === "completed" && r.material_id === null) throw new HomeworkError("SOURCE");
+    if (!writing || r.material_id === null) continue;
+    if (!(await query("SELECT id FROM study_materials WHERE id=?", [r.material_id])).length) throw new HomeworkError("SOURCE");
+    if (r.kind === "read" && r.source_revision) {
+      const [identity] = await query("SELECT content_sha256,total_pages FROM material_content_identities WHERE material_id=?", [r.material_id]);
+      if (!identity || identity.content_sha256 !== r.source_revision || identity.total_pages !== e.source?.total_pages || (r.page_end ?? 0) > Number(identity.total_pages)) throw new HomeworkError("SOURCE");
+    }
+    if (r.kind === "cards" && r.source_revision) {
+      const { deriveCurrentCards } = await import("@/logic/cardIdentity");
+      const [set] = await query("SELECT flashcards_json FROM ai_study_sets WHERE material_id=?", [r.material_id]);
+      const cards = await deriveCurrentCards(r.material_id, typeof set?.flashcards_json === "string" ? set.flashcards_json : null);
+      if (cards.status !== "ok" || cards.contentHash !== r.source_revision || cards.versionId !== r.card_set_id) throw new HomeworkError("SOURCE");
+    }
   }
 }

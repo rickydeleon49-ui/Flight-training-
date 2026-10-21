@@ -1,0 +1,552 @@
+[
+  {
+    "path": "cargo-dev.log",
+    "exit": 0,
+    "counts": [
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 962 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "contract-rust-first-real.log",
+    "exit": 101,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "contract-rust-first.log",
+    "exit": 0,
+    "counts": [
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 962 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "contract-ts-first.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  2 failed (2)",
+      "Tests  8 failed | 118 passed (126)"
+    ]
+  },
+  {
+    "path": "contract-ts-second.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 1 passed (2)",
+      "Tests  2 failed | 124 passed (126)"
+    ]
+  },
+  {
+    "path": "final/build-runner.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/build.log",
+    "exit": 1,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/cargo-lock.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/cargo-test-1.log",
+    "exit": 0,
+    "counts": [
+      "ok. 966 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 188.90s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s",
+      "ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.49s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "final/cargo-test-2.log",
+    "exit": 0,
+    "counts": [
+      "ok. 966 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 174.05s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s",
+      "ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.48s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "final/clippy.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/diff-check-final.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/diff-check.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/fmt.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/manifest-rebind.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "final/npm-1.log",
+    "exit": 0,
+    "counts": [
+      "Test Files  208 passed | 4 skipped (212)",
+      "Tests  4428 passed | 6 skipped (4434)"
+    ]
+  },
+  {
+    "path": "final/npm-2.log",
+    "exit": 0,
+    "counts": [
+      "Test Files  208 passed | 4 skipped (212)",
+      "Tests  4428 passed | 6 skipped (4434)"
+    ]
+  },
+  {
+    "path": "final/schema14.log",
+    "exit": 1,
+    "counts": [
+      "# tests 26",
+      "# pass 25",
+      "# fail 1",
+      "# skipped 0"
+    ]
+  },
+  {
+    "path": "final/typecheck.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "fmt-dev.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "r2/fmt-apply.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "r2/format-included-native-tests.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "r2/manifest-rebind.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-archive-schema_20_homework_archive_round_trip.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.78s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-conflict-homework_changed_payload_same_operation_refused.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.16s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-empty-homework_empty_assignment_never_completes.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.14s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-history-homework_history_append_only.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.13s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-older-older_app_rejects_schema_20_backup.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 1.04s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-reopen-homework_reopen_preserves_prior_cycle_completion.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.20s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-reorder-homework_reorder_keeps_ids_and_evidence.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.21s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-retry-homework_retry_same_operation_returns_original.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.19s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-rollback-homework_rollback_midwrite_leaves_nothing.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.18s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-source-homework_source_deleted_keeps_assignment_and_history.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.18s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-stale-homework_two_connections_one_winner_one_stale.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.20s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-upgrade-schema_19_archive_upgrades_to_20.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 1.30s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-validator-shared_homework_validation_contract_native_outcomes.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 7.14s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-v2-validator-tampered_schema_20_homework_archive_refused.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 1.32s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/mutations/native-validator-shared_homework_validation_contract_native_outcomes.log",
+    "exit": 101,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-conflict-homework_changed_payload_same_operation_refused.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-empty-homework_empty_assignment_never_completes.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-history-homework_history_append_only.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-persistence-homework_final_persistence_failure.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  1 failed | 3 skipped (4)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-reopen-homework_reopen_preserves_prior_cycle_completion.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-reorder-homework_reorder_keeps_ids_and_evidence.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-retry-homework_retry_same_operation_returns_original.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-rollback-homework_rollback_midwrite_leaves_nothing.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-skip-store-interrupted_browser_upgrade.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  1 failed | 3 skipped (4)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-upgrade-populated_19_to_20.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 2 skipped (4)"
+    ]
+  },
+  {
+    "path": "r2/mutations/ts-validator-after_close/reopen.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  80 failed | 24 passed (104)"
+    ]
+  },
+  {
+    "path": "r2/native-homework-first.log",
+    "exit": 0,
+    "counts": [
+      "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 964 filtered out; finished in 20.83s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/native-older-ceiling-fixed.log",
+    "exit": 0,
+    "counts": [
+      "ok. 1 passed; 0 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.75s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/native-older-ceiling.log",
+    "exit": 101,
+    "counts": [
+      "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 976 filtered out; finished in 0.45s"
+    ]
+  },
+  {
+    "path": "r2/native-schema19.log",
+    "exit": 0,
+    "counts": [
+      "ok. 1 passed; 0 failed; 0 ignored; 0 measured; 976 filtered out; finished in 1.66s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/native-strengthened.log",
+    "exit": 0,
+    "counts": [
+      "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 964 filtered out; finished in 40.96s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s",
+      "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s"
+    ]
+  },
+  {
+    "path": "r2/npm-first.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 207 passed | 4 skipped (212)",
+      "Tests  1 failed | 4427 passed | 6 skipped (4434)"
+    ]
+  },
+  {
+    "path": "r2/red-key-order.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 20 skipped (22)"
+    ]
+  },
+  {
+    "path": "r2/schema14.log",
+    "exit": 1,
+    "counts": [
+      "# tests 26",
+      "# pass 25",
+      "# fail 1",
+      "# skipped 0"
+    ]
+  },
+  {
+    "path": "r2/ts-contract-green.log",
+    "exit": 0,
+    "counts": [
+      "Test Files  2 passed (2)",
+      "Tests  126 passed (126)"
+    ]
+  },
+  {
+    "path": "r2/ts-upgrades-fixed.log",
+    "exit": 0,
+    "counts": [
+      "Test Files  4 passed (4)",
+      "Tests  19 passed (19)"
+    ]
+  },
+  {
+    "path": "r2/ts-upgrades.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 3 passed (4)",
+      "Tests  3 failed | 16 passed (19)"
+    ]
+  },
+  {
+    "path": "r2/typecheck.log",
+    "exit": 2,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "red-contract-ts-runner.log",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  4 failed (4)"
+    ]
+  },
+  {
+    "path": "red-contract-ts.log",
+    "exit": 1,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "typecheck-dev.log",
+    "exit": 2,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  },
+  {
+    "path": "typecheck-dev2.log",
+    "exit": 0,
+    "counts": [
+      "no executed-test count (inspect raw receipt)"
+    ]
+  }
+]

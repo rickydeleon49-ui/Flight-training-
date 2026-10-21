@@ -1,0 +1,1 @@
+All scratch sources restored exactly; worktree guards unchanged.
