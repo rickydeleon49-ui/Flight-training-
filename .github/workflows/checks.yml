@@ -23,6 +23,10 @@ concurrency:
   group: checks-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only token: these jobs only check out, cache and upload artifacts.
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Tests, types, and the data-safety guards
