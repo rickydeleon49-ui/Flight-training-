@@ -93,6 +93,26 @@ Before current data moves, restore performs all of these checks:
 
    Backups from schema 15 and earlier are checked against their own version's contract, so they still restore.
 
+Schema 20 adds five homework tables to the same SQLite snapshot: `homework_assignments`
+(titles, instructions, optional school/instructor/lesson/due date, state and revision),
+`homework_activities` (ordered tasks, bodies including reflections/questions, retained source
+identities and manual completion state), `homework_runs` (reserved for bound card/test runs),
+`homework_operations` (canonical requests, hashes and replay results), and `homework_history`
+(append-only snapshots including completion evidence and prior cycles). Codec 1 permits no
+runs or action links; HW-01d must expand validation before producing them. No new archive
+format is needed. Missing or deleted sources retain captured identity, wording and evidence.
+
+Startup and staged restore compare schema-20 columns, constraints, foreign keys, indexes and
+history triggers with migration 0020, then independently recompute aggregate completion,
+cycle/revision continuity and receipt/history consistency. A tampered database is refused even
+if its archive integrity hashes were recomputed. Supported older libraries upgrade additively
+with empty homework tables. An app whose supported schema ceiling is below 20 refuses a
+schema-20 backup with “Update the app first” before replacing current data.
+
+Browser mode keeps its existing atomic byte-restoring persistence boundary: a failed final
+storage write restores all live rows, history and receipts to the last durable bytes. Separate
+browser tabs remain uncoordinated; there is no homework-only or global Web Lock in this slice.
+
 Validation and extraction happen in `.restore-staging`. A successful stage is atomically renamed to `.restore-pending`. Current data remains untouched until activation.
 
 ## Replace activation

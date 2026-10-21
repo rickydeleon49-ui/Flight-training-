@@ -1,3 +1,4 @@
+import { HomeworkError, HOMEWORK_MESSAGES, homeworkAssert, type HomeworkOperation, type HomeworkResult } from "@/domain/homework";
 /**
  * SQLite through Tauri's SQL plugin — the real desktop database.
  *
@@ -535,6 +536,7 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     ): Promise<import("@/domain/types").PracticeSaveResult> {
       return invokePracticeAuthoringSave(operation);
     },
+    saveHomeworkAtomically: (operation) => invokeHomeworkSave(operation),
     saveStudySetAtomically: (operation, guideJobId) => invokeStudySetSave(operation, invoke, guideJobId),
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,
@@ -573,4 +575,16 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       await db.execute(toNumberedPlaceholders(sql), params);
     },
   };
+}
+
+export async function invokeHomeworkSave(operation: HomeworkOperation, call: typeof invoke = invoke): Promise<HomeworkResult> {
+  try {
+    const result = await call<HomeworkResult>("save_homework_atomically", { operation });
+    homeworkAssert(result && Object.keys(result).sort().join(",") === "assignmentId,revision,version" && result.version === 1 && result.assignmentId === operation.assignmentId && result.revision === operation.baseRevision + 1);
+    return result;
+  } catch (e) {
+    const wire = e as { code?: keyof typeof HOMEWORK_MESSAGES; message?: string };
+    if (wire?.code && wire.code in HOMEWORK_MESSAGES && wire.message === HOMEWORK_MESSAGES[wire.code]) throw new HomeworkError(wire.code);
+    throw new HomeworkError("STORAGE");
+  }
 }

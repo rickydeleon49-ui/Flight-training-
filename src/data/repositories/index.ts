@@ -5,6 +5,7 @@
  * imports a database driver directly.
  */
 import type { SqlDatabase } from "../db";
+import { homeworkRepository } from "./homeworkRepository";
 import { actionRepository } from "./actionRepository";
 import { appRepository } from "./appRepository";
 import { documentRepository } from "./documentRepository";
@@ -23,6 +24,7 @@ import { skillEvidenceRepository } from "./skillEvidenceRepository";
 import { navigationRepository } from "./navigationRepository";
 
 export interface Repositories {
+  homework: ReturnType<typeof homeworkRepository>;
   app: ReturnType<typeof appRepository>;
   profile: ReturnType<typeof profileRepository>;
   milestones: ReturnType<typeof milestoneRepository>;
@@ -44,6 +46,7 @@ export interface Repositories {
 
 export function createRepositories(db: SqlDatabase): Repositories {
   return {
+    homework: homeworkRepository(db),
     app: appRepository(db),
     profile: profileRepository(db),
     milestones: milestoneRepository(db),

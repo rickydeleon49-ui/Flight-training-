@@ -22,6 +22,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import type { SqlDatabase, SqlValue } from "../db";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
+import { executeHomeworkOperation } from "../homeworkTransaction";
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
@@ -138,6 +139,9 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
         refuseTransactionControl(sql);
         return run(sql, params);
       });
+    },
+    saveHomeworkAtomically(operation) {
+      return owner.exclusive(() => executeHomeworkOperation(exec, run, query, operation));
     },
     saveDebriefAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
       return owner.exclusive(() =>

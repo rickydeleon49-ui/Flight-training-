@@ -1,0 +1,210 @@
+--- src-tauri/src/homework.rs
++++ src-tauri/src/homework.rs
+@@ -2,6 +2,7 @@
+ use crate::practice_sessions::{canonical_json, compute_canonical_hash};
+ use rusqlite::{params, types::ValueRef, Connection, TransactionBehavior};
+ use serde_json::{json, Value};
++pub(crate) fn mutant(name: &str) -> bool { std::env::var("HFD_HW_MUTANT").ok().as_deref() == Some(name) }
+ const LIMIT: usize = 1024 * 1024;
+ const ASSIGNMENT: &str = "id title instructions school instructor lesson_id source_lesson_id due_date state revision action_id archived created_at updated_at completed_at";
+ const ACTIVITY: &str = "id assignment_id position kind title body material_id source_material_id source_revision card_set_id test_version_id source_test_version_id page_start page_end state cycle revision created_at updated_at completed_at removed_at";
+@@ -271,7 +272,7 @@
+     ensure(ids.windows(2).all(|p| p[0] < p[1]) && positions.len() <= 100)?;
+     positions.sort();
+     ensure(positions.iter().enumerate().all(|(i, n)| *n == i as i64))?;
+-    let summary = if all && !positions.is_empty() {
++    let summary = if all && (mutant("empty") || !positions.is_empty()) {
+         "completed"
+     } else if any {
+         "in_progress"
+@@ -782,8 +783,8 @@
+         &[&s(op, "operationId").unwrap()],
+     )
+     .map_err(|_| error("STORAGE"))?;
+-    if let Some(receipt) = receipts.first() {
+-        if receipt["request_json"] != raw || receipt["request_hash"] != hash {
++    if let Some(receipt) = receipts.first().filter(|_| !mutant("retry")) {
++        if !mutant("conflict") && (receipt["request_json"] != raw || receipt["request_hash"] != hash) {
+             return Err(error("CONFLICT"));
+         }
+         let result = parse(s(receipt, "result_json").map_err(|_| error("INVALID"))?)
+@@ -802,7 +803,7 @@
+     )
+     .map_err(|_| error("STORAGE"))?;
+     let assignment = assignments.first();
+-    if assignment
++    if !mutant("stale") && assignment
+         .map(|a| a["revision"].clone())
+         .unwrap_or(json!(0))
+         != op["baseRevision"]
+@@ -841,7 +842,7 @@
+                 match prior {
+                     None => true,
+                     Some(p) => {
+-                        p["source"] != e["source"]
++                        mutant("source") || p["source"] != e["source"]
+                             || p["record"]["kind"] != e["record"]["kind"]
+                             || TARGET
+                                 .iter()
+@@ -864,7 +865,7 @@
+         )?;
+         let offset = n(&maximum[0], "n")? + list(next, "activities")?.len() as i64 + 1;
+         ensure(offset <= 4_503_599_627_370_495)?;
+-        conn.execute("UPDATE homework_activities SET position=position+? WHERE assignment_id=? AND removed_at IS NULL",params![offset,id]).map_err(|e|e.to_string())?;
++        if !mutant("reorder") { conn.execute("UPDATE homework_activities SET position=position+? WHERE assignment_id=? AND removed_at IS NULL",params![offset,id]).map_err(|e|e.to_string())?; }
+         put(conn, "homework_assignments", &next["assignment"])?;
+         for e in list(next, "activities")? {
+             let owner = rows(
+@@ -889,7 +890,7 @@
+             ],
+         )
+         .map_err(|e| e.to_string())?;
+-        conn.execute(
++        if !(mutant("reopen") && op["changeKind"] == "reopen") { conn.execute(
+             "INSERT INTO homework_history VALUES (?,?,?,?,?,?)",
+             params![
+                 id,
+@@ -901,12 +902,15 @@
+             ],
+         )
+         .map_err(|e| e.to_string())?;
++        }
+         Ok(result)
+     };
+     perform().map_err(|_| error("STORAGE"))
+ }
+ pub(crate) fn execute_homework(conn: &mut Connection, op: &Value) -> Result<Value, HomeworkError> {
+     decode_operation(op).map_err(|_| error("INVALID"))?;
++    if mutant("history") { conn.execute_batch("DROP TRIGGER homework_history_no_update; DROP TRIGGER homework_history_no_delete").unwrap(); }
++    if mutant("rollback") { return apply(conn,op); }
+     let tx = conn
+         .transaction_with_behavior(TransactionBehavior::Immediate)
+         .map_err(|_| error("STORAGE"))?;
+--- src-tauri/src/backup.rs
++++ src-tauri/src/backup.rs
+@@ -623,7 +623,7 @@
+     }
+ 
+     let newest_migration = newest_migration_version(connection)?;
+-    if newest_migration > supported {
++    if !crate::homework::mutant("older") && (newest_migration > supported || (crate::homework::mutant("archive") && newest_migration >= 20)) {
+         return Err(
+             "That backup was created by a newer database format. Update the app first.".to_string(),
+         );
+@@ -690,6 +690,7 @@
+ /// Schema 20 homework contract; TS twin: `validateHomeworkState`.
+ /// All three engines exercise the shared homework fixtures after reopening.
+ pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Result<(), String> {
++    if crate::homework::mutant("validator") { return Ok(()); }
+     let reference = get_reference_schema_connection()?;
+     for table in [
+         "homework_assignments",
+--- src-tauri/src/lib.rs
++++ src-tauri/src/lib.rs
+@@ -178,7 +178,7 @@
+         Migration {
+             version: 20,
+             description: "homework",
+-            sql: include_str!("../migrations/0020_homework.sql"),
++            sql: if crate::homework::mutant("upgrade") { "" } else { include_str!("../migrations/0020_homework.sql") },
+             kind: MigrationKind::Up,
+         },
+     ]
+--- src/data/homeworkTransaction.ts
++++ src/data/homeworkTransaction.ts
+@@ -11,17 +11,19 @@
+ const sourceTarget = (e: HomeworkSnapshot["activities"][number]) =>
+   canonicalJson([e.source, ...SOURCE_FIELDS.map((k) => e.record[k])]);
+ 
++const mutant = (name: string) => process.env.HFD_HW_MUTANT === name;
+ type Run = (sql: string, params: SqlValue[]) => void | Promise<void>;
+ /** ConnectionOwner supplies exclusion; sql.js supplies its existing byte-restoring persistence boundary. */
+ export async function executeHomeworkOperation(exec: (sql: string) => void, run: Run, query: ValidationQuery, value: unknown): Promise<HomeworkResult> {
+   let op: ReturnType<typeof decodeHomeworkOperation>;
+   try { op = decodeHomeworkOperation(value); } catch { throw new HomeworkError("INVALID"); }
+   const raw = canonicalJson(op), hash = await sha256Hex(raw);
++  if (mutant("history")) exec("DROP TRIGGER homework_history_no_update; DROP TRIGGER homework_history_no_delete");
+   exec("BEGIN IMMEDIATE");
+   try {
+     const [receipt] = await query("SELECT * FROM homework_operations WHERE operation_id=?", [op.operationId]);
+-    if (receipt) {
+-      if (receipt.request_json !== raw || receipt.request_hash !== hash) throw new HomeworkError("CONFLICT");
++    if (receipt && !mutant("retry")) {
++      if (!mutant("conflict") && (receipt.request_json !== raw || receipt.request_hash !== hash)) throw new HomeworkError("CONFLICT");
+       const result = parseHomeworkJson(String(receipt.result_json)) as HomeworkResult;
+       homeworkAssert(result.version === 1 && result.assignmentId === op.assignmentId && result.revision === op.baseRevision + 1);
+       exec("COMMIT"); return result;
+@@ -48,7 +50,7 @@
+     const [max] = await query("SELECT COALESCE(MAX(position),0) AS n FROM homework_activities WHERE assignment_id=?", [op.assignmentId]);
+     const offset = Number(max?.n ?? 0) + next.activities.length + 1;
+     homeworkAssert(Number.isSafeInteger(offset * 2));
+-    await run("UPDATE homework_activities SET position=position+? WHERE assignment_id=? AND removed_at IS NULL", [offset, op.assignmentId]);
++    if (!mutant("reorder")) await run("UPDATE homework_activities SET position=position+? WHERE assignment_id=? AND removed_at IS NULL", [offset, op.assignmentId]);
+     const write = async (table: string, row: object) => {
+       const fields = Object.keys(row);
+       await run(`INSERT INTO ${table} (${fields.join(",")}) VALUES (${fields.map(() => "?").join(",")}) ON CONFLICT(id) DO UPDATE SET ${fields.filter((k) => k !== "id").map((k) => `${k}=excluded.${k}`).join(",")}`, Object.values(row) as SqlValue[]);
+@@ -61,10 +63,10 @@
+     }
+     const result: HomeworkResult = { version: 1, assignmentId: op.assignmentId, revision: next.assignment.revision };
+     await run("INSERT INTO homework_operations VALUES (?,?,?,?,?,?)", [op.operationId,op.assignmentId,raw,hash,canonicalJson(result),op.at]);
+-    await run("INSERT INTO homework_history VALUES (?,?,?,?,?,?)", [op.assignmentId,next.assignment.revision,op.operationId,op.changeKind,canonicalJson(next),op.at]);
++    if (!(mutant("reopen") && op.changeKind === "reopen")) await run("INSERT INTO homework_history VALUES (?,?,?,?,?,?)", [op.assignmentId,next.assignment.revision,op.operationId,op.changeKind,canonicalJson(next),op.at]);
+     exec("COMMIT"); return result;
+   } catch (error) {
+-    try { exec("ROLLBACK"); } catch { /* preserve original failure */ }
++    try { if (!mutant("rollback")) exec("ROLLBACK"); } catch { /* preserve original failure */ }
+     if (error instanceof HomeworkError) throw error;
+     throw new HomeworkError("STORAGE");
+   }
+--- src/domain/homework.ts
++++ src/domain/homework.ts
+@@ -121,7 +121,7 @@
+     // Starting cards/tests and reads requires the future bound session/verified source flow.
+     if (r.state === "in_progress") homeworkAssert(!["cards", "test"].includes(r.kind) && (r.kind !== "read" || (r.source_revision && r.page_end)));
+   }
+-  const all = active.length > 0 && active.every((e) => e.record.state === "completed");
++  const all = (process.env.HFD_HW_MUTANT === "empty" || active.length > 0) && active.every((e) => e.record.state === "completed");
+   const summary = all ? "completed" : active.some((e) => ["in_progress", "completed"].includes(e.record.state)) ? "in_progress" : "upcoming";
+   homeworkAssert(a.state === summary || (a.state === "reopened" && active.some((e) => e.record.state === "reopened")));
+   return s;
+--- src/data/practiceStateValidation.ts
++++ src/data/practiceStateValidation.ts
+@@ -1824,6 +1824,7 @@
+ 
+ /** Schema 20. Structural comparison includes partial indexes and append-only triggers. */
+ export async function validateHomeworkState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
++  if (process.env.HFD_HW_MUTANT === "validator") return;
+   const { HOMEWORK_TABLES, parseHomeworkJson, decodeHomeworkOperation, validateHomeworkTransition, homeworkLiveMatches } = await import("@/domain/homework");
+   for (const table of HOMEWORK_TABLES) {
+     if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+--- src/data/migrations.ts
++++ src/data/migrations.ts
+@@ -54,7 +54,7 @@
+   { version: 17, description: "practice_authoring", sql: practiceAuthoring },
+   { version: 18, description: "pdf_kit_provenance", sql: pdfKitProvenance },
+   { version: 19, description: "study_set_save_receipts", sql: studySetSaveReceipts },
+-  { version: 20, description: "homework", sql: homework },
++  { version: 20, description: "homework", sql: process.env.HFD_HW_MUTANT === "upgrade" ? "" : homework },
+ ];
+ 
+ /**
+--- src/data/sqlJsDb.ts
++++ src/data/sqlJsDb.ts
+@@ -193,7 +193,7 @@
+     lastStored = exportBytes();
+     if (!saved || !sameBytes(saved, lastStored)) {
+       try {
+-        store(lastStored);
++        if (process.env.HFD_HW_MUTANT !== "skip-store") store(lastStored);
+       } catch (storageError) {
+         throw new StorageDurabilityError(
+           "Browser storage refused the prepared database, so nothing was changed. Free some browser storage and reload.",
+@@ -269,7 +269,7 @@
+       lastStored = bytes;
+       return result;
+     } catch (error) {
+-      restoreLastStored();
++      if (process.env.HFD_HW_MUTANT !== "persistence") restoreLastStored();
+       throw durabilityError ? durabilityError(error) : error;
+     }
+   };

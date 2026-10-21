@@ -594,6 +594,12 @@ pub(crate) fn verify_application_database(path: &Path) -> Result<(), String> {
 /// connection. Initialization runs them on its own open transaction, so they
 /// see the pending conversion before it commits.
 pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(), String> {
+    verify_application_connection_with_ceiling(connection, crate::CURRENT_SCHEMA_VERSION)
+}
+fn verify_application_connection_with_ceiling(
+    connection: &Connection,
+    supported: i64,
+) -> Result<(), String> {
     let quick_check: String = connection
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .map_err(|e| format!("Could not check the database in that backup: {e}"))?;
@@ -617,7 +623,7 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     }
 
     let newest_migration = newest_migration_version(connection)?;
-    if newest_migration > crate::CURRENT_SCHEMA_VERSION {
+    if newest_migration > supported {
         return Err(
             "That backup was created by a newer database format. Update the app first.".to_string(),
         );
@@ -649,6 +655,9 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 19 {
         verify_schema_19_study_receipts(connection)?;
     }
+    if newest_migration >= 20 {
+        verify_schema_20_homework_semantics(connection)?;
+    }
     Ok(())
 }
 
@@ -678,8 +687,40 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
         .map_err(|e| format!("Could not inspect the database version: {e}"))
 }
 
-/// Schema 18's additive provenance contract; TS twin: `validatePdfKitState`.
-/// All three engines exercise `fixtures/pdf-kit-validation/cases.json` after reopening.
+/// Schema 20 homework contract; TS twin: `validateHomeworkState`.
+/// All three engines exercise the shared homework fixtures after reopening.
+pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in [
+        "homework_assignments",
+        "homework_activities",
+        "homework_runs",
+        "homework_operations",
+        "homework_history",
+    ] {
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Homework tables do not match the migration contract.".into());
+        }
+    }
+    for object in crate::homework::rows(&reference, "SELECT type,name,sql FROM sqlite_master WHERE tbl_name LIKE 'homework_%' AND type IN ('index','trigger') AND sql IS NOT NULL ORDER BY name", &[])? {
+        let actual = crate::homework::rows(connection, "SELECT sql FROM sqlite_master WHERE type=? AND name=?", &[&object["type"].as_str().unwrap(), &object["name"].as_str().unwrap()])?;
+        if actual.first().and_then(|v|v["sql"].as_str()).map(normalize_sql) != object["sql"].as_str().map(normalize_sql) {
+            return Err("Homework indexes or history guards are missing.".into());
+        }
+    }
+    crate::homework::validate_database(connection)
+}
+
 pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
     let table = "study_set_save_operations";
@@ -15678,4 +15719,5 @@ mod tests {
             "opener should not be called when listing fails with permission denied"
         );
     }
+    include!("homework_backup_tests.rs");
 }

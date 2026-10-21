@@ -1,0 +1,210 @@
+[
+  {
+    "kind": "ts",
+    "mutant": "validator",
+    "test": "after close/reopen",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-validator-after_close/reopen.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "rollback",
+    "test": "homework_rollback_midwrite_leaves_nothing",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-rollback-homework_rollback_midwrite_leaves_nothing.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "retry",
+    "test": "homework_retry_same_operation_returns_original",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-retry-homework_retry_same_operation_returns_original.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "conflict",
+    "test": "homework_changed_payload_same_operation_refused",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-conflict-homework_changed_payload_same_operation_refused.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "reorder",
+    "test": "homework_reorder_keeps_ids_and_evidence",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-reorder-homework_reorder_keeps_ids_and_evidence.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "reopen",
+    "test": "homework_reopen_preserves_prior_cycle_completion",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-reopen-homework_reopen_preserves_prior_cycle_completion.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "empty",
+    "test": "homework_empty_assignment_never_completes",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-empty-homework_empty_assignment_never_completes.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "history",
+    "test": "homework_history_append_only",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-history-homework_history_append_only.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "upgrade",
+    "test": "populated 19 to 20",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-upgrade-populated_19_to_20.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "skip-store",
+    "test": "interrupted browser upgrade",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-skip-store-interrupted_browser_upgrade.log"
+  },
+  {
+    "kind": "ts",
+    "mutant": "persistence",
+    "test": "homework final persistence failure",
+    "exit": 1,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/ts-persistence-homework_final_persistence_failure.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "validator",
+    "test": "shared_homework_validation_contract_native_outcomes",
+    "exit": 101,
+    "assertion_failure": false,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-validator-shared_homework_validation_contract_native_outcomes.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "validator",
+    "test": "shared_homework_validation_contract_native_outcomes",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-validator-shared_homework_validation_contract_native_outcomes.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "rollback",
+    "test": "homework_rollback_midwrite_leaves_nothing",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-rollback-homework_rollback_midwrite_leaves_nothing.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "retry",
+    "test": "homework_retry_same_operation_returns_original",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-retry-homework_retry_same_operation_returns_original.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "conflict",
+    "test": "homework_changed_payload_same_operation_refused",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-conflict-homework_changed_payload_same_operation_refused.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "stale",
+    "test": "homework_two_connections_one_winner_one_stale",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-stale-homework_two_connections_one_winner_one_stale.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "source",
+    "test": "homework_source_deleted_keeps_assignment_and_history",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-source-homework_source_deleted_keeps_assignment_and_history.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "reorder",
+    "test": "homework_reorder_keeps_ids_and_evidence",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-reorder-homework_reorder_keeps_ids_and_evidence.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "reopen",
+    "test": "homework_reopen_preserves_prior_cycle_completion",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-reopen-homework_reopen_preserves_prior_cycle_completion.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "empty",
+    "test": "homework_empty_assignment_never_completes",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-empty-homework_empty_assignment_never_completes.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "history",
+    "test": "homework_history_append_only",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-history-homework_history_append_only.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "upgrade",
+    "test": "schema_19_archive_upgrades_to_20",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-upgrade-schema_19_archive_upgrades_to_20.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "archive",
+    "test": "schema_20_homework_archive_round_trip",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-archive-schema_20_homework_archive_round_trip.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "validator",
+    "test": "tampered_schema_20_homework_archive_refused",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-validator-tampered_schema_20_homework_archive_refused.log"
+  },
+  {
+    "kind": "native",
+    "mutant": "older",
+    "test": "older_app_rejects_schema_20_backup",
+    "exit": 101,
+    "assertion_failure": true,
+    "log": "docs/evidence/hw01b-2026-10-21/r2/mutations/native-v2-older-older_app_rejects_schema_20_backup.log"
+  }
+]

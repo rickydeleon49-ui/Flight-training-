@@ -26,6 +26,8 @@ import practiceAuthoring from "../../src-tauri/migrations/0017_practice_authorin
 import studySetSaveReceipts from "../../src-tauri/migrations/0019_study_set_save_receipts.sql?raw";
 import pdfKitProvenance from "../../src-tauri/migrations/0018_pdf_kit_provenance.sql?raw";
 
+import homework from "../../src-tauri/migrations/0020_homework.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -52,6 +54,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 17, description: "practice_authoring", sql: practiceAuthoring },
   { version: 18, description: "pdf_kit_provenance", sql: pdfKitProvenance },
   { version: 19, description: "study_set_save_receipts", sql: studySetSaveReceipts },
+  { version: 20, description: "homework", sql: homework },
 ];
 
 /**

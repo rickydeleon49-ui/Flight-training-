@@ -1,0 +1,105 @@
+/** Populated schema 19 -> 20 through the actual startup and persistence boundaries. */
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { HomeworkOperation } from "@/domain/homework";
+import { HOMEWORK_TABLES } from "@/domain/homework";
+import { MIGRATIONS } from "./migrations";
+import { StorageDurabilityError } from "./persistenceErrors";
+import { homeworkRepository } from "./repositories/homeworkRepository";
+import { createSqlJsDatabase } from "./sqlJsDb";
+import { createNodeSqliteDatabase } from "./testing/nodeSqliteDb";
+import { dumpTables, openNodeEngine, openSqlJsEngine } from "./testing/skillEvidenceEngines";
+
+vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({ default: `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm` }));
+afterEach(() => vi.unstubAllGlobals());
+const fixture = JSON.parse(readFileSync("src-tauri/fixtures/homework-validation/cases.json", "utf8")) as { baseline: string[]; operations: Record<string, HomeworkOperation> };
+const encode = (bytes: Uint8Array) => btoa(Array.from(bytes, (b) => String.fromCharCode(b)).join(""));
+const decode = (bytes: string) => Uint8Array.from(atob(bytes), (c) => c.charCodeAt(0));
+async function schema19() {
+  const engine = await openNodeEngine();
+  try {
+    engine.exec("CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY, description TEXT NOT NULL, applied_at TEXT NOT NULL)");
+    for (const m of MIGRATIONS.filter((m) => m.version <= 19)) {
+      engine.exec(m.sql);
+      engine.exec(`INSERT INTO schema_migrations VALUES (${m.version}, '${m.description}', '2026-10-21T10:00:00.000Z')`);
+    }
+    for (const sql of fixture.baseline) engine.exec(sql);
+    engine.exec("INSERT INTO journal_entries (id,date,title,created_at,updated_at) VALUES ('synthetic-upgrade-sentinel','2026-10-21','Synthetic upgrade','2026-10-21T10:00:00.000Z','2026-10-21T10:00:00.000Z')");
+    return { bytes: engine.snapshot(), before: dumpTables(engine) };
+  } finally { engine.close(); }
+}
+function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, unknown[]>) {
+  for (const [table, rows] of Object.entries(before)) {
+    if (table === "schema_migrations") {
+      expect(after[table]!.slice(0, 19)).toEqual(rows);
+      expect(after[table]!.slice(19)).toEqual([expect.objectContaining({ version: 20, description: "homework" })]);
+    } else expect(after[table], table).toEqual(rows);
+  }
+  expect(Object.keys(after).filter((t) => !(t in before)).sort()).toEqual([...HOMEWORK_TABLES].sort());
+  for (const table of HOMEWORK_TABLES) expect(after[table]).toEqual([]);
+}
+
+describe("homework schema upgrade and driver durability", () => {
+  it("populated 19 to 20 browser upgrade and repeated reopen preserve every old row", async () => {
+    const { bytes, before } = await schema19();
+    let stored = encode(bytes);
+    vi.stubGlobal("localStorage", { getItem: () => stored, setItem: (_key: string, value: string) => { stored = value; } });
+    await createSqlJsDatabase();
+    const first = await openSqlJsEngine(decode(stored));
+    let upgraded: ReturnType<typeof dumpTables>;
+    try { upgraded = dumpTables(first); assertUpgrade(before, upgraded); } finally { first.close(); }
+    await createSqlJsDatabase();
+    const reopened = await openSqlJsEngine(decode(stored));
+    try { expect(dumpTables(reopened)).toEqual(upgraded); } finally { reopened.close(); }
+  });
+  it("populated 19 to 20 node upgrade and repeated reopen preserve every old row", async () => {
+    const { bytes, before } = await schema19();
+    const dir = mkdtempSync(join(tmpdir(), "homework-upgrade-"));
+    const path = join(dir, "library.db");
+    try {
+      writeFileSync(path, bytes);
+      (await createNodeSqliteDatabase(path)).close();
+      const first = await openNodeEngine(path);
+      let upgraded: ReturnType<typeof dumpTables>;
+      try { upgraded = dumpTables(first); assertUpgrade(before, upgraded); } finally { first.close(); }
+      (await createNodeSqliteDatabase(path)).close();
+      const reopened = await openNodeEngine(path);
+      try { expect(dumpTables(reopened)).toEqual(upgraded); } finally { reopened.close(); }
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+  it("interrupted browser upgrade never overwrites the populated schema 19 bytes", async () => {
+    const { bytes, before } = await schema19();
+    const stored = encode(bytes);
+    vi.stubGlobal("localStorage", { getItem: () => stored, setItem: () => { throw new Error("synthetic persistence refusal"); } });
+    await expect(createSqlJsDatabase()).rejects.toBeInstanceOf(StorageDurabilityError);
+    const reopened = await openSqlJsEngine(decode(stored));
+    try { expect(dumpTables(reopened)).toEqual(before); } finally { reopened.close(); }
+  });
+  it("homework final persistence failure restores every live table and receipt; retry saves once", async () => {
+    let stored: string | null = null, fail = false;
+    vi.stubGlobal("localStorage", { getItem: () => stored, setItem: (_key: string, value: string) => {
+      if (fail) throw new Error("synthetic persistence refusal");
+      stored = value;
+    } });
+    const db = await createSqlJsDatabase();
+    for (const sql of fixture.baseline) await db.execute(sql);
+    const repo = homeworkRepository(db);
+    const before = stored!;
+    const original = await openSqlJsEngine(decode(before));
+    let tables: ReturnType<typeof dumpTables>;
+    try { tables = dumpTables(original); } finally { original.close(); }
+    fail = true;
+    await expect(repo.save(structuredClone(fixture.operations.create!))).rejects.toBeInstanceOf(StorageDurabilityError);
+    expect(stored).toBe(before);
+    for (const [table, rows] of Object.entries(tables)) expect(await db.select(`SELECT * FROM "${table}" ORDER BY rowid`), table).toEqual(rows);
+    fail = false;
+    const result = await repo.save(structuredClone(fixture.operations.create!));
+    expect(await repo.save(structuredClone(fixture.operations.create!))).toEqual(result);
+    for (const table of ["homework_operations", "homework_history"]) expect(await db.select(`SELECT COUNT(*) AS n FROM ${table}`)).toEqual([{ n: 1 }]);
+    const reopened = homeworkRepository(await createSqlJsDatabase());
+    expect(await reopened.get(result.assignmentId)).toEqual(await repo.get(result.assignmentId));
+    expect(await reopened.history(result.assignmentId)).toEqual(await repo.history(result.assignmentId));
+  });
+});
