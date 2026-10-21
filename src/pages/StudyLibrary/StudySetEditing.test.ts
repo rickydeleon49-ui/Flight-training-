@@ -454,7 +454,9 @@ describe("editing a generated study guide", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
-    expect(localStorage.getItem("her-flight-deck.reviewed-regeneration.job-555555555555555555555555")).toBeNull();
+    // The checkpoint is dropped only once the journal confirms it forgot the
+    // answer, which follows the recognition above asynchronously.
+    await waitFor(() => expect(localStorage.getItem("her-flight-deck.reviewed-regeneration.job-555555555555555555555555")).toBeNull(), SLOW_RUNNER);
   });
 
   // Her reviewed save is two writes: the study set, and the journal confirming
