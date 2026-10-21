@@ -21,6 +21,10 @@ concurrency:
   group: build-desktop-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only token: these jobs only check out, cache and upload artifacts.
+permissions:
+  contents: read
+
 jobs:
   build-macos:
     name: macOS
