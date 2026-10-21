@@ -1,3 +1,7 @@
+## Competitive app and user-review research — 21 October 2026
+
+[Comparative research and candidate scopes](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) adds a public App Store/web survey: 18 metadata records and 120 manually read recent reviews across 15 apps, with [method and evidence](docs/research/competitive-apps-2026-10-21/README.md). The sample is qualitative and not representative. Recommendations emphasize continuity, explanation/source context, manageable sessions and dependable offline access. COMP-01–10 are evidence-backed candidates mapped to existing DIFF/HUB work, **not ten approved feature starts or a new priority queue**. Preserve the existing owner order, current scheduler, no-guilt/no-enrolment experience and separate reader/voice/format/platform gates. No app code, dependency, migration, runtime switch, release or readiness status changed. Baseline main `f2cf79f` includes HW-01d quiz/daily-plan integration; do not reassign that completed source work as new implementation.
+
 ## Offline training differentiation: researched roadmap addition — 21 October 2026
 
 The owner requested a deep research pass and a roadmap for the six discussed features. [Research, primary sources and current-code inventory](docs/OFFLINE_TRAINING_RESEARCH_2026-10-21.md) and [implementation slices/acceptance criteria](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) now define that follow-on work. **Planning addition only:** no feature, migration, dependency, model, release switch or implementation-priority change is authorized by publishing these documents.
