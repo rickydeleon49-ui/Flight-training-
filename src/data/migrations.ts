@@ -23,6 +23,7 @@ import documentNavigation from "../../src-tauri/migrations/0015_document_navigat
 import manualStudy from "../../src-tauri/migrations/0016_manual_study.sql?raw";
 import practiceAuthoring from "../../src-tauri/migrations/0017_practice_authoring.sql?raw";
 
+import studySetSaveReceipts from "../../src-tauri/migrations/0019_study_set_save_receipts.sql?raw";
 import pdfKitProvenance from "../../src-tauri/migrations/0018_pdf_kit_provenance.sql?raw";
 
 export interface Migration {
@@ -50,6 +51,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 16, description: "manual_study", sql: manualStudy },
   { version: 17, description: "practice_authoring", sql: practiceAuthoring },
   { version: 18, description: "pdf_kit_provenance", sql: pdfKitProvenance },
+  { version: 19, description: "study_set_save_receipts", sql: studySetSaveReceipts },
 ];
 
 /**

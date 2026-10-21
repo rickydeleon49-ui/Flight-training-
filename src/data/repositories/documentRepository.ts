@@ -1,3 +1,4 @@
+import { readPdfItemProvenance } from "../pdfKitSources";
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import {
@@ -334,6 +335,22 @@ export function documentRepository(db: SqlDatabase) {
     return grouped;
   }
 
+  async function withPdfSources(set: AiStudySet): Promise<AiStudySet> {
+    const query = (sql: string, params: import("../db").SqlValue[]) => db.select<Record<string, unknown>>(sql, params);
+    const summaryPdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "summary", "summary", set.summary, set.summaryOrigin ?? undefined);
+    const sections = await Promise.all(set.sections.map(async item => {
+      if (!item.itemId) return item;
+      const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "section", item.itemId, item as unknown as Record<string, unknown>, item.origin);
+      return pdfProvenance ? { ...item, pdfProvenance } : item;
+    }));
+    const flashcards = await Promise.all(set.flashcards.map(async item => {
+      if (!item.itemId) return item;
+      const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "card", item.itemId, item as unknown as Record<string, unknown>, item.origin);
+      return pdfProvenance ? { ...item, pdfProvenance } : item;
+    }));
+    return { ...set, sections, flashcards, ...(summaryPdfProvenance ? { summaryPdfProvenance } : {}) };
+  }
+
   async function readStoredSet(materialId: Id): Promise<StoredSetRow | null> {
     const [row] = await db.select<Record<string, unknown>>(
       `SELECT ${SET_COLUMNS.join(", ")} FROM ai_study_sets WHERE source_material_id = ?`,
@@ -420,7 +437,7 @@ export function documentRepository(db: SqlDatabase) {
 
     async listAiStudySets(): Promise<AiStudySet[]> {
       const rows = await db.select<AiRow>("SELECT * FROM ai_study_sets ORDER BY updated_at DESC");
-      return rows.map(mapAiStudySet);
+      return Promise.all(rows.map(row => withPdfSources(mapAiStudySet(row))));
     },
 
     /**
@@ -469,7 +486,7 @@ export function documentRepository(db: SqlDatabase) {
     /** The set she is about to edit: as stored (for the save) and as shown. */
     async readStudySetForEdit(materialId: Id): Promise<{ stored: StoredSetRow; set: AiStudySet } | null> {
       const stored = await readStoredSet(materialId);
-      return stored ? { stored, set: storedStudySet(materialId, stored) } : null;
+      return stored ? { stored, set: await withPdfSources(storedStudySet(materialId, stored)) } : null;
     },
 
     /** One atomic study-set save, history first (OFFLINE-03a). */
@@ -510,7 +527,16 @@ export function documentRepository(db: SqlDatabase) {
           (sql, params) => db.select(sql, params),
           test.sourceMaterialId,
         );
-        tests.push(withStoredOrigins(test, snapshot));
+        const authored = withStoredOrigins(test, snapshot);
+        if (snapshot) {
+          authored.questions = await Promise.all(authored.questions.map(async (question, index) => {
+            const item = snapshot.questions[index];
+            if (!item) return question;
+            const pdfProvenance = await readPdfItemProvenance((sql, params) => db.select(sql, params), test.sourceMaterialId, "question", item.identity, question as unknown as Record<string, unknown>, question.origin);
+            return pdfProvenance ? { ...question, pdfProvenance } : question;
+          }));
+        }
+        tests.push(authored);
       }
       return tests;
     },

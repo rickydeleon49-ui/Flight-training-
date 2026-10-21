@@ -282,12 +282,21 @@ fn shared_practice_authoring_contract_native_outcomes() {
                 .as_object_mut()
                 .unwrap()
                 .insert("expected".to_string(), expected);
-            let actual = match save_practice_authoring_at(dir.path(), &operation) {
+            let actual = match super::practice_authoring::execute_practice_authoring(
+                &mut open_reader(dir.path()),
+                &operation,
+            ) {
                 Ok(result) => {
                     let conn = open_reader(dir.path());
+                    let mut current = current_summary(&conn, &material);
+                    if step.expect["current"].get("pdfSourceCount").is_some() && !current.is_null()
+                    {
+                        let n: i64 = conn.query_row("SELECT COUNT(*) FROM pdf_kit_item_sources s JOIN pdf_kit_runs r ON r.run_id = s.run_id WHERE r.material_id = ?1", [&material], |r| r.get(0)).unwrap();
+                        current["pdfSourceCount"] = json!(n);
+                    }
                     let value = json!({
                         "status": result.status,
-                        "current": current_summary(&conn, &material),
+                        "current": current,
                     });
                     drop(conn);
                     value
@@ -1008,4 +1017,124 @@ fn shared_practice_authoring_validation_contract_native_outcomes() {
     }
     assert!(mismatches.is_empty(), "{mismatches:#?}");
     assert!(contract.cases.len() >= 26);
+}
+
+fn kit_operation() -> Value {
+    fixture()
+        .scenarios
+        .into_iter()
+        .find(|s| s.name == "pdf-kit-receipt-and-edit-lineage")
+        .unwrap()
+        .steps
+        .remove(0)
+        .operation
+}
+#[test]
+fn provenance_atomic_with_save_injected_failure_rolls_back_all() {
+    let dir = TempDir::new("kit-rollback");
+    let mut conn = seeded_database(dir.path());
+    conn.execute_batch("CREATE TRIGGER inject_kit BEFORE INSERT ON practice_tests BEGIN SELECT RAISE(FAIL,'synthetic'); END;").unwrap();
+    assert_eq!(
+        super::practice_authoring::execute_practice_authoring(&mut conn, &kit_operation())
+            .unwrap_err()
+            .code,
+        PracticeAuthoringErrorCode::StorageError
+    );
+    for table in [
+        "pdf_kit_runs",
+        "pdf_kit_item_sources",
+        "practice_tests",
+        "practice_test_versions",
+        "practice_save_operations",
+    ] {
+        let n: i64 = conn
+            .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 0, "{table}");
+    }
+}
+#[test]
+fn content_hash_mismatch_refused_before_write() {
+    let dir = TempDir::new("kit-hash");
+    let mut conn = seeded_database(dir.path());
+    let mut op = kit_operation();
+    op["pdfKitSources"]["items"][0]["contentHash"] = json!("b".repeat(64));
+    assert_eq!(
+        super::practice_authoring::execute_practice_authoring(&mut conn, &op)
+            .unwrap_err()
+            .code,
+        PracticeAuthoringErrorCode::InvalidArgument
+    );
+    assert_eq!(
+        conn.query_row("SELECT COUNT(*) FROM pdf_kit_runs", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn shared_pdf_kit_study_save_contract() {
+    let dir = TempDir::new("kit-study-parity");
+    let mut conn = seeded_database(dir.path());
+    let steps: Vec<Value> = serde_json::from_str(include_str!(
+        "../../src/testing/pdfKitStudySaveVectors.json"
+    ))
+    .unwrap();
+    for step in steps {
+        let mut op = step["operation"].clone();
+        if op["expected"] == "$current" {
+            let mut map = Map::new();
+            conn.query_row("SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at, summary_origin, retired_json FROM ai_study_sets WHERE source_material_id='mat-a'",[],|r| {
+                for (i,c) in crate::study_sets::SET_COLUMNS.iter().enumerate() {map.insert(c.to_string(),r.get::<_,Option<String>>(i)?.map(Value::String).unwrap_or(Value::Null));} Ok(())
+            }).unwrap();
+            op["expected"] = Value::Object(map);
+        }
+        let actual = match crate::study_sets::decode_operation(&op) {
+            Ok(decoded) => match crate::study_sets::save_on(&mut conn, &decoded, STAMP) {
+                Ok(r) => json!({"status":r.status}),
+                Err(code) => json!({"error":code}),
+            },
+            Err(code) => json!({"error":code}),
+        };
+        assert_eq!(actual, step["expect"], "{op}");
+    }
+    assert_eq!(
+        conn.query_row("SELECT COUNT(*) FROM pdf_kit_item_sources", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+}
+
+#[test]
+fn edited_kit_item_keeps_sources_and_shows_edit_origin() {
+    let dir = TempDir::new("kit-edit");
+    let mut conn = seeded_database(dir.path());
+    let op = kit_operation();
+    super::practice_authoring::execute_practice_authoring(&mut conn, &op).unwrap();
+    let snapshot = read_current_snapshot(&conn, "mat-a").unwrap().unwrap();
+    let before = decode_question(&op["next"]["questions"][0]).unwrap();
+    let retirement = retirement_record_value(&practice_retirement_record(&before, "corrected"));
+    let mut next = op["next"].clone();
+    next["questions"][0]["question"] = json!("Edited synthetic question");
+    next["questions"][0]["origin"] = json!("instructor");
+    next["retired"] = json!([retirement]);
+    let edit = json!({"operationId":"001c0001-0000-4000-8000-000000000040","sourceMaterialId":"mat-a","reason":"correct","expected":snapshot_value(&snapshot),"next":next});
+    super::practice_authoring::execute_practice_authoring(&mut conn, &edit).unwrap();
+    assert_eq!(
+        read_current_snapshot(&conn, "mat-a")
+            .unwrap()
+            .unwrap()
+            .questions[0]
+            .origin
+            .as_deref(),
+        Some("instructor")
+    );
+    assert_eq!(
+        conn.query_row("SELECT COUNT(*) FROM pdf_kit_item_sources", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
 }

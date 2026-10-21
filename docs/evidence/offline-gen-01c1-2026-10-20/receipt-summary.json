@@ -1,0 +1,293 @@
+{
+  "receipts": [
+    {
+      "log": "build-1.log",
+      "exit": 1,
+      "counts": "no tests",
+      "sha256": "e1fb7840896ca7b86e7a0bdac9a7cea5d8d46a5644c0fdb65a1cddf534a9f957"
+    },
+    {
+      "log": "build-runner.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "11dacf8be49eb4ad02b6e47cd124369d52ccbea66893924ca0a4422333f5d0e6"
+    },
+    {
+      "log": "cargo-lock.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "241c572a9242a93ccd667a939718d8c09118f3cecb17fce4baf0817bab35e971"
+    },
+    {
+      "log": "cargo-test-1.log",
+      "exit": 0,
+      "counts": "971p/0f/11i",
+      "sha256": "903742f071cdccc976d3339eb6b5ae9cb7cc8902ed652dc2fb84754f89ce30cd"
+    },
+    {
+      "log": "cargo-test-2.log",
+      "exit": 101,
+      "counts": "no tests",
+      "sha256": "bcd99ffa5d7b600b6c8388cb154d5ac65a28b074e70716cbbd64db4a6130dc33"
+    },
+    {
+      "log": "cargo-test-3.log",
+      "exit": 101,
+      "counts": "972p/1f/11i",
+      "sha256": "bf325026b57a40b9eac8a4c50c9c544f140cfaf6d3b68b9eb05e84a34e37d4a4"
+    },
+    {
+      "log": "cargo-test-4.log",
+      "exit": 0,
+      "counts": "973p/0f/11i",
+      "sha256": "a686d53817e875d98f6561c553669fcfe1a79f5a2904ffb04ec7a2d4720e8fca"
+    },
+    {
+      "log": "cargo-test-5.log",
+      "exit": 0,
+      "counts": "973p/0f/11i",
+      "sha256": "05830cf61d66ab64865a17fb2d65d386a91acb0aff210e0d6a2d6f7f0feb6482"
+    },
+    {
+      "log": "clippy-final.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "66cf54b6dbb6edfbb6306a8ec98cb06f0e17b4a37513565705fa7a94e3d6b002"
+    },
+    {
+      "log": "clippy.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "a7719322a0931e8b79ea0748e1547e16f0e8e2c043d5d474a59480e442825b2d"
+    },
+    {
+      "log": "diff-check.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "851756c7df6105eeae671bd02750c3634028d6ecf7e758434b458f499d38cc2b"
+    },
+    {
+      "log": "draft-native-1.log",
+      "exit": 0,
+      "counts": "3p/0f/0i",
+      "sha256": "4d4679880fc8471b9172165398ba68ea800eeb2c86440f059b9ce6efe405887a"
+    },
+    {
+      "log": "draft-native-red-assertions.log",
+      "exit": 101,
+      "counts": "0p/3f/0i",
+      "sha256": "cab0d6e79a07dd190d0cfd35bb35f8e7f80382221df1d85b6acb427bb6edb31e"
+    },
+    {
+      "log": "draft-native-red.log",
+      "exit": 0,
+      "counts": "0p/0f/0i",
+      "sha256": "d64dfea4d7deaf30dafd285a4a4858c1c6e3b798ec8424bf059b4795e2b35654"
+    },
+    {
+      "log": "fmt-apply-2.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "fmt-apply-3.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "fmt-apply.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "fmt-check.log",
+      "exit": 1,
+      "counts": "no tests",
+      "sha256": "2fef77595f6e8770053d064a9e001a37aaa99275b41cd94ed923379e6e28a2a0"
+    },
+    {
+      "log": "fmt-final-apply.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "8b31424133cad20649e7b2313a1e708a5050bd908993b08d807be9d7e149037e"
+    },
+    {
+      "log": "fmt-final-check-2.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "6a6c1da58a9a615b45ea7ec3162d6a6d3db474238edf3885a0ed3114f63f0622"
+    },
+    {
+      "log": "fmt-final-check.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "6a6c1da58a9a615b45ea7ec3162d6a6d3db474238edf3885a0ed3114f63f0622"
+    },
+    {
+      "log": "kit-native-2.log",
+      "exit": 101,
+      "counts": "no tests",
+      "sha256": "b28d8eca805f82021dd62c0cbcebd14b2197e0306fa2a48a76275a258dea99c4"
+    },
+    {
+      "log": "kit-native-3.log",
+      "exit": 0,
+      "counts": "27p/0f/0i",
+      "sha256": "f5dff8492f2b6f9dbc49ffbf3f05135b263b775d0be2382cfbd50e8bae9e20dc"
+    },
+    {
+      "log": "kit-native-coherent-pages.log",
+      "exit": 0,
+      "counts": "7p/0f/0i",
+      "sha256": "a3a7f21f5bb019ffc397c4d6358859897fb33ea4e311d374a154fe44fc382766"
+    },
+    {
+      "log": "kit-native-collision-fix.log",
+      "exit": 101,
+      "counts": "6p/1f/0i",
+      "sha256": "42bb2fe58b27be015cd17e95f434bd971a708491f15088918237eddcde49de6d"
+    },
+    {
+      "log": "kit-native-final.log",
+      "exit": 101,
+      "counts": "27p/2f/0i",
+      "sha256": "77879ac6c89a338ecfb46029331f9f671f5edbafb460b056ccf1fe69605ec38e"
+    },
+    {
+      "log": "npm-test-1.log",
+      "exit": 1,
+      "counts": "2 failed | 4213 passed | 6 skipped (4221)",
+      "sha256": "42a9227f120cb2caa2f25d297fd6754f198f48142e61857aeeb3fc4aa13ef682"
+    },
+    {
+      "log": "npm-test-2.log",
+      "exit": 0,
+      "counts": "4216 passed | 6 skipped (4222)",
+      "sha256": "a0c4aa1a33a43ec09a75842947571f2a12134685bed69e933048596345c2ecc1"
+    },
+    {
+      "log": "npm-test-3.log",
+      "exit": 0,
+      "counts": "4216 passed | 6 skipped (4222)",
+      "sha256": "42b18a13fc3ad08361e9e769b0992f7ea498e60664a051cf623d88ad979d14be"
+    },
+    {
+      "log": "parity-native-1.log",
+      "exit": 0,
+      "counts": "1p/0f/0i",
+      "sha256": "766ff9600515594eaa63f0453947112b4029449fd135284b393a0163f40372ba"
+    },
+    {
+      "log": "parity-native-red.log",
+      "exit": 101,
+      "counts": "0p/1f/0i",
+      "sha256": "a5e5672371afa5c447d168770cf4006bc998988022395f01bed8984adb41a4b1"
+    },
+    {
+      "log": "parity-ts-1.log",
+      "exit": 0,
+      "counts": "18 passed (18)",
+      "sha256": "412dbb999dca7d1b176031f59493b5b222e263242c8404a9ff48de289eda1220"
+    },
+    {
+      "log": "parity-ts-red-runner.log",
+      "exit": 1,
+      "counts": "1 failed | 17 passed (18)",
+      "sha256": "d6cb8161fd48f3270bb8fc7b7788e60b5faec23ba3b7430d049fe817f91edfb3"
+    },
+    {
+      "log": "parity-ts-red.log",
+      "exit": 1,
+      "counts": "no tests",
+      "sha256": "cf4677e8972630763d7f1094e75fd7438a4696ad567fb7f60bf8a74a85cf3a47"
+    },
+    {
+      "log": "reader-edit-focused.log",
+      "exit": 0,
+      "counts": "25 passed (25)",
+      "sha256": "9a0ca22edcec1af10a6910e0c667f55a2a994679be4d1b6f629ff4fac221af12"
+    },
+    {
+      "log": "reader-final-focused.log",
+      "exit": 0,
+      "counts": "63 passed (63)",
+      "sha256": "0822a4dc2f787b26a2b57a4879fb0d5ef71c26fe6d1d9bd8ef1176a97077f4f8"
+    },
+    {
+      "log": "schema14-1.log",
+      "exit": 1,
+      "counts": "25p/1f",
+      "sha256": "3873a7839a684f39ae191ea93f03921b40c0a2f0f4e830cb55b7d3995aecf482"
+    },
+    {
+      "log": "sources-ts-1.log",
+      "exit": 0,
+      "counts": "22 passed (22)",
+      "sha256": "74cb28023a1235a030aafc9c161492d1c543038a0715b4b1d3494dd359c469f9"
+    },
+    {
+      "log": "sources-ts-2.log",
+      "exit": 0,
+      "counts": "61 passed (61)",
+      "sha256": "43041193104be078f6a94235eb8d422eacdcf45f12e8b37e110f9bc6c8936435"
+    },
+    {
+      "log": "sources-ts-red.log",
+      "exit": 1,
+      "counts": "2 failed | 2 passed (4)",
+      "sha256": "a79a19a7c9749e04e810eaee0041a6a4235c77db6b6283cc2f246aae757762a6"
+    },
+    {
+      "log": "study-sources-native-red.log",
+      "exit": 101,
+      "counts": "0p/1f/0i",
+      "sha256": "1da6cf75192cca1fbf12ac6cb6c7f65e87e0f7c0c3ec9bbf2c5051d6c6aca0fb"
+    },
+    {
+      "log": "study-sources-ts-red.log",
+      "exit": 1,
+      "counts": "1 failed | 4 passed (5)",
+      "sha256": "8887d3f6d9a5b92c8397a88e0042c16c96e61d33c451f3964254d3277f0bdb6c"
+    },
+    {
+      "log": "typecheck-1.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "205a343b25d83d74624ae54d878ae4ec40b06d26a9dfce5458463a14d29af588"
+    },
+    {
+      "log": "typecheck-2.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "205a343b25d83d74624ae54d878ae4ec40b06d26a9dfce5458463a14d29af588"
+    },
+    {
+      "log": "typecheck-3.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "205a343b25d83d74624ae54d878ae4ec40b06d26a9dfce5458463a14d29af588"
+    },
+    {
+      "log": "typecheck-final.log",
+      "exit": 0,
+      "counts": "no tests",
+      "sha256": "205a343b25d83d74624ae54d878ae4ec40b06d26a9dfce5458463a14d29af588"
+    },
+    {
+      "log": "upgrade-focused.log",
+      "exit": 0,
+      "counts": "21 passed (21)",
+      "sha256": "1637c7edf4e761c3d2c15204f1e93b04ea4af001e9841214797ed2c0df66ca44"
+    }
+  ],
+  "notes": [
+    "p/f/i mean passed/failed/ignored; frontend skip counts are printed verbatim.",
+    "draft-native-red.log matched zero tests after an incorrect working-directory setup; it is not failing-first evidence.",
+    "Native final-tree full runs are cargo-test-4 and cargo-test-5; frontend passing full runs are npm-test-2 and npm-test-3.",
+    "Schema-14 failure is sandbox pgrep diagnostics; raw failure is preserved.",
+    "Rollback, hash mismatch and backup tests lack an initial failing assertion."
+  ]
+}

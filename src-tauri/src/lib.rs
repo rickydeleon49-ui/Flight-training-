@@ -25,6 +25,8 @@ mod gemini_jobs;
 mod lineage;
 mod navigation;
 mod pdf;
+mod pdf_kit;
+mod pdf_kit_sources;
 pub mod pdf_study_kit;
 #[cfg(test)]
 mod pdf_study_kit_tests;
@@ -50,7 +52,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 18;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 19;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -166,6 +168,12 @@ pub(crate) fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0018_pdf_kit_provenance.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 19,
+            description: "study_set_save_receipts",
+            sql: include_str!("../migrations/0019_study_set_save_receipts.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -267,6 +275,8 @@ pub fn run() {
             gemini::configure_gemini,
             gemini::disconnect_gemini,
             gemini::set_gemini_model,
+            pdf_kit::prepare_pdf_study_kit,
+            pdf_kit::get_pdf_study_kit,
             gemini::generate_study_aid,
             gemini::sections::queue_study_guide,
             gemini::sections::resume_study_guide,

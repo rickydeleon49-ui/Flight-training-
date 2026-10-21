@@ -646,6 +646,9 @@ pub(crate) fn verify_application_connection(connection: &Connection) -> Result<(
     if newest_migration >= 18 {
         verify_schema_18_pdf_kit_semantics(connection)?;
     }
+    if newest_migration >= 19 {
+        verify_schema_19_study_receipts(connection)?;
+    }
     Ok(())
 }
 
@@ -677,6 +680,52 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
 
 /// Schema 18's additive provenance contract; TS twin: `validatePdfKitState`.
 /// All three engines exercise `fixtures/pdf-kit-validation/cases.json` after reopening.
+pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "study_set_save_operations";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+        || check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        || m3_count(
+            connection,
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )? != 0
+    {
+        return Err("Study set save receipts do not match the migration contract.".into());
+    }
+    let mut stmt=connection.prepare("SELECT operation_id,material_id,payload_json,payload_hash FROM study_set_save_operations").map_err(|_|"Study set save receipts unavailable.")?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        })
+        .map_err(|_| "Study set save receipts unavailable.")?;
+    for row in rows {
+        let (id, material, payload, hash) =
+            row.map_err(|_| "A study set save receipt is damaged.")?;
+        let v: serde_json::Value =
+            serde_json::from_str(&payload).map_err(|_| "A study set save receipt is damaged.")?;
+        let operation = crate::study_sets::decode_operation(&v)
+            .map_err(|_| "A study set save receipt is damaged.")?;
+        if operation.pdf_kit_sources.is_none()
+            || operation.operation_id != id
+            || operation.material_id != material
+            || crate::practice_sessions::canonical_json(&operation.payload) != payload
+            || crate::practice_sessions::compute_canonical_hash(&operation.payload) != hash
+        {
+            return Err("A study set save receipt is damaged.".into());
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn verify_schema_18_pdf_kit_semantics(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
     for table in ["pdf_kit_runs", "pdf_kit_item_sources"] {
@@ -14723,7 +14772,10 @@ mod tests {
                 )
                 .unwrap();
             }
-            assert_eq!(newest_migration_version(&conn).unwrap(), 18);
+            assert_eq!(
+                newest_migration_version(&conn).unwrap(),
+                crate::CURRENT_SCHEMA_VERSION
+            );
             assert_eq!(
                 m3_count(
                     &conn,
@@ -14786,6 +14838,70 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
         std::fs::remove_dir_all(backup_dir).unwrap();
         std::fs::remove_dir_all(target).unwrap();
+    }
+
+    #[test]
+    fn backup_round_trip_keeps_kit_sources() {
+        let root = scratch("kit-saved-source");
+        let target = scratch("kit-saved-target");
+        let path = root.join(DB_FILES[0]);
+        pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
+        let before = {
+            let mut conn = Connection::open(&path).unwrap();
+            conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('mat-a','Synthetic','now','now')",[]).unwrap();
+            let practice: serde_json::Value = serde_json::from_str(include_str!(
+                "../../src/testing/practiceAuthoringVectors.json"
+            ))
+            .unwrap();
+            let op = &practice["scenarios"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["name"] == "pdf-kit-receipt-and-edit-lineage")
+                .unwrap()["steps"][0]["operation"];
+            crate::practice_authoring::execute_practice_authoring(&mut conn, op).unwrap();
+            let study: serde_json::Value = serde_json::from_str(include_str!(
+                "../../src/testing/pdfKitStudySaveVectors.json"
+            ))
+            .unwrap();
+            crate::study_sets::save_on(
+                &mut conn,
+                &crate::study_sets::decode_operation(&study[0]["operation"]).unwrap(),
+                "2026-10-20T02:00:00.000Z",
+            )
+            .unwrap();
+            [
+                "pdf_kit_runs",
+                "pdf_kit_item_sources",
+                "practice_save_operations",
+                "study_set_save_operations",
+            ]
+            .map(|t| m3_rows(&conn, &format!("SELECT * FROM {t} ORDER BY rowid"), &[]).unwrap())
+        };
+        assert_eq!(before[0].len(), 1);
+        assert_eq!(before[1].len(), 2);
+        assert_eq!(before[2].len(), 1);
+        assert_eq!(before[3].len(), 1);
+        verify_application_database(&path).unwrap();
+        let backup = scratch("kit-saved-backup");
+        let archive = backup.join("saved.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+        stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        verify_application_database(&target.join(DB_FILES[0])).unwrap();
+        let conn = Connection::open(target.join(DB_FILES[0])).unwrap();
+        let after = [
+            "pdf_kit_runs",
+            "pdf_kit_item_sources",
+            "practice_save_operations",
+            "study_set_save_operations",
+        ]
+        .map(|t| m3_rows(&conn, &format!("SELECT * FROM {t} ORDER BY rowid"), &[]).unwrap());
+        assert_eq!(before, after);
+        drop(conn);
+        for p in [root, target, backup] {
+            std::fs::remove_dir_all(p).unwrap();
+        }
     }
 
     #[test]

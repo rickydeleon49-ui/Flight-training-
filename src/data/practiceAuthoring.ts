@@ -41,6 +41,7 @@ import type {
 } from "@/domain/types";
 
 import type { SqlValue } from "./db";
+import { decodePdfKitSources, validatePdfKitContent, writePdfKitSources } from "./pdfKitSources";
 import { PracticeAuthoringError, type PracticeAuthoringErrorCode } from "./persistenceErrors";
 import {
   canonicalJson,
@@ -262,7 +263,7 @@ export function decodePracticeNext(value: Json): PracticeNext {
 
 export function decodePracticeOperation(value: Json): PracticeSaveOperation {
   if (!isRecord(value)) refuse("INVALID_ARGUMENT");
-  exactKeys(value, ["operationId", "sourceMaterialId", "reason", "expected", "next"]);
+  exactKeys(value, ["operationId", "sourceMaterialId", "reason", "expected", "next"], ["pdfKitSources"]);
   const { operationId, sourceMaterialId, reason } = value;
   if (typeof operationId !== "string" || !isUuidV4(operationId)) refuse("INVALID_ARGUMENT");
   if (typeof sourceMaterialId !== "string" || sourceMaterialId.length === 0 || sourceMaterialId.length > 200) refuse("INVALID_ARGUMENT");
@@ -278,7 +279,12 @@ export function decodePracticeOperation(value: Json): PracticeSaveOperation {
         : reason === "restore" ? next !== null
           : expected !== null && next !== null;
   if (!consistent) refuse("INVALID_ARGUMENT");
-  return { operationId, sourceMaterialId, reason: reason as PracticeSaveReason, expected, next };
+  let pdfKitSources;
+  if (has(value, "pdfKitSources")) {
+    if (!next) refuse("INVALID_ARGUMENT");
+    try { pdfKitSources = decodePdfKitSources(value.pdfKitSources, sourceMaterialId); } catch { refuse("INVALID_ARGUMENT"); }
+  }
+  return { operationId, sourceMaterialId, reason: reason as PracticeSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
 }
 
 /** One retirement record, compared byte-identically (terms included). */
@@ -751,6 +757,12 @@ async function applyOperation(
     return { status: "already_saved" };
   }
 
+  if (operation.pdfKitSources) {
+    try { await writePdfKitSources(run, query, operation.pdfKitSources); } catch (error) {
+      if (error instanceof Error && error.message === "SOURCE_CHANGED") refuse("SOURCE_CHANGED");
+      throw error;
+    }
+  }
   const current = await readCurrentSnapshot(query, operation.sourceMaterialId);
   if (!sameSnapshot(current, operation.expected)) refuse("STALE_CONTENT");
   if (operation.next) {
@@ -936,6 +948,9 @@ export async function executePracticeAuthoring(
   const operation = decodePracticeOperation(input);
   if (operation.expected && operation.next) {
     await validateProtection(operation.expected, operation.next, operation.reason);
+  }
+  if (operation.pdfKitSources) {
+    try { await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>); } catch { refuse("INVALID_ARGUMENT"); }
   }
   const payloadJson = canonicalJson(operation);
   const payloadHash = await computeCanonicalHash(operation);

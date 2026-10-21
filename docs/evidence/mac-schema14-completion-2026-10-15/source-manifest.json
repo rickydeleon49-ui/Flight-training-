@@ -1,6 +1,6 @@
 {
   "schema": "hfd-schema14-completion-source-manifest/1",
-  "generatedAt": "2026-10-20T22:43:01.173367+00:00",
+  "generatedAt": "2026-10-21T00:17:45.871375+00:00",
   "base": "16f9cf3dedbfef0be09711ec42c0f7b8d3ef4b78",
   "schemaContractCommit": "8a260c0b32bc213850ed85bf9488d6ef571354a9",
   "scope": "Only the reviewed 22-path helper overlay; workflow and follow-up report/evidence are separately inventoried, never copied over protected baseline source.",
@@ -13,8 +13,8 @@
     },
     {
       "path": "ROADMAP.md",
-      "bytes": 212167,
-      "sha256": "eaa5fe31a74d2716296cb447b5d6acf540ca04745f8cf5d9310994f2aa171731"
+      "bytes": 212344,
+      "sha256": "63689be5b67770ffc31a89792c09f58e6dac3ad0c7b0d5a757c82e5a88ef13e0"
     },
     {
       "path": "docs/MAC_SCHEMA14_COMPLETION_REVIEWER_HANDOFF_2026-10-15.md",
@@ -58,8 +58,8 @@
     },
     {
       "path": "scripts/mac-schema14-profile-snapshot.test.mjs",
-      "bytes": 32425,
-      "sha256": "91cbbbbd7e25ecee76492d8f05731e1066de95d83e5851a5a447a0158d198c20"
+      "bytes": 32488,
+      "sha256": "b974412fec7afd9c823139a93582cff62829eedf28d0947d5f25af9df0cbf026"
     },
     {
       "path": "scripts/mac-schema14-verification-proof.mjs",

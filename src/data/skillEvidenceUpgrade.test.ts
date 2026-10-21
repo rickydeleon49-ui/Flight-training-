@@ -89,7 +89,7 @@ describe("upgrading a populated schema-13 library", () => {
     const retained = withoutSchema16And17Columns(RETAINED(after)) as Record<string, unknown>;
     expect(Object.fromEntries(Object.keys(before).map((k) => [k, retained[k]]))).toEqual(before);
     const added = Object.keys(retained).filter((k) => !Object.hasOwn(before, k)).sort();
-    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES, ...PDF_KIT_NEW_TABLES].sort());
+    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES, ...PDF_KIT_NEW_TABLES, "study_set_save_operations"].sort());
     for (const table of added) expect(retained[table], table).toEqual([]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_catalog_entries")).toEqual([{ n: 15 }]);
     expect(after.query("SELECT COUNT(*) AS n FROM skill_observations")).toEqual([{ n: 0 }]);

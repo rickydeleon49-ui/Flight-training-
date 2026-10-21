@@ -168,6 +168,8 @@ export class CardReviewError extends Error {
 /* ------------------------------------------------------------------ */
 
 export type StudySetErrorCode =
+  | "CONFLICT"
+  | "SOURCE_CHANGED"
   | "INVALID_ARGUMENT"
   | "STALE_CONTENT"
   | "RETIREMENT_LIMIT"
@@ -177,6 +179,8 @@ export type StudySetErrorCode =
 
 /** Word for word the native `StudySetErrorCode::message`. */
 export const STUDY_SET_ERROR_MESSAGES: Readonly<Record<StudySetErrorCode, string>> = Object.freeze({
+  CONFLICT: "This save request was already used for different study content. Nothing has been saved.",
+  SOURCE_CHANGED: "This PDF or your chosen pages changed. Nothing has been saved; review the source first.",
   INVALID_ARGUMENT: "This study set couldn't be saved because part of it isn't valid. Nothing has been saved.",
   STALE_CONTENT: "This study set changed after you opened it. Nothing has been saved; look at it again first.",
   RETIREMENT_LIMIT:
@@ -207,6 +211,7 @@ export class StudySetSaveError extends Error {
 export type PracticeAuthoringErrorCode =
   | "INVALID_ARGUMENT"
   | "STALE_CONTENT"
+  | "SOURCE_CHANGED"
   | "CONFLICT"
   | "ATTEMPT_ACTIVE"
   | "RETIREMENT_LIMIT"
@@ -218,6 +223,7 @@ export type PracticeAuthoringErrorCode =
 export const PRACTICE_AUTHORING_ERROR_MESSAGES: Readonly<Record<PracticeAuthoringErrorCode, string>> = Object.freeze({
   INVALID_ARGUMENT: "These practice questions couldn't be saved because part of them isn't valid. Nothing has been saved.",
   STALE_CONTENT: "This practice test changed after you opened it. Nothing has been saved; look at it again first.",
+  SOURCE_CHANGED: "This PDF or your chosen pages changed. Nothing has been saved; review the source first.",
   CONFLICT: "This save request was already used for different practice content. Nothing has been saved.",
   ATTEMPT_ACTIVE: "Finish or abandon your current practice attempt before editing these questions. Nothing has been saved.",
   RETIREMENT_LIMIT: "This practice test has reached its deletion and correction history limit. Your changes haven't been saved.",

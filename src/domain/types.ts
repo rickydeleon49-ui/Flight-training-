@@ -372,6 +372,7 @@ export type StudyItemOrigin = "user" | "instructor";
  * imported items have no origin; legacy items have no id until first edited.
  */
 export interface StudyItemIdentity {
+  pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   itemId?: string;
   origin?: StudyItemOrigin;
   replaces?: string;
@@ -412,6 +413,7 @@ export type StudySetProvider = StudyAidProvider | "manual";
 
 /** AI output, an imported packet or her own set, saved locally and tied to its material. */
 export interface AiStudySet {
+  summaryPdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   sourceMaterialId: Id;
   title: string;
   summary: string;
@@ -430,6 +432,7 @@ export interface AiStudySet {
 }
 
 export interface PracticeQuestion {
+  pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   question: string;
   /** At least two choices; `correctIndex` always points inside this array. */
   options: string[];
@@ -508,6 +511,7 @@ export type PracticeSaveReason = "create" | "edit" | "correct" | "regenerate" | 
 
 /** One authoring save; the operation id makes an exact retry safe. */
 export interface PracticeSaveOperation {
+  pdfKitSources?: import("@/data/pdfKitSources").PdfKitSources;
   operationId: string;
   sourceMaterialId: string;
   reason: PracticeSaveReason;

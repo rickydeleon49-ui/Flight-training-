@@ -245,6 +245,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 16) await validateManualStudyState(query, reference);
   if (newest >= 17) await validatePracticeAuthoringState(query, reference);
   if (newest >= 18) await validatePdfKitState(query, reference);
+  if (newest >= 19) await validateStudySetReceiptState(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -1797,5 +1798,24 @@ export async function validatePdfKitState(query: ValidationQuery, reference: Val
     text(row, "logical_id");
     const length = codePointLength(text(row, "quote"));
     if (length < 1 || length > 2000) refuse("A PDF kit source has an invalid quote.");
+  }
+}
+
+/** Schema 19: only PDF-bound study operations need this new receipt table. */
+export async function validateStudySetReceiptState(query: ValidationQuery, reference: ValidationQuery): Promise<void> {
+  const table = "study_set_save_operations";
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+      !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+      !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+      !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
+      (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Study set save receipts do not match the migration contract.");
+  const { decodeStudySetOperation } = await import("./studySetTransaction");
+  const { validatePdfKitContent } = await import("./pdfKitSources");
+  for (const row of await query(`SELECT * FROM ${table}`, [])) {
+    try {
+      const operation = decodeStudySetOperation(JSON.parse(text(row, "payload_json")));
+      if (!operation.pdfKitSources || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
+      await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>);
+    } catch { refuse("A study set save receipt is damaged."); }
   }
 }
