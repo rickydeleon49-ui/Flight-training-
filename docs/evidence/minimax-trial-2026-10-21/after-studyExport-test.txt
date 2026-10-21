@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+
+ Test Files  1 passed (1)
+      Tests  29 passed (29)
+   Start at  22:17:09
+   Duration  202ms (transform 50ms, setup 41ms, import 66ms, tests 18ms, environment 0ms)
+
