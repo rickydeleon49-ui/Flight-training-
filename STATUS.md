@@ -1,3 +1,7 @@
+## Roadmap: researched features scheduled — 21 October 2026
+
+The owner approved adding DIFF-01–06 (#258) and COMP-01–10 (#259) to the roadmap. See the top of [ROADMAP.md](ROADMAP.md) for the 13-step queue. The current order is unchanged through FLIGHTLOG-01. COMP-10 joins EXPORT-01/02, and AKTR code entry joins ACS-READY-01. After FLIGHTLOG-01 come STUDY-FLOW-01, MISTAKES-01, PACKS-01, PDF-STUDY-01, VISUAL-01 and ORAL-01. No code changed.
+
 ## Competitive research: App Store and web — 21 October 2026
 
 [Report](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md), [method](docs/research/competitive-apps-2026-10-21/README.md) and provenance records cover 18 app metadata snapshots, 120 unique manually read public reviews across 15 apps, and official/web sources. Research-only recommendations reuse existing roadmap groups; no new feature or performance/readiness acceptance. Prepared against main `f2cf79f` after PR #258. Public review allegations and learning outcomes are unverified; sample counts are not customer-wide preference statistics. The owner wants research available on GitHub; Claude retains independent review/merge ownership.

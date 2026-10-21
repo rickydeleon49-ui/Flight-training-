@@ -1,3 +1,34 @@
+## Owner decision: the researched features join the roadmap — 21 October 2026
+
+The owner approved adding the proposed features from the [six-feature roadmap](docs/OFFLINE_TRAINING_ROADMAP_2026-10-21.md) (DIFF-01–06, #258) and the [competitive research](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) (COMP-01–10, #259) to the roadmap. They are now **planned work, in the order below**. Each slice still gets its own bounded prompt, failing-first tests, Claude's review and exact-head CI before it merges. The gates written in those documents still apply:
+- no local AI models;
+- no dependency or migration without the owner;
+- separate approvals for an embedded PDF reader and for voice;
+- no pass or readiness score;
+- no guilt mechanics;
+- school, instructor and lesson stay optional.
+
+**The queue.** The current work stays first and is unchanged. The new work follows the research's recommended order: polish the study session, then reduce source friction, then visual recall, then rehearsal.
+
+| # | Item | What she gets | Folds in |
+| --- | --- | --- | --- |
+| 1 | OFFLINE-ON (#260) | PDF study kits and offline search in installed builds | — |
+| 2 | POLISH-01 | New homework screens polished, visual check, FLAKE-GEN-01, small fixes | — (scope already set) |
+| 3 | Release 0.5.8 | Prepared by Claude; the owner tags and publishes | — |
+| 4 | EXPORT-01/02 | Clear packet, handout, CSV and backup choices | **COMP-10** (handouts with a separate answer key, discoverability and print fidelity); the export half of **DIFF-06** |
+| 5 | ACS-READY-01 | ACS-linked readiness view | **ACS code entry:** she types the missed-topic codes from her knowledge-test report (AKTR). She never uploads the report itself: no name, FTN or score. Unknown or outdated codes stay unresolved. |
+| 6 | SCHOOL-01 | School scorecard | — |
+| 7 | FLIGHTLOG-01 | Discovery-flight log | — |
+| 8 | STUDY-FLOW-01 | **Prepare for my next flight:** a short session she can finish or pause, one dependable **Continue**, and a calm, large-text, keyboard-friendly review screen | **DIFF-01**, **COMP-01**, **COMP-04**, **COMP-07** |
+| 9 | MISTAKES-01 | **Practice that remembers mistakes:** missed question → saved explanation → source → a small follow-up; an optional "what confused me" note; her own terminology notes turned into cards | **DIFF-03**, **COMP-02**, **COMP-08** |
+| 10 | PACKS-01 | **Offline lesson packs:** a homework assignment shows exactly which readings, cards and quizzes work offline before she travels, and repairs missing items | **DIFF-02**, **COMP-05** |
+| 11 | PDF-STUDY-01 | **Study from the PDF:** page notes become study material, and the source sits beside the question. Highlights and an embedded reader come only after a feasibility decision that keeps macOS 12 working. | **DIFF-05**, **COMP-03** |
+| 12 | VISUAL-01 | **Visual recall:** cover a label on her own diagram, answer, then reveal. A small proof first, with synthetic or rights-cleared images. | **COMP-06** (gated) |
+| 13 | ORAL-01 | **Oral-exam scenarios:** text answers compared with a reviewed outline, with self-review kept separate. Voice is a later, separately approved experiment. | **DIFF-04**, **COMP-09** |
+| — | iOS lane | Portable history: verified Mac-to-iPhone restore of the current schema | Rest of **DIFF-06** (separate platform track) |
+
+Existing scheduler, weather, FAA and Study Hub queues are kept. HUB items that overlap a row above are reconciled when that row is assigned. The order can change only by an owner decision.
+
 ## Competitive app and user-review research — 21 October 2026
 
 [Comparative research and candidate scopes](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) adds a public App Store/web survey: 18 metadata records and 120 manually read recent reviews across 15 apps, with [method and evidence](docs/research/competitive-apps-2026-10-21/README.md). The sample is qualitative and not representative. Recommendations emphasize continuity, explanation/source context, manageable sessions and dependable offline access. COMP-01–10 are evidence-backed candidates mapped to existing DIFF/HUB work, **not ten approved feature starts or a new priority queue**. Preserve the existing owner order, current scheduler, no-guilt/no-enrolment experience and separate reader/voice/format/platform gates. No app code, dependency, migration, runtime switch, release or readiness status changed. Baseline main `f2cf79f` includes HW-01d quiz/daily-plan integration; do not reassign that completed source work as new implementation.
