@@ -91,6 +91,18 @@ describe.each(ENGINES)("homework atomic contract: %s", (name) => {
       expect(engine.query("SELECT state,cycle,completed_at FROM homework_activities ORDER BY id")[0]).toEqual({ state:"reopened",cycle:2,completed_at:null });
     } finally { engine.close(); }
   });
+  it("adding_activity_to_completed_assignment_reopens_it", async () => {
+    const { engine,act,validate } = await store(name);
+    try {
+      await act(request("create")); await act(request("complete"));
+      const history = engine.query("SELECT * FROM homework_history ORDER BY revision");
+      const evidence = engine.query("SELECT * FROM homework_activities ORDER BY id");
+      await act(request("add_to_completed")); await validate();
+      expect(engine.query("SELECT state,completed_at FROM homework_assignments")).toEqual([{ state:"in_progress",completed_at:null }]);
+      expect(engine.query("SELECT * FROM homework_activities ORDER BY id").slice(0,3)).toEqual(evidence);
+      expect(engine.query("SELECT * FROM homework_history WHERE revision<=2 ORDER BY revision")).toEqual(history);
+    } finally { engine.close(); }
+  });
   it("homework_empty_assignment_never_completes",async () => {
     const { engine,act,validate } = await store(name);
     try { await act(request("empty")); await validate();

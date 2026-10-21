@@ -2,6 +2,8 @@
 use crate::practice_sessions::{canonical_json, compute_canonical_hash};
 use rusqlite::{params, types::ValueRef, Connection, TransactionBehavior};
 use serde_json::{json, Value};
+#[path = "homework_cards.rs"]
+pub(crate) mod cards;
 const LIMIT: usize = 1024 * 1024;
 const ASSIGNMENT: &str = "id title instructions school instructor lesson_id source_lesson_id due_date state revision action_id archived created_at updated_at completed_at";
 const ACTIVITY: &str = "id assignment_id position kind title body material_id source_material_id source_revision card_set_id test_version_id source_test_version_id page_start page_end state cycle revision created_at updated_at completed_at removed_at";
@@ -18,6 +20,8 @@ const TARGET: &[&str] = &[
 const CHANGES: &[&str] = &[
     "create",
     "edit",
+    "start",
+    "record_evidence",
     "complete",
     "reopen",
     "reorder",
@@ -195,7 +199,7 @@ fn validate_record(v: &Value, activity: bool) -> Result<(), String> {
 }
 pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
     keys(v, "version assignment activities runs")?;
-    ensure(v["version"] == 1 && canonical_json(v).len() <= LIMIT && list(v, "runs")?.is_empty())?;
+    ensure(v["version"] == 1 && canonical_json(v).len() <= LIMIT)?;
     let a = &v["assignment"];
     validate_record(a, false)?;
     let entries = list(v, "activities")?;
@@ -237,7 +241,7 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
         }
         ensure((r["state"] == "completed") == !e["evidence"].is_null())?;
         if !e["evidence"].is_null() {
-            ensure(!["cards", "test"].contains(&s(r, "kind")?))?;
+            ensure(r["kind"] != "test")?;
             let mut evidence = json!({"version":1,"activity_id":r["id"]});
             for k in [
                 "revision",
@@ -262,7 +266,7 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
         }
         if r["state"] == "in_progress" {
             ensure(
-                !["cards", "test"].contains(&s(r, "kind")?)
+                r["kind"] != "test"
                     && (r["kind"] != "read"
                         || (!r["source_revision"].is_null() && !r["page_end"].is_null())),
             )?;
@@ -271,6 +275,7 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
     ensure(ids.windows(2).all(|p| p[0] < p[1]) && positions.len() <= 100)?;
     positions.sort();
     ensure(positions.iter().enumerate().all(|(i, n)| *n == i as i64))?;
+    cards::snapshot(v)?;
     let summary = if all && !positions.is_empty() {
         "completed"
     } else if any {
@@ -309,6 +314,7 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
             && a["updated_at"] == at,
     )?;
     let Some(previous) = previous else {
+        ensure(list(next, "runs")?.is_empty())?;
         ensure(
             change == "create"
                 && op["baseRevision"] == 0
@@ -396,7 +402,6 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
                     && r["removed_at"].is_null(),
             )?;
             affected += 1;
-            reopened |= old["state"] == "completed";
             continue;
         };
         if prior == e {
@@ -449,6 +454,21 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
                     )?;
                 }
             }
+            "start" | "record_evidence" => {
+                ensure(
+                    p["kind"] == "cards"
+                        && except(p, r, &["state", "completed_at", "updated_at"])
+                        && e["source"] == prior["source"],
+                )?;
+                ensure(if change == "start" {
+                    ["upcoming", "reopened", "in_progress"].contains(&s(p, "state")?)
+                        && r["state"] == "in_progress"
+                        && e["evidence"].is_null()
+                } else {
+                    p["state"] == "in_progress"
+                        && ["in_progress", "completed"].contains(&s(r, "state")?)
+                })?;
+            }
             "complete" => {
                 ensure(
                     except(p, r, &["state", "completed_at", "updated_at"])
@@ -487,7 +507,8 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
             _ => return Err(INVALID.into()),
         }
     }
-    if ["reopen", "complete", "relink"].contains(&change) {
+    cards::transition(previous, op)?;
+    if ["reopen", "complete", "relink", "start"].contains(&change) {
         ensure(affected > 0)?;
     }
     if change == "archive" {
@@ -629,7 +650,7 @@ pub(crate) fn sources(conn: &Connection, snapshot: &Value, writing: bool) -> Res
         if r["kind"] == "cards" && !r["source_revision"].is_null() {
             let sets = rows(
                 conn,
-                "SELECT flashcards_json FROM ai_study_sets WHERE material_id=?",
+                "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id=?",
                 &[&id],
             )?;
             let set = sets.first().ok_or("SOURCE")?;
@@ -647,7 +668,7 @@ pub(crate) fn sources(conn: &Connection, snapshot: &Value, writing: bool) -> Res
     Ok(())
 }
 pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
-    ensure(rows(conn, "SELECT * FROM homework_runs", &[])?.is_empty())?;
+    let mut run_count = 0;
     let mut seen = std::collections::HashSet::new();
     let mut count = 0;
     for assignment in rows(conn, "SELECT * FROM homework_assignments ORDER BY id", &[])? {
@@ -698,6 +719,9 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
             )?;
             transition(previous.as_ref(), &op)?;
             sources(conn, &op["next"], false)?;
+            for r in list(&op["next"], "runs")? {
+                cards::events(conn, &op["next"], r, false)?;
+            }
             previous = Some(op["next"].clone());
             for e in list(previous.as_ref().unwrap(), "activities")? {
                 ensure(!seen.contains(s(&e["record"], "id")?))?;
@@ -711,10 +735,18 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
             &[&id],
         )?;
         ensure(live_matches(&previous, &assignment, &activities))?;
+        cards::live_rows(conn, &previous)?;
+        run_count += list(&previous, "runs")?.len();
         for e in list(&previous, "activities")? {
             seen.insert(s(&e["record"], "id")?.to_string());
         }
     }
+    ensure(
+        n(
+            &rows(conn, "SELECT COUNT(*) AS n FROM homework_runs", &[])?[0],
+            "n",
+        )? == run_count as i64,
+    )?;
     ensure(
         n(
             &rows(conn, "SELECT COUNT(*) AS n FROM homework_operations", &[])?[0],
@@ -824,9 +856,11 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
         if !live_matches(&snapshot, assignment, &activities) {
             return Err(error("INVALID"));
         }
+        cards::live_rows(conn, &snapshot).map_err(|_| error("INVALID"))?;
         previous = Some(snapshot);
     }
     transition(previous.as_ref(), op).map_err(|_| error("INVALID"))?;
+    cards::writes(conn, previous.as_ref(), op).map_err(|_| error("INVALID"))?;
     let next = &op["next"];
     let mut checked = next.clone();
     checked["activities"] = Value::Array(
@@ -874,6 +908,19 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
             )?;
             ensure(owner.first().map_or(true, |o| o["assignment_id"] == id))?;
             put(conn, "homework_activities", &e["record"])?;
+        }
+        for r in list(next, "runs")? {
+            let owner = rows(
+                conn,
+                "SELECT activity_id FROM homework_runs WHERE id=?",
+                &[&s(r, "id")?],
+            )?;
+            ensure(
+                owner
+                    .first()
+                    .map_or(true, |o| o["activity_id"] == r["activity_id"]),
+            )?;
+            put(conn, "homework_runs", &cards::row(r))?;
         }
         let result =
             json!({"version":1,"assignmentId":id,"revision":next["assignment"]["revision"]});

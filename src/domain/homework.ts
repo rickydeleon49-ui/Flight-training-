@@ -1,6 +1,6 @@
 /** HW-01b codec. Receipts carry the exact intended after-state, never arbitrary SQL.
  * Both validators independently check the state and every permitted transition.
- * Runs and action links are reserved until HW-01d and must be empty in this codec.
+ * Card runs retain frozen queues and durable rating associations; action links and test runs remain reserved.
  */
 import { z } from "zod";
 import { canonicalJson } from "@/logic/cardIdentity";
@@ -37,8 +37,21 @@ const entryCodec = z.strictObject({ record: activityCodec,
   source: z.strictObject({ title: text(200, true), total_pages: integer.nullable() }).nullable(),
   evidence: evidenceCodec.nullable(),
 });
-const snapshotCodec = z.strictObject({ version: z.literal(1), assignment: assignmentCodec, activities: z.array(entryCodec), runs: z.array(z.never()).length(0) });
-export const HOMEWORK_CHANGES = ["create", "edit", "complete", "reopen", "reorder", "remove_activity", "relink", "archive"] as const;
+const ratingEvidenceCodec = z.strictObject({
+  event_id: homeworkUuid, operation_id: homeworkUuid, item_id: hash, generation: z.number().int().min(0).max(1000000000),
+  reviewed_at: instant, rating: z.enum(["again", "hard", "good", "easy"]), item_revision: z.number().int().min(0).max(1000000000), assignment_revision: integer,
+});
+const cardRunCodec = z.strictObject({
+  id: homeworkUuid, activity_id: homeworkUuid, cycle: integer, activity_revision: integer, kind: z.literal("cards"),
+  scope: z.strictObject({version:z.literal(1),material_id:homeworkUuid,source_revision:hash,card_set_id:hash,
+    generation:z.number().int().min(0).max(1000000000),item_ids:z.array(hash).min(1).max(20),next_local_midnight:instant}),
+  ratings:z.array(ratingEvidenceCodec).max(20), started_at:instant, finished_at:instant.nullable(),invalidated_at:instant.nullable(),
+});
+export type HomeworkCardRun = z.infer<typeof cardRunCodec>;
+export const homeworkCardContextCodec = z.strictObject({assignmentId:homeworkUuid,runId:homeworkUuid,expectedRevision:integer,activityRevision:integer,cycle:integer});
+export type HomeworkCardContext = z.infer<typeof homeworkCardContextCodec>;
+const snapshotCodec = z.strictObject({ version: z.literal(1), assignment: assignmentCodec, activities: z.array(entryCodec), runs: z.array(cardRunCodec) });
+export const HOMEWORK_CHANGES = ["create", "edit", "start", "record_evidence", "complete", "reopen", "reorder", "remove_activity", "relink", "archive"] as const;
 const operationCodec = z.strictObject({ version: z.literal(1), operationId: homeworkUuid, assignmentId: homeworkUuid,
   baseRevision: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER - 1), changeKind: z.enum(HOMEWORK_CHANGES), at: instant, next: snapshotCodec,
 });
@@ -110,7 +123,7 @@ export function validateHomeworkSnapshot(value: unknown): HomeworkSnapshot {
     if (!["read", "cards", "test"].includes(r.kind)) homeworkAssert(r.source_revision === null);
     if (r.removed_at) homeworkAssert(r.removed_at >= r.created_at && r.removed_at <= a.updated_at);
     if (e.evidence) {
-      homeworkAssert(!["cards", "test"].includes(r.kind)); // HW-01d owns session evidence.
+      homeworkAssert(r.kind !== "test");
       homeworkAssert(r.completed_at! > r.created_at && r.completed_at! <= r.updated_at);
       homeworkAssert(eq(e.evidence, { version: 1, activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind,
         completed_at: r.completed_at, body: r.body, source_material_id: r.source_material_id, source_revision: r.source_revision,
@@ -119,8 +132,9 @@ export function validateHomeworkSnapshot(value: unknown): HomeworkSnapshot {
       if (["reflection", "questions"].includes(r.kind)) homeworkAssert(r.body.trim().length > 0);
     }
     // Starting cards/tests and reads requires the future bound session/verified source flow.
-    if (r.state === "in_progress") homeworkAssert(!["cards", "test"].includes(r.kind) && (r.kind !== "read" || (r.source_revision && r.page_end)));
+    if (r.state === "in_progress") homeworkAssert(r.kind !== "test" && (r.kind !== "read" || (r.source_revision && r.page_end)));
   }
+  validateCardRuns(s);
   const all = active.length > 0 && active.every((e) => e.record.state === "completed");
   const summary = all ? "completed" : active.some((e) => ["in_progress", "completed"].includes(e.record.state)) ? "in_progress" : "upcoming";
   homeworkAssert(a.state === summary || (a.state === "reopened" && active.some((e) => e.record.state === "reopened")));
@@ -147,6 +161,7 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
   const { changeKind: change, at } = operation;
   homeworkAssert(a.id === operation.assignmentId && a.revision === operation.baseRevision + 1 && a.updated_at === at);
   if (!previous) {
+    homeworkAssert(next.runs.length === 0);
     homeworkAssert(change === "create" && operation.baseRevision === 0 && a.state === "upcoming" && a.archived === 0 && a.created_at === at);
     for (const e of next.activities) homeworkAssert(e.record.cycle === 1 && e.record.revision === 1 && e.record.state === "upcoming" && e.record.created_at === at && e.record.updated_at === at && e.record.removed_at === null);
     return next;
@@ -168,7 +183,8 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
     const r = e.record, prior = previous.activities.find((p) => p.record.id === r.id);
     if (!prior) {
       homeworkAssert(change === "edit" && r.cycle === 1 && r.revision === 1 && r.state === "upcoming" && r.created_at === at && r.updated_at === at && r.removed_at === null);
-      affected++; reopened ||= old.state === "completed"; continue;
+      // New unfinished work returns the aggregate to in_progress while retaining completed activities.
+      affected++; continue;
     }
     if (eq(prior, e)) continue;
     affected++;
@@ -182,6 +198,9 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
       homeworkAssert(r.revision === p.revision + (spec ? 1 : 0) && r.cycle === p.cycle + (spec ? 1 : 0));
       if (spec) { homeworkAssert(r.state === "reopened" && r.completed_at === null && e.evidence === null); reopened = true; }
       else homeworkAssert(r.state === p.state && r.completed_at === p.completed_at && eq(e.evidence, prior.evidence) && eq(e.source, prior.source));
+    } else if (change === "start" || change === "record_evidence") {
+      homeworkAssert(p.kind === "cards" && sameExcept(p,r,["state","completed_at","updated_at"]) && eq(e.source,prior.source));
+      homeworkAssert(change === "start" ? ["upcoming","reopened","in_progress"].includes(p.state) && r.state === "in_progress" && e.evidence === null : p.state === "in_progress" && ["in_progress","completed"].includes(r.state));
     } else if (change === "complete") {
       homeworkAssert(sameExcept(p, r, ["state", "completed_at", "updated_at"]) && eq(e.source, prior.source));
       homeworkAssert(p.state !== "completed" && r.state === "completed" && r.completed_at === at && at > p.created_at);
@@ -193,11 +212,74 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
       if (r.removed_at !== null) homeworkAssert(change === "remove_activity" && r.removed_at === at);
     } else homeworkAssert(false);
   }
-  if (change === "reopen" || change === "complete" || change === "relink") homeworkAssert(affected > 0);
+  validateCardRunTransition(previous, operation);
+  if (change === "reopen" || change === "complete" || change === "relink" || change === "start") homeworkAssert(affected > 0);
   if (change === "archive") homeworkAssert(affected === 0 && old.archived !== a.archived);
   if (reopened) homeworkAssert(a.state === "reopened");
   else if (change === "complete") homeworkAssert(a.state !== "reopened");
   else if (a.state === "reopened") homeworkAssert(old.state === "reopened");
   if (a.state === "completed") homeworkAssert(a.completed_at === (old.state === "completed" ? old.completed_at : at));
   return next;
+}
+
+/** Strict frozen scope; earlier cycles may outlive a relink or external deletion. */
+function validateCardRuns(s: HomeworkSnapshot) {
+    const ids = s.runs.map(r => r.id);
+    homeworkAssert(new Set(ids).size === ids.length && eq(ids, [...ids].sort()));
+    for (const run of s.runs) {
+        const r = s.activities.find(e => e.record.id === run.activity_id)?.record;
+        homeworkAssert(r);
+        homeworkAssert(run.started_at > r.created_at && run.started_at <= s.assignment.updated_at && run.cycle <= r.cycle && run.activity_revision <= r.revision);
+        homeworkAssert(new Set(run.scope.item_ids).size === run.scope.item_ids.length && run.scope.next_local_midnight > run.started_at && Date.parse(run.scope.next_local_midnight) - Date.parse(run.started_at) <= 27 * 3600000);
+        homeworkAssert(new Set(run.ratings.map(x => x.item_id)).size === run.ratings.length && new Set(run.ratings.map(x => x.operation_id)).size === run.ratings.length);
+        for (const x of run.ratings)
+            homeworkAssert(x.event_id === x.operation_id && x.generation === run.scope.generation && run.scope.item_ids.includes(x.item_id) && x.reviewed_at > run.started_at && x.reviewed_at <= s.assignment.updated_at && x.assignment_revision < s.assignment.revision);
+        homeworkAssert((run.finished_at !== null) === (run.ratings.length === run.scope.item_ids.length));
+        if (run.finished_at)
+            homeworkAssert(run.invalidated_at === null && run.finished_at === run.ratings.at(-1)!.reviewed_at);
+        if (run.invalidated_at)
+            homeworkAssert(run.invalidated_at >= run.started_at && run.invalidated_at <= s.assignment.updated_at);
+        if (!run.invalidated_at && run.cycle === r.cycle) {
+            homeworkAssert(r.kind === "cards" && r.revision === run.activity_revision && r.source_material_id === run.scope.material_id && r.source_revision === run.scope.source_revision && r.card_set_id === run.scope.card_set_id);
+            homeworkAssert(run.finished_at ? r.state === "completed" && r.completed_at === run.finished_at : r.state === "in_progress" && r.removed_at === null);
+        }
+    }
+    for (const e of s.activities.filter(e => e.record.kind === "cards" && !e.record.removed_at && ["in_progress", "completed"].includes(e.record.state))) {
+        const runs = s.runs.filter(x => x.activity_id === e.record.id && x.cycle === e.record.cycle && !x.invalidated_at);
+        homeworkAssert(runs.length === 1 && (e.record.state === "completed") === (runs[0]!.finished_at !== null));
+    }
+    const open = s.runs.filter(x => !x.finished_at && !x.invalidated_at).map(x => x.activity_id);
+    homeworkAssert(new Set(open).size === open.length);
+}
+function validateCardRunTransition(previous: HomeworkSnapshot, op: HomeworkOperation) {
+    const next = op.next;
+    homeworkAssert(previous.runs.every(p => next.runs.some(r => r.id === p.id)));
+    let starts = 0, ratings = 0;
+    for (const r of next.runs) {
+        const p = previous.runs.find(p => p.id === r.id);
+        if (!p) {
+            starts++;
+            homeworkAssert(op.changeKind === "start" && r.started_at === op.at && r.ratings.length === 0 && !r.finished_at && !r.invalidated_at);
+            continue;
+        }
+        if (eq(p, r))
+            continue;
+        if (op.changeKind === "record_evidence") {
+            ratings++;
+            homeworkAssert(!p.finished_at && !p.invalidated_at && sameExcept(p, r, ["ratings", "finished_at"]) && r.ratings.length === p.ratings.length + 1 && eq(r.ratings.slice(0, -1), p.ratings));
+            homeworkAssert(r.ratings.at(-1)!.operation_id === op.operationId && r.ratings.at(-1)!.reviewed_at === op.at && r.ratings.at(-1)!.assignment_revision === op.baseRevision);
+        }
+        else {
+            homeworkAssert(!p.finished_at && !p.invalidated_at && r.invalidated_at === op.at && sameExcept(p, r, ["invalidated_at"]));
+            const activity = next.activities.find(e => e.record.id === r.activity_id)!.record;
+            homeworkAssert(["reopen", "edit", "relink", "remove_activity"].includes(op.changeKind) && (activity.cycle !== r.cycle || !!activity.removed_at));
+        }
+    }
+    homeworkAssert(op.changeKind !== "start" || starts === 1);
+    homeworkAssert(op.changeKind !== "record_evidence" || ratings === 1);
+    for (const p of previous.runs.filter(r => !r.finished_at && !r.invalidated_at)) {
+        const activity = next.activities.find(e => e.record.id === p.activity_id)!.record;
+        if (activity.cycle !== p.cycle || activity.removed_at)
+            homeworkAssert(next.runs.find(r => r.id === p.id)!.invalidated_at === op.at);
+    }
 }

@@ -17,6 +17,8 @@ export function homeworkRepository(db: SqlDatabase) {
       const s = validateHomeworkSnapshot(parseHomeworkJson(String(row.snapshot_json)));
       const records = await db.select("SELECT * FROM homework_activities WHERE assignment_id=? ORDER BY id", [id]);
       homeworkAssert(homeworkLiveMatches(s,a,records));
+      const {validateHomeworkCardRows}=await import("../homeworkCards");
+      await validateHomeworkCardRows((sql,p)=>db.select(sql,p),s);
       // Resolve the availability-only pointers without changing historical snapshots.
       s.assignment = a as typeof s.assignment;
       for (const e of s.activities) e.record = records.find((r) => r.id === e.record.id) as typeof e.record;

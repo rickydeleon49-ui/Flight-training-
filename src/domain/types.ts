@@ -756,7 +756,7 @@ interface CardItemActionBase {
 
 /** One card action. Exact keys per branch; anything else is refused. */
 export type CardItemAction =
-  | (CardItemActionBase & { action: "rate"; rating: CardRating })
+  | (CardItemActionBase & { action: "rate"; rating: CardRating; homework?: import("./homework").HomeworkCardContext })
   | (CardItemActionBase & { action: "suspend" | "resume" | "unflag" })
   | (CardItemActionBase & { action: "flag"; reason: CardFlagReason });
 

@@ -26,7 +26,6 @@ export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSna
         if (creating || !p) {
             r.created_at = at;
             r.updated_at = at;
-            reopened ||= !creating && previous.assignment.state === "completed";
             continue;
         }
         if (canonicalJson(p) === canonicalJson(e))
@@ -57,6 +56,10 @@ export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSna
         }
         else if (changeKind === "remove_activity" && r.removed_at)
             r.removed_at = at;
+    }
+    for(const run of next.runs.filter(r=>!r.finished_at&&!r.invalidated_at)) {
+        const activity=next.activities.find(e=>e.record.id===run.activity_id)!.record;
+        if(activity.cycle!==run.cycle || activity.removed_at) run.invalidated_at=at;
     }
     const active = activeHomework(next);
     const all = active.length > 0 && active.every(e => e.record.state === "completed");

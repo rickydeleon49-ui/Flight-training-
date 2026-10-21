@@ -7,6 +7,7 @@ import { cardVersion } from "@/logic/cardIdentity";
 import { todayIso } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import { useNavigationController } from "@/state/navigation/useDocumentNavigation";
+import { HomeworkCardRun } from "./HomeworkCardRun";
 import { HomeworkEditor } from "./HomeworkEditor";
 import { ACTIVITY_KINDS, activeHomework, homeworkOperation, homeworkSaveMessage, newHomework, type Entry, homeworkHistoryLabel, type HomeworkHistoryEntry } from "./homeworkUi";
 import "./homework.css";
@@ -185,9 +186,8 @@ export function HomeworkView() {
         {current.assignment.instructions ? <p className="homework-text">{current.assignment.instructions}</p> : null}
         {current.assignment.school ? <p>School: {current.assignment.school}</p> : null}{current.assignment.instructor ? <p>Instructor: {current.assignment.instructor}</p> : null}
         {current.assignment.source_lesson_id ? (() => { const lesson = data.events.find(e => e.id === current.assignment.lesson_id); return <p>{lesson ? `${lesson.title} · ${lesson.date}${lesson.startTime ? ` · ${lesson.startTime}` : ''}${lesson.status === 'cancelled' ? ' · Lesson cancelled' : ''}` : 'Lesson missing — edit homework to choose a lesson or unlink it.'} Your homework due date stays as you set it.</p>; })() : null}
-        <div className="row row--wrap"><Button disabled={!editable} onClick={() => setEditor({ snapshot: current })}>Edit homework</Button><Button disabled={!editable || current.assignment.state === 'completed'} onClick={() => setEditor({ snapshot: current, adding: true })}>Add activities</Button><Button disabled={!editable} onClick={() => change('archive', s => { s.assignment.archived = s.assignment.archived ? 0 : 1; })}>{current.assignment.archived ? 'Unarchive' : 'Archive'}</Button></div>
+        <div className="row row--wrap"><Button disabled={!editable} onClick={() => setEditor({ snapshot: current })}>Edit homework</Button><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, adding: true })}>Add activities</Button><Button disabled={!editable} onClick={() => change('archive', s => { s.assignment.archived = s.assignment.archived ? 0 : 1; })}>{current.assignment.archived ? 'Unarchive' : 'Archive'}</Button></div>
       </div></CardBody></Card>
-      {current.assignment.state === 'completed' ? <p>Reopen an activity before adding more work.</p> : null}
       {active.length === 0 ? <p>Add an activity whenever you're ready.</p> : null}
       <ol className="homework-activities">
         {active.map((e, index) => {
@@ -198,11 +198,13 @@ export function HomeworkView() {
           <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : r.state === 'reopened' ? 'Reopened' : 'To do'}</p>
           {r.body ? <p className="homework-text">{r.body}</p> : null}
           {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
+          {done && r.kind==='cards' ? <p>Historical review · {current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
           <div className="row row--wrap">
             {r.kind === 'read' ? <><Button disabled={missing || !controller || status.kind === 'working'} onClick={() => void openReading(e)}>Open PDF at page {r.page_start ?? 1}</Button>{!done ? <Button disabled={!editable || missing} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark reading complete</Button> : null}</> : null}
             {['reflection', 'questions'].includes(r.kind) && !done ? <Button disabled={!editable || !r.body.trim()} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark complete</Button> : null}
             {r.kind === 'checklist' && !done ? <label className="row"><input type="checkbox" checked={false} disabled={!editable} onChange={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}/>Done</label> : null}
-            {r.kind === 'cards' || r.kind === 'test' ? <>{!missing && checkedSources===current ? <Link className="button button--secondary" to={`/study/${r.material_id}`} state={r.kind === 'cards' ? { startCardReview: true } : undefined}>{r.kind === 'cards' ? 'Open cards' : 'Open quiz'}</Link> : <span>{r.kind === 'cards' ? 'Open cards' : 'Open quiz'} · {missing?'choose a source first':'checking source…'}</span>}<p className="small muted">Completion is recorded automatically in a later update</p></> : null}
+            {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={perform} reload={() => setReload(n=>n+1)} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
+            {r.kind === 'test' ? <>{!missing && checkedSources===current ? <Link className="button button--secondary" to={`/study/${r.material_id}`}>Open quiz</Link> : <span>Open quiz · {missing?'choose a source first':'checking source…'}</span>}<p className="small muted">Completion is recorded automatically in a later update</p></> : null}
             {done ? <Button disabled={!editable} onClick={() => change('reopen', s => { s.activities.find(x => x.record.id === r.id)!.record.cycle++; })}>Reopen {r.title}</Button> : null}
             <Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit {r.title}</Button>
             <Button aria-label={`Move ${r.title} up`} disabled={!editable || index === 0} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position--; s.activities.find(x => x.record.id === active[index - 1]!.record.id)!.record.position++; }); }}>Move up</Button>
