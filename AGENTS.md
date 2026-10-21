@@ -2,10 +2,11 @@
 
 `CLAUDE.md` holds the product, stack and data-safety rules. They apply to every agent.
 
-## Roles (owner, 19–20 October 2026)
+## Roles (owner, 19–21 October 2026)
 
-- **Implementers, in order:** Codex first. If Codex is out of usage, Gemini
-  (Gemini CLI, model `gemini-3.8-flash`). Qwen Flash only as the last backup.
+- **Implementers, in order:** Codex first; then Gemini (Gemini CLI, model
+  `gemini-3.8-flash`); then MiniMax M3.1 Flash only while free on Ollama,
+  until 2026-10-22 16:59 PDT; then Qwen Flash as the last backup.
 - When Codex's usage resets, new rounds go back to Codex. An in-flight round by
   another implementer is allowed to finish.
 - **Claude** assigns precise rounds, reviews, independently tests and merges.
@@ -21,7 +22,8 @@
 - Reviews go in the round folder's `claude-review*/REVIEW.md`, or
   `codex-review*/REVIEW.md` when Codex reviews; the reviewer updates
   `CURRENT_QWEN_REVIEW_LOOP.json`.
-- While Codex reviews, Gemini (`gemini-3.8-flash`), then Qwen Flash, implement.
+- While Codex reviews, Gemini (`gemini-3.8-flash`), then MiniMax M3.1 Flash
+  within its free window above, then Qwen Flash, implement.
   **No implementer reviews or merges its own round.**
 - Claude takes the role back when its usage returns, starting by reading the
   loop file and the latest round folder.
@@ -92,6 +94,7 @@
 
 ## Gotchas learned on 2026-10-20
 
+- **MiniMax launch:** `ollama launch claude --model minimax-m3.1-flash:cloud -- -p … --permission-mode acceptEdits --disallowedTools 'Bash(git:*)' 'Bash(gh:*)' 'Bash(rm:*)' 'Bash(npm install:*)' 'Bash(npm ci:*)' 'Bash(npm update:*)' 'Bash(npm add:*)' 'Bash(npx:*)' 'Bash(pnpm:*)' 'Bash(yarn:*)' 'Bash(bun:*)' 'Bash(brew:*)' 'Bash(pip:*)' 'Bash(pip3:*)' 'Bash(uv:*)' 'Bash(cargo install:*)' 'Bash(cargo add:*)' 'Bash(curl:*)' 'Bash(wget:*)' 'Bash(ssh:*)' 'Bash(scp:*)' 'Bash(sftp:*)' 'Bash(rsync:*)' 'Bash(nc:*)' 'Bash(netcat:*)' 'WebFetch' 'WebSearch' 'Agent'`. Keep these explicit denies: inherited Mac Claude settings allow `gh pr close`.
 - `cargo test` takes **one** name filter.
 - The Codex sandbox can't write `.git`, and blocks `pgrep` and some sockets;
   the reviewer reruns those tests outside it.
