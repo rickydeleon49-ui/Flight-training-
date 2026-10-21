@@ -4,10 +4,15 @@ OFFLINE-GEN plan approved with owner defaults D1–D8 (20 October 2026); GEN-FIX
 GEN-01 is complete (#245–#248). GEN-03, packet hand-off and the plain how-to,
 is the last OFFLINE-GEN slice; its local implementation awaits Claude's review.
 
-**SEARCH-ON comes immediately after GEN-03, before HOMEWORK-01:** turn on the dormant
-offline document and saved-content search (#231–#233). The owner accepts the saved-content
-p50 of 28.2 ms (the target was 20 ms). What remains: fix FLAKE-CR-01, finish
-installed/minimum-spec acceptance, then flip the release switch. These gates are still open.
+**OFFLINE-ON comes immediately after GEN-03, before HOMEWORK-01:** the release
+extraction switch enables both PDF study kits and offline document/saved-content
+search (#231–#233). Until it is on, the kit explains plainly that making a kit
+isn't available in this version yet; valid earlier caches still work. The owner
+accepts saved-content p50 of 28.2 ms (target 20 ms) and chose the memory check on
+this Mac (M5, 32 GiB), which is weaker evidence than a minimum-spec Mac. OFFLINE-ON-1
+fixes FLAKE-CR-01 and prepares the baseline/pressure check; OFFLINE-ON-2 may enable
+the release switch only after Claude accepts the measurements. Pressure and
+installed/minimum-spec acceptance remain open. See [the runbook](docs/OFFLINE_ON_PRESSURE_CHECK.md).
 
 Migration 0019 `study_set_save_operations` approved by the owner (20 October 2026): receipts for study-set saves that come from the PDF kit only; ordinary saves are unchanged.
 
@@ -56,7 +61,7 @@ Migration 0019 `study_set_save_operations` approved by the owner (20 October 202
 
 ### Updated overall order
 
-GEN-03 → SEARCH-ON → HOMEWORK-01 → EXPORT-01/02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01. After those, the earlier queued scheduler, weather and FAA work. OFFLINE-03c stays deferred.
+GEN-03 → OFFLINE-ON → HOMEWORK-01 → EXPORT-01/02 → ACS-READY-01 → SCHOOL-01 → FLIGHTLOG-01. After those, the earlier queued scheduler, weather and FAA work. OFFLINE-03c stays deferred.
 
 ### Housekeeping
 

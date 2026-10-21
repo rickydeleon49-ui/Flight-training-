@@ -90,12 +90,18 @@ const storedReviews = async () => ({
 /** The Review due tab's own reads (the binder stream uses a different limit). */
 function recordDueReads(hold?: (input: LibraryReviewDueInput) => Promise<void> | undefined) {
   const real = db.readLibraryReviewDue!.bind(db);
-  vi.spyOn(db, "readLibraryReviewDue").mockImplementation(async (input) => {
-    if (input.limit === 50) dueInputs.push(structuredClone(input));
-    const waiting = hold?.(input);
-    if (waiting) await waiting;
-    return real(input);
+  const reads: Promise<unknown>[] = [];
+  vi.spyOn(db, "readLibraryReviewDue").mockImplementation((input) => {
+    const read = (async () => {
+      if (input.limit === 50) dueInputs.push(structuredClone(input));
+      const waiting = hold?.(input);
+      if (waiting) await waiting;
+      return real(input);
+    })();
+    reads.push(read);
+    return read;
   });
+  return reads;
 }
 
 function renderDue() {
@@ -229,7 +235,7 @@ describe("Review due after a time-zone change", () => {
     let release!: () => void;
     const held = new Promise<void>((resolve) => (release = resolve));
     let holdNext = true;
-    recordDueReads((input) => {
+    const reads = recordDueReads((input) => {
       if (input.limit !== 50 || !holdNext) return undefined;
       holdNext = false;
       return held;
@@ -239,9 +245,9 @@ describe("Review due after a time-zone change", () => {
     zone = CHICAGO;
     await focusWindow();
     expect(await screen.findByText("All caught up!")).toBeTruthy();
-    await act(async () => release());
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      release();
+      await Promise.all(reads);
     });
     expect(screen.queryByRole("list", { name: "Materials with cards to review" })).toBeNull();
     expect(screen.getByText("All caught up!")).toBeTruthy();

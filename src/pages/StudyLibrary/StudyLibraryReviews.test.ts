@@ -188,7 +188,7 @@ describe("Study Library review tabs", () => {
     const session = await screen.findByLabelText(/^Card review session/);
     expect(within(session).getByText(/^Card 1 of 3 · new/)).toBeTruthy();
     expect(location.pathname).toBe("/study/fresh");
-    expect(location.state).toBeNull(); // the start request is consumed once
+    await waitFor(() => expect(location.state).toBeNull()); // the start request is consumed once
     expect(geminiService.generateStudyAid).not.toHaveBeenCalled();
   });
 
@@ -334,8 +334,9 @@ describe("Card review history and binder indicators", () => {
     await rate("done", 0, "easy", T0);
     renderApp("/study");
     expect(await screen.findByText("1 due · 1 new")).toBeTruthy();
-    expect(screen.getByText("3 new")).toBeTruthy();
-    expect(screen.getByText("Caught up")).toBeTruthy();
+    // Each material's binder badge has its own asynchronous read.
+    expect(await screen.findByText("3 new")).toBeTruthy();
+    expect(await screen.findByText("Caught up")).toBeTruthy();
   });
 });
 

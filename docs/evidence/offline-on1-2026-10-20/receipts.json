@@ -1,0 +1,420 @@
+[
+  {
+    "log": "baseline.log",
+    "command": "$ scripts/offline-extraction-pressure-check.sh baseline docs/evidence/offline-on1-2026-10-20/baseline",
+    "exit": 1,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "build-final.log",
+    "command": "$ npm run build -- --configLoader runner",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "build.log",
+    "command": "$ npm run build -- --configLoader runner",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "cargo-lock.log",
+    "command": "$ npm run test:cargo-lock",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "cargo-test-1.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+    "exit": 0,
+    "counts": [
+      "test result: ok. 951 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 233.43s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s",
+      "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.39s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "cargo-test-2.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked --no-fail-fast",
+    "exit": 0,
+    "counts": [
+      "test result: ok. 951 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out; finished in 224.07s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.51s",
+      "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 42.18s",
+      "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "clippy.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo clippy --locked --all-targets -- -D warnings",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "diff-check.log",
+    "command": "$ git diff --check",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "evidence-checksums.log",
+    "command": "$ shasum -a 256 -c docs/evidence/offline-on1-2026-10-20/SHA256SUMS",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "flake-after-1-1.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  2 failed | 203 passed | 4 skipped (209)",
+      "Tests  3 failed | 4284 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order",
+      "src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a change saved elsewhere after she opened the dialog is refused, not overwritten"
+    ]
+  },
+  {
+    "log": "flake-after-1-2.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 204 passed | 4 skipped (209)",
+      "Tests  2 failed | 4285 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-after-2-1.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  2 failed | 203 passed | 4 skipped (209)",
+      "Tests  4 failed | 4283 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order",
+      "src/pages/Questions/Questions.paging.test.ts > Questions list with a long history > shows a page at a time, keeps every question reachable, and filters the whole list"
+    ]
+  },
+  {
+    "log": "flake-after-2-2.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  4 failed | 201 passed | 4 skipped (209)",
+      "Tests  6 failed | 4281 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order",
+      "src/pages/Questions/Questions.paging.test.ts > Questions list with a long history > shows a page at a time, keeps every question reachable, and filters the whole list",
+      "src/pages/StudyLibrary/StudySetEditing.test.ts > editing a generated study guide > a failed save keeps her text, and saving again records one change",
+      "src/pages/FlightPath/skills/remaining-ui.test.ts > M3-R8 whole-draft acknowledgment > date changed while saving > [M3-R8] a date change during the save keeps the complete draft, stores the original, and Replace applies it"
+    ]
+  },
+  {
+    "log": "flake-after-3-1.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 204 passed | 4 skipped (209)",
+      "Tests  3 failed | 4284 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-after-3-2.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 204 passed | 4 skipped (209)",
+      "Tests  3 failed | 4284 passed | 6 skipped (4293)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-deterministic-final.log",
+    "command": "$ npx vitest run --configLoader runner src/pages/StudyLibrary/CardReviewResetTiming.test.ts",
+    "exit": 0,
+    "counts": [
+      "Test Files  1 passed (1)",
+      "Tests  1 passed (1)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "flake-deterministic.log",
+    "command": "$ npx vitest run --configLoader runner src/pages/StudyLibrary/CardReviewResetTiming.test.ts",
+    "exit": 0,
+    "counts": [
+      "Test Files  1 passed (1)",
+      "Tests  1 passed (1)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "flake-repro-1.log",
+    "command": "$ npm test",
+    "exit": 1,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "flake-repro-2.log",
+    "command": "$ npm test",
+    "exit": 1,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "flake-repro-3.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 203 passed | 4 skipped (208)",
+      "Tests  3 failed | 4281 passed | 6 skipped (4290)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-repro-4.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 203 passed | 4 skipped (208)",
+      "Tests  3 failed | 4281 passed | 6 skipped (4290)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-repro-5.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 204 passed | 4 skipped (209)",
+      "Tests  2 failed | 4283 passed | 6 skipped (4291)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-repro-6.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 204 passed | 4 skipped (209)",
+      "Tests  2 failed | 4283 passed | 6 skipped (4291)"
+    ],
+    "failedTests": [
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > showMoreExpandTo1000: measures a stated expanded display of 1,000 cards",
+      "src/perf/studyLibraryScenarios.test.ts > Study Library benchmark scenarios > finished every scenario exactly once, in assigned order"
+    ]
+  },
+  {
+    "log": "flake-repro-runner-1.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 203 passed | 4 skipped (208)",
+      "Tests  2 failed | 4282 passed | 6 skipped (4290)"
+    ],
+    "failedTests": [
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > kit_shows_not_available_yet_without_retry",
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > read_text_disabled_maps_to_not_available_yet"
+    ]
+  },
+  {
+    "log": "flake-repro-runner-2.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed | 203 passed | 4 skipped (208)",
+      "Tests  2 failed | 4282 passed | 6 skipped (4290)"
+    ],
+    "failedTests": [
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > kit_shows_not_available_yet_without_retry",
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > read_text_disabled_maps_to_not_available_yet"
+    ]
+  },
+  {
+    "log": "fmt.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt --check",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "focused-final.log",
+    "command": "$ npx vitest run --configLoader runner src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts src/pages/StudyLibrary/CardReviewPanel.test.ts src/pages/StudyLibrary/CardReviewResetTiming.test.ts src/pages/StudyLibrary/StudyLibraryReviews.test.ts src/pages/StudyLibrary/ReviewDueClockRecovery.test.ts",
+    "exit": 0,
+    "counts": [
+      "Test Files  5 passed (5)",
+      "Tests  89 passed (89)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "format.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo fmt",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "kit-ui.log",
+    "command": "$ npx vitest run --configLoader runner src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts",
+    "exit": 0,
+    "counts": [
+      "Test Files  1 passed (1)",
+      "Tests  36 passed (36)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "npm-test-1.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 0,
+    "counts": [
+      "Test Files  205 passed | 4 skipped (209)",
+      "Tests  4287 passed | 6 skipped (4293)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "npm-test-2.log",
+    "command": "$ npm test -- --configLoader runner",
+    "exit": 0,
+    "counts": [
+      "Test Files  205 passed | 4 skipped (209)",
+      "Tests  4287 passed | 6 skipped (4293)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "pressure-harness-tests-r2.log",
+    "command": "$ python3 scripts/offline-extraction-pressure-check.test.py",
+    "exit": 0,
+    "counts": [
+      "Ran 8 tests in 0.382s"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "pressure-harness-tests.log",
+    "command": "$ python3 scripts/offline-extraction-pressure-check.test.py",
+    "exit": 1,
+    "counts": [
+      "Ran 8 tests in 0.298s",
+      "FAILED (errors=12)"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "pressure-script-syntax.log",
+    "command": "$ bash -n scripts/offline-extraction-pressure-check.sh",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "red-kit-native.log",
+    "command": "$ env SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk CARGO_TARGET_DIR=/Users/rickymac/code/Flight-training-offline-gen-00/src-tauri/target CARGO_NET_OFFLINE=true cargo test --locked kit_extraction_unavailable_typed_when_disabled_and_no_cache",
+    "exit": 101,
+    "counts": [
+      "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 961 filtered out; finished in 0.09s"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "red-kit-ui.log",
+    "command": "$ npx vitest run --configLoader runner src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts -t kit_shows_not_available_yet_without_retry|read_text_disabled_maps_to_not_available_yet",
+    "exit": 1,
+    "counts": [
+      "Test Files  1 failed (1)",
+      "Tests  2 failed | 34 skipped (36)"
+    ],
+    "failedTests": [
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > kit_shows_not_available_yet_without_retry",
+      "src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts > read_text_disabled_maps_to_not_available_yet"
+    ]
+  },
+  {
+    "log": "schema14-checksums.log",
+    "command": "$ shasum -a 256 -c docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "schema14-helper.log",
+    "command": "$ node --test scripts/mac-schema14-profile-snapshot.test.mjs",
+    "exit": 1,
+    "counts": [
+      "# tests 26",
+      "# pass 25",
+      "# fail 1",
+      "# skipped 0"
+    ],
+    "failedTests": []
+  },
+  {
+    "log": "source-checksums.log",
+    "command": "$ shasum -a 256 -c docs/evidence/offline-on1-2026-10-20/SOURCE_SHA256SUMS",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "typecheck-final.log",
+    "command": "$ npm run typecheck",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  },
+  {
+    "log": "typecheck.log",
+    "command": "$ npm run typecheck",
+    "exit": 0,
+    "counts": [],
+    "failedTests": []
+  }
+]

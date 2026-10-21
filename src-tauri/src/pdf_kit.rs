@@ -18,6 +18,7 @@ pub struct KitError {
 }
 fn error(code: &'static str) -> KitError {
     KitError { code, message: match code {
+        "EXTRACTION_UNAVAILABLE" => "Making a study kit from your PDF isn't available in this version yet. It's coming in a later update.",
         "CACHE_MISSING" => "Prepare this PDF for offline study first, then try making a kit again.",
         "SOURCE_CHANGED" => "This PDF or your chosen pages changed. Keep your earlier work, or start a new kit.",
         "DRAFT_NOT_READY" => "Your PDF kit is still being prepared. Your saved work is still here.",
@@ -65,14 +66,34 @@ fn managed(root: &Path, material: &str) -> Result<(String, PathBuf, String), Kit
     Ok((relative, path, hash))
 }
 fn prepare_at(root: &Path, material: &str, pages: Option<Vec<u32>>) -> Result<String, KitError> {
+    prepare_at_with_extraction(
+        root,
+        material,
+        pages,
+        crate::extraction::worker::extraction_enabled(),
+    )
+}
+fn prepare_at_with_extraction(
+    root: &Path,
+    material: &str,
+    pages: Option<Vec<u32>>,
+    enabled: bool,
+) -> Result<String, KitError> {
+    let missing = || {
+        error(if enabled {
+            "CACHE_MISSING"
+        } else {
+            "EXTRACTION_UNAVAILABLE"
+        })
+    };
     let (relative, path, hash) = managed(root, material)?;
     if !root.join(crate::extraction::cache::CACHE_FILE).is_file() {
-        return Err(error("CACHE_MISSING"));
+        return Err(missing());
     }
-    let cache = Cache::open(root).map_err(|_| error("CACHE_MISSING"))?;
+    let cache = Cache::open(root).map_err(|_| missing())?;
     let count = match cache.summary(&hash) {
         Some(Summary::Complete(c)) => c.pages(),
-        _ => return Err(error("CACHE_MISSING")),
+        _ => return Err(missing()),
     };
     let doc = lopdf::Document::load(&path).map_err(|_| error("SOURCE_CHANGED"))?;
     if count == 0 || count > 1000 || doc.get_pages().len() != count as usize {
@@ -88,7 +109,7 @@ fn prepare_at(root: &Path, material: &str, pages: Option<Vec<u32>>) -> Result<St
     }
     for p in &pages {
         if cache.page(&hash, *p).is_none() {
-            return Err(error("CACHE_MISSING"));
+            return Err(missing());
         }
     }
     // Recheck after reading the document: never label parsed bytes with an older hash.

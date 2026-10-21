@@ -345,7 +345,7 @@ describe("card reviews in MaterialDetail", () => {
     expect(resets).toHaveLength(2);
     expect(resets[1]).toEqual(resets[0]);
     expect(await counts()).toMatchObject({ generation: 1, events: 0, states: 0 });
-    expect((await reviewHeading()).textContent).toBe("3 new cards · none due");
+    await waitFor(() => expect(screen.getByRole("heading", { level: 3, name: "3 new cards · none due" })).toBeTruthy());
   });
 
   it("Reset: a committed reset whose acknowledgement was lost is confirmed by Check again, never sent twice", async () => {
@@ -436,8 +436,7 @@ describe("card reviews in MaterialDetail", () => {
     await db.execute("UPDATE ai_study_sets SET flashcards_json = '[]' WHERE source_material_id = ?", [M]);
     const none = renderDetail();
     await screen.findByRole("heading", { name: "Synthetic guide" });
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByText(/Card reviews|Loading card reviews/)).toBeNull();
+    await waitFor(() => expect(screen.queryByText(/Card reviews|Loading card reviews/)).toBeNull());
     none.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = ? WHERE source_material_id = ?", [JSON.stringify(CARDS), M]);
@@ -568,9 +567,12 @@ describe("card reviews in MaterialDetail", () => {
     const dialog = await screen.findByRole("dialog", { name: `Reset card reviews for “${TITLE}”?` });
     fireEvent.click(within(dialog).getByRole("button", { name: "Reset reviews" }));
 
-    // Reset completes: notice shown, recent reviews removed
+    // The notice precedes refresh completion, and an open fallback modal hides
+    // background headings. Wait for the dialog AND authoritative refresh first.
     await screen.findByText(/Card reviews for this material were reset/);
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Recent reviews" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(button("Reset card reviews")).toHaveProperty("disabled", false));
+    expect(screen.queryByRole("heading", { name: "Recent reviews", hidden: true })).toBeNull();
 
     // Now resolve the held page 2 response with synthetic erased event
     await act(async () => {

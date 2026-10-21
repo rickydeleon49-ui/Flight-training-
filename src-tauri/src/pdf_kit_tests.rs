@@ -220,3 +220,27 @@ fn kit_receipt_retry_after_acknowledgement_needs_no_draft() {
         "already_saved"
     );
 }
+
+#[test]
+fn kit_extraction_unavailable_typed_when_disabled_and_no_cache() {
+    let missing = Rig::new(false);
+    assert_eq!(
+        prepare_at_with_extraction(&missing.0, "mat-a", None, false)
+            .unwrap_err()
+            .code,
+        "EXTRACTION_UNAVAILABLE"
+    );
+    assert_eq!(
+        prepare_at_with_extraction(&missing.0, "mat-a", None, true)
+            .unwrap_err()
+            .code,
+        "CACHE_MISSING"
+    );
+    let cached = Rig::new(true);
+    let id = prepare_at_with_extraction(&cached.0, "mat-a", None, false).unwrap();
+    work_at(&cached.0, &id).unwrap();
+    assert!(!get_at(&cached.0, &id).unwrap()["candidates"]["glossary"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+}

@@ -1,0 +1,66 @@
+{
+  "mode": "baseline",
+  "machine": "arm64",
+  "host": "macOS-27.0.1-arm64-arm-64bit",
+  "pressure": "none requested",
+  "rssMethod": "macOS /usr/bin/time -l, supervisor plus worker child rusage; conservative process peak",
+  "passCriteria": [
+    "Every synthetic file: ok, or clean memory_limit/deadline refusal; no crash.",
+    "No partial publish: probe never writes a cache or app database; only fully validated results count as ok.",
+    "No hang beyond 120 seconds (production supervisor deadline 119 s, outer watchdog 120 s).",
+    "Peak RSS <= 640 MiB (512 MiB counted cap plus approximately 1.25x overhead).",
+    "App state untouched: only temporary synthetic inputs/target and requested output directory are used."
+  ],
+  "files": [
+    {
+      "countedPeakBytes": 121510492,
+      "detail": "",
+      "outcome": "ok",
+      "pages": 60,
+      "partialPublish": false,
+      "seconds": 0.513247459,
+      "file": "synthetic-illustrated-charts.pdf",
+      "sha256": "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d",
+      "bytes": 54032644,
+      "wallSeconds": 0.665454958,
+      "peakRssBytes": null,
+      "processExit": 1,
+      "measurementError": "time/RSS measurement failed; inspect time log",
+      "pass": false
+    },
+    {
+      "countedPeakBytes": 5081487,
+      "detail": "",
+      "outcome": "ok",
+      "pages": 1050,
+      "partialPublish": false,
+      "seconds": 0.2315735,
+      "file": "synthetic-long-manual.pdf",
+      "sha256": "0ba9a7e2c4b9e14aac2360fc410f5b4a05eab9b2c9ab4b23ea8ab7228f9692c1",
+      "bytes": 330934,
+      "wallSeconds": 0.24087583300000004,
+      "peakRssBytes": null,
+      "processExit": 1,
+      "measurementError": "time/RSS measurement failed; inspect time log",
+      "pass": false
+    },
+    {
+      "countedPeakBytes": 71167,
+      "detail": "",
+      "outcome": "ok",
+      "pages": 10,
+      "partialPublish": false,
+      "seconds": 0.012815125,
+      "file": "synthetic-small-checklist.pdf",
+      "sha256": "f6c593f9d86de6e83bd476897cde7693a43cb5db785c6afbcf01eb1d8024b134",
+      "bytes": 3360,
+      "wallSeconds": 0.02080004099999999,
+      "peakRssBytes": null,
+      "processExit": 1,
+      "measurementError": "time/RSS measurement failed; inspect time log",
+      "pass": false
+    }
+  ],
+  "passed": false,
+  "evidenceLimit": "Owner Mac M5 / 32 GiB; weaker evidence than a minimum-spec Mac. Synthetic PDFs only."
+}

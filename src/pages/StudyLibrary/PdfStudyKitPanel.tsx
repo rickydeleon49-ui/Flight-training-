@@ -12,6 +12,7 @@ import { useNavigationController } from "@/state/navigation/useDocumentNavigatio
 import { PdfPracticeQuestions } from "./PracticeTestEditing";
 import { PDF_KIT_REMINDER, PdfItemLabel } from "./PdfItemLabel";
 
+const EXTRACTION_UNAVAILABLE = "Making a study kit from your PDF isn't available in this version yet. It's coming in a later update.";
 const SOURCE_CHANGED = "The PDF or page choice changed since this kit was made. Rebuild it when you’re ready.";
 const codeOf = (e: unknown) => typeof e === "object" && e !== null && "code" in e ? String(e.code) : "";
 const mirrorKey = (run: string) => `hfd:pdf-kit-review:${run}`;
@@ -68,6 +69,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
+  const [extractionUnavailable, setExtractionUnavailable] = useState(false);
   const [cacheMissing, setCacheMissing] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,7 +169,11 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
   const fail = (failure: unknown) => {
     const code = codeOf(failure);
     const msg = typeof failure === "object" && failure !== null && "message" in failure ? String((failure as any).message) : "";
-    if (code === "SOURCE_CHANGED") {
+    if (code === "EXTRACTION_UNAVAILABLE") {
+      setExtractionUnavailable(true);
+      setCacheMissing(false);
+      setError(EXTRACTION_UNAVAILABLE);
+    } else if (code === "SOURCE_CHANGED") {
       setChanged(true);
       setError(SOURCE_CHANGED);
     } else if (code === "CACHE_MISSING") {
@@ -497,7 +503,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
       <CardHeader title="A study kit from your PDF" eyebrow="On this Mac" />
       <CardBody>
         <div className="stack stack--3">
-          <Button
+          {!extractionUnavailable ? <Button
             disabled={!desktop || running || saving || changed}
             onClick={() => {
               if (changed) return;
@@ -510,7 +516,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             }}
           >
             Make a study kit from this PDF
-          </Button>
+          </Button> : null}
           {!desktop ? <p className="tiny muted">Making a PDF study kit works in the desktop app.</p> : null}
           {resume && !running && !open && !changed ? (
             <Button onClick={() => { setJob(resume); setRunning(true); }}>
@@ -538,8 +544,14 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                   try {
                     await prepareOfflineContent(material.id);
                     setError("Reading your PDF’s text. Try making the kit again when it’s ready.");
-                  } catch {
-                    setError("Your PDF’s text couldn’t be read. Try again.");
+                  } catch (failure) {
+                    if (codeOf(failure) === "offline_extraction_disabled" || failure === "offline_extraction_disabled" || (failure instanceof Error && failure.message === "offline_extraction_disabled")) {
+                      setExtractionUnavailable(true);
+                      setCacheMissing(false);
+                      setError(EXTRACTION_UNAVAILABLE);
+                    } else {
+                      setError("Your PDF’s text couldn’t be read. Try again.");
+                    }
                   } finally {
                     setExtracting(false);
                   }
