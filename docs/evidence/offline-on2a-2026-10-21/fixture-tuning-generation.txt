@@ -1,0 +1,5 @@
+$ node --input-type=module -e import {buildXrefPadPdf,deflateZeros} from "./scripts/generate-pdf-fixtures.mjs"; import {inflateSync} from "node:zlib"; import fs from "node:fs"; import crypto from "node:crypto"; for (const n of [0,1,2,3,257,258,259,260,261,65537]) {const p=Buffer.from([1,255,34]);const b=inflateSync(deflateZeros(p,n)); if(!b.equals(Buffer.concat([p,Buffer.alloc(n)]))) throw new Error("bad deflate "+n);} fs.mkdirSync("/tmp/on2a-codex-tuning",{recursive:true}); for(const [name,entries] of [["near-cap",38000000],["over-cap",150000000]]) {const b=buildXrefPadPdf(entries,name);fs.writeFileSync("/tmp/on2a-codex-tuning/synthetic-"+name+".pdf",b);console.log(name,entries,b.length,crypto.createHash("sha256").update(b).digest("hex"));}
+near-cap 38000000 1676036 8f4a80561972412da5a2847eb569620d8d4ef6876676f3be205481d379a5f8d3
+over-cap 150000000 6614022 89a874dd7465187c67cf1948347906f70953b554afcf117bc08045a4d9ba41ec
+
+EXIT 0

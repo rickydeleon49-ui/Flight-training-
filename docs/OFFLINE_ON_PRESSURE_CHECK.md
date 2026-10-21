@@ -1,7 +1,15 @@
 # Offline extraction memory check
 
 This check uses synthetic PDFs from `scripts/generate-pdf-fixtures.mjs`: a
-10-page checklist, a 1,050-page text manual and 60 illustrated pages (~54 MB).
+10-page checklist, a 1,050-page text manual, 60 illustrated pages (~54 MB),
+a near-cap load and an over-cap load. The last two are one-page PDFs with
+compressed cross-reference streams containing 38,000,000 and 150,000,000
+free-object entries. They decode during document loading, before the page
+content budget applies. Fixed Huffman encoding makes their bytes independent
+of the host zlib version; the generator never allocates the full decoded stream.
+The inputs are 1,676,036 and 6,614,022 bytes, well below 128 MiB. The near-cap
+stream expands to 266,000,049 bytes and the over-cap stream to 1,050,000,049.
+These are deliberate load-time stress cases, not typical handbook layouts.
 It builds the production worker and a small supervisor probe in the release
 profile, with extraction enabled only in a temporary target directory. The
 script removes that directory on exit. It never starts the app or opens its
@@ -11,9 +19,9 @@ From the repository root on the owner's Mac (Apple M5, 32 GiB):
 
 ```sh
 python3 /Users/rickymac/code/.gen-rel-loop/offline/qwen-03b-r4-20261019/receipt.py \
-  docs/evidence/offline-on1-2026-10-20/baseline.log \
+  docs/evidence/offline-on2a-2026-10-21/baseline.txt \
   scripts/offline-extraction-pressure-check.sh baseline \
-  docs/evidence/offline-on1-2026-10-20/baseline
+  docs/evidence/offline-on2a-2026-10-21/baseline
 ```
 
 The reviewer runs pressure mode only after the owner agrees. Save other work
@@ -32,9 +40,9 @@ stops this tool. Leave it running while the reviewer runs, from the repo root:
 
 ```sh
 python3 /Users/rickymac/code/.gen-rel-loop/offline/qwen-03b-r4-20261019/receipt.py \
-  docs/evidence/offline-on1-2026-10-20/pressure.log \
+  docs/evidence/offline-on2a-2026-10-21/pressure.txt \
   scripts/offline-extraction-pressure-check.sh pressure \
-  docs/evidence/offline-on1-2026-10-20/pressure
+  docs/evidence/offline-on2a-2026-10-21/pressure
 ```
 
 Then press Control-C in the pressure-tool terminal. The script's `pressure`
@@ -50,11 +58,25 @@ and a successful worker exit. Refusals publish no pages; the probe never writes
 app state. Each worker has a 119-second supervisor deadline and the outer
 watchdog kills/reaps its isolated process group at 120 seconds.
 
-Pass requires every file to finish `ok`, `memory_limit` or `deadline`, no crash,
-no partial publication, no hang beyond 120 seconds, peak RSS at most 640 MiB
-(512 MiB cap plus ~1.25× overhead), and other app state untouched. A missing RSS
-sample or outer watchdog failure fails the check. A nonzero exit is a failed
-check, not release authorization.
+Pass requires exactly these five files and outcomes:
+
+| File | Required outcome | Additional counted-memory check |
+| --- | --- | --- |
+| `synthetic-small-checklist.pdf` | `ok` | — |
+| `synthetic-long-manual.pdf` | `ok` | — |
+| `synthetic-illustrated-charts.pdf` | `ok` | — |
+| `synthetic-near-cap.pdf` | `ok` | Counted peak between 300 and 500 MiB inclusive |
+| `synthetic-over-cap.pdf` | `memory_limit` | Zero pages published |
+
+Every input must be at most 128 MiB. Every run must have no crash, no partial
+publication, no hang beyond 120 seconds and peak RSS at most 640 MiB (512 MiB
+counted cap times 1.25). A `deadline` is a failure, as is an unexpected refusal
+on any of the four success cases or success on the over-cap case. Missing or
+extra synthetic fixtures, a missing RSS sample, a failed timing tool or an outer
+watchdog failure fail acceptance. Other app state must remain untouched.
+A nonzero exit is a failed check, not release authorization. The probe reports
+counted peak only on success; its zero on `memory_limit` is a placeholder, not
+a measured zero or the attempted allocation size.
 
 Only baseline mode is run by this implementation round. In Codex's sandbox,
 `/usr/bin/time -l` can fail with `sysctl kern.clockrate: Operation not permitted`

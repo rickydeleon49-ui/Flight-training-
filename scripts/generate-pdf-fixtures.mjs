@@ -98,6 +98,176 @@ export function buildPdf(numPages, imgW = 0, imgH = 0, docLabel = "document") {
   return Buffer.concat(chunks);
 }
 
+/** DEFLATE packs bits low first, except for Huffman codes. */
+class BitWriter {
+  constructor() {
+    this.bytes = [];
+    this.acc = 0;
+    this.held = 0;
+  }
+
+  writeLow(value, count) {
+    this.acc |= value << this.held;
+    this.held += count;
+    while (this.held >= 8) {
+      this.bytes.push(this.acc & 0xff);
+      this.acc >>>= 8;
+      this.held -= 8;
+    }
+  }
+
+  writeCode(value, count) {
+    for (let i = count - 1; i >= 0; i--) this.writeLow((value >>> i) & 1, 1);
+  }
+
+  finish() {
+    if (this.held > 0) this.bytes.push(this.acc & 0xff);
+    return Buffer.from(this.bytes);
+  }
+}
+
+/** RFC 1951 fixed Huffman code for a literal/length symbol. */
+function fixedCode(symbol) {
+  if (symbol <= 143) return [0x30 + symbol, 8];
+  if (symbol <= 255) return [0x190 + (symbol - 144), 9];
+  if (symbol <= 279) return [symbol - 256, 7];
+  return [0xc0 + (symbol - 280), 8];
+}
+
+const LENGTH_BASE = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
+const LENGTH_EXTRA = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
+
+/** The length code that encodes `length` bytes, and its extra bits. */
+function lengthCode(length) {
+  for (let i = LENGTH_BASE.length - 1; i >= 0; i--) {
+    const extra = LENGTH_EXTRA[i];
+    if (length >= LENGTH_BASE[i] && length < LENGTH_BASE[i] + (1 << extra)) {
+      return { symbol: 257 + i, extra, value: length - LENGTH_BASE[i] };
+    }
+  }
+  throw new Error("no length code for " + length);
+}
+
+/**
+ * A zlib stream that decodes to `prefix` followed by `zeroCount` zero bytes.
+ *
+ * It is written by hand from fixed Huffman codes rather than with
+ * `node:zlib`, so the bytes never depend on the zlib build: the fixture's
+ * SHA-256 has to be the same on every machine, not just this one.
+ */
+export function deflateZeros(prefix, zeroCount) {
+  const writer = new BitWriter();
+  writer.writeLow(1, 1); // BFINAL
+  writer.writeLow(1, 2); // BTYPE: fixed Huffman
+  for (const byte of prefix) {
+    const [code, bits] = fixedCode(byte);
+    writer.writeCode(code, bits);
+  }
+  if (zeroCount > 0) {
+    const [code, bits] = fixedCode(0);
+    writer.writeCode(code, bits); // one literal, to give the copies a history
+    let remaining = zeroCount - 1;
+    while (remaining >= 3) {
+      const length = Math.min(remaining, 258);
+      const { symbol, extra, value } = lengthCode(length);
+      const [symbolCode, symbolBits] = fixedCode(symbol);
+      writer.writeCode(symbolCode, symbolBits);
+      if (extra > 0) writer.writeLow(value, extra);
+      writer.writeCode(0, 5); // distance code 0: copy the previous byte
+      remaining -= length;
+    }
+    while (remaining-- > 0) writer.writeCode(code, bits);
+  }
+  const [endCode, endBits] = fixedCode(256);
+  writer.writeCode(endCode, endBits);
+  // Adler-32 of the decoded bytes: the prefix as written, then zeroCount
+  // zero bytes, which leave the first sum unchanged.
+  let s1 = 1;
+  let s2 = 0;
+  for (const byte of prefix) {
+    s1 = (s1 + byte) % 65521;
+    s2 = (s2 + s1) % 65521;
+  }
+  s2 = (s2 + zeroCount * s1) % 65521;
+  const tail = Buffer.alloc(4);
+  tail.writeUInt32BE(((s2 << 16) | s1) >>> 0, 0);
+  return Buffer.concat([Buffer.from([0x78, 0x9c]), writer.finish(), tail]);
+}
+
+/**
+ * Load-time stress: a compressed cross-reference stream with many free
+ * entries. It expands before page inspection, exercising the allocator cap
+ * rather than the 8 MiB page-content budget. No decoded giant buffer is
+ * allocated by this generator.
+ */
+export function buildXrefPadPdf(freeEntries, docLabel = "document") {
+  const chunks = [];
+  const offsets = [];
+  let pos = 0;
+
+  function write(buf) {
+    if (typeof buf === "string") buf = Buffer.from(buf, "latin1");
+    chunks.push(buf);
+    pos += buf.length;
+  }
+
+  write("%PDF-1.5\n%\xFF\xFF\xFF\xFF\n");
+  offsets[1] = pos;
+  write("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  offsets[2] = pos;
+  write("2 0 obj\n<< /Type /Pages /Count 1 /Kids [4 0 R] >>\nendobj\n");
+  offsets[3] = pos;
+  write("3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+  offsets[4] = pos;
+  write(
+    "4 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] " +
+      "/Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>\nendobj\n"
+  );
+  const pageText = `Synthetic ${docLabel} - Page 1 of 1 (ID: P0001)`;
+  const textStream = `BT /F1 12 Tf 50 750 Td (${pageText}) Tj ET\n`;
+  offsets[5] = pos;
+  write(
+    "5 0 obj\n<< /Length " +
+      textStream.length +
+      " >>\nstream\n" +
+      textStream +
+      "endstream\nendobj\n"
+  );
+
+  // The cross-reference stream itself is object 6.
+  const xrefId = 6;
+  const size = xrefId + 1 + freeEntries;
+  const xrefOffset = pos;
+  const body = Buffer.concat(chunks);
+  const rows = [Buffer.from([0, 0, 0, 0, 0, 0xff, 0xff])];
+  for (let i = 1; i <= xrefId; i++) {
+    const row = Buffer.alloc(7);
+    row[0] = 1;
+    row.writeUInt32BE(i === xrefId ? xrefOffset : offsets[i], 1);
+    rows.push(row);
+  }
+  const compressed = deflateZeros(Buffer.concat(rows), freeEntries * 7);
+  const streamDict =
+    "<< /Type /XRef /Size " + size + " /W [1 4 2] /Root 1 0 R /Filter /FlateDecode /Length " + compressed.length + " >>";
+  const tail = Buffer.from(
+    "\nstartxref\n" + xrefOffset + "\n%%EOF\n",
+    "latin1"
+  );
+  return Buffer.concat([
+    body,
+    Buffer.from(
+      xrefId +
+        " 0 obj\n" +
+        streamDict +
+        "\nstream\n",
+      "latin1"
+    ),
+    compressed,
+    Buffer.from("\nendstream\nendobj\n", "latin1"),
+    tail,
+  ]);
+}
+
 export const FIXTURE_SPECS = [
   {
     filename: "synthetic-small-checklist.pdf",
@@ -126,13 +296,31 @@ export const FIXTURE_SPECS = [
     expectedBytes: 54032644,
     expectedSha256: "b5651eb61a484dbe4876da2ff002d4884f414086080ee061b67f6fec01ab096d",
   },
+  {
+    filename: "synthetic-near-cap.pdf",
+    pages: 1,
+    freeEntries: 38_000_000,
+    label: "near-cap",
+    expectedBytes: 1676036,
+    expectedSha256: "8f4a80561972412da5a2847eb569620d8d4ef6876676f3be205481d379a5f8d3",
+  },
+  {
+    filename: "synthetic-over-cap.pdf",
+    pages: 1,
+    freeEntries: 150_000_000,
+    label: "over-cap",
+    expectedBytes: 6614022,
+    expectedSha256: "89a874dd7465187c67cf1948347906f70953b554afcf117bc08045a4d9ba41ec",
+  },
 ];
 
 export function generateFixtures(targetDir) {
   fs.mkdirSync(targetDir, { recursive: true });
   const results = [];
   for (const spec of FIXTURE_SPECS) {
-    const buf = buildPdf(spec.pages, spec.imgW, spec.imgH, spec.label);
+    const buf = spec.freeEntries === undefined
+      ? buildPdf(spec.pages, spec.imgW, spec.imgH, spec.label)
+      : buildXrefPadPdf(spec.freeEntries, spec.label);
     const filePath = path.join(targetDir, spec.filename);
     fs.writeFileSync(filePath, buf);
     const hash = crypto.createHash("sha256").update(buf).digest("hex");

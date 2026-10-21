@@ -1,0 +1,8 @@
+$ python3 scripts/offline-extraction-pressure-check.test.py
+.............
+----------------------------------------------------------------------
+Ran 13 tests in 0.083s
+
+OK
+
+EXIT 0
