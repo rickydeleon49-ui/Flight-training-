@@ -860,5 +860,53 @@ describe("D4 — Daily Plan State & Logic", () => {
       expect(hwRec).toBeDefined();
       expect(hwRec!.reason.summary).toBe("Homework due today");
     });
+
+    it("plan_logic_unchanged_by_wording (same inputs → same item IDs, order and budget numbers as before)", () => {
+      const sources: RecommendationSources = {
+        today: TODAY,
+        actions: [
+          mockAction({ id: "act-unknown", title: "Review emergency checklist", estimatedMinutes: null, priority: "important", dueDate: TODAY }),
+          mockAction({ id: "act-10m", title: "Preflight walkaround", estimatedMinutes: 10, priority: "important", dueDate: TODAY }),
+          mockAction({ id: "act-15m", title: "Logbook review", estimatedMinutes: 15, priority: "later", dueDate: TODAY }),
+        ],
+      };
+      const { result } = computeDailyPlan(sources, null, { timeBudget: 15, today: TODAY });
+
+      // Item selection and ordering
+      expect(result.suggested.map((s) => s.id)).toEqual(["action:act-10m", "action:act-unknown"]);
+      expect(result.remaining.map((r) => r.id)).toEqual(["action:act-15m"]);
+
+      // Budget numbers
+      expect(result.allocatedMinutes).toBe(10);
+      expect(result.totalEstimatedMinutes).toBe(10);
+      expect(result.timeBudget).toBe(15);
+      expect(result.suggestedUnestimatedCount).toBe(1);
+      expect(result.fitsBudgetCompletely).toBe(false);
+
+      // Plain wording in explanations
+      expect(result.suggested[0]?.explanation).toBe("Due today · About 10 min");
+      expect(result.suggested[1]?.explanation).toBe(
+        "Due today · No time estimate yet, included because it's important",
+      );
+    });
+
+    it("daily_plan_wording_is_plain (rendered plan text never contains allocation, allocated, indeterminate or timed item)", () => {
+      const sources: RecommendationSources = {
+        today: TODAY,
+        actions: [
+          mockAction({ id: "act-unknown", title: "Review emergency checklist", estimatedMinutes: null, priority: "important", dueDate: TODAY }),
+          mockAction({ id: "act-10m", title: "Preflight walkaround", estimatedMinutes: 10, priority: "important", dueDate: TODAY }),
+        ],
+      };
+      const { result } = computeDailyPlan(sources, null, { timeBudget: 20, today: TODAY });
+
+      for (const item of result.suggested) {
+        const text = item.explanation.toLowerCase();
+        expect(text).not.toContain("allocation");
+        expect(text).not.toContain("allocated");
+        expect(text).not.toContain("indeterminate");
+        expect(text).not.toContain("timed item");
+      }
+    });
   });
 });

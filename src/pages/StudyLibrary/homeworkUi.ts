@@ -81,6 +81,17 @@ export function homeworkSaveMessage(error: unknown): {
 }
 
 export interface HomeworkHistoryEntry { change_kind: string; created_at?: string; recorded_at?: string; revision: number; snapshot_json?: unknown }
+/** Storage marks an activity "reopened" whenever its text changes; only call it reopened when it was actually completed before. */
+export function activityStateLabel(state: string, activityId: string, history: readonly HomeworkHistoryEntry[]): string {
+  if (state === "completed") return "Done";
+  if (state !== "reopened") return "To do";
+  const everCompleted = history.some(h => {
+    if (typeof h.snapshot_json !== "string") return false;
+    try { return (JSON.parse(h.snapshot_json) as HomeworkSnapshot).activities.some(e => e.record.id === activityId && e.record.state === "completed"); }
+    catch { return false; }
+  });
+  return everCompleted ? "Reopened" : "In progress";
+}
 const HISTORY_LABELS: Record<string,string> = {create:"Homework added",edit:"Homework edited",complete:"Work completed",reopen:"Work reopened",reorder:"Activities reordered",remove_activity:"Activity removed",relink:"Source replaced",archive:"Archive changed"};
 export function homeworkHistoryLabel(row: HomeworkHistoryEntry, previous?: HomeworkHistoryEntry): string {
   const label=HISTORY_LABELS[row.change_kind]??"Homework changed";
@@ -95,6 +106,16 @@ export function homeworkHistoryLabel(row: HomeworkHistoryEntry, previous?: Homew
       return row.change_kind === "remove_activity" ? !!p && !p.record.removed_at && !!e.record.removed_at : !p||canonicalJson(p)!==canonicalJson(e);
     });
     const titles=affected.slice(0,3).map(e=>e.record.title).join(", ");
+    if (
+      row.change_kind === "edit" &&
+      affected.length > 0 &&
+      affected.every((e) => {
+        const p = before.activities.find((p) => p.record.id === e.record.id);
+        return p && p.record.body !== e.record.body && ["reflection", "questions"].includes(e.record.kind);
+      })
+    ) {
+      return titles ? `Answer saved: ${titles}${affected.length > 3 ? ` and ${affected.length - 3} more` : ""}` : "Answer saved";
+    }
     return titles?`${label}: ${titles}${affected.length>3?` and ${affected.length-3} more`:""}`:label;
   }catch{return label;}
 }

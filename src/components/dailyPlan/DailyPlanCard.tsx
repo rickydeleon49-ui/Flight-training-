@@ -196,9 +196,11 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                   </span>
                 ) : (
                   <span>
-                    <strong>Timed estimate:</strong> {plan.allocatedMinutes} min of {timeBudget} min allocated
+                    About {plan.allocatedMinutes} of your {timeBudget} minutes planned
                     {overBudget ? " (over budget)" : ""}
-                    {plan.suggestedUnestimatedCount > 0 ? " (total duration indeterminate)" : ""}
+                    {plan.suggestedUnestimatedCount > 0
+                      ? " · some items don't have a time estimate yet"
+                      : ""}
                   </span>
                 )
               ) : (
@@ -317,7 +319,7 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                             {item.estimatedMinutes} min
                           </span>
                         ) : (
-                          <span className="tiny muted">Estimate unknown</span>
+                          <span className="tiny muted">No time estimate</span>
                         )}
                       </div>
                       <h4 className="daily-plan-item__title">{item.title}</h4>
@@ -364,18 +366,16 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                         Skip today
                       </button>
 
-                      <div className="stack" style={{ gap: 2, alignItems: "center" }}>
-                        <button
-                          type="button"
-                          className="button button--ghost button--small"
-                          onClick={() => void deferItem(item.id)}
-                          aria-label={`Move ${item.title} to tomorrow`}
-                          title="Postpone to tomorrow's daily plan without changing source due date"
-                        >
-                          Move to tomorrow
-                        </button>
-                        <span className="daily-plan-defer-note">Due date stays the same</span>
-                      </div>
+                      <button
+                        type="button"
+                        className="button button--ghost button--small"
+                        onClick={() => void deferItem(item.id)}
+                        aria-label={`Move ${item.title} to tomorrow`}
+                        aria-description="Your due date stays the same"
+                        title="Your due date stays the same"
+                      >
+                        Move to tomorrow
+                      </button>
                     </div>
                   </div>
 

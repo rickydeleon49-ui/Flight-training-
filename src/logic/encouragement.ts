@@ -18,6 +18,8 @@ export interface EncouragementInput {
   completedThisWeek: number;
   openActionCount: number;
   hasAnyData: boolean;
+  hasRecommendations?: boolean;
+  allWaitingAreHomework?: boolean;
 }
 
 /** Timing wording for a lesson within the coming week. */
@@ -54,6 +56,10 @@ export function encouragementMessage(input: EncouragementInput): string | null {
 
   // Overdue work is acknowledged without blame, and paired with a way out.
   if (input.overdueCount > 0) {
+    if (input.allWaitingAreHomework) {
+      const item = input.overdueCount === 1 ? "homework item is" : "homework items are";
+      return `${input.overdueCount} ${item} waiting. Open ${input.overdueCount === 1 ? "it" : "them"} to keep going.`;
+    }
     const item = input.overdueCount === 1 ? "item is" : "items are";
     return `${input.overdueCount} ${item} waiting. Choose a realistic new time for one of them.`;
   }
@@ -65,6 +71,9 @@ export function encouragementMessage(input: EncouragementInput): string | null {
   }
 
   if (input.openActionCount === 0) {
+    if (input.hasRecommendations) {
+      return "Your recommended items are above.";
+    }
     return "Nothing is waiting. A good moment to plan your next step.";
   }
 

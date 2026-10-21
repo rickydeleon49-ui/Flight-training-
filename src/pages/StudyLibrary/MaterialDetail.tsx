@@ -860,7 +860,9 @@ function MaterialDetailPage() {
                     ? "Imported study packet"
                     : practiceTest
                       ? "Saved on this computer"
-                      : "Optional, from this document"
+                      : material.filePath
+                        ? "Optional, from this document"
+                        : "Optional"
                 }
                 action={
                   canOfferGemini ? (

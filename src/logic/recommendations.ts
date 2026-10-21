@@ -615,11 +615,9 @@ export function selectRecommendations(
     if (destination === "suggested") {
       if (budget !== null && budget > 0) {
         if (candidate.estimatedMinutes === null) {
-          explanation = `${candidate.reason.summary} · Duration unknown (included by priority; not counted in ${budget}-min timed allocation)`;
+          explanation = `${candidate.reason.summary} · No time estimate yet, included because it's important`;
         } else if (hasUnknownSuggested) {
-          // When any suggested item has unknown duration, describe known allocations explicitly as
-          // estimates for timed items only, without claiming a guaranteed session fit or actual remaining session time.
-          explanation = `${candidate.reason.summary} · ${candidate.estimatedMinutes} min estimated for timed item (${totalEstimatedMinutes} of ${budget} min allocated; total duration indeterminate)`;
+          explanation = `${candidate.reason.summary} · About ${candidate.estimatedMinutes} min`;
         } else {
           // All suggested items have known estimates: full fit can be claimed
           const remainingMinutes = budget - totalEstimatedMinutes;

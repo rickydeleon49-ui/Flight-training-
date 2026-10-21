@@ -62,6 +62,8 @@ export function FlightDeck() {
         journalEntries: data.journalEntries,
         questions: data.questions,
         transactions: data.transactions,
+        notes: data.notes,
+        dailyPlan: data.dailyPlan,
       }),
     [data],
   );
@@ -183,7 +185,15 @@ export function FlightDeck() {
               />
               <CardBody>
                 <p className="small muted" style={{ marginBottom: "var(--space-3)" }}>
-                  This didn&rsquo;t get finished. Choose a realistic new time, or mark it done.
+                  {model.needsAttention.every((action) =>
+                    data.homework?.some(
+                      (h) => h.assignment.action_id === action.id && !h.assignment.archived,
+                    ),
+                  ) ? (
+                    "This homework is past its due date. Open it to keep going."
+                  ) : (
+                    <>This didn&rsquo;t get finished. Choose a realistic new time, or mark it done.</>
+                  )}
                 </p>
                 {model.needsAttention.map((action) => {
                   const boundHw = data.homework?.find(h => h.assignment.action_id === action.id && !h.assignment.archived);
@@ -239,8 +249,16 @@ export function FlightDeck() {
               {model.planGroups.length === 0 ? (
                 <EmptyState
                   icon={<CheckIcon size={26} />}
-                  title="Nothing is scheduled for today."
-                  body="A good moment to look at your Flight Path and choose the next step."
+                  title={
+                    model.hasRecommendations
+                      ? "Nothing else is scheduled today."
+                      : "Nothing is scheduled for today."
+                  }
+                  body={
+                    model.hasRecommendations
+                      ? "Your recommended items are above."
+                      : "A good moment to look at your Flight Path and choose the next step."
+                  }
                   action={
                     <Button onClick={() => setCreating(true)}>Add an action</Button>
                   }

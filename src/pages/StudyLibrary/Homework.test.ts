@@ -21,7 +21,7 @@ const save = vi.fn(async (op: HomeworkOperation) => {
     history.push(op);
     return { version: 1, assignmentId: op.assignmentId, revision: next.assignment.revision };
 });
-const repository = { save, list: async () => records.map(s => s.assignment), get: async (id: string) => structuredClone(records.find(s => s.assignment.id === id) ?? null), history: async () => history.map(op => ({ change_kind: op.changeKind, recorded_at: op.at, created_at: op.at, revision: op.next.assignment.revision })) };
+const repository = { save, list: async () => records.map(s => s.assignment), get: async (id: string) => structuredClone(records.find(s => s.assignment.id === id) ?? null), history: async () => history.map(op => ({ change_kind: op.changeKind, recorded_at: op.at, created_at: op.at, revision: op.next.assignment.revision, snapshot_json: JSON.stringify(op.next) })) };
 const refresh = vi.fn(async () => { });
 const sourceId = "10000000-0000-4000-8000-000000000001";
 const quizId = "10000000-0000-4000-8000-000000000002";
@@ -425,4 +425,28 @@ it("homework_filter_selected_state_visible", async () => {
     fireEvent.click(inProgressChip);
     expect(inProgressChip.getAttribute("aria-pressed")).toBe("true");
     expect(upcomingChip.getAttribute("aria-pressed")).toBe("false");
+});
+
+it("history_labels_answer_saved", async () => {
+    const s = assignment(["reflection"]);
+    s.activities[0]!.record.title = "Preflight thoughts";
+    s.activities[0]!.record.body = "";
+    history = [{
+        version: 1,
+        operationId: "op-create",
+        assignmentId: s.assignment.id,
+        baseRevision: 0,
+        changeKind: "create",
+        at: s.assignment.created_at,
+        next: s,
+    }];
+    view(s.assignment.id);
+    await screen.findByText("Preflight thoughts");
+
+    const textarea = screen.getByRole("textbox", { name: "Answer for Preflight thoughts" });
+    fireEvent.change(textarea, { target: { value: "Review ceiling minimums." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/Answer saved: Preflight thoughts/)).toBeTruthy();
 });

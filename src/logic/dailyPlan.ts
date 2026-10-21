@@ -368,13 +368,13 @@ function assembleLockedSession(
   const explainSuggested = (c: RecommendationCandidate): string => {
     if (!timed) return c.reason.summary;
     if (c.estimatedMinutes === null) {
-      return `${c.reason.summary} · Duration unknown (included by priority; not counted in ${budget}-min timed allocation)`;
+      return `${c.reason.summary} · No time estimate yet, included because it's important`;
     }
     if (overBudget) {
       return `${c.reason.summary} · ${c.estimatedMinutes} min estimated (${allocated} of ${budget} min allocated; over the ${budget}-min budget)`;
     }
     if (hasUnknown) {
-      return `${c.reason.summary} · ${c.estimatedMinutes} min estimated for timed item (${allocated} of ${budget} min allocated; total duration indeterminate)`;
+      return `${c.reason.summary} · About ${c.estimatedMinutes} min`;
     }
     return `${c.reason.summary} · Fits ${budget}-min session (${c.estimatedMinutes} min, ${(budget as number) - allocated} min remaining)`;
   };

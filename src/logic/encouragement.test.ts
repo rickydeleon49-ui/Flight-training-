@@ -47,6 +47,28 @@ describe("encouragementMessage", () => {
     expect(message).not.toMatch(/fail|behind|should have|missed/i);
   });
 
+  it("guides her to open homework when all waiting work is homework-bound", () => {
+    expect(
+      encouragementMessage(
+        input({ overdueCount: 1, openActionCount: 1, allWaitingAreHomework: true }),
+      ),
+    ).toBe("1 homework item is waiting. Open it to keep going.");
+    expect(
+      encouragementMessage(
+        input({ overdueCount: 2, openActionCount: 2, allWaitingAreHomework: true }),
+      ),
+    ).toBe("2 homework items are waiting. Open them to keep going.");
+  });
+
+  it("points to recommendations above instead of claiming nothing is waiting", () => {
+    expect(
+      encouragementMessage(input({ openActionCount: 0, hasRecommendations: true })),
+    ).toBe("Your recommended items are above.");
+    expect(
+      encouragementMessage(input({ openActionCount: 0, hasRecommendations: false })),
+    ).toBe("Nothing is waiting. A good moment to plan your next step.");
+  });
+
   it("names real completed work", () => {
     expect(encouragementMessage(input({ completedThisWeek: 4 }))).toBe(
       "You finished 4 things this week. That is real progress.",
