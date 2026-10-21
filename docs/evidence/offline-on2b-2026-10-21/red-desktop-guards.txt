@@ -1,0 +1,40 @@
+$ npm test -- --configLoader runner src/logic/releaseSafety.test.ts -t release_workflow_sets_offline_extraction_opt_in
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/logic/releaseSafety.test.ts -t release_workflow_sets_offline_extraction_opt_in
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+ ❯ src/logic/releaseSafety.test.ts (56 tests | 1 failed | 55 skipped) 145ms
+     × release_workflow_sets_offline_extraction_opt_in 143ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/releaseSafety.test.ts > offline release opt-in > release_workflow_sets_offline_extraction_opt_in
+AssertionError: expected undefined to be '1' // Object.is equality
+
+- Expected:
+"1"
+
++ Received:
+undefined
+
+ ❯ src/logic/releaseSafety.test.ts:1301:54
+    1299|     for (const job of Object.values(desktop.jobs) as Array<{ steps: Ar…
+    1300|       const installer = job.steps.find(step => step.run?.startsWith("n…
+    1301|       expect(installer?.env?.HFD_OFFLINE_EXTRACTION).toBe("1");
+       |                                                      ^
+    1302|     }
+    1303|     expect(workflow.jobs.check.env?.HFD_OFFLINE_EXTRACTION).toBeUndefi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 55 skipped (56)
+   Start at  11:48:39
+   Duration  919ms (transform 77ms, setup 267ms, import 130ms, tests 145ms, environment 0ms)
+
+
+EXIT 1

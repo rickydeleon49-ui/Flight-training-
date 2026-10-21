@@ -3,9 +3,9 @@
  *
  * Preparing a document reads its text on this Mac, in a separate worker
  * process, so it can later be searched without a connection. Nothing is sent
- * anywhere and no AI is involved. The feature is switched off unless the
- * build opts in: it stays off in releases until its memory budget has been
- * accepted (see docs/OFFLINE_01C_REPORT_2026-10-19.md).
+ * anywhere and no AI is involved. The build must opt in; the release workflow
+ * sets the shared native/frontend flag. See README.md, Offline PDF reading
+ * and search, for the release and debug gates.
  */
 import { invoke } from "@tauri-apps/api/core";
 

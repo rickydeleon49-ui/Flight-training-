@@ -1,0 +1,18 @@
+$ shasum -a 256 -c docs/evidence/offline-on2b-2026-10-21/SOURCE_SHA256SUMS
+.github/workflows/build-desktop.yml: OK
+.github/workflows/release.yml: OK
+README.md: OK
+ROADMAP.md: OK
+docs/OFFLINE_ON_PRESSURE_CHECK.md: OK
+docs/evidence/mac-schema14-completion-2026-10-15/SHA256SUMS: OK
+docs/evidence/mac-schema14-completion-2026-10-15/source-manifest.json: OK
+scripts/release.sh: OK
+src-tauri/examples/offline_pressure_probe.rs: OK
+src-tauri/src/extraction/worker.rs: OK
+src/logic/releaseSafety.test.ts: OK
+src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts: OK
+src/services/offlineContent.test.ts: OK
+src/services/offlineContent.ts: OK
+vite.config.ts: OK
+
+EXIT 0

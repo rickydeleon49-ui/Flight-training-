@@ -137,15 +137,20 @@ HW-01a's [Homework schema/domain proposal](docs/HOMEWORK_01_PROPOSAL_2026-10-21.
 GEN-01 is complete (#245–#248). GEN-03, packet hand-off and the plain how-to,
 is the last OFFLINE-GEN slice; its local implementation awaits Claude's review.
 
-**OFFLINE-ON comes immediately after GEN-03, before HOMEWORK-01:** the release
-extraction switch enables both PDF study kits and offline document/saved-content
-search (#231–#233). Until it is on, the kit explains plainly that making a kit
-isn't available in this version yet; valid earlier caches still work. The owner
-accepts saved-content p50 of 28.2 ms (target 20 ms) and chose the memory check on
-this Mac (M5, 32 GiB), which is weaker evidence than a minimum-spec Mac. OFFLINE-ON-1
-fixes FLAKE-CR-01 and prepares the baseline/pressure check; OFFLINE-ON-2 may enable
-the release switch only after Claude accepts the measurements. Pressure and
-installed/minimum-spec acceptance remain open. See [the runbook](docs/OFFLINE_ON_PRESSURE_CHECK.md).
+**OFFLINE-ON complete pending release (21 October 2026):** OFFLINE-ON-2b wires
+one explicit release opt-in to PDF study kits and offline document/saved-content
+search, including homework (#231–#233, #257). FLAKE-CR-01 is fixed (#250).
+The owner accepted saved-content p50 of 28.2 ms and the baseline plus
+[warning-pressure pass](docs/evidence/offline-on2b-2026-10-21/RESULT.md): five
+synthetic fixtures, near-cap 269 MiB RSS, over-cap clean refusal at 428 MiB.
+The owner's M5 / 32 GiB is weaker evidence than a minimum-spec Mac. Her Mac has
+8 GB RAM: after the update, prepare one real chapter PDF with her usual apps
+open; if slow, follow up with a 384 MiB cap. This round leaves the 512 MiB cap
+unchanged. Installed/8 GB acceptance remains open. No release is published by
+this configuration round; Claude reviews, tests and merges. See the
+[build gates](README.md#offline-pdf-reading-and-search),
+[runbook](docs/OFFLINE_ON_PRESSURE_CHECK.md) and
+[round report](docs/OFFLINE_ON2B_REPORT_2026-10-21.md).
 
 Migration 0019 `study_set_save_operations` approved by the owner (20 October 2026): receipts for study-set saves that come from the PDF kit only; ordinary saves are unchanged.
 

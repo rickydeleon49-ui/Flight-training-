@@ -202,6 +202,39 @@ which is evergreen, so any supported Windows 10 or 11 is fine.
 
 ---
 
+## Offline PDF reading and search
+
+In the desktop app, prepare a PDF once to search its readable text without a
+connection and make a study kit from its pages, with no AI or upload. Search also
+finds saved guides, cards, practice questions, notes, instructor questions and
+homework. Image-only pages need readable text; OCR is not included. Files over
+128 MiB are refused. One extraction worker runs at a time, with a 512 MiB
+counted-allocation cap, an 8 MiB per-page budget and a 120-second deadline;
+the cap is not a bound on total app or process RSS. Try individual chapters
+when a handbook cannot be prepared.
+
+Build gates live here: `.github/workflows/release.yml` sets
+`HFD_OFFLINE_EXTRACTION=1` on the installer build step; the private packaging
+checks in `.github/workflows/build-desktop.yml` use the same opt-in for both
+platforms. `scripts/release.sh` exports it for checks before preparing the tag
+(it does not build installers). For a local release build, use
+`HFD_OFFLINE_EXTRACTION=1 npm run tauri build`. The Tauri build config
+(`src-tauri/tauri.conf.json`) inherits that environment through `npm run build`;
+`vite.config.ts` maps it to the existing frontend flag only for builds.
+Rust's compile-time gate enables extraction and both native search paths;
+`offlineStudyEnabled()` uses the frontend flag plus the desktop check to show
+search. Without the release opt-in, native extraction/search remain disabled
+and a missing-cache kit keeps the unavailable message; valid caches still work.
+In debug builds Rust permits extraction as before; the UI still needs the
+explicit `VITE_OFFLINE_EXTRACTION=1` development flag. Browser mode keeps the
+desktop features hidden. Setting an environment variable after building does
+not enable the installed app.
+
+The owner accepted the [synthetic warning-pressure result](docs/evidence/offline-on2b-2026-10-21/RESULT.md)
+on a 32 GiB M5, weaker evidence than a minimum-spec Mac. After the update, check
+one real chapter PDF on her 8 GB Mac with her usual apps open; if it is slow,
+follow up with the cap lowered to 384 MiB. This round keeps the cap unchanged.
+
 ## Optional Gemini study assistant
 
 Settings can connect a personal Gemini API key from

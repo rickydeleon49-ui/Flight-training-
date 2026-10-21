@@ -1,0 +1,59 @@
+$ npm test -- --configLoader runner src/logic/releaseSafety.test.ts src/services/offlineContent.test.ts src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts -t release_workflow_sets_offline_extraction_opt_in|release_build_enables_search_ui|debug_and_release_gates_are_documented_in_one_place|extraction_enabled_success_never_shows_unavailable_message
+
+> her-flight-deck@0.5.7 test
+> vitest run --configLoader runner src/logic/releaseSafety.test.ts src/services/offlineContent.test.ts src/pages/StudyLibrary/MaterialDetailPdfKit.test.ts -t release_workflow_sets_offline_extraction_opt_in|release_build_enables_search_ui|debug_and_release_gates_are_documented_in_one_place|extraction_enabled_success_never_shows_unavailable_message
+
+
+ RUN  v4.1.11 /Users/rickymac/code/Flight-training-offline-gen-00
+
+ ❯ src/logic/releaseSafety.test.ts (56 tests | 2 failed | 54 skipped) 10ms
+     × release_workflow_sets_offline_extraction_opt_in 9ms
+     × debug_and_release_gates_are_documented_in_one_place 1ms
+ ❯ src/services/offlineContent.test.ts (10 tests | 1 failed | 9 skipped) 63ms
+   × release_build_enables_search_ui 62ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/logic/releaseSafety.test.ts > offline release opt-in > release_workflow_sets_offline_extraction_opt_in
+TypeError: Cannot read properties of undefined (reading 'HFD_OFFLINE_EXTRACTION')
+ ❯ src/logic/releaseSafety.test.ts:1298:22
+    1296|     const workflow = YAML.parse(readFileSync(WORKFLOW_PATH, "utf8"));
+    1297|     const build = workflow.jobs.build.steps.find((step: { run?: string…
+    1298|     expect(build.env.HFD_OFFLINE_EXTRACTION).toBe("1");
+       |                      ^
+    1299|     expect(workflow.jobs.check.env?.HFD_OFFLINE_EXTRACTION).toBeUndefi…
+    1300|     const script = readFileSync(RELEASE_SH_PATH, "utf8");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/logic/releaseSafety.test.ts > offline release opt-in > debug_and_release_gates_are_documented_in_one_place
+AssertionError: expected undefined to be defined
+ ❯ src/logic/releaseSafety.test.ts:1310:21
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/services/offlineContent.test.ts > release_build_enables_search_ui
+AssertionError: expected 'object' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "object"
+
+ ❯ src/services/offlineContent.test.ts:46:25
+     44|   vi.stubEnv("HFD_OFFLINE_EXTRACTION", "1");
+     45|   const { default: config } = await import("../../vite.config");
+     46|   expect(typeof config).toBe("function");
+       |                         ^
+     47|   const buildConfig = (config as import("vite").UserConfigFnObject)({ …
+     48|   const flag = JSON.parse(buildConfig.define?.["import.meta.env.VITE_O…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 1 passed | 101 skipped (105)
+   Start at  11:46:12
+   Duration  843ms (transform 258ms, setup 180ms, import 345ms, tests 179ms, environment 369ms)
+
+
+EXIT 1

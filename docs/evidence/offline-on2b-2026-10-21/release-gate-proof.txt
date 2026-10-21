@@ -1,0 +1,4 @@
+$ env -u HFD_OFFLINE_EXTRACTION /private/tmp/hfd-offline-on2b-target.Vm6VQN/release/examples/offline_pressure_probe --check-build
+{"debugAssertions":false,"extractionEnabled":true}
+
+EXIT 0

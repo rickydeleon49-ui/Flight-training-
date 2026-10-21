@@ -1,21 +1,18 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Offline extraction stays off in releases until a reviewer accepts the
- * worker's memory cap (docs/OFFLINE_01C_REPORT_2026-10-19.md §6). Turning it
- * on means setting a build flag; nothing checked in may set either one.
+ * OFFLINE-ON-2b authorizes only the release workflows/script and the Vite
+ * bridge. Other build/dev paths must not opt themselves in.
  */
-describe("offline extraction stays dormant", () => {
+describe("offline extraction has an explicit release opt-in", () => {
   const root = join(__dirname, "..", "..");
   const files = [
-    ...readdirSync(join(root, ".github", "workflows")).map((f) => join(".github", "workflows", f)),
+    ...readdirSync(join(root, ".github", "workflows")).filter(f => !["release.yml", "build-desktop.yml"].includes(f)).map((f) => join(".github", "workflows", f)),
     "package.json",
-    "vite.config.ts",
     "src-tauri/tauri.conf.json",
     "src-tauri/build.rs",
-    "scripts/release.sh",
   ];
 
   it.each(files)("%s doesn't switch it on", (file) => {
@@ -33,4 +30,40 @@ describe("offline extraction stays dormant", () => {
     expect(offlineStudyEnabled()).toBe(false);
     await expect(offlineContentReadiness(["m1"])).resolves.toEqual([]);
   });
+});
+
+vi.mock("@/data", () => ({ isTauri: () => desktop }));
+let desktop = false;
+afterEach(() => { desktop = false; vi.unstubAllEnvs(); });
+
+it("release_build_enables_search_ui", async () => {
+  vi.stubEnv("HFD_OFFLINE_EXTRACTION", "1");
+  const { default: config } = await import("../../vite.config");
+  expect(typeof config).toBe("function");
+  const buildConfig = (config as import("vite").UserConfigFnObject)({ command: "build", mode: "production", isSsrBuild: false, isPreview: false });
+  const flag = JSON.parse(buildConfig.define?.["import.meta.env.VITE_OFFLINE_EXTRACTION"]);
+  expect(flag).toBe("1");
+  vi.stubEnv("VITE_OFFLINE_EXTRACTION", flag);
+  desktop = true;
+  const { offlineStudyEnabled } = await import("./offlineContent");
+  expect(offlineStudyEnabled()).toBe(true);
+  desktop = false;
+  expect(offlineStudyEnabled()).toBe(false);
+});
+
+it("unopted_release_and_debug_builds_preserve_their_gates", async () => {
+  const { default: config } = await import("../../vite.config");
+  const resolve = config as import("vite").UserConfigFnObject;
+  const env = { mode: "production", isSsrBuild: false, isPreview: false };
+  for (const flag of [undefined, "0", "true"]) {
+    vi.stubEnv("HFD_OFFLINE_EXTRACTION", flag);
+    vi.stubEnv("VITE_OFFLINE_EXTRACTION", undefined);
+    const build = resolve({ ...env, command: "build" });
+    expect(JSON.parse(build.define?.["import.meta.env.VITE_OFFLINE_EXTRACTION"])).toBe("");
+  }
+  vi.stubEnv("HFD_OFFLINE_EXTRACTION", "1");
+  expect(resolve({ ...env, command: "serve" }).define).toEqual({});
+  vi.stubEnv("HFD_OFFLINE_EXTRACTION", undefined);
+  vi.stubEnv("VITE_OFFLINE_EXTRACTION", "1");
+  expect(JSON.parse(resolve({ ...env, command: "build" }).define?.["import.meta.env.VITE_OFFLINE_EXTRACTION"])).toBe("1");
 });
