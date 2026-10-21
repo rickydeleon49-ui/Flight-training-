@@ -9,7 +9,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { useNavigationController } from "@/state/navigation/useDocumentNavigation";
 import { HomeworkCardRun } from "./HomeworkCardRun";
 import { HomeworkEditor } from "./HomeworkEditor";
-import { ACTIVITY_KINDS, activeHomework, homeworkOperation, homeworkSaveMessage, newHomework, type Entry, homeworkHistoryLabel, type HomeworkHistoryEntry } from "./homeworkUi";
+import { ACTIVITY_KINDS, activeHomework, homeworkOperation, homeworkSaveMessage, newHomework, type Entry, homeworkHistoryLabel, activityStateLabel, type HomeworkHistoryEntry } from "./homeworkUi";
 import "./homework.css";
 type Editor = {
     snapshot: HomeworkSnapshot;
@@ -223,7 +223,7 @@ export function HomeworkView() {
                 const missing = sourceMissing(e) || !!sourceStates[r.id];
                 const done = r.state === 'completed';
                 return <li key={r.id} className="homework-activity stack stack--3">
-          <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : r.state === 'reopened' ? 'Reopened' : 'To do'}</p>
+          <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : activityStateLabel(r.state, r.id, history)}</p>
           {['reflection', 'questions'].includes(r.kind) && !done ? (
             <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
               <textarea

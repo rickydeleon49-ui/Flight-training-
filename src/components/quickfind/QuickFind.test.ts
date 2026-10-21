@@ -5,7 +5,7 @@
  */
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories } from "@/data/repositories";
@@ -21,9 +21,11 @@ vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () =
 
 let restore: (() => void) | null = null;
 let context: ReturnType<typeof useAppData> | null = null;
+let nav: ReturnType<typeof useNavigate> | null = null;
 
 function Probe() {
   context = useAppData();
+  nav = useNavigate();
   const location = useLocation();
   return h("output", { "aria-label": "Location" }, location.pathname);
 }
@@ -50,6 +52,7 @@ afterEach(() => {
   db?.close();
   db = null;
   context = null;
+  nav = null;
 });
 
 const input = () => screen.getByRole("textbox", { name: "Search everything" }) as HTMLInputElement;
@@ -127,6 +130,28 @@ describe("Quick Find without native modal support", () => {
     openWithShortcut();
     expect(input().value).toBe("");
     expect(document.activeElement).toBe(input());
+  });
+
+  it("search_palette_closes_on_route_change", async () => {
+    restore = removeCapabilities([[HTMLDialogElement.prototype, "showModal"], [HTMLDialogElement.prototype, "close"]]);
+    await mount();
+    const opener = openWithShortcut();
+    expect(screen.getByRole("dialog", { name: "Quick find" })).toBeTruthy();
+
+    act(() => {
+      nav?.("/questions");
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Quick find" })).toBeNull();
+    });
+
+    // Reopen on the new route and close manually to verify focus restoration still works.
+    openWithShortcut();
+    expect(screen.getByRole("dialog", { name: "Quick find" })).toBeTruthy();
+    fireEvent.keyDown(input(), { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Quick find" })).toBeNull();
+    expect(document.activeElement).toBe(opener);
   });
 });
 

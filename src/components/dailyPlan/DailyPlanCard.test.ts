@@ -155,8 +155,10 @@ describe("Daily Flight Plan card", () => {
     expect(screen.getByRole("button", { name: "Start action: Alpha" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Why recommend Alpha?" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Skip Alpha for today" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Move Alpha to tomorrow" })).toBeTruthy();
-    expect(screen.getByText("Due date stays the same")).toBeTruthy();
+    const moveBtn = screen.getByRole("button", { name: "Move Alpha to tomorrow" });
+    expect(moveBtn).toBeTruthy();
+    expect(moveBtn.getAttribute("title")).toBe("Your due date stays the same");
+    expect(moveBtn.getAttribute("aria-description")).toBe("Your due date stays the same");
   });
 
   describe("session stability and persistence", () => {
@@ -484,9 +486,45 @@ describe("Daily Flight Plan card", () => {
       await mount();
 
       await waitFor(() => expect(suggestedTitles()).toEqual(["Review emergency checklist"]));
-      expect(screen.getByText("Estimate unknown")).toBeTruthy();
-      expect(screen.getByText(/total duration indeterminate/i)).toBeTruthy();
+      expect(screen.getByText("No time estimate")).toBeTruthy();
+      expect(screen.getByText(/some items don't have a time estimate yet/i)).toBeTruthy();
       expect(screen.getByRole("button", { name: `Start action: ${a.title}` })).toBeTruthy();
+    });
+
+    it("daily_plan_wording_is_plain (rendered plan text never contains allocation, allocated, indeterminate or timed item)", async () => {
+      await action("Review emergency checklist", null);
+      await action("Preflight walkaround", 10);
+      const view = await mount();
+
+      await waitFor(() =>
+        expect(suggestedTitles()).toEqual(["Preflight walkaround", "Review emergency checklist"]),
+      );
+
+      const planCard = view.container.querySelector(".daily-plan-card");
+      expect(planCard).toBeTruthy();
+      const text = planCard!.textContent || "";
+
+      // Expected plain wording is present
+      expect(text).toContain("About 10 of your 20 minutes planned");
+      expect(text).toContain("some items don't have a time estimate yet");
+      expect(text).toContain("No time estimate");
+      expect(text).toContain("No time estimate yet, included because it's important");
+      expect(text).toContain("About 10 min");
+
+      // Developer jargon words must never appear in rendered plan text
+      const lower = text.toLowerCase();
+      expect(lower).not.toContain("allocation");
+      expect(lower).not.toContain("allocated");
+      expect(lower).not.toContain("indeterminate");
+      expect(lower).not.toContain("timed item");
+
+      // Buttons have plain title and aria-description
+      const moveButtons = screen.getAllByRole("button", { name: /Move .* to tomorrow/ });
+      expect(moveButtons.length).toBeGreaterThan(0);
+      for (const btn of moveButtons) {
+        expect(btn.getAttribute("title")).toBe("Your due date stays the same");
+        expect(btn.getAttribute("aria-description")).toBe("Your due date stays the same");
+      }
     });
   });
 });

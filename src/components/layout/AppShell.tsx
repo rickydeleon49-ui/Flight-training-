@@ -1,5 +1,5 @@
-import { Suspense, type ReactElement } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Suspense, useCallback, useEffect, useRef, useState, type ReactElement } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
   QUICK_FIND_EVENT,
@@ -50,7 +50,10 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AppShell() {
   const { data } = useAppData();
+  const location = useLocation();
   const today = todayIso();
+  const navRef = useRef<HTMLElement>(null);
+  const [hasOverflowRight, setHasOverflowRight] = useState(false);
 
   const overdueCount = overdueActions(data.actions, today).length;
   const questionsToAsk = data.questions.filter((q) => q.status === "to_ask").length;
@@ -60,6 +63,41 @@ export function AppShell() {
     if (to === "/questions" && questionsToAsk > 0) return { value: questionsToAsk, quiet: true };
     return null;
   };
+
+  const updateScrollFade = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const canScrollRight = nav.scrollWidth - nav.scrollLeft - nav.clientWidth > 1;
+    setHasOverflowRight(canScrollRight);
+  }, []);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const active = nav.querySelector<HTMLElement>(".nav__link.is-active");
+    if (active && typeof active.scrollIntoView === "function") {
+      active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    updateScrollFade();
+  }, [location.pathname, updateScrollFade]);
+
+  useEffect(() => {
+    updateScrollFade();
+    const nav = navRef.current;
+    if (!nav) return;
+    window.addEventListener("resize", updateScrollFade);
+    nav.addEventListener("scroll", updateScrollFade, { passive: true });
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => updateScrollFade());
+      ro.observe(nav);
+    }
+    return () => {
+      window.removeEventListener("resize", updateScrollFade);
+      nav.removeEventListener("scroll", updateScrollFade);
+      ro?.disconnect();
+    };
+  }, [updateScrollFade]);
 
   return (
     <div className="shell">
@@ -86,30 +124,40 @@ export function AppShell() {
           <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>
         </button>
 
-        <nav className="nav" aria-label="Main">
-          {NAV_ITEMS.map((item) => {
-            const count = countFor(item.to);
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
-              >
-                <span className="nav__icon">{item.icon}</span>
-                <span>{item.label}</span>
-                {count ? (
-                  <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
-                    {count.value}
-                    <span className="visually-hidden">
-                      {item.to === "/" ? " overdue" : " to ask"}
+        <div className="nav-wrapper">
+          <nav
+            ref={navRef}
+            className="nav"
+            aria-label="Main"
+            onScroll={updateScrollFade}
+          >
+            {NAV_ITEMS.map((item) => {
+              const count = countFor(item.to);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
+                >
+                  <span className="nav__icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                  {count ? (
+                    <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
+                      {count.value}
+                      <span className="visually-hidden">
+                        {item.to === "/" ? " overdue" : " to ask"}
+                      </span>
                     </span>
-                  </span>
-                ) : null}
-              </NavLink>
-            );
-          })}
-        </nav>
+                  ) : null}
+                </NavLink>
+              );
+            })}
+          </nav>
+          {hasOverflowRight ? (
+            <span className="nav__fade-right" aria-hidden="true" />
+          ) : null}
+        </div>
 
         <div className="sidebar__footer stack stack--3">
           <NavLink

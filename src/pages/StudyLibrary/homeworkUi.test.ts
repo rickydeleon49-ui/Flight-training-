@@ -5,7 +5,7 @@ import { homeworkRepository } from "@/data/repositories/homeworkRepository";
 import { validateHomeworkState } from "@/data/practiceStateValidation";
 import { ENGINES, openEngine, schemaReference } from "@/data/testing/skillEvidenceEngines";
 import { validateHomeworkTransition, type HomeworkSnapshot } from "@/domain/homework";
-import { newHomework, newHomeworkActivity, homeworkOperation, activeHomework } from "./homeworkUi";
+import { newHomework, newHomeworkActivity, homeworkOperation, activeHomework, homeworkHistoryLabel, activityStateLabel } from "./homeworkUi";
 import type { SqlValue } from "@/data/db";
 describe.each(ENGINES)("Homework UI requests through HW-01b: %s", name => {
     it("manual kinds persist, complete, reorder, reopen, remove and retain history", async () => {
@@ -70,4 +70,69 @@ it("adding_activity_to_completed_assignment_reopens_it", () => {
     expect(next.assignment.state).toBe("in_progress");
     expect(next.assignment.completed_at).toBeNull();
     expect(next.activities.find(e => e.record.id === completed.activities[0]!.record.id)).toEqual(completed.activities[0]);
+});
+
+it("history_labels_answer_saved", () => {
+    const base = newHomework();
+    base.assignment.title = "Debrief notes";
+    const act = newHomeworkActivity(base.assignment.id, 0, "reflection", base.assignment.created_at);
+    act.record.title = "Solo flight debrief";
+    act.record.body = "";
+    base.activities = [act];
+    const prev = validateHomeworkTransition(null, homeworkOperation(base, base, "create", true));
+
+    const draft = structuredClone(prev);
+    draft.activities[0]!.record.body = "Felt comfortable in the traffic pattern.";
+    const edited = validateHomeworkTransition(prev, homeworkOperation(prev, draft, "edit"));
+
+    const prevRow = {
+        change_kind: "create",
+        revision: prev.assignment.revision,
+        snapshot_json: JSON.stringify(prev),
+    };
+    const row = {
+        change_kind: "edit",
+        revision: edited.assignment.revision,
+        snapshot_json: JSON.stringify(edited),
+    };
+
+    expect(homeworkHistoryLabel(row, prevRow)).toBe("Answer saved: Solo flight debrief");
+
+    // Ordinary edit on an activity title still says "Homework edited"
+    const titleEditDraft = structuredClone(edited);
+    titleEditDraft.activities[0]!.record.title = "Updated title";
+    const titleEdited = validateHomeworkTransition(edited, homeworkOperation(edited, titleEditDraft, "edit"));
+    const titleRow = {
+        change_kind: "edit",
+        revision: titleEdited.assignment.revision,
+        snapshot_json: JSON.stringify(titleEdited),
+    };
+    expect(homeworkHistoryLabel(titleRow, row)).toBe("Homework edited: Updated title");
+});
+
+it("saving_answer_on_unstarted_activity_does_not_reopen", () => {
+    const base = newHomework();
+    base.assignment.title = "Debrief notes";
+    const act = newHomeworkActivity(base.assignment.id, 0, "reflection", base.assignment.created_at);
+    act.record.title = "Solo flight debrief";
+    base.activities = [act];
+    const created = validateHomeworkTransition(null, homeworkOperation(base, base, "create", true));
+    const draft = structuredClone(created);
+    draft.activities[0]!.record.body = "Felt comfortable in the traffic pattern.";
+    const saved = validateHomeworkTransition(created, homeworkOperation(created, draft, "edit"));
+    const id = saved.activities[0]!.record.id;
+    const history = [created, saved].map((s, i) => ({ change_kind: i ? "edit" : "create", revision: s.assignment.revision, snapshot_json: JSON.stringify(s) }));
+    // Storage marks any text change "reopened"; never completed, so she sees "In progress".
+    expect(saved.activities[0]!.record.state).toBe("reopened");
+    expect(activityStateLabel(saved.activities[0]!.record.state, id, history)).toBe("In progress");
+
+    const done = structuredClone(saved);
+    done.activities[0]!.record.state = "completed";
+    const completed = validateHomeworkTransition(saved, homeworkOperation(saved, done, "complete"));
+    const again = structuredClone(completed);
+    again.activities[0]!.record.body = "Also practised go-arounds.";
+    const changed = validateHomeworkTransition(completed, homeworkOperation(completed, again, "edit"));
+    const fullHistory = [...history, ...[completed, changed].map((s, i) => ({ change_kind: i ? "edit" : "complete", revision: s.assignment.revision, snapshot_json: JSON.stringify(s) }))];
+    expect(activityStateLabel(changed.activities[0]!.record.state, id, fullHistory)).toBe("Reopened");
+    expect(activityStateLabel("upcoming", id, [])).toBe("To do");
 });

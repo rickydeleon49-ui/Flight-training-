@@ -652,4 +652,32 @@ describe("MaterialDetail saved content provenance integration", () => {
 
     spy.mockRestore();
   });
+
+  it("practice_card_label_matches_source", async () => {
+    const withoutFile = await repos.documents.create({
+      id: "mat-without-file",
+      title: "Preflight Checklist Note",
+      filePath: null,
+      originalFileName: null,
+      fileSize: null,
+    });
+    const withFile = await repos.documents.create({
+      id: "mat-with-file",
+      title: "Weather Flying",
+      filePath: "documents/weather.pdf",
+      originalFileName: "weather.pdf",
+      fileSize: 1024,
+    });
+
+    await openMaterial(withoutFile.id);
+    const cardWithoutFile = screen.getByRole("heading", { name: "Practice test" }).closest(".card") as HTMLElement;
+    expect(within(cardWithoutFile).getByText("Optional")).toBeTruthy();
+    expect(within(cardWithoutFile).queryByText("Optional, from this document")).toBeNull();
+
+    cleanup();
+
+    await openMaterial(withFile.id);
+    const cardWithFile = screen.getByRole("heading", { name: "Practice test" }).closest(".card") as HTMLElement;
+    expect(within(cardWithFile).getByText("Optional, from this document")).toBeTruthy();
+  });
 });

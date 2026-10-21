@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { SearchIcon } from "@/components/ui";
 import { useModalDialog } from "@/components/ui/useModalDialog";
@@ -34,14 +34,23 @@ function isOpenShortcut(event: KeyboardEvent): boolean {
  */
 export function QuickFind() {
   const { data } = useAppData();
+  const location = useLocation();
   const navigate = useNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const previousLocation = useRef(location);
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const today = todayIso();
+
+  useEffect(() => {
+    if (previousLocation.current !== location) {
+      previousLocation.current = location;
+      setOpen(false);
+    }
+  }, [location]);
 
   const results = useMemo(() => quickFind(data, query, today), [data, query, today]);
 

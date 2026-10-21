@@ -19,6 +19,7 @@ import type {
   Transaction,
   IsoDate,
   ChecklistItem,
+  Note,
 } from "@/domain/types";
 import {
   completedToday,
@@ -28,6 +29,7 @@ import {
   planActions,
   type ActionGroup,
 } from "./actions";
+import { computeDailyPlan, type DailyPlanState } from "./dailyPlan";
 import { encouragementMessage } from "./encouragement";
 import {
   lessonPreparation,
@@ -36,6 +38,7 @@ import {
   type PreparationState,
 } from "./preparation";
 import { currentMilestone, milestoneProgress, studyFocus, type MilestoneProgress } from "./progress";
+import { type RecommendationSources } from "./recommendations";
 import { upcomingExpenses } from "./finance";
 import { upcomingKeyDates, type KeyDate } from "./keyDates";
 
@@ -53,6 +56,9 @@ export interface DashboardSources {
   transactions: Transaction[];
   today?: IsoDate;
   homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
+  notes?: Note[];
+  dailyPlan?: DailyPlanState | null;
+  hasRecommendations?: boolean;
 }
 
 export interface DashboardModel {
@@ -64,6 +70,7 @@ export interface DashboardModel {
   planCount: number;
   /** Items already ticked off today, shown alongside them. */
   planDoneCount: number;
+  hasRecommendations: boolean;
   nextFlight: {
     event: ScheduleEvent;
     preparation: PreparationState;
@@ -146,6 +153,32 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
 
   const focusLabel = sources.profile.currentFocus || milestone?.title || "";
 
+  const hasRecommendations =
+    sources.hasRecommendations ??
+    (() => {
+      const recSources: RecommendationSources = {
+        today,
+        actions: sources.actions,
+        homework: sources.homework,
+        events: sources.events,
+        prepItems: sources.prepItems,
+        materials: sources.materials,
+        questions: sources.questions,
+        notes: sources.notes ?? [],
+        journalEntries: sources.journalEntries,
+      };
+      const { result } = computeDailyPlan(recSources, sources.dailyPlan ?? null, { today });
+      return result.suggested.length > 0;
+    })();
+
+  const allOverdueHomework =
+    overdue.length > 0 &&
+    overdue.every((action) =>
+      sources.homework?.some(
+        (h) => h.assignment.action_id === action.id && !h.assignment.archived,
+      ),
+    );
+
   return {
     today,
     greeting: greetingFor(sources.profile.pilotName, now),
@@ -155,6 +188,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
     planGroups: groupByCategory([...plan, ...doneToday]),
     planCount: plan.length,
     planDoneCount: doneToday.length,
+    hasRecommendations,
     nextFlight:
       upcoming && preparation
         ? {
@@ -194,8 +228,10 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       nextLessonTitle: upcoming?.title ?? null,
       outstandingPrepCount: preparation?.outstanding.length ?? 0,
       overdueCount: overdue.length,
+      allWaitingAreHomework: allOverdueHomework,
       completedThisWeek,
       openActionCount: sources.actions.filter((a) => a.status === "open").length,
+      hasRecommendations,
       hasAnyData: !isEmpty,
     }),
     upcomingCost: upcomingExpenseTotal > 0 ? upcomingExpenseTotal : null,

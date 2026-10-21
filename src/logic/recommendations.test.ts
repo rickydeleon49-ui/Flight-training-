@@ -222,7 +222,7 @@ describe("D2 — Pure Recommendation Selector", () => {
       // Durations remain visibly unknown (null) without fabricating a duration or treating as 0 min
       for (const item of result.suggested) {
         expect(item.estimatedMinutes).toBeNull();
-        expect(item.explanation).toContain("Duration unknown (included by priority; not counted in 10-min timed allocation)");
+        expect(item.explanation).toContain("No time estimate yet, included because it's important");
       }
 
       // Allocated minutes track known duration (0), but unestimated count is recorded
@@ -245,11 +245,11 @@ describe("D2 — Pure Recommendation Selector", () => {
       expect(result.suggested.map((s) => s.id)).toEqual(["task-unknown-pinned", "task-10m"]);
       expect(result.suggested[0]?.estimatedMinutes).toBeNull();
       expect(result.suggested[0]?.explanation).toBe(
-        "Pinned · Duration unknown (included by priority; not counted in 10-min timed allocation)",
+        "Pinned · No time estimate yet, included because it's important",
       );
       expect(result.suggested[1]?.estimatedMinutes).toBe(10);
       expect(result.suggested[1]?.explanation).toBe(
-        "Due today · 10 min estimated for timed item (10 of 10 min allocated; total duration indeterminate)",
+        "Due today · About 10 min",
       );
       expect(result.suggested[1]?.explanation).not.toContain("Fits 10-min session");
       expect(result.suggested[1]?.explanation).not.toContain("0 min remaining");
@@ -298,13 +298,13 @@ describe("D2 — Pure Recommendation Selector", () => {
       // Unknown item explanation
       expect(result.suggested[0]?.estimatedMinutes).toBeNull();
       expect(result.suggested[0]?.explanation).toBe(
-        "Pinned note · Duration unknown (included by priority; not counted in 15-min timed allocation)",
+        "Pinned note · No time estimate yet, included because it's important",
       );
 
       // Known item explanation must NOT claim guaranteed session fit or remaining time
       expect(result.suggested[1]?.estimatedMinutes).toBe(10);
       expect(result.suggested[1]?.explanation).toBe(
-        "Due today · 10 min estimated for timed item (10 of 15 min allocated; total duration indeterminate)",
+        "Due today · About 10 min",
       );
       expect(result.suggested[1]?.explanation).not.toContain("Fits 15-min session");
       expect(result.suggested[1]?.explanation).not.toContain("remaining");
@@ -341,7 +341,7 @@ describe("D2 — Pure Recommendation Selector", () => {
       // Known item (which appears FIRST in sorted list) must still reflect indeterminate session duration
       expect(result.suggested[0]?.estimatedMinutes).toBe(10);
       expect(result.suggested[0]?.explanation).toBe(
-        "Due today · 10 min estimated for timed item (10 of 15 min allocated; total duration indeterminate)",
+        "Due today · About 10 min",
       );
       expect(result.suggested[0]?.explanation).not.toContain("Fits 15-min session");
       expect(result.suggested[0]?.explanation).not.toContain("remaining");
@@ -349,8 +349,20 @@ describe("D2 — Pure Recommendation Selector", () => {
       // Unknown item (which appears SECOND in sorted list)
       expect(result.suggested[1]?.estimatedMinutes).toBeNull();
       expect(result.suggested[1]?.explanation).toBe(
-        "Lesson prep · Duration unknown (included by priority; not counted in 15-min timed allocation)",
+        "Lesson prep · No time estimate yet, included because it's important",
       );
+    });
+
+    it("plan_logic_unchanged_by_wording (same inputs → same item IDs, order and budget numbers as before)", () => {
+      const result = selectRecommendations(candidates, { timeBudget: 10, maxItems: 3 });
+      expect(result.suggested.map((s) => s.id)).toEqual(["task-unknown-pinned", "task-10m"]);
+      expect(result.remaining.map((r) => r.id)).toEqual(["task-15m", "task-30m", "task-5m"]);
+      expect(result.totalEstimatedMinutes).toBe(10);
+      expect(result.allocatedMinutes).toBe(10);
+      expect(result.timeBudget).toBe(10);
+      expect(result.suggestedUnestimatedCount).toBe(1);
+      expect(result.unestimatedCount).toBe(1);
+      expect(result.fitsBudgetCompletely).toBe(false);
     });
 
     it("respects a 20-minute budget combining tasks that fit", () => {
