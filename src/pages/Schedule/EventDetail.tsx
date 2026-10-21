@@ -53,9 +53,9 @@ export function EventDetail() {
   const preparation = useMemo(
     () =>
       event
-        ? lessonPreparation(event, { prepItems: data.prepItems, questions: data.questions })
+        ? lessonPreparation(event, { prepItems: data.prepItems, questions: data.questions, homework: data.homework })
         : null,
-    [event, data.prepItems, data.questions],
+    [event, data.prepItems, data.questions, data.homework],
   );
 
   const relatedActions = event ? actionsFor(data.actions, "event", event.id) : [];
@@ -209,7 +209,7 @@ export function EventDetail() {
                     ))}
 
                     {preparation?.lines
-                      .filter((line) => line.source === "question")
+                      .filter((line) => line.source === "question" || line.source === "homework")
                       .map((line) => (
                         <div className="checklist-row" key={line.id}>
                           <span className="small">
@@ -222,8 +222,8 @@ export function EventDetail() {
                             )}
                             {line.label}
                           </span>
-                          <Link className="tiny" to="/questions">
-                            Questions
+                          <Link className="tiny" to={line.source === "homework" ? `/study/homework/${line.assignmentId}?activity=${line.id}` : "/questions"}>
+                            {line.source === "homework" ? "Homework" : "Questions"}
                           </Link>
                         </div>
                       ))}

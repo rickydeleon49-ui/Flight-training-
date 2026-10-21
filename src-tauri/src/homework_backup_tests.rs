@@ -27,16 +27,19 @@ fn shared_homework_validation_contract_native_outcomes() {
             let conn = Connection::open(&path).unwrap();
             homework_seed(&conn);
             for sql in case["sql"].as_array().unwrap() {
-                conn.execute_batch(sql.as_str().unwrap()).unwrap();
+                conn.execute_batch(sql.as_str().unwrap())
+                    .unwrap_or_else(|e| panic!("{}: {e}", case["name"]));
             }
         }
         let conn = Connection::open(&path).unwrap();
         let result = verify_schema_20_homework_semantics(&conn);
+        let startup = verify_application_database(&path);
         assert_eq!(
-            verify_application_database(&path).is_ok(),
+            startup.is_ok(),
             result.is_ok(),
-            "startup: {}",
-            case["name"]
+            "startup: {} ({:?})",
+            case["name"],
+            startup.err()
         );
         if result.is_ok() != (case["expect"] == "accept") {
             mismatches.push(format!("{}: {result:?}", case["name"]));
@@ -599,4 +602,443 @@ fn backup_round_trip_keeps_card_runs_and_evidence() {
     let archive=archive_root.join("cards.hfdbackup");create_consistent_complete_backup_with_retry(&root,&archive,"0.5.7").unwrap();stage_complete_restore_in(&target,&archive,"0.5.7").unwrap();apply_pending_restore_in(&target).unwrap();
     let conn=Connection::open(target.join(DB_FILES[0])).unwrap();assert_eq!(homework_dump(&conn),before);verify_application_connection(&conn).unwrap();drop(conn);
     for p in [root,target,archive_root]{std::fs::remove_dir_all(p).unwrap();}
+}
+
+// ---------- HW-01d part 2: quiz runs, their evidence and the bound next action (native driver) ----------
+const HW_QUIZ_HASH: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const HW_QUIZ_T0: &str = "2026-10-21T10:00:00.000Z";
+const HW_QUIZ_T1: &str = "2026-10-21T10:01:00.000Z";
+const HW_QUIZ_T2: &str = "2026-10-21T10:02:00.000Z";
+fn hw_id(n: u64) -> String { format!("00000000-0000-4000-8000-{n:012x}") }
+
+fn hw_quiz_seed(conn: &Connection) {
+    conn.execute(
+        "INSERT INTO practice_test_versions (id,source_material_id,source_material_title,history_key,version_number,content_hash,is_active,created_at) VALUES (?1,?2,'Synthetic source',?2,1,?3,0,?4)",
+        params![hw_id(20), hw_id(5), HW_QUIZ_HASH, HW_QUIZ_T0],
+    ).unwrap();
+    for i in 0..2u64 {
+        conn.execute(
+            "INSERT INTO practice_test_items (id,version_id,ordinal,question_text,options_json,correct_index,explanation,source_page) VALUES (?1,?2,?3,'Question','[\"A\",\"B\"]',0,'',NULL)",
+            params![hw_id(21 + i), hw_id(20), i as i64],
+        ).unwrap();
+    }
+}
+
+fn hw_quiz_entry(position: u64, title: &str) -> Value {
+    json!({"record":{"id":hw_id(2 + position),"assignment_id":hw_id(1),"position":position,"kind":"test","title":title,"body":"",
+        "material_id":hw_id(5),"source_material_id":hw_id(5),"source_revision":HW_QUIZ_HASH,"card_set_id":null,
+        "test_version_id":hw_id(20),"source_test_version_id":hw_id(20),"page_start":null,"page_end":null,
+        "state":"upcoming","cycle":1,"revision":1,"created_at":HW_QUIZ_T0,"updated_at":HW_QUIZ_T0,"completed_at":null,"removed_at":null},
+        "source":{"title":"Synthetic source","total_pages":null},"evidence":null})
+}
+
+fn hw_quiz_run(run: u64, activity: u64, attempt: u64, started: &str) -> Value {
+    json!({"id":hw_id(run),"activity_id":hw_id(activity),"cycle":1,"activity_revision":1,"kind":"test",
+        "started_at":started,"finished_at":null,"invalidated_at":null,"evidence":null,
+        "scope":{"version":1,"material_id":hw_id(5),"source_revision":HW_QUIZ_HASH,"test_version_id":hw_id(20),"attempt_id":hw_id(attempt)}})
+}
+
+fn hw_quiz_create(entries: &[Value], action: bool) -> Value {
+    let mut create = homework_operation("create");
+    create["next"]["activities"] = Value::Array(entries.to_vec());
+    if action {
+        create["next"]["assignment"]["action_id"] = json!(hw_id(50));
+        create["next"]["assignment"]["due_date"] = json!("2026-10-25");
+    }
+    create
+}
+
+fn hw_quiz_start(create: &Value, runs: &[Value]) -> Value {
+    let mut op = create.clone();
+    op["operationId"] = json!(hw_id(101));
+    op["baseRevision"] = json!(1);
+    op["changeKind"] = json!("start");
+    op["at"] = json!(HW_QUIZ_T1);
+    op["next"]["assignment"]["revision"] = json!(2);
+    op["next"]["assignment"]["state"] = json!("in_progress");
+    op["next"]["assignment"]["updated_at"] = json!(HW_QUIZ_T1);
+    op["next"]["runs"] = Value::Array(runs.to_vec());
+    let started_activity = runs[0]["activity_id"].clone();
+    for e in op["next"]["activities"].as_array_mut().unwrap() {
+        if e["record"]["id"] == started_activity {
+            e["record"]["state"] = json!("in_progress");
+            e["record"]["updated_at"] = json!(HW_QUIZ_T1);
+        }
+    }
+    op
+}
+
+fn hw_snapshot(conn: &Connection) -> Value {
+    let rows = crate::homework::rows(
+        conn,
+        "SELECT snapshot_json FROM homework_history WHERE assignment_id=? ORDER BY revision DESC LIMIT 1",
+        &[&hw_id(1)],
+    ).unwrap();
+    serde_json::from_str(rows[0]["snapshot_json"].as_str().unwrap()).unwrap()
+}
+
+fn hw_operation(snapshot: &Value, change: &str, operation_id: &str, at: &str) -> Value {
+    json!({"version":1,"operationId":operation_id,"assignmentId":snapshot["assignment"]["id"],
+        "baseRevision":snapshot["assignment"]["revision"],"changeKind":change,"at":at,"next":snapshot.clone()})
+}
+
+fn hw_context(run: &str, revision: i64, cycle: i64, activity_revision: i64) -> Value {
+    json!({"assignmentId":hw_id(1),"runId":run,"expectedRevision":revision,"activityRevision":activity_revision,"cycle":cycle})
+}
+
+fn hw_session(conn: &mut Connection, request: &Value) -> Result<Value, crate::practice_sessions::PracticeSessionErrorCode> {
+    let action = crate::practice_sessions::decode_practice_action(request)?;
+    let tx = conn.transaction().unwrap();
+    let result = crate::practice_sessions::execute_action_transaction(&tx, &action, request)?;
+    tx.commit().unwrap();
+    Ok(result)
+}
+
+fn hw_answer(conn: &mut Connection, attempt: &str, revision: i64, base: u64) -> i64 {
+    for i in 0..2u64 {
+        hw_session(conn, &json!({"action":"record_response","operationId":hw_id(base + i),"attemptId":attempt,
+            "itemId":hw_id(21 + i),"expectedRevision":revision + i as i64,"selectedIndex":0,"isDontKnow":false})).unwrap();
+    }
+    revision + 2
+}
+
+fn hw_complete(conn: &mut Connection, attempt: &str, revision: i64, homework: Option<&Value>) -> Result<Value, crate::practice_sessions::PracticeSessionErrorCode> {
+    let mut request = json!({"action":"complete_attempt","operationId":hw_id(203),"attemptId":attempt,"expectedRevision":revision});
+    if let Some(context) = homework { request["homework"] = context.clone(); }
+    hw_session(conn, &request)
+}
+
+fn hw_quiz_database(label: &str) -> (std::path::PathBuf, Connection) {
+    let root = scratch(label);
+    let path = root.join(DB_FILES[0]);
+    pdf_kit_test_database(&path, 20);
+    let conn = Connection::open(&path).unwrap();
+    conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+    homework_seed(&conn);
+    hw_quiz_seed(&conn);
+    (root, conn)
+}
+
+#[test]
+fn test_run_creates_new_attempt_atomically_never_adopts() {
+    let (root, mut conn) = hw_quiz_database("hw-quiz-atomic");
+    let path = root.join(DB_FILES[0]);
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity"), hw_quiz_entry(1, "Second quiz")], false);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+
+    // The run and its attempt are one transaction: a failed attempt insert leaves no run behind.
+    conn.execute_batch("CREATE TRIGGER fail_attempt BEFORE INSERT ON practice_attempts BEGIN SELECT RAISE(ABORT,'synthetic'); END").unwrap();
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    let before = homework_dump(&conn);
+    assert!(crate::homework::execute_homework(&mut conn, &start).is_err());
+    assert_eq!(homework_dump(&conn), before);
+    conn.execute_batch("DROP TRIGGER fail_attempt").unwrap();
+
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    assert_eq!(
+        crate::homework::rows(&conn, "SELECT kind,attempt_id,source_attempt_id,started_at,finished_at,evidence_json FROM homework_runs WHERE id=?", &[&hw_id(111)]).unwrap()[0],
+        json!({"kind":"test","attempt_id":hw_id(30),"source_attempt_id":hw_id(30),"started_at":HW_QUIZ_T1,"finished_at":null,"evidence_json":null})
+    );
+    assert_eq!(
+        json!(crate::homework::rows(&conn, "SELECT id,version_id,source_material_id,started_at,status,total_questions,revision FROM practice_attempts", &[]).unwrap()),
+        json!([{"id":hw_id(30),"version_id":hw_id(20),"source_material_id":hw_id(5),"started_at":HW_QUIZ_T1,"status":"in_progress","total_questions":2,"revision":0}])
+    );
+    verify_schema_20_homework_semantics(&conn).unwrap();
+
+    // Another quiz on the same source cannot start while that attempt is in progress, and it never adopts it.
+    let mut second = start.clone();
+    second["operationId"] = json!(hw_id(102));
+    second["baseRevision"] = json!(2);
+    second["next"]["assignment"]["revision"] = json!(3);
+    second["next"]["activities"][1]["record"]["state"] = json!("in_progress");
+    second["next"]["activities"][1]["record"]["updated_at"] = json!(HW_QUIZ_T1);
+    let mut runs = second["next"]["runs"].as_array().unwrap().clone();
+    runs.push(hw_quiz_run(112, 3, 31, HW_QUIZ_T1));
+    second["next"]["runs"] = Value::Array(runs);
+    let before = homework_dump(&conn);
+    let refused = crate::homework::execute_homework(&mut conn, &second).unwrap_err();
+    assert_eq!(serde_json::to_value(refused).unwrap()["code"], "CONFLICT");
+    assert_eq!(homework_dump(&conn), before);
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM practice_attempts", &[]).unwrap()[0]["n"], json!(1));
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_runs", &[]).unwrap()[0]["n"], json!(1));
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn pre_existing_or_abandoned_attempt_never_counts() {
+    let (root, mut conn) = hw_quiz_database("hw-quiz-not-evidence");
+    let path = root.join(DB_FILES[0]);
+    let activity = |conn: &Connection| crate::homework::rows(conn, "SELECT state,completed_at FROM homework_activities WHERE id=?", &[&hw_id(2)]).unwrap()[0].clone();
+    let actions = |conn: &Connection| json!(crate::homework::rows(conn, "SELECT id,status,completed_at FROM next_actions ORDER BY id", &[]).unwrap());
+
+    // An attempt that started before the activity existed is finished first.
+    conn.execute(
+        "INSERT INTO practice_attempts (id,version_id,source_material_id,source_material_title,started_at,completed_at,status,revision,total_questions,answered_count,correct_count,incorrect_count,dont_know_count,score_percent) VALUES (?1,?2,?3,'Synthetic source','2026-10-21T09:00:00.000Z',NULL,'in_progress',0,2,0,0,0,0,NULL)",
+        params![hw_id(29), hw_id(20), hw_id(5)],
+    ).unwrap();
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let revision = hw_answer(&mut conn, &hw_id(29), 0, 201);
+    hw_complete(&mut conn, &hw_id(29), revision, None).unwrap();
+    assert_eq!(activity(&conn), json!({"state":"upcoming","completed_at":null}));
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_history", &[]).unwrap()[0]["n"], json!(1));
+    assert_eq!(actions(&conn), json!([{"id":hw_id(50),"status":"open","completed_at":null}]));
+
+    // Starting the run writes its own attempt instead of adopting that one.
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM practice_attempts WHERE id=?", &[&hw_id(30)]).unwrap()[0]["n"], json!(1));
+
+    // Abandoning the run's attempt never completes the activity.
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 211);
+    hw_session(&mut conn, &json!({"action":"abandon_attempt","operationId":hw_id(204),"attemptId":hw_id(30),"expectedRevision":revision})).unwrap();
+    assert_eq!(activity(&conn), json!({"state":"in_progress","completed_at":null}));
+    assert_eq!(crate::homework::rows(&conn, "SELECT finished_at,evidence_json FROM homework_runs WHERE id=?", &[&hw_id(111)]).unwrap()[0], json!({"finished_at":null,"evidence_json":null}));
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_history", &[]).unwrap()[0]["n"], json!(2));
+    assert_eq!(actions(&conn), json!([{"id":hw_id(50),"status":"open","completed_at":null}]));
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn one_action_per_assignment_projected_atomically() {
+    let (root, mut conn) = hw_quiz_database("hw-quiz-action");
+    let path = root.join(DB_FILES[0]);
+    let actions = |conn: &Connection| json!(crate::homework::rows(conn, "SELECT id,title,category,status,due_date,completed_at FROM next_actions ORDER BY id", &[]).unwrap());
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    assert_eq!(actions(&conn), json!([{"id":hw_id(50),"title":"Quiz Activity","category":"prepare","status":"open","due_date":"2026-10-25","completed_at":null}]));
+
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    assert_eq!(actions(&conn)[0]["status"], json!("open"));
+
+    // Homework owns the projected fields: a generic completion by another writer is refused on verify.
+    let before = homework_dump(&conn);
+    conn.execute_batch(&format!("UPDATE next_actions SET status='completed', completed_at='{HW_QUIZ_T2}' WHERE id='{}'", hw_id(50))).unwrap();
+    assert!(verify_schema_20_homework_semantics(&conn).is_err());
+    conn.execute_batch(&format!("UPDATE next_actions SET status='open', completed_at=NULL WHERE id='{}'", hw_id(50))).unwrap();
+    assert_eq!(homework_dump(&conn), before);
+
+    // The attempt completing is what finishes the activity; the action keeps its id.
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 201);
+    hw_complete(&mut conn, &hw_id(30), revision, Some(&hw_context(&hw_id(111), 2, 1, 1))).unwrap();
+    let done = actions(&conn);
+    assert_eq!(done.as_array().unwrap().len(), 1);
+    assert_eq!(done[0]["id"], json!(hw_id(50)));
+    assert_eq!(done[0]["status"], json!("completed"));
+    assert!(!done[0]["completed_at"].is_null());
+    assert_eq!(crate::homework::rows(&conn, "SELECT state FROM homework_assignments", &[]).unwrap()[0]["state"], json!("completed"));
+
+    // Archiving dismisses the same row rather than adding another.
+    let at = crate::practice_sessions::db_now_iso(&conn).unwrap();
+    let mut archive = hw_operation(&hw_snapshot(&conn), "archive", &hw_id(104), &at);
+    archive["next"]["assignment"]["revision"] = json!(4);
+    archive["next"]["assignment"]["archived"] = json!(1);
+    archive["next"]["assignment"]["updated_at"] = json!(at);
+    crate::homework::execute_homework(&mut conn, &archive).unwrap();
+    let dismissed = actions(&conn);
+    assert_eq!(dismissed.as_array().unwrap().len(), 1);
+    assert_eq!(dismissed[0]["id"], json!(hw_id(50)));
+    assert_eq!(dismissed[0]["status"], json!("dismissed"));
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn stale_test_callback_after_reopen_refused() {
+    let (root, mut conn) = hw_quiz_database("hw-quiz-stale");
+    let path = root.join(DB_FILES[0]);
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+
+    let mut reopen = hw_operation(&hw_snapshot(&conn), "reopen", &hw_id(105), HW_QUIZ_T2);
+    reopen["next"]["assignment"]["revision"] = json!(3);
+    reopen["next"]["assignment"]["state"] = json!("reopened");
+    reopen["next"]["assignment"]["updated_at"] = json!(HW_QUIZ_T2);
+    reopen["next"]["activities"][0]["record"]["cycle"] = json!(2);
+    reopen["next"]["activities"][0]["record"]["state"] = json!("reopened");
+    reopen["next"]["activities"][0]["record"]["updated_at"] = json!(HW_QUIZ_T2);
+    reopen["next"]["runs"][0]["invalidated_at"] = json!(HW_QUIZ_T2);
+    crate::homework::execute_homework(&mut conn, &reopen).unwrap();
+    let before = homework_dump(&conn);
+
+    // A callback naming the superseded revision is refused with nothing written.
+    let refused = hw_complete(&mut conn, &hw_id(30), 0, Some(&hw_context(&hw_id(111), 2, 1, 1))).unwrap_err();
+    assert_eq!(refused, crate::practice_sessions::PracticeSessionErrorCode::InvalidState);
+    assert_eq!(homework_dump(&conn), before);
+    // The current revision does not help either: the run itself is invalidated.
+    let refused = hw_complete(&mut conn, &hw_id(30), 0, Some(&hw_context(&hw_id(111), 3, 1, 1))).unwrap_err();
+    assert_eq!(refused, crate::practice_sessions::PracticeSessionErrorCode::InvalidState);
+    assert_eq!(homework_dump(&conn), before);
+
+    // A plain completion is allowed and still never counts.
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 201);
+    hw_complete(&mut conn, &hw_id(30), revision, None).unwrap();
+    assert_eq!(crate::homework::rows(&conn, "SELECT state,cycle FROM homework_activities WHERE id=?", &[&hw_id(2)]).unwrap()[0], json!({"state":"reopened","cycle":2}));
+    assert_eq!(crate::homework::rows(&conn, "SELECT finished_at,invalidated_at,evidence_json FROM homework_runs WHERE id=?", &[&hw_id(111)]).unwrap()[0], json!({"finished_at":null,"invalidated_at":HW_QUIZ_T2,"evidence_json":null}));
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_history", &[]).unwrap()[0]["n"], json!(3));
+    assert_eq!(crate::homework::rows(&conn, "SELECT status FROM next_actions WHERE id=?", &[&hw_id(50)]).unwrap()[0]["status"], json!("open"));
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn homework_test_completion_and_evidence_roll_back_together() {
+    let (root, mut conn) = hw_quiz_database("hw-quiz-evidence-rollback");
+    let path = root.join(DB_FILES[0]);
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 201);
+
+    conn.execute_batch("CREATE TRIGGER reject_evidence BEFORE INSERT ON homework_history WHEN NEW.change_kind='record_evidence' BEGIN SELECT RAISE(ABORT,'synthetic'); END").unwrap();
+    let before = homework_dump(&conn);
+    let refused = hw_complete(&mut conn, &hw_id(30), revision, Some(&hw_context(&hw_id(111), 2, 1, 1))).unwrap_err();
+    assert_eq!(refused, crate::practice_sessions::PracticeSessionErrorCode::StorageError);
+    assert_eq!(homework_dump(&conn), before);
+    conn.execute_batch("DROP TRIGGER reject_evidence").unwrap();
+
+    hw_complete(&mut conn, &hw_id(30), revision, Some(&hw_context(&hw_id(111), 2, 1, 1))).unwrap();
+    let rows = crate::homework::rows(&conn, "SELECT status,finished_at,evidence_json FROM practice_attempts JOIN homework_runs ON homework_runs.source_attempt_id=practice_attempts.id WHERE practice_attempts.id=?", &[&hw_id(30)]).unwrap();
+    assert_eq!(rows[0]["status"], json!("completed"));
+    assert!(!rows[0]["finished_at"].is_null());
+    let evidence: Value = serde_json::from_str(rows[0]["evidence_json"].as_str().unwrap()).unwrap();
+    assert_eq!(evidence["attempt_id"], json!(hw_id(30)));
+    assert_eq!(evidence["total_questions"], json!(2));
+    assert_eq!(json!(crate::homework::rows(&conn, "SELECT change_kind FROM homework_history ORDER BY revision", &[]).unwrap().iter().map(|r| r["change_kind"].clone()).collect::<Vec<_>>()), json!(["create", "start", "record_evidence"]));
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    drop(conn);
+    verify_application_database(&path).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn backup_round_trip_keeps_runs_evidence_and_action_links() {
+    let root = scratch("hw-runs-backup");
+    let target = scratch("hw-runs-target");
+    let archive_root = scratch("hw-runs-archive");
+    let path = root.join(DB_FILES[0]);
+    pdf_kit_test_database(&path, 20);
+    let mut conn = Connection::open(&path).unwrap();
+    conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+    homework_seed(&conn);
+    for sql in homework_contract()["card_seed"].as_array().unwrap() {
+        conn.execute_batch(sql.as_str().unwrap()).unwrap();
+    }
+    hw_quiz_seed(&conn);
+
+    // One assignment holding both run kinds, with its next action bound.
+    let create = hw_quiz_create(
+        &[homework_operation("card_create")["next"]["activities"][0].clone(), hw_quiz_entry(1, "Quiz Activity")],
+        true,
+    );
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let card_start = hw_quiz_start(&create, &[homework_operation("card_start")["next"]["runs"][0].clone()]);
+    crate::homework::execute_homework(&mut conn, &card_start).unwrap();
+    homework_card_write(&mut conn, &homework_card_action(&card_start, 0, 2)).unwrap();
+    homework_card_write(&mut conn, &homework_card_action(&card_start, 1, 3)).unwrap();
+
+    let at = crate::practice_sessions::db_now_iso(&conn).unwrap();
+    let quiz_run_id = hw_id(112);
+    let mut quiz_start = hw_operation(&hw_snapshot(&conn), "start", &hw_id(106), &at);
+    quiz_start["next"]["assignment"]["revision"] = json!(5);
+    quiz_start["next"]["assignment"]["updated_at"] = json!(at);
+    quiz_start["next"]["activities"][1]["record"]["state"] = json!("in_progress");
+    quiz_start["next"]["activities"][1]["record"]["updated_at"] = json!(at);
+    let runs = quiz_start["next"]["runs"].as_array_mut().unwrap();
+    runs.push(hw_quiz_run(112, 3, 30, &at));
+    runs.sort_by_key(|r| r["id"].as_str().unwrap_or_default().to_string());
+    crate::homework::execute_homework(&mut conn, &quiz_start).unwrap();
+    let revision = hw_answer(&mut conn, &hw_id(30), 0, 201);
+    hw_complete(&mut conn, &hw_id(30), revision, Some(&hw_context(&quiz_run_id, 5, 1, 1))).unwrap();
+
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_runs WHERE evidence_json IS NOT NULL", &[]).unwrap()[0]["n"], json!(2));
+    assert_eq!(crate::homework::rows(&conn, "SELECT state FROM homework_assignments", &[]).unwrap()[0]["state"], json!("completed"));
+    assert_eq!(crate::homework::rows(&conn, "SELECT action_id FROM homework_assignments", &[]).unwrap()[0]["action_id"], json!(hw_id(50)));
+    assert_eq!(crate::homework::rows(&conn, "SELECT status FROM next_actions WHERE id=?", &[&hw_id(50)]).unwrap()[0]["status"], json!("completed"));
+    let finished = hw_snapshot(&conn);
+    assert_eq!(finished["activities"].as_array().unwrap().iter().filter(|e| !e["evidence"].is_null()).count(), 2);
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    let before = homework_dump(&conn);
+    drop(conn);
+
+    let archive = archive_root.join("runs.hfdbackup");
+    create_consistent_complete_backup_with_retry(&root, &archive, "0.5.7").unwrap();
+    stage_complete_restore_in(&target, &archive, "0.5.7").unwrap();
+    apply_pending_restore_in(&target).unwrap();
+    let conn = Connection::open(target.join(DB_FILES[0])).unwrap();
+    assert_eq!(homework_dump(&conn), before);
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM homework_runs WHERE evidence_json IS NOT NULL", &[]).unwrap()[0]["n"], json!(2));
+    assert_eq!(crate::homework::rows(&conn, "SELECT COUNT(*) AS n FROM practice_attempts WHERE status='completed'", &[]).unwrap()[0]["n"], json!(1));
+    assert_eq!(crate::homework::rows(&conn, "SELECT status FROM next_actions WHERE id=?", &[&hw_id(50)]).unwrap()[0]["status"], json!("completed"));
+    verify_application_connection(&conn).unwrap();
+    drop(conn);
+    for p in [root, target, archive_root] {
+        std::fs::remove_dir_all(p).unwrap();
+    }
+}
+
+
+#[test]
+fn homework_context_is_strict_and_bound_to_its_exact_attempt() {
+    let (root, mut conn) = hw_quiz_database("hw-context-exact");
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    let context = hw_context(&hw_id(111), 2, 1, 1);
+    let before = homework_dump(&conn);
+    for malformed in [json!({}), json!({"extra":true}), { let mut c=context.clone(); c["cycle"]=json!(0); c }] {
+        let error = hw_complete(&mut conn, &hw_id(30), 0, Some(&malformed)).unwrap_err();
+        assert_eq!(error, crate::practice_sessions::PracticeSessionErrorCode::InvalidArgument);
+    }
+    let mut wrong_revision = context.clone(); wrong_revision["activityRevision"] = json!(2);
+    assert_eq!(hw_complete(&mut conn, &hw_id(30), 0, Some(&wrong_revision)).unwrap_err(), crate::practice_sessions::PracticeSessionErrorCode::InvalidState);
+    assert_eq!(homework_dump(&conn), before);
+    conn.execute("INSERT INTO practice_attempts (id,version_id,source_material_id,source_material_title,started_at,status,revision,total_questions,answered_count,correct_count,incorrect_count,dont_know_count) VALUES (?1,?2,NULL,'Synthetic source',?3,'in_progress',0,2,0,0,0,0)", params![hw_id(31), hw_id(20), HW_QUIZ_T1]).unwrap();
+    let before = homework_dump(&conn);
+    assert_eq!(hw_complete(&mut conn, &hw_id(31), 0, Some(&context)).unwrap_err(), crate::practice_sessions::PracticeSessionErrorCode::InvalidState);
+    assert_eq!(homework_dump(&conn), before);
+    drop(conn); std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn zero_score_completes_and_detached_evidence_survives_later_edits() {
+    let (root, mut conn) = hw_quiz_database("hw-detached-quiz");
+    let path = root.join(DB_FILES[0]);
+    let create = hw_quiz_create(&[hw_quiz_entry(0, "Quiz Activity")], true);
+    crate::homework::execute_homework(&mut conn, &create).unwrap();
+    let start = hw_quiz_start(&create, &[hw_quiz_run(111, 2, 30, HW_QUIZ_T1)]);
+    crate::homework::execute_homework(&mut conn, &start).unwrap();
+    hw_complete(&mut conn, &hw_id(30), 0, None).unwrap();
+    let completed = hw_snapshot(&conn);
+    assert_eq!(completed["assignment"]["state"], "completed");
+    assert_eq!(completed["runs"][0]["evidence"]["score_percent"], json!(0.0));
+    crate::practice_sessions::run_legacy_conversion_at(&root).unwrap();
+    crate::practice_sessions::erase_practice_history_at(&root, &json!({"action":"erase_history","operationId":hw_id(212),"historyKey":hw_id(5)})).unwrap();
+    verify_schema_20_homework_semantics(&conn).unwrap();
+    let at = crate::practice_sessions::db_now_iso(&conn).unwrap();
+    let mut archive = hw_operation(&hw_snapshot(&conn), "archive", &hw_id(213), &at);
+    archive["next"]["assignment"]["revision"] = json!(4);
+    archive["next"]["assignment"]["updated_at"] = json!(at);
+    archive["next"]["assignment"]["archived"] = json!(1);
+    // Resolve the availability pointer as the UI repository does after erasure prunes the version.
+    archive["next"]["activities"][0]["record"] = crate::homework::rows(&conn, "SELECT * FROM homework_activities WHERE id=?", &[&hw_id(2)]).unwrap()[0].clone();
+    crate::homework::execute_homework(&mut conn, &archive).unwrap();
+    assert_eq!(crate::homework::rows(&conn,"SELECT attempt_id,source_attempt_id FROM homework_runs", &[]).unwrap()[0], json!({"attempt_id":null,"source_attempt_id":hw_id(30)}));
+    drop(conn); verify_application_database(&path).unwrap(); std::fs::remove_dir_all(root).unwrap();
 }

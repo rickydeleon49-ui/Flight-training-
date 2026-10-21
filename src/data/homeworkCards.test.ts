@@ -55,7 +55,7 @@ describe.each(ENGINES)("homework cards: %s", name => {
                 thrown = err;
             }
             expect(thrown).toBeDefined();
-            expect(String(thrown?.cause?.stack || thrown?.stack)).toContain("homeworkCards.ts:91");
+            expect(thrown?.cause?.reason).toBe("outside_frozen_scope");
             expect(dumpTables(e)).toEqual(before);
             expect(e.query("SELECT state FROM homework_activities")[0]!.state).toBe("in_progress");
             expect(e.query("SELECT evidence_json FROM homework_runs")[0]!.evidence_json).toBeNull();
@@ -207,7 +207,7 @@ describe.each(ENGINES)("homework cards: %s", name => {
                 thrown = err;
             }
             expect(thrown).toBeDefined();
-            expect(String(thrown?.cause?.stack || thrown?.stack)).toContain("homeworkCards.ts:88");
+            expect(thrown?.cause?.reason).toBe("run_not_open");
         }
         finally {
             e.close();

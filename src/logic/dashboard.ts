@@ -52,6 +52,7 @@ export interface DashboardSources {
   questions: Question[];
   transactions: Transaction[];
   today?: IsoDate;
+  homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
 }
 
 export interface DashboardModel {
@@ -110,6 +111,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
     ? lessonPreparation(upcoming, {
         prepItems: sources.prepItems,
         questions: sources.questions,
+        homework: sources.homework,
       })
     : null;
 

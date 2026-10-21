@@ -164,3 +164,11 @@ export const rescheduleChanges = (date: IsoDate): Partial<NextAction> => ({
   status: "open",
   completedAt: null,
 });
+
+/** Bound actions always open the next activity's evidence flow. */
+export function homeworkActionTarget(actionId: string, homework: readonly import("@/domain/homework").HomeworkSnapshot[] = []): string | null {
+  const assignment = homework.find(h => h.assignment.action_id === actionId);
+  if (!assignment) return null;
+  const next = assignment.activities.filter(a => !a.record.removed_at && a.record.state !== "completed").sort((a,b) => a.record.position - b.record.position)[0];
+  return `/study/homework/${assignment.assignment.id}${next ? `?activity=${next.record.id}` : ""}`;
+}

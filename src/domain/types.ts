@@ -674,6 +674,7 @@ export interface PracticeSessionCompleteAttemptAction {
   operationId: string;
   attemptId: string;
   expectedRevision: number;
+  homework?: import("./homework").HomeworkCardContext;
 }
 
 export interface PracticeSessionRetakeAttemptAction {

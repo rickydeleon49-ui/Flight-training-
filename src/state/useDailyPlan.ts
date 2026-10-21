@@ -83,6 +83,7 @@ export function useDailyPlan(today: IsoDate): UseDailyPlanResult {
     () => ({
       today,
       actions: data.actions,
+      homework: data.homework,
       events: data.events,
       prepItems: data.prepItems,
       materials: data.materials,
@@ -90,7 +91,7 @@ export function useDailyPlan(today: IsoDate): UseDailyPlanResult {
       notes: data.notes,
       journalEntries: data.journalEntries,
     }),
-    [data.actions, data.events, data.prepItems, data.materials, data.questions, data.notes, data.journalEntries, today],
+    [data.actions, data.homework, data.events, data.prepItems, data.materials, data.questions, data.notes, data.journalEntries, today],
   );
 
   const saved = newest(data.dailyPlan, lastWritten);

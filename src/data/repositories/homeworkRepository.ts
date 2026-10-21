@@ -24,6 +24,11 @@ export function homeworkRepository(db: SqlDatabase) {
       for (const e of s.activities) e.record = records.find((r) => r.id === e.record.id) as typeof e.record;
       return s;
     },
+    async listSnapshots() {
+      const rows = await this.list(true);
+      const snapshots = await Promise.all(rows.map(row => this.get(String(row.id))));
+      return snapshots.filter((s): s is NonNullable<typeof s> => s !== null);
+    },
     async list(includeArchived = false) {
       return db.select("SELECT * FROM homework_assignments WHERE (?=1 OR archived=0) ORDER BY due_date IS NULL,due_date,id", [includeArchived ? 1 : 0]);
     },

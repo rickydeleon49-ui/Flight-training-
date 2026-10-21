@@ -52,6 +52,7 @@ export function FlightDeck() {
       buildDashboard({
         profile: data.profile,
         actions: data.actions,
+        homework: data.homework,
         events: data.events,
         prepItems: data.prepItems,
         materials: data.materials,
@@ -423,7 +424,7 @@ function NextFlightCard({ model }: { model: Model }) {
                       {line.done ? <CheckIcon size={13} /> : <span aria-hidden="true">○</span>}
                       {line.done ? "Complete" : "Incomplete"}
                     </span>
-                    <span className="prep-list__label wrap-anywhere">{line.label}</span>
+                    <span className="prep-list__label wrap-anywhere">{line.source === "homework" ? <Link to={`/study/homework/${line.assignmentId}?activity=${line.id}`}>{line.label}</Link> : line.label}</span>
                   </li>
                 ))}
               </ul>

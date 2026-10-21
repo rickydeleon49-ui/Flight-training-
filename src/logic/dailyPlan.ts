@@ -1,3 +1,4 @@
+import { homeworkActionTarget } from "./actions";
 /**
  * Daily Flight Plan recommendation session management and decision persistence.
  *
@@ -535,6 +536,9 @@ export function getStartTarget(
     case "action": {
       const actionId = item.reason.sourceType === "action" ? item.reason.sourceId : item.id.replace(/^action:/, "");
       const action = (sources.actions ?? []).find((a) => a.id === actionId);
+
+      const homeworkPath = homeworkActionTarget(actionId, sources.homework);
+      if (homeworkPath) return { path: homeworkPath, label: `Open homework for ${item.title}` };
 
       // A linked record is only a destination while it still exists. When the
       // debrief, material or lesson has been deleted, Start falls back to the

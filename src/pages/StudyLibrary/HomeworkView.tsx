@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertIcon, Button, Card, CardBody, ConfirmDialog } from "@/components/ui";
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
@@ -22,6 +22,7 @@ const filters = { upcoming: "Upcoming", in_progress: "In progress", completed: "
 
 export function HomeworkView() {
     const { assignmentId } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { repositories, data, dataRevision, refresh } = useAppData();
     const { controller, status } = useNavigationController();
@@ -49,6 +50,15 @@ export function HomeworkView() {
     useEffect(() => { saveScope.current++; return () => { saveScope.current++; }; }, [repositories, assignmentId]);
     const lease = useRef(0);
     const started = useRef<number | null>(null);
+
+    const targetActivity = searchParams.get("activity");
+    useEffect(() => {
+        if (targetActivity && current) {
+            const el = document.getElementById(`homework-${targetActivity}`);
+            el?.scrollIntoView();
+            el?.focus();
+        }
+    }, [targetActivity, current]);
     useEffect(() => { const update = () => setToday(todayIso()); const timer = window.setInterval(update, 30000); window.addEventListener("focus", update); document.addEventListener("visibilitychange", update); return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); }; }, []);
     useEffect(() => {
         const mine = ++lease.current;
@@ -131,7 +141,7 @@ export function HomeworkView() {
     const loadAgain = () => { pending.current = null; setEditor(null); setReload(n => n + 1); };
     const perform = async (op: HomeworkOperation) => {
         if (lock.current || !repositories)
-            return;
+            return false;
         lock.current = true;
         setBusy(true);
         setError(null);
@@ -150,10 +160,15 @@ export function HomeworkView() {
                 setHistory(entries.map(row=>({change_kind:String(row.change_kind),created_at:String(row.created_at),revision:Number(row.revision),snapshot_json:row.snapshot_json})));
                 setRemoving(null);
             }
+            return true;
         }
         catch (e) {
-            if (mine === saveScope.current)
-                setError(homeworkSaveMessage(e));
+            if (mine === saveScope.current) {
+                const conflict = op.changeKind === "start" && op.next.runs.some(r => r.kind === "test") &&
+                    ((e as { code?: string })?.code === "CONFLICT" || String(e).includes("already used"));
+                setError(conflict ? { text: "Finish or abandon the in-progress quiz first.", stale: false } : homeworkSaveMessage(e));
+            }
+            return false;
         }
         finally {
             lock.current = false;
@@ -198,13 +213,73 @@ export function HomeworkView() {
           <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : r.state === 'reopened' ? 'Reopened' : 'To do'}</p>
           {r.body ? <p className="homework-text">{r.body}</p> : null}
           {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
-          {done && r.kind==='cards' ? <p>Historical review · {current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
+          {done && r.kind==='cards' ? <p>Historical review · {(current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle && run.kind==='cards') as import("@/domain/homework").HomeworkCardRun | undefined)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
+          {done && r.kind==='test' ? (() => {
+            const testRun = current.runs.find(run => run.activity_id === r.id && run.cycle === r.cycle && run.kind === 'test') as import("@/domain/homework").HomeworkTestRun | undefined;
+            const ev = testRun?.evidence;
+            return <p>Quiz completed · Score: {ev?.score_percent !== null && ev?.score_percent !== undefined ? `${ev.score_percent}%` : 'Recorded'}{ev && ev.total_questions > 0 ? ` (${ev.correct_count} of ${ev.total_questions} correct)` : ''}{missing?' · Source missing or changed':''}</p>;
+          })() : null}
           <div className="row row--wrap">
             {r.kind === 'read' ? <><Button disabled={missing || !controller || status.kind === 'working'} onClick={() => void openReading(e)}>Open PDF at page {r.page_start ?? 1}</Button>{!done ? <Button disabled={!editable || missing} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark reading complete</Button> : null}</> : null}
             {['reflection', 'questions'].includes(r.kind) && !done ? <Button disabled={!editable || !r.body.trim()} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark complete</Button> : null}
             {r.kind === 'checklist' && !done ? <label className="row"><input type="checkbox" checked={false} disabled={!editable} onChange={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}/>Done</label> : null}
-            {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={perform} reload={() => setReload(n=>n+1)} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
-            {r.kind === 'test' ? <>{!missing && checkedSources===current ? <Link className="button button--secondary" to={`/study/${r.material_id}`}>Open quiz</Link> : <span>Open quiz · {missing?'choose a source first':'checking source…'}</span>}<p className="small muted">Completion is recorded automatically in a later update</p></> : null}
+            {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={async op => { await perform(op); }} reload={() => setReload(n=>n+1)} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
+            {r.kind === 'test' && !done ? (() => {
+              const openRun = current.runs.find(run => run.activity_id === r.id && run.cycle === r.cycle && !run.finished_at && !run.invalidated_at && run.kind === 'test');
+              if (missing || checkedSources !== current) {
+                return <span>Open quiz · {missing ? 'choose a source first' : 'checking source…'}</span>;
+              }
+              if (openRun) {
+                return <Link className="button button--secondary" to={`/study/${r.material_id}`}>Continue quiz</Link>;
+              }
+              return <Button disabled={!editable || !!current.assignment.archived} onClick={async () => {
+                try {
+                  const runId = crypto.randomUUID();
+                  const attemptId = crypto.randomUUID();
+                  const now = new Date(Math.max(Date.now(), Date.parse(current.assignment.updated_at) + 1)).toISOString();
+                  const next = structuredClone(current);
+                  const act = next.activities.find(a => a.record.id === r.id)!;
+                  act.record.state = "in_progress";
+                  act.record.updated_at = now;
+                  next.assignment.revision++;
+                  next.assignment.updated_at = now;
+                  next.assignment.state = "in_progress";
+                  next.assignment.completed_at = null;
+                  next.runs.push({
+                    id: runId,
+                    activity_id: act.record.id,
+                    cycle: act.record.cycle,
+                    activity_revision: act.record.revision,
+                    kind: "test",
+                    started_at: now,
+                    finished_at: null,
+                    invalidated_at: null,
+                    evidence: null,
+                    scope: {
+                      version: 1,
+                      material_id: act.record.material_id!,
+                      source_revision: act.record.source_revision!,
+                      test_version_id: act.record.source_test_version_id!,
+                      attempt_id: attemptId,
+                    },
+                  });
+                  next.runs.sort((a, b) => a.id.localeCompare(b.id));
+                  const saved = await perform({
+                    version: 1,
+                    operationId: crypto.randomUUID(),
+                    assignmentId: next.assignment.id,
+                    baseRevision: current.assignment.revision,
+                    changeKind: "start",
+                    at: now,
+                    next,
+                  });
+                  if (saved) navigate(`/study/${act.record.material_id}`);
+                } catch {
+                  setAnnouncement("Finish or abandon the in-progress quiz first.");
+                  setError({ text: "Finish or abandon the in-progress quiz first.", stale: false });
+                }
+              }}>Start quiz</Button>;
+            })() : null}
             {done ? <Button disabled={!editable} onClick={() => change('reopen', s => { s.activities.find(x => x.record.id === r.id)!.record.cycle++; })}>Reopen {r.title}</Button> : null}
             <Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit {r.title}</Button>
             <Button aria-label={`Move ${r.title} up`} disabled={!editable || index === 0} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position--; s.activities.find(x => x.record.id === active[index - 1]!.record.id)!.record.position++; }); }}>Move up</Button>

@@ -18,7 +18,7 @@ const kind = z.enum(["read", "cards", "test", "reflection", "questions", "checkl
 const assignmentCodec = z.strictObject({
   id: homeworkUuid, title: text(200, true), instructions: text(20000), school: text(200).nullable(), instructor: text(200).nullable(),
   lesson_id: homeworkUuid.nullable(), source_lesson_id: homeworkUuid.nullable(), due_date: date.nullable(), state,
-  revision: integer, action_id: z.null(), archived: z.union([z.literal(0), z.literal(1)]),
+  revision: integer, action_id: homeworkUuid.nullable(), archived: z.union([z.literal(0), z.literal(1)]),
   created_at: instant, updated_at: instant, completed_at: instant.nullable(),
 });
 const activityCodec = z.strictObject({
@@ -47,10 +47,26 @@ const cardRunCodec = z.strictObject({
     generation:z.number().int().min(0).max(1000000000),item_ids:z.array(hash).min(1).max(20),next_local_midnight:instant}),
   ratings:z.array(ratingEvidenceCodec).max(20), started_at:instant, finished_at:instant.nullable(),invalidated_at:instant.nullable(),
 });
+const testScopeCodec = z.strictObject({
+  version: z.literal(1), material_id: homeworkUuid, source_revision: hash, test_version_id: homeworkUuid, attempt_id: homeworkUuid,
+});
+const nonNegativeInteger = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+const testEvidenceCodec = z.strictObject({
+  version: z.literal(1), attempt_id: homeworkUuid, version_id: homeworkUuid, started_at: instant, completed_at: instant,
+  score_percent: z.number().nullable(), total_questions: nonNegativeInteger, answered_count: nonNegativeInteger, correct_count: nonNegativeInteger, incorrect_count: nonNegativeInteger, dont_know_count: nonNegativeInteger,
+});
+const testRunCodec = z.strictObject({
+  id: homeworkUuid, activity_id: homeworkUuid, cycle: integer, activity_revision: integer, kind: z.literal("test"),
+  scope: testScopeCodec, evidence: testEvidenceCodec.nullable(),
+  started_at: instant, finished_at: instant.nullable(), invalidated_at: instant.nullable(),
+});
 export type HomeworkCardRun = z.infer<typeof cardRunCodec>;
+export type HomeworkTestRun = z.infer<typeof testRunCodec>;
+const runCodec = z.discriminatedUnion("kind", [cardRunCodec, testRunCodec]);
+export type HomeworkRun = z.infer<typeof runCodec>;
 export const homeworkCardContextCodec = z.strictObject({assignmentId:homeworkUuid,runId:homeworkUuid,expectedRevision:integer,activityRevision:integer,cycle:integer});
 export type HomeworkCardContext = z.infer<typeof homeworkCardContextCodec>;
-const snapshotCodec = z.strictObject({ version: z.literal(1), assignment: assignmentCodec, activities: z.array(entryCodec), runs: z.array(cardRunCodec) });
+const snapshotCodec = z.strictObject({ version: z.literal(1), assignment: assignmentCodec, activities: z.array(entryCodec), runs: z.array(runCodec) });
 export const HOMEWORK_CHANGES = ["create", "edit", "start", "record_evidence", "complete", "reopen", "reorder", "remove_activity", "relink", "archive"] as const;
 const operationCodec = z.strictObject({ version: z.literal(1), operationId: homeworkUuid, assignmentId: homeworkUuid,
   baseRevision: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER - 1), changeKind: z.enum(HOMEWORK_CHANGES), at: instant, next: snapshotCodec,
@@ -69,9 +85,10 @@ export const HOMEWORK_MESSAGES = {
   UNSUPPORTED: "Homework can't be saved with this database.",
 } as const;
 export class HomeworkError extends Error {
-  constructor(public code: keyof typeof HOMEWORK_MESSAGES) { super(HOMEWORK_MESSAGES[code]); }
+  /** `reason` is internal only: the user always sees HOMEWORK_MESSAGES[code]. */
+  constructor(public code: keyof typeof HOMEWORK_MESSAGES, readonly reason?: string) { super(HOMEWORK_MESSAGES[code]); }
 }
-export function homeworkAssert(value: unknown): asserts value { if (!value) throw new HomeworkError("INVALID"); }
+export function homeworkAssert(value: unknown, reason?: string): asserts value { if (!value) throw new HomeworkError("INVALID", reason); }
 export function parseHomeworkJson(raw: string): unknown {
   homeworkAssert(new TextEncoder().encode(raw).length <= HOMEWORK_LIMIT);
   let value: unknown;
@@ -123,18 +140,18 @@ export function validateHomeworkSnapshot(value: unknown): HomeworkSnapshot {
     if (!["read", "cards", "test"].includes(r.kind)) homeworkAssert(r.source_revision === null);
     if (r.removed_at) homeworkAssert(r.removed_at >= r.created_at && r.removed_at <= a.updated_at);
     if (e.evidence) {
-      homeworkAssert(r.kind !== "test");
-      homeworkAssert(r.completed_at! > r.created_at && r.completed_at! <= r.updated_at);
+      homeworkAssert(r.completed_at! > r.created_at && r.completed_at! <= a.updated_at);
       homeworkAssert(eq(e.evidence, { version: 1, activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind,
         completed_at: r.completed_at, body: r.body, source_material_id: r.source_material_id, source_revision: r.source_revision,
         page_start: r.page_start, page_end: r.page_end }));
       if (r.kind === "read") homeworkAssert(r.source_revision && r.page_end);
+      if (r.kind === "cards" || r.kind === "test") homeworkAssert(r.source_revision);
       if (["reflection", "questions"].includes(r.kind)) homeworkAssert(r.body.trim().length > 0);
     }
     // Starting cards/tests and reads requires the future bound session/verified source flow.
-    if (r.state === "in_progress") homeworkAssert(r.kind !== "test" && (r.kind !== "read" || (r.source_revision && r.page_end)));
-  }
-  validateCardRuns(s);
+    if (r.state === "in_progress") homeworkAssert((r.kind !== "read" && r.kind !== "test") || (r.source_revision && (r.kind !== "read" || r.page_end)));
+    }
+    validateRuns(s);
   const all = active.length > 0 && active.every((e) => e.record.state === "completed");
   const summary = all ? "completed" : active.some((e) => ["in_progress", "completed"].includes(e.record.state)) ? "in_progress" : "upcoming";
   homeworkAssert(a.state === summary || (a.state === "reopened" && active.some((e) => e.record.state === "reopened")));
@@ -174,6 +191,8 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
     if (live?.test_version_id === null && live.source_test_version_id === e.record.source_test_version_id) e.record.test_version_id = null;
   }
   const old = previous.assignment;
+  // Legacy homework binds its stable action once; subsequent operations keep that identity.
+  if (old.action_id === null && a.action_id === old.id) old.action_id = a.action_id;
   homeworkAssert(old.revision === operation.baseRevision && at >= old.updated_at && change !== "create");
   homeworkAssert(sameExcept(old, a, ["revision", "updated_at", "state", "completed_at", ...(change === "edit" ? ["title", "instructions", "school", "instructor", "lesson_id", "source_lesson_id", "due_date"] : []), ...(change === "archive" ? ["archived"] : [])]));
   const oldIds = previous.activities.map((e) => e.record.id);
@@ -199,7 +218,7 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
       if (spec) { homeworkAssert(r.state === "reopened" && r.completed_at === null && e.evidence === null); reopened = true; }
       else homeworkAssert(r.state === p.state && r.completed_at === p.completed_at && eq(e.evidence, prior.evidence) && eq(e.source, prior.source));
     } else if (change === "start" || change === "record_evidence") {
-      homeworkAssert(p.kind === "cards" && sameExcept(p,r,["state","completed_at","updated_at"]) && eq(e.source,prior.source));
+      homeworkAssert((p.kind === "cards" || p.kind === "test") && sameExcept(p,r,["state","completed_at","updated_at"]) && eq(e.source,prior.source));
       homeworkAssert(change === "start" ? ["upcoming","reopened","in_progress"].includes(p.state) && r.state === "in_progress" && e.evidence === null : p.state === "in_progress" && ["in_progress","completed"].includes(r.state));
     } else if (change === "complete") {
       homeworkAssert(sameExcept(p, r, ["state", "completed_at", "updated_at"]) && eq(e.source, prior.source));
@@ -212,7 +231,7 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
       if (r.removed_at !== null) homeworkAssert(change === "remove_activity" && r.removed_at === at);
     } else homeworkAssert(false);
   }
-  validateCardRunTransition(previous, operation);
+  validateRunTransition(previous, operation);
   if (change === "reopen" || change === "complete" || change === "relink" || change === "start") homeworkAssert(affected > 0);
   if (change === "archive") homeworkAssert(affected === 0 && old.archived !== a.archived);
   if (reopened) homeworkAssert(a.state === "reopened");
@@ -223,51 +242,80 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
 }
 
 /** Strict frozen scope; earlier cycles may outlive a relink or external deletion. */
-function validateCardRuns(s: HomeworkSnapshot) {
+function validateRuns(s: HomeworkSnapshot) {
     const ids = s.runs.map(r => r.id);
     homeworkAssert(new Set(ids).size === ids.length && eq(ids, [...ids].sort()));
     for (const run of s.runs) {
         const r = s.activities.find(e => e.record.id === run.activity_id)?.record;
         homeworkAssert(r);
         homeworkAssert(run.started_at > r.created_at && run.started_at <= s.assignment.updated_at && run.cycle <= r.cycle && run.activity_revision <= r.revision);
-        homeworkAssert(new Set(run.scope.item_ids).size === run.scope.item_ids.length && run.scope.next_local_midnight > run.started_at && Date.parse(run.scope.next_local_midnight) - Date.parse(run.started_at) <= 27 * 3600000);
-        homeworkAssert(new Set(run.ratings.map(x => x.item_id)).size === run.ratings.length && new Set(run.ratings.map(x => x.operation_id)).size === run.ratings.length);
-        for (const x of run.ratings)
-            homeworkAssert(x.event_id === x.operation_id && x.generation === run.scope.generation && run.scope.item_ids.includes(x.item_id) && x.reviewed_at > run.started_at && x.reviewed_at <= s.assignment.updated_at && x.assignment_revision < s.assignment.revision);
-        homeworkAssert((run.finished_at !== null) === (run.ratings.length === run.scope.item_ids.length));
-        if (run.finished_at)
-            homeworkAssert(run.invalidated_at === null && run.finished_at === run.ratings.at(-1)!.reviewed_at);
-        if (run.invalidated_at)
-            homeworkAssert(run.invalidated_at >= run.started_at && run.invalidated_at <= s.assignment.updated_at);
-        if (!run.invalidated_at && run.cycle === r.cycle) {
-            homeworkAssert(r.kind === "cards" && r.revision === run.activity_revision && r.source_material_id === run.scope.material_id && r.source_revision === run.scope.source_revision && r.card_set_id === run.scope.card_set_id);
-            homeworkAssert(run.finished_at ? r.state === "completed" && r.completed_at === run.finished_at : r.state === "in_progress" && r.removed_at === null);
+        if (run.kind === "cards") {
+            homeworkAssert(new Set(run.scope.item_ids).size === run.scope.item_ids.length && run.scope.next_local_midnight > run.started_at && Date.parse(run.scope.next_local_midnight) - Date.parse(run.started_at) <= 27 * 3600000);
+            homeworkAssert(new Set(run.ratings.map(x => x.item_id)).size === run.ratings.length && new Set(run.ratings.map(x => x.operation_id)).size === run.ratings.length);
+            for (const x of run.ratings)
+                homeworkAssert(x.event_id === x.operation_id && x.generation === run.scope.generation && run.scope.item_ids.includes(x.item_id) && x.reviewed_at > run.started_at && x.reviewed_at <= s.assignment.updated_at && x.assignment_revision < s.assignment.revision);
+            homeworkAssert((run.finished_at !== null) === (run.ratings.length === run.scope.item_ids.length));
+            if (run.finished_at)
+                homeworkAssert(run.invalidated_at === null && run.finished_at === run.ratings.at(-1)!.reviewed_at);
+            if (run.invalidated_at)
+                homeworkAssert(run.invalidated_at >= run.started_at && run.invalidated_at <= s.assignment.updated_at);
+            if (!run.invalidated_at && run.cycle === r.cycle) {
+                homeworkAssert(r.kind === "cards" && r.revision === run.activity_revision && r.source_material_id === run.scope.material_id && r.source_revision === run.scope.source_revision && r.card_set_id === run.scope.card_set_id);
+                homeworkAssert(run.finished_at ? r.state === "completed" && r.completed_at === run.finished_at : r.state === "in_progress" && r.removed_at === null);
+            }
+        } else if (run.kind === "test") {
+            homeworkAssert(run.scope.version === 1);
+            if (run.finished_at) {
+                homeworkAssert(run.invalidated_at === null && run.evidence !== null);
+                homeworkAssert(run.evidence.version === 1 && run.evidence.attempt_id === run.scope.attempt_id && run.evidence.version_id === run.scope.test_version_id);
+                homeworkAssert(run.evidence.started_at === run.started_at && run.evidence.completed_at === run.finished_at);
+                const ev = run.evidence;
+                homeworkAssert(run.finished_at > run.started_at && run.finished_at <= s.assignment.updated_at);
+                homeworkAssert(ev.total_questions > 0 && ev.total_questions <= 200 && ev.answered_count <= ev.total_questions &&
+                    ev.correct_count + ev.incorrect_count + ev.dont_know_count === ev.answered_count &&
+                    ev.score_percent === Math.round(ev.correct_count / ev.total_questions * 1000) / 10);
+            } else {
+                homeworkAssert(run.evidence === null);
+            }
+            if (run.invalidated_at)
+                homeworkAssert(run.invalidated_at >= run.started_at && run.invalidated_at <= s.assignment.updated_at);
+            if (!run.invalidated_at && run.cycle === r.cycle) {
+                homeworkAssert(r.kind === "test" && r.revision === run.activity_revision && r.source_material_id === run.scope.material_id && r.source_revision === run.scope.source_revision && r.source_test_version_id === run.scope.test_version_id);
+                homeworkAssert(run.finished_at ? r.state === "completed" && r.completed_at === run.finished_at : r.state === "in_progress" && r.removed_at === null);
+            }
         }
     }
-    for (const e of s.activities.filter(e => e.record.kind === "cards" && !e.record.removed_at && ["in_progress", "completed"].includes(e.record.state))) {
+    for (const e of s.activities.filter(e => ["cards", "test"].includes(e.record.kind) && !e.record.removed_at && ["in_progress", "completed"].includes(e.record.state))) {
         const runs = s.runs.filter(x => x.activity_id === e.record.id && x.cycle === e.record.cycle && !x.invalidated_at);
         homeworkAssert(runs.length === 1 && (e.record.state === "completed") === (runs[0]!.finished_at !== null));
     }
     const open = s.runs.filter(x => !x.finished_at && !x.invalidated_at).map(x => x.activity_id);
     homeworkAssert(new Set(open).size === open.length);
 }
-function validateCardRunTransition(previous: HomeworkSnapshot, op: HomeworkOperation) {
+function validateRunTransition(previous: HomeworkSnapshot, op: HomeworkOperation) {
     const next = op.next;
     homeworkAssert(previous.runs.every(p => next.runs.some(r => r.id === p.id)));
-    let starts = 0, ratings = 0;
+    let starts = 0, evidenceCount = 0;
     for (const r of next.runs) {
         const p = previous.runs.find(p => p.id === r.id);
         if (!p) {
             starts++;
-            homeworkAssert(op.changeKind === "start" && r.started_at === op.at && r.ratings.length === 0 && !r.finished_at && !r.invalidated_at);
+            homeworkAssert(op.changeKind === "start" && r.started_at === op.at && !r.finished_at && !r.invalidated_at);
+            if (r.kind === "cards") homeworkAssert(r.ratings.length === 0);
+            if (r.kind === "test") homeworkAssert(r.evidence === null);
             continue;
         }
         if (eq(p, r))
             continue;
         if (op.changeKind === "record_evidence") {
-            ratings++;
-            homeworkAssert(!p.finished_at && !p.invalidated_at && sameExcept(p, r, ["ratings", "finished_at"]) && r.ratings.length === p.ratings.length + 1 && eq(r.ratings.slice(0, -1), p.ratings));
-            homeworkAssert(r.ratings.at(-1)!.operation_id === op.operationId && r.ratings.at(-1)!.reviewed_at === op.at && r.ratings.at(-1)!.assignment_revision === op.baseRevision);
+            evidenceCount++;
+            if (r.kind === "cards") {
+                homeworkAssert(p.kind === "cards" && !p.finished_at && !p.invalidated_at && sameExcept(p, r, ["ratings", "finished_at"]) && r.ratings.length === p.ratings.length + 1 && eq(r.ratings.slice(0, -1), p.ratings));
+                homeworkAssert(r.ratings.at(-1)!.operation_id === op.operationId && r.ratings.at(-1)!.reviewed_at === op.at && r.ratings.at(-1)!.assignment_revision === op.baseRevision);
+            } else if (r.kind === "test") {
+                homeworkAssert(p.kind === "test" && !p.finished_at && !p.invalidated_at && sameExcept(p, r, ["evidence", "finished_at"]) && r.finished_at === op.at && r.evidence !== null);
+                homeworkAssert(r.evidence.completed_at === op.at);
+            }
         }
         else {
             homeworkAssert(!p.finished_at && !p.invalidated_at && r.invalidated_at === op.at && sameExcept(p, r, ["invalidated_at"]));
@@ -276,7 +324,7 @@ function validateCardRunTransition(previous: HomeworkSnapshot, op: HomeworkOpera
         }
     }
     homeworkAssert(op.changeKind !== "start" || starts === 1);
-    homeworkAssert(op.changeKind !== "record_evidence" || ratings === 1);
+    homeworkAssert(op.changeKind !== "record_evidence" || evidenceCount === 1);
     for (const p of previous.runs.filter(r => !r.finished_at && !r.invalidated_at)) {
         const activity = next.activities.find(e => e.record.id === p.activity_id)!.record;
         if (activity.cycle !== p.cycle || activity.removed_at)

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
-import type { HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
+import type { HomeworkCardRun, HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
 import type { CardReviewSnapshot, CardRating, CardItemAction } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc } from "@/logic/localDay";
@@ -19,7 +19,7 @@ export function HomeworkCardRun({ snapshot, entry, repository, disabled, save, r
     const pending = useRef<Extract<CardItemAction, {
         action: "rate";
     }> | null>(null), lock = useRef(false);
-    const run = snapshot.runs.find(r => r.activity_id === entry.record.id && r.cycle === entry.record.cycle && !r.invalidated_at);
+    const run = snapshot.runs.find(r => r.activity_id === entry.record.id && r.cycle === entry.record.cycle && !r.invalidated_at && r.kind === "cards") as HomeworkCardRun | undefined;
     useEffect(() => {
         let alive = true;
         void (async () => {
