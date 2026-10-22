@@ -253,6 +253,11 @@ jobs:
         env:
           HFD_OFFLINE_EXTRACTION: "1"
 
+      - name: Verify macOS bundle signatures
+        if: runner.os == 'macOS'
+        shell: bash
+        run: bash scripts/verify-macos-bundle-signature.sh src-tauri/target/release/bundle/dmg
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: installer-${{ matrix.name }}
@@ -316,6 +321,7 @@ jobs:
               echo "## Her Flight Deck $VERSION (macOS)"
               echo
               echo "Download the file for your Mac with Apple silicon and open it."
+              echo "On first launch, macOS may say it can't verify the developer; after the checksum matches, I'll help you open it through System Settings → Privacy & Security → Open Anyway."
               echo
               echo "| Computer | File |"
               echo "| --- | --- |"

@@ -48,6 +48,9 @@ jobs:
         run: npm run tauri build -- --bundles dmg
         env:
           HFD_OFFLINE_EXTRACTION: "1"
+      - name: Verify macOS bundle signatures
+        shell: bash
+        run: bash scripts/verify-macos-bundle-signature.sh src-tauri/target/release/bundle/dmg
       - name: Verify Apple Silicon bundle metadata
         run: |
           dmg=$(find src-tauri/target/release/bundle/dmg -name '*_aarch64.dmg' -print -quit)

@@ -10,6 +10,11 @@
       "version": "0.5.6",
       "retiredAt": "2026-10-18",
       "reason": "Private local combined GEN-REL-01–05 candidate bb68b9a failed physical installed testing: batch source checks resolved documents-relative paths from the app-data root, refusing real imported files before upload. Never publish or reuse this candidate/version; preserve its exact bytes and advance after the fix is independently reviewed."
+    },
+    {
+      "version": "0.5.8",
+      "retiredAt": "2026-10-21",
+      "reason": "Published CI build was only linker-signed, so macOS reported it as damaged. Withdrawn and superseded by 0.5.9; permanently retired and must never be reused."
     }
   ],
   "platformDistribution": {
@@ -18,7 +23,7 @@
       "architecture": "aarch64",
       "bundle": "dmg",
       "minimumSystemVersion": "12.0",
-      "candidateVersion": "0.5.7"
+      "candidateVersion": "0.5.9"
     },
     "windows": {
       "status": "held",
