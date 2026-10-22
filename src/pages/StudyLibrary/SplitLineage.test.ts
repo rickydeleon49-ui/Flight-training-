@@ -310,3 +310,38 @@ describe("saving an automatic split", () => {
     ]);
   });
 });
+
+
+describe("automatic split completion with pages left out", () => {
+  it.each([
+    [[1], "Page 1 was left out because it's too large by itself (likely a big picture). It's still in your original PDF."],
+    [[1, 3], "Pages 1 and 3 were left out because they're too large by themselves (likely big pictures). They're still in your original PDF."],
+    [[1, 2, 3, 4, 5, 6, 7, 8], "Pages 1, 2, 3, 4, 5 and 3 more were left out because they're too large by themselves (likely big pictures). They're still in your original PDF."],
+  ] as const)("keeps the completion message visible for %j until Done", async (skipped, message) => {
+    const receipt = JSON.parse(readFileSync(join(process.cwd(), "src-tauri/fixtures/split-lineage/receipt.json"), "utf8")) as SplitSourceReceipt;
+    receipt.core.skippedPages = [...skipped];
+    receipt.core.plan[0]!.selection = { start: 9, end: 10 };
+    vi.spyOn(pdfService, "inspectPdf").mockResolvedValue({ pages: 20, maxPagesPerSplit: 1000 });
+    vi.spyOn(pdfService, "watchSplitProgress").mockResolvedValue(() => {});
+    vi.spyOn(pdfService, "splitPdfAutomatically").mockResolvedValue(receipt);
+    const saveSplitBatch = vi.fn(async (_receipt: SplitSourceReceipt) => ({
+      operationId: receipt.operationId,
+      parts: receipt.core.plan.map((p) => ({ id: p.id, title: "t", filePath: p.filePath, fileSize: p.fileSize })),
+      idempotentReplay: false,
+    }));
+    Object.assign(db, { saveSplitBatch });
+    const onCreated = vi.fn();
+    const material = { id: "R", title: "Root Handbook", filePath: "R.pdf" } as StudyMaterial;
+    render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe),
+      h(SplitPdfDialog, { open: true, material, onClose: () => {}, onCreated }))));
+    await waitFor(() => expect(context?.status).toBe("ready"));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study-size parts" }));
+    expect(await screen.findByText(message)).toBeTruthy();
+    expect(onCreated).not.toHaveBeenCalled();
+    expect(saveSplitBatch.mock.calls[0]![0]).toBe(receipt);
+    expect(screen.queryByRole("button", { name: "Create study-size parts" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(onCreated).toHaveBeenCalledWith(receipt.core.plan.map((p) => p.id));
+    expect(saveSplitBatch).toHaveBeenCalledTimes(1);
+  });
+});

@@ -94,3 +94,20 @@ describe("desktop split commands", () => {
     ).rejects.toBeInstanceOf(SplitResultShapeError);
   });
 });
+
+
+describe("skipped pages in a split receipt", () => {
+  it("accepts the optional page list and passes it through automatic splitting unchanged", async () => {
+    const withSkips = clone();
+    withSkips.core.skippedPages = [1, 2];
+    withSkips.core.plan[0].selection = { start: 3, end: 7 };
+    expect(isSplitSourceReceipt(withSkips)).toBe(true);
+    await expect(splitPdfAutomatically({ relativePath: "a.pdf", batchId: "b", fileName: "B", sourceMaterialId: "A" }, vi.fn().mockResolvedValue(withSkips))).resolves.toBe(withSkips);
+  });
+  it.each([null, "1", [0], [1.5], [401], [2, 1], [1, 1], [3]])("rejects an invalid skipped page list: %j", (pages) => {
+    const invalid = clone();
+    invalid.core.skippedPages = pages;
+    invalid.core.plan[0].selection = { start: 3, end: 7 };
+    expect(isSplitSourceReceipt(invalid)).toBe(false);
+  });
+});
