@@ -1176,7 +1176,7 @@ function MaterialDetailPage() {
 
           <Card>
             <CardHeader title="Details" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organised. Use Edit at the top to change its details.</p> : null}
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit at the top to change its details.</p> : null}
             <CardBody>
               <dl className="definition">
                 <dt>Type</dt>

@@ -7,6 +7,7 @@ import {
   checkFileForGemini,
   checkSplitRange,
   describeFileSize,
+  formatFileSize,
 } from "./aiLimits";
 
 const reason = (fileName: string, bytes: number | null): string => {
@@ -21,10 +22,19 @@ describe("checkFileForGemini", () => {
 
   it("says what to do about a handbook over it", () => {
     const message = reason("phak.pdf", 62 * 1024 * 1024);
-    expect(message).toContain("62 MB");
+    expect(message).toContain("62.0 MB");
     expect(message).toContain("50 MB");
     expect(message).toContain("1,000 pages");
     expect(message).toContain("chapter");
+  });
+
+  it("uses the same formatted size as the file card for a 204.7 MB PDF", () => {
+    const bytes = Math.round(204.7 * 1024 * 1024);
+    const message = reason("amt_powerplant_handbook.pdf", bytes);
+    expect(formatFileSize(bytes)).toBe("204.7 MB");
+    expect(message).toContain("This file is 204.7 MB");
+    expect(message).not.toContain("205 MB");
+    expect(message).toContain(`This file is ${formatFileSize(bytes)}`);
   });
 
   it("does not hold an image to the PDF limit", () => {
