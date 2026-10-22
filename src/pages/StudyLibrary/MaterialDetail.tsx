@@ -123,6 +123,8 @@ function MaterialDetailPage() {
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
+  const [kitCardIndex, setKitCardIndex] = useState(0);
+  const [kitCardRevealed, setKitCardRevealed] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
   const [editingSet, setEditingSet] = useState(false);
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
@@ -183,6 +185,25 @@ function MaterialDetailPage() {
   const conversionStatus = practiceMetadata.phase === "loaded" ? practiceMetadata.conversionStatus : null;
   const completedCount = practiceMetadata.phase === "loaded" ? practiceMetadata.completedCount : 0;
   const studySet = data.aiStudySets.find((candidate) => candidate.sourceMaterialId === materialId);
+  const guideSections = useMemo(
+    () => (studySet?.sections ?? []).map((section, originalIndex) => ({ section, originalIndex })).filter(({ section }) => !section.pdfProvenance),
+    [studySet?.sections],
+  );
+  const kitSections = useMemo(
+    () => (studySet?.sections ?? []).map((section, originalIndex) => ({ section, originalIndex })).filter(({ section }) => Boolean(section.pdfProvenance)),
+    [studySet?.sections],
+  );
+  const guideFlashcards = useMemo(
+    () => (studySet?.flashcards ?? []).map((card, originalIndex) => ({ card, originalIndex })).filter(({ card }) => !card.pdfProvenance),
+    [studySet?.flashcards],
+  );
+  const kitFlashcards = useMemo(
+    () => (studySet?.flashcards ?? []).map((card, originalIndex) => ({ card, originalIndex })).filter(({ card }) => Boolean(card.pdfProvenance)),
+    [studySet?.flashcards],
+  );
+  const hasKitItems = kitSections.length > 0 || kitFlashcards.length > 0;
+  const safeCardIndex = Math.min(cardIndex, Math.max(0, guideFlashcards.length - 1));
+  const safeKitCardIndex = Math.min(kitCardIndex, Math.max(0, kitFlashcards.length - 1));
 
   // A link from offline search (OFFLINE-02c §4): open the guide section,
   // card or practice question it names, only while it is unchanged.
@@ -214,8 +235,26 @@ function MaterialDetailPage() {
       if (!live) return;
       setLinkTarget(target);
       if (target?.kind === "card") {
-        setCardIndex(target.index);
-        setCardRevealed(false);
+        const isKit = Boolean(studySet?.flashcards[target.index]?.pdfProvenance);
+        if (isKit) {
+          const kIdx = (studySet?.flashcards ?? [])
+            .map((c, i) => ({ c, i }))
+            .filter(({ c }) => Boolean(c.pdfProvenance))
+            .findIndex(({ i }) => i === target.index);
+          if (kIdx !== -1) {
+            setKitCardIndex(kIdx);
+            setKitCardRevealed(false);
+          }
+        } else {
+          const gIdx = (studySet?.flashcards ?? [])
+            .map((c, i) => ({ c, i }))
+            .filter(({ c }) => !c.pdfProvenance)
+            .findIndex(({ i }) => i === target.index);
+          if (gIdx !== -1) {
+            setCardIndex(gIdx);
+            setCardRevealed(false);
+          }
+        }
       }
     }).catch(() => {
       // Consume late failures too; only this page's live request may
@@ -647,15 +686,13 @@ function MaterialDetailPage() {
                 <CardHeader
                   title={isPdf ? "Study guide" : pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
                   eyebrow={
-                    pdfSet
-                      ? "Saved on this computer"
-                      : importedSet
-                        ? "Imported from a file you selected"
-                        : manualSet
-                          ? "Written by you, saved on this computer"
-                          : studySet?.sections.length
-                            ? "Saved on this computer"
-                            : undefined
+                    importedSet
+                      ? "Imported from a file you selected"
+                      : manualSet
+                        ? "Written by you, saved on this computer"
+                        : studySet?.summary || guideSections.length
+                          ? "Saved on this computer"
+                          : undefined
                   }
                   action={
                     <div className="row row--wrap">
@@ -682,7 +719,7 @@ function MaterialDetailPage() {
                       ) : canOfferGemini ? (
                         <Button
                           size="small"
-                          variant={studySet ? "secondary" : "primary"}
+                          variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
                           onClick={() => {
                             if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
@@ -690,7 +727,7 @@ function MaterialDetailPage() {
                         >
                           {generating
                             ? "Reading document…"
-                            : studySet
+                            : studySet && (studySet.summary || guideSections.length > 0)
                               ? "Regenerate"
                               : isPdf
                                 ? "Create study guide"
@@ -747,19 +784,17 @@ function MaterialDetailPage() {
                       />
                     ) : null
                   ) : null}
-                  {studySet && (studySet.summary || studySet.sections.length > 0) ? (
+                  {studySet && (studySet.summary || guideSections.length > 0) ? (
                     <div className="stack stack--5">
                       <div className="ai-disclaimer">
                         <AlertIcon size={16} />
                         <p className="tiny">
-                          {pdfSet
-                            ? PDF_KIT_REMINDER
-                            : manualSet
-                              ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
-                              : importedSet
-                                ? IMPORTED_CONTENT_DISCLAIMER
-                                : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
-                          {!pdfSet && !manualSet && setHasHerItems
+                          {manualSet
+                            ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
+                            : importedSet
+                              ? IMPORTED_CONTENT_DISCLAIMER
+                              : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
+                          {!manualSet && setHasHerItems
                             ? " Items marked as yours or as an instructor correction were written here, not generated."
                             : ""}
                         </p>
@@ -781,17 +816,19 @@ function MaterialDetailPage() {
                         ) : studySet.summaryOrigin ? (
                           <AuthorBadge origin={studySet.summaryOrigin} />
                         ) : null}
-                        <p
-                          id="search-target-summary"
-                          className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
-                        >
-                          {studySet.summary}
-                        </p>
-                        {studySet.sections.map((section, index) => (
+                        {studySet.summary ? (
+                          <p
+                            id="search-target-summary"
+                            className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
+                          >
+                            {studySet.summary}
+                          </p>
+                        ) : null}
+                        {guideSections.map(({ section, originalIndex }) => (
                           <div
-                            id={`search-target-guide-${index}`}
-                            className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
-                            key={`${section.heading}-${index}`}
+                            id={`search-target-guide-${originalIndex}`}
+                            className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === originalIndex ? " search-target" : ""}`}
+                            key={`${section.heading}-${originalIndex}`}
                           >
                             <h4>
                               {section.heading}{" "}
@@ -810,6 +847,10 @@ function MaterialDetailPage() {
                       </section>
 
                       {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
+                    </div>
+                  ) : editingSet && studySet ? (
+                    <div className="stack stack--5">
+                      <StudySetEditor material={material} studySet={studySet} />
                     </div>
                   ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                     <p className="small muted">
@@ -878,7 +919,7 @@ function MaterialDetailPage() {
                 <CardHeader
                   title="Flashcards"
                   eyebrow={
-                    studySet && studySet.flashcards.length > 0
+                    studySet && guideFlashcards.length > 0
                       ? "Saved on this computer"
                       : material.filePath
                         ? "From this document"
@@ -909,7 +950,7 @@ function MaterialDetailPage() {
                           </label>
                           <Button
                             size="small"
-                            variant={studySet && studySet.flashcards.length > 0 ? "secondary" : "primary"}
+                            variant={studySet && guideFlashcards.length > 0 ? "secondary" : "primary"}
                             disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
                             onClick={() => {
                               if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
@@ -988,62 +1029,68 @@ function MaterialDetailPage() {
 
                   {studySet && studySet.flashcards.length > 0 ? (
                     <div className="stack stack--5">
-                      <section
-                        id="search-target-cards"
-                        className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
-                        aria-labelledby="flashcards-title"
-                      >
-                        <div className="row row--between">
-                          <div>
-                            <h3 id="flashcards-title" className="ai-guide__title">
-                              Card {cardIndex + 1} of {studySet.flashcards.length}
-                            </h3>
-                          </div>
-                          <div className="row row--wrap">
-                            {studySet.flashcards[cardIndex]?.pdfProvenance ? (
-                              <PdfItemLabel
-                                provenance={studySet.flashcards[cardIndex]?.pdfProvenance}
-                                origin={studySet.flashcards[cardIndex]?.origin}
-                              />
-                            ) : (
-                              <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />
-                            )}
-                            <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
-                          </div>
-                        </div>
-                        <button
-                          className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
-                          type="button"
-                          onClick={() => setCardRevealed((current) => !current)}
-                          aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
+                      {guideFlashcards.length > 0 ? (
+                        <section
+                          id="search-target-cards"
+                          className={`stack stack--3${linkTarget?.kind === "card" && !studySet.flashcards[linkTarget.index]?.pdfProvenance ? " search-target" : ""}`}
+                          aria-labelledby="flashcards-title"
                         >
-                          <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
-                          <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
-                          <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
-                        </button>
-                        <div className="row row--between">
-                          <Button
-                            size="small"
-                            disabled={cardIndex === 0}
-                            onClick={() => {
-                              setCardIndex((index) => index - 1);
-                              setCardRevealed(false);
-                            }}
+                          <div className="row row--between">
+                            <div>
+                              <h3 id="flashcards-title" className="ai-guide__title">
+                                Card {safeCardIndex + 1} of {guideFlashcards.length}
+                              </h3>
+                            </div>
+                            <div className="row row--wrap">
+                              {guideFlashcards[safeCardIndex]?.card.pdfProvenance ? (
+                                <PdfItemLabel
+                                  provenance={guideFlashcards[safeCardIndex]?.card.pdfProvenance}
+                                  origin={guideFlashcards[safeCardIndex]?.card.origin}
+                                />
+                              ) : (
+                                <AuthorBadge origin={guideFlashcards[safeCardIndex]?.card.origin} />
+                              )}
+                              <SourcePageBadge page={guideFlashcards[safeCardIndex]?.card.sourcePage} materialId={material.id} />
+                            </div>
+                          </div>
+                          <button
+                            className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
+                            type="button"
+                            onClick={() => setCardRevealed((current) => !current)}
+                            aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
                           >
-                            Previous
-                          </Button>
-                          <Button
-                            size="small"
-                            disabled={cardIndex >= studySet.flashcards.length - 1}
-                            onClick={() => {
-                              setCardIndex((index) => index + 1);
-                              setCardRevealed(false);
-                            }}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </section>
+                            <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
+                            <span>{cardRevealed ? guideFlashcards[safeCardIndex]?.card.back : guideFlashcards[safeCardIndex]?.card.front}</span>
+                            <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
+                          </button>
+                          <div className="row row--between">
+                            <Button
+                              size="small"
+                              disabled={safeCardIndex === 0}
+                              onClick={() => {
+                                setCardIndex((index) => index - 1);
+                                setCardRevealed(false);
+                              }}
+                            >
+                              Previous
+                            </Button>
+                            <Button
+                              size="small"
+                              disabled={safeCardIndex >= guideFlashcards.length - 1}
+                              onClick={() => {
+                                setCardIndex((index) => index + 1);
+                                setCardRevealed(false);
+                              }}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        </section>
+                      ) : !generatingCards && material.filePath && canOfferGemini ? (
+                        <p className="small muted">
+                          Gemini will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
+                        </p>
+                      ) : null}
 
                       <CardReviewPanel
                         materialId={material.id}
@@ -1052,11 +1099,11 @@ function MaterialDetailPage() {
                         contentKey={studySet.updatedAt}
                         autoStart={startCardReview}
                         browseCard={
-                          studySet.flashcards[cardIndex]
+                          guideFlashcards[safeCardIndex]
                             ? {
-                                index: cardIndex,
-                                front: studySet.flashcards[cardIndex]!.front,
-                                back: studySet.flashcards[cardIndex]!.back,
+                                index: guideFlashcards[safeCardIndex].originalIndex,
+                                front: guideFlashcards[safeCardIndex].card.front,
+                                back: guideFlashcards[safeCardIndex].card.back,
                               }
                             : null
                         }
@@ -1382,6 +1429,125 @@ function MaterialDetailPage() {
                 <CardBody><div className="stack stack--4">
                   <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div>
                   <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
+                  {hasKitItems ? (
+                    <div id="material-saved-pdf-kit" tabIndex={-1}>
+                      <Card>
+                        <CardHeader title="Your study kit" />
+                        <CardBody>
+                          <div className="stack stack--5">
+                            <div className="ai-disclaimer">
+                              <AlertIcon size={16} />
+                              <p className="tiny">{PDF_KIT_REMINDER}</p>
+                            </div>
+
+                            {kitSections.length > 0 ? (
+                              <section className="stack stack--3" aria-labelledby="kit-sections-title">
+                                <div>
+                                  <p className="eyebrow">Study guide</p>
+                                  <h4 id="kit-sections-title" className="ai-guide__title">{studySet?.title}</h4>
+                                </div>
+                                {kitSections.map(({ section, originalIndex }) => {
+                                  const pages = [...new Set(section.pdfProvenance?.sources?.map((s) => s.page) ?? [])];
+                                  return (
+                                    <div
+                                      id={`search-target-guide-${originalIndex}`}
+                                      className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === originalIndex ? " search-target" : ""}`}
+                                      key={`${section.heading}-${originalIndex}`}
+                                    >
+                                      <h4>
+                                        {section.heading}{" "}
+                                        {section.pdfProvenance ? (
+                                          <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} />
+                                        ) : (
+                                          <AuthorBadge origin={section.origin} />
+                                        )}
+                                        {pages.map((page) => (
+                                          <SourcePageBadge key={page} page={page} materialId={material.id} />
+                                        ))}
+                                      </h4>
+                                      <GuideBody className="small" text={section.body} />
+                                    </div>
+                                  );
+                                })}
+                              </section>
+                            ) : null}
+
+                            {kitFlashcards.length > 0 ? (
+                              <section
+                                id="search-target-kit-cards"
+                                className={`stack stack--3${linkTarget?.kind === "card" && Boolean(studySet?.flashcards[linkTarget.index]?.pdfProvenance) ? " search-target" : ""}`}
+                                aria-labelledby="kit-flashcards-title"
+                              >
+                                <div className="row row--between">
+                                  <div>
+                                    <p className="eyebrow">Flashcards</p>
+                                    <h4 id="kit-flashcards-title" className="ai-guide__title">
+                                      Card {safeKitCardIndex + 1} of {kitFlashcards.length}
+                                    </h4>
+                                  </div>
+                                  <div className="row row--wrap">
+                                    {kitFlashcards[safeKitCardIndex]?.card.pdfProvenance ? (
+                                      <PdfItemLabel
+                                        provenance={kitFlashcards[safeKitCardIndex]?.card.pdfProvenance}
+                                        origin={kitFlashcards[safeKitCardIndex]?.card.origin}
+                                      />
+                                    ) : (
+                                      <AuthorBadge origin={kitFlashcards[safeKitCardIndex]?.card.origin} />
+                                    )}
+                                    <SourcePageBadge
+                                      page={
+                                        kitFlashcards[safeKitCardIndex]?.card.sourcePage ??
+                                        kitFlashcards[safeKitCardIndex]?.card.pdfProvenance?.sources?.[0]?.page
+                                      }
+                                      materialId={material.id}
+                                    />
+                                  </div>
+                                </div>
+                                <button
+                                  className={`flashcard${kitCardRevealed ? " is-revealed" : ""}`}
+                                  type="button"
+                                  onClick={() => setKitCardRevealed((current) => !current)}
+                                  aria-label={kitCardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
+                                >
+                                  <span className="tiny dim">{kitCardRevealed ? "Answer" : "Question"}</span>
+                                  <span>
+                                    {kitCardRevealed
+                                      ? kitFlashcards[safeKitCardIndex]?.card.back
+                                      : kitFlashcards[safeKitCardIndex]?.card.front}
+                                  </span>
+                                  <span className="tiny dim">
+                                    Click to {kitCardRevealed ? "see the question" : "reveal the answer"}
+                                  </span>
+                                </button>
+                                <div className="row row--between">
+                                  <Button
+                                    size="small"
+                                    disabled={safeKitCardIndex === 0}
+                                    onClick={() => {
+                                      setKitCardIndex((index) => index - 1);
+                                      setKitCardRevealed(false);
+                                    }}
+                                  >
+                                    Previous
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    disabled={safeKitCardIndex >= kitFlashcards.length - 1}
+                                    onClick={() => {
+                                      setKitCardIndex((index) => index + 1);
+                                      setKitCardRevealed(false);
+                                    }}
+                                  >
+                                    Next
+                                  </Button>
+                                </div>
+                              </section>
+                            ) : null}
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </div>
+                  ) : null}
                 </div></CardBody>
               </Card>
             </section>

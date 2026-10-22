@@ -98,6 +98,22 @@ it.each([
 it("preview_page_links_open_viewer_at_page", async () => {
   const scope = await preview(); fireEvent.click(scope.getAllByRole("button", { name: "Open PDF page 2" })[0]!); await waitFor(() => expect(request).toHaveBeenCalledWith({ materialId: material.id, reference: 2, provenance: "physical_index" })); expect(offline.verifyOfflineDestination).toHaveBeenCalledWith(material.id, "a".repeat(64));
 });
+it("ticked Keep labels are not struck through in review", async () => {
+  const scope = await preview();
+  const keepSection = scope.getByLabelText("Keep section 1") as HTMLInputElement;
+  expect(keepSection.checked).toBe(true);
+  const labelSpan = scope.getByText("Keep section 1");
+  const checkboxLabel = labelSpan.closest(".checkbox");
+  expect(checkboxLabel?.classList.contains("checkbox--no-strike")).toBe(true);
+  expect(labelSpan.style.textDecoration).not.toBe("line-through");
+
+  const keepCard = scope.getByLabelText("Keep card 1") as HTMLInputElement;
+  expect(keepCard.checked).toBe(true);
+  const cardLabelSpan = scope.getByText("Keep card 1");
+  const cardCheckboxLabel = cardLabelSpan.closest(".checkbox");
+  expect(cardCheckboxLabel?.classList.contains("checkbox--no-strike")).toBe(true);
+  expect(cardLabelSpan.style.textDecoration).not.toBe("line-through");
+});
 it("save_sends_sources_only_for_kept_items_with_final_hashes", async () => {
   const scope = await preview(); fireEvent.change(scope.getByLabelText("Card 1 answer"), { target: { value: "My final answer" } }); fireEvent.click(scope.getByLabelText("Keep section 1")); await saveKit(); await screen.findByText("Study kit saved."); const op = save.mock.calls[0]![0]; expect(op.next.sections).toEqual([]); expect(op.pdfKitSources.items.every((i: { itemKind: string }) => i.itemKind === "card")).toBe(true); expect(op.pdfKitSources.items[0].contentHash).toBe(await pdfKitContentHash("card", op.next.flashcards[0]));
 });

@@ -52,7 +52,9 @@ describe("describeReadiness", () => {
   });
 
   it("says plainly that reading stays on this Mac", () => {
-    expect(describeReadiness({ state: "notPrepared" }).detail).toMatch(/nothing is sent anywhere/);
+    expect(describeReadiness({ state: "notPrepared" }).detail).toBe(
+      "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
+    );
   });
 
   it("explains known refusals and keeps unknown codes generic and private", () => {

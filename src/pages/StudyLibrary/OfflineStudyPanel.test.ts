@@ -56,7 +56,11 @@ describe("Offline study panel", () => {
     service.prepare.mockResolvedValue(row({ state: "preparing" }));
     render(h(OfflineStudyPanel, { material: pdf }));
     expect(await screen.findByText("Not read yet")).toBeTruthy();
-    expect(screen.getByText(/nothing is sent anywhere/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
+      ),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Read this PDF's text" }));
     expect(await screen.findByText("Reading text…")).toBeTruthy();
     expect(service.prepare).toHaveBeenCalledWith("m1");

@@ -109,11 +109,12 @@ interface CheckboxProps {
   /** Supporting detail shown under the label, never struck through. */
   meta?: ReactNode;
   disabled?: boolean;
+  strikethrough?: boolean;
 }
 
-export function Checkbox({ checked, onChange, label, meta, disabled }: CheckboxProps) {
+export function Checkbox({ checked, onChange, label, meta, disabled, strikethrough = true }: CheckboxProps) {
   return (
-    <label className="checkbox">
+    <label className={`checkbox${!strikethrough ? " checkbox--no-strike" : ""}`}>
       <input
         type="checkbox"
         checked={checked}
@@ -126,7 +127,12 @@ export function Checkbox({ checked, onChange, label, meta, disabled }: CheckboxP
         </svg>
       </span>
       <span className="checkbox__body">
-        <span className="checkbox__label">{label}</span>
+        <span
+          className="checkbox__label"
+          style={!strikethrough ? { textDecoration: "none" } : undefined}
+        >
+          {label}
+        </span>
         {meta ? <span className="checkbox__meta">{meta}</span> : null}
       </span>
     </label>

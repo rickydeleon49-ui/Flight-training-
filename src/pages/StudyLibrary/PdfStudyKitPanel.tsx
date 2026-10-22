@@ -683,6 +683,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                     <Checkbox
                       label={`Keep ${noun} ${at}`}
                       checked={item.kept}
+                      strikethrough={false}
                       onChange={kept => update(item.id, { kept })}
                     />
                     <PdfItemLabel
@@ -713,6 +714,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                     <Checkbox
                       label={`My instructor corrected ${noun} ${at}`}
                       checked={item.instructor}
+                      strikethrough={false}
                       onChange={instructor => update(item.id, { instructor })}
                     />
                   </fieldset>

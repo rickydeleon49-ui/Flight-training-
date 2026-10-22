@@ -68,7 +68,8 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "notPrepared":
       return {
         label: "Not read yet",
-        detail: "Not read yet. Reading reads the text on your Mac; nothing is sent anywhere.",
+        detail:
+          "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
         tone: "neutral",
         canPrepare: true,
         settling: false,
