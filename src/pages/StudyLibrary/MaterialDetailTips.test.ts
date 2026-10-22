@@ -66,7 +66,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
   const headings = within(column as HTMLElement).getAllByRole("heading", { level: 2 }).map(node => node.textContent);
-  expect(headings.slice(0, 9)).toEqual(["Start here", "Gemini study assistant", "Practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
+  expect(headings.slice(0, 9)).toEqual(["Start here", "Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
   const file = document.getElementById("material-file-actions")!;
   const geminiSection = document.getElementById("material-study-guide")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
@@ -82,7 +82,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   expect(within(backup).getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
 });
 
-const sectionTitles = ["Gemini study assistant", "Practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
+const sectionTitles = ["Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
 it("shows a short muted tip under every section header and Hide tips hides them across visits", async () => {
   let view = await openPage();
   const tips = sectionTitles.map(title => {
@@ -114,7 +114,7 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
   expect(screen.queryByRole("heading", { name: "Start here" })).toBeNull();
   expect(screen.queryByRole("region", { name: "On this Mac (backup)" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();
-  expect(screen.getByRole("button", { name: "Write your own study guide" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Write your own study guide" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
   expect(screen.queryByText("Write what you want to remember. Your notes save as you type; watch for Saved.")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Show tips" }));
@@ -122,13 +122,13 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
 });
 
 
-it("places a saved guide written by her after practice and keeps its source label", async () => {
+it("places a saved guide written by her before flashcards and keeps its source label", async () => {
   await createRepositories(db).documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "tips", reason: "create", expected: null,
     next: { title: "My guide", summary: "My summary", summaryOrigin: "user", sections: [], flashcards: [], sourceNotes: "", provider: "manual", model: "", retired: [] } });
   await openPage();
-  const guide = screen.getByRole("heading", { name: "Your study guide" }).closest(".card")!;
+  const guide = screen.getByRole("heading", { name: "Study guide" }).closest(".card")!;
   const practice = document.getElementById("material-practice-test")!;
-  expect(practice.compareDocumentPosition(guide) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(guide.compareDocumentPosition(practice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(within(guide as HTMLElement).getByText("Written by you, saved on this computer")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Write your own study guide" })).toBeNull();
 });

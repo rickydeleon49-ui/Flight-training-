@@ -36,12 +36,13 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); });
 it("guides a large unsplit PDF toward parts using the real limits", async () => {
   open();
   await act(async () => {});
-  expect(steps()).toHaveLength(4);
+  expect(steps()).toHaveLength(5);
   expect(steps()[0]!.textContent).toContain("Do this next");
   expect(steps()[0]!.textContent).toContain("204.7 MB, 500 pages");
   expect(steps()[0]!.textContent).toContain("50 MB or 1,000 pages");
   expect(steps()[0]!.textContent).toContain("Choose a study-size PDF");
-  expect(steps()[1]!.textContent).toContain("Ask Gemini for a study guide and flashcards");
+  expect(steps()[1]!.textContent).toContain("Create a study guide");
+  expect(steps()[1]!.textContent).not.toContain("study guide and flashcards");
   expect(steps()[1]!.textContent).toContain("Her Flight Deck sends this file to Google after you confirm");
   expect(steps()[1]!.textContent).not.toContain("Gemini sends this file to Google");
   expect(steps()[1]!.textContent).toContain("section by section");
@@ -76,7 +77,7 @@ it("shows text read and a kit waiting, then takes her to draft review", async ()
   await screen.findByText("A study kit is waiting for review.");
   expect(steps()[0]!.textContent).toContain("Done");
   expect(steps()[1]!.textContent).toContain("Do this next");
-  expect(steps()[2]!.textContent).toContain("Do this next");
+  expect(steps()[4]!.textContent).toContain("Do this next");
   expect(steps()[3]!.textContent).toContain("optional");
   expect(screen.getByText("Text read on this Mac: 12 pages.")).toBeTruthy();
   const target = document.createElement("div"); target.id = "material-pdf-kit"; target.scrollIntoView = vi.fn(); document.body.append(target);
@@ -94,7 +95,7 @@ it("remembers hide and show for this viewer across material visits", () => {
   expect(screen.queryByRole("list", { name: "PDF study steps" })).toBeNull(); first.unmount();
   const second = open({ material: { ...material, id: "another" } });
   expect(screen.getByRole("button", { name: "Show tips" }).getAttribute("aria-expanded")).toBe("false");
-  fireEvent.click(screen.getByRole("button", { name: "Show tips" })); expect(steps()).toHaveLength(4); second.unmount();
+  fireEvent.click(screen.getByRole("button", { name: "Show tips" })); expect(steps()).toHaveLength(5); second.unmount();
   open(); expect(screen.getByRole("button", { name: "Hide tips" }).getAttribute("aria-expanded")).toBe("true");
 });
 
@@ -104,16 +105,16 @@ it("keeps hide and show usable when localStorage reads and writes throw", () => 
   const uncaught = vi.fn((event: ErrorEvent) => event.preventDefault());
   window.addEventListener("error", uncaught);
   try {
-    open(); expect(steps()).toHaveLength(4);
+    open(); expect(steps()).toHaveLength(5);
     fireEvent.click(screen.getByRole("button", { name: "Hide tips" })); expect(screen.queryByRole("list", { name: "PDF study steps" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Show tips" })); expect(steps()).toHaveLength(4);
+    fireEvent.click(screen.getByRole("button", { name: "Show tips" })); expect(steps()).toHaveLength(5);
     expect(uncaught).not.toHaveBeenCalled();
   } finally { window.removeEventListener("error", uncaught); }
 });
 
 it("explains desktop-only steps in browser mode without calling native services", () => {
   desktop = false; open();
-  expect(screen.getAllByText(/Works in the desktop app/)).toHaveLength(3);
+  expect(screen.getAllByText(/Works in the desktop app/)).toHaveLength(4);
   for (const button of screen.getAllByRole("button").filter(b => b.textContent !== "Hide tips")) expect(button.hasAttribute("disabled")).toBe(true);
   expect(offline.offlineContentReadiness).not.toHaveBeenCalled(); expect(documents.listPdfStudyKitJobs).not.toHaveBeenCalled();
 });
@@ -124,7 +125,7 @@ it("reports partial reading honestly and distinguishes running or cancelled kits
   const view = open({ material: { ...material, fileSize: 2048 } });
   await screen.findByText("Text read on this Mac: 8 of 12 pages.");
   expect(steps()[1]!.textContent).toContain("Do this next");
-  expect(steps()[2]!.textContent).toContain("Ask for a guide first");
+  expect(steps()[4]!.textContent).toContain("Ask for a guide first");
   view.unmount();
   vi.mocked(documents.listPdfStudyKitJobs).mockResolvedValue([{ id: "cancelled", materialId: material.id, stage: "cancelled", createdAt: 2 }]);
   open({ material: { ...material, fileSize: 2048 } });
@@ -136,7 +137,7 @@ it("shows a saved Gemini guide and leaves a new draft ready to review", async ()
   open({ studySet: saved, geminiDraftWaiting: true, material: { ...material, fileSize: 2048 } });
   await screen.findByText("Gemini guide saved."); expect(screen.getByText("A Gemini draft is waiting for review.")).toBeTruthy();
   expect(steps()[1]!.textContent).toContain("Done");
-  expect(steps()[2]!.textContent).toContain("Do this next");
+  expect(steps()[4]!.textContent).toContain("Do this next");
 });
 
 it("refreshes panel work and ignores a retired file's late answer", async () => {
@@ -188,7 +189,7 @@ it("does not turn failed status reads into done or a kit waiting for review", as
   open({ material: { ...material, fileSize: 1024 } });
   await act(async () => {});
   expect(steps()[1]!.textContent).toContain("Do this next");
-  expect(steps()[2]!.textContent).toContain("Ask for a guide first");
+  expect(steps()[4]!.textContent).toContain("Ask for a guide first");
   expect(screen.queryByText("What's been done with this PDF")).toBeNull();
 });
 

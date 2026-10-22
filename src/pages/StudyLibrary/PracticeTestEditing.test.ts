@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
+import { StartManualPracticeTest } from "@/pages/StudyLibrary/PracticeTestEditing";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
@@ -26,8 +27,23 @@ function Probe() {
   return null;
 }
 function Ready() {
-  const { status } = useAppData();
-  return status === "ready" ? h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) })) : null;
+  const { status, data } = useAppData();
+  const material = data.materials.find((m) => m.id === materialId);
+  return status === "ready"
+    ? h(
+        Routes,
+        null,
+        h(Route, {
+          path: "/study/:materialId",
+          element: h(
+            "div",
+            null,
+            h(MaterialDetail),
+            material ? h(StartManualPracticeTest, { material }) : null,
+          ),
+        }),
+      )
+    : null;
 }
 
 async function open(path: string) {

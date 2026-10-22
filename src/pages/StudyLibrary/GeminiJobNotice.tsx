@@ -28,7 +28,7 @@ export function GeminiJobNotice({
   onReview?: () => void;
   reviewDisabled?: boolean;
 }) {
-  const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
+  const what = job.kind === "study-aid" ? "study guide and cards" : job.kind === "flashcards" ? "flashcards" : "practice test";
   const busy = jobs.busy;
 
   if (
@@ -83,7 +83,7 @@ export function GeminiJobNotice({
                 ? `A completed new ${what} is ready for this document. It has not been saved yet.`
                 : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
             {onReview
-              ? `Your ${job.kind === "study-aid" ? "study guide has items" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
+              ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>

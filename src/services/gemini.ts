@@ -108,7 +108,7 @@ export interface GenerationJobIdentity {
   checkpointed?: boolean;
 }
 
-export type GeminiJobKind = "study-aid" | "practice-test";
+export type GeminiJobKind = "study-aid" | "practice-test" | "flashcards";
 export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted" | "cancelled";
 
 /**
