@@ -592,7 +592,7 @@ function MaterialDetailPage() {
             />
           ) : null}
 
-          {isPdf && material.filePath ? <PdfStudyKitPanel material={material} /> : null}
+          {isPdf && material.filePath ? <PdfStudyKitPanel key={material.id} material={material} /> : null}
 
           {material.filePath ? <OfflineStudyPanel material={material} /> : null}
 

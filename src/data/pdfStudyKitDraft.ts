@@ -9,6 +9,11 @@ interface OutlineCandidate { heading: string; sourcePage: number; sentences: { t
 interface QuestionCandidate { prompt: string; answer: string; choices: string[]; correctIndex: number; sourcePage: number; evidence: KitEvidence[]; choiceEvidence: KitEvidence[][] }
 export interface KitCandidates { glossary: CardCandidate[]; cloze: CardCandidate[]; outline: OutlineCandidate[]; questions: QuestionCandidate[] }
 export interface KitReviewItem { id: string; kind: "section" | "card"; fields: string[]; kept: boolean; instructor: boolean }
+/** Only explicit counts prove that extraction found no usable text. */
+export function kitHasNoUsableText(draft: PdfStudyKitDraft): boolean {
+  return Array.isArray(draft.candidates?.pagesUsed)
+    && draft.candidates.pagesUsed.length === 0 && draft.candidates.pagesSkippedAmbiguous === 0;
+}
 export function kitCandidates(draft: PdfStudyKitDraft): KitCandidates {
   const c = draft.candidates as unknown as KitCandidates;
   if (!c || !Array.isArray(c.glossary) || !Array.isArray(c.cloze) || !Array.isArray(c.outline) || !Array.isArray(c.questions) || c.glossary.length > 40 || c.cloze.length > 40 || c.outline.length > 40 || c.questions.length > 20) throw new Error("INVALID_DRAFT");

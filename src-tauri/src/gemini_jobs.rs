@@ -187,6 +187,17 @@ fn valid_identity(value: &str) -> bool {
     !value.is_empty() && value.len() <= MAX_ID_BYTES && !value.chars().any(char::is_control)
 }
 
+/// Admission failures stay structured until the PDF-kit IPC boundary.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum PdfKitBeginError {
+    ExistsSame { job_id: String, material_id: String },
+    InProgressOther { job_id: String, material_id: String },
+    Full,
+    Recovery,
+    Invalid,
+    Storage,
+}
+
 /// The journal of one data folder.
 pub(crate) struct Journal {
     root: PathBuf,
@@ -436,26 +447,55 @@ impl Journal {
         path: &str,
         hash: &str,
         draft: Value,
-    ) -> Result<String, String> {
+    ) -> Result<String, PdfKitBeginError> {
         if self.quarantined {
-            return Err("The local draft journal needs recovery first.".into());
+            return Err(PdfKitBeginError::Recovery);
+        }
+        // Cancellation is durable until its worker settles. Only then may the
+        // normal acknowledgement path remove it; never erase a live cancel.
+        let cancelled: Vec<String> = self
+            .jobs
+            .iter()
+            .filter(|j| {
+                j.kind == JobKind::PdfKit
+                    && j.material_id == material
+                    && j.stage == JobStage::Cancelled
+            })
+            .map(|j| j.id.clone())
+            .collect();
+        for id in cancelled {
+            self.acknowledge(&id)
+                .map_err(|_| PdfKitBeginError::Storage)?;
+        }
+        if let Some(j) = self
+            .jobs
+            .iter()
+            .find(|j| j.kind == JobKind::PdfKit && j.material_id == material)
+        {
+            return Err(PdfKitBeginError::ExistsSame {
+                job_id: j.id.clone(),
+                material_id: j.material_id.clone(),
+            });
+        }
+        if let Some(j) = self.jobs.iter().find(|j| {
+            j.kind == JobKind::PdfKit && (j.stage == JobStage::Running || self.live.contains(&j.id))
+        }) {
+            return Err(PdfKitBeginError::InProgressOther {
+                job_id: j.id.clone(),
+                material_id: j.material_id.clone(),
+            });
         }
         if self.jobs.len() >= MAX_JOBS {
-            return Err(FULL.into());
-        }
-        if self.jobs.iter().any(|j| {
-            j.kind == JobKind::PdfKit && (j.stage == JobStage::Running || j.material_id == material)
-        }) {
-            return Err("Save or explicitly discard the earlier PDF kit first.".into());
+            return Err(PdfKitBeginError::Full);
         }
         if !valid_identity(material)
             || !valid_identity(path)
             || serde_json::to_vec(&draft)
-                .map_err(|_| "Invalid PDF kit")?
+                .map_err(|_| PdfKitBeginError::Invalid)?
                 .len()
                 > MAX_RESULT_BYTES
         {
-            return Err("The PDF kit is too large to keep.".into());
+            return Err(PdfKitBeginError::Invalid);
         }
         let id = new_id();
         let mut next = self.jobs.clone();
@@ -474,7 +514,7 @@ impl Journal {
             draft: Some(draft),
             error: None,
         });
-        self.commit(next)?;
+        self.commit(next).map_err(|_| PdfKitBeginError::Storage)?;
         self.live.insert(id.clone());
         Ok(id)
     }
