@@ -116,7 +116,7 @@ function PdfStartHere({ material, materials, studySet, geminiDraftWaiting, fileM
           </li>
           <li>
             <p className="small strong">Ask Gemini for a study guide and flashcards <span className="tiny muted">— {makeState}</span></p>
-            <p className="tiny muted">Gemini sends this file to Google after you confirm. It builds your guide section by section; the completed draft waits for you to save it.</p>
+            <p className="tiny muted">Her Flight Deck sends this file to Google after you confirm. It builds your guide section by section; the completed draft waits for you to save it.</p>
             <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-study-guide")}>Go to Gemini guide</Button>
           </li>
           <li>

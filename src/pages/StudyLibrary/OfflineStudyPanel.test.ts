@@ -51,16 +51,16 @@ describe("Offline study panel", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("offers preparation, then shows that it is under way", async () => {
+  it("offers reading, then shows that it is under way", async () => {
     service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
     service.prepare.mockResolvedValue(row({ state: "preparing" }));
     render(h(OfflineStudyPanel, { material: pdf }));
-    expect(await screen.findByText("Not prepared")).toBeTruthy();
+    expect(await screen.findByText("Not read yet")).toBeTruthy();
     expect(screen.getByText(/nothing is sent anywhere/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Prepare for offline study" }));
-    expect(await screen.findByText("Preparing search")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Read this PDF's text" }));
+    expect(await screen.findByText("Reading text…")).toBeTruthy();
     expect(service.prepare).toHaveBeenCalledWith("m1");
-    expect(screen.queryByRole("button", { name: "Prepare for offline study" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Read this PDF's text" })).toBeNull();
   });
 
   it("looks again while a state is settling, until it settles", async () => {
@@ -74,11 +74,11 @@ describe("Offline study panel", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(RECHECK_MS);
     });
-    expect(await screen.findByText("Preparing search")).toBeTruthy();
+    expect(await screen.findByText("Reading text…")).toBeTruthy();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(RECHECK_MS);
     });
-    expect(await screen.findByText("Ready for offline search: all 524 pages.")).toBeTruthy();
+    expect(await screen.findByText("Text read on this Mac: all 524 pages.")).toBeTruthy();
     const calls = service.readiness.mock.calls.length;
     await act(async () => {
       await vi.advanceTimersByTimeAsync(RECHECK_MS * 3);
@@ -92,12 +92,12 @@ describe("Offline study panel", () => {
       .mockResolvedValueOnce([row({ state: "preparing" })])
       .mockResolvedValue([row({ state: "notPrepared" })]);
     render(h(OfflineStudyPanel, { material: pdf }));
-    expect(await screen.findByText("Preparing search")).toBeTruthy();
+    expect(await screen.findByText("Reading text…")).toBeTruthy();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(RECHECK_MS);
     });
-    expect(await screen.findByText("Preparing didn't finish this time. You can try again.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Prepare for offline study" })).toBeTruthy();
+    expect(await screen.findByText("Reading didn't finish this time. You can try again.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Read this PDF's text" })).toBeTruthy();
   });
 
   it("drops the old file's answer when the file is replaced under the same material", async () => {
@@ -109,12 +109,12 @@ describe("Offline study panel", () => {
     await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(1));
     const replaced = { ...pdf, fileSize: 999, updatedAt: "2026-10-19T12:00:00.000Z" };
     rerender(h(OfflineStudyPanel, { material: replaced }));
-    expect(await screen.findByText("Not prepared")).toBeTruthy();
+    expect(await screen.findByText("Not read yet")).toBeTruthy();
     expect(service.readiness).toHaveBeenCalledTimes(2);
     // The old file's late answer arrives and is ignored.
     await act(async () => answerOld([row({ state: "searchable", pages: 524 })]));
-    expect(screen.queryByText("Searchable")).toBeNull();
-    expect(screen.getByText("Not prepared")).toBeTruthy();
+    expect(screen.queryByText("Text read")).toBeNull();
+    expect(screen.getByText("Not read yet")).toBeTruthy();
   });
 
   it("forgets a settled state when the file is replaced", async () => {
@@ -122,10 +122,10 @@ describe("Offline study panel", () => {
       .mockResolvedValueOnce([row({ state: "searchable", pages: 524 })])
       .mockImplementation(() => new Promise(() => {}));
     const { rerender } = render(h(OfflineStudyPanel, { material: pdf }));
-    expect(await screen.findByText("Searchable")).toBeTruthy();
+    expect(await screen.findByText("Text read")).toBeTruthy();
     rerender(h(OfflineStudyPanel, { material: { ...pdf, filePath: "m1-restored.pdf" } }));
     await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(2));
-    expect(screen.queryByText("Searchable")).toBeNull();
+    expect(screen.queryByText("Text read")).toBeNull();
   });
 
   it("uses neutral wording when some pages couldn't be read", async () => {
@@ -133,17 +133,62 @@ describe("Offline study panel", () => {
       row({ state: "partial", searchable: 497, pages: 524, imagePages: 1, reason: "someUnreadable" }),
     ]);
     render(h(OfflineStudyPanel, { material: pdf }));
-    expect(await screen.findByText("Ready for offline search on 497 of 524 pages. Some pages couldn't be read.")).toBeTruthy();
-    expect(screen.getByText("Partly searchable")).toBeTruthy();
+    expect(await screen.findByText("Text read on 497 of 524 pages. Some pages couldn't be read.")).toBeTruthy();
+    expect(screen.getByText("Partly read")).toBeTruthy();
   });
 
   it("says so plainly if preparation can't start", async () => {
     service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
     service.prepare.mockRejectedValue("offline_extraction_disabled");
     render(h(OfflineStudyPanel, { material: pdf }));
-    fireEvent.click(await screen.findByRole("button", { name: "Prepare for offline study" }));
-    expect(await screen.findByText("Preparing for offline study couldn't start. Please try again.")).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Read this PDF's text" }));
+    expect(await screen.findByText("Reading this PDF's text couldn't start. Please try again.")).toBeTruthy();
     expect(screen.queryByText(/offline_extraction_disabled/)).toBeNull();
+  });
+
+  it("shows the too-large line and no button for a 204.7 MB PDF, and shows the button for a 20 MB PDF", async () => {
+    service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
+    const largePdf = makeMaterial({
+      id: "large",
+      title: "AMT Powerplant Handbook",
+      filePath: "amt_powerplant_handbook.pdf",
+      fileSize: Math.round(204.7 * 1024 * 1024),
+    });
+    const { rerender } = render(h(OfflineStudyPanel, { material: largePdf }));
+    expect(await screen.findByText("Read this PDF's text")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Read this PDF's text" })).toBeNull();
+
+    const normalPdf = makeMaterial({
+      id: "normal",
+      title: "Handbook",
+      filePath: "handbook.pdf",
+      fileSize: 20 * 1024 * 1024,
+    });
+    rerender(h(OfflineStudyPanel, { material: normalPdf }));
+    expect(await screen.findByRole("button", { name: "Read this PDF's text" })).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.",
+      ),
+    ).toBeNull();
+  });
+
+  it("does not render any old phrases (Offline study, Prepare for offline study, Not prepared, Searchable, etc.)", async () => {
+    service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
+    render(h(OfflineStudyPanel, { material: pdf }));
+    await screen.findByRole("heading", { name: "Read this PDF's text" });
+    expect(screen.queryByRole("heading", { name: "Offline study" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Prepare for offline study" })).toBeNull();
+    expect(screen.queryByText("Not prepared")).toBeNull();
+    expect(screen.queryByText("Searchable")).toBeNull();
+    expect(screen.queryByText("Preparing search")).toBeNull();
+    expect(screen.queryByText("Partly searchable")).toBeNull();
+    expect(screen.queryByText("Could not prepare")).toBeNull();
   });
 });
 
@@ -169,7 +214,7 @@ describe("Library offline badges", () => {
       makeMaterial({ id: "d", filePath: null }),
     ];
     render(h(BadgeProbe, { materials: shown }));
-    expect(await screen.findByText("a:Searchable")).toBeTruthy();
+    expect(await screen.findByText("a:Text read")).toBeTruthy();
     expect(service.readiness).toHaveBeenCalledTimes(1);
     expect(service.readiness).toHaveBeenCalledWith(["a", "b"]);
     expect(screen.queryByText(/^b:/)).toBeNull();
@@ -184,9 +229,9 @@ describe("Library offline badges", () => {
     const { rerender } = render(h(BadgeProbe, { materials: [a] }));
     await waitFor(() => expect(service.readiness).toHaveBeenCalledTimes(1));
     rerender(h(BadgeProbe, { materials: [{ ...a, fileSize: 20 }] }));
-    expect(await screen.findByText("a:Not prepared")).toBeTruthy();
+    expect(await screen.findByText("a:Not read yet")).toBeTruthy();
     await act(async () => answerOld([row({ state: "searchable", pages: 3 }, "a")]));
-    expect(screen.queryByText("a:Searchable")).toBeNull();
+    expect(screen.queryByText("a:Text read")).toBeNull();
     expect(service.readiness).toHaveBeenCalledTimes(2);
   });
 

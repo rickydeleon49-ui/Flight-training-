@@ -190,13 +190,7 @@ export async function cleanupDocuments(
   return relativePaths.filter((_, index) => results[index]?.status === "rejected");
 }
 
-/** Human-readable file size, e.g. "1.4 MB". */
-export function formatFileSize(bytes: number | null): string {
-  if (bytes == null) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+export { formatFileSize } from "@/logic/aiLimits";
 
 /** Compare database file references with app-owned document storage. */
 export async function checkLibrary(): Promise<LibraryReport> {

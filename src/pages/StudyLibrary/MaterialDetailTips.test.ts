@@ -77,7 +77,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   expect(column.lastElementChild).toBe(backup);
   expect(backup.contains(document.getElementById("material-offline-study"))).toBe(true);
   expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(true);
-  expect(await within(backup).findByRole("heading", { name: "Offline study" })).toBeTruthy();
+  expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
   expect(within(backup).getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
   expect(within(backup).getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
 });
@@ -141,6 +141,6 @@ it("keeps file-backed text materials working without PDF-only controls", async (
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Split automatically" })).toBeNull();
   expect(screen.getByRole("heading", { name: "Gemini study assistant" })).toBeTruthy();
-  expect(await screen.findByRole("heading", { name: "Offline study" })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Open" })).toBeTruthy();
 });
