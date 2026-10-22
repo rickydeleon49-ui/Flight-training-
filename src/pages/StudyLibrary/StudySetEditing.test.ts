@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
+import { StartManualStudySet } from "@/pages/StudyLibrary/StudySetEditor";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
@@ -33,8 +34,23 @@ function Probe() {
   return null;
 }
 function Ready() {
-  const { status } = useAppData();
-  return status === "ready" ? h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) })) : null;
+  const { status, data } = useAppData();
+  const material = data.materials.find((m) => m.id === "mat-n");
+  return status === "ready"
+    ? h(
+        Routes,
+        null,
+        h(Route, {
+          path: "/study/:materialId",
+          element: h(
+            "div",
+            null,
+            h(MaterialDetail),
+            material ? h(StartManualStudySet, { material }) : null,
+          ),
+        }),
+      )
+    : null;
 }
 
 async function open(path: string) {
@@ -121,7 +137,7 @@ describe("a study guide she writes herself", { timeout: TEST_TIMEOUT }, () => {
     fireEvent.click(create.getByRole("button", { name: "Create study guide" }));
 
     await screen.findByText("Your study guide", undefined, SLOW_RUNNER);
-    expect(screen.getByText(/A study guide you wrote/)).toBeTruthy();
+    expect(screen.getAllByText(/A study guide you wrote/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/AI-generated study aid/)).toBeNull();
     expect((await savedSet()).provider).toBe("manual");
 

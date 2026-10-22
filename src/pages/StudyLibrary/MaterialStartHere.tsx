@@ -81,7 +81,11 @@ function PdfStartHere({ material, materials, studySet, geminiDraftWaiting, fileM
   const kitWaiting = kit?.stage === "received";
   const waiting = kitWaiting || geminiDraftWaiting;
   const unavailable = !desktop ? "Works in the desktop app" : !material.filePath ? "Attach a PDF file first" : fileMissing ? "Restore this PDF's file first" : null;
-  const makeState = geminiDraftWaiting || studySet?.provider === "gemini" ? "Done" : unavailable ?? (large ? "Open a study-size part first" : "Do this next");
+  const hasGuide = Boolean(studySet && (studySet.summary || studySet.sections.length > 0));
+  const hasCards = Boolean(studySet && studySet.flashcards.length > 0);
+  const guideState = geminiDraftWaiting || studySet?.provider === "gemini" || hasGuide ? "Done" : unavailable ?? (large ? "Open a study-size part first" : "Do this next");
+  const cardsState = hasCards ? "Done" : unavailable ?? "When you're ready";
+  const practiceState = practiceTestSaved ? "Done" : unavailable ?? "When you're ready";
   const reviewState = waiting ? "Do this next" : studySet ? "Done" : "Ask for a guide first";
   const jump = (id: string) => {
     const target = document.getElementById(id);
@@ -115,19 +119,24 @@ function PdfStartHere({ material, materials, studySet, geminiDraftWaiting, fileM
             {parts[0] ? <Link className="button button--secondary button--small" to={`/study/${encodeURIComponent(parts[0].id)}`}>Open first part: {parts[0].title}</Link> : <Button size="small" variant="secondary" onClick={() => jump("material-file-actions")} disabled={Boolean(unavailable)}>See split and open options</Button>}
           </li>
           <li>
-            <p className="small strong">Ask Gemini for a study guide <span className="tiny muted">— {makeState}</span></p>
+            <p className="small strong">Create a study guide <span className="tiny muted">— {guideState}</span></p>
             <p className="tiny muted">Her Flight Deck sends this file to Google after you confirm. It builds your guide section by section; the completed draft waits for you to save it.</p>
-            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-study-guide")}>Go to Gemini guide</Button>
+            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-study-guide")}>Go to study guide</Button>
           </li>
           <li>
-            <p className="small strong">Review and save what you want to keep <span className="tiny muted">— {reviewState}</span></p>
-            <p className="tiny muted">Check the draft before saving it. Your saved study guide stays on this material's page in Study Library. AI material is a study aid to check against FAA guidance and your instructor.</p>
-            <Button size="small" variant="secondary" disabled={!waiting && !studySet} onClick={() => jump(geminiDraftWaiting ? "material-study-guide" : kitWaiting ? "material-pdf-kit" : "material-study-guide")}>{waiting ? "Go to draft review" : "Go to saved study guide"}</Button>
+            <p className="small strong">Create flashcards <span className="tiny muted">— {cardsState}</span></p>
+            <p className="tiny muted">Create key flashcards to practice recall. You choose how many cards you want, then check the front and back.</p>
+            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-flashcards")}>Go to flashcards</Button>
           </li>
           <li>
-            <p className="small strong">Try flashcards and a practice test (optional) <span className="tiny muted">— {practiceTestSaved ? "Done" : unavailable ?? "When you're ready"}</span></p>
+            <p className="small strong">Try a practice test (optional) <span className="tiny muted">— {practiceState}</span></p>
             <p className="tiny muted">Ask Gemini for multiple-choice questions from this PDF, then check the answers and explanations against your source.</p>
             <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-practice-test")}>Go to practice test</Button>
+          </li>
+          <li>
+            <p className="small strong">Review and save <span className="tiny muted">— {reviewState}</span></p>
+            <p className="tiny muted">Check the draft before saving it. Your saved study guide stays on this material's page in Study Library. AI material is a study aid to check against FAA guidance and your instructor.</p>
+            <Button size="small" variant="secondary" disabled={!waiting && !studySet && !practiceTestSaved} onClick={() => jump(geminiDraftWaiting ? "material-study-guide" : kitWaiting ? "material-pdf-kit" : "material-study-guide")}>{waiting ? "Go to draft review" : "Go to saved study guide"}</Button>
           </li>
         </ol>
         <p className="tiny muted">No internet? <a href="#material-mac-backup" onClick={event => { event.preventDefault(); jump("material-mac-backup"); }}>Use the on-Mac study kit at the bottom of this page.</a></p>

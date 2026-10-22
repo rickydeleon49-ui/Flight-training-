@@ -95,7 +95,7 @@ const sendDialog = () => screen.getByRole("dialog", { name: "Send this file to G
 describe("choosing what to send (GEN-REL-01)", () => {
   it("a whole PDF can be narrowed to a chapter first, which opens the page chooser and sends nothing", async () => {
     await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     const dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Choose a chapter or pages first" }));
     expect(await screen.findByRole("dialog", { name: "Take out a chapter" })).toBeTruthy();
@@ -115,7 +115,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
 
   it("says exactly what leaves this Mac and that Google keeps a temporary copy", async () => {
     await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     const text = (await waitFor(sendDialog)).textContent ?? "";
     expect(text).toMatch(/Only “handbook\.pdf” leaves this Mac/);
     expect(text).toMatch(/temporary copy for up to 48 hours/);
@@ -125,7 +125,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
 
   it("cancelling sends nothing", async () => {
     await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());
     expect(resumeStudyGuide).not.toHaveBeenCalled();
@@ -133,7 +133,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
 
   it("whole-document generation is still available and sends the whole document", async () => {
     await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
     await waitFor(() => expect(resumeStudyGuide).toHaveBeenCalledWith({ relativePath: "documents/handbook.pdf", materialId: "root", baseRevision: null, requestId: expect.stringMatching(/^req-/), chosenPages: Array.from({ length: 300 }, (_, i) => i + 1) }));
   });
@@ -141,7 +141,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
   it("a part sends only that part, names its pages, and saves to the part, not the original", async () => {
     await part("ch3", "Chapter 3", 41, 60);
     await openMaterial("ch3", "Chapter 3");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     const dialog = await waitFor(sendDialog);
     expect(dialog.textContent).toMatch(/Only “ch3\.pdf”, pages 41–60 of “Synthetic Handbook”, leaves this Mac/);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));

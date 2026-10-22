@@ -151,7 +151,7 @@ describe("imported content in MaterialDetail", () => {
       model: "gemini-3.5-flash",
     });
     await open("gemini-material");
-    expect(await screen.findByText("Gemini study assistant")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Study guide" })).toBeTruthy();
     expect(screen.getByText(/AI-generated study aid/)).toBeTruthy();
     expect(screen.queryByText(IMPORTED_CONTENT_DISCLAIMER)).toBeNull();
     // The button appears only once the Gemini status read resolves, which can

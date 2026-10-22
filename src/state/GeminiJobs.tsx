@@ -37,6 +37,14 @@ import {
   type GeneratedStudyAid,
 } from "@/services/gemini";
 
+export function effectiveJobKind(record: GeminiJobRecord): GeminiJobKind {
+  const reqId = record.requestId ?? (record as unknown as { request_id?: string }).request_id;
+  if (record.kind === "study-aid" && typeof reqId === "string" && reqId.startsWith("flashcards:")) {
+    return "flashcards";
+  }
+  return record.kind;
+}
+
 /** Timing-only native drafts are recovery metadata, not unfinished card sets. */
 function cardDraft(record: GeminiJobRecord): { target: number; cards: unknown[] } | undefined {
   const draft = record.draft;
@@ -668,7 +676,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           cancelRequested: false,
           cancelAttempted: false,
           cancelError: null,
-          requestId: newRequestId(),
+          requestId: kind === "flashcards" ? `flashcards:${newRequestId()}` : newRequestId(),
           invoked: false,
           local: true,
           sectionGuide: useSections,
@@ -750,9 +758,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           // The window shows the outcome itself; the journal need not keep it.
           try {
             for (const record of await listGeminiJobs()) {
+              const effective = effectiveJobKind(record);
               if (
                 record.materialId === target.materialId &&
-                (record.kind === kind || (kind === "flashcards" && record.kind === "study-aid")) &&
+                effective === kind &&
                 (record.stage === "failed" || record.stage === "cancelled")
               ) {
                 if (record.draft) {
@@ -933,11 +942,12 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           if (record.stage !== "ready" || !record.result || !repositoriesRef.current) continue;
           if (forgottenRef.current.has(record.id)) continue;
           try {
+            const effectiveKind = effectiveJobKind(record);
             // A reviewed practice save settles through its receipt, even if
             // Replace everything happened to equal the provider's whole answer.
-            if (record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice") continue;
-            const saved = await savedContent(repositoriesRef.current, record.kind, record.materialId);
-            if (alreadySaved(record.kind, saved, record.result)) applied.add(record.id);
+            if (effectiveKind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice") continue;
+            const saved = await savedContent(repositoriesRef.current, effectiveKind, record.materialId);
+            if (alreadySaved(effectiveKind, saved, record.result)) applied.add(record.id);
           } catch {
             // Shown for a deliberate decision instead.
           }
@@ -993,9 +1003,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             pendingAcksRef.current.add(record.id);
             continue;
           }
+          const effectiveKind = effectiveJobKind(record);
           // A job this window started is already shown, under its local key.
           const local = next.find(
-            (job) => job.jobId === null && job.materialId === record.materialId && (job.kind === record.kind || (job.kind === "flashcards" && record.kind === "study-aid")),
+            (job) => job.jobId === null && job.materialId === record.materialId && job.kind === effectiveKind,
           );
           if (local) continue;
           const isWaiting =
@@ -1007,7 +1018,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             {
               key: newKey(),
               jobId: record.id,
-              kind: record.kind,
+              kind: effectiveKind,
               materialId: record.materialId,
               filePath: record.relativePath,
               phase:
@@ -1029,11 +1040,12 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               contentSha256: record.contentSha256 || null,
               baseRevision: record.baseRevision ?? null,
               checkpointed: record.stage === "ready",
-              ...(record.kind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice" ? { needsReview: true } : {}),
+              ...(effectiveKind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice" ? { needsReview: true } : {}),
               draft: cardDraft(record),
               sectionGuide: record.draft?.kind === "guide-sections-v1",
               sections: sectionDraft(record),
               sectionError: recoveredSectionError(record),
+              requestId: record.requestId ?? (record as unknown as { request_id?: string }).request_id,
             },
           ];
         }

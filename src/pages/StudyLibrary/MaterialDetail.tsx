@@ -69,8 +69,8 @@ import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./Gem
 import { useGeminiJobs, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
-import { AuthorBadge, StartManualStudySet, StudySetEditor } from "./StudySetEditor";
-import { PracticeTestEditor, PracticeTestHistory, StartManualPracticeTest } from "./PracticeTestEditing";
+import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
+import { PracticeTestEditor, PracticeTestHistory } from "./PracticeTestEditing";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeRegenerationReviewDialog } from "./PracticeRegenerationReviewDialog";
 import { RegenerationReviewDialog } from "./RegenerationReviewDialog";
@@ -314,6 +314,7 @@ function MaterialDetailPage() {
   const isPdf = (material.originalFileName ?? material.filePath ?? "")
     .toLowerCase()
     .endsWith(".pdf");
+  const isOverLimit = Boolean(isPdf && !fileForAi.ready);
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
@@ -339,7 +340,7 @@ function MaterialDetailPage() {
   const generationNotice: GenerationNotice | null = !aiCheck.allowed
     ? { text: aiCheck.reason }
     : !fileForAi.ready
-      ? { text: fileForAi.reason, split: canSplit }
+      ? { text: isPdf ? "This PDF is too big for Gemini — split it first." : fileForAi.reason, split: canSplit }
       : fileMissing
         ? { text: "This study file is missing from app storage. Restore or re-attach the file to regenerate or create study aids from it." }
         : geminiStatusFailed
@@ -509,250 +510,11 @@ function MaterialDetailPage() {
     );
   };
 
-  const materialStudyGuide = material.filePath || studySet ? (
-    <div id="material-study-guide" tabIndex={-1}><Card>
-      <CardHeader
-        title={pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
-        eyebrow={
-          pdfSet ? "Saved on this computer" : importedSet
-            ? "Imported from a file you selected"
-            : manualSet
-              ? "Written by you, saved on this computer"
-              : studySet
-                ? "Saved on this computer"
-                : isPdf
-                  ? "Study guide"
-                  : "Guide and flashcards"
-        }
-        action={
-          <div className="row row--wrap">
-            {studySet ? (
-              <Button
-                size="small"
-                variant="secondary"
-                aria-pressed={editingSet}
-                disabled={isGeneratingAny}
-                onClick={() => setEditingSet((open) => !open)}
-              >
-                {editingSet ? "Done editing" : "Edit study guide"}
-              </Button>
-            ) : null}
-            {studySet || practiceTest ? (
-              <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
-                Share or print
-              </Button>
-            ) : null}
-            {canOfferGemini ? (
-              <Button
-                size="small"
-                variant={studySet ? "secondary" : "primary"}
-                disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
-                onClick={() => {
-                  if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
-                }}
-              >
-                {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
-              </Button>
-            ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
-              <Button
-                size="small"
-                variant="secondary"
-                disabled={isGeneratingAny || fileMissing}
-                onClick={() => void queueStudyAid()}
-              >
-                Generate later
-              </Button>
-            ) : null}
-          </div>
-        }
-      />
-      {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>{pdfSet ? "Review the guide and cards saved from your PDF text, and follow their page references back to the source." : importedSet ? "Review the guide and cards from your imported packet; you can edit them here." : manualSet ? "Keep your summary, sections and flashcards together; use Edit study guide to add or change them." : isPdf ? "Ask Gemini for a study guide from this file, then review and save the draft on this Mac." : "Ask Gemini for a guide and flashcards from this file, then review and save the draft on this Mac."}</p> : null}
-      <CardBody>
-        {generationNotice ? (
-          <GenerationNoticeView
-            notice={generationNotice}
-            onSplit={() => setSplitting(true)}
-            onQueueLater={() => void queueStudyAid()}
-          />
-        ) : null}
-        {generating ? (
-          studyJob ? (
-            <GeminiProgressView
-              job={studyJob}
-              title="Gemini is reviewing this document"
-              onCancel={() => void geminiJobs.cancel(studyJob.key)}
-            />
-          ) : null
-        ) : null}
-        {studySet ? (
-          <div className="stack stack--5">
-            <div className="ai-disclaimer">
-              <AlertIcon size={16} />
-              <p className="tiny">
-                {pdfSet ? PDF_KIT_REMINDER : manualSet
-                  ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
-                  : importedSet
-                    ? IMPORTED_CONTENT_DISCLAIMER
-                    : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
-                {!pdfSet && !manualSet && setHasHerItems
-                  ? " Items marked as yours or as an instructor correction were written here, not generated."
-                  : ""}
-              </p>
-            </div>
-
-            <StudyContentProvenance
-              sourceMaterialTitle={material.title}
-              content={studySet}
-              kind="study-aid"
-            />
-
-            <section className="stack stack--3" aria-labelledby="ai-guide-title">
-              <div>
-                <p className="eyebrow">Study guide</p>
-                <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
-              </div>
-              {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
-              <p
-                id="search-target-summary"
-                className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
-              >
-                {studySet.summary}
-              </p>
-              {studySet.sections.map((section, index) => (
-                <div
-                  id={`search-target-guide-${index}`}
-                  className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
-                  key={`${section.heading}-${index}`}
-                >
-                  <h4>{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</h4>
-                  <GuideBody className="small" text={section.body} />
-                </div>
-              ))}
-              {studySet.sourceNotes ? (
-                <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
-              ) : null}
-            </section>
-
-            {studySet.flashcards.length > 0 ? (
-              <section
-                id="search-target-cards"
-                className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
-                aria-labelledby="flashcards-title"
-              >
-                <div className="row row--between">
-                  <div>
-                    <p className="eyebrow">Flashcards</p>
-                    <h3 id="flashcards-title" className="ai-guide__title">
-                      Card {cardIndex + 1} of {studySet.flashcards.length}
-                    </h3>
-                  </div>
-                  <div className="row row--wrap">
-                    {studySet.flashcards[cardIndex]?.pdfProvenance ? <PdfItemLabel provenance={studySet.flashcards[cardIndex]?.pdfProvenance} origin={studySet.flashcards[cardIndex]?.origin} /> : <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />}
-                    <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
-                  </div>
-                </div>
-                <button
-                  className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
-                  type="button"
-                  onClick={() => setCardRevealed((current) => !current)}
-                  aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
-                >
-                  <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
-                  <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
-                  <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
-                </button>
-                <div className="row row--between">
-                  <Button
-                    size="small"
-                    disabled={cardIndex === 0}
-                    onClick={() => { setCardIndex((index) => index - 1); setCardRevealed(false); }}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    size="small"
-                    disabled={cardIndex >= studySet.flashcards.length - 1}
-                    onClick={() => { setCardIndex((index) => index + 1); setCardRevealed(false); }}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </section>
-            ) : null}
-
-            {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
-
-            <CardReviewPanel
-              materialId={material.id}
-              materialTitle={material.title}
-              repository={repositories?.cardReviews}
-              contentKey={studySet.updatedAt}
-              autoStart={startCardReview}
-              browseCard={
-                studySet.flashcards[cardIndex]
-                  ? {
-                      index: cardIndex,
-                      front: studySet.flashcards[cardIndex]!.front,
-                      back: studySet.flashcards[cardIndex]!.back,
-                    }
-                  : null
-              }
-            />
-          </div>
-        ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
-          <p className="small muted">
-            {isPdf ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally." : <>Gemini will read only this file and create a source-based study guide.
-            Choose a target of 20, 40 or 60 flashcards; a shorter source may yield fewer.
-            The finished draft waits for you to save it locally.</>}
-          </p>
-        ) : null}
-
-        {generationError ? (
-          <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-            <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-              {generationError}
-            </p>
-            {retryStudy ? (
-              <div className="row row--wrap">
-                <Button size="small" onClick={retryStudy}>
-                  Try again
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-        {studyJob ? (
-          <GeminiJobNotice
-            job={studyJob}
-            jobs={geminiJobs}
-            onRetry={retryStudy}
-            onReview={(setHasHerItems || studyJob.needsReview) && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
-          />
-        ) : null}
-        {geminiJobs.jobs.filter(job => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key).map(job => (
-          <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
-        ))}
-        {reviewingRegeneration &&
-        studyJob?.answer &&
-        (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
-          <RegenerationReviewDialog
-            job={studyJob}
-            materialId={material.id}
-            onClose={() => setReviewingRegeneration(false)}
-            onSave={async (reviewed) => {
-              // Closed only once saved; a failure keeps her choices open.
-              const saved = await geminiJobs.saveReviewed(studyJob.key, reviewed);
-              if (saved && isMountedRef.current) setReviewingRegeneration(false);
-              return saved;
-            }}
-          />
-        ) : null}
-        {canOfferGemini && geminiJobs.recovery === "failed" ? (
-          <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
-        ) : null}
-      </CardBody>
-    </Card></div>
-  ) : null;
+  const jumpToFileSection = () => {
+    const el = document.getElementById("material-file-actions");
+    el?.scrollIntoView?.({ block: "start" });
+    el?.focus();
+  };
 
   return (
     <>
@@ -800,10 +562,12 @@ function MaterialDetailPage() {
 
       <div className="detail">
         <div className="detail__column">
-          <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
-            geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
-            fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
-            tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
+          <div id="material-start-here">
+            <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
+              geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
+              fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
+              tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
+          </div>
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
@@ -874,237 +638,632 @@ function MaterialDetailPage() {
             </Card></div>
           ) : null}
 
-          {!manualSet ? materialStudyGuide : null}
+          {material.filePath || studySet ? (
+            <div id="material-study-guide" tabIndex={-1}>
+              <Card>
+                <CardHeader
+                  title={isPdf ? "Study guide" : pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
+                  eyebrow={
+                    pdfSet
+                      ? "Saved on this computer"
+                      : importedSet
+                        ? "Imported from a file you selected"
+                        : manualSet
+                          ? "Written by you, saved on this computer"
+                          : studySet?.sections.length
+                            ? "Saved on this computer"
+                            : undefined
+                  }
+                  action={
+                    <div className="row row--wrap">
+                      {studySet && (studySet.summary || studySet.sections.length > 0) ? (
+                        <Button
+                          size="small"
+                          variant="secondary"
+                          aria-pressed={editingSet}
+                          disabled={isGeneratingAny}
+                          onClick={() => setEditingSet((open) => !open)}
+                        >
+                          {editingSet ? "Done editing" : "Edit study guide"}
+                        </Button>
+                      ) : null}
+                      {studySet || practiceTest ? (
+                        <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
+                          Share or print
+                        </Button>
+                      ) : null}
+                      {isOverLimit ? (
+                        <Button size="small" variant="secondary" onClick={jumpToFileSection}>
+                          Split file
+                        </Button>
+                      ) : canOfferGemini ? (
+                        <Button
+                          size="small"
+                          variant={studySet ? "secondary" : "primary"}
+                          disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
+                          onClick={() => {
+                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
+                          }}
+                        >
+                          {generating
+                            ? "Reading document…"
+                            : studySet
+                              ? "Regenerate"
+                              : isPdf
+                                ? "Create study guide"
+                                : "Create study aid"}
+                        </Button>
+                      ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
+                        <Button
+                          size="small"
+                          variant="secondary"
+                          disabled={isGeneratingAny || fileMissing}
+                          onClick={() => void queueStudyAid()}
+                        >
+                          Generate later
+                        </Button>
+                      ) : null}
+                    </div>
+                  }
+                />
+                {!tipsHidden ? (
+                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                    {pdfSet
+                      ? "Review the guide saved from your PDF text, and follow page references back to the source."
+                      : importedSet
+                        ? "Review the guide from your imported packet; you can edit it here."
+                        : manualSet
+                          ? "A study guide you wrote. Use Edit study guide to change sections."
+                          : isPdf
+                            ? "Ask Gemini for a study guide from this file, then review and save the draft on this Mac."
+                            : "Ask Gemini for a study guide from this file, then review and save the draft on this Mac."}
+                  </p>
+                ) : null}
+                <CardBody>
+                  {isOverLimit ? (
+                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                      <div className="ai-disclaimer" role="alert">
+                        <AlertIcon size={16} />
+                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {!isOverLimit && generationNotice ? (
+                    <GenerationNoticeView
+                      notice={generationNotice}
+                      onSplit={jumpToFileSection}
+                      onQueueLater={() => void queueStudyAid()}
+                    />
+                  ) : null}
+                  {generating ? (
+                    studyJob ? (
+                      <GeminiProgressView
+                        job={studyJob}
+                        title="Gemini is reviewing this document"
+                        onCancel={() => void geminiJobs.cancel(studyJob.key)}
+                      />
+                    ) : null
+                  ) : null}
+                  {studySet && (studySet.summary || studySet.sections.length > 0) ? (
+                    <div className="stack stack--5">
+                      <div className="ai-disclaimer">
+                        <AlertIcon size={16} />
+                        <p className="tiny">
+                          {pdfSet
+                            ? PDF_KIT_REMINDER
+                            : manualSet
+                              ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
+                              : importedSet
+                                ? IMPORTED_CONTENT_DISCLAIMER
+                                : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
+                          {!pdfSet && !manualSet && setHasHerItems
+                            ? " Items marked as yours or as an instructor correction were written here, not generated."
+                            : ""}
+                        </p>
+                      </div>
 
-          {material ? (
-            <div id="material-flashcards-and-practice" tabIndex={-1}><div id="material-practice-test" tabIndex={-1}><Card>
-              <CardHeader
-                title="Flashcards and practice test"
-                eyebrow={
-                  importedTest
-                    ? "Imported study packet"
-                    : practiceTest || (studySet && studySet.flashcards.length > 0)
+                      <StudyContentProvenance
+                        sourceMaterialTitle={material.title}
+                        content={studySet}
+                        kind="study-aid"
+                      />
+
+                      <section className="stack stack--3" aria-labelledby="ai-guide-title">
+                        <div>
+                          <p className="eyebrow">Study guide</p>
+                          <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
+                        </div>
+                        {studySet.summaryPdfProvenance ? (
+                          <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} />
+                        ) : studySet.summaryOrigin ? (
+                          <AuthorBadge origin={studySet.summaryOrigin} />
+                        ) : null}
+                        <p
+                          id="search-target-summary"
+                          className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
+                        >
+                          {studySet.summary}
+                        </p>
+                        {studySet.sections.map((section, index) => (
+                          <div
+                            id={`search-target-guide-${index}`}
+                            className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
+                            key={`${section.heading}-${index}`}
+                          >
+                            <h4>
+                              {section.heading}{" "}
+                              {section.pdfProvenance ? (
+                                <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} />
+                              ) : (
+                                <AuthorBadge origin={section.origin} />
+                              )}
+                            </h4>
+                            <GuideBody className="small" text={section.body} />
+                          </div>
+                        ))}
+                        {studySet.sourceNotes ? (
+                          <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
+                        ) : null}
+                      </section>
+
+                      {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
+                    </div>
+                  ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
+                    <p className="small muted">
+                      {isPdf
+                        ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally."
+                        : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally."}
+                    </p>
+                  ) : null}
+
+                  {generationError ? (
+                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                        {generationError}
+                      </p>
+                      {retryStudy ? (
+                        <div className="row row--wrap">
+                          <Button size="small" onClick={retryStudy}>
+                            Try again
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {studyJob ? (
+                    <GeminiJobNotice
+                      job={studyJob}
+                      jobs={geminiJobs}
+                      onRetry={retryStudy}
+                      onReview={
+                        (setHasHerItems || studyJob.needsReview) && studyJob.answer
+                          ? () => setReviewingRegeneration(true)
+                          : undefined
+                      }
+                    />
+                  ) : null}
+                  {geminiJobs.jobs
+                    .filter((job) => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key)
+                    .map((job) => (
+                      <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
+                    ))}
+                  {reviewingRegeneration &&
+                  studyJob?.answer &&
+                  (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
+                    <RegenerationReviewDialog
+                      job={studyJob}
+                      materialId={material.id}
+                      onClose={() => setReviewingRegeneration(false)}
+                      onSave={async (reviewed) => {
+                        const saved = await geminiJobs.saveReviewed(studyJob.key, reviewed);
+                        if (saved && isMountedRef.current) setReviewingRegeneration(false);
+                        return saved;
+                      }}
+                    />
+                  ) : null}
+                  {canOfferGemini && geminiJobs.recovery === "failed" ? (
+                    <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
+                  ) : null}
+                </CardBody>
+              </Card>
+            </div>
+          ) : null}
+
+          {material.filePath || (studySet && studySet.flashcards.length > 0) ? (
+            <div id="material-flashcards" tabIndex={-1}>
+              <Card>
+                <CardHeader
+                  title="Flashcards"
+                  eyebrow={
+                    studySet && studySet.flashcards.length > 0
                       ? "Saved on this computer"
                       : material.filePath
-                        ? "Optional, from this document"
+                        ? "From this document"
                         : "Optional"
-                }
-                action={
-                  <div className="row row--wrap">
-                    {canOfferGemini ? (
-                      <Button
-                        size="small"
-                        variant={studySet && studySet.flashcards.length > 0 ? "secondary" : "primary"}
-                        disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
-                        onClick={() => {
-                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
-                        }}
-                      >
-                        {generatingCards
-                          ? "Reading document…"
-                          : "Create flashcards"}
-                      </Button>
-                    ) : null}
-                    {canOfferGemini ? (
-                      <Button
-                        size="small"
-                        variant={practiceTest ? "secondary" : "primary"}
-                        disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
-                        onClick={() => {
-                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
-                        }}
-                      >
-                        {generatingPractice
-                          ? "Reading document…"
-                          : practiceTest
-                            ? "Regenerate"
-                            : "Create practice test"}
-                      </Button>
-                    ) : null}
-                  </div>
-                }
-              />
-              {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Try saved questions with explanations, or write your own; your completed attempts stay in practice history.</p> : null}
-              <CardBody>
-                {generatingCards ? (
-                  cardJob ? (
-                    <GeminiProgressView
-                      job={cardJob}
-                      title="Gemini is creating flashcards"
-                      onCancel={() => void geminiJobs.cancel(cardJob.key)}
-                    />
-                  ) : null
-                ) : null}
-                {cardGenerationError ? (
-                  <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
-                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                      {cardGenerationError}
-                    </p>
-                    {retryFlashcards ? (
-                      <div className="row row--wrap">
-                        <Button size="small" onClick={retryFlashcards}>
-                          Try again
+                  }
+                  action={
+                    <div className="row row--wrap" style={{ alignItems: "center" }}>
+                      {isOverLimit ? (
+                        <Button size="small" variant="secondary" onClick={jumpToFileSection}>
+                          Split file
                         </Button>
+                      ) : canOfferGemini ? (
+                        <>
+                          <label className="row row--compact small" style={{ alignItems: "center", gap: "var(--space-2)" }}>
+                            Target cards
+                            <select
+                              aria-label="Target cards"
+                              className="select select--small"
+                              value={targetCards}
+                              onChange={(event) => setTargetCards(Number(event.target.value))}
+                            >
+                              {[20, 40, 60].map((count) => (
+                                <option key={count} value={count}>
+                                  {count}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <Button
+                            size="small"
+                            variant={studySet && studySet.flashcards.length > 0 ? "secondary" : "primary"}
+                            disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
+                            onClick={() => {
+                              if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
+                            }}
+                          >
+                            {generatingCards ? "Reading document…" : "Create flashcards"}
+                          </Button>
+                        </>
+                      ) : null}
+                    </div>
+                  }
+                />
+                {!tipsHidden ? (
+                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                    Create key flashcards to practice recall, and review cards you've saved.
+                  </p>
+                ) : null}
+                <CardBody>
+                  {isOverLimit ? (
+                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                      <div className="ai-disclaimer" role="alert">
+                        <AlertIcon size={16} />
+                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
                       </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                {cardJob ? (
-                  <GeminiJobNotice
-                    job={cardJob}
-                    jobs={geminiJobs}
-                    onRetry={retryFlashcards}
-                    onReview={(setHasHerItems || cardJob.needsReview) && cardJob.answer ? () => setReviewingCardRegeneration(true) : undefined}
-                  />
-                ) : null}
-                {reviewingCardRegeneration && cardJob?.answer &&
-                  (cardJob.phase === "recovered" || cardJob.phase === "save-failed" || cardJob.phase === "saving") ? (
-                  <RegenerationReviewDialog
-                    job={cardJob}
-                    materialId={material.id}
-                    onClose={() => setReviewingCardRegeneration(false)}
-                    onSave={async (reviewed) => {
-                      const saved = await geminiJobs.saveReviewed(cardJob.key, reviewed);
-                      if (saved && isMountedRef.current) setReviewingCardRegeneration(false);
-                      return saved;
-                    }}
-                  />
-                ) : null}
-                <StartManualPracticeTest material={material} />
-                <PracticeTestEditor material={material} activeAttempt={activePracticeAttempt} />
-                <PracticeTestHistory material={material} />
-                {generationNotice && practiceTest ? (
-                  <GenerationNoticeView notice={generationNotice} onSplit={() => setSplitting(true)} />
-                ) : null}
-                {generatingPractice ? (
-                  practiceJob ? (
-                    <GeminiProgressView
-                      job={practiceJob}
-                      title="Gemini is writing practice questions"
-                      onCancel={() => void geminiJobs.cancel(practiceJob.key)}
+                    </div>
+                  ) : null}
+                  {generatingCards ? (
+                    cardJob ? (
+                      <GeminiProgressView
+                        job={cardJob}
+                        title="Gemini is creating flashcards"
+                        onCancel={() => void geminiJobs.cancel(cardJob.key)}
+                      />
+                    ) : null
+                  ) : null}
+                  {cardGenerationError ? (
+                    <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                        {cardGenerationError}
+                      </p>
+                      {retryFlashcards ? (
+                        <div className="row row--wrap">
+                          <Button size="small" onClick={retryFlashcards}>
+                            Try again
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {cardJob ? (
+                    <GeminiJobNotice
+                      job={cardJob}
+                      jobs={geminiJobs}
+                      onRetry={retryFlashcards}
+                      onReview={
+                        (setHasHerItems || cardJob.needsReview) && cardJob.answer
+                          ? () => setReviewingCardRegeneration(true)
+                          : undefined
+                      }
                     />
-                  ) : null
-                ) : null}
-                {practiceMetadata.phase === "failed" ? (
-                  <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
-                    <div className="ai-disclaimer" role="alert">
-                      <AlertIcon size={16} />
-                      <p className="tiny">
-                        Practice status couldn’t be checked just now, so your history count isn’t shown. Your saved study guide and cards are still here.
-                      </p>
-                    </div>
-                    <div className="row row--wrap">
-                      <Button size="small" variant="secondary" onClick={retryPracticeMetadata}>
-                        Retry practice status
-                      </Button>
-                      <Link
-                        to={`/study/history/${encodeURIComponent(material.id)}`}
-                        className="button button--secondary button--small"
+                  ) : null}
+                  {reviewingCardRegeneration &&
+                  cardJob?.answer &&
+                  (cardJob.phase === "recovered" || cardJob.phase === "save-failed" || cardJob.phase === "saving") ? (
+                    <RegenerationReviewDialog
+                      job={cardJob}
+                      materialId={material.id}
+                      onClose={() => setReviewingCardRegeneration(false)}
+                      onSave={async (reviewed) => {
+                        const saved = await geminiJobs.saveReviewed(cardJob.key, reviewed);
+                        if (saved && isMountedRef.current) setReviewingCardRegeneration(false);
+                        return saved;
+                      }}
+                    />
+                  ) : null}
+
+                  {studySet && studySet.flashcards.length > 0 ? (
+                    <div className="stack stack--5">
+                      <section
+                        id="search-target-cards"
+                        className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
+                        aria-labelledby="flashcards-title"
                       >
-                        View practice history
-                      </Link>
+                        <div className="row row--between">
+                          <div>
+                            <h3 id="flashcards-title" className="ai-guide__title">
+                              Card {cardIndex + 1} of {studySet.flashcards.length}
+                            </h3>
+                          </div>
+                          <div className="row row--wrap">
+                            {studySet.flashcards[cardIndex]?.pdfProvenance ? (
+                              <PdfItemLabel
+                                provenance={studySet.flashcards[cardIndex]?.pdfProvenance}
+                                origin={studySet.flashcards[cardIndex]?.origin}
+                              />
+                            ) : (
+                              <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />
+                            )}
+                            <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
+                          </div>
+                        </div>
+                        <button
+                          className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
+                          type="button"
+                          onClick={() => setCardRevealed((current) => !current)}
+                          aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
+                        >
+                          <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
+                          <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
+                          <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
+                        </button>
+                        <div className="row row--between">
+                          <Button
+                            size="small"
+                            disabled={cardIndex === 0}
+                            onClick={() => {
+                              setCardIndex((index) => index - 1);
+                              setCardRevealed(false);
+                            }}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            size="small"
+                            disabled={cardIndex >= studySet.flashcards.length - 1}
+                            onClick={() => {
+                              setCardIndex((index) => index + 1);
+                              setCardRevealed(false);
+                            }}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </section>
+
+                      <CardReviewPanel
+                        materialId={material.id}
+                        materialTitle={material.title}
+                        repository={repositories?.cardReviews}
+                        contentKey={studySet.updatedAt}
+                        autoStart={startCardReview}
+                        browseCard={
+                          studySet.flashcards[cardIndex]
+                            ? {
+                                index: cardIndex,
+                                front: studySet.flashcards[cardIndex]!.front,
+                                back: studySet.flashcards[cardIndex]!.back,
+                              }
+                            : null
+                        }
+                      />
                     </div>
-                  </div>
+                  ) : !generatingCards && material.filePath && canOfferGemini ? (
+                    <p className="small muted">
+                      Gemini will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
+                    </p>
+                  ) : null}
+                </CardBody>
+              </Card>
+            </div>
+          ) : null}
+
+          <div id="material-practice-test" tabIndex={-1}>
+              <Card>
+                <CardHeader
+                  title="Practice test"
+                  eyebrow={
+                    importedTest
+                      ? "Imported study packet"
+                      : practiceTest
+                        ? "Saved on this computer"
+                        : material.filePath
+                          ? "Optional, from this document"
+                          : "Optional"
+                  }
+                  action={
+                    <div className="row row--wrap">
+                      {isOverLimit ? (
+                        <Button size="small" variant="secondary" onClick={jumpToFileSection}>
+                          Split file
+                        </Button>
+                      ) : canOfferGemini ? (
+                        <Button
+                          size="small"
+                          variant={practiceTest ? "secondary" : "primary"}
+                          disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
+                          onClick={() => {
+                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
+                          }}
+                        >
+                          {generatingPractice
+                            ? "Reading document…"
+                            : practiceTest
+                              ? "Regenerate"
+                              : "Create practice test"}
+                        </Button>
+                      ) : null}
+                    </div>
+                  }
+                />
+                {!tipsHidden ? (
+                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                    Try saved questions with explanations; your completed attempts stay in practice history.
+                  </p>
                 ) : null}
-                {conversionStatus?.legacyError === "MALFORMED_QUESTION" ? (
-                  <div className="stack stack--3">
-                    <div className="ai-disclaimer" role="alert">
-                      <AlertIcon size={16} />
-                      <p className="tiny">
-                        This practice test contains malformed questions from an earlier version and cannot be started. Please regenerate the practice test.
-                      </p>
+                <CardBody>
+                  {isOverLimit ? (
+                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                      <div className="ai-disclaimer" role="alert">
+                        <AlertIcon size={16} />
+                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
+                      </div>
                     </div>
-                    {completedCount > 0 ? (
-                      <div>
+                  ) : null}
+                  <PracticeTestEditor material={material} activeAttempt={activePracticeAttempt} />
+                  <PracticeTestHistory material={material} />
+                  {generatingPractice ? (
+                    practiceJob ? (
+                      <GeminiProgressView
+                        job={practiceJob}
+                        title="Gemini is writing practice questions"
+                        onCancel={() => void geminiJobs.cancel(practiceJob.key)}
+                      />
+                    ) : null
+                  ) : null}
+                  {practiceMetadata.phase === "failed" ? (
+                    <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                      <div className="ai-disclaimer" role="alert">
+                        <AlertIcon size={16} />
+                        <p className="tiny">
+                          Practice status couldn’t be checked just now, so your history count isn’t shown. Your saved study guide and cards are still here.
+                        </p>
+                      </div>
+                      <div className="row row--wrap">
+                        <Button size="small" variant="secondary" onClick={retryPracticeMetadata}>
+                          Retry practice status
+                        </Button>
                         <Link
                           to={`/study/history/${encodeURIComponent(material.id)}`}
                           className="button button--secondary button--small"
                         >
-                          View practice history ({completedCount})
+                          View practice history
                         </Link>
                       </div>
-                    ) : null}
-                  </div>
-                ) : practiceTest ? (
-                  <div className="stack stack--4">
-                    <div className="row row--between" style={{ alignItems: "center" }}>
-                      <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
+                    </div>
+                  ) : null}
+                  {conversionStatus?.legacyError === "MALFORMED_QUESTION" ? (
+                    <div className="stack stack--3">
+                      <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
                         <p className="tiny">
-                          {pdfTest ? PDF_KIT_REMINDER : importedTest
-                            ? IMPORTED_CONTENT_DISCLAIMER
-                            : practiceTest.provider === "manual"
-                              ? "Practice questions you wrote. Check them against your source and your instructor's guidance."
-                            : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
+                          This practice test contains malformed questions from an earlier version and cannot be started. Please regenerate the practice test.
                         </p>
                       </div>
                       {completedCount > 0 ? (
-                        <Link
-                          to={`/study/history/${encodeURIComponent(material.id)}`}
-                          className="button button--secondary button--small"
-                          style={{ marginLeft: "var(--space-3)", flexShrink: 0 }}
-                        >
-                          View practice history ({completedCount})
-                        </Link>
+                        <div>
+                          <Link
+                            to={`/study/history/${encodeURIComponent(material.id)}`}
+                            className="button button--secondary button--small"
+                          >
+                            View practice history ({completedCount})
+                          </Link>
+                        </div>
                       ) : null}
                     </div>
-
-                    <StudyContentProvenance
-                      sourceMaterialTitle={material.title}
-                      content={practiceTest}
-                      kind="practice-test"
-                    />
-
-                    <PracticeTestPanel practiceTest={practiceTest} materialId={material.id} key={practiceTest.updatedAt} onAttemptChange={setActivePracticeAttempt} />
-                  </div>
-                ) : !generatingPractice && !hasImported && material.filePath && canOfferGemini ? (
-                  <p className="small muted">
-                    Gemini will read only this file and create a multiple-choice practice test with
-                    explanations. The result will be saved locally with your other data.
-                  </p>
-                ) : null}
-
-                {practiceGenerationError ? (
-                  <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                      {practiceGenerationError}
-                    </p>
-                    {retryPractice ? (
-                      <div className="row row--wrap">
-                        <Button size="small" onClick={retryPractice}>
-                          Try again
-                        </Button>
+                  ) : practiceTest ? (
+                    <div className="stack stack--4">
+                      <div className="row row--between" style={{ alignItems: "center" }}>
+                        <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
+                          <AlertIcon size={16} />
+                          <p className="tiny">
+                            {pdfTest
+                              ? PDF_KIT_REMINDER
+                              : importedTest
+                                ? IMPORTED_CONTENT_DISCLAIMER
+                                : practiceTest.provider === "manual"
+                                  ? "Practice questions you wrote. Check them against your source and your instructor's guidance."
+                                  : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
+                          </p>
+                        </div>
+                        {completedCount > 0 ? (
+                          <Link
+                            to={`/study/history/${encodeURIComponent(material.id)}`}
+                            className="button button--secondary button--small"
+                            style={{ marginLeft: "var(--space-3)", flexShrink: 0 }}
+                          >
+                            View practice history ({completedCount})
+                          </Link>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                {practiceJob ? <GeminiJobNotice job={practiceJob} jobs={geminiJobs} onRetry={retryPractice}
-                  onReview={practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
-                    ? () => { if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true); } : undefined}
-                  reviewDisabled={activePracticeAttempt !== false}
-                /> : null}
-                {reviewingPracticeRegeneration && practiceJob?.answer &&
+
+                      <StudyContentProvenance
+                        sourceMaterialTitle={material.title}
+                        content={practiceTest}
+                        kind="practice-test"
+                      />
+
+                      <PracticeTestPanel
+                        practiceTest={practiceTest}
+                        materialId={material.id}
+                        key={practiceTest.updatedAt}
+                        onAttemptChange={setActivePracticeAttempt}
+                      />
+                    </div>
+                  ) : !generatingPractice && !hasImported && material.filePath && canOfferGemini ? (
+                    <p className="small muted">
+                      Gemini will read only this file and create a multiple-choice practice test with
+                      explanations. The result will be saved locally with your other data.
+                    </p>
+                  ) : null}
+
+                  {practiceGenerationError ? (
+                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                        {practiceGenerationError}
+                      </p>
+                      {retryPractice ? (
+                        <div className="row row--wrap">
+                          <Button size="small" onClick={retryPractice}>
+                            Try again
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {practiceJob ? (
+                    <GeminiJobNotice
+                      job={practiceJob}
+                      jobs={geminiJobs}
+                      onRetry={retryPractice}
+                      onReview={
+                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
+                          ? () => {
+                              if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true);
+                            }
+                          : undefined
+                      }
+                      reviewDisabled={activePracticeAttempt !== false}
+                    />
+                  ) : null}
+                  {reviewingPracticeRegeneration &&
+                  practiceJob?.answer &&
                   (practiceJob.phase === "recovered" || practiceJob.phase === "save-failed" || practiceJob.phase === "saving") ? (
-                  <PracticeRegenerationReviewDialog job={practiceJob} materialId={material.id}
-                    onClose={() => setReviewingPracticeRegeneration(false)}
-                    onSave={async (reviewed) => {
-                      const saved = await geminiJobs.saveReviewed(practiceJob.key, reviewed);
-                      if (saved && isMountedRef.current) setReviewingPracticeRegeneration(false);
-                      return saved;
-                    }} />
-                ) : null}
-              </CardBody>
-            </Card></div></div>
-          ) : null}
-
-          {manualSet ? materialStudyGuide : null}
-
-          {!studySet ? (
-            <Card>
-              <CardHeader title="Study guide and flashcards" eyebrow="Your own" action={<StartManualStudySet material={material} />} />
-              {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) var(--space-5)" }}>Start with your own summary, then add sections and flashcards. Nothing is sent anywhere.</p> : null}
-            </Card>
-          ) : null}
+                    <PracticeRegenerationReviewDialog
+                      job={practiceJob}
+                      materialId={material.id}
+                      onClose={() => setReviewingPracticeRegeneration(false)}
+                      onSave={async (reviewed) => {
+                        const saved = await geminiJobs.saveReviewed(practiceJob.key, reviewed);
+                        if (saved && isMountedRef.current) setReviewingPracticeRegeneration(false);
+                        return saved;
+                      }}
+                    />
+                  ) : null}
+                </CardBody>
+              </Card>
+            </div>
 
           <Card>
             <CardHeader

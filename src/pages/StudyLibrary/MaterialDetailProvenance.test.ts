@@ -670,14 +670,14 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
 
     await openMaterial(withoutFile.id);
-    const cardWithoutFile = screen.getByRole("heading", { name: "Flashcards and practice test" }).closest(".card") as HTMLElement;
+    const cardWithoutFile = screen.getByRole("heading", { name: "Practice test" }).closest(".card") as HTMLElement;
     expect(within(cardWithoutFile).getByText("Optional")).toBeTruthy();
     expect(within(cardWithoutFile).queryByText("Optional, from this document")).toBeNull();
 
     cleanup();
 
     await openMaterial(withFile.id);
-    const cardWithFile = screen.getByRole("heading", { name: "Flashcards and practice test" }).closest(".card") as HTMLElement;
+    const cardWithFile = screen.getByRole("heading", { name: "Practice test" }).closest(".card") as HTMLElement;
     expect(within(cardWithFile).getByText("Optional, from this document")).toBeTruthy();
   });
 });

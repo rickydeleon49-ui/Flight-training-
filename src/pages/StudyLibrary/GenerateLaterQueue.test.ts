@@ -146,7 +146,7 @@ afterEach(() => {
 describe("GEN-02d: the generate-later queue", () => {
   it("the Generate later choice is available when asking for a study guide", async () => {
     await open();
-    fireEvent.click(screen.getByRole("button", { name: "Create study aid" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create study guide" }));
     const dialog = await screen.findByRole("dialog", { name: "Send this file to Google?" });
     const laterBtn = within(dialog).getByRole("button", { name: "Generate later" });
     expect(laterBtn).toBeTruthy();
