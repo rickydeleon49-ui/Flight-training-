@@ -9,14 +9,23 @@ interface OutlineCandidate { heading: string; sourcePage: number; sentences: { t
 interface QuestionCandidate { prompt: string; answer: string; choices: string[]; correctIndex: number; sourcePage: number; evidence: KitEvidence[]; choiceEvidence: KitEvidence[][] }
 export interface KitCandidates { glossary: CardCandidate[]; cloze: CardCandidate[]; outline: OutlineCandidate[]; questions: QuestionCandidate[] }
 export interface KitReviewItem { id: string; kind: "section" | "card"; fields: string[]; kept: boolean; instructor: boolean }
+/** Only explicit counts prove that extraction found no usable text. */
+export function kitHasNoUsableText(draft: PdfStudyKitDraft): boolean {
+  return Array.isArray(draft.candidates?.pagesUsed)
+    && draft.candidates.pagesUsed.length === 0 && draft.candidates.pagesSkippedAmbiguous === 0;
+}
 export function kitCandidates(draft: PdfStudyKitDraft): KitCandidates {
   const c = draft.candidates as unknown as KitCandidates;
   if (!c || !Array.isArray(c.glossary) || !Array.isArray(c.cloze) || !Array.isArray(c.outline) || !Array.isArray(c.questions) || c.glossary.length > 40 || c.cloze.length > 40 || c.outline.length > 40 || c.questions.length > 20) throw new Error("INVALID_DRAFT");
   return c;
 }
+function collapseWhitespace(text: string): string {
+  return text.trim().replace(/\s+/g, " ");
+}
+
 export function kitReviewItems(draft: PdfStudyKitDraft): KitReviewItem[] {
   const c = kitCandidates(draft);
-  return [...c.outline.map((s, i) => ({ id: `${draft.runId}:section:${i}`, kind: "section" as const, fields: [s.heading, s.sentences.map(s => s.text).join("\n\n")], kept: true, instructor: false })),
+  return [...c.outline.map((s, i) => ({ id: `${draft.runId}:section:${i}`, kind: "section" as const, fields: [collapseWhitespace(s.heading), s.sentences.map(s => collapseWhitespace(s.text)).join("\n\n")], kept: true, instructor: false })),
     ...[...c.glossary, ...c.cloze].map((s, i) => ({ id: `${draft.runId}:card:${i}`, kind: "card" as const, fields: [s.prompt, s.answer], kept: true, instructor: false }))];
 }
 export function kitItemEvidence(draft: PdfStudyKitDraft, item: KitReviewItem): KitEvidence[] {

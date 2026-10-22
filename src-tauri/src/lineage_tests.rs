@@ -112,7 +112,7 @@ fn issue(
     parts: &[WrittenPart],
 ) -> Result<SplitSourceReceipt, String> {
     let bytes = std::fs::read(dir.path().join(DOCUMENTS_DIR).join(file)).unwrap();
-    issue_receipt_at(dir.path(), source, file, &bytes, total, parts)
+    issue_receipt_at(dir.path(), source, file, &bytes, total, parts, &[])
 }
 
 fn shown(receipt: &SplitSourceReceipt) -> Vec<SplitPartPresentation> {
@@ -869,4 +869,24 @@ fn shared_lineage_validation_contract_native_outcomes() {
     }
     assert!(mismatches.is_empty(), "{mismatches:#?}");
     assert!(contract.cases.len() >= 15);
+}
+
+#[test]
+fn pdf_skipped_page_receipt_refuses_invalid_order_bounds_and_overlap() {
+    let dir = library("invalid-skips");
+    material(&dir, "R", "Root Handbook", ROOT_FILE, ROOT);
+    let kept = part(&dir, "B", 2, 3);
+    for skipped in [vec![0], vec![5], vec![4, 1], vec![1, 1], vec![2]] {
+        let error = issue_receipt_at(
+            dir.path(),
+            "R",
+            ROOT_FILE,
+            ROOT,
+            4,
+            std::slice::from_ref(&kept),
+            &skipped,
+        )
+        .unwrap_err();
+        assert_eq!(error, "The pages left out do not match this split.");
+    }
 }

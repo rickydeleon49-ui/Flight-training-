@@ -177,6 +177,7 @@ pub(crate) fn selected_bytes(bytes: &[u8], pages: &[u32]) -> Result<Vec<u8>, Str
     Ok(selected)
 }
 
+/// Return None when even the first page alone is oversized; render errors stay errors.
 /// Binary-search the largest page range starting at `first` that still fits
 /// `max_bytes`, trying at most `max_pages` pages.
 ///
@@ -190,7 +191,7 @@ fn largest_fitting_last_page<F>(
     max_pages: u32,
     max_bytes: u64,
     mut render_candidate: F,
-) -> Result<(u32, Vec<u8>), String>
+) -> Result<Option<(u32, Vec<u8>)>, String>
 where
     F: FnMut(u32) -> Result<Vec<u8>, String>,
 {
@@ -211,9 +212,7 @@ where
         }
     }
 
-    best.ok_or_else(|| {
-        format!("Page {first} is larger than 50 MB by itself. Compress that PDF and try again.")
-    })
+    Ok(best)
 }
 
 /// Copy of `source` holding only pages `first..=high`, pruned and compressed
@@ -223,12 +222,10 @@ where
 /// the difference between paying that cost once per part and paying it once
 /// per binary-search step per part.
 ///
-/// `prune_objects` does a fresh reachability sweep from the current page
-/// tree every time it runs (see `lopdf`'s `processor.rs`), and `compress`
-/// only rewrites each stream object's own bytes — neither depends on how
-/// many *other* objects exist, so trimming a document in two stages (once to
-/// this window, later further within it) produces exactly the same kept
-/// objects and bytes as trimming directly to the final range in one stage.
+/// `prune_objects` sweeps from the trailer, including the catalog, so the
+/// whole-document metadata graphs must be trimmed before each sweep.
+/// Two-stage trimming keeps the same page resources as trimming directly;
+/// rebuilt navigation objects may have different object numbers.
 fn window_document(source: &Document, first: u32, high: u32, total: u32) -> Document {
     let mut window = source.clone();
     let outside: Vec<u32> = (1..=total)
@@ -276,6 +273,8 @@ fn delete_pages_batch(document: &mut Document, page_numbers: &[u32]) {
         return;
     }
 
+    trim_part_metadata(document, &removed);
+
     let mut decrements: HashMap<ObjectId, i64> = HashMap::new();
     for page_id in &removed {
         let mut parent = document
@@ -309,6 +308,191 @@ fn delete_pages_batch(document: &mut Document, page_numbers: &[u32]) {
         strip_references(object, &removed);
     }
     document.objects.retain(|id, _| !removed.contains(id));
+}
+
+/// Whole-document navigation and accessibility graphs cannot be copied as-is
+/// into a part. In particular tagged structure may reference removed pages'
+/// content/resources even after their direct /Pg references are stripped.
+fn trim_part_metadata(document: &mut Document, removed: &HashSet<ObjectId>) {
+    let Ok(root) = document.catalog().cloned() else {
+        return;
+    };
+    let kept: HashSet<ObjectId> = document
+        .get_pages()
+        .into_values()
+        .filter(|id| !removed.contains(id))
+        .collect();
+    let destination = |object: &Object| {
+        crate::pdf_study_kit::destination(document, &root, object, 0).filter(|id| kept.contains(id))
+    };
+
+    // Flatten the surviving headings in reading order. A removed parent's
+    // kept children are promoted, so a chapter in this part retains its own
+    // heading. Rebuild links rather than retaining old Parent/Next graphs.
+    let mut headings = Vec::new();
+    let mut stack = Vec::new();
+    if let Ok(outlines) = root.get(b"Outlines").and_then(|o| document.dereference(o)) {
+        if let Ok(dict) = outlines.1.as_dict() {
+            if let Ok(first) = dict.get(b"First") {
+                stack.push(first.clone());
+            }
+        }
+    }
+    let mut seen = HashSet::new();
+    while let Some(object) = stack.pop() {
+        let Ok(id) = object.as_reference() else {
+            continue;
+        };
+        if !seen.insert(id) {
+            continue;
+        }
+        let Ok(item) = document.get_dictionary(id) else {
+            continue;
+        };
+        if let Ok(next) = item.get(b"Next") {
+            stack.push(next.clone());
+        }
+        if let Ok(child) = item.get(b"First") {
+            stack.push(child.clone());
+        }
+        let target = item
+            .get(b"Dest")
+            .ok()
+            .or_else(|| {
+                let action = document
+                    .dereference(item.get(b"A").ok()?)
+                    .ok()?
+                    .1
+                    .as_dict()
+                    .ok()?;
+                (action.get(b"S").ok()?.as_name().ok()? == b"GoTo")
+                    .then(|| action.get(b"D").ok())
+                    .flatten()
+            })
+            .and_then(destination);
+        if let (Some(page), Ok(title)) = (target, item.get(b"Title")) {
+            if let Ok((_, title)) = document.dereference(title) {
+                if matches!(title, Object::String(_, _)) {
+                    headings.push((title.clone(), page));
+                }
+            }
+        }
+    }
+
+    let mut annotations = Vec::new();
+    for page in &kept {
+        let Ok(items) = document
+            .get_dictionary(*page)
+            .and_then(|p| p.get(b"Annots"))
+            .and_then(|o| document.dereference(o))
+            .and_then(|(_, o)| o.as_array())
+        else {
+            continue;
+        };
+        let mut cleaned = Vec::new();
+        for object in items {
+            let Ok((_, object)) = document.dereference(object) else {
+                continue;
+            };
+            let Ok(dict) = object.as_dict() else { continue };
+            // Forms are omitted from parts; widgets must not retain the field
+            // parent tree after AcroForm is removed from the catalog.
+            if dict.get(b"Subtype").and_then(Object::as_name).ok() == Some(b"Widget")
+                || dict
+                    .get(b"P")
+                    .and_then(Object::as_reference)
+                    .ok()
+                    .is_some_and(|id| removed.contains(&id))
+            {
+                continue;
+            }
+            let mut dict = dict.clone();
+            dict.remove(b"StructParent");
+            if let Ok(target) = dict.get(b"Dest") {
+                let Some(id) = destination(target) else {
+                    continue;
+                };
+                dict.set("Dest", vec![id.into(), Object::Name(b"Fit".to_vec())]);
+            }
+            if let Ok((_, action)) = dict.get(b"A").and_then(|o| document.dereference(o)) {
+                if let Ok(action) = action.as_dict() {
+                    let mut action = action.clone();
+                    action.remove(b"Next");
+                    if action.get(b"S").and_then(Object::as_name).ok() == Some(b"GoTo") {
+                        let Some(id) = action.get(b"D").ok().and_then(destination) else {
+                            continue;
+                        };
+                        action.set("D", vec![id.into(), Object::Name(b"Fit".to_vec())]);
+                    }
+                    dict.set("A", action);
+                }
+            }
+            cleaned.push(Object::Dictionary(dict));
+        }
+        annotations.push((*page, cleaned));
+    }
+    for (id, items) in annotations {
+        if let Ok(page) = document.get_dictionary_mut(id) {
+            page.set("Annots", items);
+        }
+    }
+    for id in &kept {
+        if let Ok(page) = document.get_dictionary_mut(*id) {
+            page.remove(b"StructParents");
+        }
+    }
+
+    let outlines = if headings.is_empty() {
+        None
+    } else {
+        let parent = document.new_object_id();
+        let ids: Vec<_> = headings.iter().map(|_| document.new_object_id()).collect();
+        for (index, (title, page)) in headings.into_iter().enumerate() {
+            let mut item = Dictionary::new();
+            item.set("Title", title);
+            item.set("Parent", parent);
+            item.set("Dest", vec![page.into(), Object::Name(b"Fit".to_vec())]);
+            if index > 0 {
+                item.set("Prev", ids[index - 1]);
+            }
+            if index + 1 < ids.len() {
+                item.set("Next", ids[index + 1]);
+            }
+            document
+                .objects
+                .insert(ids[index], Object::Dictionary(item));
+        }
+        let mut tree = Dictionary::new();
+        tree.set("Type", Object::Name(b"Outlines".to_vec()));
+        tree.set("First", ids[0]);
+        tree.set("Last", *ids.last().unwrap());
+        tree.set("Count", ids.len() as i64);
+        document.objects.insert(parent, Object::Dictionary(tree));
+        Some(parent)
+    };
+    if let Ok(catalog) = document.catalog_mut() {
+        // Accessibility tags cannot remain consistent per part. Omit their
+        // tree and MarkInfo rather than falsely claiming this part is tagged.
+        // Named destinations/forms/article threads are whole-document graphs;
+        // outlines and links above have already resolved their kept targets.
+        // PageLabels are omitted because source indices no longer match.
+        for key in [
+            b"StructTreeRoot".as_slice(),
+            b"MarkInfo",
+            b"Outlines",
+            b"Names",
+            b"Dests",
+            b"AcroForm",
+            b"OpenAction",
+            b"PageLabels",
+            b"Threads",
+        ] {
+            catalog.remove(key);
+        }
+        if let Some(id) = outlines {
+            catalog.set("Outlines", id);
+        }
+    }
 }
 
 fn strip_references_from_dictionary(dictionary: &mut Dictionary, removed: &HashSet<ObjectId>) {
@@ -393,7 +577,52 @@ pub async fn split_pdf(
     .await
 }
 
-pub(crate) fn split_range_at(
+/// Own every temporary/final path until the complete split has a receipt.
+/// A failed render, write, rename, or receipt removes the whole batch.
+#[derive(Default)]
+struct SplitFiles {
+    paths: Vec<PathBuf>,
+    keep: bool,
+}
+
+impl SplitFiles {
+    fn write_part<F>(
+        &mut self,
+        directory: &Path,
+        material_id: &str,
+        name: &str,
+        write: F,
+    ) -> Result<(PathBuf, String), String>
+    where
+        F: FnOnce(&Path) -> Result<(), String>,
+    {
+        let (temporary, _) = documents::stored_destination_in(directory, ".pdf-split-tmp", name)?;
+        self.paths.push(temporary.clone());
+        write(&temporary)?;
+        // Reserve the final name only after the temporary file is complete.
+        // The reservation prevents overwriting another stored document.
+        let (destination, stored_name) =
+            documents::stored_destination_in(directory, material_id, name)?;
+        self.paths.push(destination.clone());
+        std::fs::rename(&temporary, &destination)
+            .map_err(|error| format!("Could not save the split PDF: {error}"))?;
+        self.paths.retain(|path| path != &temporary);
+        Ok((destination, stored_name))
+    }
+}
+
+impl Drop for SplitFiles {
+    fn drop(&mut self) {
+        if !self.keep {
+            for path in &self.paths {
+                let _ = std::fs::remove_file(path);
+            }
+        }
+    }
+}
+
+#[doc(hidden)]
+pub fn split_range_at(
     root: &Path,
     source_material_id: &str,
     relative_path: &str,
@@ -411,15 +640,23 @@ pub(crate) fn split_range_at(
         return Err("That PDF has no pages this application can read.".to_string());
     }
     let original_file_name = pdf_file_name(file_name);
-    let (destination, stored_name) =
-        documents::stored_destination_in(&documents_dir, material_id, &original_file_name)?;
-
+    let mut files = SplitFiles::default();
     let outcome = (|| {
-        write_page_range_from_document(&document, &destination, first_page, last_page)?;
+        let (destination, stored_name) = files.write_part(
+            &documents_dir,
+            material_id,
+            &original_file_name,
+            |temporary| {
+                write_page_range_from_document(&document, temporary, first_page, last_page)?;
+                let size = std::fs::metadata(temporary)
+                    .map_err(|error| format!("The split PDF could not be read back: {error}"))?
+                    .len();
+                enforce_pdf_size_limit(temporary, size)
+            },
+        )?;
         let file_size = std::fs::metadata(&destination)
             .map_err(|error| format!("The split PDF could not be read back: {error}"))?
             .len();
-        enforce_pdf_size_limit(&destination, file_size)?;
         lineage::issue_receipt_at(
             root,
             source_material_id,
@@ -434,11 +671,10 @@ pub(crate) fn split_range_at(
                 file_size,
                 original_file_name,
             }],
+            &[],
         )
     })();
-    if outcome.is_err() {
-        let _ = std::fs::remove_file(&destination);
-    }
+    files.keep = outcome.is_ok();
     outcome
 }
 
@@ -457,7 +693,7 @@ fn enforce_pdf_size_limit(destination: &Path, file_size: u64) -> Result<(), Stri
     }
     let _ = std::fs::remove_file(destination);
     Err(format!(
-        "That range came out to {}, over the {} limit Google reads. Choose a smaller page range.",
+        "That page range is too large ({}; the limit is {}). Choose a shorter page range.",
         crate::gemini::describe_size(file_size),
         crate::gemini::describe_size(MAX_PDF_BYTES),
     ))
@@ -490,13 +726,34 @@ pub async fn split_pdf_automatically(
     .await
 }
 
-pub(crate) fn split_automatically_at(
+#[doc(hidden)]
+pub fn split_automatically_at(
     root: &Path,
     source_material_id: &str,
     relative_path: &str,
     batch_id: &str,
     file_name: &str,
     report: &dyn Fn(String),
+) -> Result<SplitSourceReceipt, String> {
+    split_automatically_with_limits(
+        root,
+        source_material_id,
+        relative_path,
+        batch_id,
+        file_name,
+        report,
+        (MAX_PAGES, MAX_PDF_BYTES),
+    )
+}
+
+fn split_automatically_with_limits(
+    root: &Path,
+    source_material_id: &str,
+    relative_path: &str,
+    batch_id: &str,
+    file_name: &str,
+    report: &dyn Fn(String),
+    limits: (u32, u64),
 ) -> Result<SplitSourceReceipt, String> {
     let documents_dir = root.join(documents::DOCUMENTS_DIR);
     let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
@@ -512,39 +769,77 @@ pub(crate) fn split_automatically_at(
     } else {
         base
     };
-    let total_parts_estimate = total.div_ceil(MAX_PAGES).max(1);
-    let mut created_paths = Vec::new();
+    let mut files = SplitFiles::default();
     let result = (|| {
+        let (parts, skipped_pages) = files.write_automatic_parts(
+            &document,
+            &documents_dir,
+            batch_id,
+            base,
+            report,
+            limits,
+        )?;
+        lineage::issue_receipt_at(
+            root,
+            source_material_id,
+            relative_path,
+            &bytes,
+            total,
+            &parts,
+            &skipped_pages,
+        )
+    })();
+
+    files.keep = result.is_ok();
+    result
+}
+
+impl SplitFiles {
+    fn write_automatic_parts(
+        &mut self,
+        document: &Document,
+        directory: &Path,
+        batch_id: &str,
+        base: &str,
+        report: &dyn Fn(String),
+        limits: (u32, u64),
+    ) -> Result<(Vec<WrittenPart>, Vec<u32>), String> {
+        let (max_pages, max_bytes) = limits;
+        let total = document.get_pages().len() as u32;
+        let total_parts_estimate = total.div_ceil(max_pages).max(1);
         let mut parts = Vec::new();
+        let mut skipped_pages = Vec::new();
         let mut first = 1;
         let mut number = 1;
         while first <= total {
-            let window_high = total.min(first.saturating_add(MAX_PAGES - 1));
+            let window_high = total.min(first.saturating_add(max_pages - 1));
             report(format!(
                 "Reading pages {first}\u{2013}{window_high} (part {number} of about \
                  {total_parts_estimate})…"
             ));
-            // Bounded to at most MAX_PAGES pages, however long the book
+            // Bounded to at most max_pages pages, however long the book
             // is — every candidate below is cloned and pruned from this,
             // not from the whole remaining document. See `window_document`.
-            let window = window_document(&document, first, window_high, total);
+            let window = window_document(document, first, window_high, total);
 
             let part_name = format!("{base} - Part {number}.pdf");
             let part_id = format!("{batch_id}-part-{number}");
-            let (destination, stored_name) =
-                documents::stored_destination_in(&documents_dir, &part_id, &part_name)?;
-            created_paths.push(destination.clone());
-
-            let (last, part_bytes) = largest_fitting_last_page(
-                first,
-                window_high,
-                MAX_PAGES,
-                MAX_PDF_BYTES,
-                |candidate| render_window_range(&window, 1, candidate - first + 1),
-            )?;
+            let fitting =
+                largest_fitting_last_page(first, window_high, max_pages, max_bytes, |candidate| {
+                    render_window_range(&window, 1, candidate - first + 1)
+                })?;
+            let Some((last, part_bytes)) = fitting else {
+                skipped_pages.push(first);
+                report(format!("Page {first} is too large by itself and will be left out. Your original PDF is unchanged."));
+                first += 1;
+                continue;
+            };
             let file_size = part_bytes.len() as u64;
-            std::fs::write(&destination, &part_bytes)
-                .map_err(|e| format!("Could not save the split PDF: {e}"))?;
+            let (_, stored_name) =
+                self.write_part(directory, &part_id, &part_name, |temporary| {
+                    std::fs::write(temporary, &part_bytes)
+                        .map_err(|e| format!("Could not save the split PDF: {e}"))
+                })?;
 
             report(format!(
                 "Created part {number}: pages {first}\u{2013}{last} ({} MB)",
@@ -562,22 +857,11 @@ pub(crate) fn split_automatically_at(
             first = last + 1;
             number += 1;
         }
-        lineage::issue_receipt_at(
-            root,
-            source_material_id,
-            relative_path,
-            &bytes,
-            total,
-            &parts,
-        )
-    })();
-
-    if result.is_err() {
-        for path in created_paths {
-            let _ = std::fs::remove_file(path);
+        if parts.is_empty() {
+            return Err("Every page is too large by itself, so no parts were created. Your original PDF is unchanged.".into());
         }
+        Ok((parts, skipped_pages))
     }
-    result
 }
 
 /// Make sure the new document is named like the PDF it is.
@@ -614,6 +898,454 @@ mod tests {
     use super::*;
     use lopdf::{dictionary, Object, Stream};
     use std::path::PathBuf;
+
+    /// Tagged navigation graphs deliberately share each page's own image.
+    /// After /Pg stripping alone those images still survive through /OBJR.
+    fn tagged_illustrated_pdf() -> Document {
+        let mut doc = illustrated_pdf_with_pages(4);
+        let pages: Vec<_> = doc.get_pages().into_values().collect();
+        let images: Vec<_> = pages
+            .iter()
+            .map(|id| {
+                doc.get_dictionary(*id)
+                    .unwrap()
+                    .get(b"Resources")
+                    .unwrap()
+                    .as_dict()
+                    .unwrap()
+                    .get(b"XObject")
+                    .unwrap()
+                    .as_dict()
+                    .unwrap()
+                    .get(b"Im0")
+                    .unwrap()
+                    .as_reference()
+                    .unwrap()
+            })
+            .collect();
+        let structure: Vec<Object> = pages
+            .iter()
+            .zip(&images)
+            .map(|(page, image)| {
+                doc.add_object(dictionary! {
+                    "Type" => "StructElem", "S" => "Figure", "Pg" => *page,
+                    "K" => dictionary! { "Type" => "OBJR", "Pg" => *page, "Obj" => *image },
+                })
+                .into()
+            })
+            .collect();
+        let tags = doc.add_object(dictionary! { "Type" => "StructTreeRoot", "K" => structure });
+        let outlines = doc.new_object_id();
+        let parent = doc.new_object_id();
+        let child = doc.new_object_id();
+        let siblings: Vec<_> = (1..4).map(|_| doc.new_object_id()).collect();
+        doc.objects.insert(
+            parent,
+            dictionary! {
+                "Title" => Object::string_literal("Removed parent"), "Parent" => outlines,
+                "Dest" => vec![pages[3].into(), Object::Name(b"Fit".to_vec())],
+                "First" => child, "Last" => child, "Count" => 1, "Next" => siblings[0],
+            }
+            .into(),
+        );
+        doc.objects.insert(
+            child,
+            dictionary! {
+                "Title" => Object::string_literal("Kept chapter"), "Parent" => parent,
+                "A" => dictionary! { "S" => "GoTo", "D" => Object::string_literal("kept") },
+            }
+            .into(),
+        );
+        for (index, id) in siblings.iter().enumerate() {
+            let mut item = dictionary! {
+                "Title" => Object::string_literal("Removed chapter"), "Parent" => outlines,
+                "Dest" => vec![pages[index+1].into(), Object::Name(b"Fit".to_vec())],
+            };
+            if index + 1 < siblings.len() {
+                item.set("Next", siblings[index + 1]);
+            }
+            doc.objects.insert(*id, item.into());
+        }
+        doc.objects.insert(outlines, dictionary! { "Type" => "Outlines", "First" => parent, "Last" => *siblings.last().unwrap(), "Count" => 5 }.into());
+        let names = doc.add_object(dictionary! { "Names" => vec![
+            Object::string_literal("kept"), Object::Array(vec![pages[0].into(), Object::Name(b"Fit".to_vec())]),
+            Object::string_literal("removed"), Object::Array(vec![pages[3].into(), Object::Name(b"Fit".to_vec())]),
+        ] });
+        let field = doc.new_object_id();
+        let widgets: Vec<Object> = [0, 3].into_iter().map(|index| {
+            doc.add_object(dictionary! { "Type" => "Annot", "Subtype" => "Widget", "P" => pages[index], "Parent" => field,
+                "AP" => dictionary! { "N" => images[index] } }).into()
+        }).collect();
+        doc.objects.insert(
+            field,
+            dictionary! { "FT" => "Tx", "Kids" => widgets.clone() }.into(),
+        );
+        let form = doc.add_object(dictionary! { "Fields" => vec![Object::Reference(field)] });
+        let kept_link = dictionary! { "Subtype" => "Link", "P" => pages[0], "StructParent" => 1,
+        "Dest" => Object::string_literal("kept") };
+        let kept_action = dictionary! { "Subtype" => "Link", "P" => pages[0],
+        "A" => dictionary! { "S" => "GoTo", "D" => Object::string_literal("kept"),
+            "Next" => dictionary! { "S" => "GoTo", "D" => vec![pages[3].into(), Object::Name(b"Fit".to_vec())] } } };
+        let removed_link = dictionary! { "Subtype" => "Link", "Dest" => vec![pages[3].into(), Object::Name(b"Fit".to_vec())] };
+        let removed_action = dictionary! { "Subtype" => "Link", "A" => dictionary! { "S" => "GoTo", "D" => Object::Name(b"last".to_vec()) } };
+        let wrong_owner = dictionary! { "Subtype" => "Text", "P" => pages[3] };
+        doc.get_dictionary_mut(pages[0]).unwrap().set(
+            "Annots",
+            vec![
+                widgets[0].clone(),
+                kept_link.into(),
+                kept_action.into(),
+                removed_link.into(),
+                removed_action.into(),
+                wrong_owner.into(),
+            ],
+        );
+        doc.get_dictionary_mut(pages[0])
+            .unwrap()
+            .set("StructParents", 0);
+        doc.get_dictionary_mut(pages[3])
+            .unwrap()
+            .set("Annots", vec![widgets[1].clone()]);
+        let root = doc.catalog_mut().unwrap();
+        root.set("StructTreeRoot", tags);
+        root.set("MarkInfo", dictionary! { "Marked" => true });
+        root.set("Outlines", outlines);
+        root.set("Names", dictionary! { "Dests" => names });
+        root.set(
+            "Dests",
+            dictionary! { "last" => vec![pages[3].into(), Object::Name(b"Fit".to_vec())] },
+        );
+        root.set("AcroForm", form);
+        root.set(
+            "OpenAction",
+            vec![pages[3].into(), Object::Name(b"Fit".to_vec())],
+        );
+        root.set("PageLabels", dictionary! { "Nums" => vec![0.into(), Object::Dictionary(dictionary! { "S" => "D" })] });
+        doc
+    }
+
+    fn assert_trimmed_tagged_part(bytes: &[u8], source: &Document) {
+        assert!(
+            bytes.len() > 40_000 && bytes.len() < 65_000,
+            "one image, not the whole book: {}",
+            bytes.len()
+        );
+        let doc = Document::load_mem(bytes).unwrap();
+        let page = *source.get_pages().get(&1).unwrap();
+        assert_eq!(
+            doc.get_pages().into_values().collect::<Vec<_>>(),
+            vec![page]
+        );
+        for id in source.get_pages().values().skip(1) {
+            assert!(!doc.objects.contains_key(id));
+        }
+        let root = doc.catalog().unwrap();
+        for key in [
+            b"StructTreeRoot".as_slice(),
+            b"MarkInfo",
+            b"Names",
+            b"Dests",
+            b"AcroForm",
+            b"OpenAction",
+            b"PageLabels",
+        ] {
+            assert!(
+                root.get(key).is_err(),
+                "{} survived",
+                String::from_utf8_lossy(key)
+            );
+        }
+        let outline = doc
+            .get_dictionary(root.get(b"Outlines").unwrap().as_reference().unwrap())
+            .unwrap();
+        assert_eq!(outline.get(b"Count").unwrap().as_i64().unwrap(), 1);
+        let heading = doc
+            .get_dictionary(outline.get(b"First").unwrap().as_reference().unwrap())
+            .unwrap();
+        assert_eq!(
+            heading.get(b"Title").unwrap().as_str().unwrap(),
+            b"Kept chapter"
+        );
+        assert_eq!(
+            heading.get(b"Dest").unwrap().as_array().unwrap()[0]
+                .as_reference()
+                .unwrap(),
+            page
+        );
+        assert!(heading.get(b"Next").is_err());
+        let page = doc.get_dictionary(page).unwrap();
+        assert!(page.get(b"StructParents").is_err());
+        let annots = page.get(b"Annots").unwrap().as_array().unwrap();
+        assert_eq!(annots.len(), 2, "only the two kept links survive");
+        assert!(annots[0].as_dict().unwrap().get(b"StructParent").is_err());
+        assert!(annots[0]
+            .as_dict()
+            .unwrap()
+            .get(b"Dest")
+            .unwrap()
+            .as_array()
+            .is_ok());
+        let action = annots[1]
+            .as_dict()
+            .unwrap()
+            .get(b"A")
+            .unwrap()
+            .as_dict()
+            .unwrap();
+        assert!(action.get(b"D").unwrap().as_array().is_ok());
+        assert!(action.get(b"Next").is_err());
+        // Every reference in the serialized part resolves; no dangling /Pg,
+        // /Dest, /P, or resource reference to an omitted object is left.
+        let mut copy = doc.clone();
+        let ids = copy.traverse_objects(|_| {});
+        for id in ids {
+            assert!(doc.objects.contains_key(&id), "dangling {id:?}");
+        }
+        let images = doc
+            .objects
+            .values()
+            .filter(|o| {
+                o.as_stream().is_ok_and(|s| {
+                    s.dict.get(b"Subtype").and_then(Object::as_name).ok() == Some(b"Image")
+                })
+            })
+            .count();
+        assert_eq!(images, 1);
+    }
+
+    #[test]
+    fn tagged_pdf_parts_prune_other_pages_and_preserve_kept_headings() {
+        let source = tagged_illustrated_pdf();
+        let mut bytes = Vec::new();
+        source.clone().save_to(&mut bytes).unwrap();
+        let dir = scratch().join("tagged-parts");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("manual.pdf");
+        write_page_range_from_document(&source, &path, 1, 1).unwrap();
+        assert_trimmed_tagged_part(&std::fs::read(path).unwrap(), &source);
+        assert_trimmed_tagged_part(&selected_bytes(&bytes, &[1]).unwrap(), &source);
+        let window = window_document(&source, 1, 3, 4);
+        assert_trimmed_tagged_part(&render_window_range(&window, 1, 1).unwrap(), &source);
+        // Subsetting never changes the parsed source or its original bytes.
+        let mut after = Vec::new();
+        source.clone().save_to(&mut after).unwrap();
+        assert_eq!(bytes, after);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn pdf_failed_partial_write_leaves_no_final_or_temporary_file() {
+        let dir = scratch().join("failed-write");
+        std::fs::create_dir_all(&dir).unwrap();
+        {
+            let mut files = SplitFiles::default();
+            let error = files
+                .write_part(&dir, "part", "chapter.pdf", |temporary| {
+                    assert!(
+                        !dir.join("part-chapter.pdf").exists(),
+                        "final path must not exist during a write"
+                    );
+                    std::fs::write(temporary, b"partial PDF").unwrap();
+                    Err("injected write failure".into())
+                })
+                .unwrap_err();
+            assert!(error.contains("injected"));
+        }
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    // Small synthetic byte limit exercises the production split/receipt flow
+    // without allocating a 50 MiB image for every regression.
+    fn library_with_oversized_pages(label: &str, oversized: &[u32]) -> PathBuf {
+        let root = split_library(label, 4);
+        let mut doc = pdf_with_pages(4);
+        for page in oversized {
+            let id = doc.get_pages()[page];
+            let mut seed = 42u32;
+            let data = (0..100_000)
+                .map(|_| {
+                    seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                    (seed >> 16) as u8
+                })
+                .collect();
+            let stream = doc.add_object(Stream::new(dictionary! {}, data));
+            doc.get_dictionary_mut(id).unwrap().set("Contents", stream);
+        }
+        doc.save(root.join("documents/R-handbook.pdf")).unwrap();
+        root
+    }
+
+    fn assert_oversized_page_skipped(label: &str, skipped: u32, ranges: &[(u32, u32)]) {
+        let root = library_with_oversized_pages(label, &[skipped]);
+        let source = root.join("documents/R-handbook.pdf");
+        let before = std::fs::read(&source).unwrap();
+        let receipt = split_automatically_with_limits(
+            &root,
+            "R",
+            "R-handbook.pdf",
+            "batch",
+            "Book",
+            &|_| {},
+            (MAX_PAGES, 10_000),
+        )
+        .unwrap();
+        assert_eq!(receipt.core.skipped_pages, vec![skipped]);
+        assert_eq!(
+            receipt
+                .core
+                .plan
+                .iter()
+                .map(|p| (p.selection.start, p.selection.end))
+                .collect::<Vec<_>>(),
+            ranges
+        );
+        for (index, part) in receipt.core.plan.iter().enumerate() {
+            assert_eq!(part.id, format!("batch-part-{}", index + 1));
+            assert!(part.file_size <= 10_000);
+            assert_eq!(
+                page_count(&root.join("documents").join(&part.file_path)).unwrap(),
+                part.child_page_count
+            );
+        }
+        lineage::save_split_batch_at(&root, &receipt, &presentation(&receipt)).unwrap();
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        let canonical: String = conn.query_row(
+            "SELECT receipt_canonical_json FROM split_operation_log WHERE operation_id = ?1 AND status = 'committed'",
+            [&receipt.operation_id], |r| r.get(0),
+        ).unwrap();
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&canonical).unwrap()["skippedPages"],
+            serde_json::json!([skipped])
+        );
+        assert_eq!(std::fs::read(source).unwrap(), before);
+        assert_eq!(
+            std::fs::read_dir(root.join("documents")).unwrap().count(),
+            ranges.len() + 1
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn pdf_oversized_first_page_is_skipped_and_reported() {
+        assert_oversized_page_skipped("oversized-first", 1, &[(2, 4)]);
+    }
+
+    #[test]
+    fn pdf_oversized_middle_page_is_skipped_and_reported() {
+        assert_oversized_page_skipped("oversized-middle", 2, &[(1, 1), (3, 4)]);
+    }
+
+    #[test]
+    fn pdf_oversized_last_page_is_skipped_and_reported() {
+        assert_oversized_page_skipped("oversized-last", 4, &[(1, 3)]);
+    }
+
+    #[test]
+    fn pdf_all_pages_oversized_fails_plainly_without_files_or_receipt() {
+        let root = library_with_oversized_pages("all-oversized", &[1, 2, 3, 4]);
+        let before = std::fs::read(root.join("documents/R-handbook.pdf")).unwrap();
+        let error = split_automatically_with_limits(
+            &root,
+            "R",
+            "R-handbook.pdf",
+            "batch",
+            "Book",
+            &|_| {},
+            (MAX_PAGES, 10_000),
+        )
+        .unwrap_err();
+        assert_eq!(error, "Every page is too large by itself, so no parts were created. Your original PDF is unchanged.");
+        assert_eq!(
+            std::fs::read_dir(root.join("documents")).unwrap().count(),
+            1
+        );
+        assert_eq!(
+            std::fs::read(root.join("documents/R-handbook.pdf")).unwrap(),
+            before
+        );
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM split_operation_log", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM study_materials", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn pdf_real_failure_after_skipping_rolls_back_every_written_part() {
+        let root = library_with_oversized_pages("skip-then-failure", &[2]);
+        let created = std::cell::Cell::new(0);
+        let error = split_automatically_with_limits(
+            &root,
+            "wrong-owner",
+            "R-handbook.pdf",
+            "batch",
+            "Book",
+            &|message| {
+                if message.starts_with("Created") {
+                    created.set(created.get() + 1);
+                }
+            },
+            (MAX_PAGES, 10_000),
+        )
+        .unwrap_err();
+        assert!(error.contains("no longer in the library"), "{error}");
+        assert_eq!(created.get(), 2);
+        assert_eq!(
+            std::fs::read_dir(root.join("documents")).unwrap().count(),
+            1
+        );
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM split_operation_log", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn pdf_failed_automatic_receipt_removes_all_parts_and_adds_no_rows() {
+        let root = split_library("failed-auto-receipt", 1_001);
+        let error = split_automatically_at(
+            &root,
+            "wrong-owner",
+            "R-handbook.pdf",
+            "batch",
+            "Book.pdf",
+            &|_| {},
+        )
+        .unwrap_err();
+        assert!(error.contains("no longer in the library"), "{error}");
+        assert_eq!(
+            std::fs::read_dir(root.join("documents")).unwrap().count(),
+            1
+        );
+        let conn = rusqlite::Connection::open(root.join("her-flight-deck.db")).unwrap();
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM study_materials", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            conn.query_row("SELECT count(*) FROM split_operation_log", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     /// A minimal, real PDF with `pages` numbered pages.
     fn pdf_with_pages(pages: u32) -> Document {
@@ -1116,21 +1848,29 @@ mod tests {
         let (last, bytes) = largest_fitting_last_page(1, 2_500, 1_000, 50, |page| {
             Ok(vec![0u8; (page / 10) as usize])
         })
+        .unwrap()
         .unwrap();
         assert_eq!((last, bytes.len() as u64), (509, 50));
 
         let (last, _) =
             largest_fitting_last_page(1, 2_500, 1_000, 5_000, |page| Ok(vec![0u8; page as usize]))
+                .unwrap()
                 .unwrap();
         assert_eq!(last, 1_000);
     }
 
     #[test]
-    fn a_single_oversized_page_gets_an_actionable_error() {
-        let error =
-            largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(vec![0u8; 51])).unwrap_err();
-        assert!(error.contains("Page 17"));
-        assert!(error.contains("Compress"));
+    fn a_single_oversized_page_is_a_skip_but_a_render_failure_is_an_error() {
+        assert!(
+            largest_fitting_last_page(17, 30, 1_000, 50, |_| Ok(vec![0u8; 51]))
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(
+            largest_fitting_last_page(17, 30, 1_000, 50, |_| Err("render failed".into()))
+                .unwrap_err(),
+            "render failed"
+        );
     }
 
     #[test]
@@ -1153,7 +1893,8 @@ mod tests {
         std::fs::write(&file, b"pretend pdf bytes").unwrap();
 
         let error = enforce_pdf_size_limit(&file, MAX_PDF_BYTES + 1).unwrap_err();
-        assert!(error.contains("Choose a smaller page range"), "{error}");
+        assert!(error.contains("range is too large"), "{error}");
+        assert!(error.contains("Choose a shorter page range"), "{error}");
         assert!(
             !file.exists(),
             "an oversized manual range must not be left as a stored document"
@@ -1211,6 +1952,7 @@ mod tests {
                 MAX_PDF_BYTES,
                 |candidate| render_window_range(&window, 1, candidate - first + 1),
             )
+            .unwrap()
             .unwrap();
 
             assert!(last >= first);
@@ -1301,6 +2043,7 @@ mod tests {
                 MAX_PDF_BYTES,
                 |candidate| render_window_range(&window, 1, candidate - first + 1),
             )
+            .unwrap()
             .unwrap();
             std::fs::write(out.join(format!("part-{number}.pdf")), &bytes).unwrap();
             parts.push((first, last, bytes.len() as u64));

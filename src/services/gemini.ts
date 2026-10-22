@@ -108,7 +108,7 @@ export interface GenerationJobIdentity {
   checkpointed?: boolean;
 }
 
-export type GeminiJobKind = "study-aid" | "practice-test";
+export type GeminiJobKind = "study-aid" | "practice-test" | "flashcards";
 export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted" | "cancelled";
 
 /**
@@ -271,6 +271,7 @@ export function geminiErrorMessage(error: unknown): string {
 /** Only these safe messages cross the section-guide error boundary. */
 export const SECTION_GUIDE_MESSAGES = {
   SOURCE_CHANGED: "This PDF or your chosen pages changed. Keep your earlier work, or start a new guide?",
+  PLAN_CHANGED: "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?",
   CONSENT_REQUIRED: "Choose whether to keep your earlier work or start a new guide.",
   TOO_MANY_SECTIONS: "Choose fewer pages so your guide has at most 40 sections.",
   KEY_CHANGED: "Your Gemini key changed. Continue starts a new guide and may upload the PDF again. Your earlier sections are kept.",
@@ -303,6 +304,8 @@ export function sectionGuideError(error: unknown): SectionGuideError {
   const known: Record<string, SectionGuideErrorCode> = {
     [GEMINI_CANCELLED_MESSAGE]: "CANCELLED",
     "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide.": "SOURCE_CHANGED",
+    "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?": "PLAN_CHANGED",
+    "Her Flight Deck was updated since this guide started. Keep your earlier sections, or explicitly start a new guide.": "PLAN_CHANGED",
     "The Gemini key or project changed. Explicit Continue is required before preparing this PDF again.": "KEY_CHANGED",
     "The saved PDF reference could not be validated. Your sections are kept; nothing was uploaded.": "DESCRIPTOR_INVALID",
     "Google refused access to the saved PDF. Check the key and project; nothing was uploaded.": "REFERENCE_AUTH_FAILED",
@@ -313,7 +316,7 @@ export function sectionGuideError(error: unknown): SectionGuideError {
     "Gemini is taking longer to answer. You can try again.": "GENERATION_TIMEOUT",
   };
   if (typeof message === "string" && Object.hasOwn(known, message)) return new SectionGuideError(known[message]!);
-  if (typeof message === "string" && /^Her Flight Deck stopped before [^:]+: the 15 minutes it allows for one study aid had run out\./.test(message)) return new SectionGuideError("STAGE_TIMEOUT");
+  if (typeof message === "string" && (/^Her Flight Deck stopped before [^:]+: the 15 minutes it allows for one study aid had run out\./.test(message) || message === "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.")) return new SectionGuideError("STAGE_TIMEOUT");
   return new SectionGuideError("GUIDE_PAUSED");
 }
 export interface SectionGuideRequest {

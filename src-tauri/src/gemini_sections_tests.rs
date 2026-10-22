@@ -136,7 +136,7 @@ fn planner_bounds() {
         p.iter()
             .map(|s| (s.page_start, s.page_end))
             .collect::<Vec<_>>(),
-        [(1, 5), (6, 10), (11, 15), (16, 16)]
+        [(1, 5), (6, 10), (11, 16)]
     );
     let hints = vec![(1, 24, "Chapter".to_string())];
     assert_eq!(
@@ -147,25 +147,377 @@ fn planner_bounds() {
             .collect::<Vec<_>>(),
         [(1, 10), (11, 20), (21, 24)]
     );
+    // A long selection is never refused for having too many sections: it
+    // merges to the limit instead.
+    let merged = plan(&(1..=201).collect::<Vec<_>>(), &[]).unwrap();
+    assert_eq!(merged.len(), MAX_SECTIONS);
+    assert_eq!(merged[0].heading, "Pages 1–5");
     assert_eq!(
-        plan(&(1..=201).collect::<Vec<_>>(), &[]).unwrap_err().code,
+        merged
+            .iter()
+            .flat_map(|s| s.page_start..=s.page_end)
+            .count(),
+        201
+    );
+    let over = plan(&(1..=205).collect::<Vec<_>>(), &[]).unwrap();
+    assert_eq!(over.len(), MAX_SECTIONS);
+    assert_eq!(over[0].heading, "Pages 1–10");
+    // Only a selection that cannot merge below the limit — more separate runs
+    // than the guide can hold — is still refused.
+    assert_eq!(
+        plan(&(0..41u32).map(|n| n * 2 + 1).collect::<Vec<_>>(), &[])
+            .unwrap_err()
+            .code,
         "TOO_MANY_SECTIONS"
+    );
+    assert_eq!(
+        plan(&(0..40u32).map(|n| n * 2 + 1).collect::<Vec<_>>(), &[])
+            .unwrap()
+            .len(),
+        40
     );
     let s = &p[0];
     assert!(validate_section(
         s,
-        &json!({"body":"x".repeat(16_000),"sourcePages":[1]}).to_string(),
+        &json!({"body":"x".repeat(crate::study_sets::MAX_BODY),"sourcePages":[1]}).to_string(),
         &(1..=16).collect::<Vec<_>>(),
         "model"
     )
     .is_ok());
     assert!(validate_section(
         s,
-        &json!({"body":"x".repeat(16_001),"sourcePages":[1]}).to_string(),
+        &json!({"body":"x".repeat(crate::study_sets::MAX_BODY + 1),"sourcePages":[1]}).to_string(),
         &(1..=16).collect::<Vec<_>>(),
         "model"
     )
     .is_err());
+    // A dense section that runs past the requested 12,000 characters (as a
+    // 6-page fuel-system section did on the real Powerplant handbook) is kept.
+    assert!(validate_section(
+        s,
+        &json!({"body":"x".repeat(17_500),"sourcePages":[1]}).to_string(),
+        &(1..=16).collect::<Vec<_>>(),
+        "model"
+    )
+    .is_ok());
+}
+
+#[test]
+fn a_heading_on_every_page_merges_into_at_most_40_sections() {
+    // The shape of "amt_powerplant_handbook — Part 1 of 4": a bookmark on
+    // nearly every page must still plan, never refuse.
+    let pages: Vec<u32> = (1..=102).collect();
+    let hints: Vec<(u32, u32, String)> = pages
+        .iter()
+        .map(|page| (*page, *page, format!("Heading {page}")))
+        .collect();
+    let manifest = plan(&pages, &hints).unwrap();
+    assert!(
+        manifest.len() <= MAX_SECTIONS,
+        "{} sections",
+        manifest.len()
+    );
+    assert_eq!(
+        manifest
+            .iter()
+            .flat_map(|s| s.page_start..=s.page_end)
+            .collect::<Vec<_>>(),
+        pages,
+        "every chosen page once and in source order"
+    );
+    assert!(manifest
+        .windows(2)
+        .all(|pair| pair[0].page_end + 1 == pair[1].page_start));
+    assert_eq!(
+        manifest.iter().map(|s| s.id.clone()).collect::<Vec<_>>(),
+        (1..=manifest.len())
+            .map(|n| format!("section-{n:02}"))
+            .collect::<Vec<_>>()
+    );
+    // A merged group keeps the first heading of the group, plainly.
+    assert_eq!(manifest[0].heading, "Heading 1 (and 4 more)");
+    assert_eq!((manifest[0].page_start, manifest[0].page_end), (1, 5));
+    assert_eq!(manifest.len(), 20);
+    assert_eq!(manifest[19].heading, "Heading 96 (and 6 more)");
+    assert_eq!((manifest[19].page_start, manifest[19].page_end), (96, 102));
+    assert!(manifest
+        .iter()
+        .all(|s| s.heading.starts_with(&format!("Heading {}", s.page_start))));
+}
+
+#[test]
+fn validate_section_tolerant_source_pages() {
+    let section = Section {
+        id: "section-02".into(),
+        heading: "Pages 11–20".into(),
+        page_start: 11,
+        page_end: 20,
+    };
+    let chosen: Vec<u32> = (1..=102).collect();
+    // [12, 3, 12, 15, 99] for a section of pages 11-20 is accepted with [12, 15]
+    let accepted = validate_section(
+        &section,
+        &json!({
+            "body": "Valid section body text.",
+            "sourcePages": [12, 3, 12, 15, 99]
+        })
+        .to_string(),
+        &chosen,
+        "model",
+    )
+    .unwrap();
+    assert_eq!(accepted.source_pages, vec![12, 15]);
+
+    // An answer whose pages are all outside the section is rejected
+    let err = validate_section(
+        &section,
+        &json!({
+            "body": "Valid section body text.",
+            "sourcePages": [1, 2, 3, 99, 100]
+        })
+        .to_string(),
+        &chosen,
+        "model",
+    )
+    .unwrap_err();
+    assert_eq!(
+        err.message,
+        "The section answer or its source pages were invalid; earlier sections are kept."
+    );
+}
+
+#[test]
+fn heading_every_two_pages_plans_into_at_most_21_sensible_sections() {
+    // A 102-page selection with a heading every 2 pages plans into at most 21
+    // sections, each at most 10 pages, covering every page once in order.
+    let pages: Vec<u32> = (1..=102).collect();
+    let hints: Vec<(u32, u32, String)> = (0..51)
+        .map(|i| (i * 2 + 1, i * 2 + 2, format!("Heading {}", i * 2 + 1)))
+        .collect();
+    let manifest = plan(&pages, &hints).unwrap();
+    assert!(
+        manifest.len() <= 21,
+        "expected at most 21 sections, got {}",
+        manifest.len()
+    );
+    assert!(
+        manifest.iter().all(|s| s.page_end - s.page_start < 10),
+        "each section at most 10 pages"
+    );
+    assert_eq!(
+        manifest
+            .iter()
+            .flat_map(|s| s.page_start..=s.page_end)
+            .collect::<Vec<_>>(),
+        pages,
+        "covering every page once in order"
+    );
+    assert!(manifest
+        .windows(2)
+        .all(|pair| pair[0].page_end + 1 == pair[1].page_start));
+}
+
+/// A synthetic PDF whose outline puts a chapter title at the outer level and a
+/// sub-heading on every page of that chapter, as a large FAA handbook does.
+fn outlined_pdf(pages: u32, chapters: u32) -> Vec<u8> {
+    use lopdf::{dictionary, Document, Object};
+    let mut document = Document::with_version("1.5");
+    let pages_id = document.new_object_id();
+    let outlines = document.new_object_id();
+    let page_ids: Vec<(u32, u16)> = (0..pages)
+        .map(|_| {
+            document.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+            })
+        })
+        .collect();
+    let fit = Object::Name(b"Fit".to_vec());
+    let dest = |page: u32| {
+        Object::Array(vec![
+            Object::Reference(page_ids[usize::try_from(page - 1).unwrap()]),
+            fit.clone(),
+        ])
+    };
+    document.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Count" => i64::from(pages),
+            "Kids" => page_ids.iter().map(|id| Object::Reference(*id)).collect::<Vec<Object>>(),
+        }),
+    );
+    let catalog = document.add_object(dictionary! {
+        "Type" => "Catalog", "Pages" => pages_id, "Outlines" => outlines
+    });
+    document.trailer.set("Root", catalog);
+    let step = (pages / chapters).max(1);
+    let chapter_ids: Vec<(u32, u16)> = (0..chapters).map(|_| document.new_object_id()).collect();
+    for (index, chapter) in (0..chapters).enumerate() {
+        let start = 1 + chapter * step;
+        let end = if chapter + 1 == chapters {
+            pages
+        } else {
+            start + step - 1
+        };
+        let span: Vec<u32> = (start..=end).collect();
+        let sub_ids: Vec<(u32, u16)> = span.iter().map(|_| document.new_object_id()).collect();
+        for (offset, page) in span.iter().enumerate() {
+            let mut entry = dictionary! {
+                "Title" => Object::string_literal(format!("Sub {page}")),
+                "Dest" => dest(*page),
+            };
+            if offset + 1 < sub_ids.len() {
+                entry.set("Next", sub_ids[offset + 1]);
+            }
+            document.objects.insert(sub_ids[offset], entry.into());
+        }
+        let mut entry = dictionary! {
+            "Title" => Object::string_literal(format!("Chapter {}", chapter + 1)),
+            "Dest" => dest(start),
+            "First" => sub_ids[0],
+            "Last" => sub_ids[sub_ids.len() - 1],
+        };
+        if index + 1 < chapter_ids.len() {
+            entry.set("Next", chapter_ids[index + 1]);
+        }
+        document.objects.insert(chapter_ids[index], entry.into());
+    }
+    document.objects.insert(
+        outlines,
+        dictionary! {
+            "Type" => "Outlines",
+            "First" => chapter_ids[0],
+            "Last" => *chapter_ids.last().unwrap(),
+            "Count" => i64::from(chapters),
+        }
+        .into(),
+    );
+    let mut out = Vec::new();
+    document.save_to(&mut out).unwrap();
+    out
+}
+
+#[test]
+fn a_deep_outline_plans_from_chapter_headings_only() {
+    let r = Rig::new(102);
+    std::fs::write(r.dir.path().join("documents/a.pdf"), outlined_pdf(102, 5)).unwrap();
+    let (identity, _) = source(r.dir.path(), &r.request, "gemini-2.5-flash").unwrap();
+    assert!(identity.manifest.len() <= MAX_SECTIONS);
+    // Five chapters over 102 pages give ten-page sections; the 102 sub-headings
+    // never become boundaries, because they would not fit the guide.
+    assert_eq!(
+        identity
+            .manifest
+            .iter()
+            .map(|s| s.heading.as_str())
+            .collect::<Vec<_>>(),
+        [
+            "Chapter 1",
+            "Chapter 1",
+            "Chapter 2",
+            "Chapter 2",
+            "Chapter 3",
+            "Chapter 3",
+            "Chapter 4",
+            "Chapter 4",
+            "Chapter 5",
+            "Chapter 5",
+            "Chapter 5",
+        ]
+    );
+    // A small enough outline still keeps its next level.
+    let small = Rig::new(10);
+    std::fs::write(
+        small.dir.path().join("documents/a.pdf"),
+        outlined_pdf(10, 3),
+    )
+    .unwrap();
+    let (small_plan, _) = source(small.dir.path(), &small.request, "gemini-2.5-flash").unwrap();
+    assert_eq!(
+        small_plan
+            .manifest
+            .iter()
+            .map(|s| s.heading.as_str())
+            .collect::<Vec<_>>(),
+        ["Chapter 1 (and 4 more)", "Sub 6 (and 4 more)",]
+    );
+}
+
+#[test]
+fn an_unchanged_plan_keeps_its_sections() {
+    // The merge must not shift a plan that already fits the limit.
+    assert_eq!(
+        plan(&(1..=16).collect::<Vec<_>>(), &[])
+            .unwrap()
+            .iter()
+            .map(|s| (s.page_start, s.page_end, s.heading.clone()))
+            .collect::<Vec<_>>(),
+        [
+            (1, 5, "Pages 1–5".to_string()),
+            (6, 10, "Pages 6–10".to_string()),
+            (11, 16, "Pages 11–16".to_string()),
+        ]
+    );
+    assert_eq!(
+        plan(
+            &(1..=24).collect::<Vec<_>>(),
+            &[(1, 24, "Chapter".to_string())]
+        )
+        .unwrap()
+        .iter()
+        .map(|s| (s.id.clone(), s.page_start, s.page_end))
+        .collect::<Vec<_>>(),
+        [
+            ("section-01".to_string(), 1, 10),
+            ("section-02".to_string(), 11, 20),
+            ("section-03".to_string(), 21, 24),
+        ]
+    );
+    // 200 pages with no bookmarks still plan as forty five-page sections.
+    assert_eq!(
+        plan(&(1..=200).collect::<Vec<_>>(), &[])
+            .unwrap()
+            .iter()
+            .map(|s| (s.page_start, s.page_end))
+            .collect::<Vec<_>>(),
+        (0..40u32)
+            .map(|n| (n * 5 + 1, n * 5 + 5))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn merging_never_mixes_two_chosen_runs() {
+    let mut pages: Vec<u32> = (1..=60).collect();
+    pages.extend(62..=102);
+    let hints: Vec<(u32, u32, String)> = pages
+        .iter()
+        .map(|page| (*page, *page, format!("Heading {page}")))
+        .collect();
+    let manifest = plan(&pages, &hints).unwrap();
+    assert!(
+        manifest.len() <= MAX_SECTIONS,
+        "{} sections",
+        manifest.len()
+    );
+    assert_eq!(
+        manifest
+            .iter()
+            .flat_map(|s| s.page_start..=s.page_end)
+            .collect::<Vec<_>>(),
+        pages
+    );
+    assert!(
+        manifest
+            .iter()
+            .all(|s| s.page_start > 61 || s.page_end < 61),
+        "page 61 was not chosen, so no section may cover it"
+    );
+    assert!(manifest
+        .windows(2)
+        .any(|pair| pair[0].page_end + 2 == pair[1].page_start));
 }
 
 #[test]
@@ -201,7 +553,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
         let pages: Vec<_> = (first..=last)
             .map(|p| json!({"pdfPage":p,"sourcePage":p}))
             .collect();
-        let prompt=format!("guide-section-prompt-v1: Write only section section-{:02} (Pages {first}–{last}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 16000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
+        let prompt=format!("guide-section-prompt-v1: Write only section section-{:02} (Pages {first}–{last}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 12000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
         let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
         assert_eq!(*body, expected);
         assert!(
@@ -271,6 +623,72 @@ fn changed_pdf_or_pages_requires_consent() {
     .unwrap();
     assert_eq!(r.run(Some(&id)).unwrap_err().code, "SOURCE_CHANGED");
     assert_eq!(r.fake.log().len(), count);
+}
+
+#[test]
+fn updated_app_plan_version_returns_plan_changed() {
+    let r = Rig::new(10);
+    r.fake.behave(|b| b.generate_answer = Some("bad".into()));
+    assert!(r.run(None).is_err());
+    let id = r.id();
+
+    // Mutate planner_version on disk while keeping PDF hash and chosen pages identical
+    gemini_jobs::forget(r.dir.path());
+    let path = r.dir.path().join("gemini-jobs.json");
+    let mut disk: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    disk["jobs"][0]["draft"]["identity"]["plannerVersion"] =
+        Value::String("pdf-outline-earlier-version".into());
+    std::fs::write(path, serde_json::to_vec(&disk).unwrap()).unwrap();
+
+    let err = r.run(Some(&id)).unwrap_err();
+    assert_eq!(err.code, "PLAN_CHANGED");
+    assert_eq!(
+        err.message,
+        "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?"
+    );
+
+    // If PDF hash changes as well, it returns SOURCE_CHANGED
+    std::fs::write(
+        r.dir.path().join("documents/a.pdf"),
+        generation_tests::pdf(10, "changed"),
+    )
+    .unwrap();
+    let source_err = r.run(Some(&id)).unwrap_err();
+    assert_eq!(source_err.code, "SOURCE_CHANGED");
+}
+
+#[test]
+fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
+    let r = Rig::new(10);
+    let budget = Budget::new(Duration::ZERO);
+    let cache = r.cache.lock().unwrap().clone();
+    let ctx = GenContext {
+        http: &r.http,
+        base: &r.fake.base,
+        api_key: "synthetic-only",
+        choice: ModelChoice::Standard,
+        cache: &cache,
+        epoch: cache.epoch(),
+        budget: &budget,
+        say: &|m| r.messages.lock().unwrap().push(m),
+    };
+    let err =
+        tauri::async_runtime::block_on(activate(&ctx, r.dir.path(), &r.request, None, &|_| {}))
+            .unwrap_err();
+    assert_eq!(err.code, "GUIDE_PAUSED");
+    assert_eq!(
+        err.message,
+        "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue."
+    );
+    assert!(!err.message.contains("Nothing was saved"));
+
+    let journal = gemini_jobs::Journal::open(r.dir.path());
+    let job = journal.list().into_iter().next().unwrap();
+    assert_eq!(job.stage, JobStage::Failed);
+    assert_eq!(
+        job.error.as_deref(),
+        Some("This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.")
+    );
 }
 
 #[test]
@@ -663,8 +1081,17 @@ fn section_journal_limits_refuse_without_eviction_or_upload() {
     assert!(r.run(None).is_err());
     assert_eq!(r.fake.log().len(), count);
     assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list()), before);
-    let too_many = Rig::new(201);
-    assert_eq!(too_many.run(None).unwrap_err().code, "TOO_MANY_SECTIONS");
+    let too_many = Rig::new(84);
+    let mut scattered = too_many.request.clone();
+    scattered.chosen_pages = (0..41u32).map(|n| n * 2 + 1).collect();
+    // Only more separate runs than the guide can hold is still refused.
+    assert_eq!(
+        too_many
+            .run_with(None, &scattered, &|_| {})
+            .unwrap_err()
+            .code,
+        "TOO_MANY_SECTIONS"
+    );
     assert!(too_many.fake.log().is_empty());
 }
 

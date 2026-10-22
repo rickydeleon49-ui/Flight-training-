@@ -11,6 +11,8 @@ import { invoke } from "@tauri-apps/api/core";
 
 import { isTauri } from "@/data";
 
+export { MAX_INPUT_BYTES, MAX_OFFLINE_INPUT_BYTES } from "@/logic/offlineReadiness";
+
 export type PartialReason = "imagePages" | "someUnreadable";
 
 /** Mirrors `extraction::service::Readiness` in Rust. */

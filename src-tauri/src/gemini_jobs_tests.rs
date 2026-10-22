@@ -699,3 +699,105 @@ fn kits_on_eight_pdfs_then_saved_do_not_block_gemini() {
         .begin(JobKind::StudyAid, "mat-new", "documents/n.pdf", SHA, None)
         .is_ok());
 }
+
+#[test]
+fn pdf_kit_admission_distinguishes_same_other_full_and_recovery() {
+    let dir = TempDir::new("kit-admission");
+    let mut j = Journal::open(dir.path());
+    let draft = json!({"candidates": null});
+    let id = j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()).unwrap();
+    assert_eq!(
+        j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::ExistsSame {
+            job_id: id.clone(),
+            material_id: "a".into()
+        })
+    );
+    assert_eq!(
+        j.begin_pdf_kit("b", "b.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::InProgressOther {
+            job_id: id.clone(),
+            material_id: "a".into()
+        })
+    );
+    j.finish_pdf_kit(&id, draft.clone()).unwrap();
+    // A ready kit on another PDF is offered by the UI, but does not prevent
+    // local work on another PDF; preserve the existing concurrency policy.
+    for stage in [JobStage::Ready, JobStage::Failed, JobStage::Interrupted] {
+        j.jobs[0].stage = stage;
+        assert_eq!(
+            j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()),
+            Err(PdfKitBeginError::ExistsSame {
+                job_id: id.clone(),
+                material_id: "a".into()
+            })
+        );
+    }
+    j.jobs[0].stage = JobStage::Ready;
+    for i in 1..MAX_JOBS {
+        let next = j
+            .begin_pdf_kit(&format!("m-{i}"), "b.pdf", SHA, draft.clone())
+            .unwrap();
+        j.finish_pdf_kit(&next, draft.clone()).unwrap();
+    }
+    assert_eq!(
+        j.begin_pdf_kit("new", "n.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::Full)
+    );
+    // Existing work takes precedence over capacity so she gets its actions.
+    assert!(matches!(
+        j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::ExistsSame { .. })
+    ));
+    j.quarantined = true;
+    assert_eq!(
+        j.begin_pdf_kit("new", "n.pdf", SHA, draft),
+        Err(PdfKitBeginError::Recovery)
+    );
+}
+
+#[test]
+fn pdf_kit_cancelled_record_is_kept_while_live_then_acknowledged_for_replacement() {
+    let dir = TempDir::new("kit-cancel-cleanup");
+    let mut j = Journal::open(dir.path());
+    let draft = json!({"candidates": null});
+    let id = j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()).unwrap();
+    assert!(j.cancel(&id).unwrap().cancelled);
+    assert_eq!(j.acknowledge(&id), Ok(false));
+    assert!(matches!(
+        j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::ExistsSame { .. })
+    ));
+    assert!(matches!(
+        j.begin_pdf_kit("b", "b.pdf", SHA, draft.clone()),
+        Err(PdfKitBeginError::InProgressOther { .. })
+    ));
+    assert_eq!(j.list()[0].stage, JobStage::Cancelled);
+    j.failed(&id, "Stopped").unwrap(); // Worker settled, without overwriting cancel.
+    let replacement = j.begin_pdf_kit("a", "a.pdf", SHA, draft).unwrap();
+    assert_ne!(replacement, id);
+    let reopened = Journal::open(dir.path());
+    assert_eq!(reopened.list().len(), 1);
+    assert_eq!(reopened.list()[0].id, replacement);
+}
+
+#[test]
+fn pdf_kit_cancel_cleanup_failure_preserves_record() {
+    let dir = TempDir::new("kit-cancel-write");
+    let mut j = Journal::open(dir.path());
+    let draft = json!({"candidates": null});
+    let id = j.begin_pdf_kit("a", "a.pdf", SHA, draft.clone()).unwrap();
+    j.cancel(&id).unwrap();
+    j.failed(&id, "Stopped").unwrap();
+    // The atomic journal temporary path cannot be opened as a file.
+    std::fs::create_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
+    assert_eq!(
+        j.begin_pdf_kit("a", "a.pdf", SHA, draft),
+        Err(PdfKitBeginError::Storage)
+    );
+    assert_eq!(j.list()[0].id, id);
+    assert_eq!(
+        Journal::open(dir.path()).list()[0].stage,
+        JobStage::Cancelled
+    );
+}

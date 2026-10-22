@@ -4,6 +4,7 @@
 //! network, window or WebView.
 
 use super::alloc::COUNTER;
+use super::form_text::extract_page_form_text;
 use super::inspect::{inspect_page, outcome, Outcome};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -292,7 +293,22 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
             String::new()
         } else {
             let chunks = doc.extract_text_chunks(&[number]);
-            chunks.into_iter().filter_map(Result::ok).collect()
+            let mut page_text: String = chunks.into_iter().filter_map(Result::ok).collect();
+            if !inspection.unmapped_text {
+                if let Some(form_text) = extract_page_form_text(&doc, page_id) {
+                    if !form_text.is_empty() {
+                        if page_text.is_empty() {
+                            page_text = form_text;
+                        } else {
+                            if !page_text.ends_with('\n') {
+                                page_text.push('\n');
+                            }
+                            page_text.push_str(&form_text);
+                        }
+                    }
+                }
+            }
+            page_text
         };
         let mut result = outcome(&inspection, &text);
         let mut error = None;

@@ -54,7 +54,9 @@ export async function splitPdf(
   return receipt;
 }
 
-/** Create consecutive, study-sized parts while preserving the source PDF. */
+/** Create study-sized parts while preserving the source PDF.
+ * Pages too large alone are returned in core.skippedPages and recorded in the receipt.
+ */
 export async function splitPdfAutomatically(
   request: {
     relativePath: string;

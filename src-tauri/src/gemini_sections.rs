@@ -6,6 +6,8 @@ const KIND: &str = "guide-sections-v1";
 const PLANNER: &str = "pdf-outline-5-10-v1";
 const PROMPT: &str = "guide-section-prompt-v1";
 const SCHEMA_VERSION: &str = "guide-section-answer-v1";
+/// The most sections one guide may hold, so one activation stays finishable.
+const MAX_SECTIONS: usize = 40;
 type Hints = Vec<(u32, u32, String)>;
 type Hook<'a> = &'a (dyn Fn(&str) + Sync);
 
@@ -23,6 +25,22 @@ impl SectionError {
     }
     fn source() -> Self {
         Self::new("SOURCE_CHANGED", "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide.")
+    }
+    fn plan_changed() -> Self {
+        Self::new("PLAN_CHANGED", "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")
+    }
+}
+fn identity_mismatch_error(old: &Identity, current: &Identity) -> SectionError {
+    if old.original_sha256 == current.original_sha256
+        && old.selected_sha256 == current.selected_sha256
+        && old.chosen_pages == current.chosen_pages
+        && old.material_id == current.material_id
+        && old.relative_path == current.relative_path
+        && old.base_revision == current.base_revision
+    {
+        SectionError::plan_changed()
+    } else {
+        SectionError::source()
     }
 }
 impl From<String> for SectionError {
@@ -192,6 +210,14 @@ async fn discard_at(
     Ok(removed)
 }
 
+#[derive(Clone, Debug)]
+struct PlannedSection {
+    section: Section,
+    has_hint: bool,
+    first_heading: String,
+    merged_count: usize,
+}
+
 fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
     if pages.is_empty()
         || pages.len() > 1000
@@ -203,7 +229,7 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
             "Choose PDF pages in source order.",
         ));
     }
-    let mut output = Vec::new();
+    let mut output: Vec<PlannedSection> = Vec::new();
     let mut at = 0;
     while at < pages.len() {
         let first = pages[at];
@@ -224,24 +250,161 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
         {
             end += 1;
         }
-        output.push(Section {
-            id: format!("section-{:02}", output.len() + 1),
-            heading: hint.map_or_else(
-                || format!("Pages {first}–{}", pages[end]),
-                |(_, _, h)| h.chars().take(200).collect(),
-            ),
-            page_start: first,
-            page_end: pages[end],
+        let heading = hint.map_or_else(
+            || format!("Pages {first}–{}", pages[end]),
+            |(_, _, h)| h.chars().take(200).collect(),
+        );
+        output.push(PlannedSection {
+            first_heading: heading.clone(),
+            has_hint: hint.is_some(),
+            merged_count: 1,
+            section: Section {
+                id: String::new(),
+                heading,
+                page_start: first,
+                page_end: pages[end],
+            },
         });
-        if output.len() > 40 {
-            return Err(SectionError::new(
-                "TOO_MANY_SECTIONS",
-                "Choose fewer pages; this guide needs more than 40 sections.",
-            ));
-        }
         at = end + 1;
     }
-    Ok(output)
+    // Sensible section size: merge neighbouring sections within the same chosen run
+    // while a section has fewer than 5 pages, as long as the merged section stays at most 10 pages.
+    let mut i = 0;
+    while i < output.len() {
+        let page_count = output[i].section.page_end - output[i].section.page_start + 1;
+        if page_count < 5 {
+            if i + 1 < output.len()
+                && output[i].section.page_end + 1 == output[i + 1].section.page_start
+                && (output[i + 1].section.page_end - output[i].section.page_start + 1) <= 10
+            {
+                let next = output.remove(i + 1);
+                output[i].section.page_end = next.section.page_end;
+                output[i].merged_count += next.merged_count;
+                if output[i].has_hint {
+                    output[i].section.heading = format!(
+                        "{} (and {} more)",
+                        output[i].first_heading,
+                        output[i].merged_count - 1
+                    );
+                } else {
+                    output[i].section.heading = format!(
+                        "Pages {}–{}",
+                        output[i].section.page_start, output[i].section.page_end
+                    );
+                }
+                continue;
+            } else if i > 0
+                && output[i - 1].section.page_end + 1 == output[i].section.page_start
+                && (output[i].section.page_end - output[i - 1].section.page_start + 1) <= 10
+            {
+                let curr = output.remove(i);
+                output[i - 1].section.page_end = curr.section.page_end;
+                output[i - 1].merged_count += curr.merged_count;
+                if output[i - 1].has_hint {
+                    output[i - 1].section.heading = format!(
+                        "{} (and {} more)",
+                        output[i - 1].first_heading,
+                        output[i - 1].merged_count - 1
+                    );
+                } else {
+                    output[i - 1].section.heading = format!(
+                        "Pages {}–{}",
+                        output[i - 1].section.page_start,
+                        output[i - 1].section.page_end
+                    );
+                }
+                continue;
+            }
+        }
+        i += 1;
+    }
+    // Many headings are worth keeping, so a long outline never refuses on its
+    // own: neighbours merge until the guide fits the limit.
+    let manifest = condense(output, MAX_SECTIONS).ok_or_else(|| {
+        SectionError::new(
+            "TOO_MANY_SECTIONS",
+            "Choose fewer pages; this guide needs more than 40 sections.",
+        )
+    })?;
+    Ok(manifest)
+}
+
+/// Merge neighbouring sections until at most `limit` remain, keeping the first
+/// heading of every group. Order, contiguity and the chosen runs all survive:
+/// two sections from different runs are never merged, so a selection of more
+/// than `limit` separate runs is the one case with no legal plan.
+fn condense(sections: Vec<PlannedSection>, limit: usize) -> Option<Vec<Section>> {
+    let mut runs: Vec<Vec<PlannedSection>> = Vec::new();
+    for planned in sections {
+        match runs.last_mut() {
+            Some(run)
+                if run.last().is_some_and(|last| {
+                    last.section.page_end + 1 == planned.section.page_start
+                }) =>
+            {
+                run.push(planned)
+            }
+            _ => runs.push(vec![planned]),
+        }
+    }
+    if runs.len() > limit {
+        return None;
+    }
+    // Every run keeps at least one section. Spare sections go to the run whose
+    // groups would otherwise be the largest, so no section swallows a chapter.
+    let mut groups = vec![1usize; runs.len()];
+    let mut spare = limit - runs.len();
+    while spare > 0 {
+        let Some(widest) = widest_group(&runs, &groups) else {
+            break;
+        };
+        groups[widest] += 1;
+        spare -= 1;
+    }
+    let mut manifest = Vec::with_capacity(limit);
+    for (run, &parts) in runs.iter().zip(&groups) {
+        let mut at = 0;
+        for group in 0..parts {
+            let size = run.len() / parts + usize::from(group < run.len() % parts);
+            manifest.push(merged(&run[at..at + size]));
+            at += size;
+        }
+    }
+    for (index, section) in manifest.iter_mut().enumerate() {
+        section.id = format!("section-{:02}", index + 1);
+    }
+    Some(manifest)
+}
+
+/// The run that still has sections left to split and forms the largest groups.
+fn widest_group(runs: &[Vec<PlannedSection>], groups: &[usize]) -> Option<usize> {
+    let mut widest = None;
+    for (index, run) in runs.iter().enumerate() {
+        if groups[index] >= run.len() {
+            continue;
+        }
+        let size = run.len().div_ceil(groups[index]);
+        if widest.map_or(true, |(largest, _)| size > largest) {
+            widest = Some((size, index));
+        }
+    }
+    widest.map(|(_, index)| index)
+}
+
+/// A merged group keeps the first heading; a group with no bookmark heading
+/// restates the pages it now covers.
+fn merged(group: &[PlannedSection]) -> Section {
+    let mut section = group[0].section.clone();
+    if let Some(last) = group.last() {
+        section.page_end = last.section.page_end;
+    }
+    let total_count: usize = group.iter().map(|p| p.merged_count).sum();
+    section.heading = match (group[0].has_hint, total_count) {
+        (false, _) => format!("Pages {}–{}", section.page_start, section.page_end),
+        (true, 1) => group[0].first_heading.clone(),
+        (true, count) => format!("{} (and {} more)", group[0].first_heading, count - 1),
+    };
+    section
 }
 
 fn source(
@@ -272,15 +435,49 @@ fn source(
     if total == 0 || total > crate::pdf::MAX_PAGES {
         return Err("Choose a smaller PDF.".into());
     }
-    // lopdf's existing bookmark helper provides page starts. Prefer the outer
-    // heading at duplicate starts and derive nonoverlapping ranges once.
-    let mut starts: BTreeMap<u32, String> = BTreeMap::new();
+    // lopdf's existing bookmark helper provides page starts with their outline
+    // level. A handbook bookmarks almost every page, so only the outer levels
+    // become boundaries: the next level joins only while the outline still
+    // leaves the guide within the section limit for these pages. Prefer the
+    // outer heading at duplicate starts and derive nonoverlapping ranges once.
+    let mut levels: BTreeMap<usize, Vec<(u32, String)>> = BTreeMap::new();
     if let Ok(toc) = document.get_toc() {
         for entry in toc.toc {
             if let Ok(page) = u32::try_from(entry.page) {
                 if page > 0 && page <= total && !entry.title.trim().is_empty() {
-                    starts.entry(page).or_insert(entry.title);
+                    levels
+                        .entry(entry.level)
+                        .or_default()
+                        .push((page, entry.title));
                 }
+            }
+        }
+    }
+    let chosen = (
+        request.chosen_pages.first().copied().unwrap_or(1),
+        request.chosen_pages.last().copied().unwrap_or(total),
+    );
+    let headings_at = |level: usize| {
+        levels.get(&level).map_or(0, |entries| {
+            entries
+                .iter()
+                .filter(|(page, _)| *page >= chosen.0 && *page <= chosen.1)
+                .count()
+        })
+    };
+    let mut starts: BTreeMap<u32, String> = BTreeMap::new();
+    if let Some(outer) = levels.keys().next().copied() {
+        let inner = if headings_at(outer) + headings_at(outer + 1) <= MAX_SECTIONS {
+            outer + 1
+        } else {
+            outer
+        };
+        for level in outer..=inner {
+            let Some(entries) = levels.get(&level) else {
+                continue;
+            };
+            for (page, title) in entries {
+                starts.entry(*page).or_insert(title.clone());
             }
         }
     }
@@ -389,7 +586,7 @@ fn read_draft(root: &Path, id: &str) -> Result<Draft, SectionError> {
     if d.kind != KIND
         || d.version != 1
         || d.identity.manifest.is_empty()
-        || d.identity.manifest.len() > 40
+        || d.identity.manifest.len() > MAX_SECTIONS
         || d.results.len() != d.identity.manifest.len()
     {
         return Err("Invalid section draft; it is kept for recovery.".into());
@@ -441,6 +638,8 @@ fn digest(content: &ResultBody) -> String {
         .unwrap(),
     )
 }
+/// Section length asked of the model, well under study_sets::MAX_BODY.
+const REQUESTED_BODY_CHARS: usize = 12_000;
 fn validate_section(
     s: &Section,
     text: &str,
@@ -455,14 +654,16 @@ fn validate_section(
     }
     let a: Answer = serde_json::from_str(text)
         .map_err(|_| "The section answer was incomplete; earlier sections are kept.")?;
+    let mut source_pages = a.source_pages;
+    source_pages.sort_unstable();
+    source_pages.dedup();
+    source_pages.retain(|p| *p >= s.page_start && *p <= s.page_end && chosen.contains(p));
+    source_pages.truncate(10);
+    // The prompt asks for at most REQUESTED_BODY_CHARS; models sometimes run
+    // over, so accept anything the study set itself can store.
     if a.body.trim().is_empty()
-        || a.body.chars().count() > 16_000
-        || a.source_pages.is_empty()
-        || a.source_pages.len() > 10
-        || a.source_pages.windows(2).any(|p| p[0] >= p[1])
-        || a.source_pages
-            .iter()
-            .any(|p| *p < s.page_start || *p > s.page_end || !chosen.contains(p))
+        || a.body.chars().count() > crate::study_sets::MAX_BODY
+        || source_pages.is_empty()
     {
         return Err(
             "The section answer or its source pages were invalid; earlier sections are kept."
@@ -471,7 +672,7 @@ fn validate_section(
     }
     let mut content = ResultBody {
         body: a.body,
-        source_pages: a.source_pages,
+        source_pages,
         content_digest: String::new(),
         model: model.into(),
     };
@@ -486,7 +687,7 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
         .filter(|(_, p)| **p >= section.page_start && **p <= section.page_end)
         .map(|(i, p)| json!({"pdfPage":i+1,"sourcePage":p}))
         .collect();
-    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 16000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
+    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}})
 }
 fn reserve(root: &Path, id: &str, section: &str) -> Option<u32> {
@@ -577,8 +778,10 @@ pub(super) async fn activate(
         return Err(SectionError::source());
     }
     let (identity, selected) = source(root, req, ctx.choice.primary())?;
-    if old.as_ref().is_some_and(|d| d.identity != identity) {
-        return Err(SectionError::source());
+    if let Some(old) = old.as_ref() {
+        if old.identity != identity {
+            return Err(identity_mismatch_error(&old.identity, &identity));
+        }
     }
     let id = match id {
         Some(id) => id.to_string(),
@@ -720,16 +923,24 @@ pub(super) async fn activate(
         let answer = assembly(&read_draft(root, &id)?)?;
         Ok(answer)
     };
-    let outcome =
-        match gemini_cancel::Cancellable::new(ctx.budget.run(work), registration.token.clone())
-            .await
-        {
-            Ok(Ok(outcome)) => outcome,
-            _ if !ctx.budget.can_continue() || registration.token.is_cancelled() => {
-                Err(gemini_cancel::CANCELLED.into())
-            }
-            _ => Err(gemini_files::out_of_time(ctx.budget, "finishing the guide").into()),
-        };
+    let outcome = match gemini_cancel::Cancellable::new(
+        ctx.budget.run(work),
+        registration.token.clone(),
+    )
+    .await
+    {
+        Ok(Ok(outcome)) => outcome,
+        _ if !ctx.budget.can_continue() || registration.token.is_cancelled() => {
+            Err(gemini_cancel::CANCELLED.into())
+        }
+        _ => {
+            ctx.budget.categorize("time limit reached");
+            Err(SectionError::new(
+                    "GUIDE_PAUSED",
+                    "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.",
+                ))
+        }
+    };
     match outcome {
         Ok(answer) => {
             gemini_jobs::with(root, |j| {
@@ -871,7 +1082,7 @@ pub(crate) fn save_guide_at(
     };
     let (identity, _) = source(root, &request, &d.identity.model)?;
     if identity != d.identity {
-        return Err(SectionError::source().into());
+        return Err(identity_mismatch_error(&d.identity, &identity).into());
     }
     assembly(&d)?;
     // Use the existing full-row revision check and exact save retry protocol.

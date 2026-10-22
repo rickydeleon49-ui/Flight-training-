@@ -23,9 +23,11 @@ mod gemini_cancel;
 mod gemini_files;
 mod gemini_jobs;
 mod homework;
-mod lineage;
+#[doc(hidden)]
+pub mod lineage;
 mod navigation;
-mod pdf;
+#[doc(hidden)]
+pub mod pdf;
 mod pdf_kit;
 mod pdf_kit_sources;
 pub mod pdf_study_kit;
@@ -59,7 +61,8 @@ pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 20;
 ///
 /// The SQL lives in `migrations/` so the TypeScript fallback database can
 /// load exactly the same statements and the two can never drift apart.
-pub(crate) fn migrations() -> Vec<Migration> {
+#[doc(hidden)]
+pub fn migrations() -> Vec<Migration> {
     vec![
         Migration {
             version: 1,

@@ -190,13 +190,7 @@ export async function cleanupDocuments(
   return relativePaths.filter((_, index) => results[index]?.status === "rejected");
 }
 
-/** Human-readable file size, e.g. "1.4 MB". */
-export function formatFileSize(bytes: number | null): string {
-  if (bytes == null) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+export { formatFileSize } from "@/logic/aiLimits";
 
 /** Compare database file references with app-owned document storage. */
 export async function checkLibrary(): Promise<LibraryReport> {
@@ -242,15 +236,15 @@ export interface PdfStudyKitDraft {
   createdAt: string;
   reviewState: "review-required";
   identity: { materialId: string; contentSha256: string; selectedPages: number[]; extractorVersion: number; algorithmVersion: number; pageCount: number };
-  candidates: Record<string, unknown>;
+  candidates: Record<string, unknown> | null;
 }
 export async function getPdfStudyKit(jobId: string): Promise<PdfStudyKitDraft> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke("get_pdf_study_kit", { jobId });
 }
 
-export async function listPdfStudyKitJobs(): Promise<{ id: string; materialId: string; stage: string; createdAt: number }[]> {
+export async function listPdfStudyKitJobs(): Promise<{ id: string; materialId: string; stage: string; createdAt: number; runId?: string }[]> {
   if (!isTauri()) return [];
-  const jobs = await invoke<{ id: string; materialId: string; kind: string; stage: string; createdAt: number }[]>("gemini_jobs");
-  return jobs.filter(job => job.kind === "pdf-kit");
+  const jobs = await invoke<{ id: string; materialId: string; kind: string; stage: string; createdAt: number; draft?: { runId?: string } }[]>("gemini_jobs");
+  return jobs.filter(job => job.kind === "pdf-kit").map(job => ({ ...job, runId: job.draft?.runId }));
 }

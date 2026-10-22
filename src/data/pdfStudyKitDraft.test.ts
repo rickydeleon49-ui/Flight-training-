@@ -34,3 +34,29 @@ it("hydrates valid unsaved question identities through 03b and reads PDF labels 
   const saved = (await repos.documents.listPracticeTests())[0]!; expect(saved.questions[0]?.origin).toBe("instructor"); expect(saved.questions[0]?.pdfProvenance?.status).toBe("valid");
   expect((await repos.practiceSessions.getItems(active.version.id))[0]?.pdfProvenance?.status).toBe("valid");
 });
+it("kitReviewItems collapses whitespace runs in section headings and text without touching evidence quotes", () => {
+  const d: PdfStudyKitDraft = {
+    ...journal,
+    candidates: {
+      ...journal.candidates,
+      outline: [
+        {
+          heading: "Detailed   discussion   of   aerodynamics",
+          sourcePage: 1,
+          sentences: [
+            { text: "Lift   is   the   force   that  directly   opposes   weight." },
+            { text: "Airfoils   generate   lift   through   pressure   differentials." },
+          ],
+          evidence: [{ page: 1, startOffset: 0, endOffset: 20, quote: "Raw   exact   quote." }],
+        },
+      ],
+    },
+  };
+  const items = kitReviewItems(d);
+  const section = items.find((i) => i.kind === "section")!;
+  expect(section.fields[0]).toBe("Detailed discussion of aerodynamics");
+  expect(section.fields[1]).toBe(
+    "Lift is the force that directly opposes weight.\n\nAirfoils generate lift through pressure differentials.",
+  );
+  expect(kitItemEvidence(d, section)[0]!.quote).toBe("Raw   exact   quote.");
+});

@@ -1,8 +1,9 @@
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTauri } from "@/data";
 import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, Dialog, Field, TextArea } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
-import { kitCandidates, kitEditOrigin, kitItemEvidence, kitQuestionSeed, kitReviewItems, kitSources, type KitReviewItem, type PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
+import { kitCandidates, kitHasNoUsableText, kitEditOrigin, kitItemEvidence, kitQuestionSeed, kitReviewItems, kitSources, type KitReviewItem, type PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
 import { validateNextSet, type StoredSetRow, type StudySetSaveOperation } from "@/data/studySetTransaction";
 import { getPdfStudyKit, listPdfStudyKitJobs, preparePdfStudyKit, type PdfStudyKitDraft } from "@/services/documents";
 import { acknowledgeGeminiJob, cancelGeminiJob } from "@/services/gemini";
@@ -17,6 +18,8 @@ const SOURCE_CHANGED = "The PDF or page choice changed since this kit was made. 
 const codeOf = (e: unknown) => typeof e === "object" && e !== null && "code" in e ? String(e.code) : "";
 const mirrorKey = (run: string) => `hfd:pdf-kit-review:${run}`;
 const questionsMirrorKey = (run: string) => `hfd:pdf-kit-questions:${run}`;
+
+type KitJob = Awaited<ReturnType<typeof listPdfStudyKitJobs>>[number];
 
 interface Mirror {
   items: KitReviewItem[];
@@ -60,9 +63,12 @@ async function acknowledgeJob(id: string, runId?: string): Promise<boolean> {
 }
 
 export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
-  const { repositories, mutate } = useAppData();
+  const { repositories, mutate, data } = useAppData();
   const [job, setJob] = useState<string | null>(null);
   const [resume, setResume] = useState<string | null>(null);
+  const [otherKit, setOtherKit] = useState<KitJob | null>(null);
+  const [resumeStage, setResumeStage] = useState<string | null>(null);
+  const [confirmOther, setConfirmOther] = useState<KitJob | null>(null);
   const [running, setRunning] = useState(false);
   const [draft, setDraft] = useState<PdfStudyKitDraft | null>(null);
   const [items, setItems] = useState<KitReviewItem[]>([]);
@@ -106,19 +112,28 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
     return () => clearInterval(timer);
   }, [pendingAckId, flushAck]);
 
+  const showJobs = useCallback((jobs: KitJob[], preferredId?: string) => {
+    const same = jobs.filter(j => j.materialId === material.id).sort((a, b) => b.createdAt - a.createdAt)[0];
+    setResume(same?.id ?? null);
+    setResumeStage(same?.stage ?? null);
+    // Only running jobs block another PDF, unless a refusal names a live worker.
+    const others = jobs.filter(j => j.materialId !== material.id && (j.stage === "running" || j.id === preferredId))
+      .sort((a, b) => Number(b.id === preferredId) - Number(a.id === preferredId) || Number(b.stage === "running") - Number(a.stage === "running") || b.createdAt - a.createdAt);
+    setOtherKit(others[0] ?? null);
+  }, [material.id]);
+
   useEffect(() => {
     let live = true;
+    const mine = epoch.current;
     if (desktop) {
       void listPdfStudyKitJobs().then(jobs => {
-        if (live) {
-          setResume(jobs.filter(j => j.materialId === material.id && j.stage !== "cancelled").sort((a, b) => b.createdAt - a.createdAt)[0]?.id ?? null);
-        }
+        if (live && epoch.current === mine) showJobs(jobs);
       }).catch(() => {
         if (live) setError("Your earlier kit couldn’t be checked. Try again.");
       });
     }
     return () => { live = false; epoch.current++; };
-  }, [desktop, material.id]);
+  }, [desktop, showJobs]);
 
   function remember(
     next: KitReviewItem[],
@@ -168,7 +183,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
 
   const fail = (failure: unknown) => {
     const code = codeOf(failure);
-    const msg = typeof failure === "object" && failure !== null && "message" in failure ? String((failure as any).message) : "";
+
     if (code === "EXTRACTION_UNAVAILABLE") {
       setExtractionUnavailable(true);
       setCacheMissing(false);
@@ -179,8 +194,27 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
     } else if (code === "CACHE_MISSING") {
       setCacheMissing(true);
       setError("Your PDF’s text needs reading first. Read it on this Mac, then try again.");
-    } else if (code === "JOURNAL_FULL" || msg.includes("earlier PDF kit") || msg.includes("Save or explicitly discard")) {
-      setError("Finish or discard your earlier study kit first.");
+    } else if (code === "KIT_EXISTS_SAME" || code === "KIT_IN_PROGRESS_OTHER") {
+      const blocker = failure as { jobId?: string; materialId?: string };
+      if (blocker.jobId && blocker.materialId) {
+        if (blocker.materialId === material.id) {
+          setResume(blocker.jobId);
+          setResumeStage(null);
+        } else {
+          setOtherKit({ id: blocker.jobId, materialId: blocker.materialId, stage: "running", createdAt: 0 });
+        }
+      }
+      setError(code === "KIT_EXISTS_SAME"
+        ? "Your earlier kit is still here. Continue reviewing it, or discard it when you’re ready."
+        : "Open your earlier PDF to continue, or discard its unsaved kit here.");
+      const mine = epoch.current;
+      void listPdfStudyKitJobs().then(jobs => {
+        if (epoch.current === mine && jobs.some(j => j.id === blocker.jobId)) showJobs(jobs, blocker.jobId);
+      }).catch(() => { /* The structured refusal keeps the actions available. */ });
+    } else if (code === "JOURNAL_FULL") {
+      setError("Your draft space is full. Save or discard a waiting study aid or practice test, then try again.");
+    } else if (code === "JOURNAL_RECOVERY") {
+      setError("Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again.");
     } else {
       setError("Your PDF kit couldn’t be opened. Your saved work is still here; try again.");
     }
@@ -204,6 +238,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
       if (epoch.current === mine) {
         setJob(id);
         setResume(id);
+        setResumeStage("running");
       }
     } catch (e) {
       if (epoch.current === mine) {
@@ -306,20 +341,27 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
     busy.current = true;
     setConfirmDiscard(false);
     try {
-      let activeJobId = job || resume;
+      const other = confirmOther;
+      setConfirmOther(null);
+      let activeJobId = other?.id ?? (job || resume);
       if (!activeJobId) {
         const jobs = await listPdfStudyKitJobs();
         activeJobId = jobs.filter(j => j.materialId === material.id).sort((a, b) => b.createdAt - a.createdAt)[0]?.id ?? null;
       }
-      if (running && activeJobId) {
+      if (activeJobId) {
         const outcome = await cancelGeminiJob({ jobId: activeJobId });
         if (!outcome.cancelled && (outcome.stage === "running" || outcome.stage === null)) {
           setError("Your study kit couldn’t be discarded. Try again.");
           return;
         }
       }
-      if (activeJobId && !await acknowledgeJob(activeJobId, draft?.runId)) {
+      if (activeJobId && !await acknowledgeJob(activeJobId, other ? other.runId : draft?.runId)) {
         setError("Your study kit couldn’t be discarded. Try again.");
+        return;
+      }
+      if (other) {
+        setOtherKit(null);
+        setError(null);
         return;
       }
       if (draft) clearKitMirrors(draft.runId);
@@ -497,6 +539,10 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
 
   const hasStudyItems = items.length > 0;
   const hasQuestions = Boolean(draft && kitCandidates(draft).questions.length > 0);
+  // Ambiguous pages contained text too; missing counts do not prove no text.
+  const noUsableText = draft && kitHasNoUsableText(draft);
+
+  const otherTitle = data.materials.find(m => m.id === otherKit?.materialId)?.title;
 
   return (
     <Card>
@@ -507,7 +553,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             disabled={!desktop || running || saving || changed}
             onClick={() => {
               if (changed) return;
-              if (resume) {
+              if (resume && resumeStage !== "cancelled") {
                 setJob(resume);
                 setRunning(true);
               } else {
@@ -527,6 +573,19 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             <Button variant="danger" disabled={saving} onClick={() => setConfirmDiscard(true)}>
               Discard this kit
             </Button>
+          ) : null}
+          {otherKit && !open ? (
+            <div className="stack stack--3">
+              <p>{otherTitle
+                ? `You have a study kit waiting for “${otherTitle}”.`
+                : "You have a study kit waiting for another PDF."}</p>
+              <Link className="button button--secondary" to={`/study/${encodeURIComponent(otherKit.materialId)}`}>
+                Open that PDF in the Study Library
+              </Link>
+              <Button variant="danger" disabled={saving || running} onClick={() => { setConfirmOther(otherKit); setConfirmDiscard(true); }}>
+                Discard that kit
+              </Button>
+            </div>
           ) : null}
           {running ? (
             <div role="status">
@@ -604,7 +663,9 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
           >
             <div className="stack stack--4">
               <p className="tiny muted">{PDF_KIT_REMINDER}</p>
-              {!hasStudyItems && !hasQuestions ? <p>This PDF didn’t have text the kit could use.</p> : null}
+              {!hasStudyItems && !hasQuestions ? <p>{noUsableText
+                ? "This PDF didn’t have text the kit could use."
+                : "The kit couldn’t find definitions or key terms on these pages yet."}</p> : null}
               {items.map((item, index) => {
                 const at = items.slice(0, index + 1).filter(i => i.kind === item.kind).length;
                 const noun = item.kind === "section" ? "section" : "card";
@@ -622,6 +683,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                     <Checkbox
                       label={`Keep ${noun} ${at}`}
                       checked={item.kept}
+                      strikethrough={false}
                       onChange={kept => update(item.id, { kept })}
                     />
                     <PdfItemLabel
@@ -652,6 +714,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                     <Checkbox
                       label={`My instructor corrected ${noun} ${at}`}
                       checked={item.instructor}
+                      strikethrough={false}
                       onChange={instructor => update(item.id, { instructor })}
                     />
                   </fieldset>
@@ -669,7 +732,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             message="Your saved study set and questions stay. Only the unsaved kit is removed."
             confirmLabel="Discard kit"
             destructive
-            onCancel={() => setConfirmDiscard(false)}
+            onCancel={() => { setConfirmDiscard(false); setConfirmOther(null); }}
             onConfirm={() => void discardKit()}
           />
           {questions ? (

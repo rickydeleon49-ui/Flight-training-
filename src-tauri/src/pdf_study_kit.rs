@@ -9,7 +9,7 @@ use lopdf::{Document, Object, ObjectId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub const ALGORITHM_VERSION: u32 = 1;
+pub const ALGORITHM_VERSION: u32 = 4;
 pub const PROVENANCE_LABEL: &str = "Pulled from your PDF on this Mac";
 
 /// Each page retains its cache key. A stale or differently keyed page is ignored.
@@ -122,6 +122,10 @@ fn normalized(text: &str) -> String {
         .to_lowercase()
 }
 
+fn collapse_whitespace(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 /// Matching is separate from evidence. NFKC may expand a ligature or compose
 /// combining marks: every matching byte maps back to the entire raw cluster.
 struct MatchingView {
@@ -183,6 +187,117 @@ fn words(text: &str) -> usize {
     text.split_whitespace()
         .filter(|s| s.chars().any(char::is_alphabetic))
         .count()
+}
+/// How long a blank may be, and how much sentence must be left around it for the
+/// blank to read as a question instead of a fragment.
+const MAX_BLANK_WORDS: usize = 5;
+const MIN_BLANK_CONTEXT: usize = 4;
+/// The particles that only glue a sentence together. A blank that opens with one
+/// of these in lower case ("of", "to provide different") is wrapping residue.
+const FUNCTION_WORDS: [&str; 13] = [
+    "a", "an", "and", "at", "by", "for", "in", "of", "on", "or", "the", "to", "with",
+];
+/// The rest of the prose glue, kept apart from the list above so each word is
+/// written once. Together the two are the words that carry no meaning alone.
+const PARTICLES: [&str; 32] = [
+    "about", "after", "all", "as", "but", "did", "do", "does", "had", "has", "have", "how", "if",
+    "into", "is", "it", "its", "more", "most", "no", "nor", "not", "other", "over", "so", "than",
+    "that", "the", "then", "there", "under", "upon",
+];
+/// Lower-case adverbs that end a broken term ("...to fly the avionics safely").
+const ADVERB_TAILS: [&str; 44] = [
+    "above",
+    "across",
+    "additionally",
+    "again",
+    "also",
+    "although",
+    "around",
+    "away",
+    "below",
+    "beneath",
+    "between",
+    "consequently",
+    "directly",
+    "especially",
+    "essentially",
+    "eventually",
+    "further",
+    "furthermore",
+    "generally",
+    "highly",
+    "however",
+    "immediately",
+    "inside",
+    "instead",
+    "merely",
+    "moreover",
+    "namely",
+    "nearly",
+    "never",
+    "often",
+    "once",
+    "only",
+    "otherwise",
+    "outside",
+    "particularly",
+    "rather",
+    "safely",
+    "simultaneously",
+    "sometimes",
+    "such",
+    "therefore",
+    "thus",
+    "unless",
+    "until",
+];
+fn is_glue(word: &str) -> bool {
+    FUNCTION_WORDS.contains(&word) || PARTICLES.contains(&word)
+}
+/// The edge words of a phrase, without the punctuation printed around them.
+fn first_word(text: &str) -> &str {
+    text.split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .trim_matches(|c: char| !c.is_alphanumeric())
+}
+fn last_word(text: &str) -> &str {
+    text.split_whitespace()
+        .next_back()
+        .unwrap_or_default()
+        .trim_matches(|c: char| !c.is_alphanumeric())
+}
+/// An answer worth studying: never a bare particle, never a phrase that opens
+/// with a lower-case function word, never longer than a short phrase. Case is the
+/// point — "The Wind Shear Display" names something, "the wind shear" is prose.
+fn answer_ok(answer: &str) -> bool {
+    let count = answer.split_whitespace().count();
+    let head = first_word(answer);
+    let lowered = head.to_lowercase();
+    count > 0
+        && words(answer) <= MAX_BLANK_WORDS
+        && !(count == 1 && is_glue(&lowered))
+        && !(head == lowered && FUNCTION_WORDS.contains(&lowered.as_str()))
+}
+/// A definition must open with a capital or a printed number, and its term must
+/// not stop on a lower-case connector or adverb; otherwise the split was made
+/// inside a sentence that wrapped across the lines of the page. A label line
+/// whose term is a single lowercase word is dropped — a real glossary term is
+/// capitalized or has at least two words.
+fn definition_ok(term: &str, answer: &str) -> bool {
+    let single_lower = words(term) < 2 && !term.chars().next().is_some_and(char::is_uppercase);
+    if single_lower {
+        return false;
+    }
+    let tail = last_word(term);
+    let lowered = tail.to_lowercase();
+    let broken_term =
+        tail == lowered && (is_glue(&lowered) || ADVERB_TAILS.contains(&lowered.as_str()));
+    let opens = answer
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_uppercase() || c.is_ascii_digit());
+    !broken_term && opens
 }
 fn complete(text: &str) -> bool {
     text.chars().count() <= 2000
@@ -259,16 +374,89 @@ fn term_ok(text: &str) -> bool {
         .iter()
         .any(|s| normalized(text).split_whitespace().next() == Some(s))
 }
+/// FAA handbooks set normal prose as bullet lists, so a list marker is never by
+/// itself a layout problem. Only these marks count; a hyphen is a marker only
+/// in the "- " form, never as ordinary punctuation inside a sentence.
+const BULLET_MARKS: [char; 4] = ['\u{2022}', '\u{25E6}', '\u{25AA}', '\u{2981}'];
+
+/// One raw line as list pieces with their byte offsets inside that line: the
+/// text before the first marker, then each item that follows a marker. The
+/// extractor sets several consecutive items on one line, so every mark opens a
+/// new piece and only the marker characters are dropped. `- ` is a marker only
+/// at the line's own start, never a dash inside an item.
+fn bullet_pieces(line: &str) -> Vec<(usize, &str)> {
+    let mut marks = vec![];
+    let indent = line.len() - line.trim_start().len();
+    if line[indent..].starts_with("- ") {
+        marks.push(indent + 2);
+    }
+    marks.extend(
+        line.char_indices()
+            .filter(|(_, c)| BULLET_MARKS.contains(c))
+            .map(|(i, c)| i + c.len_utf8()),
+    );
+    marks.sort_unstable();
+    marks.dedup();
+    let starts = std::iter::once(0).chain(marks.iter().copied());
+    let ends = marks.iter().copied().chain(std::iter::once(line.len()));
+    starts.zip(ends).map(|(a, b)| (a, &line[a..b])).collect()
+}
+
+/// Dot leaders join a term to its text across a gap. A sentence ends in one dot
+/// and prose ellipses use three, so only four or more dots — printed together or
+/// spaced apart — is a leader.
+fn dot_leader(line: &str) -> bool {
+    let mut dots = 0;
+    for c in line.chars() {
+        if c == '.' {
+            dots += 1;
+            if dots >= 4 {
+                return true;
+            }
+        } else if c != ' ' {
+            dots = 0;
+        }
+    }
+    false
+}
+
+/// Layout, not prose: four or more spaces inside one line is a figure label, a
+/// table row or a column gap, and dot leaders join a label to its column. Justified
+/// prose commonly pads a word gap with two or three spaces and a list marker with
+/// three, so those stay.
+fn figure_line(line: &str) -> bool {
+    let text = line.trim();
+    text.contains("    ") || dot_leader(text)
+}
+
+/// A page that is mostly figure or table text has no prose left to build cards
+/// from, so it is skipped whole. The count walks the same bullet pieces `page_view`
+/// quotes, so the page guard and the line filter never disagree about a line.
+fn mostly_figure_text(text: &str) -> bool {
+    let mut dropped = 0usize;
+    let mut kept = 0usize;
+    for line in text.split_inclusive('\n') {
+        for (_, piece) in bullet_pieces(line) {
+            if piece.trim().is_empty() {
+                continue;
+            }
+            if figure_line(piece) {
+                dropped += 1;
+            } else {
+                kept += 1;
+            }
+        }
+    }
+    dropped > kept
+}
+
 fn suspect_page(text: &str) -> bool {
     text.len() > MAX_PAGE_BYTES
         || text.contains(['\t', '|', '\u{FFFD}'])
         || text
             .chars()
             .any(|c| c.is_control() && !matches!(c, '\n' | '\r'))
-        || text.lines().any(|line| {
-            let t = line.trim();
-            t.contains("  ") || t.contains("..") || t.contains("\u{2022}")
-        })
+        || mostly_figure_text(text)
 }
 
 struct PageView {
@@ -276,17 +464,57 @@ struct PageView {
     lines: Vec<Evidence>,
     sentences: Vec<Evidence>,
 }
+/// FAA prose wraps a sentence across the lines of a page, so a sentence is looked
+/// for in a *paragraph* of consecutive kept lines and never in one line alone.
+/// A blank line, a heading line, a list item or a skipped figure/table line ends
+/// the paragraph before it. Each paragraph keeps its raw byte range, so a sentence
+/// that spans lines is still evidence sliced straight out of the page text — the
+/// newline and any indent between the lines stay inside the quote, and matching
+/// collapses that whitespace through `MatchingView` instead.
 fn page_view(page: &CachedPage) -> PageView {
     let mut offset = 0;
     let mut lines = vec![];
+    let mut paragraphs: Vec<(usize, usize)> = vec![];
+    // Nothing has been kept yet, so the first kept piece opens a paragraph.
+    let mut boundary = true;
     for line in page.text.split_inclusive('\n') {
-        let e = trimmed(page.page, offset, line);
-        if !e.quote.is_empty() && e.quote.chars().count() <= 2000 {
+        let mut kept = false;
+        // Each list item keeps a line of its own with only its marker dropped,
+        // so `trimmed` still points at the exact raw text of that item.
+        for (mark, piece) in bullet_pieces(line) {
+            let e = trimmed(page.page, offset + mark, piece);
+            if e.quote.is_empty() {
+                continue;
+            }
+            // One figure label must not condemn the page: dropping just this line
+            // keeps every other line's offsets exactly as they were in the raw
+            // text, and it closes the paragraph rather than joining across it.
+            if e.quote.chars().count() > 2000 || figure_line(&e.quote) {
+                boundary = true;
+                continue;
+            }
+            let heading = heading_line(&e);
+            if boundary || mark > 0 {
+                paragraphs.push((e.start_offset, e.end_offset));
+            } else if let Some(last) = paragraphs.last_mut() {
+                last.1 = e.end_offset;
+            }
+            // A heading is a boundary on both sides; prose continues past a line end.
+            boundary = heading;
+            kept = true;
             lines.push(e);
+        }
+        if !kept {
+            boundary = true;
         }
         offset += line.len();
     }
-    let sentences = lines.iter().flat_map(sentences).collect();
+    let sentences = paragraphs
+        .iter()
+        .flat_map(|(first, last)| {
+            sentences(&evidence(page.page, *first, &page.text[*first..*last]))
+        })
+        .collect();
     PageView {
         page: page.page,
         lines,
@@ -303,13 +531,13 @@ fn glossary_line(line: &Evidence) -> Option<CardCandidate> {
     let (start, _) = view.raw_span(at, at + sep_len)?;
     let term = line.quote[..start].trim();
     let answer = line.quote[end..].trim();
-    if !term_ok(term) || !definition_complete(answer) {
+    if !term_ok(term) || !definition_ok(term, answer) || !definition_complete(answer) {
         return None;
     }
     Some(CardCandidate {
         term: term.into(),
-        prompt: format!("What does “{term}” mean in this PDF?"),
-        answer: answer.into(),
+        prompt: collapse_whitespace(&format!("What does “{term}” mean in this PDF?")),
+        answer: collapse_whitespace(answer),
         source_page: line.page,
         rule: Rule::Definition,
         evidence: vec![line.clone()],
@@ -382,8 +610,10 @@ fn acronym_cards(line: &Evidence) -> Vec<CardCandidate> {
             let quote = &line.quote[start..close + 1];
             result.push(CardCandidate {
                 term: acronym.into(),
-                prompt: format!("What does “{acronym}” stand for in this PDF?"),
-                answer: phrase.into(),
+                prompt: collapse_whitespace(&format!(
+                    "What does “{acronym}” stand for in this PDF?"
+                )),
+                answer: collapse_whitespace(phrase),
                 source_page: line.page,
                 rule: Rule::Acronym,
                 evidence: vec![evidence(line.page, line.start_offset + start, quote)],
@@ -601,10 +831,15 @@ fn cloze_cards(pages: &[PageView], glossary: &[CardCandidate]) -> Vec<CardCandid
                 let answer = &sentence.quote[start..end];
                 // One and only one span is replaced in each independent card.
                 let prompt = format!("{}____{}", &sentence.quote[..start], &sentence.quote[end..]);
+                // A blank is only worth a card when the answer carries meaning and
+                // the rest of the sentence is still a question, not a fragment.
+                if !answer_ok(answer) || words(&prompt.replace("____", " ")) < MIN_BLANK_CONTEXT {
+                    continue;
+                }
                 result.push(CardCandidate {
                     term: answer.into(),
-                    prompt,
-                    answer: answer.into(),
+                    prompt: collapse_whitespace(&prompt),
+                    answer: collapse_whitespace(answer),
                     source_page: page.page,
                     rule: if pattern == "term" {
                         Rule::TermCloze
@@ -688,7 +923,7 @@ fn page_ids(
     }
     (pages.len() == count as usize).then_some(pages)
 }
-fn destination(
+pub(crate) fn destination(
     doc: &Document,
     root: &lopdf::Dictionary,
     object: &Object,
@@ -985,6 +1220,11 @@ fn questions(cards: &[CardCandidate], ambiguous: &BTreeSet<String>) -> Vec<Quest
             {
                 continue;
             }
+            // A printed answer may never be someone else's distractor unless it
+            // would have passed as an answer of its own.
+            if !answer_ok(&other.answer) {
+                continue;
+            }
             if choices.iter().any(|(a, _)| overlap(a, &other.answer)) {
                 continue;
             }
@@ -1002,12 +1242,15 @@ fn questions(cards: &[CardCandidate], ambiguous: &BTreeSet<String>) -> Vec<Quest
             .position(|(a, _)| a == &card.answer)
             .expect("answer retained");
         result.push(QuestionCandidate {
-            prompt: card.prompt.clone(),
-            answer: card.answer.clone(),
+            prompt: collapse_whitespace(&card.prompt),
+            answer: collapse_whitespace(&card.answer),
             correct_index,
             source_page: card.source_page,
             evidence: card.evidence.clone(),
-            choices: choices.iter().map(|(a, _)| a.clone()).collect(),
+            choices: choices
+                .iter()
+                .map(|(a, _)| collapse_whitespace(a))
+                .collect(),
             choice_evidence: choices.into_iter().map(|(_, e)| e).collect(),
         });
         if result.len() == 20 {
@@ -1168,6 +1411,21 @@ pub fn extract_cancellable(
     cards.extend(result.cloze.clone());
     cards.sort_by_key(card_key);
     result.questions = questions(&cards, &ambiguous);
+    for card in &mut result.glossary {
+        card.prompt = collapse_whitespace(&card.prompt);
+        card.answer = collapse_whitespace(&card.answer);
+    }
+    for card in &mut result.cloze {
+        card.prompt = collapse_whitespace(&card.prompt);
+        card.answer = collapse_whitespace(&card.answer);
+    }
+    for q in &mut result.questions {
+        q.prompt = collapse_whitespace(&q.prompt);
+        q.answer = collapse_whitespace(&q.answer);
+        for choice in &mut q.choices {
+            *choice = collapse_whitespace(choice);
+        }
+    }
     check()?;
     Ok(result)
 }

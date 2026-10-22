@@ -5,13 +5,35 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SearchIcon } from "@/components/ui";
 import { useModalDialog } from "@/components/ui/useModalDialog";
 import { todayIso } from "@/lib/dates";
-import { quickFind } from "@/logic/quickFind";
+import { quickFind, type QuickFindResult } from "@/logic/quickFind";
 import { useAppData } from "@/state/AppDataContext";
 
 import "./quickFind.css";
 
 /** Lets the sidebar button open Quick Find without threading state through. */
 export const QUICK_FIND_EVENT = "quickfind:open";
+
+/** Least typing that is worth searching the pages of her PDFs for. */
+const PDF_SEARCH_MIN_LENGTH = 2;
+/** Marks the hand-off row, which is a way to search, not a match. */
+const PDF_ROW_KEY = "search:pdf-text";
+
+/**
+ * Quick Find matches titles and her own records, never the words inside a PDF.
+ * Those live in the Study Library's document search, so hand the words over
+ * instead of saying nothing matches (READY-NOTICE + SEARCH round).
+ */
+export function pdfTextSearchRow(query: string): QuickFindResult | null {
+  const trimmed = query.trim();
+  if (trimmed.length < PDF_SEARCH_MIN_LENGTH) return null;
+  return {
+    key: PDF_ROW_KEY,
+    label: `Search inside your PDFs for \u201C${trimmed}\u201D`,
+    detail: "Finds the words on the pages, not just the titles",
+    section: "Study Library",
+    to: `/study?q=${encodeURIComponent(trimmed)}`,
+  };
+}
 
 /** Mac shows ⌘K, everywhere else Ctrl K. */
 export function quickFindShortcutLabel(): string {
@@ -53,6 +75,9 @@ export function QuickFind() {
   }, [location]);
 
   const results = useMemo(() => quickFind(data, query, today), [data, query, today]);
+  // The document-text row always sits last, whether or not anything matched.
+  const pdfRow = pdfTextSearchRow(query);
+  const rows = pdfRow ? [...results, pdfRow] : results;
 
   useEffect(() => {
     const show = () => {
@@ -88,11 +113,11 @@ export function QuickFind() {
 
   // Keep the highlight on a row that still exists as she types.
   useEffect(() => {
-    setHighlighted((current) => (current < results.length ? current : 0));
-  }, [results.length]);
+    setHighlighted((current) => (current < rows.length ? current : 0));
+  }, [rows.length]);
 
   const choose = (index: number) => {
-    const result = results[index];
+    const result = rows[index];
     if (!result) return;
     setOpen(false);
     navigate(result.to);
@@ -135,11 +160,11 @@ export function QuickFind() {
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
                 event.preventDefault();
-                setHighlighted((current) => (current + 1) % Math.max(results.length, 1));
+                setHighlighted((current) => (current + 1) % Math.max(rows.length, 1));
               } else if (event.key === "ArrowUp") {
                 event.preventDefault();
                 setHighlighted((current) =>
-                  (current - 1 + Math.max(results.length, 1)) % Math.max(results.length, 1),
+                  (current - 1 + Math.max(rows.length, 1)) % Math.max(rows.length, 1),
                 );
               } else if (event.key === "Enter") {
                 event.preventDefault();
@@ -154,13 +179,14 @@ export function QuickFind() {
           <p className="quick-find__empty small muted">
             Nothing matches &ldquo;{query.trim()}&rdquo; yet.
           </p>
-        ) : (
+        ) : null}
+        {rows.length > 0 ? (
           <ul className="quick-find__results">
-            {results.map((result, index) => (
+            {rows.map((result, index) => (
               <li key={result.key}>
                 <button
                   type="button"
-                  className={`quick-find__result${index === highlighted ? " is-highlighted" : ""}`}
+                  className={`quick-find__result${index === highlighted ? " is-highlighted" : ""}${result.key === PDF_ROW_KEY ? " quick-find__result--pdf" : ""}`}
                   onMouseEnter={() => setHighlighted(index)}
                   onClick={() => choose(index)}
                 >
@@ -171,7 +197,7 @@ export function QuickFind() {
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
       </dialog>
     </>
   );

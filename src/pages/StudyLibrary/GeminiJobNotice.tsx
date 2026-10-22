@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
 import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
-import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
+import { isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
  * What became of a generation that did not simply save (GEN-REL-02): an answer
@@ -28,8 +28,28 @@ export function GeminiJobNotice({
   onReview?: () => void;
   reviewDisabled?: boolean;
 }) {
-  const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
+  const what = job.kind === "study-aid" ? (job.sectionGuide ? "study guide" : "study guide and cards") : job.kind === "flashcards" ? "flashcards" : "practice test";
+  const readyTitle =
+    job.kind === "study-aid"
+      ? "Your new study guide is ready."
+      : job.kind === "flashcards"
+        ? "Your new flashcards are ready."
+        : "Your new practice test is ready.";
   const busy = jobs.busy;
+
+  if (
+    job.sectionGuide &&
+    jobs.jobs.some(
+      (other) =>
+        other.key !== job.key &&
+        other.materialId === job.materialId &&
+        other.kind === "study-aid" &&
+        other.sectionGuide &&
+        isNewerJob(other, job),
+    )
+  ) {
+    return null;
+  }
 
   if (
     job.sectionGuide &&
@@ -72,6 +92,7 @@ export function GeminiJobNotice({
   }
 
   if (job.phase === "recovered") {
+    const summary = readySummary(job);
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="ai-disclaimer" role="status">
@@ -80,15 +101,15 @@ export function GeminiJobNotice({
             {job.cancelAttempted
               ? `Gemini finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
               : job.local
-                ? `A completed new ${what} is ready for this document. It has not been saved yet.`
+                ? `${readyTitle} It has not been saved yet.`
                 : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
             {onReview
-              ? `Your ${job.kind === "study-aid" ? "study guide has items" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
+              ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>
         {onReview && reviewDisabled ? <p className="tiny muted">Finish or abandon your current practice attempt before reviewing these questions.</p> : null}
-        {job.answer && "sourceNotes" in job.answer ? <p className="tiny">{job.answer.sourceNotes}</p> : null}
+        {summary ? <p className="tiny">{summary}</p> : null}
         <div className="row row--wrap">
           {onReview ? (
             <Button size="small" disabled={busy || reviewDisabled} onClick={onReview}>
@@ -187,6 +208,29 @@ export function GeminiJobNotice({
   return null;
 }
 
+/**
+ * How much Gemini actually made, in her words. The answer's own provenance
+ * note is hashes and JSON for a section guide, which pushed the buttons off
+ * the screen; it stays stored and is shown under the saved study aid.
+ */
+function readySummary(job: GeminiJob): string | null {
+  const answer = job.answer;
+  if (!answer) return null;
+  if ("questions" in answer) {
+    const n = answer.questions.length;
+    return `${n} ${n === 1 ? "question" : "questions"} ready.`;
+  }
+  if (job.kind === "flashcards" && "flashcards" in answer) {
+    const n = answer.flashcards.length;
+    return `${n} ${n === 1 ? "flashcard" : "flashcards"} ready.`;
+  }
+  if ("sections" in answer) {
+    const n = answer.sections.length;
+    return `${n} ${n === 1 ? "section" : "sections"}, ready to review and save.`;
+  }
+  return null;
+}
+
 function QueuedSectionGuideNotice({
   job,
   jobs,
@@ -251,7 +295,7 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
   const [pending, setPending] = useState(false);
   const intent = useRef(false);
   const code = job.sectionError;
-  const sourceChanged = code === "SOURCE_CHANGED" || code === "CONSENT_REQUIRED";
+  const sourceChanged = code === "SOURCE_CHANGED" || code === "PLAN_CHANGED" || code === "CONSENT_REQUIRED";
   const activate = (restart = false) => {
     if (intent.current || jobs.locked()) return;
     intent.current = true;
@@ -259,17 +303,21 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
     void jobs.continueGuide(job.key, restart).finally(() => { intent.current = false; setPending(false); });
   };
   const saved = job.sections?.ready ?? 0;
+  // A plan refused before its first section saved nothing to count, so the
+  // counting sentence would be false: the plain reason below is the message.
   const message =
     job.phase === "cancelled" || job.queueState === "cancelled"
       ? SECTION_GUIDE_MESSAGES.CANCELLED
       : keeping || !job.local
         ? "Your finished sections are here. Continue when you're ready."
-        : saved === 1
-          ? "Your 1 finished section is saved. Try again to continue with section 2."
-          : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
+        : saved === 0
+          ? null
+          : saved === 1
+            ? "Your 1 finished section is saved. Try again to continue with section 2."
+            : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
   return (
     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-      <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div>
+      {message ? <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div> : null}
       {code && code !== "CANCELLED" && !keeping ? <p className="tiny" role="alert">{SECTION_GUIDE_MESSAGES[code]}</p> : null}
       <div className="row row--wrap">
         {sourceChanged && !keeping ? <>

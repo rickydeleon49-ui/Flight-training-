@@ -2,6 +2,8 @@
 import { createElement as h, type ComponentProps } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { kitHasNoUsableText } from "@/data/pdfStudyKitDraft";
 import type { StudyMaterial } from "@/domain/types";
 import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
 import * as documents from "@/services/documents";
@@ -14,6 +16,7 @@ import { provenanceNote } from "@/logic/studyExport";
 import { PdfItemLabel } from "./PdfItemLabel";
 
 let desktop = true;
+let materials: StudyMaterial[] = [];
 let confirmDiscardKit: () => void;
 vi.mock("@/components/ui", async importOriginal => {
   const ui = await importOriginal<typeof import("@/components/ui")>();
@@ -29,7 +32,7 @@ const repos = { documents: { readStoredStudySet: vi.fn(), saveStudySet: vi.fn(),
 const request = vi.fn().mockResolvedValue({ kind: "saved" });
 const controller = { request, status: () => ({ epoch: 1, kind: "saved" }), abort: vi.fn() };
 vi.mock("@/data", () => ({ isTauri: () => desktop }));
-vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ repositories: repos, dataRevision: 0, data: { practiceTests: [], materials: [] }, mutate: (fn: (r: typeof repos) => unknown) => fn(repos) }) }));
+vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ repositories: repos, dataRevision: 0, data: { practiceTests: [], materials }, mutate: (fn: (r: typeof repos) => unknown) => fn(repos) }) }));
 vi.mock("@/state/navigation/useDocumentNavigation", () => ({ useNavigationController: () => ({ controller }) }));
 const material = { id: "kit-material", title: "Synthetic PDF", filePath: "documents/synthetic.pdf", originalFileName: "synthetic.pdf" } as StudyMaterial;
 const evidence = { page: 2, startOffset: 0, endOffset: 20, quote: "Lift: A source line." };
@@ -43,7 +46,7 @@ let acknowledge: ReturnType<typeof vi.spyOn>;
 let save: typeof repos.documents.saveStudySet;
 const SOURCE_CHANGED = "The PDF or page choice changed since this kit was made. Rebuild it when you’re ready.";
 beforeEach(() => {
-  localStorage.clear(); desktop = true; vi.clearAllMocks();
+  localStorage.clear(); desktop = true; materials = []; vi.clearAllMocks();
   repos.documents.readStoredStudySet.mockResolvedValue(null); repos.documents.saveStudySet.mockResolvedValue({ status: "saved" });
   repos.documents.readPracticeSnapshot.mockResolvedValue(null); repos.documents.savePracticeAuthoring.mockResolvedValue({ status: "saved" }); repos.practiceSessions.getCurrentAttempt.mockResolvedValue(null);
   prepare = vi.spyOn(documents, "preparePdfStudyKit").mockResolvedValue("kit-job"); get = vi.spyOn(documents, "getPdfStudyKit").mockResolvedValue(fixture());
@@ -56,7 +59,12 @@ beforeEach(() => {
   save = repos.documents.saveStudySet;
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-function open() { return render(h(PdfStudyKitPanel, { material })); }
+function open() {
+  return render(h(MemoryRouter, { initialEntries: ["/study/kit-material"] }, h(Routes, null,
+    h(Route, { path: "/study/kit-material", element: h(PdfStudyKitPanel, { material }) }),
+    h(Route, { path: "/study/:id", element: h("p", null, "Earlier PDF page") }),
+  )));
+}
 async function preview() { open(); fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" })); return within(await screen.findByRole("dialog", { name: "Review your PDF study kit" })); }
 async function saveKit() { fireEvent.click(screen.getByRole("button", { name: "Save to study set" })); }
 it("kit_button_desktop_only_works_without_gemini_key", async () => {
@@ -73,10 +81,38 @@ it("source_changed_asks_before_rebuild_at_open_and_save", async () => {
   get.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByRole("button", { name: "Rebuild study kit" }); expect(prepare).toHaveBeenCalledTimes(1); fireEvent.click(screen.getByRole("button", { name: "Rebuild study kit" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" }); save.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); await saveKit(); await screen.findByText("The PDF or page choice changed since this kit was made. Rebuild it when you’re ready."); expect(save).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(2);
 });
 it("no_text_pdf_shows_plain_message_no_items", async () => {
-  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [] } }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("This PDF didn’t have text the kit could use."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
+  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], pagesUsed: [], pagesSkippedAmbiguous: 0 } }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("This PDF didn’t have text the kit could use."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
+});
+it.each([
+  { pagesUsed: [2], pagesSkippedAmbiguous: 0 },
+  { pagesUsed: [], pagesSkippedAmbiguous: 1 },
+  {},
+])("empty_kit_with_text_or_unknown_counts_avoids_no_text_claim: %j", async counts => {
+  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], ...counts } });
+  const scope = await preview();
+  expect(scope.getByText("The kit couldn’t find definitions or key terms on these pages yet.")).toBeTruthy();
+  expect(scope.queryByText("This PDF didn’t have text the kit could use.")).toBeNull();
+  expect(scope.queryByRole("button", { name: "Save to study set" })).toBeNull();
+  expect(save).not.toHaveBeenCalled();
 });
 it("preview_page_links_open_viewer_at_page", async () => {
   const scope = await preview(); fireEvent.click(scope.getAllByRole("button", { name: "Open PDF page 2" })[0]!); await waitFor(() => expect(request).toHaveBeenCalledWith({ materialId: material.id, reference: 2, provenance: "physical_index" })); expect(offline.verifyOfflineDestination).toHaveBeenCalledWith(material.id, "a".repeat(64));
+});
+it("ticked Keep labels are not struck through in review", async () => {
+  const scope = await preview();
+  const keepSection = scope.getByLabelText("Keep section 1") as HTMLInputElement;
+  expect(keepSection.checked).toBe(true);
+  const labelSpan = scope.getByText("Keep section 1");
+  const checkboxLabel = labelSpan.closest(".checkbox");
+  expect(checkboxLabel?.classList.contains("checkbox--no-strike")).toBe(true);
+  expect(labelSpan.style.textDecoration).not.toBe("line-through");
+
+  const keepCard = scope.getByLabelText("Keep card 1") as HTMLInputElement;
+  expect(keepCard.checked).toBe(true);
+  const cardLabelSpan = scope.getByText("Keep card 1");
+  const cardCheckboxLabel = cardLabelSpan.closest(".checkbox");
+  expect(cardCheckboxLabel?.classList.contains("checkbox--no-strike")).toBe(true);
+  expect(cardLabelSpan.style.textDecoration).not.toBe("line-through");
 });
 it("save_sends_sources_only_for_kept_items_with_final_hashes", async () => {
   const scope = await preview(); fireEvent.change(scope.getByLabelText("Card 1 answer"), { target: { value: "My final answer" } }); fireEvent.click(scope.getByLabelText("Keep section 1")); await saveKit(); await screen.findByText("Study kit saved."); const op = save.mock.calls[0]![0]; expect(op.next.sections).toEqual([]); expect(op.pdfKitSources.items.every((i: { itemKind: string }) => i.itemKind === "card")).toBe(true); expect(op.pdfKitSources.items[0].contentHash).toBe(await pdfKitContentHash("card", op.next.flashcards[0]));
@@ -216,12 +252,132 @@ it("rebuild_does_not_prepare_when_discard_unconfirmed", async () => {
   expect(await screen.findByText(/Try rebuilding again|Try again/)).toBeTruthy();
 });
 
-it("full_journal_or_open_kit_message_is_plain", async () => {
-  prepare.mockRejectedValueOnce({ code: "JOURNAL_FULL", message: "Save or explicitly discard the earlier PDF kit first." });
+it.each([
+  ["JOURNAL_FULL", "Your draft space is full. Save or discard a waiting study aid or practice test, then try again."],
+  ["JOURNAL_RECOVERY", "Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again."],
+])("journal_refusal_has_its_own_message (%s)", async (code, message) => {
+  prepare.mockRejectedValueOnce({ code });
   open();
-  fireEvent.click(await screen.findByRole("button", { name: "Make a study kit from this PDF" }));
-  expect(await screen.findByText("Finish or discard your earlier study kit first.")).toBeTruthy();
-  expect(screen.queryByText(/Your PDF kit couldn’t be opened/)).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  expect(await screen.findByText(message!)).toBeTruthy();
+  expect(screen.queryByText(/earlier study kit first/)).toBeNull();
+});
+
+it("preparing_null_candidates_never_proves_no_text", () => {
+  expect(kitHasNoUsableText({ ...fixture(), candidates: null })).toBe(false);
+});
+
+it.each(["ready", "interrupted", "failed", "cancelled"])("same_pdf_kit_has_review_and_discard (%s)", async stage => {
+  list.mockResolvedValue([{ id: "earlier", materialId: material.id, stage, createdAt: 1 }]);
+  open();
+  expect(await screen.findByRole("button", { name: "Continue reviewing your study kit" })).toBeTruthy();
+  await discard();
+  await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("earlier"));
+});
+
+it("same_pdf_refusal_refreshes_actions_after_initial_empty_list", async () => {
+  prepare.mockRejectedValueOnce({ code: "KIT_EXISTS_SAME", jobId: "earlier", materialId: material.id });
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Continue reviewing your study kit" }));
+  await screen.findByRole("dialog", { name: "Review your PDF study kit" });
+  expect(get).toHaveBeenCalledWith("earlier");
+  expect(screen.getByRole("button", { name: "Discard this kit" })).toBeTruthy();
+});
+
+it("settled_cancelled_same_pdf_can_start_a_replacement", async () => {
+  list.mockResolvedValue([{ id: "cancelled", materialId: material.id, stage: "cancelled", createdAt: 1 }]);
+  open();
+  await screen.findByRole("button", { name: "Continue reviewing your study kit" });
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  await screen.findByRole("dialog", { name: "Review your PDF study kit" });
+  expect(prepare).toHaveBeenCalledWith(material.id);
+  expect(get).toHaveBeenCalledWith("kit-job");
+});
+
+const earlierKit = { id: "other-kit", materialId: "other/pdf", stage: "ready", createdAt: 1, runId: "other-run" };
+function nameEarlierPdf() { materials = [{ ...material, id: earlierKit.materialId, title: "18_afh_ch17" }]; }
+it.each(["ready", "cancelled", "interrupted", "failed", "received"])("other_pdf_nonblocking_kit_shows_no_block (%s)", async stage => {
+  nameEarlierPdf(); list.mockResolvedValue([{ ...earlierKit, stage }]);
+  await act(async () => { open(); });
+  expect(list).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText(/You have a study kit waiting/)).toBeNull();
+  expect(screen.queryByRole("link", { name: "Open that PDF in the Study Library" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Discard that kit" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Continue reviewing your study kit" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Discard this kit" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Make a study kit from this PDF" })).toHaveProperty("disabled", false);
+  expect(acknowledge).not.toHaveBeenCalled();
+});
+
+it("other_pdf_running_kit_is_named_without_a_refusal", async () => {
+  nameEarlierPdf(); list.mockResolvedValue([
+    { id: "newer-kit", materialId: "unrelated", stage: "ready", createdAt: 100 },
+    { ...earlierKit, stage: "running" },
+  ]);
+  open();
+  expect(await screen.findByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" }).getAttribute("href")).toBe("/study/other%2Fpdf");
+  expect(screen.getByRole("button", { name: "Discard that kit" })).toBeTruthy();
+  expect(prepare).not.toHaveBeenCalled();
+});
+
+it("blocked_other_pdf_ready_kit_is_named_and_navigable", async () => {
+  nameEarlierPdf();
+  prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
+  list.mockResolvedValueOnce([]).mockResolvedValue([earlierKit]);
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+  expect(await screen.findByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
+  const link = screen.getByRole("link", { name: "Open that PDF in the Study Library" });
+  expect(link.getAttribute("href")).toBe("/study/other%2Fpdf");
+  expect(screen.getByRole("button", { name: "Discard that kit" })).toBeTruthy();
+  fireEvent.click(link);
+  expect(await screen.findByText("Earlier PDF page")).toBeTruthy();
+});
+
+it("other_pdf_kit_actions_survive_a_failed_journal_refresh", async () => {
+  nameEarlierPdf();
+  prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
+  list.mockResolvedValueOnce([]).mockRejectedValue(new Error("unavailable"));
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  expect(await screen.findByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" })).toBeTruthy();
+});
+
+it("other_pdf_discard_confirms_and_only_removes_that_kit", async () => {
+  nameEarlierPdf(); list.mockResolvedValue([earlierKit]);
+  prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
+  localStorage.setItem("hfd:pdf-kit-review:other-run", "other edits");
+  localStorage.setItem("hfd:pdf-kit-review:keep-run", "keep edits");
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+  fireEvent.click(await screen.findByRole("button", { name: "Discard that kit" }));
+  const confirm = within(await screen.findByRole("dialog", { name: "Discard this study kit?" }));
+  expect(acknowledge).not.toHaveBeenCalled();
+  expect(confirm.getByText("Your saved study set and questions stay. Only the unsaved kit is removed.")).toBeTruthy();
+  fireEvent.click(confirm.getByRole("button", { name: "Discard kit" }));
+  await waitFor(() => expect(acknowledge).toHaveBeenCalledWith(earlierKit.id));
+  expect(gemini.cancelGeminiJob).toHaveBeenCalledWith({ jobId: earlierKit.id });
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Discard that kit" })).toBeNull());
+  expect(localStorage.getItem("hfd:pdf-kit-review:other-run")).toBeNull();
+  expect(localStorage.getItem("hfd:pdf-kit-review:keep-run")).toBe("keep edits");
+  expect(save).not.toHaveBeenCalled();
+});
+
+it("other_pdf_live_cancel_keeps_actions_until_acknowledgement", async () => {
+  nameEarlierPdf(); list.mockResolvedValue([{ ...earlierKit, stage: "running" }]);
+  acknowledge.mockResolvedValue(false);
+  open();
+  fireEvent.click(await screen.findByRole("button", { name: "Discard that kit" }));
+  const confirm = within(await screen.findByRole("dialog", { name: "Discard this study kit?" }));
+  fireEvent.click(confirm.getByRole("button", { name: "Discard kit" }));
+  await screen.findByText("Your study kit couldn’t be discarded. Try again.");
+  expect(screen.getByRole("button", { name: "Discard that kit" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" })).toBeTruthy();
 });
 
 it("save_blocked_after_source_changed_button_and_handler", async () => {
@@ -363,4 +519,19 @@ it("extraction_enabled_success_never_shows_unavailable_message", async () => {
   await screen.findByRole("dialog", { name: "Review your PDF study kit" });
   expect(screen.queryByText(/isn't available in this version yet/)).toBeNull();
   expect(offline.prepareOfflineContent).toHaveBeenCalledWith(material.id);
+});
+
+it("cancelled_other_worker_keeps_its_actions_even_with_newer_ready_kits", async () => {
+  nameEarlierPdf();
+  list.mockResolvedValueOnce([]).mockResolvedValue([
+    { id: "newer-kit", materialId: "unrelated", stage: "ready", createdAt: 100 },
+    { ...earlierKit, stage: "cancelled" },
+  ]);
+  prepare.mockRejectedValueOnce({ code: "KIT_IN_PROGRESS_OTHER", jobId: earlierKit.id, materialId: earlierKit.materialId });
+  open();
+  fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" }));
+  await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+  expect(screen.getByText("You have a study kit waiting for “18_afh_ch17”.")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" }).getAttribute("href")).toBe("/study/other%2Fpdf");
+  expect(screen.getByRole("button", { name: "Discard that kit" })).toBeTruthy();
 });

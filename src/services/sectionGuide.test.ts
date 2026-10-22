@@ -32,6 +32,7 @@ describe("section command and typed-error boundary", () => {
     ["Google was still preparing this PDF after waiting, so no study aid was made. Try again in a few minutes.", "PROCESSING_TIMEOUT"],
     ["Gemini is taking longer to answer. You can try again.", "GENERATION_TIMEOUT"],
     ["The rest of the answer stopped arriving.", "READING_TIMEOUT"],
+    ["This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.", "STAGE_TIMEOUT"],
   ])("maps the existing native stage sentence safely", (message, code) => {
     expect(sectionGuideError({ code: "GUIDE_PAUSED", message }).code).toBe(code);
   });

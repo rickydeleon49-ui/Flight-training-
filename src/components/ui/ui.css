@@ -309,10 +309,14 @@
 .checkbox__label { display: block; font-size: var(--text-base); line-height: 1.4; }
 
 /* Only the label is struck through; supporting detail stays readable. */
-.checkbox input:checked ~ .checkbox__body .checkbox__label {
+.checkbox:not(.checkbox--no-strike) input:checked ~ .checkbox__body .checkbox__label {
   color: var(--text-tertiary);
   text-decoration: line-through;
   text-decoration-color: var(--border-strong);
+}
+
+.checkbox--no-strike input:checked ~ .checkbox__body .checkbox__label {
+  text-decoration: none;
 }
 
 .checkbox__meta { display: block; }

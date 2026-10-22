@@ -44,6 +44,14 @@ const ADVICE = {
 
 export type AiFileVerdict = { ready: true } | { ready: false; reason: string };
 
+/** Human-readable file size, e.g. "1.4 MB" or "204.7 MB". */
+export function formatFileSize(bytes: number | null): string {
+  if (bytes == null) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /** Bytes as she would say them: "62 MB", not "65,011,712 bytes". */
 export function describeFileSize(bytes: number): string {
   const mb = 1024 * 1024;
@@ -80,7 +88,7 @@ export function checkFileForGemini(
     return {
       ready: false,
       reason:
-        `This file is ${describeFileSize(bytes)}, over the ${describeFileSize(limit)} ` +
+        `This file is ${formatFileSize(bytes)}, over the ${describeFileSize(limit)} ` +
         `limit for this kind of file. ${ADVICE[match.kind]}`,
     };
   }

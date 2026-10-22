@@ -12,21 +12,52 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KitError {
     pub code: &'static str,
     pub message: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub job_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub material_id: Option<String>,
 }
 fn error(code: &'static str) -> KitError {
-    KitError { code, message: match code {
+    KitError { code, job_id: None, material_id: None, message: match code {
         "EXTRACTION_UNAVAILABLE" => "Making a study kit from your PDF isn't available in this version yet. It's coming in a later update.",
         "CACHE_MISSING" => "Prepare this PDF for offline study first, then try making a kit again.",
         "SOURCE_CHANGED" => "This PDF or your chosen pages changed. Keep your earlier work, or start a new kit.",
         "DRAFT_NOT_READY" => "Your PDF kit is still being prepared. Your saved work is still here.",
         "INTERRUPTED" => "Preparation stopped. Your saved work is still here. Start a new kit when you are ready.",
         "CANCELLED" => "Stopped. Your saved work is still here.",
-        "JOURNAL_FULL" => "Save or discard an earlier draft, or choose fewer pages, before making another kit.",
+        "KIT_EXISTS_SAME" => "Your earlier study kit for this PDF is ready to return to.",
+        "KIT_IN_PROGRESS_OTHER" => "A study kit for another PDF is still finishing.",
+        "JOURNAL_FULL" => "Your draft space is full. Save or discard a waiting study aid or practice test, then try again.",
+        "JOURNAL_RECOVERY" => "Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again.",
         _ => "Your PDF kit could not be prepared. Your saved work is still here.",
     }}
+}
+fn begin_error(failure: gemini_jobs::PdfKitBeginError) -> KitError {
+    use gemini_jobs::PdfKitBeginError::*;
+    let (code, blocker) = match failure {
+        ExistsSame {
+            job_id,
+            material_id,
+        } => ("KIT_EXISTS_SAME", Some((job_id, material_id))),
+        InProgressOther {
+            job_id,
+            material_id,
+        } => ("KIT_IN_PROGRESS_OTHER", Some((job_id, material_id))),
+        Full => ("JOURNAL_FULL", None),
+        Recovery => ("JOURNAL_RECOVERY", None),
+        Invalid => ("INVALID_ARGUMENT", None),
+        Storage => ("STORAGE_ERROR", None),
+    };
+    let mut failure = error(code);
+    if let Some((job, material)) = blocker {
+        failure.job_id = Some(job);
+        failure.material_id = Some(material);
+    }
+    failure
 }
 fn conn(root: &Path) -> Result<Connection, KitError> {
     Connection::open_with_flags(
@@ -128,7 +159,7 @@ fn prepare_at_with_extraction(
     let identity = json!({"materialId":material,"relativePath":relative,"contentSha256":hash,"selectedPages":pages,"extractorVersion":EXTRACTOR_VERSION,"algorithmVersion":pdf_study_kit::ALGORITHM_VERSION,"pageCount":count});
     let draft = json!({"kind":"pdf-kit","version":1,"runId":run_id,"identity":identity,"identityDigest":crate::practice_sessions::compute_canonical_hash(&identity),"createdAt":crate::card_reviews::format_iso_ms(now),"editorOperationId":operation_id,"reviewState":"preparing","candidates":null});
     gemini_jobs::with(root, |j| j.begin_pdf_kit(material, &relative, &hash, draft))
-        .map_err(|_| error("JOURNAL_FULL"))
+        .map_err(begin_error)
 }
 fn read(root: &Path, id: &str) -> Result<(gemini_jobs::JobRecord, Value), KitError> {
     let record = gemini_jobs::with(root, |j| {

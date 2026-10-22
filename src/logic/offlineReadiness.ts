@@ -15,11 +15,18 @@ export interface ReadinessWording {
   /** One or two plain sentences for the material page. */
   detail: string;
   tone: ReadinessTone;
-  /** Whether "Prepare for offline study" makes sense now. */
+  /** Whether "Read this PDF's text" makes sense now. */
   canPrepare: boolean;
   /** Whether the state will change by itself soon (worth checking again). */
   settling: boolean;
 }
+
+/**
+ * Native limit on input file size for text extraction (128 MiB).
+ * Kept in sync with `MAX_INPUT_BYTES` in `src-tauri/src/extraction/worker.rs`.
+ */
+export const MAX_OFFLINE_INPUT_BYTES = 128 * 1024 * 1024;
+export const MAX_INPUT_BYTES = MAX_OFFLINE_INPUT_BYTES;
 
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
 
@@ -27,8 +34,8 @@ const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
 const REFUSALS: Record<string, string> = {
   encrypted: "It's password-protected, so its text can't be read.",
   malformed: "It doesn't look like a complete PDF.",
-  input_too_large: "It's too large to prepare in one piece. Try splitting it into chapters first.",
-  memory_limit: "It needs more memory than offline preparation allows. Try splitting it into chapters first.",
+  input_too_large: "It's too large to read in one piece. Try splitting it into chapters first.",
+  memory_limit: "It needs more memory than reading on this Mac allows. Try splitting it into chapters first.",
   total_text_limit: "It has more text than offline search can hold in one document. Try splitting it into chapters first.",
 };
 
@@ -37,7 +44,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "unsupported":
       return {
         label: "Not a PDF",
-        detail: "Offline search preparation works with PDFs for now.",
+        detail: "Reading text works with PDFs for now.",
         tone: "neutral",
         canPrepare: false,
         settling: false,
@@ -45,7 +52,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "missing":
       return {
         label: "File missing",
-        detail: "This file isn't on this Mac right now, so it can't be prepared.",
+        detail: "This file isn't on this Mac right now, so it can't be read.",
         tone: "due",
         canPrepare: false,
         settling: false,
@@ -60,36 +67,37 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
       };
     case "notPrepared":
       return {
-        label: "Not prepared",
-        detail: "Not ready for offline search yet. Preparing reads the text on your Mac; nothing is sent anywhere.",
+        label: "Not read yet",
+        detail:
+          "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
         tone: "neutral",
         canPrepare: true,
         settling: false,
       };
     case "preparing":
       return {
-        label: "Preparing search",
-        detail: "Preparing this file for offline search on your Mac…",
+        label: "Reading text…",
+        detail: "Reading this file's text on your Mac…",
         tone: "neutral",
         canPrepare: false,
         settling: true,
       };
     case "searchable":
       return {
-        label: "Searchable",
-        detail: `Ready for offline search: all ${pages(r.pages)}.`,
+        label: "Text read",
+        detail: `Text read on this Mac: all ${pages(r.pages)}.`,
         tone: "complete",
         canPrepare: false,
         settling: false,
       };
     case "partial": {
-      const base = `Ready for offline search on ${r.searchable} of ${pages(r.pages)}.`;
+      const base = `Text read on ${r.searchable} of ${pages(r.pages)}.`;
       const reason =
         r.reason === "imagePages"
           ? ` ${pages(r.imagePages)} ${r.imagePages === 1 ? "is an image" : "are images"}; text recognition would be needed to search ${r.imagePages === 1 ? "it" : "them"}.`
           : " Some pages couldn't be read.";
       return {
-        label: "Partly searchable",
+        label: "Partly read",
         detail: base + reason,
         tone: "due",
         canPrepare: false,
@@ -98,8 +106,8 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     }
     case "couldNotProcess":
       return {
-        label: "Could not prepare",
-        detail: `This file couldn't be prepared for offline search. ${REFUSALS[r.code] ?? "Something in it couldn't be read."}`,
+        label: "Could not read",
+        detail: `This file couldn't be read on this Mac. ${REFUSALS[r.code] ?? "Something in it couldn't be read."}`,
         tone: "due",
         canPrepare: false,
         settling: false,

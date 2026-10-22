@@ -132,7 +132,79 @@ fn source_changed_requires_consent_at_get_and_save() {
 
 fn source_payload(d: &Value) -> crate::pdf_kit_sources::Sources {
     let e = &d["candidates"]["glossary"][0]["evidence"][0];
-    crate::pdf_kit_sources::decode(&serde_json::json!({"runId":d["runId"],"run":{"materialId":"mat-a","contentSha256":d["identity"]["contentSha256"],"selectedPages":[1],"extractorVersion":1,"algorithmVersion":1,"createdAt":d["createdAt"]},"items":[{"itemKind":"question","logicalId":"001c0001-0000-4000-8000-000000000050","contentHash":"a".repeat(64),"page":e["page"],"startOffset":e["startOffset"],"endOffset":e["endOffset"],"quote":e["quote"]}]}),"mat-a").unwrap()
+    crate::pdf_kit_sources::decode(&serde_json::json!({"runId":d["runId"],"run":{"materialId":"mat-a","contentSha256":d["identity"]["contentSha256"],"selectedPages":[1],"extractorVersion":d["identity"]["extractorVersion"],"algorithmVersion":d["identity"]["algorithmVersion"],"createdAt":d["createdAt"]},"items":[{"itemKind":"question","logicalId":"001c0001-0000-4000-8000-000000000050","contentHash":"a".repeat(64),"page":e["page"],"startOffset":e["startOffset"],"endOffset":e["endOffset"],"quote":e["quote"]}]}),"mat-a").unwrap()
+}
+
+#[test]
+fn old_algorithm_kit_is_stale_at_get_and_save_then_rebuildable() {
+    let r = Rig::new(true);
+    let id = r.ready();
+    let mut d = read(&r.0, &id).unwrap().1;
+    assert_eq!(d["identity"]["algorithmVersion"], 4);
+    assert_eq!(d["candidates"]["algorithmVersion"], 4);
+    d["identity"]["algorithmVersion"] = json!(1);
+    d["candidates"]["algorithmVersion"] = json!(1);
+    d["identityDigest"] = json!(crate::practice_sessions::compute_canonical_hash(
+        &d["identity"]
+    ));
+    let old_sources = source_payload(&d);
+    crate::gemini_jobs::with(&r.0, |j| j.test_replace_pdf_draft(&id, d).unwrap());
+    assert_eq!(get_at(&r.0, &id).unwrap_err().code, "SOURCE_CHANGED");
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "SOURCE_CHANGED"
+    );
+    // The existing explicit discard/rebuild flow produces a separate v4 run.
+    assert!(crate::gemini_jobs::with(&r.0, |j| j.acknowledge(&id)).unwrap());
+    let rebuilt = get_at(&r.0, &r.ready()).unwrap();
+    assert_eq!(rebuilt["identity"]["algorithmVersion"], 4);
+    assert_eq!(rebuilt["candidates"]["algorithmVersion"], 4);
+    assert_ne!(rebuilt["runId"], old_sources.run_id);
+    validate_save_at(&r.0, &source_payload(&rebuilt)).unwrap();
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "SOURCE_CHANGED"
+    );
+}
+
+#[test]
+fn old_extractor_version_kit_is_stale_at_get_and_save() {
+    let r = Rig::new(true);
+    let id = r.ready();
+    let mut d = read(&r.0, &id).unwrap().1;
+    assert_eq!(d["identity"]["extractorVersion"], 2);
+    d["identity"]["extractorVersion"] = json!(1);
+    d["identityDigest"] = json!(crate::practice_sessions::compute_canonical_hash(
+        &d["identity"]
+    ));
+    let old_sources = source_payload(&d);
+    crate::gemini_jobs::with(&r.0, |j| j.test_replace_pdf_draft(&id, d).unwrap());
+    assert_eq!(get_at(&r.0, &id).unwrap_err().code, "SOURCE_CHANGED");
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "SOURCE_CHANGED"
+    );
+}
+
+#[test]
+fn current_algorithm_kit_rejects_old_candidates_and_save_provenance() {
+    let r = Rig::new(true);
+    let id = r.ready();
+    let mut d = read(&r.0, &id).unwrap().1;
+    assert_eq!(d["identity"]["algorithmVersion"], 4);
+    let mut old_sources = source_payload(&d);
+    old_sources.run.algorithm_version = 1;
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "SOURCE_CHANGED"
+    );
+    d["candidates"]["algorithmVersion"] = json!(1);
+    crate::gemini_jobs::with(&r.0, |j| j.test_replace_pdf_draft(&id, d).unwrap());
+    assert_eq!(get_at(&r.0, &id).unwrap_err().code, "INVALID_DRAFT");
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "INVALID_DRAFT"
+    );
 }
 #[test]
 fn save_rechecks_pdf_and_selected_pages() {
@@ -243,4 +315,65 @@ fn kit_extraction_unavailable_typed_when_disabled_and_no_cache() {
         .as_array()
         .unwrap()
         .is_empty());
+}
+
+#[test]
+fn pdf_kit_admission_errors_keep_codes_and_blocker_identity_at_ipc() {
+    use crate::gemini_jobs::PdfKitBeginError::*;
+    for (failure, code, blocker) in [
+        (
+            ExistsSame {
+                job_id: "job-a".into(),
+                material_id: "mat-a".into(),
+            },
+            "KIT_EXISTS_SAME",
+            true,
+        ),
+        (
+            InProgressOther {
+                job_id: "job-a".into(),
+                material_id: "mat-a".into(),
+            },
+            "KIT_IN_PROGRESS_OTHER",
+            true,
+        ),
+        (Full, "JOURNAL_FULL", false),
+        (Recovery, "JOURNAL_RECOVERY", false),
+        (Invalid, "INVALID_ARGUMENT", false),
+        (Storage, "STORAGE_ERROR", false),
+    ] {
+        let failure = begin_error(failure);
+        assert_eq!(failure.code, code);
+        let public = serde_json::to_value(failure).unwrap();
+        if blocker {
+            assert_eq!(public["jobId"], "job-a");
+            assert_eq!(public["materialId"], "mat-a");
+        } else {
+            assert!(public.get("jobId").is_none());
+            assert!(public.get("materialId").is_none());
+        }
+    }
+}
+
+#[test]
+fn pdf_kit_prepare_preserves_same_and_other_refusals() {
+    let r = Rig::new(true);
+    let id = prepare_at(&r.0, "mat-a", None).unwrap();
+    let failure = prepare_at(&r.0, "mat-a", None).unwrap_err();
+    assert_eq!(failure.code, "KIT_EXISTS_SAME");
+    assert_eq!(failure.job_id.as_deref(), Some(id.as_str()));
+    assert_eq!(failure.material_id.as_deref(), Some("mat-a"));
+    let conn = Connection::open(r.0.join("her-flight-deck.db")).unwrap();
+    conn.execute("INSERT INTO study_materials (id,title,file_path,created_at,updated_at) VALUES ('mat-b','Synthetic second','a.pdf','now','now')",[]).unwrap();
+    let failure = prepare_at(&r.0, "mat-b", None).unwrap_err();
+    assert_eq!(failure.code, "KIT_IN_PROGRESS_OTHER");
+    assert_eq!(failure.job_id.as_deref(), Some(id.as_str()));
+    assert_eq!(failure.material_id.as_deref(), Some("mat-a"));
+    gemini_jobs::with(&r.0, |j| j.cancel(&id)).unwrap();
+    assert_eq!(work_at(&r.0, &id).unwrap_err().code, "CANCELLED");
+    let replacement = prepare_at(&r.0, "mat-a", None).unwrap();
+    assert_ne!(id, replacement);
+    assert!(!gemini_jobs::with(&r.0, |j| j.list())
+        .iter()
+        .any(|j| j.id == id));
 }
