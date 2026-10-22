@@ -152,6 +152,10 @@
 }
 .file-row__actions .button > svg { flex: none; }
 .file-row__actions:empty { display: none; }
+.file-action-tip { flex: 1 1 12rem; min-width: 0; }
+.file-action-tip p { margin-top: var(--space-2); }
+.material-start-steps { padding-left: var(--space-5); margin: 0; }
+.material-start-steps li > p { margin-bottom: var(--space-2); }
 
 .ai-working,
 .ai-disclaimer {
