@@ -115,17 +115,17 @@ function PdfStartHere({ material, materials, studySet, geminiDraftWaiting, fileM
             {parts[0] ? <Link className="button button--secondary button--small" to={`/study/${encodeURIComponent(parts[0].id)}`}>Open first part: {parts[0].title}</Link> : <Button size="small" variant="secondary" onClick={() => jump("material-file-actions")} disabled={Boolean(unavailable)}>See split and open options</Button>}
           </li>
           <li>
-            <p className="small strong">Ask Gemini for a study guide and flashcards <span className="tiny muted">— {makeState}</span></p>
+            <p className="small strong">Ask Gemini for a study guide <span className="tiny muted">— {makeState}</span></p>
             <p className="tiny muted">Her Flight Deck sends this file to Google after you confirm. It builds your guide section by section; the completed draft waits for you to save it.</p>
             <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-study-guide")}>Go to Gemini guide</Button>
           </li>
           <li>
             <p className="small strong">Review and save what you want to keep <span className="tiny muted">— {reviewState}</span></p>
-            <p className="tiny muted">Check the draft before saving it. Your saved guide and flashcards stay on this material's page in Study Library. AI material is a study aid to check against FAA guidance and your instructor.</p>
+            <p className="tiny muted">Check the draft before saving it. Your saved study guide stays on this material's page in Study Library. AI material is a study aid to check against FAA guidance and your instructor.</p>
             <Button size="small" variant="secondary" disabled={!waiting && !studySet} onClick={() => jump(geminiDraftWaiting ? "material-study-guide" : kitWaiting ? "material-pdf-kit" : "material-study-guide")}>{waiting ? "Go to draft review" : "Go to saved study guide"}</Button>
           </li>
           <li>
-            <p className="small strong">Try a practice test (optional) <span className="tiny muted">— {practiceTestSaved ? "Done" : unavailable ?? "When you're ready"}</span></p>
+            <p className="small strong">Try flashcards and a practice test (optional) <span className="tiny muted">— {practiceTestSaved ? "Done" : unavailable ?? "When you're ready"}</span></p>
             <p className="tiny muted">Ask Gemini for multiple-choice questions from this PDF, then check the answers and explanations against your source.</p>
             <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-practice-test")}>Go to practice test</Button>
           </li>

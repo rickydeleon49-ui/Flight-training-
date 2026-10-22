@@ -128,12 +128,17 @@ function MaterialDetailPage() {
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
   const [reviewingPracticeRegeneration, setReviewingPracticeRegeneration] = useState(false);
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
+  const [confirmingCards, setConfirmingCards] = useState(false);
+  const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
   // One Gemini generation at a time across the whole app, whichever page asked;
   // the lock is taken synchronously before anything awaits (src/state/GeminiJobs).
   const geminiJobs = useGeminiJobs();
   const studyJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "study-aid",
+  );
+  const cardJob = geminiJobs.jobs.find(
+    (job) => job.materialId === materialId && job.kind === "flashcards",
   );
   const practiceJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "practice-test",
@@ -149,8 +154,10 @@ function MaterialDetailPage() {
   }, [repositories, materialId, dataRevision]);
   const working = (phase: GeminiJobPhase | undefined) => phase === "running" || phase === "saving";
   const generating = working(studyJob?.phase);
+  const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
   const generationError = studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
+  const cardGenerationError = cardJob?.phase === "failed" ? cardJob.error : null;
   const practiceGenerationError = practiceJob?.phase === "failed" ? practiceJob.error : null;
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
@@ -351,6 +358,8 @@ function MaterialDetailPage() {
   // only the generation is repeated.
   const retryStudy =
     canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingAi(true) : undefined;
+  const retryFlashcards =
+    canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingCards(true) : undefined;
   const retryPractice =
     canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingPracticeTest(true) : undefined;
 
@@ -469,6 +478,26 @@ function MaterialDetailPage() {
     await geminiJobs.queueGuide({ materialId: material.id, filePath: material.filePath });
   };
 
+  const createFlashcards = async () => {
+    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+      return;
+    }
+    await geminiJobs.start(
+      "flashcards",
+      { materialId: material.id, filePath: material.filePath },
+      {
+        targetCards,
+        preflight: preflight(material.filePath),
+        onSaved: () => {
+          if (isMountedRef.current) {
+            setCardIndex(0);
+            setCardRevealed(false);
+          }
+        },
+      },
+    );
+  };
+
   const createPracticeTest = async () => {
     if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
       return;
@@ -491,7 +520,9 @@ function MaterialDetailPage() {
               ? "Written by you, saved on this computer"
               : studySet
                 ? "Saved on this computer"
-                : "Guide and flashcards"
+                : isPdf
+                  ? "Study guide"
+                  : "Guide and flashcards"
         }
         action={
           <div className="row row--wrap">
@@ -535,7 +566,7 @@ function MaterialDetailPage() {
           </div>
         }
       />
-      {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>{pdfSet ? "Review the guide and cards saved from your PDF text, and follow their page references back to the source." : importedSet ? "Review the guide and cards from your imported packet; you can edit them here." : manualSet ? "Keep your summary, sections and flashcards together; use Edit study guide to add or change them." : "Ask Gemini for a guide and flashcards from this file, then review and save the draft on this Mac."}</p> : null}
+      {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>{pdfSet ? "Review the guide and cards saved from your PDF text, and follow their page references back to the source." : importedSet ? "Review the guide and cards from your imported packet; you can edit them here." : manualSet ? "Keep your summary, sections and flashcards together; use Edit study guide to add or change them." : isPdf ? "Ask Gemini for a study guide from this file, then review and save the draft on this Mac." : "Ask Gemini for a guide and flashcards from this file, then review and save the draft on this Mac."}</p> : null}
       <CardBody>
         {generationNotice ? (
           <GenerationNoticeView
@@ -670,7 +701,7 @@ function MaterialDetailPage() {
           </div>
         ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
           <p className="small muted">
-            {isPdf ? "Gemini will read this PDF and build a guide and flashcards section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally." : <>Gemini will read only this file and create a source-based study guide.
+            {isPdf ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally." : <>Gemini will read only this file and create a source-based study guide.
             Choose a target of 20, 40 or 60 flashcards; a shorter source may yield fewer.
             The finished draft waits for you to save it locally.</>}
           </p>
@@ -846,39 +877,99 @@ function MaterialDetailPage() {
           {!manualSet ? materialStudyGuide : null}
 
           {material ? (
-            <div id="material-practice-test" tabIndex={-1}><Card>
+            <div id="material-flashcards-and-practice" tabIndex={-1}><div id="material-practice-test" tabIndex={-1}><Card>
               <CardHeader
-                title="Practice test"
+                title="Flashcards and practice test"
                 eyebrow={
                   importedTest
                     ? "Imported study packet"
-                    : practiceTest
+                    : practiceTest || (studySet && studySet.flashcards.length > 0)
                       ? "Saved on this computer"
                       : material.filePath
                         ? "Optional, from this document"
                         : "Optional"
                 }
                 action={
-                  canOfferGemini ? (
-                  <Button
-                    size="small"
-                    variant={practiceTest ? "secondary" : "primary"}
-                    disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
-                    onClick={() => {
-                      if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
-                    }}
-                  >
-                    {generatingPractice
-                      ? "Reading document…"
-                      : practiceTest
-                        ? "Regenerate"
-                        : "Create practice test"}
-                  </Button>
-                  ) : undefined
+                  <div className="row row--wrap">
+                    {canOfferGemini ? (
+                      <Button
+                        size="small"
+                        variant={studySet && studySet.flashcards.length > 0 ? "secondary" : "primary"}
+                        disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
+                        onClick={() => {
+                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
+                        }}
+                      >
+                        {generatingCards
+                          ? "Reading document…"
+                          : "Create flashcards"}
+                      </Button>
+                    ) : null}
+                    {canOfferGemini ? (
+                      <Button
+                        size="small"
+                        variant={practiceTest ? "secondary" : "primary"}
+                        disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
+                        onClick={() => {
+                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
+                        }}
+                      >
+                        {generatingPractice
+                          ? "Reading document…"
+                          : practiceTest
+                            ? "Regenerate"
+                            : "Create practice test"}
+                      </Button>
+                    ) : null}
+                  </div>
                 }
               />
               {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Try saved questions with explanations, or write your own; your completed attempts stay in practice history.</p> : null}
               <CardBody>
+                {generatingCards ? (
+                  cardJob ? (
+                    <GeminiProgressView
+                      job={cardJob}
+                      title="Gemini is creating flashcards"
+                      onCancel={() => void geminiJobs.cancel(cardJob.key)}
+                    />
+                  ) : null
+                ) : null}
+                {cardGenerationError ? (
+                  <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+                      {cardGenerationError}
+                    </p>
+                    {retryFlashcards ? (
+                      <div className="row row--wrap">
+                        <Button size="small" onClick={retryFlashcards}>
+                          Try again
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {cardJob ? (
+                  <GeminiJobNotice
+                    job={cardJob}
+                    jobs={geminiJobs}
+                    onRetry={retryFlashcards}
+                    onReview={(setHasHerItems || cardJob.needsReview) && cardJob.answer ? () => setReviewingCardRegeneration(true) : undefined}
+                  />
+                ) : null}
+                {reviewingCardRegeneration && cardJob?.answer &&
+                  (cardJob.phase === "recovered" || cardJob.phase === "save-failed" || cardJob.phase === "saving") ? (
+                  <RegenerationReviewDialog
+                    job={cardJob}
+                    materialId={material.id}
+                    onClose={() => setReviewingCardRegeneration(false)}
+                    onSave={async (reviewed) => {
+                      const saved = await geminiJobs.saveReviewed(cardJob.key, reviewed);
+                      if (saved && isMountedRef.current) setReviewingCardRegeneration(false);
+                      return saved;
+                    }}
+                  />
+                ) : null}
                 <StartManualPracticeTest material={material} />
                 <PracticeTestEditor material={material} activeAttempt={activePracticeAttempt} />
                 <PracticeTestHistory material={material} />
@@ -1003,7 +1094,7 @@ function MaterialDetailPage() {
                     }} />
                 ) : null}
               </CardBody>
-            </Card></div>
+            </Card></div></div>
           ) : null}
 
           {manualSet ? materialStudyGuide : null}
@@ -1312,6 +1403,28 @@ function MaterialDetailPage() {
       </ConfirmDialog>
 
       <ConfirmDialog
+        open={confirmingCards && !isGeneratingAny}
+        title="Send this file to Google?"
+        message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
+        confirmLabel="Send to Gemini"
+        destructive={false}
+        {...chooseChapterFirst(() => setConfirmingCards(false))}
+        onConfirm={() => {
+          setConfirmingCards(false);
+          if (isGeneratingAny || geminiJobs.locked()) return;
+          void createFlashcards();
+        }}
+        onCancel={() => setConfirmingCards(false)}
+      >
+        <label className="field">Target cards
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
+            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          </select>
+        </label>
+        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them.{isPdf ? " For PDFs it is one request per 10 cards." : " Try again resumes any kept draft with the same target."}</p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
         open={confirmingPracticeTest && !isGeneratingAny}
         title="Send this file to Google?"
         message={
@@ -1371,6 +1484,8 @@ export function geminiModelSentence(status: GeminiStatus | null): string {
 
 export const IMPORT_GUIDE_REGENERATE_WARNING =
   "This will replace your imported study guide and flashcards with AI-generated content.";
+export const IMPORT_CARDS_REGENERATE_WARNING =
+  "This will replace your imported flashcards with AI-generated cards.";
 export const IMPORT_TEST_REGENERATE_WARNING =
   "This will replace your imported practice test with AI-generated content.";
 

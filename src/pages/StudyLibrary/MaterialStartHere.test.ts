@@ -41,7 +41,8 @@ it("guides a large unsplit PDF toward parts using the real limits", async () => 
   expect(steps()[0]!.textContent).toContain("204.7 MB, 500 pages");
   expect(steps()[0]!.textContent).toContain("50 MB or 1,000 pages");
   expect(steps()[0]!.textContent).toContain("Choose a study-size PDF");
-  expect(steps()[1]!.textContent).toContain("Ask Gemini for a study guide and flashcards");
+  expect(steps()[1]!.textContent).toContain("Ask Gemini for a study guide");
+  expect(steps()[1]!.textContent).not.toContain("study guide and flashcards");
   expect(steps()[1]!.textContent).toContain("Her Flight Deck sends this file to Google after you confirm");
   expect(steps()[1]!.textContent).not.toContain("Gemini sends this file to Google");
   expect(steps()[1]!.textContent).toContain("section by section");

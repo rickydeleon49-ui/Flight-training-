@@ -66,7 +66,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
   const headings = within(column as HTMLElement).getAllByRole("heading", { level: 2 }).map(node => node.textContent);
-  expect(headings.slice(0, 9)).toEqual(["Start here", "Gemini study assistant", "Practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
+  expect(headings.slice(0, 9)).toEqual(["Start here", "Gemini study assistant", "Flashcards and practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
   const file = document.getElementById("material-file-actions")!;
   const geminiSection = document.getElementById("material-study-guide")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
@@ -82,7 +82,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   expect(within(backup).getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
 });
 
-const sectionTitles = ["Gemini study assistant", "Practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
+const sectionTitles = ["Gemini study assistant", "Flashcards and practice test", "Study guide and flashcards", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
 it("shows a short muted tip under every section header and Hide tips hides them across visits", async () => {
   let view = await openPage();
   const tips = sectionTitles.map(title => {

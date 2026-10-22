@@ -248,7 +248,7 @@ export const CANCELLED_BEFORE_SENDING = "Cancelled before anything was sent to G
 /** Whether a progress event is about this job: by id once known, otherwise by its material and output. */
 function belongsTo(job: GeminiJob, event: GeminiProgressEvent): boolean {
   if (job.jobId && event.jobId) return job.jobId === event.jobId;
-  return job.materialId === event.materialId && job.kind === event.kind;
+  return job.materialId === event.materialId && (job.kind === event.kind || (job.kind === "flashcards" && event.kind === "study-aid"));
 }
 
 /** While a job found running after a reload is followed, check this often. */
@@ -287,13 +287,20 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
       canonical([a.title, a.summary, sections(a.sections), cards(a.flashcards), a.sourceNotes, a.model])
     );
   }
+  if (kind === "flashcards") {
+    const s = saved as AiStudySet;
+    const a = answer as GeneratedStudyAid;
+    const cards = (list: AiStudySet["flashcards"]) =>
+      list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
+    return canonical(cards(s.flashcards)) === canonical(cards(a.flashcards));
+  }
   const s = saved as PracticeTest;
   const a = answer as GeneratedPracticeTest;
   return canonical([s.title, s.questions, s.model]) === canonical([a.title, a.questions, a.model]);
 }
 
 async function savedContent(repos: Repositories, kind: GeminiJobKind, materialId: string) {
-  return kind === "study-aid"
+  return kind === "study-aid" || kind === "flashcards"
     ? (await repos.documents.listAiStudySets()).find((set) => set.sourceMaterialId === materialId)
     : (await repos.documents.listPracticeTests()).find((test) => test.sourceMaterialId === materialId);
 }
@@ -456,7 +463,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                 return "superseded" as const;
               }
             }
-            if (reviewed?.kind === "study-set" && job.kind === "study-aid") {
+            if (reviewed?.kind === "study-set" && (job.kind === "study-aid" || job.kind === "flashcards")) {
               // The set she reviewed is named column for column, so a change made
               // since refuses as stale; the same id makes a retry safe.
               await repos.documents.saveStudySet({
@@ -482,7 +489,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           if ((saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
           // Her own items, corrections and deletions are never replaced
           // without her review (OFFLINE-03a).
-          if (job.kind === "study-aid" && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
+          if ((job.kind === "study-aid" || job.kind === "flashcards") && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
           if (job.kind === "practice-test" && needsPracticeRegenerationReview(await repos.documents.readPracticeSnapshot(job.materialId))) return "review" as const;
           if (job.kind === "study-aid") {
             const aid = answer as GeneratedStudyAid;
@@ -495,6 +502,18 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               sourceNotes: aid.sourceNotes,
               model: aid.model,
             }, job.sectionGuide ? job.jobId ?? undefined : undefined);
+          } else if (job.kind === "flashcards") {
+            const aid = answer as GeneratedStudyAid;
+            const currentSet = saved as AiStudySet | undefined;
+            await repos.documents.saveAiStudySet({
+              sourceMaterialId: job.materialId,
+              title: currentSet?.title || aid.title,
+              summary: currentSet ? currentSet.summary : "",
+              sections: currentSet ? currentSet.sections : [],
+              flashcards: aid.flashcards,
+              sourceNotes: currentSet ? currentSet.sourceNotes : aid.sourceNotes,
+              model: currentSet?.model || aid.model,
+            });
           } else {
             const test = answer as GeneratedPracticeTest;
             await repos.documents.savePracticeTest({
@@ -624,7 +643,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       }
       // What she is asking to replace, so nothing newer is ever overwritten.
       const saved =
-        kind === "study-aid"
+        kind === "study-aid" || kind === "flashcards"
           ? dataRef.current.aiStudySets.find((set) => set.sourceMaterialId === target.materialId)
           : dataRef.current.practiceTests.find((test) => test.sourceMaterialId === target.materialId);
       const baseRevision = saved?.updatedAt ?? null;
@@ -680,7 +699,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         } catch {
           // Progress is a courtesy; generation goes ahead without it.
         }
-        const generate = kind === "study-aid" ? generateStudyAid : generatePracticeTest;
+        const generate = (kind === "study-aid" || kind === "flashcards") ? generateStudyAid : generatePracticeTest;
         // Cancelled before anything was sent: nothing is sent. Checked here,
         // with no await before the request, so a cancel during any earlier step
         // (the checks, setting up progress) is never missed.
@@ -701,13 +720,25 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               return;
             }
             answer = await resumeStudyGuide(request);
-          } else answer = kind === "study-aid"
+          } else answer = (kind === "study-aid" || kind === "flashcards")
             ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40)
             : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.
           const safe = useSections ? sectionGuideError(error) : null;
-          const message = safe?.message ?? geminiErrorMessage(error);
+          let message = safe?.message ?? geminiErrorMessage(error);
+          if (
+            kind === "flashcards" &&
+            (message.includes("Resume or explicitly discard") ||
+              message.includes("earlier versioned draft") ||
+              message.includes("Resume the earlier guide") ||
+              message.includes("guide job for the same material is in progress") ||
+              (message.toLowerCase().includes("guide") && message.toLowerCase().includes("progress")) ||
+              ((message.includes("already working on another study aid") || message.includes("waiting to be saved or discarded")) &&
+                jobsRef.current.some((j) => j.materialId === target.materialId && (j.sectionGuide || j.kind === "study-aid"))))
+          ) {
+            message = "Finish or stop the study guide first, then make flashcards.";
+          }
           const cancelled = safe?.code === "CANCELLED" || message === GEMINI_CANCELLED_MESSAGE;
           update(key, {
             phase: cancelled ? "cancelled" : "failed",
@@ -721,7 +752,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             for (const record of await listGeminiJobs()) {
               if (
                 record.materialId === target.materialId &&
-                record.kind === kind &&
+                (record.kind === kind || (kind === "flashcards" && record.kind === "study-aid")) &&
                 (record.stage === "failed" || record.stage === "cancelled")
               ) {
                 if (record.draft) {
@@ -740,6 +771,18 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           return;
         }
         const { jobId = null, contentSha256 = null, checkpointed = false, ...rest } = answer;
+        const currentSet = kind === "flashcards" ? (saved as AiStudySet | undefined) : undefined;
+        const jobAnswer: Answer =
+          kind === "flashcards"
+            ? {
+                ...(rest as GeneratedStudyAid),
+                title: currentSet?.title || (rest as GeneratedStudyAid).title,
+                summary: currentSet ? currentSet.summary : "",
+                sections: currentSet ? currentSet.sections : [],
+                sourceNotes: currentSet ? currentSet.sourceNotes : (rest as GeneratedStudyAid).sourceNotes,
+                flashcards: (rest as GeneratedStudyAid).flashcards,
+              }
+            : (rest as Answer);
         // Study aids always wait for acceptance. An answer that beat a cancel
         // also waits, including practice tests.
         if (kind === "study-aid" || current()?.cancelAttempted) {
@@ -747,7 +790,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             jobId,
             contentSha256,
             checkpointed: Boolean(checkpointed && jobId),
-            answer: rest as Answer,
+            answer: jobAnswer,
             progress: null,
             stage: null,
             phase: "recovered",
@@ -759,7 +802,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           jobId,
           contentSha256,
           checkpointed: Boolean(checkpointed && jobId),
-          answer: rest as Answer,
+          answer: jobAnswer,
           progress: null,
           stage: null,
         });
@@ -839,7 +882,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const saveReviewed = useCallback(
     async (key: string, reviewed: ReviewedRegeneration) => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
-      if (!job || !job.answer || ((job.kind === "study-aid") !== (reviewed.kind === "study-set")) || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
+      if (!job || !job.answer || (((job.kind === "study-aid" || job.kind === "flashcards") !== (reviewed.kind === "study-set"))) || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
       if (activeRef.current !== null) return false;
       activeRef.current = key;
       try {
@@ -952,7 +995,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           }
           // A job this window started is already shown, under its local key.
           const local = next.find(
-            (job) => job.jobId === null && job.materialId === record.materialId && job.kind === record.kind,
+            (job) => job.jobId === null && job.materialId === record.materialId && (job.kind === record.kind || (job.kind === "flashcards" && record.kind === "study-aid")),
           );
           if (local) continue;
           const isWaiting =
