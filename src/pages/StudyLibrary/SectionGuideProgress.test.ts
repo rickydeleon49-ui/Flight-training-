@@ -209,9 +209,9 @@ describe("section guide progress and deliberate recovery", () => {
     const repos = createRepositories(db); await repos.documents.saveAiStudySet({ sourceMaterialId: "m", ...AID });
     await db.execute("UPDATE ai_study_sets SET summary_origin = 'user' WHERE source_material_id = 'm'");
     await open(); await act(async () => { await jobs.start("study-aid", { materialId: "m", filePath: "documents/m.pdf" }); });
-    expect(screen.queryByRole("button", { name: "Save the new study guide and cards" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save the new study guide" })).toBeNull();
     expect((await repos.documents.listAiStudySets())[0]?.summaryOrigin).toBe("user");
-    fireEvent.click(screen.getByRole("button", { name: "Review the new study guide and cards" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review the new study guide" }));
     expect(screen.getByRole("dialog", { name: /Review/ })).toBeTruthy(); expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled();
   });
   it("a draft whose document was removed still requires confirmation before discard", async () => {
@@ -225,7 +225,7 @@ describe("section guide progress and deliberate recovery", () => {
   it("checks the section job again at save time and surfaces changed-source consent without saving", async () => {
     const save = vi.spyOn(db, "saveStudySetAtomically").mockRejectedValue(new gemini.SectionGuideError("SOURCE_CHANGED"));
     await open(); await act(async () => { await jobs.start("study-aid", { materialId: "m", filePath: "documents/m.pdf" }); });
-    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide" }));
     await screen.findByRole("button", { name: "Keep my earlier work" });
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ materialId: "m" }), "section-job");
     expect(await createRepositories(db).documents.listAiStudySets()).toHaveLength(0);

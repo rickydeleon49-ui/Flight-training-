@@ -149,7 +149,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     expect(resumeStudyGuide).toHaveBeenCalledWith({ relativePath: "documents/ch3.pdf", materialId: "ch3", baseRevision: null, requestId: expect.stringMatching(/^req-/), chosenPages: Array.from({ length: 20 }, (_, i) => i + 1) });
     const repos = createRepositories(db);
     expect(await repos.documents.listAiStudySets()).toHaveLength(0);
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     await waitFor(async () => expect(await repos.documents.listAiStudySets()).toHaveLength(1));
     const [saved] = await repos.documents.listAiStudySets();
     expect(saved?.sourceMaterialId).toBe("ch3");

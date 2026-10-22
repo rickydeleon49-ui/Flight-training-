@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useSearchParams } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import type { AppData } from "@/state/AppDataContext";
@@ -19,6 +19,8 @@ beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
   localStorage.clear();
+  // The search box is remembered for the session; a test must not inherit it.
+  sessionStorage.clear();
   mutateMock.mockReset().mockResolvedValue(null);
   const materials = Array.from({ length: 150 }, (_, index) =>
     makeMaterial({ id: `material-${index}`, title: `Material ${index}` }),
@@ -77,4 +79,25 @@ it("opens add material dialog and closes it when creation succeeds", async () =>
   fireEvent.click(within(dialog).getByRole("button", { name: "Add material" }));
 
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+});
+
+/** The library's own address, so a test can see what a hand-off left behind. */
+function LibraryAddress() {
+  const [params] = useSearchParams();
+  return h("output", { "aria-label": "Address" }, params.toString());
+}
+
+it("takes the words Quick Find hands over (?q=) into the search box and off the address", () => {
+  render(h(MemoryRouter, { initialEntries: ["/study?q=crankshaft"] }, h(LibraryAddress), h(StudyLibrary)));
+
+  const box = screen.getByRole("textbox", { name: "Search your library" }) as HTMLInputElement;
+  expect(box.value).toBe("crankshaft");
+  // The hand-off really filters, which is also what searches the PDF pages.
+  expect(screen.queryByText("Material 0")).toBeNull();
+  expect(screen.getByText("Nothing matches those filters.")).toBeTruthy();
+  expect(screen.getByLabelText("Address").textContent).toBe("");
+
+  // Typing from here still works: the address no longer overrides the box.
+  fireEvent.change(box, { target: { value: "Material 149" } });
+  expect(screen.getByText("Showing 1 of 1 materials")).toBeTruthy();
 });

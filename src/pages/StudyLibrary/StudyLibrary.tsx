@@ -95,6 +95,17 @@ export function StudyLibrary() {
     "library.type", "", isOneOf(["", ...MATERIAL_TYPE_OPTIONS.map((option) => option.value)]),
   );
   const [search, setSearch] = useRememberedState<string>("library.search", "", isText);
+  // Quick Find (⌘K) hands her words over as `/study?q=…`: they go in the search
+  // box, which is what searching inside the PDFs reads, then the address is
+  // left alone so typing from here changes what she sees.
+  const handedOver = params.get("q");
+  useEffect(() => {
+    if (handedOver === null) return;
+    setSearch(handedOver);
+    const next = new URLSearchParams(params);
+    next.delete("q");
+    setParams(next, { replace: true });
+  }, [handedOver, params, setParams, setSearch]);
   const [sort, setSort] = useRememberedState<MaterialSort>(
     "library.sort", "recent", isOneOf(SORT_VALUES),
   );

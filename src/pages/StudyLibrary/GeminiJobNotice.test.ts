@@ -8,6 +8,8 @@ import {
   sectionGuideError,
   SectionGuideError,
   SECTION_GUIDE_MESSAGES,
+  type GeneratedPracticeTest,
+  type GeneratedStudyAid,
   type SectionGuideRequest,
 } from "@/services/gemini";
 
@@ -259,6 +261,125 @@ describe("GeminiJobNotice frontend tests", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Try again" }));
       expect(jobs.continueGuide).toHaveBeenCalledWith("job-timeout", false);
+    });
+  });
+
+  describe("4. An answer waiting to be saved says what is ready", () => {
+    const provenance =
+      `Source SHA-256: ${"b".repeat(64)} sections: [{"id":"section-01","heading":"Airspace classes","pageStart":12,"pageEnd":18},` +
+      `{"id":"section-02","heading":"Clouds and visibility","pageStart":19,"pageEnd":24}]`;
+
+    const guideAnswer: GeneratedStudyAid = {
+      title: "Airspace and weather",
+      summary: "Synthetic summary.",
+      sections: [
+        { heading: "Airspace classes", body: "Synthetic body." },
+        { heading: "Clouds", body: "Synthetic body." },
+        { heading: "Wind", body: "Synthetic body." },
+      ],
+      flashcards: [
+        { front: "Class B?", back: "Synthetic.", sourcePage: 3 },
+        { front: "Cumulus?", back: "Synthetic.", sourcePage: null },
+      ],
+      sourceNotes: provenance,
+      model: "gemini-3.5-flash",
+    };
+
+    /** A finished answer she has not saved yet — the "ready to save" notice. */
+    function ready(overrides: Partial<GeminiJob> = {}): GeminiJob {
+      return baseJob({
+        phase: "recovered",
+        local: true,
+        sectionError: undefined,
+        answer: guideAnswer,
+        ...overrides,
+      });
+    }
+
+    it("a section guide says how many sections are ready, names no hashes or JSON, and keeps Save under it", () => {
+      const job = ready({ key: "job-ready-guide", sections: draft(3, 3) });
+      const jobs = createMockJobs([job]);
+      render(h(GeminiJobNotice, { job, jobs }));
+
+      const summary = screen.getByText("3 sections, ready to review and save.");
+      expect(summary).toBeTruthy();
+      expect(screen.getByText(/Your new study guide is ready\./)).toBeTruthy();
+      expect(screen.getByText(/It has not been saved yet\./)).toBeTruthy();
+      expect(document.body.textContent).not.toContain("SHA-256");
+      expect(document.body.textContent).not.toContain("section-01");
+      expect(document.body.textContent).not.toContain(provenance);
+
+      const save = screen.getByRole("button", { name: "Save the new study guide" });
+      expect(save.closest(".stack")?.textContent).toContain("3 sections, ready to review and save.");
+      expect(summary.nextElementSibling?.querySelector("button")).toBe(save);
+      fireEvent.click(save);
+      expect(jobs.saveAgain).toHaveBeenCalledWith("job-ready-guide");
+    });
+
+    it("a finished flashcard set counts the cards and says flashcards", () => {
+      const answer: GeneratedStudyAid = {
+        ...guideAnswer,
+        flashcards: Array.from({ length: 12 }, (_, index) => ({
+          front: `Front ${index}`,
+          back: "Synthetic.",
+          sourcePage: null,
+        })),
+      };
+      const job = ready({
+        key: "job-ready-cards",
+        kind: "flashcards",
+        sectionGuide: false,
+        sections: undefined,
+        answer,
+      });
+      const jobs = createMockJobs([job]);
+      render(h(GeminiJobNotice, { job, jobs }));
+
+      expect(screen.getByText("12 flashcards ready.")).toBeTruthy();
+      expect(screen.getByText(/Your new flashcards are ready\./)).toBeTruthy();
+      expect(document.body.textContent).not.toContain("SHA-256");
+      const save = screen.getByRole("button", { name: "Save the new flashcards" });
+      expect(save.closest(".stack")?.textContent).toContain("12 flashcards ready.");
+      fireEvent.click(save);
+      expect(jobs.saveAgain).toHaveBeenCalledWith("job-ready-cards");
+    });
+
+    it("a finished practice test counts the questions and says practice test", () => {
+      const answer: GeneratedPracticeTest = {
+        title: "Airspace practice test",
+        questions: Array.from({ length: 8 }, (_, index) => ({
+          question: `Question ${index}?`,
+          options: ["Synthetic", "Also synthetic"],
+          correctIndex: 0,
+          explanation: "Synthetic.",
+          sourcePage: null,
+        })),
+        model: "gemini-3.5-flash",
+      };
+      const job = ready({
+        key: "job-ready-test",
+        kind: "practice-test",
+        sectionGuide: false,
+        sections: undefined,
+        answer,
+      });
+      const jobs = createMockJobs([job]);
+      render(h(GeminiJobNotice, { job, jobs }));
+
+      expect(screen.getByText("8 questions ready.")).toBeTruthy();
+      expect(screen.getByText(/Your new practice test is ready\./)).toBeTruthy();
+      expect(screen.getByText(/completed practice history is kept\./)).toBeTruthy();
+      const save = screen.getByRole("button", { name: "Save the new practice test" });
+      expect(save.closest(".stack")?.textContent).toContain("8 questions ready.");
+      fireEvent.click(save);
+      expect(jobs.saveAgain).toHaveBeenCalledWith("job-ready-test");
+    });
+
+    it("one finished section reads in the singular", () => {
+      const answer: GeneratedStudyAid = { ...guideAnswer, sections: guideAnswer.sections.slice(0, 1) };
+      const job = ready({ key: "job-ready-one", sections: draft(1, 1), answer });
+      render(h(GeminiJobNotice, { job, jobs: createMockJobs([job]) }));
+      expect(screen.getByText("1 section, ready to review and save.")).toBeTruthy();
     });
   });
 });
