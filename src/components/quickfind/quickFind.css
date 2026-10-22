@@ -106,3 +106,10 @@
   padding: var(--space-5);
   margin: 0;
 }
+
+/* The row that hands her words to the Study Library's document search: a way
+   to search, not another match, so it sits apart at the bottom. */
+.quick-find__result--pdf {
+  margin-top: var(--space-1);
+  border-top: 1px solid var(--border-subtle);
+}

@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
+import { StudyLibrary } from "@/pages/StudyLibrary/StudyLibrary";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { removeCapabilities } from "@/testing/capabilities";
 
@@ -45,6 +46,28 @@ async function mount() {
   await waitFor(() => expect(context?.status).toBe("ready"));
 }
 
+/** The same harness with the real Study Library mounted at /study. */
+async function mountLibrary() {
+  db = await createNodeSqliteDatabase();
+  const repos = createRepositories(db);
+  await repos.app.set("airline_starter_pack", "skipped-for-test");
+  await repos.documents.create({
+    id: "m-engine",
+    title: "Engine handbook",
+    filePath: "documents/engine.pdf",
+    originalFileName: "engine-handbook.pdf",
+  });
+  render(h(AppDataProvider, null,
+    h(MemoryRouter, { initialEntries: ["/"] },
+      h("main", null, h("button", { type: "button" }, "Sidebar search")),
+      h(Probe),
+      h(QuickFind),
+      h(Routes, null,
+        h(Route, { path: "/study", element: h(StudyLibrary) }),
+        h(Route, { path: "*", element: null })))));
+  await waitFor(() => expect(context?.status).toBe("ready"));
+}
+
 afterEach(() => {
   cleanup();
   restore?.();
@@ -57,6 +80,8 @@ afterEach(() => {
 
 const input = () => screen.getByRole("textbox", { name: "Search everything" }) as HTMLInputElement;
 const location = () => screen.getByLabelText("Location", { selector: "output" }).textContent;
+const resultRows = () =>
+  screen.getAllByRole("button").filter((button) => button.classList.contains("quick-find__result"));
 
 function openWithShortcut() {
   const opener = screen.getByRole("button", { name: "Sidebar search" });
@@ -183,5 +208,48 @@ describe("Quick Find with native modal support", () => {
     // Native Escape closes the dialog itself and fires "close".
     act(() => close.call(dialog));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Quick find" })).toBeNull());
+  });
+});
+
+describe("Quick Find hands the words inside a PDF to the Study Library", () => {
+  it("opens the Study Library searching for what only a PDF's pages hold", async () => {
+    restore = removeCapabilities([[HTMLDialogElement.prototype, "showModal"], [HTMLDialogElement.prototype, "close"]]);
+    await mountLibrary();
+    openWithShortcut();
+
+    // One letter is not worth reading every prepared PDF for.
+    fireEvent.change(input(), { target: { value: "c" } });
+    expect(screen.queryByRole("button", { name: /Search inside your PDFs/ })).toBeNull();
+
+    // "crankshaft" matches no title: the row is the way to the page text.
+    fireEvent.change(input(), { target: { value: "crankshaft" } });
+    const row = screen.getByRole("button", { name: /Search inside your PDFs for “crankshaft”/ });
+    expect(resultRows().at(-1)).toBe(row);
+
+    fireEvent.click(row);
+    expect(location()).toBe("/study");
+    const box = (await screen.findByRole("textbox", { name: "Search your library" })) as HTMLInputElement;
+    expect(box.value).toBe("crankshaft");
+    expect(screen.getByText("Nothing matches those filters.")).toBeTruthy();
+  });
+
+  it("sits last beside title matches, and ArrowDown and Enter reach it", async () => {
+    restore = removeCapabilities([[HTMLDialogElement.prototype, "showModal"], [HTMLDialogElement.prototype, "close"]]);
+    await mountLibrary();
+    openWithShortcut();
+
+    fireEvent.change(input(), { target: { value: "engine" } });
+    const rows = resultRows();
+    expect(rows.some((candidate) => candidate.textContent?.includes("Engine handbook"))).toBe(true);
+    const last = rows.at(-1)!;
+    expect(last.classList.contains("quick-find__result--pdf")).toBe(true);
+    expect(last.textContent).toContain("Search inside your PDFs for “engine”");
+
+    fireEvent.keyDown(input(), { key: "ArrowDown" });
+    expect(document.querySelector(".quick-find__result.is-highlighted")).toBe(last);
+    fireEvent.keyDown(input(), { key: "Enter" });
+    expect(location()).toBe("/study");
+    const box = (await screen.findByRole("textbox", { name: "Search your library" })) as HTMLInputElement;
+    expect(box.value).toBe("engine");
   });
 });
