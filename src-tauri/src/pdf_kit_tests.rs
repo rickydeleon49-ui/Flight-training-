@@ -140,8 +140,8 @@ fn old_algorithm_kit_is_stale_at_get_and_save_then_rebuildable() {
     let r = Rig::new(true);
     let id = r.ready();
     let mut d = read(&r.0, &id).unwrap().1;
-    assert_eq!(d["identity"]["algorithmVersion"], 3);
-    assert_eq!(d["candidates"]["algorithmVersion"], 3);
+    assert_eq!(d["identity"]["algorithmVersion"], 4);
+    assert_eq!(d["candidates"]["algorithmVersion"], 4);
     d["identity"]["algorithmVersion"] = json!(1);
     d["candidates"]["algorithmVersion"] = json!(1);
     d["identityDigest"] = json!(crate::practice_sessions::compute_canonical_hash(
@@ -154,11 +154,11 @@ fn old_algorithm_kit_is_stale_at_get_and_save_then_rebuildable() {
         validate_save_at(&r.0, &old_sources).unwrap_err().code,
         "SOURCE_CHANGED"
     );
-    // The existing explicit discard/rebuild flow produces a separate v3 run.
+    // The existing explicit discard/rebuild flow produces a separate v4 run.
     assert!(crate::gemini_jobs::with(&r.0, |j| j.acknowledge(&id)).unwrap());
     let rebuilt = get_at(&r.0, &r.ready()).unwrap();
-    assert_eq!(rebuilt["identity"]["algorithmVersion"], 3);
-    assert_eq!(rebuilt["candidates"]["algorithmVersion"], 3);
+    assert_eq!(rebuilt["identity"]["algorithmVersion"], 4);
+    assert_eq!(rebuilt["candidates"]["algorithmVersion"], 4);
     assert_ne!(rebuilt["runId"], old_sources.run_id);
     validate_save_at(&r.0, &source_payload(&rebuilt)).unwrap();
     assert_eq!(
@@ -172,7 +172,7 @@ fn current_algorithm_kit_rejects_old_candidates_and_save_provenance() {
     let r = Rig::new(true);
     let id = r.ready();
     let mut d = read(&r.0, &id).unwrap().1;
-    assert_eq!(d["identity"]["algorithmVersion"], 3);
+    assert_eq!(d["identity"]["algorithmVersion"], 4);
     let mut old_sources = source_payload(&d);
     old_sources.run.algorithm_version = 1;
     assert_eq!(
