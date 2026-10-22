@@ -152,6 +152,19 @@ describe("section guide progress and deliberate recovery", () => {
     await waitFor(() => expect(gemini.restartStudyGuide).toHaveBeenCalledWith("section-job", true, expect.any(Object))); noProviderText();
   });
   it("too many sections asks for fewer pages", async () => { await fail("TOO_MANY_SECTIONS"); expect(screen.getByText("Choose fewer pages so your guide has at most 40 sections.")).toBeTruthy(); noProviderText(); });
+  it("a plan refused before any section shows only the reason and counts nothing", async () => {
+    await fail("TOO_MANY_SECTIONS", record("failed", 0));
+    expect(screen.getByText("Choose fewer pages so your guide has at most 40 sections.")).toBeTruthy();
+    expect(screen.queryByText(/finished sections are saved/)).toBeNull();
+    noProviderText();
+  });
+  it("a pause before the first section counts nothing either", async () => {
+    await fail(undefined, record("failed", 0));
+    expect(screen.getByText("Your guide could not be finished. Your saved sections are kept. Try again when you're ready.")).toBeTruthy();
+    expect(screen.queryByText(/finished sections are saved/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    noProviderText();
+  });
   it.each(["REFERENCE_AUTH_FAILED", "REFERENCE_LOOKUP_FAILED", "DESCRIPTOR_INVALID"] as const)("%s keeps sections and says nothing was uploaded", async code => {
     await fail(code); expect(screen.getByText(/Your sections are kept; nothing was uploaded/)).toBeTruthy(); noProviderText();
   });

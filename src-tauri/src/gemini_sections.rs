@@ -6,6 +6,8 @@ const KIND: &str = "guide-sections-v1";
 const PLANNER: &str = "pdf-outline-5-10-v1";
 const PROMPT: &str = "guide-section-prompt-v1";
 const SCHEMA_VERSION: &str = "guide-section-answer-v1";
+/// The most sections one guide may hold, so one activation stays finishable.
+const MAX_SECTIONS: usize = 40;
 type Hints = Vec<(u32, u32, String)>;
 type Hook<'a> = &'a (dyn Fn(&str) + Sync);
 
@@ -203,7 +205,7 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
             "Choose PDF pages in source order.",
         ));
     }
-    let mut output = Vec::new();
+    let mut output: Vec<(Section, bool)> = Vec::new();
     let mut at = 0;
     while at < pages.len() {
         let first = pages[at];
@@ -224,24 +226,106 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
         {
             end += 1;
         }
-        output.push(Section {
-            id: format!("section-{:02}", output.len() + 1),
-            heading: hint.map_or_else(
-                || format!("Pages {first}–{}", pages[end]),
-                |(_, _, h)| h.chars().take(200).collect(),
-            ),
-            page_start: first,
-            page_end: pages[end],
-        });
-        if output.len() > 40 {
-            return Err(SectionError::new(
-                "TOO_MANY_SECTIONS",
-                "Choose fewer pages; this guide needs more than 40 sections.",
-            ));
-        }
+        output.push((
+            Section {
+                id: String::new(),
+                heading: hint.map_or_else(
+                    || format!("Pages {first}–{}", pages[end]),
+                    |(_, _, h)| h.chars().take(200).collect(),
+                ),
+                page_start: first,
+                page_end: pages[end],
+            },
+            hint.is_some(),
+        ));
         at = end + 1;
     }
-    Ok(output)
+    // Many headings are worth keeping, so a long outline never refuses on its
+    // own: neighbours merge until the guide fits the limit.
+    let manifest = condense(output, MAX_SECTIONS).ok_or_else(|| {
+        SectionError::new(
+            "TOO_MANY_SECTIONS",
+            "Choose fewer pages; this guide needs more than 40 sections.",
+        )
+    })?;
+    Ok(manifest)
+}
+
+/// Merge neighbouring sections until at most `limit` remain, keeping the first
+/// heading of every group. Order, contiguity and the chosen runs all survive:
+/// two sections from different runs are never merged, so a selection of more
+/// than `limit` separate runs is the one case with no legal plan.
+fn condense(sections: Vec<(Section, bool)>, limit: usize) -> Option<Vec<Section>> {
+    let mut runs: Vec<Vec<(Section, bool)>> = Vec::new();
+    for planned in sections {
+        match runs.last_mut() {
+            Some(run)
+                if run
+                    .last()
+                    .is_some_and(|(last, _)| last.page_end + 1 == planned.0.page_start) =>
+            {
+                run.push(planned)
+            }
+            _ => runs.push(vec![planned]),
+        }
+    }
+    if runs.len() > limit {
+        return None;
+    }
+    // Every run keeps at least one section. Spare sections go to the run whose
+    // groups would otherwise be the largest, so no section swallows a chapter.
+    let mut groups = vec![1usize; runs.len()];
+    let mut spare = limit - runs.len();
+    while spare > 0 {
+        let Some(widest) = widest_group(&runs, &groups) else {
+            break;
+        };
+        groups[widest] += 1;
+        spare -= 1;
+    }
+    let mut manifest = Vec::with_capacity(limit);
+    for (run, &parts) in runs.iter().zip(&groups) {
+        let mut at = 0;
+        for group in 0..parts {
+            let size = run.len() / parts + usize::from(group < run.len() % parts);
+            manifest.push(merged(&run[at..at + size]));
+            at += size;
+        }
+    }
+    for (index, section) in manifest.iter_mut().enumerate() {
+        section.id = format!("section-{:02}", index + 1);
+    }
+    Some(manifest)
+}
+
+/// The run that still has sections left to split and forms the largest groups.
+fn widest_group(runs: &[Vec<(Section, bool)>], groups: &[usize]) -> Option<usize> {
+    let mut widest = None;
+    for (index, run) in runs.iter().enumerate() {
+        if groups[index] >= run.len() {
+            continue;
+        }
+        let size = run.len().div_ceil(groups[index]);
+        if widest.map_or(true, |(largest, _)| size > largest) {
+            widest = Some((size, index));
+        }
+    }
+    widest.map(|(_, index)| index)
+}
+
+/// A merged group keeps the first heading; a group with no bookmark heading
+/// restates the pages it now covers.
+fn merged(group: &[(Section, bool)]) -> Section {
+    let mut section = group[0].0.clone();
+    if let Some((last, _)) = group.last() {
+        section.page_end = last.page_end;
+    }
+    section.heading = match (group[0].1, group.len()) {
+        (false, _) => format!("Pages {}–{}", section.page_start, section.page_end),
+        (true, 1) => section.heading,
+        (true, count) => format!("{} (and {} more)", section.heading, count - 1),
+    };
+    section
 }
 
 fn source(
@@ -272,15 +356,49 @@ fn source(
     if total == 0 || total > crate::pdf::MAX_PAGES {
         return Err("Choose a smaller PDF.".into());
     }
-    // lopdf's existing bookmark helper provides page starts. Prefer the outer
-    // heading at duplicate starts and derive nonoverlapping ranges once.
-    let mut starts: BTreeMap<u32, String> = BTreeMap::new();
+    // lopdf's existing bookmark helper provides page starts with their outline
+    // level. A handbook bookmarks almost every page, so only the outer levels
+    // become boundaries: the next level joins only while the outline still
+    // leaves the guide within the section limit for these pages. Prefer the
+    // outer heading at duplicate starts and derive nonoverlapping ranges once.
+    let mut levels: BTreeMap<usize, Vec<(u32, String)>> = BTreeMap::new();
     if let Ok(toc) = document.get_toc() {
         for entry in toc.toc {
             if let Ok(page) = u32::try_from(entry.page) {
                 if page > 0 && page <= total && !entry.title.trim().is_empty() {
-                    starts.entry(page).or_insert(entry.title);
+                    levels
+                        .entry(entry.level)
+                        .or_default()
+                        .push((page, entry.title));
                 }
+            }
+        }
+    }
+    let chosen = (
+        request.chosen_pages.first().copied().unwrap_or(1),
+        request.chosen_pages.last().copied().unwrap_or(total),
+    );
+    let headings_at = |level: usize| {
+        levels.get(&level).map_or(0, |entries| {
+            entries
+                .iter()
+                .filter(|(page, _)| *page >= chosen.0 && *page <= chosen.1)
+                .count()
+        })
+    };
+    let mut starts: BTreeMap<u32, String> = BTreeMap::new();
+    if let Some(outer) = levels.keys().next().copied() {
+        let inner = if headings_at(outer) + headings_at(outer + 1) <= MAX_SECTIONS {
+            outer + 1
+        } else {
+            outer
+        };
+        for level in outer..=inner {
+            let Some(entries) = levels.get(&level) else {
+                continue;
+            };
+            for (page, title) in entries {
+                starts.entry(*page).or_insert(title.clone());
             }
         }
     }
@@ -389,7 +507,7 @@ fn read_draft(root: &Path, id: &str) -> Result<Draft, SectionError> {
     if d.kind != KIND
         || d.version != 1
         || d.identity.manifest.is_empty()
-        || d.identity.manifest.len() > 40
+        || d.identity.manifest.len() > MAX_SECTIONS
         || d.results.len() != d.identity.manifest.len()
     {
         return Err("Invalid section draft; it is kept for recovery.".into());

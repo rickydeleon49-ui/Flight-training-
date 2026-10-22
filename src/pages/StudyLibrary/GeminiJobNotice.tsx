@@ -259,17 +259,21 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
     void jobs.continueGuide(job.key, restart).finally(() => { intent.current = false; setPending(false); });
   };
   const saved = job.sections?.ready ?? 0;
+  // A plan refused before its first section saved nothing to count, so the
+  // counting sentence would be false: the plain reason below is the message.
   const message =
     job.phase === "cancelled" || job.queueState === "cancelled"
       ? SECTION_GUIDE_MESSAGES.CANCELLED
       : keeping || !job.local
         ? "Your finished sections are here. Continue when you're ready."
-        : saved === 1
-          ? "Your 1 finished section is saved. Try again to continue with section 2."
-          : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
+        : saved === 0
+          ? null
+          : saved === 1
+            ? "Your 1 finished section is saved. Try again to continue with section 2."
+            : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
   return (
     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-      <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div>
+      {message ? <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div> : null}
       {code && code !== "CANCELLED" && !keeping ? <p className="tiny" role="alert">{SECTION_GUIDE_MESSAGES[code]}</p> : null}
       <div className="row row--wrap">
         {sourceChanged && !keeping ? <>
