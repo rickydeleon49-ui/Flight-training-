@@ -136,7 +136,7 @@ fn planner_bounds() {
         p.iter()
             .map(|s| (s.page_start, s.page_end))
             .collect::<Vec<_>>(),
-        [(1, 5), (6, 10), (11, 15), (16, 16)]
+        [(1, 5), (6, 10), (11, 16)]
     );
     let hints = vec![(1, 24, "Chapter".to_string())];
     assert_eq!(
@@ -151,7 +151,7 @@ fn planner_bounds() {
     // merges to the limit instead.
     let merged = plan(&(1..=201).collect::<Vec<_>>(), &[]).unwrap();
     assert_eq!(merged.len(), MAX_SECTIONS);
-    assert_eq!(merged[0].heading, "Pages 1–10");
+    assert_eq!(merged[0].heading, "Pages 1–5");
     assert_eq!(
         merged
             .iter()
@@ -159,6 +159,9 @@ fn planner_bounds() {
             .count(),
         201
     );
+    let over = plan(&(1..=205).collect::<Vec<_>>(), &[]).unwrap();
+    assert_eq!(over.len(), MAX_SECTIONS);
+    assert_eq!(over[0].heading, "Pages 1–10");
     // Only a selection that cannot merge below the limit — more separate runs
     // than the guide can hold — is still refused.
     assert_eq!(
@@ -223,12 +226,86 @@ fn a_heading_on_every_page_merges_into_at_most_40_sections() {
             .collect::<Vec<_>>()
     );
     // A merged group keeps the first heading of the group, plainly.
-    assert_eq!(manifest[0].heading, "Heading 1 (and 2 more)");
-    assert_eq!((manifest[0].page_start, manifest[0].page_end), (1, 3));
-    assert_eq!(manifest[39].heading, "Heading 101 (and 1 more)");
+    assert_eq!(manifest[0].heading, "Heading 1 (and 4 more)");
+    assert_eq!((manifest[0].page_start, manifest[0].page_end), (1, 5));
+    assert_eq!(manifest.len(), 20);
+    assert_eq!(manifest[19].heading, "Heading 96 (and 6 more)");
+    assert_eq!((manifest[19].page_start, manifest[19].page_end), (96, 102));
     assert!(manifest
         .iter()
         .all(|s| s.heading.starts_with(&format!("Heading {}", s.page_start))));
+}
+
+#[test]
+fn validate_section_tolerant_source_pages() {
+    let section = Section {
+        id: "section-02".into(),
+        heading: "Pages 11–20".into(),
+        page_start: 11,
+        page_end: 20,
+    };
+    let chosen: Vec<u32> = (1..=102).collect();
+    // [12, 3, 12, 15, 99] for a section of pages 11-20 is accepted with [12, 15]
+    let accepted = validate_section(
+        &section,
+        &json!({
+            "body": "Valid section body text.",
+            "sourcePages": [12, 3, 12, 15, 99]
+        })
+        .to_string(),
+        &chosen,
+        "model",
+    )
+    .unwrap();
+    assert_eq!(accepted.source_pages, vec![12, 15]);
+
+    // An answer whose pages are all outside the section is rejected
+    let err = validate_section(
+        &section,
+        &json!({
+            "body": "Valid section body text.",
+            "sourcePages": [1, 2, 3, 99, 100]
+        })
+        .to_string(),
+        &chosen,
+        "model",
+    )
+    .unwrap_err();
+    assert_eq!(
+        err.message,
+        "The section answer or its source pages were invalid; earlier sections are kept."
+    );
+}
+
+#[test]
+fn heading_every_two_pages_plans_into_at_most_21_sensible_sections() {
+    // A 102-page selection with a heading every 2 pages plans into at most 21
+    // sections, each at most 10 pages, covering every page once in order.
+    let pages: Vec<u32> = (1..=102).collect();
+    let hints: Vec<(u32, u32, String)> = (0..51)
+        .map(|i| (i * 2 + 1, i * 2 + 2, format!("Heading {}", i * 2 + 1)))
+        .collect();
+    let manifest = plan(&pages, &hints).unwrap();
+    assert!(
+        manifest.len() <= 21,
+        "expected at most 21 sections, got {}",
+        manifest.len()
+    );
+    assert!(
+        manifest.iter().all(|s| s.page_end - s.page_start < 10),
+        "each section at most 10 pages"
+    );
+    assert_eq!(
+        manifest
+            .iter()
+            .flat_map(|s| s.page_start..=s.page_end)
+            .collect::<Vec<_>>(),
+        pages,
+        "covering every page once in order"
+    );
+    assert!(manifest
+        .windows(2)
+        .all(|pair| pair[0].page_end + 1 == pair[1].page_start));
 }
 
 /// A synthetic PDF whose outline puts a chapter title at the outer level and a
@@ -355,18 +432,7 @@ fn a_deep_outline_plans_from_chapter_headings_only() {
             .iter()
             .map(|s| s.heading.as_str())
             .collect::<Vec<_>>(),
-        [
-            "Chapter 1",
-            "Sub 2",
-            "Sub 3",
-            "Chapter 2",
-            "Sub 5",
-            "Sub 6",
-            "Chapter 3",
-            "Sub 8",
-            "Sub 9",
-            "Sub 10",
-        ]
+        ["Chapter 1 (and 4 more)", "Sub 6 (and 4 more)",]
     );
 }
 
@@ -382,8 +448,7 @@ fn an_unchanged_plan_keeps_its_sections() {
         [
             (1, 5, "Pages 1–5".to_string()),
             (6, 10, "Pages 6–10".to_string()),
-            (11, 15, "Pages 11–15".to_string()),
-            (16, 16, "Pages 16–16".to_string()),
+            (11, 16, "Pages 11–16".to_string()),
         ]
     );
     assert_eq!(
