@@ -18,6 +18,7 @@ static GLOBAL: extraction::alloc::Global = extraction::alloc::Global;
 #[cfg(test)]
 mod fake_gemini;
 mod gemini;
+mod gemini_ask;
 mod gemini_budget;
 mod gemini_cancel;
 mod gemini_files;
@@ -293,6 +294,7 @@ pub fn run() {
             gemini::sections::resume_study_guide,
             gemini::sections::restart_study_guide,
             gemini::generate_practice_test,
+            gemini_ask::ask_gemini,
             gemini::gemini_jobs,
             gemini::acknowledge_gemini_job,
             gemini::cancel_gemini_job,
