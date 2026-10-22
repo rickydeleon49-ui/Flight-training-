@@ -21,7 +21,7 @@ use unicode_normalization::UnicodeNormalization;
 
 pub const CACHE_FILE: &str = "content-cache.db";
 /// Bump when extraction output can change; old entries then simply miss.
-pub const EXTRACTOR_VERSION: i64 = 1;
+pub const EXTRACTOR_VERSION: i64 = 2;
 const SCHEMA: &str = "2";
 
 /// Snippet match markers (design §6.3). Canonical text never contains them,

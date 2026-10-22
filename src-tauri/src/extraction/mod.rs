@@ -4,6 +4,7 @@
 
 pub mod alloc;
 pub mod cache;
+pub mod form_text;
 pub mod inspect;
 pub mod search;
 pub mod search_api;

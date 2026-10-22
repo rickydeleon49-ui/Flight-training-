@@ -109,6 +109,19 @@ impl Pdf {
     fn blank(&mut self) {
         self.page_with(b"0 0 m 10 10 l S".to_vec(), dictionary! {}, false);
     }
+    fn form(&mut self, content: &str, resources: lopdf::Dictionary) -> ObjectId {
+        let mut s = Stream::new(
+            dictionary! {
+                "Type" => "XObject",
+                "Subtype" => "Form",
+                "BBox" => vec![0.into(), 0.into(), 100.into(), 100.into()],
+                "Resources" => resources,
+            },
+            content.as_bytes().to_vec(),
+        );
+        s.allows_compression = false;
+        self.doc.add_object(s)
+    }
     fn bytes(mut self) -> Vec<u8> {
         let count = self.kids.len() as i64;
         self.doc.objects.insert(
@@ -550,4 +563,127 @@ fn a_release_build_without_the_opt_in_refuses_a_valid_request() {
         Some(her_flight_deck_lib::extraction::worker::EXIT_DISABLED)
     );
     assert!(out.stdout.is_empty(), "no frames, not even `verified`");
+}
+
+#[test]
+fn worker_test_a_page_content_only_form_do_extracts_form_text() {
+    let s = Scratch::new("worker-form-a");
+    let mut pdf = Pdf::new();
+    let font = pdf.font;
+    let form = pdf.form(
+        "BT /F1 12 Tf 72 700 Td (Form text extracted) Tj ET",
+        dictionary! { "Font" => dictionary! { "F1" => font } },
+    );
+    pdf.page_with(
+        b"/Fm1 Do".to_vec(),
+        dictionary! { "XObject" => dictionary! { "Fm1" => form } },
+        false,
+    );
+    let (path, sha) = s.write("form_a.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::Text);
+    assert!(out.pages[0].text.contains("Form text extracted"));
+}
+
+#[test]
+fn worker_test_b_nested_forms_extract_inner_text() {
+    let s = Scratch::new("worker-form-b");
+    let mut pdf = Pdf::new();
+    let font = pdf.font;
+    let inner = pdf.form(
+        "BT /F1 12 Tf 72 700 Td (Deep inner text) Tj ET",
+        dictionary! { "Font" => dictionary! { "F1" => font } },
+    );
+    let outer = pdf.form(
+        "BT /F1 12 Tf 72 700 Td (Outer text) Tj ET /FmInner Do",
+        dictionary! {
+            "Font" => dictionary! { "F1" => font },
+            "XObject" => dictionary! { "FmInner" => inner },
+        },
+    );
+    pdf.page_with(
+        b"/FmOuter Do".to_vec(),
+        dictionary! { "XObject" => dictionary! { "FmOuter" => outer } },
+        false,
+    );
+    let (path, sha) = s.write("form_b.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::Text);
+    assert!(out.pages[0].text.contains("Outer text"));
+    assert!(out.pages[0].text.contains("Deep inner text"));
+}
+
+#[test]
+fn worker_test_c_cyclic_form_does_not_loop() {
+    let s = Scratch::new("worker-form-c");
+    let mut pdf = Pdf::new();
+    let font = pdf.font;
+    let form_id = pdf.doc.new_object_id();
+    let mut stream = Stream::new(
+        dictionary! {
+            "Type" => "XObject",
+            "Subtype" => "Form",
+            "BBox" => vec![0.into(), 0.into(), 100.into(), 100.into()],
+            "Resources" => dictionary! {
+                "Font" => dictionary! { "F1" => font },
+                "XObject" => dictionary! { "SelfRef" => form_id },
+            }
+        },
+        b"BT /F1 12 Tf 72 700 Td (Self cyclic text) Tj ET /SelfRef Do".to_vec(),
+    );
+    stream.allows_compression = false;
+    pdf.doc.objects.insert(form_id, Object::Stream(stream));
+    pdf.page_with(
+        b"/FmSelf Do".to_vec(),
+        dictionary! { "XObject" => dictionary! { "FmSelf" => form_id } },
+        false,
+    );
+    let (path, sha) = s.write("form_c.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::Text);
+    assert!(out.pages[0].text.contains("Self cyclic text"));
+}
+
+#[test]
+fn worker_test_d_inline_text_only_exact_match() {
+    let s = Scratch::new("worker-form-d");
+    let mut pdf = Pdf::new();
+    pdf.text("Just plain inline text");
+    let (path, sha) = s.write("form_d.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::Text);
+    assert!(out.pages[0].text.contains("Just plain inline text"));
+}
+
+#[test]
+fn worker_test_e_unmapped_type0_font_stays_untrusted() {
+    let s = Scratch::new("worker-form-e");
+    let mut pdf = Pdf::new();
+    let descendant = pdf.doc.add_object(dictionary! {
+        "Type" => "Font", "Subtype" => "CIDFontType2", "BaseFont" => "SyntheticCID",
+        "CIDSystemInfo" => dictionary! { "Registry" => Object::string_literal("Adobe"),
+            "Ordering" => Object::string_literal("Identity"), "Supplement" => 0 },
+    });
+    let unmapped_font = pdf.doc.add_object(dictionary! {
+        "Type" => "Font", "Subtype" => "Type0", "BaseFont" => "SyntheticCID",
+        "Encoding" => "Identity-H", "DescendantFonts" => vec![descendant.into()],
+    });
+    let form = pdf.form(
+        "BT /F1 12 Tf <00410042> Tj ET",
+        dictionary! { "Font" => dictionary! { "F1" => unmapped_font } },
+    );
+    pdf.page_with(
+        b"/Fm1 Do".to_vec(),
+        dictionary! { "XObject" => dictionary! { "Fm1" => form } },
+        false,
+    );
+    let (path, sha) = s.write("form_e.pdf", &pdf.bytes());
+    let out = run(&path, &sha, Limits::default()).unwrap();
+    assert_eq!(out.pages.len(), 1);
+    assert_eq!(out.pages[0].outcome, Outcome::TextUnreadable);
+    assert!(out.pages[0].text.is_empty());
 }

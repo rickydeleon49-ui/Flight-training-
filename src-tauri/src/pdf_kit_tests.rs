@@ -168,6 +168,25 @@ fn old_algorithm_kit_is_stale_at_get_and_save_then_rebuildable() {
 }
 
 #[test]
+fn old_extractor_version_kit_is_stale_at_get_and_save() {
+    let r = Rig::new(true);
+    let id = r.ready();
+    let mut d = read(&r.0, &id).unwrap().1;
+    assert_eq!(d["identity"]["extractorVersion"], 2);
+    d["identity"]["extractorVersion"] = json!(1);
+    d["identityDigest"] = json!(crate::practice_sessions::compute_canonical_hash(
+        &d["identity"]
+    ));
+    let old_sources = source_payload(&d);
+    crate::gemini_jobs::with(&r.0, |j| j.test_replace_pdf_draft(&id, d).unwrap());
+    assert_eq!(get_at(&r.0, &id).unwrap_err().code, "SOURCE_CHANGED");
+    assert_eq!(
+        validate_save_at(&r.0, &old_sources).unwrap_err().code,
+        "SOURCE_CHANGED"
+    );
+}
+
+#[test]
 fn current_algorithm_kit_rejects_old_candidates_and_save_provenance() {
     let r = Rig::new(true);
     let id = r.ready();
