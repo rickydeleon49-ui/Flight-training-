@@ -26,6 +26,22 @@ impl SectionError {
     fn source() -> Self {
         Self::new("SOURCE_CHANGED", "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide.")
     }
+    fn plan_changed() -> Self {
+        Self::new("PLAN_CHANGED", "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")
+    }
+}
+fn identity_mismatch_error(old: &Identity, current: &Identity) -> SectionError {
+    if old.original_sha256 == current.original_sha256
+        && old.selected_sha256 == current.selected_sha256
+        && old.chosen_pages == current.chosen_pages
+        && old.material_id == current.material_id
+        && old.relative_path == current.relative_path
+        && old.base_revision == current.base_revision
+    {
+        SectionError::plan_changed()
+    } else {
+        SectionError::source()
+    }
 }
 impl From<String> for SectionError {
     fn from(message: String) -> Self {
@@ -762,8 +778,10 @@ pub(super) async fn activate(
         return Err(SectionError::source());
     }
     let (identity, selected) = source(root, req, ctx.choice.primary())?;
-    if old.as_ref().is_some_and(|d| d.identity != identity) {
-        return Err(SectionError::source());
+    if let Some(old) = old.as_ref() {
+        if old.identity != identity {
+            return Err(identity_mismatch_error(&old.identity, &identity));
+        }
     }
     let id = match id {
         Some(id) => id.to_string(),
@@ -905,16 +923,24 @@ pub(super) async fn activate(
         let answer = assembly(&read_draft(root, &id)?)?;
         Ok(answer)
     };
-    let outcome =
-        match gemini_cancel::Cancellable::new(ctx.budget.run(work), registration.token.clone())
-            .await
-        {
-            Ok(Ok(outcome)) => outcome,
-            _ if !ctx.budget.can_continue() || registration.token.is_cancelled() => {
-                Err(gemini_cancel::CANCELLED.into())
-            }
-            _ => Err(gemini_files::out_of_time(ctx.budget, "finishing the guide").into()),
-        };
+    let outcome = match gemini_cancel::Cancellable::new(
+        ctx.budget.run(work),
+        registration.token.clone(),
+    )
+    .await
+    {
+        Ok(Ok(outcome)) => outcome,
+        _ if !ctx.budget.can_continue() || registration.token.is_cancelled() => {
+            Err(gemini_cancel::CANCELLED.into())
+        }
+        _ => {
+            ctx.budget.categorize("time limit reached");
+            Err(SectionError::new(
+                    "GUIDE_PAUSED",
+                    "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.",
+                ))
+        }
+    };
     match outcome {
         Ok(answer) => {
             gemini_jobs::with(root, |j| {
@@ -1056,7 +1082,7 @@ pub(crate) fn save_guide_at(
     };
     let (identity, _) = source(root, &request, &d.identity.model)?;
     if identity != d.identity {
-        return Err(SectionError::source().into());
+        return Err(identity_mismatch_error(&d.identity, &identity).into());
     }
     assembly(&d)?;
     // Use the existing full-row revision check and exact save retry protocol.

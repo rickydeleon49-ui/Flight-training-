@@ -153,6 +153,8 @@ export interface GeminiJob {
   maxAttempts?: number;
   /** When this window started it (ms since the epoch), for an honest elapsed time. */
   startedAt?: number;
+  /** When this job was first created or recorded (ms since the epoch). */
+  createdAt?: number;
   /** A cancel is on its way to (or held by) the native side. */
   cancelRequested?: boolean;
   /** She pressed Cancel at some point: an answer that still arrives is never saved by itself. */
@@ -179,6 +181,17 @@ export interface GeminiJob {
    * have their native id.
    */
   local?: boolean;
+}
+
+export function isNewerJob(a: GeminiJob, b: GeminiJob): boolean {
+  if (a.key === b.key) return false;
+  const timeA = a.createdAt ?? a.startedAt ?? 0;
+  const timeB = b.createdAt ?? b.startedAt ?? 0;
+  if (timeA !== timeB) return timeA > timeB;
+  const aWorking = a.phase === "running" || a.phase === "saving";
+  const bWorking = b.phase === "running" || b.phase === "saving";
+  if (aWorking !== bWorking) return aWorking;
+  return false;
 }
 
 export interface GeminiJobTarget {
@@ -673,6 +686,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           stage: "preparing",
           attempt: 0,
           startedAt: Date.now(),
+          createdAt: Date.now(),
           cancelRequested: false,
           cancelAttempted: false,
           cancelError: null,
@@ -830,10 +844,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       || !["failed", "interrupted", "cancelled", "waiting-for-her"].includes(job.phase)) return;
     activeRef.current = key; // synchronous: a double click can never dispatch twice
     const requestId = newRequestId();
+    const now = Date.now();
     const retainedKey = restart ? newKey() : null;
     if (retainedKey) commit([...jobsRef.current, { ...job, key: retainedKey, local: false }]);
     update(key, { phase: "running", error: null, sectionError: undefined, local: true, invoked: true,
-      cancelRequested: false, cancelAttempted: false, cancelError: null, requestId, startedAt: Date.now(), ...(restart ? { jobId: null, sections: { ready: 0, total: 0, request: job.sections.request } } : {}) });
+      cancelRequested: false, cancelAttempted: false, cancelError: null, requestId, startedAt: now, ...(restart ? { jobId: null, createdAt: now, sections: { ready: 0, total: 0, request: job.sections.request } } : {}) });
     let stop = () => {};
     try {
       try { stop = await watchGeminiProgress(event => {
@@ -993,6 +1008,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             sectionGuide: record.draft?.kind === "guide-sections-v1",
             sections: sectionDraft(record),
             sectionError: recoveredSectionError(record),
+            createdAt: job.createdAt ?? record?.createdAt,
           };
         });
         const known = new Set(next.map((job) => job.jobId).filter(Boolean));
@@ -1046,6 +1062,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               sections: sectionDraft(record),
               sectionError: recoveredSectionError(record),
               requestId: record.requestId ?? (record as unknown as { request_id?: string }).request_id,
+              createdAt: record.createdAt,
             },
           ];
         }

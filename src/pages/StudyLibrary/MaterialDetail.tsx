@@ -66,7 +66,7 @@ import { OfflineStudyPanel } from "./OfflineStudyPanel";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
 import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
-import { useGeminiJobs, type GeminiJobPhase } from "@/state/GeminiJobs";
+import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
 import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
@@ -134,9 +134,12 @@ function MaterialDetailPage() {
   // One Gemini generation at a time across the whole app, whichever page asked;
   // the lock is taken synchronously before anything awaits (src/state/GeminiJobs).
   const geminiJobs = useGeminiJobs();
-  const studyJob = geminiJobs.jobs.find(
-    (job) => job.materialId === materialId && job.kind === "study-aid",
-  );
+  const studyJob = geminiJobs.jobs
+    .filter((job) => job.materialId === materialId && job.kind === "study-aid")
+    .reduce<GeminiJob | undefined>(
+      (latest, candidate) => (!latest || isNewerJob(candidate, latest) ? candidate : latest),
+      undefined,
+    );
   const cardJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "flashcards",
   );

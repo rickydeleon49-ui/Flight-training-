@@ -626,6 +626,72 @@ fn changed_pdf_or_pages_requires_consent() {
 }
 
 #[test]
+fn updated_app_plan_version_returns_plan_changed() {
+    let r = Rig::new(10);
+    r.fake.behave(|b| b.generate_answer = Some("bad".into()));
+    assert!(r.run(None).is_err());
+    let id = r.id();
+
+    // Mutate planner_version on disk while keeping PDF hash and chosen pages identical
+    gemini_jobs::forget(r.dir.path());
+    let path = r.dir.path().join("gemini-jobs.json");
+    let mut disk: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    disk["jobs"][0]["draft"]["identity"]["plannerVersion"] =
+        Value::String("pdf-outline-earlier-version".into());
+    std::fs::write(path, serde_json::to_vec(&disk).unwrap()).unwrap();
+
+    let err = r.run(Some(&id)).unwrap_err();
+    assert_eq!(err.code, "PLAN_CHANGED");
+    assert_eq!(
+        err.message,
+        "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?"
+    );
+
+    // If PDF hash changes as well, it returns SOURCE_CHANGED
+    std::fs::write(
+        r.dir.path().join("documents/a.pdf"),
+        generation_tests::pdf(10, "changed"),
+    )
+    .unwrap();
+    let source_err = r.run(Some(&id)).unwrap_err();
+    assert_eq!(source_err.code, "SOURCE_CHANGED");
+}
+
+#[test]
+fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
+    let r = Rig::new(10);
+    let budget = Budget::new(Duration::ZERO);
+    let cache = r.cache.lock().unwrap().clone();
+    let ctx = GenContext {
+        http: &r.http,
+        base: &r.fake.base,
+        api_key: "synthetic-only",
+        choice: ModelChoice::Standard,
+        cache: &cache,
+        epoch: cache.epoch(),
+        budget: &budget,
+        say: &|m| r.messages.lock().unwrap().push(m),
+    };
+    let err =
+        tauri::async_runtime::block_on(activate(&ctx, r.dir.path(), &r.request, None, &|_| {}))
+            .unwrap_err();
+    assert_eq!(err.code, "GUIDE_PAUSED");
+    assert_eq!(
+        err.message,
+        "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue."
+    );
+    assert!(!err.message.contains("Nothing was saved"));
+
+    let journal = gemini_jobs::Journal::open(r.dir.path());
+    let job = journal.list().into_iter().next().unwrap();
+    assert_eq!(job.stage, JobStage::Failed);
+    assert_eq!(
+        job.error.as_deref(),
+        Some("This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.")
+    );
+}
+
+#[test]
 fn pdf_changed_between_sections_stops_before_next_request() {
     let r = Rig::new(20);
     r.fake.behave(|b| {
