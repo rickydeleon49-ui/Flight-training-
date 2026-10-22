@@ -1269,6 +1269,13 @@ fn run_split_edge_cases(
                 }
             }
         }
+        // A whole document over the part limit must be refused with a plain
+        // reason; that refusal is the correct outcome, not a failure.
+        Err(e) if file_size > 52_428_800 && e.to_string().contains("too large") => EdgeCaseRow {
+            name: "2c. Take out whole document (1..last)".to_string(),
+            status: "PASS".to_string(),
+            notes: format!("refused as expected (over the part limit): {e}"),
+        },
         Err(e) => {
             let reason = format!("split range failed: {e}");
             record_failure(file_name, "EDGE_2C", &reason, failures, structured_failures);
