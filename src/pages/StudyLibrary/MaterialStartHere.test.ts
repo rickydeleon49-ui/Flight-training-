@@ -35,13 +35,17 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); });
 
 it("guides a large unsplit PDF toward parts using the real limits", async () => {
   open();
-  await screen.findByText(/Too large to read in one piece/);
+  await act(async () => {});
   expect(steps()).toHaveLength(4);
   expect(steps()[0]!.textContent).toContain("Do this next");
   expect(steps()[0]!.textContent).toContain("204.7 MB, 500 pages");
   expect(steps()[0]!.textContent).toContain("50 MB or 1,000 pages");
-  expect(steps()[0]!.textContent).toContain("128 MB");
-  expect(within(steps()[1]!).getByRole("button").hasAttribute("disabled")).toBe(true);
+  expect(steps()[0]!.textContent).toContain("Choose a study-size PDF");
+  expect(steps()[1]!.textContent).toContain("Ask Gemini for a study guide and flashcards");
+  expect(steps()[1]!.textContent).toContain("sends this file to Google after you confirm");
+  expect(steps()[1]!.textContent).toContain("section by section");
+  expect(steps()[1]!.textContent).not.toContain("flashcard target");
+  expect(steps()[1]!.textContent).toContain("Open a study-size part first");
   expect(screen.queryByText("What's been done with this PDF")).toBeNull();
   const target = document.createElement("div"); target.id = "material-file-actions"; target.tabIndex = -1;
   target.scrollIntoView = vi.fn(); document.body.append(target);
@@ -69,8 +73,10 @@ it("shows text read and a kit waiting, then takes her to draft review", async ()
   vi.mocked(documents.listPdfStudyKitJobs).mockResolvedValue([{ id: "kit", materialId: material.id, stage: "received", createdAt: 1 }]);
   open({ material: { ...material, fileSize: 2048 } });
   await screen.findByText("A study kit is waiting for review.");
-  expect(steps()[0]!.textContent).toContain("Done"); expect(steps()[1]!.textContent).toContain("Done");
-  expect(steps()[2]!.textContent).toContain("Done"); expect(steps()[3]!.textContent).toContain("Do this next");
+  expect(steps()[0]!.textContent).toContain("Done");
+  expect(steps()[1]!.textContent).toContain("Do this next");
+  expect(steps()[2]!.textContent).toContain("Do this next");
+  expect(steps()[3]!.textContent).toContain("optional");
   expect(screen.getByText("Text read on this Mac: 12 pages.")).toBeTruthy();
   const target = document.createElement("div"); target.id = "material-pdf-kit"; target.scrollIntoView = vi.fn(); document.body.append(target);
   fireEvent.click(screen.getByRole("button", { name: "Go to draft review" })); expect(target.scrollIntoView).toHaveBeenCalled(); target.remove();
@@ -116,19 +122,20 @@ it("reports partial reading honestly and distinguishes running or cancelled kits
   vi.mocked(documents.listPdfStudyKitJobs).mockResolvedValue([{ id: "cancelled", materialId: material.id, stage: "cancelled", createdAt: 2 }, { id: "running", materialId: material.id, stage: "running", createdAt: 1 }]);
   const view = open({ material: { ...material, fileSize: 2048 } });
   await screen.findByText("Text read on this Mac: 8 of 12 pages.");
-  expect(steps()[1]!.textContent).toContain("Partly searchable"); expect(steps()[1]!.textContent).not.toContain("Done");
-  expect(steps()[2]!.textContent).toContain("Check your earlier kit below"); expect(steps()[3]!.textContent).toContain("Make a kit or guide first");
+  expect(steps()[1]!.textContent).toContain("Do this next");
+  expect(steps()[2]!.textContent).toContain("Ask for a guide first");
   view.unmount();
   vi.mocked(documents.listPdfStudyKitJobs).mockResolvedValue([{ id: "cancelled", materialId: material.id, stage: "cancelled", createdAt: 2 }]);
   open({ material: { ...material, fileSize: 2048 } });
   await act(async () => {});
-  expect(steps()[2]!.textContent).toContain("Do this next");
+  expect(steps()[1]!.textContent).toContain("Do this next");
 });
 
 it("shows a saved Gemini guide and leaves a new draft ready to review", async () => {
   open({ studySet: saved, geminiDraftWaiting: true, material: { ...material, fileSize: 2048 } });
   await screen.findByText("Gemini guide saved."); expect(screen.getByText("A Gemini draft is waiting for review.")).toBeTruthy();
-  expect(steps()[3]!.textContent).toContain("Do this next");
+  expect(steps()[1]!.textContent).toContain("Done");
+  expect(steps()[2]!.textContent).toContain("Do this next");
 });
 
 it("refreshes panel work and ignores a retired file's late answer", async () => {
@@ -154,23 +161,24 @@ it("uses page count as well as bytes when recommending a split", async () => {
   expect(steps()[0]!.textContent).toContain("1,001 pages");
 });
 
-it("accepts the exact 50 MB, 1000 page and 128 MB limits", async () => {
+it("accepts the exact Gemini limits and recommends parts above them", async () => {
   pages = 1000;
   const view = open({ material: { ...material, fileSize: 50 * 1024 * 1024 } });
   expect(steps()[0]!.textContent).toContain("Done"); view.unmount();
   open({ material: { ...material, fileSize: 128 * 1024 * 1024 } });
-  await waitFor(() => expect(steps()[1]!.textContent).toContain("Do this next"));
+  await waitFor(() => expect(steps()[1]!.textContent).toContain("Open a study-size part first"));
   expect(within(steps()[1]!).getByRole("button").hasAttribute("disabled")).toBe(false);
 });
 
-it("explains missing files and unavailable text reading without offering a broken step", async () => {
+it("explains missing files and keeps Gemini available when backup text reading is unavailable", async () => {
   const first = open({ fileMissing: true });
   expect(steps()[1]!.textContent).toContain("Restore this PDF's file first");
   expect(within(steps()[0]!).getByRole("button").hasAttribute("disabled")).toBe(true); first.unmount();
   vi.mocked(offline.offlineStudyEnabled).mockReturnValue(false);
   open({ material: { ...material, fileSize: 1024 } });
-  await screen.findByText(/Text reading isn't available in this version/);
-  expect(within(steps()[1]!).getByRole("button").hasAttribute("disabled")).toBe(true);
+  await act(async () => {});
+  expect(steps()[1]!.textContent).toContain("Do this next");
+  expect(within(steps()[1]!).getByRole("button").hasAttribute("disabled")).toBe(false);
 });
 
 it("does not turn failed status reads into done or a kit waiting for review", async () => {
@@ -178,7 +186,29 @@ it("does not turn failed status reads into done or a kit waiting for review", as
   vi.mocked(documents.listPdfStudyKitJobs).mockRejectedValue(new Error("unavailable"));
   open({ material: { ...material, fileSize: 1024 } });
   await act(async () => {});
-  await screen.findByText(/Kit status couldn't be checked yet/);
-  expect(steps()[1]!.textContent).toContain("Text status couldn't be checked yet");
+  expect(steps()[1]!.textContent).toContain("Do this next");
+  expect(steps()[2]!.textContent).toContain("Ask for a guide first");
   expect(screen.queryByText("What's been done with this PDF")).toBeNull();
+});
+
+
+it("links the backup and optional practice step to their sections", async () => {
+  open({ material: { ...material, fileSize: 2048 }, practiceTestSaved: true });
+  expect(steps()[3]!.textContent).toContain("Done");
+  for (const [id, name] of [["material-mac-backup", "Use the on-Mac study kit at the bottom of this page."], ["material-practice-test", "Go to practice test"]]) {
+    const target = document.createElement("section"); target.id = id!; target.tabIndex = -1; target.scrollIntoView = vi.fn(); document.body.append(target);
+    if (id === "material-mac-backup") {
+      const link = screen.getByRole("link", { name });
+      expect(link.getAttribute("href")).toBe("#material-mac-backup"); fireEvent.click(link);
+    } else fireEvent.click(screen.getByRole("button", { name }));
+    expect(target.scrollIntoView).toHaveBeenCalled(); expect(document.activeElement).toBe(target); target.remove();
+  }
+});
+
+it("takes a Gemini draft to Gemini review even when a backup kit also waits", async () => {
+  vi.mocked(documents.listPdfStudyKitJobs).mockResolvedValue([{ id: "kit", materialId: material.id, stage: "received", createdAt: 1 }]);
+  open({ material: { ...material, fileSize: 2048 }, geminiDraftWaiting: true });
+  await screen.findByText("A study kit is waiting for review.");
+  const target = document.createElement("div"); target.id = "material-study-guide"; target.scrollIntoView = vi.fn(); document.body.append(target);
+  fireEvent.click(screen.getByRole("button", { name: "Go to draft review" })); expect(target.scrollIntoView).toHaveBeenCalled(); target.remove();
 });

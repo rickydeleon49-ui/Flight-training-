@@ -78,7 +78,7 @@ import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
 import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
-import { MaterialStartHere } from "./MaterialStartHere";
+import { MaterialStartHere, useMaterialTips } from "./MaterialStartHere";
 
 export function MaterialDetail() {
   const { materialId } = useParams();
@@ -105,6 +105,7 @@ function MaterialDetailPage() {
   const operations = useActionOperations();
   const today = todayIso();
 
+  const { hidden: tipsHidden, setHidden: setTipsHidden } = useMaterialTips();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
@@ -479,6 +480,249 @@ function MaterialDetailPage() {
     );
   };
 
+  const materialStudyGuide = material.filePath || studySet ? (
+    <div id="material-study-guide" tabIndex={-1}><Card>
+      <CardHeader
+        title={pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
+        eyebrow={
+          pdfSet ? "Saved on this computer" : importedSet
+            ? "Imported from a file you selected"
+            : manualSet
+              ? "Written by you, saved on this computer"
+              : studySet
+                ? "Saved on this computer"
+                : "Guide and flashcards"
+        }
+        action={
+          <div className="row row--wrap">
+            {studySet ? (
+              <Button
+                size="small"
+                variant="secondary"
+                aria-pressed={editingSet}
+                disabled={isGeneratingAny}
+                onClick={() => setEditingSet((open) => !open)}
+              >
+                {editingSet ? "Done editing" : "Edit study guide"}
+              </Button>
+            ) : null}
+            {studySet || practiceTest ? (
+              <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
+                Share or print
+              </Button>
+            ) : null}
+            {canOfferGemini ? (
+              <Button
+                size="small"
+                variant={studySet ? "secondary" : "primary"}
+                disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
+                onClick={() => {
+                  if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
+                }}
+              >
+                {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
+              </Button>
+            ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
+              <Button
+                size="small"
+                variant="secondary"
+                disabled={isGeneratingAny || fileMissing}
+                onClick={() => void queueStudyAid()}
+              >
+                Generate later
+              </Button>
+            ) : null}
+          </div>
+        }
+      />
+      {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>{pdfSet ? "Review the guide and cards saved from your PDF text, and follow their page references back to the source." : importedSet ? "Review the guide and cards from your imported packet; you can edit them here." : manualSet ? "Keep your summary, sections and flashcards together; use Edit study guide to add or change them." : "Ask Gemini for a guide and flashcards from this file, then review and save the draft on this Mac."}</p> : null}
+      <CardBody>
+        {generationNotice ? (
+          <GenerationNoticeView
+            notice={generationNotice}
+            onSplit={() => setSplitting(true)}
+            onQueueLater={() => void queueStudyAid()}
+          />
+        ) : null}
+        {generating ? (
+          studyJob ? (
+            <GeminiProgressView
+              job={studyJob}
+              title="Gemini is reviewing this document"
+              onCancel={() => void geminiJobs.cancel(studyJob.key)}
+            />
+          ) : null
+        ) : null}
+        {studySet ? (
+          <div className="stack stack--5">
+            <div className="ai-disclaimer">
+              <AlertIcon size={16} />
+              <p className="tiny">
+                {pdfSet ? PDF_KIT_REMINDER : manualSet
+                  ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
+                  : importedSet
+                    ? IMPORTED_CONTENT_DISCLAIMER
+                    : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
+                {!pdfSet && !manualSet && setHasHerItems
+                  ? " Items marked as yours or as an instructor correction were written here, not generated."
+                  : ""}
+              </p>
+            </div>
+
+            <StudyContentProvenance
+              sourceMaterialTitle={material.title}
+              content={studySet}
+              kind="study-aid"
+            />
+
+            <section className="stack stack--3" aria-labelledby="ai-guide-title">
+              <div>
+                <p className="eyebrow">Study guide</p>
+                <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
+              </div>
+              {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
+              <p
+                id="search-target-summary"
+                className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
+              >
+                {studySet.summary}
+              </p>
+              {studySet.sections.map((section, index) => (
+                <div
+                  id={`search-target-guide-${index}`}
+                  className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
+                  key={`${section.heading}-${index}`}
+                >
+                  <h4>{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</h4>
+                  <GuideBody className="small" text={section.body} />
+                </div>
+              ))}
+              {studySet.sourceNotes ? (
+                <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
+              ) : null}
+            </section>
+
+            {studySet.flashcards.length > 0 ? (
+              <section
+                id="search-target-cards"
+                className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
+                aria-labelledby="flashcards-title"
+              >
+                <div className="row row--between">
+                  <div>
+                    <p className="eyebrow">Flashcards</p>
+                    <h3 id="flashcards-title" className="ai-guide__title">
+                      Card {cardIndex + 1} of {studySet.flashcards.length}
+                    </h3>
+                  </div>
+                  <div className="row row--wrap">
+                    {studySet.flashcards[cardIndex]?.pdfProvenance ? <PdfItemLabel provenance={studySet.flashcards[cardIndex]?.pdfProvenance} origin={studySet.flashcards[cardIndex]?.origin} /> : <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />}
+                    <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
+                  </div>
+                </div>
+                <button
+                  className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
+                  type="button"
+                  onClick={() => setCardRevealed((current) => !current)}
+                  aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
+                >
+                  <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
+                  <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
+                  <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
+                </button>
+                <div className="row row--between">
+                  <Button
+                    size="small"
+                    disabled={cardIndex === 0}
+                    onClick={() => { setCardIndex((index) => index - 1); setCardRevealed(false); }}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    size="small"
+                    disabled={cardIndex >= studySet.flashcards.length - 1}
+                    onClick={() => { setCardIndex((index) => index + 1); setCardRevealed(false); }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </section>
+            ) : null}
+
+            {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
+
+            <CardReviewPanel
+              materialId={material.id}
+              materialTitle={material.title}
+              repository={repositories?.cardReviews}
+              contentKey={studySet.updatedAt}
+              autoStart={startCardReview}
+              browseCard={
+                studySet.flashcards[cardIndex]
+                  ? {
+                      index: cardIndex,
+                      front: studySet.flashcards[cardIndex]!.front,
+                      back: studySet.flashcards[cardIndex]!.back,
+                    }
+                  : null
+              }
+            />
+          </div>
+        ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
+          <p className="small muted">
+            {isPdf ? "Gemini will read this PDF and build a guide and flashcards section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally." : <>Gemini will read only this file and create a source-based study guide.
+            Choose a target of 20, 40 or 60 flashcards; a shorter source may yield fewer.
+            The finished draft waits for you to save it locally.</>}
+          </p>
+        ) : null}
+
+        {generationError ? (
+          <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+            <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
+              {generationError}
+            </p>
+            {retryStudy ? (
+              <div className="row row--wrap">
+                <Button size="small" onClick={retryStudy}>
+                  Try again
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {studyJob ? (
+          <GeminiJobNotice
+            job={studyJob}
+            jobs={geminiJobs}
+            onRetry={retryStudy}
+            onReview={(setHasHerItems || studyJob.needsReview) && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
+          />
+        ) : null}
+        {geminiJobs.jobs.filter(job => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key).map(job => (
+          <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
+        ))}
+        {reviewingRegeneration &&
+        studyJob?.answer &&
+        (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
+          <RegenerationReviewDialog
+            job={studyJob}
+            materialId={material.id}
+            onClose={() => setReviewingRegeneration(false)}
+            onSave={async (reviewed) => {
+              // Closed only once saved; a failure keeps her choices open.
+              const saved = await geminiJobs.saveReviewed(studyJob.key, reviewed);
+              if (saved && isMountedRef.current) setReviewingRegeneration(false);
+              return saved;
+            }}
+          />
+        ) : null}
+        {canOfferGemini && geminiJobs.recovery === "failed" ? (
+          <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
+        ) : null}
+      </CardBody>
+    </Card></div>
+  ) : null;
+
   return (
     <>
       <PageHeader
@@ -489,6 +733,7 @@ function MaterialDetailPage() {
             <Link className="button button--ghost" to="/study">
               Back
             </Link>
+            {!isPdf ? <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show tips" : "Hide tips"}</Button> : null}
             <Button onClick={() => setEditing(true)}>Edit</Button>
             <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
               Delete
@@ -526,7 +771,8 @@ function MaterialDetailPage() {
         <div className="detail__column">
           <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
             geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
-            fileMissing={fileMissing} />
+            fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
+            tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
@@ -544,7 +790,7 @@ function MaterialDetailPage() {
                     {canSplit ? (
                       <div className="file-action-tip">
                         <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                        <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p>
+                        {!tipsHidden ? <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p> : null}
                       </div>
                     ) : null}
                     {canSplit ? (
@@ -552,7 +798,7 @@ function MaterialDetailPage() {
                       <Button variant="secondary" onClick={() => setSplittingManually(true)}>
                         Take out a chapter
                       </Button>
-                      <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p>
+                      {!tipsHidden ? <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p> : null}
                       </div>
                     ) : null}
                     {!fileMissing && canHandleFiles() ? (
@@ -560,7 +806,7 @@ function MaterialDetailPage() {
                       <Button onClick={open}>
                         <ExternalIcon size={15} /> Open
                       </Button>
-                      <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app." : "Opens the file in its usual app on your Mac."}</p>
+                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app." : "Opens the file in its usual app on your Mac."}</p> : null}
                       </div>
                     ) : null}
                     {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
@@ -597,276 +843,10 @@ function MaterialDetailPage() {
             </Card></div>
           ) : null}
 
-          {material.filePath ? (
-            <DocumentPagesPanel
-              material={material}
-              fileMissing={fileMissing}
-              restoring={restoringFile}
-              onRestore={() => void restoreFile()}
-            />
-          ) : null}
-
-          {isPdf && material.filePath ? <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel material={material} /></div> : null}
-
-          {material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div> : null}
-
-          {!material.filePath && !studySet ? (
-            <Card>
-              <CardHeader title="Study guide and flashcards" eyebrow="Your own" action={<StartManualStudySet material={material} />} />
-              <CardBody>
-                <p className="small muted">
-                  Write your own summary, sections and flashcards for this material. Nothing is sent anywhere.
-                </p>
-              </CardBody>
-            </Card>
-          ) : null}
-
-          {material.filePath || studySet ? (
-            <div id="material-study-guide" tabIndex={-1}><Card>
-              <CardHeader
-                title={pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
-                eyebrow={
-                  pdfSet ? "Saved on this computer" : importedSet
-                    ? "Imported from a file you selected"
-                    : manualSet
-                      ? "Written by you, saved on this computer"
-                      : studySet
-                        ? "Saved on this computer"
-                        : "Guide and flashcards"
-                }
-                action={
-                  <div className="row row--wrap">
-                    {studySet ? (
-                      <Button
-                        size="small"
-                        variant="secondary"
-                        aria-pressed={editingSet}
-                        disabled={isGeneratingAny}
-                        onClick={() => setEditingSet((open) => !open)}
-                      >
-                        {editingSet ? "Done editing" : "Edit study guide"}
-                      </Button>
-                    ) : (
-                      <StartManualStudySet material={material} />
-                    )}
-                    {studySet || practiceTest ? (
-                      <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
-                        Share or print
-                      </Button>
-                    ) : null}
-                    {canOfferGemini ? (
-                      <Button
-                        size="small"
-                        variant={studySet ? "secondary" : "primary"}
-                        disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
-                        onClick={() => {
-                          if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
-                        }}
-                      >
-                        {generating ? "Reading document…" : studySet ? "Regenerate" : "Create study aid"}
-                      </Button>
-                    ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
-                      <Button
-                        size="small"
-                        variant="secondary"
-                        disabled={isGeneratingAny || fileMissing}
-                        onClick={() => void queueStudyAid()}
-                      >
-                        Generate later
-                      </Button>
-                    ) : null}
-                  </div>
-                }
-              />
-              <CardBody>
-                {generationNotice ? (
-                  <GenerationNoticeView
-                    notice={generationNotice}
-                    onSplit={() => setSplitting(true)}
-                    onQueueLater={() => void queueStudyAid()}
-                  />
-                ) : null}
-                {generating ? (
-                  studyJob ? (
-                    <GeminiProgressView
-                      job={studyJob}
-                      title="Gemini is reviewing this document"
-                      onCancel={() => void geminiJobs.cancel(studyJob.key)}
-                    />
-                  ) : null
-                ) : null}
-                {studySet ? (
-                  <div className="stack stack--5">
-                    <div className="ai-disclaimer">
-                      <AlertIcon size={16} />
-                      <p className="tiny">
-                        {pdfSet ? PDF_KIT_REMINDER : manualSet
-                          ? "A study guide you wrote. Check it against current FAA material, aircraft documents, and your instructor."
-                          : importedSet
-                            ? IMPORTED_CONTENT_DISCLAIMER
-                            : `AI-generated study aid${studySet.model ? ` (made with ${geminiModelName(studySet.model)})` : ""}. Verify everything against the source, current FAA material, aircraft documents, and your instructor before using it.`}
-                        {!pdfSet && !manualSet && setHasHerItems
-                          ? " Items marked as yours or as an instructor correction were written here, not generated."
-                          : ""}
-                      </p>
-                    </div>
-
-                    <StudyContentProvenance
-                      sourceMaterialTitle={material.title}
-                      content={studySet}
-                      kind="study-aid"
-                    />
-
-                    <section className="stack stack--3" aria-labelledby="ai-guide-title">
-                      <div>
-                        <p className="eyebrow">Study guide</p>
-                        <h3 id="ai-guide-title" className="ai-guide__title">{studySet.title}</h3>
-                      </div>
-                      {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : studySet.summaryOrigin ? <AuthorBadge origin={studySet.summaryOrigin} /> : null}
-                      <p
-                        id="search-target-summary"
-                        className={`small ai-copy${linkTarget?.kind === "summary" ? " search-target" : ""}`}
-                      >
-                        {studySet.summary}
-                      </p>
-                      {studySet.sections.map((section, index) => (
-                        <div
-                          id={`search-target-guide-${index}`}
-                          className={`ai-guide__section${linkTarget?.kind === "guide" && linkTarget.index === index ? " search-target" : ""}`}
-                          key={`${section.heading}-${index}`}
-                        >
-                          <h4>{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</h4>
-                          <GuideBody className="small" text={section.body} />
-                        </div>
-                      ))}
-                      {studySet.sourceNotes ? (
-                        <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
-                      ) : null}
-                    </section>
-
-                    {studySet.flashcards.length > 0 ? (
-                      <section
-                        id="search-target-cards"
-                        className={`stack stack--3${linkTarget?.kind === "card" ? " search-target" : ""}`}
-                        aria-labelledby="flashcards-title"
-                      >
-                        <div className="row row--between">
-                          <div>
-                            <p className="eyebrow">Flashcards</p>
-                            <h3 id="flashcards-title" className="ai-guide__title">
-                              Card {cardIndex + 1} of {studySet.flashcards.length}
-                            </h3>
-                          </div>
-                          <div className="row row--wrap">
-                            {studySet.flashcards[cardIndex]?.pdfProvenance ? <PdfItemLabel provenance={studySet.flashcards[cardIndex]?.pdfProvenance} origin={studySet.flashcards[cardIndex]?.origin} /> : <AuthorBadge origin={studySet.flashcards[cardIndex]?.origin} />}
-                            <SourcePageBadge page={studySet.flashcards[cardIndex]?.sourcePage} materialId={material.id} />
-                          </div>
-                        </div>
-                        <button
-                          className={`flashcard${cardRevealed ? " is-revealed" : ""}`}
-                          type="button"
-                          onClick={() => setCardRevealed((current) => !current)}
-                          aria-label={cardRevealed ? "Hide flashcard answer" : "Reveal flashcard answer"}
-                        >
-                          <span className="tiny dim">{cardRevealed ? "Answer" : "Question"}</span>
-                          <span>{cardRevealed ? studySet.flashcards[cardIndex]?.back : studySet.flashcards[cardIndex]?.front}</span>
-                          <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
-                        </button>
-                        <div className="row row--between">
-                          <Button
-                            size="small"
-                            disabled={cardIndex === 0}
-                            onClick={() => { setCardIndex((index) => index - 1); setCardRevealed(false); }}
-                          >
-                            Previous
-                          </Button>
-                          <Button
-                            size="small"
-                            disabled={cardIndex >= studySet.flashcards.length - 1}
-                            onClick={() => { setCardIndex((index) => index + 1); setCardRevealed(false); }}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </section>
-                    ) : null}
-
-                    {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
-
-                    <CardReviewPanel
-                      materialId={material.id}
-                      materialTitle={material.title}
-                      repository={repositories?.cardReviews}
-                      contentKey={studySet.updatedAt}
-                      autoStart={startCardReview}
-                      browseCard={
-                        studySet.flashcards[cardIndex]
-                          ? {
-                              index: cardIndex,
-                              front: studySet.flashcards[cardIndex]!.front,
-                              back: studySet.flashcards[cardIndex]!.back,
-                            }
-                          : null
-                      }
-                    />
-                  </div>
-                ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
-                  <p className="small muted">
-                    Gemini will read only this file and create a source-based study guide.
-                    Choose a target of 20, 40 or 60 flashcards; a shorter source may yield fewer.
-                    The finished draft waits for you to save it locally.
-                  </p>
-                ) : null}
-
-                {generationError ? (
-                  <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                      {generationError}
-                    </p>
-                    {retryStudy ? (
-                      <div className="row row--wrap">
-                        <Button size="small" onClick={retryStudy}>
-                          Try again
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                {studyJob ? (
-                  <GeminiJobNotice
-                    job={studyJob}
-                    jobs={geminiJobs}
-                    onRetry={retryStudy}
-                    onReview={(setHasHerItems || studyJob.needsReview) && studyJob.answer ? () => setReviewingRegeneration(true) : undefined}
-                  />
-                ) : null}
-                {geminiJobs.jobs.filter(job => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key).map(job => (
-                  <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
-                ))}
-                {reviewingRegeneration &&
-                studyJob?.answer &&
-                (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
-                  <RegenerationReviewDialog
-                    job={studyJob}
-                    materialId={material.id}
-                    onClose={() => setReviewingRegeneration(false)}
-                    onSave={async (reviewed) => {
-                      // Closed only once saved; a failure keeps her choices open.
-                      const saved = await geminiJobs.saveReviewed(studyJob.key, reviewed);
-                      if (saved && isMountedRef.current) setReviewingRegeneration(false);
-                      return saved;
-                    }}
-                  />
-                ) : null}
-                {canOfferGemini && geminiJobs.recovery === "failed" ? (
-                  <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
-                ) : null}
-              </CardBody>
-            </Card></div>
-          ) : null}
+          {!manualSet ? materialStudyGuide : null}
 
           {material ? (
-            <Card>
+            <div id="material-practice-test" tabIndex={-1}><Card>
               <CardHeader
                 title="Practice test"
                 eyebrow={
@@ -897,6 +877,7 @@ function MaterialDetailPage() {
                   ) : undefined
                 }
               />
+              {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Try saved questions with explanations, or write your own; your completed attempts stay in practice history.</p> : null}
               <CardBody>
                 <StartManualPracticeTest material={material} />
                 <PracticeTestEditor material={material} activeAttempt={activePracticeAttempt} />
@@ -1022,6 +1003,15 @@ function MaterialDetailPage() {
                     }} />
                 ) : null}
               </CardBody>
+            </Card></div>
+          ) : null}
+
+          {manualSet ? materialStudyGuide : null}
+
+          {!studySet ? (
+            <Card>
+              <CardHeader title="Study guide and flashcards" eyebrow="Your own" action={<StartManualStudySet material={material} />} />
+              {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) var(--space-5)" }}>Start with your own summary, then add sections and flashcards. Nothing is sent anywhere.</p> : null}
             </Card>
           ) : null}
 
@@ -1045,6 +1035,7 @@ function MaterialDetailPage() {
                 )
               }
             />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
             <CardBody>
               <TextArea
                 rows={6}
@@ -1071,6 +1062,7 @@ function MaterialDetailPage() {
                 </Button>
               }
             />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Give this material a small next step, and add a date if you have one in mind.</p> : null}
             <CardBody flush>
               {relatedActions.length === 0 ? (
                 <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
@@ -1095,6 +1087,7 @@ function MaterialDetailPage() {
 
           <Card>
             <CardHeader title="Questions from this material" />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Keep questions here to ask later; they also appear on your Questions page.</p> : null}
             <CardBody>
               <div className="stack stack--3">
                 {questions.map((question) => (
@@ -1123,11 +1116,29 @@ function MaterialDetailPage() {
               </div>
             </CardBody>
           </Card>
+          {isPdf && material.filePath ? (
+            <DocumentPagesPanel material={material} fileMissing={fileMissing} restoring={restoringFile}
+              onRestore={() => void restoreFile()} showTips={!tipsHidden} />
+          ) : null}
+
+          {isPdf && material.filePath ? (
+            <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
+              <Card>
+                <CardHeader title="On this Mac (backup)" />
+                {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                <CardBody><div className="stack stack--4">
+                  <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div>
+                  <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel material={material} /></div>
+                </div></CardBody>
+              </Card>
+            </section>
+          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div> : null}
         </div>
 
         <div className="detail__column">
           <Card>
             <CardHeader title="Review status" />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
             <CardBody>
               <div className="stack stack--4">
                 <Select
@@ -1138,7 +1149,7 @@ function MaterialDetailPage() {
                     mutate((repos) => repos.documents.update(material.id, { reviewStatus: value }))
                   }
                 />
-                <p className="tiny muted">Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.</p>
+                {!tipsHidden ? <p className="tiny muted">Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.</p> : null}
                 <Button
                   block
                   onClick={() =>
@@ -1149,7 +1160,7 @@ function MaterialDetailPage() {
                 >
                   Mark as reviewed today
                 </Button>
-                <p className="tiny muted">Records today's date as your last review. Choose your review status separately.</p>
+                {!tipsHidden ? <p className="tiny muted">Records today's date as your last review. Choose your review status separately.</p> : null}
                 {material.lastReviewedAt ? (
                   <p className="tiny dim">
                     {formatLocalDay(material.lastReviewedAt, today)
@@ -1165,6 +1176,7 @@ function MaterialDetailPage() {
 
           <Card>
             <CardHeader title="Details" />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organised. Use Edit at the top to change its details.</p> : null}
             <CardBody>
               <dl className="definition">
                 <dt>Type</dt>

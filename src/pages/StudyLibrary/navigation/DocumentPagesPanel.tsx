@@ -43,6 +43,7 @@ interface DocumentPagesPanelProps {
   fileMissing: boolean;
   restoring: boolean;
   onRestore: () => void;
+  showTips?: boolean;
 }
 
 const WORKING: Record<string, string> = {
@@ -77,7 +78,7 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
   }
 }
 
-export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore }: DocumentPagesPanelProps) {
+export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
   const nav = useMaterialNavigation(material.id, repo, status);
   const [page, setPage] = useState("");
@@ -217,6 +218,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   return (
     <Card>
       <CardHeader eyebrow="Pages" title="Find your place" />
+      {showTips ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Open a page in your PDF reader or save a bookmark; mark a page read only after you have read it.</p> : null}
       <CardBody>
         <section className="stack stack--3" aria-labelledby={headingId}>
           <h4 id={headingId} className="visually-hidden">
@@ -236,7 +238,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                   Check pages
                 </Button>
               </div>
-              <p className="tiny muted">Check pages counts this PDF's pages and checks whether the file has changed.</p>
+              {showTips ? <p className="tiny muted">Check pages counts this PDF's pages and checks whether the file has changed.</p> : null}
               {checkNote ? (
                 <p className="tiny" role="status">
                   {checkNote}
@@ -255,7 +257,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                   Open at page
                 </Button>
               </form>
-              <p className="tiny muted">Open at page opens your PDF reader and remembers the page you asked for. You may need to go to that page in the reader.</p>
+              {showTips ? <p className="tiny muted">Open at page opens your PDF reader and remembers the page you asked for. You may need to go to that page in the reader.</p> : null}
             </>
           )}
 
@@ -314,7 +316,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                 </Button>
               ) : null}
             </div>
-            <p className="tiny muted">Save a named place so you can return to it later without remembering the page number.</p>
+            {showTips ? <p className="tiny muted">Save a named place so you can return to it later without remembering the page number.</p> : null}
             {desktop && !identity ? <p className="tiny muted">Check this file&apos;s pages before adding a bookmark.</p> : null}
             {bookmarks.length === 0 ? (
               <p className="tiny muted">No bookmarks yet.</p>
