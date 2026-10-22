@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
 import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
-import type { GeminiJob, useGeminiJobs } from "@/state/GeminiJobs";
+import { isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
  * What became of a generation that did not simply save (GEN-REL-02): an answer
@@ -30,6 +30,20 @@ export function GeminiJobNotice({
 }) {
   const what = job.kind === "study-aid" ? "study guide and cards" : job.kind === "flashcards" ? "flashcards" : "practice test";
   const busy = jobs.busy;
+
+  if (
+    job.sectionGuide &&
+    jobs.jobs.some(
+      (other) =>
+        other.key !== job.key &&
+        other.materialId === job.materialId &&
+        other.kind === "study-aid" &&
+        other.sectionGuide &&
+        isNewerJob(other, job),
+    )
+  ) {
+    return null;
+  }
 
   if (
     job.sectionGuide &&
@@ -251,7 +265,7 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
   const [pending, setPending] = useState(false);
   const intent = useRef(false);
   const code = job.sectionError;
-  const sourceChanged = code === "SOURCE_CHANGED" || code === "CONSENT_REQUIRED";
+  const sourceChanged = code === "SOURCE_CHANGED" || code === "PLAN_CHANGED" || code === "CONSENT_REQUIRED";
   const activate = (restart = false) => {
     if (intent.current || jobs.locked()) return;
     intent.current = true;

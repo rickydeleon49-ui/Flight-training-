@@ -257,7 +257,7 @@ export async function invokeStudySetSave(
     result = await call("save_study_set_atomically", { operation, ...(guideJobId ? { guideJobId } : {}) });
   } catch (rejection) {
     const { code, message } = (rejection ?? {}) as { code?: unknown; message?: unknown };
-    if (guideJobId && code === "SOURCE_CHANGED") throw sectionGuideError(rejection);
+    if (guideJobId && (code === "SOURCE_CHANGED" || code === "PLAN_CHANGED")) throw sectionGuideError(rejection);
     if (isStudySetErrorCode(code) && code !== "IPC_TRANSPORT_ERROR" && message === STUDY_SET_ERROR_MESSAGES[code]) {
       throw new StudySetSaveError(code);
     }

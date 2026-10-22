@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
-import { useGeminiJobs } from "@/state/GeminiJobs";
+import { useGeminiJobs, isNewerJob } from "@/state/GeminiJobs";
 import * as gemini from "@/services/gemini";
 import * as pdf from "@/services/pdf";
 import * as documents from "@/services/documents";
@@ -129,6 +129,33 @@ describe("section guide progress and deliberate recovery", () => {
     expect(gemini.restartStudyGuide).toHaveBeenCalledWith("section-job", true, expect.objectContaining({ materialId: "m", chosenPages: record().draft!.identity!.chosenPages }));
     await waitFor(() => expect(jobs.jobs.some(j => j.jobId === "section-job")).toBe(true));
     expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled(); noProviderText();
+  });
+  it("PLAN_CHANGED shows app update message and the same choices as SOURCE_CHANGED", async () => {
+    await fail("PLAN_CHANGED");
+    expect(screen.getByText("Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Keep my earlier work" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start a new guide" })).toBeTruthy();
+    noProviderText();
+  });
+  it("time limit native message maps to STAGE_TIMEOUT and notice says finished sections are kept", async () => {
+    const timeLimitMsg = "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.";
+    const err = gemini.sectionGuideError({ code: "GUIDE_PAUSED", message: timeLimitMsg });
+    expect(err.code).toBe("STAGE_TIMEOUT");
+    await fail(err.code);
+    expect(screen.getByRole("alert").textContent).toContain("Your finished sections are kept.");
+    expect(screen.getByText("Your 3 finished sections are saved. Try again to continue with section 4.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    noProviderText();
+  });
+  it("with two section-guide study-aid jobs for the same material, only the newer job's notice renders", async () => {
+    const olderRecord = { ...record("failed", 1), id: "old-section-job", createdAt: 1000, error: "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide." };
+    const newerRecord = { ...record("failed", 3), id: "new-section-job", createdAt: 2000, error: "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide." };
+    vi.mocked(gemini.listGeminiJobs).mockResolvedValue([olderRecord, newerRecord]);
+    await open();
+    expect(jobs.jobs).toHaveLength(2);
+    expect(isNewerJob(jobs.jobs[1]!, jobs.jobs[0]!)).toBe(true);
+    expect(screen.getAllByRole("button", { name: "Start a new guide" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Keep my earlier work" })).toHaveLength(1);
   });
   it("a restarted job can report progress before answering without duplicating the retained draft", async () => {
     await fail("SOURCE_CHANGED"); const answer = deferred<gemini.GeneratedStudyAid & gemini.GenerationJobIdentity>();
