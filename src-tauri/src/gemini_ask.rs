@@ -21,7 +21,8 @@ pub const ASK_INSTRUCTION: &str =
     "You are a patient flight-training study helper for a student pilot. \
      Answer from the attached PDF and the given context; say plainly when the PDF does not cover it. \
      Cite PDF page numbers you used. Keep it short and clear. \
-     This is a study aid; remind her to check FAA guidance and her instructor for anything operational.";
+     This is a study aid; remind her to check FAA guidance and her instructor for anything operational. \
+     Write plain text with no Markdown: no asterisks or headings; separate paragraphs with a blank line.";
 
 pub const ASK_GEMINI_BUDGET: Duration = Duration::from_secs(90);
 
@@ -93,6 +94,19 @@ pub fn validate_history(history: &[AskHistoryTurn]) -> Result<&[AskHistoryTurn],
     Ok(turns)
 }
 
+/// Gemini sometimes escapes line breaks twice or adds Markdown emphasis even
+/// when asked for plain text; the answer is shown as plain text, so both are
+/// turned back into what she should read.
+fn plain_answer(raw: &str) -> String {
+    raw.replace("\\r\\n", "\n")
+        .replace("\\n", "\n")
+        .replace("\\t", " ")
+        .replace("**", "")
+        .replace("__", "")
+        .trim()
+        .to_string()
+}
+
 pub fn parse_and_validate_answer(
     text: &str,
     pdf_page_count: Option<u32>,
@@ -100,7 +114,7 @@ pub fn parse_and_validate_answer(
     let parsed: RawAskResponse = serde_json::from_str(text)
         .map_err(|_| "Gemini did not return a usable answer. Try asking again.".to_string())?;
 
-    let answer = parsed.answer.trim().to_string();
+    let answer = plain_answer(&parsed.answer);
     if answer.is_empty() {
         return Err("Gemini did not return an answer. Try asking again.".to_string());
     }
@@ -271,6 +285,17 @@ mod tests {
     use std::sync::Arc;
 
     const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
+
+    #[test]
+    fn answers_lose_escaped_line_breaks_and_markdown_emphasis() {
+        let text = r#"{"answer":"Two kinds:\\n\\n1. **Power-off** stall.\\n2. __Power-on__ stall.","sourcePages":[2]}"#;
+        let answer = parse_and_validate_answer(text, Some(5)).unwrap();
+        assert_eq!(
+            answer.answer,
+            "Two kinds:\n\n1. Power-off stall.\n2. Power-on stall."
+        );
+        assert_eq!(answer.source_pages, vec![2]);
+    }
 
     fn synthetic_pdf(pages: u32) -> Vec<u8> {
         let mut document = Document::with_version("1.5");
