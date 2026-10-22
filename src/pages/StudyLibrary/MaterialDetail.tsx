@@ -78,6 +78,7 @@ import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
 import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
+import { MaterialStartHere } from "./MaterialStartHere";
 
 export function MaterialDetail() {
   const { materialId } = useParams();
@@ -523,8 +524,11 @@ function MaterialDetailPage() {
 
       <div className="detail">
         <div className="detail__column">
+          <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
+            geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
+            fileMissing={fileMissing} />
           {material.filePath ? (
-            <Card>
+            <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
                 <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
                   {fileMissing ? <AlertIcon /> : <DocumentIcon />}
@@ -538,18 +542,28 @@ function MaterialDetailPage() {
                   </div>
                   <div className="file-row__actions">
                     {canSplit ? (
-                      <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                      <div className="file-action-tip">
+                        <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                        <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p>
+                      </div>
                     ) : null}
                     {canSplit ? (
+                      <div className="file-action-tip">
                       <Button variant="secondary" onClick={() => setSplittingManually(true)}>
                         Take out a chapter
                       </Button>
+                      <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p>
+                      </div>
                     ) : null}
                     {!fileMissing && canHandleFiles() ? (
+                      <div className="file-action-tip">
                       <Button onClick={open}>
                         <ExternalIcon size={15} /> Open
                       </Button>
+                      <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app." : "Opens the file in its usual app on your Mac."}</p>
+                      </div>
                     ) : null}
+                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
                   </div>
                 </div>
                 {fileMissing ? (
@@ -580,7 +594,7 @@ function MaterialDetailPage() {
                 ) : null}
                 <SplitLineageDetails material={material} materials={data.materials} />
               </CardBody>
-            </Card>
+            </Card></div>
           ) : null}
 
           {material.filePath ? (
@@ -592,9 +606,9 @@ function MaterialDetailPage() {
             />
           ) : null}
 
-          {isPdf && material.filePath ? <PdfStudyKitPanel material={material} /> : null}
+          {isPdf && material.filePath ? <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel material={material} /></div> : null}
 
-          {material.filePath ? <OfflineStudyPanel material={material} /> : null}
+          {material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div> : null}
 
           {!material.filePath && !studySet ? (
             <Card>
@@ -608,7 +622,7 @@ function MaterialDetailPage() {
           ) : null}
 
           {material.filePath || studySet ? (
-            <Card>
+            <div id="material-study-guide" tabIndex={-1}><Card>
               <CardHeader
                 title={pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
                 eyebrow={
@@ -848,7 +862,7 @@ function MaterialDetailPage() {
                   <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
                 ) : null}
               </CardBody>
-            </Card>
+            </Card></div>
           ) : null}
 
           {material ? (
@@ -1124,6 +1138,7 @@ function MaterialDetailPage() {
                     mutate((repos) => repos.documents.update(material.id, { reviewStatus: value }))
                   }
                 />
+                <p className="tiny muted">Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.</p>
                 <Button
                   block
                   onClick={() =>
@@ -1134,6 +1149,7 @@ function MaterialDetailPage() {
                 >
                   Mark as reviewed today
                 </Button>
+                <p className="tiny muted">Records today's date as your last review. Choose your review status separately.</p>
                 {material.lastReviewedAt ? (
                   <p className="tiny dim">
                     {formatLocalDay(material.lastReviewedAt, today)

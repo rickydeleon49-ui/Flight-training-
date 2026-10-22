@@ -236,6 +236,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                   Check pages
                 </Button>
               </div>
+              <p className="tiny muted">Check pages counts this PDF's pages and checks whether the file has changed.</p>
               {checkNote ? (
                 <p className="tiny" role="status">
                   {checkNote}
@@ -254,6 +255,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                   Open at page
                 </Button>
               </form>
+              <p className="tiny muted">Open at page opens your PDF reader and remembers the page you asked for. You may need to go to that page in the reader.</p>
             </>
           )}
 
@@ -312,6 +314,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                 </Button>
               ) : null}
             </div>
+            <p className="tiny muted">Save a named place so you can return to it later without remembering the page number.</p>
             {desktop && !identity ? <p className="tiny muted">Check this file&apos;s pages before adding a bookmark.</p> : null}
             {bookmarks.length === 0 ? (
               <p className="tiny muted">No bookmarks yet.</p>
