@@ -179,18 +179,27 @@ fn planner_bounds() {
     let s = &p[0];
     assert!(validate_section(
         s,
-        &json!({"body":"x".repeat(16_000),"sourcePages":[1]}).to_string(),
+        &json!({"body":"x".repeat(crate::study_sets::MAX_BODY),"sourcePages":[1]}).to_string(),
         &(1..=16).collect::<Vec<_>>(),
         "model"
     )
     .is_ok());
     assert!(validate_section(
         s,
-        &json!({"body":"x".repeat(16_001),"sourcePages":[1]}).to_string(),
+        &json!({"body":"x".repeat(crate::study_sets::MAX_BODY + 1),"sourcePages":[1]}).to_string(),
         &(1..=16).collect::<Vec<_>>(),
         "model"
     )
     .is_err());
+    // A dense section that runs past the requested 12,000 characters (as a
+    // 6-page fuel-system section did on the real Powerplant handbook) is kept.
+    assert!(validate_section(
+        s,
+        &json!({"body":"x".repeat(17_500),"sourcePages":[1]}).to_string(),
+        &(1..=16).collect::<Vec<_>>(),
+        "model"
+    )
+    .is_ok());
 }
 
 #[test]
@@ -544,7 +553,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
         let pages: Vec<_> = (first..=last)
             .map(|p| json!({"pdfPage":p,"sourcePage":p}))
             .collect();
-        let prompt=format!("guide-section-prompt-v1: Write only section section-{:02} (Pages {first}–{last}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 16000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
+        let prompt=format!("guide-section-prompt-v1: Write only section section-{:02} (Pages {first}–{last}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 12000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
         let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
         assert_eq!(*body, expected);
         assert!(

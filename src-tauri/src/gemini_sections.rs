@@ -622,6 +622,8 @@ fn digest(content: &ResultBody) -> String {
         .unwrap(),
     )
 }
+/// Section length asked of the model, well under study_sets::MAX_BODY.
+const REQUESTED_BODY_CHARS: usize = 12_000;
 fn validate_section(
     s: &Section,
     text: &str,
@@ -641,7 +643,12 @@ fn validate_section(
     source_pages.dedup();
     source_pages.retain(|p| *p >= s.page_start && *p <= s.page_end && chosen.contains(p));
     source_pages.truncate(10);
-    if a.body.trim().is_empty() || a.body.chars().count() > 16_000 || source_pages.is_empty() {
+    // The prompt asks for at most REQUESTED_BODY_CHARS; models sometimes run
+    // over, so accept anything the study set itself can store.
+    if a.body.trim().is_empty()
+        || a.body.chars().count() > crate::study_sets::MAX_BODY
+        || source_pages.is_empty()
+    {
         return Err(
             "The section answer or its source pages were invalid; earlier sections are kept."
                 .into(),
@@ -664,7 +671,7 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
         .filter(|(_, p)| **p >= section.page_start && **p <= section.page_end)
         .map(|(i, p)| json!({"pdfPage":i+1,"sourcePage":p}))
         .collect();
-    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 16000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
+    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}})
 }
 fn reserve(root: &Path, id: &str, section: &str) -> Option<u32> {
