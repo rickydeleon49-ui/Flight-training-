@@ -23,3 +23,4 @@ These are the recommended defaults. Reply **"I approve SL-D1 through SL-D8"** to
 - **0.5.8 retired.** Its CI build was only linker-signed and macOS called it damaged; 0.5.9 supersedes it.
 - **0.5.9 waits for real-file testing.** "Before we release 5.9 let's get all these fixed and run some more real testing." Card quality and the Preview-edited PDF fix were both held in ("Fix in 0.5.9", "Fix before release").
 - **Oversized single pages** are left out of a split and named, never shrunk (no image dependency).
+- **Simple PDF page, Gemini does the work.** "Study guide flash card and practice test all have their own section and the file splitter at the top"; keep "Start here"; "the make your own isn't a good system, let Gemini do the work". No hand-written guide or practice-question entry points; editing what Gemini made (and anything already saved) stays.
