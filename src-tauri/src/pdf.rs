@@ -621,7 +621,8 @@ impl Drop for SplitFiles {
     }
 }
 
-pub(crate) fn split_range_at(
+#[doc(hidden)]
+pub fn split_range_at(
     root: &Path,
     source_material_id: &str,
     relative_path: &str,
@@ -725,7 +726,8 @@ pub async fn split_pdf_automatically(
     .await
 }
 
-pub(crate) fn split_automatically_at(
+#[doc(hidden)]
+pub fn split_automatically_at(
     root: &Path,
     source_material_id: &str,
     relative_path: &str,
