@@ -9,7 +9,7 @@ use lopdf::{Document, Object, ObjectId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub const ALGORITHM_VERSION: u32 = 1;
+pub const ALGORITHM_VERSION: u32 = 2;
 pub const PROVENANCE_LABEL: &str = "Pulled from your PDF on this Mac";
 
 /// Each page retains its cache key. A stale or differently keyed page is ignored.
@@ -267,7 +267,9 @@ fn suspect_page(text: &str) -> bool {
             .any(|c| c.is_control() && !matches!(c, '\n' | '\r'))
         || text.lines().any(|line| {
             let t = line.trim();
-            t.contains("  ") || t.contains("..") || t.contains("\u{2022}")
+            // Justified prose commonly has two spaces between words. Wider
+            // interior gaps still indicate ambiguous columns or tables.
+            t.contains("   ") || t.contains("..") || t.contains("\u{2022}")
         })
 }
 

@@ -84,6 +84,79 @@ fn glossary_colon_dash_and_sentence_forms() {
     assert_sources(&k, &input(&[(Outcome::Text, text)]));
 }
 
+const JUSTIFIED_PROSE: &str = "  Café  lift  is  defined  as  an  upward  force.  \n  Air  Traffic  Control  (ATC)  directs  traffic.  Lift  supports  the  airplane.  \n";
+
+#[test]
+fn justified_prose_keeps_sentences_cards_and_exact_raw_evidence() {
+    let src = input(&[(Outcome::Text, JUSTIFIED_PROSE)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(k.pages_used, vec![1]);
+    assert_eq!(k.pages_skipped_ambiguous, 0);
+    let definition = k
+        .glossary
+        .iter()
+        .find(|c| c.rule == Rule::Definition)
+        .unwrap();
+    assert_eq!(definition.term, "Café  lift");
+    assert_eq!(definition.answer, "an  upward  force.");
+    evidence(
+        &definition.evidence[0],
+        1,
+        2,
+        "Café  lift  is  defined  as  an  upward  force.",
+    );
+    let acronym = k.glossary.iter().find(|c| c.rule == Rule::Acronym).unwrap();
+    assert_eq!(acronym.term, "ATC");
+    assert_eq!(acronym.answer, "Air  Traffic  Control");
+    evidence(
+        &acronym.evidence[0],
+        1,
+        JUSTIFIED_PROSE.find("Air").unwrap(),
+        "Air  Traffic  Control  (ATC)",
+    );
+    let sentences: Vec<_> = k.outline.iter().flat_map(|s| &s.sentences).collect();
+    // Outlines intentionally keep at most two sentences per section.
+    assert_eq!(
+        sentences
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>(),
+        vec![
+            "Café  lift  is  defined  as  an  upward  force.",
+            "Air  Traffic  Control  (ATC)  directs  traffic.",
+        ]
+    );
+    for sentence in sentences {
+        assert_eq!(sentence.text, sentence.evidence.quote);
+        let e = &sentence.evidence;
+        assert_eq!(&JUSTIFIED_PROSE[e.start_offset..e.end_offset], e.quote);
+    }
+    assert!(k.cloze.iter().any(|c| c.answer == "ATC"));
+    assert!(k.cloze.iter().any(|c| c.answer == "Café  lift"));
+    assert_sources(&k, &src);
+}
+
+#[test]
+fn justified_prose_does_not_admit_layout_garbled_pages() {
+    for garbled in [
+        "Lift: An upward force.   Drag: An opposing force.",
+        "Lift: An upward force.     Drag: An opposing force.",
+        "Lift........An upward force.",
+        "Lift.. An upward force.",
+        "Lift:\tAn upward force.",
+        "Lift | An upward force.",
+        "Lift: An upward \u{FFFD} force.",
+        "Lift: An upward \u{0007} force.",
+        "\u{2022} Lift: An upward force.",
+    ] {
+        let src = input(&[(Outcome::Text, JUSTIFIED_PROSE), (Outcome::Text, garbled)]);
+        let k = extract(&src, None).unwrap();
+        assert_eq!(k.pages_used, vec![1], "{garbled:?}");
+        assert_eq!(k.pages_skipped_ambiguous, 1, "{garbled:?}");
+        assert_sources(&k, &src);
+    }
+}
+
 #[test]
 fn acronym_explicit_only_and_conflicts_suppressed() {
     let src = input(&[(Outcome::Text, "Air Traffic Control (ATC) directs traffic.\nPIC (Pilot In Command) is responsible.\nXYZ is unexplained.\nWrong Phrase (QQ) is ignored."),
@@ -391,7 +464,7 @@ fn label_is_pulled_from_your_pdf_never_ai_or_verified() {
         assert!(!PROVENANCE_LABEL.to_lowercase().contains(word));
     }
     let json = serde_json::to_value(kit("Lift: An upward force.")).unwrap();
-    assert_eq!(json["algorithmVersion"], 1);
+    assert_eq!(json["algorithmVersion"], 2);
     assert_eq!(json["contentSha256"], "a".repeat(64));
 }
 
