@@ -47,9 +47,10 @@ it("places Start here first, connects its destinations, and explains file, page 
   }
   expect(screen.getByText("Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.")).toBeTruthy();
   expect(screen.getByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeTruthy();
-  expect(screen.getByText("Opens the PDF in your Mac's PDF app.")).toBeTruthy();
+  expect(screen.getByText("Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page.")).toBeTruthy();
   expect(await screen.findByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
-  expect(screen.getByText("Open at page opens your PDF reader and remembers the page you asked for. You may need to go to that page in the reader.")).toBeTruthy();
+  // "Open at page" was removed (owner, 22 October): no trace of it or its tip.
+  expect(screen.queryByText(/Open at page/)).toBeNull();
   expect(screen.getByText("Save a named place so you can return to it later without remembering the page number.")).toBeTruthy();
   expect(screen.getByText("Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.")).toBeTruthy();
   expect(screen.getByText("Records today's date as your last review. Choose your review status separately.")).toBeTruthy();

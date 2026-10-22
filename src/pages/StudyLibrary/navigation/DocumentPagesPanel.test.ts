@@ -5,6 +5,12 @@
  * database with the real navigation transaction. The desktop inspector and
  * verified opener are stand-ins on that database (they record what they were
  * asked); no real file, reader, profile, provider or network is used.
+ *
+ * "Open at page" and its reading marks were removed from the panel (owner,
+ * 22 October; macOS cannot reliably open a reader at a page), so these tests
+ * assert those controls are gone while Check pages and bookmarks — including
+ * a bookmark's own open, which still hands the file to the reader with its
+ * page shown next to it — keep working.
  */
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -118,9 +124,17 @@ async function tuple() {
   return row ? JSON.parse(row.t) : null;
 }
 
-async function openAt(scope: HTMLElement, page: string) {
-  fireEvent.change(within(scope).getByLabelText("PDF page"), { target: { value: page } });
-  fireEvent.click(within(scope).getByRole("button", { name: "Open at page" }));
+/** Checks the pages, adds one bookmark and returns the rendered list. */
+async function addBookmark(scope: HTMLElement, page: string, title: string, label?: string) {
+  fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+  await within(scope).findByText("This PDF has 50 pages.");
+  fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
+  const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
+  fireEvent.change(within(dialog).getByLabelText("PDF page"), { target: { value: page } });
+  if (label !== undefined) fireEvent.change(within(dialog).getByLabelText("Printed page (optional)"), { target: { value: label } });
+  fireEvent.change(within(dialog).getByLabelText("Name"), { target: { value: title } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save bookmark" }));
+  return within(scope).findByRole("list", { name: "Bookmarks" });
 }
 
 beforeEach(() => {
@@ -138,58 +152,61 @@ afterEach(() => {
 });
 
 describe("the pages panel", () => {
-  it("opens at a physical page, records only that it was asked for, and reads separately", async () => {
+  it("no longer offers open-at-page or its reading marks, and keeps Check pages and Bookmarks", async () => {
+    // Reverting the removal makes these absence assertions fail.
     await seed();
     renderDetail();
     const scope = await panel();
-    await openAt(scope, "12");
-    expect(await within(scope).findByText(/Opened in your PDF reader\. Go to PDF page 12 there; your reader may not jump to it by itself\./)).toBeTruthy();
-    expect(opened).toEqual([{ materialId: M, hash: A }]);
-    await within(scope).findByText(/Last page you asked to open/);
-    expect(await tuple()).toEqual([12, 0, A, "active", 1]);
+    expect(within(scope).queryByLabelText("PDF page")).toBeNull();
+    expect(within(scope).queryByRole("button", { name: "Open at page" })).toBeNull();
+    expect(within(scope).queryByText(/Open at page opens your PDF reader/)).toBeNull();
+    expect(within(scope).queryByText(/Last page you asked to open/)).toBeNull();
+    expect(within(scope).queryByRole("checkbox", { name: /I've read this page/ })).toBeNull();
 
-    const read = within(scope).getByRole("checkbox", { name: /I've read this page/ }) as HTMLInputElement;
-    expect(read.checked).toBe(false);
-    fireEvent.click(read);
-    await waitFor(async () => expect(await tuple()).toEqual([12, 1, A, "active", 1]));
-    await waitFor(() => expect((within(scope).getByRole("checkbox", { name: /I've read this page/ }) as HTMLInputElement).checked).toBe(true));
-    fireEvent.click(within(scope).getByRole("checkbox", { name: /I've read this page/ }));
-    await waitFor(async () => expect(await tuple()).toEqual([12, 0, A, "active", 1]));
+    // Kept: the page count line and Check pages with its tip.
+    await within(scope).findByText("This file's pages haven't been checked yet. Use Check pages to count them.");
+    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    await within(scope).findByText("This PDF has 50 pages.");
+    expect(within(scope).getByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
+
+    // Kept: bookmarks. addBookmark drives the dialog's own "PDF page" field
+    // (the only page input left, and the only one under this card while the
+    // dialog is open); opening a bookmark still hands the file to the reader
+    // with the bookmark's page shown next to it — without the removed status.
+    const list = await addBookmark(scope, "9", "Charts");
+    expect(within(scope).queryByLabelText("PDF page")).toBeNull();
+    expect(within(list).getByText("Charts")).toBeTruthy();
+    expect(within(list).getByText("PDF page 9")).toBeTruthy();
+    fireEvent.click(within(list).getByRole("button", { name: "Open Charts at PDF page 9" }));
+    await waitFor(() => expect(opened).toEqual([{ materialId: M, hash: A }]));
+    expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
   });
 
-  it("refuses a page past the end or not a number, with an explanation, and opens nothing", async () => {
+  it("a bookmark that opened but could not be saved offers a save-only retry that does not reopen the file", async () => {
     await seed();
     renderDetail();
     const scope = await panel();
-    await openAt(scope, "abc");
-    expect(await within(scope).findByText("Enter a whole page number, like 12.")).toBeTruthy();
-    await openAt(scope, "51");
-    expect(await within(scope).findByText("This document has 50 pages, so there is no page 51.")).toBeTruthy();
-    expect(opened).toEqual([]);
-    expect(await tuple()).toBeNull();
-  });
-
-  it("a failed save offers a save-only retry that does not reopen the file", async () => {
-    await seed();
-    renderDetail();
-    const scope = await panel();
+    const list = await addBookmark(scope, "7", "Retry place");
     commitFails = new NavigationError("STORAGE_FAILURE", NAVIGATION_ERROR_MESSAGES.STORAGE_FAILURE);
-    await openAt(scope, "7");
+    fireEvent.click(within(list).getByRole("button", { name: "Open Retry place at PDF page 7" }));
     const retry = await within(scope).findByRole("button", { name: "Try saving again" });
     expect(within(scope).getByText(/Opened, but the page wasn't saved/)).toBeTruthy();
     expect(await tuple()).toBeNull();
     fireEvent.click(retry);
-    expect(await within(scope).findByText(/Go to PDF page 7 there/)).toBeTruthy();
-    expect(await tuple()).toEqual([7, 0, A, "active", 1]);
+    await waitFor(async () => expect(await tuple()).toEqual([7, 0, A, "active", 1]));
     expect(opened).toHaveLength(1);
   });
 
   it("a missing file explains itself and keeps restore reachable", async () => {
+    // The controller's failure path (here: a source badge's check) is what
+    // shows the panel's restore affordance; a failed "Check pages" only
+    // reports the error line.
     await seed();
     renderDetail();
     const scope = await panel();
     inspectFails = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
-    await openAt(scope, "3");
+    const badge = await screen.findByRole("button", { name: /Source p\. 12/ });
+    fireEvent.click(badge);
     expect(await within(scope).findByText(NAVIGATION_ERROR_MESSAGES.FILE_MISSING)).toBeTruthy();
     expect(within(scope).getByRole("button", { name: "Find and restore file" })).toBeTruthy();
   });
@@ -215,8 +232,11 @@ describe("the pages panel", () => {
     const [bookmark] = await db.select<{ originating_content_sha256: string; title: string }>("SELECT * FROM material_bookmarks");
     expect(bookmark).toMatchObject({ originating_content_sha256: A, title: "Airspace chart" });
 
+    // Opening a bookmark still hands the file to the reader; its page is
+    // shown next to the bookmark, and the removed status stays unseen.
     fireEvent.click(within(list).getByRole("button", { name: /Open Airspace chart at PDF page 9/ }));
-    expect(await within(scope).findByText(/Go to PDF page 9 \(printed page 3-12\) there/)).toBeTruthy();
+    await waitFor(() => expect(opened).toEqual([{ materialId: M, hash: A }]));
+    expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
 
     fireEvent.click(within(list).getByRole("button", { name: "Remove bookmark Airspace chart" }));
     const confirm = await screen.findByRole("dialog", { name: "Remove this bookmark?" });
@@ -262,7 +282,7 @@ describe("source badges", () => {
     expect(await screen.findByText("Source p. 12")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Source p\. 12/ })).toBeNull();
     const scope = await panel();
-    expect(within(scope).getByText(/Opening a file at a page needs the desktop app/)).toBeTruthy();
+    expect(within(scope).getByText(/Checking pages and opening bookmarks need the desktop app/)).toBeTruthy();
     expect(within(scope).queryByRole("button", { name: "Open at page" })).toBeNull();
   });
 
@@ -293,8 +313,9 @@ describe("saved places open only on their own content (M4S1-R5)", () => {
     renderDetail();
     const scope = await panel();
     const open = await savedBookmark(scope);
-    await openAt(scope, "4");
-    await within(scope).findByText(/Go to PDF page 4 there/);
+    // Open it once on A: that is what saves the reading state now.
+    fireEvent.click(open);
+    await waitFor(async () => expect(await tuple()).toEqual([9, 0, A, "active", 1]));
     const before = await tuple();
     opened = [];
     fileHash = B;
@@ -314,9 +335,12 @@ describe("saved places open only on their own content (M4S1-R5)", () => {
     const scope = await panel();
     const open = await savedBookmark(scope);
     fireEvent.click(open);
-    expect(await within(scope).findByText(/Go to PDF page 9 \(printed page A-label\) there/)).toBeTruthy();
-    expect(opened).toEqual([{ materialId: M, hash: A }]);
-    expect(await tuple()).toEqual([9, 0, A, "active", 1]);
+    await waitFor(() => expect(opened).toEqual([{ materialId: M, hash: A }]));
+    await waitFor(async () => expect(await tuple()).toEqual([9, 0, A, "active", 1]));
+    // Where to go stays written next to the bookmark itself; the removed
+    // "Opened in your PDF reader…" status is not shown.
+    expect(within(scope).getByText(/PDF page 9 \(printed page A-label\)/)).toBeTruthy();
+    expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
   });
 
   it("a file replaced while the bookmark's inspection is held is refused", async () => {
