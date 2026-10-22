@@ -55,6 +55,7 @@ import { materialLinkAnchor, resolveMaterialLink, type MaterialLinkTarget } from
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { CardReviewPanel } from "./CardReviewPanel";
+import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
@@ -357,6 +358,12 @@ function MaterialDetailPage() {
     .toLowerCase()
     .endsWith(".pdf");
   const isOverLimit = Boolean(isPdf && !fileForAi.ready);
+  const pdfAskContext = (() => {
+    const title = material.title || "";
+    const summary = studySet?.summary ? `\n\n${studySet.summary}` : "";
+    const combined = `${title}${summary}`;
+    return combined.length > 8000 ? combined.slice(0, 8000) : combined;
+  })();
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
@@ -860,6 +867,17 @@ function MaterialDetailPage() {
                     </p>
                   ) : null}
 
+                  {isPdf && !isOverLimit ? (
+                    <div style={{ marginTop: "var(--space-4)" }}>
+                      <AskGeminiPanel
+                        materialId={material.id}
+                        relativePath={material.filePath ?? null}
+                        context={pdfAskContext}
+                        buttonLabel="Ask about this PDF"
+                      />
+                    </div>
+                  ) : null}
+
                   {generationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
                       <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
@@ -1063,6 +1081,18 @@ function MaterialDetailPage() {
                             <span>{cardRevealed ? guideFlashcards[safeCardIndex]?.card.back : guideFlashcards[safeCardIndex]?.card.front}</span>
                             <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
                           </button>
+                          {cardRevealed && guideFlashcards[safeCardIndex]?.card ? (
+                            <AskGeminiPanel
+                              materialId={material.id}
+                              relativePath={material.filePath ?? null}
+                              context={formatFlashcardContext(
+                                guideFlashcards[safeCardIndex].card.front,
+                                guideFlashcards[safeCardIndex].card.back,
+                                guideFlashcards[safeCardIndex].card.sourcePage,
+                              )}
+                              buttonLabel="Explain this"
+                            />
+                          ) : null}
                           <div className="row row--between">
                             <Button
                               size="small"
@@ -1095,6 +1125,7 @@ function MaterialDetailPage() {
                       <CardReviewPanel
                         materialId={material.id}
                         materialTitle={material.title}
+                        materialFilePath={material.filePath ?? null}
                         repository={repositories?.cardReviews}
                         contentKey={studySet.updatedAt}
                         autoStart={startCardReview}

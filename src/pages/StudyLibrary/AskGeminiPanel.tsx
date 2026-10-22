@@ -7,6 +7,18 @@ export interface AskGeminiPanelProps {
   materialId: string;
   relativePath?: string | null;
   context: string;
+  buttonLabel?: string;
+}
+
+export function formatFlashcardContext(front: string, back: string, sourcePage?: number | null): string {
+  const parts = [
+    `Card front: ${front}`,
+    `Card back: ${back}`,
+  ];
+  if (sourcePage !== null && sourcePage !== undefined) {
+    parts.push(`Source page: ${sourcePage}`);
+  }
+  return parts.join("\n\n");
 }
 
 interface ChatTurn {
@@ -33,7 +45,7 @@ function persistGoogleNoteSeen(): void {
   }
 }
 
-export function AskGeminiPanel({ materialId, relativePath, context }: AskGeminiPanelProps) {
+export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel }: AskGeminiPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<ChatTurn[]>([]);
@@ -119,7 +131,7 @@ export function AskGeminiPanel({ materialId, relativePath, context }: AskGeminiP
           variant="ghost"
           onClick={() => setIsOpen(true)}
         >
-          Why? Ask Gemini
+          {buttonLabel ?? "Why? Ask Gemini"}
         </Button>
       </div>
     );
@@ -142,15 +154,33 @@ export function AskGeminiPanel({ materialId, relativePath, context }: AskGeminiP
         <span className="small bold" style={{ color: "var(--fg-default)" }}>
           Ask Gemini
         </span>
-        <Button
-          type="button"
-          size="small"
-          variant="ghost"
-          onClick={() => setIsOpen(false)}
-          aria-label="Close Ask Gemini"
-        >
-          Close
-        </Button>
+        <div className="row row--gap-2" style={{ alignItems: "center" }}>
+          {history.length > 0 && (
+            <Button
+              type="button"
+              size="small"
+              variant="ghost"
+              disabled={isLoading}
+              onClick={() => {
+                setHistory([]);
+                setError(null);
+                setQuestion("");
+              }}
+              aria-label="Ask another"
+            >
+              Ask another
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="small"
+            variant="ghost"
+            onClick={() => setIsOpen(false)}
+            aria-label="Close Ask Gemini"
+          >
+            Close
+          </Button>
+        </div>
       </div>
 
       {showGoogleNote && (
@@ -211,6 +241,27 @@ export function AskGeminiPanel({ materialId, relativePath, context }: AskGeminiP
                       p. {page}
                     </Badge>
                   ))}
+                </div>
+              )}
+              {turn.role === "model" && (
+                <div style={{ marginTop: "var(--space-1)" }}>
+                  <button
+                    type="button"
+                    role="link"
+                    disabled
+                    aria-disabled="true"
+                    title="Coming in the real version"
+                    className="button button--ghost button--small link-button"
+                    style={{
+                      padding: 0,
+                      opacity: 0.6,
+                      cursor: "not-allowed",
+                      fontSize: "0.8rem",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Save as flashcard
+                  </button>
                 </div>
               )}
             </div>
