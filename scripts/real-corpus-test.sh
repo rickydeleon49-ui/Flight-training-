@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <corpus-dir> [out-dir]" >&2
   exit 1
@@ -16,5 +18,5 @@ if [ $# -ge 2 ] && [ -n "$2" ]; then
   export HFD_REAL_CORPUS_OUT="$OUT_DIR"
 fi
 
-cargo test --locked --release --manifest-path /Users/rickymac/code/Flight-training-real-test/src-tauri/Cargo.toml --test real_corpus -- --ignored --nocapture --test-threads=1
+cargo test --locked --release --manifest-path "$ROOT/src-tauri/Cargo.toml" --test real_corpus -- --ignored --nocapture --test-threads=1
 exit $?
