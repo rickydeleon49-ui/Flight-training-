@@ -195,6 +195,67 @@ fn verify_page_coverage(
     }
 }
 
+fn word_multiset(text: &str) -> HashMap<String, usize> {
+    let mut counts = HashMap::new();
+    let mut current = String::new();
+    for c in text.chars() {
+        if c.is_alphanumeric() {
+            for lc in c.to_lowercase() {
+                current.push(lc);
+            }
+        } else {
+            if current.chars().count() >= 2 {
+                *counts.entry(current).or_insert(0) += 1;
+            }
+            current = String::new();
+        }
+    }
+    if current.chars().count() >= 2 {
+        *counts.entry(current).or_insert(0) += 1;
+    }
+    counts
+}
+
+fn content_match_ok(source_text: &str, part_text: &str) -> Result<(), usize> {
+    let source_words = word_multiset(source_text);
+    if source_words.is_empty() {
+        return Ok(());
+    }
+    let part_words = word_multiset(part_text);
+    let mut missing_count = 0;
+    for (word, &s_count) in &source_words {
+        let p_count = part_words.get(word).copied().unwrap_or(0);
+        if s_count > p_count {
+            missing_count += s_count - p_count;
+        }
+    }
+    if missing_count <= 3 {
+        Ok(())
+    } else {
+        Err(missing_count)
+    }
+}
+
+fn verify_content_match(
+    source_doc: &lopdf::Document,
+    source_start_page: u32,
+    part_doc: &lopdf::Document,
+    part_label: &str,
+) -> Result<(), String> {
+    let part_page_count = part_doc.get_pages().len() as u32;
+    for part_page in 1..=part_page_count {
+        let source_page = source_start_page + part_page - 1;
+        let source_text = source_doc.extract_text(&[source_page]).unwrap_or_default();
+        let part_text = part_doc.extract_text(&[part_page]).unwrap_or_default();
+        if let Err(missing_count) = content_match_ok(&source_text, &part_text) {
+            return Err(format!(
+                "{part_label} page {part_page} (source page {source_page}): missing {missing_count} words"
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn record_failure(
     file: &str,
     check: &str,
@@ -597,6 +658,14 @@ fn run_read_and_kit(
     }
 }
 
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct EdgeCaseRow {
+    name: String,
+    status: String,
+    notes: String,
+}
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ReportFileEntry {
@@ -635,6 +704,8 @@ struct ReportJson {
     failure_count: usize,
     failures: Vec<ReportFailureEntry>,
     files: Vec<ReportFileEntry>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    split_edge_cases: Vec<EdgeCaseRow>,
 }
 
 #[test]
@@ -691,6 +762,859 @@ fn judge_evidence() {
 }
 
 #[test]
+fn judge_content_pass() {
+    assert!(content_match_ok(
+        "The quick brown fox jumps over the lazy dog.",
+        "The quick brown fox jumps over the lazy dog."
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "FAA-H-8083-25B, Pilot's Handbook of Aeronautical Knowledge",
+        "faa h 8083 25b pilot s handbook of aeronautical knowledge"
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "airspeed altitude heading vertical speed engine rpm fuel",
+        "airspeed altitude heading vertical speed engine rpm fuel"
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "airspeed altitude heading vertical speed engine rpm fuel",
+        "altitude heading vertical speed engine rpm fuel"
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "airspeed altitude heading vertical speed engine rpm fuel",
+        "heading vertical speed engine rpm fuel"
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "airspeed altitude heading vertical speed engine rpm fuel",
+        "vertical speed engine rpm fuel"
+    )
+    .is_ok());
+    assert!(content_match_ok(
+        "engine oil pressure temperature",
+        "engine oil pressure temperature extra notes added by reader"
+    )
+    .is_ok());
+    assert!(content_match_ok("", "any content here").is_ok());
+    assert!(content_match_ok("   \t\n  ", "any content here").is_ok());
+    assert!(content_match_ok("a b c", "x y z").is_ok());
+    assert_eq!(
+        content_match_ok(
+            "airspeed altitude heading vertical speed engine rpm fuel",
+            "speed engine rpm fuel"
+        ),
+        Err(4)
+    );
+}
+
+#[test]
+fn judge_content_fail() {
+    let res = content_match_ok(
+        "airspeed altitude heading vertical speed engine rpm fuel",
+        "speed engine rpm fuel",
+    );
+    assert_eq!(res, Err(4));
+
+    let res2 = content_match_ok("navigation compass rudder elevator aileron", "");
+    assert_eq!(res2, Err(5));
+
+    let res3 = content_match_ok(
+        "warning warning warning warning warning danger",
+        "warning danger",
+    );
+    assert_eq!(res3, Err(4));
+}
+
+fn run_nested_split_part_1(
+    part1_path: &Path,
+    part1_name: &str,
+    part1_pages: u32,
+    failures: &mut Vec<String>,
+    structured_failures: &mut Vec<ReportFailureEntry>,
+) -> EdgeCaseRow {
+    let lib_2f = TempLibrary::new("edge-2f");
+    let dest = lib_2f.doc_dir().join(part1_name);
+    if let Err(e) = std::fs::copy(part1_path, &dest) {
+        let reason = format!("cannot copy part 1 for nested split: {e}");
+        record_failure(
+            part1_name,
+            "EDGE_2F",
+            &reason,
+            failures,
+            structured_failures,
+        );
+        return EdgeCaseRow {
+            name: "2f. Nested split Part 1".to_string(),
+            status: "FAIL".to_string(),
+            notes: reason,
+        };
+    }
+    let part1_size = std::fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
+    if let Err(e) = lib_2f.init_db(part1_name, part1_size) {
+        let reason = format!("cannot init db for nested split: {e}");
+        record_failure(
+            part1_name,
+            "EDGE_2F",
+            &reason,
+            failures,
+            structured_failures,
+        );
+        return EdgeCaseRow {
+            name: "2f. Nested split Part 1".to_string(),
+            status: "FAIL".to_string(),
+            notes: reason,
+        };
+    }
+    let doc_part1 = match lopdf::Document::load(&dest) {
+        Ok(d) => d,
+        Err(e) => {
+            let reason = format!("cannot load part 1 with lopdf: {e}");
+            record_failure(
+                part1_name,
+                "EDGE_2F",
+                &reason,
+                failures,
+                structured_failures,
+            );
+            return EdgeCaseRow {
+                name: "2f. Nested split Part 1".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            };
+        }
+    };
+    let split_res = pdf::split_automatically_at(
+        &lib_2f.path,
+        "source-mat",
+        part1_name,
+        "batch-nested",
+        part1_name,
+        &|_| {},
+    );
+    match split_res {
+        Ok(receipt) => {
+            if let Err(e) =
+                verify_page_coverage(part1_pages, &receipt.core.plan, &receipt.core.skipped_pages)
+            {
+                record_failure(part1_name, "EDGE_2F", &e, failures, structured_failures);
+                return EdgeCaseRow {
+                    name: "2f. Nested split Part 1".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: e,
+                };
+            }
+            for (i, part) in receipt.core.plan.iter().enumerate() {
+                let p_path = lib_2f.doc_dir().join(&part.file_path);
+                match lopdf::Document::load(&p_path) {
+                    Ok(doc) => {
+                        if let Err(e) = verify_content_match(
+                            &doc_part1,
+                            part.selection.start,
+                            &doc,
+                            &format!("nested part {} ({})", i + 1, part.file_path),
+                        ) {
+                            record_failure(
+                                part1_name,
+                                "EDGE_2F",
+                                &e,
+                                failures,
+                                structured_failures,
+                            );
+                            return EdgeCaseRow {
+                                name: "2f. Nested split Part 1".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: e,
+                            };
+                        }
+                    }
+                    Err(e) => {
+                        let reason = format!("cannot reopen nested part {}: {e}", part.file_path);
+                        record_failure(
+                            part1_name,
+                            "EDGE_2F",
+                            &reason,
+                            failures,
+                            structured_failures,
+                        );
+                        return EdgeCaseRow {
+                            name: "2f. Nested split Part 1".to_string(),
+                            status: "FAIL".to_string(),
+                            notes: reason,
+                        };
+                    }
+                }
+            }
+            EdgeCaseRow {
+                name: "2f. Nested split Part 1".to_string(),
+                status: "PASS".to_string(),
+                notes: format!(
+                    "{} parts; coverage and content PASS",
+                    receipt.core.plan.len()
+                ),
+            }
+        }
+        Err(e) => {
+            let reason = format!("nested automatic split failed: {e}");
+            record_failure(
+                part1_name,
+                "EDGE_2F",
+                &reason,
+                failures,
+                structured_failures,
+            );
+            EdgeCaseRow {
+                name: "2f. Nested split Part 1".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    }
+}
+
+struct SplitEdgeCaseTarget<'a> {
+    source_entry: &'a Path,
+    file_name: &'a str,
+    total_source_pages: u32,
+    file_size: u64,
+    source_doc: &'a lopdf::Document,
+}
+
+fn run_split_edge_cases(
+    target: &SplitEdgeCaseTarget<'_>,
+    multi_part_candidate: Option<(&Path, &str, u32)>,
+    failures: &mut Vec<String>,
+    structured_failures: &mut Vec<ReportFailureEntry>,
+) -> Vec<EdgeCaseRow> {
+    let source_entry = target.source_entry;
+    let file_name = target.file_name;
+    let total_source_pages = target.total_source_pages;
+    let file_size = target.file_size;
+    let source_doc = target.source_doc;
+    let mut rows = Vec::new();
+    let temp_lib = TempLibrary::new("edge-cases");
+    let copy_path = temp_lib.doc_dir().join(file_name);
+    if let Err(e) = std::fs::copy(source_entry, &copy_path) {
+        let reason = format!("cannot copy source to edge temp lib: {e}");
+        record_failure(
+            file_name,
+            "EDGE_SETUP",
+            &reason,
+            failures,
+            structured_failures,
+        );
+        return rows;
+    }
+    if let Err(e) = temp_lib.init_db(file_name, file_size) {
+        let reason = format!("cannot init db in edge temp lib: {e}");
+        record_failure(
+            file_name,
+            "EDGE_SETUP",
+            &reason,
+            failures,
+            structured_failures,
+        );
+        return rows;
+    }
+
+    // 2a. take out page 1 only
+    let row_2a = match pdf::split_range_at(
+        &temp_lib.path,
+        "source-mat",
+        file_name,
+        "edge-2a",
+        1,
+        1,
+        "edge_2a_p1.pdf",
+    ) {
+        Ok(receipt) => {
+            if receipt.core.plan.is_empty() {
+                let reason = "split range for page 1 produced no parts".to_string();
+                record_failure(file_name, "EDGE_2A", &reason, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2a. Take out page 1 only".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: reason,
+                }
+            } else {
+                let part = &receipt.core.plan[0];
+                let p_path = temp_lib.doc_dir().join(&part.file_path);
+                match lopdf::Document::load(&p_path) {
+                    Ok(doc) => {
+                        let pages = doc.get_pages().len();
+                        if pages != 1 {
+                            let reason = format!("reopened page count {pages} != 1");
+                            record_failure(
+                                file_name,
+                                "EDGE_2A",
+                                &reason,
+                                failures,
+                                structured_failures,
+                            );
+                            EdgeCaseRow {
+                                name: "2a. Take out page 1 only".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: reason,
+                            }
+                        } else if let Err(e) =
+                            verify_content_match(source_doc, 1, &doc, "2a (page 1)")
+                        {
+                            record_failure(file_name, "EDGE_2A", &e, failures, structured_failures);
+                            EdgeCaseRow {
+                                name: "2a. Take out page 1 only".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: e,
+                            }
+                        } else {
+                            EdgeCaseRow {
+                                name: "2a. Take out page 1 only".to_string(),
+                                status: "PASS".to_string(),
+                                notes: "reopened 1 page; content PASS".to_string(),
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let reason = format!("cannot reopen part with lopdf: {e}");
+                        record_failure(
+                            file_name,
+                            "EDGE_2A",
+                            &reason,
+                            failures,
+                            structured_failures,
+                        );
+                        EdgeCaseRow {
+                            name: "2a. Take out page 1 only".to_string(),
+                            status: "FAIL".to_string(),
+                            notes: reason,
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            let reason = format!("split range failed: {e}");
+            record_failure(file_name, "EDGE_2A", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2a. Take out page 1 only".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    };
+    rows.push(row_2a);
+
+    // 2b. take out the last page only
+    let row_2b = match pdf::split_range_at(
+        &temp_lib.path,
+        "source-mat",
+        file_name,
+        "edge-2b",
+        total_source_pages,
+        total_source_pages,
+        "edge_2b_last.pdf",
+    ) {
+        Ok(receipt) => {
+            if receipt.core.plan.is_empty() {
+                let reason = "split range for last page produced no parts".to_string();
+                record_failure(file_name, "EDGE_2B", &reason, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2b. Take out last page only".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: reason,
+                }
+            } else {
+                let part = &receipt.core.plan[0];
+                let p_path = temp_lib.doc_dir().join(&part.file_path);
+                match lopdf::Document::load(&p_path) {
+                    Ok(doc) => {
+                        let pages = doc.get_pages().len();
+                        if pages != 1 {
+                            let reason = format!("reopened page count {pages} != 1");
+                            record_failure(
+                                file_name,
+                                "EDGE_2B",
+                                &reason,
+                                failures,
+                                structured_failures,
+                            );
+                            EdgeCaseRow {
+                                name: "2b. Take out last page only".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: reason,
+                            }
+                        } else if let Err(e) = verify_content_match(
+                            source_doc,
+                            total_source_pages,
+                            &doc,
+                            "2b (last page)",
+                        ) {
+                            record_failure(file_name, "EDGE_2B", &e, failures, structured_failures);
+                            EdgeCaseRow {
+                                name: "2b. Take out last page only".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: e,
+                            }
+                        } else {
+                            EdgeCaseRow {
+                                name: "2b. Take out last page only".to_string(),
+                                status: "PASS".to_string(),
+                                notes: "reopened 1 page; content PASS".to_string(),
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let reason = format!("cannot reopen part with lopdf: {e}");
+                        record_failure(
+                            file_name,
+                            "EDGE_2B",
+                            &reason,
+                            failures,
+                            structured_failures,
+                        );
+                        EdgeCaseRow {
+                            name: "2b. Take out last page only".to_string(),
+                            status: "FAIL".to_string(),
+                            notes: reason,
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            let reason = format!("split range failed: {e}");
+            record_failure(file_name, "EDGE_2B", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2b. Take out last page only".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    };
+    rows.push(row_2b);
+
+    // 2c. take out the whole document (1..last)
+    let row_2c = match pdf::split_range_at(
+        &temp_lib.path,
+        "source-mat",
+        file_name,
+        "edge-2c",
+        1,
+        total_source_pages,
+        "edge_2c_whole.pdf",
+    ) {
+        Ok(receipt) => {
+            if receipt.core.plan.is_empty() {
+                let reason = "split range for whole document produced no parts".to_string();
+                record_failure(file_name, "EDGE_2C", &reason, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2c. Take out whole document (1..last)".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: reason,
+                }
+            } else {
+                let part = &receipt.core.plan[0];
+                let p_path = temp_lib.doc_dir().join(&part.file_path);
+                match lopdf::Document::load(&p_path) {
+                    Ok(doc) => {
+                        let pages = doc.get_pages().len() as u32;
+                        if pages != total_source_pages {
+                            let reason =
+                                format!("reopened page count {pages} != {total_source_pages}");
+                            record_failure(
+                                file_name,
+                                "EDGE_2C",
+                                &reason,
+                                failures,
+                                structured_failures,
+                            );
+                            EdgeCaseRow {
+                                name: "2c. Take out whole document (1..last)".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: reason,
+                            }
+                        } else if let Err(e) =
+                            verify_content_match(source_doc, 1, &doc, "2c (whole doc)")
+                        {
+                            record_failure(file_name, "EDGE_2C", &e, failures, structured_failures);
+                            EdgeCaseRow {
+                                name: "2c. Take out whole document (1..last)".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: e,
+                            }
+                        } else {
+                            EdgeCaseRow {
+                                name: "2c. Take out whole document (1..last)".to_string(),
+                                status: "PASS".to_string(),
+                                notes: format!("reopened {total_source_pages} pages; content PASS"),
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let reason = format!("cannot reopen part with lopdf: {e}");
+                        record_failure(
+                            file_name,
+                            "EDGE_2C",
+                            &reason,
+                            failures,
+                            structured_failures,
+                        );
+                        EdgeCaseRow {
+                            name: "2c. Take out whole document (1..last)".to_string(),
+                            status: "FAIL".to_string(),
+                            notes: reason,
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            let reason = format!("split range failed: {e}");
+            record_failure(file_name, "EDGE_2C", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2c. Take out whole document (1..last)".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    };
+    rows.push(row_2c);
+
+    // 2d. take out pages 9-25
+    let mut part_2d_path = None;
+    let row_2d = match pdf::split_range_at(
+        &temp_lib.path,
+        "source-mat",
+        file_name,
+        "edge-2d",
+        9,
+        25,
+        "edge_2d_9_25.pdf",
+    ) {
+        Ok(receipt) => {
+            if receipt.core.plan.is_empty() {
+                let reason = "split range for pages 9-25 produced no parts".to_string();
+                record_failure(file_name, "EDGE_2D", &reason, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2d. Take out pages 9-25".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: reason,
+                }
+            } else {
+                let part = &receipt.core.plan[0];
+                let p_path = temp_lib.doc_dir().join(&part.file_path);
+                part_2d_path = Some(p_path.clone());
+                match lopdf::Document::load(&p_path) {
+                    Ok(doc) => {
+                        let pages = doc.get_pages().len();
+                        if pages != 17 {
+                            let reason = format!("reopened page count {pages} != 17");
+                            record_failure(
+                                file_name,
+                                "EDGE_2D",
+                                &reason,
+                                failures,
+                                structured_failures,
+                            );
+                            EdgeCaseRow {
+                                name: "2d. Take out pages 9-25".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: reason,
+                            }
+                        } else if let Err(e) =
+                            verify_content_match(source_doc, 9, &doc, "2d (pages 9-25)")
+                        {
+                            record_failure(file_name, "EDGE_2D", &e, failures, structured_failures);
+                            EdgeCaseRow {
+                                name: "2d. Take out pages 9-25".to_string(),
+                                status: "FAIL".to_string(),
+                                notes: e,
+                            }
+                        } else {
+                            EdgeCaseRow {
+                                name: "2d. Take out pages 9-25".to_string(),
+                                status: "PASS".to_string(),
+                                notes: "reopened 17 pages; content PASS".to_string(),
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let reason = format!("cannot reopen part with lopdf: {e}");
+                        record_failure(
+                            file_name,
+                            "EDGE_2D",
+                            &reason,
+                            failures,
+                            structured_failures,
+                        );
+                        EdgeCaseRow {
+                            name: "2d. Take out pages 9-25".to_string(),
+                            status: "FAIL".to_string(),
+                            notes: reason,
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            let reason = format!("split range failed: {e}");
+            record_failure(file_name, "EDGE_2D", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2d. Take out pages 9-25".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    };
+    rows.push(row_2d);
+
+    // 2e. split automatically a file that is already under the limits
+    let lib_2e = TempLibrary::new("edge-2e");
+    let (target_e_name, target_e_pages) = if total_source_pages <= 1000 && file_size <= 52_428_800 {
+        let dest = lib_2e.doc_dir().join(file_name);
+        let _ = std::fs::copy(source_entry, &dest);
+        let _ = lib_2e.init_db(file_name, file_size);
+        (file_name.to_string(), total_source_pages)
+    } else if let Some(ref p2d) = part_2d_path {
+        let dest = lib_2e.doc_dir().join("under_limits.pdf");
+        let _ = std::fs::copy(p2d, &dest);
+        let sz = std::fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
+        let _ = lib_2e.init_db("under_limits.pdf", sz);
+        ("under_limits.pdf".to_string(), 17)
+    } else {
+        ("none.pdf".to_string(), 0)
+    };
+
+    let row_2e = if target_e_pages > 0 {
+        match pdf::split_automatically_at(
+            &lib_2e.path,
+            "source-mat",
+            &target_e_name,
+            "batch-2e",
+            &target_e_name,
+            &|_| {},
+        ) {
+            Ok(receipt) => {
+                let part_count = receipt.core.plan.len();
+                if part_count != 1 {
+                    let reason = format!("expected 1 part for file under limits, got {part_count}");
+                    record_failure(file_name, "EDGE_2E", &reason, failures, structured_failures);
+                    EdgeCaseRow {
+                        name: "2e. Split under limits automatically".to_string(),
+                        status: "FAIL".to_string(),
+                        notes: reason,
+                    }
+                } else if receipt.core.plan[0].child_page_count != target_e_pages {
+                    let reason = format!(
+                        "part page count {} != {target_e_pages}",
+                        receipt.core.plan[0].child_page_count
+                    );
+                    record_failure(file_name, "EDGE_2E", &reason, failures, structured_failures);
+                    EdgeCaseRow {
+                        name: "2e. Split under limits automatically".to_string(),
+                        status: "FAIL".to_string(),
+                        notes: reason,
+                    }
+                } else if let Err(e) = verify_page_coverage(
+                    target_e_pages,
+                    &receipt.core.plan,
+                    &receipt.core.skipped_pages,
+                ) {
+                    record_failure(file_name, "EDGE_2E", &e, failures, structured_failures);
+                    EdgeCaseRow {
+                        name: "2e. Split under limits automatically".to_string(),
+                        status: "FAIL".to_string(),
+                        notes: e,
+                    }
+                } else {
+                    EdgeCaseRow {
+                        name: "2e. Split under limits automatically".to_string(),
+                        status: "PASS".to_string(),
+                        notes: format!("1 part covering all {target_e_pages} pages"),
+                    }
+                }
+            }
+            Err(e) => {
+                let reason = format!("automatic split failed: {e}");
+                record_failure(file_name, "EDGE_2E", &reason, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2e. Split under limits automatically".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: reason,
+                }
+            }
+        }
+    } else {
+        let reason = "no under-limits file available".to_string();
+        record_failure(file_name, "EDGE_2E", &reason, failures, structured_failures);
+        EdgeCaseRow {
+            name: "2e. Split under limits automatically".to_string(),
+            status: "FAIL".to_string(),
+            notes: reason,
+        }
+    };
+    rows.push(row_2e);
+
+    // 2f. nested: split automatically Part 1 of a split (when a split produced 2+ parts): coverage and CONTENT checks pass
+    let row_2f = if let Some((cand_path, cand_name, cand_pages)) = multi_part_candidate {
+        run_nested_split_part_1(
+            cand_path,
+            cand_name,
+            cand_pages,
+            failures,
+            structured_failures,
+        )
+    } else {
+        EdgeCaseRow {
+            name: "2f. Nested split Part 1".to_string(),
+            status: "PASS".to_string(),
+            notes: "N/A (split did not produce 2+ parts)".to_string(),
+        }
+    };
+    rows.push(row_2f);
+
+    // 2g. split the same source twice: both runs succeed, leave no temp or empty files,
+    // and the second run's parts are byte-identical in page count and coverage to the first.
+    let lib_2g_1 = TempLibrary::new("edge-2g-1");
+    let lib_2g_2 = TempLibrary::new("edge-2g-2");
+    let (target_g_name, target_g_size, target_g_entry) =
+        if total_source_pages <= 1000 && file_size <= 52_428_800 {
+            (file_name.to_string(), file_size, source_entry.to_path_buf())
+        } else if let Some(ref p2d) = part_2d_path {
+            let sz = std::fs::metadata(p2d).map(|m| m.len()).unwrap_or(0);
+            ("under_limits.pdf".to_string(), sz, p2d.clone())
+        } else {
+            (file_name.to_string(), file_size, source_entry.to_path_buf())
+        };
+
+    let _ = std::fs::copy(&target_g_entry, lib_2g_1.doc_dir().join(&target_g_name));
+    let _ = lib_2g_1.init_db(&target_g_name, target_g_size);
+    let _ = std::fs::copy(&target_g_entry, lib_2g_2.doc_dir().join(&target_g_name));
+    let _ = lib_2g_2.init_db(&target_g_name, target_g_size);
+
+    let res_g1 = pdf::split_automatically_at(
+        &lib_2g_1.path,
+        "source-mat",
+        &target_g_name,
+        "batch-2g",
+        &target_g_name,
+        &|_| {},
+    );
+    let res_g2 = pdf::split_automatically_at(
+        &lib_2g_2.path,
+        "source-mat",
+        &target_g_name,
+        "batch-2g",
+        &target_g_name,
+        &|_| {},
+    );
+
+    let row_2g = match (res_g1, res_g2) {
+        (Ok(rec1), Ok(rec2)) => {
+            let mut g_ok = true;
+            let mut g_err = String::new();
+            if let Err(e) = check_temp_docs_folder(&lib_2g_1.doc_dir()) {
+                g_ok = false;
+                g_err = format!("run 1 left temporary or empty files: {e}");
+            } else if let Err(e) = check_temp_docs_folder(&lib_2g_2.doc_dir()) {
+                g_ok = false;
+                g_err = format!("run 2 left temporary or empty files: {e}");
+            } else if rec1.core.plan.len() != rec2.core.plan.len() {
+                g_ok = false;
+                g_err = format!(
+                    "part counts differ: run 1 has {}, run 2 has {}",
+                    rec1.core.plan.len(),
+                    rec2.core.plan.len()
+                );
+            } else if rec1.core.skipped_pages != rec2.core.skipped_pages {
+                g_ok = false;
+                g_err = "skipped pages differ between run 1 and run 2".to_string();
+            } else {
+                for (i, (p1, p2)) in rec1.core.plan.iter().zip(rec2.core.plan.iter()).enumerate() {
+                    if p1.child_page_count != p2.child_page_count {
+                        g_ok = false;
+                        g_err = format!(
+                            "part {} page count differs: {} vs {}",
+                            i + 1,
+                            p1.child_page_count,
+                            p2.child_page_count
+                        );
+                        break;
+                    }
+                    if p1.selection.start != p2.selection.start
+                        || p1.selection.end != p2.selection.end
+                    {
+                        g_ok = false;
+                        g_err = format!(
+                            "part {} selection differs: {}..{} vs {}..{}",
+                            i + 1,
+                            p1.selection.start,
+                            p1.selection.end,
+                            p2.selection.start,
+                            p2.selection.end
+                        );
+                        break;
+                    }
+                    let b1 =
+                        std::fs::read(lib_2g_1.doc_dir().join(&p1.file_path)).unwrap_or_default();
+                    let b2 =
+                        std::fs::read(lib_2g_2.doc_dir().join(&p2.file_path)).unwrap_or_default();
+                    if b1 != b2 {
+                        g_ok = false;
+                        g_err = format!(
+                            "part {} bytes differ between run 1 and run 2 (len {} vs {})",
+                            i + 1,
+                            b1.len(),
+                            b2.len()
+                        );
+                        break;
+                    }
+                }
+            }
+            if g_ok {
+                EdgeCaseRow {
+                    name: "2g. Split same source twice".to_string(),
+                    status: "PASS".to_string(),
+                    notes: format!(
+                        "both succeeded; {} parts byte-identical; no temp files",
+                        rec1.core.plan.len()
+                    ),
+                }
+            } else {
+                record_failure(file_name, "EDGE_2G", &g_err, failures, structured_failures);
+                EdgeCaseRow {
+                    name: "2g. Split same source twice".to_string(),
+                    status: "FAIL".to_string(),
+                    notes: g_err,
+                }
+            }
+        }
+        (Err(e1), _) => {
+            let reason = format!("run 1 failed: {e1}");
+            record_failure(file_name, "EDGE_2G", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2g. Split same source twice".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+        (_, Err(e2)) => {
+            let reason = format!("run 2 failed: {e2}");
+            record_failure(file_name, "EDGE_2G", &reason, failures, structured_failures);
+            EdgeCaseRow {
+                name: "2g. Split same source twice".to_string(),
+                status: "FAIL".to_string(),
+                notes: reason,
+            }
+        }
+    };
+    rows.push(row_2g);
+
+    rows
+}
+
+#[test]
 #[ignore = "SKIPPED: set HFD_REAL_CORPUS"]
 fn real_corpus() {
     let corpus_env = match std::env::var("HFD_REAL_CORPUS") {
@@ -739,6 +1663,9 @@ fn real_corpus() {
     let mut structured_failures: Vec<ReportFailureEntry> = Vec::new();
     let mut report_files: Vec<ReportFileEntry> = Vec::new();
     let mut table_rows: Vec<String> = Vec::new();
+    let mut edge_case_rows: Vec<EdgeCaseRow> = Vec::new();
+    let mut edge_cases_tested = false;
+    let mut multi_part_split_info: Option<(PathBuf, String, u32)> = None;
 
     for entry in &entries {
         let file_name = entry
@@ -817,8 +1744,10 @@ fn real_corpus() {
 
         let mut notes = read_res.notes.clone();
 
+        let source_doc = lopdf::Document::load(&copy_path).ok();
         let total_source_pages = read_res.total_pages_opt.unwrap_or_else(|| {
-            lopdf::Document::load(&copy_path)
+            source_doc
+                .as_ref()
                 .map(|d| d.get_pages().len() as u32)
                 .unwrap_or(0)
         });
@@ -927,6 +1856,18 @@ fn real_corpus() {
                                         );
                                         break;
                                     }
+                                    if let Some(ref s_doc) = source_doc {
+                                        if let Err(e) = verify_content_match(
+                                            s_doc,
+                                            part.selection.start,
+                                            &doc,
+                                            &format!("part {} ({})", i + 1, part.file_path),
+                                        ) {
+                                            split_ok = false;
+                                            split_reason = e;
+                                            break;
+                                        }
+                                    }
                                 }
                                 Err(e) => {
                                     split_ok = false;
@@ -1005,14 +1946,27 @@ fn real_corpus() {
 
                     if split_ok {
                         split_status = "PASS".to_string();
+                        notes.push_str("; split content PASS");
                         if !receipt.core.plan.is_empty() {
                             passing_first_part = Some(receipt.core.plan[0].clone());
+                            if receipt.core.plan.len() >= 2 && multi_part_split_info.is_none() {
+                                multi_part_split_info = Some((
+                                    temp_lib.doc_dir().join(&receipt.core.plan[0].file_path),
+                                    receipt.core.plan[0].file_path.clone(),
+                                    receipt.core.plan[0].child_page_count,
+                                ));
+                            }
                         }
                     } else {
                         split_status = "FAIL".to_string();
+                        let check_tag = if split_reason.contains("missing") {
+                            "SPLIT_CONTENT"
+                        } else {
+                            "SPLIT"
+                        };
                         record_failure(
                             &file_name,
-                            "SPLIT",
+                            check_tag,
                             &split_reason,
                             &mut failures,
                             &mut structured_failures,
@@ -1061,6 +2015,16 @@ fn real_corpus() {
                                 if pages != 10 {
                                     ch_ok = false;
                                     ch_err = format!("chapter has {} pages, expected 10", pages);
+                                } else if let Some(ref s_doc) = source_doc {
+                                    if let Err(e) = verify_content_match(
+                                        s_doc,
+                                        11,
+                                        &doc,
+                                        &format!("chapter ({})", part.file_path),
+                                    ) {
+                                        ch_ok = false;
+                                        ch_err = e;
+                                    }
                                 }
                             }
                             Err(e) => {
@@ -1087,11 +2051,17 @@ fn real_corpus() {
                     }
                     if ch_ok {
                         chapter_status = "PASS".to_string();
+                        notes.push_str("; chapter content PASS");
                     } else {
                         chapter_status = "FAIL".to_string();
+                        let check_tag = if ch_err.contains("missing") {
+                            "CHAPTER_CONTENT"
+                        } else {
+                            "CHAPTER"
+                        };
                         record_failure(
                             &file_name,
-                            "CHAPTER",
+                            check_tag,
                             &ch_err,
                             &mut failures,
                             &mut structured_failures,
@@ -1134,6 +2104,43 @@ fn real_corpus() {
                     &mut failures,
                     &mut structured_failures,
                 );
+            }
+        }
+
+        if !edge_cases_tested && total_source_pages >= 30 {
+            edge_cases_tested = true;
+            if let Some(ref s_doc) = source_doc {
+                let candidate_part = multi_part_split_info
+                    .as_ref()
+                    .map(|(p, f, c)| (p.as_path(), f.as_str(), *c));
+                let edge_results = run_split_edge_cases(
+                    &SplitEdgeCaseTarget {
+                        source_entry: entry,
+                        file_name: &file_name,
+                        total_source_pages,
+                        file_size,
+                        source_doc: s_doc,
+                    },
+                    candidate_part,
+                    &mut failures,
+                    &mut structured_failures,
+                );
+                edge_case_rows.extend(edge_results);
+            }
+        } else if edge_cases_tested && multi_part_split_info.is_some() {
+            if let Some(row) = edge_case_rows.iter_mut().find(|r| r.name.starts_with("2f")) {
+                if row.notes.contains("N/A") {
+                    if let Some((ref cand_path, ref cand_name, cand_pages)) = multi_part_split_info
+                    {
+                        *row = run_nested_split_part_1(
+                            cand_path,
+                            cand_name,
+                            cand_pages,
+                            &mut failures,
+                            &mut structured_failures,
+                        );
+                    }
+                }
             }
         }
 
@@ -1275,6 +2282,19 @@ fn real_corpus() {
     }
     report_md.push('\n');
 
+    if !edge_case_rows.is_empty() {
+        report_md.push_str("## SPLIT EDGE CASES\n\n");
+        report_md.push_str("| Edge Case | Status | Notes |\n");
+        report_md.push_str("| --- | --- | --- |\n");
+        for row in &edge_case_rows {
+            report_md.push_str(&format!(
+                "| {} | {} | {} |\n",
+                row.name, row.status, row.notes
+            ));
+        }
+        report_md.push('\n');
+    }
+
     if !failures.is_empty() {
         report_md.push_str("## Failures\n\n");
         for failure in &failures {
@@ -1297,6 +2317,7 @@ fn real_corpus() {
         failure_count: failures.len(),
         failures: structured_failures,
         files: report_files,
+        split_edge_cases: edge_case_rows.clone(),
     };
 
     std::fs::write(out_dir.join("report.md"), &report_md).expect("write report.md");
@@ -1315,6 +2336,16 @@ fn real_corpus() {
         println!("{row}");
     }
     println!();
+
+    if !edge_case_rows.is_empty() {
+        println!("SPLIT EDGE CASES");
+        println!("| Edge Case | Status | Notes |");
+        println!("| --- | --- | --- |");
+        for row in &edge_case_rows {
+            println!("| {} | {} | {} |", row.name, row.status, row.notes);
+        }
+        println!();
+    }
 
     for failure in &failures {
         println!("{failure}");
