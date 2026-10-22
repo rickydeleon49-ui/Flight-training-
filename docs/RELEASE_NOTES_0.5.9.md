@@ -4,7 +4,16 @@ Written for her. Paste the "What's new" part into the GitHub release draft above
 
 ## What's new
 
-Everything from 0.5.8 is here, along with a fix so the Mac app opens properly. Your study tools and homework are ready when you are.
+Everything from 0.5.8 is here, plus a round of fixes found by testing with real FAA handbooks. Your study tools and homework are ready when you are.
+
+**Fixed in this version**
+- **The Mac app opens properly.** 0.5.8 could be reported as "damaged". 0.5.9 opens the usual way: the first time, macOS may say it can't verify the developer, and you can open it through System Settings → Privacy & Security → Open Anyway.
+- **A guide to each PDF page.** A PDF's page now starts with "Start here": a few numbered steps that show what's done and what to do next, a short history of what's been done with that PDF, and a one-line tip under each button. Tips can be hidden. Gemini study guides come first; the on-Mac study kit is a backup at the bottom.
+- **Big handbooks split properly.** Large FAA handbooks (like the 500-page Powerplant handbook) now split into study-size parts. A page that's too large by itself is left out and named, and a split that can't finish leaves nothing behind.
+- **Gemini guides for big chapters.** Guides on long parts with detailed bookmarks no longer stop at "too many sections", and one unclear page reference no longer stops the whole guide. Sections are a sensible size, so a long part needs fewer requests.
+- **The on-Mac study kit works on FAA chapters.** It now reads pages with justified text, bullet lists and numbered lists, makes cards from whole sentences, and skips figure labels instead of whole pages. If an earlier kit is in the way, the card now says which PDF it belongs to and lets you continue or discard it.
+- **PDFs edited in Preview.** After removing pages in Preview, the app can read the text again for search and the study kit.
+- **Clearer wording.** "Read this PDF's text" is one name everywhere; very large PDFs say to split them first; file sizes match across the page.
 
 **Homework.** The Study Library has a new Homework section for anything you want to prepare, whether you set it yourself or an instructor gives it to you.
 - **Activities:** an assignment can hold readings (with page ranges), flashcards, a practice quiz, a reflection, questions to bring to your instructor, and checklist items. School, instructor, due date and lesson are all optional.
@@ -38,6 +47,8 @@ Every item remembers which page it came from. Nothing is sent anywhere.
 - Backups made with 0.5.9 include your homework.
 
 ## Good to know
+
+- **A PDF edited in Preview** can read fine but give a shorter on-Mac study kit when Preview broke its sentences into fragments. A Gemini study guide is not affected.
 
 - **Memory:** making a study kit from a large PDF uses memory while it works, capped at 512 MB. On a Mac with 8 GB, the first time you try it, keep your usual apps open and see how it feels. If it's slow, say so; the cap can be lowered in a follow-up.
 - **Windows:** distribution stays on 0.5.1 pending a separate security review.
