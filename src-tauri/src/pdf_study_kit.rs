@@ -9,7 +9,7 @@ use lopdf::{Document, Object, ObjectId};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub const ALGORITHM_VERSION: u32 = 2;
+pub const ALGORITHM_VERSION: u32 = 3;
 pub const PROVENANCE_LABEL: &str = "Pulled from your PDF on this Mac";
 
 /// Each page retains its cache key. A stale or differently keyed page is ignored.
@@ -259,18 +259,89 @@ fn term_ok(text: &str) -> bool {
         .iter()
         .any(|s| normalized(text).split_whitespace().next() == Some(s))
 }
+/// FAA handbooks set normal prose as bullet lists, so a list marker is never by
+/// itself a layout problem. Only these marks count; a hyphen is a marker only
+/// in the "- " form, never as ordinary punctuation inside a sentence.
+const BULLET_MARKS: [char; 4] = ['\u{2022}', '\u{25E6}', '\u{25AA}', '\u{2981}'];
+
+/// One raw line as list pieces with their byte offsets inside that line: the
+/// text before the first marker, then each item that follows a marker. The
+/// extractor sets several consecutive items on one line, so every mark opens a
+/// new piece and only the marker characters are dropped. `- ` is a marker only
+/// at the line's own start, never a dash inside an item.
+fn bullet_pieces(line: &str) -> Vec<(usize, &str)> {
+    let mut marks = vec![];
+    let indent = line.len() - line.trim_start().len();
+    if line[indent..].starts_with("- ") {
+        marks.push(indent + 2);
+    }
+    marks.extend(
+        line.char_indices()
+            .filter(|(_, c)| BULLET_MARKS.contains(c))
+            .map(|(i, c)| i + c.len_utf8()),
+    );
+    marks.sort_unstable();
+    marks.dedup();
+    let starts = std::iter::once(0).chain(marks.iter().copied());
+    let ends = marks.iter().copied().chain(std::iter::once(line.len()));
+    starts.zip(ends).map(|(a, b)| (a, &line[a..b])).collect()
+}
+
+/// Dot leaders join a term to its text across a gap. A sentence ends in one dot
+/// and prose ellipses use three, so only four or more dots — printed together or
+/// spaced apart — is a leader.
+fn dot_leader(line: &str) -> bool {
+    let mut dots = 0;
+    for c in line.chars() {
+        if c == '.' {
+            dots += 1;
+            if dots >= 4 {
+                return true;
+            }
+        } else if c != ' ' {
+            dots = 0;
+        }
+    }
+    false
+}
+
+/// Layout, not prose: four or more spaces inside one line is a figure label, a
+/// table row or a column gap, and dot leaders join a label to its column. Justified
+/// prose commonly pads a word gap with two or three spaces and a list marker with
+/// three, so those stay.
+fn figure_line(line: &str) -> bool {
+    let text = line.trim();
+    text.contains("    ") || dot_leader(text)
+}
+
+/// A page that is mostly figure or table text has no prose left to build cards
+/// from, so it is skipped whole. The count walks the same bullet pieces `page_view`
+/// quotes, so the page guard and the line filter never disagree about a line.
+fn mostly_figure_text(text: &str) -> bool {
+    let mut dropped = 0usize;
+    let mut kept = 0usize;
+    for line in text.split_inclusive('\n') {
+        for (_, piece) in bullet_pieces(line) {
+            if piece.trim().is_empty() {
+                continue;
+            }
+            if figure_line(piece) {
+                dropped += 1;
+            } else {
+                kept += 1;
+            }
+        }
+    }
+    dropped > kept
+}
+
 fn suspect_page(text: &str) -> bool {
     text.len() > MAX_PAGE_BYTES
         || text.contains(['\t', '|', '\u{FFFD}'])
         || text
             .chars()
             .any(|c| c.is_control() && !matches!(c, '\n' | '\r'))
-        || text.lines().any(|line| {
-            let t = line.trim();
-            // Justified prose commonly has two spaces between words. Wider
-            // interior gaps still indicate ambiguous columns or tables.
-            t.contains("   ") || t.contains("..") || t.contains("\u{2022}")
-        })
+        || mostly_figure_text(text)
 }
 
 struct PageView {
@@ -282,9 +353,16 @@ fn page_view(page: &CachedPage) -> PageView {
     let mut offset = 0;
     let mut lines = vec![];
     for line in page.text.split_inclusive('\n') {
-        let e = trimmed(page.page, offset, line);
-        if !e.quote.is_empty() && e.quote.chars().count() <= 2000 {
-            lines.push(e);
+        // Each list item keeps a line of its own with only its marker dropped,
+        // so `trimmed` still points at the exact raw text of that item.
+        for (mark, piece) in bullet_pieces(line) {
+            let e = trimmed(page.page, offset + mark, piece);
+            // One figure label must not condemn the page: sentences, cards and
+            // the outline are built per line, so dropping just this line keeps
+            // every other line's offsets exactly as they were in the raw text.
+            if !e.quote.is_empty() && e.quote.chars().count() <= 2000 && !figure_line(&e.quote) {
+                lines.push(e);
+            }
         }
         offset += line.len();
     }

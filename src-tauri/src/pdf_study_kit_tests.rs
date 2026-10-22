@@ -139,15 +139,12 @@ fn justified_prose_keeps_sentences_cards_and_exact_raw_evidence() {
 #[test]
 fn justified_prose_does_not_admit_layout_garbled_pages() {
     for garbled in [
-        "Lift: An upward force.   Drag: An opposing force.",
         "Lift: An upward force.     Drag: An opposing force.",
         "Lift........An upward force.",
-        "Lift.. An upward force.",
         "Lift:\tAn upward force.",
         "Lift | An upward force.",
         "Lift: An upward \u{FFFD} force.",
         "Lift: An upward \u{0007} force.",
-        "\u{2022} Lift: An upward force.",
     ] {
         let src = input(&[(Outcome::Text, JUSTIFIED_PROSE), (Outcome::Text, garbled)]);
         let k = extract(&src, None).unwrap();
@@ -155,6 +152,311 @@ fn justified_prose_does_not_admit_layout_garbled_pages() {
         assert_eq!(k.pages_skipped_ambiguous, 1, "{garbled:?}");
         assert_sources(&k, &src);
     }
+    // A three-space gap was here as a garbled page; it is ordinary justified prose
+    // and is asserted admissible by three_space_gaps_are_prose_and_keep_their_lines.
+}
+
+/// Real PHAK text puts a figure label on its own line in the middle of prose. One
+/// such line must not throw the page away: sentences, cards and the outline are
+/// built per line, so only that line is dropped.
+const PROSE_WITH_FIGURE_LABEL: &str = "Lift: An upward force.\nDrag — A resisting force.\nRisk Assessment Matrix      LikelihoodSeverity\nWeight is defined as a downward force.\nXPDR    5537  IDNT  LCL 10:12:34\n";
+
+#[test]
+fn one_figure_label_line_is_dropped_and_its_page_stays() {
+    let src = input(&[(Outcome::Text, PROSE_WITH_FIGURE_LABEL)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(k.pages_used, vec![1]);
+    assert_eq!(k.pages_skipped_ambiguous, 0);
+    // The prose lines around the figure labels still make their cards, each one
+    // quoted from the exact raw bytes of its own line.
+    assert_eq!(
+        k.glossary
+            .iter()
+            .map(|c| (&*c.term, &*c.answer))
+            .collect::<Vec<_>>(),
+        vec![
+            ("Lift", "An upward force."),
+            ("Drag", "A resisting force."),
+            ("Weight", "a downward force."),
+        ]
+    );
+    for (card, quote) in k.glossary.iter().zip([
+        "Lift: An upward force.",
+        "Drag — A resisting force.",
+        "Weight is defined as a downward force.",
+    ]) {
+        evidence(
+            &card.evidence[0],
+            1,
+            PROSE_WITH_FIGURE_LABEL.find(quote).unwrap(),
+            quote,
+        );
+    }
+    // The figure label was the page's only heading-shaped line, so dropping just
+    // that line leaves the outline on its page-range fallback.
+    assert_eq!(
+        k.outline.iter().map(|s| &*s.heading).collect::<Vec<_>>(),
+        vec!["Pages 1–1"]
+    );
+    assert_eq!(
+        k.outline
+            .iter()
+            .flat_map(|s| &s.sentences)
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>(),
+        vec![
+            "Drag — A resisting force.",
+            "Weight is defined as a downward force."
+        ]
+    );
+    let emitted = k
+        .glossary
+        .iter()
+        .chain(&k.cloze)
+        .flat_map(|c| &c.evidence)
+        .chain(k.outline.iter().flat_map(|s| s.evidence.iter()))
+        .chain(
+            k.outline
+                .iter()
+                .flat_map(|s| s.sentences.iter().map(|x| &x.evidence)),
+        )
+        .chain(
+            k.questions
+                .iter()
+                .flat_map(|q| q.evidence.iter().chain(q.choice_evidence.iter().flatten())),
+        );
+    for e in emitted {
+        assert!(!e.quote.contains("    "), "{e:?} kept a layout gap");
+        assert!(
+            !e.quote.contains("Matrix") && !e.quote.contains("XPDR"),
+            "{e:?} came from a figure line"
+        );
+    }
+    assert_sources(&k, &src);
+}
+
+/// Real PHAK text pads a numbered item with three spaces after the marker and
+/// opens a three-space word gap in justified prose. Both stay, gap and all.
+const THREE_SPACE_PROSE: &str = "1.   Accept no unnecessary risk.\nCeilings are above 1,000 feet   but less than 3,000 feet ceilings.\n";
+
+#[test]
+fn three_space_gaps_are_prose_and_keep_their_lines() {
+    let src = input(&[(Outcome::Text, THREE_SPACE_PROSE)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(k.pages_used, vec![1]);
+    assert_eq!(k.pages_skipped_ambiguous, 0);
+    let sentences: Vec<_> = k.outline.iter().flat_map(|s| &s.sentences).collect();
+    assert_eq!(
+        sentences
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>(),
+        vec![
+            "Accept no unnecessary risk.",
+            "Ceilings are above 1,000 feet   but less than 3,000 feet ceilings.",
+        ]
+    );
+    // The printed gap survives verbatim and the offsets still slice the raw page.
+    assert!(sentences[1].text.contains("feet   but"));
+    for sentence in &sentences {
+        evidence(
+            &sentence.evidence,
+            1,
+            THREE_SPACE_PROSE.find(&*sentence.text).unwrap(),
+            &sentence.text,
+        );
+    }
+    assert_eq!(
+        k.cloze.iter().map(|c| &*c.answer).collect::<Vec<_>>(),
+        vec!["above 1,000 feet", "less than 3,000 feet"]
+    );
+    assert_sources(&k, &src);
+}
+
+/// A page that is mostly figure or table text has no prose left, so it is still
+/// skipped whole.
+const FIGURE_PAGE: &str = "VC010  18/18 A2960 METAR KIND 1950Z 16012KT 3SM RA                  BKN020\nXPDR    5537  IDNT  LCL 10:12:34\nRisk Assessment Matrix      LikelihoodSeverity\nLift: An upward force.\n";
+
+#[test]
+fn a_mostly_figure_page_and_a_tabbed_page_are_still_suspect() {
+    let tabbed = "Lift: An upward force.\nWind is 10 kt.\nDrag:\tA resisting force.\n";
+    for garbled in [FIGURE_PAGE, tabbed] {
+        let src = input(&[(Outcome::Text, JUSTIFIED_PROSE), (Outcome::Text, garbled)]);
+        let k = extract(&src, None).unwrap();
+        assert_eq!(k.pages_used, vec![1], "{garbled:?}");
+        assert_eq!(k.pages_skipped_ambiguous, 1, "{garbled:?}");
+        assert_sources(&k, &src);
+    }
+}
+
+const BULLETED_PROSE: &str = "1. The Four Forces\n\u{2022} Lift acts upward on the airplane.\n  \u{25E6} Weight acts toward the earth.\n\u{25AA} Thrust: A forward force.\n- Drag — A resisting force.\n\u{2981} Total lift equals total weight in level flight.\n";
+
+#[test]
+fn bulleted_list_items_are_prose_and_keep_exact_raw_offsets() {
+    let src = input(&[(Outcome::Text, BULLETED_PROSE)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(k.pages_used, vec![1]);
+    assert_eq!(k.pages_skipped_ambiguous, 0);
+    // Each bullet item is its own line; only the marker is dropped, so a card
+    // quotes the raw bytes that follow it.
+    assert_eq!(
+        k.glossary
+            .iter()
+            .map(|c| (&*c.term, &*c.answer))
+            .collect::<Vec<_>>(),
+        vec![
+            ("Thrust", "A forward force."),
+            ("Drag", "A resisting force.")
+        ]
+    );
+    evidence(
+        &k.glossary[0].evidence[0],
+        1,
+        BULLETED_PROSE.find("Thrust").unwrap(),
+        "Thrust: A forward force.",
+    );
+    evidence(
+        &k.glossary[1].evidence[0],
+        1,
+        BULLETED_PROSE.find("Drag").unwrap(),
+        "Drag — A resisting force.",
+    );
+    let sentences: Vec<_> = k.outline.iter().flat_map(|s| &s.sentences).collect();
+    assert_eq!(
+        sentences
+            .iter()
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>(),
+        vec![
+            "Lift acts upward on the airplane.",
+            "Weight acts toward the earth."
+        ]
+    );
+    for sentence in &sentences {
+        assert_eq!(
+            sentence.evidence.start_offset,
+            BULLETED_PROSE.find(&*sentence.text).unwrap()
+        );
+    }
+    // No emitted quote ever carries a marker.
+    let marks = ['\u{2022}', '\u{25E6}', '\u{25AA}', '\u{2981}'];
+    for e in k
+        .glossary
+        .iter()
+        .chain(&k.cloze)
+        .flat_map(|c| &c.evidence)
+        .chain(k.outline.iter().flat_map(|s| &s.evidence))
+    {
+        assert!(!e.quote.contains(marks), "{e:?} still holds a marker");
+    }
+    assert_sources(&k, &src);
+}
+
+/// Real cached AFH text sets several consecutive list items on one line. Those
+/// are ordinary items, not merged columns, so the page stays and every item is
+/// quoted from the exact raw bytes that follow its own marker.
+const MERGED_LIST_ITEMS: &str = "The initial climb begins when the airplane leaves the surface at 50 feet AGL. \u{2981} Failure to review the AFM and POH performance charts before 60 knots. \u{2981} Failure to clear the area below 100 feet.\n";
+
+#[test]
+fn several_bullets_on_one_line_are_items_and_never_make_a_page_suspect() {
+    for merged in [
+        "\u{2022} Lift: An upward force. \u{2022} Drag: An opposing force.",
+        "\u{2022} Lift acts upward. \u{2022} Weight acts downward.",
+        "Lift acts upward. \u{25E6} Weight acts downward.",
+        "\u{25AA}\u{2981} Lift acts upward.",
+        "\u{2022} Lift acts upward. Weight acts downward. \u{25AA}",
+        MERGED_LIST_ITEMS,
+    ] {
+        let src = input(&[(Outcome::Text, BULLETED_PROSE), (Outcome::Text, merged)]);
+        let k = extract(&src, None).unwrap();
+        assert_eq!(k.pages_used, vec![1, 2], "{merged:?}");
+        assert_eq!(k.pages_skipped_ambiguous, 0, "{merged:?}");
+        assert_sources(&k, &src);
+    }
+    let src = input(&[(Outcome::Text, MERGED_LIST_ITEMS)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(k.pages_used, vec![1]);
+    // One line per item: the text before the first bullet and each item, so a
+    // cloze card carries the whole sentence it came from at its raw offsets.
+    let items = [
+        "The initial climb begins when the airplane leaves the surface at 50 feet AGL.",
+        "Failure to review the AFM and POH performance charts before 60 knots.",
+        "Failure to clear the area below 100 feet.",
+    ];
+    let mut sentences = k.cloze.iter().map(|c| &c.evidence[0]);
+    for item in items {
+        let e = sentences
+            .next()
+            .unwrap_or_else(|| panic!("{item:?} lost its line"));
+        evidence(e, 1, MERGED_LIST_ITEMS.find(item).unwrap(), item);
+    }
+    assert!(sentences.next().is_none());
+    // A section deliberately keeps two sentences, and they are the first items.
+    let outline: Vec<_> = k
+        .outline
+        .iter()
+        .flat_map(|s| &s.sentences)
+        .map(|s| s.text.as_str())
+        .collect();
+    assert_eq!(outline, items[..2].to_vec());
+    for e in k
+        .glossary
+        .iter()
+        .chain(&k.cloze)
+        .flat_map(|c| &c.evidence)
+        .chain(k.outline.iter().flat_map(|s| &s.evidence))
+        .chain(k.questions.iter().flat_map(|q| &q.evidence))
+    {
+        assert!(
+            !e.quote
+                .contains(['\u{2022}', '\u{25E6}', '\u{25AA}', '\u{2981}']),
+            "{e:?} still holds a marker"
+        );
+    }
+    assert_sources(&k, &src);
+}
+
+#[test]
+fn dot_leaders_are_suspect_and_a_short_dot_run_is_not() {
+    for prose in [
+        "Lift.. An upward force.",
+        "Lift... An upward force.",
+        "The lift is steady... the ride is smooth.",
+    ] {
+        let src = input(&[(Outcome::Text, JUSTIFIED_PROSE), (Outcome::Text, prose)]);
+        let k = extract(&src, None).unwrap();
+        assert_eq!(k.pages_used, vec![1, 2], "{prose:?}");
+        assert_eq!(k.pages_skipped_ambiguous, 0, "{prose:?}");
+        assert_sources(&k, &src);
+    }
+    for garbled in [
+        "Lift........An upward force.",
+        "Lift .... an upward force.",
+        "Lift . . . . an upward force.",
+        "Lift. . . . . an upward force.",
+    ] {
+        let src = input(&[(Outcome::Text, JUSTIFIED_PROSE), (Outcome::Text, garbled)]);
+        let k = extract(&src, None).unwrap();
+        assert_eq!(k.pages_used, vec![1], "{garbled:?}");
+        assert_eq!(k.pages_skipped_ambiguous, 1, "{garbled:?}");
+        assert_sources(&k, &src);
+    }
+    let ellipsis = "The lift is steady... the ride is smooth.";
+    let src = input(&[(Outcome::Text, ellipsis)]);
+    let k = extract(&src, None).unwrap();
+    assert_eq!(
+        k.outline
+            .iter()
+            .flat_map(|s| &s.sentences)
+            .map(|s| s.text.as_str())
+            .collect::<Vec<_>>(),
+        vec!["The lift is steady...", "the ride is smooth."]
+    );
+    assert_sources(&k, &src);
+    assert_eq!(
+        kit("Lift: An upward force...").glossary[0].answer,
+        "An upward force..."
+    );
 }
 
 #[test]
@@ -464,7 +766,7 @@ fn label_is_pulled_from_your_pdf_never_ai_or_verified() {
         assert!(!PROVENANCE_LABEL.to_lowercase().contains(word));
     }
     let json = serde_json::to_value(kit("Lift: An upward force.")).unwrap();
-    assert_eq!(json["algorithmVersion"], 2);
+    assert_eq!(json["algorithmVersion"], 3);
     assert_eq!(json["contentSha256"], "a".repeat(64));
 }
 
