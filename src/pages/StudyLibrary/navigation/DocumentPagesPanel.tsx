@@ -1,26 +1,27 @@
 /**
- * A material's pages (M4 Slice 1): open the PDF at a page, the last page she
- * asked to open, a separate "I've read this" mark, and bookmarks.
+ * A material's pages (M4 Slice 1): the page count, a page check, and bookmarks.
  *
- * - The default system reader opens the file. It may not jump to the page on
- *   its own, so the page is always shown as guidance (OD-2).
- * - A page outside the checked page count, or not a whole number, is refused
- *   with an explanation and never moved to a nearby page (OD-4, OD-6).
- * - Opening a page records only that it was asked for. Reading is a separate,
- *   explicit mark tied to that exact saved request (OD-9, M4S1-R1).
+ * "Open at page" was removed (owner, 22 October): macOS gives no reliable way
+ * to hand the reader a specific page, so the panel no longer offers it or the
+ * reading marks tied to it. A bookmark's own page number stays shown next to
+ * it so she knows where to go once the file opens. The controller, repository
+ * and any saved reading data remain in place, unused by this panel.
+ *
+ * - Opening a bookmark hands the file to the default system reader; the
+ *   bookmark's page is guidance only (OD-2).
  * - Saved places made for an earlier version of the file say so (OD-8).
- * - If the page opened but could not be saved, "Try saving again" resends the
- *   save without opening the file a second time.
+ * - If a bookmark opened but its page could not be saved, "Try saving again"
+ *   resends the save without opening the file a second time.
  * - A bookmark opens only on the content it was saved on (M4S1-R5). A new
  *   bookmark is bound to the content, page count and material shown when its
  *   dialog opened, and a later refresh never rebinds it (M4S1-R6).
- * - A check, read mark or removal reports back only to the repository and
+ * - A check, bookmark save or removal reports back only to the repository and
  *   material it started on; one that finishes after they changed says
  *   nothing over the new ones (NAV-UI-01).
  */
-import { type FormEvent, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
-import { Button, Card, CardBody, CardHeader, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import type { NavigationBookmark, StudyMaterial } from "@/domain/types";
 import { NAVIGATION_LIMITS } from "@/data/navigationTransaction";
 import { savedPlaceNote } from "@/logic/navigation";
@@ -62,10 +63,9 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
     case "working":
       return { text: WORKING[status.step] ?? "Working…", error: false };
     case "saved":
-      return {
-        text: `Opened in your PDF reader. Go to ${pageWords(status.destination.physicalPage, status.destination.pageLabel)} there; your reader may not jump to it by itself.`,
-        error: false,
-      };
+      // Opening a bookmark's own page needs no notice: the bookmark row
+      // already shows the page to go to, and the file has opened.
+      return null;
     case "opened_unsaved":
       return { text: `${status.message} Go to ${pageWords(status.destination.physicalPage, status.destination.pageLabel)} in your reader.`, error: true };
     case "guidance":
@@ -81,14 +81,11 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
 export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
   const nav = useMaterialNavigation(material.id, repo, status);
-  const [page, setPage] = useState("");
-  const [pageError, setPageError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [checkNote, setCheckNote] = useState<string | null>(null);
   const [draft, setDraft] = useState<BookmarkDraft | null>(null);
   const [removing, setRemoving] = useState<NavigationBookmark | null>(null);
   const [removePending, setRemovePending] = useState(false);
-  const [readPending, setReadPending] = useState(false);
   const headingId = useId();
   const notices = useRef<object | null>(null);
 
@@ -138,11 +135,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const said = mine ? statusText(mine) : null;
   const missing = fileMissing || (mine?.kind === "failed" && mine.code === "FILE_MISSING");
 
-  const openAt = async (reference: string | number) => {
-    setActionError(null);
-    await controller.request({ materialId: material.id, reference, provenance: "physical_index" });
-  };
-
   const openBookmark = async (bookmark: NavigationBookmark) => {
     setActionError(null);
     await controller.openSaved({
@@ -163,17 +155,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
     });
   };
 
-  const submitPage = async (event: FormEvent) => {
-    event.preventDefault();
-    const text = page.trim();
-    if (!/^\d+$/.test(text)) {
-      setPageError("Enter a whole page number, like 12.");
-      return;
-    }
-    setPageError(null);
-    await openAt(text);
-  };
-
   const checkPages = async () => {
     const current = noticeOwner();
     setActionError(null);
@@ -183,20 +164,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       if (current()) setCheckNote(changed ? "This file changed since it was last checked. Places saved for the earlier version are marked." : null);
     } catch (error) {
       if (current()) setActionError(navigationMessage(error));
-    }
-  };
-
-  const toggleRead = async (confirmed: boolean) => {
-    if (!reading) return;
-    const current = noticeOwner();
-    setActionError(null);
-    setReadPending(true);
-    try {
-      await nav.setRead(reading, confirmed);
-    } catch (error) {
-      if (current()) setActionError(navigationMessage(error));
-    } finally {
-      setReadPending(false);
     }
   };
 
@@ -218,21 +185,21 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   return (
     <Card>
       <CardHeader eyebrow="Pages" title="Find your place" />
-      {showTips ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Open a page in your PDF reader or save a bookmark; mark a page read only after you have read it.</p> : null}
+      {showTips ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Save a bookmark for a page you want to come back to, and open it from here when you're ready to read that page.</p> : null}
       <CardBody>
         <section className="stack stack--3" aria-labelledby={headingId}>
           <h4 id={headingId} className="visually-hidden">
             Pages of {material.title}
           </h4>
           {!desktop ? (
-            <p className="tiny muted">Opening a file at a page needs the desktop app. Your bookmarks are still listed here.</p>
+            <p className="tiny muted">Checking pages and opening bookmarks need the desktop app. Your bookmarks are still listed here.</p>
           ) : (
             <>
               <div className="row row--between row--wrap">
                 <p className="tiny muted">
                   {identity
                     ? `This PDF has ${identity.totalPages} ${identity.totalPages === 1 ? "page" : "pages"}.`
-                    : "This file's pages haven't been checked yet. They are checked when you open a page."}
+                    : "This file's pages haven't been checked yet. Use Check pages to count them."}
                 </p>
                 <Button size="small" onClick={() => void checkPages()} disabled={busy || missing}>
                   Check pages
@@ -244,20 +211,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                   {checkNote}
                 </p>
               ) : null}
-
-              <form className="row row--wrap" onSubmit={(event) => void submitPage(event)} noValidate>
-                <Field
-                  label="PDF page"
-                  hint={identity ? `The page number your PDF reader shows, from 1 to ${identity.totalPages}.` : "The page number your PDF reader shows."}
-                  error={pageError}
-                >
-                  <TextInput inputMode="numeric" value={page} onChange={(event) => setPage(event.target.value)} disabled={busy || missing} />
-                </Field>
-                <Button type="submit" variant="primary" disabled={busy || missing}>
-                  Open at page
-                </Button>
-              </form>
-              {showTips ? <p className="tiny muted">Open at page opens your PDF reader and remembers the page you asked for. You may need to go to that page in the reader.</p> : null}
             </>
           )}
 
@@ -287,24 +240,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             <p className="field__error" role="alert">
               {actionError ?? nav.error}
             </p>
-          ) : null}
-
-          {reading ? (
-            <div className="stack stack--2">
-              <p className="small">
-                Last page you asked to open: <strong>{pageWords(reading.lastRequestedPage, reading.lastRequestedPageLabel)}</strong>
-              </p>
-              {savedPlaceNote(reading.status) ? <p className="tiny muted">{savedPlaceNote(reading.status)}</p> : null}
-              {reading.status === "active" && desktop ? (
-                <Checkbox
-                  checked={reading.confirmedRead}
-                  disabled={readPending}
-                  onChange={(checked) => void toggleRead(checked)}
-                  label="I've read this page"
-                  meta="Opening a page doesn't mark it read. Tick this only when you have."
-                />
-              ) : null}
-            </div>
           ) : null}
 
           <div className="stack stack--2">

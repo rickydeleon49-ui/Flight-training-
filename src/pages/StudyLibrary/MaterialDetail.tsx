@@ -643,7 +643,7 @@ function MaterialDetailPage() {
                       <Button onClick={open}>
                         <ExternalIcon size={15} /> Open
                       </Button>
-                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app." : "Opens the file in its usual app on your Mac."}</p> : null}
+                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page." : "Opens the file in its usual app on your Mac."}</p> : null}
                       </div>
                     ) : null}
                     {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
