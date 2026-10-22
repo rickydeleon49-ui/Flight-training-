@@ -14,7 +14,7 @@ import {
 } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
 
-import { saveSplitParts } from "./splitSave";
+import { saveSplitParts, skippedPagesMessage } from "./splitSave";
 
 interface Props {
   open: boolean;
@@ -27,12 +27,14 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
   const { mutate, repositories, refresh } = useAppData();
   const [outline, setOutline] = useState<PdfOutline | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<{ ids: string[]; message: string } | null>(null);
   const [working, setWorking] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !material.filePath) return;
     setError(null);
+    setCompleted(null);
     setOutline(null);
     let cancelled = false;
     inspectPdf(material.filePath)
@@ -85,8 +87,9 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
         );
         return;
       }
-      const created = outcome.ids;
-      onCreated(created);
+      const message = skippedPagesMessage(receipt.core.skippedPages ?? []);
+      if (message) setCompleted({ ids: outcome.ids, message });
+      else onCreated(outcome.ids);
     } catch (splitError) {
       setError(splitError instanceof Error ? splitError.message : String(splitError));
     } finally {
@@ -105,14 +108,20 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
       description="Automatically divides this PDF into labeled parts that can each have their own study guide. The original is left exactly as it is."
       narrow
       footer={
-        <>
-          <Button variant="ghost" onClick={onClose} disabled={working}>
-            Cancel
+        completed ? (
+          <Button variant="primary" onClick={() => onCreated(completed.ids)}>
+            Done
           </Button>
-          <Button variant="primary" onClick={save} disabled={working || !outline}>
-            {working ? "Creating the parts…" : "Create study-size parts"}
-          </Button>
-        </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onClose} disabled={working}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={save} disabled={working || !outline}>
+              {working ? "Creating the parts…" : "Create study-size parts"}
+            </Button>
+          </>
+        )
       }
     >
       <div className="stack stack--4">
@@ -127,6 +136,12 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
             {outline.maxPagesPerSplit.toLocaleString()} pages. Parts are labeled in order and
             appear as separate library items with their own study-guide action.
           </p>
+        ) : null}
+        {completed ? (
+          <div role="status">
+            <p className="small">Your study-size parts were saved to your library.</p>
+            <p className="small">{completed.message}</p>
+          </div>
         ) : null}
         {working ? (
           <div className="ai-working" role="status">

@@ -688,7 +688,7 @@ fn page_ids(
     }
     (pages.len() == count as usize).then_some(pages)
 }
-fn destination(
+pub(crate) fn destination(
     doc: &Document,
     root: &lopdf::Dictionary,
     object: &Object,

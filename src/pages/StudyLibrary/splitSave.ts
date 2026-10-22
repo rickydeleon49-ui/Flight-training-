@@ -49,3 +49,16 @@ export async function saveSplitParts(
     return { saved: false, cleanupFailed: true };
   }
 }
+
+/** Explain omitted source pages without overwhelming the completion dialog. */
+export function skippedPagesMessage(pages: readonly number[]): string | null {
+  if (pages.length === 0) return null;
+  if (pages.length === 1) {
+    return `Page ${pages[0]} was left out because it's too large by itself (likely a big picture). It's still in your original PDF.`;
+  }
+  const shown = pages.slice(0, 5);
+  const list = pages.length > 5
+    ? `${shown.join(", ")} and ${pages.length - 5} more`
+    : `${shown.slice(0, -1).join(", ")} and ${shown.at(-1)}`;
+  return `Pages ${list} were left out because they're too large by themselves (likely big pictures). They're still in your original PDF.`;
+}

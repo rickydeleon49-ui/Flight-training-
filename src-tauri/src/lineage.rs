@@ -94,6 +94,10 @@ pub struct SplitReceiptCore {
     pub parent_snapshot: Option<SplitParentSnapshot>,
     pub nested_level: u32,
     pub plan: Vec<SplitPlanPart>,
+    /// Immediate source page numbers omitted by automatic splitting. Empty is
+    /// omitted to preserve the hashes of receipts issued before this field.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub skipped_pages: Vec<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -299,6 +303,7 @@ pub fn issue_receipt(
     source_bytes: &[u8],
     source_total_pages: u32,
     parts: &[WrittenPart],
+    skipped_pages: &[u32],
 ) -> Result<SplitSourceReceipt, String> {
     safe_relative_path(source_file_path)?;
     if source_total_pages == 0 {
@@ -308,6 +313,17 @@ pub fn issue_receipt(
         return Err(format!(
             "A split makes between 1 and {MAX_PARTS_PER_BATCH} parts."
         ));
+    }
+    if skipped_pages.windows(2).any(|pair| pair[0] >= pair[1])
+        || skipped_pages.iter().any(|page| {
+            *page == 0
+                || *page > source_total_pages
+                || parts
+                    .iter()
+                    .any(|part| (part.first_page..=part.last_page).contains(page))
+        })
+    {
+        return Err("The pages left out do not match this split.".into());
     }
     require_operation_log(connection)?;
 
@@ -427,6 +443,7 @@ pub fn issue_receipt(
         parent_snapshot: snapshot,
         nested_level: level,
         plan,
+        skipped_pages: skipped_pages.to_vec(),
     };
     let (canonical, hash) = receipt_hash(&core)?;
     connection
@@ -455,6 +472,7 @@ pub fn issue_receipt_at(
     source_bytes: &[u8],
     source_total_pages: u32,
     parts: &[WrittenPart],
+    skipped_pages: &[u32],
 ) -> Result<SplitSourceReceipt, String> {
     let connection = open_library(root)?;
     issue_receipt(
@@ -464,6 +482,7 @@ pub fn issue_receipt_at(
         source_bytes,
         source_total_pages,
         parts,
+        skipped_pages,
     )
 }
 

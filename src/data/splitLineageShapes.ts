@@ -89,7 +89,7 @@ const CORE_KEYS = [
 function isSplitReceiptCore(value: unknown): value is SplitReceiptCore {
   return (
     isRecord(value) &&
-    hasExactly(value, CORE_KEYS) &&
+    hasExactly(value, "skippedPages" in value ? [...CORE_KEYS, "skippedPages"] : CORE_KEYS) &&
     isText(value.sourceMaterialId) &&
     isText(value.sourceFilePath) &&
     isCount(value.sourceFileSize) &&
@@ -105,7 +105,15 @@ function isSplitReceiptCore(value: unknown): value is SplitReceiptCore {
     isPage(value.nestedLevel) &&
     Array.isArray(value.plan) &&
     value.plan.length > 0 &&
-    value.plan.every(isSplitPlanPart)
+    value.plan.every(isSplitPlanPart) &&
+    (!("skippedPages" in value) || (
+      Array.isArray(value.skippedPages) &&
+      value.skippedPages.every((page, index, pages) =>
+        isPage(page) && page <= (value.sourceTotalPages as number) &&
+        (index === 0 || pages[index - 1] < page) &&
+        !(value.plan as SplitPlanPart[]).some((part) => page >= part.selection.start && page <= part.selection.end),
+      )
+    ))
   );
 }
 

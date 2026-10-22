@@ -311,6 +311,8 @@ export interface SplitReceiptCore {
   parentSnapshot: SplitParentSnapshot | null;
   nestedLevel: number;
   plan: SplitPlanPart[];
+  /** Pages of the immediate source omitted because each alone exceeded the byte limit. */
+  skippedPages?: number[];
 }
 
 /**
