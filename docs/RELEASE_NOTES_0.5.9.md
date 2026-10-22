@@ -8,6 +8,10 @@ Everything from 0.5.8 is here, plus a round of fixes found by testing with real 
 
 **Fixed in this version**
 - **The Mac app opens properly.** 0.5.8 could be reported as "damaged". 0.5.9 opens the usual way: the first time, macOS may say it can't verify the developer, and you can open it through System Settings → Privacy & Security → Open Anyway.
+- **A simpler PDF page, with Gemini doing the work.** Each PDF now has a "Start here" guide, the file and split tools at the top, then three sections of their own: **Study guide**, **Flashcards** (choose 20, 40 or 60, each with its page) and **Practice test**. Making a guide no longer replaces your flashcards, and making flashcards keeps your guide. Too-large PDFs say plainly to split them first.
+- **The on-Mac backup sits at the bottom.** "On this Mac (backup)" reads a PDF's text for search and makes a study kit with no internet; kits you save show there, separate from your Gemini guide and cards.
+- **Search inside PDFs from anywhere.** ⌘K now offers "Search inside your PDFs".
+- **Removed "Open at page".** Your Mac can't reliably open a PDF at a chosen page, so the app opens the PDF and leaves the page to you (in Preview, ⌥⌘G).
 - **A guide to each PDF page.** A PDF's page now starts with "Start here": a few numbered steps that show what's done and what to do next, a short history of what's been done with that PDF, and a one-line tip under each button. Tips can be hidden. Gemini study guides come first; the on-Mac study kit is a backup at the bottom.
 - **Big handbooks split properly.** Large FAA handbooks (like the 500-page Powerplant handbook) now split into study-size parts. A page that's too large by itself is left out and named, and a split that can't finish leaves nothing behind.
 - **Gemini guides for big chapters.** Guides on long parts with detailed bookmarks no longer stop at "too many sections", and one unclear page reference no longer stops the whole guide. Sections are a sensible size, so a long part needs fewer requests.
