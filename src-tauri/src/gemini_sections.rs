@@ -194,6 +194,14 @@ async fn discard_at(
     Ok(removed)
 }
 
+#[derive(Clone, Debug)]
+struct PlannedSection {
+    section: Section,
+    has_hint: bool,
+    first_heading: String,
+    merged_count: usize,
+}
+
 fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
     if pages.is_empty()
         || pages.len() > 1000
@@ -205,7 +213,7 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
             "Choose PDF pages in source order.",
         ));
     }
-    let mut output: Vec<(Section, bool)> = Vec::new();
+    let mut output: Vec<PlannedSection> = Vec::new();
     let mut at = 0;
     while at < pages.len() {
         let first = pages[at];
@@ -226,19 +234,73 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
         {
             end += 1;
         }
-        output.push((
-            Section {
+        let heading = hint.map_or_else(
+            || format!("Pages {first}–{}", pages[end]),
+            |(_, _, h)| h.chars().take(200).collect(),
+        );
+        output.push(PlannedSection {
+            first_heading: heading.clone(),
+            has_hint: hint.is_some(),
+            merged_count: 1,
+            section: Section {
                 id: String::new(),
-                heading: hint.map_or_else(
-                    || format!("Pages {first}–{}", pages[end]),
-                    |(_, _, h)| h.chars().take(200).collect(),
-                ),
+                heading,
                 page_start: first,
                 page_end: pages[end],
             },
-            hint.is_some(),
-        ));
+        });
         at = end + 1;
+    }
+    // Sensible section size: merge neighbouring sections within the same chosen run
+    // while a section has fewer than 5 pages, as long as the merged section stays at most 10 pages.
+    let mut i = 0;
+    while i < output.len() {
+        let page_count = output[i].section.page_end - output[i].section.page_start + 1;
+        if page_count < 5 {
+            if i + 1 < output.len()
+                && output[i].section.page_end + 1 == output[i + 1].section.page_start
+                && (output[i + 1].section.page_end - output[i].section.page_start + 1) <= 10
+            {
+                let next = output.remove(i + 1);
+                output[i].section.page_end = next.section.page_end;
+                output[i].merged_count += next.merged_count;
+                if output[i].has_hint {
+                    output[i].section.heading = format!(
+                        "{} (and {} more)",
+                        output[i].first_heading,
+                        output[i].merged_count - 1
+                    );
+                } else {
+                    output[i].section.heading = format!(
+                        "Pages {}–{}",
+                        output[i].section.page_start, output[i].section.page_end
+                    );
+                }
+                continue;
+            } else if i > 0
+                && output[i - 1].section.page_end + 1 == output[i].section.page_start
+                && (output[i].section.page_end - output[i - 1].section.page_start + 1) <= 10
+            {
+                let curr = output.remove(i);
+                output[i - 1].section.page_end = curr.section.page_end;
+                output[i - 1].merged_count += curr.merged_count;
+                if output[i - 1].has_hint {
+                    output[i - 1].section.heading = format!(
+                        "{} (and {} more)",
+                        output[i - 1].first_heading,
+                        output[i - 1].merged_count - 1
+                    );
+                } else {
+                    output[i - 1].section.heading = format!(
+                        "Pages {}–{}",
+                        output[i - 1].section.page_start,
+                        output[i - 1].section.page_end
+                    );
+                }
+                continue;
+            }
+        }
+        i += 1;
     }
     // Many headings are worth keeping, so a long outline never refuses on its
     // own: neighbours merge until the guide fits the limit.
@@ -255,14 +317,14 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
 /// heading of every group. Order, contiguity and the chosen runs all survive:
 /// two sections from different runs are never merged, so a selection of more
 /// than `limit` separate runs is the one case with no legal plan.
-fn condense(sections: Vec<(Section, bool)>, limit: usize) -> Option<Vec<Section>> {
-    let mut runs: Vec<Vec<(Section, bool)>> = Vec::new();
+fn condense(sections: Vec<PlannedSection>, limit: usize) -> Option<Vec<Section>> {
+    let mut runs: Vec<Vec<PlannedSection>> = Vec::new();
     for planned in sections {
         match runs.last_mut() {
             Some(run)
-                if run
-                    .last()
-                    .is_some_and(|(last, _)| last.page_end + 1 == planned.0.page_start) =>
+                if run.last().is_some_and(|last| {
+                    last.section.page_end + 1 == planned.section.page_start
+                }) =>
             {
                 run.push(planned)
             }
@@ -299,7 +361,7 @@ fn condense(sections: Vec<(Section, bool)>, limit: usize) -> Option<Vec<Section>
 }
 
 /// The run that still has sections left to split and forms the largest groups.
-fn widest_group(runs: &[Vec<(Section, bool)>], groups: &[usize]) -> Option<usize> {
+fn widest_group(runs: &[Vec<PlannedSection>], groups: &[usize]) -> Option<usize> {
     let mut widest = None;
     for (index, run) in runs.iter().enumerate() {
         if groups[index] >= run.len() {
@@ -315,15 +377,16 @@ fn widest_group(runs: &[Vec<(Section, bool)>], groups: &[usize]) -> Option<usize
 
 /// A merged group keeps the first heading; a group with no bookmark heading
 /// restates the pages it now covers.
-fn merged(group: &[(Section, bool)]) -> Section {
-    let mut section = group[0].0.clone();
-    if let Some((last, _)) = group.last() {
-        section.page_end = last.page_end;
+fn merged(group: &[PlannedSection]) -> Section {
+    let mut section = group[0].section.clone();
+    if let Some(last) = group.last() {
+        section.page_end = last.section.page_end;
     }
-    section.heading = match (group[0].1, group.len()) {
+    let total_count: usize = group.iter().map(|p| p.merged_count).sum();
+    section.heading = match (group[0].has_hint, total_count) {
         (false, _) => format!("Pages {}–{}", section.page_start, section.page_end),
-        (true, 1) => section.heading,
-        (true, count) => format!("{} (and {} more)", section.heading, count - 1),
+        (true, 1) => group[0].first_heading.clone(),
+        (true, count) => format!("{} (and {} more)", group[0].first_heading, count - 1),
     };
     section
 }
@@ -573,15 +636,12 @@ fn validate_section(
     }
     let a: Answer = serde_json::from_str(text)
         .map_err(|_| "The section answer was incomplete; earlier sections are kept.")?;
-    if a.body.trim().is_empty()
-        || a.body.chars().count() > 16_000
-        || a.source_pages.is_empty()
-        || a.source_pages.len() > 10
-        || a.source_pages.windows(2).any(|p| p[0] >= p[1])
-        || a.source_pages
-            .iter()
-            .any(|p| *p < s.page_start || *p > s.page_end || !chosen.contains(p))
-    {
+    let mut source_pages = a.source_pages;
+    source_pages.sort_unstable();
+    source_pages.dedup();
+    source_pages.retain(|p| *p >= s.page_start && *p <= s.page_end && chosen.contains(p));
+    source_pages.truncate(10);
+    if a.body.trim().is_empty() || a.body.chars().count() > 16_000 || source_pages.is_empty() {
         return Err(
             "The section answer or its source pages were invalid; earlier sections are kept."
                 .into(),
@@ -589,7 +649,7 @@ fn validate_section(
     }
     let mut content = ResultBody {
         body: a.body,
-        source_pages: a.source_pages,
+        source_pages,
         content_digest: String::new(),
         model: model.into(),
     };
