@@ -12,13 +12,13 @@
 - **HOMEWORK-01:** homework with six kinds of activity. Cards and quizzes complete themselves; homework shows in the daily plan and in search (#253–#257).
 - **v0.6.0:** Ask Gemini and the completed 0.5.9 work (#267).
 
-**0.6.1 work in progress:** local branch `polish/0.6.1` has eleven commits after `main`: POLISH-061A, NARROW-061, EXPORT-MD-061, EXPORT-CENTER-061, EXPORT-CENTER-UI-061, roadmap status refresh, EXPORT-CSV-061, EXPORT-CSV-UI-061, CSV roadmap refresh, EXPORT-PRINT-061, and this print roadmap refresh. The export center, combined handout, selected-card CSV, PDF instructions and pagination polish are implemented locally; physical paper output and native save-picker checks remain unverified. The branch is not pushed.
+**0.6.1 work in progress:** local branch `polish/0.6.1` has eleven commits after `main`: POLISH-061A, NARROW-061, EXPORT-MD-061, EXPORT-CENTER-061, EXPORT-CENTER-UI-061, roadmap status refresh, EXPORT-CSV-061, EXPORT-CSV-UI-061, CSV roadmap refresh, EXPORT-PRINT-061, and this print roadmap refresh. Export features and synthetic native save-picker checks are complete locally. Browser print preview and physical paper output remain unverified; Safari automation timed out before opening the saved HTML. The branch is not pushed.
 
 ## The queue
 
 Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
 
-Rows 1–3 are complete: OFFLINE-ON and 0.6.1 polish are delivered locally, and v0.6.0 is published. Row 4 is active on the local 0.6.1 branch: Markdown export, the combined handout builder and Library entry point, selected-card CSV, PDF workflow instructions, and pagination polish are implemented. Physical Letter/A4 output and native save-picker verification remain.
+Rows 1–3 are complete: OFFLINE-ON and 0.6.1 polish are delivered locally, and v0.6.0 is published. Row 4 implementation and synthetic native save verification are complete on the local 0.6.1 branch: Markdown export, the combined handout builder and Library entry point, selected-card CSV, PDF workflow instructions, pagination polish, plus native HTML/CSV saves. Browser print preview, PDF creation and physical Letter/A4 output remain unverified.
 
 | # | Item | What she gets | Includes | Plan |
 | --- | --- | --- | --- | --- |
