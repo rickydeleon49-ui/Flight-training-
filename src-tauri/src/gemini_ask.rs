@@ -21,6 +21,8 @@ pub const ASK_INSTRUCTION: &str =
     "You are a patient flight-training study helper for a student pilot. \
      Answer from the attached PDF and the given context; say plainly when the PDF does not cover it. \
      Cite PDF page numbers you used. Keep it short and clear. \
+     Give a focused answer of about 300 words at most. If the topic needs more, cover the most important points \
+     and end by offering to go deeper on a part she names. \
      This is a study aid; remind her to check FAA guidance and her instructor for anything operational. \
      Write plain text with no Markdown: no asterisks or headings; separate paragraphs with a blank line.";
 
@@ -30,7 +32,7 @@ pub const MAX_CONTEXT_CHARS: usize = 8000;
 pub const MAX_QUESTION_CHARS: usize = 1000;
 pub const MAX_HISTORY_TURNS: usize = 6;
 pub const MAX_HISTORY_TURN_CHARS: usize = 2000;
-pub const MAX_ANSWER_CHARS: usize = 6000;
+pub const MAX_ANSWER_CHARS: usize = 12000;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -117,6 +119,39 @@ fn plain_answer(raw: &str) -> String {
         .to_string()
 }
 
+fn shorten_answer(answer: String) -> String {
+    if answer.chars().count() <= MAX_ANSWER_CHARS {
+        return answer;
+    }
+
+    // Include the blank line before the notice in the character budget.
+    let prefix: String = answer.chars().take(MAX_ANSWER_CHARS - 2).collect();
+    // A break in the first half would throw most of the answer away.
+    let half = prefix.len() / 2;
+    let end = prefix
+        .rfind("\n\n")
+        .filter(|&end| end >= half)
+        .or_else(|| {
+            prefix
+                .char_indices()
+                .rev()
+                .find_map(|(index, ch)| {
+                    let end = index + ch.len_utf8();
+                    let sentence_end = matches!(ch, '。' | '！' | '？')
+                        || (matches!(ch, '.' | '!' | '?')
+                            && (end == prefix.len()
+                                || prefix[end..].starts_with(char::is_whitespace)));
+                    sentence_end.then_some(end)
+                })
+                .filter(|&end| end >= half)
+        })
+        .unwrap_or(prefix.len());
+    format!(
+        "{}\n\n(Answer shortened. Ask a follow-up for more.)",
+        prefix[..end].trim_end()
+    )
+}
+
 pub fn parse_and_validate_answer(
     text: &str,
     pdf_page_count: Option<u32>,
@@ -128,9 +163,7 @@ pub fn parse_and_validate_answer(
     if answer.is_empty() {
         return Err("Gemini did not return an answer. Try asking again.".to_string());
     }
-    if answer.chars().count() > MAX_ANSWER_CHARS {
-        return Err("Gemini's answer was longer than expected. Try asking again.".to_string());
-    }
+    let answer = shorten_answer(answer);
 
     let mut source_pages = Vec::new();
     if let Some(max_page) = pdf_page_count {
@@ -294,6 +327,99 @@ mod tests {
     const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
 
     #[test]
+    fn ask_instruction_requests_a_focused_answer_and_a_follow_up() {
+        assert!(ASK_INSTRUCTION.contains("focused answer of about 300 words at most"));
+        assert!(ASK_INSTRUCTION.contains("cover the most important points"));
+        assert!(ASK_INSTRUCTION.contains("end by offering to go deeper on a part she names"));
+        assert!(ASK_INSTRUCTION.contains("Cite PDF page numbers"));
+        assert!(ASK_INSTRUCTION.contains("check FAA guidance and her instructor"));
+        assert!(ASK_INSTRUCTION.contains("Write plain text with no Markdown"));
+        let request = build_ask_request(None, "", &[], "Explain in detail, step by step.");
+        assert_eq!(request["contents"][0]["parts"][0]["text"], ASK_INSTRUCTION);
+        assert_eq!(request["generationConfig"]["maxOutputTokens"], 4096);
+    }
+
+    #[test]
+    fn long_answer_uses_the_last_paragraph_break_and_preserves_pages() {
+        let first = format!("{}.", "a".repeat(6500));
+        let second = format!("{}.", "b".repeat(5000));
+        let tail = format!("{}? {}", "c".repeat(100), "d".repeat(8392));
+        let raw = format!("{first}\n\n{second}\n\n{tail}");
+        assert_eq!(raw.chars().count(), 20000);
+        let response = json!({"answer": raw, "sourcePages": [4, 2, 2, 0, 6]});
+        let result = parse_and_validate_answer(&response.to_string(), Some(5)).unwrap();
+        let notice = "(Answer shortened. Ask a follow-up for more.)";
+        assert_eq!(result.answer, format!("{first}\n\n{second}\n\n{notice}"));
+        assert!(result.answer.ends_with(notice));
+        assert!(result.answer.chars().count() <= 12000 + notice.chars().count());
+        assert_eq!(result.source_pages, vec![2, 4]);
+    }
+
+    #[test]
+    fn an_early_paragraph_break_does_not_throw_the_answer_away() {
+        let raw = format!("Intro.\n\n{}. {}", "a".repeat(11000), "b".repeat(8990));
+        let result = parse_and_validate_answer(&json!({"answer": raw}).to_string(), None).unwrap();
+        assert!(result.answer.chars().count() > 11000);
+        assert!(result
+            .answer
+            .ends_with("(Answer shortened. Ask a follow-up for more.)"));
+    }
+
+    #[test]
+    fn long_answer_without_paragraphs_uses_the_last_sentence_end() {
+        let first = format!("{}.", "a".repeat(6500));
+        let second = format!("{}?", "b".repeat(5000));
+        let raw = format!("{first} {second} {}", "c".repeat(8496));
+        assert_eq!(raw.chars().count(), 20000);
+        let response = json!({"answer": raw});
+        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        assert_eq!(
+            result.answer,
+            format!("{first} {second}\n\n(Answer shortened. Ask a follow-up for more.)")
+        );
+    }
+
+    #[test]
+    fn long_multibyte_answer_uses_a_unicode_sentence_boundary() {
+        let sentence = format!("{}。", "航".repeat(7999));
+        let raw = format!("{sentence}{}", "🛩".repeat(12000));
+        assert_eq!(raw.chars().count(), 20000);
+        let response = json!({"answer": raw});
+        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        assert_eq!(
+            result.answer,
+            format!("{sentence}\n\n(Answer shortened. Ask a follow-up for more.)")
+        );
+    }
+
+    #[test]
+    fn long_multibyte_answer_without_boundaries_has_a_char_safe_fallback() {
+        let response = json!({"answer": "é🛩航".repeat(6667)});
+        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        let expected: String = "é🛩航".repeat(6667).chars().take(11998).collect();
+        let notice = "(Answer shortened. Ask a follow-up for more.)";
+        assert_eq!(result.answer, format!("{expected}\n\n{notice}"));
+        assert_eq!(
+            result.answer.chars().count(),
+            12000 + notice.chars().count()
+        );
+    }
+
+    #[test]
+    fn normal_answers_through_the_new_limit_are_unchanged() {
+        for answer in [
+            "Check page 2.\n\nThis is a study aid.".to_string(),
+            "é".repeat(7000),
+            "航".repeat(12000),
+        ] {
+            let response = json!({"answer": answer, "sourcePages": [2]});
+            let result = parse_and_validate_answer(&response.to_string(), Some(5)).unwrap();
+            assert_eq!(result.answer, answer);
+            assert_eq!(result.source_pages, vec![2]);
+        }
+    }
+
+    #[test]
     fn a_full_length_model_answer_can_be_sent_as_history() {
         let answer = "航".repeat(MAX_ANSWER_CHARS);
         let history = validate_history(&[AskHistoryTurn {
@@ -310,7 +436,7 @@ mod tests {
             prior,
             format!("Prior conversation:\nHelper: {}", history[0].text)
         );
-        assert_eq!(answer.chars().count(), 6000);
+        assert_eq!(answer.chars().count(), 12000);
     }
 
     #[test]
