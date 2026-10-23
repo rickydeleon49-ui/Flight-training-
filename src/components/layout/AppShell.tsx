@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useRef, useState, type ReactElement } from "react";
+import { Suspense, useEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -52,8 +52,11 @@ export function AppShell() {
   const { data } = useAppData();
   const location = useLocation();
   const today = todayIso();
-  const navRef = useRef<HTMLElement>(null);
-  const [hasOverflowRight, setHasOverflowRight] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const [desktop, setDesktop] = useState(() => window.matchMedia?.("(min-width: 1000px)").matches ?? true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const resizeFocusRef = useRef<"search" | "menu" | null>(null);
 
   const overdueCount = overdueActions(data.actions, today).length;
   const questionsToAsk = data.questions.filter((q) => q.status === "to_ask").length;
@@ -64,40 +67,54 @@ export function AppShell() {
     return null;
   };
 
-  const updateScrollFade = useCallback(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const canScrollRight = nav.scrollWidth - nav.scrollLeft - nav.clientWidth > 1;
-    setHasOverflowRight(canScrollRight);
+  useEffect(() => {
+    const media = window.matchMedia?.("(min-width: 1000px)");
+    if (!media) return;
+    const update = () => {
+      // Keep focus reachable when a resize hides the disclosure or its button.
+      if (media.matches && document.activeElement === menuRef.current) {
+        resizeFocusRef.current = "search";
+      } else if (!media.matches && navigationRef.current?.contains(document.activeElement)) {
+        resizeFocusRef.current = "menu";
+      }
+      setDesktop(media.matches);
+      setMenuOpen(false);
+    };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const active = nav.querySelector<HTMLElement>(".nav__link.is-active");
-    if (active && typeof active.scrollIntoView === "function") {
-      active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // Wait until the new layout has revealed the destination before focusing it.
+    if (resizeFocusRef.current === "search") {
+      navigationRef.current?.querySelector<HTMLButtonElement>(".nav__search")?.focus();
+    } else if (resizeFocusRef.current === "menu") {
+      menuRef.current?.focus();
     }
-    updateScrollFade();
-  }, [location.pathname, updateScrollFade]);
+    resizeFocusRef.current = null;
+  }, [desktop]);
+
+  const closeMenu = () => {
+    if (!desktop) {
+      setMenuOpen(false);
+      menuRef.current?.focus();
+    }
+  };
 
   useEffect(() => {
-    updateScrollFade();
-    const nav = navRef.current;
-    if (!nav) return;
-    window.addEventListener("resize", updateScrollFade);
-    nav.addEventListener("scroll", updateScrollFade, { passive: true });
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => updateScrollFade());
-      ro.observe(nav);
+    // Also close after navigation from Quick Find or browser history.
+    setMenuOpen(false);
+    if (!desktop && navigationRef.current?.contains(document.activeElement)) {
+      menuRef.current?.focus();
     }
-    return () => {
-      window.removeEventListener("resize", updateScrollFade);
-      nav.removeEventListener("scroll", updateScrollFade);
-      ro?.disconnect();
-    };
-  }, [updateScrollFade]);
+  }, [location.key, desktop]);
+
+  useEffect(() => {
+    if (desktop) {
+      navigationRef.current?.querySelector<HTMLElement>(".nav .nav__link.is-active")
+        ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }
+  }, [desktop, location.pathname]);
 
   return (
     <div className="shell">
@@ -113,66 +130,79 @@ export function AppShell() {
         </div>
 
         <button
+          ref={menuRef}
           type="button"
-          className="nav__search"
-          onClick={() => window.dispatchEvent(new Event(QUICK_FIND_EVENT))}
+          className="button button--secondary sidebar__menu"
+          hidden={desktop}
+          aria-expanded={menuOpen}
+          aria-controls="app-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
         >
-          <span className="nav__icon">
-            <SearchIcon size={17} />
-          </span>
-          <span>Search</span>
-          <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>
+          Menu
         </button>
 
-        <div className="nav-wrapper">
-          <nav
-            ref={navRef}
-            className="nav"
-            aria-label="Main"
-            onScroll={updateScrollFade}
-          >
-            {NAV_ITEMS.map((item) => {
-              const count = countFor(item.to);
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
-                >
-                  <span className="nav__icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                  {count ? (
-                    <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
-                      {count.value}
-                      <span className="visually-hidden">
-                        {item.to === "/" ? " overdue" : " to ask"}
-                      </span>
-                    </span>
-                  ) : null}
-                </NavLink>
-              );
-            })}
-          </nav>
-          {hasOverflowRight ? (
-            <span className="nav__fade-right" aria-hidden="true" />
-          ) : null}
-        </div>
-
-        <div className="sidebar__footer stack stack--3">
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
+        <div
+          id="app-navigation"
+          ref={navigationRef}
+          className="sidebar__navigation"
+          hidden={!desktop && !menuOpen}
+        >
+          <button
+            type="button"
+            className="nav__search"
+            onClick={() => window.dispatchEvent(new Event(QUICK_FIND_EVENT))}
           >
             <span className="nav__icon">
-              <SettingsIcon size={19} />
+              <SearchIcon size={17} />
             </span>
-            <span>Settings</span>
-          </NavLink>
-          <p className="sidebar__note">
-            Your instructor and official aviation guidance stay authoritative. This is
-            here to keep your training organized.
-          </p>
+            <span>Search</span>
+            <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>
+          </button>
+
+          <div className="nav-wrapper">
+            <nav className="nav" aria-label="Main">
+              {NAV_ITEMS.map((item) => {
+                const count = countFor(item.to);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={closeMenu}
+                    end={item.to === "/"}
+                    className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
+                  >
+                    <span className="nav__icon">{item.icon}</span>
+                    <span>{item.label}</span>
+                    {count ? (
+                      <span className={`nav__count${count.quiet ? " nav__count--quiet" : ""}`}>
+                        {count.value}
+                        <span className="visually-hidden">
+                          {item.to === "/" ? " overdue" : " to ask"}
+                        </span>
+                      </span>
+                    ) : null}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="sidebar__footer stack stack--3">
+            <NavLink
+              to="/settings"
+              onClick={closeMenu}
+              className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}
+            >
+              <span className="nav__icon">
+                <SettingsIcon size={19} />
+              </span>
+              <span>Settings</span>
+            </NavLink>
+            <p className="sidebar__note">
+              Your instructor and official aviation guidance stay authoritative. This is
+              here to keep your training organized.
+            </p>
+          </div>
         </div>
       </aside>
 

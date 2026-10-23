@@ -585,7 +585,7 @@ function MaterialDetailPage() {
         title={material.title}
         subtitle={`${MATERIAL_TYPE_LABELS[material.materialType]} · ${TOPIC_LABELS[material.topic]}`}
         action={
-          <div className="row">
+          <div className="row row--wrap">
             <Link className="button button--ghost" to="/study">
               Back
             </Link>
@@ -1310,8 +1310,8 @@ function MaterialDetailPage() {
                     </div>
                   ) : practiceTest ? (
                     <div className="stack stack--4">
-                      <div className="row row--between" style={{ alignItems: "center" }}>
-                        <div className="ai-disclaimer" style={{ flex: 1, margin: 0 }}>
+                      <div className="row row--between row--wrap" style={{ alignItems: "center" }}>
+                        <div className="ai-disclaimer" style={{ flex: "1 1 16rem", margin: 0 }}>
                           <AlertIcon size={16} />
                           <p className="tiny">
                             {pdfTest
@@ -1327,7 +1327,7 @@ function MaterialDetailPage() {
                           <Link
                             to={`/study/history/${encodeURIComponent(material.id)}`}
                             className="button button--secondary button--small"
-                            style={{ marginLeft: "var(--space-3)", flexShrink: 0 }}
+                            style={{ flexShrink: 0 }}
                           >
                             View practice history ({completedCount})
                           </Link>

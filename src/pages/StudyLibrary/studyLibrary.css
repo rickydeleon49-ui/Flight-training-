@@ -541,3 +541,7 @@
 /* Share or print (P54-04). */
 .export-study__choices { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .export-study__option { display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+
+@media (max-width: 999px) {
+  .material-grid { grid-template-columns: minmax(0, 1fr); }
+}
