@@ -5,7 +5,7 @@ import type { AiStudySet, PracticeTest } from "@/domain/types";
 import { makeMaterial } from "@/testing/factories";
 
 import type { ExportSource } from "./studyExport";
-import { buildHandoutHtml, escapeHtml } from "./studyHandout";
+import { buildHandoutHtml, buildMultiMaterialHandoutHtml, escapeHtml } from "./studyHandout";
 
 const NOW = new Date("2026-10-16T18:00:00Z");
 const ALL = { guide: true, flashcards: true, questions: true };
@@ -103,6 +103,52 @@ describe("a printable handout", () => {
 
   it("escapes every HTML-significant character", () => {
     expect(escapeHtml(`<a href="x" title='y'>&</a>`)).toBe("&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;&amp;&lt;/a&gt;");
+  });
+});
+
+describe("a combined printable handout", () => {
+  const second = source({
+    material: makeMaterial({ title: "Crosswind" }),
+    studySet: { ...set, summary: "Second material guide", flashcards: [] },
+    practiceTest: { ...test, title: "Crosswind practice", questions: [{ ...test.questions[0]!, question: "Second material question", explanation: "Second material explanation" }] },
+  });
+
+  it("keeps material order, headings, and source page labels", () => {
+    const doc = page(buildMultiMaterialHandoutHtml([
+      { source: source(), selection: ALL },
+      { source: second, selection: ALL },
+    ], { answerKey: false }, NOW));
+    expect([...doc.querySelectorAll(".material > h2")].map((heading) => heading.textContent)).toEqual(["Aviation Weather", "Crosswind"]);
+    expect(doc.body.textContent).toContain("Aviation Weather:");
+    expect(doc.body.textContent).toContain("(source p. 12)");
+    expect(doc.body.textContent).toContain("Second material guide");
+  });
+
+  it("filters corrections per material and puts the optional answer key last", () => {
+    const corrected = source({
+      studySet: { ...set, flashcards: [{ front: "Private CFI card", back: "Private card back", sourcePage: null, origin: "instructor" }] },
+      practiceTest: { ...test, questions: [{ ...test.questions[0]!, question: "Private CFI question", options: ["Private CFI answer", "Other"], correctIndex: 0, explanation: "Private CFI explanation", origin: "instructor" }] },
+    });
+    const doc = page(buildMultiMaterialHandoutHtml([
+      { source: corrected, selection: { ...ALL, instructorCorrections: false } },
+      { source: second, selection: { ...ALL, instructorCorrections: true } },
+    ], { answerKey: true }, NOW));
+    expect(doc.body.textContent).not.toContain("Private CFI");
+    expect(doc.body.textContent).toContain("Second material explanation");
+    const keys = [...doc.querySelectorAll(".answer-key")];
+    expect(keys).toHaveLength(1);
+    expect(doc.body.lastElementChild).toBe(keys[0]);
+    expect(keys[0]?.textContent).toContain("1. B: Broken");
+  });
+
+  it("omits all answer and explanation data when the key is off", () => {
+    const html = buildMultiMaterialHandoutHtml([
+      { source: source(), selection: ALL },
+      { source: second, selection: ALL },
+    ], { answerKey: false }, NOW);
+    expect(html).not.toContain("Broken layers are ceilings.");
+    expect(html).not.toContain("Second material explanation");
+    expect(page(html).querySelector(".answer-key")).toBeNull();
   });
 });
 
