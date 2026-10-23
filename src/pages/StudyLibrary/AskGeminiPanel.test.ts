@@ -11,7 +11,7 @@ import { AppDataContext, AppDataProvider, EMPTY_DATA, useAppData } from "@/state
 import * as geminiService from "@/services/gemini";
 import * as pdfService from "@/services/pdf";
 import * as documentService from "@/services/documents";
-import { askGemini } from "@/services/gemini";
+import { askGemini, cancelAskGemini, watchAskGeminiProgress, type AskGeminiParams } from "@/services/gemini";
 import { AskGeminiPanel, GOOGLE_NOTE_STORAGE_KEY } from "./AskGeminiPanel";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { MaterialDetail } from "./MaterialDetail";
@@ -29,6 +29,8 @@ vi.mock("@/services/gemini", async (importOriginal) => {
   return {
     ...actual,
     askGemini: vi.fn(),
+    cancelAskGemini: vi.fn().mockResolvedValue(undefined),
+    watchAskGeminiProgress: vi.fn().mockResolvedValue(() => {}),
   };
 });
 
@@ -376,6 +378,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
       fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
       fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      await waitFor(() => expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(1));
       expect((screen.getByLabelText("Ask a question") as HTMLInputElement).disabled).toBe(true);
       fireEvent.click(screen.getByRole("button", { name: action }));
       if (action === "Close Ask Gemini") {
@@ -385,7 +388,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
       expect(input.disabled).toBe(false);
       fireEvent.change(input, { target: { value: "New question" } });
       fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-      expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(2);
+      await waitFor(() => expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(2));
       expect(vi.mocked(askGemini).mock.calls[1]![0]).toMatchObject({ history: [] });
 
       await act(async () => { resolveOld({ answer: "Stale answer", sourcePages: [] }); });
@@ -410,6 +413,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByRole("button", { name: action }));
     if (action === "Close Ask Gemini") {
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
@@ -474,6 +478,96 @@ describe("AskGeminiPanel answer actions and reset", () => {
     expect(screen.queryByText("Answer to be cleared on reset.")).toBeNull();
     expect(screen.queryByText("Initial query")).toBeNull();
     expect(screen.queryByRole("button", { name: "Ask another" })).toBeNull();
+  });
+});
+
+describe("AskGeminiPanel request progress and cancellation", () => {
+  let emit: Parameters<typeof watchAskGeminiProgress>[0];
+  let unlisten = vi.fn<() => void>();
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    unlisten = vi.fn();
+    vi.mocked(watchAskGeminiProgress).mockImplementation(async (listener) => {
+      emit = listener;
+      return unlisten;
+    });
+    vi.mocked(askGemini).mockImplementation(() => new Promise(() => {}));
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.mocked(watchAskGeminiProgress).mockResolvedValue(() => {});
+  });
+
+  async function start() {
+    const view = render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(askGemini).toHaveBeenCalledTimes(1));
+    const { requestId } = vi.mocked(askGemini).mock.calls[0]![0] as AskGeminiParams;
+    expect(requestId).toMatch(/^[A-Za-z0-9-]{1,64}$/);
+    return { view, requestId: requestId! };
+  }
+
+  it.each(["answer", "error"])("shows only current progress under the input, clearing on %s", async (outcome) => {
+    let resolve!: (value: Awaited<ReturnType<typeof askGemini>>) => void;
+    let reject!: (reason: Error) => void;
+    vi.mocked(askGemini).mockImplementationOnce(() => new Promise((yes, no) => { resolve = yes; reject = no; }));
+    const { requestId } = await start();
+    act(() => emit({ requestId: "another-request", message: "Other question's progress" }));
+    expect(screen.queryByRole("status")).toBeNull();
+    const message = "Gemini is busy or rate-limited. Waiting 10 seconds, then trying again — attempt 2 of 3.";
+    act(() => emit({ requestId, message }));
+    expect(screen.getByRole("status").textContent).toBe(message);
+    expect(screen.getByRole("button", { name: "Asking…" })).toBeTruthy();
+    expect(screen.getByLabelText("Ask a question").compareDocumentPosition(screen.getByRole("status")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    act(() => emit({ requestId, message: "Trying the backup Gemini model…" }));
+    expect(screen.getByRole("status").textContent).toBe("Trying the backup Gemini model…");
+    act(() => emit({ requestId: "another-request", message: "Do not replace this question's progress" }));
+    expect(screen.getByRole("status").textContent).toBe("Trying the backup Gemini model…");
+    await act(async () => {
+      if (outcome === "answer") resolve({ answer: "Synthetic answer", sourcePages: [] });
+      else reject(new Error("Synthetic error"));
+    });
+    expect(screen.getByText(outcome === "answer" ? "Synthetic answer" : "Synthetic error")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(unlisten).toHaveBeenCalledTimes(1);
+    expect(cancelAskGemini).not.toHaveBeenCalled();
+    act(() => emit({ requestId, message: "Late progress" }));
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it.each(["Ask another", "Close Ask Gemini", "unmount"])("%s cancels the in-flight id and clears progress", async (action) => {
+    const { view, requestId } = await start();
+    act(() => emit({ requestId, message: "Gemini is busy, trying again…" }));
+    expect(screen.getByRole("status")).toBeTruthy();
+    if (action === "unmount") view.unmount();
+    else fireEvent.click(screen.getByRole("button", { name: action }));
+    expect(cancelAskGemini).toHaveBeenCalledExactlyOnceWith(requestId);
+    expect(unlisten).toHaveBeenCalledTimes(1);
+    act(() => emit({ requestId, message: "Late progress" }));
+    expect(screen.queryByRole("status")).toBeNull();
+    if (action === "Close Ask Gemini") {
+      fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+      expect(screen.queryByText("Gemini is busy, trying again…")).toBeNull();
+    }
+  });
+
+  it("closing while the listener starts prevents a native ask and releases the late listener", async () => {
+    let ready!: (stop: () => void) => void;
+    vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
+    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect(askGemini).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Close Ask Gemini" }));
+    await act(async () => { ready(unlisten); });
+    expect(askGemini).not.toHaveBeenCalled();
+    expect(unlisten).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -295,6 +295,7 @@ pub fn run() {
             gemini::sections::restart_study_guide,
             gemini::generate_practice_test,
             gemini_ask::ask_gemini,
+            gemini_ask::cancel_ask_gemini,
             gemini::gemini_jobs,
             gemini::acknowledge_gemini_job,
             gemini::cancel_gemini_job,

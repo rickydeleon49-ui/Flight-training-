@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Badge, Button, QuestionIcon } from "@/components/ui";
-import { askGemini, type AskGeminiHistoryTurn } from "@/services/gemini";
+import { newId } from "@/lib/id";
+import { askGemini, cancelAskGemini, watchAskGeminiProgress, type AskGeminiHistoryTurn } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
   materialId: string;
@@ -25,6 +26,11 @@ interface ChatTurn {
   role: "user" | "model";
   text: string;
   sourcePages?: number[];
+}
+
+interface InFlightAsk {
+  id: string;
+  unlisten?: () => void;
 }
 
 export const GOOGLE_NOTE_STORAGE_KEY = "hfd_ask_gemini_google_note_seen";
@@ -53,13 +59,25 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
   const [error, setError] = useState<string | null>(null);
   const [googleNoteDismissed, setGoogleNoteDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const requestIdRef = useRef(0);
+  const requestRef = useRef<InFlightAsk | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const [answerVersion, setAnswerVersion] = useState(0);
 
-  useEffect(() => () => { requestIdRef.current += 1; }, []);
+  const cancelInFlight = () => {
+    const request = requestRef.current;
+    requestRef.current = null;
+    if (request) {
+      request.unlisten?.();
+      request.unlisten = undefined;
+      void cancelAskGemini(request.id).catch(() => {});
+    }
+  };
+
+  useEffect(() => () => { cancelInFlight(); }, []);
 
   const resetConversation = () => {
-    requestIdRef.current += 1;
+    cancelInFlight();
+    setProgress(null);
     setHistory([]);
     setError(null);
     setQuestion("");
@@ -100,7 +118,9 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
 
     setIsLoading(true);
     setError(null);
-    const requestId = ++requestIdRef.current;
+    setProgress(null);
+    const request: InFlightAsk = { id: newId() };
+    requestRef.current = request;
 
     const turnsToSend: AskGeminiHistoryTurn[] = history.slice(-6).map((turn) => ({
       role: turn.role,
@@ -108,7 +128,15 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
     }));
 
     try {
+      request.unlisten = await watchAskGeminiProgress((event) => {
+        if (requestRef.current === request && event.requestId === request.id) {
+          setProgress(event.message);
+        }
+      });
+      // Close/unmount can happen while the listener is being installed.
+      if (requestRef.current !== request) return;
       const result = await askGemini({
+        requestId: request.id,
         relativePath: relativePath ?? null,
         materialId,
         context,
@@ -116,7 +144,8 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         history: turnsToSend,
       });
 
-      if (requestId !== requestIdRef.current) return;
+      if (requestRef.current !== request) return;
+      if (!result) return;
       setHistory((prev) => {
         const next = [
           ...prev,
@@ -128,7 +157,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
       setQuestion("");
       setAnswerVersion((version) => version + 1);
     } catch (err: unknown) {
-      if (requestId !== requestIdRef.current) return;
+      if (requestRef.current !== request) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         setError("No internet right now");
       } else {
@@ -149,7 +178,13 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         }
       }
     } finally {
-      if (requestId === requestIdRef.current) setIsLoading(false);
+      request.unlisten?.();
+      request.unlisten = undefined;
+      if (requestRef.current === request) {
+        requestRef.current = null;
+        setIsLoading(false);
+        setProgress(null);
+      }
     }
   };
 
@@ -315,6 +350,9 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
             {isLoading ? "Asking…" : "Ask"}
           </Button>
         </div>
+        {isLoading && progress && (
+          <p className="small dim" role="status" style={{ margin: 0 }}>{progress}</p>
+        )}
       </form>
 
       <p className="tiny dim" style={{ margin: 0 }}>

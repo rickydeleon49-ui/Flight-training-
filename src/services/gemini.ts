@@ -3,6 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
+import { newId } from "@/lib/id";
 import type { PracticeQuestion, StudyFlashcard, StudyGuideSection } from "@/domain/types";
 import { DesktopOnlyError } from "./documents";
 
@@ -215,6 +216,7 @@ export interface AskGeminiHistoryTurn {
 }
 
 export interface AskGeminiParams {
+  requestId?: string;
   relativePath?: string | null;
   materialId: string;
   context: string;
@@ -238,7 +240,7 @@ export async function askGemini(
   maybeContext?: string,
   maybeQuestion?: string,
   maybeHistory?: AskGeminiHistoryTurn[],
-): Promise<AskGeminiResult> {
+): Promise<AskGeminiResult | null> {
   if (!isTauri()) throw new DesktopOnlyError();
   const params: AskGeminiParams =
     typeof paramsOrRelativePath === "object" && paramsOrRelativePath !== null
@@ -251,13 +253,34 @@ export async function askGemini(
           history: maybeHistory ?? [],
         };
 
-  return invoke<AskGeminiResult>("ask_gemini", {
+  return invoke<AskGeminiResult | null>("ask_gemini", {
+    requestId: params.requestId ?? newId(),
     relativePath: params.relativePath ?? null,
     materialId: params.materialId,
     context: params.context,
     question: params.question,
     history: params.history ?? [],
   });
+}
+
+export interface AskGeminiProgressEvent {
+  requestId: string;
+  message: string;
+}
+
+/** Native wording for just one interactive question, without storing a chat. */
+export async function watchAskGeminiProgress(
+  onProgress: (event: AskGeminiProgressEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<AskGeminiProgressEvent>("ask-gemini-progress", (event) => {
+    onProgress(event.payload);
+  });
+}
+
+export async function cancelAskGemini(requestId: string): Promise<void> {
+  if (!isTauri()) return;
+  return invoke<void>("cancel_ask_gemini", { requestId });
 }
 
 /** Every recorded generation: what the window rebuilds itself from. */

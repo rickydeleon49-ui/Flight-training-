@@ -6,16 +6,119 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::future::Future;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::gemini::{
     extract_text, generate_with_retries_at, generation_client, load_choice, prepare_submission,
     prepared_sources, run_generation, stored_key, GenContext, LoadedSource,
 };
 use crate::gemini_budget::Budget;
+use crate::gemini_cancel::{CancelToken, Cancellable};
 use crate::gemini_files::{self, GOOGLE_BASE};
 use crate::storage;
+
+const ASK_PROGRESS_EVENT: &str = "ask-gemini-progress";
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct AskProgress {
+    request_id: String,
+    message: String,
+}
+
+fn progress_reporter<'a>(
+    request_id: &'a str,
+    emit: &'a (dyn Fn(AskProgress) + Sync),
+) -> impl Fn(String) + Sync + 'a {
+    move |message| {
+        emit(AskProgress {
+            request_id: request_id.to_string(),
+            message,
+        });
+    }
+}
+
+fn validate_request_id(request_id: &str) -> Result<(), String> {
+    if request_id.is_empty()
+        || request_id.len() > 64
+        || !request_id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+    {
+        return Err("The question request was not recognised. Try asking again.".into());
+    }
+    Ok(())
+}
+
+// Asks are transient, with no journal or stored-data changes. Keep their tokens
+// separate from durable generation jobs, even if a caller reuses a job id.
+static RUNNING_ASKS: Mutex<Option<HashMap<String, Arc<CancelToken>>>> = Mutex::new(None);
+
+struct AskRegistration {
+    request_id: String,
+    token: Arc<CancelToken>,
+}
+
+impl AskRegistration {
+    fn register(request_id: &str, budget: &Budget) -> Result<Self, String> {
+        validate_request_id(request_id)?;
+        let token = Arc::new(CancelToken::default());
+        let mut running = RUNNING_ASKS.lock().unwrap_or_else(|e| e.into_inner());
+        let asks = running.get_or_insert_with(HashMap::new);
+        if asks.contains_key(request_id) {
+            return Err("This question is already being asked.".into());
+        }
+        asks.insert(request_id.to_string(), token.clone());
+        let admission = token.clone();
+        budget.attach_admission(Arc::new(move || !admission.is_cancelled()));
+        Ok(Self {
+            request_id: request_id.to_string(),
+            token,
+        })
+    }
+
+    // Wrap preparation as well as generation: cancellation drops HTTP work and
+    // releases only this ask's lease. It never invalidates the shared PDF cache.
+    async fn run<T>(
+        &self,
+        work: impl Future<Output = Result<T, String>>,
+    ) -> Result<Option<T>, String> {
+        match Cancellable::new(work, self.token.clone()).await {
+            Ok(result) => result.map(Some),
+            Err(_) => Ok(None),
+        }
+    }
+}
+
+impl Drop for AskRegistration {
+    fn drop(&mut self) {
+        if let Some(asks) = RUNNING_ASKS
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_mut()
+        {
+            asks.remove(&self.request_id);
+        }
+    }
+}
+
+#[tauri::command]
+pub fn cancel_ask_gemini(request_id: String) -> Result<(), String> {
+    validate_request_id(&request_id)?;
+    let token = RUNNING_ASKS
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .and_then(|asks| asks.get(&request_id).cloned());
+    if let Some(token) = token {
+        token.cancel();
+    }
+    Ok(())
+}
 
 pub const ASK_INSTRUCTION: &str =
     "You are a patient flight-training study helper for a student pilot. \
@@ -260,58 +363,69 @@ pub async fn ask_gemini_with(
 #[tauri::command]
 pub async fn ask_gemini(
     app: AppHandle,
+    request_id: String,
     relative_path: Option<String>,
     material_id: String,
     context: String,
     question: String,
     history: Vec<AskHistoryTurn>,
-) -> Result<AskAnswer, String> {
+) -> Result<Option<AskAnswer>, String> {
+    validate_request_id(&request_id)?;
     let _ = &material_id;
     validate_question(&question)?;
     validate_context(&context)?;
 
     let budget = Budget::new(ASK_GEMINI_BUDGET);
-    // Recorded before the key is read, as every generation does, so a
-    // disconnect or key change during this question makes it stale.
-    let epoch = prepared_sources().epoch();
+    let registration = AskRegistration::register(&request_id, &budget)?;
+    registration
+        .run(async {
+            // Recorded before the key is read, as every generation does, so a
+            // disconnect or key change during this question makes it stale.
+            let epoch = prepared_sources().epoch();
 
-    let (api_key, source, page_count) =
-        if let Some(rel_path) = relative_path.as_deref().filter(|p| !p.trim().is_empty()) {
-            let (api_key, source) = budget
-                .run(prepare_submission(&app, rel_path))
-                .await
-                .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
-            let page_count = source.page_count;
-            (api_key, Some(source), page_count)
-        } else {
-            let api_key = stored_key(&app)?;
-            (api_key, None, None)
-        };
+            let (api_key, source, page_count) = if let Some(rel_path) =
+                relative_path.as_deref().filter(|p| !p.trim().is_empty())
+            {
+                let (api_key, source) = budget
+                    .run(prepare_submission(&app, rel_path))
+                    .await
+                    .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
+                let page_count = source.page_count;
+                (api_key, Some(source), page_count)
+            } else {
+                let api_key = stored_key(&app)?;
+                (api_key, None, None)
+            };
 
-    let root = storage::app_root(&app)?;
-    let choice = load_choice(&root);
-    let http = generation_client()?;
-    let say = |_| ();
-    let ctx = GenContext {
-        http: &http,
-        base: GOOGLE_BASE,
-        api_key: &api_key,
-        choice,
-        cache: prepared_sources(),
-        epoch,
-        budget: &budget,
-        say: &say,
-    };
+            let root = storage::app_root(&app)?;
+            let choice = load_choice(&root);
+            let http = generation_client()?;
+            let emit = |progress| {
+                let _ = app.emit(ASK_PROGRESS_EVENT, progress);
+            };
+            let say = progress_reporter(&request_id, &emit);
+            let ctx = GenContext {
+                http: &http,
+                base: GOOGLE_BASE,
+                api_key: &api_key,
+                choice,
+                cache: prepared_sources(),
+                epoch,
+                budget: &budget,
+                say: &say,
+            };
 
-    ask_gemini_with(
-        &ctx,
-        source.as_ref(),
-        page_count,
-        &context,
-        &question,
-        &history,
-    )
-    .await
+            ask_gemini_with(
+                &ctx,
+                source.as_ref(),
+                page_count,
+                &context,
+                &question,
+                &history,
+            )
+            .await
+        })
+        .await
 }
 
 #[cfg(test)]
@@ -325,6 +439,232 @@ mod tests {
     use std::sync::Arc;
 
     const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
+
+    fn answer_body() -> String {
+        json!({"candidates": [{"content": {"parts": [{"text":
+            json!({"answer": "A synthetic answer.", "sourcePages": [1]}).to_string()
+        }]}}]})
+        .to_string()
+    }
+
+    #[test]
+    fn ask_progress_emitter_preserves_every_message_and_serializes_request_id() {
+        let events = Mutex::new(Vec::new());
+        let emit = |event| events.lock().unwrap().push(event);
+        let say = progress_reporter("ask-emitter-test", &emit);
+        for message in [
+            "Preparing this PDF…",
+            "Gemini is busy, trying again…",
+            "Trying the backup Gemini model…",
+        ] {
+            say(message.into());
+        }
+        let events = events.lock().unwrap();
+        assert_eq!(events.len(), 3);
+        for (event, message) in events.iter().zip([
+            "Preparing this PDF…",
+            "Gemini is busy, trying again…",
+            "Trying the backup Gemini model…",
+        ]) {
+            assert_eq!(
+                serde_json::to_value(event).unwrap(),
+                json!({
+                    "requestId": "ask-emitter-test", "message": message,
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn ask_cancellation_drops_pending_work_and_keeps_other_requests_running() {
+        use std::sync::atomic::AtomicBool;
+        use std::task::{Context, Poll, Waker};
+
+        struct DropFlag(Arc<AtomicBool>);
+        impl Drop for DropFlag {
+            fn drop(&mut self) {
+                self.0.store(true, Ordering::SeqCst);
+            }
+        }
+        let budget = Budget::new(ASK_GEMINI_BUDGET);
+        let registration = AskRegistration::register("ask-pending-test", &budget).unwrap();
+        let other_budget = Budget::new(ASK_GEMINI_BUDGET);
+        let other = AskRegistration::register("ask-unrelated-test", &other_budget).unwrap();
+        let dropped = Arc::new(AtomicBool::new(false));
+        let flag = DropFlag(dropped.clone());
+        let mut work = Box::pin(registration.run(async move {
+            let _flag = flag;
+            std::future::pending::<Result<(), String>>().await
+        }));
+        let mut cx = Context::from_waker(Waker::noop());
+        assert!(work.as_mut().poll(&mut cx).is_pending());
+        cancel_ask_gemini("ask-pending-test".into()).unwrap();
+        assert_eq!(work.as_mut().poll(&mut cx), Poll::Ready(Ok(None)));
+        assert!(dropped.load(Ordering::SeqCst), "in-flight work is dropped");
+        assert!(!budget.can_continue(), "no later request may be sent");
+        assert!(other_budget.can_continue());
+        assert!(!other.token.is_cancelled());
+    }
+
+    #[test]
+    fn ask_progress_forwards_retry_and_fallback_wording_with_request_id() {
+        let rig = test_rig();
+        rig.fake.behave(|b| {
+            b.generate_statuses = vec![(503, "busy".into()), (503, "busy".into())];
+            b.generate_retry_after = Some("0".into());
+            // Queued answers follow statuses; generate_answer overrides them.
+            b.generate_answers = vec![answer_body()];
+        });
+        let (budget, _) = crate::gemini_budget::testing::fake_budget(ASK_GEMINI_BUDGET);
+        let registration = AskRegistration::register("ask-progress-test", &budget).unwrap();
+        let events = Mutex::new(Vec::new());
+        let emit = |event| events.lock().unwrap().push(event);
+        let say = progress_reporter("ask-progress-test", &emit);
+        let ctx = GenContext {
+            http: &rig.http,
+            base: &rig.fake.base,
+            api_key: KEY,
+            choice: ModelChoice::Standard,
+            cache: &rig.cache,
+            epoch: rig.cache.epoch(),
+            budget: &budget,
+            say: &say,
+        };
+        let result = tauri::async_runtime::block_on(registration.run(ask_gemini_with(
+            &ctx,
+            None,
+            None,
+            "",
+            "Why?",
+            &[],
+        )))
+        .unwrap()
+        .unwrap();
+        assert_eq!(result.answer, "A synthetic answer.");
+        let events = events.lock().unwrap();
+        assert_eq!(events.len(), 3, "two waits and the fallback notice");
+        assert!(events.iter().all(|e| e.request_id == "ask-progress-test"));
+        assert_eq!(events[0].message, "Gemini is busy or rate-limited. Waiting 0 seconds, then trying again — attempt 2 of 3.");
+        assert_eq!(events[1].message, "Gemini is busy or rate-limited. Waiting 0 seconds, then trying again — attempt 3 of 3.");
+        assert_eq!(events[2].message, "Trying the backup Gemini model…");
+        assert_eq!(
+            serde_json::to_value(&events[0]).unwrap()["requestId"],
+            "ask-progress-test"
+        );
+    }
+
+    #[test]
+    fn cancelled_ask_stops_before_next_attempt_and_preserves_shared_pdf() {
+        let rig = test_rig();
+        rig.fake.behave(|b| {
+            b.enforce_files = true;
+            b.generate_statuses = vec![(503, "busy".into())];
+            b.generate_retry_after = Some("0".into());
+            // Leave an answer for a forbidden retry and the other job's ask.
+            b.generate_answers = vec![answer_body()];
+        });
+        let source = LoadedSource::new(synthetic_pdf(5), "application/pdf", "documents/shared.pdf");
+        let other_budget = Budget::new(ASK_GEMINI_BUDGET);
+        let quiet = |_| ();
+        let other_lease = tauri::async_runtime::block_on(rig.cache.prepare(
+            &rig.http,
+            &rig.fake.base,
+            KEY,
+            &crate::gemini_files::Source {
+                bytes: &source.bytes,
+                content_sha256: &source.content_sha256,
+                mime: source.mime,
+                scope: &source.scope,
+            },
+            rig.cache.epoch(),
+            None,
+            &other_budget,
+            &quiet,
+        ))
+        .unwrap();
+        let (budget, _) = crate::gemini_budget::testing::fake_budget(ASK_GEMINI_BUDGET);
+        let registration = AskRegistration::register("ask-cancel-shared-test", &budget).unwrap();
+        let say = |message: String| {
+            if message.contains("trying again") {
+                cancel_ask_gemini("ask-cancel-shared-test".into()).unwrap();
+            }
+        };
+        let ctx = GenContext {
+            http: &rig.http,
+            base: &rig.fake.base,
+            api_key: KEY,
+            choice: ModelChoice::Standard,
+            cache: &rig.cache,
+            epoch: rig.cache.epoch(),
+            budget: &budget,
+            say: &say,
+        };
+        let result = tauri::async_runtime::block_on(registration.run(ask_gemini_with(
+            &ctx,
+            Some(&source),
+            Some(5),
+            "",
+            "Why?",
+            &[],
+        )))
+        .unwrap();
+        assert_eq!(result, None, "cancellation ends quietly");
+        assert_eq!(rig.fake.count(|r| r.is_generate()), 1, "no next attempt");
+        assert_eq!(rig.fake.count(|r| r.is_delete()), 0);
+        assert!(other_lease.is_current());
+        let other_ctx = GenContext {
+            budget: &other_budget,
+            say: &quiet,
+            ..ctx
+        };
+        let answer = tauri::async_runtime::block_on(ask_gemini_with(
+            &other_ctx,
+            Some(&source),
+            Some(5),
+            "",
+            "Another job's question",
+            &[],
+        ))
+        .unwrap();
+        assert_eq!(answer.answer, "A synthetic answer.");
+        assert_eq!(
+            rig.fake.count(|r| r.is_upload_start()),
+            1,
+            "the prepared PDF was reused"
+        );
+        assert_eq!(rig.fake.count(|r| r.is_generate()), 2);
+        assert_eq!(rig.fake.count(|r| r.is_delete()), 0);
+    }
+
+    #[test]
+    fn ask_request_ids_are_validated_before_registration_and_cancellation() {
+        let budget = Budget::new(ASK_GEMINI_BUDGET);
+        for id in [
+            "".into(),
+            "a".repeat(65),
+            "ask_id".into(),
+            "ask id".into(),
+            "ask/id".into(),
+            "é".into(),
+            "a\n".into(),
+        ] {
+            assert!(AskRegistration::register(&id, &budget).is_err(), "{id:?}");
+            assert!(cancel_ask_gemini(id.clone()).is_err(), "{id:?}");
+        }
+        for id in ["A-z09".into(), "a".repeat(64)] {
+            let registered = AskRegistration::register(&id, &budget).unwrap();
+            assert!(
+                AskRegistration::register(&id, &budget).is_err(),
+                "no token replacement"
+            );
+            cancel_ask_gemini(id.clone()).unwrap();
+            assert!(registered.token.is_cancelled());
+            drop(registered);
+            let next = AskRegistration::register(&id, &budget).unwrap();
+            assert!(!next.token.is_cancelled(), "finished requests are removed");
+        }
+        cancel_ask_gemini("already-finished".into()).unwrap();
+    }
 
     #[test]
     fn ask_instruction_requests_a_focused_answer_and_a_follow_up() {
