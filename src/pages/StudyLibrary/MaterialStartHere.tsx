@@ -121,17 +121,17 @@ function PdfStartHere({ material, materials, studySet, geminiDraftWaiting, fileM
           <li>
             <p className="small strong">Create a study guide <span className="tiny muted">— {guideState}</span></p>
             <p className="tiny muted">Her Flight Deck sends this file to Google after you confirm. It builds your guide section by section; the completed draft waits for you to save it.</p>
-            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-study-guide")}>Go to study guide</Button>
+            <Button size="small" variant="secondary" disabled={!desktop || (!material.filePath && !fileMissing)} onClick={() => jump("material-study-guide")}>Go to study guide</Button>
           </li>
           <li>
             <p className="small strong">Create flashcards <span className="tiny muted">— {cardsState}</span></p>
             <p className="tiny muted">Create key flashcards to practice recall. You choose how many cards you want, then check the front and back.</p>
-            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-flashcards")}>Go to flashcards</Button>
+            <Button size="small" variant="secondary" disabled={!desktop || (!material.filePath && !fileMissing)} onClick={() => jump("material-flashcards")}>Go to flashcards</Button>
           </li>
           <li>
             <p className="small strong">Try a practice test (optional) <span className="tiny muted">— {practiceState}</span></p>
             <p className="tiny muted">Ask Gemini for multiple-choice questions from this PDF, then check the answers and explanations against your source.</p>
-            <Button size="small" variant="secondary" disabled={Boolean(unavailable)} onClick={() => jump("material-practice-test")}>Go to practice test</Button>
+            <Button size="small" variant="secondary" disabled={!desktop || (!material.filePath && !fileMissing)} onClick={() => jump("material-practice-test")}>Go to practice test</Button>
           </li>
           <li>
             <p className="small strong">Review and save <span className="tiny muted">— {reviewState}</span></p>

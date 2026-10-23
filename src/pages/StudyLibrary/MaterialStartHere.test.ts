@@ -183,6 +183,18 @@ it("explains missing files and keeps Gemini available when backup text reading i
   expect(within(steps()[1]!).getByRole("button").hasAttribute("disabled")).toBe(false);
 });
 
+it("keeps saved study sections reachable when the PDF file is missing", () => {
+  open({ fileMissing: true, studySet: { ...saved, flashcards: [{ front: "Front", back: "Back", sourcePage: null }] }, practiceTestSaved: true });
+  expect(within(steps()[0]!).getByRole("button", { name: "See split and open options" }).hasAttribute("disabled")).toBe(true);
+  for (const [id, name] of [["material-study-guide", "Go to study guide"], ["material-flashcards", "Go to flashcards"], ["material-practice-test", "Go to practice test"]]) {
+    const target = document.createElement("section"); target.id = id!; target.tabIndex = -1; target.scrollIntoView = vi.fn(); document.body.append(target);
+    const button = screen.getByRole("button", { name });
+    expect(button.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(button);
+    expect(target.scrollIntoView).toHaveBeenCalled(); expect(document.activeElement).toBe(target); target.remove();
+  }
+});
+
 it("does not turn failed status reads into done or a kit waiting for review", async () => {
   vi.mocked(offline.offlineContentReadiness).mockRejectedValue(new Error("unavailable"));
   vi.mocked(documents.listPdfStudyKitJobs).mockRejectedValue(new Error("unavailable"));
