@@ -617,6 +617,34 @@ function MaterialDetailPage() {
               fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
               tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
           </div>
+          {isPdf && material.filePath ? (
+            <div id="material-ask-gemini"><Card>
+              <CardHeader title="Ask about this PDF" />
+              <CardBody>
+                {isOverLimit ? (
+                  <p className="small muted">This PDF is too big for Gemini — split it first.</p>
+                ) : !canOfferGemini || fileMissing ? (
+                  <p className="small muted">
+                    {fileMissing
+                      ? "This PDF's file is missing, so Gemini can't read it."
+                      : !gemini?.configured
+                        ? "Connect Gemini in Settings to ask questions about this PDF."
+                        : (generationNotice?.text ?? "Gemini isn't available for this PDF right now.")}
+                  </p>
+                ) : (
+                  <>
+                    <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
+                    <AskGeminiPanel
+                      materialId={material.id}
+                      relativePath={material.filePath ?? null}
+                      context={pdfAskContext}
+                      buttonLabel="Ask about this PDF"
+                    />
+                  </>
+                )}
+              </CardBody>
+            </Card></div>
+          ) : null}
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
@@ -865,17 +893,6 @@ function MaterialDetailPage() {
                         ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally."
                         : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally."}
                     </p>
-                  ) : null}
-
-                  {isPdf && !isOverLimit ? (
-                    <div style={{ marginTop: "var(--space-4)" }}>
-                      <AskGeminiPanel
-                        materialId={material.id}
-                        relativePath={material.filePath ?? null}
-                        context={pdfAskContext}
-                        buttonLabel="Ask about this PDF"
-                      />
-                    </div>
                   ) : null}
 
                   {generationError ? (

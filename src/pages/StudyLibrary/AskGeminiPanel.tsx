@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, QuestionIcon } from "@/components/ui";
 import { askGemini, type AskGeminiHistoryTurn } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
@@ -52,6 +52,22 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [googleNoteDismissed, setGoogleNoteDismissed] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [answerVersion, setAnswerVersion] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus({ preventScroll: true });
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (answerVersion === 0) return;
+    const input = inputRef.current;
+    input?.focus({ preventScroll: true });
+    input?.scrollIntoView?.({
+      block: "nearest",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }, [answerVersion]);
 
   const showGoogleNote = !checkGoogleNoteSeen() && !googleNoteDismissed;
 
@@ -97,6 +113,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         return next.slice(-6);
       });
       setQuestion("");
+      setAnswerVersion((version) => version + 1);
     } catch (err: unknown) {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         setError("No internet right now");
@@ -128,10 +145,10 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         <Button
           type="button"
           size="small"
-          variant="ghost"
+          variant="secondary"
           onClick={() => setIsOpen(true)}
         >
-          {buttonLabel ?? "Why? Ask Gemini"}
+          <QuestionIcon size={14} /> {buttonLabel ?? "Why? Ask Gemini"}
         </Button>
       </div>
     );
@@ -243,27 +260,6 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
                   ))}
                 </div>
               )}
-              {turn.role === "model" && (
-                <div style={{ marginTop: "var(--space-1)" }}>
-                  <button
-                    type="button"
-                    role="link"
-                    disabled
-                    aria-disabled="true"
-                    title="Coming in the real version"
-                    className="button button--ghost button--small link-button"
-                    style={{
-                      padding: 0,
-                      opacity: 0.6,
-                      cursor: "not-allowed",
-                      fontSize: "0.8rem",
-                      textDecoration: "underline",
-                    }}
-                  >
-                    Save as flashcard
-                  </button>
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -287,6 +283,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
       <form onSubmit={handleAsk} className="stack stack--2">
         <div className="row row--gap-2" style={{ alignItems: "center" }}>
           <input
+            ref={inputRef}
             type="text"
             className="input"
             style={{ flex: 1 }}

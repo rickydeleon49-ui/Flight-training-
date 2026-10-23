@@ -112,7 +112,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     // Answer is now revealed, so Why? Ask Gemini appears
     await screen.findByText("Correct");
     const askGeminiBtn = screen.getByRole("button", { name: "Why? Ask Gemini" });
-    expect(askGeminiBtn).toBeTruthy();
+    expect(askGeminiBtn.classList.contains("button--secondary")).toBe(true);
   });
 
   it("Ask calls askGemini with the question's context and her text", async () => {
@@ -182,6 +182,52 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     expect(
       screen.getByText("Study aid — check it against FAA guidance and your instructor."),
     ).toBeTruthy();
+  });
+
+  it.each([false, true])("focuses and scrolls to the input after every answer (reduced motion: %s)", async (reducedMotion) => {
+    const matchMedia = vi.fn().mockReturnValue({ matches: reducedMotion });
+    vi.stubGlobal("matchMedia", matchMedia);
+    try {
+      vi.mocked(askGemini).mockImplementation(async (params) => ({
+        answer: `Answer: ${params && typeof params === "object" ? params.question : ""}`, sourcePages: [],
+      }));
+      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+      const opener = screen.getByRole("button", { name: "Why? Ask Gemini" });
+      opener.focus();
+      expect(document.activeElement).toBe(opener);
+      fireEvent.click(opener);
+      const input = screen.getByRole("textbox", { name: "Ask a question" });
+      expect(document.activeElement).toBe(input);
+      const scroll = vi.fn();
+      input.scrollIntoView = scroll;
+
+      // Four replies also cover new answers after the six-turn history cap.
+      for (let i = 1; i <= 4; i++) {
+        fireEvent.change(input, { target: { value: `Question ${i}` } });
+        const submit = screen.getByRole("button", { name: "Ask" });
+        submit.focus();
+        fireEvent.click(submit);
+        await screen.findByText(`Answer: Question ${i}`);
+        expect(document.activeElement).toBe(input);
+        expect((input as HTMLInputElement).disabled).toBe(false);
+        expect((input as HTMLInputElement).value).toBe("");
+        expect(scroll).toHaveBeenCalledTimes(i);
+        expect(scroll).toHaveBeenLastCalledWith({ block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
+      }
+      expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
+      const reset = screen.getByRole("button", { name: "Ask another" });
+      expect(reset.classList.contains("button--ghost")).toBe(true);
+      fireEvent.click(reset);
+      expect(scroll).toHaveBeenCalledTimes(4);
+      const close = screen.getByRole("button", { name: "Close Ask Gemini" });
+      expect(close.classList.contains("button--ghost")).toBe(true);
+      fireEvent.click(close);
+      fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+      expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Ask a question" }));
+      expect(scroll).toHaveBeenCalledTimes(4);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("the Google note shows once", async () => {
@@ -295,7 +341,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
   });
 });
 
-describe("AskGeminiPanel additions (Save as flashcard and reset)", () => {
+describe("AskGeminiPanel answer actions and reset", () => {
   let db: TestDatabase;
 
   beforeEach(async () => {
@@ -309,7 +355,7 @@ describe("AskGeminiPanel additions (Save as flashcard and reset)", () => {
     db?.close();
   });
 
-  it("renders Save as flashcard link under model answer disabled with tooltip", async () => {
+  it("shows no unfinished flashcard action after an answer", async () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Bernoulli's principle explains the pressure difference.",
@@ -330,10 +376,8 @@ describe("AskGeminiPanel additions (Save as flashcard and reset)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await screen.findByText("Bernoulli's principle explains the pressure difference.");
-    const saveLink = screen.getByRole("link", { name: "Save as flashcard" });
-    expect(saveLink).toBeTruthy();
-    expect(saveLink.getAttribute("title")).toBe("Coming in the real version");
-    expect((saveLink as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByText("Save as flashcard")).toBeNull();
+    expect(screen.queryByTitle("Coming in the real version")).toBeNull();
   });
 
   it("reset clears history", async () => {
@@ -467,7 +511,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
     // 2. After flipping card, Explain this button is shown
     const explainBtn = within(flashcardsSection).getByRole("button", { name: "Explain this" });
-    expect(explainBtn).toBeTruthy();
+    expect(explainBtn.classList.contains("button--secondary")).toBe(true);
 
     // Open and ask
     fireEvent.click(explainBtn);
@@ -509,7 +553,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
     // 2. After reveal, Explain this appears
     const explainBtn = screen.getByRole("button", { name: "Explain this" });
-    expect(explainBtn).toBeTruthy();
+    expect(explainBtn.classList.contains("button--secondary")).toBe(true);
 
     fireEvent.click(explainBtn);
     const input = screen.getByLabelText("Ask a question");
@@ -560,7 +604,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(screen.getByRole("button", { name: /^Good:/ })).toBeTruthy();
   });
 
-  it("Ask about this PDF passes relativePath and the title", async () => {
+  it("puts the PDF Ask card right after Start here, outside and above Study guide, and passes its context", async () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard rate turns are 3 degrees per second.",
@@ -571,13 +615,19 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     const studyGuideSection = document.getElementById("material-study-guide")!;
-    const askPdfBtn = within(studyGuideSection).getByRole("button", { name: "Ask about this PDF" });
-    expect(askPdfBtn).toBeTruthy();
+    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    const startHere = document.getElementById("material-start-here")!;
+    expect(startHere.nextElementSibling?.contains(askCard)).toBe(true);
+    expect(askCard.compareDocumentPosition(studyGuideSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(studyGuideSection).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(await within(askCard).findByText("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.")).toBeTruthy();
+    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask about this PDF" });
+    expect(askPdfBtn.classList.contains("button--secondary")).toBe(true);
 
     fireEvent.click(askPdfBtn);
-    const input = within(studyGuideSection).getByLabelText("Ask a question");
+    const input = within(askCard).getByLabelText("Ask a question");
     fireEvent.change(input, { target: { value: "What is a standard rate turn?" } });
-    fireEvent.click(within(studyGuideSection).getByRole("button", { name: "Ask" }));
+    fireEvent.click(within(askCard).getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(1));
     const args = mockAsk.mock.calls[0]![0] as any;
@@ -588,13 +638,30 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(args.context).toContain("A synthetic study summary.");
   });
 
+  it("asks her to connect Gemini instead of offering a question box when it is not connected", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({
+      configured: false,
+      model: "gemini-3.5-flash",
+      choice: "standard",
+    });
+    await seedFlashcardMaterial();
+    await openMaterial("mat-pdf");
+
+    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    await waitFor(() =>
+      expect(within(askCard).getByText("Connect Gemini in Settings to ask questions about this PDF.")).toBeTruthy(),
+    );
+    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+  });
+
   it("the too-big PDF shows the split line", async () => {
     // 60 MB exceeds the 50 MB limit
     await seedFlashcardMaterial(60 * 1024 * 1024);
     await openMaterial("mat-pdf");
 
-    const studyGuideSection = document.getElementById("material-study-guide")!;
-    expect(within(studyGuideSection).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
-    expect(within(studyGuideSection).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    expect(within(askCard).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
+    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(within(askCard).queryByRole("region", { name: "Ask Gemini helper" })).toBeNull();
   });
 });
