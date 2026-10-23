@@ -89,7 +89,7 @@ describe("Gemini model choice on a material", () => {
     expect(geminiModelSentence({ configured: false, model: null, choice: "standard" } as never)).toBe("");
   });
 
-  it("asks before sending to Gemini 4 Argon, then labels the saved aid with the model that made it", async () => {
+  it("STUDENT-1: asks before sending to Gemini 4 Argon, then labels the saved aid with the model that made it", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status("most-capable"));
     // Argon could not answer, so the standard model made it: the label must say so.
     const generate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
@@ -106,6 +106,9 @@ describe("Gemini model choice on a material", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
     expect(confirm.textContent).toContain("It will be read by Gemini 4 Argon");
+    expect(confirm.textContent).toContain("if Google already has a copy from the last 48 hours, that copy is used instead");
+    expect(confirm.textContent).toContain("On the free tier Google may use it to improve its products");
+    expect(confirm.textContent).not.toContain("will be uploaded");
     expect(generate).not.toHaveBeenCalled();
 
     await act(async () => {

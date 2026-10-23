@@ -7,7 +7,7 @@
  * Ratings only schedule reviews: they are never scores, mastery, FAA results
  * or readiness, and practice tests are unaffected.
  */
-import { useContext, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
 import type { CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
@@ -342,15 +342,33 @@ function SessionView({
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const navigationFrom = useRef<string | null>(null);
   const shown = session.cards[session.position];
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
   const appData = useContext(AppDataContext);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
 
-  useEffect(() => {
-    region.current?.focus();
-  }, [session.position]);
+  useLayoutEffect(() => {
+    region.current?.focus({ preventScroll: true });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!shown || navigationFrom.current === null || navigationFrom.current === shown.itemId) return;
+    navigationFrom.current = null;
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView?.({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }, [shown?.itemId]);
+
+  const rate = (rating: CardRating) => {
+    if (review.blocked || !shown) return;
+    navigationFrom.current = shown.itemId;
+    review.rate(rating);
+  };
 
   if (!shown || !item) {
     return <DoneForNow review={review} />;
@@ -372,7 +390,7 @@ function SessionView({
       return;
     }
     if (!review.revealed && (event.key === " " || event.key === "Enter")) {
-      if (event.target !== event.currentTarget) return; // a focused button handles its own keys
+      if (event.target !== event.currentTarget && event.target !== heading.current) return; // buttons handle their own keys
       event.preventDefault();
       review.reveal();
       return;
@@ -380,7 +398,7 @@ function SessionView({
     const index = ["1", "2", "3", "4"].indexOf(event.key);
     if (review.revealed && index >= 0) {
       event.preventDefault();
-      review.rate(RATING_ORDER[index]!);
+      rate(RATING_ORDER[index]!);
     }
   };
 
@@ -393,10 +411,10 @@ function SessionView({
       aria-label={`Card review session. Card ${session.position + 1} of ${session.cards.length}.`}
     >
       <div className="row row--between">
-        <p className="small strong">
+        <h4 ref={heading} tabIndex={-1} className="small strong">
           Card {session.position + 1} of {session.cards.length}
           {shown.kind === "new" ? " · new" : ""}
-        </p>
+        </h4>
         <SourcePageBadge page={item.sourcePage} materialId={materialId} />
       </div>
       <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
@@ -416,7 +434,7 @@ function SessionView({
                 disabled={busy}
                 aria-keyshortcuts={String(index + 1)}
                 aria-label={`${RATING_LABELS[rating]}: again in ${waits?.[rating] ?? "a while"}`}
-                onClick={() => review.rate(rating)}
+                onClick={() => rate(rating)}
               >
                 <span>{RATING_LABELS[rating]}</span>
                 <span className="tiny card-review__wait"> · {waits?.[rating] ?? "—"}</span>
@@ -442,7 +460,7 @@ function SessionView({
           item={item}
           state={state}
           disabled={busy}
-          onAction={(kind) => review.itemAction(item.itemId, kind)}
+          onAction={(kind) => { navigationFrom.current = item.itemId; review.itemAction(item.itemId, kind); }}
         />
         <Button size="small" variant="ghost" onClick={review.endSession}>
           Done for now

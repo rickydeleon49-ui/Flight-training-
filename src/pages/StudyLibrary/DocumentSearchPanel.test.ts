@@ -142,6 +142,19 @@ describe("Searching inside documents", () => {
     expect(service.search).not.toHaveBeenCalled();
   });
 
+  it.each(["…", " ... ", "", " ", "\uE000…\uE001"])("STUDENT-1: replaces empty snippet %j with a useful page description", async (snippet) => {
+    const result = response();
+    result.groups[0]!.passages[0]!.snippet = snippet;
+    service.search.mockResolvedValue(result);
+    render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));
+    await typed();
+    const hit = await screen.findByRole("button", { name: /Pilot's Handbook, PDF page 58: open/ });
+    expect(hit.textContent).toContain("PDF page 58");
+    expect(hit.textContent).toContain("Matched on this page");
+    expect(hit.textContent).not.toContain("…");
+    expect(document.getElementById(hit.getAttribute("aria-describedby")!)?.textContent).toBe("Matched on this page");
+  });
+
   it("searches the filtered documents after a pause and shows grouped, highlighted text", async () => {
     service.search.mockResolvedValue(response());
     render(inRouter(h(DocumentSearchPanel, { query: "crosswind", materials })));

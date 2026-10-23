@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -126,6 +126,7 @@ function MaterialDetailPage() {
   const [cardRevealed, setCardRevealed] = useState(false);
   const [kitCardIndex, setKitCardIndex] = useState(0);
   const [kitCardRevealed, setKitCardRevealed] = useState(false);
+  const [practiceJustSaved, setPracticeJustSaved] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
   const [editingSet, setEditingSet] = useState(false);
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
@@ -279,6 +280,14 @@ function MaterialDetailPage() {
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
+  // Saving replaces the progress view and mounts a compact loading panel before
+  // its questions arrive. Anchor to the stable practice section after that
+  // layout change, only for a generation requested during this visit.
+  useLayoutEffect(() => {
+    if (!practiceJustSaved || generatingPractice || !practiceTest) return;
+    setPracticeJustSaved(false);
+    document.getElementById("material-practice-test")?.scrollIntoView?.({ block: "start", behavior: "auto" });
+  }, [practiceJustSaved, generatingPractice, practiceTest]);
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
   // A set she wrote herself is labelled as hers, never as Gemini output.
@@ -555,7 +564,10 @@ function MaterialDetailPage() {
     await geminiJobs.start(
       "practice-test",
       { materialId: material.id, filePath: material.filePath },
-      { preflight: preflight(material.filePath) },
+      {
+        preflight: preflight(material.filePath),
+        onSaved: () => { if (isMountedRef.current) setPracticeJustSaved(true); },
+      },
     );
   };
 
@@ -876,7 +888,7 @@ function MaterialDetailPage() {
                             <GuideBody className="small" text={section.body} />
                           </div>
                         ))}
-                        {studySet.sourceNotes ? (
+                        {studySet.sourceNotes && !studySet.sourceNotes.trimStart().startsWith("Source SHA-256:") ? (
                           <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
                         ) : null}
                       </section>

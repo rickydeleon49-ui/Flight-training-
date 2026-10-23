@@ -149,6 +149,33 @@ afterEach(async () => {
 });
 
 describe("card reviews in MaterialDetail", () => {
+  it.each([false, true])("STUDENT-1: rating after a long Explain this answer reveals the next heading (reduced motion %s)", async (reduced) => {
+    await seed();
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reduced })));
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const answer = "A long synthetic card explanation. ".repeat(200);
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, sourcePages: [] });
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(scroll).not.toHaveBeenCalled();
+    fireEvent.click(button("Show answer"));
+    fireEvent.click(button("Explain this"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Explain?" } });
+    fireEvent.click(button("Ask"));
+    await screen.findByText(answer.trim());
+    scroll.mockClear();
+    fireEvent.click(button(/^Good: again in/));
+    const heading = await screen.findByRole("heading", { name: "Card 2 of 3 · new" });
+    expect(document.activeElement).toBe(heading);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reduced ? "auto" : "smooth" });
+    expect(screen.queryByText(answer.trim())).toBeNull();
+    fireEvent.keyDown(heading, { key: " " });
+    expect(sessionRegion().getByText("C")).toBeTruthy();
+  });
+
   it("full session with keyboard, then done-for-now; no Gemini, network or practice write", async () => {
     await seed();
     renderDetail();

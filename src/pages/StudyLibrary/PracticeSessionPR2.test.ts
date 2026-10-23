@@ -142,7 +142,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     await screen.findByText("Question 2 of 3");
 
     // Verify Q1 pill shows answered
-    const q1Pill = screen.getByRole("button", { name: /Question 1 \(Answered\)/ });
+    const q1Pill = screen.getByRole("button", { name: /Question 1, correct/ });
     expect(q1Pill).toBeTruthy();
 
     // Revisit Q1 via pill
@@ -170,7 +170,7 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     expect(screen.getByText(/Standard pattern altitude is 1,000 feet AGL/)).toBeTruthy();
 
     // Nav pill updates to indicate don't know
-    const q1Pill = screen.getByRole("button", { name: /Question 1 \(Don't know\)/ });
+    const q1Pill = screen.getByRole("button", { name: /Question 1, not quite, don’t know/ });
     expect(q1Pill).toBeTruthy();
 
     // Continue to Q2 once persistence completes

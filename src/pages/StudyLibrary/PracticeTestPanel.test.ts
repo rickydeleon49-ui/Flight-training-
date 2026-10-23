@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import type { PracticeTest } from "@/domain/types";
+import * as geminiService from "@/services/gemini";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 
@@ -53,6 +54,8 @@ describe("PracticeTestPanel", () => {
 
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     db?.close();
   });
 
@@ -67,6 +70,51 @@ describe("PracticeTestPanel", () => {
     await screen.findByText("Question 1 of 2");
     return view;
   }
+
+  it.each([false, true])("STUDENT-1: Continue restores the next heading after a long Ask answer (reduced motion %s)", async (reduced) => {
+    const scroll = vi.fn();
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reduced })));
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const answer = "A long synthetic explanation. ".repeat(200);
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, sourcePages: [] });
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+    expect(scroll).not.toHaveBeenCalled();
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText(answer.trim());
+    scroll.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    const heading = await screen.findByRole("heading", { name: "Question 2 of 2" });
+    expect(document.activeElement).toBe(heading);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reduced ? "auto" : "smooth" });
+    expect(screen.queryByText(answer.trim())).toBeNull();
+    scroll.mockClear();
+    // A user can also go back to an answered question without losing the heading.
+    fireEvent.click(screen.getByRole("button", { name: "Question 1, not quite" }));
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Question 1 of 2" }));
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reduced ? "auto" : "smooth" });
+  });
+
+  it("STUDENT-1: tiles distinguish incorrect, correct, unanswered and current", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+    expect(screen.getByRole("button", { name: "Question 1, unanswered" }).className).toContain("practice-pill--current");
+    expect(screen.getByRole("button", { name: "Question 2, unanswered" }).className).toBe("practice-pill");
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    expect(screen.getByRole("button", { name: "Question 1, not quite" }).className).toContain("practice-pill--incorrect");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByText("Question 2 of 2");
+    expect(screen.getByRole("button", { name: "Question 1, not quite" }).className).not.toContain("practice-pill--current");
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    const correct = screen.getByRole("button", { name: "Question 2, correct" });
+    expect(correct.className).toContain("practice-pill--correct");
+    expect(correct.className).toContain("practice-pill--current");
+  });
 
   it("renders the first question with options in radiogroup", async () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
@@ -188,7 +236,7 @@ describe("PracticeTestPanel", () => {
     expect(document.activeElement).toBe(continueBtn);
   });
 
-  it("moves focus to Continue on mouse click, and to first option of next question on Continue", async () => {
+  it("moves focus to Continue on mouse click, and to the next heading on Continue", async () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     const options = screen.getAllByRole("radio");
@@ -198,12 +246,12 @@ describe("PracticeTestPanel", () => {
     const continueBtn = screen.getByRole("button", { name: "Continue" });
     expect(document.activeElement).toBe(continueBtn);
 
-    // Click Continue and verify focus moves to first option of Question 2
+    // Click Continue and verify focus moves to the Question 2 heading
     await waitFor(() => expect(continueBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(continueBtn);
     await screen.findByText("Question 2 of 2");
     const nextOptions = screen.getAllByRole("radio");
-    expect(document.activeElement).toBe(nextOptions[0]);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Question 2 of 2" }));
     expect(nextOptions[0]?.getAttribute("tabindex")).toBe("0");
   });
 
@@ -223,7 +271,7 @@ describe("PracticeTestPanel", () => {
     fireEvent.click(continueBtn);
     await screen.findByText("Question 2 of 2");
     const q2Options = screen.getAllByRole("radio");
-    expect(document.activeElement).toBe(q2Options[0]);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Question 2 of 2" }));
 
     // Select final question answer with Enter
     fireEvent.keyDown(q2Options[1]!, { key: "Enter" });

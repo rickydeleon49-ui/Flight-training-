@@ -60,8 +60,8 @@ export function checkAiSubmission(
   return {
     allowed: true,
     reason:
-      `"${material.originalFileName ?? material.title}" will be uploaded to Google to ` +
-      "generate the study aid. On the free tier Google may use it to improve its " +
+      `"${material.originalFileName ?? material.title}" will be sent to Google to generate the study aid ` +
+      "(if Google already has a copy from the last 48 hours, that copy is used instead). On the free tier Google may use it to improve its " +
       "products, so send study material only — never anything personal or identifying.",
   };
 }
