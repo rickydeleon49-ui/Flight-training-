@@ -114,15 +114,17 @@ li { margin: .15rem 0; }
 blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
 code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
 table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
-th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+thead { display: table-header-group; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 th { background: #f3f4f6; }
 .cards td { width: 50%; }
-.cards tr, .question, li { break-inside: avoid; }
+.cards tr, .question, li { break-inside: avoid; page-break-inside: avoid; }
 .question { margin: 0 0 1rem; }
 .choices { list-style: none; padding-left: .5rem; }
 .answer-key { break-before: page; }
-@page { margin: 0.6in; }
-@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+h1, h2, h3, p { orphans: 3; widows: 3; }
+@page { size: auto; margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2, h3 { break-after: avoid; page-break-after: avoid; } }
 `;
 
 /** The handout page for the chosen parts. */
@@ -195,6 +197,7 @@ function documentHtml(title: string, date: Date, notice: string, sections: strin
 <h1>${escapeHtml(title)}</h1>
 <p class="meta">Study handout from Her Flight Deck · ${escapeHtml(formattedDate)}</p>
 <p class="notice">${escapeHtml(notice)}</p>
+<p class="print-help">To make a PDF, open this file in a browser, choose Print, then Save as PDF.</p>
 </header>
 ${sections.join("\n")}
 </body>

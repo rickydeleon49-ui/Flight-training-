@@ -53,6 +53,12 @@ describe("a printable handout", () => {
       "default-src 'none'; style-src 'unsafe-inline'",
     );
     expect(doc.querySelectorAll("script, a, img, iframe, link, object, embed, form")).toHaveLength(0);
+    expect(doc.querySelector(".print-help")?.textContent).toBe("To make a PDF, open this file in a browser, choose Print, then Save as PDF.");
+    expect(html).toContain("@page { size: auto; margin: 0.6in; }");
+    expect(html).toContain("thead { display: table-header-group; }");
+    expect(html).toContain("h2, h3 { break-after: avoid; page-break-after: avoid; }");
+    expect(html).toContain(".cards tr, .question, li { break-inside: avoid; page-break-inside: avoid; }");
+    expect(html).toContain("overflow-wrap: anywhere;");
   });
 
   it("shows the guide's formatting, flashcards and questions", () => {
@@ -114,14 +120,16 @@ describe("a combined printable handout", () => {
   });
 
   it("keeps material order, headings, and source page labels", () => {
-    const doc = page(buildMultiMaterialHandoutHtml([
+    const html = buildMultiMaterialHandoutHtml([
       { source: source(), selection: ALL },
       { source: second, selection: ALL },
-    ], { answerKey: false }, NOW));
+    ], { answerKey: false }, NOW);
+    const doc = page(html);
     expect([...doc.querySelectorAll(".material > h2")].map((heading) => heading.textContent)).toEqual(["Aviation Weather", "Crosswind"]);
     expect(doc.body.textContent).toContain("Aviation Weather:");
     expect(doc.body.textContent).toContain("(source p. 12)");
     expect(doc.body.textContent).toContain("Second material guide");
+    expect(doc.querySelector(".print-help")?.textContent).toContain("choose Print, then Save as PDF");
   });
 
   it("filters corrections per material and puts the optional answer key last", () => {
