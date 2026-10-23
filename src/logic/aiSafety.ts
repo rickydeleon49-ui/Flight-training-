@@ -57,11 +57,16 @@ export function checkAiSubmission(
     };
   }
 
+  const name = material.originalFileName ?? material.title;
+  // Only PDFs are kept at Google for reuse; other files go with the request.
+  const reuse = name.toLowerCase().endsWith(".pdf")
+    ? " (if Google already has a copy from the last 48 hours, that copy is used instead)"
+    : "";
   return {
     allowed: true,
     reason:
-      `"${material.originalFileName ?? material.title}" will be sent to Google to generate the study aid ` +
-      "(if Google already has a copy from the last 48 hours, that copy is used instead). On the free tier Google may use it to improve its " +
+      `"${name}" will be sent to Google to generate the study aid${reuse}. ` +
+      "On the free tier Google may use it to improve its " +
       "products, so send study material only — never anything personal or identifying.",
   };
 }

@@ -106,7 +106,8 @@ describe("Gemini model choice on a material", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
     expect(confirm.textContent).toContain("It will be read by Gemini 4 Argon");
-    expect(confirm.textContent).toContain("if Google already has a copy from the last 48 hours, that copy is used instead");
+    expect(confirm.textContent).toContain("will be sent to Google to generate the study aid.");
+    expect(confirm.textContent).not.toContain("48 hours");
     expect(confirm.textContent).toContain("On the free tier Google may use it to improve its products");
     expect(confirm.textContent).not.toContain("will be uploaded");
     expect(generate).not.toHaveBeenCalled();

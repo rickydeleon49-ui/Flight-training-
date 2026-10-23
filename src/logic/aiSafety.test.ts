@@ -27,6 +27,18 @@ describe("checkAiSubmission", () => {
     expect(result.reason).toMatch(/Google/);
   });
 
+  it("mentions reusing Google's copy only for PDFs, which Google keeps", () => {
+    expect(checkAiSubmission(withFile(), []).reason).toContain(
+      "if Google already has a copy from the last 48 hours, that copy is used instead",
+    );
+    const text = checkAiSubmission(
+      withFile({ filePath: "abc-notes.txt", originalFileName: "notes.txt" }),
+      [],
+    ).reason;
+    expect(text).toContain("will be sent to Google to generate the study aid.");
+    expect(text).not.toContain("48 hours");
+  });
+
   it("refuses a file attached to a certificate or medical record", () => {
     // The one click that must never be possible.
     const material = withFile({ id: "mat-1" });
