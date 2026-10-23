@@ -196,7 +196,7 @@ function sourceRefs(title: string, page: number | null) {
 }
 
 /** A safe file name for the save dialog's suggestion. */
-export function exportFileName(title: string, extension: "json" | "html" | "ics"): string {
+export function exportFileName(title: string, extension: "json" | "html" | "ics" | "zip"): string {
   const base =
     title
       .normalize("NFC")

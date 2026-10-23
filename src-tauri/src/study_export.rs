@@ -13,7 +13,7 @@
 //! renamed to the destination.
 
 use std::fs::{File, OpenOptions};
-use std::io::Write;
+use std::io::{Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -33,6 +33,10 @@ const _: () = assert!(MAX_BRIEF_BYTES < MAX_HANDOUT_BYTES);
 /// any single-lesson calendar export and still refuses runaway input before the dialog opens.
 const MAX_CALENDAR_BYTES: u64 = 64 * 1024;
 const _: () = assert!(MAX_CALENDAR_BYTES < MAX_BRIEF_BYTES);
+/// Markdown bundle limits: at most 8 MiB of UTF-8 note text and 4 MiB final ZIP.
+const MAX_MARKDOWN_UNCOMPRESSED: u64 = 8 * 1024 * 1024;
+const MAX_MARKDOWN_ARCHIVE: u64 = 4 * 1024 * 1024;
+const MAX_MARKDOWN_INPUT: usize = 16 * 1024 * 1024;
 /// Suggested names longer than this are shortened.
 const MAX_SUGGESTED_NAME_CHARS: usize = 120;
 
@@ -43,6 +47,7 @@ pub enum ExportKind {
     Handout,
     Brief,
     Calendar,
+    Markdown,
 }
 
 impl ExportKind {
@@ -51,6 +56,7 @@ impl ExportKind {
             Self::Packet => "json",
             Self::Handout | Self::Brief => "html",
             Self::Calendar => "ics",
+            Self::Markdown => "zip",
         }
     }
 
@@ -59,6 +65,7 @@ impl ExportKind {
             Self::Packet => "Study packet",
             Self::Handout | Self::Brief => "Web page",
             Self::Calendar => "Calendar file",
+            Self::Markdown => "Markdown bundle",
         }
     }
 
@@ -68,6 +75,7 @@ impl ExportKind {
             Self::Handout => "Save printable handout",
             Self::Brief => "Save lesson brief",
             Self::Calendar => "Save calendar file",
+            Self::Markdown => "Save Markdown bundle",
         }
     }
 
@@ -77,6 +85,7 @@ impl ExportKind {
             Self::Handout => MAX_HANDOUT_BYTES,
             Self::Brief => MAX_BRIEF_BYTES,
             Self::Calendar => MAX_CALENDAR_BYTES,
+            Self::Markdown => MAX_MARKDOWN_ARCHIVE,
         }
     }
 }
@@ -136,9 +145,16 @@ pub async fn save_study_export(
 ) -> Result<Option<SavedExport>, ExportFailure> {
     // Refused before any dialog, so she is never asked where to save something
     // that cannot be saved.
-    if contents.len() as u64 > kind.limit() {
+    if (kind == ExportKind::Markdown && contents.len() > MAX_MARKDOWN_INPUT)
+        || (kind != ExportKind::Markdown && contents.len() as u64 > kind.limit())
+    {
         return Err(ExportError::TooLarge.into());
     }
+    let bytes = if kind == ExportKind::Markdown {
+        build_markdown_archive(&contents).map_err(ExportFailure::from)?
+    } else {
+        contents.into_bytes()
+    };
     tauri::async_runtime::spawn_blocking(move || {
         let Some(choice) = app
             .dialog()
@@ -151,11 +167,87 @@ pub async fn save_study_export(
             return Ok(None);
         };
         let path = choice.into_path().map_err(|_| ExportError::WriteFailed)?;
-        write_export(&path, contents.as_bytes(), kind.limit()).map(Some)
+        write_export(&path, &bytes, kind.limit()).map(Some)
     })
     .await
     .map_err(|_| ExportFailure::from(ExportError::WriteFailed))?
     .map_err(ExportFailure::from)
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct MarkdownEntry {
+    name: String,
+    text: String,
+}
+
+fn valid_markdown_entry_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 120
+        && name.ends_with(".md")
+        && name
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
+        && name != ".md"
+        && !name.starts_with('.')
+        && !name.contains("..")
+}
+
+/// Build the archive before opening the native picker, validating flat entry
+/// names, uniqueness and both the uncompressed and final archive bounds.
+fn build_markdown_archive(json: &str) -> Result<Vec<u8>, ExportError> {
+    if json.len() > MAX_MARKDOWN_INPUT {
+        return Err(ExportError::TooLarge);
+    }
+    let entries: Vec<MarkdownEntry> =
+        serde_json::from_str(json).map_err(|_| ExportError::WriteFailed)?;
+    if entries.is_empty() || entries.len() > 256 {
+        return Err(ExportError::WriteFailed);
+    }
+    let mut seen = std::collections::HashSet::new();
+    let mut total = 0u64;
+    for entry in &entries {
+        if !valid_markdown_entry_name(&entry.name) || !seen.insert(entry.name.to_lowercase()) {
+            return Err(ExportError::WriteFailed);
+        }
+        total = total
+            .checked_add(entry.text.len() as u64)
+            .ok_or(ExportError::TooLarge)?;
+        if total > MAX_MARKDOWN_UNCOMPRESSED {
+            return Err(ExportError::TooLarge);
+        }
+    }
+    let mut writer = zip::ZipWriter::new(Cursor::new(Vec::new()));
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated);
+    for entry in entries {
+        writer
+            .start_file(entry.name, options)
+            .map_err(|_| ExportError::WriteFailed)?;
+        writer
+            .write_all(entry.text.as_bytes())
+            .map_err(|_| ExportError::WriteFailed)?;
+    }
+    let bytes = writer
+        .finish()
+        .map_err(|_| ExportError::WriteFailed)?
+        .into_inner();
+    if bytes.len() as u64 > MAX_MARKDOWN_ARCHIVE {
+        return Err(ExportError::TooLarge);
+    }
+    // Inspect the finished archive as an independent native-side name check.
+    let mut archive =
+        zip::ZipArchive::new(Cursor::new(&bytes)).map_err(|_| ExportError::WriteFailed)?;
+    let mut archive_names = std::collections::HashSet::new();
+    for i in 0..archive.len() {
+        let file = archive.by_index(i).map_err(|_| ExportError::WriteFailed)?;
+        if !valid_markdown_entry_name(file.name())
+            || !archive_names.insert(file.name().to_lowercase())
+        {
+            return Err(ExportError::WriteFailed);
+        }
+    }
+    Ok(bytes)
 }
 
 /// A file name for the dialog's suggestion: no folders, no control
@@ -522,6 +614,69 @@ mod tests {
         );
         assert!(entries(&dir).is_empty());
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn markdown_export_builds_a_bounded_zip_with_validated_entries() {
+        let kind: ExportKind = serde_json::from_str("\"markdown\"").unwrap();
+        assert_eq!(kind.extension(), "zip");
+        assert_eq!(kind.filter_name(), "Markdown bundle");
+        assert_eq!(kind.title(), "Save Markdown bundle");
+        assert_eq!(kind.limit(), MAX_MARKDOWN_ARCHIVE);
+        let bytes = build_markdown_archive(r##"[{"name":"index.md","text":"# Index\n"},{"name":"weather-guide.md","text":"# Weather\n"}]"##).unwrap();
+        assert!(bytes.len() <= MAX_MARKDOWN_ARCHIVE as usize);
+        let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+        assert_eq!(archive.len(), 2);
+        let mut names = vec![];
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i).unwrap();
+            names.push(file.name().to_string());
+            let mut text = String::new();
+            std::io::Read::read_to_string(&mut file, &mut text).unwrap();
+            assert!(text.starts_with('#'));
+        }
+        assert_eq!(names, vec!["index.md", "weather-guide.md"]);
+    }
+
+    #[test]
+    fn markdown_archive_rejects_traversal_nested_names_and_collisions() {
+        for bad in [
+            r#"[{"name":"../evil.md","text":"x"}]"#,
+            r#"[{"name":"folder/note.md","text":"x"}]"#,
+            r#"[{"name":"folder\\note.md","text":"x"}]"#,
+            r#"[{"name":"INDEX.md","text":"x"},{"name":"index.md","text":"y"}]"#,
+        ] {
+            assert_eq!(build_markdown_archive(bad), Err(ExportError::WriteFailed));
+        }
+    }
+
+    #[test]
+    fn markdown_archive_enforces_uncompressed_and_final_limits_before_picker() {
+        let too_much = serde_json::to_string(&vec![MarkdownEntry {
+            name: "large.md".into(),
+            text: "x".repeat(MAX_MARKDOWN_UNCOMPRESSED as usize + 1),
+        }])
+        .unwrap();
+        assert_eq!(
+            build_markdown_archive(&too_much),
+            Err(ExportError::TooLarge)
+        );
+        let mut state = 17u32;
+        let noisy_text: String = (0..MAX_MARKDOWN_ARCHIVE as usize + 2 * 1024 * 1024)
+            .map(|_| {
+                state = state.wrapping_mul(1664525).wrapping_add(1013904223);
+                char::from(b'!' + ((state >> 16) % 90) as u8)
+            })
+            .collect();
+        let noisy = serde_json::to_string(&vec![MarkdownEntry {
+            name: "random.md".into(),
+            text: noisy_text,
+        }])
+        .unwrap();
+        assert!(matches!(
+            build_markdown_archive(&noisy),
+            Err(ExportError::TooLarge)
+        ));
     }
 
     #[test]
