@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -356,6 +356,67 @@ describe("AskGeminiPanel answer actions and reset", () => {
   afterEach(() => {
     cleanup();
     db?.close();
+  });
+
+  it("limits the question input to 1000 characters", () => {
+    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    expect((screen.getByLabelText("Ask a question") as HTMLInputElement).maxLength).toBe(1000);
+  });
+
+  it.each(["Ask another", "Close Ask Gemini"])(
+    "drops a late answer after %s without unlocking the next request",
+    async (action) => {
+      let resolveOld!: (value: Awaited<ReturnType<typeof askGemini>>) => void;
+      let resolveNew!: (value: Awaited<ReturnType<typeof askGemini>>) => void;
+      vi.mocked(askGemini)
+        .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
+        .mockImplementationOnce(() => new Promise((resolve) => { resolveNew = resolve; }));
+      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+      fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+      fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
+      fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      expect((screen.getByLabelText("Ask a question") as HTMLInputElement).disabled).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: action }));
+      if (action === "Close Ask Gemini") {
+        fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+      }
+      const input = screen.getByLabelText("Ask a question") as HTMLInputElement;
+      expect(input.disabled).toBe(false);
+      fireEvent.change(input, { target: { value: "New question" } });
+      fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(askGemini).mock.calls[1]![0]).toMatchObject({ history: [] });
+
+      await act(async () => { resolveOld({ answer: "Stale answer", sourcePages: [] }); });
+      expect(screen.queryByText("Stale answer")).toBeNull();
+      expect(screen.queryByText("Old question")).toBeNull();
+      expect(input.value).toBe("New question");
+      expect(input.disabled).toBe(true);
+      expect(screen.getByRole("button", { name: "Asking…" })).toBeTruthy();
+
+      await act(async () => { resolveNew({ answer: "Current answer", sourcePages: [] }); });
+      expect(screen.getByText("Current answer")).toBeTruthy();
+      expect(input.disabled).toBe(false);
+    },
+  );
+
+  it.each(["Ask another", "Close Ask Gemini"])("drops a late error after %s", async (action) => {
+    let rejectOld!: (reason: Error) => void;
+    vi.mocked(askGemini).mockImplementationOnce(() => new Promise((_resolve, reject) => {
+      rejectOld = reject;
+    }));
+    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    fireEvent.click(screen.getByRole("button", { name: action }));
+    if (action === "Close Ask Gemini") {
+      fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    }
+    await act(async () => { rejectOld(new Error("Stale error")); });
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect((screen.getByLabelText("Ask a question") as HTMLInputElement).disabled).toBe(false);
   });
 
   it("shows no unfinished flashcard action after an answer", async () => {

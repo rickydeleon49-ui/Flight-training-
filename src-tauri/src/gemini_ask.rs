@@ -24,7 +24,7 @@ pub const ASK_INSTRUCTION: &str =
      This is a study aid; remind her to check FAA guidance and her instructor for anything operational. \
      Write plain text with no Markdown: no asterisks or headings; separate paragraphs with a blank line.";
 
-pub const ASK_GEMINI_BUDGET: Duration = Duration::from_secs(90);
+pub const ASK_GEMINI_BUDGET: Duration = Duration::from_secs(300);
 
 pub const MAX_CONTEXT_CHARS: usize = 8000;
 pub const MAX_QUESTION_CHARS: usize = 1000;
@@ -80,18 +80,28 @@ pub fn validate_context(context: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn validate_history(history: &[AskHistoryTurn]) -> Result<&[AskHistoryTurn], String> {
+pub fn validate_history(history: &[AskHistoryTurn]) -> Vec<AskHistoryTurn> {
     let turns = if history.len() > MAX_HISTORY_TURNS {
         &history[history.len() - MAX_HISTORY_TURNS..]
     } else {
         history
     };
-    for turn in turns {
-        if turn.text.chars().count() > MAX_HISTORY_TURN_CHARS {
-            return Err("History entries can be up to 2,000 characters.".to_string());
-        }
-    }
-    Ok(turns)
+    turns
+        .iter()
+        .map(|turn| {
+            let text = if turn.text.chars().count() > MAX_HISTORY_TURN_CHARS {
+                let mut text: String = turn.text.chars().take(MAX_HISTORY_TURN_CHARS - 1).collect();
+                text.push('…');
+                text
+            } else {
+                turn.text.clone()
+            };
+            AskHistoryTurn {
+                role: turn.role.clone(),
+                text,
+            }
+        })
+        .collect()
 }
 
 /// Gemini sometimes escapes line breaks twice or adds Markdown emphasis even
@@ -196,13 +206,13 @@ pub async fn ask_gemini_with(
 ) -> Result<AskAnswer, String> {
     validate_question(question)?;
     validate_context(context)?;
-    let valid_history = validate_history(history)?;
+    let valid_history = validate_history(history);
 
     let (raw, _model) = if let Some(src) = source {
-        let build = |part: Value| build_ask_request(Some(part), context, valid_history, question);
+        let build = |part: Value| build_ask_request(Some(part), context, &valid_history, question);
         run_generation(ctx, src, &build).await?
     } else {
-        let body = build_ask_request(None, context, valid_history, question);
+        let body = build_ask_request(None, context, &valid_history, question);
         ctx.budget
             .run(generate_with_retries_at(ctx, &body))
             .await
@@ -226,7 +236,6 @@ pub async fn ask_gemini(
     let _ = &material_id;
     validate_question(&question)?;
     validate_context(&context)?;
-    let valid_history = validate_history(&history)?;
 
     let budget = Budget::new(ASK_GEMINI_BUDGET);
     // Recorded before the key is read, as every generation does, so a
@@ -239,9 +248,7 @@ pub async fn ask_gemini(
                 .run(prepare_submission(&app, rel_path))
                 .await
                 .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
-            let page_count = lopdf::Document::load_mem(&source.bytes)
-                .map(|d| d.get_pages().len() as u32)
-                .ok();
+            let page_count = source.page_count;
             (api_key, Some(source), page_count)
         } else {
             let api_key = stored_key(&app)?;
@@ -269,7 +276,7 @@ pub async fn ask_gemini(
         page_count,
         &context,
         &question,
-        valid_history,
+        &history,
     )
     .await
 }
@@ -285,6 +292,58 @@ mod tests {
     use std::sync::Arc;
 
     const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
+
+    #[test]
+    fn a_full_length_model_answer_can_be_sent_as_history() {
+        let answer = "航".repeat(MAX_ANSWER_CHARS);
+        let history = validate_history(&[AskHistoryTurn {
+            role: "model".into(),
+            text: answer.clone(),
+        }]);
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].role, "model");
+        assert_eq!(history[0].text.chars().count(), MAX_HISTORY_TURN_CHARS);
+        assert_eq!(history[0].text, format!("{}…", "航".repeat(1999)));
+        let request = build_ask_request(None, "", &history, "Why?");
+        let prior = request["contents"][0]["parts"][1]["text"].as_str().unwrap();
+        assert_eq!(
+            prior,
+            format!("Prior conversation:\nHelper: {}", history[0].text)
+        );
+        assert_eq!(answer.chars().count(), 6000);
+    }
+
+    #[test]
+    fn history_accepts_any_turn_length_and_keeps_the_last_six() {
+        let turns: Vec<_> = [0, 1, 1999, 2000, 2001, 6000, 20000, 100000]
+            .into_iter()
+            .enumerate()
+            .map(|(index, length)| AskHistoryTurn {
+                role: index.to_string(),
+                text: "é".repeat(length),
+            })
+            .collect();
+        for turn in &turns {
+            let bounded = validate_history(std::slice::from_ref(turn));
+            assert_eq!(bounded.len(), 1);
+            assert!(bounded[0].text.chars().count() <= 2000);
+            if turn.text.chars().count() <= 2000 {
+                assert_eq!(&bounded[0], turn);
+            } else {
+                assert!(bounded[0].text.ends_with('…'));
+            }
+        }
+        let bounded = validate_history(&turns);
+        assert_eq!(bounded.len(), 6);
+        assert_eq!(bounded[0].role, "2");
+        assert_eq!(bounded[5].role, "7");
+        assert!(validate_history(&[]).is_empty());
+    }
+
+    #[test]
+    fn ask_budget_includes_five_minutes_for_preparation_and_answering() {
+        assert_eq!(ASK_GEMINI_BUDGET, Duration::from_secs(300));
+    }
 
     #[test]
     fn answers_lose_escaped_line_breaks_and_markdown_emphasis() {

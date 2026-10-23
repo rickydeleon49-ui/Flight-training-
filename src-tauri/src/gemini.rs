@@ -330,10 +330,13 @@ fn check_page_count(pages: u32) -> Result<(), String> {
 /// A PDF this application cannot parse is let through rather than stopped:
 /// its length is unknown, not known to be too great, and Google may well read
 /// it. Refusing on a failed count would be inventing a reason to say no.
-async fn check_pdf_length(path: &Path) -> Result<(), String> {
+async fn check_pdf_length(path: &Path) -> Result<Option<u32>, String> {
     match pdf::count_pages(path.to_path_buf()).await {
-        Ok(pages) => check_page_count(pages),
-        Err(_) => Ok(()),
+        Ok(pages) => {
+            check_page_count(pages)?;
+            Ok(Some(pages))
+        }
+        Err(_) => Ok(None),
     }
 }
 
@@ -716,6 +719,8 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
 pub(crate) struct LoadedSource {
     pub bytes: Vec<u8>,
     pub mime: &'static str,
+    /// Page count from the PDF length check, if that check could read it.
+    pub page_count: Option<u32>,
     /// SHA-256 of exactly these bytes: what a prepared copy is bound to.
     pub content_sha256: String,
     /// The selected managed source (its stored path).
@@ -728,6 +733,7 @@ impl LoadedSource {
             content_sha256: calculate_sha256(&bytes),
             bytes,
             mime,
+            page_count: None,
             scope: scope.to_string(),
         }
     }
@@ -762,9 +768,11 @@ pub(crate) async fn prepare_submission(
     let mime = mime_type(file_name)?;
     check_size(mime, metadata.len())?;
     // Size is only half of Google's PDF limit; the other half is pages.
-    if mime == "application/pdf" {
-        check_pdf_length(&path).await?;
-    }
+    let page_count = if mime == "application/pdf" {
+        check_pdf_length(&path).await?
+    } else {
+        None
+    };
     let bytes = std::fs::read(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
             "This study file is missing from app storage. Restore or re-attach the file before generating.".to_string()
@@ -772,7 +780,9 @@ pub(crate) async fn prepare_submission(
             format!("Could not read that study file: {e}")
         }
     })?;
-    Ok((api_key, LoadedSource::new(bytes, mime, relative_path)))
+    let mut source = LoadedSource::new(bytes, mime, relative_path);
+    source.page_count = page_count;
+    Ok((api_key, source))
 }
 
 /// The session's prepared PDFs (GEN-REL-01): native memory only.
@@ -2502,6 +2512,39 @@ mod tests {
         assert!(complaint.contains("1200 pages"));
         assert!(complaint.contains("1000"));
         assert!(complaint.contains("chapter"));
+    }
+
+    #[test]
+    fn pdf_length_check_returns_the_count_and_allows_an_unknown_count() {
+        use lopdf::{dictionary, Document};
+
+        let root = choice_scratch("page-count");
+        let path = root.join("synthetic.pdf");
+        let mut document = Document::with_version("1.5");
+        let pages_id = document.new_object_id();
+        let page_id = document.add_object(dictionary! {
+            "Type" => "Page", "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        });
+        document.objects.insert(
+            pages_id,
+            lopdf::Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Count" => 1, "Kids" => vec![page_id.into()],
+            }),
+        );
+        let catalog = document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+        document.trailer.set("Root", catalog);
+        document.save(&path).unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            Some(1)
+        );
+        std::fs::write(&path, b"synthetic unreadable PDF").unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            None
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

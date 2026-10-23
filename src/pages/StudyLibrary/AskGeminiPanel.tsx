@@ -53,7 +53,18 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
   const [error, setError] = useState<string | null>(null);
   const [googleNoteDismissed, setGoogleNoteDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestIdRef = useRef(0);
   const [answerVersion, setAnswerVersion] = useState(0);
+
+  useEffect(() => () => { requestIdRef.current += 1; }, []);
+
+  const resetConversation = () => {
+    requestIdRef.current += 1;
+    setHistory([]);
+    setError(null);
+    setQuestion("");
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus({ preventScroll: true });
@@ -89,6 +100,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
 
     setIsLoading(true);
     setError(null);
+    const requestId = ++requestIdRef.current;
 
     const turnsToSend: AskGeminiHistoryTurn[] = history.slice(-6).map((turn) => ({
       role: turn.role,
@@ -104,6 +116,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         history: turnsToSend,
       });
 
+      if (requestId !== requestIdRef.current) return;
       setHistory((prev) => {
         const next = [
           ...prev,
@@ -115,6 +128,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
       setQuestion("");
       setAnswerVersion((version) => version + 1);
     } catch (err: unknown) {
+      if (requestId !== requestIdRef.current) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         setError("No internet right now");
       } else {
@@ -135,7 +149,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
         }
       }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
   };
 
@@ -172,17 +186,12 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
           Ask Gemini
         </span>
         <div className="row row--gap-2" style={{ alignItems: "center" }}>
-          {history.length > 0 && (
+          {(history.length > 0 || isLoading) && (
             <Button
               type="button"
               size="small"
               variant="ghost"
-              disabled={isLoading}
-              onClick={() => {
-                setHistory([]);
-                setError(null);
-                setQuestion("");
-              }}
+              onClick={resetConversation}
               aria-label="Ask another"
             >
               Ask another
@@ -192,7 +201,10 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
             type="button"
             size="small"
             variant="ghost"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              resetConversation();
+              setIsOpen(false);
+            }}
             aria-label="Close Ask Gemini"
           >
             Close
@@ -285,6 +297,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
           <input
             ref={inputRef}
             type="text"
+            maxLength={1000}
             className="input"
             style={{ flex: 1 }}
             placeholder="Ask a question about this..."
