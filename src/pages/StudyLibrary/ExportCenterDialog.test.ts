@@ -64,6 +64,36 @@ describe("Study Library export center", () => {
     expect((await screen.findByRole("status")).textContent).toContain("Saved");
   });
 
+  it("saves selected flashcards as CSV with safe-cell disclosure and correction filtering", () => {
+    saveStudyExport.mockResolvedValue({ fileName: "Flashcards.csv", byteLength: 120 });
+    const first: ExportSource = {
+      ...sources[0]!,
+      studySet: {
+        ...set,
+        flashcards: [
+          { front: "=1+1", back: "Formula front", sourcePage: 3 },
+          { front: "Instructor card", back: "Private correction", sourcePage: 4, origin: "instructor" },
+        ],
+      },
+    };
+    const second: ExportSource = {
+      ...sources[1]!,
+      studySet: { ...set, sourceMaterialId: "two", title: "Crosswind", flashcards: [{ front: "Crosswind card", back: "Second material", sourcePage: 9 }] },
+    };
+    open([first, second]);
+    fireEvent.click(screen.getByLabelText("Flashcard CSV (.csv)"));
+    expect(screen.getByText(/leading apostrophe for safety/).textContent).toContain("Some flashcard importers may show it.");
+    fireEvent.click(screen.getByRole("button", { name: "Save CSV…" }));
+
+    const [kind, fileName, csv] = saveStudyExport.mock.calls[0] as [string, string, string];
+    expect(kind).toBe("csv");
+    expect(fileName).toMatch(/\.csv$/);
+    expect(csv.indexOf("'" + '"=1+1"')).toBeLessThan(csv.indexOf('"Crosswind card"'));
+    expect(csv).toContain('"Aviation Weather"');
+    expect(csv).toContain('"Crosswind"');
+    expect(csv).not.toContain("Private correction");
+  });
+
   it("leaves corrections out by default and includes them only when chosen", () => {
     saveStudyExport.mockResolvedValue({ fileName: "Study handout.html", byteLength: 10 });
     const corrected = {

@@ -37,6 +37,8 @@ const _: () = assert!(MAX_CALENDAR_BYTES < MAX_BRIEF_BYTES);
 const MAX_MARKDOWN_UNCOMPRESSED: u64 = 8 * 1024 * 1024;
 const MAX_MARKDOWN_ARCHIVE: u64 = 4 * 1024 * 1024;
 const MAX_MARKDOWN_INPUT: usize = 16 * 1024 * 1024;
+/// Flashcard CSV export limit: 8 MiB is far beyond any reasonable deck.
+const MAX_CSV_BYTES: u64 = 8 * 1024 * 1024;
 /// Suggested names longer than this are shortened.
 const MAX_SUGGESTED_NAME_CHARS: usize = 120;
 
@@ -48,6 +50,7 @@ pub enum ExportKind {
     Brief,
     Calendar,
     Markdown,
+    Csv,
 }
 
 impl ExportKind {
@@ -57,6 +60,7 @@ impl ExportKind {
             Self::Handout | Self::Brief => "html",
             Self::Calendar => "ics",
             Self::Markdown => "zip",
+            Self::Csv => "csv",
         }
     }
 
@@ -66,6 +70,7 @@ impl ExportKind {
             Self::Handout | Self::Brief => "Web page",
             Self::Calendar => "Calendar file",
             Self::Markdown => "Markdown bundle",
+            Self::Csv => "CSV spreadsheet",
         }
     }
 
@@ -76,6 +81,7 @@ impl ExportKind {
             Self::Brief => "Save lesson brief",
             Self::Calendar => "Save calendar file",
             Self::Markdown => "Save Markdown bundle",
+            Self::Csv => "Save flashcard CSV",
         }
     }
 
@@ -86,6 +92,7 @@ impl ExportKind {
             Self::Brief => MAX_BRIEF_BYTES,
             Self::Calendar => MAX_CALENDAR_BYTES,
             Self::Markdown => MAX_MARKDOWN_ARCHIVE,
+            Self::Csv => MAX_CSV_BYTES,
         }
     }
 }
@@ -608,6 +615,32 @@ mod tests {
         let dir = scratch("calendar-limit");
         let path = dir.join("Lesson.ics");
         let oversized = vec![b'x'; MAX_CALENDAR_BYTES as usize + 1];
+        assert_eq!(
+            write_export(&path, &oversized, kind.limit()),
+            Err(ExportError::TooLarge)
+        );
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_csv_export_is_its_own_bounded_csv_kind() {
+        let kind: ExportKind = serde_json::from_str("\"csv\"").unwrap();
+        assert_eq!(kind, ExportKind::Csv);
+        assert_eq!(kind.extension(), "csv");
+        assert_eq!(kind.filter_name(), "CSV spreadsheet");
+        assert_eq!(kind.title(), "Save flashcard CSV");
+        assert_eq!(kind.limit(), MAX_CSV_BYTES);
+        assert_eq!(
+            suggested_file_name("Flashcards 2026-10-24.json", kind),
+            "Flashcards 2026-10-24.json.csv"
+        );
+        assert_eq!(suggested_file_name("   ", kind), "Study export.csv");
+        assert!(serde_json::from_str::<ExportKind>("\"Csv\"").is_err());
+
+        let dir = scratch("csv-limit");
+        let path = dir.join("Flashcards.csv");
+        let oversized = vec![b'x'; MAX_CSV_BYTES as usize + 1];
         assert_eq!(
             write_export(&path, &oversized, kind.limit()),
             Err(ExportError::TooLarge)

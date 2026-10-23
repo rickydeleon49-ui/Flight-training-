@@ -10,6 +10,7 @@ import {
   type ExportSource,
 } from "@/logic/studyExport";
 import { buildMultiMaterialHandoutHtml } from "@/logic/studyHandout";
+import { buildFlashcardCsv } from "@/logic/flashcardCsv";
 import { DesktopOnlyError } from "@/services/documents";
 import { saveStudyExport, StudyExportError } from "@/services/studyExport";
 
@@ -30,6 +31,7 @@ function initialState(sources: ExportSource[]): SelectionState[] {
 
 export function ExportCenterDialog({ open, sources, onClose }: Props) {
   const [rows, setRows] = useState<SelectionState[]>(() => initialState(sources));
+  const [output, setOutput] = useState<"handout" | "csv">("handout");
   const [answerKey, setAnswerKey] = useState(true);
   const [working, setWorking] = useState(false);
   const busy = useRef(false);
@@ -39,6 +41,7 @@ export function ExportCenterDialog({ open, sources, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     setRows(initialState(sources));
+    setOutput("handout");
     setAnswerKey(true);
     setError(null);
     setSaved(null);
@@ -53,16 +56,26 @@ export function ExportCenterDialog({ open, sources, onClose }: Props) {
     return row?.include && hasChosenPart ? [{ source, selection }] : [];
   });
   const hasQuestions = chosenItems.some(({ source, selection }) => exportableParts(exportSourceFor(source, selection)).questions && selection.questions);
+  const chosenCsvItems = sources.flatMap((source, index) => {
+    const row = rows[index];
+    const selection = selections[index]!;
+    const effective = exportSourceFor(source, selection);
+    return row?.include && selection.flashcards && exportableParts(effective).flashcards ? [{ source, selection }] : [];
+  });
 
   const save = async () => {
-    if (busy.current || chosenItems.length === 0) return;
+    if (busy.current || (output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)) return;
     busy.current = true;
     setWorking(true);
     setError(null);
     setSaved(null);
     try {
-      const html = buildMultiMaterialHandoutHtml(chosenItems, { answerKey: hasQuestions && answerKey }, new Date());
-      const result = await saveStudyExport("handout", exportFileName("Study handout", "html"), html);
+      const contents = output === "csv"
+        ? buildFlashcardCsv(chosenCsvItems)
+        : buildMultiMaterialHandoutHtml(chosenItems, { answerKey: hasQuestions && answerKey }, new Date());
+      const result = output === "csv"
+        ? await saveStudyExport("csv", exportFileName("Flashcards", "csv"), contents)
+        : await saveStudyExport("handout", exportFileName("Study handout", "html"), contents);
       if (result) setSaved(`Saved “${result.fileName}”.`);
     } catch (caught) {
       if (caught instanceof DesktopOnlyError) setError("Saving a file needs the desktop application.");
@@ -104,18 +117,24 @@ export function ExportCenterDialog({ open, sources, onClose }: Props) {
       open={open}
       onClose={onClose}
       dismissible={!working}
-      title="Export handouts"
-      description="Choose study materials to bring together in one printable file. Your library stays the same."
+      title="Export study materials"
+      description="Choose study materials to bring together in a file. Your library stays the same."
       footer={(
         <>
           <Button variant="ghost" onClick={onClose} disabled={working}>{saved ? "Done" : "Cancel"}</Button>
-          <Button variant="primary" onClick={() => void save()} disabled={working || chosenItems.length === 0}>
-            {working ? "Saving…" : "Save handout…"}
+          <Button variant="primary" onClick={() => void save()} disabled={working || (output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
+            {working ? "Saving…" : output === "csv" ? "Save CSV…" : "Save handout…"}
           </Button>
         </>
       )}
     >
       <div className="stack stack--4">
+        <fieldset className="export-study__choices" disabled={working}>
+          <legend className="field__label">Save as</legend>
+          <label className="small"><input type="radio" name="export-center-output" checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout</label>
+          <label className="small"><input type="radio" name="export-center-output" checked={output === "csv"} onChange={() => setOutput("csv")} /> Flashcard CSV (.csv)</label>
+          {output === "csv" ? <p className="tiny dim">Spreadsheet formula cells get a leading apostrophe for safety. Some flashcard importers may show it.</p> : null}
+        </fieldset>
         {sources.length === 0 ? <p className="small">No study materials are ready to export yet.</p> : null}
         {sources.map((source, index) => {
           const row = rows[index] ?? initialState([source])[0]!;
