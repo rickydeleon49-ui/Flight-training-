@@ -1,4 +1,5 @@
 import { PdfItemLabel } from "./PdfItemLabel";
+import { practiceAskContext } from "@/logic/practiceAskContext";
 import { AskGeminiPanel } from "./AskGeminiPanel";
 import {
   useCallback,
@@ -1246,13 +1247,7 @@ export function PracticeTestPanel({
       ? question.options[shownChoice]
       : "Not answered";
   const correctOptionText = question.options[question.correctIndex] ?? "";
-  const askGeminiContext = [
-    `Question: ${question.questionText}`,
-    `Choices:\n${question.options.map((opt, i) => `${i + 1}. ${opt}`).join("\n")}`,
-    `Her chosen answer: ${chosenOptionText}`,
-    `Correct answer: ${correctOptionText}`,
-    `Explanation: ${question.explanation}`,
-  ].join("\n\n");
+  const askGeminiContext = practiceAskContext(question, chosenOptionText, correctOptionText);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
 
   return (
@@ -1381,6 +1376,7 @@ export function PracticeTestPanel({
           <p className="tiny dim ai-copy">{question.explanation}</p>
 
           <AskGeminiPanel
+            key={`${state.version?.id}:${question.id}`}
             materialId={materialId}
             relativePath={currentMaterial?.filePath ?? null}
             context={askGeminiContext}

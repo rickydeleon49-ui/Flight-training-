@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render as baseRender, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,8 +13,20 @@ import * as pdfService from "@/services/pdf";
 import * as documentService from "@/services/documents";
 import { askGemini, cancelAskGemini, watchAskGeminiProgress, type AskGeminiParams } from "@/services/gemini";
 import { AskGeminiPanel, GOOGLE_NOTE_STORAGE_KEY } from "./AskGeminiPanel";
+import { CardReviewPanel } from "./CardReviewPanel";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { MaterialDetail } from "./MaterialDetail";
+
+import { makeMaterial } from "@/testing/factories";
+import { checkAiSubmission } from "@/logic/aiSafety";
+
+const allowedMaterial = makeMaterial({ id: "mat-1", filePath: "documents/test.pdf" });
+const allowedData = { ...EMPTY_DATA, materials: [allowedMaterial] };
+function render(ui: React.ReactElement) {
+  return baseRender(ui, { wrapper: ({ children }) => h(AppDataContext.Provider, {
+    value: { data: allowedData } as ContextType<typeof AppDataContext>,
+  }, children) });
+}
 
 let db: TestDatabase;
 let repos: Repositories;
@@ -98,8 +110,30 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     const view = render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
     await screen.findByText("Question 1 of 1");
-    return view;
+    return { ...view, value };
   }
+
+  it.each([["admin", true], ["credential", true], ["admin", false], ["credential", false]] as const)("refuses %s reclassification after a saved quiz and listener startup (file attached: %s)", async (kind, hasFile) => {
+    const view = await renderPracticePanel();
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    let ready!: (stop: () => void) => void;
+    vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    // Replace the current snapshot while the Ask listener is still pending.
+    const material = makeMaterial({ id: "mat-1", filePath: hasFile ? "documents/private.pdf" : null,
+      materialType: kind === "admin" ? "admin_document" : "study_guide" });
+    const credentials = kind === "credential" ? [{ materialId: "mat-1", title: "Synthetic medical" }] as typeof EMPTY_DATA.toolkit.credentials : [];
+    const value = { ...view.value, data: {
+      ...view.value!.data, materials: [material], toolkit: { ...EMPTY_DATA.toolkit, credentials },
+    } } as ContextType<typeof AppDataContext>;
+    view.rerender(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
+    await act(async () => { ready(() => {}); });
+    expect((await screen.findByRole("alert")).textContent).toBe(checkAiSubmission(material, credentials, hasFile ? "file" : "study_context").reason);
+    expect(askGemini).not.toHaveBeenCalled();
+  });
 
   it("the panel is hidden before answering and shown after", async () => {
     await renderPracticePanel();
@@ -648,6 +682,39 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
       ],
     );
   }
+
+  it.each(["admin", "credential"])("refuses %s files at both card entry points and the PDF Ask card", async (kind) => {
+    await seedFlashcardMaterial();
+    // Study content predates this classification / credential link.
+    if (kind === "admin") await repos.documents.update("mat-pdf", { materialType: "admin_document" });
+    else await repos.toolkit.save({ ...EMPTY_DATA.toolkit, credentials: [{
+      id: "synthetic-credential", type: "medical", title: "Synthetic medical", identifier: "",
+      issuedOn: null, expiresOn: null, notes: "", materialId: "mat-pdf",
+    }] });
+    await openMaterial("mat-pdf");
+    const material = (await repos.documents.list()).find((item) => item.id === "mat-pdf")!;
+    const credentials = (await repos.toolkit.get()).credentials;
+    const reason = checkAiSubmission(material, credentials).reason;
+    // PDF-level refusal uses the generation reason and offers no submit button.
+    expect(document.getElementById("material-ask-gemini")!.textContent).toContain(reason);
+    const cards = within(document.getElementById("material-flashcards")!);
+    fireEvent.click(cards.getByRole("button", { name: "Reveal flashcard answer" }));
+    fireEvent.click(cards.getByRole("button", { name: "Explain this" }));
+    fireEvent.change(cards.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(cards.getByRole("button", { name: "Ask" }));
+    expect((await cards.findByRole("alert")).textContent).toBe(reason);
+    fireEvent.click(cards.getByRole("button", { name: "Close Ask Gemini" }));
+    cleanup();
+    render(h(AppDataContext.Provider, { value: { data: { ...EMPTY_DATA, materials: [material],
+      toolkit: { ...EMPTY_DATA.toolkit, credentials } } } as ContextType<typeof AppDataContext> },
+      h(CardReviewPanel, { materialId: "mat-pdf", materialTitle: material.title, repository: repos.cardReviews, autoStart: true })));
+    fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Explain this" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect((await screen.findByRole("alert")).textContent).toBe(reason);
+    expect(askGemini).not.toHaveBeenCalled();
+  });
 
   it("Explain this hidden before reveal and shown after in both places (flashcards viewer)", async () => {
     const mockAsk = vi.mocked(askGemini);

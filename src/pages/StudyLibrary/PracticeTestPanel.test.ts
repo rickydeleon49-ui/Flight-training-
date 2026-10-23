@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
+import { practiceAskContext } from "@/logic/practiceAskContext";
+import { makeMaterial } from "@/testing/factories";
+import maxContext from "@/testing/fixtures/ask-max-import-context.txt?raw";
+import { validatePacketText } from "@/logic/studyPacket";
 import type { PracticeTest } from "@/domain/types";
 import * as geminiService from "@/services/gemini";
 import { PracticeTestPanel } from "./PracticeTestPanel";
@@ -62,7 +66,7 @@ describe("PracticeTestPanel", () => {
   async function renderPanel(ui: React.ReactElement) {
     const value = {
       repositories: repos,
-      data: EMPTY_DATA,
+      data: { ...EMPTY_DATA, materials: [makeMaterial({ id: "mat-1", filePath: "documents/test.pdf" })] },
       status: "ready",
       error: null,
     } as ContextType<typeof AppDataContext>;
@@ -70,6 +74,85 @@ describe("PracticeTestPanel", () => {
     await screen.findByText("Question 1 of 2");
     return view;
   }
+
+  it("cancels a pending reply on answered-to-answered navigation and starts fresh", async () => {
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const cancel = vi.spyOn(geminiService, "cancelAskGemini").mockResolvedValue();
+    let resolveOld!: (answer: geminiService.AskGeminiResult) => void;
+    const ask = vi.spyOn(geminiService, "askGemini")
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
+      .mockResolvedValueOnce({ answer: "Current answer", sourcePages: [] });
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Continue" }).hasAttribute("disabled")).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await screen.findByText("Question 2 of 2");
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    fireEvent.click(screen.getByRole("button", { name: "Question 1, correct" }));
+    await screen.findByText("Question 1 of 2");
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(ask).toHaveBeenCalledTimes(1));
+    const old = ask.mock.calls[0]![0] as geminiService.AskGeminiParams;
+    fireEvent.click(screen.getByRole("button", { name: "Question 2, correct" }));
+    await screen.findByText("Question 2 of 2");
+    expect(cancel).toHaveBeenCalledExactlyOnceWith(old.requestId);
+    expect(screen.queryByLabelText("Ask a question")).toBeNull();
+    await act(async () => { resolveOld({ answer: "Stale answer", sourcePages: [] }); });
+    expect(screen.queryByText("Stale answer")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "New question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Current answer");
+    expect(ask.mock.calls[1]![0]).toMatchObject({ history: [], context: expect.stringContaining("downwind leg") });
+  });
+
+  it("budgets maximum authored text while retaining both answer identities", () => {
+    const chosen = "A" + "🛩".repeat(999);
+    const correct = "B" + "🛩".repeat(999);
+    const context = practiceAskContext({ questionText: "🛩".repeat(10000), options: [chosen, correct], explanation: "🛩".repeat(5000) }, chosen, correct);
+    expect(Array.from(context).length).toBeLessThanOrEqual(8000);
+    expect(context).toContain(`Her chosen answer: ${chosen}`);
+    expect(context).toContain(`Correct answer: ${correct}`);
+    expect(context).toMatch(/^Question: 🛩+…/u);
+    expect(context).toContain("Explanation: …");
+    expect(context).toContain("Choices:\n…");
+    expect(context).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u);
+  });
+
+  it("budgets a maximum imported Unicode question through import, persistence and Ask validation", async () => {
+    const packet = validatePacketText(JSON.stringify({
+      format: "hfd-study-packet", formatVersion: 1, title: "Synthetic maximum",
+      questions: [{ id: "q1", type: "single-choice", question: "🛩".repeat(2000),
+        choices: Array.from({ length: 6 }, (_, i) => ({ id: `c${i}`, text: String(i) + "🛩".repeat(499) })),
+        correctChoiceId: "c1", explanation: "🛩".repeat(4000) }],
+    }));
+    expect(packet.ok).toBe(true);
+    if (!packet.ok || !packet.payload.practiceTest) throw new Error("Synthetic import refused");
+    const imported = packet.payload.practiceTest.questions[0]!;
+    const test = { ...sampleTest, questions: [imported, sampleTest.questions[1]!] };
+    await repos.documents.savePracticeTest(test);
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer: "Bounded answer", sourcePages: [] });
+    await renderPanel(h(PracticeTestPanel, { practiceTest: test }));
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("Bounded answer");
+    const context = (ask.mock.calls[0]![0] as geminiService.AskGeminiParams).context;
+    // Rust validate_context tests this exact fixture, not a second TS validator.
+    expect(context).toBe(maxContext);
+    expect(Array.from(context)).toHaveLength(8000);
+    expect(context).toContain(`Question: ${imported.question}`);
+    expect(context).toContain(`Her chosen answer: ${imported.options[0]}`);
+    expect(context).toContain(`Correct answer: ${imported.options[1]}`);
+    expect(context).toContain("…");
+  });
 
   it.each([false, true])("STUDENT-1: Continue restores the next heading after a long Ask answer (reduced motion %s)", async (reduced) => {
     const scroll = vi.fn();

@@ -633,7 +633,9 @@ function MaterialDetailPage() {
             <div id="material-ask-gemini"><Card>
               <CardHeader title="Ask about this PDF" />
               <CardBody>
-                {isOverLimit ? (
+                {!aiCheck.allowed ? (
+                  <p className="small muted">{aiCheck.reason}</p>
+                ) : isOverLimit ? (
                   <p className="small muted">This PDF is too big for Gemini — split it first.</p>
                 ) : !canOfferGemini || fileMissing ? (
                   <p className="small muted">

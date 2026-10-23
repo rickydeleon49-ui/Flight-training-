@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Badge, Button, QuestionIcon } from "@/components/ui";
+import { checkAiSubmission } from "@/logic/aiSafety";
+import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
 import { askGemini, cancelAskGemini, watchAskGeminiProgress, type AskGeminiHistoryTurn } from "@/services/gemini";
 
@@ -51,7 +53,11 @@ function persistGoogleNoteSeen(): void {
   }
 }
 
-export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel }: AskGeminiPanelProps) {
+export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPanelProps) {
+  const appData = useOptionalAppData();
+  // Read the latest classification even if it changes while the listener starts.
+  const dataRef = useRef(appData);
+  dataRef.current = appData;
   const [isOpen, setIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<ChatTurn[]>([]);
@@ -135,9 +141,17 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
       });
       // Close/unmount can happen while the listener is being installed.
       if (requestRef.current !== request) return;
+      // All PDF, card and practice-question entry points pass through this gate.
+      // The native command cannot read the frontend's current material/credential
+      // snapshot; never trust a path retained by an older card or quiz here.
+      const data = dataRef.current?.data;
+      const material = data?.materials.find((item) => item.id === materialId);
+      if (!material || !data) throw new Error("This material is no longer available. Open it again before asking.");
+      const check = checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context");
+      if (!check.allowed) throw new Error(check.reason);
       const result = await askGemini({
         requestId: request.id,
-        relativePath: relativePath ?? null,
+        relativePath: material.filePath ?? null,
         materialId,
         context,
         question: trimmed,

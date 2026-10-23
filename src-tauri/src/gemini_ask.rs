@@ -6,15 +6,15 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::future::Future;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 
 use crate::gemini::{
-    extract_text, generate_with_retries_at, generation_client, load_choice, prepare_submission,
-    prepared_sources, run_generation, stored_key, GenContext, LoadedSource,
+    current_key, extract_text, generate_with_retries_at, generation_client, load_choice,
+    load_submission_source, prepared_sources, run_generation, GenContext, LoadedSource,
 };
 use crate::gemini_budget::Budget;
 use crate::gemini_cancel::{CancelToken, Cancellable};
@@ -56,7 +56,35 @@ fn validate_request_id(request_id: &str) -> Result<(), String> {
 
 // Asks are transient, with no journal or stored-data changes. Keep their tokens
 // separate from durable generation jobs, even if a caller reuses a job id.
-static RUNNING_ASKS: Mutex<Option<HashMap<String, Arc<CancelToken>>>> = Mutex::new(None);
+static RUNNING_ASKS: Mutex<Option<AskRegistry>> = Mutex::new(None);
+const MAX_EARLY_CANCELS: usize = 64;
+const EARLY_CANCEL_TTL: Duration = Duration::from_secs(300);
+
+#[derive(Default)]
+struct AskRegistry {
+    running: HashMap<String, Arc<CancelToken>>,
+    cancelled: VecDeque<(String, Instant)>,
+}
+
+impl AskRegistry {
+    fn prune(&mut self, now: Instant) {
+        self.cancelled
+            .retain(|(_, time)| now.duration_since(*time) < EARLY_CANCEL_TTL);
+    }
+
+    fn cancel(&mut self, id: &str, now: Instant) {
+        self.prune(now);
+        if let Some(token) = self.running.get(id) {
+            token.cancel();
+        } else {
+            self.cancelled.retain(|(old, _)| old != id);
+            self.cancelled.push_back((id.to_string(), now));
+            while self.cancelled.len() > MAX_EARLY_CANCELS {
+                self.cancelled.pop_front();
+            }
+        }
+    }
+}
 
 struct AskRegistration {
     request_id: String,
@@ -68,7 +96,17 @@ impl AskRegistration {
         validate_request_id(request_id)?;
         let token = Arc::new(CancelToken::default());
         let mut running = RUNNING_ASKS.lock().unwrap_or_else(|e| e.into_inner());
-        let asks = running.get_or_insert_with(HashMap::new);
+        let registry = running.get_or_insert_with(AskRegistry::default);
+        registry.prune(Instant::now());
+        if let Some(index) = registry
+            .cancelled
+            .iter()
+            .position(|(id, _)| id == request_id)
+        {
+            registry.cancelled.remove(index);
+            token.cancel();
+        }
+        let asks = &mut registry.running;
         if asks.contains_key(request_id) {
             return Err("This question is already being asked.".into());
         }
@@ -101,7 +139,7 @@ impl Drop for AskRegistration {
             .unwrap_or_else(|e| e.into_inner())
             .as_mut()
         {
-            asks.remove(&self.request_id);
+            asks.running.remove(&self.request_id);
         }
     }
 }
@@ -109,14 +147,11 @@ impl Drop for AskRegistration {
 #[tauri::command]
 pub fn cancel_ask_gemini(request_id: String) -> Result<(), String> {
     validate_request_id(&request_id)?;
-    let token = RUNNING_ASKS
+    RUNNING_ASKS
         .lock()
         .unwrap_or_else(|e| e.into_inner())
-        .as_ref()
-        .and_then(|asks| asks.get(&request_id).cloned());
-    if let Some(token) = token {
-        token.cancel();
-    }
+        .get_or_insert_with(AskRegistry::default)
+        .cancel(&request_id, Instant::now());
     Ok(())
 }
 
@@ -157,14 +192,6 @@ struct RawAskResponse {
     answer: String,
     #[serde(default)]
     source_pages: Vec<i64>,
-}
-
-#[cfg(test)]
-pub fn require_connected_key(key: Option<&str>) -> Result<&str, String> {
-    match key {
-        Some(k) if !k.trim().is_empty() => Ok(k),
-        _ => Err("Gemini is not connected. Connect it in Settings first.".to_string()),
-    }
 }
 
 pub fn validate_question(question: &str) -> Result<(), String> {
@@ -360,6 +387,29 @@ pub async fn ask_gemini_with(
     parse_and_validate_answer(&text, page_count)
 }
 
+// The same preflight is used by the command and synthetic-key-store tests.
+// Key loading always precedes file preparation and any provider work.
+async fn ask_preflight_with<T, F, Fut, A, Answer>(
+    relative_path: Option<&str>,
+    load_key: impl FnOnce() -> Result<Option<String>, String>,
+    load_source: F,
+    answer: A,
+) -> Result<T, String>
+where
+    F: FnOnce(String) -> Fut,
+    Fut: Future<Output = Result<LoadedSource, String>>,
+    A: FnOnce(String, Option<LoadedSource>) -> Answer,
+    Answer: Future<Output = Result<T, String>>,
+{
+    let api_key = load_key()?
+        .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())?;
+    let source = match relative_path.filter(|p| !p.trim().is_empty()) {
+        Some(path) => Some(load_source(path.to_string()).await?),
+        None => None,
+    };
+    answer(api_key, source).await
+}
+
 #[tauri::command]
 pub async fn ask_gemini(
     app: AppHandle,
@@ -371,6 +421,11 @@ pub async fn ask_gemini(
     history: Vec<AskHistoryTurn>,
 ) -> Result<Option<AskAnswer>, String> {
     validate_request_id(&request_id)?;
+    // Material classification and credential links are owned by the frontend
+    // AppData snapshot (generation uses that same policy gate). This native
+    // command has no current policy snapshot; AskGeminiPanel is the shared,
+    // fail-closed gate for both files and study context. material_id is not
+    // evidence of permission and must never be treated as one here.
     let _ = &material_id;
     validate_question(&question)?;
     validate_context(&context)?;
@@ -383,45 +438,58 @@ pub async fn ask_gemini(
             // disconnect or key change during this question makes it stale.
             let epoch = prepared_sources().epoch();
 
-            let (api_key, source, page_count) = if let Some(rel_path) =
-                relative_path.as_deref().filter(|p| !p.trim().is_empty())
-            {
-                let (api_key, source) = budget
-                    .run(prepare_submission(&app, rel_path))
-                    .await
-                    .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
-                let page_count = source.page_count;
-                (api_key, Some(source), page_count)
-            } else {
-                let api_key = stored_key(&app)?;
-                (api_key, None, None)
-            };
-
-            let root = storage::app_root(&app)?;
-            let choice = load_choice(&root);
-            let http = generation_client()?;
-            let emit = |progress| {
-                let _ = app.emit(ASK_PROGRESS_EVENT, progress);
-            };
-            let say = progress_reporter(&request_id, &emit);
-            let ctx = GenContext {
-                http: &http,
-                base: GOOGLE_BASE,
-                api_key: &api_key,
-                choice,
-                cache: prepared_sources(),
-                epoch,
-                budget: &budget,
-                say: &say,
-            };
-
-            ask_gemini_with(
-                &ctx,
-                source.as_ref(),
-                page_count,
-                &context,
-                &question,
-                &history,
+            ask_preflight_with(
+                relative_path.as_deref(),
+                || current_key(&storage::app_root(&app)?),
+                |path| {
+                    let app = &app;
+                    let budget = &budget;
+                    async move {
+                        budget
+                            .run(load_submission_source(app, &path))
+                            .await
+                            .map_err(|_| {
+                                gemini_files::out_of_time(budget, "preparing the document")
+                            })?
+                    }
+                },
+                |api_key, source| {
+                    let app = &app;
+                    let budget = &budget;
+                    let request_id = &request_id;
+                    let context = &context;
+                    let question = &question;
+                    let history = &history;
+                    async move {
+                        let page_count = source.as_ref().and_then(|source| source.page_count);
+                        let root = storage::app_root(app)?;
+                        let choice = load_choice(&root);
+                        let http = generation_client()?;
+                        let emit = |progress| {
+                            let _ = app.emit(ASK_PROGRESS_EVENT, progress);
+                        };
+                        let say = progress_reporter(request_id, &emit);
+                        let ctx = GenContext {
+                            http: &http,
+                            base: GOOGLE_BASE,
+                            api_key: &api_key,
+                            choice,
+                            cache: prepared_sources(),
+                            epoch,
+                            budget,
+                            say: &say,
+                        };
+                        ask_gemini_with(
+                            &ctx,
+                            source.as_ref(),
+                            page_count,
+                            context,
+                            question,
+                            history,
+                        )
+                        .await
+                    }
+                },
             )
             .await
         })
@@ -445,6 +513,85 @@ mod tests {
             json!({"answer": "A synthetic answer.", "sourcePages": [1]}).to_string()
         }]}}]})
         .to_string()
+    }
+
+    #[test]
+    fn maximum_imported_practice_context_passes_native_validation() {
+        let context = include_str!("../../src/testing/fixtures/ask-max-import-context.txt");
+        assert_eq!(context.chars().count(), MAX_CONTEXT_CHARS);
+        validate_context(context).unwrap();
+        assert!(validate_context(&format!("{context}x")).is_err());
+    }
+
+    #[test]
+    fn cancel_before_registration_admits_zero_provider_requests() {
+        use std::sync::atomic::AtomicUsize;
+        let requests = AtomicUsize::new(0);
+        let budget = Budget::new(ASK_GEMINI_BUDGET);
+        cancel_ask_gemini("ask-early-cancel-test".into()).unwrap();
+        let registration = AskRegistration::register("ask-early-cancel-test", &budget).unwrap();
+        let result = tauri::async_runtime::block_on(registration.run(ask_preflight_with(
+            Some("documents/synthetic.pdf"),
+            || Ok(Some(KEY.into())),
+            |_| async {
+                Ok(LoadedSource::new(
+                    synthetic_pdf(1),
+                    "application/pdf",
+                    "synthetic.pdf",
+                ))
+            },
+            |_, _| async {
+                requests.fetch_add(1, Ordering::SeqCst);
+                Ok(())
+            },
+        )))
+        .unwrap();
+        assert_eq!(result, None);
+        assert_eq!(
+            requests.load(Ordering::SeqCst),
+            0,
+            "no provider stage admitted"
+        );
+        assert!(!budget.can_continue());
+        drop(registration);
+        let next_budget = Budget::new(ASK_GEMINI_BUDGET);
+        let next = AskRegistration::register("ask-early-cancel-test", &next_budget).unwrap();
+        assert!(
+            !next.token.is_cancelled(),
+            "registration consumes the tombstone"
+        );
+    }
+
+    #[test]
+    fn early_cancel_tombstones_are_bounded_and_expire() {
+        let mut registry = AskRegistry::default();
+        let now = Instant::now();
+        for i in 0..100 {
+            registry.cancel(&format!("early-{i}"), now);
+        }
+        assert_eq!(registry.cancelled.len(), 64);
+        assert_eq!(registry.cancelled.front().unwrap().0, "early-36");
+        registry.cancel("early-99", now);
+        assert_eq!(
+            registry.cancelled.len(),
+            64,
+            "duplicate cancels use one slot"
+        );
+        assert_eq!(
+            registry.cancelled.front().unwrap().0,
+            "early-36",
+            "a duplicate does not evict another id"
+        );
+        assert_eq!(
+            registry
+                .cancelled
+                .iter()
+                .filter(|(id, _)| id == "early-99")
+                .count(),
+            1
+        );
+        registry.prune(now + EARLY_CANCEL_TTL);
+        assert!(registry.cancelled.is_empty());
     }
 
     #[test]
@@ -1018,14 +1165,54 @@ mod tests {
     }
 
     #[test]
-    fn missing_key_gives_plain_message() {
-        assert_eq!(
-            require_connected_key(None).unwrap_err(),
-            "Gemini is not connected. Connect it in Settings first."
-        );
-        assert_eq!(
-            require_connected_key(Some("")).unwrap_err(),
-            "Gemini is not connected. Connect it in Settings first."
-        );
+    fn missing_key_preflight_refuses_file_and_context_before_provider_work() {
+        use std::sync::atomic::AtomicUsize;
+        let root = std::env::temp_dir().join(format!(
+            "hfd-ask-missing-key-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        for path in [Some("documents/synthetic.pdf"), None] {
+            let file_reads = AtomicUsize::new(0);
+            let uploads = AtomicUsize::new(0);
+            let generations = AtomicUsize::new(0);
+            let result = tauri::async_runtime::block_on(ask_preflight_with(
+                path,
+                || crate::secrets::load_key(&root),
+                |_| async {
+                    file_reads.fetch_add(1, Ordering::SeqCst);
+                    Ok(LoadedSource::new(
+                        synthetic_pdf(1),
+                        "application/pdf",
+                        "synthetic.pdf",
+                    ))
+                },
+                |_, source| {
+                    let uploads = &uploads;
+                    let generations = &generations;
+                    async move {
+                        // Injected provider boundary: the production callback runs
+                        // ask_gemini_with here (upload if needed, then generation).
+                        if source.is_some() {
+                            uploads.fetch_add(1, Ordering::SeqCst);
+                        }
+                        generations.fetch_add(1, Ordering::SeqCst);
+                        Ok(())
+                    }
+                },
+            ));
+            assert_eq!(
+                result.unwrap_err(),
+                "Gemini is not connected. Connect it in Settings first."
+            );
+            assert_eq!(file_reads.load(Ordering::SeqCst), 0);
+            assert_eq!(uploads.load(Ordering::SeqCst), 0);
+            assert_eq!(generations.load(Ordering::SeqCst), 0);
+        }
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

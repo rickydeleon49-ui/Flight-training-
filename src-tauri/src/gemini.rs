@@ -568,7 +568,7 @@ fn migrate_legacy_key(root: &Path) -> Option<String> {
 /// `Ok(None)` means none is stored. That is deliberately distinct from an
 /// error, so a folder we cannot read never again looks like a key she never
 /// entered.
-fn current_key(root: &Path) -> Result<Option<String>, String> {
+pub(crate) fn current_key(root: &Path) -> Result<Option<String>, String> {
     if let Some(key) = secrets::load_key(root)? {
         return Ok(Some(key));
     }
@@ -752,6 +752,14 @@ pub(crate) async fn prepare_submission(
     relative_path: &str,
 ) -> Result<(String, LoadedSource), String> {
     let api_key = stored_key(app)?;
+    let source = load_submission_source(app, relative_path).await?;
+    Ok((api_key, source))
+}
+
+pub(crate) async fn load_submission_source(
+    app: &AppHandle,
+    relative_path: &str,
+) -> Result<LoadedSource, String> {
     let path = documents::stored_document_path(app, relative_path)?;
     let metadata = std::fs::metadata(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
@@ -781,7 +789,7 @@ pub(crate) async fn prepare_submission(
     })?;
     let mut source = LoadedSource::new(bytes, mime, relative_path);
     source.page_count = page_count;
-    Ok((api_key, source))
+    Ok(source)
 }
 
 /// The session's prepared PDFs (GEN-REL-01): native memory only.

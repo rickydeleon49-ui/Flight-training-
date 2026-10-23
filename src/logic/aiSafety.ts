@@ -29,8 +29,9 @@ const REFUSED_TYPES: ReadonlySet<StudyMaterial["materialType"]> = new Set(["admi
 export function checkAiSubmission(
   material: StudyMaterial,
   credentials: CredentialRecord[],
+  content: "file" | "study_context" = "file",
 ): AiSubmissionCheck {
-  if (!material.filePath) {
+  if (!material.filePath && content === "file") {
     return {
       allowed: false,
       reason: "This material has no file attached, so there is nothing to send.",
@@ -55,6 +56,10 @@ export function checkAiSubmission(
         `This is filed as an ${MATERIAL_TYPE_LABELS[material.materialType]}, which often ` +
         "holds personal details. Change its type if it is really study material.",
     };
+  }
+
+  if (content === "study_context") {
+    return { allowed: true, reason: "Your question and study context will be sent to Google. Send study material only — never anything personal or identifying." };
   }
 
   const name = material.originalFileName ?? material.title;
