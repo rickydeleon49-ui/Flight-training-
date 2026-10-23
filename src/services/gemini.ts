@@ -25,20 +25,22 @@ export const GEMINI_MODEL_CHOICES: Record<
   { label: string; detail: string }
 > = {
   standard: {
-    label: "Standard — Gemini Flash",
+    label: "Standard — Gemini 3.5 Flash",
     detail: "Fast and inexpensive. Works with a free Google AI Studio key.",
   },
   "most-capable": {
-    label: "Most capable — Gemini 4 Argon",
+    label: "Most capable — Gemini 3.8 Flash",
     detail:
-      "Better with long or complex handbooks, but slower and costs more per document. Needs a key with billing turned on.",
+      "Newer and a little more thorough; may use slightly more of your Google credits.",
   },
 };
 
-/** A model ID as she would read it, e.g. "Gemini 4 Argon". Unknown IDs are shown as they are. */
+/** A model ID as she would read it. Historical models keep their original labels. */
 export function geminiModelName(model: string): string {
   if (typeof model !== "string" || !model) return "Gemini";
   if (model === "gemini-4-argon") return "Gemini 4 Argon";
+  if (model === "gemini-3.5-flash") return "Gemini 3.5 Flash";
+  if (model === "gemini-3.8-flash") return "Gemini 3.8 Flash";
   if (model.endsWith("-flash-lite")) return "Gemini Flash-Lite";
   if (model.endsWith("-flash")) return "Gemini Flash";
   return model;

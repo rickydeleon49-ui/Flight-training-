@@ -116,6 +116,77 @@ fn retry_after_is_paid_before_every_retry_including_fallback() {
 }
 
 #[test]
+fn capable_choice_sends_gemini_3_8_flash() {
+    let r = rig(300);
+    let answer = r
+        .run_with(&r.budget, "text/plain", ModelChoice::MostCapable)
+        .unwrap();
+    let requests: Vec<_> = r
+        .fake
+        .log()
+        .into_iter()
+        .filter(|q| q.is_generate())
+        .collect();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(
+        requests[0].path,
+        "/v1beta/models/gemini-3.8-flash:generateContent"
+    );
+    assert_eq!(answer.model, "gemini-3.8-flash");
+}
+
+#[test]
+fn capable_access_refusal_falls_back_to_standard() {
+    let r = rig(300);
+    r.fake
+        .behave(|b| b.generate_statuses = vec![(403, "{}".into())]);
+    let answer = r
+        .run_with(&r.budget, "text/plain", ModelChoice::MostCapable)
+        .unwrap();
+    let paths: Vec<_> = r
+        .fake
+        .log()
+        .into_iter()
+        .filter(|q| q.is_generate())
+        .map(|q| q.path)
+        .collect();
+    assert_eq!(
+        paths,
+        vec![
+            "/v1beta/models/gemini-3.8-flash:generateContent",
+            "/v1beta/models/gemini-3.5-flash:generateContent",
+        ]
+    );
+    assert_eq!(answer.model, "gemini-3.5-flash");
+    assert_eq!(r.budget.attempts(), 2);
+    assert!(r.time.pauses.lock().unwrap().is_empty());
+    assert!(r
+        .said
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|m| m.contains("Gemini 3.8 Flash") && m.contains("trying the standard")));
+}
+
+#[test]
+fn capable_invalid_key_or_repeated_access_refusal_stops() {
+    for statuses in [
+        vec![(403, r#"{"error":{"reason":"API_KEY_INVALID"}}"#.into())],
+        vec![(403, "{}".into()); 4],
+    ] {
+        let expected = if statuses.len() == 1 { 1 } else { 2 };
+        let r = rig(300);
+        r.fake.behave(|b| b.generate_statuses = statuses);
+        let error = r
+            .run_with(&r.budget, "text/plain", ModelChoice::MostCapable)
+            .unwrap_err();
+        assert_eq!(r.count(), expected);
+        assert!(r.time.pauses.lock().unwrap().is_empty());
+        assert!(error.contains("key") || error.contains("access"), "{error}");
+    }
+}
+
+#[test]
 fn capable_model_fallback_also_honors_retry_after() {
     let r = rig(300);
     r.fake.behave(|b| {

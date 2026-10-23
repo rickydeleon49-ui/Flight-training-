@@ -4,6 +4,8 @@ Written for her. Paste the "What's new" part into the GitHub release draft above
 
 ## What's new
 
+"Most capable" now uses Gemini 3.8 Flash, which costs much less than before.
+
 **Ask Gemini about what you're studying.** You can now ask Gemini a question right where you are, and it answers from your PDF and shows which pages it used.
 - **Ask about this PDF:** a card near the top of each PDF's page. Ask anything about the pages, then ask follow-up questions; it remembers the conversation until you press **Ask another** or close it.
 - **Explain this:** after you turn a flashcard over, ask why the answer is what it is.

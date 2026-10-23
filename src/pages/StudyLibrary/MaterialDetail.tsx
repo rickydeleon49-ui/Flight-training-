@@ -1866,7 +1866,7 @@ export function geminiModelSentence(status: GeminiStatus | null): string {
   if (!status || typeof status.model !== "string" || !status.model) return "";
   const name = geminiModelName(status.model);
   return status.choice === "most-capable"
-    ? ` It will be read by ${name}, which costs more per document on a key with billing turned on.`
+    ? ` It will be read by ${name}, which may use slightly more of your Google credits.`
     : ` It will be read by ${name}.`;
 }
 

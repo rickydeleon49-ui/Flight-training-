@@ -49,11 +49,10 @@ const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 
 /// The more capable model she can choose in Settings instead of `MODEL`.
 ///
-/// Google offers it only to keys with billing turned on, and each document
-/// costs noticeably more, so it is never the default and is only used once she
-/// has chosen it. Pinned and checked against the official model documentation
-/// before release, exactly like `MODEL`.
-const CAPABLE_MODEL: &str = "gemini-4-argon";
+/// Newer and a little more thorough; it may use slightly more Google credits.
+/// Only used once she has chosen it. Pinned and checked before release,
+/// exactly like `MODEL`.
+const CAPABLE_MODEL: &str = "gemini-3.8-flash";
 
 /// Her model choice, kept beside the key in the application data folder.
 ///
@@ -68,7 +67,7 @@ const MODEL_CHOICE_WRITING: &str = "gemini-model.writing";
 pub(crate) enum ModelChoice {
     /// `MODEL`: fast, inexpensive and available on Google's free tier.
     Standard,
-    /// `CAPABLE_MODEL`: slower and costlier, for long or complex material.
+    /// `CAPABLE_MODEL`: newer and a little more thorough.
     MostCapable,
 }
 
@@ -109,7 +108,7 @@ impl ModelChoice {
         match self {
             ModelChoice::Standard => "Trying the backup Gemini model…",
             ModelChoice::MostCapable => {
-                "Gemini 4 Argon is not answering right now, so trying the standard Gemini model…"
+                "Gemini 3.8 Flash is not answering right now, so trying the standard Gemini model…"
             }
         }
     }
@@ -1991,6 +1990,19 @@ pub(crate) async fn generate_with_retries_at(
                         status: Some(status),
                     });
                 }
+                // Access to the capable model can differ from Standard.
+                // Try Standard without suggesting billing is required.
+                // An explicitly invalid key remains terminal for both models.
+                if !on_fallback
+                    && choice == ModelChoice::MostCapable
+                    && status == 403
+                    && !has_invalid_key_reason(&body)
+                {
+                    model = choice.fallback();
+                    on_fallback = true;
+                    (ctx.say)(choice.fallback_notice().to_string());
+                    continue;
+                }
                 if !is_retryable(status) {
                     ctx.budget.categorize("refused");
                     return Err(Failure {
@@ -2243,7 +2255,7 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
             "Google did not accept the authentication credentials. Check your API key in Google AI Studio and try again.".to_string()
         }
         403 if model == CAPABLE_MODEL => {
-            "Google did not allow this key to use Gemini 4 Argon. It needs a key with billing turned on. Turn on billing for this key in Google AI Studio, or choose the standard model in Settings.".to_string()
+            "Google did not allow this key to use Gemini 3.8 Flash. Check this key's model access in Google AI Studio, or choose the standard model in Settings.".to_string()
         }
         403 => {
             "Google denied project or API access. Check API key restrictions, API enablement, permissions, or project/billing configuration in Google AI Studio or Google Cloud Console.".to_string()
@@ -2683,7 +2695,7 @@ mod tests {
         assert_eq!(ModelChoice::Standard.primary(), MODEL);
         assert_eq!(ModelChoice::Standard.fallback(), FALLBACK_MODEL);
         assert_eq!(ModelChoice::MostCapable.primary(), CAPABLE_MODEL);
-        // When Argon cannot answer, her request falls back to the standard
+        // When Gemini 3.8 Flash cannot answer, her request falls back to the standard
         // model rather than straight to the lightest one.
         assert_eq!(ModelChoice::MostCapable.fallback(), MODEL);
         for choice in [ModelChoice::Standard, ModelChoice::MostCapable] {
@@ -2723,6 +2735,17 @@ mod tests {
     }
 
     #[test]
+    fn an_existing_capable_choice_selects_gemini_3_8_flash() {
+        let root = choice_scratch("existing-capable");
+        // The choice file from the Argon version keeps the same stored value.
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "most-capable").unwrap();
+        let choice = load_choice(&root);
+        assert_eq!(choice.primary(), "gemini-3.8-flash");
+        assert_eq!(choice.fallback(), "gemini-3.5-flash");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn status_reports_the_model_her_choice_sends_documents_to() {
         let standard = GeminiStatus::new(true, ModelChoice::Standard);
         assert_eq!((standard.model, standard.choice), (MODEL, "standard"));
@@ -2734,7 +2757,7 @@ mod tests {
     }
 
     #[test]
-    fn only_argons_rate_limit_skips_straight_to_the_standard_model() {
+    fn only_the_capable_models_rate_limit_skips_straight_to_the_standard_model() {
         assert!(moves_straight_to_fallback(ModelChoice::MostCapable, 429));
         for status in [400, 403, 404, 500, 502, 503, 504] {
             assert!(!moves_straight_to_fallback(
@@ -2748,10 +2771,11 @@ mod tests {
     }
 
     #[test]
-    fn a_403_from_argon_explains_billing_and_the_standard_choice() {
+    fn a_403_from_the_capable_model_explains_access_and_the_standard_choice() {
         let message = describe_refusal(RefusalContext::Generation, 403, "{}", CAPABLE_MODEL);
-        assert!(message.contains("Gemini 4 Argon"));
-        assert!(message.contains("billing"));
+        assert!(message.contains("Gemini 3.8 Flash"));
+        assert!(message.contains("model access"));
+        assert!(!message.contains("billing"));
         assert!(message.contains("standard model in Settings"));
         let standard = describe_refusal(RefusalContext::Generation, 403, "{}", MODEL);
         assert!(!standard.contains("Argon"));

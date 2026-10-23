@@ -1244,10 +1244,9 @@ export function Settings() {
                   ))}
                   {gemini.choice === "most-capable" ? (
                     <p className="tiny dim">
-                      If Google is busy, or this key has reached its limit for Gemini 4 Argon,
-                      Her Flight Deck tries Gemini Flash instead and shows which model made each
-                      study aid. If Google does not allow this key to use Argon, you will see a
-                      message asking you to turn on billing or choose Standard.
+                      If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key,
+                      Her Flight Deck tries Gemini 3.5 Flash instead and shows which model made each
+                      study aid. If the request is still refused, check this key's access in Google AI Studio.
                     </p>
                   ) : null}
                 </fieldset>
@@ -1276,7 +1275,7 @@ export function Settings() {
                 waits, retries, and tries a backup model before reporting it. If it happens often,
                 enabling billing for the same Google Cloud project moves the key to paid Tier 1,
                 which has higher rate limits. Billing alone does not change the model: choose
-                Gemini 4 Argon above if you want the more capable one. No model is guaranteed to
+                Gemini 3.8 Flash above if you want the more capable one. No model is guaranteed to
                 always have capacity, so you may still need to try again later.
               </p>
 
