@@ -286,7 +286,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     expect(screen.getByText("Gemini is not connected. Connect it in Settings first.")).toBeTruthy();
   });
 
-  it("shows 'No internet right now' when offline", async () => {
+  it("keeps the question and explains how to retry when offline", async () => {
     render(
       h(AskGeminiPanel, {
         materialId: "mat-1",
@@ -307,7 +307,8 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
       await screen.findByRole("alert");
-      expect(screen.getByText("No internet right now")).toBeTruthy();
+      expect(screen.getByText("No internet right now. Your question is still here — press Ask again when you're back online.")).toBeTruthy();
+      expect(input).toHaveProperty("value", "Test offline question");
     } finally {
       Object.defineProperty(navigator, "onLine", { value: originalOnLine, configurable: true });
     }

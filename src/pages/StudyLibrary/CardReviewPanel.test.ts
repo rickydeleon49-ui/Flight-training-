@@ -63,14 +63,14 @@ async function counts() {
   return { ...row };
 }
 
-function renderDetail() {
+function renderDetail(startCardReview = false) {
   return render(
     h(
       AppDataProvider,
       null,
       h(
         MemoryRouter,
-        { initialEntries: [`/study/${M}`] },
+        { initialEntries: [{ pathname: `/study/${M}`, state: startCardReview ? { startCardReview: true } : null }] },
         h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) })),
       ),
     ),
@@ -149,6 +149,31 @@ afterEach(async () => {
 });
 
 describe("card reviews in MaterialDetail", () => {
+  it.each([true, false])("scrolls to and focuses the first card only when opened from Review due (reduced motion %s)", async (reducedMotion) => {
+    await seed();
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scroll });
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reducedMotion })));
+
+    const entryView = renderDetail(true);
+    const showAnswer = await screen.findByRole("button", { name: "Show answer" });
+    const session = screen.getByLabelText(/^Card review session/);
+    const heading = within(session).getByRole("heading", { name: "Card 1 of 3 · new" });
+    await waitFor(() => {
+      expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reducedMotion ? "auto" : "smooth" });
+      expect(document.activeElement).toBe(heading);
+    });
+    expect(showAnswer).toBeTruthy();
+    entryView.unmount();
+
+    scroll.mockClear();
+    const ordinaryView = renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(scroll).not.toHaveBeenCalled();
+    ordinaryView.unmount();
+  });
+
   it.each([false, true])("STUDENT-1: rating after a long Explain this answer reveals the next heading (reduced motion %s)", async (reduced) => {
     await seed();
     const scroll = vi.fn();

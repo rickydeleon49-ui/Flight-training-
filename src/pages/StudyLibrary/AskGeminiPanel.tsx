@@ -112,7 +112,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
     if (!trimmed || isLoading) return;
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setError("No internet right now");
+      setError("No internet right now. Your question is still here — press Ask again when you're back online.");
       return;
     }
 
@@ -159,7 +159,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
     } catch (err: unknown) {
       if (requestRef.current !== request) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) {
-        setError("No internet right now");
+        setError("No internet right now. Your question is still here — press Ask again when you're back online.");
       } else {
         const msg =
           typeof err === "string"
@@ -172,7 +172,7 @@ export function AskGeminiPanel({ materialId, relativePath, context, buttonLabel 
           msg.toLowerCase().includes("check the internet connection") ||
           msg.toLowerCase().includes("could not reach gemini")
         ) {
-          setError("No internet right now");
+          setError("No internet right now. Your question is still here — press Ask again when you're back online.");
         } else {
           setError(msg || "Gemini could not complete that request.");
         }

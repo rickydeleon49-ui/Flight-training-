@@ -60,6 +60,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
   const autoStarted = useRef(false);
+  const entrySessionPending = useRef(false);
   const { session, blocked, starting, startSession, clock } = review;
   const reviewRead = review.read;
 
@@ -72,7 +73,10 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
     if (reviewRead.snapshot.current.status !== "ok") return;
     const now = clock.now();
     const summary = summarizeCards(reviewRead.snapshot, now, nextLocalMidnightUtc(now, clock.timeZone()));
-    if (summary.dueNow + summary.newCount > 0) void startSession();
+    if (summary.dueNow + summary.newCount > 0) {
+      entrySessionPending.current = true;
+      void startSession();
+    }
   }, [autoStart, reviewRead, session, blocked, starting, startSession, clock]);
 
   // The dialog closes once its reset is resolved (acknowledged or refused).
@@ -175,7 +179,19 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
         </p>
       ) : null}
 
-      {review.session ? <SessionView review={review} items={items} states={snapshot.states} materialId={materialId} materialFilePath={materialFilePath} /> : null}
+      {review.session ? (
+        <SessionView
+          review={review}
+          items={items}
+          states={snapshot.states}
+          materialId={materialId}
+          materialFilePath={materialFilePath}
+          focusEntry={entrySessionPending.current}
+          onEntryShown={() => {
+            entrySessionPending.current = false;
+          }}
+        />
+      ) : null}
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
@@ -333,16 +349,21 @@ function SessionView({
   states,
   materialId,
   materialFilePath,
+  focusEntry,
+  onEntryShown,
 }: {
   review: CardReviewController;
   items: CardReviewSnapshotItem[];
   states: Record<string, CardReviewItemState>;
   materialId: string;
   materialFilePath?: string | null;
+  focusEntry: boolean;
+  onEntryShown: () => void;
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const entryFocusHandled = useRef(false);
   const navigationFrom = useRef<string | null>(null);
   const shown = session.cards[session.position];
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
@@ -351,7 +372,16 @@ function SessionView({
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
 
   useLayoutEffect(() => {
-    region.current?.focus({ preventScroll: true });
+    if (focusEntry) {
+      if (entryFocusHandled.current) return;
+      entryFocusHandled.current = true;
+      const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      region.current?.scrollIntoView?.({ block: "start", behavior });
+      heading.current?.focus({ preventScroll: true });
+      onEntryShown();
+    } else {
+      region.current?.focus({ preventScroll: true });
+    }
   }, []);
 
   useLayoutEffect(() => {
