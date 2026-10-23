@@ -158,7 +158,7 @@ export function EventDetail() {
               <Button onClick={() => setCalendarOpen(true)}>Add to calendar…</Button>
             ) : null}
             <Button onClick={() => setEditing(true)}>Edit</Button>
-            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="danger" className="destructive-action" onClick={() => setConfirmingDelete(true)}>
               Delete
             </Button>
           </div>

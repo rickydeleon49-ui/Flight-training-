@@ -339,7 +339,7 @@ export function HomeworkView() {
             <Button disabled={!editable} aria-label={`Edit ${r.title}`} onClick={() => setEditor({ snapshot: current, activityId: r.id })}>Edit</Button>
             <Button aria-label={`Move ${r.title} up`} disabled={!editable || index === 0} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position--; s.activities.find(x => x.record.id === active[index - 1]!.record.id)!.record.position++; }); }}>Move up</Button>
             <Button aria-label={`Move ${r.title} down`} disabled={!editable || index === active.length - 1} onClick={() => { focusActivity.current = r.id; setAnnouncement(`Moving ${r.title}…`); change('reorder', s => { s.activities.find(x => x.record.id === r.id)!.record.position++; s.activities.find(x => x.record.id === active[index + 1]!.record.id)!.record.position--; }); }}>Move down</Button>
-            <Button disabled={!editable} aria-label={`Remove ${r.title}`} onClick={() => setRemoving(e)}>Remove</Button>
+            <Button variant="danger" className="destructive-action" disabled={!editable} aria-label={`Remove ${r.title}`} onClick={() => setRemoving(e)}>Remove</Button>
           </div>
         </li>;
             })}

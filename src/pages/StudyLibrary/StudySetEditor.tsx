@@ -219,7 +219,7 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
           Instructor's correction
         </Button>
       ) : null}
-      <Button size="small" variant="ghost" disabled={busy} onClick={() => void begin({ mode: "delete", target })}>
+      <Button size="small" variant="danger" className="destructive-action" disabled={busy} onClick={() => void begin({ mode: "delete", target })}>
         Delete
       </Button>
     </div>

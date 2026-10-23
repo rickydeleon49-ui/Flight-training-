@@ -591,7 +591,7 @@ function MaterialDetailPage() {
             </Link>
             {!isPdf ? <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show tips" : "Hide tips"}</Button> : null}
             <Button onClick={() => setEditing(true)}>Edit</Button>
-            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="danger" className="destructive-action" onClick={() => setConfirmingDelete(true)}>
               Delete
             </Button>
           </div>
@@ -625,6 +625,7 @@ function MaterialDetailPage() {
 
       <div className="detail">
         <div className="detail__column">
+
           <div id="material-start-here">
             <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
               geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
@@ -661,6 +662,23 @@ function MaterialDetailPage() {
                 )}
               </CardBody>
             </Card></div>
+          ) : null}
+          {isPdf ? (
+            <nav className="row row--wrap material-jumps" aria-label="Jump to">
+              <span className="tiny muted">Jump to</span>
+              {[
+                ...(material.filePath || studySet ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
+                ...(material.filePath || (studySet && studySet.flashcards.length > 0) ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
+                { id: "material-practice-heading", label: "Practice test" },
+                ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
+              ].map(({ id, label }) => (
+                <Button key={id} size="small" variant="ghost" onClick={() => {
+                  const heading = document.getElementById(id);
+                  heading?.focus({ preventScroll: true });
+                  heading?.scrollIntoView?.({ block: "start" });
+                }}>{label}</Button>
+              ))}
+            </nav>
           ) : null}
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
@@ -737,6 +755,7 @@ function MaterialDetailPage() {
               <Card>
                 <CardHeader
                   title={isPdf ? "Study guide" : pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
+                  headingId="material-guide-heading"
                   eyebrow={
                     importedSet
                       ? "Imported from a file you selected"
@@ -970,6 +989,7 @@ function MaterialDetailPage() {
               <Card>
                 <CardHeader
                   title="Flashcards"
+                  headingId="material-cards-heading"
                   eyebrow={
                     studySet && guideFlashcards.length > 0
                       ? "Saved on this computer"
@@ -1188,6 +1208,7 @@ function MaterialDetailPage() {
               <Card>
                 <CardHeader
                   title="Practice test"
+                  headingId="material-practice-heading"
                   eyebrow={
                     importedTest
                       ? "Imported study packet"
@@ -1489,7 +1510,7 @@ function MaterialDetailPage() {
           {isPdf && material.filePath ? (
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
-                <CardHeader title="On this Mac (backup)" />
+                <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
                 {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
                   <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div>

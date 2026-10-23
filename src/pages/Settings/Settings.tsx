@@ -766,7 +766,7 @@ export function Settings() {
                       {draft.photo ? "Change photo" : "Add a photo"}
                     </Button>
                     {draft.photo ? (
-                      <Button variant="danger" onClick={removePhoto}>
+                      <Button variant="danger" className="destructive-action" onClick={removePhoto}>
                         Remove
                       </Button>
                     ) : null}

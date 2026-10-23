@@ -53,7 +53,7 @@ describe("describeReadiness", () => {
 
   it("says plainly that reading stays on this Mac", () => {
     expect(describeReadiness({ state: "notPrepared" }).detail).toBe(
-      "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
+      "This PDF isn't ready to search on your Mac yet. Choose “Read this PDF's text” below once, then you can search its text without internet. Nothing is sent anywhere.",
     );
   });
 

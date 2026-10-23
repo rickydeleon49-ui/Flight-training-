@@ -514,7 +514,7 @@ function QuestionRow({
             {question.answer ? "Edit answer" : "Add answer"}
           </Button>
         ) : null}
-        <IconButton label={`Delete question: ${question.text}`} tone="danger" disabled={isSaving} onClick={onDelete}>
+        <IconButton className="destructive-action" label={`Delete question: ${question.text}`} tone="danger" disabled={isSaving} onClick={onDelete}>
           <TrashIcon size={16} />
         </IconButton>
       </div>

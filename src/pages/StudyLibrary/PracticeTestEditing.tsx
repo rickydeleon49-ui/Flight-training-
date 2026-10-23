@@ -196,7 +196,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
                 {question.options.map((option, at) => <div key={at} className="stack stack--2" style={{ minWidth: 0 }}>
                   <Field label={`Question ${index + 1}, option ${at + 1}`} error={validate ? messages.options[at] : null}><TextArea rows={2} value={option} onChange={(event) => change(index, { options: question.options.map((value, position) => position === at ? event.target.value : value) })} /></Field>
                   <div className="row row--wrap"><label><input type="radio" name={`correct-${index}`} checked={question.correctIndex === at} onChange={() => change(index, { correctIndex: at })} /> Correct answer: option {at + 1}</label>
-                    <Button size="small" disabled={question.options.length <= MIN_OPTIONS} aria-label={`Remove question ${index + 1} option ${at + 1}`} onClick={() => change(index, {
+                    <Button size="small" variant="danger" className="destructive-action" disabled={question.options.length <= MIN_OPTIONS} aria-label={`Remove question ${index + 1} option ${at + 1}`} onClick={() => change(index, {
                       options: question.options.filter((_, position) => position !== at),
                       correctIndex: question.correctIndex === at ? -1 : question.correctIndex > at ? question.correctIndex - 1 : question.correctIndex,
                     })}>Remove option</Button></div>

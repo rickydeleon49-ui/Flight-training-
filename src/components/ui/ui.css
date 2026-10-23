@@ -513,6 +513,16 @@ dialog:not([open]) { display: none; }
 .row--wrap { flex-wrap: wrap; }
 .row--top { align-items: flex-start; }
 
+/* Keep destructive controls last, with breathing room from everyday actions. */
+.destructive-action { margin-inline-start: var(--space-5); }
+
+.section-jump-target { scroll-margin-top: var(--space-5); }
+.section-jump-target:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .muted { color: var(--text-secondary); }
 .dim { color: var(--text-tertiary); }
 .small { font-size: var(--text-sm); }

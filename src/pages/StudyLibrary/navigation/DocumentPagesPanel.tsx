@@ -278,7 +278,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                           Open
                         </Button>
                       ) : null}
-                      <Button size="small" variant="secondary" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
+                      <Button size="small" variant="danger" className="destructive-action" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
                         Remove
                       </Button>
                     </div>

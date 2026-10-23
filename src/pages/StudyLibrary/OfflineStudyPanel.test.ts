@@ -58,7 +58,7 @@ describe("Offline study panel", () => {
     expect(await screen.findByText("Not read yet")).toBeTruthy();
     expect(
       screen.getByText(
-        "This copies the PDF's text onto your Mac so you can search it and make a study kit without internet. Nothing is sent anywhere.",
+        "This PDF isn't ready to search on your Mac yet. Choose “Read this PDF's text” below once, then you can search its text without internet. Nothing is sent anywhere.",
       ),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Read this PDF's text" }));

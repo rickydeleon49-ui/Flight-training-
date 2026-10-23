@@ -159,6 +159,21 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", ...AID });
   });
 
+  it("keeps item deletion last, visibly separated and dangerous, with confirmation", async () => {
+    await open("/study/mat-a");
+    const editor = await openEditor();
+    const deletes = editor.getAllByRole("button", { name: "Delete" });
+    for (const remove of deletes) {
+      expect(remove.parentElement?.lastElementChild).toBe(remove);
+      expect(remove.classList.contains("destructive-action")).toBe(true);
+      expect(remove.classList.contains("button--danger")).toBe(true);
+    }
+    fireEvent.click(deletes[0]!);
+    const confirm = await screen.findByRole("dialog");
+    expect(within(confirm).getByRole("button", { name: "Cancel" })).toBeTruthy();
+    expect(await history()).toHaveLength(0);
+  });
+
   it("an edit is marked as hers and keeps the earlier wording, which she can restore", async () => {
     await open("/study/mat-a");
     const editor = await openEditor();

@@ -252,7 +252,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
       <RecentReviews review={review} zone={zone} />
 
       <div className="card-review__reset">
-        <Button size="small" variant="secondary" disabled={review.blocked} onClick={() => setResetOpen(true)}>
+        <Button size="small" variant="danger" disabled={review.blocked} onClick={() => setResetOpen(true)}>
           Reset card reviews
         </Button>
       </div>
@@ -471,6 +471,7 @@ function SessionView({
               </Button>
             ))}
           </div>
+          <p className="tiny dim">1–4 rate it.</p>
           <AskGeminiPanel
             materialId={materialId}
             relativePath={resolvedFilePath}
@@ -483,6 +484,7 @@ function SessionView({
           <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onClick={review.reveal}>
             Show answer
           </Button>
+          <p className="tiny dim">Space or Enter shows the answer.</p>
         </div>
       )}
       <div className="row row--between">
@@ -496,7 +498,6 @@ function SessionView({
           Done for now
         </Button>
       </div>
-      <p className="tiny dim">{review.revealed ? "1–4 rate it." : "Space or Enter shows the answer; 1–4 rate it."}</p>
     </div>
   );
 }
