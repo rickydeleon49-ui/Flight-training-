@@ -15,14 +15,16 @@ interface CardHeaderProps {
   title: ReactNode;
   eyebrow?: string;
   action?: ReactNode;
+  /** An addressable heading for in-page navigation. */
+  headingId?: string;
 }
 
-export function CardHeader({ title, eyebrow, action }: CardHeaderProps) {
+export function CardHeader({ title, eyebrow, action, headingId }: CardHeaderProps) {
   return (
     <header className="card__header">
       <div>
         {eyebrow ? <p className="card__eyebrow">{eyebrow}</p> : null}
-        <h2 className="card__title">{title}</h2>
+        <h2 id={headingId} tabIndex={headingId ? -1 : undefined} className={headingId ? "card__title section-jump-target" : "card__title"}>{title}</h2>
       </div>
       {action}
     </header>

@@ -84,6 +84,32 @@ describe("Share or print", () => {
     }
   });
 
+  it("selects a Markdown ZIP bundle and explains that selected practice answers travel with it", async () => {
+    saveStudyExport.mockResolvedValue({ fileName: "Aviation Weather.zip", byteLength: 100 });
+    open();
+    fireEvent.click(screen.getByLabelText(/Markdown bundle \(\.zip\)/));
+    expect(screen.getByText("The practice note includes each answer and explanation.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    await screen.findByText("Saved “Aviation Weather.zip”.");
+    const [kind, name, contents] = saveStudyExport.mock.calls[0] as [string, string, string];
+    expect(kind).toBe("markdown");
+    expect(name).toBe("Aviation Weather.zip");
+    expect(JSON.parse(contents)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "index.md" }),
+      expect.objectContaining({ name: "aviation-weather-guide-metars.md" }),
+      expect.objectContaining({ name: "aviation-weather-practice-questions.md", text: expect.stringContaining("**Answer:** Broken") }),
+    ]));
+  });
+
+  it("blocks a credential-shaped value in a Markdown selection before native save", async () => {
+    const secretLike = `AIza${"B".repeat(35)}`;
+    render(h(ExportStudyDialog, { open: true, source: { ...source, studySet: { ...set, summary: secretLike } }, onClose: () => {} }));
+    fireEvent.click(screen.getByLabelText(/Markdown bundle \(\.zip\)/));
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("looks like a password or access key");
+    expect(saveStudyExport).not.toHaveBeenCalled();
+  });
+
   it("says nothing when she cancels the save dialog", async () => {
     saveStudyExport.mockResolvedValue(null);
     open();

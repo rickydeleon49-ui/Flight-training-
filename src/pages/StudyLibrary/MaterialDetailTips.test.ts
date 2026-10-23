@@ -63,6 +63,59 @@ async function openPage() {
   return view;
 }
 
+it("keeps Delete apart from Edit at the end of the material header and still confirms", async () => {
+  await openPage();
+  const edit = screen.getByRole("button", { name: "Edit" });
+  const remove = screen.getByRole("button", { name: "Delete" });
+  expect(edit.nextElementSibling).toBe(remove);
+  expect(remove.parentElement?.lastElementChild).toBe(remove);
+  expect(remove.classList.contains("destructive-action")).toBe(true);
+  expect(remove.classList.contains("button--danger")).toBe(true);
+  expect(screen.queryByRole("button", { name: "Del" })).toBeNull();
+  fireEvent.click(remove);
+  const dialog = await screen.findByRole("dialog", { name: "Delete this material?" });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(context.data.materials.some(material => material.id === "tips")).toBe(true);
+});
+
+it("jumps from right after Ask about this PDF to each present heading with focus, even with tips hidden", async () => {
+  await openPage();
+  const jumps = screen.getByRole("navigation", { name: "Jump to" });
+  expect(document.getElementById("material-ask-gemini")?.nextElementSibling).toBe(jumps);
+  const destinations = [
+    ["Study guide", "Study guide"],
+    ["Flashcards", "Flashcards"],
+    ["Practice test", "Practice test"],
+    ["Backup on this Mac", "On this Mac (backup)"],
+  ];
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(destinations.map(([label]) => label));
+  fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
+  expect(screen.getByRole("button", { name: "Split automatically" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
+  for (const [label, title] of destinations) {
+    const heading = screen.getByRole("heading", { name: title });
+    const scroll = vi.fn();
+    heading.scrollIntoView = scroll;
+    const button = within(jumps).getByRole("button", { name: label });
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    fireEvent.click(button);
+    expect(document.activeElement).toBe(heading);
+    expect(heading.tabIndex).toBe(-1);
+    expect(heading.classList.contains("section-jump-target")).toBe(true);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start" });
+  }
+});
+
+it("only offers jumps to sections present on a PDF whose file has been detached", async () => {
+  await createRepositories(db).documents.update("tips", { filePath: null });
+  await openPage();
+  const jumps = screen.getByRole("navigation", { name: "Jump to" });
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Practice test"]);
+  fireEvent.click(within(jumps).getByRole("button", { name: "Practice test" }));
+  expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Practice test" }));
+});
+
 it("orders the PDF workflow with both backup panels together at the bottom", async () => {
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
@@ -73,7 +126,8 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
   expect(column.firstElementChild?.textContent).toContain("Start here");
   expect(column.children[1]).toBe(document.getElementById("material-ask-gemini"));
-  expect(column.children[2]).toBe(file);
+  expect(column.children[2]).toBe(screen.getByRole("navigation", { name: "Jump to" }));
+  expect(column.children[3]).toBe(file);
   expect(file.compareDocumentPosition(geminiSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(geminiSection.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(column.lastElementChild).toBe(backup);
@@ -114,6 +168,7 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
   await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
   await openPage();
   expect(screen.queryByRole("heading", { name: "Start here" })).toBeNull();
+  expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
   expect(screen.queryByRole("region", { name: "On this Mac (backup)" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Write your own study guide" })).toBeNull();

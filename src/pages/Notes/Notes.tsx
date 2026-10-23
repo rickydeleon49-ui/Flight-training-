@@ -291,7 +291,7 @@ function NoteRow({
           Edit
         </Button>
         <IconButton
-          label={`Delete note: ${heading}`}
+          className="destructive-action" label={`Delete note: ${heading}`}
           tone="danger"
           onClick={onDelete}
         >

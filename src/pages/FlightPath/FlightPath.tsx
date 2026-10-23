@@ -332,7 +332,7 @@ function MilestoneSection({
             <EditIcon size={15} />
           </IconButton>
           <IconButton
-            label={`Delete ${milestone.title}`}
+            className="destructive-action" label={`Delete ${milestone.title}`}
             tone="danger"
             onClick={onDeleteMilestone}
           >
@@ -579,7 +579,7 @@ function GoalCard({
             <Button size="small" onClick={onEdit}>
               Edit
             </Button>
-            <Button size="small" variant="danger" onClick={() => setConfirmingDelete(true)}>
+            <Button size="small" variant="danger" className="destructive-action" onClick={() => setConfirmingDelete(true)}>
               Delete
             </Button>
           </div>

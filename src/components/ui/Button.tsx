@@ -43,11 +43,11 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
-export function IconButton({ label, tone = "default", children, ...props }: IconButtonProps) {
+export function IconButton({ label, tone = "default", children, className = "", ...props }: IconButtonProps) {
   return (
     <button
       type="button"
-      className={`icon-button${tone === "danger" ? " icon-button--danger" : ""}`}
+      className={`icon-button${tone === "danger" ? " icon-button--danger" : ""} ${className}`.trim()}
       title={label}
       {...props}
     >

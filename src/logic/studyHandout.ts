@@ -114,25 +114,26 @@ li { margin: .15rem 0; }
 blockquote { margin: 0 0 .6rem; padding: .1rem 0 .1rem .8rem; border-left: 3px solid #c9ccd1; color: #444c56; }
 code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
 table { border-collapse: collapse; width: 100%; margin: 0 0 .8rem; }
-th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+thead { display: table-header-group; }
+th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 th { background: #f3f4f6; }
 .cards td { width: 50%; }
-.cards tr, .question, li { break-inside: avoid; }
+.cards tr, .question, li { break-inside: avoid; page-break-inside: avoid; }
 .question { margin: 0 0 1rem; }
 .choices { list-style: none; padding-left: .5rem; }
 .answer-key { break-before: page; }
-@page { margin: 0.6in; }
-@media print { body { padding: 0; max-width: none; } h2 { break-after: avoid; } }
+h1, h2, h3, p { orphans: 3; widows: 3; }
+@page { size: auto; margin: 0.6in; }
+@media print { body { padding: 0; max-width: none; } h2, h3 { break-after: avoid; page-break-after: avoid; } }
 `;
 
 /** The handout page for the chosen parts. */
-export function buildHandoutHtml(allContent: ExportSource, selection: ExportSelection, options: HandoutOptions, createdAt: Date): string {
+function handoutSections(allContent: ExportSource, selection: ExportSelection, options: HandoutOptions, includeAnswerKey = true): string[] {
   // Her instructor's corrections are left out unless she included them.
   const source = exportSourceFor(allContent, selection);
   const available = exportableParts(source);
   const set = source.studySet;
   const test = source.practiceTest;
-  const title = source.material.title.trim() || "Study handout";
   const sections: string[] = [];
 
   if (set && selection.guide && available.guide) {
@@ -164,7 +165,7 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
       })
       .join("");
     sections.push(`<section><h2>Practice questions</h2>${questions}</section>`);
-    if (options.answerKey) {
+    if (options.answerKey && includeAnswerKey) {
       const answers = test.questions
         .map((question, index) => {
           const letter = LETTERS[question.correctIndex] ?? String(question.correctIndex + 1);
@@ -176,7 +177,11 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
     }
   }
 
-  const date = createdAt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return sections;
+}
+
+function documentHtml(title: string, date: Date, notice: string, sections: string[]): string {
+  const formattedDate = date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -190,11 +195,49 @@ export function buildHandoutHtml(allContent: ExportSource, selection: ExportSele
 <body>
 <header>
 <h1>${escapeHtml(title)}</h1>
-<p class="meta">Study handout from Her Flight Deck · ${escapeHtml(date)}</p>
-<p class="notice">${escapeHtml(provenanceNote(source, selection))}</p>
+<p class="meta">Study handout from Her Flight Deck · ${escapeHtml(formattedDate)}</p>
+<p class="notice">${escapeHtml(notice)}</p>
+<p class="print-help">To make a PDF, open this file in a browser, choose Print, then Save as PDF.</p>
 </header>
 ${sections.join("\n")}
 </body>
 </html>
 `;
+}
+
+/** The handout page for the chosen parts. */
+export function buildHandoutHtml(allContent: ExportSource, selection: ExportSelection, options: HandoutOptions, createdAt: Date): string {
+  const source = exportSourceFor(allContent, selection);
+  const title = source.material.title.trim() || "Study handout";
+  return documentHtml(title, createdAt, provenanceNote(source, selection), handoutSections(allContent, selection, options));
+}
+
+/** One printable document for an ordered set of selected materials. */
+export function buildMultiMaterialHandoutHtml(
+  items: Array<{ source: ExportSource; selection: ExportSelection }>,
+  options: HandoutOptions,
+  createdAt: Date,
+): string {
+  const sections: string[] = [];
+  const notices: string[] = [];
+  const answers: Array<{ title: string; html: string }> = [];
+  for (const { source: original, selection } of items) {
+    const source = exportSourceFor(original, selection);
+    const title = source.material.title.trim() || "Study handout";
+    const selected = handoutSections(original, selection, { answerKey: false });
+    if (options.answerKey) {
+      const key = handoutSections(original, selection, { answerKey: true }).find((part) => part.includes('class="answer-key"'));
+      if (key) answers.push({ title, html: key });
+    }
+    sections.push(`<section class="material"><h2>${escapeHtml(title)}</h2>${selected.join("")}</section>`);
+    notices.push(`${title}: ${provenanceNote(source, selection)}`);
+  }
+  if (answers.length) {
+    const keys = answers.map(({ title: materialTitle, html }) =>
+      `<h3>${escapeHtml(materialTitle)}</h3>${html.replace(/<section class="answer-key"><h2>Answer key<\/h2>|<\/section>/g, "")}`,
+    );
+    sections.push(`<section class="answer-key"><h2>Answer key</h2>${keys.join("")}</section>`);
+  }
+  const title = items.length === 1 ? items[0]!.source.material.title.trim() || "Study handout" : "Study handout";
+  return documentHtml(title, createdAt, notices.join(" "), sections);
 }

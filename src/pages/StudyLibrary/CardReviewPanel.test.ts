@@ -206,14 +206,31 @@ describe("card reviews in MaterialDetail", () => {
     renderDetail();
     await reviewHeading();
     await openSession();
-    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    expect(sessionRegion().getByText("Space or Enter shows the answer.")).toBeTruthy();
+    expect(button("Show answer").nextElementSibling).toBe(sessionRegion().getByText("Space or Enter shows the answer."));
     fireEvent.click(button("Show answer"));
-    expect(sessionRegion().queryByText("Space or Enter shows the answer; 1–4 rate it.")).toBeNull();
+    expect(sessionRegion().queryByText("Space or Enter shows the answer.")).toBeNull();
     expect(sessionRegion().getByText("1–4 rate it.")).toBeTruthy();
+    expect(sessionRegion().getByRole("group", { name: "Rate this card" }).nextElementSibling).toBe(sessionRegion().getByText("1–4 rate it."));
     fireEvent.click(button(/^Good: again in/));
     await screen.findByText(/^Card 2 of 3 · new/);
-    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    expect(sessionRegion().getByText("Space or Enter shows the answer.")).toBeTruthy();
     expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
+  });
+
+  it("separates the dangerous reset action from the session controls and still confirms", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    const reset = button("Reset card reviews");
+    expect(reset.classList.contains("button--danger")).toBe(true);
+    expect(reset.parentElement?.className).toBe("card-review__reset");
+    expect(sessionRegion().queryByRole("button", { name: "Reset card reviews" })).toBeNull();
+    fireEvent.click(reset);
+    const dialog = await screen.findByRole("dialog", { name: `Reset card reviews for “${TITLE}”?` });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(sessionRegion().getByRole("button", { name: "Show answer" })).toBeTruthy();
   });
 
   it("full session with keyboard, then done-for-now; no Gemini, network or practice write", async () => {

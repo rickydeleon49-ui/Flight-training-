@@ -196,7 +196,7 @@
 
 /* ------------------------------ Forms ----------------------------- */
 
-.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field { min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 
 .field__label {
   font-size: var(--text-sm);
@@ -215,6 +215,7 @@
 .input,
 .textarea,
 .select {
+  min-width: 0;
   width: 100%;
   background: var(--surface-card);
   border: 1px solid var(--border-strong);
@@ -257,7 +258,7 @@
 }
 .form-grid > .field--full { grid-column: 1 / -1; }
 
-@media (max-width: 640px) {
+@media (max-width: 999px) {
   .form-grid { grid-template-columns: 1fr; }
 }
 
@@ -513,6 +514,16 @@ dialog:not([open]) { display: none; }
 .row--wrap { flex-wrap: wrap; }
 .row--top { align-items: flex-start; }
 
+/* Keep destructive controls last, with breathing room from everyday actions. */
+.destructive-action { margin-inline-start: var(--space-5); }
+
+.section-jump-target { scroll-margin-top: var(--space-5); }
+.section-jump-target:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .muted { color: var(--text-secondary); }
 .dim { color: var(--text-tertiary); }
 .small { font-size: var(--text-sm); }
@@ -553,4 +564,10 @@ dialog:not([open]) { display: none; }
 .search-target {
   box-shadow: var(--focus-ring);
   border-radius: var(--radius-sm, 8px);
+}
+
+/* Let card actions use another line instead of squeezing headings or controls. */
+@media (max-width: 999px) {
+  .card__header { flex-wrap: wrap; }
+  .card__header > * { min-width: 0; max-width: 100%; }
 }

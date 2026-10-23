@@ -26,10 +26,12 @@ import {
   type ExportSource,
 } from "@/logic/studyExport";
 import { buildHandoutHtml } from "@/logic/studyHandout";
+import { buildMarkdownBundle } from "@/logic/studyMarkdown";
+import { hasCredentialLikeText } from "@/logic/studyPacket/semantic";
 import { DesktopOnlyError } from "@/services/documents";
 import { saveStudyExport, StudyExportError } from "@/services/studyExport";
 
-type Output = "packet" | "handout";
+type Output = "packet" | "handout" | "markdown";
 
 interface Props {
   open: boolean;
@@ -86,6 +88,14 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
         }
         contents = packet.text;
         suggested = packet.fileName;
+      } else if (output === "markdown") {
+        const entries = buildMarkdownBundle(source, selection);
+        if (entries.some((entry) => hasCredentialLikeText(entry.text))) {
+          setError("This study aid contains text that looks like a password or access key, so it wasn't exported. Remove it from the study aid first.");
+          return;
+        }
+        contents = JSON.stringify(entries);
+        suggested = exportFileName(source.material.title, "zip");
       } else {
         contents = buildHandoutHtml(source, selection, { answerKey }, now);
         suggested = exportFileName(source.material.title, "html");
@@ -161,6 +171,10 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
             <input type="radio" name={`${ids}-output`} checked={output === "packet"} onChange={() => setOutput("packet")} /> Study packet (.json):
             to import into Her Flight Deck on another computer
           </label>
+          <label className="small">
+            <input type="radio" name={`${ids}-output`} checked={output === "markdown"} onChange={() => setOutput("markdown")} /> Markdown bundle (.zip):
+            notes for Obsidian or another notes app
+          </label>
         </fieldset>
 
         {output === "handout" && selection.questions && available.questions ? (
@@ -182,6 +196,12 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
         ) : null}
         {output === "packet" && selection.questions && available.questions ? (
           <p className="tiny dim">A study packet always includes the answers, so it can be practiced after importing.</p>
+        ) : null}
+        {output === "markdown" && selection.questions && available.questions ? (
+          <p className="tiny dim">The practice note includes each answer and explanation.</p>
+        ) : null}
+        {output === "markdown" ? (
+          <p className="tiny dim">The bundle is limited to 8 MiB of notes and a 4 MiB ZIP. Original files and personal notes are not included.</p>
         ) : null}
 
         <p className="tiny dim">

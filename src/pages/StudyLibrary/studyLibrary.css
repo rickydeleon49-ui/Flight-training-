@@ -427,7 +427,13 @@
   gap: var(--space-2);
 }
 .card-review__browse-options { align-items: flex-start; gap: var(--space-2); }
-.card-review__reset { padding-top: var(--space-2); }
+.card-review__reset {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.material-jumps { padding-block: var(--space-2); }
 .card-review__wait { color: inherit; opacity: 0.85; }
 
 /* Library-wide card reviews (M2-4 / C2) */
@@ -535,3 +541,7 @@
 /* Share or print (P54-04). */
 .export-study__choices { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .export-study__option { display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+
+@media (max-width: 999px) {
+  .material-grid { grid-template-columns: minmax(0, 1fr); }
+}

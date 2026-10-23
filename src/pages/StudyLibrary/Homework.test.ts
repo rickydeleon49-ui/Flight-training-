@@ -41,6 +41,18 @@ function view(id?: string) { return render(h(MemoryRouter, { initialEntries: [id
 function editor(s = newHomework()) { return render(h(HomeworkEditor, { snapshot: s, creating: true, onClose: vi.fn(), onSaved: vi.fn(), onReload: vi.fn() })); }
 beforeEach(() => { appData = { ...EMPTY_DATA }; openSaved.mockClear(); records = []; history = []; fail = null; save.mockClear(); refresh.mockClear(); });
 afterEach(cleanup);
+it("keeps Remove last and apart from ordinary activity controls, with confirmation", async () => {
+    const s = assignment();
+    view(s.assignment.id);
+    const remove = await screen.findByRole("button", { name: "Remove checklist work" });
+    expect(remove.parentElement?.lastElementChild).toBe(remove);
+    expect(remove.classList.contains("destructive-action")).toBe(true);
+    expect(remove.classList.contains("button--danger")).toBe(true);
+    fireEvent.click(remove);
+    const dialog = await screen.findByRole("dialog", { name: "Remove activity?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(save).not.toHaveBeenCalled();
+});
 it("homework_list_filters_and_empty_state_without_school", async () => {
     view();
     await screen.findByText("A little preparation, at your pace.");

@@ -99,7 +99,7 @@ export function JournalEntryDetail() {
             <Link className="button button--secondary" to={`/journal/${entry.id}/edit`}>
               Edit full log
             </Link>
-            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="danger" className="destructive-action" onClick={() => setConfirmingDelete(true)}>
               Delete
             </Button>
           </div>

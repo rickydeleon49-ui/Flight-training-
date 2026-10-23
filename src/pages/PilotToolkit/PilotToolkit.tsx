@@ -692,6 +692,7 @@ function RecordsTool({
                     <Button
                       size="small"
                       variant="danger"
+                      className="destructive-action"
                       onClick={() => setRemoving(record)}
                     >
                       Remove

@@ -107,7 +107,7 @@ export function ActionRow({
           </IconButton>
         ) : null}
         {onDelete ? (
-          <IconButton label={`Delete ${action.title}`} tone="danger" onClick={() => onDelete(action)}>
+          <IconButton className="destructive-action" label={`Delete ${action.title}`} tone="danger" onClick={() => onDelete(action)}>
             <TrashIcon size={16} />
           </IconButton>
         ) : null}

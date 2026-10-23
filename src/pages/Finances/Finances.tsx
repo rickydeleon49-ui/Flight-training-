@@ -185,7 +185,7 @@ export function Finances() {
                           <EditIcon size={15} />
                         </IconButton>
                         <IconButton
-                          label={`Delete ${transaction.description || "transaction"}`}
+                          className="destructive-action" label={`Delete ${transaction.description || "transaction"}`}
                           tone="danger"
                           onClick={() => setDeleting(transaction)}
                         >

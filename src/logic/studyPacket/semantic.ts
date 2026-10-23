@@ -20,6 +20,11 @@ const BIDI_CONTROLS = /[‪-‮⁦-⁩]/;
 const HTML_LIKE = /<\/?[A-Za-z!][^>]*>/;
 const MARKDOWN_IMAGE = /!\[[^\]]*\]\(/;
 
+/** Shared secret-shaped text guard for export formats that carry study text. */
+export function hasCredentialLikeText(value: string): boolean {
+  return CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value));
+}
+
 /** Non-empty normalized source claims, or null. An empty object or blank values are not a claim. */
 export function sourceClaims(source: ValidatedPacket["source"]): PreviewSourceClaims | null {
   if (!source) return null;
@@ -107,7 +112,7 @@ export function checkSemantics(packet: ValidatedPacket): SemanticResult {
   // Every normalized string. Object keys here are schema-owned names only.
   const walk = (value: unknown, path: string) => {
     if (typeof value === "string") {
-      if (CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value))) errors.push(rawError("credential_like_content", path));
+      if (hasCredentialLikeText(value)) errors.push(rawError("credential_like_content", path));
       if (BIDI_CONTROLS.test(value)) warnings.add("bidi_controls_present");
       if (HTML_LIKE.test(value)) warnings.add("html_like_text");
       if (MARKDOWN_IMAGE.test(value)) warnings.add("markdown_images_not_shown");
