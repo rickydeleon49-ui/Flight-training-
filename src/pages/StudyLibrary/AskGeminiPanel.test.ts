@@ -208,10 +208,13 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
         submit.focus();
         fireEvent.click(submit);
         await screen.findByText(`Answer: Question ${i}`);
-        expect(document.activeElement).toBe(input);
+        // Focus and scroll follow the render of the answer, so wait for them.
+        await waitFor(() => {
+          expect(document.activeElement).toBe(input);
+          expect(scroll).toHaveBeenCalledTimes(i);
+        });
         expect((input as HTMLInputElement).disabled).toBe(false);
         expect((input as HTMLInputElement).value).toBe("");
-        expect(scroll).toHaveBeenCalledTimes(i);
         expect(scroll).toHaveBeenLastCalledWith({ block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
       }
       expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
