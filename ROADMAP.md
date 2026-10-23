@@ -4,18 +4,21 @@
 
 ## Where things stand
 
-**Released:** v0.5.7. The next release is **0.5.8**; 0.5.2 and 0.5.6 are retired.
+**Released:** v0.6.0, published as Latest from `main` at `7d7d878`. The next release is **0.6.1**; 0.5.2 and 0.5.6 are retired.
 
-**Done since 0.5.7, in `main`:**
+**Done in `main` through v0.6.0:**
 - **Offline reading and search foundations:** OFFLINE-01, OFFLINE-02 and its saved-content search, and OFFLINE-03a/b, so she can write and edit her own summaries, cards and practice questions.
 - **OFFLINE-GEN:** a study kit made from her PDF with no AI (#238–#249).
 - **HOMEWORK-01:** homework with six kinds of activity. Cards and quizzes complete themselves; homework shows in the daily plan and in search (#253–#257).
+- **v0.6.0:** Ask Gemini and the completed 0.5.9 work (#267).
 
-**Finishing now:** OFFLINE-ON (#260). It switches PDF study kits and offline search on in the installed app. The memory check passed; a real-world check on her 8 GB Mac comes after the update.
+**0.6.1 work in progress:** local branch `polish/0.6.1` has five commits after `main`: POLISH-061A, NARROW-061, EXPORT-MD-061, EXPORT-CENTER-061, and EXPORT-CENTER-UI-061. The first export center and combined handout are implemented locally; the branch is not pushed. Native installed-app and save-picker checks remain unverified.
 
 ## The queue
 
 Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
+
+Rows 1–3 are complete: OFFLINE-ON and 0.6.1 polish are delivered locally, and v0.6.0 is published. Row 4 is active on the local 0.6.1 branch: Markdown export, the combined handout builder, and its Library entry point are done; flashcard CSV and improved print / Save as PDF are still ahead.
 
 | # | Item | What she gets | Includes | Plan |
 | --- | --- | --- | --- | --- |
