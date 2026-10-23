@@ -1,6 +1,6 @@
 [package]
 name = "her-flight-deck"
-version = "0.5.9"
+version = "0.6.0"
 description = "A personal flight-training companion"
 authors = ["Her Flight Deck"]
 edition = "2021"

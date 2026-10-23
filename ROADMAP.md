@@ -22,7 +22,7 @@ Only the owner reorders this list. Each item ships as one or more bounded slices
 | 1 | **OFFLINE-ON** | PDF study kits and offline search in the installed app | — | [runbook](docs/OFFLINE_ON_PRESSURE_CHECK.md) |
 | 2 | **POLISH-01** | The new screens polished; a visual check at desktop and narrow widths; small fixes (FLAKE-GEN-01, the "overdue since" date format) | — | owner scope set 21 Oct |
 | 3 | **Release 0.5.8** | Everything above, installable. Claude prepares it; the owner tags and publishes | — | `scripts/release.sh` |
-| 4 | **EXPORT-01/02** | One clear Export / Print place: handouts across materials, flashcard CSV, better print / Save as PDF, separate answer keys | COMP-10; the export half of DIFF-06 | [plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) |
+| 4 | **EXPORT-01/02** | One clear Export / Print place: handouts across materials, flashcard CSV, better print / Save as PDF, separate answer keys; Markdown export that works in Obsidian or any notes app (one note per guide section, flashcards, page references kept; owner, 22 Oct 2026) | COMP-10; the export half of DIFF-06 | [plan](docs/OFFLINE_STUDY_HOMEWORK_EXPORT_ROADMAP_2026-10-18.md) |
 | 5 | **ACS-READY-01** | An ACS-linked view of what she has studied. **Plus:** she types in the missed-topic codes from her knowledge-test report (AKTR) to get matching reading, cards and instructor questions; she never uploads the report itself | AKTR code entry | [research](docs/COMPETITIVE_APP_RESEARCH_2026-10-21.md) |
 | 6 | **SCHOOL-01** | A scorecard to compare flight schools | — | 20 Oct entry below |
 | 7 | **FLIGHTLOG-01** | A discovery-flight log that carries into her real logbook later | — | 20 Oct entry below |
