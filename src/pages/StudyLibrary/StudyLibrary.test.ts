@@ -101,3 +101,18 @@ it("takes the words Quick Find hands over (?q=) into the search box and off the 
   fireEvent.change(box, { target: { value: "Material 149" } });
   expect(screen.getByText("Showing 1 of 1 materials")).toBeTruthy();
 });
+
+for (const storedDash of ["-", "–", "—", "−"]) {
+  it(`finds page ranges with any dash without changing the ${storedDash} title`, () => {
+    const title = `00_afh_full — Pages 120${storedDash}150`;
+    data.materials = [makeMaterial({ id: "range", title }), makeMaterial({ id: "other", title: "Other material" })];
+    render(h(MemoryRouter, null, h(StudyLibrary)));
+    for (const queryDash of ["-", "–", "—", "−"]) {
+      fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: `Pages 120${queryDash}150` } });
+      expect(screen.getByText(title)).toBeTruthy();
+      expect(screen.queryByText("Other material")).toBeNull();
+      expect(data.materials[0]!.title).toBe(title);
+    }
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+}

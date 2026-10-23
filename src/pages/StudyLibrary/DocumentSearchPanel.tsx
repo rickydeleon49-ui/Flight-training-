@@ -363,9 +363,11 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
                             <span className="stack stack--1">
                               <span className="tiny">{place}</span>
                               <span className="small wrap-anywhere" id={snippetId}>
-                                {snippetPieces(passage.snippet).map((piece, i) =>
-                                  piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
-                                )}
+                                {passage.snippet.replace(/[\s.…\uE000\uE001]/gu, "")
+                                  ? snippetPieces(passage.snippet).map((piece, i) =>
+                                      piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
+                                    )
+                                  : "Matched on this page"}
                               </span>
                             </span>
                           </button>

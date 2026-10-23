@@ -63,14 +63,14 @@ async function counts() {
   return { ...row };
 }
 
-function renderDetail() {
+function renderDetail(startCardReview = false) {
   return render(
     h(
       AppDataProvider,
       null,
       h(
         MemoryRouter,
-        { initialEntries: [`/study/${M}`] },
+        { initialEntries: [{ pathname: `/study/${M}`, state: startCardReview ? { startCardReview: true } : null }] },
         h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) })),
       ),
     ),
@@ -149,6 +149,73 @@ afterEach(async () => {
 });
 
 describe("card reviews in MaterialDetail", () => {
+  it.each([true, false])("scrolls to and focuses the first card only when opened from Review due (reduced motion %s)", async (reducedMotion) => {
+    await seed();
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scroll });
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reducedMotion })));
+
+    const entryView = renderDetail(true);
+    const showAnswer = await screen.findByRole("button", { name: "Show answer" });
+    const session = screen.getByLabelText(/^Card review session/);
+    const heading = within(session).getByRole("heading", { name: "Card 1 of 3 · new" });
+    await waitFor(() => {
+      expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reducedMotion ? "auto" : "smooth" });
+      expect(document.activeElement).toBe(heading);
+    });
+    expect(showAnswer).toBeTruthy();
+    entryView.unmount();
+
+    scroll.mockClear();
+    const ordinaryView = renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(scroll).not.toHaveBeenCalled();
+    ordinaryView.unmount();
+  });
+
+  it.each([false, true])("STUDENT-1: rating after a long Explain this answer reveals the next heading (reduced motion %s)", async (reduced) => {
+    await seed();
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reduced })));
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const answer = "A long synthetic card explanation. ".repeat(200);
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", sourcePages: [] });
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(scroll).not.toHaveBeenCalled();
+    fireEvent.click(button("Show answer"));
+    fireEvent.click(button("Explain this"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Explain?" } });
+    fireEvent.click(button("Ask"));
+    await screen.findByText(answer.trim());
+    scroll.mockClear();
+    fireEvent.click(button(/^Good: again in/));
+    const heading = await screen.findByRole("heading", { name: "Card 2 of 3 · new" });
+    expect(document.activeElement).toBe(heading);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: reduced ? "auto" : "smooth" });
+    expect(screen.queryByText(answer.trim())).toBeNull();
+    fireEvent.keyDown(heading, { key: " " });
+    expect(sessionRegion().getByText("C")).toBeTruthy();
+  });
+
+  it("updates the shortcut hint after reveal and restores it for the next card", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    fireEvent.click(button("Show answer"));
+    expect(sessionRegion().queryByText("Space or Enter shows the answer; 1–4 rate it.")).toBeNull();
+    expect(sessionRegion().getByText("1–4 rate it.")).toBeTruthy();
+    fireEvent.click(button(/^Good: again in/));
+    await screen.findByText(/^Card 2 of 3 · new/);
+    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
+  });
+
   it("full session with keyboard, then done-for-now; no Gemini, network or practice write", async () => {
     await seed();
     renderDetail();

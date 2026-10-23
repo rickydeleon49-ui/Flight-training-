@@ -7,12 +7,14 @@
  * Ratings only schedule reviews: they are never scores, mastery, FAA results
  * or readiness, and practice tests are unaffected.
  */
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
 import type { CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
+import { AppDataContext } from "@/state/AppDataContext";
+import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 
 import { ResetCardReviewsDialog } from "./ResetCardReviewsDialog";
 import {
@@ -44,6 +46,7 @@ interface CardReviewPanelProps {
   materialId: string;
   materialTitle: string;
   repository: CardReviewRepository | undefined;
+  materialFilePath?: string | null;
   /** Changes whenever the saved cards are replaced, so the panel reads again. */
   contentKey?: string;
   /** The card the browse carousel is showing, so it can be paused or flagged. */
@@ -52,11 +55,12 @@ interface CardReviewPanelProps {
   autoStart?: boolean;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
   const autoStarted = useRef(false);
+  const entrySessionPending = useRef(false);
   const { session, blocked, starting, startSession, clock } = review;
   const reviewRead = review.read;
 
@@ -69,7 +73,10 @@ export function CardReviewPanel({ materialId, materialTitle, repository, content
     if (reviewRead.snapshot.current.status !== "ok") return;
     const now = clock.now();
     const summary = summarizeCards(reviewRead.snapshot, now, nextLocalMidnightUtc(now, clock.timeZone()));
-    if (summary.dueNow + summary.newCount > 0) void startSession();
+    if (summary.dueNow + summary.newCount > 0) {
+      entrySessionPending.current = true;
+      void startSession();
+    }
   }, [autoStart, reviewRead, session, blocked, starting, startSession, clock]);
 
   // The dialog closes once its reset is resolved (acknowledged or refused).
@@ -172,7 +179,19 @@ export function CardReviewPanel({ materialId, materialTitle, repository, content
         </p>
       ) : null}
 
-      {review.session ? <SessionView review={review} items={items} states={snapshot.states} materialId={materialId} /> : null}
+      {review.session ? (
+        <SessionView
+          review={review}
+          items={items}
+          states={snapshot.states}
+          materialId={materialId}
+          materialFilePath={materialFilePath}
+          focusEntry={entrySessionPending.current}
+          onEntryShown={() => {
+            entrySessionPending.current = false;
+          }}
+        />
+      ) : null}
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
@@ -329,20 +348,57 @@ function SessionView({
   items,
   states,
   materialId,
+  materialFilePath,
+  focusEntry,
+  onEntryShown,
 }: {
   review: CardReviewController;
   items: CardReviewSnapshotItem[];
   states: Record<string, CardReviewItemState>;
   materialId: string;
+  materialFilePath?: string | null;
+  focusEntry: boolean;
+  onEntryShown: () => void;
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const entryFocusHandled = useRef(false);
+  const navigationFrom = useRef<string | null>(null);
   const shown = session.cards[session.position];
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
+  const appData = useContext(AppDataContext);
+  const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
+  const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
 
-  useEffect(() => {
-    region.current?.focus();
-  }, [session.position]);
+  useLayoutEffect(() => {
+    if (focusEntry) {
+      if (entryFocusHandled.current) return;
+      entryFocusHandled.current = true;
+      const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      region.current?.scrollIntoView?.({ block: "start", behavior });
+      heading.current?.focus({ preventScroll: true });
+      onEntryShown();
+    } else {
+      region.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!shown || navigationFrom.current === null || navigationFrom.current === shown.itemId) return;
+    navigationFrom.current = null;
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView?.({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }, [shown?.itemId]);
+
+  const rate = (rating: CardRating) => {
+    if (review.blocked || !shown) return;
+    navigationFrom.current = shown.itemId;
+    review.rate(rating);
+  };
 
   if (!shown || !item) {
     return <DoneForNow review={review} />;
@@ -354,8 +410,17 @@ function SessionView({
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (busy) return;
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
     if (!review.revealed && (event.key === " " || event.key === "Enter")) {
-      if (event.target !== event.currentTarget) return; // a focused button handles its own keys
+      if (event.target !== event.currentTarget && event.target !== heading.current) return; // buttons handle their own keys
       event.preventDefault();
       review.reveal();
       return;
@@ -363,7 +428,7 @@ function SessionView({
     const index = ["1", "2", "3", "4"].indexOf(event.key);
     if (review.revealed && index >= 0) {
       event.preventDefault();
-      review.rate(RATING_ORDER[index]!);
+      rate(RATING_ORDER[index]!);
     }
   };
 
@@ -376,10 +441,10 @@ function SessionView({
       aria-label={`Card review session. Card ${session.position + 1} of ${session.cards.length}.`}
     >
       <div className="row row--between">
-        <p className="small strong">
+        <h4 ref={heading} tabIndex={-1} className="small strong">
           Card {session.position + 1} of {session.cards.length}
           {shown.kind === "new" ? " · new" : ""}
-        </p>
+        </h4>
         <SourcePageBadge page={item.sourcePage} materialId={materialId} />
       </div>
       <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
@@ -399,13 +464,19 @@ function SessionView({
                 disabled={busy}
                 aria-keyshortcuts={String(index + 1)}
                 aria-label={`${RATING_LABELS[rating]}: again in ${waits?.[rating] ?? "a while"}`}
-                onClick={() => review.rate(rating)}
+                onClick={() => rate(rating)}
               >
                 <span>{RATING_LABELS[rating]}</span>
                 <span className="tiny card-review__wait"> · {waits?.[rating] ?? "—"}</span>
               </Button>
             ))}
           </div>
+          <AskGeminiPanel
+            materialId={materialId}
+            relativePath={resolvedFilePath}
+            context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
+            buttonLabel="Explain this"
+          />
         </>
       ) : (
         <div>
@@ -419,13 +490,13 @@ function SessionView({
           item={item}
           state={state}
           disabled={busy}
-          onAction={(kind) => review.itemAction(item.itemId, kind)}
+          onAction={(kind) => { navigationFrom.current = item.itemId; review.itemAction(item.itemId, kind); }}
         />
         <Button size="small" variant="ghost" onClick={review.endSession}>
           Done for now
         </Button>
       </div>
-      <p className="tiny dim">Space or Enter shows the answer; 1–4 rate it.</p>
+      <p className="tiny dim">{review.revealed ? "1–4 rate it." : "Space or Enter shows the answer; 1–4 rate it."}</p>
     </div>
   );
 }

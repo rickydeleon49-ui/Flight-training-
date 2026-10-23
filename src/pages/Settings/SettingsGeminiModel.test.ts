@@ -32,7 +32,7 @@ async function open() {
 }
 
 const STANDARD: geminiService.GeminiStatus = { configured: true, model: "gemini-3.5-flash", choice: "standard" };
-const ARGON: geminiService.GeminiStatus = { configured: true, model: "gemini-4-argon", choice: "most-capable" };
+const CAPABLE: geminiService.GeminiStatus = { configured: true, model: "gemini-3.8-flash", choice: "most-capable" };
 
 describe("Gemini model choice in Settings", () => {
   beforeEach(async () => {
@@ -52,6 +52,16 @@ describe("Gemini model choice in Settings", () => {
     vi.restoreAllMocks();
   });
 
+  it("explains busy messages in two plain sentences with useful next steps", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
+    await open();
+    const paragraph = (await screen.findByText("If Gemini keeps saying it is busy:")).closest("p")!.textContent!.replace(/\s+/g, " ");
+    expect(paragraph).toContain("A “busy” message means Google is overloaded, not that your key is wrong.");
+    expect(paragraph).toContain("Her Flight Deck already waits and retries; if it keeps happening, try again later or switch to Standard.");
+    expect(paragraph).not.toMatch(/billing|Tier 1|503|Google Cloud/i);
+    expect(paragraph.match(/\./g)).toHaveLength(2);
+  });
+
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
@@ -59,40 +69,49 @@ describe("Gemini model choice in Settings", () => {
     expect(screen.queryByText("Model for new study aids")).toBeNull();
   });
 
-  it("switches to Gemini 4 Argon and back, saying what changes and what does not", async () => {
+  it.each([STANDARD, CAPABLE])("offers only the current pair with $choice selected", async (status) => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status);
+    await open();
+    await screen.findByRole("radio", { name: /Most capable — Gemini 3.8 Flash/ });
+    expect(screen.getAllByRole("radio", { name: /Standard —|Most capable —/ })).toHaveLength(2);
+    expect(document.body.textContent).not.toMatch(/Argon|costs more per document|needs a key with billing turned on/i);
+  });
+
+  it("switches to Gemini 3.8 Flash and back, saying what changes and what does not", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
     const choose = vi
       .spyOn(geminiService, "setGeminiModel")
-      .mockImplementation(async (choice) => (choice === "most-capable" ? ARGON : STANDARD));
+      .mockImplementation(async (choice) => (choice === "most-capable" ? CAPABLE : STANDARD));
     await open();
 
-    const standard = await screen.findByRole("radio", { name: /Standard — Gemini Flash/ });
-    const argon = screen.getByRole("radio", { name: /Most capable — Gemini 4 Argon/ });
+    const standard = await screen.findByRole("radio", { name: /Standard — Gemini 3.5 Flash/ });
+    const capable = screen.getByRole("radio", { name: /Most capable — Gemini 3.8 Flash/ });
     expect((standard as HTMLInputElement).checked).toBe(true);
-    expect(screen.getByText(/Gemini Flash · key saved on this computer/)).toBeTruthy();
+    expect(screen.getByText(/Gemini 3.5 Flash · key saved on this computer/)).toBeTruthy();
 
     await act(async () => {
-      fireEvent.click(argon);
+      fireEvent.click(capable);
     });
     expect(choose).toHaveBeenCalledWith("most-capable");
     await screen.findByText(
-      "New study aids will use Gemini 4 Argon. Saved study guides and flashcards are unchanged.",
+      "New study aids will use Gemini 3.8 Flash. Saved study guides and flashcards are unchanged.",
     );
-    expect((argon as HTMLInputElement).checked).toBe(true);
-    expect(screen.getByText(/Gemini 4 Argon · key saved on this computer/)).toBeTruthy();
+    expect((capable as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText(/Gemini 3.8 Flash · key saved on this computer/)).toBeTruthy();
     expect(
       screen.getByText(
-        /If Google is busy, or this key has reached its limit for Gemini 4 Argon, Her Flight Deck tries Gemini Flash instead and shows which model made each study aid/,
+        /If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key, Her Flight Deck tries Gemini 3.5 Flash instead and shows which model made each study aid/,
       ),
     ).toBeTruthy();
-    expect(screen.getByText(/asking you to turn on billing or choose Standard/)).toBeTruthy();
+    expect(screen.getByText(/check this key's access in Google AI Studio/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Argon|costs more per document|needs a key with billing turned on/i);
 
     await act(async () => {
       fireEvent.click(standard);
     });
     expect(choose).toHaveBeenLastCalledWith("standard");
     await screen.findByText(
-      "New study aids will use Gemini Flash. Saved study guides and flashcards are unchanged.",
+      "New study aids will use Gemini 3.5 Flash. Saved study guides and flashcards are unchanged.",
     );
   });
 
@@ -100,11 +119,11 @@ describe("Gemini model choice in Settings", () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
     vi.spyOn(geminiService, "setGeminiModel").mockRejectedValue("Could not save the Gemini model choice: disk full");
     await open();
-    const argon = await screen.findByRole("radio", { name: /Most capable — Gemini 4 Argon/ });
+    const capable = await screen.findByRole("radio", { name: /Most capable — Gemini 3.8 Flash/ });
     await act(async () => {
-      fireEvent.click(argon);
+      fireEvent.click(capable);
     });
     expect((await screen.findByRole("alert")).textContent).toContain("Could not save the Gemini model choice");
-    expect((screen.getByRole("radio", { name: /Standard — Gemini Flash/ }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("radio", { name: /Standard — Gemini 3.5 Flash/ }) as HTMLInputElement).checked).toBe(true);
   });
 });

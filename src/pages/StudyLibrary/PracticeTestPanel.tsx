@@ -1,4 +1,6 @@
 import { PdfItemLabel } from "./PdfItemLabel";
+import { practiceAskContext } from "@/logic/practiceAskContext";
+import { AskGeminiPanel } from "./AskGeminiPanel";
 import {
   useCallback,
   useContext,
@@ -469,6 +471,8 @@ export function PracticeTestPanel({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
+  const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const navigationFrom = useRef<number | null>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const actionButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -936,6 +940,7 @@ export function PracticeTestPanel({
     (nextIndex: number, focusIndex = 0) => {
       if (busyRef.current || intentRef.current) return;
       if (renderedRef.current.phase !== "ready") return;
+      if (nextIndex !== renderedRef.current.index) navigationFrom.current = renderedRef.current.index;
       dispatch({
         type: "navigated",
         generation: generationRef.current,
@@ -1062,10 +1067,15 @@ export function PracticeTestPanel({
   }, [revealed, state.completedResult]);
 
   useLayoutEffect(() => {
-    if (canEdit && state.index > 0 && !revealed && !state.completedResult) {
-      optionRefs.current[0]?.focus();
-    }
-  }, [canEdit, revealed, state.index, state.completedResult]);
+    if (navigationFrom.current === null || navigationFrom.current === state.index) return;
+    navigationFrom.current = null;
+    const heading = questionHeadingRef.current;
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView?.({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }, [state.index]);
 
   // -------------------------------------------------------------------------
   // Shared notices — reachable from the question view AND the result view (R7)
@@ -1231,6 +1241,15 @@ export function PracticeTestPanel({
 
   if (!question) return <div className="stack stack--3">{notices}</div>;
 
+  const chosenOptionText = shownDontKnow
+    ? "I don't know"
+    : shownChoice !== null && shownChoice !== undefined && question.options[shownChoice]
+      ? question.options[shownChoice]
+      : "Not answered";
+  const correctOptionText = question.options[question.correctIndex] ?? "";
+  const askGeminiContext = practiceAskContext(question, chosenOptionText, correctOptionText);
+  const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
+
   return (
     <div className="stack stack--3" aria-labelledby="practice-test-title">
       {notices}
@@ -1250,9 +1269,8 @@ export function PracticeTestPanel({
           {questions.map((itm, qIdx) => {
             const resp = state.attempt?.responses.find((r) => r.itemId === itm.id);
             let pillClass = "practice-pill";
+            if (resp) pillClass += resp.isCorrect ? " practice-pill--correct" : " practice-pill--incorrect";
             if (qIdx === state.index) pillClass += " practice-pill--current";
-            else if (resp?.isDontKnow) pillClass += " practice-pill--dont-know";
-            else if (resp) pillClass += " practice-pill--answered";
 
             return (
               <button
@@ -1260,7 +1278,7 @@ export function PracticeTestPanel({
                 type="button"
                 className={pillClass}
                 disabled={!canEdit}
-                aria-label={`Question ${qIdx + 1}${resp ? (resp.isDontKnow ? " (Don't know)" : " (Answered)") : ""}`}
+                aria-label={`Question ${qIdx + 1}, ${resp ? (resp.isDontKnow ? "not quite, don’t know" : resp.isCorrect ? "correct" : "not quite") : "unanswered"}`}
                 aria-current={qIdx === state.index ? "true" : undefined}
                 onClick={() => goToIndex(qIdx)}
               >
@@ -1272,7 +1290,7 @@ export function PracticeTestPanel({
       )}
 
       <div className="row row--between">
-        <h3 id="practice-test-title" className="ai-guide__title">
+        <h3 ref={questionHeadingRef} tabIndex={-1} id="practice-test-title" className="ai-guide__title">
           Question {state.index + 1} of {totalQuestions}
         </h3>
         <SourcePageBadge page={question.sourcePage} materialId={materialId} />
@@ -1356,6 +1374,13 @@ export function PracticeTestPanel({
           </div>
 
           <p className="tiny dim ai-copy">{question.explanation}</p>
+
+          <AskGeminiPanel
+            key={`${state.version?.id}:${question.id}`}
+            materialId={materialId}
+            relativePath={currentMaterial?.filePath ?? null}
+            context={askGeminiContext}
+          />
         </div>
       )}
 

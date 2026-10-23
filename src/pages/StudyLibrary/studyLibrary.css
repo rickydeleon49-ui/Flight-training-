@@ -360,20 +360,22 @@
   cursor: default;
 }
 
-.practice-pill--current {
-  border-color: var(--accent-primary);
-  background: var(--surface-sunken);
-  font-weight: 600;
-}
-
-.practice-pill--answered {
+.practice-pill--correct {
   background: var(--category-complete-fill);
   border-color: var(--category-complete-edge);
+  color: var(--status-complete);
 }
 
-.practice-pill--dont-know {
-  background: var(--surface-sunken);
-  border-color: var(--border-strong);
+.practice-pill--incorrect {
+  background: var(--status-overdue-fill);
+  border-color: var(--status-overdue-edge);
+  color: var(--status-overdue);
+}
+
+.practice-pill--current {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  font-weight: 600;
 }
 
 .practice-history-card {

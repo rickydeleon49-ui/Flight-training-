@@ -44,7 +44,7 @@ async function open(id: string) {
 function status(choice: geminiService.GeminiModelChoice): geminiService.GeminiStatus {
   return {
     configured: true,
-    model: choice === "most-capable" ? "gemini-4-argon" : "gemini-3.5-flash",
+    model: choice === "most-capable" ? "gemini-3.8-flash" : "gemini-3.5-flash",
     choice,
   };
 }
@@ -80,18 +80,18 @@ describe("Gemini model choice on a material", () => {
     vi.restoreAllMocks();
   });
 
-  it("names the model in the send message, and warns about cost only for Argon", () => {
-    expect(geminiModelSentence(status("standard"))).toBe(" It will be read by Gemini Flash.");
-    const argon = geminiModelSentence(status("most-capable"));
-    expect(argon).toContain("It will be read by Gemini 4 Argon");
-    expect(argon).toContain("costs more per document");
+  it("names the model in the send message, and warns about cost only for Gemini 3.8 Flash", () => {
+    expect(geminiModelSentence(status("standard"))).toBe(" It will be read by Gemini 3.5 Flash.");
+    const capable = geminiModelSentence(status("most-capable"));
+    expect(capable).toContain("It will be read by Gemini 3.8 Flash");
+    expect(capable).toContain("may use slightly more of your Google credits");
     expect(geminiModelSentence(null)).toBe("");
     expect(geminiModelSentence({ configured: false, model: null, choice: "standard" } as never)).toBe("");
   });
 
-  it("asks before sending to Gemini 4 Argon, then labels the saved aid with the model that made it", async () => {
+  it("STUDENT-1: asks before sending to Gemini 3.8 Flash, then labels the saved aid with the model that made it", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status("most-capable"));
-    // Argon could not answer, so the standard model made it: the label must say so.
+    // Gemini 3.8 Flash could not answer, so the standard model made it: the label must say so.
     const generate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
       title: "Synthetic guide",
       summary: "Synthetic summary",
@@ -105,7 +105,11 @@ describe("Gemini model choice on a material", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
-    expect(confirm.textContent).toContain("It will be read by Gemini 4 Argon");
+    expect(confirm.textContent).toContain("It will be read by Gemini 3.8 Flash");
+    expect(confirm.textContent).toContain("will be sent to Google to generate the study aid.");
+    expect(confirm.textContent).not.toContain("48 hours");
+    expect(confirm.textContent).toContain("On the free tier Google may use it to improve its products");
+    expect(confirm.textContent).not.toContain("will be uploaded");
     expect(generate).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -114,16 +118,33 @@ describe("Gemini model choice on a material", () => {
     await waitFor(() => expect(generate).toHaveBeenCalledTimes(1));
     expect(await createRepositories(db).documents.listAiStudySets()).toHaveLength(0);
     fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
-    expect(await screen.findByText(/AI-generated study aid \(made with Gemini Flash\)/)).toBeTruthy();
+    expect(await screen.findByText(/AI-generated study aid \(made with Gemini 3.5 Flash\)/)).toBeTruthy();
   });
 
-  it("names Gemini Flash for the standard choice", async () => {
+  it("names Gemini 3.5 Flash for the standard choice", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status("standard"));
     const material = await seedMaterial();
     await open(material.id);
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const confirm = await screen.findByRole("dialog", { name: "Send this file to Google?" });
-    expect(confirm.textContent).toContain("It will be read by Gemini Flash.");
-    expect(confirm.textContent).not.toContain("Argon");
+    expect(confirm.textContent).toContain("It will be read by Gemini 3.5 Flash.");
+    expect(confirm.textContent).not.toContain("Gemini 3.8 Flash");
+  });
+
+  it("renders the original Gemini 4 Argon label on an older saved aid", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status("most-capable"));
+    const material = await seedMaterial();
+    await createRepositories(db).documents.saveAiStudySet({
+      sourceMaterialId: material.id,
+      title: "Older synthetic guide",
+      summary: "Synthetic summary",
+      sections: [{ heading: "Section", body: "Body" }],
+      flashcards: [{ front: "Q", back: "A", sourcePage: null }],
+      sourceNotes: "",
+      model: "gemini-4-argon",
+    });
+    await open(material.id);
+    expect(await screen.findByText(/AI-generated study aid \(made with Gemini 4 Argon\)/)).toBeTruthy();
+    expect((await createRepositories(db).documents.listAiStudySets())[0]?.model).toBe("gemini-4-argon");
   });
 });

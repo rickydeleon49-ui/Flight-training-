@@ -12,6 +12,7 @@ import {
   TOPIC_LABELS,
 } from "@/domain/types";
 import { formatLongDate } from "@/lib/dates";
+import { searchText } from "@/logic/searchText";
 import { noteHeading } from "@/logic/notes";
 import type { AppData } from "@/state/AppDataContext";
 
@@ -63,11 +64,11 @@ const DESTINATIONS: Array<{ label: string; to: string; detail: string }> = [
  * which beats a match somewhere in the record's other text.
  */
 function rank(candidate: Candidate, query: string): number | null {
-  const label = candidate.label.toLowerCase();
+  const label = searchText(candidate.label);
   if (label.startsWith(query)) return 0;
   if (new RegExp(`\\b${escapeForRegExp(query)}`).test(label)) return 1;
   if (label.includes(query)) return 2;
-  if (candidate.haystack.toLowerCase().includes(query)) return 3;
+  if (searchText(candidate.haystack).includes(query)) return 3;
   return null;
 }
 
@@ -172,7 +173,7 @@ function buildCandidates(data: AppData, today: string): Candidate[] {
  * opening Quick Find is useful before typing anything.
  */
 export function quickFind(data: AppData, query: string, today: string, limit = 12): QuickFindResult[] {
-  const trimmed = query.trim().toLowerCase();
+  const trimmed = searchText(query.trim());
 
   if (!trimmed) {
     return DESTINATIONS.map(({ label, to, detail }) => ({

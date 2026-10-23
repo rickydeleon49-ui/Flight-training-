@@ -461,7 +461,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     });
   });
 
-  it("section order on a PDF page is Start here, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
+  it("section order on a PDF page is Start here, Ask, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
     await openMaterial("mat-pdf");
 
     const startHere = document.getElementById("material-start-here")!;
@@ -478,7 +478,9 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     expect(practiceTest).toBeTruthy();
     expect(backup).toBeTruthy();
 
-    const order = [startHere, fileActions, studyGuide, flashcards, practiceTest, backup];
+    const askCard = document.getElementById("material-ask-gemini")!;
+    expect(askCard).toBeTruthy();
+    const order = [startHere, askCard, fileActions, studyGuide, flashcards, practiceTest, backup];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),

@@ -189,7 +189,7 @@ describe("completion link to the exact attempt's focused review", () => {
     });
 
     // Resumes at the unanswered question; open an answered one to reach completion.
-    fireEvent.click(await screen.findByRole("button", { name: "Question 1 (Answered)" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Question 1, correct" }));
     fireEvent.click(await screen.findByRole("button", { name: /Complete test now/ }));
 
     // Unknown outcome: no result view and no review link stand in for success.

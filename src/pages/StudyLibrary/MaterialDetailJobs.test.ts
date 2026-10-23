@@ -709,6 +709,49 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     const shell = readFileSync(join(process.cwd(), "src/components/layout/AppShell.tsx"), "utf8");
     expect(shell).toMatch(/<div className="content__inner">\s*<GeminiOrphanNotices \/>/);
   });
+  it("STUDENT-1: completed generation brings the stable practice section into view without remounting the page", async () => {
+    await material("mat-a", "Material A");
+    const answer = deferred<geminiService.GeneratedPracticeTest>();
+    vi.spyOn(geminiService, "generatePracticeTest").mockReturnValue(answer.promise);
+    await open("/study/mat-a");
+    const title = screen.getByRole("heading", { name: "Material A" });
+    const section = document.getElementById("material-practice-test")!;
+    const scroll = vi.fn();
+    section.scrollIntoView = scroll;
+    fireEvent.click(await screen.findByRole("button", { name: "Create practice test" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+    await screen.findByText("Gemini is writing practice questions");
+    expect(scroll).not.toHaveBeenCalled();
+    await act(async () => answer.resolve(TEST));
+    await screen.findByText("Question 1 of 1");
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: "auto" });
+    expect(screen.getByRole("heading", { name: "Material A" })).toBe(title);
+    expect(document.getElementById("material-practice-test")).toBe(section);
+    scroll.mockClear();
+    await act(async () => context.refresh());
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    'Source SHA-256: synthetic; selected PDF SHA-256: synthetic; sections: [{"id":"s1"}]',
+    'Source SHA-256: malformed',
+    '  Source SHA-256: synthetic',
+  ])("STUDENT-1: hides machine provenance from a saved guide without changing storage (%s)", async (notes) => {
+    await material("mat-a", "Material A");
+    await repos.documents.saveAiStudySet({ ...AID, sourceMaterialId: "mat-a", sourceNotes: notes });
+    await open("/study/mat-a");
+    await screen.findByRole("heading", { name: AID.title });
+    expect(screen.queryByText(notes.trim())).toBeNull();
+    expect((await repos.documents.listAiStudySets())[0]!.sourceNotes).toBe(notes);
+  });
+
+  it("STUDENT-1: still shows ordinary human source notes", async () => {
+    await material("mat-a", "Material A");
+    await repos.documents.saveAiStudySet({ ...AID, sourceMaterialId: "mat-a", sourceNotes: "Review the handbook chapter with my instructor." });
+    await open("/study/mat-a");
+    expect(await screen.findByText("Review the handbook chapter with my instructor.")).toBeTruthy();
+  });
+
   it("GENREL05-R2 practice tests still auto-save", async () => {
     await material("mat-a", "Material A");
     const generate = vi.spyOn(geminiService, "generatePracticeTest").mockResolvedValue(TEST);

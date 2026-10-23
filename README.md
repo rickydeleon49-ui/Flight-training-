@@ -320,17 +320,18 @@ draft and starts again. A finished set waits for her to save it; until she does,
 her current study guide, cards and review history stay as they were.
 
 **Which model reads it.** Settings offers two choices once a key is connected.
-**Standard** sends documents to Gemini Flash (`gemini-3.5-flash`, which Google
-now serves as `gemini-3.6-flash`) and works on a free key. **Most capable** sends
-them to Gemini 4 Argon (`gemini-4-argon`). Google offers Argon only on keys with
-billing turned on, and it costs more per document, so it is never the default.
+**Standard** sends documents to Gemini 3.5 Flash (`gemini-3.5-flash`): fast and
+inexpensive, and it works with a free Google AI Studio key. **Most capable** sends
+them to Gemini 3.8 Flash (`gemini-3.8-flash`): newer and a little more thorough;
+it may use slightly more of your Google credits. Standard remains the default.
 The choice is stored in a `gemini-model` file beside the key, never in SQLite or
 a backup, and a missing or unreadable choice means Standard. The **Send this
 file to Google?** message names the model that will read the file, and each
-saved study aid says which model made it. If Argon refuses a key without billing
-(`403`) the message says so and points to the Standard choice. If Argon is rate
-limited (`429`) or stays busy, the request moves to Gemini Flash once instead of
-waiting through every pause.
+saved study aid says which model made it. Older aids made with Gemini 4 Argon
+keep that label. If Gemini 3.8 Flash is unavailable to this key (`403`), temporarily
+rate-limited (`429`) or stays busy, the request moves to Gemini 3.5 Flash within
+the same bounded attempts. Invalid keys and exhausted daily quotas still stop
+the request; turning on billing is not presented as a requirement for this model.
 
 **When Google is busy.** A `503` means Google's own capacity is short for a
 moment — nothing to do with her key, her quota, or her document. Generating

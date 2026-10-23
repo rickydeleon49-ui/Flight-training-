@@ -5,8 +5,8 @@ import { GEMINI_MODEL_CHOICES, geminiModelName } from "@/services/gemini";
 describe("geminiModelName", () => {
   it("reads model IDs the way she would say them", () => {
     expect(geminiModelName("gemini-4-argon")).toBe("Gemini 4 Argon");
-    expect(geminiModelName("gemini-3.5-flash")).toBe("Gemini Flash");
-    expect(geminiModelName("gemini-3.8-flash")).toBe("Gemini Flash");
+    expect(geminiModelName("gemini-3.5-flash")).toBe("Gemini 3.5 Flash");
+    expect(geminiModelName("gemini-3.8-flash")).toBe("Gemini 3.8 Flash");
     expect(geminiModelName("gemini-3.5-flash-lite")).toBe("Gemini Flash-Lite");
   });
 
@@ -18,9 +18,10 @@ describe("geminiModelName", () => {
 });
 
 describe("GEMINI_MODEL_CHOICES", () => {
-  it("says the capable model needs billing and the standard one works on a free key", () => {
+  it("describes both current models without requiring billing", () => {
     expect(GEMINI_MODEL_CHOICES.standard.detail).toContain("free");
-    expect(GEMINI_MODEL_CHOICES["most-capable"].label).toContain("Gemini 4 Argon");
-    expect(GEMINI_MODEL_CHOICES["most-capable"].detail).toContain("billing");
+    expect(GEMINI_MODEL_CHOICES["most-capable"].label).toContain("Gemini 3.8 Flash");
+    expect(GEMINI_MODEL_CHOICES["most-capable"].detail).toContain("may use slightly more of your Google credits");
+    expect(JSON.stringify(GEMINI_MODEL_CHOICES)).not.toMatch(/Argon|billing|costs more per document/);
   });
 });

@@ -49,11 +49,10 @@ const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 
 /// The more capable model she can choose in Settings instead of `MODEL`.
 ///
-/// Google offers it only to keys with billing turned on, and each document
-/// costs noticeably more, so it is never the default and is only used once she
-/// has chosen it. Pinned and checked against the official model documentation
-/// before release, exactly like `MODEL`.
-const CAPABLE_MODEL: &str = "gemini-4-argon";
+/// Newer and a little more thorough; it may use slightly more Google credits.
+/// Only used once she has chosen it. Pinned and checked before release,
+/// exactly like `MODEL`.
+const CAPABLE_MODEL: &str = "gemini-3.8-flash";
 
 /// Her model choice, kept beside the key in the application data folder.
 ///
@@ -68,7 +67,7 @@ const MODEL_CHOICE_WRITING: &str = "gemini-model.writing";
 pub(crate) enum ModelChoice {
     /// `MODEL`: fast, inexpensive and available on Google's free tier.
     Standard,
-    /// `CAPABLE_MODEL`: slower and costlier, for long or complex material.
+    /// `CAPABLE_MODEL`: newer and a little more thorough.
     MostCapable,
 }
 
@@ -109,7 +108,7 @@ impl ModelChoice {
         match self {
             ModelChoice::Standard => "Trying the backup Gemini model…",
             ModelChoice::MostCapable => {
-                "Gemini 4 Argon is not answering right now, so trying the standard Gemini model…"
+                "Gemini 3.8 Flash is not answering right now, so trying the standard Gemini model…"
             }
         }
     }
@@ -118,7 +117,7 @@ impl ModelChoice {
 /// Her saved choice. Anything missing, unreadable or unrecognised means the
 /// standard model, so a damaged preference never sends a document to the
 /// costlier one.
-fn load_choice(root: &Path) -> ModelChoice {
+pub(crate) fn load_choice(root: &Path) -> ModelChoice {
     std::fs::read_to_string(root.join(MODEL_CHOICE_FILE))
         .ok()
         .and_then(|value| ModelChoice::parse(&value))
@@ -198,7 +197,7 @@ const GENERATE_TIMEOUT: Duration = Duration::from_secs(900);
 /// The client for generation. Its overall timeout is only a backstop: every
 /// request is given what remains of the generation's one budget, and a
 /// connection that cannot be made in `CONNECT_TIMEOUT` counts as unreachable.
-fn generation_client() -> Result<Client, String> {
+pub(crate) fn generation_client() -> Result<Client, String> {
     Client::builder()
         .connect_timeout(gemini_budget::CONNECT_TIMEOUT)
         .timeout(GENERATE_TIMEOUT)
@@ -330,10 +329,13 @@ fn check_page_count(pages: u32) -> Result<(), String> {
 /// A PDF this application cannot parse is let through rather than stopped:
 /// its length is unknown, not known to be too great, and Google may well read
 /// it. Refusing on a failed count would be inventing a reason to say no.
-async fn check_pdf_length(path: &Path) -> Result<(), String> {
+async fn check_pdf_length(path: &Path) -> Result<Option<u32>, String> {
     match pdf::count_pages(path.to_path_buf()).await {
-        Ok(pages) => check_page_count(pages),
-        Err(_) => Ok(()),
+        Ok(pages) => {
+            check_page_count(pages)?;
+            Ok(Some(pages))
+        }
+        Err(_) => Ok(None),
     }
 }
 
@@ -566,14 +568,14 @@ fn migrate_legacy_key(root: &Path) -> Option<String> {
 /// `Ok(None)` means none is stored. That is deliberately distinct from an
 /// error, so a folder we cannot read never again looks like a key she never
 /// entered.
-fn current_key(root: &Path) -> Result<Option<String>, String> {
+pub(crate) fn current_key(root: &Path) -> Result<Option<String>, String> {
     if let Some(key) = secrets::load_key(root)? {
         return Ok(Some(key));
     }
     Ok(migrate_legacy_key(root))
 }
 
-fn stored_key(app: &AppHandle) -> Result<String, String> {
+pub(crate) fn stored_key(app: &AppHandle) -> Result<String, String> {
     current_key(&app_root(app)?)?
         .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())
 }
@@ -716,6 +718,8 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
 pub(crate) struct LoadedSource {
     pub bytes: Vec<u8>,
     pub mime: &'static str,
+    /// Page count from the PDF length check, if that check could read it.
+    pub page_count: Option<u32>,
     /// SHA-256 of exactly these bytes: what a prepared copy is bound to.
     pub content_sha256: String,
     /// The selected managed source (its stored path).
@@ -728,6 +732,7 @@ impl LoadedSource {
             content_sha256: calculate_sha256(&bytes),
             bytes,
             mime,
+            page_count: None,
             scope: scope.to_string(),
         }
     }
@@ -742,11 +747,19 @@ impl LoadedSource {
     }
 }
 
-async fn prepare_submission(
+pub(crate) async fn prepare_submission(
     app: &AppHandle,
     relative_path: &str,
 ) -> Result<(String, LoadedSource), String> {
     let api_key = stored_key(app)?;
+    let source = load_submission_source(app, relative_path).await?;
+    Ok((api_key, source))
+}
+
+pub(crate) async fn load_submission_source(
+    app: &AppHandle,
+    relative_path: &str,
+) -> Result<LoadedSource, String> {
     let path = documents::stored_document_path(app, relative_path)?;
     let metadata = std::fs::metadata(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
@@ -762,9 +775,11 @@ async fn prepare_submission(
     let mime = mime_type(file_name)?;
     check_size(mime, metadata.len())?;
     // Size is only half of Google's PDF limit; the other half is pages.
-    if mime == "application/pdf" {
-        check_pdf_length(&path).await?;
-    }
+    let page_count = if mime == "application/pdf" {
+        check_pdf_length(&path).await?
+    } else {
+        None
+    };
     let bytes = std::fs::read(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
             "This study file is missing from app storage. Restore or re-attach the file before generating.".to_string()
@@ -772,11 +787,13 @@ async fn prepare_submission(
             format!("Could not read that study file: {e}")
         }
     })?;
-    Ok((api_key, LoadedSource::new(bytes, mime, relative_path)))
+    let mut source = LoadedSource::new(bytes, mime, relative_path);
+    source.page_count = page_count;
+    Ok(source)
 }
 
 /// The session's prepared PDFs (GEN-REL-01): native memory only.
-fn prepared_sources() -> &'static PreparedSources {
+pub(crate) fn prepared_sources() -> &'static PreparedSources {
     static PREPARED: OnceLock<PreparedSources> = OnceLock::new();
     PREPARED.get_or_init(|| {
         PreparedSources::new(
@@ -788,17 +805,17 @@ fn prepared_sources() -> &'static PreparedSources {
 
 /// Everything one generation needs, without the window: tests run the same
 /// code against a loopback endpoint.
-struct GenContext<'a> {
-    http: &'a Client,
-    base: &'a str,
-    api_key: &'a str,
-    choice: ModelChoice,
-    cache: &'a PreparedSources,
+pub(crate) struct GenContext<'a> {
+    pub(crate) http: &'a Client,
+    pub(crate) base: &'a str,
+    pub(crate) api_key: &'a str,
+    pub(crate) choice: ModelChoice,
+    pub(crate) cache: &'a PreparedSources,
     /// The prepared-source context this generation began in.
-    epoch: u64,
+    pub(crate) epoch: u64,
     /// The one active budget every step of this generation draws from.
-    budget: &'a Budget,
-    say: &'a (dyn Fn(String) + Sync),
+    pub(crate) budget: &'a Budget,
+    pub(crate) say: &'a (dyn Fn(String) + Sync),
 }
 
 impl GenContext<'_> {
@@ -840,7 +857,7 @@ fn source_part(source: &LoadedSource, prepared: Option<&gemini_files::Prepared>)
 /// The copy stays leased while it is used, so replacing or evicting it cannot
 /// delete it mid-request. If the context ends (disconnect or a new key) at any
 /// point, the operation is refused and nothing it produced is returned.
-async fn run_generation(
+pub(crate) async fn run_generation(
     ctx: &GenContext<'_>,
     source: &LoadedSource,
     build: &(dyn Fn(Value) -> Value + Sync),
@@ -1590,7 +1607,7 @@ async fn study_aid_request(
 ///
 /// Shared by every kind of generation this application asks Gemini for, so a
 /// malformed envelope is refused the same way regardless of what was asked.
-fn extract_text(raw: &str) -> Result<String, String> {
+pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     let envelope: Value = serde_json::from_str(raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
     if envelope
@@ -1900,9 +1917,9 @@ async fn generate_once(
 /// Why generation ended without an answer: the message, and the status of a
 /// refusal Google will not reconsider (so a missing prepared file can be told
 /// apart from a missing model).
-struct Failure {
-    message: String,
-    status: Option<u16>,
+pub(crate) struct Failure {
+    pub(crate) message: String,
+    pub(crate) status: Option<u16>,
 }
 
 impl From<String> for Failure {
@@ -1936,7 +1953,7 @@ enum Setback {
 /// request that times out has used the whole budget, so nothing follows it.
 ///
 /// Returns the response body and the model that produced it.
-async fn generate_with_retries_at(
+pub(crate) async fn generate_with_retries_at(
     ctx: &GenContext<'_>,
     body: &Value,
 ) -> Result<(String, &'static str), Failure> {
@@ -1980,6 +1997,19 @@ async fn generate_with_retries_at(
                         message: quota_message(),
                         status: Some(status),
                     });
+                }
+                // Access to the capable model can differ from Standard.
+                // Try Standard without suggesting billing is required.
+                // An explicitly invalid key remains terminal for both models.
+                if !on_fallback
+                    && choice == ModelChoice::MostCapable
+                    && status == 403
+                    && !has_invalid_key_reason(&body)
+                {
+                    model = choice.fallback();
+                    on_fallback = true;
+                    (ctx.say)(choice.fallback_notice().to_string());
+                    continue;
                 }
                 if !is_retryable(status) {
                     ctx.budget.categorize("refused");
@@ -2233,7 +2263,7 @@ fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &st
             "Google did not accept the authentication credentials. Check your API key in Google AI Studio and try again.".to_string()
         }
         403 if model == CAPABLE_MODEL => {
-            "Google did not allow this key to use Gemini 4 Argon. It needs a key with billing turned on. Turn on billing for this key in Google AI Studio, or choose the standard model in Settings.".to_string()
+            "Google did not allow this key to use Gemini 3.8 Flash. Check this key's model access in Google AI Studio, or choose the standard model in Settings.".to_string()
         }
         403 => {
             "Google denied project or API access. Check API key restrictions, API enablement, permissions, or project/billing configuration in Google AI Studio or Google Cloud Console.".to_string()
@@ -2505,6 +2535,39 @@ mod tests {
     }
 
     #[test]
+    fn pdf_length_check_returns_the_count_and_allows_an_unknown_count() {
+        use lopdf::{dictionary, Document};
+
+        let root = choice_scratch("page-count");
+        let path = root.join("synthetic.pdf");
+        let mut document = Document::with_version("1.5");
+        let pages_id = document.new_object_id();
+        let page_id = document.add_object(dictionary! {
+            "Type" => "Page", "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        });
+        document.objects.insert(
+            pages_id,
+            lopdf::Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Count" => 1, "Kids" => vec![page_id.into()],
+            }),
+        );
+        let catalog = document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+        document.trailer.set("Root", catalog);
+        document.save(&path).unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            Some(1)
+        );
+        std::fs::write(&path, b"synthetic unreadable PDF").unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            None
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn other_files_are_not_held_to_the_pdf_limit() {
         // The inline cap is twice the PDF one, so an image between the two is
         // sent rather than refused for a limit that does not apply to it.
@@ -2640,7 +2703,7 @@ mod tests {
         assert_eq!(ModelChoice::Standard.primary(), MODEL);
         assert_eq!(ModelChoice::Standard.fallback(), FALLBACK_MODEL);
         assert_eq!(ModelChoice::MostCapable.primary(), CAPABLE_MODEL);
-        // When Argon cannot answer, her request falls back to the standard
+        // When Gemini 3.8 Flash cannot answer, her request falls back to the standard
         // model rather than straight to the lightest one.
         assert_eq!(ModelChoice::MostCapable.fallback(), MODEL);
         for choice in [ModelChoice::Standard, ModelChoice::MostCapable] {
@@ -2680,6 +2743,17 @@ mod tests {
     }
 
     #[test]
+    fn an_existing_capable_choice_selects_gemini_3_8_flash() {
+        let root = choice_scratch("existing-capable");
+        // The choice file from the Argon version keeps the same stored value.
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "most-capable").unwrap();
+        let choice = load_choice(&root);
+        assert_eq!(choice.primary(), "gemini-3.8-flash");
+        assert_eq!(choice.fallback(), "gemini-3.5-flash");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn status_reports_the_model_her_choice_sends_documents_to() {
         let standard = GeminiStatus::new(true, ModelChoice::Standard);
         assert_eq!((standard.model, standard.choice), (MODEL, "standard"));
@@ -2691,7 +2765,7 @@ mod tests {
     }
 
     #[test]
-    fn only_argons_rate_limit_skips_straight_to_the_standard_model() {
+    fn only_the_capable_models_rate_limit_skips_straight_to_the_standard_model() {
         assert!(moves_straight_to_fallback(ModelChoice::MostCapable, 429));
         for status in [400, 403, 404, 500, 502, 503, 504] {
             assert!(!moves_straight_to_fallback(
@@ -2705,10 +2779,11 @@ mod tests {
     }
 
     #[test]
-    fn a_403_from_argon_explains_billing_and_the_standard_choice() {
+    fn a_403_from_the_capable_model_explains_access_and_the_standard_choice() {
         let message = describe_refusal(RefusalContext::Generation, 403, "{}", CAPABLE_MODEL);
-        assert!(message.contains("Gemini 4 Argon"));
-        assert!(message.contains("billing"));
+        assert!(message.contains("Gemini 3.8 Flash"));
+        assert!(message.contains("model access"));
+        assert!(!message.contains("billing"));
         assert!(message.contains("standard model in Settings"));
         let standard = describe_refusal(RefusalContext::Generation, 403, "{}", MODEL);
         assert!(!standard.contains("Argon"));

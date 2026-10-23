@@ -67,12 +67,13 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
   const headings = within(column as HTMLElement).getAllByRole("heading", { level: 2 }).map(node => node.textContent);
-  expect(headings.slice(0, 9)).toEqual(["Start here", "Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
+  expect(headings.slice(0, 10)).toEqual(["Start here", "Ask about this PDF", "Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
   const file = document.getElementById("material-file-actions")!;
   const geminiSection = document.getElementById("material-study-guide")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
   expect(column.firstElementChild?.textContent).toContain("Start here");
-  expect(column.children[1]).toBe(file);
+  expect(column.children[1]).toBe(document.getElementById("material-ask-gemini"));
+  expect(column.children[2]).toBe(file);
   expect(file.compareDocumentPosition(geminiSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(geminiSection.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(column.lastElementChild).toBe(backup);

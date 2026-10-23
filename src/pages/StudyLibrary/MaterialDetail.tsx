@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -55,6 +55,7 @@ import { materialLinkAnchor, resolveMaterialLink, type MaterialLinkTarget } from
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { CardReviewPanel } from "./CardReviewPanel";
+import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
@@ -69,6 +70,7 @@ import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./Gem
 import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
+import { pdfAskContext } from "@/logic/pdfAskContext";
 import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
 import { PracticeTestEditor, PracticeTestHistory } from "./PracticeTestEditing";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
@@ -125,6 +127,7 @@ function MaterialDetailPage() {
   const [cardRevealed, setCardRevealed] = useState(false);
   const [kitCardIndex, setKitCardIndex] = useState(0);
   const [kitCardRevealed, setKitCardRevealed] = useState(false);
+  const [practiceJustSaved, setPracticeJustSaved] = useState(false);
   const [confirmingPracticeTest, setConfirmingPracticeTest] = useState(false);
   const [editingSet, setEditingSet] = useState(false);
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
@@ -278,6 +281,14 @@ function MaterialDetailPage() {
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
+  // Saving replaces the progress view and mounts a compact loading panel before
+  // its questions arrive. Anchor to the stable practice section after that
+  // layout change, only for a generation requested during this visit.
+  useLayoutEffect(() => {
+    if (!practiceJustSaved || generatingPractice || !practiceTest) return;
+    setPracticeJustSaved(false);
+    document.getElementById("material-practice-test")?.scrollIntoView?.({ block: "start", behavior: "auto" });
+  }, [practiceJustSaved, generatingPractice, practiceTest]);
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
   // A set she wrote herself is labelled as hers, never as Gemini output.
@@ -357,6 +368,13 @@ function MaterialDetailPage() {
     .toLowerCase()
     .endsWith(".pdf");
   const isOverLimit = Boolean(isPdf && !fileForAi.ready);
+  const pdfAskConversationKey = JSON.stringify([
+    material.id,
+    material.filePath,
+    material.fileSize,
+    material.updatedAt,
+  ]);
+  const pdfContext = pdfAskContext(material.title, studySet?.summary);
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
@@ -548,7 +566,10 @@ function MaterialDetailPage() {
     await geminiJobs.start(
       "practice-test",
       { materialId: material.id, filePath: material.filePath },
-      { preflight: preflight(material.filePath) },
+      {
+        preflight: preflight(material.filePath),
+        onSaved: () => { if (isMountedRef.current) setPracticeJustSaved(true); },
+      },
     );
   };
 
@@ -610,6 +631,37 @@ function MaterialDetailPage() {
               fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
               tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
           </div>
+          {isPdf && material.filePath ? (
+            <div id="material-ask-gemini"><Card>
+              <CardHeader title="Ask about this PDF" />
+              <CardBody>
+                {!aiCheck.allowed ? (
+                  <p className="small muted">{aiCheck.reason}</p>
+                ) : isOverLimit ? (
+                  <p className="small muted">This PDF is too big for Gemini — split it first.</p>
+                ) : !canOfferGemini || fileMissing ? (
+                  <p className="small muted">
+                    {fileMissing
+                      ? "This PDF's file is missing, so Gemini can't read it."
+                      : !gemini?.configured
+                        ? "Connect Gemini in Settings to ask questions about this PDF."
+                        : (generationNotice?.text ?? "Gemini isn't available for this PDF right now.")}
+                  </p>
+                ) : (
+                  <>
+                    <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
+                    <AskGeminiPanel
+                      key={pdfAskConversationKey}
+                      materialId={material.id}
+                      relativePath={material.filePath ?? null}
+                      context={pdfContext}
+                      buttonLabel="Ask about this PDF"
+                    />
+                  </>
+                )}
+              </CardBody>
+            </Card></div>
+          ) : null}
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
@@ -841,7 +893,7 @@ function MaterialDetailPage() {
                             <GuideBody className="small" text={section.body} />
                           </div>
                         ))}
-                        {studySet.sourceNotes ? (
+                        {studySet.sourceNotes && !studySet.sourceNotes.trimStart().startsWith("Source SHA-256:") ? (
                           <p className="tiny dim ai-copy">{studySet.sourceNotes}</p>
                         ) : null}
                       </section>
@@ -1063,6 +1115,18 @@ function MaterialDetailPage() {
                             <span>{cardRevealed ? guideFlashcards[safeCardIndex]?.card.back : guideFlashcards[safeCardIndex]?.card.front}</span>
                             <span className="tiny dim">Click to {cardRevealed ? "see the question" : "reveal the answer"}</span>
                           </button>
+                          {cardRevealed && guideFlashcards[safeCardIndex]?.card ? (
+                            <AskGeminiPanel
+                              materialId={material.id}
+                              relativePath={material.filePath ?? null}
+                              context={formatFlashcardContext(
+                                guideFlashcards[safeCardIndex].card.front,
+                                guideFlashcards[safeCardIndex].card.back,
+                                guideFlashcards[safeCardIndex].card.sourcePage,
+                              )}
+                              buttonLabel="Explain this"
+                            />
+                          ) : null}
                           <div className="row row--between">
                             <Button
                               size="small"
@@ -1095,6 +1159,7 @@ function MaterialDetailPage() {
                       <CardReviewPanel
                         materialId={material.id}
                         materialTitle={material.title}
+                        materialFilePath={material.filePath ?? null}
                         repository={repositories?.cardReviews}
                         contentKey={studySet.updatedAt}
                         autoStart={startCardReview}
@@ -1806,7 +1871,7 @@ export function geminiModelSentence(status: GeminiStatus | null): string {
   if (!status || typeof status.model !== "string" || !status.model) return "";
   const name = geminiModelName(status.model);
   return status.choice === "most-capable"
-    ? ` It will be read by ${name}, which costs more per document on a key with billing turned on.`
+    ? ` It will be read by ${name}, which may use slightly more of your Google credits.`
     : ` It will be read by ${name}.`;
 }
 

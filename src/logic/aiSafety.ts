@@ -29,8 +29,9 @@ const REFUSED_TYPES: ReadonlySet<StudyMaterial["materialType"]> = new Set(["admi
 export function checkAiSubmission(
   material: StudyMaterial,
   credentials: CredentialRecord[],
+  content: "file" | "study_context" = "file",
 ): AiSubmissionCheck {
-  if (!material.filePath) {
+  if (!material.filePath && content === "file") {
     return {
       allowed: false,
       reason: "This material has no file attached, so there is nothing to send.",
@@ -57,11 +58,20 @@ export function checkAiSubmission(
     };
   }
 
+  if (content === "study_context") {
+    return { allowed: true, reason: "Your question and study context will be sent to Google. Send study material only — never anything personal or identifying." };
+  }
+
+  const name = material.originalFileName ?? material.title;
+  // Only PDFs are kept at Google for reuse; other files go with the request.
+  const reuse = name.toLowerCase().endsWith(".pdf")
+    ? " (if Google already has a copy from the last 48 hours, that copy is used instead)"
+    : "";
   return {
     allowed: true,
     reason:
-      `"${material.originalFileName ?? material.title}" will be uploaded to Google to ` +
-      "generate the study aid. On the free tier Google may use it to improve its " +
+      `"${name}" will be sent to Google to generate the study aid${reuse}. ` +
+      "On the free tier Google may use it to improve its " +
       "products, so send study material only — never anything personal or identifying.",
   };
 }

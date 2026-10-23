@@ -3,7 +3,9 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
+import { newId } from "@/lib/id";
 import type { PracticeQuestion, StudyFlashcard, StudyGuideSection } from "@/domain/types";
+import { DesktopOnlyError } from "./documents";
 
 export const GOOGLE_AI_STUDIO_KEY_URL = "https://aistudio.google.com/app/apikey";
 
@@ -23,20 +25,22 @@ export const GEMINI_MODEL_CHOICES: Record<
   { label: string; detail: string }
 > = {
   standard: {
-    label: "Standard — Gemini Flash",
+    label: "Standard — Gemini 3.5 Flash",
     detail: "Fast and inexpensive. Works with a free Google AI Studio key.",
   },
   "most-capable": {
-    label: "Most capable — Gemini 4 Argon",
+    label: "Most capable — Gemini 3.8 Flash",
     detail:
-      "Better with long or complex handbooks, but slower and costs more per document. Needs a key with billing turned on.",
+      "Newer and a little more thorough; may use slightly more of your Google credits.",
   },
 };
 
-/** A model ID as she would read it, e.g. "Gemini 4 Argon". Unknown IDs are shown as they are. */
+/** A model ID as she would read it. Historical models keep their original labels. */
 export function geminiModelName(model: string): string {
   if (typeof model !== "string" || !model) return "Gemini";
   if (model === "gemini-4-argon") return "Gemini 4 Argon";
+  if (model === "gemini-3.5-flash") return "Gemini 3.5 Flash";
+  if (model === "gemini-3.8-flash") return "Gemini 3.8 Flash";
   if (model.endsWith("-flash-lite")) return "Gemini Flash-Lite";
   if (model.endsWith("-flash")) return "Gemini Flash";
   return model;
@@ -206,6 +210,80 @@ export async function generatePracticeTest(
     baseRevision,
     requestId,
   });
+}
+
+export interface AskGeminiHistoryTurn {
+  role: "user" | "model";
+  text: string;
+}
+
+export interface AskGeminiParams {
+  requestId?: string;
+  relativePath?: string | null;
+  materialId: string;
+  context: string;
+  question: string;
+  history?: AskGeminiHistoryTurn[];
+}
+
+export interface AskGeminiResult {
+  model: string;
+  answer: string;
+  sourcePages: number[];
+}
+
+/**
+ * Ask Gemini a question about a study document or practice test question.
+ *
+ * Desktop only: throws DesktopOnlyError in browser mode.
+ */
+export async function askGemini(
+  paramsOrRelativePath: AskGeminiParams | string | null | undefined,
+  maybeMaterialId?: string,
+  maybeContext?: string,
+  maybeQuestion?: string,
+  maybeHistory?: AskGeminiHistoryTurn[],
+): Promise<AskGeminiResult | null> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const params: AskGeminiParams =
+    typeof paramsOrRelativePath === "object" && paramsOrRelativePath !== null
+      ? paramsOrRelativePath
+      : {
+          relativePath: paramsOrRelativePath,
+          materialId: maybeMaterialId ?? "",
+          context: maybeContext ?? "",
+          question: maybeQuestion ?? "",
+          history: maybeHistory ?? [],
+        };
+
+  return invoke<AskGeminiResult | null>("ask_gemini", {
+    requestId: params.requestId ?? newId(),
+    relativePath: params.relativePath ?? null,
+    materialId: params.materialId,
+    context: params.context,
+    question: params.question,
+    history: params.history ?? [],
+  });
+}
+
+export interface AskGeminiProgressEvent {
+  requestId: string;
+  message: string;
+}
+
+/** Native wording for just one interactive question, without storing a chat. */
+export async function watchAskGeminiProgress(
+  onProgress: (event: AskGeminiProgressEvent) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return () => {};
+  return listen<AskGeminiProgressEvent>("ask-gemini-progress", (event) => {
+    onProgress(event.payload);
+  });
+}
+
+export async function cancelAskGemini(requestId: string): Promise<void> {
+  if (!isTauri()) return;
+  return invoke<void>("cancel_ask_gemini", { requestId });
 }
 
 /** Every recorded generation: what the window rebuilds itself from. */
