@@ -30,6 +30,7 @@ import {
 } from "@/domain/types";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import { searchText } from "@/logic/searchText";
+import { exportableParts } from "@/logic/studyExport";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -37,6 +38,7 @@ import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState"
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
+import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
@@ -84,6 +86,7 @@ export function StudyLibrary() {
     [data.aiStudySets],
   );
   const [importing, setImporting] = useState(false);
+  const [exportingHandouts, setExportingHandouts] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
   // throw away the filtering she just set up.
   const [status, setStatus] = useRememberedState<StatusFilter>(
@@ -173,6 +176,14 @@ export function StudyLibrary() {
   };
 
   const hasAny = data.materials.length > 0;
+  const exportSources = useMemo(() => data.materials.flatMap((material) => {
+    const source = {
+      material: { title: material.title },
+      studySet: data.aiStudySets.find((set) => set.sourceMaterialId === material.id) ?? null,
+      practiceTest: data.practiceTests.find((test) => test.sourceMaterialId === material.id) ?? null,
+    };
+    return Object.values(exportableParts(source)).some(Boolean) ? [source] : [];
+  }), [data.materials, data.aiStudySets, data.practiceTests]);
 
   return (
     <>
@@ -185,6 +196,9 @@ export function StudyLibrary() {
             <Link to="/study/history" className="button button--secondary">
               Practice history
             </Link>
+            <Button variant="secondary" onClick={() => setExportingHandouts(true)} disabled={exportSources.length === 0}>
+              Export handout…
+            </Button>
             <Button onClick={() => setImporting(true)} disabled={importing}>
               <NoteIcon size={16} /> Import study packet…
             </Button>
@@ -371,6 +385,12 @@ export function StudyLibrary() {
           // banner says so, and opening it now would show "not found".
           if (refreshed) navigate(`/study/${materialId}`);
         }}
+      />
+
+      <ExportCenterDialog
+        open={exportingHandouts}
+        sources={exportSources}
+        onClose={() => setExportingHandouts(false)}
       />
     </>
   );

@@ -31,7 +31,7 @@ beforeEach(() => {
       makeAction({ relatedType: "material", relatedId: "material-0", title: "First step" }),
       makeAction({ relatedType: "material", relatedId: "material-0", title: "Later step" }),
     ],
-    goals: [], events: [], aiStudySets: [],
+    goals: [], events: [], aiStudySets: [], practiceTests: [],
   } as unknown as AppData;
 });
 afterEach(cleanup);
@@ -39,6 +39,7 @@ afterEach(cleanup);
 it("shows a bounded first page, loads more, and searches all materials", () => {
   render(h(MemoryRouter, null, h(StudyLibrary)));
 
+  expect((screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText("Material 0")).toBeTruthy();
   expect(screen.queryByText("Material 149")).toBeNull();
   expect(screen.getByText("Showing 100 of 150 materials")).toBeTruthy();
@@ -58,6 +59,27 @@ it("shows a bounded first page, loads more, and searches all materials", () => {
   });
   expect(screen.getByText("Showing 100 of 150 materials")).toBeTruthy();
   expect(screen.queryByText("Material 149")).toBeNull();
+});
+
+it("opens the export center when study content is available", () => {
+  data.aiStudySets = [{
+    sourceMaterialId: "material-0",
+    title: "Weather",
+    summary: "Weather summary",
+    sections: [],
+    flashcards: [{ front: "BKN?", back: "Broken", sourcePage: null }],
+    sourceNotes: "",
+    provider: "manual",
+    model: "",
+    generatedAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
+  }];
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const button = screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement;
+  expect(button.disabled).toBe(false);
+  fireEvent.click(button);
+  expect(screen.getByRole("dialog", { name: "Export handouts" })).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Material 0" })).toBeTruthy();
 });
 
 it("opens add material dialog and closes it when creation succeeds", async () => {
