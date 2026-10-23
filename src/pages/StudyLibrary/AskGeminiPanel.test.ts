@@ -864,6 +864,42 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(args.context).toContain("A synthetic study summary.");
   });
 
+  it("cancels a pending PDF reply and clears its conversation when the attachment is replaced", async () => {
+    const mockAsk = vi.mocked(askGemini);
+    mockAsk.mockResolvedValueOnce({ answer: "Answer for the original PDF.", sourcePages: [2] });
+    let finishPending!: (value: { answer: string; sourcePages: number[] }) => void;
+    mockAsk.mockImplementationOnce(() => new Promise((resolve) => { finishPending = resolve; }));
+    vi.spyOn(documentService, "pickAndImportDocument").mockResolvedValueOnce({
+      relativePath: "documents/replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096,
+    });
+
+    await seedFlashcardMaterial();
+    await openMaterial("mat-pdf");
+    const askCard = () => screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask about this PDF" }));
+
+    const ask = async (question: string) => {
+      fireEvent.change(within(askCard()).getByLabelText("Ask a question"), { target: { value: question } });
+      fireEvent.click(within(askCard()).getByRole("button", { name: "Ask" }));
+    };
+    await ask("What does the original PDF say?");
+    await screen.findByText("Answer for the original PDF.");
+    await ask("One more question");
+    await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+    await screen.findByText("replacement.pdf");
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(cancelAskGemini).toHaveBeenCalled());
+    await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask about this PDF" })).toBeTruthy());
+    expect(within(askCard()).queryByText("Answer for the original PDF.")).toBeNull();
+    await act(async () => finishPending({ answer: "Late answer from the original PDF.", sourcePages: [3] }));
+    expect(screen.queryByText("Late answer from the original PDF.")).toBeNull();
+  });
+
   it("asks her to connect Gemini instead of offering a question box when it is not connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({
       configured: false,

@@ -70,6 +70,7 @@ import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./Gem
 import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
+import { pdfAskContext } from "@/logic/pdfAskContext";
 import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
 import { PracticeTestEditor, PracticeTestHistory } from "./PracticeTestEditing";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
@@ -367,12 +368,13 @@ function MaterialDetailPage() {
     .toLowerCase()
     .endsWith(".pdf");
   const isOverLimit = Boolean(isPdf && !fileForAi.ready);
-  const pdfAskContext = (() => {
-    const title = material.title || "";
-    const summary = studySet?.summary ? `\n\n${studySet.summary}` : "";
-    const combined = `${title}${summary}`;
-    return combined.length > 8000 ? combined.slice(0, 8000) : combined;
-  })();
+  const pdfAskConversationKey = JSON.stringify([
+    material.id,
+    material.filePath,
+    material.fileSize,
+    material.updatedAt,
+  ]);
+  const pdfContext = pdfAskContext(material.title, studySet?.summary);
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
@@ -649,9 +651,10 @@ function MaterialDetailPage() {
                   <>
                     <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
                     <AskGeminiPanel
+                      key={pdfAskConversationKey}
                       materialId={material.id}
                       relativePath={material.filePath ?? null}
-                      context={pdfAskContext}
+                      context={pdfContext}
                       buttonLabel="Ask about this PDF"
                     />
                   </>
