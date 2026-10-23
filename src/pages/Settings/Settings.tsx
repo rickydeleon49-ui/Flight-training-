@@ -1270,13 +1270,9 @@ export function Settings() {
               </p>
 
               <p className="tiny dim">
-                <span className="strong">If Gemini keeps saying it is busy:</span> a “503 —
-                high demand” is Google&rsquo;s capacity, not your key. Her Flight Deck already
-                waits, retries, and tries a backup model before reporting it. If it happens often,
-                enabling billing for the same Google Cloud project moves the key to paid Tier 1,
-                which has higher rate limits. Billing alone does not change the model: choose
-                Gemini 3.8 Flash above if you want the more capable one. No model is guaranteed to
-                always have capacity, so you may still need to try again later.
+                <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
+                message means Google is overloaded, not that your key is wrong. Her Flight Deck
+                already waits and retries; if it keeps happening, try again later or switch to Standard.
               </p>
 
               {gemini?.configured ? (

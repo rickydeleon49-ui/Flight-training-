@@ -35,7 +35,7 @@ describe("askGemini service", () => {
   it("invokes ask_gemini with correct payload when desktop is available", async () => {
     mocks.invoke.mockResolvedValue({
       answer: "Sample answer",
-      sourcePages: [3],
+      model: "gemini-3.5-flash", sourcePages: [3],
     });
 
     const res = await askGemini({
@@ -49,7 +49,7 @@ describe("askGemini service", () => {
 
     expect(res).toEqual({
       answer: "Sample answer",
-      sourcePages: [3],
+      model: "gemini-3.5-flash", sourcePages: [3],
     });
     expect(mocks.invoke).toHaveBeenCalledWith("ask_gemini", {
       requestId: "ask-service-test",
@@ -64,7 +64,7 @@ describe("askGemini service", () => {
   it("works with positional arguments as well", async () => {
     mocks.invoke.mockResolvedValue({
       answer: "Positional answer",
-      sourcePages: [],
+      model: "gemini-3.5-flash", sourcePages: [],
     });
 
     const res = await askGemini(
@@ -76,7 +76,7 @@ describe("askGemini service", () => {
 
     expect(res).toEqual({
       answer: "Positional answer",
-      sourcePages: [],
+      model: "gemini-3.5-flash", sourcePages: [],
     });
     expect(mocks.invoke).toHaveBeenCalledWith("ask_gemini", {
       requestId: expect.stringMatching(/^[A-Za-z0-9-]{1,64}$/),

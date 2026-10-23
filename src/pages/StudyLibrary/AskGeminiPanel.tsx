@@ -4,7 +4,7 @@ import { Badge, Button, QuestionIcon } from "@/components/ui";
 import { checkAiSubmission } from "@/logic/aiSafety";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
-import { askGemini, cancelAskGemini, watchAskGeminiProgress, type AskGeminiHistoryTurn } from "@/services/gemini";
+import { askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
   materialId: string;
@@ -28,6 +28,7 @@ interface ChatTurn {
   role: "user" | "model";
   text: string;
   sourcePages?: number[];
+  model?: string;
 }
 
 interface InFlightAsk {
@@ -63,11 +64,21 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stopped, setStopped] = useState(false);
   const [googleNoteDismissed, setGoogleNoteDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const requestRef = useRef<InFlightAsk | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [answerVersion, setAnswerVersion] = useState(0);
+
+  // Derive this from the current snapshot so opening the panel and changes to
+  // the material or its credential links immediately show the same refusal.
+  const data = appData?.data;
+  const material = data?.materials.find((item) => item.id === materialId);
+  const check = material && data
+    ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context")
+    : { allowed: false, reason: "This material is no longer available. Open it again before asking." };
+  const refusal = check.allowed ? null : check.reason;
 
   const cancelInFlight = () => {
     const request = requestRef.current;
@@ -84,6 +95,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   const resetConversation = () => {
     cancelInFlight();
     setProgress(null);
+    setStopped(false);
     setHistory([]);
     setError(null);
     setQuestion("");
@@ -116,6 +128,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
     e?.preventDefault();
     const trimmed = question.trim();
     if (!trimmed || isLoading) return;
+    setStopped(false);
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setError("No internet right now. Your question is still here — press Ask again when you're back online.");
@@ -164,7 +177,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
         const next = [
           ...prev,
           { role: "user" as const, text: trimmed },
-          { role: "model" as const, text: result.answer, sourcePages: result.sourcePages },
+          { role: "model" as const, text: result.answer, sourcePages: result.sourcePages, model: result.model },
         ];
         return next.slice(-6);
       });
@@ -240,7 +253,11 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
               type="button"
               size="small"
               variant="ghost"
-              onClick={resetConversation}
+              onClick={() => {
+                const wasPending = requestRef.current !== null;
+                resetConversation();
+                setStopped(wasPending);
+              }}
               aria-label="Ask another"
             >
               Ask another
@@ -308,6 +325,11 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
               <p className="small ai-copy" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
                 {turn.text}
               </p>
+              {turn.role === "model" && (
+                <p className="tiny dim" style={{ margin: "var(--space-1) 0 0" }}>
+                  Answered by {geminiModelName(turn.model ?? "")}
+                </p>
+              )}
               {turn.sourcePages && turn.sourcePages.length > 0 && (
                 <div
                   className="row row--gap-1 row--wrap"
@@ -326,7 +348,9 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
         </div>
       )}
 
-      {error && (
+      {stopped && <p className="small dim" role="status">Stopped that question.</p>}
+
+      {(refusal || error) && (
         <div
           role="alert"
           style={{
@@ -337,7 +361,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
             fontSize: "0.875rem",
           }}
         >
-          {error}
+          {refusal || error}
         </div>
       )}
 
@@ -352,14 +376,14 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
             placeholder="Ask a question about this..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || !check.allowed}
             aria-label="Ask a question"
           />
           <Button
             type="submit"
             variant="primary"
             size="small"
-            disabled={isLoading || !question.trim()}
+            disabled={isLoading || !check.allowed || !question.trim()}
           >
             {isLoading ? "Asking…" : "Ask"}
           </Button>

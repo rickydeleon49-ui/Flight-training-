@@ -52,6 +52,16 @@ describe("Gemini model choice in Settings", () => {
     vi.restoreAllMocks();
   });
 
+  it("explains busy messages in two plain sentences with useful next steps", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
+    await open();
+    const paragraph = (await screen.findByText("If Gemini keeps saying it is busy:")).closest("p")!.textContent!.replace(/\s+/g, " ");
+    expect(paragraph).toContain("A “busy” message means Google is overloaded, not that your key is wrong.");
+    expect(paragraph).toContain("Her Flight Deck already waits and retries; if it keeps happening, try again later or switch to Standard.");
+    expect(paragraph).not.toMatch(/billing|Tier 1|503|Google Cloud/i);
+    expect(paragraph.match(/\./g)).toHaveLength(2);
+  });
+
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();

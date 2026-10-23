@@ -496,7 +496,7 @@ function SessionView({
           Done for now
         </Button>
       </div>
-      <p className="tiny dim">Space or Enter shows the answer; 1–4 rate it.</p>
+      <p className="tiny dim">{review.revealed ? "1–4 rate it." : "Space or Enter shows the answer; 1–4 rate it."}</p>
     </div>
   );
 }

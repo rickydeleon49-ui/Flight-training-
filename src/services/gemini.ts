@@ -227,6 +227,7 @@ export interface AskGeminiParams {
 }
 
 export interface AskGeminiResult {
+  model: string;
   answer: string;
   sourcePages: number[];
 }

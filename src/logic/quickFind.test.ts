@@ -32,6 +32,17 @@ const data: AppData = {
 const labels = (query: string) => quickFind(data, query, TODAY).map((result) => result.label);
 
 describe("quickFind", () => {
+  it.each(["-", "–", "—", "−"])("matches page-range dashes in Quick Find and preserves the %s title", (storedDash) => {
+    const title = `00_afh_full — Pages 120${storedDash}150`;
+    const material = makeMaterial({ id: "range", title, notes: `More pages 160${storedDash}180` });
+    const records = { ...EMPTY_DATA, materials: [material] };
+    for (const queryDash of ["-", "–", "—", "−"]) {
+      expect(quickFind(records, `Pages 120${queryDash}150`, TODAY)).toMatchObject([{ label: title, to: "/study/range" }]);
+      expect(quickFind(records, `pages 160${queryDash}180`, TODAY)).toMatchObject([{ label: title }]);
+    }
+    expect(material.title).toBe(title);
+  });
+
   it("offers the sections before anything is typed", () => {
     const results = quickFind(data, "", TODAY);
     expect(results.every((result) => result.section === "Go to")).toBe(true);

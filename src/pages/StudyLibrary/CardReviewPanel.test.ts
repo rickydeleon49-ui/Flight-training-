@@ -181,7 +181,7 @@ describe("card reviews in MaterialDetail", () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reduced })));
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const answer = "A long synthetic card explanation. ".repeat(200);
-    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, sourcePages: [] });
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", sourcePages: [] });
     renderDetail();
     await reviewHeading();
     await openSession();
@@ -199,6 +199,21 @@ describe("card reviews in MaterialDetail", () => {
     expect(screen.queryByText(answer.trim())).toBeNull();
     fireEvent.keyDown(heading, { key: " " });
     expect(sessionRegion().getByText("C")).toBeTruthy();
+  });
+
+  it("updates the shortcut hint after reveal and restores it for the next card", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    fireEvent.click(button("Show answer"));
+    expect(sessionRegion().queryByText("Space or Enter shows the answer; 1–4 rate it.")).toBeNull();
+    expect(sessionRegion().getByText("1–4 rate it.")).toBeTruthy();
+    fireEvent.click(button(/^Good: again in/));
+    await screen.findByText(/^Card 2 of 3 · new/);
+    expect(sessionRegion().getByText("Space or Enter shows the answer; 1–4 rate it.")).toBeTruthy();
+    expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
   });
 
   it("full session with keyboard, then done-for-now; no Gemini, network or practice write", async () => {

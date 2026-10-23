@@ -135,6 +135,34 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     expect(askGemini).not.toHaveBeenCalled();
   });
 
+  it.each(["admin", "credential", "missing"])("shows the %s refusal on opening and tracks material changes", (kind) => {
+    const refusedMaterial = makeMaterial({ ...allowedMaterial, materialType: kind === "admin" ? "admin_document" : "study_guide" });
+    const credentials = kind === "credential" ? [{ materialId: "mat-1", title: "Synthetic medical" }] as typeof EMPTY_DATA.toolkit.credentials : [];
+    const refusedData = { ...allowedData, materials: kind === "missing" ? [] : [refusedMaterial], toolkit: { ...EMPTY_DATA.toolkit, credentials } };
+    const panel = (data: typeof allowedData) => h(AppDataContext.Provider, { value: { data } as ContextType<typeof AppDataContext> },
+      h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    const view = render(panel(refusedData));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    const input = screen.getByLabelText("Ask a question") as HTMLInputElement;
+    const ask = screen.getByRole("button", { name: "Ask" }) as HTMLButtonElement;
+    const reason = kind === "missing" ? "This material is no longer available. Open it again before asking." : checkAiSubmission(refusedMaterial, credentials).reason;
+    expect(screen.getByRole("alert").textContent).toBe(reason);
+    expect(input.disabled).toBe(true);
+    expect(ask.disabled).toBe(true);
+    expect(watchAskGeminiProgress).not.toHaveBeenCalled();
+    view.rerender(panel(allowedData));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(input.disabled).toBe(false);
+    fireEvent.change(input, { target: { value: "Why?" } });
+    expect(ask.disabled).toBe(false);
+    view.rerender(panel(refusedData));
+    expect(screen.getByRole("alert").textContent).toBe(reason);
+    expect(input.disabled).toBe(true);
+    expect(ask.disabled).toBe(true);
+    fireEvent.submit(input.closest("form")!);
+    expect(askGemini).not.toHaveBeenCalled();
+  });
+
   it("the panel is hidden before answering and shown after", async () => {
     await renderPracticePanel();
 
@@ -155,7 +183,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard altitude gives adequate terrain clearance.",
-      sourcePages: [42],
+      model: "gemini-3.5-flash", sourcePages: [42],
     });
 
     await renderPracticePanel();
@@ -191,11 +219,11 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     expect(callArgs.context).toContain("Standard pattern altitude is 1,000 feet AGL");
   });
 
-  it("answers and page chips render", async () => {
+  it.each(["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"])("answers and page chips render with the actual model %s", async (model) => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard pattern altitude is 1,000 ft AGL as stated in AC 90-66B.",
-      sourcePages: [42, 45],
+      model, sourcePages: [42, 45],
     });
 
     render(
@@ -213,6 +241,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await screen.findByText("Standard pattern altitude is 1,000 ft AGL as stated in AC 90-66B.");
+    expect(screen.getByText(`Answered by ${geminiService.geminiModelName(model)}`)).toBeTruthy();
     expect(screen.getByText("p. 42")).toBeTruthy();
     expect(screen.getByText("p. 45")).toBeTruthy();
     expect(
@@ -225,7 +254,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     vi.stubGlobal("matchMedia", matchMedia);
     try {
       vi.mocked(askGemini).mockImplementation(async (params) => ({
-        answer: `Answer: ${params && typeof params === "object" ? params.question : ""}`, sourcePages: [],
+        answer: `Answer: ${params && typeof params === "object" ? params.question : ""}`, model: "gemini-3.5-flash", sourcePages: [],
       }));
       render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
       const opener = screen.getByRole("button", { name: "Why? Ask Gemini" });
@@ -352,7 +381,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockImplementation(async (params) => ({
       answer: `Answer to ${params && typeof params === "object" ? params.question : ""}`,
-      sourcePages: [],
+      model: "gemini-3.5-flash", sourcePages: [],
     }));
 
     render(
@@ -419,21 +448,23 @@ describe("AskGeminiPanel answer actions and reset", () => {
       if (action === "Close Ask Gemini") {
         fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
       }
+      expect(screen.queryByText("Stopped that question.") !== null).toBe(action === "Ask another");
       const input = screen.getByLabelText("Ask a question") as HTMLInputElement;
       expect(input.disabled).toBe(false);
       fireEvent.change(input, { target: { value: "New question" } });
       fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      expect(screen.queryByText("Stopped that question.")).toBeNull();
       await waitFor(() => expect(vi.mocked(askGemini)).toHaveBeenCalledTimes(2));
       expect(vi.mocked(askGemini).mock.calls[1]![0]).toMatchObject({ history: [] });
 
-      await act(async () => { resolveOld({ answer: "Stale answer", sourcePages: [] }); });
+      await act(async () => { resolveOld({ answer: "Stale answer", model: "gemini-3.5-flash", sourcePages: [] }); });
       expect(screen.queryByText("Stale answer")).toBeNull();
       expect(screen.queryByText("Old question")).toBeNull();
       expect(input.value).toBe("New question");
       expect(input.disabled).toBe(true);
       expect(screen.getByRole("button", { name: "Asking…" })).toBeTruthy();
 
-      await act(async () => { resolveNew({ answer: "Current answer", sourcePages: [] }); });
+      await act(async () => { resolveNew({ answer: "Current answer", model: "gemini-3.5-flash", sourcePages: [] }); });
       expect(screen.getByText("Current answer")).toBeTruthy();
       expect(input.disabled).toBe(false);
     },
@@ -462,7 +493,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Bernoulli's principle explains the pressure difference.",
-      sourcePages: [12],
+      model: "gemini-3.5-flash", sourcePages: [12],
     });
 
     render(
@@ -487,7 +518,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Answer to be cleared on reset.",
-      sourcePages: [],
+      model: "gemini-3.5-flash", sourcePages: [],
     });
 
     render(
@@ -564,7 +595,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
     act(() => emit({ requestId: "another-request", message: "Do not replace this question's progress" }));
     expect(screen.getByRole("status").textContent).toBe("Trying the backup Gemini model…");
     await act(async () => {
-      if (outcome === "answer") resolve({ answer: "Synthetic answer", sourcePages: [] });
+      if (outcome === "answer") resolve({ answer: "Synthetic answer", model: "gemini-3.5-flash", sourcePages: [] });
       else reject(new Error("Synthetic error"));
     });
     expect(screen.getByText(outcome === "answer" ? "Synthetic answer" : "Synthetic error")).toBeTruthy();
@@ -584,7 +615,9 @@ describe("AskGeminiPanel request progress and cancellation", () => {
     expect(cancelAskGemini).toHaveBeenCalledExactlyOnceWith(requestId);
     expect(unlisten).toHaveBeenCalledTimes(1);
     act(() => emit({ requestId, message: "Late progress" }));
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByText("Late progress")).toBeNull();
+    expect(screen.queryByText("Gemini is busy, trying again…")).toBeNull();
+    expect(screen.queryByRole("status")?.textContent ?? null).toBe(action === "Ask another" ? "Stopped that question." : null);
     if (action === "Close Ask Gemini") {
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
       expect(screen.queryByText("Gemini is busy, trying again…")).toBeNull();
@@ -700,8 +733,8 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const cards = within(document.getElementById("material-flashcards")!);
     fireEvent.click(cards.getByRole("button", { name: "Reveal flashcard answer" }));
     fireEvent.click(cards.getByRole("button", { name: "Explain this" }));
-    fireEvent.change(cards.getByLabelText("Ask a question"), { target: { value: "Why?" } });
-    fireEvent.click(cards.getByRole("button", { name: "Ask" }));
+    expect((cards.getByLabelText("Ask a question") as HTMLInputElement).disabled).toBe(true);
+    expect((cards.getByRole("button", { name: "Ask" }) as HTMLButtonElement).disabled).toBe(true);
     expect((await cards.findByRole("alert")).textContent).toBe(reason);
     fireEvent.click(cards.getByRole("button", { name: "Close Ask Gemini" }));
     cleanup();
@@ -720,7 +753,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Vy gives the best climb rate.",
-      sourcePages: [15],
+      model: "gemini-3.5-flash", sourcePages: [15],
     });
 
     await seedFlashcardMaterial();
@@ -759,7 +792,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Vx clears obstacles on departure.",
-      sourcePages: [14],
+      model: "gemini-3.5-flash", sourcePages: [14],
     });
 
     await seedFlashcardMaterial();
@@ -834,7 +867,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard rate turns are 3 degrees per second.",
-      sourcePages: [10],
+      model: "gemini-3.5-flash", sourcePages: [10],
     });
 
     await seedFlashcardMaterial();
@@ -866,8 +899,8 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
   it("cancels a pending PDF reply and clears its conversation when the attachment is replaced", async () => {
     const mockAsk = vi.mocked(askGemini);
-    mockAsk.mockResolvedValueOnce({ answer: "Answer for the original PDF.", sourcePages: [2] });
-    let finishPending!: (value: { answer: string; sourcePages: number[] }) => void;
+    mockAsk.mockResolvedValueOnce({ answer: "Answer for the original PDF.", model: "gemini-3.5-flash", sourcePages: [2] });
+    let finishPending!: (value: { answer: string; model: string; sourcePages: number[] }) => void;
     mockAsk.mockImplementationOnce(() => new Promise((resolve) => { finishPending = resolve; }));
     vi.spyOn(documentService, "pickAndImportDocument").mockResolvedValueOnce({
       relativePath: "documents/replacement.pdf", originalFileName: "replacement.pdf", fileSize: 4096,
@@ -896,7 +929,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await waitFor(() => expect(cancelAskGemini).toHaveBeenCalled());
     await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask about this PDF" })).toBeTruthy());
     expect(within(askCard()).queryByText("Answer for the original PDF.")).toBeNull();
-    await act(async () => finishPending({ answer: "Late answer from the original PDF.", sourcePages: [3] }));
+    await act(async () => finishPending({ answer: "Late answer from the original PDF.", model: "gemini-3.5-flash", sourcePages: [3] }));
     expect(screen.queryByText("Late answer from the original PDF.")).toBeNull();
   });
 

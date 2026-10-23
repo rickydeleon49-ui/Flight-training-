@@ -182,6 +182,7 @@ pub struct AskHistoryTurn {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AskAnswer {
+    pub model: String,
     pub answer: String,
     pub source_pages: Vec<u32>,
 }
@@ -285,6 +286,7 @@ fn shorten_answer(answer: String) -> String {
 pub fn parse_and_validate_answer(
     text: &str,
     pdf_page_count: Option<u32>,
+    model: &str,
 ) -> Result<AskAnswer, String> {
     let parsed: RawAskResponse = serde_json::from_str(text)
         .map_err(|_| "Gemini did not return a usable answer. Try asking again.".to_string())?;
@@ -307,6 +309,7 @@ pub fn parse_and_validate_answer(
     source_pages.dedup();
 
     Ok(AskAnswer {
+        model: model.to_string(),
         answer,
         source_pages,
     })
@@ -371,7 +374,7 @@ pub async fn ask_gemini_with(
     validate_context(context)?;
     let valid_history = validate_history(history);
 
-    let (raw, _model) = if let Some(src) = source {
+    let (raw, model) = if let Some(src) = source {
         let build = |part: Value| build_ask_request(Some(part), context, &valid_history, question);
         run_generation(ctx, src, &build).await?
     } else {
@@ -384,7 +387,7 @@ pub async fn ask_gemini_with(
     };
 
     let text = extract_text(&raw)?;
-    parse_and_validate_answer(&text, page_count)
+    parse_and_validate_answer(&text, page_count, model)
 }
 
 // The same preflight is used by the command and synthetic-key-store tests.
@@ -688,6 +691,11 @@ mod tests {
         .unwrap()
         .unwrap();
         assert_eq!(result.answer, "A synthetic answer.");
+        assert_eq!(result.model, "gemini-3.5-flash-lite");
+        assert_eq!(
+            serde_json::to_value(&result).unwrap()["model"],
+            "gemini-3.5-flash-lite"
+        );
         let events = events.lock().unwrap();
         assert_eq!(events.len(), 3, "two waits and the fallback notice");
         assert!(events.iter().all(|e| e.request_id == "ask-progress-test"));
@@ -827,6 +835,23 @@ mod tests {
     }
 
     #[test]
+    fn answer_model_is_generation_provenance_and_serializes_for_the_frontend() {
+        // A model name inside the generated text is never trusted as provenance.
+        let text = r#"{"answer":"A synthetic answer.","sourcePages":[2],"model":"forged"}"#;
+        for model in [
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-3.5-flash-lite",
+        ] {
+            let answer = parse_and_validate_answer(text, Some(5), model).unwrap();
+            assert_eq!(answer.model, model);
+            let wire = serde_json::to_value(&answer).unwrap();
+            assert_eq!(wire["model"], model);
+            assert_eq!(wire["sourcePages"], json!([2]));
+        }
+    }
+
+    #[test]
     fn long_answer_uses_the_last_paragraph_break_and_preserves_pages() {
         let first = format!("{}.", "a".repeat(6500));
         let second = format!("{}.", "b".repeat(5000));
@@ -834,7 +859,8 @@ mod tests {
         let raw = format!("{first}\n\n{second}\n\n{tail}");
         assert_eq!(raw.chars().count(), 20000);
         let response = json!({"answer": raw, "sourcePages": [4, 2, 2, 0, 6]});
-        let result = parse_and_validate_answer(&response.to_string(), Some(5)).unwrap();
+        let result =
+            parse_and_validate_answer(&response.to_string(), Some(5), "gemini-3.5-flash").unwrap();
         let notice = "(Answer shortened. Ask a follow-up for more.)";
         assert_eq!(result.answer, format!("{first}\n\n{second}\n\n{notice}"));
         assert!(result.answer.ends_with(notice));
@@ -845,7 +871,12 @@ mod tests {
     #[test]
     fn an_early_paragraph_break_does_not_throw_the_answer_away() {
         let raw = format!("Intro.\n\n{}. {}", "a".repeat(11000), "b".repeat(8990));
-        let result = parse_and_validate_answer(&json!({"answer": raw}).to_string(), None).unwrap();
+        let result = parse_and_validate_answer(
+            &json!({"answer": raw}).to_string(),
+            None,
+            "gemini-3.5-flash",
+        )
+        .unwrap();
         assert!(result.answer.chars().count() > 11000);
         assert!(result
             .answer
@@ -859,7 +890,8 @@ mod tests {
         let raw = format!("{first} {second} {}", "c".repeat(8496));
         assert_eq!(raw.chars().count(), 20000);
         let response = json!({"answer": raw});
-        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        let result =
+            parse_and_validate_answer(&response.to_string(), None, "gemini-3.5-flash").unwrap();
         assert_eq!(
             result.answer,
             format!("{first} {second}\n\n(Answer shortened. Ask a follow-up for more.)")
@@ -872,7 +904,8 @@ mod tests {
         let raw = format!("{sentence}{}", "🛩".repeat(12000));
         assert_eq!(raw.chars().count(), 20000);
         let response = json!({"answer": raw});
-        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        let result =
+            parse_and_validate_answer(&response.to_string(), None, "gemini-3.5-flash").unwrap();
         assert_eq!(
             result.answer,
             format!("{sentence}\n\n(Answer shortened. Ask a follow-up for more.)")
@@ -882,7 +915,8 @@ mod tests {
     #[test]
     fn long_multibyte_answer_without_boundaries_has_a_char_safe_fallback() {
         let response = json!({"answer": "é🛩航".repeat(6667)});
-        let result = parse_and_validate_answer(&response.to_string(), None).unwrap();
+        let result =
+            parse_and_validate_answer(&response.to_string(), None, "gemini-3.5-flash").unwrap();
         let expected: String = "é🛩航".repeat(6667).chars().take(11998).collect();
         let notice = "(Answer shortened. Ask a follow-up for more.)";
         assert_eq!(result.answer, format!("{expected}\n\n{notice}"));
@@ -900,7 +934,9 @@ mod tests {
             "航".repeat(12000),
         ] {
             let response = json!({"answer": answer, "sourcePages": [2]});
-            let result = parse_and_validate_answer(&response.to_string(), Some(5)).unwrap();
+            let result =
+                parse_and_validate_answer(&response.to_string(), Some(5), "gemini-3.5-flash")
+                    .unwrap();
             assert_eq!(result.answer, answer);
             assert_eq!(result.source_pages, vec![2]);
         }
@@ -961,7 +997,7 @@ mod tests {
     #[test]
     fn answers_lose_escaped_line_breaks_and_markdown_emphasis() {
         let text = r#"{"answer":"Two kinds:\\n\\n1. **Power-off** stall.\\n2. __Power-on__ stall.","sourcePages":[2]}"#;
-        let answer = parse_and_validate_answer(text, Some(5)).unwrap();
+        let answer = parse_and_validate_answer(text, Some(5), "gemini-3.5-flash").unwrap();
         assert_eq!(
             answer.answer,
             "Two kinds:\n\n1. Power-off stall.\n2. Power-on stall."
@@ -1075,6 +1111,11 @@ mod tests {
         assert_eq!(
             result.answer,
             "The pitot tube provides dynamic pressure for the airspeed indicator."
+        );
+        assert_eq!(result.model, "gemini-3.5-flash");
+        assert_eq!(
+            serde_json::to_value(&result).unwrap()["model"],
+            "gemini-3.5-flash"
         );
         // Pages must be sorted and deduplicated
         assert_eq!(result.source_pages, vec![2, 4]);

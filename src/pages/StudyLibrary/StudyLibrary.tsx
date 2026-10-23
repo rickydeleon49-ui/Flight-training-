@@ -29,6 +29,7 @@ import {
   type Topic,
 } from "@/domain/types";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
+import { searchText } from "@/logic/searchText";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -132,18 +133,17 @@ export function StudyLibrary() {
   );
 
   const visible = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = searchText(search.trim());
     const matching = filtered.filter((material) => {
       if (query) {
-        const haystack = [
+        const haystack = searchText([
           material.title,
           material.notes,
           TOPIC_LABELS[material.topic],
           MATERIAL_TYPE_LABELS[material.materialType],
           ...material.tags,
         ]
-          .join(" ")
-          .toLowerCase();
+          .join(" "));
         if (!haystack.includes(query)) return false;
       }
       return true;
