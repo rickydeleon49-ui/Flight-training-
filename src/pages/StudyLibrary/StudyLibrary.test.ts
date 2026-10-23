@@ -78,7 +78,7 @@ it("opens the export center when study content is available", () => {
   const button = screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement;
   expect(button.disabled).toBe(false);
   fireEvent.click(button);
-  expect(screen.getByRole("dialog", { name: "Export handouts" })).toBeTruthy();
+  expect(screen.getByRole("dialog", { name: "Export study materials" })).toBeTruthy();
   expect(screen.getByRole("region", { name: "Material 0" })).toBeTruthy();
 });
 
