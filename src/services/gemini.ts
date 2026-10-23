@@ -4,6 +4,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
 import type { PracticeQuestion, StudyFlashcard, StudyGuideSection } from "@/domain/types";
+import { DesktopOnlyError } from "./documents";
 
 export const GOOGLE_AI_STUDIO_KEY_URL = "https://aistudio.google.com/app/apikey";
 
@@ -205,6 +206,57 @@ export async function generatePracticeTest(
     materialId,
     baseRevision,
     requestId,
+  });
+}
+
+export interface AskGeminiHistoryTurn {
+  role: "user" | "model";
+  text: string;
+}
+
+export interface AskGeminiParams {
+  relativePath?: string | null;
+  materialId: string;
+  context: string;
+  question: string;
+  history?: AskGeminiHistoryTurn[];
+}
+
+export interface AskGeminiResult {
+  answer: string;
+  sourcePages: number[];
+}
+
+/**
+ * Ask Gemini a question about a study document or practice test question.
+ *
+ * Desktop only: throws DesktopOnlyError in browser mode.
+ */
+export async function askGemini(
+  paramsOrRelativePath: AskGeminiParams | string | null | undefined,
+  maybeMaterialId?: string,
+  maybeContext?: string,
+  maybeQuestion?: string,
+  maybeHistory?: AskGeminiHistoryTurn[],
+): Promise<AskGeminiResult> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const params: AskGeminiParams =
+    typeof paramsOrRelativePath === "object" && paramsOrRelativePath !== null
+      ? paramsOrRelativePath
+      : {
+          relativePath: paramsOrRelativePath,
+          materialId: maybeMaterialId ?? "",
+          context: maybeContext ?? "",
+          question: maybeQuestion ?? "",
+          history: maybeHistory ?? [],
+        };
+
+  return invoke<AskGeminiResult>("ask_gemini", {
+    relativePath: params.relativePath ?? null,
+    materialId: params.materialId,
+    context: params.context,
+    question: params.question,
+    history: params.history ?? [],
   });
 }
 

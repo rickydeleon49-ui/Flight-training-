@@ -7,12 +7,14 @@
  * Ratings only schedule reviews: they are never scores, mastery, FAA results
  * or readiness, and practice tests are unaffected.
  */
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useContext, useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
 import type { CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
+import { AppDataContext } from "@/state/AppDataContext";
+import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 
 import { ResetCardReviewsDialog } from "./ResetCardReviewsDialog";
 import {
@@ -44,6 +46,7 @@ interface CardReviewPanelProps {
   materialId: string;
   materialTitle: string;
   repository: CardReviewRepository | undefined;
+  materialFilePath?: string | null;
   /** Changes whenever the saved cards are replaced, so the panel reads again. */
   contentKey?: string;
   /** The card the browse carousel is showing, so it can be paused or flagged. */
@@ -52,7 +55,7 @@ interface CardReviewPanelProps {
   autoStart?: boolean;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
@@ -172,7 +175,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, content
         </p>
       ) : null}
 
-      {review.session ? <SessionView review={review} items={items} states={snapshot.states} materialId={materialId} /> : null}
+      {review.session ? <SessionView review={review} items={items} states={snapshot.states} materialId={materialId} materialFilePath={materialFilePath} /> : null}
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
@@ -329,16 +332,21 @@ function SessionView({
   items,
   states,
   materialId,
+  materialFilePath,
 }: {
   review: CardReviewController;
   items: CardReviewSnapshotItem[];
   states: Record<string, CardReviewItemState>;
   materialId: string;
+  materialFilePath?: string | null;
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
   const shown = session.cards[session.position];
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
+  const appData = useContext(AppDataContext);
+  const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
+  const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
 
   useEffect(() => {
     region.current?.focus();
@@ -354,6 +362,15 @@ function SessionView({
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (busy) return;
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
     if (!review.revealed && (event.key === " " || event.key === "Enter")) {
       if (event.target !== event.currentTarget) return; // a focused button handles its own keys
       event.preventDefault();
@@ -406,6 +423,12 @@ function SessionView({
               </Button>
             ))}
           </div>
+          <AskGeminiPanel
+            materialId={materialId}
+            relativePath={resolvedFilePath}
+            context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
+            buttonLabel="Explain this"
+          />
         </>
       ) : (
         <div>

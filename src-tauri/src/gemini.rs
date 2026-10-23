@@ -118,7 +118,7 @@ impl ModelChoice {
 /// Her saved choice. Anything missing, unreadable or unrecognised means the
 /// standard model, so a damaged preference never sends a document to the
 /// costlier one.
-fn load_choice(root: &Path) -> ModelChoice {
+pub(crate) fn load_choice(root: &Path) -> ModelChoice {
     std::fs::read_to_string(root.join(MODEL_CHOICE_FILE))
         .ok()
         .and_then(|value| ModelChoice::parse(&value))
@@ -198,7 +198,7 @@ const GENERATE_TIMEOUT: Duration = Duration::from_secs(900);
 /// The client for generation. Its overall timeout is only a backstop: every
 /// request is given what remains of the generation's one budget, and a
 /// connection that cannot be made in `CONNECT_TIMEOUT` counts as unreachable.
-fn generation_client() -> Result<Client, String> {
+pub(crate) fn generation_client() -> Result<Client, String> {
     Client::builder()
         .connect_timeout(gemini_budget::CONNECT_TIMEOUT)
         .timeout(GENERATE_TIMEOUT)
@@ -330,10 +330,13 @@ fn check_page_count(pages: u32) -> Result<(), String> {
 /// A PDF this application cannot parse is let through rather than stopped:
 /// its length is unknown, not known to be too great, and Google may well read
 /// it. Refusing on a failed count would be inventing a reason to say no.
-async fn check_pdf_length(path: &Path) -> Result<(), String> {
+async fn check_pdf_length(path: &Path) -> Result<Option<u32>, String> {
     match pdf::count_pages(path.to_path_buf()).await {
-        Ok(pages) => check_page_count(pages),
-        Err(_) => Ok(()),
+        Ok(pages) => {
+            check_page_count(pages)?;
+            Ok(Some(pages))
+        }
+        Err(_) => Ok(None),
     }
 }
 
@@ -573,7 +576,7 @@ fn current_key(root: &Path) -> Result<Option<String>, String> {
     Ok(migrate_legacy_key(root))
 }
 
-fn stored_key(app: &AppHandle) -> Result<String, String> {
+pub(crate) fn stored_key(app: &AppHandle) -> Result<String, String> {
     current_key(&app_root(app)?)?
         .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())
 }
@@ -716,6 +719,8 @@ fn mime_type(file_name: &str) -> Result<&'static str, String> {
 pub(crate) struct LoadedSource {
     pub bytes: Vec<u8>,
     pub mime: &'static str,
+    /// Page count from the PDF length check, if that check could read it.
+    pub page_count: Option<u32>,
     /// SHA-256 of exactly these bytes: what a prepared copy is bound to.
     pub content_sha256: String,
     /// The selected managed source (its stored path).
@@ -728,6 +733,7 @@ impl LoadedSource {
             content_sha256: calculate_sha256(&bytes),
             bytes,
             mime,
+            page_count: None,
             scope: scope.to_string(),
         }
     }
@@ -742,7 +748,7 @@ impl LoadedSource {
     }
 }
 
-async fn prepare_submission(
+pub(crate) async fn prepare_submission(
     app: &AppHandle,
     relative_path: &str,
 ) -> Result<(String, LoadedSource), String> {
@@ -762,9 +768,11 @@ async fn prepare_submission(
     let mime = mime_type(file_name)?;
     check_size(mime, metadata.len())?;
     // Size is only half of Google's PDF limit; the other half is pages.
-    if mime == "application/pdf" {
-        check_pdf_length(&path).await?;
-    }
+    let page_count = if mime == "application/pdf" {
+        check_pdf_length(&path).await?
+    } else {
+        None
+    };
     let bytes = std::fs::read(&path).map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
             "This study file is missing from app storage. Restore or re-attach the file before generating.".to_string()
@@ -772,11 +780,13 @@ async fn prepare_submission(
             format!("Could not read that study file: {e}")
         }
     })?;
-    Ok((api_key, LoadedSource::new(bytes, mime, relative_path)))
+    let mut source = LoadedSource::new(bytes, mime, relative_path);
+    source.page_count = page_count;
+    Ok((api_key, source))
 }
 
 /// The session's prepared PDFs (GEN-REL-01): native memory only.
-fn prepared_sources() -> &'static PreparedSources {
+pub(crate) fn prepared_sources() -> &'static PreparedSources {
     static PREPARED: OnceLock<PreparedSources> = OnceLock::new();
     PREPARED.get_or_init(|| {
         PreparedSources::new(
@@ -788,17 +798,17 @@ fn prepared_sources() -> &'static PreparedSources {
 
 /// Everything one generation needs, without the window: tests run the same
 /// code against a loopback endpoint.
-struct GenContext<'a> {
-    http: &'a Client,
-    base: &'a str,
-    api_key: &'a str,
-    choice: ModelChoice,
-    cache: &'a PreparedSources,
+pub(crate) struct GenContext<'a> {
+    pub(crate) http: &'a Client,
+    pub(crate) base: &'a str,
+    pub(crate) api_key: &'a str,
+    pub(crate) choice: ModelChoice,
+    pub(crate) cache: &'a PreparedSources,
     /// The prepared-source context this generation began in.
-    epoch: u64,
+    pub(crate) epoch: u64,
     /// The one active budget every step of this generation draws from.
-    budget: &'a Budget,
-    say: &'a (dyn Fn(String) + Sync),
+    pub(crate) budget: &'a Budget,
+    pub(crate) say: &'a (dyn Fn(String) + Sync),
 }
 
 impl GenContext<'_> {
@@ -840,7 +850,7 @@ fn source_part(source: &LoadedSource, prepared: Option<&gemini_files::Prepared>)
 /// The copy stays leased while it is used, so replacing or evicting it cannot
 /// delete it mid-request. If the context ends (disconnect or a new key) at any
 /// point, the operation is refused and nothing it produced is returned.
-async fn run_generation(
+pub(crate) async fn run_generation(
     ctx: &GenContext<'_>,
     source: &LoadedSource,
     build: &(dyn Fn(Value) -> Value + Sync),
@@ -1590,7 +1600,7 @@ async fn study_aid_request(
 ///
 /// Shared by every kind of generation this application asks Gemini for, so a
 /// malformed envelope is refused the same way regardless of what was asked.
-fn extract_text(raw: &str) -> Result<String, String> {
+pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     let envelope: Value = serde_json::from_str(raw)
         .map_err(|_| "Gemini returned an unreadable response.".to_string())?;
     if envelope
@@ -1900,9 +1910,9 @@ async fn generate_once(
 /// Why generation ended without an answer: the message, and the status of a
 /// refusal Google will not reconsider (so a missing prepared file can be told
 /// apart from a missing model).
-struct Failure {
-    message: String,
-    status: Option<u16>,
+pub(crate) struct Failure {
+    pub(crate) message: String,
+    pub(crate) status: Option<u16>,
 }
 
 impl From<String> for Failure {
@@ -1936,7 +1946,7 @@ enum Setback {
 /// request that times out has used the whole budget, so nothing follows it.
 ///
 /// Returns the response body and the model that produced it.
-async fn generate_with_retries_at(
+pub(crate) async fn generate_with_retries_at(
     ctx: &GenContext<'_>,
     body: &Value,
 ) -> Result<(String, &'static str), Failure> {
@@ -2502,6 +2512,39 @@ mod tests {
         assert!(complaint.contains("1200 pages"));
         assert!(complaint.contains("1000"));
         assert!(complaint.contains("chapter"));
+    }
+
+    #[test]
+    fn pdf_length_check_returns_the_count_and_allows_an_unknown_count() {
+        use lopdf::{dictionary, Document};
+
+        let root = choice_scratch("page-count");
+        let path = root.join("synthetic.pdf");
+        let mut document = Document::with_version("1.5");
+        let pages_id = document.new_object_id();
+        let page_id = document.add_object(dictionary! {
+            "Type" => "Page", "Parent" => pages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+        });
+        document.objects.insert(
+            pages_id,
+            lopdf::Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Count" => 1, "Kids" => vec![page_id.into()],
+            }),
+        );
+        let catalog = document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+        document.trailer.set("Root", catalog);
+        document.save(&path).unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            Some(1)
+        );
+        std::fs::write(&path, b"synthetic unreadable PDF").unwrap();
+        assert_eq!(
+            tauri::async_runtime::block_on(check_pdf_length(&path)).unwrap(),
+            None
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
