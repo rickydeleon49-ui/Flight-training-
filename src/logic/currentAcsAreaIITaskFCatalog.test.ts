@@ -158,7 +158,7 @@ describe("Private Pilot Airplane ACS 6C Area II Task F (PA.II.F) catalog slice",
     });
   });
 
-  it("leaves out-of-slice current codes unresolved (including Area II Task E and Task G)", () => {
+  it("leaves out-of-slice and unverified code-like tokens unresolved", () => {
     // Area II Task E codes
     expect(resolveCurrentAreaIITaskFAktrCode("PA.II.E.K1")).toEqual({
       status: "unresolved",
@@ -169,7 +169,7 @@ describe("Private Pilot Airplane ACS 6C Area II Task F (PA.II.F) catalog slice",
       code: "PA.II.E.S1",
     });
 
-    // Area II Task G code
+    // Unverified Area II-shaped token; Area III starts after Task F
     expect(resolveCurrentAreaIITaskFAktrCode("PA.II.G.K1")).toEqual({
       status: "unresolved",
       code: "PA.II.G.K1",
