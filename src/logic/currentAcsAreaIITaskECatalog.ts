@@ -2,7 +2,7 @@
  * Small offline slice of current Private Pilot Airplane ACS codes:
  * Area of Operation II (Preflight Procedures), Task E (Taxiing and Sailing, ASES/AMES).
  *
- * Source: FAA-S-ACS-6C, printed page 14 / PDF page 22.
+ * Source: FAA-S-ACS-6C, printed pages 14–15 / PDF pages 22–23.
  *
  * This is an explicit partial slice limited to PA.II.E, not a complete ACS catalog.
  */
@@ -11,8 +11,8 @@ export const PRIVATE_AIRPLANE_ACS_6C_AREA_II_TASK_E_SOURCE = {
   document: "FAA-S-ACS-6C",
   title: "Private Pilot for Airplane Category Airman Certification Standards",
   effectiveFrom: "2024-05-31",
-  printedPage: 14,
-  pdfPage: 22,
+  printedPages: "14–15",
+  pdfPages: "22–23",
   areaOfOperation: "Area of Operation II: Preflight Procedures",
   task: "Task E. Taxiing and Sailing (ASES, AMES)",
   coverageLabel: "PA.II.E",
@@ -85,9 +85,17 @@ const currentAreaIITaskEEntries = [
     "PA.II.E.S8",
     "Plan and follow the most favorable taxi or sailing course for current conditions.",
   ],
+  [
+    "PA.II.E.S9",
+    "Abide by right-of-way rules, maintain positive airplane control, proper speed, and separation between other aircraft, vessels, and persons.",
+  ],
+  [
+    "PA.II.E.S10",
+    "Comply with applicable taxi elements in Task D if the practical test is conducted in an amphibious airplane.",
+  ],
 ] as const;
 
-/** All 21 current PA.II.E codes from FAA-S-ACS-6C page 14. */
+/** All 23 current PA.II.E codes from FAA-S-ACS-6C pages 14–15. */
 export const CURRENT_PRIVATE_AIRPLANE_AREA_II_TASK_E_CODES: readonly CurrentAreaIITaskEAktrCode[] =
   currentAreaIITaskEEntries.map(([code, description]) => ({
     code,
@@ -106,7 +114,7 @@ export type CurrentAreaIITaskECodeResolution =
 
 /**
  * Exact code resolution with ASCII case-insensitive matching for the PA.II.E slice.
- * Anything outside these 21 current entries remains unresolved.
+ * Anything outside these 23 current entries remains unresolved.
  */
 export function resolveCurrentAreaIITaskEAktrCode(code: string): CurrentAreaIITaskECodeResolution {
   const normalized = code.replace(/[a-z]/g, (letter) => letter.toUpperCase());

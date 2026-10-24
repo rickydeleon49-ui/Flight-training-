@@ -28,12 +28,14 @@ describe("Private Pilot Airplane ACS 6C Area II Task E (PA.II.E) catalog slice",
     "PA.II.E.S6",
     "PA.II.E.S7",
     "PA.II.E.S8",
+    "PA.II.E.S9",
+    "PA.II.E.S10",
   ] as const;
 
-  it("contains exactly the 21 verified Area II Task E codes once each in order with status 'current'", () => {
+  it("contains exactly the 23 verified Area II Task E codes once each in order with status 'current'", () => {
     const codes = CURRENT_PRIVATE_AIRPLANE_AREA_II_TASK_E_CODES.map(({ code }) => code);
     expect(codes).toEqual(expectedCodes);
-    expect(new Set(codes).size).toBe(21);
+    expect(new Set(codes).size).toBe(23);
 
     for (const entry of CURRENT_PRIVATE_AIRPLANE_AREA_II_TASK_E_CODES) {
       expect(entry.status).toBe("current");
@@ -50,8 +52,8 @@ describe("Private Pilot Airplane ACS 6C Area II Task E (PA.II.E) catalog slice",
       document: "FAA-S-ACS-6C",
       title: "Private Pilot for Airplane Category Airman Certification Standards",
       effectiveFrom: "2024-05-31",
-      printedPage: 14,
-      pdfPage: 22,
+      printedPages: "14–15",
+      pdfPages: "22–23",
       areaOfOperation: "Area of Operation II: Preflight Procedures",
       task: "Task E. Taxiing and Sailing (ASES, AMES)",
       coverageLabel: "PA.II.E",
@@ -86,6 +88,10 @@ describe("Private Pilot Airplane ACS 6C Area II Task E (PA.II.E) catalog slice",
       "PA.II.E.S7":
         "Exhibit procedures for steering and maneuvering while maintaining proper situational awareness and desired orientation, path, and position while taxiing using idle, plow, or step taxi technique, as appropriate.",
       "PA.II.E.S8": "Plan and follow the most favorable taxi or sailing course for current conditions.",
+      "PA.II.E.S9":
+        "Abide by right-of-way rules, maintain positive airplane control, proper speed, and separation between other aircraft, vessels, and persons.",
+      "PA.II.E.S10":
+        "Comply with applicable taxi elements in Task D if the practical test is conducted in an amphibious airplane.",
     };
 
     for (const entry of CURRENT_PRIVATE_AIRPLANE_AREA_II_TASK_E_CODES) {
@@ -135,6 +141,26 @@ describe("Private Pilot Airplane ACS 6C Area II Task E (PA.II.E) catalog slice",
         code: "PA.II.E.S6",
         description:
           "Position the flight controls, flaps, doors, water rudders, and power correctly for the existing conditions to follow the desired course while sailing and to prevent or correct for porpoising and skipping during step taxi.",
+      },
+    });
+
+    const resS9 = resolveCurrentAreaIITaskEAktrCode("pa.ii.e.s9");
+    expect(resS9).toMatchObject({
+      status: "current",
+      entry: {
+        code: "PA.II.E.S9",
+        description:
+          "Abide by right-of-way rules, maintain positive airplane control, proper speed, and separation between other aircraft, vessels, and persons.",
+      },
+    });
+
+    const resS10 = resolveCurrentAreaIITaskEAktrCode("PA.II.E.S10");
+    expect(resS10).toMatchObject({
+      status: "current",
+      entry: {
+        code: "PA.II.E.S10",
+        description:
+          "Comply with applicable taxi elements in Task D if the practical test is conducted in an amphibious airplane.",
       },
     });
   });
