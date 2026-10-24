@@ -36,6 +36,7 @@ import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
+import { AcsAreaMaterialCoveragePanel } from "@/pages/StudyLibrary/AcsAreaMaterialCoveragePanel";
 
 import "./flightDeck.css";
 
@@ -307,6 +308,7 @@ export function FlightDeck() {
           <FlightHoursCard entries={data.journalEntries} today={model.today} />
           <MilestoneCard model={model} />
           <StudyFocusCard model={model} />
+          <AcsAreaMaterialCoveragePanel materials={data.materials} />
           <KeyDatesCard model={model} />
           <WhyCard model={model} />
 

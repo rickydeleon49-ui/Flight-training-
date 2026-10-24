@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
@@ -299,5 +299,75 @@ describe("FlightDeck and reminders bound homework actions", () => {
     expect(screen.getByText(/This didn['’]t get finished\. Choose a realistic new time, or mark it done\./)).toBeTruthy();
     expect(screen.queryByText("This homework is past its due date. Open it to keep going.")).toBeNull();
     expect(screen.getByText("1 item is waiting. Choose a realistic new time for one of them.")).toBeTruthy();
+  });
+
+  it("surfaces ACS material coverage disclosure collapsed by default and handles study focus presence and absence", async () => {
+    // 1. When material has ACS tags and is in Study Focus
+    const acsMaterial = makeMaterial({
+      id: "mat-acs-1",
+      title: "Navigation Log Prep",
+      reviewStatus: "needs_review",
+      tags: ["PA.I.A.K1"],
+    });
+
+    appData.materials = [acsMaterial];
+    appData.actions = [];
+
+    render(h(MemoryRouter, null, h(FlightDeck)));
+
+    // Study focus card should be visible
+    expect(await screen.findByText("Study focus")).toBeTruthy();
+    expect(screen.getByText("Navigation Log Prep")).toBeTruthy();
+
+    // ACS Area Material Coverage panel should be visible
+    expect(screen.getByText("ACS Area Material Coverage")).toBeTruthy();
+    const summaryHeading = screen.getByText("See counts by ACS area");
+    expect(summaryHeading).toBeTruthy();
+
+    const details = document.querySelector("details.acs-area-material-coverage-details") as HTMLDetailsElement;
+    expect(details).toBeTruthy();
+    expect(details.open).toBe(false);
+
+    // Opening disclosure shows details
+    fireEvent.click(summaryHeading);
+    expect(details.open).toBe(true);
+    expect(screen.getByTestId("acs-coverage-explanation")).toBeTruthy();
+    expect(screen.getByTestId("acs-coverage-area-I")).toBeTruthy();
+
+    cleanup();
+
+    // 2. When there is NO material selected for Study Focus (e.g. material is reference_only or actions exist with no study focus)
+    const refMaterial = makeMaterial({
+      id: "mat-ref-1",
+      title: "Airplane Flying Handbook",
+      reviewStatus: "reference_only",
+      tags: ["PA.I.A.K1"],
+    });
+    const regularAction = makeAction({
+      id: "act-1",
+      title: "Organize headset bag",
+      dueDate: "2026-10-21",
+    });
+
+    appData.materials = [refMaterial];
+    appData.actions = [regularAction];
+
+    render(h(MemoryRouter, null, h(FlightDeck)));
+
+    // Study focus is absent
+    expect(await screen.findByText("Today's plan")).toBeTruthy();
+    expect(screen.queryByText("Study focus")).toBeNull();
+
+    // But ACS Area Material Coverage panel is still visible and collapsed by default
+    expect(screen.getByText("ACS Area Material Coverage")).toBeTruthy();
+    const detailsNoFocus = document.querySelector("details.acs-area-material-coverage-details") as HTMLDetailsElement;
+    expect(detailsNoFocus).toBeTruthy();
+    expect(detailsNoFocus.open).toBe(false);
+
+    // Opening it still reveals the coverage data
+    const summaryNoFocus = screen.getByText("See counts by ACS area");
+    fireEvent.click(summaryNoFocus);
+    expect(detailsNoFocus.open).toBe(true);
+    expect(screen.getByTestId("acs-coverage-area-I")).toBeTruthy();
   });
 });
