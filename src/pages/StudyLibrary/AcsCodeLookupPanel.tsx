@@ -23,10 +23,14 @@ export function AcsCodeLookupPanel({
 }: AcsCodeLookupPanelProps) {
   const [input, setInput] = useState("");
   const [results, setResults] = useState<AcsStudyMaterialLinksGroup[] | null>(null);
+  const [announcement, setAnnouncement] = useState("");
 
   const handleInputChange = (value: string) => {
     setInput(value);
     if (!value.trim()) {
+      if (results !== null) {
+        setAnnouncement("Lookup results cleared.");
+      }
       setResults(null);
     }
   };
@@ -36,6 +40,7 @@ export function AcsCodeLookupPanel({
     const tokens = tokenizeAktrCodes(input);
     if (tokens.length === 0) {
       setResults(null);
+      setAnnouncement("No codes entered.");
       return;
     }
 
@@ -47,6 +52,25 @@ export function AcsCodeLookupPanel({
       instructorQuestions: questions,
     });
     setResults(groups);
+
+    let currentCount = 0;
+    let archivedCount = 0;
+    let notFoundCount = 0;
+
+    for (const g of groups) {
+      if (g.status === "current") {
+        currentCount += 1;
+      } else if (g.status === "archived") {
+        archivedCount += 1;
+      } else {
+        notFoundCount += 1;
+      }
+    }
+
+    const total = groups.length;
+    setAnnouncement(
+      `${total} code${total === 1 ? "" : "s"} checked. ${currentCount} current, ${archivedCount} archived, ${notFoundCount} not found.`,
+    );
   };
 
   return (
@@ -72,6 +96,16 @@ export function AcsCodeLookupPanel({
             </Button>
           </div>
         </form>
+
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="visually-hidden"
+          data-testid="acs-lookup-status"
+        >
+          {announcement}
+        </div>
 
         {results !== null ? (
           <div className="acs-code-lookup-results stack" style={{ marginTop: "var(--space-4)" }}>

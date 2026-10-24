@@ -191,4 +191,58 @@ describe("AcsCodeLookupPanel", () => {
     expect(screen.queryByRole("link", { name: /radio communications guide/i })).toBeNull();
     expect(screen.queryByTestId("acs-code-result-PA.III.A.K1")).toBeNull();
   });
+
+  it("announces lookup summary politely to assistive technology on submission and on clear", () => {
+    render(
+      <MemoryRouter>
+        <AcsCodeLookupPanel
+          materials={[mockMaterial]}
+          aiStudySets={[]}
+          practiceTests={[]}
+          questions={[]}
+        />
+      </MemoryRouter>
+    );
+
+    const statusRegion = screen.getByRole("status");
+    expect(statusRegion).toBeTruthy();
+    expect(statusRegion.getAttribute("aria-live")).toBe("polite");
+    expect(statusRegion.getAttribute("aria-atomic")).toBe("true");
+    expect(statusRegion.textContent).toBe("");
+
+    const textarea = screen.getByLabelText(/missed topic codes/i);
+    fireEvent.change(textarea, {
+      target: { value: "PA.III.A.K1, PA.III.A.R3, UNKNOWN.999" },
+    });
+
+    const submitBtn = screen.getByRole("button", { name: /find study materials/i });
+    fireEvent.click(submitBtn);
+
+    expect(statusRegion.textContent).toBe(
+      "3 codes checked. 1 current, 1 archived, 1 not found."
+    );
+
+    // Empty input should announce that results were cleared
+    fireEvent.change(textarea, { target: { value: "" } });
+    expect(statusRegion.textContent).toBe("Lookup results cleared.");
+  });
+
+  it("announces when submitted with no codes entered", () => {
+    render(
+      <MemoryRouter>
+        <AcsCodeLookupPanel
+          materials={[]}
+          aiStudySets={[]}
+          practiceTests={[]}
+          questions={[]}
+        />
+      </MemoryRouter>
+    );
+
+    const statusRegion = screen.getByRole("status");
+    const submitBtn = screen.getByRole("button", { name: /find study materials/i });
+    fireEvent.click(submitBtn);
+
+    expect(statusRegion.textContent).toBe("No codes entered.");
+  });
 });
