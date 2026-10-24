@@ -38,6 +38,7 @@ import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState"
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
+import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
@@ -312,6 +313,12 @@ export function StudyLibrary() {
           aiStudySets={data.aiStudySets}
           practiceTests={data.practiceTests}
           questions={data.questions}
+        />
+      </div>
+
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <AcsAreaMaterialCoveragePanel
+          materials={data.materials}
         />
       </div>
 
