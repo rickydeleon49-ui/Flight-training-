@@ -306,6 +306,7 @@ describe("D1: debrief interactions with dashboard, actions, and preparation", ()
       instructorFeedback: "Keep your scan moving outside",
       questionsForNextTime: "How to maintain pitch when rolling in fast?",
       confidence: 3,
+      schoolName: null,
       goalId: null,
       createdAt: "2026-09-03T18:00:00.000Z",
       updatedAt: "2026-09-03T18:00:00.000Z",

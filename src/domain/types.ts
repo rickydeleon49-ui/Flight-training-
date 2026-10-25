@@ -1123,6 +1123,12 @@ export interface JournalEntry {
   questionsForNextTime: string;
   /** Reflective 1–5 self-assessment, not an official proficiency rating. */
   confidence: number | null;
+  /**
+   * Optional historical snapshot of the flight school name at the time of the flight.
+   * Independent of comparison-school records (no FK); preserved if comparison schools
+   * are renamed or deleted. Existing pre-migration entries map to null.
+   */
+  schoolName: string | null;
   goalId: Id | null;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
