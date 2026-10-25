@@ -1,11 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Card, CardBody, CardHeader, Field, TextArea } from "@/components/ui";
 import type { AiStudySet, PracticeTest, Question, StudyMaterial } from "@/domain/types";
 import { tokenizeAktrCodes } from "@/logic/aktrCodeInput";
 import {
   findAcsStudyMaterialLinks,
-  type AcsStudyMaterialLinksGroup,
 } from "@/logic/acsStudyMaterialLinks";
 
 export interface AcsCodeLookupPanelProps {
@@ -22,16 +21,16 @@ export function AcsCodeLookupPanel({
   questions = [],
 }: AcsCodeLookupPanelProps) {
   const [input, setInput] = useState("");
-  const [results, setResults] = useState<AcsStudyMaterialLinksGroup[] | null>(null);
+  const [submittedTokens, setSubmittedTokens] = useState<string[] | null>(null);
   const [announcement, setAnnouncement] = useState("");
 
   const handleInputChange = (value: string) => {
     setInput(value);
     if (!value.trim()) {
-      if (results !== null) {
+      if (submittedTokens !== null) {
         setAnnouncement("Lookup results cleared.");
       }
-      setResults(null);
+      setSubmittedTokens(null);
     }
   };
 
@@ -39,10 +38,12 @@ export function AcsCodeLookupPanel({
     e.preventDefault();
     const tokens = tokenizeAktrCodes(input);
     if (tokens.length === 0) {
-      setResults(null);
+      setSubmittedTokens(null);
       setAnnouncement("No codes entered.");
       return;
     }
+
+    setSubmittedTokens(tokens);
 
     const groups = findAcsStudyMaterialLinks({
       codes: tokens,
@@ -51,7 +52,6 @@ export function AcsCodeLookupPanel({
       practiceTests,
       instructorQuestions: questions,
     });
-    setResults(groups);
 
     let currentCount = 0;
     let archivedCount = 0;
@@ -72,6 +72,19 @@ export function AcsCodeLookupPanel({
       `${total} code${total === 1 ? "" : "s"} checked. ${currentCount} current, ${archivedCount} archived, ${notFoundCount} not found.`,
     );
   };
+
+  const results = useMemo(() => {
+    if (submittedTokens === null) {
+      return null;
+    }
+    return findAcsStudyMaterialLinks({
+      codes: submittedTokens,
+      materials,
+      aiStudySets,
+      practiceTests,
+      instructorQuestions: questions,
+    });
+  }, [submittedTokens, materials, aiStudySets, practiceTests, questions]);
 
   return (
     <Card className="acs-code-lookup-panel">
