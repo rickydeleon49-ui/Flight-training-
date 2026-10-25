@@ -37,6 +37,8 @@ import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
+import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
+import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
@@ -304,6 +306,21 @@ export function StudyLibrary() {
       ) : null}
 
       <DocumentSearchPanel query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
+
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <AcsCodeLookupPanel
+          materials={data.materials}
+          aiStudySets={data.aiStudySets}
+          practiceTests={data.practiceTests}
+          questions={data.questions}
+        />
+      </div>
+
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <AcsAreaMaterialCoveragePanel
+          materials={data.materials}
+        />
+      </div>
 
       {!hasAny ? (
         <Card>

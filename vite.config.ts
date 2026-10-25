@@ -35,7 +35,7 @@ export default defineConfig(({ command }) => ({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
     testTimeout: 20_000,
     hookTimeout: 20_000,
     setupFiles: ["./src/testing/vitestSetup.ts"],
