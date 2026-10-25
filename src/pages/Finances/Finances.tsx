@@ -38,6 +38,7 @@ import {
 import { useAppData } from "@/state/AppDataContext";
 
 import { TransactionFormDialog, type TransactionDraft } from "./TransactionFormDialog";
+import { SchoolComparisonPanel } from "./SchoolComparisonPanel";
 import "./finances.css";
 
 export function Finances() {
@@ -92,6 +93,7 @@ export function Finances() {
             }
           />
         </Card>
+        <SchoolComparisonPanel />
         <TransactionFormDialog
           open={formType !== null}
           type={formType ?? "contribution"}
@@ -353,6 +355,8 @@ export function Finances() {
             </Card>
           </div>
         </div>
+
+        <SchoolComparisonPanel />
       </div>
 
       <TransactionFormDialog

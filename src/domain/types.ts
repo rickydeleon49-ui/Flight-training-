@@ -1740,4 +1740,3 @@ export interface FlightSchool {
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
 }
-

@@ -58,6 +58,7 @@ describe("a printable handout", () => {
     expect(html).toContain("thead { display: table-header-group; }");
     expect(html).toContain("h2, h3 { break-after: avoid; page-break-after: avoid; }");
     expect(html).toContain(".cards tr, .question, li { break-inside: avoid; page-break-inside: avoid; }");
+    expect(html).toContain(".practice-heading-keep { break-inside: avoid; page-break-inside: avoid; }");
     expect(html).toContain("overflow-wrap: anywhere;");
   });
 
@@ -202,4 +203,120 @@ it("filters and labels authored practice questions without adding answer-key lab
   const withoutKey = page(buildHandoutHtml(authored, { ...ALL, instructorCorrections: true }, { answerKey: false }, NOW));
   expect(withoutKey.querySelector(".answer-key")).toBeNull();
   expect(withoutKey.body.textContent).not.toContain("Private CFI explanation");
+});
+
+describe("practice questions heading keep group in print", () => {
+  const multiQuestionTest: PracticeTest = {
+    sourceMaterialId: "m",
+    title: "Multi-question practice",
+    questions: [
+      {
+        question: "First question stem?",
+        options: ["Option 1A", "Option 1B"],
+        correctIndex: 0,
+        explanation: "Explanation 1.",
+        sourcePage: 10,
+      },
+      {
+        question: "Second question stem?",
+        options: ["Option 2A", "Option 2B"],
+        correctIndex: 1,
+        explanation: "Explanation 2.",
+        sourcePage: 11,
+      },
+      {
+        question: "Third question stem?",
+        options: ["Option 3A", "Option 3B"],
+        correctIndex: 0,
+        explanation: "Explanation 3.",
+        sourcePage: 12,
+      },
+    ],
+    provider: "gemini",
+    model: "gemini-3.5-flash",
+    generatedAt: "2026-10-01T10:00:00Z",
+    updatedAt: "2026-10-01T10:00:00Z",
+  };
+
+  it("encloses Practice questions heading and first question in .practice-heading-keep while keeping remaining questions outside", () => {
+    const html = buildHandoutHtml(
+      source({ practiceTest: multiQuestionTest }),
+      { guide: false, flashcards: false, questions: true },
+      { answerKey: true },
+      NOW,
+    );
+    const doc = page(html);
+
+    const keepGroup = doc.querySelector(".practice-heading-keep");
+    expect(keepGroup).not.toBeNull();
+
+    // Heading is inside the keep group
+    const heading = keepGroup?.querySelector("h2");
+    expect(heading?.textContent).toBe("Practice questions");
+
+    // First question is inside the keep group
+    const firstQ = keepGroup?.querySelector(".question");
+    expect(firstQ).not.toBeNull();
+    expect(firstQ?.textContent).toContain("First question stem?");
+    expect(firstQ?.textContent).toContain("(source p. 10)");
+
+    // Only one question in the keep group
+    expect(keepGroup?.querySelectorAll(".question")).toHaveLength(1);
+
+    // Remaining questions exist outside the keep group under the same section
+    const section = keepGroup?.parentElement;
+    expect(section?.tagName.toLowerCase()).toBe("section");
+    const allQuestions = section?.querySelectorAll(".question");
+    expect(allQuestions).toHaveLength(3);
+
+    // Verify ordering
+    expect(allQuestions?.[0]?.textContent).toContain("1. First question stem?");
+    expect(allQuestions?.[1]?.textContent).toContain("2. Second question stem?");
+    expect(allQuestions?.[2]?.textContent).toContain("3. Third question stem?");
+
+    // Second and third questions are not inside the keep group
+    expect(allQuestions?.[1]?.parentElement).toBe(section);
+    expect(allQuestions?.[2]?.parentElement).toBe(section);
+
+    // Answer key stays separate with page break
+    const answerKey = doc.querySelector(".answer-key");
+    expect(answerKey).not.toBeNull();
+    expect(answerKey?.parentElement).not.toBe(section);
+    expect(answerKey?.textContent).toContain("1. A: Option 1A");
+    expect(answerKey?.textContent).toContain("2. B: Option 2B");
+  });
+
+  it("applies keep group in combined handout as well", () => {
+    const firstSource = source({
+      material: makeMaterial({ title: "Material 1" }),
+      practiceTest: multiQuestionTest,
+    });
+    const secondSource = source({
+      material: makeMaterial({ title: "Material 2" }),
+      practiceTest: multiQuestionTest,
+    });
+
+    const html = buildMultiMaterialHandoutHtml(
+      [
+        { source: firstSource, selection: { guide: false, flashcards: false, questions: true } },
+        { source: secondSource, selection: { guide: false, flashcards: false, questions: true } },
+      ],
+      { answerKey: true },
+      NOW,
+    );
+    const doc = page(html);
+
+    const keepGroups = doc.querySelectorAll(".practice-heading-keep");
+    expect(keepGroups).toHaveLength(2);
+
+    for (const group of keepGroups) {
+      expect(group.querySelector("h2")?.textContent).toBe("Practice questions");
+      expect(group.querySelectorAll(".question")).toHaveLength(1);
+      expect(group.querySelector(".question")?.textContent).toContain("1. First question stem?");
+    }
+
+    const answerKey = doc.querySelector(".answer-key");
+    expect(answerKey).not.toBeNull();
+    expect(doc.body.lastElementChild).toBe(answerKey);
+  });
 });
