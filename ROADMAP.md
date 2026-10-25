@@ -4,6 +4,8 @@
 
 ## Where things stand
 
+Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs/FEATURE_VALIDATION_0.6.1.md). Local work and shipped work are labeled separately.
+
 **Released:** v0.6.0, published as Latest from `main` at `7d7d878`. The next release is **0.6.1**; 0.5.2 and 0.5.6 are retired.
 
 **Done in `main` through v0.6.0:**
@@ -18,7 +20,7 @@
 
 **Discovery-flight logging in main, 25 October:** PR #271 merged at `0b8ee1b` after all six checks passed for exact head `5fa14fd` and the ancestor check passed. Both post-merge main workflows also passed. Schema22 adds an optional historical school-name snapshot to the existing journal. The fresh discovery preset leaves aircraft/instructor/time blank, keeps notes-only entries accessible in Debriefs, and preserves old drafts, explicit clearing and retry semantics. Local final-source frontend5,368/6skipped twice, native1,109/13ignored twice, regular gates and29 guard mutations pass. Isolated Chromium student, narrow/portrait/keyboard/accessibility checks and synthetic native build/signature pass; this feature's installed-window walkthrough was unavailable (`cgWindowNotFound`), so browser evidence remains separate from installed-app evidence.
 
-**Current local work:** STUDY-FLOW-01a pure candidate/reason contract over existing Daily Plan suggestions, in an isolated branch. The pure contract is accepted locally: Node22 focused117, fullfrontend5,404/6skipped, typecheck/build/diff and16 scratch guard mutations pass. It preserves plan order and estimates, uses honest Open/Start/Continue metadata and leaves source validation authoritative at the destination. Daily Flight Plan UI wiring follows; whole-feature checks, student walkthrough and exact-head CI remain. No new scheduler, storage, schema, provider or dependency.
+**Study Flow continuation implementation:** the first STUDY-FLOW-01 slice uses existing Daily Plan suggestions for one prominent, honest Open/Start/Continue entry. It preserves priority/order/budget and canonical saved homework. Local final frontend5,414/6skipped twice, native1,109/13ignored twice, focused71, regular gates and21guard mutations pass. Browser desktop/narrow/keyboard/restart/warm disconnected saving and rebuilt native save/Continue/fullrestart pass. Exact-head CI/merge determine delivery; no release/tag. The new [feature validation log](docs/FEATURE_VALIDATION_0.6.1.md) records features, bugs, tests and limits. Next-flight preparation and calm review remain in row8; no new scheduler/storage/schema/provider/dependency.
 
 **Export verification:** native synthetic imports and HTML, CSV and Markdown ZIP saves work. ZIP guide sections stay separate, CSV formula mitigation is present, and Safari Letter/A4 preview plus A4 Save as PDF were exercised. The merged print correction keeps the practice heading and first question together in both paper sizes; the answer key stays separate. Physical printing remains untested.
 
