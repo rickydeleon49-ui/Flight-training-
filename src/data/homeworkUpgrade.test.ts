@@ -34,11 +34,15 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
   for (const [table, rows] of Object.entries(before)) {
     if (table === "schema_migrations") {
       expect(after[table]!.slice(0, 19)).toEqual(rows);
-      expect(after[table]!.slice(19)).toEqual([expect.objectContaining({ version: 20, description: "homework" })]);
+      expect(after[table]!.slice(19)).toEqual([
+        expect.objectContaining({ version: 20, description: "homework" }),
+        expect.objectContaining({ version: 21, description: "flight_schools" }),
+      ]);
     } else expect(after[table], table).toEqual(rows);
   }
-  expect(Object.keys(after).filter((t) => !(t in before)).sort()).toEqual([...HOMEWORK_TABLES].sort());
-  for (const table of HOMEWORK_TABLES) expect(after[table]).toEqual([]);
+  const added = [...HOMEWORK_TABLES, "flight_schools"].sort();
+  expect(Object.keys(after).filter((t) => !(t in before)).sort()).toEqual(added);
+  for (const table of added) expect(after[table]).toEqual([]);
 }
 
 describe("homework schema upgrade and driver durability", () => {
