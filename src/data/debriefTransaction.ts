@@ -1,3 +1,4 @@
+import { validateSchoolName } from "@/domain/journalSchool";
 import type { DebriefSaveOperation, SqlValue } from "./db";
 
 /**
@@ -33,6 +34,8 @@ export async function executeDebriefSave(
     }
 
     // 1. Journal entry, written as shown in the form.
+    const hasSchoolName = journal.schoolName !== undefined;
+    const validatedSchoolName = hasSchoolName ? validateSchoolName(journal.schoolName) : null;
     const eventId = await liveOrNull("schedule_events", journal.eventId);
     const goalId = await liveOrNull("goals", journal.goalId);
     const materialIds: string[] = [];
@@ -65,7 +68,6 @@ export async function executeDebriefSave(
       journal.instructorFeedback ?? "",
       journal.questionsForNextTime ?? "",
       journal.confidence ?? null,
-      goalId,
     ];
     if (await exists("SELECT 1 FROM journal_entries WHERE id = ?", [journalId])) {
       await run(
@@ -77,9 +79,10 @@ export async function executeDebriefSave(
             simulated_instrument_time = ?, day_landings = ?, night_landings = ?,
             mission = ?, practiced = ?, went_well = ?, was_difficult = ?,
             instructor_feedback = ?, questions_for_next_time = ?, confidence = ?,
+            school_name = CASE WHEN ? THEN ? ELSE school_name END,
             goal_id = ?, updated_at = ?
          WHERE id = ?`,
-        [...fields, timestamp, journalId],
+        [...fields, hasSchoolName ? 1 : 0, validatedSchoolName, goalId, timestamp, journalId],
       );
     } else {
       await run(
@@ -91,9 +94,9 @@ export async function executeDebriefSave(
             simulated_instrument_time, day_landings, night_landings,
             mission, practiced, went_well, was_difficult,
             instructor_feedback, questions_for_next_time,
-            confidence, goal_id, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [journalId, ...fields, timestamp, timestamp],
+            confidence, school_name, goal_id, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [journalId, ...fields, validatedSchoolName, goalId, timestamp, timestamp],
       );
     }
     await run("DELETE FROM journal_materials WHERE journal_id = ?", [journalId]);

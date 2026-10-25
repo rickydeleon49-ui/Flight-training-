@@ -1,5 +1,6 @@
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
+import { validateSchoolName } from "@/domain/journalSchool";
 import type { Id, JournalEntry } from "@/domain/types";
 import { toNullableNumber, toNullableText, toText, type SqlDatabase } from "../db";
 
@@ -12,7 +13,7 @@ interface Row {
   simulated_instrument_time: unknown; day_landings: unknown; night_landings: unknown;
   practiced: unknown; went_well: unknown; was_difficult: unknown;
   instructor_feedback: unknown; questions_for_next_time: unknown; confidence: unknown;
-  goal_id: unknown; created_at: unknown; updated_at: unknown;
+  school_name: unknown; goal_id: unknown; created_at: unknown; updated_at: unknown;
 }
 
 const map = (row: Row, materialIds: Id[]): JournalEntry => ({
@@ -42,6 +43,7 @@ const map = (row: Row, materialIds: Id[]): JournalEntry => ({
   instructorFeedback: toText(row.instructor_feedback),
   questionsForNextTime: toText(row.questions_for_next_time),
   confidence: toNullableNumber(row.confidence),
+  schoolName: toNullableText(row.school_name),
   goalId: toNullableText(row.goal_id),
   createdAt: toText(row.created_at),
   updatedAt: toText(row.updated_at),
@@ -114,6 +116,7 @@ export function journalRepository(db: SqlDatabase) {
         instructorFeedback: input.instructorFeedback ?? "",
         questionsForNextTime: input.questionsForNextTime ?? "",
         confidence: input.confidence ?? null,
+        schoolName: validateSchoolName(input.schoolName),
         goalId: input.goalId ?? null,
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -126,8 +129,8 @@ export function journalRepository(db: SqlDatabase) {
            night_time, actual_instrument_time, simulated_instrument_time,
            day_landings, night_landings, mission, practiced, went_well,
            was_difficult, instructor_feedback, questions_for_next_time,
-           confidence, goal_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           confidence, school_name, goal_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           entry.id, entry.eventId, entry.date, entry.title, entry.aircraftType,
           entry.aircraftId, entry.departureAirport, entry.arrivalAirport,
@@ -136,7 +139,7 @@ export function journalRepository(db: SqlDatabase) {
           entry.actualInstrumentTime, entry.simulatedInstrumentTime,
           entry.dayLandings, entry.nightLandings, entry.mission, entry.practiced,
           entry.wentWell, entry.wasDifficult, entry.instructorFeedback,
-          entry.questionsForNextTime, entry.confidence, entry.goalId, entry.createdAt,
+          entry.questionsForNextTime, entry.confidence, entry.schoolName, entry.goalId, entry.createdAt,
           entry.updatedAt,
         ],
       );
@@ -148,7 +151,12 @@ export function journalRepository(db: SqlDatabase) {
       const rows = await db.select<Row>("SELECT * FROM journal_entries WHERE id = ?", [id]);
       const existing = rows[0];
       if (!existing) throw new Error("That journal entry no longer exists.");
-      const next = { ...map(existing, []), ...changes, updatedAt: nowIso() };
+      const current = map(existing, []);
+      const schoolName =
+        changes.schoolName !== undefined
+          ? validateSchoolName(changes.schoolName)
+          : current.schoolName;
+      const next = { ...current, ...changes, schoolName, updatedAt: nowIso() };
       await db.execute(
         `UPDATE journal_entries
             SET event_id = ?, date = ?, title = ?, aircraft_type = ?, aircraft_id = ?,
@@ -158,7 +166,7 @@ export function journalRepository(db: SqlDatabase) {
                 simulated_instrument_time = ?, day_landings = ?, night_landings = ?,
                 mission = ?, practiced = ?, went_well = ?, was_difficult = ?,
                 instructor_feedback = ?, questions_for_next_time = ?, confidence = ?,
-                goal_id = ?, updated_at = ?
+                school_name = ?, goal_id = ?, updated_at = ?
           WHERE id = ?`,
         [
           next.eventId, next.date, next.title, next.aircraftType, next.aircraftId,
@@ -168,7 +176,7 @@ export function journalRepository(db: SqlDatabase) {
           next.simulatedInstrumentTime, next.dayLandings, next.nightLandings,
           next.mission, next.practiced, next.wentWell, next.wasDifficult,
           next.instructorFeedback, next.questionsForNextTime, next.confidence,
-          next.goalId, next.updatedAt, id,
+          next.schoolName, next.goalId, next.updatedAt, id,
         ],
       );
       if (changes.materialIds) await this.setMaterials(id, changes.materialIds);

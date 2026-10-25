@@ -272,7 +272,8 @@ export function createRequest(
 /** A store with one real debrief (journal and action) saved through the shipped debrief transaction on the same connection. */
 export async function storeWithDebrief(engineName: EngineName = "node:sqlite") {
   const engine = await openEngine(engineName);
-  const store = await openStore(engine);
+  await applyMigrations((sql) => engine.exec(sql), appliedVersions(engine));
+  const store = await openStore(engine, { migrate: false });
   const { executeDebriefSave } = await import("../debriefTransaction");
   const journalId = uuid();
   const actionId = uuid();
@@ -329,7 +330,8 @@ export const PRACTICE_AUTHORING_NEW_TABLES = ["practice_save_operations"] as con
  * `summary_origin` (NULL) and `retired_json` ('[]'), and `material_bookmarks`
  * gains `quote` (NULL); migration 17 then gives `practice_tests` its own
  * `retired_json` ('[]') and `practice_test_items` `logical_id` and `replaces_id`
- * (both NULL). Every older value is then compared as it was.
+ * (both NULL). Migration 22 adds journal_entries.school_name (NULL).
+ * Every older value is then compared as it was.
  */
 export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Record<string, unknown[]> {
   const strip = (table: string, columns: Record<string, unknown>) =>
@@ -346,6 +348,7 @@ export function withoutSchema16And17Columns(rows: Record<string, unknown[]>): Re
   if ("material_bookmarks" in rows) out.material_bookmarks = strip("material_bookmarks", { quote: null });
   if ("practice_tests" in rows) out.practice_tests = strip("practice_tests", { retired_json: "[]" });
   if ("practice_test_items" in rows) out.practice_test_items = strip("practice_test_items", { logical_id: null, replaces_id: null });
+  if ("journal_entries" in rows) out.journal_entries = strip("journal_entries", { school_name: null });
   return out;
 }
 

@@ -21,12 +21,48 @@
 //!   link. Any error rolls back the whole operation.
 
 use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::path::Path;
 use std::time::Duration;
 use tauri::AppHandle;
 
 use crate::storage::app_root;
+
+fn deserialize_nullable<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(Some)
+}
+
+fn is_ecmascript_whitespace_or_bom(c: char) -> bool {
+    matches!(
+        c,
+        '\u{0009}'..='\u{000D}'
+            | '\u{0020}'
+            | '\u{00A0}'
+            | '\u{1680}'
+            | '\u{2000}'..='\u{200A}'
+            | '\u{2028}'
+            | '\u{2029}'
+            | '\u{202F}'
+            | '\u{205F}'
+            | '\u{3000}'
+            | '\u{FEFF}'
+    )
+}
+
+fn validate_school_name(raw: &str) -> Result<Option<String>, String> {
+    let trimmed = raw.trim_matches(is_ecmascript_whitespace_or_bom);
+    if trimmed.is_empty() {
+        return Ok(None);
+    }
+    if trimmed.encode_utf16().count() > 200 {
+        return Err("School name exceeds maximum length of 200 characters.".to_string());
+    }
+    Ok(Some(trimmed.to_string()))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -95,6 +131,12 @@ pub struct DebriefJournalPayload {
     pub questions_for_next_time: Option<String>,
     #[serde(default)]
     pub confidence: Option<i64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_nullable",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub school_name: Option<Option<String>>,
     #[serde(default)]
     pub goal_id: Option<String>,
     #[serde(default)]
@@ -194,6 +236,12 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
     let journal_id = &op.target_id;
     let j = &op.journal;
 
+    let (update_school, validated_school) = match &j.school_name {
+        None => (0i32, None),
+        Some(None) => (1i32, None),
+        Some(Some(raw)) => (1i32, validate_school_name(raw)?),
+    };
+
     // 1. Journal entry, written as shown in the form.
     let event_id = live_or_none(&tx, "schedule_events", &j.event_id)?;
     let goal_id = live_or_none(&tx, "goals", &j.goal_id)?;
@@ -219,8 +267,9 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 simulated_instrument_time = ?16, day_landings = ?17, night_landings = ?18,
                 mission = ?19, practiced = ?20, went_well = ?21, was_difficult = ?22,
                 instructor_feedback = ?23, questions_for_next_time = ?24, confidence = ?25,
-                goal_id = ?26, updated_at = ?27
-             WHERE id = ?28",
+                school_name = CASE WHEN ?26 THEN ?27 ELSE school_name END,
+                goal_id = ?28, updated_at = ?29
+             WHERE id = ?30",
             params![
                 event_id,
                 j.date,
@@ -247,6 +296,8 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 text(&j.instructor_feedback),
                 text(&j.questions_for_next_time),
                 j.confidence,
+                update_school,
+                validated_school,
                 goal_id,
                 now,
                 journal_id,
@@ -263,10 +314,10 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 simulated_instrument_time, day_landings, night_landings,
                 mission, practiced, went_well, was_difficult,
                 instructor_feedback, questions_for_next_time,
-                confidence, goal_id, created_at, updated_at
+                confidence, school_name, goal_id, created_at, updated_at
             ) VALUES (
                 ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15,
-                ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?28
+                ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?29
             )",
             params![
                 journal_id,
@@ -295,6 +346,7 @@ pub fn save_debrief_operation_at(root: &Path, op: &DebriefSaveOperation) -> Resu
                 text(&j.instructor_feedback),
                 text(&j.questions_for_next_time),
                 j.confidence,
+                validated_school,
                 goal_id,
                 now,
             ],
@@ -533,6 +585,18 @@ mod tests {
             "04-withdraw-question" => {
                 include_str!("../fixtures/debrief-contract/04-withdraw-question.json")
             }
+            "school-01-create" => {
+                include_str!("../fixtures/debrief-contract/school-01-create.json")
+            }
+            "school-02-update-preserve" => {
+                include_str!("../fixtures/debrief-contract/school-02-update-preserve.json")
+            }
+            "school-03-update-clear" => {
+                include_str!("../fixtures/debrief-contract/school-03-update-clear.json")
+            }
+            "school-expected" => {
+                include_str!("../fixtures/debrief-contract/school-expected.json")
+            }
             "expected" => include_str!("../fixtures/debrief-contract/expected.json"),
             other => panic!("no fixture {other}"),
         }
@@ -585,6 +649,17 @@ mod tests {
         conn.query_row(sql, [], |r| r.get(0)).unwrap()
     }
 
+    /// Full database snapshot capturing every row, field, and timestamp across debrief tables.
+    fn full_database_snapshot(conn: &Connection) -> Value {
+        json!({
+            "journal": rows(conn, "SELECT * FROM journal_entries ORDER BY id"),
+            "journalMaterials": rows(conn, "SELECT * FROM journal_materials ORDER BY journal_id, material_id"),
+            "actions": rows(conn, "SELECT * FROM next_actions ORDER BY id"),
+            "questions": rows(conn, "SELECT * FROM questions ORDER BY id"),
+            "operations": rows(conn, "SELECT * FROM debrief_operations ORDER BY id"),
+        })
+    }
+
     #[test]
     fn frontend_contract_fixtures_persist_the_same_rows_as_the_browser_transaction() {
         let dir = TestDir::new();
@@ -612,6 +687,633 @@ mod tests {
     }
 
     #[test]
+    fn shared_school_fixtures_persist_the_same_rows_as_the_browser_transaction() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+        let expected: Value = serde_json::from_str(fixture_text("school-expected")).unwrap();
+
+        let school_rows = |conn: &Connection| {
+            rows(
+                conn,
+                "SELECT id, date, title, school_name FROM journal_entries ORDER BY id",
+            )
+        };
+
+        // 1. Create with trimmed Unicode (NBSP/BOM) school name
+        save_debrief_operation_at(dir.path(), &fixture("school-01-create")).unwrap();
+        assert_eq!(school_rows(&conn), expected["afterCreate"]);
+
+        // 2. Replay with modified payload carrying another valid school value: complete NO-OP
+        let mut replay_op = fixture("school-01-create");
+        replay_op.journal.school_name = Some(Some("Different Valid School".to_string()));
+        save_debrief_operation_at(dir.path(), &replay_op).unwrap();
+        assert_eq!(
+            school_rows(&conn),
+            expected["afterReplayWithDifferentSchool"]
+        );
+
+        // 3. Deliberate new operation update with omitted schoolName: preserves snapshot
+        save_debrief_operation_at(dir.path(), &fixture("school-02-update-preserve")).unwrap();
+        assert_eq!(school_rows(&conn), expected["afterUpdatePreserve"]);
+
+        // 4. Deliberate new operation update with explicit null: clears snapshot
+        save_debrief_operation_at(dir.path(), &fixture("school-03-update-clear")).unwrap();
+        assert_eq!(school_rows(&conn), expected["afterUpdateClear"]);
+    }
+
+    #[test]
+    fn debrief_school_name_absent_creates_null_preserved_on_omitted_update_and_cleared_on_blank() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+
+        // 1. Absent on create -> NULL
+        let op_absent: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-absent-1",
+            "targetId": "j-school-demo",
+            "journal": { "date": "2026-10-25", "title": "Flight Without School" }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_absent).unwrap();
+
+        let school: Option<String> = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-school-demo'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school, None);
+
+        // 2. Deliberate update with schoolName set
+        let op_set: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-set-school",
+            "targetId": "j-school-demo",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Flight With School",
+                "schoolName": "Galvin Flying"
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_set).unwrap();
+
+        let school: Option<String> = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-school-demo'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school.as_deref(), Some("Galvin Flying"));
+
+        // 3. Deliberate update with omitted schoolName -> preserves stored snapshot
+        let op_preserve: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-preserve-school",
+            "targetId": "j-school-demo",
+            "journal": { "date": "2026-10-25", "title": "Updated Flight Title" }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_preserve).unwrap();
+
+        let (title, school): (String, Option<String>) = conn
+            .query_row(
+                "SELECT title, school_name FROM journal_entries WHERE id = 'j-school-demo'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(title, "Updated Flight Title");
+        assert_eq!(school.as_deref(), Some("Galvin Flying"));
+
+        // 4. Deliberate update with blank string -> clears to NULL
+        let op_clear_blank: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-clear-blank",
+            "targetId": "j-school-demo",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Updated Flight Title",
+                "schoolName": "   \t \n  "
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_clear_blank).unwrap();
+
+        let school: Option<String> = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-school-demo'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school, None);
+
+        // 5. Deliberate update with explicit null -> clears to NULL
+        // First re-set it
+        let mut op_reset = op_set.clone();
+        op_reset.operation_id = "op-reset-school".into();
+        save_debrief_operation_at(dir.path(), &op_reset).unwrap();
+
+        let op_clear_null: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-clear-null",
+            "targetId": "j-school-demo",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Updated Flight Title",
+                "schoolName": null
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_clear_null).unwrap();
+
+        let school: Option<String> = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-school-demo'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school, None);
+    }
+
+    #[test]
+    fn debrief_school_name_length_limit_and_utf16_astral_counting() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+
+        // 200 ASCII code units succeeds
+        let op_200: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-200-ascii",
+            "targetId": "j-200",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "200 ascii",
+                "schoolName": "A".repeat(200)
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_200).unwrap();
+
+        // 201 ASCII code units fails with error and rolls back completely
+        let op_201: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-201-ascii",
+            "targetId": "j-201",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "201 ascii",
+                "schoolName": "A".repeat(201)
+            }
+        }))
+        .unwrap();
+        let err = save_debrief_operation_at(dir.path(), &op_201).unwrap_err();
+        assert_eq!(err, "School name exceeds maximum length of 200 characters.");
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM journal_entries WHERE id = 'j-201'"
+            ),
+            0
+        );
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM debrief_operations WHERE id = 'op-201-ascii'"
+            ),
+            0
+        );
+
+        // Astral characters: 100 emojis = 200 UTF-16 code units (succeeds)
+        let astral_100 = "🚀".repeat(100);
+        assert_eq!(astral_100.encode_utf16().count(), 200);
+        let op_astral_ok: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-astral-100",
+            "targetId": "j-astral-ok",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "100 astral",
+                "schoolName": astral_100
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_astral_ok).unwrap();
+        let saved_astral: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-astral-ok'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(saved_astral, astral_100);
+
+        // Astral characters: 101 emojis = 202 UTF-16 code units (fails and rolls back)
+        let astral_101 = "🚀".repeat(101);
+        assert_eq!(astral_101.encode_utf16().count(), 202);
+        let op_astral_fail: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-astral-101",
+            "targetId": "j-astral-fail",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "101 astral",
+                "schoolName": astral_101
+            }
+        }))
+        .unwrap();
+        let err_astral = save_debrief_operation_at(dir.path(), &op_astral_fail).unwrap_err();
+        assert_eq!(
+            err_astral,
+            "School name exceeds maximum length of 200 characters."
+        );
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM journal_entries WHERE id = 'j-astral-fail'"
+            ),
+            0
+        );
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM debrief_operations WHERE id = 'op-astral-101'"
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn debrief_school_name_trimming_unicode_nbsp_and_bom() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+
+        let raw = "\u{FEFF}  Valley Flight Center \u{00A0}";
+        let op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-trim-unicode",
+            "targetId": "j-trim",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Trimming Test",
+                "schoolName": raw
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op).unwrap();
+
+        let stored: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-trim'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(stored, "Valley Flight Center");
+
+        // NBSP and BOM trim, but leading and trailing NEL (\u{0085}) stay intact
+        let raw_nel = "\u{FEFF}\u{00A0}\u{0085} Valley Flight Center \u{0085}\u{00A0}\u{FEFF}";
+        let op_nel: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-trim-nel",
+            "targetId": "j-trim-nel",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "NEL Trimming Parity",
+                "schoolName": raw_nel
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_nel).unwrap();
+
+        let stored_nel: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-trim-nel'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(stored_nel, "\u{0085} Valley Flight Center \u{0085}");
+
+        // Length-boundary case:
+        // Leading NEL + 199 characters + surrounding BOM and NBSP = 200 code units when trimmed (admitted)
+        let valid_leading_nel = format!(
+            "\u{FEFF}\u{00A0}\u{0085}{}\u{00A0}\u{FEFF}",
+            "A".repeat(199)
+        );
+        let op_boundary_ok: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-boundary-ok",
+            "targetId": "j-boundary-ok",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Valid boundary",
+                "schoolName": valid_leading_nel
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op_boundary_ok).unwrap();
+        let stored_boundary: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-boundary-ok'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(stored_boundary, format!("\u{0085}{}", "A".repeat(199)));
+        assert_eq!(stored_boundary.encode_utf16().count(), 200);
+
+        // Leading NEL + 200 characters + surrounding BOM and NBSP = 201 code units when trimmed.
+        // Because NEL is preserved and not trimmed, the trimmed string has 201 code units and must be rejected.
+        // If accidental extra trimming of NEL occurred, it would admit oversized text.
+        let invalid_leading_nel = format!(
+            "\u{FEFF}\u{00A0}\u{0085}{}\u{00A0}\u{FEFF}",
+            "A".repeat(200)
+        );
+        let op_boundary_err: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-boundary-err",
+            "targetId": "j-boundary-err",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Invalid boundary",
+                "schoolName": invalid_leading_nel
+            }
+        }))
+        .unwrap();
+        let err = save_debrief_operation_at(dir.path(), &op_boundary_err).unwrap_err();
+        assert!(err.contains("School name exceeds maximum length of 200 characters."));
+
+        // Trailing NEL boundary: 200 'A's + trailing NEL = 201 code units (rejected)
+        let invalid_trailing_nel = format!(
+            "\u{FEFF}\u{00A0}{}\u{0085}\u{00A0}\u{FEFF}",
+            "A".repeat(200)
+        );
+        let op_trailing_err: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-trailing-err",
+            "targetId": "j-trailing-err",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Invalid trailing",
+                "schoolName": invalid_trailing_nel
+            }
+        }))
+        .unwrap();
+        let err_trailing = save_debrief_operation_at(dir.path(), &op_trailing_err).unwrap_err();
+        assert!(err_trailing.contains("School name exceeds maximum length of 200 characters."));
+
+        // U+180E boundary: 200 'A's + U+180E = 201 code units (rejected)
+        let invalid_180e = format!(
+            "\u{FEFF}\u{00A0}\u{180E}{}\u{00A0}\u{FEFF}",
+            "A".repeat(200)
+        );
+        let op_180e_err: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-180e-err",
+            "targetId": "j-180e-err",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Invalid 180E",
+                "schoolName": invalid_180e
+            }
+        }))
+        .unwrap();
+        let err_180e = save_debrief_operation_at(dir.path(), &op_180e_err).unwrap_err();
+        assert!(err_180e.contains("School name exceeds maximum length of 200 characters."));
+    }
+
+    #[test]
+    fn populated_rollback_on_invalid_school_and_full_state_replay_preservation() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+        seed(&conn);
+
+        // 1. Seed complete prior journal with school, flight fields, material links,
+        // related action/question and operation receipt.
+        let prior_op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-prior-1",
+            "targetId": "journal-prior-1",
+            "journal": {
+                "date": "2026-10-24",
+                "title": "Pre-solo maneuvers",
+                "schoolName": "Rainier Flight Service",
+                "eventId": "event-1",
+                "materialIds": ["material-1"],
+                "aircraftType": "C172S",
+                "aircraftId": "N172SP",
+                "departureAirport": "KBFI",
+                "arrivalAirport": "KBFI",
+                "instructorName": "Taylor Morgan",
+                "totalTime": 1.5,
+                "dualReceived": 1.5,
+                "soloTime": 0.0,
+                "picTime": 0.0,
+                "dayLandings": 3,
+                "wentWell": "Steep turns and emergency descent",
+                "wasDifficult": "Crosswind correction on rollout",
+                "instructorFeedback": "Smooth rudder coordination",
+                "questionsForNextTime": "Power-off 180 glide distance",
+                "confidence": 4
+            },
+            "action": {
+                "id": "act-prior-1",
+                "title": "Chair-fly steep turns",
+                "materialId": "material-1"
+            },
+            "withdrawActionId": null,
+            "question": {
+                "id": "q-prior-1",
+                "text": "What roll rate is best rolling out of steep turns?",
+                "eventId": "event-1",
+                "materialId": "material-1"
+            },
+            "withdrawQuestionId": null
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &prior_op).unwrap();
+
+        let snapshot_before = full_database_snapshot(&conn);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM journal_entries"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM journal_materials"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM next_actions"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM questions"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM debrief_operations"), 1);
+
+        // 2. Attempt a new invalid201-school save that also proposes changes/deletions to linked entities.
+        let invalid_op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-invalid-201",
+            "targetId": "journal-prior-1",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Attempted Corrupted Title",
+                "schoolName": "X".repeat(201),
+                "materialIds": []
+            },
+            "action": {
+                "id": "act-prior-1",
+                "title": "Mutated action title",
+                "materialId": null
+            },
+            "withdrawActionId": null,
+            "question": null,
+            "withdrawQuestionId": "q-prior-1"
+        }))
+        .unwrap();
+
+        let err = save_debrief_operation_at(dir.path(), &invalid_op).unwrap_err();
+        assert!(err.contains("School name exceeds maximum length of 200 characters."));
+
+        // Assert clear rejection, all prior state byte/value unchanged, and no new receipt.
+        assert_eq!(full_database_snapshot(&conn), snapshot_before);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM debrief_operations WHERE id = 'op-invalid-201'"
+            ),
+            0
+        );
+
+        // 3. Follow with valid retry / missing-school update to show connection remains usable
+        // and omitted schoolName preserves existing snapshot.
+        let valid_retry_op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-valid-retry-1",
+            "targetId": "journal-prior-1",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Pre-solo maneuvers (revised)",
+                "materialIds": ["material-1"]
+            },
+            "action": null,
+            "withdrawActionId": null,
+            "question": null,
+            "withdrawQuestionId": null
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &valid_retry_op).unwrap();
+
+        let snapshot_after_valid = full_database_snapshot(&conn);
+        let school_after_update: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'journal-prior-1'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school_after_update, "Rainier Flight Service");
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM debrief_operations"), 2);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM next_actions"), 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM questions"), 1);
+
+        // 4. Committed-operation replay with another valid school value:
+        // preserves all existing rows and receipts, not only the school/title projection.
+        let replay_op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-valid-retry-1",
+            "targetId": "journal-prior-1",
+            "journal": {
+                "date": "2026-10-26",
+                "title": "Replay Attempted Mutated Title",
+                "schoolName": "Different Flight Academy",
+                "materialIds": []
+            },
+            "action": null,
+            "withdrawActionId": "act-prior-1",
+            "question": null,
+            "withdrawQuestionId": "q-prior-1"
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &replay_op).unwrap();
+        assert_eq!(full_database_snapshot(&conn), snapshot_after_valid);
+
+        // Also replay initial committed operation with another valid school value
+        let replay_prior_op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-prior-1",
+            "targetId": "journal-prior-1",
+            "journal": {
+                "date": "2026-10-26",
+                "title": "Different Title",
+                "schoolName": "Yet Another Flight School",
+                "materialIds": ["material-1"]
+            },
+            "action": null,
+            "withdrawActionId": null,
+            "question": null,
+            "withdrawQuestionId": null
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &replay_prior_op).unwrap();
+        assert_eq!(full_database_snapshot(&conn), snapshot_after_valid);
+    }
+
+    #[test]
+    fn debrief_school_name_invalid_runtime_types_are_rejected() {
+        let invalid_num = json!({
+            "operationId": "op-bad-type",
+            "targetId": "j-bad-type",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Bad Type",
+                "schoolName": 9999
+            }
+        });
+        assert!(serde_json::from_value::<DebriefSaveOperation>(invalid_num).is_err());
+
+        let invalid_obj = json!({
+            "operationId": "op-bad-obj",
+            "targetId": "j-bad-obj",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Bad Type",
+                "schoolName": { "nested": true }
+            }
+        });
+        assert!(serde_json::from_value::<DebriefSaveOperation>(invalid_obj).is_err());
+    }
+
+    #[test]
+    fn debrief_school_snapshot_isolated_from_flight_schools_rename_and_removal() {
+        let dir = TestDir::new();
+        let conn = setup_db(dir.path());
+
+        conn.execute(
+            "INSERT INTO flight_schools (id, name, hourly_cost_cents, created_at, updated_at)
+             VALUES ('sch-1', 'Summit Aviation', 19500, '2026-10-25T00:00:00.000Z', '2026-10-25T00:00:00.000Z')",
+            [],
+        )
+        .unwrap();
+
+        let op: DebriefSaveOperation = serde_json::from_value(json!({
+            "operationId": "op-school-isolation",
+            "targetId": "j-iso-1",
+            "journal": {
+                "date": "2026-10-25",
+                "title": "Slow Flight",
+                "schoolName": "Summit Aviation"
+            }
+        }))
+        .unwrap();
+        save_debrief_operation_at(dir.path(), &op).unwrap();
+
+        // Rename comparison school
+        conn.execute(
+            "UPDATE flight_schools SET name = 'Summit Flight College' WHERE id = 'sch-1'",
+            [],
+        )
+        .unwrap();
+
+        let school_after_rename: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-iso-1'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school_after_rename, "Summit Aviation");
+
+        // Delete comparison school
+        conn.execute("DELETE FROM flight_schools WHERE id = 'sch-1'", [])
+            .unwrap();
+
+        let school_after_delete: String = conn
+            .query_row(
+                "SELECT school_name FROM journal_entries WHERE id = 'j-iso-1'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(school_after_delete, "Summit Aviation");
+    }
+
+    #[test]
     fn contract_rejects_the_old_and_drifted_payload_shapes() {
         let base: Value = serde_json::from_str(fixture_text("01-create")).unwrap();
         let reject = |mutate: &dyn Fn(&mut Value)| {
@@ -633,8 +1335,20 @@ mod tests {
         assert!(reject(&|v| {
             v.as_object_mut().unwrap().remove("operationId");
         }));
+        assert!(reject(&|v| {
+            v["journal"]["schoolName"] = json!(12345);
+        }));
         // The canonical shape itself round-trips.
         assert!(serde_json::from_value::<DebriefSaveOperation>(base.clone()).is_ok());
+
+        // Explicit string and explicit null schoolName round-trip.
+        let mut valid_school = base.clone();
+        valid_school["journal"]["schoolName"] = json!("Cascade Aviation");
+        assert!(serde_json::from_value::<DebriefSaveOperation>(valid_school).is_ok());
+
+        let mut null_school = base.clone();
+        null_school["journal"]["schoolName"] = Value::Null;
+        assert!(serde_json::from_value::<DebriefSaveOperation>(null_school).is_ok());
     }
 
     #[test]
@@ -976,6 +1690,36 @@ mod tests {
             (material, source.as_deref(), answer.as_str()),
             (None, Some("mat-1"), "About 16 degrees")
         );
+
+        // The original legacy test upgraded only through migration 10 (which introduced debrief_links D7).
+        // Since then, migrations 11 through current have been registered, including migration 22 which
+        // added the nullable `school_name` column to `journal_entries`.
+        // The modern debrief saver (`save_debrief_operation_at`) writes to the current schema.
+        // Before invoking the modern atomic saver, apply remaining registered migrations 11..current
+        // in order (matching actual startup) and verify that retained training and history rows
+        // remain unchanged apart from new nullable fields.
+        let v9_pre_modern = v9(&conn);
+        let remaining_migrations: Vec<_> = crate::migrations()
+            .into_iter()
+            .filter(|m| m.version >= 11)
+            .collect();
+        for migration in &remaining_migrations {
+            conn.execute_batch(migration.sql).unwrap();
+        }
+        assert_eq!(
+            v9(&conn),
+            v9_pre_modern,
+            "Retained v9 training rows must remain unchanged across migrations 11..current"
+        );
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM journal_entries WHERE school_name IS NOT NULL"
+            ),
+            0,
+            "Existing journal entries retain NULL for newly added school_name column"
+        );
+
         let op: DebriefSaveOperation = serde_json::from_value(json!({
             "operationId": "op-after-upgrade",
             "targetId": "jr-2",

@@ -177,6 +177,7 @@ export const makeJournalEntry = (overrides: Partial<JournalEntry> = {}): Journal
   instructorFeedback: "",
   questionsForNextTime: "",
   confidence: null,
+  schoolName: null,
   goalId: null,
   createdAt: STAMP,
   updatedAt: STAMP,

@@ -197,6 +197,12 @@ export function JournalEntryDetail() {
               <dl className="definition">
                 <dt>Date</dt>
                 <dd>{formatLongDate(entry.date, today)}</dd>
+                {entry.schoolName ? (
+                  <>
+                    <dt>School</dt>
+                    <dd className="wrap-anywhere">{entry.schoolName}</dd>
+                  </>
+                ) : null}
                 {entry.confidence != null ? (
                   <>
                     <dt>Confidence</dt>

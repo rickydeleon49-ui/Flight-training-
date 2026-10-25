@@ -53,6 +53,7 @@ export function FlightJournal() {
     () => data.journalEntries.filter(hasFlightLogData),
     [data.journalEntries],
   );
+  const notesWithoutFlightCount = data.journalEntries.length - loggedFlights.length;
   const totals = useMemo(() => flightLogTotals(data.journalEntries), [data.journalEntries]);
   const activity = useMemo(
     () => flightActivity(data.journalEntries, today),
@@ -67,9 +68,12 @@ export function FlightJournal() {
         title="Flight Log & Journal"
         subtitle="Flight time, lesson notes, and instructor feedback in one training history."
         action={
-          <div className="row">
+          <div className="row header-actions">
             <Link className="button button--secondary" to="/journal/new?mode=quick">
               Quick debrief
+            </Link>
+            <Link className="button button--secondary" to="/journal/new?mode=discovery">
+              Log discovery flight
             </Link>
             <Link className="button button--primary" to="/journal/new">
               <PlusIcon size={16} /> Log a flight
@@ -93,7 +97,7 @@ export function FlightJournal() {
           aria-pressed={view === "debriefs"}
           onClick={() => setView("debriefs")}
         >
-          Debriefs
+          Debriefs{data.journalEntries.length > 0 ? ` (${data.journalEntries.length})` : ""}
         </button>
         <button
           type="button"
@@ -293,15 +297,34 @@ export function FlightJournal() {
               action={<span className="tiny dim">{totals.flights} logged</span>}
             />
             <CardBody flush>
+              {notesWithoutFlightCount > 0 ? (
+                <div className="journal-notes-callout">
+                  <span className="small muted">
+                    {notesWithoutFlightCount} {notesWithoutFlightCount === 1 ? "entry has notes without flight details" : "entries have notes without flight details"} in your debriefs history.
+                  </span>
+                  <button
+                    type="button"
+                    className="button button--ghost button--small"
+                    onClick={() => setView("debriefs")}
+                  >
+                    View in Debriefs
+                  </button>
+                </div>
+              ) : null}
               {loggedFlights.length === 0 ? (
                 <EmptyState
                   icon={<JournalIcon size={28} />}
                   title="Your flight log is ready."
                   body="After an instructor flight, enter the aircraft, route, and the flight-time categories agreed with your instructor."
                   action={
-                    <Link className="button button--primary" to="/journal/new">
-                      Log your first flight
-                    </Link>
+                    <div className="row" style={{ gap: "var(--space-3)", flexWrap: "wrap", justifyContent: "center" }}>
+                      <Link className="button button--secondary" to="/journal/new?mode=discovery">
+                        Log discovery flight
+                      </Link>
+                      <Link className="button button--primary" to="/journal/new">
+                        <PlusIcon size={16} /> Log a flight
+                      </Link>
+                    </div>
                   }
                 />
               ) : (
@@ -395,9 +418,14 @@ export function FlightJournal() {
                   title="Your journal is ready."
                   body="After your next lesson, write down what you practised, what your instructor said, and the one thing to work on. Over time this becomes the clearest record of how far you have come."
                   action={
-                    <Link className="button button--primary" to="/journal/new">
-                      Log your first flight
-                    </Link>
+                    <div className="row" style={{ gap: "var(--space-3)", flexWrap: "wrap", justifyContent: "center" }}>
+                      <Link className="button button--secondary" to="/journal/new?mode=discovery">
+                        Log discovery flight
+                      </Link>
+                      <Link className="button button--primary" to="/journal/new">
+                        Log your first flight
+                      </Link>
+                    </div>
                   }
                 />
               ) : (
@@ -412,6 +440,11 @@ export function FlightJournal() {
                         <span className="strong wrap-anywhere">
                           {entry.title || event?.title || "Lesson debrief"}
                         </span>
+                        {entry.schoolName ? (
+                          <span className="journal-entry__school tiny muted wrap-anywhere">
+                            · {entry.schoolName}
+                          </span>
+                        ) : null}
                         {entry.confidence != null ? (
                           <Badge tone="study">Confidence {entry.confidence}/5</Badge>
                         ) : null}
