@@ -119,6 +119,7 @@ th, td { border: 1px solid #c9ccd1; padding: .35rem .5rem; text-align: left; ver
 th { background: #f3f4f6; }
 .cards td { width: 50%; }
 .cards tr, .question, li { break-inside: avoid; page-break-inside: avoid; }
+.practice-heading-keep { break-inside: avoid; page-break-inside: avoid; }
 .question { margin: 0 0 1rem; }
 .choices { list-style: none; padding-left: .5rem; }
 .answer-key { break-before: page; }
@@ -156,15 +157,23 @@ function handoutSections(allContent: ExportSource, selection: ExportSelection, o
   }
 
   if (test && selection.questions && available.questions) {
-    const questions = test.questions
-      .map((question, index) => {
-        const choices = question.options
-          .map((option, choice) => `<li>${LETTERS[choice] ?? choice + 1}. ${escapeHtml(option)}</li>`)
-          .join("");
-        return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${authorRef(question.origin, question.pdfProvenance)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
-      })
-      .join("");
-    sections.push(`<section><h2>Practice questions</h2>${questions}</section>`);
+    const questionElements = test.questions.map((question, index) => {
+      const choices = question.options
+        .map((option, choice) => `<li>${LETTERS[choice] ?? choice + 1}. ${escapeHtml(option)}</li>`)
+        .join("");
+      return `<div class="question"><p><strong>${index + 1}.</strong> ${lines(question.question)}${authorRef(question.origin, question.pdfProvenance)}${pageRef(question.sourcePage)}</p><ul class="choices">${choices}</ul></div>`;
+    });
+
+    let questionsHtml = "";
+    if (questionElements.length > 0) {
+      const first = questionElements[0];
+      const rest = questionElements.slice(1).join("");
+      questionsHtml = `<div class="practice-heading-keep"><h2>Practice questions</h2>${first}</div>${rest}`;
+    } else {
+      questionsHtml = `<h2>Practice questions</h2>`;
+    }
+
+    sections.push(`<section>${questionsHtml}</section>`);
     if (options.answerKey && includeAnswerKey) {
       const answers = test.questions
         .map((question, index) => {

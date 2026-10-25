@@ -1722,3 +1722,21 @@ export type NavigationErrorCode =
   /** Browser mode only: there is no managed file to inspect. */
   | "OPEN_FAILED"
   | "DESKTOP_ONLY";
+
+/* ------------------------------------------------------------------ */
+/* Flight Schools                                                      */
+/* ------------------------------------------------------------------ */
+
+export type FlightSchoolTrainingTrack = "Part 61" | "Part 141" | "not sure";
+
+export interface FlightSchool {
+  id: Id;
+  name: string;
+  hourlyCostCents: Cents | null;
+  aircraftDescription: string | null;
+  trainingTrack: FlightSchoolTrainingTrack | null;
+  availabilityDescription: string | null;
+  discoveryFlightReflection: string | null;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}

@@ -47,6 +47,7 @@ export function hidePending(data: AppData, pending: ReadonlySet<Id>): AppData {
     notes: keep(data.notes, pending),
     transactions: keep(data.transactions, pending),
     fundGoals: keep(data.fundGoals, pending),
+    flightSchools: keep(data.flightSchools, pending),
     // A study aid belongs to its material and is keyed by it.
     aiStudySets: data.aiStudySets.filter((set) => !pending.has(set.sourceMaterialId)),
     toolkit,

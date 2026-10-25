@@ -14,6 +14,7 @@ import { createRepositories, type Repositories } from "@/data/repositories";
 import { initializeAirlineStarterPack } from "@/data/starter";
 import type {
   ChecklistItem,
+  FlightSchool,
   FundGoal,
   Goal,
   JournalEntry,
@@ -61,6 +62,7 @@ export interface AppData {
   notes: Note[];
   transactions: Transaction[];
   fundGoals: FundGoal[];
+  flightSchools: FlightSchool[];
   toolkit: ToolkitState;
   dailyPlan: DailyPlanState | null;
   homework?: import("@/domain/homework").HomeworkSnapshot[];
@@ -155,6 +157,7 @@ export const EMPTY_DATA: AppData = {
   notes: [],
   transactions: [],
   fundGoals: [],
+  flightSchools: [],
   toolkit: defaultToolkitState(),
   dailyPlan: null,
   homework: [],
@@ -180,6 +183,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     notes,
     transactions,
     fundGoals,
+    flightSchools,
     toolkit,
     dailyPlan,
     homework,
@@ -200,6 +204,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.notes.list(),
     repositories.finance.list(),
     repositories.finance.listFundGoals(),
+    repositories.flightSchools.list(),
     repositories.toolkit.get(),
     repositories.app.getDailyPlanState(),
     repositories.homework.listSnapshots(),
@@ -222,6 +227,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     notes,
     transactions,
     fundGoals,
+    flightSchools,
     toolkit,
     dailyPlan,
     homework,

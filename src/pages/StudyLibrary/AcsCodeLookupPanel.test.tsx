@@ -245,4 +245,203 @@ describe("AcsCodeLookupPanel", () => {
 
     expect(statusRegion.textContent).toBe("No codes entered.");
   });
+
+  describe("live lookup updates and rerender regressions", () => {
+    it("updates displayed material link when tagged material is added after submission without resubmitting", () => {
+      const { rerender } = render(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      const textarea = screen.getByLabelText(/missed topic codes/i);
+      fireEvent.change(textarea, { target: { value: "PA.I.A.K1" } });
+      fireEvent.click(screen.getByRole("button", { name: /find study materials/i }));
+
+      const resultItem = screen.getByTestId("acs-code-result-PA.I.A.K1");
+      expect(resultItem.textContent).toMatch(/no tagged study materials exist/i);
+      expect(resultItem.querySelector("a")).toBeNull();
+
+      // Add material with matching tag and rerender
+      const newMaterial: StudyMaterial = {
+        ...mockMaterial,
+        id: "mat-new-1",
+        title: "Aerodynamics Fundamentals",
+        tags: ["PA.I.A.K1"],
+      };
+
+      rerender(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[newMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      // Link should now appear live without resubmitting
+      const link = screen.getByRole("link", { name: /aerodynamics fundamentals/i });
+      expect(link.getAttribute("href")).toBe("/study/mat-new-1");
+      expect(resultItem.textContent).not.toMatch(/no tagged study materials exist/i);
+    });
+
+    it("updates dynamically when a material is renamed or removed", () => {
+      const initialMaterial: StudyMaterial = {
+        ...mockMaterial,
+        id: "mat-rename",
+        title: "Initial Title",
+        tags: ["PA.I.A.K1"],
+      };
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[initialMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      const textarea = screen.getByLabelText(/missed topic codes/i);
+      fireEvent.change(textarea, { target: { value: "PA.I.A.K1" } });
+      fireEvent.click(screen.getByRole("button", { name: /find study materials/i }));
+
+      expect(screen.getByRole("link", { name: /initial title/i })).toBeTruthy();
+
+      // Renamed material
+      const renamedMaterial: StudyMaterial = {
+        ...initialMaterial,
+        title: "Updated Title",
+      };
+
+      rerender(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[renamedMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByRole("link", { name: /initial title/i })).toBeNull();
+      expect(screen.getByRole("link", { name: /updated title/i })).toBeTruthy();
+
+      // Removed material
+      rerender(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByRole("link", { name: /updated title/i })).toBeNull();
+      const resultItem = screen.getByTestId("acs-code-result-PA.I.A.K1");
+      expect(resultItem.textContent).toMatch(/no tagged study materials exist/i);
+    });
+
+    it("updates sub-content counts dynamically when study sets, practice tests, or questions change", () => {
+      const { rerender } = render(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[mockMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      const textarea = screen.getByLabelText(/missed topic codes/i);
+      fireEvent.change(textarea, { target: { value: "PA.III.A.K1" } });
+      fireEvent.click(screen.getByRole("button", { name: /find study materials/i }));
+
+      expect(screen.getByRole("link", { name: /radio communications guide/i })).toBeTruthy();
+      expect(screen.queryByText(/study guide/i)).toBeNull();
+
+      // Add study sets, practice tests, and questions
+      rerender(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[mockMaterial]}
+            aiStudySets={[mockStudySet]}
+            practiceTests={[mockPracticeTest]}
+            questions={[mockQuestion]}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText(/1 study guide\/set/i)).toBeTruthy();
+      expect(screen.getByText(/1 practice test/i)).toBeTruthy();
+      expect(screen.getByText(/1 instructor question/i)).toBeTruthy();
+    });
+
+    it("editing the input without submitting keeps previous query results", () => {
+      render(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[mockMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      const textarea = screen.getByLabelText(/missed topic codes/i);
+      fireEvent.change(textarea, { target: { value: "PA.III.A.K1" } });
+      fireEvent.click(screen.getByRole("button", { name: /find study materials/i }));
+
+      expect(screen.getByTestId("acs-code-result-PA.III.A.K1")).toBeTruthy();
+      expect(screen.getByRole("link", { name: /radio communications guide/i })).toBeTruthy();
+
+      // Type something else into textarea without submitting
+      fireEvent.change(textarea, { target: { value: "PA.I.A.K1, PA.I.B.K2" } });
+
+      // Previous submitted query results should still be displayed
+      expect(screen.getByTestId("acs-code-result-PA.III.A.K1")).toBeTruthy();
+      expect(screen.getByRole("link", { name: /radio communications guide/i })).toBeTruthy();
+      expect(screen.queryByTestId("acs-code-result-PA.I.A.K1")).toBeNull();
+    });
+
+    it("clearing input with whitespace still removes results and announces clearing", () => {
+      render(
+        <MemoryRouter>
+          <AcsCodeLookupPanel
+            materials={[mockMaterial]}
+            aiStudySets={[]}
+            practiceTests={[]}
+            questions={[]}
+          />
+        </MemoryRouter>
+      );
+
+      const textarea = screen.getByLabelText(/missed topic codes/i);
+      fireEvent.change(textarea, { target: { value: "PA.III.A.K1" } });
+      fireEvent.click(screen.getByRole("button", { name: /find study materials/i }));
+
+      expect(screen.getByTestId("acs-code-result-PA.III.A.K1")).toBeTruthy();
+
+      // Clear input with spaces/whitespace
+      fireEvent.change(textarea, { target: { value: "   \n\t  " } });
+
+      expect(screen.queryByTestId("acs-code-result-PA.III.A.K1")).toBeNull();
+      const statusRegion = screen.getByRole("status");
+      expect(statusRegion.textContent).toBe("Lookup results cleared.");
+    });
+  });
 });

@@ -6,6 +6,7 @@
  */
 import type {
   ChecklistItem,
+  FlightSchool,
   Goal,
   JournalEntry,
   Milestone,
@@ -222,6 +223,21 @@ export const makeTransaction = (overrides: Partial<Transaction> = {}): Transacti
   eventId: null,
   goalId: null,
   source: "manual",
+  createdAt: STAMP,
+  updatedAt: STAMP,
+  ...overrides,
+});
+
+export const makeFlightSchool = (
+  overrides: Partial<FlightSchool> = {},
+): FlightSchool => ({
+  id: id(),
+  name: "Skyline Flight Academy",
+  hourlyCostCents: 22000,
+  aircraftDescription: "Cessna 172S G1000",
+  trainingTrack: "Part 61",
+  availabilityDescription: "Weekdays and weekends",
+  discoveryFlightReflection: "Great instructor rapport, very thorough pre-flight.",
   createdAt: STAMP,
   updatedAt: STAMP,
   ...overrides,

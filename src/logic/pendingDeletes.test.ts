@@ -47,6 +47,30 @@ const data: AppData = {
       },
     ],
   },
+  flightSchools: [
+    {
+      id: "fs1",
+      name: "Alpha Aviation",
+      hourlyCostCents: 20000,
+      aircraftDescription: null,
+      trainingTrack: "Part 61",
+      availabilityDescription: null,
+      discoveryFlightReflection: null,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    },
+    {
+      id: "fs2",
+      name: "Bravo Flight",
+      hourlyCostCents: null,
+      aircraftDescription: null,
+      trainingTrack: null,
+      availabilityDescription: null,
+      discoveryFlightReflection: null,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    },
+  ],
 };
 
 describe("hidePending", () => {
@@ -79,6 +103,12 @@ describe("hidePending", () => {
     const next = hidePending(data, new Set(["nothing"]));
     expect(next.materials).toBe(data.materials);
     expect(next.questions).toBe(data.questions);
+  });
+
+  it("hides flight schools when pending delete", () => {
+    const next = hidePending(data, new Set(["fs1"]));
+    expect(next.flightSchools.map((s) => s.id)).toEqual(["fs2"]);
+    expect(next.actions).toBe(data.actions);
   });
 
   it("never changes the data it was given", () => {
