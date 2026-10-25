@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -28,6 +28,7 @@ interface DebriefDraft {
   eventId: string | null;
   date: string;
   title: string;
+  schoolName?: string;
   aircraftType: string;
   aircraftId: string;
   departureAirport: string;
@@ -123,10 +124,11 @@ const optionalNumber = (value: string): number | null =>
 export function JournalForm() {
   const { entryId } = useParams();
   const [searchParams] = useSearchParams();
-  const initialMode = searchParams.get("mode") === "quick" ? "quick" : "full";
+  const modeParam = searchParams.get("mode");
+  const initialMode = modeParam === "quick" ? "quick" : "full";
   return (
     <JournalFormPage
-      key={`${entryId ?? "new"}:${searchParams.get("event") ?? ""}:${initialMode}`}
+      key={`${entryId ?? "new"}:${searchParams.get("event") ?? ""}:${modeParam ?? initialMode}`}
       initialMode={initialMode}
     />
   );
@@ -163,6 +165,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         eventId: existing.eventId,
         date: existing.date,
         title: existing.title,
+        ...(existing.schoolName != null ? { schoolName: existing.schoolName } : {}),
         aircraftType: existing.aircraftType,
         aircraftId: existing.aircraftId,
         departureAirport: existing.departureAirport,
@@ -215,6 +218,18 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       };
     }
 
+    if (searchParams.get("mode") === "discovery") {
+      return {
+        ...emptyDraft(),
+        title: "Discovery flight",
+        aircraftType: "",
+        aircraftId: "",
+        departureAirport: "",
+        arrivalAirport: "",
+        instructorName: "",
+      };
+    }
+
     return {
       ...emptyDraft(),
       aircraftType: data.profile.aircraftType,
@@ -228,7 +243,69 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
 
   // A debrief takes a while to write; leaving the page must not lose it.
   const draftKey = existing ? `journal.${existing.id}` : "journal.new";
-  const { recovered, forget } = useDraftRecovery(draftKey, draft, setDraft);
+
+  const restoreDraft = useCallback(
+    (saved: Partial<DebriefDraft>) => {
+      setDraft((_current) => {
+        const defaults = emptyDraft();
+        const base = existing
+          ? {
+              ...startingDraft(),
+            }
+          : {
+              ...defaults,
+            };
+
+        const merged: DebriefDraft = {
+          ...base,
+          ...saved,
+        };
+
+        // Preserve special school field missing-versus-explicit distinction:
+        // When saved.schoolName is undefined, delete merged.schoolName so that saving
+        // omits the schoolName key (preserving any DB value atomically without resending
+        // a stale snapshot). The input still falls back to existing?.schoolName for display.
+        // Explicit saved/edited blank ("") remains defined and clears when saved.
+        if (saved.schoolName !== undefined) {
+          merged.schoolName = saved.schoolName;
+        } else {
+          delete merged.schoolName;
+        }
+
+        // Do not overwrite title/aircraft/notes with the discovery preset:
+        if (!existing) {
+          if (saved.title !== undefined) {
+            merged.title = saved.title;
+          }
+          if (saved.aircraftType !== undefined) {
+            merged.aircraftType = saved.aircraftType;
+          }
+        }
+
+        // Normalize missing legacy fields safely at recovery boundary:
+        merged.questionsForNextTime =
+          saved.questionsForNextTime ?? base.questionsForNextTime ?? "";
+        merged.questionToSave =
+          saved.questionToSave !== undefined
+            ? saved.questionToSave
+            : saved.questionEdited
+              ? ""
+              : merged.questionsForNextTime;
+        merged.questionEdited = Boolean(saved.questionEdited ?? base.questionEdited);
+        merged.wentWell = saved.wentWell ?? base.wentWell ?? "";
+        merged.wasDifficult = saved.wasDifficult ?? base.wasDifficult ?? "";
+        merged.instructorFeedback = saved.instructorFeedback ?? base.instructorFeedback ?? "";
+        merged.mission = saved.mission ?? base.mission ?? "";
+        merged.practiced = saved.practiced ?? base.practiced ?? "";
+        merged.materialIds = saved.materialIds ?? base.materialIds ?? [];
+
+        return merged;
+      });
+    },
+    [existing, startingDraft],
+  );
+
+  const { recovered, forget } = useDraftRecovery(draftKey, draft, restoreDraft);
 
   // Sync refs if a recovered draft carried IDs across page reloads:
   if (draft.id && !createdEntryIdRef.current) createdEntryIdRef.current = draft.id;
@@ -237,6 +314,17 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
 
   const latestDraftRef = useRef<DebriefDraft>(draft);
   latestDraftRef.current = draft;
+
+  const schoolSuggestions = useMemo(() => {
+    const names = new Set<string>();
+    if (data.profile.flightSchool?.trim()) {
+      names.add(data.profile.flightSchool.trim());
+    }
+    for (const s of data.flightSchools ?? []) {
+      if (s.name?.trim()) names.add(s.name.trim());
+    }
+    return Array.from(names);
+  }, [data.profile.flightSchool, data.flightSchools]);
 
   const hasUnsavedEdits = (current: DebriefDraft, submitted: DebriefDraft) => {
     return (
@@ -250,6 +338,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       current.questionMaterialId !== submitted.questionMaterialId ||
       current.questionEventId !== submitted.questionEventId ||
       current.title !== submitted.title ||
+      current.schoolName !== submitted.schoolName ||
       current.mission !== submitted.mission ||
       current.practiced !== submitted.practiced ||
       current.confidence !== submitted.confidence ||
@@ -277,11 +366,11 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const currentQuestionToSave =
-    draft.questionToSave !== undefined
+    (draft.questionToSave !== undefined
       ? draft.questionToSave
       : draft.questionEdited
         ? ""
-        : draft.questionsForNextTime;
+        : draft.questionsForNextTime) ?? "";
 
   const handleNextActionTitleChange = (value: string) => {
     setDraft((current) => ({ ...current, nextActionTitle: value }));
@@ -387,6 +476,11 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       setError(timeProblem);
       return;
     }
+    const enteredSchool = draft.schoolName !== undefined ? draft.schoolName : (existing?.schoolName ?? "");
+    if (enteredSchool && enteredSchool.trim().length > 200) {
+      setError("School name cannot exceed 200 characters.");
+      return;
+    }
     setError(null);
     setIsSaving(true);
     isSavingRef.current = true;
@@ -471,6 +565,9 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         confidence: payload.confidence ?? null,
         goalId: payload.goalId ?? null,
         materialIds: payload.materialIds ?? [],
+        ...(draft.schoolName !== undefined
+          ? { schoolName: draft.schoolName.trim() === "" ? null : draft.schoolName.trim() }
+          : {}),
       },
       action: wantAction
         ? {
@@ -566,6 +663,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   };
 
   const lessons = data.events.filter((event) => event.eventType === "flight_lesson");
+  const isDiscoveryPreset = !entryId && !existing && !recovered && searchParams.get("mode") === "discovery";
 
   return (
     <>
@@ -577,14 +675,18 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
               : "Quick debrief"
             : existing
               ? "Edit flight record"
-              : "Log a training flight"
+              : isDiscoveryPreset
+                ? "Log discovery flight"
+                : "Log a training flight"
         }
         subtitle={
           mode === "quick"
             ? existing
               ? "Update your debrief notes. Flight log times and aircraft remain untouched."
               : "Capture what happened while it is fresh. Flight times can be added later."
-            : "Record the flight and debrief while it is fresh."
+            : isDiscoveryPreset
+              ? "Record your discovery flight experience and impressions. Flight times, aircraft, and school are optional."
+              : "Record the flight and debrief while it is fresh."
         }
         action={
           <Button variant="ghost" onClick={() => navigate(-1)}>
@@ -789,12 +891,15 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         </Card>
       ) : (
         <Card>
-          <CardHeader title="Training flight" eyebrow="Personal flight-time record" />
+          <CardHeader
+            title={isDiscoveryPreset ? "Discovery flight" : "Training flight"}
+            eyebrow={isDiscoveryPreset ? "Discovery reflection" : "Personal flight-time record"}
+          />
           <CardBody>
             <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
-              Copy flight times from the entry agreed with her instructor. Categories can overlap,
-              so the application does not calculate PIC, solo, instrument, or cross-country time.
-              Keep the instructor-endorsed logbook as the authoritative record.
+              {isDiscoveryPreset
+                ? "Flight times, aircraft, and school are optional. Copy only times agreed with your instructor, and keep the instructor-endorsed logbook authoritative."
+                : "Copy flight times from the entry agreed with her instructor. Categories can overlap, so the application does not calculate PIC, solo, instrument, or cross-country time. Keep the instructor-endorsed logbook as the authoritative record."}
             </p>
             {error ? (
               <p
@@ -903,6 +1008,29 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     placeholder="CFI name"
                     onChange={(e) => update("instructorName", e.target.value)}
                   />
+                )}
+              </Field>
+
+              <Field label="School" hint="Flight school or club (optional)">
+                {({ id, describedBy }) => (
+                  <>
+                    <TextInput
+                      id={id}
+                      aria-describedby={describedBy}
+                      list="school-suggestions"
+                      disabled={isSaving}
+                      value={draft.schoolName !== undefined ? draft.schoolName : (existing?.schoolName ?? "")}
+                      placeholder="e.g. San Carlos Flight Center"
+                      onChange={(e) => update("schoolName", e.target.value)}
+                    />
+                    {schoolSuggestions.length > 0 ? (
+                      <datalist id="school-suggestions">
+                        {schoolSuggestions.map((name) => (
+                          <option key={name} value={name} />
+                        ))}
+                      </datalist>
+                    ) : null}
+                  </>
                 )}
               </Field>
 
