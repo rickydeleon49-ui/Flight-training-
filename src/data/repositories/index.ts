@@ -22,6 +22,7 @@ import { cardReviewRepository } from "./cardReviewRepository";
 import { cardLibraryRepository } from "./cardLibraryRepository";
 import { skillEvidenceRepository } from "./skillEvidenceRepository";
 import { navigationRepository } from "./navigationRepository";
+import { flightSchoolRepository } from "./flightSchoolRepository";
 
 export interface Repositories {
   homework: ReturnType<typeof homeworkRepository>;
@@ -42,6 +43,7 @@ export interface Repositories {
   cardLibrary: ReturnType<typeof cardLibraryRepository>;
   skillEvidence: ReturnType<typeof skillEvidenceRepository>;
   navigation: ReturnType<typeof navigationRepository>;
+  flightSchools: ReturnType<typeof flightSchoolRepository>;
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
@@ -64,6 +66,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     cardLibrary: cardLibraryRepository(db),
     skillEvidence: skillEvidenceRepository(db),
     navigation: navigationRepository(db),
+    flightSchools: flightSchoolRepository(db),
   };
 }
 
@@ -71,3 +74,5 @@ export { practiceSessionRepository } from "./practiceSessionRepository";
 export { cardReviewRepository } from "./cardReviewRepository";
 export { cardLibraryRepository } from "./cardLibraryRepository";
 export { DuplicateLessonCostError } from "./financeRepository";
+export { flightSchoolRepository } from "./flightSchoolRepository";
+
