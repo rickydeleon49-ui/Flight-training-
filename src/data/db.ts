@@ -274,6 +274,7 @@ export interface DebriefSaveOperation {
     instructorFeedback?: string | null;
     questionsForNextTime?: string | null;
     confidence?: number | null;
+    schoolName?: string | null;
     goalId?: string | null;
     materialIds?: string[];
   };

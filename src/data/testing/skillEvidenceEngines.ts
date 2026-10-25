@@ -272,7 +272,8 @@ export function createRequest(
 /** A store with one real debrief (journal and action) saved through the shipped debrief transaction on the same connection. */
 export async function storeWithDebrief(engineName: EngineName = "node:sqlite") {
   const engine = await openEngine(engineName);
-  const store = await openStore(engine);
+  await applyMigrations((sql) => engine.exec(sql), appliedVersions(engine));
+  const store = await openStore(engine, { migrate: false });
   const { executeDebriefSave } = await import("../debriefTransaction");
   const journalId = uuid();
   const actionId = uuid();

@@ -1,0 +1,34 @@
+{
+  "afterCreate": [
+    {
+      "id": "journal-school-1",
+      "date": "2026-10-25",
+      "title": "Discovery Flight",
+      "school_name": "Rainier Flight Service"
+    }
+  ],
+  "afterReplayWithDifferentSchool": [
+    {
+      "id": "journal-school-1",
+      "date": "2026-10-25",
+      "title": "Discovery Flight",
+      "school_name": "Rainier Flight Service"
+    }
+  ],
+  "afterUpdatePreserve": [
+    {
+      "id": "journal-school-1",
+      "date": "2026-10-25",
+      "title": "Solo Pattern Work",
+      "school_name": "Rainier Flight Service"
+    }
+  ],
+  "afterUpdateClear": [
+    {
+      "id": "journal-school-1",
+      "date": "2026-10-25",
+      "title": "Solo Pattern Work",
+      "school_name": null
+    }
+  ]
+}

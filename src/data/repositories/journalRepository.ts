@@ -1,5 +1,6 @@
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
+import { validateSchoolName } from "@/domain/journalSchool";
 import type { Id, JournalEntry } from "@/domain/types";
 import { toNullableNumber, toNullableText, toText, type SqlDatabase } from "../db";
 
@@ -13,23 +14,6 @@ interface Row {
   practiced: unknown; went_well: unknown; was_difficult: unknown;
   instructor_feedback: unknown; questions_for_next_time: unknown; confidence: unknown;
   school_name: unknown; goal_id: unknown; created_at: unknown; updated_at: unknown;
-}
-
-function validateSchoolName(rawSchoolName: unknown): string | null {
-  if (rawSchoolName === null || rawSchoolName === undefined) {
-    return null;
-  }
-  if (typeof rawSchoolName !== "string") {
-    throw new Error("School name must be a string or null.");
-  }
-  const trimmed = rawSchoolName.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  if (trimmed.length > 200) {
-    throw new Error("School name exceeds maximum length of 200 characters.");
-  }
-  return trimmed;
 }
 
 const map = (row: Row, materialIds: Id[]): JournalEntry => ({
