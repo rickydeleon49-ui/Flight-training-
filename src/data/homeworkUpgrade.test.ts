@@ -37,7 +37,12 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
       expect(after[table]!.slice(19)).toEqual([
         expect.objectContaining({ version: 20, description: "homework" }),
         expect.objectContaining({ version: 21, description: "flight_schools" }),
+        expect.objectContaining({ version: 22, description: "journal_school" }),
       ]);
+    } else if (table === "journal_entries") {
+      expect(after[table], table).toEqual(
+        rows.map((r) => ({ ...(r as Record<string, unknown>), school_name: null })),
+      );
     } else expect(after[table], table).toEqual(rows);
   }
   const added = [...HOMEWORK_TABLES, "flight_schools"].sort();

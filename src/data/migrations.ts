@@ -28,6 +28,7 @@ import pdfKitProvenance from "../../src-tauri/migrations/0018_pdf_kit_provenance
 
 import homework from "../../src-tauri/migrations/0020_homework.sql?raw";
 import flightSchools from "../../src-tauri/migrations/0021_flight_schools.sql?raw";
+import journalSchool from "../../src-tauri/migrations/0022_journal_school.sql?raw";
 
 export interface Migration {
   version: number;
@@ -57,6 +58,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 19, description: "study_set_save_receipts", sql: studySetSaveReceipts },
   { version: 20, description: "homework", sql: homework },
   { version: 21, description: "flight_schools", sql: flightSchools },
+  { version: 22, description: "journal_school", sql: journalSchool },
 ];
 
 /**
