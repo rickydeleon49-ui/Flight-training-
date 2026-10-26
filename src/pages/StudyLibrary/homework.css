@@ -35,3 +35,33 @@
   color: var(--text-inverse);
   border-color: var(--accent-primary);
 }
+
+.homework-card-run .button {
+  min-height: 44px;
+}
+
+.homework-card-run .card-review__session,
+.homework-card-run .flashcard {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.homework-card-run .flashcard {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+@media (max-width: 560px) {
+  .homework-card-run .card-review__session {
+    padding: var(--space-2);
+  }
+
+  .homework-card-run .flashcard {
+    padding: var(--space-3);
+  }
+
+  .homework-card-run .card-review__ratings {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  }
+}
