@@ -19,6 +19,7 @@
  * The page is escaped text under the handout's Content-Security-Policy: it
  * cannot run or load anything.
  */
+import type { HomeworkSnapshot } from "@/domain/homework";
 import {
   EVENT_STATUS_LABELS,
   EVENT_TYPE_LABELS,
@@ -41,6 +42,7 @@ export interface BriefSources {
   questions: Question[];
   materials: StudyMaterial[];
   journalEntries: JournalEntry[];
+  homework?: readonly HomeworkSnapshot[];
 }
 
 export interface FollowUpCandidate {
@@ -127,7 +129,11 @@ export function lessonBrief(event: ScheduleEvent, sources: BriefSources): Lesson
   if (event.instructor.trim()) facts.push({ label: "Instructor", value: event.instructor.trim() });
   if (event.status !== "scheduled") facts.push({ label: "Status", value: EVENT_STATUS_LABELS[event.status] });
 
-  const preparation = lessonPreparation(event, { prepItems: sources.prepItems, questions: sources.questions });
+  const preparation = lessonPreparation(event, {
+    prepItems: sources.prepItems,
+    questions: sources.questions,
+    homework: sources.homework,
+  });
   const materials = event.materialIds
     .map((id) => sources.materials.find((material) => material.id === id))
     .filter((material): material is StudyMaterial => material !== undefined)

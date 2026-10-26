@@ -400,6 +400,12 @@ function SessionView({
     review.rate(rating);
   };
 
+  const reveal = () => {
+    if (review.blocked) return;
+    review.reveal();
+    heading.current?.focus({ preventScroll: true });
+  };
+
   if (!shown || !item) {
     return <DoneForNow review={review} />;
   }
@@ -422,7 +428,7 @@ function SessionView({
     if (!review.revealed && (event.key === " " || event.key === "Enter")) {
       if (event.target !== event.currentTarget && event.target !== heading.current) return; // buttons handle their own keys
       event.preventDefault();
-      review.reveal();
+      reveal();
       return;
     }
     const index = ["1", "2", "3", "4"].indexOf(event.key);
@@ -481,7 +487,7 @@ function SessionView({
         </>
       ) : (
         <div>
-          <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onClick={review.reveal}>
+          <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onClick={reveal}>
             Show answer
           </Button>
           <p className="tiny dim">Space or Enter shows the answer.</p>

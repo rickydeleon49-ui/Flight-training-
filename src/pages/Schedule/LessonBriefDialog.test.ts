@@ -11,6 +11,8 @@ import { createElement as h, type ContextType } from "react";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { validateHomeworkSnapshot, type HomeworkSnapshot } from "@/domain/homework";
+import type { ScheduleEvent } from "@/domain/types";
 import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 import { makeEvent, makeJournalEntry, makePrepItem } from "@/testing/factories";
 
@@ -45,11 +47,124 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-function open(props: { open?: boolean } = {}) {
-  const value = { repositories: null, data, status: "ready", error: null, mutate: async () => null, deleteWithUndo: () => undefined } as unknown as ContextType<
+function makeValidHomeworkSnapshot(options: {
+  assignmentId?: string;
+  title?: string;
+  instructions?: string;
+  instructor?: string | null;
+  lessonId?: string | null;
+  sourceLessonId?: string | null;
+  archived?: 0 | 1;
+  activities: Array<{
+    id: string;
+    title: string;
+    state?: "upcoming" | "in_progress" | "completed";
+    body?: string;
+    removed?: boolean;
+  }>;
+}): HomeworkSnapshot {
+  const assignmentId = options.assignmentId ?? "00000000-0000-4000-8000-000000000001";
+  const createdAt = "2026-10-21T10:00:00.000Z";
+  const updatedAt = "2026-10-21T10:05:00.000Z";
+  const completedAt = "2026-10-21T10:04:00.000Z";
+  const removedAt = "2026-10-21T10:03:00.000Z";
+
+  const sortedActivities = [...options.activities].sort((a, b) => a.id.localeCompare(b.id));
+
+  let activeIndex = 0;
+  const activities = sortedActivities.map((act) => {
+    const isRemoved = Boolean(act.removed);
+    const state = act.state ?? "upcoming";
+    const isCompleted = state === "completed";
+    const actCompletedAt = isCompleted ? completedAt : null;
+    const body = act.body ?? "";
+    const position = isRemoved ? 999 : activeIndex++;
+
+    return {
+      record: {
+        id: act.id,
+        assignment_id: assignmentId,
+        position,
+        kind: "checklist" as const,
+        title: act.title,
+        body,
+        material_id: null,
+        source_material_id: null,
+        source_revision: null,
+        card_set_id: null,
+        test_version_id: null,
+        source_test_version_id: null,
+        page_start: null,
+        page_end: null,
+        state,
+        cycle: 1,
+        revision: 1,
+        created_at: createdAt,
+        updated_at: isCompleted || isRemoved ? updatedAt : createdAt,
+        completed_at: actCompletedAt,
+        removed_at: isRemoved ? removedAt : null,
+      },
+      source: null,
+      evidence: isCompleted
+        ? {
+            version: 1 as const,
+            activity_id: act.id,
+            revision: 1,
+            cycle: 1,
+            kind: "checklist" as const,
+            completed_at: completedAt,
+            body,
+            source_material_id: null,
+            source_revision: null,
+            page_start: null,
+            page_end: null,
+          }
+        : null,
+    };
+  });
+
+  const active = activities.filter((e) => e.record.removed_at === null);
+  const allCompleted = active.length > 0 && active.every((e) => e.record.state === "completed");
+  const anyActiveProgress = active.some((e) => ["in_progress", "completed"].includes(e.record.state));
+  const assignmentState = allCompleted ? "completed" : anyActiveProgress ? "in_progress" : "upcoming";
+  const assignmentCompletedAt = allCompleted ? completedAt : null;
+
+  const lesson_id = options.lessonId !== undefined ? options.lessonId : null;
+  const source_lesson_id = options.sourceLessonId !== undefined ? options.sourceLessonId : lesson_id;
+
+  const snapshot: HomeworkSnapshot = {
+    version: 1,
+    assignment: {
+      id: assignmentId,
+      title: options.title ?? "Homework Assignment",
+      instructions: options.instructions ?? "SENTINEL_INSTRUCTIONS",
+      school: null,
+      instructor: options.instructor !== undefined ? options.instructor : "SENTINEL_INSTRUCTOR_NOTES",
+      lesson_id,
+      source_lesson_id,
+      due_date: null,
+      state: assignmentState,
+      revision: 1,
+      action_id: null,
+      archived: options.archived ?? 0,
+      created_at: createdAt,
+      updated_at: updatedAt,
+      completed_at: assignmentCompletedAt,
+    },
+    activities,
+    runs: [],
+  };
+
+  return validateHomeworkSnapshot(snapshot);
+}
+
+function open(props: { open?: boolean; data?: typeof data; event?: ScheduleEvent } = {}) {
+  const currentData = props.data ?? data;
+  const currentEvent = props.event ?? lesson;
+  const value = { repositories: null, data: currentData, status: "ready", error: null, mutate: async () => null, deleteWithUndo: () => undefined } as unknown as ContextType<
     typeof AppDataContext
   >;
-  const element = (isOpen: boolean, shown = lesson) => h(AppDataContext.Provider, { value }, h(LessonBriefDialog, { open: isOpen, event: shown, onClose: () => {} }));
+  const element = (isOpen: boolean, shown = currentEvent) => h(AppDataContext.Provider, { value }, h(LessonBriefDialog, { open: isOpen, event: shown, onClose: () => {} }));
   const view = render(element(props.open ?? true));
   return {
     view,
@@ -250,5 +365,75 @@ describe("Lesson brief", () => {
     const frame = screen.getByTitle("Lesson brief preview");
     expect(frame.getAttribute("sandbox")).toBe("allow-same-origin allow-modals");
     expect(preview()).toContain(`content="default-src 'none'; style-src 'unsafe-inline'"`);
+  });
+
+  it("previews homework activities in readiness and saves the exact preview without leaking private fields", async () => {
+    const hwLessonId = "00000000-0000-4000-8000-000000000010";
+    const hwLesson = makeEvent({
+      id: hwLessonId,
+      title: "Crosswind landings",
+      date: "2026-10-24",
+      notes: "SENTINEL_LESSON_NOTES",
+    });
+    const hw = makeValidHomeworkSnapshot({
+      assignmentId: "00000000-0000-4000-8000-000000000001",
+      lessonId: hwLessonId,
+      sourceLessonId: hwLessonId,
+      instructions: "SENTINEL_HW_INSTRUCTIONS",
+      instructor: "SENTINEL_HW_INSTRUCTOR_NOTES",
+      activities: [
+        {
+          id: "00000000-0000-4000-8000-000000000002",
+          title: "Pre-flight checklist & emergency review <script>alert(1)</script>",
+          state: "completed",
+          body: "SENTINEL_ACTIVITY_BODY_1",
+        },
+        {
+          id: "00000000-0000-4000-8000-000000000003",
+          title: "Pattern briefing",
+          state: "in_progress",
+          body: "SENTINEL_ACTIVITY_BODY_2",
+        },
+      ],
+    });
+    const hwData = {
+      ...EMPTY_DATA,
+      events: [hwLesson],
+      prepItems: [makePrepItem({ eventId: hwLessonId, title: "Check METAR" })],
+      journalEntries: [makeJournalEntry({ date: "2026-10-17", questionsForNextTime: "Crab or slip?", wentWell: "SENTINEL_WENT_WELL" })],
+      homework: [hw],
+    };
+
+    saveStudyExport.mockResolvedValue({ fileName: "Lesson brief.html", byteLength: 10 });
+    open({ data: hwData, event: hwLesson });
+
+    // Preview iframe srcdoc has the readiness count and items
+    const doc = preview();
+    expect(doc).toContain("1 of 3 ready");
+    expect(doc).toContain("<strong>To do:</strong> Check METAR");
+    expect(doc).toContain("<strong>Done:</strong> Pre-flight checklist &amp; emergency review &lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(doc).toContain("<strong>To do:</strong> Pattern briefing");
+
+    // Private sentinels are completely omitted
+    for (const sentinel of [
+      "SENTINEL_ACTIVITY_BODY_1",
+      "SENTINEL_ACTIVITY_BODY_2",
+      "SENTINEL_HW_INSTRUCTIONS",
+      "SENTINEL_HW_INSTRUCTOR_NOTES",
+      "SENTINEL_LESSON_NOTES",
+      "SENTINEL_WENT_WELL",
+    ]) {
+      expect(doc).not.toContain(sentinel);
+    }
+    expect(doc).not.toContain("<script>alert(1)</script>");
+
+    // Save sends the exact preview HTML (including the homework activities)
+    fireEvent.click(screen.getByRole("button", { name: "Save…" }));
+    expect((await screen.findByRole("status")).textContent).toBe("Saved “Lesson brief.html”.");
+    expect(saveStudyExport).toHaveBeenCalledWith(
+      "brief",
+      "Lesson brief 2026-10-24 Crosswind landings.html",
+      doc,
+    );
   });
 });
