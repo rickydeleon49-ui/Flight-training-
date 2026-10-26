@@ -375,7 +375,11 @@ function FlightHoursCard({
       <CardHeader
         title="Flight hours"
         eyebrow="Logbook snapshot"
-        action={<span className="tiny dim">{totals.flights} flights</span>}
+        action={
+          <span className="tiny dim">
+            {totals.flights} {totals.flights === 1 ? "flight" : "flights"}
+          </span>
+        }
       />
       <CardBody>
         <div className="deck-flight-hours">
@@ -385,7 +389,10 @@ function FlightHoursCard({
           </div>
           <div className="deck-flight-hours__recent">
             <p className="strong numeric">{formatHours(activity.hoursLast30Days)} hr</p>
-            <p className="tiny dim">across {activity.flightsLast30Days} flights in 30 days</p>
+            <p className="tiny dim">
+              across {activity.flightsLast30Days}{" "}
+              {activity.flightsLast30Days === 1 ? "flight" : "flights"} in 30 days
+            </p>
           </div>
         </div>
         <div className="deck-flight-hours__categories tiny dim">

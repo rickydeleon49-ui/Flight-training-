@@ -7,7 +7,7 @@ import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
 import { FlightDeck } from "./FlightDeck";
 import { ReminderPopup } from "@/components/reminders/ReminderPopup";
 import { ActionRow } from "@/components/actions/ActionRow";
-import { makeAction, makeEvent, makeMaterial, makePrepItem, makeQuestion } from "@/testing/factories";
+import { makeAction, makeEvent, makeJournalEntry, makeMaterial, makePrepItem, makeQuestion } from "@/testing/factories";
 import type { HomeworkSnapshot } from "@/domain/homework";
 
 let appData: AppData;
@@ -648,6 +648,86 @@ describe("FlightDeck and reminders bound homework actions", () => {
       expect(currentLocation).toBe(
         `/study/homework/${activeAssignmentId}?activity=${activeActivityId}`,
       );
+    });
+  });
+
+  describe("FlightDeck flight hours singular/plural captions", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-10-25T12:00:00Z"));
+      appData.actions = [
+        makeAction({
+          id: "act-default",
+          title: "Preflight planning",
+          dueDate: "2026-10-25",
+        }),
+      ];
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("renders null for flight hours card when there are 0 logged flights", () => {
+      appData.journalEntries = [];
+      render(h(MemoryRouter, null, h(FlightDeck)));
+      expect(screen.queryByText("Flight hours")).toBeNull();
+    });
+
+    it("displays singular '1 flight' and 'across 1 flight in 30 days' when exactly 1 flight exists in 30 days", () => {
+      appData.journalEntries = [
+        makeJournalEntry({
+          id: "j-1",
+          date: "2026-10-20",
+          totalTime: 1.5,
+          aircraftType: "C172",
+        }),
+      ];
+      render(h(MemoryRouter, null, h(FlightDeck)));
+
+      expect(screen.getByText("Flight hours")).toBeTruthy();
+      expect(screen.getByText("1 flight")).toBeTruthy();
+      expect(screen.queryByText("1 flights")).toBeNull();
+      expect(screen.getByText("across 1 flight in 30 days")).toBeTruthy();
+      expect(screen.queryByText("across 1 flights in 30 days")).toBeNull();
+    });
+
+    it("displays plural '2 flights' and 'across 2 flights in 30 days' when 2 flights exist in 30 days", () => {
+      appData.journalEntries = [
+        makeJournalEntry({
+          id: "j-1",
+          date: "2026-10-18",
+          totalTime: 1.2,
+          aircraftType: "C172",
+        }),
+        makeJournalEntry({
+          id: "j-2",
+          date: "2026-10-20",
+          totalTime: 1.8,
+          aircraftType: "C172",
+        }),
+      ];
+      render(h(MemoryRouter, null, h(FlightDeck)));
+
+      expect(screen.getByText("Flight hours")).toBeTruthy();
+      expect(screen.getByText("2 flights")).toBeTruthy();
+      expect(screen.getByText("across 2 flights in 30 days")).toBeTruthy();
+    });
+
+    it("displays 'across 0 flights in 30 days' when flights exist only outside the last 30 days", () => {
+      appData.journalEntries = [
+        makeJournalEntry({
+          id: "j-old",
+          date: "2026-08-01",
+          totalTime: 2.0,
+          aircraftType: "C172",
+        }),
+      ];
+      render(h(MemoryRouter, null, h(FlightDeck)));
+
+      expect(screen.getByText("Flight hours")).toBeTruthy();
+      expect(screen.getByText("1 flight")).toBeTruthy();
+      expect(screen.getByText("across 0 flights in 30 days")).toBeTruthy();
     });
   });
 });

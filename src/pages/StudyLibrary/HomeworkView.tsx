@@ -46,6 +46,10 @@ export function HomeworkView() {
     const [checkedSources,setCheckedSources] = useState<HomeworkSnapshot | null>(null);
     const [announcement, setAnnouncement] = useState("");
     const focusActivity = useRef<string | null>(null);
+    const cardFocusIntent = useRef<{ activityId: string; headingId: string; assignmentId: string } | null>(null);
+    useEffect(() => {
+        cardFocusIntent.current = null;
+    }, [assignmentId]);
     const [filter, setFilter] = useState<keyof typeof filters>("upcoming");
     const [editor, setEditor] = useState<Editor | null>(null);
     const [removing, setRemoving] = useState<Entry | null>(null);
@@ -65,13 +69,29 @@ export function HomeworkView() {
     const started = useRef<number | null>(null);
 
     const targetActivity = searchParams.get("activity");
+    const targetSelection = assignmentId && targetActivity ? `${assignmentId}:${targetActivity}` : null;
+    const handledTargetSelection = useRef<string | null>(null);
+
     useEffect(() => {
-        if (targetActivity && current) {
-            const el = document.getElementById(`homework-${targetActivity}`);
-            el?.scrollIntoView();
-            el?.focus();
+        if (!targetSelection) {
+            handledTargetSelection.current = null;
+            return;
         }
-    }, [targetActivity, current]);
+        if (handledTargetSelection.current && handledTargetSelection.current !== targetSelection) {
+            handledTargetSelection.current = null;
+        }
+        if (handledTargetSelection.current === targetSelection) {
+            return;
+        }
+        if (!loading && current && current.assignment.id === assignmentId) {
+            const el = document.getElementById(`homework-${targetActivity}`);
+            if (el) {
+                el.scrollIntoView();
+                el.focus();
+                handledTargetSelection.current = targetSelection;
+            }
+        }
+    }, [targetSelection, targetActivity, assignmentId, loading, current]);
     useEffect(() => { const update = () => setToday(todayIso()); const timer = window.setInterval(update, 30000); window.addEventListener("focus", update); document.addEventListener("visibilitychange", update); return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); }; }, []);
     useEffect(() => {
         const mine = ++lease.current;
@@ -151,6 +171,34 @@ export function HomeworkView() {
         document.getElementById(`homework-${focusActivity.current}`)?.focus();
         focusActivity.current = null;
     } }, [loading,busy]);
+    useEffect(() => {
+        if (!busy && !loading && checkedSources && checkedSources === current && cardFocusIntent.current) {
+            const intent = cardFocusIntent.current;
+            cardFocusIntent.current = null;
+            if (intent.assignmentId !== assignmentId) return;
+
+            const active = document.activeElement;
+            const movedAway =
+                active &&
+                active !== document.body &&
+                active !== document.documentElement;
+            if (movedAway) return;
+
+            const run = current.runs.find(
+                (r) =>
+                    r.activity_id === intent.activityId &&
+                    r.cycle === current.activities.find((a) => a.record.id === intent.activityId)?.record.cycle &&
+                    !r.invalidated_at &&
+                    r.kind === "cards",
+            ) as import("@/domain/homework").HomeworkCardRun | undefined;
+
+            if (run?.finished_at) {
+                document.getElementById(`homework-${intent.activityId}`)?.focus({ preventScroll: true });
+            } else {
+                document.getElementById(intent.headingId)?.focus({ preventScroll: true });
+            }
+        }
+    }, [busy, loading, checkedSources, current, assignmentId]);
     const loadAgain = () => { pending.current = null; setEditor(null); setReload(n => n + 1); };
     const perform = async (op: HomeworkOperation) => {
         if (lock.current || !repositories)
@@ -269,7 +317,7 @@ export function HomeworkView() {
             <p className="homework-text">{r.body}</p>
           ) : null}
           {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
-          {done && r.kind==='cards' ? <p>Historical review · {(current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle && run.kind==='cards') as import("@/domain/homework").HomeworkCardRun | undefined)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
+          {done && r.kind==='cards' ? <p>Historical review · {(current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle && !run.invalidated_at && run.kind==='cards') as import("@/domain/homework").HomeworkCardRun | undefined)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}
           {done && r.kind==='test' ? (() => {
             const testRun = current.runs.find(run => run.activity_id === r.id && run.cycle === r.cycle && run.kind === 'test') as import("@/domain/homework").HomeworkTestRun | undefined;
             const ev = testRun?.evidence;
@@ -278,7 +326,7 @@ export function HomeworkView() {
           <div className="row row--wrap">
             {r.kind === 'read' ? <><Button disabled={missing || !controller || status.kind === 'working'} onClick={() => void openReading(e)}>Open PDF at page {r.page_start ?? 1}</Button>{!done ? <Button disabled={!editable || missing} onClick={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}>Mark reading complete</Button> : null}</> : null}
             {r.kind === 'checklist' && !done ? <label className="row"><input type="checkbox" checked={false} disabled={!editable} onChange={() => change('complete', s => { s.activities.find(x => x.record.id === r.id)!.record.state = 'completed'; })}/>Done</label> : null}
-            {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={async op => { await perform(op); }} reload={() => setReload(n=>n+1)} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
+            {r.kind === 'cards' && repositories?.cardReviews && !missing && checkedSources===current ? <HomeworkCardRun snapshot={current} entry={e} repository={repositories.cardReviews} disabled={!editable || !!current.assignment.archived} save={async op => { await perform(op); }} reload={(intent?: { activityId?: string; headingId?: string }) => { if (intent?.activityId && intent?.headingId && current) { cardFocusIntent.current = { activityId: intent.activityId, headingId: intent.headingId, assignmentId: current.assignment.id }; } else { cardFocusIntent.current = null; } setReload(n=>n+1); }} reopen={() => change('reopen',s=>{s.activities.find(x=>x.record.id===r.id)!.record.cycle++;})}/> : null}
             {r.kind === 'test' && !done ? (() => {
               const openRun = current.runs.find(run => run.activity_id === r.id && run.cycle === r.cycle && !run.finished_at && !run.invalidated_at && run.kind === 'test');
               if (missing || checkedSources !== current) {
