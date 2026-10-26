@@ -18,6 +18,37 @@
 
 .action-row .checkbox { flex: 1; min-width: 0; }
 
+.action-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.action-row--homework .action-row__tools {
+  opacity: 1;
+}
+
+.action-row--homework .action-row__tools .button {
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .action-row--homework {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-row--homework .action-row__content {
+    width: 100%;
+  }
+
+  .action-row--homework .action-row__tools {
+    align-self: flex-start;
+  }
+}
+
 .action-row__meta {
   display: flex;
   flex-wrap: wrap;

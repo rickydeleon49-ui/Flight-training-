@@ -473,7 +473,30 @@ function NextFlightCard({ model }: { model: Model }) {
                       {line.done ? <CheckIcon size={13} /> : <span aria-hidden="true">○</span>}
                       {line.done ? "Complete" : "Incomplete"}
                     </span>
-                    <span className="prep-list__label wrap-anywhere">{line.source === "homework" ? <Link to={`/study/homework/${line.assignmentId}?activity=${line.id}`}>{line.label}</Link> : line.label}</span>
+                    <span className="prep-list__label wrap-anywhere">
+                      {line.source === "homework" ? (
+                        <Link
+                          className="prep-list__link"
+                          to={`/study/homework/${line.assignmentId}?activity=${line.id}`}
+                        >
+                          {line.label}
+                        </Link>
+                      ) : line.source === "question" ? (
+                        <Link
+                          className="prep-list__link"
+                          to={`/questions?question=${encodeURIComponent(line.id)}`}
+                        >
+                          {line.label}
+                        </Link>
+                      ) : (
+                        <Link
+                          className="prep-list__link"
+                          to={`/schedule/${event.id}`}
+                        >
+                          {line.label}
+                        </Link>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>

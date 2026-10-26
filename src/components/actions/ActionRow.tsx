@@ -69,8 +69,12 @@ export function ActionRow({
 
   if (boundHw) {
     return (
-      <div className={`action-row${overdue ? " action-row--overdue" : ""}`}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+      <div
+        className={`action-row action-row--homework${
+          overdue ? " action-row--overdue" : ""
+        }`}
+      >
+        <div className="action-row__content">
           <span className="strong wrap-anywhere">{action.title}</span>
           {meta}
         </div>
