@@ -409,7 +409,12 @@ export function FlightJournal() {
           <Card>
             <CardHeader
               title="Your training history"
-              action={<span className="tiny dim">{data.journalEntries.length} entries</span>}
+              action={
+                <span className="tiny dim">
+                  {data.journalEntries.length}{" "}
+                  {data.journalEntries.length === 1 ? "entry" : "entries"}
+                </span>
+              }
             />
             <CardBody flush>
               {data.journalEntries.length === 0 ? (

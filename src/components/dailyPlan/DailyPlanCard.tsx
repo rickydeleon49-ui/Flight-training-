@@ -17,6 +17,10 @@ import {
   getStartTarget,
 } from "@/logic/dailyPlan";
 import type { Recommendation, RecommendationPrecedence } from "@/logic/recommendations";
+import {
+  buildStudyFlowCandidates,
+  type StudyFlowCandidate,
+} from "@/logic/studyFlowCandidates";
 import { useDailyPlan } from "@/state/useDailyPlan";
 import { useLocalToday } from "@/state/useLocalToday";
 
@@ -57,6 +61,47 @@ function precedenceLabel(precedence: RecommendationPrecedence): string {
     default:
       return "Action";
   }
+}
+
+function getSuggestedActionDetails(candidate: StudyFlowCandidate, isFirst: boolean) {
+  let buttonText: "Continue" | "Start" | "Open";
+  if (isFirst) {
+    if (candidate.flowKind === "continue") {
+      buttonText = "Continue";
+    } else if (candidate.flowKind === "open") {
+      buttonText = "Open";
+    } else {
+      buttonText = "Start";
+    }
+  } else {
+    if (candidate.flowKind === "continue" || candidate.flowKind === "open") {
+      buttonText = "Open";
+    } else {
+      buttonText = "Start";
+    }
+  }
+
+  let ariaLabel = candidate.target.label;
+  if (candidate.target.isLocalAction && ariaLabel.startsWith("Start action: ") && buttonText === "Start") {
+    // Preserve "Start action: <title>" for ordinary local actions
+    return { buttonText, ariaLabel };
+  }
+
+  if (buttonText === "Continue") {
+    if (!ariaLabel.toLowerCase().startsWith("continue ")) {
+      ariaLabel = `Continue ${ariaLabel.replace(/^(open|start)\s+/i, "")}`;
+    }
+  } else if (buttonText === "Start") {
+    if (!ariaLabel.toLowerCase().startsWith("start ")) {
+      ariaLabel = `Start ${ariaLabel.replace(/^(open|continue)\s+/i, "")}`;
+    }
+  } else if (buttonText === "Open") {
+    if (!ariaLabel.toLowerCase().startsWith("open ")) {
+      ariaLabel = `Open ${ariaLabel.replace(/^(start|continue)\s+/i, "")}`;
+    }
+  }
+
+  return { buttonText, ariaLabel };
 }
 
 export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps) {
@@ -113,6 +158,8 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
     if (option) void chooseBudget(option.value);
   };
 
+  const candidates = buildStudyFlowCandidates(plan, sources);
+
   const handleStart = (item: Recommendation) => {
     const target = getStartTarget(item, sources);
     if (!target.isLocalAction || !target.elementId) return;
@@ -122,6 +169,18 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
       onStartAction(actionId);
     } else if (!focusRenderedAction(actionId)) {
       setStartNote(`"${item.title}" isn't shown on this page. Find it in your action list.`);
+    }
+  };
+
+  const handleSuggestedAction = (candidate: StudyFlowCandidate) => {
+    const { target } = candidate;
+    if (!target.isLocalAction || !target.elementId) return;
+    const actionId = target.elementId.replace(/^action-/, "");
+    setStartNote(null);
+    if (onStartAction) {
+      onStartAction(actionId);
+    } else if (!focusRenderedAction(actionId)) {
+      setStartNote(`"${candidate.title}" isn't shown on this page. Find it in your action list.`);
     }
   };
 
@@ -301,15 +360,27 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
           )
         ) : (
           <div className="daily-plan-list" style={{ marginTop: "var(--space-4)" }}>
-            {plan.suggested.map((item) => {
-              const target = getStartTarget(item, sources);
+            {candidates.map((candidate, index) => {
+              const item = plan.suggested[index]!;
+              const target = candidate.target;
               const isWhyOpen = openWhyId === item.id;
+              const isFirst = index === 0;
+              const { buttonText, ariaLabel } = getSuggestedActionDetails(candidate, isFirst);
+              const primaryBtnClass = isFirst
+                ? "button button--primary daily-plan-item__action-primary"
+                : "button button--secondary button--small";
 
               return (
-                <article className="daily-plan-item" key={item.id}>
+                <article
+                  className={`daily-plan-item${isFirst ? " daily-plan-item--prominent" : ""}`}
+                  key={item.id}
+                >
                   <div className="daily-plan-item__main">
                     <div className="daily-plan-item__content">
                       <div className="daily-plan-item__header">
+                        {isFirst ? (
+                          <span className="daily-plan-item__next-tag">Next in your plan</span>
+                        ) : null}
                         <Badge tone={precedenceTone(item.precedence)}>
                           {precedenceLabel(item.precedence)}
                         </Badge>
@@ -324,25 +395,30 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                       </div>
                       <h4 className="daily-plan-item__title">{item.title}</h4>
                       <p className="daily-plan-item__explanation">{item.explanation}</p>
+                      {candidate.requiresSourceCheck ? (
+                        <p className="daily-plan-item__source-note tiny muted">
+                          Source is checked when opened
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="daily-plan-item__actions">
                       {target.isLocalAction ? (
                         <button
                           type="button"
-                          className="button button--primary button--small"
-                          onClick={() => handleStart(item)}
-                          aria-label={target.label}
+                          className={primaryBtnClass}
+                          onClick={() => handleSuggestedAction(candidate)}
+                          aria-label={ariaLabel}
                         >
-                          Start
+                          {buttonText}
                         </button>
                       ) : (
                         <Link
                           to={target.path}
-                          className="button button--primary button--small"
-                          aria-label={target.label}
+                          className={primaryBtnClass}
+                          aria-label={ariaLabel}
                         >
-                          Start
+                          {buttonText}
                         </Link>
                       )}
 

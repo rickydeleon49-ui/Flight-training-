@@ -111,7 +111,7 @@ it("live homework reaches the plan, and Complete opens its evidence flow", async
     h(Route, { path: "/study/homework/:assignmentId", element: h("p", null, "Homework evidence flow") }),
   ))));
   await screen.findByText("Daily Flight Plan");
-  const link = await screen.findByRole("link", { name: /Open homework for Review the synthetic checklist/ });
+  const link = await screen.findByRole("link", { name: /Start homework for Review the synthetic checklist/ });
   expect(link.getAttribute("href")).toBe(`/study/homework/${draft.assignment.id}?activity=${draft.activities[0]!.record.id}`);
   fireEvent.click(screen.getByRole("button", { name: "Why recommend Review the synthetic checklist?" }));
   expect(screen.getByText(`Homework overdue since ${formatShortDate(draft.assignment.due_date, today)}`)).toBeTruthy();

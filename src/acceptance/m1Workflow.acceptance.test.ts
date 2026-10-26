@@ -209,7 +209,7 @@ describe("M1 D7 acceptance: Daily Flight Plan and debrief workflow", () => {
       expect((await repos.app.getDailyPlanState())?.decisions[`action:${seed.skippable.id}`]?.type).toBe("skip"),
     );
     await act(async () => {
-      fireEvent.click(within(card).getByRole("link", { name: "Open study material for Read the steep turn chapter" }));
+      fireEvent.click(within(card).getByRole("link", { name: "Start study material for Read the steep turn chapter" }));
     });
     await screen.findByRole("heading", { name: "Synthetic Handbook — Steep Turns" });
 
