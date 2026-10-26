@@ -436,6 +436,193 @@
 .material-jumps { padding-block: var(--space-2); }
 .card-review__wait { color: inherit; opacity: 0.85; }
 
+/* Standalone card review container and responsive / 200% font safeguards */
+.card-review {
+  min-width: 0;
+  max-width: 100%;
+}
+.card-review .row {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.card-review .source-badge {
+  min-width: 0;
+  max-width: 100%;
+}
+.card-review .button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.card-review .badge--button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  align-items: center;
+  box-sizing: border-box;
+}
+.card-review .card-review__session {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.card-review .flashcard {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.card-review .card-review__answer {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.card-review .card-review__ratings .button {
+  height: auto;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  line-height: var(--leading-tight);
+}
+.card-review .card-review__ratings .button > span:first-child {
+  white-space: nowrap;
+}
+.card-review .card-review__wait {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+@media (max-width: 600px) {
+  .card-review .card-review__ratings {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .card-review .card-review__session {
+    padding: var(--space-2);
+  }
+  .card-review .flashcard {
+    padding: var(--space-3);
+  }
+}
+.card-review .card-review__options {
+  min-width: 0;
+  max-width: 100%;
+}
+.card-review .card-review__menu {
+  min-width: 0;
+  max-width: 100%;
+}
+.card-review .card-review__menu .button {
+  text-align: left;
+  justify-content: flex-start;
+}
+.card-review .card-review__list li {
+  overflow-wrap: break-word;
+}
+
+/* MaterialDetail scoped safeguards */
+.material-detail {
+  min-width: 0;
+  max-width: 100%;
+}
+.material-detail .detail__column {
+  min-width: 0;
+  max-width: 100%;
+}
+.material-detail .button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.material-detail .button--block {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.material-detail .badge--button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  align-items: center;
+  box-sizing: border-box;
+}
+.material-detail .badge {
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+.material-detail .source-badge {
+  min-width: 0;
+  max-width: 100%;
+}
+.material-detail .source-badge__note {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+/* Flashcards section (#material-flashcards) safeguards */
+#material-flashcards {
+  min-width: 0;
+  max-width: 100%;
+}
+#material-flashcards .row {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+#material-flashcards .card__header {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+#material-flashcards .flashcard {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+#material-flashcards .flashcard span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+#material-flashcards .source-badge {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 560px) {
+  #material-flashcards .flashcard {
+    padding: var(--space-3);
+  }
+}
+
+/* Narrow MaterialDetail definition list conversion to viable single column */
+@media (max-width: 700px) {
+  .material-detail .definition {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+  .material-detail .definition dt {
+    margin-top: var(--space-2);
+  }
+  .material-detail .definition dt:first-child {
+    margin-top: 0;
+  }
+  .material-detail .definition dd {
+    margin: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+}
+
 /* Library-wide card reviews (M2-4 / C2) */
 .library-tabs {
   display: flex;

@@ -218,6 +218,25 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
   });
 
+  it("focuses the card heading upon reveal so digit shortcuts work from activeElement", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    const showAnswer = await openSession();
+    showAnswer.focus();
+    expect(document.activeElement).toBe(showAnswer);
+
+    fireEvent.click(showAnswer);
+    expect(await screen.findByText("B")).toBeTruthy();
+    const heading = sessionRegion().getByRole("heading", { name: "Card 1 of 3 · new" });
+    expect(document.activeElement).toBe(heading);
+
+    fireEvent.keyDown(document.activeElement!, { key: "3" });
+    expect(await screen.findByText("Saved: back tomorrow")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Card 2 of 3 · new" })).toBeTruthy();
+    expect(await counts()).toMatchObject({ events: 1, states: 1, receipts: 1 });
+  });
+
   it("separates the dangerous reset action from the session controls and still confirms", async () => {
     await seed();
     renderDetail();

@@ -623,7 +623,7 @@ function MaterialDetailPage() {
         </Card>
       ) : null}
 
-      <div className="detail">
+      <div className="detail material-detail">
         <div className="detail__column">
 
           <div id="material-start-here">
