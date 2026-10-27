@@ -10,6 +10,7 @@ import { useNavigationController } from "@/state/navigation/useDocumentNavigatio
 import { HomeworkCardRun } from "./HomeworkCardRun";
 import { HomeworkEditor } from "./HomeworkEditor";
 import { ACTIVITY_KINDS, activeHomework, homeworkOperation, homeworkSaveMessage, newHomework, type Entry, homeworkHistoryLabel, activityStateLabel, type HomeworkHistoryEntry } from "./homeworkUi";
+import { homeworkOfflineSummary } from "@/logic/homeworkOffline";
 import "./homework.css";
 type Editor = {
     snapshot: HomeworkSnapshot;
@@ -129,6 +130,7 @@ export function HomeworkView() {
         controller.abort(); started.current = null; }, [controller, assignmentId]);
     useEffect(() => {
         let live = true;
+        setCheckedSources(null);
         setSourceStates({});
         if (!current || !repositories)
             return;
@@ -166,7 +168,7 @@ export function HomeworkView() {
             }
         })).then(()=>{if(live)setCheckedSources(current);});
         return () => { live = false; };
-    }, [current, repositories, data.aiStudySets, dataRevision]);
+    }, [current, repositories, data.aiStudySets, dataRevision, reload]);
     useEffect(() => { if (!busy && !loading && focusActivity.current) {
         document.getElementById(`homework-${focusActivity.current}`)?.focus();
         focusActivity.current = null;
@@ -248,6 +250,18 @@ export function HomeworkView() {
     const openReading = async (e: Entry) => { if (!controller || !e.record.material_id || !e.record.page_start)
         return; const result = controller.openSaved({ materialId: e.record.material_id, contentSha256: e.record.source_revision, physicalPage: e.record.page_start, pageLabel: null }); started.current = controller.status().epoch; await result; };
     const active = current ? activeHomework(current) : [];
+    const offlineSummary = current && current.assignment.id === assignmentId
+        ? homeworkOfflineSummary({
+            activities: active.map(e => ({ id: e.record.id, kind: e.record.kind, title: e.record.title })),
+            sourceState: (id: string) => sourceStates[id],
+            sourceMissing: (id: string) => {
+                const e = active.find(x => x.record.id === id);
+                return e ? sourceMissing(e) : false;
+            },
+            checked: checkedSources === current,
+            canCheckFiles: Boolean(repositories?.navigation?.canCheckFiles()),
+        })
+        : null;
     const editable = !busy && !pending.current;
     return <div className="homework-view stack stack--4">
     <PageHeader title="Homework" subtitle="A little preparation, at your pace." action={<Button variant="primary" onClick={() => setEditor({ snapshot: newHomework(), creating: true })} disabled={busy}>Add homework</Button>}/>
@@ -257,6 +271,11 @@ export function HomeworkView() {
     {loading ? <p role="status">Loading homework…</p> : assignmentId ? !current ? <p>That homework isn't here any more.</p> : <>
       <Link to="/study/homework">All homework</Link>
       <Card><CardBody><div className="stack stack--3"><h2 className="wrap-anywhere">{current.assignment.title}</h2>
+        {offlineSummary && offlineSummary.summary.state !== "empty" ? (
+          <p role="status" aria-live="polite" className="small muted wrap-anywhere">
+            <span>Before you go offline</span> · <span>{offlineSummary.summary.text}</span>
+          </p>
+        ) : null}
         <p>{active.filter(e => e.record.state === 'completed').length} of {active.length} done{current.assignment.archived ? ' · Archived' : ''}</p>
         {current.assignment.due_date ? <p>Due {formatShortDate(current.assignment.due_date, today)}{!current.assignment.archived && current.assignment.state !== 'completed' && current.assignment.due_date < today ? <span className="homework-overdue"> · <AlertIcon size={14}/> overdue</span> : null}</p> : null}
         {current.assignment.instructions ? <p className="homework-text">{current.assignment.instructions}</p> : null}
@@ -270,8 +289,9 @@ export function HomeworkView() {
                 const r = e.record;
                 const missing = sourceMissing(e) || !!sourceStates[r.id];
                 const done = r.state === 'completed';
+                const offlineItem = offlineSummary?.items.find(item => item.id === r.id);
                 return <li key={r.id} className="homework-activity stack stack--3">
-          <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : activityStateLabel(r.state, r.id, history)}</p>
+          <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted wrap-anywhere">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : activityStateLabel(r.state, r.id, history)}{offlineItem ? <> · <span>{offlineItem.text}</span></> : null}</p>
           {['reflection', 'questions'].includes(r.kind) && !done ? (
             <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
               <textarea
