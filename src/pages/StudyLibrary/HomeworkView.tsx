@@ -319,7 +319,7 @@ export function HomeworkView() {
     {error ? <div role="alert"><p>{error.text}</p><Button onClick={loadAgain}>Reload</Button>{pending.current && !error.stale ? <Button disabled={busy} onClick={() => void perform(pending.current!)}>Retry save</Button> : null}</div> : null}
     {loading ? <p role="status">Loading homework…</p> : assignmentId ? !current ? <p>That homework isn't here any more.</p> : <>
       <Link to="/study/homework">All homework</Link>
-      <Card><CardBody><div className="stack stack--3"><h2 className="wrap-anywhere">{current.assignment.title}</h2>
+      <Card><CardBody><div className="stack stack--3"><h2 className="homework-title wrap-anywhere">{current.assignment.title}</h2>
         {offlineSummary && offlineSummary.summary.state !== "empty" ? (
           <p role="status" aria-live="polite" className="small muted wrap-anywhere">
             <span>Before you go offline</span> · <span>{offlineSummary.summary.text}</span>
