@@ -90,7 +90,7 @@ export function Notes() {
   };
 
   return (
-    <>
+    <div className="notes-page">
       <PageHeader
         title="Notes"
         subtitle="Somewhere to write it down without deciding where it goes first."
@@ -235,7 +235,7 @@ export function Notes() {
         }}
         onCancel={() => setConfirmingDelete(null)}
       />
-    </>
+    </div>
   );
 }
 

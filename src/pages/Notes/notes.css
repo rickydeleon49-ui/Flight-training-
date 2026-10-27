@@ -1,11 +1,45 @@
 /* Notes: a running page of whatever she wanted to keep. */
 
+.notes-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Ensure buttons and icon buttons in the Notes page meet 44px min touch/target dimensions */
+.notes-page .button,
+.notes-page .icon-button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Recovery banner wrap and sizing */
+.notes-page .draft-note {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Composer / editor bottom rows wrap cleanly */
+.notes-page .row {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.notes-page .input,
+.notes-page .textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .note-row {
   display: flex;
   align-items: flex-start;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
   border-top: 1px solid var(--border-subtle);
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* A pinned note is marked at the edge rather than given its own section, so
@@ -14,7 +48,13 @@
 
 .note-row--editing { background: var(--surface-sunken); }
 
-.note-row__main { flex: 1; min-width: 0; }
+.note-row__main {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 .note-row__heading {
   display: flex;
@@ -42,9 +82,12 @@
 /* Three small controls sit better in a row than stacked down a tall note. */
 .note-row__tools {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   flex: none;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 720px) {
