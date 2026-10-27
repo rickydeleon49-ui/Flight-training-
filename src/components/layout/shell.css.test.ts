@@ -16,4 +16,10 @@ describe("navigation layout", () => {
     const navRule = css.slice(css.indexOf(".nav {"), css.indexOf("}", css.indexOf(".nav {")));
     expect(navRule).toContain("position: relative");
   });
+
+  it("narrow layout gives spare height to the page, not the top bar", () => {
+    const narrow = css.slice(css.indexOf("@media (max-width: 999px)"));
+    const shellRule = narrow.slice(narrow.indexOf(".shell {"), narrow.indexOf("}", narrow.indexOf(".shell {")));
+    expect(shellRule).toContain("grid-template-rows: auto 1fr");
+  });
 });

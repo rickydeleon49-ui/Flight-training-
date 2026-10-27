@@ -24,6 +24,8 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
         pageActivityId?: string;
     } | null>(null);
     const problemId = useId();
+    const addButtons = useRef<HTMLDivElement>(null);
+    const [focusActivity, setFocusActivity] = useState<string | null | undefined>(undefined);
     const activitySections = useRef(new Map<string, HTMLElement>());
     useEffect(() => {
         if (!problem?.pageActivityId) return;
@@ -31,6 +33,15 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
         start?.focus({ preventScroll: true });
         start?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
     }, [problem]);
+    useEffect(() => {
+        if (focusActivity === undefined) return;
+        const target = focusActivity === null
+            ? addButtons.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+            : activitySections.current.get(focusActivity)?.querySelector<HTMLInputElement>("input");
+        target?.focus();
+        target?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+        setFocusActivity(undefined);
+    }, [focusActivity]);
     const mounted = useRef(true);
     useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
     const submitting = useRef(false);
@@ -42,7 +53,24 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
     const [checking, setChecking] = useState(false);
     const assignment = draft.assignment;
     function updateEntry(id: string, change: (entry: Entry) => void) { setDraft(s => { const next = structuredClone(s); change(next.activities.find(e => e.record.id === id)!); return next; }); }
-    const add = (kind: Entry["record"]["kind"]) => setDraft(s => ({ ...s, activities: [...s.activities, newHomeworkActivity(s.assignment.id, activeHomework(s).length, kind, s.assignment.created_at)] }));
+    const isNew = (id: string) => creating || !snapshot.activities.some(e => e.record.id === id);
+    const add = (kind: Entry["record"]["kind"]) => {
+        const entry = newHomeworkActivity(assignment.id, activeHomework(draft).length, kind, assignment.created_at);
+        setDraft(s => ({ ...s, activities: [...s.activities, entry] }));
+        setFocusActivity(entry.record.id);
+    };
+    const remove = (id: string) => {
+        if (!isNew(id) || busy || checking) return;
+        const index = entries.findIndex(e => e.record.id === id);
+        setFocusActivity((entries[index + 1] ?? entries[index - 1])?.record.id ?? null);
+        setDraft(s => {
+            const next = structuredClone(s);
+            next.activities = next.activities.filter(e => e.record.id !== id);
+            activeHomework(next).forEach((e, i) => { e.record.position = i; });
+            return next;
+        });
+        if (problem?.pageActivityId === id) setProblem(null);
+    };
     const chooseSource = async (id: string, materialId: string) => {
         if (!repositories)
             return;
@@ -146,7 +174,7 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
         }
     };
     const entries = activeHomework(draft).filter(e => creating || e.record.id === activityId || (adding && !snapshot.activities.some(p => p.record.id === e.record.id)));
-    return <Dialog open title={creating ? "Add homework" : relink ? "Choose a source" : "Edit homework"} onClose={onClose} dismissible={!busy && !checking} footer={<>{problem ? <p className="small" aria-hidden="true" style={{ flexBasis: "100%", margin: 0 }}>{problem.text}</p> : null}<Button onClick={onClose} disabled={busy || checking}>Cancel</Button><Button variant="primary" onClick={() => void submit()} disabled={busy || checking || problem?.stale}>{busy ? "Saving…" : "Save homework"}</Button></>}>
+    return <Dialog open title={creating ? "Add homework" : relink ? "Choose a source" : adding ? "Add activities" : "Edit homework"} onClose={onClose} dismissible={!busy && !checking} footer={<>{problem ? <p className="small" aria-hidden="true" style={{ flexBasis: "100%", margin: 0 }}>{problem.text}</p> : null}<Button onClick={onClose} disabled={busy || checking}>Cancel</Button><Button variant="primary" onClick={() => void submit()} disabled={busy || checking || problem?.stale}>{busy ? "Saving…" : "Save homework"}</Button></>}>
     <div className="stack stack--4">
       {problem ? <div role="alert"><p id={problemId}>{problem.text}</p>{problem.stale ? <Button onClick={async () => { try {
         setLatest(await repositories!.homework.get(snapshot.assignment.id));
@@ -163,11 +191,14 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
       {creating || adding ? (
         <div style={{ marginTop: "var(--space-4)" }}>
           <h4 className="homework-activities-heading">Activities</h4>
-          <div className="row row--wrap">{Object.entries(ACTIVITY_KINDS).map(([kind, label]) => <Button key={kind} disabled={activeHomework(draft).length >= 100} onClick={() => add(kind as Entry["record"]["kind"])}>Add {label.toLowerCase()}</Button>)}</div>
+          <div className="row row--wrap" ref={addButtons}>{Object.entries(ACTIVITY_KINDS).map(([kind, label]) => <Button key={kind} disabled={activeHomework(draft).length >= 100} onClick={() => add(kind as Entry["record"]["kind"])}>Add {label.toLowerCase()}</Button>)}</div>
         </div>
       ) : null}
       {entries.map(e => <section className="stack stack--3 homework-activity" key={e.record.id} ref={node => { if (node) activitySections.current.set(e.record.id, node); else activitySections.current.delete(e.record.id); }}>
-        <h3>{ACTIVITY_KINDS[e.record.kind]}</h3>
+        <div className="row row--wrap">
+          <h3>{ACTIVITY_KINDS[e.record.kind]}</h3>
+          {isNew(e.record.id) ? <Button aria-label={`Remove ${e.record.title || ACTIVITY_KINDS[e.record.kind]}`} onClick={() => remove(e.record.id)}>Remove</Button> : null}
+        </div>
         {["read","cards","test"].includes(e.record.kind)&&!e.record.source_revision?<p className="small muted">You can save this draft now and choose a source when you are ready.</p>:null}
         <Field label="Activity title">{({ id }) => <TextInput id={id} maxLength={200} value={e.record.title} disabled={relink} onChange={event => updateEntry(e.record.id, entry => { entry.record.title = event.target.value; })}/>}</Field>
         {!relink ? (

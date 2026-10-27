@@ -168,3 +168,108 @@ it.each([
     expect(document.activeElement).toBe(screen.getByLabelText("Start page"));
     expect(save).not.toHaveBeenCalled();
 });
+
+it.each([
+    [{ creating: true }, "Add homework"],
+    [{ adding: true }, "Add activities"],
+    [{}, "Edit homework"],
+    [{ relink: true }, "Choose a source"],
+])("names the dialog for its purpose: %s", (mode, title) => {
+    render(h(HomeworkEditor, { snapshot: newHomework(), ...mode, onSaved: vi.fn(), onReload: vi.fn(), onClose: vi.fn() }));
+    expect(screen.getByRole("dialog", { name: title })).toBeTruthy();
+    expect(saveButton()).toBeTruthy();
+});
+
+it.each([true, false])("removes only a new duplicate, retains saved work and contiguous positions (creating: %s)", async (creating) => {
+    const s = newHomework();
+    s.assignment.title = "Before my lesson";
+    const saved = newHomeworkActivity(s.assignment.id, 0, "reflection", s.assignment.created_at);
+    saved.record.body = "Keep this prompt";
+    saved.record.answer = "Keep this answer";
+    if (!creating) { s.assignment.revision = 1; s.activities.push(saved); }
+    const original = structuredClone(s);
+    render(h(HomeworkEditor, { snapshot: s, creating, adding: !creating, onSaved: vi.fn(), onReload: vi.fn(), onClose: vi.fn() }));
+    fireEvent.click(screen.getByRole("button", { name: "Add questions" }));
+    const first = screen.getByLabelText("Activity title");
+    expect(document.activeElement).toBe(first);
+    fireEvent.click(screen.getByRole("button", { name: "Add questions" }));
+    const second = screen.getAllByLabelText("Activity title")[1]!;
+    expect(document.activeElement).toBe(second);
+    const sections = screen.getAllByRole("button", { name: "Remove Questions" }).map(b => b.closest("section")!);
+    fireEvent.change(within(sections[1]!).getByLabelText("Activity text"), { target: { value: "Ask about crosswinds" } });
+    // Remove the first of two same-kind entries: identity matters, and the next entry receives focus.
+    fireEvent.click(within(sections[0]!).getByRole("button", { name: "Remove Questions" }));
+    expect(screen.getAllByLabelText("Activity title")).toHaveLength(1);
+    expect(document.activeElement).toBe(second);
+    expect(save).not.toHaveBeenCalled();
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    const next = save.mock.calls[0]![0].next;
+    expect(next.activities).toHaveLength(creating ? 1 : 2);
+    const questions = next.activities.find(e => e.record.kind === "questions")!;
+    expect(questions.record).toMatchObject({ title: "Questions", body: "Ask about crosswinds", position: creating ? 0 : 1, removed_at: null });
+    if (!creating) expect(next.activities.find(e => e.record.id === saved.record.id)).toEqual(saved);
+    expect(s).toEqual(original);
+});
+
+it("moves focus to the previous activity, then back to Add when the last new activity is removed", () => {
+    editor(newHomework());
+    fireEvent.click(screen.getByRole("button", { name: "Add reflection" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add checklist" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Checklist" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Activity title"));
+    fireEvent.change(screen.getByLabelText("Activity title"), { target: { value: "After landing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Remove After landing" }));
+    expect(screen.queryByLabelText("Activity title")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Add reading" }));
+    expect(save).not.toHaveBeenCalled();
+});
+
+it.each(["questions", "reflection", "checklist"] as const)("keeps untouched default %s visible, removable and included on Save", async kind => {
+    const s = newHomework();
+    s.assignment.title = "Before my lesson";
+    editor(s);
+    fireEvent.click(screen.getByRole("button", { name: `Add ${kind}` }));
+    const title = (screen.getByLabelText("Activity title") as HTMLInputElement).value;
+    expect(screen.getByRole("button", { name: `Remove ${title}` })).toBeTruthy();
+    expect((screen.getByLabelText("Activity text") as HTMLTextAreaElement).value).toBe("");
+    fireEvent.click(saveButton());
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+    expect(save.mock.calls[0]![0].next.activities).toHaveLength(1);
+    expect(save.mock.calls[0]![0].next.activities[0]!.record).toMatchObject({ kind, title, body: "" });
+    expect(screen.getByRole("button", { name: `Remove ${title}` })).toBeTruthy();
+});
+
+it("never offers draft removal for a saved activity being edited or relinked", () => {
+    const s = reading();
+    const props = { snapshot: s, activityId: s.activities[0]!.record.id, onSaved: vi.fn(), onReload: vi.fn(), onClose: vi.fn() };
+    const view = render(h(HomeworkEditor, props));
+    expect(screen.getByLabelText("Activity title")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Remove / })).toBeNull();
+    view.rerender(h(HomeworkEditor, { ...props, relink: true }));
+    expect(screen.queryByRole("button", { name: /^Remove / })).toBeNull();
+});
+
+it("disables removal while saving, and Cancel does not persist a draft removal", async () => {
+    const s = newHomework();
+    s.assignment.title = "Before my lesson";
+    const callbacks = editor(s);
+    fireEvent.click(screen.getByRole("button", { name: "Add questions" }));
+    let finish!: () => void;
+    save.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    fireEvent.click(saveButton());
+    const remove = screen.getByRole("button", { name: "Remove Questions" });
+    expect(remove.closest("fieldset")!.disabled).toBe(true);
+    fireEvent.click(remove);
+    expect(screen.getByLabelText("Activity title")).toBeTruthy();
+    finish();
+    await waitFor(() => expect(callbacks.onSaved).toHaveBeenCalledTimes(1));
+    cleanup(); save.mockClear();
+    const cancelled = editor(s);
+    fireEvent.click(screen.getByRole("button", { name: "Add questions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Questions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(cancelled.onClose).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+    expect(s.activities).toEqual([]);
+});
