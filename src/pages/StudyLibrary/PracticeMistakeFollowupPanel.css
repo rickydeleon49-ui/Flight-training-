@@ -1,0 +1,229 @@
+/**
+ * Scoped styles for the opt-in short saved-attempt mistake review panel
+ * and scoped layout fixes for AttemptReviewPage.
+ * Touch targets meet the 44px minimum bounding box.
+ * Fully responsive: flex wrapping without horizontal clipping or overflow:hidden.
+ */
+
+/* =========================================================================
+   Scoped layout rules for successful AttemptReviewPage
+   Addresses 390px / 200% text zoom overflow and 44px minimum target sizes.
+   ========================================================================= */
+
+.practice-attempt-review-page {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .card__header > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .card__header .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .source-badge {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-attempt-review-page .badge {
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+  box-sizing: border-box;
+}
+
+.practice-attempt-review-page .filter-chips .filter-chip,
+.practice-attempt-review-page .filter-chip,
+.practice-attempt-review-page .badge--button,
+.practice-attempt-review-page button,
+.practice-attempt-review-page a.button {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.practice-attempt-review-page .practice-option {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  cursor: default;
+}
+
+.practice-attempt-review-page .practice-option > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* =========================================================================
+   Scoped styles for the Short saved review panel itself
+   ========================================================================= */
+
+.practice-mistake-followup {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__heading {
+  margin: 0;
+  outline: none;
+  min-width: 0;
+}
+
+.practice-mistake-followup__heading:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+.practice-mistake-followup__body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__size-select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.practice-mistake-followup__button,
+.practice-mistake-followup button,
+.practice-mistake-followup a.button,
+.practice-mistake-followup .badge--button {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.practice-mistake-followup .practice-option {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: default;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.practice-mistake-followup .practice-option > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.practice-mistake-followup__revealed-details {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+  border-radius: var(--radius-sm, 6px);
+  min-width: 0;
+  max-width: 100%;
+}
