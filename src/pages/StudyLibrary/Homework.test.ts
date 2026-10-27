@@ -101,7 +101,7 @@ it("stale_save_keeps_draft_and_offers_reload", async () => {
     editor();
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Keep my draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
-    await screen.findByText("This changed elsewhere. Reload to see the latest");
+    expect((await screen.findByRole("alert")).textContent).toContain("This changed elsewhere. Reload to see the latest");
     expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Keep my draft");
     expect(screen.getByRole("button", { name: "Reload" })).toBeTruthy();
 });
@@ -236,7 +236,7 @@ it("saves all six kinds with verified sources and optional fields", async () => 
     }
     fireEvent.change(screen.getByLabelText("End page"), { target: { value: "9" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
-    await screen.findByText("Choose a physical page range within this PDF.");
+    expect((await screen.findByRole("alert")).textContent).toContain("It has 8 pages — choose pages 1–8.");
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText("End page"), { target: { value: "4" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));

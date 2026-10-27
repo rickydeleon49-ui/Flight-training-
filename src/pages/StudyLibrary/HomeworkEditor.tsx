@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button, Dialog, Field, TextInput, TextArea } from "@/components/ui";
 import type { HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
 import { useAppData } from "@/state/AppDataContext";
@@ -21,7 +21,16 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
     const [problem, setProblem] = useState<{
         text: string;
         stale: boolean;
+        pageActivityId?: string;
     } | null>(null);
+    const problemId = useId();
+    const activitySections = useRef(new Map<string, HTMLElement>());
+    useEffect(() => {
+        if (!problem?.pageActivityId) return;
+        const start = activitySections.current.get(problem.pageActivityId)?.querySelector<HTMLInputElement>('input[name="page_start"]');
+        start?.focus({ preventScroll: true });
+        start?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }, [problem]);
     const mounted = useRef(true);
     useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
     const submitting = useRef(false);
@@ -101,7 +110,15 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
                 return;
             }
             if (r.kind === "read" && (r.page_start !== null || r.page_end !== null || r.source_revision !== null) && (!Number.isInteger(r.page_start) || !Number.isInteger(r.page_end) || r.page_start! < 1 || r.page_end! < r.page_start! || r.page_end! > (e.source?.total_pages ?? 0))) {
-                setProblem({ text: "Choose a physical page range within this PDF.", stale: false });
+                const pages = e.source?.total_pages;
+                const text = !Number.isInteger(r.page_start) || !Number.isInteger(r.page_end)
+                    ? `“${r.title}”: enter both a start page and an end page.`
+                    : r.page_end! < r.page_start! && r.page_start! >= 1
+                    ? `“${r.title}”: the end page must be the same as or after the start page.`
+                    : pages
+                    ? `“${r.title}”: pages ${r.page_start ?? "?"}–${r.page_end ?? "?"} aren't in this PDF. It has ${pages} pages — choose pages 1–${pages}.`
+                    : `“${r.title}”: choose a physical page range within this PDF. Check the PDF's pages in the desktop app first.`;
+                setProblem({ text, stale: false, pageActivityId: r.id });
                 return;
             }
         }
@@ -129,9 +146,9 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
         }
     };
     const entries = activeHomework(draft).filter(e => creating || e.record.id === activityId || (adding && !snapshot.activities.some(p => p.record.id === e.record.id)));
-    return <Dialog open title={creating ? "Add homework" : relink ? "Choose a source" : "Edit homework"} onClose={onClose} dismissible={!busy && !checking} footer={<><Button onClick={onClose} disabled={busy || checking}>Cancel</Button><Button variant="primary" onClick={() => void submit()} disabled={busy || checking || problem?.stale}>{busy ? "Saving…" : "Save homework"}</Button></>}>
+    return <Dialog open title={creating ? "Add homework" : relink ? "Choose a source" : "Edit homework"} onClose={onClose} dismissible={!busy && !checking} footer={<>{problem ? <p className="small" aria-hidden="true" style={{ flexBasis: "100%", margin: 0 }}>{problem.text}</p> : null}<Button onClick={onClose} disabled={busy || checking}>Cancel</Button><Button variant="primary" onClick={() => void submit()} disabled={busy || checking || problem?.stale}>{busy ? "Saving…" : "Save homework"}</Button></>}>
     <div className="stack stack--4">
-      {problem ? <div role="alert"><p>{problem.text}</p>{problem.stale ? <Button onClick={async () => { try {
+      {problem ? <div role="alert"><p id={problemId}>{problem.text}</p>{problem.stale ? <Button onClick={async () => { try {
         setLatest(await repositories!.homework.get(snapshot.assignment.id));
     }
     catch {
@@ -149,7 +166,7 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
           <div className="row row--wrap">{Object.entries(ACTIVITY_KINDS).map(([kind, label]) => <Button key={kind} disabled={activeHomework(draft).length >= 100} onClick={() => add(kind as Entry["record"]["kind"])}>Add {label.toLowerCase()}</Button>)}</div>
         </div>
       ) : null}
-      {entries.map(e => <section className="stack stack--3 homework-activity" key={e.record.id}>
+      {entries.map(e => <section className="stack stack--3 homework-activity" key={e.record.id} ref={node => { if (node) activitySections.current.set(e.record.id, node); else activitySections.current.delete(e.record.id); }}>
         <h3>{ACTIVITY_KINDS[e.record.kind]}</h3>
         {["read","cards","test"].includes(e.record.kind)&&!e.record.source_revision?<p className="small muted">You can save this draft now and choose a source when you are ready.</p>:null}
         <Field label="Activity title">{({ id }) => <TextInput id={id} maxLength={200} value={e.record.title} disabled={relink} onChange={event => updateEntry(e.record.id, entry => { entry.record.title = event.target.value; })}/>}</Field>
@@ -162,7 +179,7 @@ export function HomeworkEditor({ snapshot, creating = false, activityId, adding 
         {["read", "cards", "test"].includes(e.record.kind) ? <>
           <Field label="Material">{({ id }) => <select className="select" id={id} value={e.record.material_id ?? ""} onChange={event => void chooseSource(e.record.id, event.target.value)}><option value="">Choose a material</option>{data.materials.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}</select>}</Field>
           {e.record.material_id ? <Button onClick={() => void chooseSource(e.record.id, e.record.material_id!)}>Use this source again</Button> : null}
-          {e.record.kind === 'read' ? <><p className="small muted">Physical PDF pages{e.source?.total_pages ? ` · ${e.source.total_pages} pages` : " · check a PDF in the desktop app"}</p>{(['page_start', 'page_end'] as const).map(key => <Field key={key} label={key === 'page_start' ? 'Start page' : 'End page'}>{({ id }) => <TextInput id={id} type="number" min={1} max={e.source?.total_pages ?? undefined} value={e.record[key] ?? ""} onChange={event => updateEntry(e.record.id, entry => { entry.record[key] = event.target.value ? Number(event.target.value) : null; })}/>}</Field>)}</> : null}
+          {e.record.kind === 'read' ? <><p className="small muted">Physical PDF pages{e.source?.total_pages ? ` · ${e.source.total_pages} pages` : " · check a PDF in the desktop app"}</p>{(['page_start', 'page_end'] as const).map(key => <Field key={key} label={key === 'page_start' ? 'Start page' : 'End page'}>{({ id }) => <TextInput id={id} name={key} aria-invalid={problem?.pageActivityId === e.record.id || undefined} aria-describedby={problem?.pageActivityId === e.record.id ? problemId : undefined} type="number" min={1} max={e.source?.total_pages ?? undefined} value={e.record[key] ?? ""} onChange={event => updateEntry(e.record.id, entry => { entry.record[key] = event.target.value ? Number(event.target.value) : null; })}/>}</Field>)}</> : null}
           {e.record.kind === 'test' && e.record.test_version_id ? <p className="small muted">This activity keeps the saved quiz version you selected. Choose the material again to use its latest quiz.</p> : null}
         </> : null}
       </section>)}
