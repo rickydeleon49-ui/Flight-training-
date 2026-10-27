@@ -61,6 +61,8 @@ export function HomeworkView() {
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [reload, setReload] = useState(0);
+    const [sourceRefresh, setSourceRefresh] = useState(0);
+    const sourceEpoch = useRef(0);
     const [today, setToday] = useState(todayIso);
     const pending = useRef<HomeworkOperation | null>(null);
     const lock = useRef(false);
@@ -94,6 +96,28 @@ export function HomeworkView() {
         }
     }, [targetSelection, targetActivity, assignmentId, loading, current]);
     useEffect(() => { const update = () => setToday(todayIso()); const timer = window.setInterval(update, 30000); window.addEventListener("focus", update); document.addEventListener("visibilitychange", update); return () => { window.clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); }; }, []);
+    useEffect(() => {
+        let timer: number | undefined;
+        const recheck = () => {
+            if (document.visibilityState === "hidden" || timer !== undefined) return;
+            // Invalidate immediately, including promises that settle before the next effect.
+            sourceEpoch.current++;
+            setCheckedSources(null);
+            setSourceStates({});
+            timer = window.setTimeout(() => {
+                timer = undefined;
+                setSourceRefresh(n => n + 1);
+            }, 0);
+        };
+        window.addEventListener("focus", recheck);
+        document.addEventListener("visibilitychange", recheck);
+        return () => {
+            window.removeEventListener("focus", recheck);
+            document.removeEventListener("visibilitychange", recheck);
+            window.clearTimeout(timer);
+            sourceEpoch.current++;
+        };
+    }, []);
     useEffect(() => {
         const mine = ++lease.current;
         setLoading(true);
@@ -130,10 +154,25 @@ export function HomeworkView() {
         controller.abort(); started.current = null; }, [controller, assignmentId]);
     useEffect(() => {
         let live = true;
+        const epoch = ++sourceEpoch.current;
+        const isCurrent = () => live && epoch === sourceEpoch.current;
         setCheckedSources(null);
         setSourceStates({});
         if (!current || !repositories)
             return;
+        // Promises (including failures) are shared only within this check run.
+        const readings = new Map<string, ReturnType<typeof repositories.navigation.inspect>>();
+        const cards = new Map<string, Promise<string | null>>();
+        const versions = new Map<string, ReturnType<typeof repositories.practiceSessions.getVersion>>();
+        const activeVersions = new Map<string, ReturnType<typeof repositories.practiceSessions.getActiveVersion>>();
+        function once<T>(cache: Map<string, Promise<T>>, key: string, check: () => Promise<T>): Promise<T> {
+            let result = cache.get(key);
+            if (!result) {
+                result = Promise.resolve().then(check);
+                cache.set(key, result);
+            }
+            return result;
+        }
         void Promise.all(activeHomework(current).map(async (e) => {
             const r = e.record;
             if (!r.material_id || !["read", "cards", "test"].includes(r.kind))
@@ -141,34 +180,44 @@ export function HomeworkView() {
             try {
                 let hash: string | null = null;
                 if (r.kind === 'cards') {
-                    const set = data.aiStudySets.find(s => s.sourceMaterialId === r.material_id);
-                    hash = set?.flashcards.length ? (await cardVersion(r.material_id, set.flashcards)).contentHash : null;
+                    hash = await once(cards, r.material_id, async () => {
+                        const set = data.aiStudySets.find(s => s.sourceMaterialId === r.material_id);
+                        return set?.flashcards.length ? (await cardVersion(r.material_id!, set.flashcards)).contentHash : null;
+                    });
                 }
                 else if (r.kind === 'test') {
-                    const v = r.test_version_id ? await repositories.practiceSessions.getVersion(r.test_version_id) : null;
+                    const v = r.test_version_id ? await once(versions, r.test_version_id, () => repositories.practiceSessions.getVersion(r.test_version_id!)) : null;
                     if (!v) {
-                        if (live)
+                        if (isCurrent())
                             setSourceStates(s => ({ ...s, [r.id]: "missing" }));
                         return;
                     }
                     // The ordinary quiz screen opens the current version. Refuse a silent replacement.
-                    const active = await repositories.practiceSessions.getActiveVersion(r.material_id);
+                    const active = await once(activeVersions, r.material_id, () => repositories.practiceSessions.getActiveVersion(r.material_id!));
                     hash = active?.version.id === r.test_version_id ? v.contentHash : null;
                 }
-                else if (repositories.navigation.canCheckFiles())
-                    hash = (await repositories.navigation.inspect(r.material_id)).contentSha256;
+                else if (repositories.navigation.canCheckFiles()) {
+                    const inspected = await once(readings, r.material_id, () => repositories.navigation.inspect(r.material_id!));
+                    hash = inspected.contentSha256;
+                    const start = r.page_start;
+                    const end = r.page_end;
+                    if (!Number.isInteger(start) || !Number.isInteger(end) || start! < 1 || end! < start! || end! > inspected.totalPages) {
+                        if (isCurrent()) setSourceStates(s => ({ ...s, [r.id]: "changed" }));
+                        return;
+                    }
+                }
                 else
                     return;
-                if (live && hash !== r.source_revision)
+                if (isCurrent() && hash !== r.source_revision)
                     setSourceStates(s => ({ ...s, [r.id]: "changed" }));
             }
             catch {
-                if (live)
+                if (isCurrent())
                     setSourceStates(s => ({ ...s, [r.id]: "unavailable" }));
             }
-        })).then(()=>{if(live)setCheckedSources(current);});
+        })).then(()=>{if(isCurrent())setCheckedSources(current);});
         return () => { live = false; };
-    }, [current, repositories, data.aiStudySets, dataRevision, reload]);
+    }, [current, repositories, data.aiStudySets, dataRevision, reload, sourceRefresh]);
     useEffect(() => { if (!busy && !loading && focusActivity.current) {
         document.getElementById(`homework-${focusActivity.current}`)?.focus();
         focusActivity.current = null;
@@ -270,7 +319,7 @@ export function HomeworkView() {
     {error ? <div role="alert"><p>{error.text}</p><Button onClick={loadAgain}>Reload</Button>{pending.current && !error.stale ? <Button disabled={busy} onClick={() => void perform(pending.current!)}>Retry save</Button> : null}</div> : null}
     {loading ? <p role="status">Loading homework…</p> : assignmentId ? !current ? <p>That homework isn't here any more.</p> : <>
       <Link to="/study/homework">All homework</Link>
-      <Card><CardBody><div className="stack stack--3"><h2 className="wrap-anywhere">{current.assignment.title}</h2>
+      <Card><CardBody><div className="stack stack--3"><h2 className="homework-title wrap-anywhere">{current.assignment.title}</h2>
         {offlineSummary && offlineSummary.summary.state !== "empty" ? (
           <p role="status" aria-live="polite" className="small muted wrap-anywhere">
             <span>Before you go offline</span> · <span>{offlineSummary.summary.text}</span>
