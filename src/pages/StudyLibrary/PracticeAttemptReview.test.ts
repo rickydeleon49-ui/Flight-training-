@@ -6,7 +6,7 @@
  * AppDataProvider over a disposable node:sqlite file; records are created only
  * through the existing repositories. jsdom only, not installed-app evidence.
  */
-import { createElement as h, useLayoutEffect } from "react";
+import { createElement as h, StrictMode, useEffect, useLayoutEffect, useState } from "react";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,14 +14,20 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { StudySetSaveError } from "@/data/persistenceErrors";
 import { createRepositories, type Repositories } from "@/data/repositories";
+import type { StoredCard, StudySetSaveOperation } from "@/data/studySetTransaction";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import type { PracticeAttempt, PracticeTest, PracticeTestItem } from "@/domain/types";
 import { clearDraft, readDraft, writeDraft } from "@/lib/drafts";
+import { currentTimeZone, nextLocalMidnightUtc } from "@/logic/localDay";
+import { prepareStudyEdit } from "@/logic/studyAuthoring";
+import { authoringStateOf, emptyManualSet, frameOf, nextSetOf } from "@/logic/studySetEditing";
 import { Notes } from "@/pages/Notes/Notes";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { PracticeHistory } from "./PracticeHistory";
 import { PracticeTestPanel } from "./PracticeTestPanel";
+import { StudySetEditor } from "./StudySetEditor";
 
 let testDb: TestDatabase;
 vi.mock("@/data", () => ({
@@ -1182,5 +1188,815 @@ describe("Safe Notes entry from mistake followup panel (MISTAKES-01c)", () => {
 
     expect(readDraft("notes.new")).toBeNull();
     expect(await storedState()).toEqual(practiceBefore);
+  });
+});
+
+describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", () => {
+  async function seedStudySet(
+    materialId: string,
+    title: string,
+    existingCards: Array<{ front: string; back: string; sourcePage?: number | null }>,
+  ) {
+    const { frame, state } = emptyManualSet(title);
+    let curState = state;
+    for (const card of existingCards) {
+      const editRes = await prepareStudyEdit(curState, {
+        kind: "add",
+        item: { kind: "card", fields: [card.front, card.back], sourcePage: card.sourcePage ?? null },
+        origin: "user",
+      });
+      curState = editRes.next;
+    }
+    const op: StudySetSaveOperation = {
+      operationId: crypto.randomUUID(),
+      materialId,
+      reason: "create",
+      expected: null,
+      next: nextSetOf(frame, curState),
+    };
+    await repos.documents.saveStudySet(op);
+  }
+
+  it("hides Make a card button until reveal, disables it with plain explanation when material is missing or no study set exists, and supports flashcards-only sets", async () => {
+    // 1. Material exists, but NO saved study set exists yet
+    await seed("m-card-none", "NoSet");
+    const attNoSet = await completeAttempt("m-card-none", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    await renderHistory(reviewPath(attNoSet.historyKey, attNoSet.attemptId));
+    await screen.findByText("Review: NoSet material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+
+    // Action is hidden before opt-in and before reveal
+    expect(within(panel).queryByRole("button", { name: "Make a card" })).toBeNull();
+    expect(within(panel).queryByText(/Make a study guide for this material first/)).toBeNull();
+
+    // Opt-in
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    expect(within(panel).queryByRole("button", { name: "Make a card" })).toBeNull();
+    expect(within(panel).queryByText(/Make a study guide for this material first/)).toBeNull();
+
+    // Reveal saved answer
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    fireEvent.click(revealBtn);
+
+    // Make a card button is present and disabled with plain explanation; Notes link remains available
+    const makeCardBtn = within(panel).getByRole("button", { name: "Make a card" });
+    expect(makeCardBtn.hasAttribute("disabled")).toBe(true);
+    expect(
+      within(panel).getByText("Make a study guide for this material first, then you can add cards here."),
+    ).toBeTruthy();
+    const notesLink = within(panel).getByRole("link", { name: "Write a note" });
+    expect(notesLink.getAttribute("href")).toBe("/notes");
+    expect(notesLink.hasAttribute("disabled")).toBe(false);
+
+    // Verify keyboard / DOM order: Write a note Link comes before Make a card Button
+    expect(
+      Boolean(notesLink.compareDocumentPosition(makeCardBtn) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+    cleanup();
+
+    // 2. Material is deleted: Make a card is disabled with deleted explanation; Notes remains available
+    await seed("m-card-del", "DelMat");
+    const attDel = await completeAttempt("m-card-del", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    await repos.documents.remove("m-card-del");
+
+    await renderHistory(reviewPath(attDel.historyKey, attDel.attemptId));
+    await screen.findByText("Review: DelMat material");
+
+    const panelDel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panelDel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panelDel).getByRole("button", { name: "Show saved answer" }));
+
+    const makeCardDelBtn = within(panelDel).getByRole("button", { name: "Make a card" });
+    expect(makeCardDelBtn.hasAttribute("disabled")).toBe(true);
+    expect(
+      within(panelDel).getByText("This material was removed, so cards can’t be added here."),
+    ).toBeTruthy();
+    expect(within(panelDel).getByRole("link", { name: "Write a note" })).toBeTruthy();
+    cleanup();
+
+    // 3. Existing flashcards-only study set exists: Make a card is enabled
+    await seed("m-card-flash", "FlashSet");
+    await seedStudySet("m-card-flash", "FlashSet material", [
+      { front: "Existing card front", back: "Existing card back" },
+    ]);
+    const attFlash = await completeAttempt("m-card-flash", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    await renderHistory(reviewPath(attFlash.historyKey, attFlash.attemptId));
+    await screen.findByText("Review: FlashSet material");
+
+    const panelFlash = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panelFlash).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panelFlash).getByRole("button", { name: "Show saved answer" }));
+
+    const makeCardFlashBtn = within(panelFlash).getByRole("button", { name: "Make a card" });
+    expect(makeCardFlashBtn.hasAttribute("disabled")).toBe(false);
+    expect(within(panelFlash).queryByText(/Make a study guide for this material first/)).toBeNull();
+    expect(within(panelFlash).queryByText(/This material was removed/)).toBeNull();
+  });
+
+  it("opens compact add-card dialog with blank fields, no copied attempt content, explicit material title context, and saves exactly one user card with new identity and null source page", async () => {
+    await seed("m-card-save", "Airfoil");
+    await seedStudySet("m-card-save", "Airfoil material", [
+      { front: "Camber line", back: "Mean line between upper and lower surfaces", sourcePage: 12 },
+    ]);
+    const { historyKey, attemptId } = await completeAttempt("m-card-save", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    // Regenerate current PRACTICE before opening old completed attempt
+    await repos.documents.savePracticeTest({
+      provider: "gemini",
+      sourceMaterialId: "m-card-save",
+      title: "Airfoil replacement",
+      model: "synthetic",
+      questions: [
+        {
+          question: "Regenerated question?",
+          options: ["Regen right", "Regen wrong"],
+          correctIndex: 0,
+          explanation: "Regen why",
+          sourcePage: 99,
+        },
+      ],
+    });
+
+    // Capture 6 practice-table baseline AFTER regeneration
+    const practiceBaselineAfterRegen = await storedState();
+
+    // Capture complete study_set_history baseline after regeneration BEFORE UI save
+    type StudyHistoryRow = {
+      id: string;
+      material_id: string;
+      kind: string;
+      reason: string;
+      previous_json: string;
+      provider: string;
+      created_at: string;
+    };
+    const historyBaseline = await testDb.select<StudyHistoryRow>(
+      "SELECT id, material_id, kind, reason, previous_json, provider, created_at FROM study_set_history WHERE material_id = 'm-card-save' ORDER BY created_at ASC, id ASC",
+    );
+
+    // Capture old cards array before write
+    const setBefore = (await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = 'm-card-save'",
+    ))[0];
+    if (!setBefore) throw new Error("Expected set before write");
+    const oldCardsBefore: StoredCard[] = JSON.parse(setBefore.flashcards_json);
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: Airfoil material");
+
+    // Assert old frozen question stays while replacement question is not shown
+    expect(screen.queryByText("Regenerated question?")).toBeNull();
+
+    // Spy on saveStudySet calling through to real repo, capturing actual committed operationId
+    const docsRepo = appCtx.repositories!.documents;
+    const realSaveStudySet = docsRepo.saveStudySet.bind(docsRepo);
+    let committedOperationId: string | null = null;
+    vi.spyOn(docsRepo, "saveStudySet").mockImplementation(async (op) => {
+      committedOperationId = op.operationId;
+      return realSaveStudySet(op);
+    });
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+
+    // Click Make a card
+    const makeCardBtn = within(panel).getByRole("button", { name: "Make a card" });
+    fireEvent.click(makeCardBtn);
+
+    // Dialog opens with title "Add a card" and explicit material title description
+    await screen.findByRole("heading", { name: "Add a card" });
+    expect(screen.getByText("Airfoil material")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.",
+      ),
+    ).toBeTruthy();
+
+    // Compact mode: no instructor attribution checkbox, no summary/section/delete/history tools
+    expect(screen.queryByText("This came from my instructor")).toBeNull();
+    expect(screen.queryByText("Previous versions")).toBeNull();
+    expect(screen.queryByText("Add a section")).toBeNull();
+
+    // Await actual Question field after opening (not heading only while opening read is pending)
+    const questionInput = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    const answerInput = screen.getByLabelText("Answer") as HTMLTextAreaElement;
+    const pageInput = screen.getByLabelText("Source page (optional)") as HTMLInputElement;
+    expect(questionInput.value).toBe("");
+    expect(answerInput.value).toBe("");
+    expect(pageInput.value).toBe("");
+    expect(questionInput.value).not.toContain("Airfoil question");
+    expect(answerInput.value).not.toContain("Airfoil why");
+    expect(questionInput.value).not.toContain(attemptId);
+
+    // Type own words and leave optional page blank
+    const typedQuestion = "Angle of attack definition";
+    const typedAnswer = "Acute angle between chord line and relative wind.";
+    fireEvent.change(questionInput, { target: { value: typedQuestion } });
+    fireEvent.change(answerInput, {
+      target: { value: typedAnswer },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // Dialog closes and unmounts on success
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+    expect(committedOperationId).toBeTruthy();
+    expect(document.activeElement).toBe(makeCardBtn);
+
+    // Ordinary data refresh does not steal focus
+    makeCardBtn.blur();
+    expect(document.activeElement).not.toBe(makeCardBtn);
+    await act(async () => {
+      await appCtx.mutate(async () => ({ ok: true as const }));
+    });
+    expect(document.activeElement).not.toBe(makeCardBtn);
+
+    // Verify SQLite: exactly ONE card appended, old cards unchanged, null source page, user origin, no PDF provenance
+    const studySets = await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = 'm-card-save'",
+    );
+    expect(studySets).toHaveLength(1);
+    const studySetRow = studySets[0];
+    if (!studySetRow) throw new Error("Expected study set");
+    const flashcards: StoredCard[] = JSON.parse(studySetRow.flashcards_json);
+    expect(flashcards).toHaveLength(oldCardsBefore.length + 1);
+
+    // Deep compare old cards after to before
+    expect(flashcards.slice(0, oldCardsBefore.length)).toEqual(oldCardsBefore);
+
+    const newCard = flashcards[flashcards.length - 1];
+    if (!newCard) throw new Error("Expected new card");
+    expect(newCard.front).toBe(typedQuestion);
+    expect(newCard.back).toBe(typedAnswer);
+    expect(newCard.sourcePage).toBeNull();
+    expect(newCard.origin).toBe("user");
+    expect(newCard).not.toHaveProperty("pdfProvenance");
+    expect(typeof newCard.itemId).toBe("string");
+    expect(newCard.itemId).toBeTruthy();
+    const oldItemIds = oldCardsBefore.map((c) => c.itemId).filter(Boolean);
+    expect(oldItemIds).not.toContain(newCard.itemId);
+
+    // Verify study_set_history captured edit operation receipt
+    const postHistory = await testDb.select<StudyHistoryRow>(
+      "SELECT id, material_id, kind, reason, previous_json, provider, created_at FROM study_set_history WHERE material_id = 'm-card-save' ORDER BY created_at ASC, id ASC",
+    );
+    const baselineIds = new Set(historyBaseline.map((r) => r.id));
+    const addedHistory = postHistory.filter((r) => !baselineIds.has(r.id));
+    expect(addedHistory).toHaveLength(1);
+    const newHistoryRow = addedHistory[0]!;
+    expect(newHistoryRow.id).toBe(committedOperationId);
+    expect(newHistoryRow.kind).toBe("study_set");
+    expect(newHistoryRow.reason).toBe("edit");
+    const previousState = JSON.parse(newHistoryRow.previous_json ?? "{}");
+    expect(JSON.parse(previousState.flashcards_json)).toEqual(oldCardsBefore);
+
+    // Baseline rows must remain deep-unchanged in posthistory, including practice-kind rows
+    const postBaselineRows = postHistory.filter((r) => baselineIds.has(r.id));
+    expect(postBaselineRows).toEqual(historyBaseline);
+    expect(historyBaseline.some((r) => r.kind === "practice")).toBe(true);
+
+    // All 6 frozen practice tables and receipts are 100% unchanged (explicit new card save affects only current AiStudySet)
+    expect(await storedState()).toEqual(practiceBaselineAfterRegen);
+
+    // Frozen practice review score and review entries on page remain unchanged
+    expect(screen.getByText("Review: Airfoil material")).toBeTruthy();
+    expect(within(panel).getByText("Review 1 of 3")).toBeTruthy();
+  });
+
+  it("retains typed fields and same operation on IPC_TRANSPORT_ERROR lost-ack retry, appending exactly one card and receipt", async () => {
+    await seed("m-card-retry", "LostAck");
+    await seedStudySet("m-card-retry", "LostAck material", [
+      { front: "Existing Q", back: "Existing A" },
+    ]);
+    const { historyKey, attemptId } = await completeAttempt("m-card-retry", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const practiceBefore = await storedState();
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: LostAck material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Make a card" }));
+
+    await screen.findByRole("heading", { name: "Add a card" });
+
+    // Type fields
+    const questionInput = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    const answerInput = screen.getByLabelText("Answer") as HTMLTextAreaElement;
+    fireEvent.change(questionInput, { target: { value: "Retry front" } });
+    fireEvent.change(answerInput, { target: { value: "Retry back" } });
+
+    // Intercept documents.saveStudySet to simulate applied write + lost ack transport error
+    const documents = appCtx.repositories!.documents;
+    const originalSave = documents.saveStudySet.bind(documents);
+    let callCount = 0;
+    let firstOpId: string | null = null;
+    let secondOpId: string | null = null;
+
+    vi.spyOn(documents, "saveStudySet").mockImplementation(async (op) => {
+      callCount++;
+      if (callCount === 1) {
+        firstOpId = op.operationId;
+        // Real write succeeds in SQLite
+        await originalSave(op);
+        // Lost ack throws typed IPC_TRANSPORT_ERROR
+        throw new StudySetSaveError("IPC_TRANSPORT_ERROR");
+      }
+      secondOpId = op.operationId;
+      return originalSave(op);
+    });
+
+    // First save click
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // Error is displayed; dialog remains open and typed draft stays intact
+    await screen.findByText(
+      "The app couldn't confirm whether this study set was saved. Try again; a retry is safe.",
+    );
+    expect(screen.getByRole("heading", { name: "Add a card" })).toBeTruthy();
+    expect((screen.getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Retry front");
+    expect((screen.getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("Retry back");
+
+    // Click Save again (retry)
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // Retry succeeds: dialog closes
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+
+    // Both calls used the EXACT same operation ID
+    expect(callCount).toBe(2);
+    expect(firstOpId).toBeTruthy();
+    expect(secondOpId).toBe(firstOpId);
+
+    // Database check: exactly ONE new card was appended (total 2 cards, not 3)
+    const setRows = await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = 'm-card-retry'",
+    );
+    const setRow = setRows[0];
+    if (!setRow) throw new Error("Expected set row");
+    const cards = JSON.parse(setRow.flashcards_json);
+    expect(cards).toHaveLength(2);
+    expect(cards[1]?.front).toBe("Retry front");
+    expect(cards[1]?.back).toBe("Retry back");
+
+    // History has initial create with NO prior row; one append creates ONE edit row, not 2
+    const history = await testDb.select<{ id: string; reason: string; previous_json: string }>(
+      "SELECT id, reason, previous_json FROM study_set_history WHERE material_id = 'm-card-retry'",
+    );
+    expect(history).toHaveLength(1);
+    expect(history[0]?.id).toBe(firstOpId);
+    expect(history[0]?.reason).toBe("edit");
+    const prevHistory = JSON.parse(history[0]?.previous_json ?? "{}");
+    const prevCards = JSON.parse(prevHistory.flashcards_json);
+    expect(prevCards).toHaveLength(1);
+    expect(prevCards[0]?.front).toBe("Existing Q");
+    expect(prevCards[0]?.back).toBe("Existing A");
+
+    expect(await storedState()).toEqual(practiceBefore);
+  });
+
+  it("guards busy duplicate click, handles normal Cancel and Escape with focus restoration, and refuses stale currentset", async () => {
+    await seed("m-card-guards", "Guards");
+    await seedStudySet("m-card-guards", "Guards material", [
+      { front: "Guard Q", back: "Guard A" },
+    ]);
+    const { historyKey, attemptId } = await completeAttempt("m-card-guards", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: Guards material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+
+    const makeCardBtn = within(panel).getByRole("button", { name: "Make a card" });
+
+    // Focus Cancel test
+    makeCardBtn.focus();
+    expect(document.activeElement).toBe(makeCardBtn);
+    fireEvent.click(makeCardBtn);
+    await screen.findByRole("heading", { name: "Add a card" });
+    await screen.findByLabelText("Question");
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+    expect(document.activeElement).toBe(makeCardBtn);
+
+    // Escape test (native showModal cancels via dialog cancel event; jsdom does not translate fireEvent.keyDown(document, Escape) to cancel, so dispatch cancel on actual dialog in unit as native transport stand-in)
+    fireEvent.click(makeCardBtn);
+    await screen.findByRole("heading", { name: "Add a card" });
+    const questionInputEl = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    questionInputEl.focus();
+    expect(document.activeElement).toBe(questionInputEl);
+    const dialogEl = document.querySelector("dialog");
+    if (!dialogEl) throw new Error("Expected dialog element");
+    fireEvent(dialogEl, new Event("cancel", { bubbles: true, cancelable: true }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+    expect(document.activeElement).toBe(makeCardBtn);
+
+    // Busy duplicate click guard
+    fireEvent.click(makeCardBtn);
+    await screen.findByRole("heading", { name: "Add a card" });
+    const busyQ = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    const busyA = screen.getByLabelText("Answer") as HTMLTextAreaElement;
+    fireEvent.change(busyQ, { target: { value: "Busy Q" } });
+    fireEvent.change(busyA, { target: { value: "Busy A" } });
+
+    let releaseSave!: () => void;
+    const saveHeld = new Promise<void>((r) => (releaseSave = r));
+    const documents = appCtx.repositories!.documents;
+    const originalSave = documents.saveStudySet.bind(documents);
+    const saveSpy = vi.spyOn(documents, "saveStudySet").mockImplementation(async (op) => {
+      await saveHeld;
+      return originalSave(op);
+    });
+
+    const saveBtn = screen.getByRole("button", { name: "Save" });
+    fireEvent.click(saveBtn);
+
+    // Save button changes to "Saving…" and is disabled
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Saving…" }).hasAttribute("disabled")).toBe(true),
+    );
+
+    // Duplicate click while busy is ignored
+    fireEvent.click(screen.getByRole("button", { name: "Saving…" }));
+
+    await act(async () => {
+      releaseSave();
+      await saveHeld;
+    });
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+    expect(saveSpy).toHaveBeenCalledTimes(1);
+
+    // Stale currentset refusal: valid external CONTENT change through actual
+    // readStudySetForEdit + prepareStudyEdit / nextSetOf + saveStudySet, without AppData refresh before trigger
+    const editRead = await repos.documents.readStudySetForEdit("m-card-guards");
+    if (!editRead) throw new Error("Expected edit read");
+    const editPlan = await prepareStudyEdit(authoringStateOf(editRead.set), {
+      kind: "add",
+      item: { kind: "card", fields: ["External Q", "External A"], sourcePage: null },
+      origin: "user",
+    });
+    const externalOp: StudySetSaveOperation = {
+      operationId: crypto.randomUUID(),
+      materialId: "m-card-guards",
+      reason: "edit",
+      expected: editRead.stored,
+      next: nextSetOf(frameOf(editRead.set), editPlan.next),
+    };
+    await repos.documents.saveStudySet(externalOp);
+
+    fireEvent.click(makeCardBtn);
+    await screen.findByRole("heading", { name: "Add a card" });
+    await screen.findByText(
+      "This study set changed since this page was shown. Close this and look at it again.",
+    );
+    expect(screen.getByRole("button", { name: "Save" }).hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+  });
+
+  it("guards against context change and late old read with no ghost dialog or false write", async () => {
+    await seed("m-late-a", "LateAlpha");
+    await seedStudySet("m-late-a", "LateAlpha material", [{ front: "A1", back: "B1" }]);
+    await seed("m-late-b", "LateBravo");
+    await seedStudySet("m-late-b", "LateBravo material", [{ front: "A2", back: "B2" }]);
+
+    const attA = await completeAttempt("m-late-a", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const attB = await completeAttempt("m-late-b", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    await renderHistory(reviewPath(attA.historyKey, attA.attemptId));
+    await screen.findByText("Review: LateAlpha material");
+
+    // Hold readStudySetForEdit on material A
+    let releaseReadA!: () => void;
+    const readAHeld = new Promise<void>((r) => (releaseReadA = r));
+    const documents = appCtx.repositories!.documents;
+    const originalRead = documents.readStudySetForEdit.bind(documents);
+
+    vi.spyOn(documents, "readStudySetForEdit").mockImplementation(async (id) => {
+      if (id === "m-late-a") {
+        await readAHeld;
+      }
+      return originalRead(id);
+    });
+
+    const panelA = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panelA).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panelA).getByRole("button", { name: "Show saved answer" }));
+
+    // Click Make a card while read is held
+    const makeCardBtnA = within(panelA).getByRole("button", { name: "Make a card" });
+    makeCardBtnA.focus();
+    expect(document.activeElement).toBe(makeCardBtnA);
+    fireEvent.click(makeCardBtnA);
+
+    // Navigate to attempt B before read A completes
+    act(() => navigateTo(reviewPath(attB.historyKey, attB.attemptId)));
+    await screen.findByText("Review: LateBravo material");
+
+    // Now release read A
+    await act(async () => {
+      releaseReadA();
+      await readAHeld;
+    });
+
+    // No ghost dialog opened on attempt B
+    expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull();
+    // Context change does not steal focus back to unmounted attempt A opener
+    expect(document.activeElement).not.toBe(makeCardBtnA);
+
+    // No cards written to either material
+    const rowsA = await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = 'm-late-a'",
+    );
+    const rowA = rowsA[0];
+    if (!rowA) throw new Error("Expected set A");
+    expect(JSON.parse(rowA.flashcards_json)).toHaveLength(1);
+
+    const rowsB = await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = 'm-late-b'",
+    );
+    const rowB = rowsB[0];
+    if (!rowB) throw new Error("Expected set B");
+    expect(JSON.parse(rowB.flashcards_json)).toHaveLength(1);
+  });
+
+  it("mounts compact subtree in StrictMode under ready AppDataProvider with one read per mounted intent, and typing or ordinary refresh does not reopen or reset draft", async () => {
+    await seed("m-card-strict", "StrictMat");
+    await seedStudySet("m-card-strict", "StrictMat material", [
+      { front: "Strict Q1", back: "Strict A1" },
+    ]);
+
+    let readSpy: ReturnType<typeof vi.spyOn> | null = null;
+    function StrictCompactHarness({ materialId }: { materialId: string }) {
+      const { status, repositories, data, mutate } = useAppData();
+      const [mountedIntent, setMountedIntent] = useState(false);
+
+      useEffect(() => {
+        if (status === "ready" && repositories && !mountedIntent) {
+          if (!readSpy) {
+            readSpy = vi.spyOn(repositories.documents, "readStudySetForEdit");
+          }
+          setMountedIntent(true);
+        }
+      }, [status, repositories, mountedIntent]);
+
+      if (status !== "ready" || !mountedIntent) return null;
+
+      const material = data.materials.find((m) => m.id === materialId) ?? null;
+      const studySet = data.aiStudySets.find((s) => s.sourceMaterialId === materialId) ?? null;
+      if (!material || !studySet) return null;
+
+      return h(
+        "div",
+        null,
+        h(
+          "button",
+          {
+            type: "button",
+            onClick: () => void mutate(async () => ({ ok: true as const })),
+          },
+          "Trigger refresh",
+        ),
+        h(
+          StrictMode,
+          null,
+          h(StudySetEditor, {
+            material,
+            studySet,
+            compact: true,
+          }),
+        ),
+      );
+    }
+
+    render(h(AppDataProvider, null, h(StrictCompactHarness, { materialId: "m-card-strict" })));
+
+    // Await ready and compact editor to open
+    const questionInput = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    const answerInput = screen.getByLabelText("Answer") as HTMLTextAreaElement;
+
+    // In StrictMode development/test, effect replay occurs, but autoOpenedRef ensures exactly ONE read/open
+    expect(readSpy).toBeTruthy();
+    expect(readSpy).toHaveBeenCalledTimes(1);
+
+    // Type into draft fields
+    fireEvent.change(questionInput, { target: { value: "Draft strict Q" } });
+    fireEvent.change(answerInput, { target: { value: "Draft strict A" } });
+    answerInput.focus();
+    expect(document.activeElement).toBe(answerInput);
+
+    // Trigger ordinary AppData refresh
+    fireEvent.click(screen.getByRole("button", { name: "Trigger refresh" }));
+
+    // Wait for refresh to settle in AppDataProvider
+    await waitFor(() => {
+      expect((screen.getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Draft strict Q");
+    });
+
+    // Ensure typing / ordinary data refresh does not reopen, reset draft, or steal focus
+    expect(readSpy).toHaveBeenCalledTimes(1);
+    expect((screen.getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Draft strict Q");
+    expect((screen.getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("Draft strict A");
+    expect(document.activeElement).toBe(answerInput);
+  });
+
+  it("contracts approved C-D3 versioning: rating 2 cards Easy, then adding 1 card via revealed compact UI creates fresh version with 3 new in due queue, 0 rated in current snapshot, and preserves old raw reviews and 6 practice tables deep-unchanged", async () => {
+    const matId = "m-card-cd3";
+    await seed(matId, "CD3Mat");
+    await seedStudySet(matId, "CD3Mat material", [
+      { front: "Card 1 Q", back: "Card 1 A" },
+      { front: "Card 2 Q", back: "Card 2 A" },
+    ]);
+
+    // Rate both existing cards Easy via real repos.cardReviews.getCardReviewSnapshot + saveAction
+    const initialSnap = await repos.cardReviews.getCardReviewSnapshot(matId);
+    if (initialSnap.current.status !== "ok") throw new Error("Expected ok snapshot");
+    expect(initialSnap.current.items).toHaveLength(2);
+    const oldVersionId = initialSnap.current.versionId;
+    const oldContentHash = initialSnap.current.contentHash;
+    const oldItemIds = initialSnap.current.items.map((i) => i.itemId);
+
+    for (const item of initialSnap.current.items) {
+      const snap = await repos.cardReviews.getCardReviewSnapshot(matId);
+      const rev = snap.states[item.itemId]?.revision ?? 0;
+      await repos.cardReviews.saveAction({
+        action: "rate",
+        operationId: crypto.randomUUID(),
+        materialId: matId,
+        versionContentHash: snap.current.status === "ok" ? snap.current.contentHash : "",
+        itemId: item.itemId,
+        expectedGeneration: snap.generation,
+        expectedRevision: rev,
+        rating: "easy",
+      });
+    }
+
+    // Verify both are rated in snapshot before adding new card
+    const ratedSnap = await repos.cardReviews.getCardReviewSnapshot(matId);
+    if (ratedSnap.current.status !== "ok") throw new Error("Expected ok rated snapshot");
+    expect(Object.keys(ratedSnap.states)).toHaveLength(2);
+    expect(ratedSnap.states[oldItemIds[0]!]?.lastReviewedAt).toBeTruthy();
+    expect(ratedSnap.states[oldItemIds[1]!]?.lastReviewedAt).toBeTruthy();
+
+    // Capture OLD raw card review tables before opening old completed review
+    const oldRawStates = await testDb.select("SELECT * FROM card_review_state ORDER BY item_id");
+    const oldRawEvents = await testDb.select("SELECT * FROM card_review_events ORDER BY id");
+    const oldRawOperations = await testDb.select("SELECT * FROM card_review_operations ORDER BY operation_id");
+    expect(oldRawStates).toHaveLength(2);
+    expect(oldRawEvents).toHaveLength(2);
+    expect(oldRawOperations).toHaveLength(2);
+
+    // Complete attempt and capture 6 practice baseline before opening old completed review
+    const { historyKey, attemptId } = await completeAttempt(matId, [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const practiceBaseline = await storedState();
+
+    // Open old completed review
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: CD3Mat material");
+
+    // Open revealed Make card
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+    const makeCardBtn = within(panel).getByRole("button", { name: "Make a card" });
+    fireEvent.click(makeCardBtn);
+
+    // Assert disclosure BEFORE typing/Save
+    await screen.findByRole("heading", { name: "Add a card" });
+    const disclosure = screen.getByText(
+      "Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.",
+    );
+    expect(disclosure).toBeTruthy();
+
+    // Blank fields
+    const questionInput = (await screen.findByLabelText("Question")) as HTMLTextAreaElement;
+    const answerInput = screen.getByLabelText("Answer") as HTMLTextAreaElement;
+    const pageInput = screen.getByLabelText("Source page (optional)") as HTMLInputElement;
+    expect(questionInput.value).toBe("");
+    expect(answerInput.value).toBe("");
+    expect(pageInput.value).toBe("");
+
+    // Type 1 new own-word card / noPage
+    fireEvent.change(questionInput, { target: { value: "New own-word card 3 Q" } });
+    fireEvent.change(answerInput, { target: { value: "New own-word card 3 A" } });
+    expect(pageInput.value).toBe("");
+
+    // Explicit Save
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
+
+    // Actual current version hash / IDs changed
+    const currentSnap = await repos.cardReviews.getCardReviewSnapshot(matId);
+    if (currentSnap.current.status !== "ok") throw new Error("Expected ok current snapshot");
+    expect(currentSnap.current.contentHash).not.toBe(oldContentHash);
+    expect(currentSnap.current.versionId).not.toBe(oldVersionId);
+    expect(currentSnap.current.items).toHaveLength(3);
+    const newItemIds = currentSnap.current.items.map((i) => i.itemId);
+    for (const oldId of oldItemIds) {
+      expect(newItemIds).not.toContain(oldId);
+    }
+
+    // Snapshot current rated states 0 under approved C-D3
+    expect(Object.keys(currentSnap.states)).toHaveLength(0);
+
+    // getDueQueue returns 3 new under APPROVED C-D3
+    const nowUtc = new Date().toISOString();
+    const nextLocalMidnight = nextLocalMidnightUtc(nowUtc, currentTimeZone());
+    const queue = await repos.cardReviews.getDueQueue({
+      materialId: matId,
+      currentVersionId: currentSnap.current.versionId,
+      currentItemIds: newItemIds,
+      nowUtc,
+      nextLocalMidnightUtc: nextLocalMidnight,
+    });
+    expect(queue).toHaveLength(3);
+    expect(queue.filter((q) => q.kind === "new")).toHaveLength(3);
+    expect(queue.filter((q) => q.kind === "due")).toHaveLength(0);
+    expect(queue.filter((q) => q.kind === "again")).toHaveLength(0);
+    expect(queue.every((q) => q.kind === "new" && q.dueAt === null)).toBe(true);
+
+    // Old raw states/events/receipts deep UNCHANGED, no fake events
+    const postRawStates = await testDb.select("SELECT * FROM card_review_state ORDER BY item_id");
+    expect(postRawStates).toEqual(oldRawStates);
+    const postRawEvents = await testDb.select("SELECT * FROM card_review_events ORDER BY id");
+    expect(postRawEvents).toEqual(oldRawEvents);
+    const postRawOperations = await testDb.select("SELECT * FROM card_review_operations ORDER BY operation_id");
+    expect(postRawOperations).toEqual(oldRawOperations);
+
+    // Practice baseline unchanged
+    expect(await storedState()).toEqual(practiceBaseline);
+
+    // Old cards deep unchanged / new user / null page
+    const studySets = await testDb.select<{ flashcards_json: string }>(
+      "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?",
+      [matId],
+    );
+    const flashcards: StoredCard[] = JSON.parse(studySets[0]!.flashcards_json);
+    expect(flashcards).toHaveLength(3);
+    expect(flashcards[0]?.front).toBe("Card 1 Q");
+    expect(flashcards[0]?.back).toBe("Card 1 A");
+    expect(flashcards[0]?.sourcePage).toBeNull();
+    expect(flashcards[0]?.origin).toBe("user");
+    expect(flashcards[1]?.front).toBe("Card 2 Q");
+    expect(flashcards[1]?.back).toBe("Card 2 A");
+    expect(flashcards[1]?.sourcePage).toBeNull();
+    expect(flashcards[1]?.origin).toBe("user");
+    expect(flashcards[2]?.front).toBe("New own-word card 3 Q");
+    expect(flashcards[2]?.back).toBe("New own-word card 3 A");
+    expect(flashcards[2]?.sourcePage).toBeNull();
+    expect(flashcards[2]?.origin).toBe("user");
   });
 });

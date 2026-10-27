@@ -15,6 +15,7 @@ interface DialogProps {
   footer?: ReactNode;
   narrow?: boolean;
   dismissible?: boolean;
+  className?: string;
   /** Where focus goes on opening; defaults to the first focusable element. */
   initialFocus?: () => HTMLElement | null;
 }
@@ -36,6 +37,7 @@ export function Dialog({
   footer,
   narrow = false,
   dismissible = true,
+  className,
   initialFocus,
 }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -59,7 +61,7 @@ export function Dialog({
       ) : null}
       <dialog
         ref={ref}
-        className={`dialog${narrow ? " dialog--narrow" : ""}${modal.fallback ? " modal-fallback" : ""}`}
+        className={`dialog${narrow ? " dialog--narrow" : ""}${modal.fallback ? " modal-fallback" : ""}${className ? ` ${className}` : ""}`}
         aria-labelledby={titleId}
         role={modal.fallback ? "dialog" : undefined}
         aria-modal={modal.showBackdrop ? true : undefined}

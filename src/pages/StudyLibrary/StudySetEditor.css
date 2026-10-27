@@ -1,0 +1,30 @@
+/* Scoped layout for compact StudySetEditor add-card dialog.
+   Keeps the dialog bounded to the viewport with a flex column layout so the
+   header and footer remain anchored and non-shrinking, while the body scrolls
+   independently. Closed dialogs remain hidden by targeting [open] only. */
+
+.dialog.study-set-editor--compact[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 4rem);
+  max-height: calc(100dvh - 4rem);
+  overflow: hidden;
+}
+
+.dialog.study-set-editor--compact[open] .dialog__header,
+.dialog.study-set-editor--compact[open] .dialog__footer {
+  flex-shrink: 0;
+}
+
+.dialog.study-set-editor--compact[open] .dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.dialog.study-set-editor--compact[open] .button,
+.dialog.study-set-editor--compact[open] .icon-button {
+  min-height: 44px;
+  min-width: 44px;
+}

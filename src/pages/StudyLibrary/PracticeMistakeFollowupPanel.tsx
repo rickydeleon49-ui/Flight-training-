@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Badge, Button } from "@/components/ui";
@@ -9,8 +9,10 @@ import type {
   PracticeTestVersion,
 } from "@/domain/types";
 import { selectPracticeMistakeFollowups } from "@/logic/practiceMistakeFollowups";
+import { useAppData } from "@/state/AppDataContext";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { PdfItemLabel } from "./PdfItemLabel";
+import { StudySetEditor } from "./StudySetEditor";
 import "./PracticeMistakeFollowupPanel.css";
 
 export interface PracticeMistakeFollowupPanelProps {
@@ -32,6 +34,20 @@ export function PracticeMistakeFollowupPanel({
 }: PracticeMistakeFollowupPanelProps) {
   const headingId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const makeCardButtonRef = useRef<HTMLButtonElement>(null);
+  const returnFocusTokenRef = useRef<string | null>(null);
+
+  const { data } = useAppData();
+  const currentMaterial =
+    data.materials.find((m) => m.id === attempt.sourceMaterialId) ?? null;
+  const currentSet =
+    data.aiStudySets.find((s) => s.sourceMaterialId === attempt.sourceMaterialId) ?? null;
+  const canMakeCard = Boolean(currentMaterial && currentSet);
+  const makeCardDisabledReason = !currentMaterial
+    ? "This material was removed, so cards can’t be added here."
+    : !currentSet
+      ? "Make a study guide for this material first, then you can add cards here."
+      : null;
 
   // Context identity string tuple: [historyKey, attemptId, versionId]
   const contextKey = JSON.stringify([historyKey, attempt.id, version.id]);
@@ -40,16 +56,37 @@ export function PracticeMistakeFollowupPanel({
   const [limitChoice, setLimitChoice] = useState<3 | 5>(3);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [isMakingCard, setIsMakingCard] = useState(false);
 
   // Reset state when contextKey changes
   const [prevContextKey, setPrevContextKey] = useState(contextKey);
   if (prevContextKey !== contextKey) {
     setPrevContextKey(contextKey);
+    returnFocusTokenRef.current = null;
     setActive(false);
     setLimitChoice(3);
     setCurrentIndex(0);
     setRevealed(false);
+    setIsMakingCard(false);
   }
+
+  // Scoped opener focus restoration after compact StudySetEditor is unmounted for deliberate close/cancel/save only
+  useEffect(() => {
+    const requestedToken = returnFocusTokenRef.current;
+    if (!requestedToken) {
+      return;
+    }
+    returnFocusTokenRef.current = null;
+    if (
+      !isMakingCard &&
+      requestedToken === contextKey &&
+      makeCardButtonRef.current &&
+      makeCardButtonRef.current.isConnected &&
+      !makeCardButtonRef.current.disabled
+    ) {
+      makeCardButtonRef.current.focus({ preventScroll: true });
+    }
+  }, [isMakingCard, contextKey]);
 
   const result = selectPracticeMistakeFollowups({
     attempt,
@@ -104,6 +141,7 @@ export function PracticeMistakeFollowupPanel({
     setActive(true);
     setCurrentIndex(0);
     setRevealed(false);
+    setIsMakingCard(false);
     focusHeading();
   };
 
@@ -111,6 +149,7 @@ export function PracticeMistakeFollowupPanel({
     setActive(false);
     setCurrentIndex(0);
     setRevealed(false);
+    setIsMakingCard(false);
     focusHeading();
   };
 
@@ -118,6 +157,7 @@ export function PracticeMistakeFollowupPanel({
     if (currentIndex < result.suggestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setRevealed(false);
+      setIsMakingCard(false);
       focusHeading();
     }
   };
@@ -126,6 +166,7 @@ export function PracticeMistakeFollowupPanel({
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
       setRevealed(false);
+      setIsMakingCard(false);
       focusHeading();
     }
   };
@@ -134,7 +175,14 @@ export function PracticeMistakeFollowupPanel({
     setActive(false);
     setCurrentIndex(0);
     setRevealed(false);
+    setIsMakingCard(false);
     onOpenMissedReview?.();
+  };
+
+  const handleToggleRevealed = () => {
+    returnFocusTokenRef.current = null;
+    setIsMakingCard(false);
+    setRevealed((prev) => !prev);
   };
 
   const selectedCount = result.suggestions.length;
@@ -281,7 +329,7 @@ export function PracticeMistakeFollowupPanel({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setRevealed((prev) => !prev)}
+                onClick={handleToggleRevealed}
                 className="practice-mistake-followup__button"
               >
                 {revealed ? "Hide saved answer" : "Show saved answer"}
@@ -315,14 +363,40 @@ export function PracticeMistakeFollowupPanel({
                 <p className="tiny dim">
                   Write what confused you in your own words. Notes stay separate from practice history.
                 </p>
-                <div>
+                <div className="row row--wrap row--gap-2" style={{ alignItems: "center" }}>
                   <Link
                     to="/notes"
                     className="button button--secondary practice-mistake-followup__button"
                   >
                     Write a note
                   </Link>
+                  <Button
+                    ref={makeCardButtonRef}
+                    type="button"
+                    variant="secondary"
+                    className="practice-mistake-followup__button"
+                    disabled={!canMakeCard}
+                    onClick={() => setIsMakingCard(true)}
+                  >
+                    Make a card
+                  </Button>
                 </div>
+                {makeCardDisabledReason ? (
+                  <p className="tiny dim">{makeCardDisabledReason}</p>
+                ) : null}
+
+                {isMakingCard && currentMaterial && currentSet ? (
+                  <StudySetEditor
+                    key={JSON.stringify(["card-editor", historyKey, attempt.id, attempt.sourceMaterialId])}
+                    material={currentMaterial}
+                    studySet={currentSet}
+                    compact
+                    onClose={() => {
+                      returnFocusTokenRef.current = contextKey;
+                      setIsMakingCard(false);
+                    }}
+                  />
+                ) : null}
               </div>
             ) : null}
 
