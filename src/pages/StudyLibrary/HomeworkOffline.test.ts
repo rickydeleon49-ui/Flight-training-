@@ -7,6 +7,7 @@ import { type HomeworkSnapshot, type HomeworkOperation } from "@/domain/homework
 import { makeMaterial } from "@/testing/factories";
 import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
 import { newHomework, newHomeworkActivity } from "./homeworkUi";
+import { cardVersion } from "@/logic/cardIdentity";
 import { HomeworkView } from "./HomeworkView";
 
 let appData: AppData;
@@ -23,6 +24,12 @@ function createDeferred() {
   return { promise, resolve };
 }
 
+vi.mock("@/logic/cardIdentity", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  cardVersion: vi.fn((...args: Parameters<typeof cardVersion>) =>
+    importOriginal<typeof import("@/logic/cardIdentity")>().then(m => m.cardVersion(...args))),
+}));
+
 const sourceId = "10000000-0000-4000-8000-000000000001";
 const quizId = "10000000-0000-4000-8000-000000000002";
 
@@ -33,7 +40,7 @@ const repository = {
   save: vi.fn(async (op: HomeworkOperation) => ({ version: 1, assignmentId: op.assignmentId, revision: op.next.assignment.revision })),
   list: async () => records.map((s) => s.assignment),
   get: vi.fn(async (id: string) => structuredClone(records.find((s) => s.assignment.id === id) ?? null)),
-  history: async () => [],
+  history: vi.fn(async () => []),
 };
 
 const repositories = {
@@ -43,8 +50,8 @@ const repositories = {
     canCheckFiles: () => canCheckFilesFlag,
   },
   practiceSessions: {
-    getActiveVersion: async () => ({ version: { id: quizId, contentHash: "b".repeat(64) } }),
-    getVersion: async () => ({ id: quizId, contentHash: "b".repeat(64) }),
+    getActiveVersion: vi.fn(async () => ({ version: { id: quizId, contentHash: "b".repeat(64) } })),
+    getVersion: vi.fn(async () => ({ id: quizId, contentHash: "b".repeat(64) })),
   },
 };
 
@@ -105,7 +112,184 @@ describe("Homework offline summary UI (PACKS-01b)", () => {
     records = [];
   });
 
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function returnToHomework() {
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    fireEvent(document, new Event("visibilitychange"));
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    fireEvent(window, new Event("focus"));
+  }
+
+  it("resume_rechecks_changed_pdf_without_data_revision", async () => {
+    const s = readingAssignment();
+    const original = structuredClone(s);
+    renderView(s.assignment.id);
+    inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 });
+    await screen.findByText("Everything here works without internet.");
+    const reads = repository.get.mock.calls.length;
+    const histories = repository.history.mock.calls.length;
+    inspectDeferred = createDeferred();
+    vi.useFakeTimers();
+    returnToHomework();
+    // The paired browser events schedule exactly one refresh.
+    expect(vi.getTimerCount()).toBe(1);
+    expect(screen.getByText("Checking what works without internet…")).toBeTruthy();
+    expect(screen.queryByText("Works offline")).toBeNull();
+    await act(async () => { await vi.runOnlyPendingTimersAsync(); });
+    vi.useRealTimers();
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(2));
+    await act(async () => inspectDeferred.resolve({ contentSha256: "c".repeat(64), totalPages: 10 }));
+    await screen.findByText("1 of 1 needs a fix before you study offline.");
+    expect(screen.getByText("Needs a fix")).toBeTruthy();
+    expect(inspect).toHaveBeenCalledTimes(2);
+    expect(repository.get).toHaveBeenCalledTimes(reads);
+    expect(repository.history).toHaveBeenCalledTimes(histories);
+    expect(repository.save).not.toHaveBeenCalled();
+    expect(openSaved).not.toHaveBeenCalled();
+    expect(records).toEqual([original]);
+    expect(dataRevision).toBe(1);
+  });
+
+  it("resume older-run-finishes-late cannot overwrite the new result", async () => {
+    const s = readingAssignment();
+    renderView(s.assignment.id);
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(1));
+    const old = inspectDeferred;
+    inspectDeferred = createDeferred();
+    vi.useFakeTimers();
+    returnToHomework();
+    // Even a completion before the coalesced refresh must stay obsolete.
+    await act(async () => old.resolve({ contentSha256: "c".repeat(64), totalPages: 10 }));
+    expect(screen.getByText("Checking what works without internet…")).toBeTruthy();
+    await act(async () => { await vi.runOnlyPendingTimersAsync(); });
+    vi.useRealTimers();
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(2));
+    await act(async () => inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 }));
+    await screen.findByText("Everything here works without internet.");
+    expect(screen.queryByText("Needs a fix")).toBeNull();
+  });
+
+  it.each(["focus", "visibilitychange"])("resume rechecks on %s alone", async (event) => {
+    const s = readingAssignment();
+    renderView(s.assignment.id);
+    inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 });
+    await screen.findByText("Everything here works without internet.");
+    inspectDeferred = createDeferred();
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    fireEvent(event === "focus" ? window : document, new Event(event));
+    expect(screen.getByText("Checking what works without internet…")).toBeTruthy();
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(2));
+    await act(async () => inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 }));
+    await screen.findByText("Everything here works without internet.");
+  });
+
+  it("resume older-run-finishes-late after the new check stays ignored", async () => {
+    const s = readingAssignment();
+    renderView(s.assignment.id);
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(1));
+    const old = inspectDeferred;
+    inspectDeferred = createDeferred();
+    returnToHomework();
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(2));
+    await act(async () => inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 }));
+    await screen.findByText("Everything here works without internet.");
+    await act(async () => old.resolve({ contentSha256: "c".repeat(64), totalPages: 10 }));
+    expect(screen.getByText("Everything here works without internet.")).toBeTruthy();
+    expect(screen.queryByText("Needs a fix")).toBeNull();
+  });
+
+  it("resume unmount cleanup removes listeners and cancels a queued recheck", async () => {
+    const removeWindow = vi.spyOn(window, "removeEventListener");
+    const removeDocument = vi.spyOn(document, "removeEventListener");
+    const addWindow = vi.spyOn(window, "addEventListener");
+    const addDocument = vi.spyOn(document, "addEventListener");
+    const clearTimer = vi.spyOn(window, "clearTimeout");
+    const setTimer = vi.spyOn(window, "setTimeout");
+    const s = readingAssignment();
+    const rendered = renderView(s.assignment.id);
+    await vi.waitFor(() => expect(inspect).toHaveBeenCalledTimes(1));
+    const focusListeners = addWindow.mock.calls.filter(([type]) => type === "focus").map(([, listener]) => listener);
+    const visibleListeners = addDocument.mock.calls.filter(([type]) => type === "visibilitychange").map(([, listener]) => listener);
+    returnToHomework();
+    const queuedTimer = setTimer.mock.results.at(-1)!.value;
+    rendered.unmount();
+    for (const listener of focusListeners) expect(removeWindow).toHaveBeenCalledWith("focus", listener);
+    for (const listener of visibleListeners) expect(removeDocument).toHaveBeenCalledWith("visibilitychange", listener);
+    expect(clearTimer).toHaveBeenCalledWith(queuedTimer);
+    returnToHomework();
+    await act(async () => inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 }));
+    expect(inspect).toHaveBeenCalledTimes(1);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it("shared_sources_are_checked_once_per_run", async () => {
+    const s = readingAssignment();
+    const cards = [{ front: "Q1", back: "A1", sourcePage: null }];
+    const hash = (await cardVersion(sourceId, cards)).contentHash;
+    vi.mocked(cardVersion).mockClear();
+    appData.aiStudySets = [{ sourceMaterialId: sourceId, flashcards: cards } as AppData["aiStudySets"][number]];
+    const secondReading = structuredClone(s.activities[0]!);
+    secondReading.record.id = "second-reading";
+    secondReading.record.title = "Other reading";
+    secondReading.record.source_revision = "c".repeat(64);
+    s.activities.push(secondReading);
+    for (const kind of ["cards", "test"] as const) {
+      for (let i = 0; i < 2; i++) {
+        const e = newHomeworkActivity(s.assignment.id, s.activities.length, kind, s.assignment.created_at);
+        e.record.title = `${kind} ${i}`;
+        Object.assign(e.record, { material_id: sourceId, source_material_id: sourceId,
+          source_revision: i === 0 ? (kind === "cards" ? hash : "b".repeat(64)) : "different",
+          card_set_id: "saved-cards", test_version_id: quizId });
+        e.source = { title: "Test Handbook", total_pages: 10 };
+        s.activities.push(e);
+      }
+    }
+    renderView(s.assignment.id);
+    inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 });
+    await screen.findByText("3 of 6 need a fix before you study offline.");
+    const counts = (n: number) => {
+      expect(inspect).toHaveBeenCalledTimes(n);
+      expect(cardVersion).toHaveBeenCalledTimes(n);
+      expect(repositories.practiceSessions.getVersion).toHaveBeenCalledTimes(n);
+      expect(repositories.practiceSessions.getActiveVersion).toHaveBeenCalledTimes(n);
+    };
+    counts(1);
+    expect(screen.getAllByText("Works offline")).toHaveLength(3);
+    expect(screen.getAllByText("Needs a fix")).toHaveLength(3);
+    inspectDeferred = createDeferred();
+    returnToHomework();
+    expect(screen.getByText("Checking what works without internet…")).toBeTruthy();
+    await vi.waitFor(() => counts(2));
+    await act(async () => inspectDeferred.resolve({ contentSha256: "c".repeat(64), totalPages: 10 }));
+    await screen.findByText("3 of 6 need a fix before you study offline.");
+    counts(2);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it.each([[1, 11], [0, 5], [5, 4], [1.5, 5]])("matching_hash_out_of_range_reading_never_ready (%s–%s)", async (start, end) => {
+    const s = readingAssignment();
+    const invalid = structuredClone(s.activities[0]!);
+    invalid.record.id = "invalid-reading";
+    invalid.record.title = "Range to repair";
+    invalid.record.page_start = start;
+    invalid.record.page_end = end;
+    s.activities.push(invalid);
+    renderView(s.assignment.id);
+    inspectDeferred.resolve({ contentSha256: "a".repeat(64), totalPages: 10 });
+    await screen.findByText("1 of 2 needs a fix before you study offline.");
+    expect(screen.getAllByText("Needs a fix")).toHaveLength(1);
+    expect(await screen.findAllByText("Works offline")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Choose a source for Range to repair" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Choose a source for Aerodynamics reading" })).toBeNull();
+    expect(screen.queryByText("Everything here works without internet.")).toBeNull();
+    expect(inspect).toHaveBeenCalledTimes(1);
+  });
 
   it("an all-healthy assignment shows 'Everything here works without internet.' only after checks finish", async () => {
     const s = newHomework();
