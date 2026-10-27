@@ -113,6 +113,13 @@ if its archive integrity hashes were recomputed. Supported older libraries upgra
 with empty homework tables. An app whose supported schema ceiling is below 20 refuses a
 schema-20 backup with “Update the app first” before replacing current data.
 
+Schema 23 adds a separate `answer` to homework activities. Existing `body` text stays
+as the prompt and existing rows receive an empty answer. Only reflections and questions
+may hold an answer. New completions use evidence version 2, which captures both prompt
+and answer; immutable version-1 evidence and receipts retain their original validation.
+Backups from before schema 23 restore against their own schema contract and receive
+the empty answer when startup applies migration 0023.
+
 Browser mode keeps its existing atomic byte-restoring persistence boundary: a failed final
 storage write restores all live rows, history and receipts to the last durable bytes. Separate
 browser tabs remain uncoordinated; there is no homework-only or global Web Lock in this slice.

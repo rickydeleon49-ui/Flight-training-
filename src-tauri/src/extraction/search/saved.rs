@@ -255,7 +255,7 @@ impl Searcher {
                      + (SELECT coalesce(sum(octet_length(text) + octet_length(answer)), 0) FROM app.questions)
                      + (SELECT coalesce(sum(min(octet_length(title), ?1)), 0) FROM app.study_materials)
                      + (SELECT coalesce(sum(octet_length(title)+octet_length(instructions)),0) FROM app.homework_assignments WHERE archived=0)
-                     + (SELECT coalesce(sum(octet_length(h.title)+octet_length(h.body)),0) FROM app.homework_activities h JOIN app.homework_assignments a ON a.id=h.assignment_id WHERE a.archived=0 AND h.removed_at IS NULL)",
+                     + (SELECT coalesce(sum(octet_length(h.title)+octet_length(h.body)+octet_length(h.answer)),0) FROM app.homework_activities h JOIN app.homework_assignments a ON a.id=h.assignment_id WHERE a.archived=0 AND h.removed_at IS NULL)",
                     [MAX_TITLE_BYTES],
                     |r| r.get(0),
                 )
@@ -457,7 +457,8 @@ impl Searcher {
                   FROM app.homework_assignments WHERE archived=0 AND octet_length(id)<=?2", "homework"),
                 ("SELECT h.assignment_id || ':' || h.id,h.material_id,
                     CASE WHEN octet_length(h.title)<=?1 THEN h.title END,
-                    CASE WHEN octet_length(h.body)<=?1 THEN h.body END
+                    CASE WHEN h.answer='' THEN CASE WHEN octet_length(h.body)<=?1 THEN h.body END
+                         WHEN octet_length(h.body)+octet_length(h.answer)+1<=?1 THEN h.body || char(10) || h.answer END
                   FROM app.homework_activities h JOIN app.homework_assignments a ON a.id=h.assignment_id
                   WHERE a.archived=0 AND h.removed_at IS NULL AND octet_length(h.id)<=?2
                     AND octet_length(h.assignment_id)<=?2 AND (h.material_id IS NULL OR octet_length(h.material_id)<=?2)", "homework_activity"),

@@ -627,7 +627,7 @@ pub(crate) fn record_rating(conn: &Connection, action: &Value, at: &str) -> Resu
     if finished {
         e["record"]["state"] = json!("completed");
         e["record"]["completed_at"] = json!(at);
-        let mut evidence = json!({"version":1,"activity_id":activity_id});
+        let mut evidence = json!({"version":2,"answer":e["record"].get("answer").cloned().unwrap_or(json!("")),"activity_id":activity_id});
         for k in [
             "revision",
             "cycle",

@@ -30,6 +30,8 @@ import homework from "../../src-tauri/migrations/0020_homework.sql?raw";
 import flightSchools from "../../src-tauri/migrations/0021_flight_schools.sql?raw";
 import journalSchool from "../../src-tauri/migrations/0022_journal_school.sql?raw";
 
+import homeworkAnswers from "../../src-tauri/migrations/0023_homework_answers.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -59,6 +61,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 20, description: "homework", sql: homework },
   { version: 21, description: "flight_schools", sql: flightSchools },
   { version: 22, description: "journal_school", sql: journalSchool },
+  { version: 23, description: "homework_answers", sql: homeworkAnswers },
 ];
 
 /**

@@ -109,7 +109,18 @@ pub(crate) fn parse(raw: &str) -> Result<Value, String> {
     Ok(v)
 }
 fn validate_record(v: &Value, activity: bool) -> Result<(), String> {
-    keys(v, if activity { ACTIVITY } else { ASSIGNMENT })?;
+    let names = if activity && v.get("answer").is_some() {
+        format!("{ACTIVITY} answer")
+    } else {
+        (if activity { ACTIVITY } else { ASSIGNMENT }).to_string()
+    };
+    keys(v, &names)?;
+    if activity {
+        let answer = v.get("answer").and_then(Value::as_str).unwrap_or("");
+        ensure(v.get("answer").is_none() || v["answer"].is_string())?;
+        ensure(text(answer, 20000, false))?;
+        ensure(["reflection", "questions"].contains(&s(v, "kind")?) || answer.is_empty())?;
+    }
     ensure(uuid(s(v, "id")?) && text(s(v, "title")?, 200, true))?;
     ensure(n(v, "revision")? >= 1)?;
     ensure(["upcoming", "in_progress", "completed", "reopened"].contains(&s(v, "state")?))?;
@@ -241,7 +252,12 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
         }
         ensure((r["state"] == "completed") == !e["evidence"].is_null())?;
         if !e["evidence"].is_null() {
-            let mut evidence = json!({"version":1,"activity_id":r["id"]});
+            let version = &e["evidence"]["version"];
+            ensure(*version == 1 || *version == 2)?;
+            let mut evidence = json!({"version":version,"activity_id":r["id"]});
+            if *version == 2 {
+                evidence["answer"] = json!(r.get("answer").and_then(Value::as_str).unwrap_or(""));
+            }
             for k in [
                 "revision",
                 "cycle",
@@ -263,7 +279,15 @@ pub(crate) fn validate_snapshot(v: &Value) -> Result<(), String> {
                 ensure(!r["source_revision"].is_null())?;
             }
             if ["reflection", "questions"].contains(&s(r, "kind")?) {
-                ensure(text(s(r, "body")?, 20000, true))?;
+                ensure(text(
+                    if e["evidence"]["version"] == 1 {
+                        s(r, "body")?
+                    } else {
+                        r.get("answer").and_then(Value::as_str).unwrap_or("")
+                    },
+                    20000,
+                    true,
+                ))?;
             }
         }
         if r["state"] == "in_progress" {
@@ -306,8 +330,24 @@ pub(crate) fn decode_operation(v: &Value) -> Result<(), String> {
     )?;
     validate_snapshot(&v["next"])
 }
+fn normalize_answers(snapshot: &Value) -> Value {
+    let mut normalized = snapshot.clone();
+    if let Some(entries) = normalized["activities"].as_array_mut() {
+        for e in entries {
+            if e["record"].get("answer").is_none() {
+                e["record"]["answer"] = json!("");
+            }
+        }
+    }
+    normalized
+}
 pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), String> {
     decode_operation(op)?;
+    let previous_normalized = previous.map(normalize_answers);
+    let previous = previous_normalized.as_ref();
+    let mut normalized_op = op.clone();
+    normalized_op["next"] = normalize_answers(&op["next"]);
+    let op = &normalized_op;
     let next = &op["next"];
     let a = &next["assignment"];
     let at = s(op, "at")?;
@@ -423,14 +463,17 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
                 && r["updated_at"] == at
                 && r["created_at"] == p["created_at"],
         )?;
-        let spec =
-            p["kind"] != r["kind"] || p["body"] != r["body"] || TARGET.iter().any(|k| p[k] != r[k]);
+        let spec = p["kind"] != r["kind"]
+            || p["body"] != r["body"]
+            || p["answer"] != r["answer"]
+            || TARGET.iter().any(|k| p[k] != r[k]);
         match change {
             "edit" | "relink" => {
                 let mut allowed = vec![
                     "title",
                     "kind",
                     "body",
+                    "answer",
                     "updated_at",
                     "state",
                     "completed_at",
@@ -440,7 +483,7 @@ pub(crate) fn transition(previous: Option<&Value>, op: &Value) -> Result<(), Str
                 allowed.extend(TARGET);
                 ensure(except(p, r, &allowed))?;
                 if change == "relink" {
-                    allowed.retain(|k| !["title", "kind", "body"].contains(k));
+                    allowed.retain(|k| !["title", "kind", "body", "answer"].contains(k));
                     ensure(except(p, r, &allowed))?;
                 }
                 ensure(
@@ -587,7 +630,17 @@ pub(crate) fn rows(
         .map_err(|e| e.to_string())
 }
 fn live_matches(snapshot: &Value, assignment: &Value, activities: &[Value]) -> bool {
-    let mut expected = snapshot.clone();
+    let mut expected = normalize_answers(snapshot);
+    let activities: Vec<Value> = activities
+        .iter()
+        .map(|r| {
+            let mut r = r.clone();
+            if r.get("answer").is_none() {
+                r["answer"] = json!("");
+            }
+            r
+        })
+        .collect();
     if assignment["lesson_id"].is_null() {
         expected["assignment"]["lesson_id"] = Value::Null;
     }
@@ -903,6 +956,18 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
         cards::live_rows(conn, &snapshot).map_err(|_| error("INVALID"))?;
         previous = Some(snapshot);
     }
+    for e in list(&op["next"], "activities").map_err(|_| error("INVALID"))? {
+        let prior = previous
+            .as_ref()
+            .and_then(|p| p["activities"].as_array())
+            .and_then(|es| es.iter().find(|p| p["record"]["id"] == e["record"]["id"]));
+        if e["record"]["state"] == "completed"
+            && prior.map_or(true, |p| p["record"]["state"] != "completed")
+            && e["evidence"]["version"] != 2
+        {
+            return Err(error("INVALID"));
+        }
+    }
     transition(previous.as_ref(), op).map_err(|_| error("INVALID"))?;
     cards::writes(conn, previous.as_ref(), op).map_err(|_| error("INVALID"))?;
     let next = op["next"].clone();
@@ -974,7 +1039,11 @@ fn apply(conn: &Connection, op: &Value) -> Result<Value, HomeworkError> {
                 &[&s(&e["record"], "id")?],
             )?;
             ensure(owner.first().map_or(true, |o| o["assignment_id"] == id))?;
-            put(conn, "homework_activities", &e["record"])?;
+            let mut record = e["record"].clone();
+            if record.get("answer").is_none() {
+                record["answer"] = json!("");
+            }
+            put(conn, "homework_activities", &record)?;
         }
         for r in list(&next, "runs")? {
             let prior = previous
@@ -1280,7 +1349,8 @@ pub(crate) fn record_test_completion(
                     rec["updated_at"] = Value::String(completed_at.to_string());
                     let act_rec = rec.clone();
                     entry["evidence"] = json!({
-                        "version": 1,
+                        "version": 2,
+                        "answer": act_rec.get("answer").cloned().unwrap_or(json!("")),
                         "activity_id": act_rec["id"],
                         "revision": act_rec["revision"],
                         "cycle": act_rec["cycle"],

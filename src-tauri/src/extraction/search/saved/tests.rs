@@ -43,7 +43,7 @@ impl Fixture {
              CREATE TABLE card_versions (id TEXT PRIMARY KEY, source_material_id TEXT NOT NULL, is_active INTEGER NOT NULL);
              CREATE TABLE card_items (id TEXT PRIMARY KEY, version_id TEXT NOT NULL, front TEXT NOT NULL, back TEXT NOT NULL);
              CREATE TABLE homework_assignments (id TEXT PRIMARY KEY,title TEXT,instructions TEXT,archived INTEGER);
-             CREATE TABLE homework_activities (id TEXT PRIMARY KEY,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT);
+             CREATE TABLE homework_activities (id TEXT PRIMARY KEY,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT,answer TEXT NOT NULL DEFAULT '');
              CREATE TABLE notes (id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL DEFAULT '');
              CREATE TABLE questions (id TEXT PRIMARY KEY, text TEXT NOT NULL, material_id TEXT,
                answer TEXT NOT NULL DEFAULT '');",
@@ -623,7 +623,7 @@ fn homework_search_current_uuid_digest_scope_and_rebuild() {
     let f = Fixture::new();
     let db = f.db();
     db.execute_batch("INSERT INTO homework_assignments VALUES ('a','Fronts','Prepare privately',0),('b','ArchivedFronts','hidden',1);
-        INSERT INTO homework_activities VALUES ('x','a','Clouds','Write reflection',NULL,NULL),('y','a','Linked','Linked fronts','m1',NULL),('z','a','RemovedFronts','hidden',NULL,'gone');").unwrap();
+        INSERT INTO homework_activities (id,assignment_id,title,body,material_id,removed_at) VALUES ('x','a','Clouds','Write reflection',NULL,NULL),('y','a','Linked','Linked fronts','m1',NULL),('z','a','RemovedFronts','hidden',NULL,'gone');").unwrap();
     let host = f.host();
     let response = f.search(&host, "fronts", ALL, &[]).unwrap();
     let saved = response.saved.unwrap();
@@ -682,7 +682,7 @@ fn homework_search_excludes_archived_assignments_and_removed_activities() {
         "INSERT INTO homework_assignments VALUES
            ('active', 'Activeword', '', 0),
            ('archived', 'Archivedword', '', 1);
-         INSERT INTO homework_activities VALUES
+         INSERT INTO homework_activities (id,assignment_id,title,body,material_id,removed_at) VALUES
            ('archived-activity', 'archived', 'Archivedactivityword', '', NULL, NULL),
            ('removed-activity', 'active', 'Removedactivityword', '', NULL, 'gone');",
     )
@@ -737,7 +737,7 @@ fn homework_search_excludes_archived_assignments_and_removed_activities() {
 fn homework_material_filters_never_include_unrelated_bodies() {
     let f = Fixture::new();
     f.db().execute_batch("INSERT INTO homework_assignments VALUES ('a','Scopeword heading','',0),('b','Scopeword unlinked','',0);
-      INSERT INTO homework_activities VALUES ('x','a','Scopeword linked','Body','m1',NULL),('y','a','Scopeword unrelated','Body','m2',NULL),('z','b','Scopeword unlinked','Body',NULL,NULL);").unwrap();
+      INSERT INTO homework_activities (id,assignment_id,title,body,material_id,removed_at) VALUES ('x','a','Scopeword linked','Body','m1',NULL),('y','a','Scopeword unrelated','Body','m2',NULL),('z','b','Scopeword unlinked','Body',NULL,NULL);").unwrap();
     let host = f.host();
     let scoped = |ids: Vec<String>| {
         host.search(Request {
@@ -798,6 +798,62 @@ fn homework_obeys_field_and_total_byte_bounds() {
     .unwrap();
     assert_eq!(
         f.search(&host, "bounded", ALL, &[])
+            .unwrap()
+            .saved
+            .unwrap()
+            .state,
+        "too_large"
+    );
+}
+
+#[test]
+fn homework_search_finds_saved_answer_and_rebuilds_after_answer_edit() {
+    let f = Fixture::new();
+    let db = f.db();
+    db.execute_batch("INSERT INTO homework_assignments VALUES ('answer-hw','Debrief','',0);
+      INSERT INTO homework_activities VALUES ('reflection','answer-hw','Reflection','What did you learn?',NULL,NULL,'crosswindnote');").unwrap();
+    let host = f.host();
+    let found = f.search(&host, "crosswindnote", ALL, &[]).unwrap();
+    assert!(hits(&found)
+        .iter()
+        .any(|(_, kind, id)| *kind == "homework_activity" && id == "answer-hw:reflection"));
+    db.execute("UPDATE homework_activities SET answer='ruddernote'", [])
+        .unwrap();
+    assert!(hits(&f.search(&host, "crosswindnote", ALL, &[]).unwrap()).is_empty());
+    assert!(hits(&f.search(&host, "ruddernote", ALL, &[]).unwrap())
+        .iter()
+        .any(|(_, kind, id)| *kind == "homework_activity" && id == "answer-hw:reflection"));
+}
+
+#[test]
+fn homework_answers_obey_field_and_total_byte_bounds() {
+    let f = Fixture::new();
+    let db = f.db();
+    db.execute_batch(
+        "INSERT INTO homework_assignments VALUES ('a','Debrief','',0);
+      INSERT INTO homework_activities VALUES ('x','a','Answerword','Prompt',NULL,NULL,'');",
+    )
+    .unwrap();
+    db.execute(
+        "UPDATE homework_activities SET answer=?1",
+        ["x".repeat(MAX_TEXT_FIELD_BYTES as usize + 1)],
+    )
+    .unwrap();
+    let host = f.host();
+    let saved = f
+        .search(&host, "answerword", ALL, &[])
+        .unwrap()
+        .saved
+        .unwrap();
+    assert!(saved.groups.is_empty());
+    assert_eq!(saved.coverage.too_large_items, 1);
+    db.execute(
+        "UPDATE homework_activities SET answer=?1",
+        ["x".repeat(MAX_SAVED_BYTES as usize + 1)],
+    )
+    .unwrap();
+    assert_eq!(
+        f.search(&host, "answerword", ALL, &[])
             .unwrap()
             .saved
             .unwrap()

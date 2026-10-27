@@ -101,7 +101,7 @@ it("stale_save_keeps_draft_and_offers_reload", async () => {
     editor();
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Keep my draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
-    await screen.findByText("This changed elsewhere. Reload to see the latest");
+    expect((await screen.findByRole("alert")).textContent).toContain("This changed elsewhere. Reload to see the latest");
     expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Keep my draft");
     expect(screen.getByRole("button", { name: "Reload" })).toBeTruthy();
 });
@@ -122,7 +122,11 @@ it("reflection_requires_nonblank_then_mark", async () => {
     fireEvent.change(screen.getByLabelText("Activity text"), { target: { value: "I want to review fronts." } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    fireEvent.click(await screen.findByRole("button", { name: "Mark complete" }));
+    expect((await screen.findByRole("button", { name: "Mark complete" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByRole("textbox", { name: "Answer for reflection work" }), { target: { value: "My answer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Mark complete" }) as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByRole("button", { name: "Mark complete" }));
     await waitFor(() => expect(records[0]!.assignment.state).toBe("completed"));
 });
 it("quiz_score_shown_separately_no_pass_rule", async () => {
@@ -236,7 +240,7 @@ it("saves all six kinds with verified sources and optional fields", async () => 
     }
     fireEvent.change(screen.getByLabelText("End page"), { target: { value: "9" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
-    await screen.findByText("Choose a physical page range within this PDF.");
+    expect((await screen.findByRole("alert")).textContent).toContain("It has 8 pages — choose pages 1–8.");
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText("End page"), { target: { value: "4" } });
     fireEvent.click(screen.getByRole("button", { name: "Save homework" }));
@@ -388,9 +392,10 @@ it("activity_buttons_short_visible_labels_full_aria", async () => {
 it("reflection_and_questions_complete_inline", async () => {
     const s = assignment(["reflection"]);
     s.activities[0]!.record.title = "Self reflection";
-    s.activities[0]!.record.body = "";
+    s.activities[0]!.record.body = "What did you learn today?";
     view(s.assignment.id);
     await screen.findByText("Self reflection");
+    expect(screen.getByText("What did you learn today?", { selector: "p" })).toBeTruthy();
 
     const textarea = screen.getByRole("textbox", { name: "Answer for Self reflection" }) as HTMLTextAreaElement;
     expect(textarea).toBeTruthy();
@@ -406,7 +411,8 @@ it("reflection_and_questions_complete_inline", async () => {
     fireEvent.click(saveBtn);
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     expect(save.mock.calls[0]![0].changeKind).toBe("edit");
-    expect(records[0]!.activities[0]!.record.body).toBe("My debrief notes");
+    expect(records[0]!.activities[0]!.record.answer).toBe("My debrief notes");
+    expect(records[0]!.activities[0]!.record.body).toBe("What did you learn today?");
 
     await waitFor(() => expect((screen.getByRole("button", { name: "Mark complete" }) as HTMLButtonElement).disabled).toBe(false));
     expect(screen.queryByText("Write your answer first")).toBeNull();
@@ -415,6 +421,9 @@ it("reflection_and_questions_complete_inline", async () => {
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
     expect(save.mock.calls[1]![0].changeKind).toBe("complete");
     expect(records[0]!.activities[0]!.record.state).toBe("completed");
+    expect(screen.queryByRole("textbox", { name: "Answer for Self reflection" })).toBeNull();
+    expect(screen.getByText("My debrief notes")).toBeTruthy();
+    expect(screen.getByText("What did you learn today?")).toBeTruthy();
 });
 
 it("homework_filter_selected_state_visible", async () => {

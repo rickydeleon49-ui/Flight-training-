@@ -316,7 +316,7 @@ fn homework_content_type_has_api_parity_and_remains_feature_gated() {
          CREATE TABLE notes (id TEXT,title TEXT,body TEXT);
          CREATE TABLE questions (id TEXT,material_id TEXT,text TEXT,answer TEXT);
          CREATE TABLE homework_assignments (id TEXT,title TEXT,instructions TEXT,archived INTEGER);
-         CREATE TABLE homework_activities (id TEXT,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT);
+         CREATE TABLE homework_activities (id TEXT,assignment_id TEXT,title TEXT,body TEXT,material_id TEXT,removed_at TEXT,answer TEXT NOT NULL DEFAULT '');
          INSERT INTO homework_assignments VALUES ('00000000-0000-4000-8000-000000000001','Cloud homework','Review clouds',0);"
     ).unwrap();
     wait_ready(&f.svc);

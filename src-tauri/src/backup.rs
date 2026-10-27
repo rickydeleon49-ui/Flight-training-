@@ -690,7 +690,8 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
 /// Schema 20 homework contract; TS twin: `validateHomeworkState`.
 /// All three engines exercise the shared homework fixtures after reopening.
 pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Result<(), String> {
-    let reference = get_reference_schema_connection()?;
+    let version = newest_migration_version(connection)?.min(crate::CURRENT_SCHEMA_VERSION);
+    let reference = get_reference_schema_connection_through(version)?;
     for table in [
         "homework_assignments",
         "homework_activities",

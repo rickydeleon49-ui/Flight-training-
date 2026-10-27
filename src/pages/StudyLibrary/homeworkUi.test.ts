@@ -15,7 +15,7 @@ describe.each(ENGINES)("Homework UI requests through HW-01b: %s", name => {
             const repo = homeworkRepository({ select: async <T>(sql: string, p: SqlValue[] = []) => engine.query(sql, p) as T[], execute: async () => { }, saveHomeworkAtomically: op => executeHomeworkOperation(sql => engine.exec(sql), (sql, p) => engine.run(sql, p), (sql, p) => engine.query(sql, p), op) });
             const empty = newHomework(), draft = structuredClone(empty);
             draft.assignment.title = "Synthetic preparation";
-            draft.activities = ["checklist", "reflection", "questions"].map((kind, i) => { const e = newHomeworkActivity(draft.assignment.id, i, kind as "checklist", draft.assignment.created_at); e.record.body = "Saved response"; return e; });
+            draft.activities = ["checklist", "reflection", "questions"].map((kind, i) => { const e = newHomeworkActivity(draft.assignment.id, i, kind as "checklist", draft.assignment.created_at); e.record.body = "Prompt"; e.record.answer = ["reflection", "questions"].includes(kind) ? "Saved response" : ""; return e; });
             await repo.save(homeworkOperation(empty, draft, "create", true));
             let current = (await repo.get(draft.assignment.id))!;
             for (const e of activeHomework(current)) {
@@ -82,7 +82,7 @@ it("history_labels_answer_saved", () => {
     const prev = validateHomeworkTransition(null, homeworkOperation(base, base, "create", true));
 
     const draft = structuredClone(prev);
-    draft.activities[0]!.record.body = "Felt comfortable in the traffic pattern.";
+    draft.activities[0]!.record.answer = "Felt comfortable in the traffic pattern.";
     const edited = validateHomeworkTransition(prev, homeworkOperation(prev, draft, "edit"));
 
     const prevRow = {
@@ -118,7 +118,7 @@ it("saving_answer_on_unstarted_activity_does_not_reopen", () => {
     base.activities = [act];
     const created = validateHomeworkTransition(null, homeworkOperation(base, base, "create", true));
     const draft = structuredClone(created);
-    draft.activities[0]!.record.body = "Felt comfortable in the traffic pattern.";
+    draft.activities[0]!.record.answer = "Felt comfortable in the traffic pattern.";
     const saved = validateHomeworkTransition(created, homeworkOperation(created, draft, "edit"));
     const id = saved.activities[0]!.record.id;
     const history = [created, saved].map((s, i) => ({ change_kind: i ? "edit" : "create", revision: s.assignment.revision, snapshot_json: JSON.stringify(s) }));
@@ -130,7 +130,7 @@ it("saving_answer_on_unstarted_activity_does_not_reopen", () => {
     done.activities[0]!.record.state = "completed";
     const completed = validateHomeworkTransition(saved, homeworkOperation(saved, done, "complete"));
     const again = structuredClone(completed);
-    again.activities[0]!.record.body = "Also practised go-arounds.";
+    again.activities[0]!.record.answer = "Also practised go-arounds.";
     const changed = validateHomeworkTransition(completed, homeworkOperation(completed, again, "edit"));
     const fullHistory = [...history, ...[completed, changed].map((s, i) => ({ change_kind: i ? "edit" : "complete", revision: s.assignment.revision, snapshot_json: JSON.stringify(s) }))];
     expect(activityStateLabel(changed.activities[0]!.record.state, id, fullHistory)).toBe("Reopened");

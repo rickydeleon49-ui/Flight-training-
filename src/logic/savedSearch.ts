@@ -85,7 +85,7 @@ export async function checkSavedHit(data: Pick<AppData, "aiStudySets" | "notes" 
       if (!s || s.assignment.archived) return "gone";
       const entry = activityId ? s.activities.find(e => e.record.id === activityId && !e.record.removed_at) : null;
       if (passage.kind === "homework_activity" && !entry) return "gone";
-      const fields = entry ? [entry.record.title, entry.record.body] : [s.assignment.title, s.assignment.instructions];
+      const fields = entry ? [entry.record.title, entry.record.answer ? `${entry.record.body}\n${entry.record.answer}` : entry.record.body] : [s.assignment.title, s.assignment.instructions];
       return (await itemDigest(fields)) === passage.rev ? "ok" : "changed";
     }
     case "note":

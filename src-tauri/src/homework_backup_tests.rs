@@ -52,7 +52,7 @@ fn shared_homework_validation_contract_native_outcomes() {
 fn homework_scenario(name: &str) {
     let root = scratch(name);
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     let mut conn = Connection::open(&path).unwrap();
     conn.pragma_update(None, "foreign_keys", "ON").unwrap();
     homework_seed(&conn);
@@ -280,7 +280,7 @@ fn homework_history_append_only() {
 fn homework_two_connections_one_winner_one_stale() {
     let root = scratch("hw-race");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     {
         let mut conn = Connection::open(&path).unwrap();
         homework_seed(&conn);
@@ -392,7 +392,7 @@ fn schema_20_homework_archive_round_trip() {
     let target = scratch("hw20-target");
     let backup = scratch("hw20-backup");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     let before = {
         let mut conn = Connection::open(&path).unwrap();
         conn.pragma_update(None, "foreign_keys", "ON").unwrap();
@@ -421,7 +421,7 @@ fn tampered_schema_20_homework_archive_refused() {
     let target = scratch("hw20-refused");
     let backup = scratch("hw20-backup");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     {
         let mut conn = Connection::open(&path).unwrap();
         homework_seed(&conn);
@@ -467,7 +467,7 @@ fn older_app_rejects_schema_20_backup() {
     let root = scratch("hw20-old");
     let target = scratch("hw20-old-target");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     pdf_kit_test_database(&target.join(DB_FILES[0]), 19);
     let before = std::fs::read(target.join(DB_FILES[0])).unwrap();
     let source = std::fs::read(&path).unwrap();
@@ -502,7 +502,7 @@ fn adding_activity_to_completed_assignment_reopens_it() {
 fn card_run_completes_only_with_all_frozen_items_rated_in_run() {
     let root = scratch("hw-cards");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     let mut conn = Connection::open(&path).unwrap();
     conn.pragma_update(None, "foreign_keys", "ON").unwrap();
     homework_seed(&conn);
@@ -539,7 +539,7 @@ fn homework_card_write(conn:&mut Connection,request:&Value)->Result<Value,crate:
     tx.commit().unwrap();Ok(result)
 }
 fn homework_card_scenario(name:&str) {
-    let root=scratch(name);let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,20);
+    let root=scratch(name);let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,crate::CURRENT_SCHEMA_VERSION);
     let mut conn=Connection::open(&path).unwrap();conn.pragma_update(None,"foreign_keys","ON").unwrap();homework_seed(&conn);
     for sql in homework_contract()["card_seed"].as_array().unwrap(){conn.execute_batch(sql.as_str().unwrap()).unwrap();}
     crate::homework::execute_homework(&mut conn,&homework_operation("card_create")).unwrap();
@@ -593,7 +593,7 @@ fn homework_card_scenario(name:&str) {
 #[test] fn homework_rating_and_evidence_roll_back_together(){homework_card_scenario("rating_rollback");}
 #[test]
 fn backup_round_trip_keeps_card_runs_and_evidence() {
-    let root=scratch("hw-cards-backup");let target=scratch("hw-cards-target");let archive_root=scratch("hw-cards-archive");let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,20);
+    let root=scratch("hw-cards-backup");let target=scratch("hw-cards-target");let archive_root=scratch("hw-cards-archive");let path=root.join(DB_FILES[0]);pdf_kit_test_database(&path,crate::CURRENT_SCHEMA_VERSION);
     let before={
         let conn=Connection::open(&path).unwrap();conn.pragma_update(None,"foreign_keys","ON").unwrap();homework_seed(&conn);
         let contract=homework_contract();let case=contract["cases"].as_array().unwrap().iter().find(|c|c["name"]=="detached card evidence keeps accepted event associations").unwrap();
@@ -711,7 +711,7 @@ fn hw_complete(conn: &mut Connection, attempt: &str, revision: i64, homework: Op
 fn hw_quiz_database(label: &str) -> (std::path::PathBuf, Connection) {
     let root = scratch(label);
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     let conn = Connection::open(&path).unwrap();
     conn.pragma_update(None, "foreign_keys", "ON").unwrap();
     homework_seed(&conn);
@@ -932,7 +932,7 @@ fn backup_round_trip_keeps_runs_evidence_and_action_links() {
     let target = scratch("hw-runs-target");
     let archive_root = scratch("hw-runs-archive");
     let path = root.join(DB_FILES[0]);
-    pdf_kit_test_database(&path, 20);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
     let mut conn = Connection::open(&path).unwrap();
     conn.pragma_update(None, "foreign_keys", "ON").unwrap();
     homework_seed(&conn);
@@ -1077,5 +1077,77 @@ fn zero_score_completes_and_detached_evidence_survives_later_edits() {
     archive["next"]["activities"][0]["record"] = crate::homework::rows(&conn, "SELECT * FROM homework_activities WHERE id=?", &[&hw_id(2)]).unwrap()[0].clone();
     crate::homework::execute_homework(&mut conn, &archive).unwrap();
     assert_eq!(crate::homework::rows(&conn,"SELECT attempt_id,source_attempt_id FROM homework_runs", &[]).unwrap()[0], json!({"attempt_id":null,"source_attempt_id":hw_id(30)}));
+    drop(conn); verify_application_database(&path).unwrap(); std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn homework_answer_length_and_kind_validation() {
+    let base = homework_operation("create");
+    crate::homework::validate_snapshot(&base["next"]).unwrap();
+    let mut oversized = base.clone();
+    let entries = oversized["next"]["activities"].as_array_mut().unwrap();
+    let reflection = entries.iter_mut().find(|e| e["record"]["kind"] == "reflection").unwrap();
+    reflection["record"]["answer"] = json!("x".repeat(20001));
+    assert!(crate::homework::validate_snapshot(&oversized["next"]).is_err());
+    let mut wrong_kind = base;
+    let checklist = wrong_kind["next"]["activities"].as_array_mut().unwrap().iter_mut().find(|e| e["record"]["kind"] == "checklist").unwrap();
+    checklist["record"]["answer"] = json!("not permitted");
+    assert!(crate::homework::validate_snapshot(&wrong_kind["next"]).is_err());
+}
+
+#[test]
+fn homework_pre0023_backup_restores_v1_evidence_then_upgrades_empty_answer() {
+    let source = scratch("hw-answer-legacy-source");
+    let target = scratch("hw-answer-legacy-target");
+    let path = source.join(DB_FILES[0]);
+    pdf_kit_test_database(&path, 22);
+    {
+        let conn = Connection::open(&path).unwrap();
+        homework_seed(&conn);
+        let contract = homework_contract();
+        let legacy = contract["cases"].as_array().unwrap().iter().find(|c| c["name"] == "manual completions include separate aggregate stamp").unwrap();
+        for sql in legacy["sql"].as_array().unwrap() { conn.execute_batch(sql.as_str().unwrap()).unwrap(); }
+    }
+    verify_application_database(&path).unwrap();
+    let archive_root = scratch("hw-answer-legacy-archive");
+    let archive = archive_root.join("legacy.zip");
+    create_consistent_complete_backup_with_retry(&source, &archive, "0.6.0").unwrap();
+    stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+    apply_pending_restore_in(&target).unwrap();
+    let restored = target.join(DB_FILES[0]);
+    let conn = Connection::open(&restored).unwrap();
+    let before = crate::homework::rows(&conn,"SELECT id,body FROM homework_activities ORDER BY id", &[]).unwrap();
+    let history = crate::homework::rows(&conn,"SELECT * FROM homework_history ORDER BY revision", &[]).unwrap();
+    for m in crate::migrations().into_iter().filter(|m| m.version > 22) {
+        conn.execute_batch(m.sql).unwrap();
+        conn.execute("INSERT INTO _sqlx_migrations VALUES (?1)",[m.version]).unwrap();
+    }
+    for mut row in before { let id=row["id"].as_str().unwrap().to_string(); row["answer"]=json!(""); assert_eq!(crate::homework::rows(&conn,"SELECT id,body,answer FROM homework_activities WHERE id=?", &[&id]).unwrap()[0], row); }
+    assert_eq!(crate::homework::rows(&conn,"SELECT * FROM homework_history ORDER BY revision", &[]).unwrap(),history);
+    drop(conn);
+    verify_application_database(&restored).unwrap();
+    std::fs::remove_dir_all(source).unwrap(); std::fs::remove_dir_all(target).unwrap(); std::fs::remove_dir_all(archive_root).unwrap();
+}
+
+#[test]
+fn homework_new_completion_requires_answer_and_v2_evidence() {
+    let root = scratch("hw-new-answer-completion");
+    let path = root.join(DB_FILES[0]);
+    pdf_kit_test_database(&path, crate::CURRENT_SCHEMA_VERSION);
+    let mut conn = Connection::open(&path).unwrap();
+    homework_seed(&conn);
+    crate::homework::execute_homework(&mut conn, &homework_operation("create")).unwrap();
+    let mut complete = homework_operation("complete");
+    for entry in complete["next"]["activities"].as_array_mut().unwrap() {
+        if let Some(ev) = entry["evidence"].as_object_mut() { ev.insert("version".into(),json!(1)); ev.remove("answer"); }
+    }
+    assert!(crate::homework::execute_homework(&mut conn, &complete).is_err());
+    let mut blank = homework_operation("complete");
+    let reflection = blank["next"]["activities"].as_array_mut().unwrap().iter_mut().find(|e| e["record"]["kind"] == "reflection").unwrap();
+    reflection["record"]["answer"] = json!("");
+    reflection["evidence"]["answer"] = json!("");
+    assert!(crate::homework::validate_snapshot(&blank["next"]).is_err());
+    assert!(crate::homework::execute_homework(&mut conn, &blank).is_err());
+    crate::homework::execute_homework(&mut conn, &homework_operation("complete")).unwrap();
     drop(conn); verify_application_database(&path).unwrap(); std::fs::remove_dir_all(root).unwrap();
 }

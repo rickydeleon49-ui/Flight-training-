@@ -1866,7 +1866,7 @@ export async function validateHomeworkState(query: ValidationQuery, reference: V
       homeworkAssert(await sha256Hex(raw) === receipt.request_hash);
       homeworkAssert(canonicalJson(parseHomeworkJson(text(row, "snapshot_json"))) === canonicalJson(operation.next));
       homeworkAssert(text(receipt, "result_json") === canonicalJson({ version: 1, assignmentId: id, revision: row.revision }));
-      previous = validateHomeworkTransition(previous, operation);
+      previous = validateHomeworkTransition(previous, operation, true);
       await validateHomeworkSources(query, previous, false);
       for(const r of previous.runs) await checkRunEvents(query,previous,r);
       for (const e of previous.activities) {

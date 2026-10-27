@@ -341,6 +341,7 @@ export function HomeworkView() {
                 const offlineItem = offlineSummary?.items.find(item => item.id === r.id);
                 return <li key={r.id} className="homework-activity stack stack--3">
           <h3 className="wrap-anywhere" tabIndex={-1} id={`homework-${r.id}`}>{r.title}</h3><p className="small muted wrap-anywhere">{ACTIVITY_KINDS[r.kind]} · {done ? 'Done' : activityStateLabel(r.state, r.id, history)}{offlineItem ? <> · <span>{offlineItem.text}</span></> : null}</p>
+          {r.body ? <p className="homework-text">{r.body}</p> : null}
           {['reflection', 'questions'].includes(r.kind) && !done ? (
             <div className="stack stack--2" style={{ marginTop: "var(--space-2)" }}>
               <textarea
@@ -349,7 +350,7 @@ export function HomeworkView() {
                 disabled={!editable}
                 placeholder={r.kind === "questions" ? "Write questions for your instructor (one per line)…" : "Write your reflection…"}
                 aria-label={`Answer for ${r.title}`}
-                value={activityDrafts[r.id] ?? r.body}
+                value={activityDrafts[r.id] ?? r.answer ?? ""}
                 onChange={(event) => {
                   const val = event.target.value;
                   setActivityDrafts((prev) => ({ ...prev, [r.id]: val }));
@@ -357,18 +358,18 @@ export function HomeworkView() {
               />
               <div className="row" style={{ alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
                 <Button
-                  disabled={!editable || (activityDrafts[r.id] !== undefined && activityDrafts[r.id] === r.body)}
+                  disabled={!editable || (activityDrafts[r.id] !== undefined && activityDrafts[r.id] === (r.answer ?? ""))}
                   onClick={() => {
-                    const text = activityDrafts[r.id] ?? r.body;
+                    const text = activityDrafts[r.id] ?? r.answer ?? "";
                     change("edit", (s) => {
-                      s.activities.find((x) => x.record.id === r.id)!.record.body = text;
+                      s.activities.find((x) => x.record.id === r.id)!.record.answer = text;
                     });
                   }}
                 >
                   Save
                 </Button>
                 <Button
-                  disabled={!editable || !r.body.trim()}
+                  disabled={!editable || !(r.answer ?? "").trim()}
                   onClick={() =>
                     change("complete", (s) => {
                       s.activities.find((x) => x.record.id === r.id)!.record.state = "completed";
@@ -377,13 +378,13 @@ export function HomeworkView() {
                 >
                   Mark complete
                 </Button>
-                {!r.body.trim() ? (
+                {!(r.answer ?? "").trim() ? (
                   <span className="tiny muted">Write your answer first</span>
                 ) : null}
               </div>
             </div>
-          ) : r.body ? (
-            <p className="homework-text">{r.body}</p>
+          ) : r.answer ? (
+            <p className="homework-text">{r.answer}</p>
           ) : null}
           {missing ? <><p>{sourceStates[r.id] === 'changed' ? "Source changed — choose a source to continue" : sourceStates[r.id] === 'unavailable' ? "This source could not be checked. Choose a source to continue" : "Source missing — choose a source to continue"}</p><Button disabled={!editable} onClick={() => setEditor({ snapshot: current, activityId: r.id, relink: true })}>Choose a source for {r.title}</Button></> : e.source ? <p>{e.source.title}{r.kind === 'read' ? ` · PDF pages ${r.page_start}–${r.page_end}` : ''}</p> : null}
           {done && r.kind==='cards' ? <p>Historical review · {(current.runs.find(run=>run.activity_id===r.id && run.cycle===r.cycle && !run.invalidated_at && run.kind==='cards') as import("@/domain/homework").HomeworkCardRun | undefined)?.ratings.length ?? 0} linked cards rated{missing?' · Source missing or changed':''}</p> : null}

@@ -17,12 +17,14 @@ it("search_finds_homework_and_opens_by_uuid", async () => {
 it("search_excludes_archived_and_removed", async () => {
     const s = newHomework();
     const e = newHomeworkActivity(s.assignment.id, 0, "reflection", s.assignment.created_at);
+    e.record.body = "Prompt from my instructor";
     s.activities = [e];
     const p: SavedPassage = { kind: "homework_activity", recordId: `${s.assignment.id}:${e.record.id}`, rev: await itemDigest([e.record.title, e.record.body]), snippet: "" };
+    // A hit saved before answers existed still matches while the answer is empty.
     expect(await checkSavedHit(data, p, null, async () => s)).toBe("ok");
     e.record.position = 4;
     expect(await checkSavedHit(data, p, null, async () => s)).toBe("ok");
-    e.record.body = "Changed";
+    e.record.answer = "Changed answer";
     expect(await checkSavedHit(data, p, null, async () => s)).toBe("changed");
     e.record.removed_at = new Date().toISOString();
     expect(await checkSavedHit(data, p, null, async () => s)).toBe("gone");
