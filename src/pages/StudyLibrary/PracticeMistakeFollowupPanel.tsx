@@ -311,6 +311,18 @@ export function PracticeMistakeFollowupPanel({
                 {candidate.item.explanation ? (
                   <p className="tiny dim ai-copy">{candidate.item.explanation}</p>
                 ) : null}
+
+                <p className="tiny dim">
+                  Write what confused you in your own words. Notes stay separate from practice history.
+                </p>
+                <div>
+                  <Link
+                    to="/notes"
+                    className="button button--secondary practice-mistake-followup__button"
+                  >
+                    Write a note
+                  </Link>
+                </div>
               </div>
             ) : null}
 

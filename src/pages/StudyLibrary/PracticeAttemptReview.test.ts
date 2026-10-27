@@ -17,6 +17,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import type { PracticeAttempt, PracticeTest, PracticeTestItem } from "@/domain/types";
+import { clearDraft, readDraft, writeDraft } from "@/lib/drafts";
+import { Notes } from "@/pages/Notes/Notes";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { PracticeHistory } from "./PracticeHistory";
 import { PracticeTestPanel } from "./PracticeTestPanel";
@@ -71,6 +73,7 @@ function HistoryRoutes() {
     Routes,
     null,
     h(Route, { path: "/", element: h("p", null, "Home") }),
+    h(Route, { path: "/notes", element: h(Notes) }),
     h(Route, { path: "/study/history", element: h(PracticeHistory) }),
     h(Route, { path: "/study/history/:historyKey", element: h(PracticeHistory) }),
     h(Route, { path: "/study/history/:historyKey/:attemptId", element: h(PracticeHistory) }),
@@ -988,5 +991,196 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
       await secondAttemptDeferred;
     });
     await screen.findByText("Could not load attempt review");
+  });
+});
+
+describe("Safe Notes entry from mistake followup panel (MISTAKES-01c)", () => {
+  let initialDraft: unknown = null;
+
+  beforeEach(() => {
+    initialDraft = readDraft("notes.new");
+    clearDraft("notes.new");
+  });
+
+  afterEach(() => {
+    if (initialDraft !== null) {
+      writeDraft("notes.new", initialDraft);
+    } else {
+      clearDraft("notes.new");
+    }
+  });
+
+  it("omits Write a note link before opt-in and before reveal, displays it after reveal with exact /notes href and copy, and opens fresh blank composer on click with practice history untouched", async () => {
+    await seed("m-notes-entry", "NotesEntry");
+    // Q1 incorrect, Q2 correct, Q3 don't know, Q4 unanswered
+    const { historyKey, attemptId } = await completeAttempt("m-notes-entry", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const beforeState = await storedState();
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: NotesEntry material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+
+    // 1. Link is absent before opt-in
+    expect(within(panel).queryByRole("link", { name: "Write a note" })).toBeNull();
+    expect(within(panel).queryByText(/Write what confused you/)).toBeNull();
+
+    // 2. Opt-in: link is still absent before deliberate reveal
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    expect(within(panel).queryByRole("link", { name: "Write a note" })).toBeNull();
+    expect(within(panel).queryByText(/Write what confused you/)).toBeNull();
+
+    // 3. Reveal saved answer: link appears in revealed-details only
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    fireEvent.click(revealBtn);
+
+    const notesLink = within(panel).getByRole("link", { name: "Write a note" });
+    expect(notesLink).toBeTruthy();
+    expect(notesLink.getAttribute("href")).toBe("/notes");
+    expect(
+      within(panel).getByText(
+        "Write what confused you in your own words. Notes stay separate from practice history.",
+      ),
+    ).toBeTruthy();
+
+    // 4. Clicking opens actual composer route, no note created, no private content copied
+    type RouteSnapshot = { search: string; state: unknown };
+    let capturedNotesRoute: RouteSnapshot | null = null;
+    onLayoutRoute = (loc) => {
+      if (loc.pathname === "/notes") {
+        capturedNotesRoute = { search: loc.search, state: loc.state };
+      }
+    };
+
+    fireEvent.click(notesLink);
+    expect(capturedNotesRoute).toEqual({ search: "", state: null });
+    await screen.findByRole("heading", { name: "Write something down" });
+    expect(screen.getByRole("heading", { name: "Notes" })).toBeTruthy();
+
+    // No notes created in SQLite or React state
+    expect(await testDb.select("SELECT * FROM notes")).toHaveLength(0);
+    expect(appCtx.data.notes).toHaveLength(0);
+
+    // Fresh composer is blank: no frozen question, explanation, answers, or IDs copied
+    const titleInput = screen.getByLabelText("Title (optional)") as HTMLInputElement;
+    const bodyInput = screen.getByLabelText("Note") as HTMLTextAreaElement;
+    expect(titleInput.value).toBe("");
+    expect(bodyInput.value).toBe("");
+
+    // All 6 practice tables/receipts completely unchanged
+    expect(await storedState()).toEqual(beforeState);
+
+    // 5. Explicitly typing and saving creates exact ordinary Note from user text only
+    fireEvent.change(titleInput, { target: { value: "My own question reflection" } });
+    fireEvent.change(bodyInput, {
+      target: { value: "Check private pilot oral exam guide on right-of-way rules." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+
+    await screen.findByText("My own question reflection");
+    const savedNotes = await testDb.select<{ id: string; title: string; body: string }>(
+      "SELECT id, title, body FROM notes",
+    );
+    expect(savedNotes).toHaveLength(1);
+    const savedNote = savedNotes[0];
+    if (!savedNote) throw new Error("Expected saved note");
+    expect(savedNote.title).toBe("My own question reflection");
+    expect(savedNote.body).toBe(
+      "Check private pilot oral exam guide on right-of-way rules.",
+    );
+    // Verified: no leaked frozen question/answer/explanation or attempt IDs
+    expect(savedNote.title).not.toContain("NotesEntry");
+    expect(savedNote.title).not.toContain(attemptId);
+    expect(savedNote.body).not.toContain("NotesEntry");
+    expect(savedNote.body).not.toContain("why");
+    expect(savedNote.body).not.toContain(attemptId);
+    expect(savedNote.body).not.toContain(historyKey);
+
+    // Practice history and operations remain unchanged after Note creation
+    expect(await storedState()).toEqual(beforeState);
+  });
+
+  it("preserves unsaved Notes draft through navigation to history, opt-in, reveal, and link re-entry", async () => {
+    // 1. Visit Notes first and type unsaved title/body through real inputs / useDraftRecovery
+    await renderHistory("/notes");
+    await screen.findByRole("heading", { name: "Write something down" });
+
+    const titleInput = screen.getByLabelText("Title (optional)");
+    const bodyInput = screen.getByLabelText("Note");
+    fireEvent.change(titleInput, { target: { value: "Pre-existing draft title" } });
+    fireEvent.change(bodyInput, {
+      target: { value: "Pre-existing draft body typed before visiting practice." },
+    });
+
+    expect(readDraft("notes.new")).toEqual({
+      title: "Pre-existing draft title",
+      body: "Pre-existing draft body typed before visiting practice.",
+    });
+    expect(await testDb.select("SELECT * FROM notes")).toHaveLength(0);
+
+    // 2. Seed and complete attempt, then navigate to practice history review
+    await seed("m-draft-pres", "DraftPreserve");
+    const { historyKey, attemptId } = await completeAttempt("m-draft-pres", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const practiceBefore = await storedState();
+
+    act(() => navigateTo(reviewPath(historyKey, attemptId)));
+    await screen.findByText("Review: DraftPreserve material");
+
+    // 3. Opt-in and deliberate reveal in the followup panel
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    fireEvent.click(revealBtn);
+
+    const notesLink = within(panel).getByRole("link", { name: "Write a note" });
+    expect(notesLink.getAttribute("href")).toBe("/notes");
+
+    // 4. Click link back to Notes: recovered draft intact with status banner
+    fireEvent.click(notesLink);
+    await screen.findByRole("heading", { name: "Write something down" });
+    await screen.findByRole("status");
+    expect(
+      screen.getByText(
+        "Picked up where you left off — this is what you had typed but not saved.",
+      ),
+    ).toBeTruthy();
+
+    const restoredTitle = screen.getByLabelText("Title (optional)") as HTMLInputElement;
+    const restoredBody = screen.getByLabelText("Note") as HTMLTextAreaElement;
+    expect(restoredTitle.value).toBe("Pre-existing draft title");
+    expect(restoredBody.value).toBe(
+      "Pre-existing draft body typed before visiting practice.",
+    );
+
+    // Note count remains unchanged until save
+    expect(await testDb.select("SELECT * FROM notes")).toHaveLength(0);
+
+    // 5. Saving recovered draft persists it and clears the draft
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+    await screen.findByText("Pre-existing draft title");
+
+    const notesInDb = await testDb.select<{ id: string; title: string; body: string }>(
+      "SELECT id, title, body FROM notes",
+    );
+    expect(notesInDb).toHaveLength(1);
+    const firstNoteInDb = notesInDb[0];
+    if (!firstNoteInDb) throw new Error("Expected note in db");
+    expect(firstNoteInDb.title).toBe("Pre-existing draft title");
+    expect(firstNoteInDb.body).toBe(
+      "Pre-existing draft body typed before visiting practice.",
+    );
+
+    expect(readDraft("notes.new")).toBeNull();
+    expect(await storedState()).toEqual(practiceBefore);
   });
 });
