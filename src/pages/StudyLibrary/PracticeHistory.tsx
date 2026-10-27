@@ -1,4 +1,5 @@
 import { PdfItemLabel } from "./PdfItemLabel";
+import { PracticeMistakeFollowupPanel } from "./PracticeMistakeFollowupPanel";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -21,6 +22,7 @@ import type {
   PracticeHistoryGroup,
   PracticeResponse,
   PracticeTestItem,
+  PracticeTestVersion,
 } from "@/domain/types";
 import { formatLongDate, localDayOf } from "@/lib/dates";
 import {
@@ -479,6 +481,7 @@ function AttemptReviewPage({
   const [loaded, setLoaded] = useState<{
     routeKey: string;
     attempt: PracticeAttempt;
+    version: PracticeTestVersion;
     items: PracticeTestItem[];
     responses: PracticeResponse[];
   } | null>(null);
@@ -487,7 +490,7 @@ function AttemptReviewPage({
 
   // Both route parts are identity: the same attempt under another group must
   // be revalidated, not assumed.
-  const routeKey = `${historyKey}|${attemptId}`;
+  const routeKey = JSON.stringify([historyKey, attemptId]);
   const { begin, isCurrent } = useRouteGeneration(routeKey);
 
   useEffect(() => {
@@ -541,7 +544,7 @@ function AttemptReviewPage({
         repositories.practiceSessions.getResponses(attemptId),
       ]);
       if (!isCurrent(generation)) return;
-      setLoaded({ routeKey, attempt: att, items: itms, responses: resps });
+      setLoaded({ routeKey, attempt: att, version: ver, items: itms, responses: resps });
     } catch (err) {
       if (!isCurrent(generation)) return;
       setFailure({ routeKey, text: errorText(err, "Failed to load attempt review.") });
@@ -585,7 +588,7 @@ function AttemptReviewPage({
     );
   }
 
-  const { attempt, items } = current;
+  const { attempt, version, items } = current;
   const entries = buildAttemptReview(attempt.id, items, current.responses);
   const shown = reviewEntriesFor(entries, view);
 
@@ -593,7 +596,7 @@ function AttemptReviewPage({
   const disclaimer = `Practice result from your material (${score}%). Not an official FAA knowledge test score or certification of flight readiness.`;
 
   return (
-    <div className="stack stack--4">
+    <div className="stack stack--4 practice-attempt-review-page">
       <div>
         <Link
           to={`/study/history/${encodeURIComponent(historyKey)}`}
@@ -635,6 +638,15 @@ function AttemptReviewPage({
           </div>
         </CardBody>
       </Card>
+
+      <PracticeMistakeFollowupPanel
+        historyKey={historyKey}
+        attempt={attempt}
+        version={version}
+        items={items}
+        responses={current.responses}
+        onOpenMissedReview={() => chooseView("missed")}
+      />
 
       <div className="stack stack--3">
         <div className="row row--between row--wrap">

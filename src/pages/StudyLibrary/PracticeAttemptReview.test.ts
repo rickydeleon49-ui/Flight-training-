@@ -6,17 +6,17 @@
  * AppDataProvider over a disposable node:sqlite file; records are created only
  * through the existing repositories. jsdom only, not installed-app evidence.
  */
-import { createElement as h } from "react";
+import { createElement as h, useLayoutEffect } from "react";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
-import type { PracticeTest, PracticeTestItem } from "@/domain/types";
+import type { PracticeAttempt, PracticeTest, PracticeTestItem } from "@/domain/types";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { PracticeHistory } from "./PracticeHistory";
 import { PracticeTestPanel } from "./PracticeTestPanel";
@@ -29,9 +29,15 @@ vi.mock("@/data", () => ({
 
 let appCtx: ReturnType<typeof useAppData>;
 let navigateTo: (path: string) => void;
+let onLayoutRoute: ((location: ReturnType<typeof useLocation>) => void) | null = null;
+
 function Probe() {
   appCtx = useAppData();
   navigateTo = useNavigate();
+  const location = useLocation();
+  useLayoutEffect(() => {
+    onLayoutRoute?.(location);
+  }, [location]);
   return null;
 }
 
@@ -53,6 +59,7 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  onLayoutRoute = null;
   testDb?.close();
   rmSync(tempDir, { recursive: true, force: true });
 });
@@ -89,13 +96,17 @@ async function renderPanel(test: PracticeTest) {
 
 /** Four questions; question n has explanation "Why n" and source page 10 + n. */
 async function seed(id: string, prefix: string): Promise<PracticeTest> {
+  return seedWithCount(id, prefix, 4);
+}
+
+async function seedWithCount(id: string, prefix: string, count: number): Promise<PracticeTest> {
   await repos.documents.create({ id, title: `${prefix} material` });
   await repos.documents.savePracticeTest({
     provider: "gemini",
     sourceMaterialId: id,
     title: `${prefix} material`,
     model: "synthetic",
-    questions: [1, 2, 3, 4].map((n) => ({
+    questions: Array.from({ length: count }, (_, i) => i + 1).map((n) => ({
       question: `${prefix} question ${n}?`,
       options: [`${prefix} ${n} right`, `${prefix} ${n} wrong`],
       correctIndex: 0,
@@ -163,6 +174,9 @@ async function storedState() {
     attempts: await testDb.select("SELECT * FROM practice_attempts ORDER BY id"),
     responses: await testDb.select("SELECT * FROM practice_responses ORDER BY id"),
     versions: await testDb.select("SELECT * FROM practice_test_versions ORDER BY id"),
+    items: await testDb.select("SELECT * FROM practice_test_items ORDER BY id"),
+    sessionOperations: await testDb.select("SELECT * FROM practice_session_operations ORDER BY operation_id"),
+    saveOperations: await testDb.select("SELECT * FROM practice_save_operations ORDER BY operation_id"),
   };
 }
 
@@ -347,7 +361,7 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     await seed("m1", "Frozen");
     const { historyKey, attemptId } = await completeAttempt("m1", ["correct", "dont_know", "skip", "incorrect"]);
     await repos.documents.savePracticeTest({
-    provider: "gemini",
+      provider: "gemini",
       sourceMaterialId: "m1",
       title: "Replacement",
       model: "synthetic",
@@ -404,5 +418,575 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     expect(screen.queryByText(/Bravo/)).toBeNull();
     expect(pressed("Missed or skipped")).toBe("true");
     expect(questionHeadings()).toEqual(["Question 1 of 4"]);
+  });
+});
+
+describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () => {
+  it("shows opt-in teaser with actual count from mixed outcomes and walks through single-question review", async () => {
+    await seed("m-walk", "Walkthrough");
+    // Q1 incorrect, Q2 correct, Q3 don't know, Q4 unanswered
+    const { historyKey, attemptId } = await completeAttempt("m-walk", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: Walkthrough material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    const heading = within(panel).getByRole("heading", { name: "Short saved review" });
+    expect(heading).toBeTruthy();
+    expect(within(panel).getByText(/Review questions you missed or skipped/)).toBeTruthy();
+    expect(within(panel).getByText(/historical, read-only review/)).toBeTruthy();
+
+    // 3 eligible questions -> teaser button shows "Review 3 questions"
+    const startBtn = within(panel).getByRole("button", { name: "Review 3 questions" });
+    expect(startBtn).toBeTruthy();
+
+    // With <= 3 eligible, size choices are NOT shown
+    expect(within(panel).queryByRole("group", { name: "Review size" })).toBeNull();
+
+    // Click start to opt in
+    fireEvent.click(startBtn);
+
+    // Heading receives focus
+    expect(document.activeElement).toBe(heading);
+
+    // Done for now button is visible
+    expect(within(panel).getByRole("button", { name: "Done for now" })).toBeTruthy();
+
+    // Review 1 of 3 (Q1, incorrect)
+    expect(within(panel).getByText("Review 1 of 3")).toBeTruthy();
+    expect(within(panel).getByText("(Question 1 of 4)")).toBeTruthy();
+    expect(within(panel).getByText("Incorrect")).toBeTruthy();
+    expect(within(panel).getByText("Walkthrough question 1?")).toBeTruthy();
+
+    // Options are unmarked before reveal
+    expect(within(panel).queryByText("(Correct answer)")).toBeNull();
+    expect(within(panel).queryByText("(Your choice)")).toBeNull();
+    expect(panel.querySelectorAll(".practice-option--correct").length).toBe(0);
+    expect(panel.querySelectorAll(".practice-option--incorrect").length).toBe(0);
+
+    // Previous is disabled on first item
+    expect(within(panel).getByRole("button", { name: "Previous" }).hasAttribute("disabled")).toBe(true);
+    const nextBtn = within(panel).getByRole("button", { name: "Next" });
+    expect(nextBtn.hasAttribute("disabled")).toBe(false);
+
+    // Reveal toggle: focus button first, click, assert same button identity and activeElement
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    revealBtn.focus();
+    expect(document.activeElement).toBe(revealBtn);
+    fireEvent.click(revealBtn);
+
+    const hideBtn = within(panel).getByRole("button", { name: "Hide saved answer" });
+    expect(hideBtn).toBe(revealBtn);
+    expect(document.activeElement).toBe(revealBtn);
+
+    // Now options show correct answer and your choice
+    expect(within(panel).getByText("(Correct answer)")).toBeTruthy();
+    expect(within(panel).getByText("(Your choice)")).toBeTruthy();
+    const correctOption = panel.querySelector(".practice-option--correct");
+    expect(correctOption).toBeTruthy();
+    expect(correctOption?.textContent).toContain("Walkthrough 1 right");
+    const incorrectOption = panel.querySelector(".practice-option--incorrect");
+    expect(incorrectOption).toBeTruthy();
+    expect(incorrectOption?.textContent).toContain("Walkthrough 1 wrong");
+    expect(within(panel).getByText("Walkthrough why 1")).toBeTruthy();
+    expect(within(panel).getByText("Source p. 11")).toBeTruthy();
+
+    // Click Next: advances to Q3 (don't know) and resets reveal
+    fireEvent.click(nextBtn);
+    expect(document.activeElement).toBe(heading);
+    expect(within(panel).getByText("Review 2 of 3")).toBeTruthy();
+    expect(within(panel).getByText("(Question 3 of 4)")).toBeTruthy();
+    expect(within(panel).getByText("Marked as don't know")).toBeTruthy();
+    expect(within(panel).queryByText("Walkthrough why 1")).toBeNull();
+    expect(within(panel).queryByText("(Correct answer)")).toBeNull();
+    expect(within(panel).getByRole("button", { name: "Show saved answer" })).toBeTruthy();
+
+    // Reveal Q3 details: focus button first, click
+    const revealBtn2 = within(panel).getByRole("button", { name: "Show saved answer" });
+    revealBtn2.focus();
+    fireEvent.click(revealBtn2);
+    expect(within(panel).getByText("Marked as don't know during the test.")).toBeTruthy();
+    expect(within(panel).getByText("Walkthrough why 3")).toBeTruthy();
+
+    // Click Next: advances to Q4 (unanswered) and resets reveal
+    fireEvent.click(within(panel).getByRole("button", { name: "Next" }));
+    expect(within(panel).getByText("Review 3 of 3")).toBeTruthy();
+    expect(within(panel).getByText("(Question 4 of 4)")).toBeTruthy();
+    expect(within(panel).getByText("Unanswered")).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
+
+    // Reveal Q4 details before Previous to verify Previous clears revealed state
+    const revealBtn3 = within(panel).getByRole("button", { name: "Show saved answer" });
+    revealBtn3.focus();
+    fireEvent.click(revealBtn3);
+    expect(within(panel).getByText("Unanswered during the test.")).toBeTruthy();
+    expect(within(panel).getByText("Walkthrough why 4")).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Hide saved answer" })).toBeTruthy();
+
+    // Previous works and resets reveal
+    const prevBtn = within(panel).getByRole("button", { name: "Previous" });
+    expect(prevBtn.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(prevBtn);
+    expect(document.activeElement).toBe(heading);
+    expect(within(panel).getByText("Review 2 of 3")).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Show saved answer" })).toBeTruthy();
+    expect(within(panel).queryByRole("button", { name: "Hide saved answer" })).toBeNull();
+    expect(within(panel).queryByText("Walkthrough why 4")).toBeNull();
+    expect(within(panel).queryByText("Walkthrough why 3")).toBeNull();
+    expect(within(panel).queryByText("Unanswered during the test.")).toBeNull();
+    expect(within(panel).queryByText("Marked as don't know during the test.")).toBeNull();
+    expect(within(panel).queryByText("(Correct answer)")).toBeNull();
+    expect(within(panel).queryByText("(Your choice)")).toBeNull();
+
+    // Done for now closes active review back to teaser
+    fireEvent.click(within(panel).getByRole("button", { name: "Done for now" }));
+    expect(within(panel).getByRole("button", { name: "Review 3 questions" })).toBeTruthy();
+    expect(within(panel).queryByText("Review 2 of 3")).toBeNull();
+    expect(document.activeElement).toBe(heading);
+  });
+
+  it("supports size selection (Up to 3 / Up to 5) when >3 eligible, labels 4 accurately, and leaves all history accessible", async () => {
+    await seedWithCount("m-cap6", "CapSix", 6);
+    // All 6 missed (incorrect)
+    const { historyKey, attemptId } = await completeAttempt("m-cap6", [
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+    ]);
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: CapSix material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    const sizeGroup = within(panel).getByRole("group", { name: "Review size" });
+    expect(sizeGroup).toBeTruthy();
+
+    const upTo3Btn = within(sizeGroup).getByRole("button", { name: "Up to 3" });
+    const upTo5Btn = within(sizeGroup).getByRole("button", { name: "Up to 5" });
+    expect(upTo3Btn.getAttribute("aria-pressed")).toBe("true");
+    expect(upTo5Btn.getAttribute("aria-pressed")).toBe("false");
+    expect(within(panel).getByRole("button", { name: "Review 3 questions" })).toBeTruthy();
+
+    // Choose Up to 5
+    fireEvent.click(upTo5Btn);
+    expect(upTo5Btn.getAttribute("aria-pressed")).toBe("true");
+    expect(upTo3Btn.getAttribute("aria-pressed")).toBe("false");
+    expect(within(panel).getByRole("button", { name: "Review 5 questions" })).toBeTruthy();
+
+    // Start review with 5 questions
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 5 questions" }));
+    expect(within(panel).getByText("Review 1 of 5")).toBeTruthy();
+
+    // Full review below still has all questions available!
+    const fullReviewHeadings = questionHeadings();
+    expect(fullReviewHeadings).toHaveLength(6);
+    cleanup();
+
+    // Now test with exactly 4 eligible questions
+    await seedWithCount("m-cap4", "CapFour", 5);
+    // 4 incorrect, 1 correct -> 4 eligible
+    const res4 = await completeAttempt("m-cap4", [
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "correct",
+    ]);
+    await renderHistory(reviewPath(res4.historyKey, res4.attemptId));
+    await screen.findByText("Review: CapFour material");
+
+    const panel4 = screen.getByRole("region", { name: "Short saved review" });
+    const upTo5Btn4 = within(panel4).getByRole("button", { name: "Up to 5" });
+    fireEvent.click(upTo5Btn4);
+    // Exactly 4 are eligible, so label is "Review 4 questions"
+    expect(within(panel4).getByRole("button", { name: "Review 4 questions" })).toBeTruthy();
+  });
+
+  it("reviews the exact frozen old version even after regeneration and source replacement", async () => {
+    await seed("m-regen", "Regen");
+    const { historyKey, attemptId } = await completeAttempt("m-regen", [
+      "incorrect",
+      "correct",
+      "skip",
+      "dont_know",
+    ]);
+
+    // Replace material practice test with new version
+    await repos.documents.savePracticeTest({
+      provider: "gemini",
+      sourceMaterialId: "m-regen",
+      title: "Replacement Material",
+      model: "synthetic",
+      questions: [
+        {
+          question: "Brand new regenerated question?",
+          options: ["New A", "New B"],
+          correctIndex: 0,
+          explanation: "Brand new why",
+          sourcePage: 99,
+        },
+      ],
+    });
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: Regen material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+
+    // Reveal answer to inspect exact old options, correct answer, explanation and source page
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    revealBtn.focus();
+    fireEvent.click(revealBtn);
+
+    // Frozen old question, options, correct answer indicator, explanation and source page
+    expect(within(panel).getByText("Regen question 1?")).toBeTruthy();
+    expect(within(panel).getByText("Regen 1 right")).toBeTruthy();
+    expect(within(panel).getByText("Regen 1 wrong")).toBeTruthy();
+    expect(within(panel).getByText("(Correct answer)")).toBeTruthy();
+    expect(within(panel).getByText("(Your choice)")).toBeTruthy();
+
+    const correctMarker = within(panel).getByText("(Correct answer)");
+    const correctOptionContainer = correctMarker.closest(".practice-option") ?? correctMarker.parentElement!;
+    expect(correctOptionContainer.textContent).toContain("Regen 1 right");
+    expect(correctOptionContainer.textContent).not.toContain("Regen 1 wrong");
+
+    const yourChoiceMarker = within(panel).getByText("(Your choice)");
+    const yourChoiceOptionContainer = yourChoiceMarker.closest(".practice-option") ?? yourChoiceMarker.parentElement!;
+    expect(yourChoiceOptionContainer.textContent).toContain("Regen 1 wrong");
+    expect(yourChoiceOptionContainer.textContent).not.toContain("Regen 1 right");
+
+    expect(within(panel).getByText("Regen why 1")).toBeTruthy();
+    expect(within(panel).getByText("Source p. 11")).toBeTruthy();
+
+    // Brand new regenerated items and details are absent
+    expect(within(panel).queryByText("Brand new regenerated question?")).toBeNull();
+    expect(within(panel).queryByText("Brand new why")).toBeNull();
+    expect(within(panel).queryByText("Source p. 99")).toBeNull();
+  });
+
+  it("leaves database state, responses, and operations completely unchanged during review and makes no API/provider calls", async () => {
+    await seed("m-db", "ImmutableDB");
+    const { historyKey, attemptId } = await completeAttempt("m-db", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const before = await storedState();
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: ImmutableDB material");
+
+    const sessions = appCtx.repositories!.practiceSessions;
+    const saveSpy = vi.spyOn(sessions, "saveSessionAction");
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    // Start review
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    // Reveal answer
+    const revealBtn = within(panel).getByRole("button", { name: "Show saved answer" });
+    revealBtn.focus();
+    fireEvent.click(revealBtn);
+    // Hide answer
+    fireEvent.click(within(panel).getByRole("button", { name: "Hide saved answer" }));
+    // Next
+    fireEvent.click(within(panel).getByRole("button", { name: "Next" }));
+    // Previous
+    fireEvent.click(within(panel).getByRole("button", { name: "Previous" }));
+    // Click full missed review link
+    const fullLink = within(panel).getByRole("link", { name: "Review all missed questions" });
+    fireEvent.click(fullLink);
+    // Done for now
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Done for now" }));
+
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(await storedState()).toEqual(before);
+  });
+
+  it("hides the panel cleanly for an all-correct attempt", async () => {
+    await seed("m-perf", "PerfectTest");
+    const { historyKey, attemptId } = await completeAttempt("m-perf", [
+      "correct",
+      "correct",
+      "correct",
+      "correct",
+    ]);
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: PerfectTest material");
+
+    // All correct: panel is quiet and hidden
+    expect(screen.queryByRole("region", { name: "Short saved review" })).toBeNull();
+  });
+
+  it("shows gentle unavailable message if loaded version mismatches the attempt (defensive transport test)", async () => {
+    await seed("m-unavail", "Unavail");
+    const res = await completeAttempt("m-unavail", ["incorrect", "correct", "correct", "correct"]);
+    await renderHistory("/");
+    const sessions = appCtx.repositories!.practiceSessions;
+    const originalGetVersion = sessions.getVersion.bind(sessions);
+    // Defensive test: impossible version transport response where loaded version ID does not match attempt.versionId
+    vi.spyOn(sessions, "getVersion").mockImplementation(async (versionId) => {
+      const v = await originalGetVersion(versionId);
+      if (!v) return null;
+      // Matching historyKey so AttemptReviewPage loads, but mismatched version ID
+      return { ...v, id: "mismatched-version-id" };
+    });
+
+    act(() => navigateTo(reviewPath(res.historyKey, res.attemptId)));
+    await screen.findByText("Review: Unavail material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    expect(
+      within(panel).getByText(
+        "Saved review details for missed questions are unavailable for this attempt.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("full missed review link uses helper path and closes local active review even when query already missed", async () => {
+    await seed("m-link", "LinkTest");
+    const { historyKey, attemptId } = await completeAttempt("m-link", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+
+    // Render directly on ?review=missed
+    await renderHistory(reviewPath(historyKey, attemptId, "?review=missed"));
+    await screen.findByText("Review: LinkTest material");
+
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 3 questions" }));
+    expect(within(panel).getByText("Review 1 of 3")).toBeTruthy();
+
+    // Click "Review all missed questions"
+    const fullLink = within(panel).getByRole("link", { name: "Review all missed questions" });
+    fireEvent.click(fullLink);
+
+    // Active review is closed back to teaser
+    expect(within(panel).getByRole("button", { name: "Review 3 questions" })).toBeTruthy();
+    expect(within(panel).queryByText("Review 1 of 3")).toBeNull();
+  });
+
+  it("resets active review and does not leak state across different completed attempts", async () => {
+    await seedWithCount("m-ctx1", "CtxOne", 6);
+    await seedWithCount("m-ctx2", "CtxTwo", 4);
+
+    const att1 = await completeAttempt("m-ctx1", [
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "incorrect",
+    ]);
+    const att2 = await completeAttempt("m-ctx2", [
+      "incorrect",
+      "incorrect",
+      "incorrect",
+      "correct",
+    ]);
+
+    await renderHistory(reviewPath(att1.historyKey, att1.attemptId));
+    await screen.findByText("Review: CtxOne material");
+
+    const panel1 = screen.getByRole("region", { name: "Short saved review" });
+    // Select Up to 5 on attempt 1
+    fireEvent.click(within(panel1).getByRole("button", { name: "Up to 5" }));
+    fireEvent.click(within(panel1).getByRole("button", { name: "Review 5 questions" }));
+    expect(within(panel1).getByText("Review 1 of 5")).toBeTruthy();
+
+    // Advance to question 2 and reveal
+    fireEvent.click(within(panel1).getByRole("button", { name: "Next" }));
+    expect(within(panel1).getByText("Review 2 of 5")).toBeTruthy();
+    expect(within(panel1).getByText("CtxOne question 2?")).toBeTruthy();
+    const revealBtn = within(panel1).getByRole("button", { name: "Show saved answer" });
+    revealBtn.focus();
+    fireEvent.click(revealBtn);
+    expect(within(panel1).getByText("CtxOne why 2")).toBeTruthy();
+
+    // Navigate to attempt 2
+    act(() => navigateTo(reviewPath(att2.historyKey, att2.attemptId)));
+    await screen.findByText("Review: CtxTwo material");
+
+    const panel2 = screen.getByRole("region", { name: "Short saved review" });
+    // Attempt 2 panel must be reset to teaser mode, default limit 3, no leaked active/revealed state
+    expect(within(panel2).queryByText(/Review \d+ of \d+/)).toBeNull();
+    expect(within(panel2).queryByText("CtxOne question 2?")).toBeNull();
+    expect(within(panel2).queryByText("CtxOne why 2")).toBeNull();
+    expect(within(panel2).getByRole("button", { name: "Review 3 questions" })).toBeTruthy();
+
+    // Start review on attempt 2: starts fresh at 1 of 3, unrevealed
+    fireEvent.click(within(panel2).getByRole("button", { name: "Review 3 questions" }));
+    expect(within(panel2).getByText("Review 1 of 3")).toBeTruthy();
+    expect(within(panel2).getByText("CtxTwo question 1?")).toBeTruthy();
+    expect(within(panel2).getByRole("button", { name: "Show saved answer" })).toBeTruthy();
+    expect(within(panel2).queryByText("CtxTwo why 1")).toBeNull();
+  });
+
+  it("handles missing or erased attempts gracefully and preserves frozen review after source material deletion", async () => {
+    // Missing attempt
+    await renderHistory("/");
+    act(() => navigateTo(reviewPath("missing-key", "missing-attempt")));
+    await screen.findByText("Could not load attempt review");
+    expect(screen.getByText("Practice attempt not found.")).toBeTruthy();
+    cleanup();
+
+    // Erased attempt: actual real SQLite erasure through repos.practiceSessions.eraseHistory
+    await seed("m-erase", "ErasedAttempt");
+    const resErase = await completeAttempt("m-erase", ["incorrect", "correct", "correct", "correct"]);
+    await renderHistory(reviewPath(resErase.historyKey, resErase.attemptId));
+    await screen.findByText("Review: ErasedAttempt material");
+    expect(screen.getByRole("region", { name: "Short saved review" })).toBeTruthy();
+    expect(screen.getByText("ErasedAttempt question 1?")).toBeTruthy();
+
+    // Navigate away / unmount
+    act(() => navigateTo("/"));
+    await screen.findByText("Home");
+    cleanup();
+
+    // Erase through existing SQLite repository API on fictional seeded completed attempt
+    await repos.practiceSessions.eraseHistory({
+      action: "erase_history",
+      operationId: crypto.randomUUID(),
+      historyKey: resErase.historyKey,
+    });
+
+    // Revisit exact old route: assert attempt not found and panel/question absent; real stored history not resurrected
+    await renderHistory(reviewPath(resErase.historyKey, resErase.attemptId));
+    await screen.findByText("Could not load attempt review");
+    expect(screen.getByText("Practice attempt not found.")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Short saved review" })).toBeNull();
+    expect(screen.queryByText("ErasedAttempt question 1?")).toBeNull();
+    cleanup();
+
+    // Source material deleted: version and attempt remain in SQLite, review works normally
+    await seed("m-del", "DeletedSource");
+    const resDel = await completeAttempt("m-del", ["incorrect", "correct", "correct", "correct"]);
+    await repos.documents.remove("m-del");
+
+    await renderHistory(reviewPath(resDel.historyKey, resDel.attemptId));
+    await screen.findByText("Review: DeletedSource material");
+    const panelDel = screen.getByRole("region", { name: "Short saved review" });
+    expect(within(panelDel).getByRole("button", { name: "Review 1 question" })).toBeTruthy();
+  });
+
+  it("guards against delimiter collision between opaque paired IDs via pre-effect layout commit check", async () => {
+    // Real valid seeded attempt in SQLite
+    await seed("m-col-real", "Collision");
+    const real = await completeAttempt("m-col-real", ["incorrect", "correct", "correct", "correct"]);
+    const realAttempt = (await repos.practiceSessions.getAttempt(real.attemptId))!;
+    const realVersion = (await repos.practiceSessions.getVersion(real.versionId))!;
+    const realItems = await repos.practiceSessions.getItems(real.versionId);
+    const realResponses = await repos.practiceSessions.getResponses(real.attemptId);
+
+    await renderHistory("/");
+    const sessions = appCtx.repositories!.practiceSessions;
+
+    let resolveSecondAttempt!: (val: PracticeAttempt | null) => void;
+    const secondAttemptDeferred = new Promise<PracticeAttempt | null>((resolve) => {
+      resolveSecondAttempt = resolve;
+    });
+
+    // Explicitly labelled opaque-ID transport stand-in over otherwise real valid seeded attempt/version/items/responses.
+    // Never persist forbidden opaque IDs to SQLite.
+    const detachedItems: PracticeTestItem[] = realItems.map((item) => ({
+      ...item,
+      versionId: "ver-col-c",
+    }));
+    const detachedResponses = realResponses.map((resp) => ({
+      ...resp,
+      attemptId: "c",
+    }));
+
+    vi.spyOn(sessions, "getAttempt").mockImplementation(async (id: string) => {
+      if (id === "c") {
+        return { ...realAttempt, id: "c", versionId: "ver-col-c" };
+      }
+      if (id === "b|c") {
+        return secondAttemptDeferred;
+      }
+      return null;
+    });
+
+    vi.spyOn(sessions, "getVersion").mockImplementation(async (versionId: string) => {
+      if (versionId === "ver-col-c") {
+        return { ...realVersion, id: "ver-col-c", historyKey: "a|b" };
+      }
+      return null;
+    });
+
+    vi.spyOn(sessions, "getItems").mockImplementation(async (versionId: string) => {
+      if (versionId === "ver-col-c") {
+        return detachedItems;
+      }
+      return [];
+    });
+
+    vi.spyOn(sessions, "getResponses").mockImplementation(async (attemptId: string) => {
+      if (attemptId === "c") {
+        return detachedResponses;
+      }
+      return [];
+    });
+
+    // 1. Render first completed tuple (historyKey="a|b", attemptId="c")
+    act(() => navigateTo(reviewPath("a|b", "c")));
+    await screen.findByText("Review: Collision material");
+    expect(screen.getByText("Collision question 1?")).toBeTruthy();
+    const firstPanel = screen.getByRole("region", { name: "Short saved review" });
+    expect(firstPanel).toBeTruthy();
+    expect(within(firstPanel).getByRole("button", { name: "Review 1 question" })).toBeTruthy();
+    expect(
+      within(firstPanel).queryByText(
+        "Saved review details for missed questions are unavailable for this attempt.",
+      ),
+    ).toBeNull();
+
+    // 2. Layout observer in Probe captures DOM commit synchronously BEFORE passive useEffect runs
+    let capturedOnSecondRouteCommit = false;
+    let oldQuestionPresentOnSecondRouteCommit = true;
+    let panelPresentOnSecondRouteCommit = true;
+    onLayoutRoute = (loc) => {
+      if (loc.pathname === reviewPath("a", "b|c")) {
+        capturedOnSecondRouteCommit = true;
+        oldQuestionPresentOnSecondRouteCommit =
+          document.body.textContent?.includes("Collision question 1?") ?? false;
+        panelPresentOnSecondRouteCommit =
+          document.body.querySelector(".practice-mistake-followup") !== null;
+      }
+    };
+
+    // 3. Navigate to second tuple (historyKey="a", attemptId="b|c") with deferred getAttempt
+    act(() => navigateTo(reviewPath("a", "b|c")));
+
+    // 4. Assert DOM state at second-route commit before passive load:
+    // With JSON tuple routeKey, route 2 does not match route 1, so old question and followup panel
+    // are absent during second route commit.
+    // Delimiter `${historyKey}|${attemptId}` would produce identical "a|b|c" key for both tuples and fail this check.
+    expect(capturedOnSecondRouteCommit).toBe(true);
+    expect(oldQuestionPresentOnSecondRouteCommit).toBe(false);
+    expect(panelPresentOnSecondRouteCommit).toBe(false);
+
+    // 5. Resolve deferred second attempt as missing
+    await act(async () => {
+      resolveSecondAttempt(null);
+      await secondAttemptDeferred;
+    });
+    await screen.findByText("Could not load attempt review");
   });
 });
