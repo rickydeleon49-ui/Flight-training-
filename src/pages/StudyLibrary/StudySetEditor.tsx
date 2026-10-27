@@ -1,4 +1,5 @@
 import { PdfItemLabel } from "./PdfItemLabel";
+import "./StudySetEditor.css";
 import { useEffect, useRef, useState } from "react";
 
 import { Badge, Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
@@ -68,13 +69,28 @@ function sameContent(a: AiStudySet, b: AiStudySet): boolean {
 
 const NOUN = { summary: "summary", section: "section", card: "card" } as const;
 
+export interface StudySetEditorProps {
+  material: StudyMaterial;
+  studySet: AiStudySet;
+  /**
+   * One explicit mounted add-card intent. The caller unmounts on close.
+   */
+  compact?: boolean;
+  onClose?: () => void;
+}
+
 /**
  * Editing her study set (OFFLINE-03a): add, edit, correct and delete the
  * summary, sections and cards; see and restore previous versions. Every save
  * keeps the whole previous set in history first, and a change made elsewhere
  * since she opened a dialog is refused rather than overwritten.
  */
-export function StudySetEditor({ material, studySet }: { material: StudyMaterial; studySet: AiStudySet }) {
+export function StudySetEditor({
+  material,
+  studySet,
+  compact = false,
+  onClose,
+}: StudySetEditorProps) {
   const { mutate, repositories } = useAppData();
   const [action, setAction] = useState<Action | null>(null);
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -96,6 +112,7 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
     setOpenError(null);
     setError(null);
     pendingRef.current = null;
+    onClose?.();
   };
 
   const begin = async (next: Action) => {
@@ -133,6 +150,14 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
       );
     }
   };
+
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (compact && repositories && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      void begin({ mode: "add", kind: "card" });
+    }
+  }, [compact, repositories]);
 
   const edit = (): StudyEdit | null => {
     if (!action || !opened) return null;
@@ -191,6 +216,69 @@ export function StudySetEditor({ material, studySet }: { material: StudyMaterial
     if (outcome?.ok) close();
     else setError(outcome?.message ?? "This change couldn't be saved. Nothing has been saved; your text is still here.");
   };
+
+  if (compact) {
+    return (
+      <Dialog
+        open={Boolean(action)}
+        onClose={close}
+        title="Add a card"
+        description={material.title}
+        dismissible={!busy}
+        className="study-set-editor--compact"
+        footer={
+          <>
+            <Button onClick={close} disabled={busy}>Cancel</Button>
+            <Button variant="primary" onClick={() => void save()} disabled={busy || !opened}>
+              {busy ? "Saving…" : "Save"}
+            </Button>
+          </>
+        }
+      >
+        <div className="stack stack--3">
+          {openError ? <p className="field__error" role="alert">{openError}</p> : null}
+          {opened ? (
+            <>
+              <p className="tiny muted">
+                Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.
+              </p>
+              <Field label="Question">
+                <TextArea
+                  rows={2}
+                  value={fields[0] ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setFields((before) => [value, before[1] ?? ""]);
+                  }}
+                />
+              </Field>
+              <Field label="Answer">
+                <TextArea
+                  rows={5}
+                  value={fields[1] ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setFields((before) => [before[0] ?? "", value]);
+                  }}
+                />
+              </Field>
+              <Field label="Source page (optional)">
+                <TextInput
+                  inputMode="numeric"
+                  value={page}
+                  onChange={(event) => setPage(event.target.value)}
+                  style={{ minHeight: "44px" }}
+                />
+              </Field>
+            </>
+          ) : !openError ? (
+            <p className="tiny dim" role="status">Opening…</p>
+          ) : null}
+          {error ? <p className="field__error" role="alert">{error}</p> : null}
+        </div>
+      </Dialog>
+    );
+  }
 
   const noun = action ? (action.mode === "add" ? NOUN[action.kind] : NOUN[action.target.kind]) : "item";
   const current = action && action.mode !== "add" && opened ? locate(opened.state, action.target) : undefined;
