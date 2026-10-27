@@ -29,6 +29,7 @@ import {
   type Topic,
 } from "@/domain/types";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
+import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
 import { exportableParts } from "@/logic/studyExport";
 import { newId } from "@/lib/id";
@@ -258,7 +259,7 @@ export function StudyLibrary() {
             </span>
             <TextInput
               value={search}
-              placeholder="Search titles, notes and tags"
+              placeholder={offlineStudyEnabled() ? "Search titles, PDFs, notes and homework" : "Search titles, notes and tags"}
               aria-label="Search your library"
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -289,6 +290,8 @@ export function StudyLibrary() {
         </div>
       )}
 
+      <DocumentSearchPanel query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
+
       {hasAny ? (
         <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
           {STATUS_FILTERS.map((filter) => (
@@ -304,8 +307,6 @@ export function StudyLibrary() {
           ))}
         </div>
       ) : null}
-
-      <DocumentSearchPanel query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
 
       <div style={{ marginBottom: "var(--space-5)" }}>
         <AcsCodeLookupPanel

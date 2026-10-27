@@ -49,10 +49,12 @@ const count = (n: number, one: string, many: string) => `${n.toLocaleString()} $
  * One or two sentences about what was searched, so "no match" is never
  * confused with "not searched yet".
  */
-export function coverageSentence(c: SearchCoverage, found: number): string {
+export function coverageSentence(c: SearchCoverage, found: number, savedSearched = false, homeworkSearched = false): string {
   const parts: string[] = [];
   if (c.searchedDocuments === 0) {
-    parts.push("None of these documents are ready for offline search yet.");
+    parts.push(savedSearched
+      ? `PDF text isn’t ready to search yet — ${homeworkSearched ? "your saved study content and homework were searched" : "your saved study content was searched"}.`
+      : "PDF text isn’t ready to search yet.");
   } else if (found === 0) {
     parts.push(`No matches in ${count(c.searchedDocuments, "document", "documents")} (${count(c.searchedPages, "page", "pages")}).`);
   } else {

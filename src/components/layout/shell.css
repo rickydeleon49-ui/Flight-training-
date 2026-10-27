@@ -166,7 +166,8 @@
 .sidebar__menu[hidden] { display: none; }
 
 @media (max-width: 999px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+  /* The top bar keeps its own height; the page takes any spare height (no blank band). */
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .sidebar {
     position: static;
     height: auto;

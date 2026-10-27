@@ -36,12 +36,17 @@ describe("snippetPieces", () => {
 });
 
 describe("coverageSentence", () => {
+  it("acknowledges saved content only when it was searched", () => {
+    expect(coverageSentence(none, 0, true, true)).toBe("PDF text isn’t ready to search yet — your saved study content and homework were searched.");
+    expect(coverageSentence(none, 0, false)).not.toContain("were searched");
+    expect(coverageSentence(none, 0, true)).toBe("PDF text isn’t ready to search yet — your saved study content was searched.");
+  });
   it("separates no match from not searched", () => {
     expect(coverageSentence({ ...none, searchedDocuments: 12, searchedPages: 3041, notPrepared: 4 }, 0)).toBe(
       "No matches in 12 documents (3,041 pages). 4 documents aren't prepared for offline search yet.",
     );
     expect(coverageSentence({ ...none, notPrepared: 1 }, 0)).toBe(
-      "None of these documents are ready for offline search yet. 1 document isn't prepared for offline search yet.",
+      "PDF text isn’t ready to search yet. 1 document isn't prepared for offline search yet.",
     );
   });
 

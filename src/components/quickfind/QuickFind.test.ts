@@ -17,6 +17,12 @@ import { removeCapabilities } from "@/testing/capabilities";
 import { supportsNativeModal } from "../ui/useModalDialog";
 import { QUICK_FIND_EVENT, QuickFind } from "./QuickFind";
 
+const offline = vi.hoisted(() => ({ enabled: true, search: vi.fn() }));
+vi.mock("@/services/offlineContent", async (original) => ({
+  ...await original<typeof import("@/services/offlineContent")>(),
+  offlineStudyEnabled: () => offline.enabled,
+  searchOfflineContent: (...args: unknown[]) => offline.search(...args),
+}));
 let db: TestDatabase | null = null;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 
@@ -70,6 +76,8 @@ async function mountLibrary() {
 
 afterEach(() => {
   cleanup();
+  offline.enabled = true;
+  offline.search.mockReset();
   restore?.();
   restore = null;
   db?.close();
@@ -219,11 +227,14 @@ describe("Quick Find hands the words inside a PDF to the Study Library", () => {
 
     // One letter is not worth reading every prepared PDF for.
     fireEvent.change(input(), { target: { value: "c" } });
-    expect(screen.queryByRole("button", { name: /Search inside your PDFs/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Search PDFs and homework/ })).toBeNull();
 
     // "crankshaft" matches no title: the row is the way to the page text.
     fireEvent.change(input(), { target: { value: "crankshaft" } });
-    const row = screen.getByRole("button", { name: /Search inside your PDFs for “crankshaft”/ });
+    const row = screen.getByRole("button", { name: /Search PDFs and homework for “crankshaft”/ });
+    expect(screen.queryByText(/Nothing matches/)).toBeNull();
+    expect(resultRows()).toHaveLength(1);
+    expect(row.classList.contains("is-highlighted")).toBe(true);
     expect(resultRows().at(-1)).toBe(row);
 
     fireEvent.click(row);
@@ -243,7 +254,7 @@ describe("Quick Find hands the words inside a PDF to the Study Library", () => {
     expect(rows.some((candidate) => candidate.textContent?.includes("Engine handbook"))).toBe(true);
     const last = rows.at(-1)!;
     expect(last.classList.contains("quick-find__result--pdf")).toBe(true);
-    expect(last.textContent).toContain("Search inside your PDFs for “engine”");
+    expect(last.textContent).toContain("Search PDFs and homework for “engine”");
 
     fireEvent.keyDown(input(), { key: "ArrowDown" });
     expect(document.querySelector(".quick-find__result.is-highlighted")).toBe(last);
@@ -251,5 +262,45 @@ describe("Quick Find hands the words inside a PDF to the Study Library", () => {
     expect(location()).toBe("/study");
     const box = (await screen.findByRole("textbox", { name: "Search your library" })) as HTMLInputElement;
     expect(box.value).toBe("engine");
+  });
+});
+
+
+describe("content search findability", () => {
+  const emptyCoverage = { searchedDocuments: 0, searchedPages: 0, imagePages: 0, otherUnsearchablePages: 0, notPrepared: 1, notChecked: 0, preparing: 0, couldNotPrepare: 0, missing: 0, notPdf: 0 };
+
+  it("puts a homework-only hit directly below the Library search, before filters and empty PDFs", async () => {
+    offline.search.mockResolvedValue({
+      groups: [], coverage: emptyCoverage, nextOffset: null, moreBeyondCap: false, trimmed: false,
+      saved: { state: "ok", coverage: { studySets: 0, practiceVersions: 0, notes: 0, questions: 0, homework: 1, tooLargeItems: 0 },
+        groups: [{ kind: "homework", materialId: null, title: "Homework", passages: [{ kind: "homework_activity", recordId: "hw:reflection", rev: "synthetic", snippet: "Use opposite rudder" }] }], nextOffset: null, moreBeyondCap: false },
+    });
+    await mountLibrary();
+    act(() => nav?.("/study"));
+    const box = await screen.findByRole("textbox", { name: "Search your library" });
+    expect(box.getAttribute("placeholder")).toBe("Search titles, PDFs, notes and homework");
+    fireEvent.change(box, { target: { value: "rudder" } });
+    const hit = await screen.findByRole("button", { name: "Homework, Homework activity: open it" });
+    const before = (a: Node, b: Node) => expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    before(box.closest(".library__toolbar")!, hit);
+    before(hit, screen.getByRole("button", { name: "Everything" }));
+    before(hit, screen.getByText("In your documents"));
+    before(hit, screen.getByText("Nothing matches those filters."));
+    expect(screen.getByText(/PDF text isn’t ready to search yet — your saved study content and homework were searched/)).toBeTruthy();
+    expect(offline.search).toHaveBeenCalledWith("rudder", ["m-engine"], 0, expect.any(Array), false);
+  });
+
+  it("keeps disabled-build wording honest in both search boxes and the handoff", async () => {
+    offline.enabled = false;
+    await mountLibrary();
+    openWithShortcut();
+    fireEvent.change(input(), { target: { value: "rudder" } });
+    const row = screen.getByRole("button", { name: /Search your library for “rudder”/ });
+    expect(row.textContent).not.toMatch(/PDF|homework/i);
+    fireEvent.click(row);
+    const box = await screen.findByRole("textbox", { name: "Search your library" });
+    expect(box.getAttribute("placeholder")).toBe("Search titles, notes and tags");
+    expect(screen.queryByText("In your documents")).toBeNull();
+    expect(offline.search).not.toHaveBeenCalled();
   });
 });

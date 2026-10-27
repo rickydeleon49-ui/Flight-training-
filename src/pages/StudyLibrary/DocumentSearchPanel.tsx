@@ -313,8 +313,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
   const saved = results?.saved ?? null;
   const savedFound = (saved?.groups.length ?? 0) || (saved?.nextOffset != null ? 1 : 0);
 
-  return (
-    <>
+  const documentsCard = (
     <Card>
       <CardHeader title="In your documents" eyebrow="Offline search" />
       <CardBody>
@@ -327,7 +326,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
                 : phase.kind === "problem"
                   ? phase.message
                   : results
-                    ? coverageSentence(results.coverage, found)
+                    ? coverageSentence(results.coverage, found, saved?.state === "ok", (saved?.coverage.homework ?? 0) > 0)
                     : ""}
           </p>
           {results && results.groups.length > 0 ? (
@@ -397,7 +396,8 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
         </div>
       </CardBody>
     </Card>
-    {saved ? (
+  );
+  const savedCard = saved ? (
       <Card>
         <CardHeader title="In your saved study content" eyebrow="Offline search" />
         <CardBody>
@@ -465,7 +465,10 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
           </div>
         </CardBody>
       </Card>
-    ) : null}
-    </>
-  );
+    ) : null;
+
+  // Put actual saved hits ahead of an empty PDF section, in DOM and reading order.
+  return savedFound && !found
+    ? <>{savedCard}{documentsCard}</>
+    : <>{documentsCard}{savedCard}</>;
 }
