@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { SearchIcon } from "@/components/ui";
 import { useModalDialog } from "@/components/ui/useModalDialog";
+import { offlineStudyEnabled } from "@/services/offlineContent";
 import { todayIso } from "@/lib/dates";
 import { quickFind, type QuickFindResult } from "@/logic/quickFind";
 import { useAppData } from "@/state/AppDataContext";
@@ -28,8 +29,12 @@ export function pdfTextSearchRow(query: string): QuickFindResult | null {
   if (trimmed.length < PDF_SEARCH_MIN_LENGTH) return null;
   return {
     key: PDF_ROW_KEY,
-    label: `Search inside your PDFs for \u201C${trimmed}\u201D`,
-    detail: "Finds the words on the pages, not just the titles",
+    label: offlineStudyEnabled()
+      ? `Search PDFs and homework for “${trimmed}”`
+      : `Search your library for “${trimmed}”`,
+    detail: offlineStudyEnabled()
+      ? "Look inside PDFs, saved study content and homework"
+      : "Find materials by title, notes and tags",
     section: "Study Library",
     to: `/study?q=${encodeURIComponent(trimmed)}`,
   };
@@ -175,7 +180,7 @@ export function QuickFind() {
           <kbd className="quick-find__hint">esc</kbd>
         </div>
 
-        {results.length === 0 ? (
+        {results.length === 0 && !pdfRow ? (
           <p className="quick-find__empty small muted">
             Nothing matches &ldquo;{query.trim()}&rdquo; yet.
           </p>
