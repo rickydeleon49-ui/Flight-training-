@@ -8,7 +8,7 @@ export function newHomework(): HomeworkSnapshot {
     return { version: 1, runs: [], activities: [], assignment: { id: crypto.randomUUID(), title: "", instructions: "", school: null, instructor: null, lesson_id: null, source_lesson_id: null, due_date: null, state: "upcoming", revision: 0, action_id: null, archived: 0, created_at: at, updated_at: at, completed_at: null } };
 }
 export function newHomeworkActivity(assignmentId: string, position: number, kind: HomeworkActivity["kind"], at: string): Entry {
-    return { source: null, evidence: null, record: { id: crypto.randomUUID(), assignment_id: assignmentId, position, kind, title: ACTIVITY_KINDS[kind], body: "", material_id: null, source_material_id: null, source_revision: null, card_set_id: null, test_version_id: null, source_test_version_id: null, page_start: null, page_end: null, state: "upcoming", cycle: 1, revision: 1, created_at: at, updated_at: at, completed_at: null, removed_at: null } };
+    return { source: null, evidence: null, record: { id: crypto.randomUUID(), assignment_id: assignmentId, position, kind, title: ACTIVITY_KINDS[kind], body: "", answer: "", material_id: null, source_material_id: null, source_revision: null, card_set_id: null, test_version_id: null, source_test_version_id: null, page_start: null, page_end: null, state: "upcoming", cycle: 1, revision: 1, created_at: at, updated_at: at, completed_at: null, removed_at: null } };
 }
 export const activeHomework = (s: HomeworkSnapshot) => s.activities.filter(e => !e.record.removed_at).sort((a, b) => a.record.position - b.record.position);
 export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSnapshot, changeKind: HomeworkOperation["changeKind"], creating = false): HomeworkOperation {
@@ -33,7 +33,7 @@ export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSna
             continue;
         r.updated_at = at;
         if (changeKind === "edit" || changeKind === "relink") {
-            const fields = (r: HomeworkActivity) => [r.kind, r.body, r.material_id, r.source_material_id, r.source_revision, r.card_set_id, r.test_version_id, r.source_test_version_id, r.page_start, r.page_end];
+            const fields = (r: HomeworkActivity) => [r.kind, r.body, r.answer ?? "", r.material_id, r.source_material_id, r.source_revision, r.card_set_id, r.test_version_id, r.source_test_version_id, r.page_start, r.page_end];
             if (canonicalJson(fields(p.record)) !== canonicalJson(fields(r))) {
                 r.revision = p.record.revision + 1;
                 r.cycle = p.record.cycle + 1;
@@ -46,7 +46,7 @@ export function homeworkOperation(previous: HomeworkSnapshot, draft: HomeworkSna
         else if (changeKind === "complete") {
             r.state = "completed";
             r.completed_at = at;
-            e.evidence = { version: 1, activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind, completed_at: at, body: r.body, source_material_id: r.source_material_id, source_revision: r.source_revision, page_start: r.page_start, page_end: r.page_end };
+            e.evidence = { version: 2, answer: r.answer ?? "", activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind, completed_at: at, body: r.body, source_material_id: r.source_material_id, source_revision: r.source_revision, page_start: r.page_start, page_end: r.page_end };
         }
         else if (changeKind === "reopen") {
             r.cycle = p.record.cycle + 1;
@@ -111,7 +111,7 @@ export function homeworkHistoryLabel(row: HomeworkHistoryEntry, previous?: Homew
       affected.length > 0 &&
       affected.every((e) => {
         const p = before.activities.find((p) => p.record.id === e.record.id);
-        return p && p.record.body !== e.record.body && ["reflection", "questions"].includes(e.record.kind);
+        return p && p.record.answer !== e.record.answer && ["reflection", "questions"].includes(e.record.kind);
       })
     ) {
       return titles ? `Answer saved: ${titles}${affected.length > 3 ? ` and ${affected.length - 3} more` : ""}` : "Answer saved";

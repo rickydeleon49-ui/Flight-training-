@@ -663,7 +663,8 @@ export async function executePracticeSessionAction(
                   entryToFinish.record.updated_at = timestamp;
                   const actRec = entryToFinish.record;
                   entryToFinish.evidence = {
-                    version: 1,
+                    version: 2,
+                    answer: actRec.answer ?? "",
                     activity_id: actRec.id,
                     revision: actRec.revision,
                     cycle: actRec.cycle,

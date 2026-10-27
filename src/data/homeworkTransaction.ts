@@ -71,7 +71,7 @@ export async function applyHomeworkOperation(run:Run,query:ValidationQuery,value
   for (const e of next.activities) {
     const [owner] = await query("SELECT assignment_id FROM homework_activities WHERE id=?", [e.record.id]);
     homeworkAssert(!owner || owner.assignment_id === op.assignmentId);
-    await write("homework_activities", e.record);
+    await write("homework_activities", { ...e.record, answer: e.record.answer ?? "" });
   }
   for (const r of next.runs) {
     const prior = previous?.runs.find((p) => p.id === r.id);

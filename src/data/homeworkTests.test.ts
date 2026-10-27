@@ -496,7 +496,8 @@ describe.each(ENGINES)("homework test runs and actions: %s", (name) => {
                 updated_at: T2,
               },
               evidence: {
-                version: 1,
+                version: 2,
+                answer: "",
                 activity_id: id(2),
                 revision: 1,
                 cycle: 1,

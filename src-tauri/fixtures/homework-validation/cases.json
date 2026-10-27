@@ -1330,7 +1330,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -1357,7 +1358,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": null
@@ -1384,7 +1386,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -1445,7 +1448,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": {
@@ -1458,8 +1462,9 @@
               "source_revision": null,
               "page_start": null,
               "page_end": null,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000002"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000002",
+              "answer": ""
             }
           },
           {
@@ -1484,7 +1489,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": {
@@ -1497,8 +1503,9 @@
               "source_revision": null,
               "page_start": null,
               "page_end": null,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000003"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000003",
+              "answer": "A saved response"
             }
           },
           {
@@ -1523,7 +1530,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -1539,8 +1547,9 @@
               "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
               "page_start": 1,
               "page_end": 3,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000004"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000004",
+              "answer": ""
             }
           }
         ],
@@ -1596,7 +1605,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:02:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -1623,7 +1633,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": {
@@ -1636,8 +1647,9 @@
               "source_revision": null,
               "page_start": null,
               "page_end": null,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000003"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000003",
+              "answer": "A saved response"
             }
           },
           {
@@ -1662,7 +1674,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -1678,8 +1691,9 @@
               "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
               "page_start": 1,
               "page_end": 3,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000004"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000004",
+              "answer": ""
             }
           }
         ],
@@ -1735,7 +1749,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -1762,7 +1777,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": null
@@ -1789,7 +1805,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -1850,7 +1867,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -1877,7 +1895,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": null
@@ -1904,7 +1923,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -1965,7 +1985,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -1992,7 +2013,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": null
@@ -2019,7 +2041,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -2110,7 +2133,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": {
@@ -2123,8 +2147,9 @@
               "source_revision": null,
               "page_start": null,
               "page_end": null,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000002"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000002",
+              "answer": ""
             }
           },
           {
@@ -2149,7 +2174,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": "A saved response"
             },
             "source": null,
             "evidence": {
@@ -2162,8 +2188,9 @@
               "source_revision": null,
               "page_start": null,
               "page_end": null,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000003"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000003",
+              "answer": "A saved response"
             }
           },
           {
@@ -2188,7 +2215,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": "2026-10-21T10:01:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -2204,8 +2232,9 @@
               "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
               "page_start": 1,
               "page_end": 3,
-              "version": 1,
-              "activity_id": "00000000-0000-4000-8000-000000000004"
+              "version": 2,
+              "activity_id": "00000000-0000-4000-8000-000000000004",
+              "answer": ""
             }
           },
           {
@@ -2230,7 +2259,8 @@
               "created_at": "2026-10-21T10:02:00.000Z",
               "updated_at": "2026-10-21T10:02:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": null,
             "evidence": null
@@ -2288,7 +2318,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:00:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -2349,7 +2380,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:01:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -2434,7 +2466,8 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:02:00.000Z",
               "completed_at": null,
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
@@ -2530,14 +2563,15 @@
               "created_at": "2026-10-21T10:00:00.000Z",
               "updated_at": "2026-10-21T10:03:00.000Z",
               "completed_at": "2026-10-21T10:03:00.000Z",
-              "removed_at": null
+              "removed_at": null,
+              "answer": ""
             },
             "source": {
               "title": "Synthetic source",
               "total_pages": null
             },
             "evidence": {
-              "version": 1,
+              "version": 2,
               "activity_id": "00000000-0000-4000-8000-000000000002",
               "revision": 1,
               "cycle": 1,
@@ -2547,7 +2581,8 @@
               "source_material_id": "00000000-0000-4000-8000-000000000005",
               "source_revision": "0874018fa6f8ccafc5483f72c836b0a52573fa5757c296282eb5c1abf44ef0ed",
               "page_start": null,
-              "page_end": null
+              "page_end": null,
+              "answer": ""
             }
           }
         ],

@@ -196,7 +196,7 @@ export async function recordHomeworkCardRating(run: Run, query: ValidationQuery,
         entry.record.state = "completed";
         entry.record.completed_at = at;
         const a = entry.record;
-        entry.evidence = { version: 1, activity_id: a.id, revision: a.revision, cycle: a.cycle, kind: a.kind, completed_at: at, body: a.body, source_material_id: a.source_material_id, source_revision: a.source_revision, page_start: a.page_start, page_end: a.page_end };
+        entry.evidence = { version: 2, answer: a.answer ?? "", activity_id: a.id, revision: a.revision, cycle: a.cycle, kind: a.kind, completed_at: at, body: a.body, source_material_id: a.source_material_id, source_revision: a.source_revision, page_start: a.page_start, page_end: a.page_end };
     }
     next.assignment.revision++;
     next.assignment.updated_at = at;

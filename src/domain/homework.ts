@@ -23,16 +23,17 @@ const assignmentCodec = z.strictObject({
 });
 const activityCodec = z.strictObject({
   id: homeworkUuid, assignment_id: homeworkUuid, position: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER), kind,
-  title: text(200, true), body: text(20000), material_id: homeworkUuid.nullable(), source_material_id: homeworkUuid.nullable(),
+  title: text(200, true), body: text(20000), answer: text(20000).optional(), material_id: homeworkUuid.nullable(), source_material_id: homeworkUuid.nullable(),
   source_revision: hash.nullable(), card_set_id: hash.nullable(), test_version_id: homeworkUuid.nullable(), source_test_version_id: homeworkUuid.nullable(),
   page_start: integer.nullable(), page_end: integer.nullable(), state, cycle: integer, revision: integer,
   created_at: instant, updated_at: instant, completed_at: instant.nullable(), removed_at: instant.nullable(),
 });
-const evidenceCodec = z.strictObject({
+const evidenceV1Codec = z.strictObject({
   version: z.literal(1), activity_id: homeworkUuid, revision: integer, cycle: integer, kind,
   completed_at: instant, body: text(20000), source_material_id: homeworkUuid.nullable(), source_revision: hash.nullable(),
   page_start: integer.nullable(), page_end: integer.nullable(),
 });
+const evidenceCodec = z.union([evidenceV1Codec, evidenceV1Codec.extend({ version: z.literal(2), answer: text(20000) })]);
 const entryCodec = z.strictObject({ record: activityCodec,
   source: z.strictObject({ title: text(200, true), total_pages: integer.nullable() }).nullable(),
   evidence: evidenceCodec.nullable(),
@@ -102,7 +103,10 @@ export function decodeHomeworkOperation(value: unknown): HomeworkOperation {
   homeworkAssert(new TextEncoder().encode(canonicalJson(value)).length <= HOMEWORK_LIMIT);
   return parsed.data;
 }
-const eq = (a: unknown, b: unknown) => canonicalJson(a) === canonicalJson(b);
+// Missing answers in immutable pre-0023 history mean empty, without rewriting receipts.
+const comparable = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (_k, value) =>
+  value && typeof value === "object" && "assignment_id" in value && "kind" in value ? { ...value, answer: value.answer ?? "" } : value));
+const eq = (a: unknown, b: unknown) => canonicalJson(comparable(a)) === canonicalJson(comparable(b));
 const sameExcept = (a: object, b: object, except: string[]) => {
   const omit = (o: object) => Object.fromEntries(Object.entries(o).filter(([k]) => !except.includes(k)));
   return eq(omit(a), omit(b));
@@ -124,6 +128,7 @@ export function validateHomeworkSnapshot(value: unknown): HomeworkSnapshot {
   homeworkAssert(eq(active.map((e) => e.record.position).sort((x, y) => x - y), active.map((_, i) => i)));
   for (const e of s.activities) {
     const r = e.record;
+    homeworkAssert(["reflection", "questions"].includes(r.kind) || !(r.answer ?? ""));
     homeworkAssert(r.assignment_id === a.id && r.created_at >= a.created_at && r.updated_at >= r.created_at && r.updated_at <= a.updated_at);
     homeworkAssert(nullablePointer(r.material_id, r.source_material_id) && nullablePointer(r.test_version_id, r.source_test_version_id));
     homeworkAssert((r.state === "completed") === (r.completed_at !== null) && (r.completed_at !== null) === (e.evidence !== null));
@@ -141,12 +146,12 @@ export function validateHomeworkSnapshot(value: unknown): HomeworkSnapshot {
     if (r.removed_at) homeworkAssert(r.removed_at >= r.created_at && r.removed_at <= a.updated_at);
     if (e.evidence) {
       homeworkAssert(r.completed_at! > r.created_at && r.completed_at! <= a.updated_at);
-      homeworkAssert(eq(e.evidence, { version: 1, activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind,
+      homeworkAssert(eq(e.evidence, { version: e.evidence.version, ...(e.evidence.version === 2 ? { answer: r.answer ?? "" } : {}), activity_id: r.id, revision: r.revision, cycle: r.cycle, kind: r.kind,
         completed_at: r.completed_at, body: r.body, source_material_id: r.source_material_id, source_revision: r.source_revision,
         page_start: r.page_start, page_end: r.page_end }));
       if (r.kind === "read") homeworkAssert(r.source_revision && r.page_end);
       if (r.kind === "cards" || r.kind === "test") homeworkAssert(r.source_revision);
-      if (["reflection", "questions"].includes(r.kind)) homeworkAssert(r.body.trim().length > 0);
+      if (["reflection", "questions"].includes(r.kind)) homeworkAssert((e.evidence.version === 1 ? r.body : r.answer ?? "").trim().length > 0);
     }
     // Starting cards/tests and reads requires the future bound session/verified source flow.
     if (r.state === "in_progress") homeworkAssert((r.kind !== "read" && r.kind !== "test") || (r.source_revision && (r.kind !== "read" || r.page_end)));
@@ -173,7 +178,7 @@ export function homeworkLiveMatches(snapshot: HomeworkSnapshot, assignment: obje
 }
 
 /** Guard each authored revision rather than trusting a fixture's state label. */
-export function validateHomeworkTransition(previous: HomeworkSnapshot | null, operation: HomeworkOperation): HomeworkSnapshot {
+export function validateHomeworkTransition(previous: HomeworkSnapshot | null, operation: HomeworkOperation, historical = false): HomeworkSnapshot {
   const next = validateHomeworkSnapshot(operation.next), a = next.assignment;
   const { changeKind: change, at } = operation;
   homeworkAssert(a.id === operation.assignmentId && a.revision === operation.baseRevision + 1 && a.updated_at === at);
@@ -208,11 +213,12 @@ export function validateHomeworkTransition(previous: HomeworkSnapshot | null, op
     if (eq(prior, e)) continue;
     affected++;
     const p = prior.record;
+    if (!historical && p.state !== "completed" && r.state === "completed") homeworkAssert(e.evidence?.version === 2);
     homeworkAssert(p.removed_at === null && r.updated_at === at && r.created_at === p.created_at);
-    const spec = !sameExcept(p, r, ["kind", "body", ...targetKeys, "title", "position", "updated_at", "state", "completed_at", "revision", "cycle"])
-      ? false : !eq([p.kind, p.body, ...targetKeys.map((k) => p[k as keyof HomeworkActivity])], [r.kind, r.body, ...targetKeys.map((k) => r[k as keyof HomeworkActivity])]);
+    const spec = !sameExcept(p, r, ["kind", "body", "answer", ...targetKeys, "title", "position", "updated_at", "state", "completed_at", "revision", "cycle"])
+      ? false : !eq([p.kind, p.body, p.answer ?? "", ...targetKeys.map((k) => p[k as keyof HomeworkActivity])], [r.kind, r.body, r.answer ?? "", ...targetKeys.map((k) => r[k as keyof HomeworkActivity])]);
     if (change === "edit" || change === "relink") {
-      homeworkAssert(sameExcept(p, r, ["title", "kind", "body", ...targetKeys, "updated_at", "state", "completed_at", "revision", "cycle"]));
+      homeworkAssert(sameExcept(p, r, ["title", "kind", "body", "answer", ...targetKeys, "updated_at", "state", "completed_at", "revision", "cycle"]));
       if (change === "relink") homeworkAssert(sameExcept(p, r, [...targetKeys, "updated_at", "state", "completed_at", "revision", "cycle"]));
       homeworkAssert(r.revision === p.revision + (spec ? 1 : 0) && r.cycle === p.cycle + (spec ? 1 : 0));
       if (spec) { homeworkAssert(r.state === "reopened" && r.completed_at === null && e.evidence === null); reopened = true; }
