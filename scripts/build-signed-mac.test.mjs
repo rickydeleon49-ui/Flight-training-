@@ -131,7 +131,7 @@ describe('build-signed-mac.sh refusals', () => {
     const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: ONE, FAKE_XCRUN_EXIT: '1' });
     assert.equal(r.status, 1);
     assert.match(r.output, /keychain profile "hfd-notary" is missing/);
-    assert.match(r.output, /notarytool store-credentials hfd-notary --apple-id <your Apple ID> --team-id ABCDE12345/);
+    assert.match(r.output, /notarytool store-credentials hfd-notary --key <AuthKey_KEYID.p8> --key-id <KEYID> --issuer <issuer ID>[\s\S]*--apple-id <your Apple ID> --team-id ABCDE12345/);
     assert.deepEqual(r.tools, ['security', 'xcrun']);
     assert.deepEqual(r.calls.find((c) => c[0] === 'xcrun'), ['xcrun', 'notarytool', 'history', '--keychain-profile', 'hfd-notary']);
   });
