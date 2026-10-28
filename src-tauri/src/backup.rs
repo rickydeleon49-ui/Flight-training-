@@ -15185,6 +15185,102 @@ mod tests {
     }
 
     #[test]
+    fn faa_shelf_complete_backup_restores_books_addendum_notes_and_bookmarks() {
+        use lopdf::{dictionary, Document, Object};
+        let root = scratch("faa-shelf-source");
+        let target = scratch("faa-shelf-target");
+        let backup = scratch("faa-shelf-backup");
+        let db = root.join(DB_FILES[0]);
+        pdf_kit_test_database(&db, crate::CURRENT_SCHEMA_VERSION);
+        std::fs::create_dir_all(root.join(DOCUMENTS_DIR)).unwrap();
+        let conn = Connection::open(&db).unwrap();
+        let mut copies = Vec::new();
+        // Authored one-page PDFs, never real FAA publications. Include an older edition.
+        for (index, reference, edition) in [
+            (0, "Private Pilot Airplane ACS", "FAA-S-ACS-6B"),
+            (1, "Private Pilot Airplane ACS", "FAA-S-ACS-6C"),
+            (
+                2,
+                "Pilot’s Handbook of Aeronautical Knowledge (PHAK)",
+                "FAA-H-8083-25C",
+            ),
+            (3, "PHAK addendum", "FAA-H-8083-25C · MOSAIC addendum"),
+        ] {
+            let mut pdf = Document::with_version("1.5");
+            let pages = pdf.new_object_id();
+            let page = pdf.add_object(dictionary! {
+                "Type" => "Page", "Parent" => pages,
+                "MediaBox" => vec![0.into(), 0.into(), 100.into(), 100.into()],
+            });
+            pdf.objects.insert(
+                pages,
+                Object::Dictionary(dictionary! {
+                    "Type" => "Pages", "Count" => 1, "Kids" => vec![Object::Reference(page)],
+                }),
+            );
+            let catalog = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages });
+            pdf.trailer.set("Root", catalog);
+            pdf.trailer.set(
+                "Info",
+                Object::Dictionary(dictionary! {
+                    "Title" => Object::string_literal(format!("Synthetic shelf {index}")),
+                }),
+            );
+            let mut bytes = Vec::new();
+            pdf.save_to(&mut bytes).unwrap();
+            let (hash, count) = crate::navigation::identity_of_bytes(&bytes).unwrap();
+            let notes = format!(
+                "FAA reference: {reference}\nSaved edition: {edition}\nLocal copy SHA-256: {hash}\nLocal copy pages: {count}\nEdition not checked.\nMy synthetic reference note."
+            );
+            let id = format!("shelf-{index}");
+            let file = format!("faa-shelf-{index}.pdf");
+            std::fs::write(root.join(DOCUMENTS_DIR).join(&file), &bytes).unwrap();
+            conn.execute("INSERT INTO study_materials (id,title,material_type,review_status,notes,file_path,original_file_name,file_size,created_at,updated_at) VALUES (?1,?2,'reference','reference_only',?3,?4,'synthetic.pdf',?5,'2026-10-28','2026-10-28')",
+                params![id, format!("Synthetic {edition}"), notes, file, bytes.len() as i64]).unwrap();
+            conn.execute("INSERT INTO material_bookmarks (id,material_id,page_index,title,notes,status,created_at,updated_at) VALUES (?1,?2,1,'My place','Keep this note','unverified','now','now')",params![format!("bookmark-{index}"), id]).unwrap();
+            copies.push((id, file, bytes, notes));
+        }
+        let before = m3_rows(&conn, "SELECT * FROM study_materials ORDER BY id", &[]).unwrap();
+        let bookmarks =
+            m3_rows(&conn, "SELECT * FROM material_bookmarks ORDER BY id", &[]).unwrap();
+        drop(conn);
+        let archive = backup.join("shelf.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+        stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        verify_application_database(&target.join(DB_FILES[0])).unwrap();
+        let restored = Connection::open(target.join(DB_FILES[0])).unwrap();
+        assert_eq!(
+            before,
+            m3_rows(&restored, "SELECT * FROM study_materials ORDER BY id", &[]).unwrap()
+        );
+        assert_eq!(
+            bookmarks,
+            m3_rows(
+                &restored,
+                "SELECT * FROM material_bookmarks ORDER BY id",
+                &[]
+            )
+            .unwrap()
+        );
+        for (id, file, bytes, notes) in copies {
+            assert_eq!(
+                std::fs::read(target.join(DOCUMENTS_DIR).join(file)).unwrap(),
+                bytes
+            );
+            let preview = crate::study_page_sources::preview_on(&restored, &target, &id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(preview.total_pages, 1);
+            assert!(notes.contains(&preview.content_sha256));
+        }
+        drop(restored);
+        for path in [root, target, backup] {
+            std::fs::remove_dir_all(path).unwrap();
+        }
+    }
+
+    #[test]
     fn backup_round_trip_keeps_kit_sources() {
         let root = scratch("kit-saved-source");
         let target = scratch("kit-saved-target");

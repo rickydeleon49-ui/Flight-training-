@@ -768,3 +768,40 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.faa-shelf {
+  margin-block: var(--space-5);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.faa-shelf__entry {
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.faa-shelf__entry .faa-shelf__entry {
+  margin-top: var(--space-3);
+  padding-inline-start: var(--space-3);
+}
+
+.faa-shelf__copy {
+  margin-block: var(--space-3);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.faa-shelf summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: var(--space-2);
+}
+
+.faa-shelf .button, .faa-shelf input, .faa-shelf-dialog .button, .faa-shelf-dialog .icon-button {
+  min-height: 44px;
+  white-space: normal;
+  height: auto;
+  max-width: 100%;
+}
+
+.faa-shelf-dialog .icon-button { min-width: 44px; }

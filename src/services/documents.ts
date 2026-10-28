@@ -19,6 +19,8 @@ export interface ImportedDocument {
   relativePath: string;
   originalFileName: string;
   fileSize: number;
+  /** Local byte identity only; this does not verify a publication's edition. */
+  pdfIdentity?: { contentSha256: string; totalPages: number } | null;
 }
 
 export interface MissingMaterialInfo {
@@ -57,7 +59,7 @@ export function documentErrorMessage(error: unknown, fallback: string): string {
 }
 
 /** Ask the user for a file and copy it into private storage. */
-export async function pickAndImportDocument(materialId: string): Promise<ImportedDocument | null> {
+export async function pickAndImportDocument(materialId: string, pdfOnly = false): Promise<ImportedDocument | null> {
   if (!isTauri()) throw new DesktopOnlyError();
 
   const selected = await open({
@@ -66,8 +68,8 @@ export async function pickAndImportDocument(materialId: string): Promise<Importe
     title: "Add to your study library",
     filters: [
       {
-        name: "Documents",
-        extensions: ["pdf", "png", "jpg", "jpeg", "webp", "txt", "md", "rtf", "docx"],
+        name: pdfOnly ? "PDF" : "Documents",
+        extensions: pdfOnly ? ["pdf"] : ["pdf", "png", "jpg", "jpeg", "webp", "txt", "md", "rtf", "docx"],
       },
     ],
   });
@@ -77,6 +79,7 @@ export async function pickAndImportDocument(materialId: string): Promise<Importe
   return invoke<ImportedDocument>("import_document", {
     sourcePath: selected,
     materialId,
+    ...(pdfOnly ? { pdfOnly: true } : {}),
   });
 }
 

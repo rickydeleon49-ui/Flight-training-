@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   invoke: vi.fn(),
   openPath: vi.fn(),
   revealItemInDir: vi.fn(),
+  pick: vi.fn(),
 }));
 
 vi.mock("@/data", () => ({
@@ -20,6 +21,8 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
   revealItemInDir: mocks.revealItemInDir,
 }));
 
+vi.mock("@tauri-apps/plugin-dialog", () => ({ open: mocks.pick }));
+
 import {
   cleanupDocuments,
   checkLibrary,
@@ -30,6 +33,7 @@ import {
   documentExists,
   importUnlinkedFile,
   openDocument,
+  pickAndImportDocument,
   removeMaterialWithFile,
   revealDocument,
   reattachUnlinkedFile,
@@ -43,6 +47,20 @@ beforeEach(() => {
   mocks.invoke.mockReset();
   mocks.openPath.mockReset();
   mocks.revealItemInDir.mockReset();
+  mocks.pick.mockReset();
+});
+
+it("FAA PDF intake uses the existing import command, and browser mode never calls the picker", async () => {
+  await expect(pickAndImportDocument("shelf-id", true)).rejects.toThrow(DesktopOnlyError);
+  expect(mocks.pick).not.toHaveBeenCalled();
+  expect(mocks.invoke).not.toHaveBeenCalled();
+  mocks.isTauri.mockReturnValue(true);
+  mocks.pick.mockResolvedValue("/synthetic/local.pdf");
+  mocks.invoke.mockResolvedValue({ relativePath: "shelf-id.pdf", originalFileName: "local.pdf", fileSize: 120,
+    pdfIdentity: { contentSha256: "a".repeat(64), totalPages: 1 } });
+  await expect(pickAndImportDocument("shelf-id", true)).resolves.toMatchObject({ relativePath: "shelf-id.pdf" });
+  expect(mocks.pick).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "PDF", extensions: ["pdf"] }] }));
+  expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "/synthetic/local.pdf", materialId: "shelf-id", pdfOnly: true });
 });
 
 describe("library repair desktop commands", () => {

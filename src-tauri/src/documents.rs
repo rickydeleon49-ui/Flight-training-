@@ -63,6 +63,7 @@ pub struct ImportedDocument {
     /// The file name the user recognises, shown in the UI.
     pub original_file_name: String,
     pub file_size: u64,
+    pub pdf_identity: Option<crate::study_page_sources::Preview>,
 }
 
 /// Absolute path of the private documents directory, created if needed.
@@ -429,9 +430,10 @@ pub async fn import_document(
     app: AppHandle,
     source_path: String,
     material_id: String,
+    pdf_only: Option<bool>,
 ) -> Result<ImportedDocument, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        import_document_from_path(&app, &source_path, &material_id)
+        import_document_from_path(&app, &source_path, &material_id, pdf_only.unwrap_or(false))
     })
     .await
     .map_err(|error| format!("Could not finish importing that file: {error}"))?
@@ -441,6 +443,7 @@ fn import_document_from_path(
     app: &AppHandle,
     source_path: &str,
     material_id: &str,
+    pdf_only: bool,
 ) -> Result<ImportedDocument, String> {
     let source = PathBuf::from(&source_path);
 
@@ -468,10 +471,34 @@ fn import_document_from_path(
         }
     };
 
+    let pdf_identity = if pdf_only {
+        match imported_pdf_identity(&destination) {
+            Ok(identity) => Some(identity),
+            Err(error) => {
+                let _ = std::fs::remove_file(&destination);
+                return Err(error);
+            }
+        }
+    } else {
+        None
+    };
+
     Ok(ImportedDocument {
         relative_path: stored_name,
         original_file_name,
         file_size: copied,
+        pdf_identity,
+    })
+}
+
+fn imported_pdf_identity(path: &Path) -> Result<crate::study_page_sources::Preview, String> {
+    let bytes =
+        std::fs::read(path).map_err(|_| "That PDF could not be read. Try choosing it again.")?;
+    let (content_sha256, total_pages) = crate::navigation::identity_of_bytes(&bytes)
+        .map_err(|_| "Choose a readable PDF with at least one page.")?;
+    Ok(crate::study_page_sources::Preview {
+        content_sha256,
+        total_pages,
     })
 }
 

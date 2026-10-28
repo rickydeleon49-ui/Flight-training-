@@ -38,6 +38,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
+import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
@@ -339,6 +340,7 @@ export function StudyLibrary() {
       ) : null}
 
       {!search.trim() ? topicPanels : null}
+      {!search.trim() ? <FaaReferences /> : null}
 
       {!hasAny ? (
         <Card>
