@@ -319,8 +319,8 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             ) : (
               <ul className="stack stack--2" aria-label="Bookmarks">
                 {bookmarks.map((bookmark) => (
-                  <li key={bookmark.id} className="row row--between row--wrap">
-                    <div style={{ minWidth: 0, flex: 1 }}>
+                  <li key={bookmark.id} className="row row--between row--wrap bookmark-row">
+                    <div className="bookmark-row__title">
                       <p className="small strong">{bookmark.title}</p>
                       <p className="tiny muted">
                         {pageWords(bookmark.physicalPage, bookmark.pageLabel)}
@@ -328,7 +328,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                       </p>
                       {bookmark.notes ? <p className="tiny">{bookmark.notes}</p> : null}
                     </div>
-                    <div className="row">
+                    <div className="row bookmark-row__actions">
                       {desktop && bookmark.status === "verified" ? (
                         <Button
                           size="small"

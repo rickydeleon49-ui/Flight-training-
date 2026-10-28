@@ -491,7 +491,7 @@ describe("Make a card from a page note (PDF-STUDY-01c)",()=>{
     expect((within(dialog).getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("Exact answer\nSecond line");
     expect((within(dialog).getByLabelText("Source page (optional)") as HTMLInputElement).value).toBe("3");
     expect(within(dialog).getByText(/From page 3 \(printed page iv\)/)).toBeTruthy();
-    expect(within(dialog).getByText(/Adding a card starts fresh reviews/)).toBeTruthy();
+    expect(within(dialog).getByText(/New cards start fresh/)).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("button",{name:"Cancel"}));
     await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
     expect(await counts()).toEqual(before);

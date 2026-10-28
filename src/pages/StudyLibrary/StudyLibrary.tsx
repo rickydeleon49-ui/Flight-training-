@@ -403,8 +403,6 @@ export function StudyLibrary() {
       <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
       ) : null}
 
-      {search.trim() ? <div className="library__search-topics">{topicPanels}</div> : null}
-
       </div>
       ) : null}
 

@@ -256,7 +256,7 @@ export function StudySetEditor({
           {opened ? (
             <>
               <p className="tiny muted">
-                Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.
+                New cards start fresh. Your earlier reviews are kept.
               </p>
               <Field label="Question">
                 <TextArea
