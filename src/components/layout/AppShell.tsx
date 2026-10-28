@@ -97,11 +97,14 @@ export function AppShell() {
   const beforeQuickFindOpen = useCallback(() => {
     if (desktop) return;
     // Give the dialog a visible return target before it captures focus.
-    if (navigationRef.current?.contains(document.activeElement)) {
+    // WebKit doesn't focus a button on mouse click, so an open Menu with focus
+    // on the page body also returns to the Menu button.
+    const active = document.activeElement;
+    if (navigationRef.current?.contains(active) || (menuOpen && (!active || active === document.body))) {
       menuRef.current?.focus();
     }
     setMenuOpen(false);
-  }, [desktop]);
+  }, [desktop, menuOpen]);
 
   const closeMenu = () => {
     if (!desktop) {

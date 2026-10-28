@@ -126,6 +126,19 @@ describe("AppShell navigation disclosure", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
+  it("returns focus to Menu after a mouse click on Search that left focus on the page (WebKit)", () => {
+    mount();
+    const menuButton = menu();
+    fireEvent.click(menuButton);
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(document.activeElement).toBe(document.body);
+    fireEvent.click(screen.getByRole("button", { name: /^Search/ }));
+    const box = screen.getByRole("textbox", { name: "Search everything" });
+    expect(menuButton.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.keyDown(box, { key: "Escape" });
+    expect(document.activeElement).toBe(menu());
+  });
+
   it("keeps the desktop sidebar and its Search focus return when Quick Find closes", () => {
     mount(1320);
     const search = screen.getByRole("button", { name: /^Search/ });
