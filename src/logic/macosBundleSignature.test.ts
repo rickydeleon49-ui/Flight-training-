@@ -82,7 +82,7 @@ function audit(options: {
   details?: string; verifyExit?: string; displayExit?: string;
   staged?: boolean; noApp?: boolean;
   noDmg?: boolean; attachExit?: string; detachExit?: string;
-  secondDetails?: string;
+  secondDetails?: string; team?: string;
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), "hfd-signature-test-"));
   const bin = join(root, "bin");
@@ -132,6 +132,7 @@ if (args[0] === 'attach') {
         VERIFY_EXIT: options.verifyExit ?? "0", DISPLAY_EXIT: options.displayExit ?? "0",
         ATTACH_EXIT: options.attachExit ?? "0", DETACH_EXIT: options.detachExit ?? "0",
         NO_APP: String(options.noApp ?? false), SECOND_DETAILS: options.secondDetails,
+        HFD_EXPECT_DEVELOPER_ID_TEAM: options.team ?? "",
       },
     });
     let calls: string[][] = [];
@@ -194,5 +195,37 @@ describe("signature gate execution", () => {
     const result = audit({ noDmg: true });
     expect(result.status).toBe(1);
     expect(result.output).toContain("::error::No DMGs found");
+  });
+});
+
+const developerId = "Identifier=com.herflightdeck.app\nflags=0x10000(runtime)\n" + sealed.replace("Signature=adhoc\n", "")
+  + "Authority=Developer ID Application: Example Owner (ABCDE12345)\nAuthority=Developer ID Certification Authority\nTeamIdentifier=ABCDE12345\n";
+
+describe("opt-in Developer ID mode", () => {
+  it("accepts a Developer ID, hardened-runtime signature for the expected team", () => {
+    const result = audit({ details: developerId, team: "ABCDE12345" });
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it.each([
+    ["ad-hoc signature", sealed + "Identifier=com.herflightdeck.app\nflags=0x10002(adhoc,runtime)\nTeamIdentifier=not set\n", "Not signed by Developer ID Application"],
+    ["another team", developerId.replaceAll("ABCDE12345", "ZZZZZ99999"), "Not signed by Developer ID Application"],
+    ["no hardened runtime", developerId.replace("flags=0x10000(runtime)", "flags=0x0(none)"), "Hardened runtime flag missing"],
+    ["another bundle identifier", developerId.replace("Identifier=com.herflightdeck.app", "Identifier=com.example.other"), "Bundle identifier is not com.herflightdeck.app"],
+  ] as const)("rejects %s", (_label, details, message) => {
+    const result = audit({ details, team: "ABCDE12345" });
+    expect(result.status, result.output).toBe(1);
+    expect(result.output).toContain(`::error::${message}`);
+  });
+
+  it("rejects a malformed team ID before touching any image", () => {
+    const result = audit({ team: "bad" });
+    expect(result.status).toBe(1);
+    expect(result.output).toContain("HFD_EXPECT_DEVELOPER_ID_TEAM must be");
+    expect(result.calls).toEqual([]);
+  });
+
+  it("leaves the ad-hoc CI behaviour unchanged when the team is unset", () => {
+    expect(audit().status).toBe(0);
   });
 });
