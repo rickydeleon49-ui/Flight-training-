@@ -201,11 +201,42 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().getByText("C")).toBeTruthy();
   });
 
+  it("opening a source preserves the card session and hidden answer without review writes", async () => {
+    await seed();
+    await createRepositories(db).documents.update(M, { filePath: "synthetic.pdf" });
+    db.inspectNavigationIdentity = async materialId => ({ materialId, contentSha256: "a".repeat(64), totalPages: 50, verifiedAt: "x", changed: false });
+    const open = vi.fn().mockResolvedValue(undefined);
+    db.openNavigationDocument = open;
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    const before = await counts();
+    const writes = interceptWrites((_action, real) => real());
+    const region = sessionRegion();
+    const question = region.getByText(CARDS[0]!.front);
+    const source = region.getByRole("button", { name: "Open source: Source page 1" });
+    source.focus();
+    // jsdom does not synthesize the native button's default keyboard click.
+    // Check the parent leaves the key unconsumed, then deliver that activation.
+    expect(fireEvent.keyDown(source, { key: ' ' })).toBe(true);
+    fireEvent.keyUp(source, { key: ' ' });
+    fireEvent.click(source, { detail: 0 });
+    await within(source.parentElement!).findByRole("status");
+    expect(document.activeElement).toBe(source);
+    expect(region.getByText(CARDS[0]!.front)).toBe(question);
+    expect(region.queryByText(CARDS[0]!.back)).toBeNull();
+    expect(region.getByRole("button", { name: "Show answer" })).toBeTruthy();
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(writes.calls).toEqual([]);
+    expect(await counts()).toEqual(before);
+  });
+
   it("updates the shortcut hint after reveal and restores it for the next card", async () => {
     await seed();
     renderDetail();
     await reviewHeading();
     await openSession();
+    expect(sessionRegion().getByText("Source page 1")).toBeTruthy();
     expect(sessionRegion().getByText("Space or Enter shows the answer.")).toBeTruthy();
     expect(button("Show answer").nextElementSibling).toBe(sessionRegion().getByText("Space or Enter shows the answer."));
     fireEvent.click(button("Show answer"));

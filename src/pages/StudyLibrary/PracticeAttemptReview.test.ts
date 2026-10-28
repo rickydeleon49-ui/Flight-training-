@@ -284,7 +284,7 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     for (const n of [1, 3, 4]) {
       expect(screen.getByText(`Mixed question ${n}?`)).toBeTruthy();
       expect(screen.getByText(`Mixed why ${n}`)).toBeTruthy();
-      expect(screen.getByText(`Source p. ${10 + n}`)).toBeTruthy();
+      expect(screen.getByText(new RegExp(`page ${10 + n}$`))).toBeTruthy();
     }
     expect(screen.getByText("(Your choice)")).toBeTruthy();
     expect(screen.getAllByText("(Correct answer)")).toHaveLength(3);
@@ -366,6 +366,61 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     expect(screen.queryByText("Nothing missed or skipped")).toBeNull();
   });
 
+  it.each([false, true])("historical source title falls back through version then current material (%s)", async currentOnly => {
+    await seed("fallback", "Original");
+    const saved = await completeAttempt("fallback", ["incorrect", "correct", "correct", "correct"]);
+    await testDb.execute("UPDATE practice_attempts SET source_material_title = '' WHERE id = ?", [saved.attemptId]);
+    if (currentOnly) await testDb.execute("UPDATE practice_test_versions SET source_material_title = '' WHERE id = ?", [saved.versionId]);
+    await repos.documents.update("fallback", { title: "Renamed handbook" });
+    await renderHistory(reviewPath(saved.historyKey, saved.attemptId));
+    await screen.findByText("Original question 1?");
+    const label = `From: ${currentOnly ? "Renamed handbook" : "Original material"}, page 11`;
+    expect(screen.getByText(label)).toBeTruthy();
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 1 question" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+    expect(within(panel).getByText(label)).toBeTruthy();
+  });
+
+  it("opening sources in full and Short saved review keeps saved answers without writes", async () => {
+    await seed("open-history", "Saved");
+    const saved = await completeAttempt("open-history", ["incorrect", "correct", "correct", "correct"]);
+    await repos.documents.update("open-history", { filePath: "synthetic.pdf" });
+    testDb.inspectNavigationIdentity = async materialId => ({ materialId, contentSha256: "a".repeat(64), totalPages: 50, verifiedAt: "x", changed: false });
+    const open = vi.fn().mockResolvedValue(undefined);
+    testDb.openNavigationDocument = open;
+    await renderHistory(reviewPath(saved.historyKey, saved.attemptId));
+    await screen.findByText("Review: Saved material");
+    const attempts = await testDb.select("SELECT * FROM practice_attempts");
+    const responses = await testDb.select("SELECT * FROM practice_responses");
+    const save = vi.spyOn(appCtx.repositories!.practiceSessions, "saveSessionAction");
+    const fullSource = screen.getByRole("button", { name: "Open source: From: Saved material, page 11" });
+    fireEvent.click(fullSource);
+    await within(fullSource.parentElement!).findByRole("status");
+    const panel = screen.getByRole("region", { name: "Short saved review" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review 1 question" }));
+    expect(within(panel).queryByRole("button", { name: /^Open source/ })).toBeNull();
+    fireEvent.click(within(panel).getByRole("button", { name: "Show saved answer" }));
+    const question = within(panel).getByText("Saved question 1?");
+    const options = Array.from(panel.querySelectorAll(".practice-option"));
+    const shortSource = within(panel).getByRole("button", { name: "Open source: From: Saved material, page 11" });
+    shortSource.focus();
+    // jsdom does not synthesize the native button's default keyboard click.
+    // Check the parent leaves the key unconsumed, then deliver that activation.
+    expect(fireEvent.keyDown(shortSource, { key: 'Enter' })).toBe(true);
+    fireEvent.keyUp(shortSource, { key: 'Enter' });
+    fireEvent.click(shortSource, { detail: 0 });
+    await within(shortSource.parentElement!).findByRole("status");
+    expect(document.activeElement).toBe(shortSource);
+    expect(within(panel).getByText("Saved question 1?")).toBe(question);
+    expect(Array.from(panel.querySelectorAll(".practice-option"))).toEqual(options);
+    expect(within(panel).getByRole("button", { name: "Hide saved answer" })).toBeTruthy();
+    expect(open).toHaveBeenCalledTimes(2);
+    expect(save).not.toHaveBeenCalled();
+    expect(await testDb.select("SELECT * FROM practice_attempts")).toEqual(attempts);
+    expect(await testDb.select("SELECT * FROM practice_responses")).toEqual(responses);
+  });
+
   it("still reviews the frozen questions after the test is replaced and the source deleted", async () => {
     await seed("m1", "Frozen");
     const { historyKey, attemptId } = await completeAttempt("m1", ["correct", "dont_know", "skip", "incorrect"]);
@@ -384,7 +439,7 @@ describe("All questions / Missed or skipped in a completed attempt", () => {
     await screen.findByText("Review: Frozen material");
     expect(questionHeadings()).toEqual(["Question 2 of 4", "Question 3 of 4", "Question 4 of 4"]);
     expect(screen.getByText("Frozen why 2")).toBeTruthy();
-    expect(screen.getByText("Source p. 14")).toBeTruthy();
+    expect(screen.getByText("From: Frozen material, page 14")).toBeTruthy();
     expect(screen.queryByText("Replacement question?")).toBeNull();
     expect(screen.queryByText("New why")).toBeNull();
   });
@@ -472,6 +527,8 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
     expect(within(panel).getByText("Incorrect")).toBeTruthy();
     expect(within(panel).getByText("Walkthrough question 1?")).toBeTruthy();
 
+    expect(within(panel).queryByText(/^From:/)).toBeNull();
+    expect(within(panel).queryByRole("button", { name: /^Open source/ })).toBeNull();
     // Options are unmarked before reveal
     expect(within(panel).queryByText("(Correct answer)")).toBeNull();
     expect(within(panel).queryByText("(Your choice)")).toBeNull();
@@ -503,7 +560,7 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
     expect(incorrectOption).toBeTruthy();
     expect(incorrectOption?.textContent).toContain("Walkthrough 1 wrong");
     expect(within(panel).getByText("Walkthrough why 1")).toBeTruthy();
-    expect(within(panel).getByText("Source p. 11")).toBeTruthy();
+    expect(within(panel).getByText("From: Walkthrough material, page 11")).toBeTruthy();
 
     // Click Next: advances to Q3 (don't know) and resets reveal
     fireEvent.click(nextBtn);
@@ -674,12 +731,12 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
     expect(yourChoiceOptionContainer.textContent).not.toContain("Regen 1 right");
 
     expect(within(panel).getByText("Regen why 1")).toBeTruthy();
-    expect(within(panel).getByText("Source p. 11")).toBeTruthy();
+    expect(within(panel).getByText(/page 11$/)).toBeTruthy();
 
     // Brand new regenerated items and details are absent
     expect(within(panel).queryByText("Brand new regenerated question?")).toBeNull();
     expect(within(panel).queryByText("Brand new why")).toBeNull();
-    expect(within(panel).queryByText("Source p. 99")).toBeNull();
+    expect(within(panel).queryByText(/page 99$/)).toBeNull();
   });
 
   it("leaves database state, responses, and operations completely unchanged during review and makes no API/provider calls", async () => {
@@ -892,6 +949,11 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
     await screen.findByText("Review: DeletedSource material");
     const panelDel = screen.getByRole("region", { name: "Short saved review" });
     expect(within(panelDel).getByRole("button", { name: "Review 1 question" })).toBeTruthy();
+    fireEvent.click(within(panelDel).getByRole("button", { name: "Review 1 question" }));
+    expect(within(panelDel).queryByText(/^From:/)).toBeNull();
+    fireEvent.click(within(panelDel).getByRole("button", { name: "Show saved answer" }));
+    expect(within(panelDel).getByText("From: DeletedSource material, page 11")).toBeTruthy();
+    expect(within(panelDel).queryByRole("button", { name: /^Open source/ })).toBeNull();
   });
 
   it("guards against delimiter collision between opaque paired IDs via pre-effect layout commit check", async () => {

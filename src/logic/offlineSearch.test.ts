@@ -43,11 +43,16 @@ describe("coverageSentence", () => {
   });
   it("separates no match from not searched", () => {
     expect(coverageSentence({ ...none, searchedDocuments: 12, searchedPages: 3041, notPrepared: 4 }, 0)).toBe(
-      "No matches in 12 documents (3,041 pages). 4 documents aren't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.",
+      "No matches in 12 documents (3,041 pages). 4 PDFs aren't ready to search yet.",
     );
     expect(coverageSentence({ ...none, notPrepared: 1 }, 0)).toBe(
-      "PDF text isn’t ready to search yet. 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.",
+      "1 PDF isn't ready to search yet.",
     );
+  });
+
+  it("PACKS-06 gives one preparation notice when no PDFs could be searched", () => {
+    expect(coverageSentence({ ...none, notPrepared: 1 }, 0, true)).toBe("Your saved study content was searched. 1 PDF isn't ready to search yet.");
+    expect(coverageSentence({ ...none, notPrepared: 2 }, 0, true, true)).toBe("Your saved study content and homework were searched. 2 PDFs aren't ready to search yet.");
   });
 
   it("reports every exclusion with singulars and no guesses", () => {

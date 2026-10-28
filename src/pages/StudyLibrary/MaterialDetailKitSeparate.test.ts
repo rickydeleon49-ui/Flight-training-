@@ -182,7 +182,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
 
     // Kit provenance labels and page links in "Your study kit"
     expect(within(backupSection).getAllByText("Pulled from your PDF on this Mac").length).toBeGreaterThan(0);
-    expect(within(backupSection).getAllByText("Source p. 2").length).toBeGreaterThan(0);
+    expect(within(backupSection).getAllByText(/page 2$/).length).toBeGreaterThan(0);
 
     // Flipping the kit flashcard
     const kitCardButton = within(backupSection).getByRole("button", { name: "Reveal flashcard answer" });

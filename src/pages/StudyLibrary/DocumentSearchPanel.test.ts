@@ -93,6 +93,15 @@ const response = (over: Partial<SearchResponse> = {}): SearchResponse => ({
   ...over,
 });
 
+const saved = (over: Partial<SavedSection> = {}): SavedSection => ({
+  state: "ok",
+  groups: [],
+  coverage: { studySets: 1, practiceVersions: 0, notes: 2, questions: 0, tooLargeItems: 0 },
+  nextOffset: null,
+  moreBeyondCap: false,
+  ...over,
+});
+
 const materials = [
   makeMaterial({ id: "m1", title: "Pilot's Handbook", filePath: "m1.pdf" }),
   makeMaterial({ id: "m2", title: "Notes", filePath: null }),
@@ -180,14 +189,14 @@ describe("Searching inside documents", () => {
     // Document text is text: the markup shows literally, nothing is parsed.
     expect(screen.getByText(/<script>x<\/script> component/)).toBeTruthy();
     expect(document.querySelector("script")).toBeNull();
-    expect(screen.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
+    expect(screen.getByText("Searched 2 documents (30 pages). 1 PDF isn't ready to search yet.")).toBeTruthy();
   });
 
   it("says no match apart from not prepared", async () => {
     service.search.mockResolvedValue(response({ groups: [] }));
     render(inRouter(h(DocumentSearchPanel, { query: "zzqxv", materials })));
     await typed();
-    expect(await screen.findByText("No matches in 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
+    expect(await screen.findByText("No matches in 2 documents (30 pages). 1 PDF isn't ready to search yet.")).toBeTruthy();
   });
 
   it("uses only the newest answer while she keeps typing", async () => {
@@ -407,15 +416,6 @@ describe("appendGroups", () => {
 });
 
 describe("saved study content", () => {
-  const saved = (over: Partial<SavedSection> = {}): SavedSection => ({
-    state: "ok",
-    groups: [],
-    coverage: { studySets: 1, practiceVersions: 0, notes: 2, questions: 0, tooLargeItems: 0 },
-    nextOffset: null,
-    moreBeyondCap: false,
-    ...over,
-  });
-
   it("shows a separate section, labelled as study aids, with what was searched", async () => {
     service.search.mockResolvedValue(
       response({
@@ -538,7 +538,7 @@ describe("saved study content", () => {
     expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions", "homework"], false);
     // The documents section and its coverage are kept.
     expect(view.getByText("Pilot's Handbook")).toBeTruthy();
-    expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
+    expect(view.getByText("Searched 2 documents (30 pages). 1 PDF isn't ready to search yet.")).toBeTruthy();
   });
 
   it("merges saved groups and items when a page repeats a trimmed group", () => {
@@ -623,6 +623,8 @@ it("PACKS-04 links only identified unprepared PDFs to their reading control", as
   expect(screen.queryByRole("link", { name: "Pilot's Handbook" })).toBeNull();
   expect(screen.queryByRole("link", { name: "Notes" })).toBeNull();
   expect(link.getAttribute("href")).toBe("/study/m3#read-pdf-text");
+  expect(screen.getByText("Searched 2 documents (30 pages). 1 PDF isn't ready to search yet.")).toBeTruthy();
+  expect(screen.queryByText(/Open a PDF and choose|Open each document|Choose a document to reach/)).toBeNull();
   fireEvent.click(link);
   expect(screen.getByTestId("location").textContent).toBe("/study/m3#read-pdf-text");
 });
@@ -632,7 +634,7 @@ it("PACKS-04 keeps preparation wording when document identities cannot be checke
   service.readiness.mockRejectedValue(new Error("private failure"));
   render(inRouter(h(DocumentSearchPanel, { query: "lift", materials })));
   await typed();
-  expect(screen.getByText(/Open each document in Study Library and choose/)).toBeTruthy();
+  expect(screen.getByText(/Open a PDF and choose/)).toBeTruthy();
   expect(screen.queryByRole("link")).toBeNull();
   expect(screen.queryByText("private failure")).toBeNull();
 });
@@ -646,4 +648,87 @@ it("PACKS-04 ignores late preparation identities after a file replacement", asyn
   view.rerender(inRouter(h(DocumentSearchPanel, { query: "lift", materials: materials.map(m => ({ ...m, updatedAt: "replaced" })) })));
   await act(async () => finish([{ materialId: "m3", readiness: { state: "notPrepared" } }]));
   expect(screen.queryByRole("link", { name: "Weather" })).toBeNull();
+});
+
+it("PACKS-06 limits each entire card to three hits, reveals loaded hits in order, then fetches the native offset and resets", async () => {
+  const result = response({ nextOffset: 6, saved: saved({ nextOffset: 6 }) });
+  const pages = Array.from({ length: 6 }, (_, i) => ({ contentSha256: sha, pageIndex: i + 1, snippet: `Document hit ${i + 1}` }));
+  result.groups = [
+    { ...result.groups[0]!, passages: pages.slice(0, 2) },
+    { ...result.groups[0]!, materialId: "m3", title: "Weather", passages: pages.slice(2) },
+  ];
+  const notes = Array.from({ length: 6 }, (_, i) => ({ kind: "note" as const, recordId: `n${i}`, rev: sha, snippet: `Saved hit ${i + 1}` }));
+  result.saved!.groups = [
+    { kind: "notes", materialId: null, title: "Notes", passages: notes.slice(0, 2) },
+    { kind: "questions", materialId: null, title: "Questions", passages: notes.slice(2) },
+  ];
+  service.search.mockResolvedValue(result);
+  const view = render(inRouter(h(DocumentSearchPanel, { query: "hit", materials })));
+  await typed();
+  const hits = () => Array.from(view.container.querySelectorAll("button[data-search-result]")).map(el => el.textContent);
+  expect(hits()).toHaveLength(6);
+  expect(hits().filter(t => t?.includes("Document hit")).map(t => t?.match(/Document hit \d/)?.[0])).toEqual(["Document hit 1", "Document hit 2", "Document hit 3"]);
+  expect(hits().filter(t => t?.includes("Saved hit")).map(t => t?.match(/Saved hit \d/)?.[0])).toEqual(["Saved hit 1", "Saved hit 2", "Saved hit 3"]);
+  fireEvent.click(screen.getByRole("button", { name: "Show more matches" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show more saved matches" }));
+  expect(hits()).toHaveLength(12);
+  expect(service.search).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole("button", { name: "Show more matches" }));
+  await act(async () => {});
+  expect(service.search).toHaveBeenLastCalledWith("hit", ["m1", "m2", "m3"], 6, ["documentPages"], false);
+  view.rerender(inRouter(h(DocumentSearchPanel, { query: "new hit", materials })));
+  await typed();
+  expect(hits()).toHaveLength(6);
+  fireEvent.click(screen.getByRole("button", { name: "Show more saved matches" }));
+  view.rerender(inRouter(h(DocumentSearchPanel, { query: "new hit", materials: materials.slice(0, 1), materialFiltersActive: true })));
+  await typed();
+  expect(hits()).toHaveLength(6);
+});
+
+it.each(["activity", "assignment"])("PACKS-06 shows a duplicate %s title once and keeps snippet highlighting", async kind => {
+  const { newHomework, newHomeworkActivity } = await import("./homeworkUi");
+  const snapshot = newHomework();
+  snapshot.assignment.title = kind === "activity" ? "Before my trip" : "Read PHAK";
+  const activity = newHomeworkActivity(snapshot.assignment.id, 0, "checklist", snapshot.assignment.created_at);
+  activity.record.title = "Read PHAK";
+  snapshot.activities = [activity];
+  service.getHomework.mockResolvedValue(snapshot);
+  service.search.mockResolvedValue(response({ groups: [], saved: saved({ groups: [{
+    kind: "homework", materialId: null, title: "Homework", passages: [{
+      kind: kind === "activity" ? "homework_activity" : "homework",
+      recordId: kind === "activity" ? `${snapshot.assignment.id}:${activity.record.id}` : snapshot.assignment.id,
+      rev: sha, snippet: "  read  \uE000phak\uE001  ",
+    }],
+  }] }) }));
+  const view = render(inRouter(h(DocumentSearchPanel, { query: "phak", materials })));
+  await typed();
+  await waitFor(() => expect(screen.getByRole("button", { name: /Homework · (Read PHAK|Before my trip)/ })).toBeTruthy());
+  const button = view.container.querySelector("button[data-search-result]")!;
+  expect(button.textContent?.toLowerCase().match(/read\s+phak/g)).toHaveLength(1);
+  // The assignment label stays useful; the repeated title line is gone.
+  expect(button.querySelectorAll(".small.wrap-anywhere")).toHaveLength(1);
+  expect(button.querySelector("mark")?.textContent).toBe("phak");
+  expect(document.getElementById(button.getAttribute("aria-describedby")!)?.textContent).toBe("  read  phak  ");
+});
+
+it("PACKS-06 hides the activity title line when the snippet starts with that title", async () => {
+  const { newHomework, newHomeworkActivity } = await import("./homeworkUi");
+  const snapshot = newHomework();
+  snapshot.assignment.title = "After my lesson";
+  const activity = newHomeworkActivity(snapshot.assignment.id, 0, "questions", snapshot.assignment.created_at);
+  activity.record.title = "Crosswind landing questions";
+  snapshot.activities = [activity];
+  service.getHomework.mockResolvedValue(snapshot);
+  service.search.mockResolvedValue(response({ groups: [], saved: saved({ groups: [{
+    kind: "homework", materialId: null, title: "Homework", passages: [{
+      kind: "homework_activity", recordId: `${snapshot.assignment.id}:${activity.record.id}`,
+      rev: sha, snippet: "Crosswind landing questions How much \uE000rudder\uE001 do I need?",
+    }],
+  }] }) }));
+  const view = render(inRouter(h(DocumentSearchPanel, { query: "rudder", materials })));
+  await typed();
+  await waitFor(() => expect(screen.getByRole("button", { name: /Homework · After my lesson/ })).toBeTruthy());
+  const button = view.container.querySelector("button[data-search-result]")!;
+  expect(button.textContent?.match(/Crosswind landing questions/g)).toHaveLength(1);
+  expect(button.querySelector("mark")?.textContent).toBe("rudder");
 });

@@ -205,7 +205,7 @@ describe("the pages panel", () => {
     renderDetail();
     const scope = await panel();
     inspectFails = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
-    const badge = await screen.findByRole("button", { name: /Source p\. 12/ });
+    const badge = await screen.findByRole("button", { name: /Open source:/ });
     fireEvent.click(badge);
     expect(await within(scope).findByText(NAVIGATION_ERROR_MESSAGES.FILE_MISSING)).toBeTruthy();
     expect(within(scope).getByRole("button", { name: "Find and restore file" })).toBeTruthy();
@@ -267,11 +267,16 @@ describe("source badges", () => {
   it("open the document with guidance for a cited page and save no position", async () => {
     await seed();
     renderDetail();
-    const badge = await screen.findByRole("button", { name: /Source p\. 12: open the source document and look for page 12/ });
+    expect(await screen.findByText("Source page 12")).toBeTruthy();
+    const before = await db.select("SELECT * FROM card_review_events");
+    const attempts = await db.select("SELECT * FROM practice_attempts");
+    const badge = await screen.findByRole("button", { name: /Open source: .*page 12/ });
     fireEvent.click(badge);
     // The badge's own note (the panel's status line says the same).
     expect(await within(badge.parentElement!).findByText(/The study aid points to page 12, which may be the page number printed in the book/)).toBeTruthy();
     expect(opened).toEqual([{ materialId: M, hash: A }]);
+    expect(await db.select("SELECT * FROM card_review_events")).toEqual(before);
+    expect(await db.select("SELECT * FROM practice_attempts")).toEqual(attempts);
     expect(await tuple()).toBeNull();
     expect(await db.select("SELECT * FROM material_operation_claims")).toEqual([]);
   });
@@ -279,8 +284,8 @@ describe("source badges", () => {
   it("stay plain labels outside the desktop app, where no file can be checked", async () => {
     await seed({ desktop: false });
     renderDetail();
-    expect(await screen.findByText("Source p. 12")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Source p\. 12/ })).toBeNull();
+    expect(await screen.findByText(/page 12$/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Open source:/ })).toBeNull();
     const scope = await panel();
     expect(within(scope).getByText(/Checking pages and opening bookmarks need the desktop app/)).toBeTruthy();
     expect(within(scope).queryByRole("button", { name: "Open at page" })).toBeNull();
@@ -457,11 +462,11 @@ describe("source badges retire their guidance when the view goes away (M4S1-R8)"
   it("leaving while the file is being checked opens nothing", async () => {
     await seed();
     const view = renderDetail();
-    const badge = await screen.findByRole("button", { name: /Source p\. 12/ });
+    const badge = await screen.findByRole("button", { name: /Open source:/ });
     const held = gate();
     inspectHeld = held.promise;
     fireEvent.click(badge);
-    await waitFor(() => expect(screen.getByRole("button", { name: /Source p\. 12/ }).hasAttribute("disabled")).toBe(true));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Open source:/ }).getAttribute("aria-disabled")).toBe("true"));
     view.unmount();
     inspectHeld = null;
     held.resolve();

@@ -198,3 +198,49 @@ describe("AppShell navigation disclosure", () => {
     expect(menu().getAttribute("aria-expanded")).toBe("false");
   });
 });
+
+it.each(["Menu", "Search", "Notes", "Settings"])("PACKS-06 Escape from %s closes narrow navigation and focuses Menu", name => {
+  mount();
+  fireEvent.click(menu());
+  const target = name === "Menu" ? menu() : name === "Search" ? screen.getByRole("button", { name: /^Search/ }) : screen.getByRole("link", { name });
+  target.focus();
+  fireEvent.keyDown(target, { key: "Escape" });
+  expect(menu().getAttribute("aria-expanded")).toBe("false");
+  expect(document.activeElement).toBe(menu());
+  expect(screen.queryByRole("navigation")).toBeNull();
+});
+
+it("PACKS-06 leaves desktop Escape and Escape outside the narrow menu alone", () => {
+  mount(1320);
+  const notes = screen.getByRole("link", { name: "Notes" });
+  notes.focus();
+  expect(fireEvent.keyDown(notes, { key: "Escape" })).toBe(true);
+  expect(document.activeElement).toBe(notes);
+  expect(screen.getByRole("navigation")).toBeTruthy();
+  resize(644);
+  fireEvent.click(menu());
+  expect(fireEvent.keyDown(document.body, { key: "Escape" })).toBe(true);
+  expect(menu().getAttribute("aria-expanded")).toBe("true");
+});
+
+it("PACKS-06 preserves Escape for a dialog inside the menu and for a child that already handled it", () => {
+  mount();
+  fireEvent.click(menu());
+  const navigation = document.getElementById("app-navigation")!;
+  const dialog = document.createElement("div");
+  dialog.setAttribute("role", "dialog");
+  const input = document.createElement("input");
+  dialog.append(input);
+  navigation.append(dialog);
+  input.focus();
+  expect(fireEvent.keyDown(input, { key: "Escape" })).toBe(true);
+  expect(menu().getAttribute("aria-expanded")).toBe("true");
+  expect(document.activeElement).toBe(input);
+  dialog.remove();
+  const notes = screen.getByRole("link", { name: "Notes" });
+  notes.focus();
+  notes.addEventListener("keydown", event => event.preventDefault(), { once: true });
+  fireEvent.keyDown(notes, { key: "Escape" });
+  expect(menu().getAttribute("aria-expanded")).toBe("true");
+  expect(document.activeElement).toBe(notes);
+});

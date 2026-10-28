@@ -26,14 +26,18 @@ export function sourceGuidance(page: number | string): string {
 interface SourcePageBadgeProps {
   /** The page the study aid cited, if any. */
   page: number | string | null | undefined;
+  /** Shown only away from the material's own page (history, review), where the book isn't obvious. */
+  materialTitle?: string | null;
   /** The material whose file holds that page; null when it is gone. */
   materialId: string | null | undefined;
 }
 
-export function SourcePageBadge({ page, materialId }: SourcePageBadgeProps) {
+export function SourcePageBadge({ page, materialId, materialTitle }: SourcePageBadgeProps) {
   const materials = useOptionalAppData()?.data.materials ?? [];
   const { repo, controller, status } = useNavigationController();
-  const hasFile = Boolean(materialId && materials.find((m) => m.id === materialId)?.filePath);
+  const material = materials.find((m) => m.id === materialId);
+  const title = materialTitle === undefined ? undefined : materialTitle?.trim() || material?.title?.trim();
+  const hasFile = Boolean(materialId && material?.filePath);
   const [shown, setShown] = useState<{ controller: NavigationController; epoch: number; materialId: string; page: number | string } | null>(null);
   const started = useRef<{ controller: NavigationController; epoch: number } | null>(null);
 
@@ -49,7 +53,7 @@ export function SourcePageBadge({ page, materialId }: SourcePageBadgeProps) {
   }, [controller, materialId, page]);
 
   if (page === null || page === undefined || page === "") return <Badge tone="study">Check source</Badge>;
-  const label = `Source p. ${page}`;
+  const label = title ? `From: ${title}, page ${page}` : `Source page ${page}`;
   if (!materialId || !hasFile || !controller || !repo?.canCheckFiles()) return <Badge tone="study">{label}</Badge>;
 
   const busy = status.kind === "working" && "materialId" in status && status.materialId === materialId;
@@ -58,12 +62,14 @@ export function SourcePageBadge({ page, materialId }: SourcePageBadgeProps) {
 
   return (
     <span className="source-badge">
+      {/* Keep keyboard focus here while the external reader is opening. */}
       <button
         type="button"
         className="badge badge--study badge--button"
-        disabled={busy}
-        aria-label={`${label}: open the source document and look for page ${page}`}
+        aria-disabled={busy}
+        aria-label={`Open source: ${label}`}
         onClick={async () => {
+          if (busy) return;
           const pending = controller.openForGuidance(materialId, sourceGuidance(page));
           // The new request's epoch is published synchronously as it starts.
           const request = { controller, epoch: controller.status().epoch };

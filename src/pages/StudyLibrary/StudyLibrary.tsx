@@ -191,6 +191,23 @@ export function StudyLibrary() {
     return Object.values(exportableParts(source)).some(Boolean) ? [source] : [];
   }), [data.materials, data.aiStudySets, data.practiceTests]);
 
+  const topicPanels = (<>
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <AcsCodeLookupPanel
+          materials={data.materials}
+          aiStudySets={data.aiStudySets}
+          practiceTests={data.practiceTests}
+          questions={data.questions}
+        />
+      </div>
+
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <AcsAreaMaterialCoveragePanel
+          materials={data.materials}
+        />
+      </div>
+  </>);
+
   return (
     <>
       <PageHeader
@@ -315,20 +332,7 @@ export function StudyLibrary() {
         </div>
       ) : null}
 
-      <div style={{ marginBottom: "var(--space-5)" }}>
-        <AcsCodeLookupPanel
-          materials={data.materials}
-          aiStudySets={data.aiStudySets}
-          practiceTests={data.practiceTests}
-          questions={data.questions}
-        />
-      </div>
-
-      <div style={{ marginBottom: "var(--space-5)" }}>
-        <AcsAreaMaterialCoveragePanel
-          materials={data.materials}
-        />
-      </div>
+      {!search.trim() ? topicPanels : null}
 
       {!hasAny ? (
         <Card>
@@ -388,6 +392,8 @@ export function StudyLibrary() {
           ) : null}
         </>
       )}
+
+      {search.trim() ? topicPanels : null}
 
       </div>
       ) : null}
