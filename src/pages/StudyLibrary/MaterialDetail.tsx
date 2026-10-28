@@ -1497,7 +1497,7 @@ function MaterialDetailPage() {
               <div className="stack stack--3">
                 {questions.map((question) => (
                   <div className="row row--between" key={question.id}>
-                    <span className="small wrap-anywhere">{question.text}</span>
+                    <span className="small wrap-anywhere" style={{ whiteSpace: "pre-line" }}>{question.text}</span>
                     <Badge>{question.status === "answered" ? "Answered" : "To ask"}</Badge>
                   </div>
                 ))}
