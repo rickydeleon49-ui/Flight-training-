@@ -185,13 +185,23 @@ describe("Glass appearance styles (glass.css)", () => {
     expect(ivoryHex).toBe("#faf7f4");
 
     const ivory = parseHex(ivoryHex);
-    // Glass surface: rgba(255, 255, 255, 0.68) blended over ivory
-    const glassBlended = blendOver({ r: 255, g: 255, b: 255, a: 0.68 }, ivory);
+    // Worst case: the strongest palette tint (32%) behind the page, with the
+    // 62% white glass card over it. Secondary text also sits on the bare page.
+    const tints = ["--palette-rose", "--palette-lavender", "--palette-sky"].map((t) => parseHex(getHexToken(t)));
+    // Read the real strengths from glass.css so a stronger look can't skip this check.
+    const tintAlpha = Math.max(...[...glassCss.matchAll(/radial-gradient\([^,]+,\s*rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/g)].map((m) => Number(m[1])));
+    const cardAlpha = Number(glassCss.match(/--glass-surface:\s*rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/)![1]);
+    expect(tintAlpha).toBeGreaterThan(0);
+    const worst = (text: string, onCard: boolean) =>
+      Math.min(...tints.map((tint) => {
+        const page = blendOver({ ...tint, a: tintAlpha }, ivory);
+        return contrastRatio(parseHex(text), onCard ? blendOver({ r: 255, g: 255, b: 255, a: cardAlpha }, page) : page);
+      }));
 
-    const primaryContrast = contrastRatio(parseHex(navyHex), glassBlended);
-    const secondaryContrast = contrastRatio(parseHex(navyMutedHex), glassBlended);
-    const overdueContrast = contrastRatio(parseHex(overdueHex), glassBlended);
-    const dueTodayContrast = contrastRatio(parseHex(dueTodayHex), glassBlended);
+    const primaryContrast = Math.min(worst(navyHex, true), worst(navyHex, false));
+    const secondaryContrast = Math.min(worst(navyMutedHex, true), worst(navyMutedHex, false));
+    const overdueContrast = worst(overdueHex, true);
+    const dueTodayContrast = worst(dueTodayHex, true);
 
     // WCAG AA requirement: >= 4.5
     expect(primaryContrast).toBeGreaterThanOrEqual(4.5);
