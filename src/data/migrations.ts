@@ -32,6 +32,7 @@ import journalSchool from "../../src-tauri/migrations/0022_journal_school.sql?ra
 
 import studyPageSources from "../../src-tauri/migrations/0024_study_page_sources.sql?raw";
 import homeworkAnswers from "../../src-tauri/migrations/0023_homework_answers.sql?raw";
+import oralScenarios from "../../src-tauri/migrations/0025_oral_scenarios.sql?raw";
 
 export interface Migration {
   version: number;
@@ -64,6 +65,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 22, description: "journal_school", sql: journalSchool },
   { version: 23, description: "homework_answers", sql: homeworkAnswers },
   { version: 24, description: "study_page_sources", sql: studyPageSources },
+  { version: 25, description: "oral_scenarios", sql: oralScenarios },
 ];
 
 /**

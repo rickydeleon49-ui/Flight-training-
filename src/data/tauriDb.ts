@@ -1,3 +1,5 @@
+import { canonicalJson as oralCanonicalJson } from "@/logic/cardIdentity";
+import { decodeOralResult, ORAL_MESSAGES, OralScenarioError, type OralErrorCode, type OralOperation, type OralResult } from "./oralScenarios";
 import { HomeworkError, HOMEWORK_MESSAGES, homeworkAssert, type HomeworkOperation, type HomeworkResult } from "@/domain/homework";
 /**
  * SQLite through Tauri's SQL plugin — the real desktop database.
@@ -537,6 +539,7 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
       return invokePracticeAuthoringSave(operation);
     },
     saveHomeworkAtomically: (operation) => invokeHomeworkSave(operation),
+    saveOralScenarioAtomically: (operation) => invokeOralScenarioSave(operation),
     saveStudySetAtomically: (operation, guideJobId) => invokeStudySetSave(operation, invoke, guideJobId),
     erasePracticeHistoryAtomically(
       action: import("@/domain/types").EraseHistoryAction,
@@ -587,4 +590,18 @@ export async function invokeHomeworkSave(operation: HomeworkOperation, call: typ
     if (wire?.code && wire.code in HOMEWORK_MESSAGES && wire.message === HOMEWORK_MESSAGES[wire.code]) throw new HomeworkError(wire.code);
     throw new HomeworkError("STORAGE");
   }
+}
+
+export async function invokeOralScenarioSave(operation: OralOperation, call: typeof invoke = invoke): Promise<OralResult> {
+  let result: unknown;
+  try {
+    result = await call<unknown>("save_oral_scenario_operation", { operation });
+  } catch (e) {
+    const wire = e as { code?: OralErrorCode; message?: string };
+    if (wire?.code && wire.code in ORAL_MESSAGES && wire.message === ORAL_MESSAGES[wire.code]) throw new OralScenarioError(wire.code);
+    throw new OralScenarioError("STORAGE");
+  }
+  const decoded = decodeOralResult(oralCanonicalJson(result), operation.action);
+  if ("scenarioId" in operation && decoded.scenarioId !== operation.scenarioId) throw new OralScenarioError("STORAGE");
+  return decoded;
 }

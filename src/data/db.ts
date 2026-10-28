@@ -10,6 +10,8 @@
 export interface SqlDatabase {
   /** HW-01b: no sequential fallback. */
   saveHomeworkAtomically?(operation: import("@/domain/homework").HomeworkOperation): Promise<import("@/domain/homework").HomeworkResult>;
+  /** ORAL-01c: one idempotent scenario save. No sequential fallback. */
+  saveOralScenarioAtomically?(operation: import("./oralScenarios").OralOperation): Promise<import("./oralScenarios").OralResult>;
   /** Run a query and return typed rows. */
   select<T = Record<string, unknown>>(sql: string, params?: SqlValue[]): Promise<T[]>;
   /** Run a statement that returns no rows. */

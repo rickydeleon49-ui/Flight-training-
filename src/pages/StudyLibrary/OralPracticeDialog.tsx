@@ -1,74 +1,61 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Checkbox, Dialog, Field, TextArea } from "@/components/ui";
+import type { OralScenario } from "@/data/oralScenarios";
 import type { StudyMaterial } from "@/domain/types";
-import {
-  ORAL_MAX_ANSWER,
-  ORAL_MAX_ASSUMPTIONS,
-  ORAL_MAX_POINTS,
-  ORAL_MAX_SCENARIO,
-  oralNoteDraft,
-  oralQuestionText,
-  oralSetupProblem,
-  parseOralPoints,
-  type OralText,
-} from "@/logic/oralPractice";
+import { ORAL_MAX_ANSWER, oralNoteDraft, oralQuestionText, type OralText } from "@/logic/oralPractice";
 import { useAppData } from "@/state/AppDataContext";
 
-type Step = "setup" | "answer" | "reveal";
+type Step = "answer" | "reveal";
 
 /**
- * Try one oral question. Everything stays in this dialog's memory: closing it
- * clears it, and nothing is written unless she presses Ask my instructor or
- * Write a note.
+ * Practise her saved scenarios one at a time. Her answer and ticks stay in
+ * this dialog's memory only: closing it clears them, and nothing is written
+ * unless she presses Ask my instructor or Write a note.
  */
 export function OralPracticeDialog({
   material,
+  scenarios,
+  startIndex,
   open,
   onClose,
 }: {
   material: StudyMaterial;
+  scenarios: OralScenario[];
+  startIndex: number;
   open: boolean;
   onClose: () => void;
 }) {
   const { mutate } = useAppData();
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("setup");
-  const [scenario, setScenario] = useState("");
-  const [assumptions, setAssumptions] = useState("");
-  const [pointsText, setPointsText] = useState("");
+  const [index, setIndex] = useState(startIndex);
+  const [step, setStep] = useState<Step>("answer");
   const [answer, setAnswer] = useState("");
-  const [points, setPoints] = useState<string[]>([]);
   const [covered, setCovered] = useState<boolean[]>([]);
-  const [problem, setProblem] = useState<ReturnType<typeof oralSetupProblem>>(null);
   const [asked, setAsked] = useState(false);
   const [asking, setAsking] = useState(false);
   const revealRef = useRef<HTMLHeadingElement>(null);
 
-  const close = () => {
-    setStep("setup");
-    setScenario("");
-    setAssumptions("");
-    setPointsText("");
+  const startAt = (at: number) => {
+    setIndex(at);
+    setStep("answer");
     setAnswer("");
-    setPoints([]);
     setCovered([]);
-    setProblem(null);
     setAsked(false);
     setAsking(false);
+  };
+  useEffect(() => {
+    if (open) startAt(startIndex);
+  }, [open, startIndex]);
+
+  const scenario = scenarios[index];
+  const close = () => {
+    startAt(startIndex);
     onClose();
   };
-
-  const toAnswer = () => {
-    const found = oralSetupProblem(scenario, pointsText);
-    setProblem(found);
-    if (found) return;
-    // The points leave the form and are kept in memory only, out of the page.
-    setPoints(parseOralPoints(pointsText));
-    setPointsText("");
-    setStep("answer");
-  };
+  if (!scenario) return null;
+  const points = scenario.points;
 
   const reveal = () => {
     setCovered(points.map(() => false));
@@ -78,10 +65,10 @@ export function OralPracticeDialog({
   };
 
   const text = (): OralText => ({
-    scenario,
-    assumptions,
+    scenario: scenario.prompt,
+    assumptions: scenario.assumptions,
     answer,
-    coveredPoints: points.filter((_, index) => covered[index]),
+    coveredPoints: points.filter((_, at) => covered[at]),
   });
 
   const ask = async () => {
@@ -104,15 +91,9 @@ export function OralPracticeDialog({
     navigate("/notes", { state: { noteDraft: draft } });
   };
 
+  const hasNext = index < scenarios.length - 1;
   const footer =
-    step === "setup" ? (
-      <>
-        <Button onClick={close}>Cancel</Button>
-        <Button variant="primary" onClick={toAnswer}>
-          Next
-        </Button>
-      </>
-    ) : step === "answer" ? (
+    step === "answer" ? (
       <>
         <Button onClick={close}>Cancel</Button>
         <Button variant="primary" onClick={reveal}>
@@ -120,70 +101,40 @@ export function OralPracticeDialog({
         </Button>
       </>
     ) : (
-      <Button variant="primary" onClick={close}>
-        Done
-      </Button>
+      <>
+        <Button variant={hasNext ? "secondary" : "primary"} onClick={close}>
+          Done
+        </Button>
+        {hasNext ? (
+          <Button variant="primary" onClick={() => startAt(index + 1)}>
+            Next scenario
+          </Button>
+        ) : null}
+      </>
     );
 
   return (
     <Dialog open={open} onClose={close} title="Practice an oral question" footer={footer}>
       <div className="stack stack--3">
-        <p className="tiny muted">Try it — the scenario is not saved yet.</p>
-
-        {step === "setup" ? (
-          <>
-            <Field
-              label="Scenario"
-              hint="The question as an examiner might ask it. Write it, or copy it from your instructor."
-              error={problem?.field === "scenario" ? problem.message : null}
-            >
-              <TextArea
-                rows={3}
-                maxLength={ORAL_MAX_SCENARIO}
-                value={scenario}
-                onChange={(event) => setScenario(event.target.value)}
-              />
-            </Field>
-            <Field label="Assumptions (optional)" hint="For example the aircraft, the weather, or “imagine you are…”.">
-              <TextArea
-                rows={2}
-                maxLength={ORAL_MAX_ASSUMPTIONS}
-                value={assumptions}
-                onChange={(event) => setAssumptions(event.target.value)}
-              />
-            </Field>
-            <Field
-              label="Discussion points"
-              hint={`One point per line, up to ${ORAL_MAX_POINTS}. They stay hidden until you choose to show them.`}
-              error={problem?.field === "points" ? problem.message : null}
-            >
-              <TextArea rows={4} value={pointsText} onChange={(event) => setPointsText(event.target.value)} />
-            </Field>
-          </>
+        <p className="wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
+          {scenario.prompt}
+        </p>
+        {scenario.assumptions.trim() ? (
+          <p className="small muted wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
+            {scenario.assumptions}
+          </p>
         ) : null}
 
         {step === "answer" ? (
-          <>
-            <p className="wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
-              {scenario}
-            </p>
-            {assumptions.trim() ? (
-              <p className="small muted wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
-                {assumptions}
-              </p>
-            ) : null}
-            <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points.">
-              <TextArea
-                rows={6}
-                maxLength={ORAL_MAX_ANSWER}
-                value={answer}
-                onChange={(event) => setAnswer(event.target.value)}
-              />
-            </Field>
-          </>
-        ) : null}
-
-        {step === "reveal" ? (
+          <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points. Your answer is not saved.">
+            <TextArea
+              rows={6}
+              maxLength={ORAL_MAX_ANSWER}
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+            />
+          </Field>
+        ) : (
           <div aria-live="polite">
             <h3 ref={revealRef} tabIndex={-1} className="small">
               Your discussion points
@@ -198,13 +149,13 @@ export function OralPracticeDialog({
             ) : null}
             <p className="tiny muted">Tick the points you covered.</p>
             <div className="stack stack--2">
-              {points.map((point, index) => (
+              {points.map((point, at) => (
                 <Checkbox
-                  key={index}
-                  checked={Boolean(covered[index])}
+                  key={at}
+                  checked={Boolean(covered[at])}
                   strikethrough={false}
                   onChange={(checked) =>
-                    setCovered((current) => current.map((value, at) => (at === index ? checked : value)))
+                    setCovered((current) => current.map((value, i) => (i === at ? checked : value)))
                   }
                   label={<span className="wrap-anywhere">{point}</span>}
                 />
@@ -225,7 +176,7 @@ export function OralPracticeDialog({
               </p>
             ) : null}
           </div>
-        ) : null}
+        )}
       </div>
     </Dialog>
   );

@@ -23,6 +23,7 @@ import { cardLibraryRepository } from "./cardLibraryRepository";
 import { skillEvidenceRepository } from "./skillEvidenceRepository";
 import { navigationRepository } from "./navigationRepository";
 import { flightSchoolRepository } from "./flightSchoolRepository";
+import { oralScenarioRepository } from "./oralScenarioRepository";
 
 export interface Repositories {
   homework: ReturnType<typeof homeworkRepository>;
@@ -44,6 +45,7 @@ export interface Repositories {
   skillEvidence: ReturnType<typeof skillEvidenceRepository>;
   navigation: ReturnType<typeof navigationRepository>;
   flightSchools: ReturnType<typeof flightSchoolRepository>;
+  oralScenarios: ReturnType<typeof oralScenarioRepository>;
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
@@ -67,6 +69,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     skillEvidence: skillEvidenceRepository(db),
     navigation: navigationRepository(db),
     flightSchools: flightSchoolRepository(db),
+    oralScenarios: oralScenarioRepository(db),
   };
 }
 
