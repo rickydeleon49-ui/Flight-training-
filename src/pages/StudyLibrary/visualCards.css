@@ -16,3 +16,8 @@
 .visual-card-editor .dialog__footer { flex: none; padding: 12px 16px; gap: 8px; }
 .visual-card-editor fieldset { min-inline-size: 0; width: 100%; }
 .visual-card-editor input { max-width: 100%; }
+.visual-card-editor summary { cursor: pointer; min-height: 44px; }
+.visual-card-list { list-style: none; margin: 0; padding: 0; }
+.visual-card-list li { display: flex; align-items: center; gap: var(--space-3); }
+.visual-card-list li > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visual-card-list .button { flex: none; }

@@ -348,7 +348,9 @@ export function HomeworkCardRun({
                         {revealed ? (
                           <p>{item.front}</p>
                         ) : (
-                          <Button onClick={reveal}>Covered label 1. {item.front}. Reveal label</Button>
+                          <Button onClick={reveal}>
+                            Covered label 1. {item.front}{/[.?!]$/.test(item.front) ? "" : "."} Reveal label
+                          </Button>
                         )}
                         {revealed ? (
                           <>

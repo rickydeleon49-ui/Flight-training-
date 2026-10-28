@@ -482,7 +482,7 @@ function SessionView({
               <p>{item.front}</p>
             ) : (
               <Button disabled={busy} onClick={reveal}>
-                Covered label 1. {item.front}. Reveal label
+                Covered label 1. {item.front}{/[.?!]$/.test(item.front) ? "" : "."} Reveal label
               </Button>
             )}
             {review.revealed ? (

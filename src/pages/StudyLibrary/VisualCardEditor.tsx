@@ -36,6 +36,7 @@ export function VisualCardEditor({
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [resize, setResize] = useState(false);
+  const [placementOpen, setPlacementOpen] = useState(false);
   const [trying, setTrying] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [whole, setWhole] = useState(false);
@@ -247,61 +248,68 @@ export function VisualCardEditor({
                   onChange={(e) => setAnswer(e.target.value)}
                 />
               </label>
-              <p className="small">
-                Describe the label’s place without giving away the answer. Drag on the picture, or use the bounds
-                below.
-              </p>
-              <div className="row row--wrap">
-                {(["x", "y", "w", "h"] as const).map((k) => (
-                  <label key={k} className="small">
-                    {BOUND_LABELS[k]}
-                    <input
-                      className="input"
-                      style={{ width: 80 }}
-                      type="number"
-                      value={cover[k]}
-                      min={k === "x" || k === "y" ? 0 : 1}
-                      max={k === "x" || k === "w" ? size.width : size.height}
-                      onChange={(e) => {
-                        if (Number.isFinite(e.target.valueAsNumber)) {
-                          setCover(clampCover({ ...cover, [k]: e.target.valueAsNumber }, size));
-                        }
-                      }}
-                    />
+              <details open={placementOpen} onToggle={(e) => setPlacementOpen(e.currentTarget.open)}>
+                <summary tabIndex={0}>Other ways to place the cover (keyboard or exact numbers)</summary>
+                {/* The dialog fallback also uses hidden to skip collapsed controls when tabbing. */}
+                <div hidden={!placementOpen} className={placementOpen ? "stack stack--3" : undefined}>
+                  <div className="row row--wrap">
+                    {(["x", "y", "w", "h"] as const).map((k) => (
+                      <label key={k} className="small">
+                        {BOUND_LABELS[k]}
+                        <input
+                          className="input"
+                          style={{ width: 80 }}
+                          type="number"
+                          value={cover[k]}
+                          min={k === "x" || k === "y" ? 0 : 1}
+                          max={k === "x" || k === "w" ? size.width : size.height}
+                          onChange={(e) => {
+                            if (Number.isFinite(e.target.valueAsNumber)) {
+                              setCover(clampCover({ ...cover, [k]: e.target.valueAsNumber }, size));
+                            }
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <label className="small">
+                    View rotation{" "}
+                    <select value={turn} onChange={(e) => setTurn(Number(e.target.value) as Turn)}>
+                      {[0, 90, 180, 270].map((n) => (
+                        <option key={n} value={n}>
+                          {n}°
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                ))}
-              </div>
-              <label className="small">
-                View rotation{" "}
-                <select value={turn} onChange={(e) => setTurn(Number(e.target.value) as Turn)}>
-                  {[0, 90, 180, 270].map((n) => (
-                    <option key={n} value={n}>
-                      {n}°
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="small">
-                Arrow keys{" "}
-                <select value={resize ? "resize" : "move"} onChange={(e) => setResize(e.target.value === "resize")}>
-                  <option value="move">Move</option>
-                  <option value="resize">Resize</option>
-                </select>
-              </label>
-              <Button
-                onKeyDown={(e) => {
-                  if (e.key.startsWith("Arrow")) {
-                    e.preventDefault();
-                    setCover((c) => adjustCover(c, size, e.key, e.shiftKey, resize));
-                  }
-                }}
-              >
-                Cover 1: use arrow keys to {resize ? "resize" : "move"}
-              </Button>
-              <p role="status" className="small">
-                Left {cover.x}, top {cover.y}, width {cover.w}, height {cover.h}. Shift with an arrow changes 10
-                pixels.
-              </p>
+                  <label className="small">
+                    Arrow keys{" "}
+                    <select value={resize ? "resize" : "move"} onChange={(e) => setResize(e.target.value === "resize")}>
+                      <option value="move">Move</option>
+                      <option value="resize">Resize</option>
+                    </select>
+                  </label>
+                  <Button
+                    onKeyDown={(e) => {
+                      if (e.key.startsWith("Arrow")) {
+                        e.preventDefault();
+                        setCover((c) => adjustCover(c, size, e.key, e.shiftKey, resize));
+                      }
+                    }}
+                  >
+                    Cover 1: use arrow keys to {resize ? "resize" : "move"}
+                  </Button>
+                  <p role="status" className="small">
+                    Left {cover.x}, top {cover.y}, width {cover.w}, height {cover.h}. Shift with an arrow changes 10
+                    pixels.
+                  </p>
+                  <p className="small">
+                    Your original picture stays unchanged. Complete backups keep the picture and its cards; database-only
+                    copies still need the managed picture files.
+                  </p>
+                </div>
+              </details>
+              {!question.trim() || !answer.trim() ? <p className="small">Write a question and its answer first.</p> : null}
               <Button
                 disabled={!question.trim() || !answer.trim()}
                 onClick={() => {
@@ -318,7 +326,9 @@ export function VisualCardEditor({
               {revealed ? (
                 <p>{question}</p>
               ) : (
-                <Button onClick={() => setRevealed(true)}>Covered label 1. {question}. Reveal label</Button>
+                <Button onClick={() => setRevealed(true)}>
+                  Covered label 1. {question}{/[.?!]$/.test(question) ? "" : "."} Reveal label
+                </Button>
               )}
               {revealed ? (
                 <>
@@ -337,10 +347,6 @@ export function VisualCardEditor({
               </Button>
             </div>
           )}
-          <p className="small">
-            Your original picture stays unchanged. Complete backups keep the picture and its cards; database-only
-            copies still need the managed picture files.
-          </p>
         </div>
       ) : null}
     </Dialog>
