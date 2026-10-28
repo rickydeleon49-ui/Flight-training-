@@ -161,6 +161,9 @@ export function QuickFind() {
             placeholder="Search everything — materials, lessons, flights, questions"
             aria-label="Search everything"
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {

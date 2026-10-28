@@ -1513,7 +1513,7 @@ function MaterialDetailPage() {
                 <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
                 {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
-                  <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div>
+                  <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div>
                   <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
                   {hasKitItems ? (
                     <div id="material-saved-pdf-kit" tabIndex={-1}>
@@ -1637,7 +1637,7 @@ function MaterialDetailPage() {
                 </div></CardBody>
               </Card>
             </section>
-          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} /></div> : null}
+          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div> : null}
         </div>
 
         <div className="detail__column">
