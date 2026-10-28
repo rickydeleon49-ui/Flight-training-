@@ -62,8 +62,8 @@ it("imports with the existing PDF-only path, saves a separate unverified materia
   fireEvent.click(screen.getByRole("button", { name: "Save reference" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(mocks.create).toHaveBeenCalledTimes(2);
-  expect(mocks.create.mock.calls[1]![0]).toMatchObject({ filePath: "synthetic.pdf", reviewStatus: "reference_only", tags: [] });
-  expect(mocks.cleanup).not.toHaveBeenCalled();
+  expect(mocks.create.mock.calls[1]![0]).toMatchObject({ title: "Private Pilot Airplane ACS — FAA-S-ACS-6B", notes: "", faaReference: { referenceId: "private-acs", edition: "FAA-S-ACS-6B", ...imported.pdfIdentity }, filePath: "synthetic.pdf", reviewStatus: "reference_only", tags: [] });
+  expect(mocks.cleanup).toHaveBeenCalledWith([]);
 });
 
 it("cancels an imported copy safely and keeps Cancel available to retry failed cleanup", async () => {
@@ -84,7 +84,7 @@ it("shows a missing saved file honestly, preserving the notes link and preventin
   mocks.materials = [material()];
   mocks.preview.mockResolvedValue(null);
   mount();
-  await screen.findByText(/Missing · Your notes/);
+  await screen.findByText(/File missing/);
   expect((screen.getByRole("button", { name: /Open offline:/ }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/id");
   expect(mocks.open).not.toHaveBeenCalled();
@@ -93,18 +93,18 @@ it("shows a missing saved file honestly, preserving the notes link and preventin
 it("rechecks before opening, refuses changed bytes, and keeps the saved edition unverified", async () => {
   mocks.materials = [material()];
   mount();
-  await screen.findByText("Present · Saved offline");
-  expect(screen.getByText(/Different edition noted/)).toBeTruthy();
+  await screen.findByText("Saved on this Mac");
+  expect(screen.getByText(/Your copy: FAA-S-ACS-6B/)).toBeTruthy();
   mocks.preview.mockResolvedValue({ ...imported.pdfIdentity, contentSha256: "b".repeat(64) });
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
-  await screen.findByText(/Changed · This file differs/);
+  await screen.findByText(/This file has changed since you added it/);
   expect(mocks.open).not.toHaveBeenCalled();
 });
 
 it("opens a matching copy in the existing external reader with honest M4 fallback wording", async () => {
   mocks.materials = [material()];
   mount();
-  await screen.findByText("Present · Saved offline");
+  await screen.findByText("Saved on this Mac");
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
   await screen.findByText("Opened in your PDF reader.");
   expect(mocks.open).toHaveBeenCalledWith("synthetic.pdf");
@@ -125,7 +125,7 @@ it("makes no native calls in browser mode, even with saved shelf materials", () 
 it("retires a pending open check when the shelf unmounts", async () => {
   mocks.materials = [material()];
   const view = mount();
-  await screen.findByText("Present · Saved offline");
+  await screen.findByText("Saved on this Mac");
   let finish!: (value: typeof imported.pdfIdentity) => void;
   mocks.preview.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
@@ -133,4 +133,33 @@ it("retires a pending open check when the shelf unmounts", async () => {
   finish(imported.pdfIdentity);
   await Promise.resolve();
   expect(mocks.open).not.toHaveBeenCalled();
+});
+
+ it("shows each edition once and aligns all three publication rows", async () => {
+  mocks.materials = [makeMaterial(faaReferenceDraft(FAA_REFERENCES[0], "id", FAA_REFERENCES[0].edition, imported))];
+  mount();
+  await screen.findByText("Saved on this Mac");
+  expect(screen.getAllByText(/FAA-S-ACS-6C/)).toHaveLength(1);
+  expect(screen.queryByText(/Your copy:/)).toBeNull();
+  expect(document.querySelectorAll(".faa-shelf > .faa-shelf__entry")).toHaveLength(3);
+});
+
+it("keeps the earlier PDF when another pick is cancelled, then cleans unused picks before saving", async () => {
+  mount();
+  fireEvent.click(screen.getByRole("button", { name: "Add PDF: Private Pilot Airplane ACS" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose local PDF" }));
+  await screen.findByText("synthetic.pdf");
+  mocks.pick.mockResolvedValueOnce(null);
+  fireEvent.click(screen.getByRole("button", { name: "Choose another PDF" }));
+  await waitFor(() => expect(mocks.pick).toHaveBeenCalledTimes(2));
+  expect(screen.getByText("synthetic.pdf")).toBeTruthy();
+  mocks.pick.mockResolvedValueOnce({ ...imported, relativePath: "second.pdf", originalFileName: "second.pdf" });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Choose another PDF" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: "Choose another PDF" }));
+  await screen.findByText("second.pdf");
+  expect(mocks.pick.mock.calls[0]![0]).not.toBe(mocks.pick.mock.calls[2]![0]);
+  fireEvent.click(screen.getByRole("button", { name: "Save reference" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(mocks.cleanup).toHaveBeenCalledWith(["synthetic.pdf"]);
+  expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ title: FAA_REFERENCES[0].title, notes: "", filePath: "second.pdf" }));
 });

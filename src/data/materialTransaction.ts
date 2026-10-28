@@ -136,8 +136,16 @@ export async function executeMaterialSave(
     const result = await (operation.mode === "create"
       ? handleCreate(run, query, operation, timestamp)
       : handleUpdate(run, query, operation, timestamp));
+    if (operation.faaReference) {
+      if (operation.mode !== "create") throw new Error("Add another reference as a separate copy.");
+      const copy = operation.faaReference;
+      await run(
+        "INSERT INTO faa_reference_copies (material_id, reference_id, edition, content_sha256, total_pages, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [operation.id, copy.referenceId, copy.edition, copy.contentSha256, copy.totalPages, result.createdAt],
+      );
+    }
     await exec("COMMIT");
-    return result;
+    return operation.faaReference ? { ...result, faaReference: operation.faaReference } : result;
   } catch (error) {
     try {
       await exec("ROLLBACK");

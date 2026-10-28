@@ -251,6 +251,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 24) await validatePageSources(query, reference);
   if (newest >= 25) await validateOralScenarios(query, reference);
   if (newest >= 26) await validateVisualCards(query, reference);
+  if (newest >= 27) await validateFaaReferences(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -2081,5 +2082,22 @@ export async function validateOralScenarios(query: ValidationQuery, reference: V
     } catch {
       refuse("An oral scenario save receipt is damaged.");
     }
+  }
+}
+
+/** Schema 27 is local intake metadata, not an official source verification. */
+export async function validateFaaReferences(query: ValidationQuery, reference: ValidationQuery) {
+  const table = "faa_reference_copies";
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+      !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+      !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+      !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
+      (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged FAA reference details.");
+  for (const row of await query(`SELECT * FROM ${table}`, [])) {
+    if (typeof row.material_id !== "string" || typeof row.created_at !== "string" ||
+        !["private-acs", "phak", "phak-addendum"].includes(text(row, "reference_id")) ||
+        typeof row.edition !== "string" || [...row.edition].length > 200 ||
+        typeof row.content_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(row.content_sha256) ||
+        !Number.isSafeInteger(row.total_pages) || Number(row.total_pages) < 1) refuse("Damaged FAA reference details.");
   }
 }

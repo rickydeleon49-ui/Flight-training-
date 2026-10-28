@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button, Dialog, Field, TextInput } from "@/components/ui";
@@ -28,12 +28,12 @@ export function FaaReferences() {
   const { data, mutate } = useAppData();
   const [adding, setAdding] = useState<FaaReference | null>(null);
 
-  const entry = (reference: FaaReference, children?: ReactNode) => {
+  const entry = (reference: FaaReference) => {
     const copies = faaShelfCopies(data.materials, reference);
     return (
     <div key={reference.id} className="faa-shelf__entry">
       <div className="row row--wrap">
-        {reference.id === "phak-addendum" ? <h4 className="small">{reference.title}</h4> : <h3 className="small">{reference.title}</h3>}
+        <h3 className="small">{reference.title}</h3>
         <Button onClick={() => setAdding(reference)} disabled={!canHandleFiles()}
           aria-label={`Add PDF: ${reference.title}`}>Add PDF</Button>
       </div>
@@ -47,7 +47,6 @@ export function FaaReferences() {
         <SavedReference key={material.id} material={material} note={note} reference={reference} />
       ))}
       {copies.length === 0 ? <p className="small muted">Optional · No saved PDF</p> : null}
-      {children}
     </div>
     );
   };
@@ -58,7 +57,8 @@ export function FaaReferences() {
       <p className="small muted">Optional books for offline study. Add your own local PDFs.</p>
       {!canHandleFiles() ? <p className="small muted">Adding, checking and opening PDFs needs the desktop application. Your saved reference notes are still available here.</p> : null}
       {entry(FAA_REFERENCES[0])}
-      {entry(FAA_REFERENCES[1], entry(FAA_REFERENCES[2]))}
+      {entry(FAA_REFERENCES[1])}
+      {entry(FAA_REFERENCES[2])}
       <p className="small muted">Complete backups include these PDFs, notes and bookmarks. Large books make backups larger. Adding another copy keeps earlier editions.</p>
       {adding ? <AddReference reference={adding} onClose={() => setAdding(null)} onSave={async (draft) => {
         const saved = await mutate((repos) => repos.documents.create(draft));
@@ -70,9 +70,9 @@ export function FaaReferences() {
 
 const AVAILABILITY: Record<FaaAvailability, string> = {
   checking: "Checking saved PDF…",
-  present: "Present · Saved offline",
-  missing: "Missing · Your notes and history are still here. Add another copy when ready.",
-  changed: "Changed · This file differs from the added copy. Your notes and history are still here.",
+  present: "Saved on this Mac",
+  missing: "File missing. Add it again when you're ready.",
+  changed: "This file has changed since you added it.",
   unknown: "Availability could not be checked. Try again in the desktop application.",
   browser: "Availability needs the desktop application",
 };
@@ -129,13 +129,13 @@ function SavedReference({ material, note, reference }: {
 
   return (
     <div className="faa-shelf__copy">
-      <p className="small wrap-anywhere">Saved edition: {note.edition || "Not supplied"} · {faaEditionMessage(reference, note)}</p>
+      <p className="small wrap-anywhere">{faaEditionMessage(reference, note)}</p>
       <p className="small muted">Added {material.createdAt.slice(0, 10)}</p>
       <p className="small" role="status">{AVAILABILITY[availability]}</p>
       <div className="row row--wrap">
         <Button onClick={() => void open()} disabled={busy || availability !== "present"}
           aria-label={`Open offline: ${material.title}`}>{busy ? "Opening…" : "Open offline"}</Button>
-        <Link className="button button--secondary" to={`/study/${material.id}`}>Notes and bookmarks<span className="visually-hidden">: {material.title}</span></Link>
+        <Link className="button button--secondary" to={`/study/${material.id}`}>Notes and bookmarks<span className="visually-hidden">: {reference.title}</span></Link>
       </div>
       {message ? <p className="small" role="status">{message}</p> : null}
     </div>
@@ -150,6 +150,7 @@ function AddReference({ reference, onClose, onSave }: {
   const [id] = useState(newId);
   const [edition, setEdition] = useState("");
   const [imported, setImported] = useState<ImportedDocument | null>(null);
+  const unused = useRef<string[]>([]);
   const [busy, setBusy] = useState(false);
   const locked = useRef(false);
   const [error, setError] = useState("");
@@ -160,8 +161,13 @@ function AddReference({ reference, onClose, onSave }: {
     setBusy(true);
     setError("");
     try {
-      const file = await pickAndImportDocument(id, true);
-      if (file) setImported(file);
+      // Every pick gets a fresh storage name so a failed replacement cannot
+      // overwrite the PDF already chosen for this draft.
+      const file = await pickAndImportDocument(newId(), true);
+      if (file) {
+        if (imported) unused.current.push(imported.relativePath);
+        setImported(file);
+      }
     } catch {
       setError("That file could not be added. Choose a readable PDF and try again.");
     } finally {
@@ -174,7 +180,7 @@ function AddReference({ reference, onClose, onSave }: {
     if (locked.current) return;
     locked.current = true;
     setBusy(true);
-    const failures = await cleanupDocuments(imported ? [imported.relativePath] : []);
+    const failures = await cleanupDocuments([...unused.current, ...(imported ? [imported.relativePath] : [])]);
     locked.current = false;
     setBusy(false);
     if (failures.length) setError("The unused copy could not be removed. Try Cancel again.");
@@ -187,6 +193,12 @@ function AddReference({ reference, onClose, onSave }: {
     setBusy(true);
     setError("");
     try {
+      const failures = await cleanupDocuments(unused.current);
+      unused.current = failures;
+      if (failures.length) {
+        setError("The unused copy could not be removed. Try Save reference again.");
+        return;
+      }
       if (await onSave(faaReferenceDraft(reference, id, edition, imported))) onClose();
       else setError("That reference could not be saved. Your PDF and edition note are here to retry.");
     } catch {
@@ -205,14 +217,14 @@ function AddReference({ reference, onClose, onSave }: {
       </>}>
       <div className="stack stack--4 faa-shelf">
         <p className="small">Listed edition: {reference.edition}. {reference.publication}.</p>
-        <p className="small muted">Choose a PDF you obtained separately. Its filename does not verify the edition or official source. No file is downloaded.</p>
-        <Field label="Edition written in your PDF (optional)" hint="A different edition is welcome as a separate copy. Edition not checked.">
+        <p className="small muted">Choose a PDF from your computer. The app does not download or verify FAA editions.</p>
+        <Field label="Your PDF’s edition (optional)" hint="You can leave this blank. Another edition stays as a separate copy.">
           {({ id: fieldId, describedBy }) => <TextInput id={fieldId} aria-describedby={describedBy}
             maxLength={200} value={edition} placeholder={reference.edition} disabled={busy}
             onChange={(event) => setEdition(event.target.value)} />}
         </Field>
-        {imported ? <p className="small wrap-anywhere">{imported.originalFileName}</p> :
-          <Button onClick={() => void choose()} disabled={busy}>{busy ? "Adding…" : "Choose local PDF"}</Button>}
+        {imported ? <p className="small wrap-anywhere">{imported.originalFileName}</p> : null}
+        <Button onClick={() => void choose()} disabled={busy}>{busy ? "Adding…" : imported ? "Choose another PDF" : "Choose local PDF"}</Button>
         <p className="small muted">The app keeps a private copy. Include it in a complete backup; large books make backups larger.</p>
         {error ? <p className="field__error" role="alert">{error}</p> : null}
       </div>

@@ -780,11 +780,6 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-.faa-shelf__entry .faa-shelf__entry {
-  margin-top: var(--space-3);
-  padding-inline-start: var(--space-3);
-}
-
 .faa-shelf__copy {
   margin-block: var(--space-3);
   padding-inline-start: var(--space-3);

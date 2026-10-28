@@ -219,6 +219,7 @@ export interface MaterialSaveFields {
 }
 
 export interface MaterialSaveOperation {
+  faaReference?: import("@/domain/types").FaaReferenceCopy;
   mode: "create" | "update";
   id: string;
   fields: MaterialSaveFields;

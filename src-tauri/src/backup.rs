@@ -661,6 +661,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 25 {
         verify_schema_25_oral_scenarios(connection)?;
     }
+    if newest_migration >= 27 {
+        verify_schema_27_faa_references(connection)?;
+    }
     if newest_migration >= 26 {
         verify_schema_26_visual_cards(connection)?;
     }
@@ -729,6 +732,21 @@ pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Re
         }
     }
     crate::homework::validate_database(connection)
+}
+
+pub(crate) fn verify_schema_27_faa_references(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "faa_reference_copies";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+        || check_constraints(&table_sql(connection, table)?) != check_constraints(&table_sql(&reference, table)?)
+        || m3_count(connection, "SELECT COUNT(*) FROM pragma_foreign_key_check('faa_reference_copies')", &[])? != 0
+        || m3_count(connection, "SELECT COUNT(*) FROM faa_reference_copies WHERE typeof(material_id) != 'text' OR typeof(created_at) != 'text' OR reference_id NOT IN ('private-acs','phak','phak-addendum') OR typeof(edition) != 'text' OR length(edition)>200 OR typeof(content_sha256) != 'text' OR length(content_sha256)!=64 OR content_sha256 GLOB '*[^0-9a-f]*' OR typeof(total_pages) != 'integer' OR total_pages<1", &[])? != 0
+    {
+        return Err("Damaged FAA reference details.".into());
+    }
+    Ok(())
 }
 
 pub(crate) fn verify_schema_26_visual_cards(connection: &Connection) -> Result<(), String> {
@@ -16120,6 +16138,7 @@ mod tests {
     }
     include!("homework_backup_tests.rs");
     include!("visual_backup_tests.rs");
+    include!("faa_backup_tests.rs");
     #[test]
     fn oral_scenarios_backup_round_trip_old_backup_and_newer_schema() {
         for old in [false, true] {

@@ -1596,7 +1596,18 @@ pub struct MaterialSaveFields {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FaaReferenceCopy {
+    pub reference_id: String,
+    pub edition: String,
+    pub content_sha256: String,
+    pub total_pages: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct MaterialSaveOperation {
+    #[serde(default)]
+    pub faa_reference: Option<FaaReferenceCopy>,
     pub mode: String,
     pub id: String,
     pub fields: MaterialSaveFields,
@@ -1669,6 +1680,15 @@ pub fn save_material_operation_at(
         unknown => return Err(format!("Unknown save mode: {unknown}")),
     };
 
+    if let Some(copy) = &op.faa_reference {
+        if op.mode != "create" {
+            return Err("Add another reference as a separate copy.".into());
+        }
+        tx.execute(
+            "INSERT INTO faa_reference_copies (material_id, reference_id, edition, content_sha256, total_pages, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![op.id, copy.reference_id, copy.edition, copy.content_sha256, copy.total_pages, result.created_at],
+        ).map_err(|_| "That reference could not be saved. Your PDF and edition are here to retry.")?;
+    }
     tx.commit()
         .map_err(|error| format!("Could not commit study material: {error}"))?;
 

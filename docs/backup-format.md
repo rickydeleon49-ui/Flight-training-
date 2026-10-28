@@ -206,3 +206,20 @@ The fixed archive ceilings are hostile-input bounds, not a promise that a device
 
 4. **Safe Deletion Ordering, Fallible Inspection & Return Fault Coverage (G4 / H1 / H3):**
    `remove_pending_directory_safely` implements strict payload-before-plan deletion: directory enumeration (`read_dir`) and individual entry inspection errors are propagated immediately before `RESTORE_PLAN` is touched. No-follow metadata inspection (`symlink_metadata` and `is_symlink_or_reparse`) guards against unsafe links or treating inspection failures as absence. `round6_cleanup_enumeration_error_must_preserve_ownership_plan` verifies plan and payload preservation under native Windows directory-listing denial. Dedicated tests verify genuine SQLite WAL return failure (`ReturnDbRename(1)`), document return failure (`ReturnDocsRename`), and genuine WAL install-move failure without mixing or loss.
+
+## FAA reference copies (schema 27)
+
+Complete backups retain `faa_reference_copies` alongside their materials and managed
+PDFs. The table holds the selected publication, optional entered edition, local
+SHA-256, physical page count and date added; it does not verify an official edition.
+Material Notes remain personal and start empty. Shelf copies are identified by this
+table and stay reachable from the shelf rather than appearing as ordinary library cards.
+
+The row and material are written in the same immediate transaction on every driver.
+A failure rolls both back and leaves the picked PDF available to retry or cancel.
+Deleting a material cascades to its copy details. Native and frontend validators check
+columns/defaults/keys, CHECK constraints, foreign keys and row values, including the
+64-character lowercase hex hash and positive integer page count; damaged or newer
+schemas are refused. Archive versions 1/2/3 are unchanged. Older backups restore with
+no shelf rows: the add-only migration creates an empty table on opening the restored
+library. No legacy Notes are parsed, rewritten or cleared during upgrade.

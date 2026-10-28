@@ -215,7 +215,16 @@ export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
 };
 export const REVIEW_STATUS_OPTIONS = options(REVIEW_STATUS_LABELS);
 
+/** Local intake identity, read from faa_reference_copies, never from personal notes. */
+export interface FaaReferenceCopy {
+  referenceId: "private-acs" | "phak" | "phak-addendum";
+  edition: string;
+  contentSha256: string;
+  totalPages: number;
+}
+
 export interface StudyMaterial {
+  faaReference?: FaaReferenceCopy;
   id: Id;
   title: string;
   materialType: MaterialType;

@@ -218,3 +218,14 @@ it("PACKS-07 puts title matches before content, but keeps content first for meta
   expect(before(screen.getByText("Content search hit"), screen.getByText("Other book"))).toBe(true);
   expect(screen.getByText("Find study materials for missed topics")).toBeTruthy();
 });
+
+it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards", () => {
+  data.materials = [makeMaterial({ id: "faa", title: "Private Pilot Airplane ACS", notes: "", faaReference: {
+    referenceId: "private-acs", edition: "", contentSha256: "a".repeat(64), totalPages: 1,
+  } }), makeMaterial({ id: "ordinary", title: "My own reading", notes: "FAA reference: Private Pilot Airplane ACS" })];
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  expect(screen.getByRole("link", { name: /Notes and bookmarks: Private Pilot Airplane ACS/ }).getAttribute("href")).toBe("/study/faa");
+  expect(document.querySelectorAll(".material-card")).toHaveLength(1);
+  expect(screen.getByText("My own reading")).toBeTruthy();
+  expect(screen.queryByRole("link", { name: /^Private Pilot Airplane ACS$/ })).toBeNull();
+});

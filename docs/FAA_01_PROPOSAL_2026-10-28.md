@@ -1,5 +1,10 @@
 # FAA-01: a small offline reference shelf — 28 October 2026
 
+**Owner decision, 28 October (01b round 2):** approved one small add-only schema-27
+`faa_reference_copies` table for book identity, entered edition, local hash/page count
+and date added. This supersedes the existing-fields/no-migration storage proposal
+below for the shelf only. Material Notes start empty and remain personal.
+
 **Plan only; the owner has not approved the FAA shelf.** Recommendations below need their decision before implementation.
 Inspected `87dd211d0fc731da2ea9893312cfed9ae06af4a4`, branch `roadmap/faa-01a`.
 P54-08 coordinates FAA-01 airport data, FAA-02 references, M3 skills and M4 source navigation; preserve the existing queue after WX-01.

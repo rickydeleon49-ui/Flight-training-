@@ -133,6 +133,7 @@ export function StudyLibrary() {
   const filtered = useMemo(
     () =>
       data.materials.filter((material) => {
+        if (material.faaReference) return false;
         if (status === "next_up" && material.priority !== "next_up") return false;
         if (status !== "all" && status !== "next_up" && material.reviewStatus !== status) return false;
         if (topic && material.topic !== topic) return false;
@@ -339,8 +340,8 @@ export function StudyLibrary() {
         </div>
       ) : null}
 
-      {!search.trim() ? topicPanels : null}
       {!search.trim() ? <FaaReferences /> : null}
+      {!search.trim() ? topicPanels : null}
 
       {!hasAny ? (
         <Card>

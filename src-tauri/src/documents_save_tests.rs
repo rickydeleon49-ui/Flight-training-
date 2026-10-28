@@ -117,6 +117,7 @@ impl Drop for Profile {
 
 pub(super) fn op(mode: &str, id: &str, tags: Option<&[&str]>) -> MaterialSaveOperation {
     MaterialSaveOperation {
+        faa_reference: None,
         mode: mode.to_string(),
         id: id.to_string(),
         fields: MaterialSaveFields {

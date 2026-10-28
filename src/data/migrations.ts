@@ -36,6 +36,8 @@ import oralScenarios from "../../src-tauri/migrations/0025_oral_scenarios.sql?ra
 
 import visualCardRegions from "../../src-tauri/migrations/0026_visual_card_regions.sql?raw";
 
+import faaReferenceCopies from "../../src-tauri/migrations/0027_faa_reference_copies.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -69,6 +71,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 24, description: "study_page_sources", sql: studyPageSources },
   { version: 25, description: "oral_scenarios", sql: oralScenarios },
   { version: 26, description: "visual_card_regions", sql: visualCardRegions },
+  { version: 27, description: "faa_reference_copies", sql: faaReferenceCopies },
 ];
 
 /**
