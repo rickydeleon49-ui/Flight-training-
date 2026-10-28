@@ -120,7 +120,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
   const headings = within(column as HTMLElement).getAllByRole("heading", { level: 2 }).map(node => node.textContent);
-  expect(headings.slice(0, 10)).toEqual(["Start here", "Ask about this PDF", "Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
+  expect(headings.slice(0, 11)).toEqual(["Start here", "Ask about this PDF", "Study guide", "Flashcards", "Practice test", "Practice an oral question", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
   const file = document.getElementById("material-file-actions")!;
   const geminiSection = document.getElementById("material-study-guide")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });

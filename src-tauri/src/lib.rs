@@ -27,6 +27,7 @@ mod homework;
 #[doc(hidden)]
 pub mod lineage;
 mod navigation;
+mod oral_scenarios;
 #[doc(hidden)]
 pub mod pdf;
 mod pdf_kit;
@@ -57,7 +58,7 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 24;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 25;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -210,6 +211,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0024_study_page_sources.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 25,
+            description: "oral_scenarios",
+            sql: include_str!("../migrations/0025_oral_scenarios.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -290,6 +297,7 @@ pub fn run() {
             practice_sessions::erase_practice_history_atomically,
             practice_authoring::save_practice_authoring_atomically,
             homework::save_homework_atomically,
+            oral_scenarios::save_oral_scenario_operation,
             study_sets::save_study_set_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,

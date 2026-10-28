@@ -23,6 +23,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { SqlDatabase, SqlValue } from "../db";
 import { createConnectionOwner, refuseTransactionControl, rollbackIfOpen } from "../connectionOwner";
 import { executeHomeworkOperation } from "../homeworkTransaction";
+import { executeOralOperation } from "../oralScenarios";
 import { executeDebriefSave } from "../debriefTransaction";
 import { executeMaterialSave, executeMaterialsBatch } from "../materialTransaction";
 import { executeStructuredImport } from "../structuredImportTransaction";
@@ -142,6 +143,9 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     },
     saveHomeworkAtomically(operation) {
       return owner.exclusive(() => executeHomeworkOperation(exec, run, query, operation));
+    },
+    saveOralScenarioAtomically(operation) {
+      return owner.exclusive(() => executeOralOperation(exec, run, query, operation));
     },
     saveDebriefAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {
       return owner.exclusive(() =>

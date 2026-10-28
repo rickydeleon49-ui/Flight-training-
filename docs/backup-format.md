@@ -120,6 +120,14 @@ and answer; immutable version-1 evidence and receipts retain their original vali
 Backups from before schema 23 restore against their own schema contract and receive
 the empty answer when startup applies migration 0023.
 
+Schema 25 adds her saved oral-question scenarios: `oral_scenarios` (order and soft removal),
+`oral_scenario_versions` (frozen versions with a 1–12 point outline and a SHA-256 content hash)
+and `oral_save_operations` (request hashes and id-only results, never her text). Restore
+refuses a version whose outline, bounds or hash do not match, a scenario whose version numbers
+are not 1..n, and a receipt that names a missing or foreign row. Her typed answers and ticks are
+never stored, so no backup holds them. Older backups restore with the three tables empty, and
+deleting a material removes its scenarios.
+
 Browser mode keeps its existing atomic byte-restoring persistence boundary: a failed final
 storage write restores all live rows, history and receipts to the last durable bytes. Separate
 browser tabs remain uncoordinated; there is no homework-only or global Web Lock in this slice.

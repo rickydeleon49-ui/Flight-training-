@@ -1,11 +1,11 @@
 /**
- * Oral-question practice (ORAL-01b). Pure helpers: nothing here stores anything.
- * The scenario, her answer and the ticked points live only in the open dialog.
+ * Oral-question practice (ORAL-01b/01c). Pure helpers: nothing here stores anything.
+ * Her answer and the ticked points live only in the open practice dialog.
  */
 export const ORAL_MAX_POINTS = 12;
 export const ORAL_MAX_SCENARIO = 4000;
 export const ORAL_MAX_ASSUMPTIONS = 2000;
-export const ORAL_MAX_POINT = 300;
+export const ORAL_MAX_POINT = 500;
 export const ORAL_MAX_ANSWER = 20000;
 
 /** One discussion point per line; blank lines are ignored. */

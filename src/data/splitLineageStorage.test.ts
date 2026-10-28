@@ -146,7 +146,7 @@ describe("upgrading a populated schema-12 library", () => {
     expect(await upgraded.select("SELECT MAX(version) AS v FROM schema_migrations")).toEqual([
       { v: MIGRATIONS.at(-1)!.version },
     ]);
-    expect(MIGRATIONS.at(-1)!.version).toBe(24);
+    expect(MIGRATIONS.at(-1)!.version).toBe(25);
     expect(await snapshot(upgraded)).toEqual(before);
     expect(await upgraded.select("SELECT COUNT(*) AS n FROM material_split_lineage")).toEqual([{ n: 0 }]);
     expect(await upgraded.select("SELECT COUNT(*) AS n FROM split_operation_log")).toEqual([{ n: 0 }]);

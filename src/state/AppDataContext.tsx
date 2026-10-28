@@ -115,7 +115,7 @@ interface AppDataContextValue {
    */
   deleteWithUndo: (request: PendingDelete) => void;
   /** What is currently deletable-back, if anything. */
-  pendingDelete: { label: string } | null;
+  pendingDelete: { label: string; ids: Id[] } | null;
   undoDelete: () => void;
   lastError: string | null;
   clearError: () => void;
@@ -402,7 +402,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       mutate,
       refresh,
       deleteWithUndo,
-      pendingDelete: pending ? { label: pending.label } : null,
+      pendingDelete: pending ? { label: pending.label, ids: pending.ids } : null,
       undoDelete,
       lastError,
       clearError: () => setLastError(null),

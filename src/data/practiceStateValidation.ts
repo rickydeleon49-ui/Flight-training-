@@ -249,6 +249,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 19) await validateStudySetReceiptState(query, reference);
   if (newest >= 20) await validateHomeworkState(query, reference);
   if (newest >= 24) await validatePageSources(query, reference);
+  if (newest >= 25) await validateOralScenarios(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -2020,4 +2021,48 @@ async function validateAuthoredQuestionSource(query: ValidationQuery, binding: R
     }
   }
   refuse("Damaged authored page source.");
+}
+
+/**
+ * ORAL-01c (native `verify_schema_25_oral_scenarios`): the three tables exactly
+ * as migrated, every frozen version's points codec and content hash, contiguous
+ * version numbers, and receipts that hold ids only and point at real rows.
+ */
+export async function validateOralScenarios(query: ValidationQuery, reference: ValidationQuery) {
+  for (const table of ["oral_scenarios", "oral_scenario_versions", "oral_save_operations"]) {
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) || !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) || !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) || !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged oral scenario schema.");
+  }
+  const indexSql = "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_oral_scenario_order'";
+  const [actualIndex] = await query(indexSql, []);
+  const [expectedIndex] = await reference(indexSql, []);
+  if (!actualIndex || !expectedIndex || normalizeSql(text(actualIndex, "sql")) !== normalizeSql(text(expectedIndex, "sql"))) refuse("Damaged oral scenario order.");
+  const { decodeOralPoints, decodeOralResult, isOralId, oralContentHash, validOralContent } = await import("./oralScenarios");
+  for (const s of await query("SELECT id, (SELECT COUNT(*) FROM oral_scenario_versions v WHERE v.scenario_id = s.id) AS n, (SELECT COALESCE(MAX(version_number), 0) FROM oral_scenario_versions v WHERE v.scenario_id = s.id) AS top FROM oral_scenarios s", [])) {
+    if (!isOralId(s.id) || int(s, "n") < 1 || int(s, "n") !== int(s, "top")) refuse("Damaged oral scenario versions.");
+  }
+  for (const v of await query("SELECT * FROM oral_scenario_versions ORDER BY scenario_id, version_number", [])) {
+    try {
+      const content = { prompt: v.prompt, assumptions: v.assumptions, points: decodeOralPoints(v.points_json), sourcePage: optInt(v, "source_page"), origin: v.origin };
+      if (!isOralId(v.id) || !validOralContent(content, true) || !text(v, "created_at")) throw new Error();
+      if ((await oralContentHash(text(v, "scenario_id"), int(v, "version_number"), content)) !== v.content_hash) throw new Error();
+    } catch {
+      refuse("Damaged oral scenario.");
+    }
+  }
+  for (const r of await query("SELECT * FROM oral_save_operations", [])) {
+    try {
+      if (!isOralId(r.operation_id) || !["create", "edit", "reorder", "remove"].includes(text(r, "action"))) throw new Error();
+      const result = decodeOralResult(r.result_json, text(r, "action"));
+      if (result.scenarioId !== null) {
+        const [owner] = await query("SELECT material_id, removed_at FROM oral_scenarios WHERE id = ?", [result.scenarioId]);
+        if (!owner || owner.material_id !== r.material_id || (result.action === "remove" && owner.removed_at == null)) throw new Error();
+      }
+      if (result.versionId !== null) {
+        const [version] = await query("SELECT scenario_id, version_number FROM oral_scenario_versions WHERE id = ?", [result.versionId]);
+        if (!version || version.scenario_id !== result.scenarioId || int(version, "version_number") !== result.versionNumber || (result.action === "create" && result.versionNumber !== 1)) throw new Error();
+      }
+    } catch {
+      refuse("An oral scenario save receipt is damaged.");
+    }
+  }
 }

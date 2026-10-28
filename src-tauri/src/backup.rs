@@ -658,6 +658,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 24 {
         verify_schema_24_page_sources(connection)?;
     }
+    if newest_migration >= 25 {
+        verify_schema_25_oral_scenarios(connection)?;
+    }
     if newest_migration >= 20 {
         verify_schema_20_homework_semantics(connection)?;
     }
@@ -909,6 +912,39 @@ fn verify_authored_question_source(
     }
     Err("Damaged authored page source.".into())
 }
+/// ORAL-01c: the three scenario tables exactly as migrated, then the codec,
+/// hash, version-order and receipt checks in `oral_scenarios`.
+pub(crate) fn verify_schema_25_oral_scenarios(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in [
+        "oral_scenarios",
+        "oral_scenario_versions",
+        "oral_save_operations",
+    ] {
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Damaged oral scenario schema.".into());
+        }
+    }
+    let index = "idx_oral_scenario_order";
+    let actual = m3_master_sql(connection, "index", index)?;
+    let expected = m3_master_sql(&reference, "index", index)?;
+    if actual.is_none() || actual.map(|s| normalize_sql(&s)) != expected.map(|s| normalize_sql(&s))
+    {
+        return Err("Damaged oral scenario order.".into());
+    }
+    crate::oral_scenarios::validate_database(connection)
+}
+
 pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
     let table = "study_set_save_operations";
@@ -15908,6 +15944,59 @@ mod tests {
         );
     }
     include!("homework_backup_tests.rs");
+    #[test]
+    fn oral_scenarios_backup_round_trip_old_backup_and_newer_schema() {
+        for old in [false, true] {
+            let root = scratch("oral-backup");
+            let target = scratch("oral-target");
+            let backup = scratch("oral-archive");
+            let path = root.join(DB_FILES[0]);
+            if old {
+                pdf_kit_test_database(&path, 24);
+            } else {
+                let mut conn = Connection::open(&path).unwrap();
+                crate::oral_scenarios::tests::library_at(&conn);
+                crate::oral_scenarios::execute(
+                    &mut conn,
+                    &crate::oral_scenarios::tests::create(1, 10, 11, "Scenario Alpha"),
+                )
+                .unwrap();
+                verify_application_connection(&conn).unwrap();
+            }
+            let archive = backup.join("oral.hfdbackup");
+            create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+            stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+            apply_pending_restore_in(&target).unwrap();
+            let conn = Connection::open(target.join(DB_FILES[0])).unwrap();
+            if old {
+                for m in crate::migrations().into_iter().filter(|m| m.version > 24) {
+                    conn.execute_batch(m.sql).unwrap();
+                    conn.execute("INSERT INTO _sqlx_migrations VALUES (?1)", [m.version])
+                        .unwrap();
+                }
+            }
+            verify_application_connection(&conn).unwrap();
+            let rows = m3_count(&conn, "SELECT COUNT(*) FROM oral_scenario_versions", &[]).unwrap();
+            assert_eq!(rows, if old { 0 } else { 1 });
+            if !old {
+                conn.execute("UPDATE oral_scenario_versions SET prompt='Tampered'", [])
+                    .unwrap();
+                assert!(verify_application_connection(&conn).is_err());
+                conn.execute(
+                    "INSERT INTO _sqlx_migrations VALUES (?1)",
+                    [crate::CURRENT_SCHEMA_VERSION + 1],
+                )
+                .unwrap();
+                assert!(verify_application_connection(&conn)
+                    .unwrap_err()
+                    .contains("newer database format"));
+            }
+            drop(conn);
+            for p in [root, target, backup] {
+                std::fs::remove_dir_all(p).unwrap();
+            }
+        }
+    }
     #[test]
     fn page_sources_current_backup_round_trip_and_old_backup_upgrade() {
         for old in [false, true] {
