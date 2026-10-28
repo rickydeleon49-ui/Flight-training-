@@ -655,6 +655,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 19 {
         verify_schema_19_study_receipts(connection)?;
     }
+    if newest_migration >= 24 {
+        verify_schema_24_page_sources(connection)?;
+    }
     if newest_migration >= 20 {
         verify_schema_20_homework_semantics(connection)?;
     }
@@ -722,6 +725,90 @@ pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Re
     crate::homework::validate_database(connection)
 }
 
+pub(crate) fn verify_schema_24_page_sources(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in ["study_page_sources", "study_page_source_bindings"] {
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Page sources do not match the migration contract.".into());
+        }
+    }
+    for name in [
+        "collect_study_page_sources",
+        "erase_frozen_card_page_sources",
+        "erase_material_card_page_sources",
+    ] {
+        let sql = "SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?1";
+        let actual: Option<String> = connection
+            .query_row(sql, [name], |r| r.get(0))
+            .optional()
+            .map_err(|_| "Damaged page source guards.")?;
+        let expected: String = reference
+            .query_row(sql, [name], |r| r.get(0))
+            .map_err(|_| "Damaged page source guards.")?;
+        if actual.as_deref().map(normalize_sql) != Some(normalize_sql(&expected)) {
+            return Err("Damaged page source guards.".into());
+        }
+    }
+    let mut stmt=connection.prepare("SELECT b.owner_key,b.binding_kind,b.item_key,b.content_fingerprint,s.physical_page FROM study_page_source_bindings b JOIN study_page_sources s ON s.id=b.source_id").map_err(|_|"Page sources unavailable.")?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, i64>(4)?,
+            ))
+        })
+        .map_err(|_| "Page sources unavailable.")?;
+    for row in rows {
+        let (owner, kind, key, hash, page) = row.map_err(|_| "Damaged page source.")?;
+        if kind == "frozen_card" {
+            let card:Option<serde_json::Value>=connection.query_row("SELECT i.front,i.back,i.source_page,o.origin FROM card_items i JOIN card_versions v ON v.id=i.version_id LEFT JOIN card_item_origins o ON o.item_id=i.id WHERE i.id=?1 AND v.source_material_id=?2",rusqlite::params![key,owner],|r|Ok(serde_json::json!({"front":r.get::<_,String>(0)?,"back":r.get::<_,String>(1)?,"sourcePage":r.get::<_,Option<i64>>(2)?,"origin":r.get::<_,Option<String>>(3)?}))).optional().map_err(|_|"Damaged page source.")?;
+            if card.as_ref().map_or(true, |c| {
+                crate::study_page_sources::fingerprint(c) != hash || c["sourcePage"] != page
+            }) {
+                return Err("Damaged frozen page source.".into());
+            }
+        } else if kind == "authored_card" {
+            let mut candidates=connection.prepare("SELECT flashcards_json FROM ai_study_sets WHERE source_material_id=?1 UNION ALL SELECT json_extract(previous_json,'$.flashcards_json') FROM study_set_history WHERE material_id=?1 AND kind='study_set'").map_err(|_|"Damaged authored page source.")?;
+            let rows = candidates
+                .query_map([&owner], |r| r.get::<_, String>(0))
+                .map_err(|_| "Damaged authored page source.")?;
+            let mut found = false;
+            for row in rows {
+                let cards: serde_json::Value =
+                    serde_json::from_str(&row.map_err(|_| "Damaged authored page source.")?)
+                        .map_err(|_| "Damaged authored page source.")?;
+                if cards.as_array().is_some_and(|a| {
+                    a.iter().any(|c| {
+                        c["itemId"] == key
+                            && crate::study_page_sources::fingerprint(c) == hash
+                            && c["sourcePage"] == page
+                    })
+                }) {
+                    found = true;
+                }
+            }
+            if !found {
+                return Err("Damaged authored page source.".into());
+            }
+        } else {
+            return Err("Unsupported page source binding.".into());
+        }
+    }
+    Ok(())
+}
 pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
     let table = "study_set_save_operations";
@@ -756,7 +843,7 @@ pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result
             serde_json::from_str(&payload).map_err(|_| "A study set save receipt is damaged.")?;
         let operation = crate::study_sets::decode_operation(&v)
             .map_err(|_| "A study set save receipt is damaged.")?;
-        if operation.pdf_kit_sources.is_none()
+        if (operation.pdf_kit_sources.is_none() && operation.page_source.is_none())
             || operation.operation_id != id
             || operation.material_id != material
             || crate::practice_sessions::canonical_json(&operation.payload) != payload
@@ -15721,4 +15808,68 @@ mod tests {
         );
     }
     include!("homework_backup_tests.rs");
+    #[test]
+    fn page_sources_current_backup_round_trip_and_old_backup_upgrade() {
+        for old in [false, true] {
+            let root = scratch("page-source-backup");
+            let target = scratch("page-source-target");
+            let backup = scratch("page-source-archive");
+            let path = root.join(DB_FILES[0]);
+            if old {
+                pdf_kit_test_database(&path, 23);
+            } else {
+                let conn = crate::study_page_sources::tests::library(&root);
+                let op = crate::study_page_sources::tests::operation(None);
+                crate::study_sets::save_study_set_at(&root, &op).unwrap();
+                verify_application_connection(&conn).unwrap();
+            }
+            let archive = backup.join("sources.hfdbackup");
+            create_consistent_complete_backup_with_retry(&root, &archive, "0.6.0").unwrap();
+            stage_complete_restore_in(&target, &archive, "0.6.0").unwrap();
+            apply_pending_restore_in(&target).unwrap();
+            let conn = Connection::open(target.join(DB_FILES[0])).unwrap();
+            if old {
+                for m in crate::migrations().into_iter().filter(|m| m.version > 23) {
+                    conn.execute_batch(m.sql).unwrap();
+                    conn.execute("INSERT INTO _sqlx_migrations VALUES (?1)", [m.version])
+                        .unwrap();
+                }
+            }
+            verify_application_connection(&conn).unwrap();
+            for table in ["study_page_sources", "study_page_source_bindings"] {
+                assert_eq!(
+                    m3_count(&conn, &format!("SELECT COUNT(*) FROM {table}"), &[]).unwrap(),
+                    if old { 0 } else { 1 }
+                );
+            }
+            if !old {
+                let original_hash: String = conn
+                    .query_row(
+                        "SELECT content_fingerprint FROM study_page_source_bindings LIMIT 1",
+                        [],
+                        |r| r.get(0),
+                    )
+                    .unwrap();
+                conn.execute(
+                    "UPDATE study_page_source_bindings SET content_fingerprint=?1",
+                    ["f".repeat(64)],
+                )
+                .unwrap();
+                assert!(verify_application_connection(&conn).is_err());
+                conn.execute(
+                    "UPDATE study_page_source_bindings SET content_fingerprint=?1",
+                    [original_hash],
+                )
+                .unwrap();
+                verify_application_connection(&conn).unwrap();
+                conn.pragma_update(None, "foreign_keys", "OFF").unwrap();
+                conn.execute("UPDATE study_page_source_bindings SET source_id='5e700000-0000-4000-8000-999999999999'",[]).unwrap();
+                assert!(verify_application_connection(&conn).is_err());
+            }
+            drop(conn);
+            for p in [root, target, backup] {
+                std::fs::remove_dir_all(p).unwrap();
+            }
+        }
+    }
 }

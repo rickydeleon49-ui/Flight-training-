@@ -386,6 +386,7 @@ export interface StudyGuideSection extends StudyItemIdentity {
 }
 
 export interface StudyFlashcard extends StudyItemIdentity {
+  pageSource?: import("@/data/studyPageSources").PageSource;
   front: string;
   back: string;
   sourcePage: number | null;
@@ -805,6 +806,7 @@ export interface CardReviewItemState {
 }
 
 export interface CardReviewSnapshotItem {
+  pageSource?: import("@/data/studyPageSources").PageSource;
   itemId: string;
   ordinal: number;
   front: string;

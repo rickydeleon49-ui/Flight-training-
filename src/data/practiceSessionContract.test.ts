@@ -10,7 +10,7 @@ vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
 import { createRepositories } from "./repositories";
 import { practiceSessionRepository } from "./repositories/practiceSessionRepository";
 import { documentRepository } from "./repositories/documentRepository";
-import { applyMigrations } from "./migrations";
+import { applyMigrations, MIGRATIONS } from "./migrations";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
 import { seedPracticeTest as seedPracticeTestViaAuthoring } from "./testing/practiceTestFixtures";
 import { PracticeSessionError } from "./persistenceErrors";
@@ -492,7 +492,7 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
     // is a genuine pre-practice-sessions database. (0012–0016 would mostly
     // tolerate the missing tables through FK leniency, but 0017's ALTER on
     // the practice tables must not run before 0011 exists.)
-    const applied10 = new Set<number>([11, 12, 13, 14, 15, 16, 17]);
+    const applied10 = new Set<number>(MIGRATIONS.filter(m => m.version > 10).map(m => m.version));
     await applyMigrations((sql) => rawDb.exec(sql), applied10);
 
     const cleanMatId = "mat-clean-legacy";

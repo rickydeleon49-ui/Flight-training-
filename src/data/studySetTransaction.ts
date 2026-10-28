@@ -9,6 +9,7 @@
  * Its id becomes the history row's id, so a retry after an uncertain answer
  * is recognised instead of applied twice.
  */
+import { decodeBookmarkCardSource, writeBookmarkCardSource, carryCardSources, type BookmarkCardSource } from "./studyPageSources";
 import { decodePdfKitSources, validatePdfKitContent, writePdfKitSources, type PdfKitSources } from "./pdfKitSources";
 import { sha256Hex } from "@/logic/cardIdentity";
 import type { SqlValue } from "./db";
@@ -90,6 +91,7 @@ export interface NextStudySet {
 }
 
 export interface StudySetSaveOperation {
+  pageSource?: BookmarkCardSource;
   pdfKitSources?: PdfKitSources;
   operationId: string;
   materialId: string;
@@ -280,7 +282,7 @@ const REASONS: readonly StudySetSaveReason[] = ["create", "edit", "correct", "de
 
 export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   if (!isRecord(value)) return invalid();
-  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"], ["pdfKitSources"]);
+  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"], ["pdfKitSources", "pageSource"]);
   const { operationId, materialId, reason } = value;
   if (typeof operationId !== "string" || !UUID_V4_LOWER.test(operationId)) invalid();
   if (typeof materialId !== "string" || !materialId || new TextEncoder().encode(materialId).length > 200) invalid();
@@ -297,7 +299,12 @@ export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
     if (!next) invalid();
     try { pdfKitSources = decodePdfKitSources(value.pdfKitSources, materialId as string); } catch { invalid(); }
   }
-  return { operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
+  let pageSource;
+  if (has(value, "pageSource")) {
+    if (!next || pdfKitSources) invalid();
+    try { pageSource = decodeBookmarkCardSource(value.pageSource, materialId as string, next!); } catch { invalid(); }
+  }
+  return { ...(pageSource ? { pageSource } : {}), operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
 }
 
 const HISTORY_REASON: Readonly<Record<StudySetSaveReason, string>> = {
@@ -419,7 +426,7 @@ async function apply(
     current && operation.next
       ? holds(current, operation.next) && (recorded !== undefined || operation.reason === "create")
       : !current && !operation.next && recorded !== undefined;
-  if (already && !operation.pdfKitSources) {
+  if (already && !operation.pdfKitSources && !operation.pageSource) {
     if (recorded && recorded.material_id !== operation.materialId) throw new StudySetSaveError("STALE_CONTENT");
     return { status: "already_saved" };
   }
@@ -456,7 +463,12 @@ async function apply(
       ],
     );
   }
-  if (operation.pdfKitSources) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
+  if (operation.pageSource) {
+    try { await writeBookmarkCardSource(run, query, operation.pageSource, next!, now); }
+    catch (e) { if (e instanceof Error && e.message === "SOURCE_CHANGED") throw new StudySetSaveError("SOURCE_CHANGED"); throw e; }
+  }
+  if (next) await carryCardSources(run, query, operation.materialId, current ? JSON.parse(current.flashcards_json) : [], next.flashcards);
+  if (operation.pdfKitSources || operation.pageSource) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
   const { invalidateHomeworkCardRuns } = await import("./homeworkCards");
   await invalidateHomeworkCardRuns(run,query,operation.materialId,now,true);
   return { status: "saved" };

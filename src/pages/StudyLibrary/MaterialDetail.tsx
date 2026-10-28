@@ -1123,7 +1123,7 @@ function MaterialDetailPage() {
                               ) : (
                                 <AuthorBadge origin={guideFlashcards[safeCardIndex]?.card.origin} />
                               )}
-                              <SourcePageBadge page={guideFlashcards[safeCardIndex]?.card.sourcePage} materialId={material.id} />
+                              <SourcePageBadge source={guideFlashcards[safeCardIndex]?.card.pageSource} page={guideFlashcards[safeCardIndex]?.card.sourcePage} materialId={material.id} />
                             </div>
                           </div>
                           <button

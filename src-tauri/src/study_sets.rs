@@ -119,7 +119,7 @@ fn storage<E>(_: E) -> StudySetErrorCode {
 /* Validation                                                          */
 /* ------------------------------------------------------------------ */
 
-fn is_lower_uuid_v4(value: &str) -> bool {
+pub(crate) fn is_lower_uuid_v4(value: &str) -> bool {
     let b = value.as_bytes();
     b.len() == 36
         && b.iter().enumerate().all(|(i, c)| match i {
@@ -461,6 +461,7 @@ impl SaveReason {
 /// A decoded save request.
 #[derive(Debug, Clone)]
 pub struct SaveOperation {
+    pub page_source: Option<crate::study_page_sources::Envelope>,
     pub pdf_kit_sources: Option<crate::pdf_kit_sources::Sources>,
     pub payload: Value,
     pub operation_id: String,
@@ -492,7 +493,7 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
     exact_keys(
         map,
         &["operationId", "materialId", "reason", "expected", "next"],
-        &["pdfKitSources"],
+        &["pdfKitSources", "pageSource"],
     )?;
     let operation_id = match map.get("operationId") {
         Some(Value::String(id)) if is_lower_uuid_v4(id) => id.clone(),
@@ -534,7 +535,15 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
         crate::pdf_kit_sources::validate_content(sources, &value["next"])
             .map_err(|_| StudySetErrorCode::InvalidArgument)?;
     }
+    let page_source = map
+        .get("pageSource")
+        .map(|v| crate::study_page_sources::decode(v, &material_id, &value["next"]))
+        .transpose()?;
+    if page_source.is_some() && (next.is_none() || pdf_kit_sources.is_some()) {
+        return invalid();
+    }
     Ok(SaveOperation {
+        page_source,
         pdf_kit_sources,
         payload: value.clone(),
         operation_id,
@@ -659,7 +668,7 @@ pub fn apply_operation(
         (None, None) => recorded.is_some(),
         _ => false,
     };
-    if already && operation.pdf_kit_sources.is_none() {
+    if already && operation.pdf_kit_sources.is_none() && operation.page_source.is_none() {
         if recorded.is_some_and(|m| m != operation.material_id) {
             return Err(StudySetErrorCode::StaleContent);
         }
@@ -739,7 +748,22 @@ pub fn apply_operation(
             .map_err(storage)?;
         }
     }
-    if operation.pdf_kit_sources.is_some() {
+    if let Some(s) = &operation.page_source {
+        crate::study_page_sources::write(tx, s, &operation.payload["next"], now)?;
+    }
+    let before = current
+        .as_ref()
+        .and_then(|r| r.get("flashcards_json"))
+        .and_then(Value::as_str)
+        .and_then(|s| serde_json::from_str::<Value>(s).ok())
+        .unwrap_or(json!([]));
+    crate::study_page_sources::carry(
+        tx,
+        &operation.material_id,
+        &before,
+        &operation.payload["next"]["flashcards"],
+    )?;
+    if operation.pdf_kit_sources.is_some() || operation.page_source.is_some() {
         tx.execute("INSERT INTO study_set_save_operations (operation_id,material_id,payload_json,payload_hash) VALUES (?1,?2,?3,?4)",params![operation.operation_id,operation.material_id,payload_json,payload_hash]).map_err(storage)?;
     }
     crate::homework::cards::invalidate_drift(tx, &operation.material_id, now)
@@ -772,8 +796,9 @@ pub fn save_study_set_at(root: &Path, operation: &Value) -> Result<SaveResult, S
             })?;
         }
     }
-    save_on(
+    save_on_at(
         &mut conn,
+        Some(root),
         &operation,
         &crate::card_reviews::format_iso_ms(now_ms()),
     )
@@ -788,11 +813,56 @@ fn now_ms() -> i64 {
 }
 
 /// One save on an open connection; any failure rolls everything back.
+#[cfg(test)]
 pub fn save_on(conn: &mut Connection, operation: &SaveOperation, now: &str) -> Check<SaveResult> {
+    save_on_at(conn, None, operation, now)
+}
+fn save_on_at(
+    conn: &mut Connection,
+    root: Option<&Path>,
+    operation: &SaveOperation,
+    now: &str,
+) -> Check<SaveResult> {
     let tx = conn
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(storage)?;
+    let replay: bool = tx
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='study_set_save_operations')",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or(false)
+        && tx
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM study_set_save_operations WHERE operation_id=?1)",
+                [&operation.operation_id],
+                |r| r.get(0),
+            )
+            .unwrap_or(false);
+    if !replay {
+        if let Some(e) = &operation.page_source {
+            let root = root.ok_or(StudySetErrorCode::SourceChanged)?;
+            if crate::study_page_sources::preview_on(&tx, root, &operation.material_id)?
+                != e.preview
+            {
+                return Err(StudySetErrorCode::SourceChanged);
+            }
+        }
+    }
     let result = apply_operation(&tx, operation, now)?;
+    if !replay {
+        if let Some(e) = &operation.page_source {
+            if crate::study_page_sources::preview_on(
+                &tx,
+                root.ok_or(StudySetErrorCode::SourceChanged)?,
+                &operation.material_id,
+            )? != e.preview
+            {
+                return Err(StudySetErrorCode::SourceChanged);
+            }
+        }
+    }
     tx.commit().map_err(storage)?;
     Ok(result)
 }

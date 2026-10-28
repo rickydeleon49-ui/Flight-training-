@@ -459,3 +459,12 @@ describe("opening a saved place on the content it was saved against (M4S1-R5)", 
     expect(await r.controller.request({ ...intent("m1", 9), pageLabel: "3-12" })).toMatchObject({ kind: "saved", destination: { contentSha256: B } });
   });
 });
+
+it("opens a saved card source only on its original hash and bounds, without navigation writes",async()=>{
+  for(const [hash,page,expected] of [[A,3,"guidance"],[B,3,"refused"],[A,51,"refused"],[null,3,"refused"]] as const) {
+    const opens:string[]=[];
+    const c=new NavigationController({inspect:async()=>({materialId:"m",contentSha256:A,totalPages:50,verifiedAt:"x",changed:false}),open:async(_id,h)=>{opens.push(h);},operation:async()=>{throw Error("must not write");}});
+    expect((await c.openForGuidance("m","Go to PDF page 3.",{materialId:"m",contentSha256:hash,physicalPage:page,pageLabel:"iv"}))?.kind).toBe(expected);
+    expect(opens).toEqual(expected==="guidance"?[A]:[]);
+  }
+});

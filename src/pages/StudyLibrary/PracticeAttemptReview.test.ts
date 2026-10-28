@@ -1453,7 +1453,7 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
     await screen.findByRole("heading", { name: "Add a card" });
     expect(screen.getByText("Airfoil material")).toBeTruthy();
     expect(
-      screen.getByText(
+      await screen.findByText(
         "Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.",
       ),
     ).toBeTruthy();
@@ -1978,7 +1978,7 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
 
     // Assert disclosure BEFORE typing/Save
     await screen.findByRole("heading", { name: "Add a card" });
-    const disclosure = screen.getByText(
+    const disclosure = await screen.findByText(
       "Adding a card starts fresh reviews for this set. Earlier reviews stay saved with the previous version.",
     );
     expect(disclosure).toBeTruthy();

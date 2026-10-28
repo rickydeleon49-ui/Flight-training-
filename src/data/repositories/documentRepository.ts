@@ -1,3 +1,4 @@
+import { readCardPageSource } from "../studyPageSources";
 import { readPdfItemProvenance } from "../pdfKitSources";
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
@@ -345,6 +346,8 @@ export function documentRepository(db: SqlDatabase) {
     }));
     const flashcards = await Promise.all(set.flashcards.map(async item => {
       if (!item.itemId) return item;
+      const pageSource = await readCardPageSource(query, set.sourceMaterialId, "authored_card", item.itemId, item);
+      if (pageSource) return { ...item, pageSource };
       const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "card", item.itemId, item as unknown as Record<string, unknown>, item.origin);
       return pdfProvenance ? { ...item, pdfProvenance } : item;
     }));

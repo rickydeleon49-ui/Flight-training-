@@ -1,3 +1,4 @@
+import type { BookmarkCardSource } from "@/data/studyPageSources";
 import { PdfItemLabel } from "./PdfItemLabel";
 import "./StudySetEditor.css";
 import { useEffect, useRef, useState } from "react";
@@ -44,9 +45,16 @@ function problemText(error: unknown): string {
 const uncertain = (error: unknown) =>
   error instanceof StudySetSaveError && (error.code === "IPC_TRANSPORT_ERROR" || error.code === "STORAGE_ERROR");
 
+/** Where a card made from a page note points, and whether that page could be checked. */
+function seedNote({ source, preview }: Omit<BookmarkCardSource, "itemId">): string {
+  const page = `From page ${source.physicalPage}${source.printedLabel ? ` (printed page ${source.printedLabel})` : ""}.`;
+  const checked = preview && preview.contentSha256 === source.contentSha256 && source.physicalPage <= preview.totalPages;
+  return checked ? page : `${page} Position unverified: the PDF is missing or has changed.`;
+}
+
 /** The set she opened, read once when an editing dialog opens. */
 interface Opened {
-  stored: StoredSetRow;
+  stored: StoredSetRow | null;
   set: AiStudySet;
   state: AuthoringState;
 }
@@ -77,6 +85,8 @@ export interface StudySetEditorProps {
    */
   compact?: boolean;
   onClose?: () => void;
+  bookmarkSeed?: Omit<BookmarkCardSource, "itemId">;
+  createFirst?: boolean;
 }
 
 /**
@@ -90,6 +100,8 @@ export function StudySetEditor({
   studySet,
   compact = false,
   onClose,
+  bookmarkSeed,
+  createFirst = false,
 }: StudySetEditorProps) {
   const { mutate, repositories } = useAppData();
   const [action, setAction] = useState<Action | null>(null);
@@ -125,7 +137,9 @@ export function StudySetEditor({
     setFromInstructor(false);
     setPage("");
     try {
-      const read = await repositories.documents.readStudySetForEdit(material.id);
+      const read: { stored: StoredSetRow | null; set: AiStudySet } | null =
+        await repositories.documents.readStudySetForEdit(material.id) ??
+        (bookmarkSeed && createFirst ? { stored: null, set: studySet } : null);
       if (!read || !sameContent(read.set, studySet)) {
         setOpenError("This study set changed since this page was shown. Close this and look at it again.");
         return;
@@ -133,7 +147,8 @@ export function StudySetEditor({
       const state = authoringStateOf(read.set);
       setOpened({ ...read, state });
       if (next.mode === "add") {
-        setFields(["", ""]);
+        setFields(bookmarkSeed ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
+        if (bookmarkSeed) setPage(String(bookmarkSeed.source.physicalPage));
       } else {
         const item = locate(state, next.target);
         if (!item) {
@@ -197,9 +212,10 @@ export function StudySetEditor({
           operation = {
             operationId: newId(),
             materialId: material.id,
-            reason: request.kind === "add" ? "edit" : request.kind,
+            reason: opened.stored === null ? "create" : request.kind === "add" ? "edit" : request.kind,
             expected: opened.stored,
             next: nextSetOf(frameOf(opened.set), plan.next),
+            ...(bookmarkSeed ? {pageSource: {...bookmarkSeed, itemId: plan.next.items.filter(i=>i.kind==="card").at(-1)!.itemId}} : {}),
           };
         }
         pendingRef.current = { key, operation };
@@ -262,6 +278,7 @@ export function StudySetEditor({
                   }}
                 />
               </Field>
+              {bookmarkSeed ? <p className="tiny muted">{seedNote(bookmarkSeed)}</p> : null}
               <Field label="Source page (optional)">
                 <TextInput
                   inputMode="numeric"

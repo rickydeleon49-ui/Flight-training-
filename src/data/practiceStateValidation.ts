@@ -248,6 +248,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 18) await validatePdfKitState(query, reference);
   if (newest >= 19) await validateStudySetReceiptState(query, reference);
   if (newest >= 20) await validateHomeworkState(query, reference);
+  if (newest >= 24) await validatePageSources(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -1816,8 +1817,8 @@ export async function validateStudySetReceiptState(query: ValidationQuery, refer
   for (const row of await query(`SELECT * FROM ${table}`, [])) {
     try {
       const operation = decodeStudySetOperation(JSON.parse(text(row, "payload_json")));
-      if (!operation.pdfKitSources || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
-      await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>);
+      if ((!operation.pdfKitSources && !operation.pageSource) || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
+      if (operation.pdfKitSources) await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>);
     } catch { refuse("A study set save receipt is damaged."); }
   }
 }
@@ -1926,5 +1927,28 @@ export async function validateHomeworkSources(query: ValidationQuery, snapshot: 
       const cards = await deriveCurrentCards(r.material_id, typeof set?.flashcards_json === "string" ? set.flashcards_json : null);
       if (cards.status !== "ok" || cards.contentHash !== r.source_revision || cards.versionId !== r.card_set_id) throw new HomeworkError("SOURCE");
     }
+  }
+}
+
+export async function validatePageSources(query: ValidationQuery, reference: ValidationQuery) {
+  for (const table of ["study_page_sources","study_page_source_bindings"]) {
+    if (!same(await navigationColumns(query,table),await navigationColumns(reference,table)) || !same(await foreignKeyShapes(query,table),await foreignKeyShapes(reference,table)) || !same(await navigationKeyIndexes(query,table),await navigationKeyIndexes(reference,table)) || !same(checkConstraints(await tableSql(query,table)),checkConstraints(await tableSql(reference,table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`,[])).length) refuse("Damaged page source schema.");
+  }
+  for(const trigger of ["collect_study_page_sources","erase_frozen_card_page_sources","erase_material_card_page_sources"]) {
+    const sql="SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?";
+    const [actual]=await query(sql,[trigger]); const [expected]=await reference(sql,[trigger]);
+    if(!actual || !expected || normalizeSql(text(actual,"sql"))!==normalizeSql(text(expected,"sql"))) refuse("Damaged page source guards.");
+  }
+  const {cardSourceFingerprint} = await import("./studyPageSources");
+  for(const b of await query("SELECT b.*,s.physical_page FROM study_page_source_bindings b JOIN study_page_sources s ON s.id=b.source_id",[])) {
+    if(b.binding_kind === "frozen_card") {
+      const [c] = await query("SELECT i.front,i.back,i.source_page AS sourcePage,o.origin FROM card_items i JOIN card_versions v ON v.id=i.version_id LEFT JOIN card_item_origins o ON o.item_id=i.id WHERE i.id=? AND v.source_material_id=?",[text(b,"item_key"),text(b,"owner_key")]);
+      if(!c || c.sourcePage !== b.physical_page || await cardSourceFingerprint(c as unknown as import("./studySetTransaction").StoredCard) !== b.content_fingerprint) refuse("Damaged frozen page source.");
+    } else if(b.binding_kind === "authored_card") {
+      const candidates = await query("SELECT flashcards_json AS cards FROM ai_study_sets WHERE source_material_id=? UNION ALL SELECT json_extract(previous_json,'$.flashcards_json') AS cards FROM study_set_history WHERE material_id=? AND kind='study_set'", [text(b,"owner_key"),text(b,"owner_key")]);
+      let found=false;
+      for(const row of candidates) for(const c of JSON.parse(text(row,"cards"))) if(c.itemId===b.item_key && c.sourcePage===b.physical_page && await cardSourceFingerprint(c)===b.content_fingerprint) found=true;
+      if(!found) refuse("Damaged authored page source.");
+    } else refuse("Unsupported page source binding.");
   }
 }
