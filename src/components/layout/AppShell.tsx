@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState, type ReactElement } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -92,6 +92,15 @@ export function AppShell() {
       menuRef.current?.focus();
     }
     resizeFocusRef.current = null;
+  }, [desktop]);
+
+  const beforeQuickFindOpen = useCallback(() => {
+    if (desktop) return;
+    // Give the dialog a visible return target before it captures focus.
+    if (navigationRef.current?.contains(document.activeElement)) {
+      menuRef.current?.focus();
+    }
+    setMenuOpen(false);
   }, [desktop]);
 
   const closeMenu = () => {
@@ -215,7 +224,7 @@ export function AppShell() {
         </div>
       </main>
       <ReminderPopup />
-      <QuickFind />
+      <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>
   );

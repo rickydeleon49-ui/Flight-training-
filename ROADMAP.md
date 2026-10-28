@@ -42,13 +42,25 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 **PACKS-01b offline summary (Row 10, local):** Committed locally f62f2ab on roadmap/packs-01a (not pushed; batched with later PACKS slices). Each open homework assignment shows a "Before you go offline" line: "Everything here works without internet." or "{n} of {m} need a fix before you study offline." (singular "needs"), plus a per-activity note (Works offline / Needs a fix / Checking… / Check in the Mac app) on the activity's status line. Reuses the existing local source check; never claims ready while checking, after a failed/unavailable check, for a stale assignment, or for PDF readings in browser mode. No storage/SQL/IPC/network change. Bugs found in review and fixed: stale "ready" during recheck; previous assignment's summary after a failed switch; note inside the heading changed its accessible name; five rules had no failing test. Checks: Node 22 focused 79 passed across 6 files; typecheck and diff check pass; 12 scratch mutations caught. Evidence: .gen-rel-loop/offline/packs-01b-offline-summary/ (fix-result.md, manager-checks-fix/). Not yet done: browser/student check, full frontend twice, native build — at the end of the PACKS batch.
 
+**PACKS-01c merged in PR #280 (main `b5828df`):** Offline readiness is rechecked when she returns to a homework, shared source checks run once per pass and validate reading page ranges, and assignment titles keep words whole on narrow screens. No tag or release.
+
+**PACKS-01d/01e merged in PR #281 (main `74ddc6e`):** Page-range errors name the reading and the PDF's page count next to Save. Migration 0023 adds a separate answer field for reflection and question activities, so the prompt is no longer prefilled into her answer; older completion records stay valid. Claude reviewed the work and the installed-app student run passed on a fictional profile. No tag or release.
+
+**PACKS-02 merged in PR #282 (main `657bf81`):** Unsaved activities can be removed; the editor says "Add activities". The narrow layout has no blank band, and homework and PDF search are easier to find. Claude reviewed the work and the installed-app student run passed on a fictional profile. No tag or release.
+
+**PACKS-03 merged in PR #283 (main `b9df37d`):** Search hits show the homework name and open at the activity. PDF search includes a preparation hint; spacing was adjusted. Claude reviewed the work and the installed-app student run passed on a fictional profile. No tag or release.
+
+**PACKS-04 merged in PR #284 (main `6249569`):** The not-prepared notice links to "Read this PDF's text". Empty wording is scoped to study materials when content matches, and autocorrect is off in both search boxes. Claude reviewed the work and the installed-app student run passed on a fictional profile. No tag or release.
+
+**PACKS-05 in progress:** Close the narrow Menu before Quick Find opens, with a visible focus return; omit the material empty card when content search has hits. Record PACKS slices through 04 here. Review and student run pending; no tag or release.
+
 **Export verification:** native synthetic imports and HTML, CSV and Markdown ZIP saves work. ZIP guide sections stay separate, CSV formula mitigation is present, and Safari Letter/A4 preview plus A4 Save as PDF were exercised. The merged print correction keeps the practice heading and first question together in both paper sizes; the answer key stays separate. Physical printing remains untested.
 
 ## The queue
 
 Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
 
-Rows 1–3 are complete in `main`, and v0.6.0 is published. Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims.
+Rows 1–3 are complete in `main`, and v0.6.0 is published. Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims. Row 10 PACKS slices through 04 are merged; PACKS-05 is in progress. The next queue item remains row 11 PDF-STUDY-01.
 
 | # | Item | What she gets | Includes | Plan |
 | --- | --- | --- | --- | --- |

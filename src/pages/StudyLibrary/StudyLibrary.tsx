@@ -344,10 +344,10 @@ export function StudyLibrary() {
           />
         </Card>
       ) : visible.length === 0 ? (
-        <Card>
+        contentHasMatches ? null : <Card>
           <EmptyState
-            title={contentHasMatches ? "No study materials match." : "Nothing matches those filters."}
-            body={contentHasMatches ? "Matches inside your content are shown above." : "Try a different status or clear the search."}
+            title="Nothing matches those filters."
+            body="Try a different status or clear the search."
             action={
               <Button
                 onClick={() => {
