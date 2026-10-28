@@ -1,0 +1,12 @@
+/* VISUAL-01b developer proof only; never imported by the production app. */
+.visual-proof { padding: 24px; max-width: 860px; margin: 0 auto; }
+.visual-proof-dialog { width: min(860px, calc(100vw - 24px)); }
+.proof-body { display: grid; gap: 12px; }
+.proof-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.proof-inline { display: inline-flex; gap: 6px; align-items: center; }
+.proof-bounds { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.proof-bounds input { width: 6.5em; }
+.proof-stage { display: block; width: 100%; touch-action: none; background: #eee6dc; border-radius: 8px; }
+.visual-proof .button, .visual-proof-dialog .button, .visual-proof-dialog .input { min-height: 44px; }
+.visual-proof-dialog :focus-visible { outline: 3px solid #604778; outline-offset: 3px; }
+.proof-answer { font-size: 1.25rem; font-weight: 600; margin: 8px 0 0; }
