@@ -138,3 +138,10 @@ for (const storedDash of ["-", "–", "—", "−"]) {
     expect(mutateMock).not.toHaveBeenCalled();
   });
 }
+
+it("PACKS-04 disables automatic corrections in the Study Library search box", () => {
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const box = screen.getByRole("textbox", { name: "Search your library" });
+  for (const attribute of ["autocomplete", "autocorrect", "autocapitalize"]) expect(box.getAttribute(attribute)).toBe("off");
+  expect(box.getAttribute("spellcheck")).toBe("false");
+});

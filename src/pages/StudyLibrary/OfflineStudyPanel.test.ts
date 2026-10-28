@@ -247,3 +247,37 @@ describe("Library offline badges", () => {
     expect(screen.queryByText(/a:/)).toBeNull();
   });
 });
+
+it("PACKS-04 focuses and scrolls to Read this PDF's text after status loads, only for a direct link", async () => {
+  const scroll = vi.fn();
+  const previousScroll = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = scroll;
+  try {
+    service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
+    const view = render(h(OfflineStudyPanel, { material: pdf, focusRequested: true }));
+    const button = await screen.findByRole("button", { name: "Read this PDF's text" });
+    expect(document.activeElement).toBe(button);
+    expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    expect(scroll.mock.instances[0]).toBe(button);
+    expect(service.prepare).not.toHaveBeenCalled();
+    button.blur();
+    view.rerender(h(OfflineStudyPanel, { material: pdf, focusRequested: true }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    view.unmount();
+    render(h(OfflineStudyPanel, { material: pdf }));
+    await screen.findByRole("button", { name: "Read this PDF's text" });
+    expect(scroll).toHaveBeenCalledTimes(1);
+  } finally {
+    Element.prototype.scrollIntoView = previousScroll;
+  }
+});
+
+it("PACKS-04 waits through checking before focusing the reading control", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  service.readiness.mockResolvedValueOnce([row({ state: "checking" })]).mockResolvedValue([row({ state: "notPrepared" })]);
+  render(h(OfflineStudyPanel, { material: pdf, focusRequested: true }));
+  await screen.findByText("Checking…");
+  expect(document.activeElement?.id).not.toBe("read-pdf-text");
+  await act(async () => { await vi.advanceTimersByTimeAsync(RECHECK_MS); });
+  expect(document.activeElement).toBe(await screen.findByRole("button", { name: "Read this PDF's text" }));
+});

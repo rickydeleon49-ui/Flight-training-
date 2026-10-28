@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -116,7 +116,10 @@ export function StudyLibrary() {
   const [sort, setSort] = useRememberedState<MaterialSort>(
     "library.sort", "recent", isOneOf(SORT_VALUES),
   );
+  const [contentMatch, setContentMatch] = useState<{ key: string; found: boolean } | null>(null);
   const filterKey = [status, topic, type, search, sort].join("\0");
+  const onMatchesChange = useCallback((found: boolean) => setContentMatch({ key: filterKey, found }), [filterKey]);
+  const contentHasMatches = contentMatch?.key === filterKey && contentMatch.found;
   const [page, setPage] = useState({ key: filterKey, limit: MATERIAL_PAGE_SIZE });
   const visibleLimit = page.key === filterKey ? page.limit : MATERIAL_PAGE_SIZE;
   useEffect(() => setPage({ key: filterKey, limit: MATERIAL_PAGE_SIZE }), [filterKey]);
@@ -261,6 +264,10 @@ export function StudyLibrary() {
               value={search}
               placeholder={offlineStudyEnabled() ? "Search titles, PDFs, notes and homework" : "Search titles, notes and tags"}
               aria-label="Search your library"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
@@ -290,7 +297,7 @@ export function StudyLibrary() {
         </div>
       )}
 
-      <DocumentSearchPanel query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
+      <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
 
       {hasAny ? (
         <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
@@ -339,8 +346,8 @@ export function StudyLibrary() {
       ) : visible.length === 0 ? (
         <Card>
           <EmptyState
-            title="Nothing matches those filters."
-            body="Try a different status or clear the search."
+            title={contentHasMatches ? "No study materials match." : "Nothing matches those filters."}
+            body={contentHasMatches ? "Matches inside your content are shown above." : "Try a different status or clear the search."}
             action={
               <Button
                 onClick={() => {

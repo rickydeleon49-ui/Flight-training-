@@ -285,7 +285,8 @@ describe("content search findability", () => {
     before(box.closest(".library__toolbar")!, hit);
     before(hit, screen.getByRole("button", { name: "Everything" }));
     before(hit, screen.getByText("In your documents"));
-    before(hit, screen.getByText("Nothing matches those filters."));
+    before(hit, await screen.findByText("No study materials match."));
+    expect(screen.queryByText("Nothing matches those filters.")).toBeNull();
     expect(screen.getByText(/PDF text isn’t ready to search yet — your saved study content and homework were searched/)).toBeTruthy();
     expect(offline.search).toHaveBeenCalledWith("rudder", ["m-engine"], 0, expect.any(Array), false);
   });
@@ -303,4 +304,28 @@ describe("content search findability", () => {
     expect(screen.queryByText("In your documents")).toBeNull();
     expect(offline.search).not.toHaveBeenCalled();
   });
+});
+
+it("PACKS-04 disables automatic corrections in Quick Find", async () => {
+  await mount();
+  openWithShortcut();
+  for (const attribute of ["autocomplete", "autocorrect", "autocapitalize"]) expect(input().getAttribute(attribute)).toBe("off");
+  expect(input().getAttribute("spellcheck")).toBe("false");
+});
+
+it("PACKS-04 distinguishes PDF-only hits from an empty search and resets for new words", async () => {
+  const coverage = { searchedDocuments: 1, searchedPages: 10, imagePages: 0, otherUnsearchablePages: 0, notPrepared: 0, notChecked: 0, preparing: 0, couldNotPrepare: 0, missing: 0, notPdf: 0 };
+  offline.search.mockResolvedValue({ groups: [{ materialId: "m-engine", title: "Engine handbook", materialType: "handbook", originalFileName: null, addedAt: "2026-10-27", passages: [{ contentSha256: "a".repeat(64), pageIndex: 3, snippet: "lift" }] }], coverage, nextOffset: null, moreBeyondCap: false, trimmed: false });
+  await mountLibrary();
+  act(() => nav?.("/study"));
+  const box = await screen.findByRole("textbox", { name: "Search your library" });
+  fireEvent.change(box, { target: { value: "lift" } });
+  await screen.findByRole("button", { name: /Engine handbook, PDF page 3: open/ });
+  expect(await screen.findByText("No study materials match.")).toBeTruthy();
+  expect(screen.queryByText("Nothing matches those filters.")).toBeNull();
+  offline.search.mockResolvedValue({ groups: [], coverage, nextOffset: null, moreBeyondCap: false, trimmed: false });
+  fireEvent.change(box, { target: { value: "absent" } });
+  await screen.findByText(/No matches in 1 document/);
+  expect(screen.getByText("Nothing matches those filters.")).toBeTruthy();
+  expect(screen.queryByText("No study materials match.")).toBeNull();
 });

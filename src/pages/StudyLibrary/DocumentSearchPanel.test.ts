@@ -10,6 +10,7 @@ import { makeMaterial } from "@/testing/factories";
 const service = vi.hoisted(() => ({
   enabled: true,
   getHomework: vi.fn(),
+  readiness: vi.fn(),
   search: vi.fn<(q: string, ids: string[], offset: number, types?: readonly string[], filtered?: boolean) => Promise<SearchResponse>>(),
   verify: vi.fn<(id: string, sha: string) => Promise<"ok" | "changed" | "missing">>(),
 }));
@@ -34,6 +35,7 @@ vi.mock("@/services/offlineContent", async (original) => {
   return {
     ...real,
     offlineStudyEnabled: () => service.enabled,
+    offlineContentReadiness: (ids: string[]) => service.readiness(ids),
     searchOfflineContent: (q: string, ids: string[], offset: number, types?: readonly string[], filtered?: boolean) =>
       service.search(q, ids, offset, types, filtered),
     verifyOfflineDestination: (id: string, sha: string) => service.verify(id, sha),
@@ -100,7 +102,7 @@ const materials = [
 /** Where the panel navigated to, if anywhere. */
 function Location() {
   const location = useLocation();
-  return h("output", { "data-testid": "location" }, `${location.pathname}${location.search}`);
+  return h("output", { "data-testid": "location" }, `${location.pathname}${location.search}${location.hash}`);
 }
 
 function inRouter(element: ReactElement) {
@@ -112,6 +114,7 @@ beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   service.enabled = true;
   service.getHomework.mockReset();
+  service.readiness.mockReset().mockResolvedValue([]);
   service.search.mockReset();
   service.verify.mockReset();
   nav.request.mockReset();
@@ -605,4 +608,42 @@ it("shows each homework name and activity title, and opens the matching activity
   const s = assignments[0]!;
   await waitFor(() => expect(screen.getByTestId("location").textContent)
     .toBe(`/study/homework/${s.assignment.id}?activity=${s.activities[0]!.record.id}`));
+});
+
+it("PACKS-04 links only identified unprepared PDFs to their reading control", async () => {
+  service.search.mockResolvedValue(response());
+  service.readiness.mockResolvedValue([
+    { materialId: "m1", readiness: { state: "searchable", pages: 30 } },
+    { materialId: "m3", readiness: { state: "notPrepared" } },
+  ]);
+  render(inRouter(h(DocumentSearchPanel, { query: "lift", materials })));
+  await typed();
+  const link = await screen.findByRole("link", { name: "Weather" });
+  expect(service.readiness).toHaveBeenCalledWith(["m1", "m3"]);
+  expect(screen.queryByRole("link", { name: "Pilot's Handbook" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "Notes" })).toBeNull();
+  expect(link.getAttribute("href")).toBe("/study/m3#read-pdf-text");
+  fireEvent.click(link);
+  expect(screen.getByTestId("location").textContent).toBe("/study/m3#read-pdf-text");
+});
+
+it("PACKS-04 keeps preparation wording when document identities cannot be checked", async () => {
+  service.search.mockResolvedValue(response());
+  service.readiness.mockRejectedValue(new Error("private failure"));
+  render(inRouter(h(DocumentSearchPanel, { query: "lift", materials })));
+  await typed();
+  expect(screen.getByText(/Open each document in Study Library and choose/)).toBeTruthy();
+  expect(screen.queryByRole("link")).toBeNull();
+  expect(screen.queryByText("private failure")).toBeNull();
+});
+
+it("PACKS-04 ignores late preparation identities after a file replacement", async () => {
+  let finish!: (rows: unknown[]) => void;
+  service.search.mockResolvedValue(response());
+  service.readiness.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })).mockResolvedValue([]);
+  const view = render(inRouter(h(DocumentSearchPanel, { query: "lift", materials })));
+  await typed();
+  view.rerender(inRouter(h(DocumentSearchPanel, { query: "lift", materials: materials.map(m => ({ ...m, updatedAt: "replaced" })) })));
+  await act(async () => finish([{ materialId: "m3", readiness: { state: "notPrepared" } }]));
+  expect(screen.queryByRole("link", { name: "Weather" })).toBeNull();
 });

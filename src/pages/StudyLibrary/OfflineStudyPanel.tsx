@@ -18,7 +18,7 @@ export const RECHECK_MS = 1500;
  * Reading a document's text on this Mac so it can be searched offline; nothing
  * is sent anywhere. Renders nothing unless this build opted in.
  */
-export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
+export function OfflineStudyPanel({ material, focusRequested = false }: { material: StudyMaterial; focusRequested?: boolean }) {
   const [readiness, setReadiness] = useState<OfflineReadiness | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -65,6 +65,8 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
     };
   }, [enabled, identity, refresh]);
 
+  const panel = useRef<HTMLDivElement>(null);
+  const focused = useRef(false);
   const wording = readiness ? describeReadiness(readiness) : null;
 
   // While a state is still settling, look again shortly.
@@ -73,6 +75,17 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
     const timer = window.setTimeout(() => void refresh(), RECHECK_MS);
     return () => window.clearTimeout(timer);
   }, [enabled, wording?.settling, readiness, refresh]);
+
+  // Wait for the async status before moving to the actual reading control.
+  // Polling and rerenders must not keep taking focus from her.
+  useEffect(() => {
+    if (!focusRequested) focused.current = false;
+    if (!focusRequested || focused.current || readiness?.state === "checking" || !panel.current) return;
+    const target = panel.current.querySelector<HTMLButtonElement>("button") ?? panel.current;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView?.({ block: "center" });
+    focused.current = true;
+  }, [focusRequested, readiness]);
 
   if (!enabled || !readiness || !wording || readiness.state === "unsupported") return null;
 
@@ -91,31 +104,33 @@ export function OfflineStudyPanel({ material }: { material: StudyMaterial }) {
   };
 
   return (
-    <Card>
-      <CardHeader
-        title="Read this PDF's text"
-        eyebrow="On this Mac"
-        action={<Badge tone={wording.tone}>{wording.label}</Badge>}
-      />
-      <CardBody>
-        <div className="stack stack--3">
-          <p className="small" role="status">
-            {wording.detail}
-          </p>
-          {problem ? <p className="small muted">{problem}</p> : null}
-          {tooLarge ? (
-            <p className="small">
-              This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.
+    <div ref={panel} id="read-pdf-text" tabIndex={-1}>
+      <Card>
+        <CardHeader
+          title="Read this PDF's text"
+          eyebrow="On this Mac"
+          action={<Badge tone={wording.tone}>{wording.label}</Badge>}
+        />
+        <CardBody>
+          <div className="stack stack--3">
+            <p className="small" role="status">
+              {wording.detail}
             </p>
-          ) : wording.canPrepare ? (
-            <div className="row row--wrap">
-              <Button size="small" variant="primary" disabled={asking} onClick={() => void prepare()}>
-                Read this PDF's text
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </CardBody>
-    </Card>
+            {problem ? <p className="small muted">{problem}</p> : null}
+            {tooLarge ? (
+              <p className="small">
+                This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.
+              </p>
+            ) : wording.canPrepare ? (
+              <div className="row row--wrap">
+                <Button size="small" variant="primary" disabled={asking} onClick={() => void prepare()}>
+                  Read this PDF's text
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </CardBody>
+      </Card>
+    </div>
   );
 }

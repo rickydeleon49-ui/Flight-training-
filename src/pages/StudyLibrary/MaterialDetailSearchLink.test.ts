@@ -14,6 +14,7 @@ import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/node
 import { itemDigest } from "@/logic/savedSearch";
 import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import * as documentService from "@/services/documents";
+import * as offlineService from "@/services/offlineContent";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
@@ -159,4 +160,13 @@ describe("links from offline search", () => {
     expect(await screen.findByText("This study guide has changed since you searched. Search again to find it.")).toBeTruthy();
     expect(highlighted("search-target-cards")).toBe(false);
   });
+});
+
+it("PACKS-04 a material preparation link reaches the reading button on the full page", async () => {
+  vi.spyOn(offlineService, "offlineStudyEnabled").mockReturnValue(true);
+  vi.spyOn(offlineService, "offlineContentReadiness").mockResolvedValue([{ materialId: "mat-saved", readiness: { state: "notPrepared" } }]);
+  await open("#read-pdf-text");
+  const button = await screen.findByRole("button", { name: "Read this PDF's text" });
+  await waitFor(() => expect(document.activeElement).toBe(button));
+  expect(button.closest("#read-pdf-text")).toBeTruthy();
 });

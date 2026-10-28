@@ -1,6 +1,6 @@
 import type { HomeworkSnapshot } from "@/domain/homework";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { MATERIAL_TYPE_LABELS, type MaterialType, type StudyMaterial } from "@/domain/types";
@@ -11,6 +11,8 @@ import {
   OfflineSearchError,
   SAVED_CONTENT_TYPES,
   offlineStudyEnabled,
+  offlineContentReadiness,
+  fileIdentity,
   searchOfflineContent,
   verifyOfflineDestination,
   type ContentType,
@@ -96,13 +98,20 @@ type Phase =
  * opens a match only after re-checking it. Renders nothing unless this
  * build opted in.
  */
-export function DocumentSearchPanel(props: { query: string; materials: StudyMaterial[]; materialFiltersActive?: boolean }) {
+interface SearchPanelProps {
+  query: string;
+  materials: StudyMaterial[];
+  materialFiltersActive?: boolean;
+  onMatchesChange?: (found: boolean) => void;
+}
+
+export function DocumentSearchPanel(props: SearchPanelProps) {
   // Whether the build opted in never changes while the app runs, so a
   // dormant build does no work here at all: no hooks, no requests.
   return offlineStudyEnabled() ? <DocumentSearch {...props} /> : null;
 }
 
-function DocumentSearch({ query, materials, materialFiltersActive = false }: { query: string; materials: StudyMaterial[]; materialFiltersActive?: boolean }) {
+function DocumentSearch({ query, materials, materialFiltersActive = false, onMatchesChange }: SearchPanelProps) {
   const trimmed = query.trim();
   // Documents need a file; guides, cards and practice follow every
   // selected material. The native side tells the two apart.
@@ -235,6 +244,12 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
     [retire],
   );
 
+  useEffect(() => {
+    onMatchesChange?.(!!results && (results.groups.length > 0 || results.nextOffset !== null ||
+      (results.saved?.groups.length ?? 0) > 0 || results.saved?.nextOffset != null));
+    return () => onMatchesChange?.(false);
+  }, [results, onMatchesChange]);
+
   if (!trimmed) return null;
 
   const showMore = (section: "documents" | "saved") => {
@@ -349,6 +364,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
                     ? coverageSentence(results.coverage, found, saved?.state === "ok", (saved?.coverage.homework ?? 0) > 0)
                     : ""}
           </p>
+          {results && results.coverage.notPrepared > 0 ? <UnpreparedDocumentLinks materials={materials} /> : null}
           {results && results.groups.length > 0 ? (
             <div className="stack stack--3" role="list" aria-label="Matches in your documents" onKeyDown={onKeyDown}>
               {results.groups.map((group) => {
@@ -496,4 +512,31 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
   return savedFound && !found
     ? <div className="document-search-results stack stack--4">{savedCard}{documentsCard}</div>
     : <div className="document-search-results stack stack--4">{documentsCard}{savedCard}</div>;
+}
+
+/** Coverage has counts; the existing readiness lookup supplies document identities. */
+function UnpreparedDocumentLinks({ materials }: { materials: StudyMaterial[] }) {
+  const pdfs = materials.filter(m => m.filePath?.toLowerCase().endsWith(".pdf"));
+  const identity = pdfs.map(fileIdentity).join("\n");
+  const [answer, setAnswer] = useState<{ identity: string; ids: string[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    setAnswer(null);
+    if (pdfs.length) void offlineContentReadiness(pdfs.map(m => m.id)).then(rows => {
+      if (live) setAnswer({ identity, ids: rows.filter(row => row.readiness.state === "notPrepared").map(row => row.materialId) });
+    }).catch(() => { /* The coverage notice still explains how to prepare a PDF. */ });
+    return () => { live = false; };
+    // Identity includes the IDs and file revisions; title changes need no new lookup.
+  }, [identity]);
+  const unprepared = answer?.identity === identity ? pdfs.filter(m => answer.ids.includes(m.id)) : [];
+  return unprepared.length ? (
+    <div className="stack stack--2" aria-label="Documents to prepare for offline search">
+      <p className="small muted">Choose a document to reach “Read this PDF's text”:</p>
+      {unprepared.map(material => (
+        <Link className="small wrap-anywhere" key={material.id} to={`/study/${encodeURIComponent(material.id)}#read-pdf-text`}>
+          {material.title}
+        </Link>
+      ))}
+    </div>
+  ) : null;
 }
