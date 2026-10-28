@@ -518,6 +518,15 @@ describe("card reviews in MaterialDetail", () => {
     expect(writes).not.toHaveBeenCalled();
   });
 
+  it("the browse card options read as one clear control with no separate dangling label", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    expect(screen.getByRole("button", { name: `More options for card: ${CARDS[0]!.front}` }).textContent).toBe("Card 1 options");
+    expect(document.querySelector(".card-review__browse-options .tiny.dim")).toBeNull();
+    expect(screen.queryByText("Card 1:")).toBeNull();
+  });
+
   it("a never-rated card can be paused and flagged from the browse card, listed, and resumed", async () => {
     await seed();
     renderDetail();

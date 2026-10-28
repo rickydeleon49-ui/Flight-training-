@@ -161,7 +161,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     // 2. Verify Top "Flashcards" section
     const flashcardsSection = document.getElementById("material-flashcards")!;
     expect(flashcardsSection).toBeTruthy();
-    expect(within(flashcardsSection).getByText("Card 1 of 1")).toBeTruthy();
+    expect(within(flashcardsSection).getByText("Your card 1 of 1")).toBeTruthy();
     expect(within(flashcardsSection).getByText("What is Gemini Lift?")).toBeTruthy();
     expect(within(flashcardsSection).queryByText("What is Kit Drag?")).toBeNull();
 
@@ -177,7 +177,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(within(backupSection).queryByText("Gemini Lift")).toBeNull();
 
     // Kit card inside "Your study kit"
-    expect(within(backupSection).getByText("Card 1 of 1")).toBeTruthy();
+    expect(within(backupSection).getByText("PDF card 1 of 1")).toBeTruthy();
     expect(within(backupSection).getByText("What is Kit Drag?")).toBeTruthy();
     // Gemini card NOT in "Your study kit"
     expect(within(backupSection).queryByText("What is Gemini Lift?")).toBeNull();
@@ -187,7 +187,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(within(backupSection).getAllByText(/page 2$/).length).toBeGreaterThan(0);
 
     // PACKS-07: each section carries the study-aid meaning once, never per item.
-    for (const name of ["Flight Training Study Set", "Card 1 of 1"]) {
+    for (const name of ["Flight Training Study Set", "PDF card 1 of 1"]) {
       const section = within(backupSection).getByRole("region", { name });
       expect(within(section).getAllByText("Pulled from your PDF on this Mac")).toHaveLength(1);
       expect(within(section).getAllByText("Study aid. Compare this kit with your PDF, current FAA guidance and your instructor.")).toHaveLength(1);

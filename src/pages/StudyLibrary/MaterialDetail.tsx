@@ -1111,7 +1111,7 @@ function MaterialDetailPage() {
                           <div className="row row--between">
                             <div>
                               <h3 id="flashcards-title" className="ai-guide__title">
-                                Card {safeCardIndex + 1} of {guideFlashcards.length}
+                                {kitFlashcards.length > 0 ? "Your card" : "Card"} {safeCardIndex + 1} of {guideFlashcards.length}
                               </h3>
                             </div>
                             <div className="row row--wrap">
@@ -1570,7 +1570,7 @@ function MaterialDetailPage() {
                                   <div>
                                     <p className="eyebrow">Flashcards</p>
                                     <h4 id="kit-flashcards-title" className="ai-guide__title">
-                                      Card {safeKitCardIndex + 1} of {kitFlashcards.length}
+                                      {guideFlashcards.length > 0 ? "PDF card" : "Card"} {safeKitCardIndex + 1} of {kitFlashcards.length}
                                     </h4>
                                   </div>
                                   <div className="row row--wrap">

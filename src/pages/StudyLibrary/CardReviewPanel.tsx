@@ -203,8 +203,8 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
-          <span className="tiny dim">Card {browseItem.ordinal + 1}:</span>
           <CardOptions
+            label={`Card ${browseItem.ordinal + 1} options`}
             item={browseItem}
             state={snapshot.states[browseItem.itemId]}
             disabled={review.blocked}
@@ -541,11 +541,13 @@ function DoneForNow({ review }: { review: CardReviewController }) {
 }
 
 function CardOptions({
+  label = "Card options",
   item,
   state,
   disabled,
   onAction,
 }: {
+  label?: string;
   item: CardReviewSnapshotItem;
   state: CardReviewItemState | undefined;
   disabled: boolean;
@@ -566,7 +568,7 @@ function CardOptions({
         disabled={disabled}
         onClick={() => setOpen((value) => !value)}
       >
-        Card options
+        {label}
       </Button>
       {open && !disabled ? (
         <div className="card-review__menu" role="group" aria-label={`Options for card: ${item.front}`}>
