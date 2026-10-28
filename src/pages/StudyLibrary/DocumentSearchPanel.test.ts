@@ -710,3 +710,25 @@ it.each(["activity", "assignment"])("PACKS-06 shows a duplicate %s title once an
   expect(button.querySelector("mark")?.textContent).toBe("phak");
   expect(document.getElementById(button.getAttribute("aria-describedby")!)?.textContent).toBe("  read  phak  ");
 });
+
+it("PACKS-06 hides the activity title line when the snippet starts with that title", async () => {
+  const { newHomework, newHomeworkActivity } = await import("./homeworkUi");
+  const snapshot = newHomework();
+  snapshot.assignment.title = "After my lesson";
+  const activity = newHomeworkActivity(snapshot.assignment.id, 0, "questions", snapshot.assignment.created_at);
+  activity.record.title = "Crosswind landing questions";
+  snapshot.activities = [activity];
+  service.getHomework.mockResolvedValue(snapshot);
+  service.search.mockResolvedValue(response({ groups: [], saved: saved({ groups: [{
+    kind: "homework", materialId: null, title: "Homework", passages: [{
+      kind: "homework_activity", recordId: `${snapshot.assignment.id}:${activity.record.id}`,
+      rev: sha, snippet: "Crosswind landing questions How much \uE000rudder\uE001 do I need?",
+    }],
+  }] }) }));
+  const view = render(inRouter(h(DocumentSearchPanel, { query: "rudder", materials })));
+  await typed();
+  await waitFor(() => expect(screen.getByRole("button", { name: /Homework · After my lesson/ })).toBeTruthy());
+  const button = view.container.querySelector("button[data-search-result]")!;
+  expect(button.textContent?.match(/Crosswind landing questions/g)).toHaveLength(1);
+  expect(button.querySelector("mark")?.textContent).toBe("rudder");
+});

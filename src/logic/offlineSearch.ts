@@ -43,10 +43,14 @@ export function snippetPieces(snippet: string): SnippetPiece[] {
   return pieces;
 }
 
-/** Compare displayed text only; search markers never count as title text. */
+/**
+ * Whether the snippet already shows the title (equal to it, or starting with
+ * it), so the title line would repeat. Search markers never count as text.
+ */
 export function snippetMatchesTitle(snippet: string, title: string): boolean {
   const plain = (text: string) => text.replace(/[\uE000\uE001]/gu, "").replace(/\s+/gu, " ").trim().toLowerCase();
-  return !!plain(title) && plain(snippet) === plain(title);
+  const t = plain(title), s = plain(snippet);
+  return !!t && (s === t || s.startsWith(`${t} `));
 }
 
 const count = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
