@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { MATERIAL_TYPE_LABELS, type MaterialType, type StudyMaterial } from "@/domain/types";
-import { coverageSentence, destinationProblem, pagePlace, searchProblem, snippetPieces } from "@/logic/offlineSearch";
+import { coverageSentence, destinationProblem, pagePlace, searchProblem, snippetMatchesTitle, snippetPieces } from "@/logic/offlineSearch";
 import { checkSavedHit, savedCoverageSentence, savedDestination, savedKindLabel, savedProblem } from "@/logic/savedSearch";
 import {
   ALL_CONTENT_TYPES,
@@ -84,6 +84,18 @@ export function appendGroups(shown: SearchGroup[], more: SearchGroup[]): SearchG
   return out;
 }
 
+const CONTENT_PAGE_SIZE = 3;
+
+/** Bound the whole card, keeping the service's group and passage order. */
+function firstHits<T, G extends { passages: T[] }>(groups: G[], limit: number): G[] {
+  let remaining = limit;
+  return groups.flatMap(group => {
+    const passages = group.passages.slice(0, remaining);
+    remaining -= passages.length;
+    return passages.length ? [{ ...group, passages }] : [];
+  });
+}
+
 type Phase =
   | { kind: "idle" }
   | { kind: "searching" }
@@ -120,6 +132,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
   const app = useOptionalAppData();
   const data = app?.data;
   const navigate = useNavigate();
+  const [limits, setLimits] = useState({ documents: CONTENT_PAGE_SIZE, saved: CONTENT_PAGE_SIZE });
   const [results, setResults] = useState<Results | null>(null);
   const [homeworkLabels, setHomeworkLabels] = useState<Record<string, HomeworkSnapshot>>({});
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
@@ -205,6 +218,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
     const mine = ++generation.current;
     retire();
     setNotes({});
+    setLimits({ documents: CONTENT_PAGE_SIZE, saved: CONTENT_PAGE_SIZE });
     // Results for other words or other filters are never left on screen.
     setResults(null);
     if (!trimmed) {
@@ -253,6 +267,10 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
   if (!trimmed) return null;
 
   const showMore = (section: "documents" | "saved") => {
+    const groups = section === "documents" ? results?.groups : results?.saved?.groups;
+    const loaded = groups?.reduce((sum, group) => sum + group.passages.length, 0) ?? 0;
+    setLimits(previous => ({ ...previous, [section]: previous[section] + CONTENT_PAGE_SIZE }));
+    if (loaded > limits[section]) return;
     const next = section === "documents" ? results?.nextOffset : results?.saved?.nextOffset;
     if (!results || next === null || next === undefined) return;
     const mine = ++generation.current;
@@ -348,6 +366,9 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
   const saved = results?.saved ?? null;
   const savedFound = (saved?.groups.length ?? 0) || (saved?.nextOffset != null ? 1 : 0);
 
+  const moreDocuments = !!results && results.groups.reduce((n, g) => n + g.passages.length, 0) > limits.documents;
+  const moreSaved = !!saved && saved.groups.reduce((n, g) => n + g.passages.length, 0) > limits.saved;
+
   const documentsCard = (
     <Card>
       <CardHeader title="In your documents" eyebrow="Offline search" />
@@ -367,7 +388,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
           {results && results.coverage.notPrepared > 0 ? <UnpreparedDocumentLinks materials={materials} /> : null}
           {results && results.groups.length > 0 ? (
             <div className="stack stack--3" role="list" aria-label="Matches in your documents" onKeyDown={onKeyDown}>
-              {results.groups.map((group) => {
+              {firstHits(results.groups, limits.documents).map((group) => {
                 const material = byId.get(group.materialId);
                 const type = MATERIAL_TYPE_LABELS[group.materialType as MaterialType] ?? group.materialType;
                 return (
@@ -419,14 +440,14 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
               })}
             </div>
           ) : null}
-          {results && results.nextOffset !== null && phase.kind === "done" ? (
+          {results && (moreDocuments || results.nextOffset !== null) && phase.kind === "done" ? (
             <div className="row row--wrap">
               <Button size="small" onClick={() => showMore("documents")}>
                 Show more matches
               </Button>
             </div>
           ) : null}
-          {results && results.nextOffset === null && results.moreBeyondCap && phase.kind === "done" ? (
+          {results && !moreDocuments && results.nextOffset === null && results.moreBeyondCap && phase.kind === "done" ? (
             <p className="tiny muted">Showing the best matches. Narrow your search to see more.</p>
           ) : null}
         </div>
@@ -447,7 +468,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
                   Guides, cards and practice questions are study aids. Check them against FAA guidance and your instructor.
                 </p>
                 <div className="stack stack--3" role="list" aria-label="Matches in your saved study content" onKeyDown={onKeyDown}>
-                  {saved.groups.map((group) => (
+                  {firstHits(saved.groups, limits.saved).map((group) => (
                     <div role="listitem" key={`${group.kind}:${group.materialId ?? ""}`} className="stack stack--2">
                       <strong className="wrap-anywhere">{group.title}</strong>
                       {group.passages.map((passage) => {
@@ -458,6 +479,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
                         const label = homework ? `Homework · ${homework.assignment.title}` : savedKindLabel(passage.kind);
                         const activityTitle = passage.kind === "homework_activity"
                           ? homework?.activities.find(e => e.record.id === activityId && !e.record.removed_at)?.record.title : null;
+                        const duplicateTitle = snippetMatchesTitle(passage.snippet, activityTitle ?? homework?.assignment.title ?? "");
                         const snippetId = `${baseId}-${key}`;
                         return (
                           <div key={key} className="stack stack--1">
@@ -471,8 +493,8 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
                               onClick={() => void openSaved(group, passage)}
                             >
                               <span className="stack stack--1">
-                                <span className="tiny wrap-anywhere">{label}</span>
-                                {activityTitle ? <span className="small wrap-anywhere">{activityTitle}</span> : null}
+                                <span className="tiny wrap-anywhere">{duplicateTitle && !activityTitle ? "Homework" : label}</span>
+                                {activityTitle && !duplicateTitle ? <span className="small wrap-anywhere">{activityTitle}</span> : null}
                                 <span className="small wrap-anywhere" id={snippetId}>
                                   {snippetPieces(passage.snippet).map((piece, i) =>
                                     piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
@@ -493,14 +515,14 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
                 </div>
               </>
             ) : null}
-            {saved.nextOffset !== null && phase.kind === "done" ? (
+            {(moreSaved || saved.nextOffset !== null) && phase.kind === "done" ? (
               <div className="row row--wrap">
                 <Button size="small" onClick={() => showMore("saved")}>
                   Show more saved matches
                 </Button>
               </div>
             ) : null}
-            {saved.nextOffset === null && saved.moreBeyondCap && phase.kind === "done" ? (
+            {!moreSaved && saved.nextOffset === null && saved.moreBeyondCap && phase.kind === "done" ? (
               <p className="tiny muted">Showing the best matches. Narrow your search to see more.</p>
             ) : null}
           </div>
@@ -531,12 +553,11 @@ function UnpreparedDocumentLinks({ materials }: { materials: StudyMaterial[] }) 
   const unprepared = answer?.identity === identity ? pdfs.filter(m => answer.ids.includes(m.id)) : [];
   return unprepared.length ? (
     <div className="stack stack--2" aria-label="Documents to prepare for offline search">
-      <p className="small muted">Choose a document to reach “Read this PDF's text”:</p>
       {unprepared.map(material => (
         <Link className="small wrap-anywhere" key={material.id} to={`/study/${encodeURIComponent(material.id)}#read-pdf-text`}>
           {material.title}
         </Link>
       ))}
     </div>
-  ) : null;
+  ) : <p className="small muted">Open a PDF and choose “Read this PDF's text”.</p>;
 }

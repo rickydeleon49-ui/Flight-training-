@@ -43,6 +43,12 @@ export function snippetPieces(snippet: string): SnippetPiece[] {
   return pieces;
 }
 
+/** Compare displayed text only; search markers never count as title text. */
+export function snippetMatchesTitle(snippet: string, title: string): boolean {
+  const plain = (text: string) => text.replace(/[\uE000\uE001]/gu, "").replace(/\s+/gu, " ").trim().toLowerCase();
+  return !!plain(title) && plain(snippet) === plain(title);
+}
+
 const count = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
 
 /**
@@ -51,7 +57,11 @@ const count = (n: number, one: string, many: string) => `${n.toLocaleString()} $
  */
 export function coverageSentence(c: SearchCoverage, found: number, savedSearched = false, homeworkSearched = false): string {
   const parts: string[] = [];
-  if (c.searchedDocuments === 0) {
+  if (c.searchedDocuments === 0 && c.notPrepared > 0) {
+    if (savedSearched) parts.push(homeworkSearched
+      ? "Your saved study content and homework were searched."
+      : "Your saved study content was searched.");
+  } else if (c.searchedDocuments === 0) {
     parts.push(savedSearched
       ? `PDF text isn’t ready to search yet — ${homeworkSearched ? "your saved study content and homework were searched" : "your saved study content was searched"}.`
       : "PDF text isn’t ready to search yet.");
@@ -60,7 +70,7 @@ export function coverageSentence(c: SearchCoverage, found: number, savedSearched
   } else {
     parts.push(`Searched ${count(c.searchedDocuments, "document", "documents")} (${count(c.searchedPages, "page", "pages")}).`);
   }
-  if (c.notPrepared > 0) parts.push(`${count(c.notPrepared, "document isn't", "documents aren't")} prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.`);
+  if (c.notPrepared > 0) parts.push(`${count(c.notPrepared, "PDF isn't", "PDFs aren't")} ready to search yet.`);
   if (c.notChecked > 0) parts.push(`${count(c.notChecked, "document is", "documents are")} still being checked.`);
   if (c.preparing > 0) parts.push(`${count(c.preparing, "document is", "documents are")} being prepared.`);
   if (c.couldNotPrepare > 0) parts.push(`${count(c.couldNotPrepare, "document", "documents")} couldn't be prepared.`);

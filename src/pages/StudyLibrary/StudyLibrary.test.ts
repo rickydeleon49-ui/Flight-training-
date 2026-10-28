@@ -182,3 +182,15 @@ it("PACKS-05 omits the material empty card when content hits answer the search, 
   fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
   expect(screen.getByText("Material 0")).toBeTruthy();
 });
+
+it("PACKS-06 places matching materials before missed-topic panels during search, and restores browsing order", () => {
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const topics = () => screen.getByText("Find study materials for missed topics");
+  expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
+  fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "Material 149" } });
+  expect(before(screen.getByText("Material 149"), topics())).toBe(true);
+  expect(before(screen.getByText("Material 149"), screen.getByText("ACS Area Material Coverage"))).toBe(true);
+  fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "   " } });
+  expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
+});

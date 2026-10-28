@@ -287,7 +287,7 @@ describe("content search findability", () => {
     before(hit, screen.getByText("In your documents"));
     expect(screen.queryByText("No study materials match.")).toBeNull();
     await waitFor(() => expect(screen.queryByText("Nothing matches those filters.")).toBeNull());
-    expect(screen.getByText(/PDF text isn’t ready to search yet — your saved study content and homework were searched/)).toBeTruthy();
+    expect(screen.getByText("Your saved study content and homework were searched. 1 PDF isn't ready to search yet.")).toBeTruthy();
     expect(offline.search).toHaveBeenCalledWith("rudder", ["m-engine"], 0, expect.any(Array), false);
   });
 

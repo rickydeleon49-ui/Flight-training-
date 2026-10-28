@@ -130,7 +130,16 @@ export function AppShell() {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <aside className="sidebar" onKeyDown={(event) => {
+        if (event.key !== "Escape" || event.defaultPrevented || desktop || !menuOpen) return;
+        const target = event.target as HTMLElement;
+        if (target.closest("dialog, [role=dialog]")) return;
+        if (target === menuRef.current || navigationRef.current?.contains(target)) {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMenu();
+        }
+      }}>
         <div className="brand">
           <span className="brand__mark" aria-hidden="true">
             <PlaneIcon size={17} />
