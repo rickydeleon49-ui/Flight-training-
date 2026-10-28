@@ -37,6 +37,14 @@ fn storage(_: rusqlite::Error) -> Code {
     Code::StorageError
 }
 pub fn decode(v: &Value, material: &str, next: &Value) -> Check<Envelope> {
+    decode_for(v, material, |id| {
+        next["flashcards"]
+            .as_array()
+            .is_some_and(|a| a.iter().any(|c| c["itemId"] == id))
+    })
+}
+/// The same snapshot, bound to one new item that `has_item` recognises.
+pub fn decode_for(v: &Value, material: &str, has_item: impl Fn(&str) -> bool) -> Check<Envelope> {
     let exact = |value: &Value, keys: &[&str]| {
         value
             .as_object()
@@ -76,9 +84,6 @@ pub fn decode(v: &Value, material: &str, next: &Value) -> Check<Envelope> {
     let e: Envelope = serde_json::from_value(v.clone()).map_err(|_| Code::InvalidArgument)?;
     let p = &e.source;
     let b = &e.bookmark;
-    let card = next["flashcards"]
-        .as_array()
-        .and_then(|a| a.iter().find(|c| c["itemId"] == e.item_id));
     if !crate::study_sets::is_lower_uuid_v4(&p.id)
         || p.material_id.as_deref() != Some(material)
         || p.material_title.trim().is_empty()
@@ -109,7 +114,7 @@ pub fn decode(v: &Value, material: &str, next: &Value) -> Check<Envelope> {
         || e.preview
             .as_ref()
             .is_some_and(|p| !hex(&p.content_sha256) || p.total_pages < 0)
-        || card.is_none()
+        || !has_item(&e.item_id)
     {
         return Err(Code::InvalidArgument);
     }
@@ -176,7 +181,8 @@ pub async fn preview_study_page_source(
     .await
     .map_err(|_| "Couldn't check this source.".to_string())?
 }
-pub fn write(tx: &Transaction<'_>, e: &Envelope, next: &Value, now: &str) -> Check<()> {
+/// Refuses unless the page note and its material are exactly as she saw them.
+fn check_bookmark(tx: &Transaction<'_>, e: &Envelope) -> Check<()> {
     let p = &e.source;
     let b = &e.bookmark;
     let row:Option<Value>=tx.query_row("SELECT b.title,b.notes,b.updated_at,b.page_index,b.page_label,b.originating_content_sha256,m.title,b.created_at FROM material_bookmarks b JOIN study_materials m ON m.id=b.material_id WHERE b.id=?1 AND b.material_id=?2",params![b["id"].as_str(),p.material_id],|r|Ok(json!([r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,i64>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,Option<String>>(5)?,r.get::<_,String>(6)?,r.get::<_,String>(7)?]))).optional().map_err(storage)?;
@@ -194,13 +200,10 @@ pub fn write(tx: &Transaction<'_>, e: &Envelope, next: &Value, now: &str) -> Che
     {
         return Err(Code::SourceChanged);
     }
-    let c = next["flashcards"]
-        .as_array()
-        .and_then(|a| a.iter().find(|c| c["itemId"] == e.item_id))
-        .ok_or(Code::InvalidArgument)?;
-    if c["sourcePage"] != p.physical_page {
-        return Ok(());
-    }
+    Ok(())
+}
+fn insert_source(tx: &Transaction<'_>, e: &Envelope, now: &str) -> Check<()> {
+    let p = &e.source;
     tx.execute(
         "INSERT INTO study_page_sources VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
         params![
@@ -210,11 +213,24 @@ pub fn write(tx: &Transaction<'_>, e: &Envelope, next: &Value, now: &str) -> Che
             p.content_sha256,
             p.physical_page,
             p.printed_label,
-            b["id"].as_str(),
+            e.bookmark["id"].as_str(),
             now
         ],
     )
     .map_err(storage)?;
+    Ok(())
+}
+pub fn write(tx: &Transaction<'_>, e: &Envelope, next: &Value, now: &str) -> Check<()> {
+    check_bookmark(tx, e)?;
+    let p = &e.source;
+    let c = next["flashcards"]
+        .as_array()
+        .and_then(|a| a.iter().find(|c| c["itemId"] == e.item_id))
+        .ok_or(Code::InvalidArgument)?;
+    if c["sourcePage"] != p.physical_page {
+        return Ok(());
+    }
+    insert_source(tx, e, now)?;
     tx.execute(
         "INSERT INTO study_page_source_bindings VALUES (?1,?2,'authored_card',?3,?4)",
         params![p.id, p.material_id, e.item_id, fingerprint(c)],
@@ -272,6 +288,83 @@ pub fn freeze(
             tx.execute("INSERT OR IGNORE INTO study_page_source_bindings SELECT source_id,owner_key,'frozen_card',?1,content_fingerprint FROM study_page_source_bindings WHERE owner_key=?2 AND binding_kind='authored_card' AND item_key=?3 AND content_fingerprint=?4",params![key,owner,id,fingerprint(c)])?;
         }
     }
+    Ok(())
+}
+
+/// A practice question's fingerprint over its five content fields and origin.
+pub fn question_fingerprint(q: &Value) -> String {
+    crate::practice_sessions::compute_canonical_hash(&json!([
+        q["question"],
+        q["options"],
+        q["correctIndex"],
+        q["explanation"],
+        q["sourcePage"],
+        q.get("origin").unwrap_or(&Value::Null)
+    ]))
+}
+/// Saves the page source of a question made from a page note, in the same
+/// transaction as the question. A different page detaches the reference.
+pub fn write_question(
+    tx: &Transaction<'_>,
+    e: &Envelope,
+    question: &Value,
+    now: &str,
+) -> Check<()> {
+    check_bookmark(tx, e)?;
+    let p = &e.source;
+    if question["sourcePage"] != p.physical_page {
+        return Ok(());
+    }
+    insert_source(tx, e, now)?;
+    tx.execute(
+        "INSERT INTO study_page_source_bindings VALUES (?1,?2,'authored_question',?3,?4)",
+        params![
+            p.id,
+            p.material_id,
+            e.item_id,
+            question_fingerprint(question)
+        ],
+    )
+    .map_err(storage)?;
+    Ok(())
+}
+/// After a practice save: an edit or correction that keeps a question's page
+/// keeps its source, and every saved item row gets a frozen copy so attempts
+/// on that version keep showing it after later edits.
+pub fn carry_questions(
+    tx: &Transaction<'_>,
+    owner: &str,
+    carry: bool,
+    before: &[Value],
+    after: &[(Value, String)],
+) -> rusqlite::Result<()> {
+    if !has_tables(tx) {
+        return Ok(());
+    }
+    for (q, item_id) in after {
+        let hash = question_fingerprint(q);
+        let old = if carry {
+            before
+                .iter()
+                .find(|o| o["identity"] == q["identity"] || o["identity"] == q["replaces"])
+        } else {
+            None
+        };
+        if let Some(old) = old.filter(|o| o["sourcePage"] == q["sourcePage"]) {
+            tx.execute("INSERT OR IGNORE INTO study_page_source_bindings SELECT source_id,owner_key,binding_kind,?1,?2 FROM study_page_source_bindings WHERE owner_key=?3 AND binding_kind='authored_question' AND item_key=?4 AND content_fingerprint=?5",params![q["identity"].as_str(),hash,owner,old["identity"].as_str(),question_fingerprint(old)])?;
+        }
+        tx.execute("INSERT OR IGNORE INTO study_page_source_bindings SELECT source_id,owner_key,'frozen_question',?1,content_fingerprint FROM study_page_source_bindings WHERE owner_key=?2 AND binding_kind='authored_question' AND item_key=?3 AND content_fingerprint=?4",params![item_id,owner,q["identity"].as_str(),hash])?;
+    }
+    Ok(())
+}
+/// Question sources nothing can show any more: a pruned item row, or the
+/// drafts of a deleted material. Saved attempts keep their frozen ones.
+pub fn collect_questions(c: &Connection) -> rusqlite::Result<()> {
+    if !has_tables(c) {
+        return Ok(());
+    }
+    c.execute("DELETE FROM study_page_source_bindings WHERE binding_kind='frozen_question' AND item_key NOT IN (SELECT id FROM practice_test_items)",[])?;
+    c.execute("DELETE FROM study_page_source_bindings WHERE binding_kind='authored_question' AND owner_key NOT IN (SELECT id FROM study_materials)",[])?;
     Ok(())
 }
 
@@ -334,8 +427,11 @@ pub(crate) mod tests {
         json!({"operationId":"5e700000-0000-4000-8000-000000000002","materialId":"m","reason":"create","expected":null,"next":{"title":"Cards","summary":"","summaryOrigin":null,"sections":[],"flashcards":[{"itemId":"one","front":"Question","back":"Answer","sourcePage":1,"origin":"user"}],"sourceNotes":"","provider":"manual","model":"","retired":[]},"pageSource":{"source":{"id":"5e700000-0000-4000-8000-000000000003","materialId":"m","materialTitle":"Synthetic","contentSha256":null,"physicalPage":1,"printedLabel":"iv"},"bookmark":{"id":"5e700000-0000-4000-8000-000000000001","materialId":"m","physicalPage":1,"pageLabel":"iv","originatingContentSha256":null,"title":"Question","notes":"Answer","status":"unverified","createdAt":"x","updatedAt":"x"},"preview":preview,"itemId":"one"}})
     }
     fn scratch() -> std::path::PathBuf {
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let p = std::env::temp_dir().join(format!(
-            "hfd-page-source-{}",
+            "hfd-page-source-{}-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -563,5 +659,342 @@ pub(crate) mod tests {
             crate::study_sets::decode_operation(&op).unwrap_err(),
             Code::InvalidArgument
         );
+    }
+
+    // ---- PDF-STUDY-01d: a practice question made from a page note ----
+    pub(crate) const NOTE_Q: &str = "5e700000-0000-4000-8000-0000000000a1";
+    const OTHER_Q: &str = "5e700000-0000-4000-8000-0000000000a2";
+    pub(crate) fn question(id: &str, text: &str, correct: i64) -> Value {
+        json!({"question":text,"options":["Yes","No"],"correctIndex":correct,"explanation":"Answer","sourcePage":1,"identity":id,"origin":"user"})
+    }
+    pub(crate) fn practice_op(
+        op_id: &str,
+        reason: &str,
+        expected: Value,
+        questions: Vec<Value>,
+        retired: Value,
+        preview: Option<Preview>,
+    ) -> Value {
+        let card = operation(preview);
+        let mut source = card["pageSource"].clone();
+        source["itemId"] = json!(NOTE_Q);
+        json!({"operationId":op_id,"sourceMaterialId":"m","reason":reason,"expected":expected,
+            "next":{"title":"Synthetic","provider":"manual","model":"","questions":questions,"retired":retired},
+            "pageSource":source})
+    }
+    fn snapshot(c: &Connection) -> Value {
+        crate::practice_authoring::snapshot_value(
+            &crate::practice_authoring::read_current_snapshot(c, "m")
+                .unwrap()
+                .unwrap(),
+        )
+    }
+    fn count(c: &Connection, sql: &str) -> i64 {
+        c.query_row(sql, [], |r| r.get(0)).unwrap()
+    }
+    fn save(
+        root: &Path,
+        op: &Value,
+    ) -> Result<&'static str, crate::practice_authoring::PracticeAuthoringErrorCode> {
+        crate::practice_authoring::save_practice_authoring_at(root, op)
+            .map(|r| r.status)
+            .map_err(|e| e.code)
+    }
+    use crate::practice_authoring::PracticeAuthoringErrorCode as P;
+
+    #[test]
+    fn note_question_waits_for_an_active_attempt() {
+        let root = scratch();
+        let c = library(&root);
+        let mut first = practice_op(
+            "5e700000-0000-4000-8000-0000000000a5",
+            "create",
+            Value::Null,
+            vec![question(OTHER_Q, "Existing", 1)],
+            json!([]),
+            None,
+        );
+        first.as_object_mut().unwrap().remove("pageSource");
+        assert_eq!(save(&root, &first), Ok("saved"));
+        c.execute("INSERT INTO practice_attempts (id,version_id,source_material_id,source_material_title,started_at,status,revision,total_questions) SELECT '5e700000-0000-4000-8000-0000000000a6',version_id,'m','Synthetic','2026-01-01T00:00:00.000Z','in_progress',0,1 FROM practice_test_items", []).unwrap();
+        let existing = snapshot(&c);
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000a7",
+            "edit",
+            existing.clone(),
+            vec![
+                existing["questions"][0].clone(),
+                question(NOTE_Q, "Question", 0),
+            ],
+            json!([]),
+            None,
+        );
+        assert_eq!(save(&root, &op), Err(P::AttemptActive));
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_sources"), 0);
+        assert_eq!(snapshot(&c), existing);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn note_question_needs_an_answer_and_options_before_save() {
+        let root = scratch();
+        let c = library(&root);
+        for bad in [
+            question(NOTE_Q, "Question", -1),
+            json!({"question":"Question","options":["",""],"correctIndex":0,"explanation":"Answer","sourcePage":1,"identity":NOTE_Q,"origin":"user"}),
+        ] {
+            let op = practice_op(
+                "5e700000-0000-4000-8000-0000000000b1",
+                "create",
+                Value::Null,
+                vec![bad],
+                json!([]),
+                None,
+            );
+            assert_eq!(save(&root, &op), Err(P::InvalidArgument));
+        }
+        // A source bound to a question that is not in the save is refused.
+        let mut op = practice_op(
+            "5e700000-0000-4000-8000-0000000000b1",
+            "create",
+            Value::Null,
+            vec![question(OTHER_Q, "Q", 0)],
+            json!([]),
+            None,
+        );
+        op["pageSource"]["itemId"] = json!(NOTE_Q);
+        assert_eq!(save(&root, &op), Err(P::InvalidArgument));
+        for t in [
+            "practice_tests",
+            "study_page_sources",
+            "practice_save_operations",
+        ] {
+            assert_eq!(count(&c, &format!("SELECT count(*) FROM {t}")), 0);
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn note_question_creates_appends_retries_and_keeps_pdf_bytes() {
+        let root = scratch();
+        let c = library(&root);
+        let file = root.join("documents/source.pdf");
+        let bytes = pdf_bytes(2, "Original");
+        std::fs::write(&file, &bytes).unwrap();
+        let preview = preview_on(&c, &root, "m").unwrap();
+        // First: a test with one existing question of her own, no source.
+        let mut first = practice_op(
+            "5e700000-0000-4000-8000-0000000000c1",
+            "create",
+            Value::Null,
+            vec![question(OTHER_Q, "Existing", 1)],
+            json!([]),
+            preview.clone(),
+        );
+        first.as_object_mut().unwrap().remove("pageSource");
+        assert_eq!(save(&root, &first), Ok("saved"));
+        let existing = snapshot(&c);
+        // Make a question: appended, the existing question untouched.
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000c2",
+            "edit",
+            existing.clone(),
+            vec![
+                existing["questions"][0].clone(),
+                question(NOTE_Q, "Question", 0),
+            ],
+            json!([]),
+            preview.clone(),
+        );
+        assert_eq!(save(&root, &op), Ok("saved"));
+        assert_eq!(save(&root, &op), Ok("already_saved"));
+        let now = snapshot(&c);
+        assert_eq!(now["questions"][0], existing["questions"][0]);
+        assert_eq!(now["questions"].as_array().unwrap().len(), 2);
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_sources"), 1);
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='authored_question'"), 1);
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='frozen_question'"), 1);
+        // A stale snapshot is refused and writes nothing more.
+        let stale = practice_op(
+            "5e700000-0000-4000-8000-0000000000c3",
+            "edit",
+            existing,
+            vec![
+                question(OTHER_Q, "Existing", 1),
+                question(NOTE_Q, "Question", 0),
+            ],
+            json!([]),
+            preview,
+        );
+        assert_eq!(save(&root, &stale), Err(P::StaleContent));
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_sources"), 1);
+        crate::backup::verify_application_connection(&c).unwrap();
+        assert_eq!(std::fs::read(&file).unwrap(), bytes);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn note_question_changed_pdf_or_note_refuses_without_writes() {
+        let root = scratch();
+        let c = library(&root);
+        let file = root.join("documents/source.pdf");
+        std::fs::write(&file, pdf_bytes(2, "A")).unwrap();
+        let preview = preview_on(&c, &root, "m").unwrap();
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000d1",
+            "create",
+            Value::Null,
+            vec![question(NOTE_Q, "Question", 0)],
+            json!([]),
+            preview,
+        );
+        std::fs::write(&file, pdf_bytes(2, "B")).unwrap();
+        let changed = std::fs::read(&file).unwrap();
+        assert_eq!(save(&root, &op), Err(P::SourceChanged));
+        assert_eq!(std::fs::read(&file).unwrap(), changed);
+        c.execute_batch("UPDATE material_bookmarks SET notes='New';")
+            .unwrap();
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000d2",
+            "create",
+            Value::Null,
+            vec![question(NOTE_Q, "Question", 0)],
+            json!([]),
+            preview_on(&c, &root, "m").unwrap(),
+        );
+        assert_eq!(save(&root, &op), Err(P::SourceChanged));
+        for t in [
+            "practice_tests",
+            "practice_test_versions",
+            "study_page_sources",
+            "practice_save_operations",
+        ] {
+            assert_eq!(count(&c, &format!("SELECT count(*) FROM {t}")), 0, "{t}");
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn note_question_missing_pdf_saves_and_failed_source_write_rolls_back() {
+        let root = scratch();
+        let c = library(&root);
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000e1",
+            "create",
+            Value::Null,
+            vec![question(NOTE_Q, "Question", 0)],
+            json!([]),
+            None,
+        );
+        c.execute_batch("CREATE TRIGGER refuse_source BEFORE INSERT ON study_page_sources BEGIN SELECT RAISE(ABORT,'synthetic full disk'); END;").unwrap();
+        assert_eq!(save(&root, &op), Err(P::StorageError));
+        for t in [
+            "practice_tests",
+            "practice_test_versions",
+            "practice_save_operations",
+        ] {
+            assert_eq!(count(&c, &format!("SELECT count(*) FROM {t}")), 0, "{t}");
+        }
+        c.execute_batch("DROP TRIGGER refuse_source;").unwrap();
+        assert_eq!(save(&root, &op), Ok("saved"));
+        assert_eq!(
+            count(
+                &c,
+                "SELECT count(*) FROM study_page_sources WHERE content_sha256 IS NULL"
+            ),
+            1
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn note_question_edits_carry_freeze_and_remove_collects_unreachable_rows() {
+        let root = scratch();
+        let c = library(&root);
+        let op = practice_op(
+            "5e700000-0000-4000-8000-0000000000f1",
+            "create",
+            Value::Null,
+            vec![question(NOTE_Q, "Question", 0)],
+            json!([]),
+            None,
+        );
+        assert_eq!(save(&root, &op), Ok("saved"));
+        let first_item: String = c
+            .query_row("SELECT id FROM practice_test_items", [], |r| r.get(0))
+            .unwrap();
+        // A completed attempt keeps the first version after later edits.
+        c.execute("INSERT INTO practice_attempts (id,version_id,source_material_id,source_material_title,started_at,completed_at,status,revision,total_questions,answered_count,score_percent) SELECT '5e700000-0000-4000-8000-0000000000f9',version_id,'m','Synthetic','2026-01-01T00:00:00.000Z','2026-01-01T00:00:01.000Z','completed',1,1,0,0 FROM practice_test_items", []).unwrap();
+        // She rewords it on the same page: the source carries to the new wording.
+        let before = snapshot(&c);
+        let old = crate::practice_authoring::decode_question(&before["questions"][0]).unwrap();
+        let record = crate::practice_authoring::retirement_record_value(
+            &crate::practice_authoring::practice_retirement_record(&old, "corrected"),
+        );
+        let edit = practice_op(
+            "5e700000-0000-4000-8000-0000000000f2",
+            "edit",
+            before,
+            vec![question(NOTE_Q, "Reworded", 0)],
+            json!([record]),
+            None,
+        );
+        let mut edit = edit;
+        edit.as_object_mut().unwrap().remove("pageSource");
+        assert_eq!(save(&root, &edit), Ok("saved"));
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='authored_question'"), 2);
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='frozen_question'"), 2);
+        crate::backup::verify_application_connection(&c).unwrap();
+        // A changed page detaches it from the next version only.
+        let before = snapshot(&c);
+        let old = crate::practice_authoring::decode_question(&before["questions"][0]).unwrap();
+        let record = crate::practice_authoring::retirement_record_value(
+            &crate::practice_authoring::practice_retirement_record(&old, "corrected"),
+        );
+        let mut moved = question(NOTE_Q, "Reworded", 0);
+        moved["sourcePage"] = json!(2);
+        let mut retired = before["retired"].as_array().unwrap().clone();
+        retired.push(record);
+        let mut edit = practice_op(
+            "5e700000-0000-4000-8000-0000000000f3",
+            "edit",
+            before,
+            vec![moved],
+            json!(retired),
+            None,
+        );
+        edit.as_object_mut().unwrap().remove("pageSource");
+        assert_eq!(save(&root, &edit), Ok("saved"));
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='frozen_question'"), 2);
+        // Removing the test prunes unattempted versions; the completed attempt keeps its frozen source.
+        let remove = json!({"operationId":"5e700000-0000-4000-8000-0000000000f4","sourceMaterialId":"m","reason":"remove","expected":snapshot(&c),"next":null});
+        assert_eq!(save(&root, &remove), Ok("saved"));
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='frozen_question'"), 1);
+        let kept: String = c.query_row("SELECT item_key FROM study_page_source_bindings WHERE binding_kind='frozen_question'", [], |r| r.get(0)).unwrap();
+        assert_eq!(kept, first_item);
+        crate::backup::verify_application_connection(&c).unwrap();
+        // Deleting the material keeps the attempt's frozen source and collects her drafts.
+        c.execute("DELETE FROM study_materials WHERE id='m'", [])
+            .unwrap();
+        crate::backup::verify_application_connection(&c).unwrap();
+        collect_questions(&c).unwrap();
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='authored_question'"), 0);
+        assert_eq!(count(&c, "SELECT count(*) FROM study_page_source_bindings WHERE binding_kind='frozen_question'"), 1);
+        assert_eq!(
+            count(
+                &c,
+                "SELECT count(*) FROM study_page_sources WHERE source_material_id IS NULL"
+            ),
+            1
+        );
+        crate::backup::verify_application_connection(&c).unwrap();
+        // A damaged fingerprint is refused.
+        c.execute(
+            "UPDATE study_page_source_bindings SET content_fingerprint=?1",
+            [&"f".repeat(64)],
+        )
+        .unwrap();
+        assert!(crate::backup::verify_application_connection(&c).is_err());
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

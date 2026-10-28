@@ -515,6 +515,8 @@ export type PracticeSaveReason = "create" | "edit" | "correct" | "regenerate" | 
 /** One authoring save; the operation id makes an exact retry safe. */
 export interface PracticeSaveOperation {
   pdfKitSources?: import("@/data/pdfKitSources").PdfKitSources;
+  /** A question made from a page note: its private source snapshot. */
+  pageSource?: import("@/data/studyPageSources").BookmarkQuestionSource;
   operationId: string;
   sourceMaterialId: string;
   reason: PracticeSaveReason;
@@ -558,6 +560,8 @@ export interface PracticeTestVersion {
 
 export interface PracticeTestItem {
   pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
+  /** The page note this exact saved item was made from, if any. */
+  pageSource?: import("@/data/studyPageSources").PageSource;
   id: string;
   versionId: string;
   ordinal: number;

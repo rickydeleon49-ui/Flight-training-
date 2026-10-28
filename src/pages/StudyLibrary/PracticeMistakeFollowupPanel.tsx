@@ -340,6 +340,7 @@ export function PracticeMistakeFollowupPanel({
               <div className="stack stack--2 practice-mistake-followup__revealed-details">
                 <div className="row row--wrap row--gap-2" style={{ alignItems: "center" }}>
                   <SourcePageBadge
+                    source={candidate.item.pageSource}
                     page={candidate.item.sourcePage}
                     materialId={attempt.sourceMaterialId} materialTitle={attempt.sourceMaterialTitle?.trim() || version.sourceMaterialTitle}
                   />
