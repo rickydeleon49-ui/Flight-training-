@@ -161,6 +161,24 @@ describe("Daily Flight Plan card", () => {
     expect(moveBtn.getAttribute("aria-description")).toBe("Your due date stays the same");
   });
 
+  it("says items have no time estimate instead of 'About 0 of your N minutes'", async () => {
+    await action("Alpha", null);
+    await mount();
+    await waitFor(() => expect(suggestedTitles()).toEqual(["Alpha"]));
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await waitFor(() => expect(screen.getByText(/don't have time estimates yet/)).toBeTruthy());
+    expect(screen.queryByText(/About 0 of your/)).toBeNull();
+  });
+
+  it("keeps the 'About N of your M minutes' sentence when an item has an estimate", async () => {
+    await action("Alpha", 10);
+    await action("Bravo", null);
+    await mount();
+    await waitFor(() => expect(suggestedTitles().length).toBe(2));
+    expect(screen.getByText(/About 10 of your 20 minutes planned/)).toBeTruthy();
+    expect(screen.queryByText(/These don't have time estimates yet/)).toBeNull();
+  });
+
   describe("session stability and persistence", () => {
     it("keeps A/B when a higher-priority C arrives, across a database reopen, until Refresh", async () => {
       const a = await action("Alpha", 5);
@@ -487,7 +505,7 @@ describe("Daily Flight Plan card", () => {
 
       await waitFor(() => expect(suggestedTitles()).toEqual(["Review emergency checklist"]));
       expect(screen.getByText("No time estimate")).toBeTruthy();
-      expect(screen.getByText(/some items don't have a time estimate yet/i)).toBeTruthy();
+      expect(screen.getByText(/These don't have time estimates yet/)).toBeTruthy();
       expect(screen.getByRole("button", { name: `Start action: ${a.title}` })).toBeTruthy();
     });
 

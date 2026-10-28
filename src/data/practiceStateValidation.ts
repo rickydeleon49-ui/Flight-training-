@@ -17,7 +17,7 @@ import { decodePracticeOperation, decodePracticeRetirements, decodePracticeSnaps
 import { canonicalJson, isValidCardText, MAX_BACK_CHARS, MAX_FRONT_CHARS, MAX_SOURCE_PAGE, sha256Hex, versionOrigin, type CanonicalCard } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, stepDelayMs } from "@/logic/cardScheduler";
 
-import type { PracticeSaveOperation, SkillEvidenceActionName } from "@/domain/types";
+import type { PracticeSaveOperation, SkillEvidenceActionName, StudyItemOrigin } from "@/domain/types";
 
 import type { SqlValue } from "./db";
 import { MIGRATIONS } from "./migrations";
@@ -1939,7 +1939,7 @@ export async function validatePageSources(query: ValidationQuery, reference: Val
     const [actual]=await query(sql,[trigger]); const [expected]=await reference(sql,[trigger]);
     if(!actual || !expected || normalizeSql(text(actual,"sql"))!==normalizeSql(text(expected,"sql"))) refuse("Damaged page source guards.");
   }
-  const {cardSourceFingerprint} = await import("./studyPageSources");
+  const {cardSourceFingerprint, questionSourceFingerprint} = await import("./studyPageSources");
   for(const b of await query("SELECT b.*,s.physical_page FROM study_page_source_bindings b JOIN study_page_sources s ON s.id=b.source_id",[])) {
     if(b.binding_kind === "frozen_card") {
       const [c] = await query("SELECT i.front,i.back,i.source_page AS sourcePage,o.origin FROM card_items i JOIN card_versions v ON v.id=i.version_id LEFT JOIN card_item_origins o ON o.item_id=i.id WHERE i.id=? AND v.source_material_id=?",[text(b,"item_key"),text(b,"owner_key")]);
@@ -1949,6 +1949,75 @@ export async function validatePageSources(query: ValidationQuery, reference: Val
       let found=false;
       for(const row of candidates) for(const c of JSON.parse(text(row,"cards"))) if(c.itemId===b.item_key && c.sourcePage===b.physical_page && await cardSourceFingerprint(c)===b.content_fingerprint) found=true;
       if(!found) refuse("Damaged authored page source.");
+    } else if (b.binding_kind === "frozen_question") {
+      await validateFrozenQuestionSource(query, b, questionSourceFingerprint);
+    } else if (b.binding_kind === "authored_question") {
+      await validateAuthoredQuestionSource(query, b, questionSourceFingerprint);
     } else refuse("Unsupported page source binding.");
   }
+}
+
+type QuestionFingerprint = typeof import("./studyPageSources").questionSourceFingerprint;
+
+/**
+ * A frozen question source must match its saved item exactly. An item that
+ * is gone leaves an unreachable row that the next practice save collects.
+ */
+async function validateFrozenQuestionSource(query: ValidationQuery, binding: Record<string, unknown>, fingerprint: QuestionFingerprint) {
+  const [item] = await query(
+    `SELECT i.question_text, i.options_json, i.correct_index, i.explanation, i.source_page, o.origin, v.history_key
+       FROM practice_test_items i
+       JOIN practice_test_versions v ON v.id = i.version_id
+       LEFT JOIN practice_item_origins o ON o.item_id = i.id
+      WHERE i.id = ?`,
+    [text(binding, "item_key")],
+  );
+  if (!item) return;
+  let options: string[];
+  try {
+    options = JSON.parse(text(item, "options_json"));
+  } catch {
+    refuse("Damaged frozen page source.");
+  }
+  const question = {
+    question: text(item, "question_text"),
+    options,
+    correctIndex: Number(item.correct_index),
+    explanation: text(item, "explanation"),
+    sourcePage: item.source_page === null ? null : Number(item.source_page),
+    ...(item.origin === "user" || item.origin === "instructor" ? { origin: item.origin as StudyItemOrigin } : {}),
+  };
+  if (
+    item.history_key !== binding.owner_key ||
+    question.sourcePage !== binding.physical_page ||
+    await fingerprint(question) !== binding.content_fingerprint
+  ) refuse("Damaged frozen page source.");
+}
+
+/**
+ * A question draft's source must match that question in the current test or
+ * a preserved earlier version. A deleted material's drafts are collectable.
+ */
+async function validateAuthoredQuestionSource(query: ValidationQuery, binding: Record<string, unknown>, fingerprint: QuestionFingerprint) {
+  const owner = text(binding, "owner_key");
+  if (!(await query("SELECT 1 FROM study_materials WHERE id = ?", [owner])).length) return;
+  const current = await readCurrentSnapshot(query, owner);
+  const history = await query("SELECT previous_json FROM study_set_history WHERE material_id = ? AND kind = 'practice'", [owner]);
+  const snapshots = [current, ...history.map((row) => {
+    try {
+      return decodePracticeSnapshot(JSON.parse(text(row, "previous_json")));
+    } catch {
+      return null;
+    }
+  })];
+  for (const snapshot of snapshots) {
+    for (const question of snapshot?.questions ?? []) {
+      if (
+        question.identity === binding.item_key &&
+        question.sourcePage === binding.physical_page &&
+        await fingerprint(question) === binding.content_fingerprint
+      ) return;
+    }
+  }
+  refuse("Damaged authored page source.");
 }

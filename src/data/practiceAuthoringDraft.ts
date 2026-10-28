@@ -88,3 +88,28 @@ export async function bindPdfQuestions(operation: PracticeSaveOperation, draft: 
   }));
   return operation;
 }
+
+/** A page note opened as a question: what "Make a question" carries until Save. */
+export type NoteQuestionSeed = Omit<import("./studyPageSources").BookmarkQuestionSource, "itemId"> & { identity: string };
+
+/**
+ * Her saved questions, then one new question from the page note: title →
+ * question, notes → explanation, page → source page, two blank options and
+ * no correct answer chosen. Nothing is saved until she presses Save.
+ */
+export function draftWithNoteQuestion(snapshot: PracticeSnapshot | null, seed: NoteQuestionSeed): PracticeDraftQuestion[] {
+  return [
+    ...(snapshot ? draftFromSnapshot(snapshot) : []),
+    {
+      identity: seed.identity, question: seed.bookmark.title, options: ["", ""], correctIndex: -1,
+      explanation: seed.bookmark.notes, sourcePage: seed.source.physicalPage, instructor: false,
+    },
+  ];
+}
+
+/** Binds the page source to the note's question while it is still in the save. */
+export function bindNoteQuestion(operation: PracticeSaveOperation, seed: NoteQuestionSeed): PracticeSaveOperation {
+  if (!operation.next?.questions.some((question) => question.identity === seed.identity)) return operation;
+  const { identity, ...source } = seed;
+  return { ...operation, pageSource: { ...source, itemId: identity } };
+}

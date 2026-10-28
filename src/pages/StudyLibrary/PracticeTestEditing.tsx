@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import { appendPracticeRetirements } from "@/data/practiceAuthoring";
-import { bindPdfQuestions, buildPracticeEditOperation, draftFromSnapshot, draftWithPdfQuestions, type PracticeDraftQuestion } from "@/data/practiceAuthoringDraft";
+import { bindNoteQuestion, bindPdfQuestions, buildPracticeEditOperation, draftFromSnapshot, draftWithNoteQuestion, draftWithPdfQuestions, type NoteQuestionSeed, type PracticeDraftQuestion } from "@/data/practiceAuthoringDraft";
 import { PRACTICE_AUTHORING_ERROR_MESSAGES, PracticeAuthoringError } from "@/data/persistenceErrors";
 import type { PracticeHistoryEntry, PracticeSaveOperation, PracticeSnapshot, StudyMaterial } from "@/domain/types";
 import { formatLocalDay } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import type { PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
 import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
-import { AuthorBadge } from "./StudySetEditor";
+import { AuthorBadge, seedNote } from "./StudySetEditor";
 
 // Mirrors the decoder bounds in practiceAuthoring.ts without changing that contract.
 const MAX_QUESTIONS = 200;
@@ -36,9 +36,9 @@ function questionErrors(question: PracticeDraftQuestion) {
 }
 
 /** One dialog for a first manual test and for editing an existing test. */
-function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onSourceChanged, onSaved, onLeaveOut }: { material: StudyMaterial; creating: boolean; activeAttempt?: boolean | null; seed?: PdfQuestionSeed; onClose?: () => void; onSourceChanged?: () => void; onSaved?: () => void; onLeaveOut?: () => void }) {
+function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, onClose, onSourceChanged, onSaved, onLeaveOut }: { material: StudyMaterial; creating: boolean; activeAttempt?: boolean | null; seed?: PdfQuestionSeed; noteSeed?: NoteQuestionSeed; onClose?: () => void; onSourceChanged?: () => void; onSaved?: () => void; onLeaveOut?: () => void }) {
   const { repositories, mutate, dataRevision, data } = useAppData();
-  const [open, setOpen] = useState(Boolean(seed));
+  const [open, setOpen] = useState(Boolean(seed || noteSeed));
   const [expected, setExpected] = useState<PracticeSnapshot | null | undefined>();
   const [title, setTitle] = useState(material.title);
   const [draft, setDraft] = useState<UiQuestion[]>([]);
@@ -61,8 +61,20 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
   useEffect(() => { if (open && mirrorKey) remember(); }, [title, draft, expected, busy, open, mirrorKey]);
   const titleRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
-    if (open && expected !== undefined) titleRef.current?.focus();
+    if (open && expected !== undefined && !noteSeed) titleRef.current?.focus();
   }, [open, expected]);
+  // From a page note the new question is at the bottom: bring it into view and
+  // start in its first answer option, the empty field she must fill.
+  const noteOptionsRef = useRef<HTMLDivElement | null>(null);
+  const noteFocused = useRef(false);
+  useEffect(() => {
+    if (!open || expected === undefined || !noteSeed || noteFocused.current) return;
+    const first = noteOptionsRef.current?.querySelector("textarea");
+    if (!first) return;
+    noteFocused.current = true;
+    first.scrollIntoView?.({ block: "center" });
+    first.focus({ preventScroll: true });
+  }, [open, expected, draft.length]);
 
   useEffect(() => {
     let live = true;
@@ -100,7 +112,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
       }
       setExpected(current);
       setTitle(current?.title ?? material.title);
-      setDraft(seed ? draftWithPdfQuestions(current, seed).map(item => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : current ? draftFromSnapshot(current).map((item) => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : [emptyQuestion()]);
+      setDraft(noteSeed ? draftWithNoteQuestion(current, noteSeed).map(item => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : seed ? draftWithPdfQuestions(current, seed).map(item => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : current ? draftFromSnapshot(current).map((item) => ({ ...item, pageInput: item.sourcePage === null ? "" : String(item.sourcePage) })) : [emptyQuestion()]);
       pending.current = null;
       setValidate(false);
       setStale(false);
@@ -108,7 +120,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
       if (readRef.current === request) setError(problemText(failure));
     }
   };
-  useEffect(() => { if (seed) void load(); }, [seed, repositories]);
+  useEffect(() => { if (seed || noteSeed) void load(); }, [seed, noteSeed, repositories]);
   const change = (index: number, update: Partial<UiQuestion>) => {
     pending.current = null;
     setDraft((items) => items.map((item, at) => at === index ? { ...item, ...update } : item));
@@ -132,6 +144,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
             operationId: crypto.randomUUID(), materialId: material.id, expected, title, draft,
           });
           if (seed && pending.current?.key !== key) operation = await bindPdfQuestions(operation, draft, seed);
+          if (noteSeed && pending.current?.key !== key) operation = bindNoteQuestion(operation, noteSeed);
           pending.current = { key, operation };
           remember();
           await repos.documents.savePracticeAuthoring(operation);
@@ -157,9 +170,9 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
     }
   };
   const blocked = activeAttempt === true || attempt === true;
-  const label = seed ? "Review draft questions" : creating ? "Write your own practice questions" : "Edit questions";
+  const label = noteSeed ? "Make a question" : seed ? "Review draft questions" : creating ? "Write your own practice questions" : "Edit questions";
   const hasTest = data.practiceTests.some((test) => test.sourceMaterialId === material.id);
-  const applicable = !seed && (creating ? !hasTest : hasTest);
+  const applicable = !seed && !noteSeed && (creating ? !hasTest : hasTest);
   const wasOpen = useRef(false);
   useEffect(() => {
     // A successful first save replaces its opener with Edit questions.
@@ -176,11 +189,12 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
     <Dialog open={open} onClose={close} title={label} dismissible={!busy} initialFocus={() => titleRef.current} footer={<>
       <Button onClick={close} disabled={busy}>Cancel</Button>
       {seed ? <Button disabled={busy} onClick={() => { onLeaveOut?.(); close(); }}>Leave questions out</Button> : null}
-      <Button variant="primary" disabled={busy || expected === undefined || Boolean(seed && (blocked || attempt === null))} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
+      <Button variant="primary" disabled={busy || expected === undefined || Boolean((seed || noteSeed) && (blocked || attempt === null))} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
     </>}>
       <div className="stack stack--3" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
         {seed ? <p className="tiny muted">{PDF_KIT_REMINDER} Your saved questions stay here; these drafts are added only when you save.</p> : null}
         {seed && blocked ? <p role="alert">Finish or abandon your current attempt before saving these questions.</p> : null}
+        {noteSeed && blocked ? <p role="alert">Finish or abandon your current attempt before saving this question.</p> : null}
         {expected === undefined ? <p role="status">Opening…</p> : <fieldset disabled={busy} className="stack stack--3" style={{ minWidth: 0, border: 0, padding: 0 }}>
           <Field label="Practice test title" error={validate ? titleError : null}><input className="input" ref={titleRef} value={title} onChange={(event) => { pending.current = null; setTitle(event.target.value); }} /></Field>
           {draft.map((question, index) => {
@@ -192,7 +206,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
             return <fieldset key={index} className="stack stack--2" style={{ minWidth: 0 }}>
               <legend>Question {index + 1}</legend>{seed?.questions.some(q => q.identity === question.identity) ? <PdfItemLabel provenance={{ status: "valid", label: "Pulled from your PDF on this Mac", sources: [] }} origin={question.instructor ? "instructor" : !samePdfQuestion(question, seed.questions.find(q => q.identity === question.identity)!) ? "user" : undefined} /> : savedPdf ? <PdfItemLabel provenance={savedPdf} origin={question.instructor ? "instructor" : expected?.questions[savedIndex] && !samePdfQuestion(question, draftFromSnapshot(expected)[savedIndex]!) ? "user" : origin} /> : <AuthorBadge origin={origin} />}
               <Field label={`Question ${index + 1} wording`} error={validate ? messages.question : null}><TextArea rows={3} value={question.question} onChange={(event) => change(index, { question: event.target.value })} /></Field>
-              <div role="group" aria-label={`Question ${index + 1} answer options`} className="stack stack--2">
+              <div role="group" aria-label={`Question ${index + 1} answer options`} className="stack stack--2" ref={noteSeed && question.identity === noteSeed.identity ? noteOptionsRef : undefined}>
                 {question.options.map((option, at) => <div key={at} className="stack stack--2" style={{ minWidth: 0 }}>
                   <Field label={`Question ${index + 1}, option ${at + 1}`} error={validate ? messages.options[at] : null}><TextArea rows={2} value={option} onChange={(event) => change(index, { options: question.options.map((value, position) => position === at ? event.target.value : value) })} /></Field>
                   <div className="row row--wrap"><label><input type="radio" name={`correct-${index}`} checked={question.correctIndex === at} onChange={() => change(index, { correctIndex: at })} /> Correct answer: option {at + 1}</label>
@@ -206,6 +220,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
               </div>
               <Field label={`Question ${index + 1} explanation (optional)`} error={validate ? messages.explanation : null} hint={length(question.explanation) >= 4_500 ? `${length(question.explanation).toLocaleString()} / 5,000 characters` : undefined}><TextArea rows={3} value={question.explanation} onChange={(event) => change(index, { explanation: event.target.value })} /></Field>
               <Field label={`Question ${index + 1} page (optional)`} error={validate ? messages.page : null}><TextInput type="text" inputMode="numeric" value={question.pageInput} onChange={(event) => change(index, { pageInput: event.target.value, sourcePage: event.target.value.trim() === "" ? null : Number(event.target.value) })} /></Field>
+              {noteSeed && question.identity === noteSeed.identity ? <p className="tiny muted">{seedNote(noteSeed)}</p> : null}
               <Checkbox label="My instructor corrected this" checked={instructor || question.instructor} disabled={instructor} onChange={(checked) => change(index, { instructor: checked })} />
               <div><Button size="small" variant="danger" aria-label={`Delete question ${index + 1}`} onClick={() => setDeleting(index)}>Delete question</Button></div>
             </fieldset>;
@@ -228,6 +243,11 @@ function PracticeEditing({ material, creating, activeAttempt, seed, onClose, onS
 
 export function PdfPracticeQuestions({ material, seed, onClose, onSourceChanged, onSaved, onLeaveOut }: { material: StudyMaterial; seed: PdfQuestionSeed; onClose: () => void; onSourceChanged: () => void; onSaved?: () => void; onLeaveOut?: () => void }) {
   return <PracticeEditing material={material} creating seed={seed} onClose={onClose} onSourceChanged={onSourceChanged} onSaved={onSaved} onLeaveOut={onLeaveOut} />;
+}
+
+/** "Make a question" from a page note: the same editor, one prefilled question added. */
+export function PracticeNoteQuestion({ material, seed, onClose, onSaved }: { material: StudyMaterial; seed: NoteQuestionSeed; onClose: () => void; onSaved?: () => void }) {
+  return <PracticeEditing material={material} creating noteSeed={seed} onClose={onClose} onSaved={onSaved} />;
 }
 
 export function StartManualPracticeTest({ material }: { material: StudyMaterial }) {

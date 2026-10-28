@@ -52,7 +52,15 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 **PACKS-04 merged in PR #284 (main `6249569`):** The not-prepared notice links to "Read this PDF's text". Empty wording is scoped to study materials when content matches, and autocorrect is off in both search boxes. Claude reviewed the work and the installed-app student run passed on a fictional profile. No tag or release.
 
-**PACKS-05 in progress:** Close the narrow Menu before Quick Find opens, with a visible focus return; omit the material empty card when content search has hits. Record PACKS slices through 04 here. Review and student run pending; no tag or release.
+**PACKS-05 merged in PR #285 (main `316f910`):** Close the narrow Menu before Quick Find opens, with a visible focus return; omit the material empty card when content search has hits. Claude reviewed the work and the installed-app student run passed on a fictional profile; all six exact-head checks passed; no tag or release.
+
+**PACKS-06 + PDF-STUDY-01a/01b merged in PR #286 (main `80ed7ae`):** Calmer search results (three hits first, materials before topic panels, no repeated homework titles, one-line "PDF isn't ready" note with links, Escape closes the narrow Menu); PDF-STUDY-01 Phase A proposal (`docs/PDF_STUDY_01_PROPOSAL_2026-10-27.md`); 01b source pills name the book only in practice history and Short saved review. Claude reviewed the work and the installed-app student run passed on a fictional profile; all six exact-head checks passed; no tag or release.
+
+**PACKS-07 + PDF-STUDY-01c + GLASS-01 merged in PR #287 (main `f4ea44d`):** Less repetition on study-kit pages; "Make a card" from a page note with owner-approved add-only migration 0024 (`study_page_sources` + bindings), "Position unverified" when the PDF is missing or changed; optional Glass appearance in Settings (owner request; Classic default, CSS only, contrast-tested). Claude reviewed the work and the installed-app student run passed on a fictional profile; all six exact-head checks passed; no tag or release.
+
+**PACKS-08 in progress:** Search topic panels hidden while searching, plainer card wording, bookmark rows wrap, card counts.
+
+**Row 11 PDF-STUDY-01 in progress:** 01d (page note → practice question) in progress. Next queue item after row 11 stays row 12 VISUAL-01.
 
 **Export verification:** native synthetic imports and HTML, CSV and Markdown ZIP saves work. ZIP guide sections stay separate, CSV formula mitigation is present, and Safari Letter/A4 preview plus A4 Save as PDF were exercised. The merged print correction keeps the practice heading and first question together in both paper sizes; the answer key stays separate. Physical printing remains untested.
 
@@ -60,7 +68,7 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
 
-Rows 1–3 are complete in `main`, and v0.6.0 is published. Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims. Row 10 PACKS slices through 04 are merged; PACKS-05 is in progress. The next queue item remains row 11 PDF-STUDY-01.
+Rows 1–3 are complete in `main`, and v0.6.0 is published. Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims. Row 10 PACKS slices through 07 are merged; PACKS-08 is in progress. Row 11 PDF-STUDY-01: 01d (page note → practice question) in progress. Next queue item after row 11 stays row 12 VISUAL-01.
 
 | # | Item | What she gets | Includes | Plan |
 | --- | --- | --- | --- | --- |

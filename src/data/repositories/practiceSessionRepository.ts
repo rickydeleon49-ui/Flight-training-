@@ -1,4 +1,5 @@
 import { readPdfItemProvenance } from "../pdfKitSources";
+import { readQuestionPageSource, readSourcedQuestionItems } from "../studyPageSources";
 /**
  * Repository for Practice Sessions (M2 PR 1).
  *
@@ -353,6 +354,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
     async getItems(versionId: string): Promise<PracticeTestItem[]> {
       const rows = await db.select<{
         material_id: string | null;
+        history_key: string;
         id: string;
         version_id: string;
         ordinal: number;
@@ -365,7 +367,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         replaces_id: string | null;
         origin: string | null;
       }>(
-        `SELECT v.source_material_id AS material_id, i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
+        `SELECT v.source_material_id AS material_id, v.history_key, i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
                 i.correct_index, i.explanation, i.source_page,
                 i.logical_id, i.replaces_id, o.origin
          FROM practice_test_items i
@@ -376,6 +378,8 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         [versionId],
       );
 
+      // Only items made from a page note carry a frozen source; find them in one read.
+      const sourced = new Set((await readSourcedQuestionItems((sql, params) => db.select(sql, params), versionId)));
       return Promise.all(rows.map(async (r): Promise<PracticeTestItem> => {
         const item: PracticeTestItem = {
         id: r.id,
@@ -390,8 +394,11 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         replaces: r.replaces_id,
         ...(r.origin === "user" || r.origin === "instructor" ? { origin: r.origin } : {}),
         };
-        if (!r.material_id) return item;
         const current = { question: item.questionText, options: item.options, correctIndex: item.correctIndex, explanation: item.explanation, sourcePage: item.sourcePage };
+        // A page-note source is frozen on this exact item, so it outlives the material.
+        const pageSource = sourced.has(item.id) ? await readQuestionPageSource((sql, params) => db.select(sql, params), r.history_key, item.id, { ...current, origin: item.origin }) : undefined;
+        if (pageSource) return { ...item, pageSource };
+        if (!r.material_id) return item;
         const pdfProvenance = await readPdfItemProvenance((sql, params) => db.select(sql, params), r.material_id, "question", item.logicalId ?? item.id, current, item.origin);
         return pdfProvenance ? { ...item, pdfProvenance } : item;
       }));

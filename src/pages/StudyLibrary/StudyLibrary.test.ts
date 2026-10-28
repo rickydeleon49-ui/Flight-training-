@@ -183,14 +183,15 @@ it("PACKS-05 omits the material empty card when content hits answer the search, 
   expect(screen.getByText("Material 0")).toBeTruthy();
 });
 
-it("PACKS-06 places matching materials before missed-topic panels during search, and restores browsing order", () => {
+it("PACKS-08 does not show missed-topic panels while a search is typed, and shows them when empty", () => {
   render(h(MemoryRouter, null, h(StudyLibrary)));
   const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
   const topics = () => screen.getByText("Find study materials for missed topics");
   expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
   fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "Material 149" } });
-  expect(before(screen.getByText("Material 149"), topics())).toBe(true);
-  expect(before(screen.getByText("Material 149"), screen.getByText("ACS Area Material Coverage"))).toBe(true);
+  expect(screen.getByText("Material 149")).toBeTruthy();
+  expect(screen.queryByText("Find study materials for missed topics")).toBeNull();
+  expect(screen.queryByText("ACS Area Material Coverage")).toBeNull();
   fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "   " } });
   expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
 });
@@ -208,12 +209,12 @@ it("PACKS-07 puts title matches before content, but keeps content first for meta
   fireEvent.change(box, { target: { value: "  phak  " } });
   expect(before(screen.getByText("PHAK — Pages 1–10"), screen.getByText("Content search hit"))).toBe(true);
   expect(screen.getAllByText("Content search hit")).toHaveLength(1);
-  const topics = screen.getByText("Find study materials for missed topics");
-  expect(topics.closest(".library__search-topics")).toBeTruthy();
+  expect(screen.queryByText("Find study materials for missed topics")).toBeNull();
   fireEvent.change(box, { target: { value: "rudder" } });
   expect(before(screen.getByText("Content search hit"), screen.getByText("Other book"))).toBe(true);
   fireEvent.change(box, { target: { value: "Pages 1-10" } });
   expect(before(screen.getByText("PHAK — Pages 1–10"), screen.getByText("Content search hit"))).toBe(true);
   fireEvent.change(box, { target: { value: "   " } });
   expect(before(screen.getByText("Content search hit"), screen.getByText("Other book"))).toBe(true);
+  expect(screen.getByText("Find study materials for missed topics")).toBeTruthy();
 });

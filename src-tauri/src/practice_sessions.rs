@@ -1402,6 +1402,8 @@ pub fn erase_practice_history_at(
         [&payload.history_key],
     )
     .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    crate::study_page_sources::collect_questions(&tx)
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
 
     // 5. Store erasure receipt
     let now = db_now_iso(&tx).map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
@@ -2020,6 +2022,8 @@ pub fn remove_practice_test_at(
         [source_material_id],
     )
     .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
+    crate::study_page_sources::collect_questions(&tx)
+        .map_err(|_| PracticeSessionErrorCode::StorageError.error())?;
 
     // 5. Delete legacy row
     tx.execute(

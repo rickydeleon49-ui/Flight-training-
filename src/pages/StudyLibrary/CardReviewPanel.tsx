@@ -10,7 +10,7 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
-import type { CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
+import type { AiStudySet, CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
 import { AppDataContext } from "@/state/AppDataContext";
@@ -53,9 +53,10 @@ interface CardReviewPanelProps {
   browseCard?: { index: number; front: string; back: string } | null;
   /** Opened from Review due: start this material's session once its cards are read. */
   autoStart?: boolean;
+  studySet?: AiStudySet | null;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
@@ -138,6 +139,12 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
     return state?.suspended || state?.flag;
   });
 
+  // Her own cards and PDF-kit cards share one review queue; say so when both exist.
+  const setFlashcards = studySet?.flashcards ?? [];
+  const pdfCount = setFlashcards.filter((card) => Boolean(card.pdfProvenance)).length;
+  const userCount = setFlashcards.filter((card) => !card.pdfProvenance).length;
+  const hasMixedSources = pdfCount > 0 && userCount > 0;
+
   let statusLine: string;
   if (summary.allPaused) statusLine = "Nothing to review — all cards are paused or flagged.";
   else if (!reviewable) {
@@ -149,6 +156,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
       .filter(Boolean)
       .join(" · ");
   }
+  if (hasMixedSources) statusLine = `${statusLine} (${userCount} you wrote, ${pdfCount} from your PDF)`;
 
   return (
     <section className="card-review stack stack--3" aria-labelledby="card-review-title">
@@ -195,8 +203,8 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
 
       {!review.session && browseItem ? (
         <div className="row card-review__browse-options">
-          <span className="tiny dim">Card {browseItem.ordinal + 1}:</span>
           <CardOptions
+            label={`Card ${browseItem.ordinal + 1} options`}
             item={browseItem}
             state={snapshot.states[browseItem.itemId]}
             disabled={review.blocked}
@@ -533,11 +541,13 @@ function DoneForNow({ review }: { review: CardReviewController }) {
 }
 
 function CardOptions({
+  label = "Card options",
   item,
   state,
   disabled,
   onAction,
 }: {
+  label?: string;
   item: CardReviewSnapshotItem;
   state: CardReviewItemState | undefined;
   disabled: boolean;
@@ -558,7 +568,7 @@ function CardOptions({
         disabled={disabled}
         onClick={() => setOpen((value) => !value)}
       >
-        Card options
+        {label}
       </Button>
       {open && !disabled ? (
         <div className="card-review__menu" role="group" aria-label={`Options for card: ${item.front}`}>

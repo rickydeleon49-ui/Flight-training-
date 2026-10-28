@@ -564,6 +564,25 @@
   overflow-wrap: break-word;
 }
 
+/* DocumentPagesPanel bookmark rows: wrap buttons below title when space is short */
+.bookmark-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.bookmark-row__title {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.bookmark-row__actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.bookmark-row__actions .destructive-action {
+  margin-inline-start: var(--space-3);
+}
+
 /* Flashcards section (#material-flashcards) safeguards */
 #material-flashcards {
   min-width: 0;
@@ -736,10 +755,6 @@
 .document-search-results { margin-bottom: var(--space-5); }
 
 .material-grid ~ .document-search-results {
-  margin-top: var(--space-5);
-}
-
-.library__search-topics {
   margin-top: var(--space-5);
 }
 

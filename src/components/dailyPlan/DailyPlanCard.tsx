@@ -255,9 +255,11 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                   </span>
                 ) : (
                   <span>
-                    About {plan.allocatedMinutes} of your {timeBudget} minutes planned
+                    {plan.allocatedMinutes > 0
+                      ? `About ${plan.allocatedMinutes} of your ${timeBudget} minutes planned`
+                      : "These don't have time estimates yet."}
                     {overBudget ? " (over budget)" : ""}
-                    {plan.suggestedUnestimatedCount > 0
+                    {plan.suggestedUnestimatedCount > 0 && plan.allocatedMinutes > 0
                       ? " · some items don't have a time estimate yet"
                       : ""}
                   </span>

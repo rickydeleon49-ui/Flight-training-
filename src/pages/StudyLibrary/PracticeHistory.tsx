@@ -702,7 +702,7 @@ function AttemptReviewPage({
                 title={`Question ${number} of ${items.length}`}
                 action={
                   <span className="row">
-                    <SourcePageBadge page={item.sourcePage} materialId={attempt.sourceMaterialId} materialTitle={attempt.sourceMaterialTitle?.trim() || version.sourceMaterialTitle} />
+                    <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={attempt.sourceMaterialId} materialTitle={attempt.sourceMaterialTitle?.trim() || version.sourceMaterialTitle} />
                     <Badge tone={resultTone}>{resultLabel}</Badge>
                   </span>
                 }

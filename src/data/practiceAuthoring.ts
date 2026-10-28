@@ -42,6 +42,7 @@ import type {
 
 import type { SqlValue } from "./db";
 import { decodePdfKitSources, validatePdfKitContent, writePdfKitSources } from "./pdfKitSources";
+import { carryQuestionSources, collectQuestionSources, decodeBookmarkSource, writeBookmarkQuestionSource } from "./studyPageSources";
 import { PracticeAuthoringError, type PracticeAuthoringErrorCode } from "./persistenceErrors";
 import {
   canonicalJson,
@@ -263,7 +264,7 @@ export function decodePracticeNext(value: Json): PracticeNext {
 
 export function decodePracticeOperation(value: Json): PracticeSaveOperation {
   if (!isRecord(value)) refuse("INVALID_ARGUMENT");
-  exactKeys(value, ["operationId", "sourceMaterialId", "reason", "expected", "next"], ["pdfKitSources"]);
+  exactKeys(value, ["operationId", "sourceMaterialId", "reason", "expected", "next"], ["pdfKitSources", "pageSource"]);
   const { operationId, sourceMaterialId, reason } = value;
   if (typeof operationId !== "string" || !isUuidV4(operationId)) refuse("INVALID_ARGUMENT");
   if (typeof sourceMaterialId !== "string" || sourceMaterialId.length === 0 || sourceMaterialId.length > 200) refuse("INVALID_ARGUMENT");
@@ -284,7 +285,22 @@ export function decodePracticeOperation(value: Json): PracticeSaveOperation {
     if (!next) refuse("INVALID_ARGUMENT");
     try { pdfKitSources = decodePdfKitSources(value.pdfKitSources, sourceMaterialId); } catch { refuse("INVALID_ARGUMENT"); }
   }
-  return { operationId, sourceMaterialId, reason: reason as PracticeSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
+  // A question made from a page note: one snapshot, bound to one new question.
+  let pageSource;
+  if (has(value, "pageSource")) {
+    if (!next || pdfKitSources) refuse("INVALID_ARGUMENT");
+    const questions = next.questions;
+    try {
+      pageSource = decodeBookmarkSource(value.pageSource, sourceMaterialId, (itemId) => questions.some((q) => q.identity === itemId));
+    } catch {
+      refuse("INVALID_ARGUMENT");
+    }
+  }
+  return {
+    operationId, sourceMaterialId, reason: reason as PracticeSaveReason, expected, next,
+    ...(pdfKitSources ? { pdfKitSources } : {}),
+    ...(pageSource ? { pageSource } : {}),
+  };
 }
 
 /** One retirement record, compared byte-identically (terms included). */
@@ -763,6 +779,8 @@ async function applyOperation(
       throw error;
     }
   }
+  // Sources left by a deleted material or a pruned version are collected here.
+  await collectQuestionSources(run, query);
   const current = await readCurrentSnapshot(query, operation.sourceMaterialId);
   if (!sameSnapshot(current, operation.expected)) refuse("STALE_CONTENT");
   if (operation.next) {
@@ -820,6 +838,7 @@ async function applyOperation(
       [operation.sourceMaterialId],
     );
     await run("DELETE FROM practice_tests WHERE source_material_id = ?", [operation.sourceMaterialId]);
+    await collectQuestionSources(run, query);
     await run(
       `INSERT INTO practice_save_operations (operation_id, material_id, action, payload_json, payload_hash, result_json, applied_at)
        VALUES (?, ?, 'remove', ?, ?, ?, ?)`,
@@ -879,9 +898,11 @@ async function applyOperation(
       now,
     ],
   );
+  const itemIds: string[] = [];
   for (let index = 0; index < next.questions.length; index++) {
     const question = next.questions[index]!;
     const itemId = crypto.randomUUID();
+    itemIds.push(itemId);
     await run(
       `INSERT INTO practice_test_items (
          id, version_id, ordinal, question_text, options_json,
@@ -904,6 +925,18 @@ async function applyOperation(
       await run("INSERT INTO practice_item_origins (item_id, origin) VALUES (?, ?)", [itemId, question.origin]);
     }
   }
+  if (operation.pageSource) {
+    const seeded = next.questions.find((question) => question.identity === operation.pageSource!.itemId)!;
+    try {
+      await writeBookmarkQuestionSource(run, query, operation.pageSource, seeded, now);
+    } catch (error) {
+      if (error instanceof Error && error.message === "SOURCE_CHANGED") refuse("SOURCE_CHANGED");
+      throw error;
+    }
+  }
+  // Only her own edits carry a source forward; a regenerated question never inherits one.
+  const carry = operation.reason === "edit" || operation.reason === "correct";
+  await carryQuestionSources(run, query, operation.sourceMaterialId, carry, current?.questions ?? [], next.questions, itemIds);
   const [mirrorRow] = await query("SELECT generated_at FROM practice_tests WHERE source_material_id = ?", [operation.sourceMaterialId]);
   const renews = operation.reason === "create" || operation.reason === "regenerate";
   const generatedAt = !renews && mirrorRow ? String(mirrorRow["generated_at"]) : now;

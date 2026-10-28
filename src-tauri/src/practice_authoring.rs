@@ -218,6 +218,8 @@ pub struct PracticeNext {
 #[derive(Debug, Clone)]
 pub struct SaveOperation {
     pub pdf_kit_sources: Option<crate::pdf_kit_sources::Sources>,
+    /// A question made from a page note: its private source snapshot.
+    pub page_source: Option<crate::study_page_sources::Envelope>,
     pub operation_id: String,
     pub material_id: String,
     pub reason: Reason,
@@ -585,7 +587,7 @@ pub fn decode_practice_operation(value: &Value) -> Check<SaveOperation> {
             "expected",
             "next",
         ],
-        &["pdfKitSources"],
+        &["pdfKitSources", "pageSource"],
     )?;
     let Value::String(operation_id) = &map["operationId"] else {
         return invalid();
@@ -631,8 +633,24 @@ pub fn decode_practice_operation(value: &Value) -> Check<SaveOperation> {
     if pdf_kit_sources.is_some() && next.is_none() {
         return invalid();
     }
+    // A question made from a page note: one snapshot, bound to one new question.
+    let page_source = match map.get("pageSource") {
+        None => None,
+        Some(v) => {
+            let Some(next) = next.as_ref().filter(|_| pdf_kit_sources.is_none()) else {
+                return invalid();
+            };
+            Some(
+                crate::study_page_sources::decode_for(v, material_id, |id| {
+                    next.questions.iter().any(|q| q.identity == id)
+                })
+                .map_err(|_| PracticeAuthoringErrorCode::InvalidArgument)?,
+            )
+        }
+    };
     Ok(SaveOperation {
         pdf_kit_sources,
+        page_source,
         operation_id: operation_id.clone(),
         material_id: material_id.clone(),
         reason,
@@ -921,6 +939,9 @@ pub fn operation_value(operation: &SaveOperation) -> Value {
     if let Some(sources) = &operation.pdf_kit_sources {
         value["pdfKitSources"] = serde_json::to_value(sources).expect("validated sources");
     }
+    if let Some(source) = &operation.page_source {
+        value["pageSource"] = serde_json::to_value(source).expect("validated page source");
+    }
     value
 }
 
@@ -1200,6 +1221,8 @@ pub fn apply_operation(
             }
         })?;
     }
+    // Sources left by a deleted material or a pruned version are collected here.
+    crate::study_page_sources::collect_questions(tx).map_err(storage)?;
     let current = read_current_snapshot(tx, &operation.material_id)?;
     if !same_snapshot(current.as_ref(), operation.expected.as_ref()) {
         return Err(PracticeAuthoringErrorCode::StaleContent);
@@ -1295,6 +1318,7 @@ pub fn apply_operation(
             params![&operation.material_id],
         )
         .map_err(storage)?;
+        crate::study_page_sources::collect_questions(tx).map_err(storage)?;
         tx.execute(
             "INSERT INTO practice_save_operations (operation_id, material_id, action, payload_json, payload_hash, result_json, applied_at)
              VALUES (?1, ?2, 'remove', ?3, ?4, ?5, ?6)",
@@ -1393,8 +1417,10 @@ pub fn apply_operation(
         ],
     )
     .map_err(storage)?;
+    let mut saved_items: Vec<(Value, String)> = Vec::with_capacity(next.questions.len());
     for (index, question) in next.questions.iter().enumerate() {
         let item_id = generate_uuid_v4(tx).map_err(storage)?;
+        saved_items.push((question_value(question), item_id.clone()));
         tx.execute(
             "INSERT INTO practice_test_items (
                id, version_id, ordinal, question_text, options_json,
@@ -1422,6 +1448,32 @@ pub fn apply_operation(
             .map_err(storage)?;
         }
     }
+    if let Some(source) = &operation.page_source {
+        let seeded = saved_items
+            .iter()
+            .find(|(q, _)| q["identity"] == source.item_id)
+            .ok_or(PracticeAuthoringErrorCode::InvalidArgument)?;
+        crate::study_page_sources::write_question(tx, source, &seeded.0, now).map_err(|e| {
+            if e == crate::study_sets::StudySetErrorCode::SourceChanged {
+                PracticeAuthoringErrorCode::SourceChanged
+            } else {
+                PracticeAuthoringErrorCode::StorageError
+            }
+        })?;
+    }
+    // Only her own edits carry a source forward; a regenerated question never inherits one.
+    let before: Vec<Value> = current
+        .as_ref()
+        .map(|c| c.questions.iter().map(question_value).collect())
+        .unwrap_or_default();
+    crate::study_page_sources::carry_questions(
+        tx,
+        &operation.material_id,
+        matches!(operation.reason, Reason::Edit | Reason::Correct),
+        &before,
+        &saved_items,
+    )
+    .map_err(storage)?;
     let mirror_generated_at: Option<Option<String>> = tx
         .query_row(
             "SELECT generated_at FROM practice_tests WHERE source_material_id = ?1",
@@ -1481,8 +1533,44 @@ pub fn apply_operation(
 /// immediate transaction. Any statement failure rolls the whole operation
 /// back — receipt, history, version, items, origins, mirror and attempt
 /// changes alike — and surfaces as `STORAGE_ERROR`.
+#[cfg(test)]
 pub fn execute_practice_authoring(
     conn: &mut Connection,
+    input: &Value,
+) -> Result<SaveResult, PracticeAuthoringErrorWire> {
+    execute_practice_authoring_at(conn, None, input)
+}
+
+/// A page-note question re-checks its PDF inside the save transaction, both
+/// before and after the writes, so a file that changes during Save refuses
+/// the whole save. The caller skips it for an exact retry of a saved operation.
+fn page_source_unchanged(
+    tx: &Transaction,
+    root: Option<&Path>,
+    operation: &SaveOperation,
+) -> Check<()> {
+    let Some(envelope) = &operation.page_source else {
+        return Ok(());
+    };
+    let root = root.ok_or(PracticeAuthoringErrorCode::SourceChanged)?;
+    let preview = crate::study_page_sources::preview_on(tx, root, &operation.material_id).map_err(
+        |e| match e {
+            crate::study_sets::StudySetErrorCode::NotFound => PracticeAuthoringErrorCode::NotFound,
+            crate::study_sets::StudySetErrorCode::StorageError => {
+                PracticeAuthoringErrorCode::StorageError
+            }
+            _ => PracticeAuthoringErrorCode::SourceChanged,
+        },
+    )?;
+    if preview != envelope.preview {
+        return Err(PracticeAuthoringErrorCode::SourceChanged);
+    }
+    Ok(())
+}
+
+fn execute_practice_authoring_at(
+    conn: &mut Connection,
+    root: Option<&Path>,
     input: &Value,
 ) -> Result<SaveResult, PracticeAuthoringErrorWire> {
     let operation = decode_practice_operation(input).map_err(PracticeAuthoringErrorCode::error)?;
@@ -1508,8 +1596,21 @@ pub fn execute_practice_authoring(
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
     let now = db_now_iso(&tx).map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
+    let replay: bool = tx
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM practice_save_operations WHERE operation_id=?1)",
+            [&operation.operation_id],
+            |r| r.get(0),
+        )
+        .map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
+    if !replay {
+        page_source_unchanged(&tx, root, &operation).map_err(PracticeAuthoringErrorCode::error)?;
+    }
     let result = apply_operation(&tx, &operation, &payload_json, &payload_hash, &now)
         .map_err(PracticeAuthoringErrorCode::error)?;
+    if !replay {
+        page_source_unchanged(&tx, root, &operation).map_err(PracticeAuthoringErrorCode::error)?;
+    }
     tx.commit()
         .map_err(|_| PracticeAuthoringErrorCode::StorageError.error())?;
     Ok(result)
@@ -1552,7 +1653,7 @@ pub fn save_practice_authoring_at(
             }
         })?;
     }
-    execute_practice_authoring(&mut conn, operation)
+    execute_practice_authoring_at(&mut conn, Some(root), operation)
 }
 
 #[tauri::command]

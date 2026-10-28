@@ -11,7 +11,13 @@ it("PACKS-07 lets the per-material history header and summary wrap within a narr
   expect(css).toMatch(/\.practice-history-detail \.page-header > div\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/);
 });
 
-it("PACKS-07 separates missed-topic panels from search results by the normal spacing token", () => {
+it("PACKS-07 separates content search results by the normal spacing token", () => {
   expect(css).toMatch(/\.material-grid ~ \.document-search-results\s*\{[^}]*margin-top:\s*var\(--space-5\);/);
-  expect(css).toMatch(/\.library__search-topics\s*\{[^}]*margin-top:\s*var\(--space-5\);/);
+});
+
+it("PACKS-08 wraps bookmark rows so title stays full width and buttons sit below when space is short", () => {
+  expect(css).toMatch(/\.bookmark-row\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/);
+  expect(css).toMatch(/\.bookmark-row__title\s*\{[^}]*flex:\s*1\s+1\s+16rem;[^}]*min-width:\s*0;/);
+  expect(css).toMatch(/\.bookmark-row__actions\s*\{[^}]*flex:\s*0\s+1\s+auto;[^}]*flex-wrap:\s*wrap;[^}]*min-width:\s*0;[^}]*max-width:\s*100%;/);
+  expect(css).toMatch(/\.bookmark-row__actions \.destructive-action\s*\{[^}]*margin-inline-start:/);
 });
