@@ -471,3 +471,27 @@ it("history_labels_answer_saved", async () => {
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     expect(await screen.findByText(/Answer saved: Preflight thoughts/)).toBeTruthy();
 });
+
+it.each(["matching", "unknown", "removed", "homework"])("search link scrolls and focuses %s activity or the homework top", async mode => {
+    const s = assignment(["checklist", "reflection"]);
+    const entry = s.activities.find(e => e.record.kind === "reflection")!;
+    if (mode === "removed") entry.record.removed_at = s.assignment.created_at;
+    const activity = mode === "unknown" ? "unknown-id" : entry.record.id;
+    const scroll = vi.fn();
+    const prior = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    render(h(MemoryRouter, { initialEntries: [
+        `/study/homework/${s.assignment.id}${mode === "homework" ? "" : `?activity=${activity}`}`
+    ] }, h(Routes, null, h(Route, { path: "/study/homework/:assignmentId", element: h(HomeworkView) }))));
+    const heading = await screen.findByRole("heading", { name: mode === "matching" ? "reflection work" : s.assignment.title });
+    if (mode === "homework") {
+        // A plain visit (no activity link) leaves focus and scroll alone.
+        await new Promise(r => setTimeout(r, 50));
+        expect(document.activeElement).not.toBe(heading);
+        expect(scroll).not.toHaveBeenCalled();
+    } else {
+        await waitFor(() => expect(document.activeElement).toBe(heading));
+        expect(scroll.mock.instances).toContain(heading);
+    }
+    HTMLElement.prototype.scrollIntoView = prior;
+});

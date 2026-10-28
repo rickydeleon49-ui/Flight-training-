@@ -111,6 +111,7 @@ beforeEach(() => {
   appData.data = { aiStudySets: [], notes: [], questions: [] };
   vi.useFakeTimers({ shouldAdvanceTime: true });
   service.enabled = true;
+  service.getHomework.mockReset();
   service.search.mockReset();
   service.verify.mockReset();
   nav.request.mockReset();
@@ -176,14 +177,14 @@ describe("Searching inside documents", () => {
     // Document text is text: the markup shows literally, nothing is parsed.
     expect(screen.getByText(/<script>x<\/script> component/)).toBeTruthy();
     expect(document.querySelector("script")).toBeNull();
-    expect(screen.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
+    expect(screen.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
   });
 
   it("says no match apart from not prepared", async () => {
     service.search.mockResolvedValue(response({ groups: [] }));
     render(inRouter(h(DocumentSearchPanel, { query: "zzqxv", materials })));
     await typed();
-    expect(await screen.findByText("No matches in 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
+    expect(await screen.findByText("No matches in 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
   });
 
   it("uses only the newest answer while she keeps typing", async () => {
@@ -534,7 +535,7 @@ describe("saved study content", () => {
     expect(service.search).toHaveBeenLastCalledWith("crosswind", ["m1", "m2", "m3"], 0, ["guides", "cards", "practice", "notes", "questions", "homework"], false);
     // The documents section and its coverage are kept.
     expect(view.getByText("Pilot's Handbook")).toBeTruthy();
-    expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet.")).toBeTruthy();
+    expect(view.getByText("Searched 2 documents (30 pages). 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.")).toBeTruthy();
   });
 
   it("merges saved groups and items when a page repeats a trimmed group", () => {
@@ -556,7 +557,7 @@ it("Homework results open the UUID after a fresh repository and digest check",as
  service.search.mockResolvedValue(response({groups:[],saved:{state:"ok",coverage:{studySets:0,practiceVersions:0,notes:0,questions:0,homework:1,tooLargeItems:0},groups:[{kind:"homework",title:"Homework",materialId:null,passages:[passage]}],nextOffset:null,moreBeyondCap:false}}));
  render(inRouter(h(DocumentSearchPanel,{query:"crosswind",materials:[],materialFiltersActive:true})));await typed();
  expect(service.search.mock.calls[0]![4]).toBe(true);
- fireEvent.click(await screen.findByRole("button",{name:"Homework, Homework: open it"}));
+ fireEvent.click(await screen.findByRole("button",{name:/Homework, Homework.*: open it/}));
  await waitFor(()=>expect(screen.getByTestId("location").textContent).toBe(`/study/homework/${s.assignment.id}`));
  expect(service.getHomework).toHaveBeenCalledWith(s.assignment.id);
 });
@@ -565,8 +566,43 @@ it("Homework stale or archived hits never navigate",async()=>{
  service.getHomework.mockResolvedValue(s);
  service.search.mockResolvedValue(response({groups:[],saved:{state:"ok",coverage:{studySets:0,practiceVersions:0,notes:0,questions:0,homework:1,tooLargeItems:0},groups:[{kind:"homework",title:"Homework",materialId:null,passages:[{kind:"homework",recordId:s.assignment.id,rev:await itemDigest(["Old title",""]),snippet:"Crosswind"}]}],nextOffset:null,moreBeyondCap:false}}));
  render(inRouter(h(DocumentSearchPanel,{query:"crosswind",materials:[]})));await typed();
- fireEvent.click(await screen.findByRole("button",{name:"Homework, Homework: open it"}));await screen.findByText("This homework has changed since you searched. Search again to find it.");
+ fireEvent.click(await screen.findByRole("button",{name:/Homework, Homework.*: open it/}));await screen.findByText("This homework has changed since you searched. Search again to find it.");
  expect(screen.getByTestId("location").textContent).toBe("/study");
- s.assignment.archived=1;fireEvent.click(screen.getByRole("button",{name:"Homework, Homework: open it"}));await screen.findByText("That item isn't here any more.");
+ s.assignment.archived=1;fireEvent.click(screen.getByRole("button",{name:/Homework, Homework.*: open it/}));await screen.findByText("That item isn't here any more.");
  expect(screen.getByTestId("location").textContent).toBe("/study");
+});
+
+
+it("shows each homework name and activity title, and opens the matching activity without changing its digest", async () => {
+  const { newHomework, newHomeworkActivity } = await import("./homeworkUi");
+  const assignments = ["Crosswind practice", "Weather practice"].map(title => {
+    const s = newHomework();
+    s.assignment.title = title;
+    const entry = newHomeworkActivity(s.assignment.id, 0, "checklist", s.assignment.created_at);
+    entry.record.title = "Review rudder timing";
+    entry.record.body = "Use the rudder";
+    s.activities = [entry];
+    return s;
+  });
+  service.getHomework.mockImplementation(async id => assignments.find(s => s.assignment.id === id) ?? null);
+  const passages: import("@/services/offlineContent").SavedPassage[] = await Promise.all(assignments.map(async s => ({
+    kind: "homework_activity" as const, recordId: `${s.assignment.id}:${s.activities[0]!.record.id}`,
+    rev: await itemDigest(["Review rudder timing", "Use the rudder"]), snippet: "rudder",
+  })));
+  passages.push({ kind: "homework", recordId: assignments[0]!.assignment.id,
+    rev: await itemDigest(["Crosswind practice", ""]), snippet: "Crosswind practice" });
+  service.search.mockResolvedValue(response({ groups: [], saved: { state: "ok",
+    coverage: { studySets: 0, practiceVersions: 0, notes: 0, questions: 0, homework: 2, tooLargeItems: 0 },
+    groups: [{ kind: "homework", title: "Homework", materialId: null, passages }],
+    nextOffset: null, moreBeyondCap: false } }));
+  render(inRouter(h(DocumentSearchPanel, { query: "rudder", materials: [] })));
+  await typed();
+  const crosswind = await screen.findByRole("button", { name: "Homework, Homework · Crosswind practice: Review rudder timing: open it" });
+  expect(screen.getByRole("button", { name: "Homework, Homework · Weather practice: Review rudder timing: open it" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Homework, Homework · Crosswind practice: open it" })).toBeTruthy();
+  expect(screen.getAllByText("Review rudder timing")).toHaveLength(2);
+  fireEvent.click(crosswind);
+  const s = assignments[0]!;
+  await waitFor(() => expect(screen.getByTestId("location").textContent)
+    .toBe(`/study/homework/${s.assignment.id}?activity=${s.activities[0]!.record.id}`));
 });

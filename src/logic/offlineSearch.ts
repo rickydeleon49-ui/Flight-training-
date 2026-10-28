@@ -60,7 +60,7 @@ export function coverageSentence(c: SearchCoverage, found: number, savedSearched
   } else {
     parts.push(`Searched ${count(c.searchedDocuments, "document", "documents")} (${count(c.searchedPages, "page", "pages")}).`);
   }
-  if (c.notPrepared > 0) parts.push(`${count(c.notPrepared, "document isn't", "documents aren't")} prepared for offline search yet.`);
+  if (c.notPrepared > 0) parts.push(`${count(c.notPrepared, "document isn't", "documents aren't")} prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.`);
   if (c.notChecked > 0) parts.push(`${count(c.notChecked, "document is", "documents are")} still being checked.`);
   if (c.preparing > 0) parts.push(`${count(c.preparing, "document is", "documents are")} being prepared.`);
   if (c.couldNotPrepare > 0) parts.push(`${count(c.couldNotPrepare, "document", "documents")} couldn't be prepared.`);

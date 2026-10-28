@@ -53,8 +53,11 @@ export function savedDestination(passage: SavedPassage, materialId: string | nul
   const id = encodeURIComponent(passage.recordId);
   switch (passage.kind) {
     case "homework":
-    case "homework_activity":
-      return `/study/homework/${encodeURIComponent(passage.recordId.split(":")[0]!)}`;
+    case "homework_activity": {
+      const [assignmentId, activityId] = passage.recordId.split(":");
+      const activity = passage.kind === "homework_activity" && activityId ? `?activity=${encodeURIComponent(activityId)}` : "";
+      return `/study/homework/${encodeURIComponent(assignmentId!)}${activity}`;
+    }
     case "summary":
       return materialId ? `/study/${encodeURIComponent(materialId)}?guide=summary${rev}` : null;
     case "guide":

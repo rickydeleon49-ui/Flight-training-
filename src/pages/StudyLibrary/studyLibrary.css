@@ -732,3 +732,5 @@
 @media (max-width: 999px) {
   .material-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.document-search-results { margin-bottom: var(--space-5); }
