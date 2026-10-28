@@ -25,8 +25,22 @@ initAppearance();
 const container = document.getElementById("root");
 if (!container) throw new Error("Root element is missing from index.html");
 
-createRoot(container).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// VISUAL-01b developer-only proof, reachable in browser dev mode (`npm run dev`)
+// at /#/dev/visual-proof. Vite replaces import.meta.env.DEV with false in a
+// production build, so this branch and its dynamic import are removed and the
+// real app boots exactly as before.
+if (import.meta.env.DEV && !("__TAURI_INTERNALS__" in window) && window.location.hash === "#/dev/visual-proof") {
+  void import("./dev/VisualProof").then(({ default: VisualProof }) => {
+    createRoot(container).render(
+      <StrictMode>
+        <VisualProof />
+      </StrictMode>,
+    );
+  });
+} else {
+  createRoot(container).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

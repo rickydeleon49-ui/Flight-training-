@@ -10,7 +10,7 @@
 
 .question-row__main { flex: 1; min-width: 0; }
 
-.question-row__text { font-size: var(--text-base); line-height: 1.45; }
+.question-row__text { font-size: var(--text-base); line-height: 1.45; white-space: pre-line; }
 
 .question-row__meta {
   display: flex;

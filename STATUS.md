@@ -1,3 +1,7 @@
+## PR #288 merged: PACKS-08/09, PDF-STUDY-01d/01e, VISUAL-01a plan — 28 October 2026
+
+PR #288 merged PACKS-08/09, PDF-STUDY-01d/01e, and the VISUAL-01a plan into main (`5f305af`). It delivers calmer search and page notes, separate "Your card" and "PDF card" counts, a single "Card N options" control, and a calmer Today line when nothing has a time estimate. "Make a question" turns a page note into a practice question in the existing editor with the page source saved beside it using the approved 0024 tables (no new migration). Student-run polish wraps page-note buttons, opens the editor at the new question, and confirms saves with "Question added to your practice test." The VISUAL-01 plan is in docs/VISUAL_01_PROPOSAL_2026-10-28.md, and all six exact-head checks passed on `76fcaa9`.
+
 ## Roadmap: researched features scheduled — 21 October 2026
 
 The owner approved adding DIFF-01–06 (#258) and COMP-01–10 (#259) to the roadmap. See the top of [ROADMAP.md](ROADMAP.md) for the 13-step queue. The current order is unchanged through FLIGHTLOG-01. COMP-10 joins EXPORT-01/02, and AKTR code entry joins ACS-READY-01. After FLIGHTLOG-01 come STUDY-FLOW-01, MISTAKES-01, PACKS-01, PDF-STUDY-01, VISUAL-01 and ORAL-01. No code changed.

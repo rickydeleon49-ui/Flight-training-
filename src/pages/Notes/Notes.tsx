@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useSearchFocus } from "@/state/useSearchFocus";
 
@@ -55,6 +56,25 @@ export function Notes() {
 
   // A note half-written when she closes the page is still worth keeping.
   const { recovered, forget } = useDraftRecovery("notes.new", draft, setDraft);
+
+  // "Write a note" from oral practice hands over text she can edit. It is
+  // added under anything she had half-written, and saved only on Save note.
+  const location = useLocation();
+  const navigate = useNavigate();
+  // One hand-over per navigation, even when effects run twice.
+  const handedKey = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const handed = (location.state as { noteDraft?: { title?: unknown; body?: unknown } } | null)?.noteDraft;
+    if (!handed || typeof handed.body !== "string" || handedKey.current === location.key) return;
+    handedKey.current = location.key;
+    const handedTitle = typeof handed.title === "string" ? handed.title : "";
+    const handedBody = handed.body;
+    setDraft((current) => ({
+      title: current.title || handedTitle,
+      body: current.body.trim() ? `${current.body}\n\n${handedBody}` : handedBody,
+    }));
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
 
   const visible = useMemo(
     () => searchNotes(data.notes, search),
@@ -128,7 +148,7 @@ export function Notes() {
                 }
               />
               <TextArea
-                rows={4}
+                rows={Math.min(12, Math.max(4, draft.body.split("\n").length))}
                 value={draft.body}
                 aria-label="Note"
                 placeholder="The school on the north field returns calls after four. Ask about their discovery flight."
