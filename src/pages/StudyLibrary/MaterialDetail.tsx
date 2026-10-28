@@ -1184,6 +1184,7 @@ function MaterialDetailPage() {
                         repository={repositories?.cardReviews}
                         contentKey={studySet.updatedAt}
                         autoStart={startCardReview}
+                        studySet={studySet}
                         browseCard={
                           guideFlashcards[safeCardIndex]
                             ? {

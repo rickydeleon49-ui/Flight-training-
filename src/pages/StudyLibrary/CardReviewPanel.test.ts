@@ -77,7 +77,7 @@ function renderDetail(startCardReview = false) {
   );
 }
 
-const reviewHeading = () => screen.findByRole("heading", { level: 3, name: /new card|due|caught up|Nothing to review/ });
+const reviewHeading = () => screen.findByRole("heading", { level: 3, name: /new card|due|caught up|Nothing to review|cards to review/ });
 const button = (name: string | RegExp) => screen.getByRole("button", { name });
 const sessionRegion = () => within(screen.getByLabelText(/^Card review session/));
 
@@ -740,6 +740,38 @@ describe("card reviews in MaterialDetail", () => {
     expect(geminiService.generateStudyAid).not.toHaveBeenCalled();
     expect(geminiService.generatePracticeTest).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows the split sentence when both kinds of cards exist (mixed sources)", async () => {
+    const userCard = { front: "User Front", back: "User Back", sourcePage: 1, origin: "user" as const };
+    const pdfCard = {
+      front: "PDF Front",
+      back: "PDF Back",
+      sourcePage: 2,
+      pdfProvenance: { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] },
+    };
+    await seed([userCard, pdfCard]);
+    renderDetail();
+    expect((await reviewHeading()).textContent).toBe("2 new cards · none due (1 you wrote, 1 from your PDF)");
+  });
+
+  it("shows where 24 new cards come from: 1 you wrote, 23 from your PDF", async () => {
+    const userCard = { front: "User Front", back: "User Back", sourcePage: 1, origin: "user" as const };
+    const pdfCards = Array.from({ length: 23 }, (_, i) => ({
+      front: `PDF Front ${i + 1}`,
+      back: `PDF Back ${i + 1}`,
+      sourcePage: i + 1,
+      pdfProvenance: { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] },
+    }));
+    await seed([userCard, ...pdfCards]);
+    renderDetail();
+    expect((await reviewHeading()).textContent).toBe("24 new cards · none due (1 you wrote, 23 from your PDF)");
+  });
+
+  it("keeps the old sentence when all cards come from a single source", async () => {
+    await seed(CARDS);
+    renderDetail();
+    expect((await reviewHeading()).textContent).toBe("3 new cards · none due");
   });
 });
 
