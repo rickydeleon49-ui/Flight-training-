@@ -47,7 +47,7 @@ describe("manual airport weather memory controller", () => {
   it("empty response removes earlier product without affecting the other", async () => {
     const h = harness(); h.controller.open(); h.controller.setStation("KZZZ"); await h.controller.request("metar"); h.advance(2000); await h.controller.request("taf"); h.advance(60000);
     h.get.mockResolvedValueOnce({ report: null, fetchedAt: 1793188862000 }); await h.controller.request("metar");
-    expect(h.controller.snapshot().metar.report).toBeNull(); expect(h.controller.snapshot().metar.status).toBe("No observation returned for this airport"); expect(h.controller.snapshot().taf.report).toBe(report);
+    expect(h.controller.snapshot().metar.report).toBeNull(); expect(h.controller.snapshot().metar.status).toBe("No observation returned for this airport."); expect(h.controller.snapshot().taf.report).toBe(report);
   });
   it("NIL/CNL is unavailable and never reuses an earlier conditions summary", async () => {
     const h = harness(); h.controller.open(); h.controller.setStation("KZZZ"); h.get.mockResolvedValueOnce({ report: { ...report, unavailable: true }, fetchedAt: 1793188800000 }); await h.controller.request("taf");

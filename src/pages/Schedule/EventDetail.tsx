@@ -38,11 +38,14 @@ export function EventDetail() {
   const { eventId } = useParams();
   const { hash } = useLocation();
   useEffect(() => {
-    if (hash === "#airport-weather") {
-      const section = document.getElementById("airport-weather") ?? document.getElementById("lesson-preparation");
-      section?.scrollIntoView?.({ block: "start" });
-      section?.focus({ preventScroll: true });
+    // A lesson opens at its top unless a link asks for its weather.
+    if (hash !== "#airport-weather") {
+      window.scrollTo?.(0, 0);
+      return;
     }
+    const section = document.getElementById("airport-weather") ?? document.getElementById("lesson-preparation");
+    section?.scrollIntoView?.({ block: "start" });
+    section?.focus({ preventScroll: true });
   }, [eventId, hash]);
   const navigate = useNavigate();
   const { data, mutate, deleteWithUndo } = useAppData();

@@ -75,7 +75,7 @@ export class WeatherController {
       if (result.report && result.report.station !== station) throw { kind: "mismatch" };
       this.tick();
       this.update({ confident: true, [product]: { ...this.value[product], report: result.report, fetchedAt: result.fetchedAt, previous: false, timeConfident: true,
-        status: !result.report || result.report.unavailable ? (product === "metar" ? "No observation returned for this airport" : "No forecast returned for this airport.") : "" } });
+        status: !result.report || result.report.unavailable ? (product === "metar" ? "No observation returned for this airport." : "No forecast returned for this airport.") : "" } });
     } catch (error) {
       if (revision !== this.revision) return;
       const kind = (error as WeatherFailure | null)?.kind;

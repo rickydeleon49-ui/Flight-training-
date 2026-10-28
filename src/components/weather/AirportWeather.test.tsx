@@ -34,6 +34,9 @@ describe("optional lesson weather UI", () => {
     enable(); enter(); await act(async () => {});
     expect(gets()).toEqual([]); expect(screen.getByText("Enter the airport's four-letter ICAO code to look at its reports.")).toBeTruthy();
     expect(localStorage.getItem(WEATHER_PREFERENCE)).toBe("true");
+    // Nothing requested yet: no empty report headings.
+    expect(screen.queryByText("Observation (METAR)")).toBeNull();
+    expect(screen.queryByText("Forecast (TAF)")).toBeNull();
   });
   it("browser mode is calm, labels controls and performs no native calls", async () => {
     mock.native = false; mock.invoke.mockClear();

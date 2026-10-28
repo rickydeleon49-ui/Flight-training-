@@ -7,16 +7,18 @@ import { conditionsSummary, localTimeText, normalizeIcao, periodLabel, timeText,
 export function WeatherPreference() {
   const view = useSyncExternalStore(airportWeather.subscribe, airportWeather.snapshot);
   return <div className="stack stack--3">
-    <Checkbox label="Show airport weather" checked={view.enabled} onChange={airportWeather.setEnabled} />
+    <Checkbox label="Show airport weather" checked={view.enabled} onChange={airportWeather.setEnabled} strikethrough={false} />
     <p className="small muted">Gets reports from NOAA/NWS for the airport you enter.</p>
     <p className="small muted">{WEATHER_NOTE}</p>
   </div>;
 }
-function Times({ label, value }: { label: string; value: number | null }) {
-  return <p className="small wrap-anywhere">{label}: {timeText(value)}<br /><span className="muted">{localTimeText(value)}</span></p>;
+function Times({ label, value, local = false }: { label: string; value: number | null; local?: boolean }) {
+  return <p className="small wrap-anywhere">{label}: {timeText(value)}{local ? <><br /><span className="muted">{localTimeText(value)}</span></> : null}</p>;
 }
 function Report({ product, item, view }: { product: WeatherProduct; item: ProductView; view: WeatherView }) {
   const report = item.report;
+  // Nothing asked for yet: no empty heading.
+  if (!report && !item.status) return null;
   return <div className="stack stack--3" aria-label={product === "metar" ? "Observation" : "Forecast"}>
     <h4>{product === "metar" ? "Observation (METAR)" : "Forecast (TAF)"}</h4>
     <p role="status">{item.status}{item.status.endsWith("after") ? ` ${timeText(view.now + Math.max(0, view.until - view.mono))}.` : ""}</p>
@@ -33,7 +35,7 @@ function Report({ product, item, view }: { product: WeatherProduct; item: Produc
           <p>{periodLabel(period).startsWith("Period details") ? "Some details are only in the original report." : conditionsSummary(period)}</p>
         </div>) : <p>Some details are only in the original report.</p>}
       </>}
-      <Times label={product === "metar" ? "Observed" : "Issued"} value={report.reportTime} />
+      <Times label={product === "metar" ? "Observed" : "Issued"} value={report.reportTime} local />
       {product === "taf" && <><Times label="Validity starts" value={report.validFrom} /><Times label="Validity ends" value={report.validTo} /></>}
       <Times label="Last successful fetch" value={item.fetchedAt} />
       {weatherAges(report, product, item.fetchedAt, view.now, view.confident && item.timeConfident).map(label => <p className="small muted" key={label}>{label}</p>)}
