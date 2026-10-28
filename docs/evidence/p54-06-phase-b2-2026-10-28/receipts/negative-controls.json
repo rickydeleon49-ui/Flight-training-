@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "controls": [
+    {
+      "id": "wrong-expectation-in-memory",
+      "how": "one contract dueAt changed by 1 ms in an in-memory clone",
+      "refused": true,
+      "reason": "product-cap-180-days: dueAt"
+    },
+    {
+      "id": "wrong-expectation-in-copy",
+      "how": "the same change written to a disposable copy of the frozen folder",
+      "refused": true,
+      "reason": "Frozen file digest mismatch: contract-vectors.json\n+ actual - expected\n\n+ '445dd6b63dbc4bf0e36cfe3eac72e21597434f5425708fb4f4fa0ce7f32dbca9'\n- '8bac63b44534e0a56f936997b13cd001f6786cdd23b166ad7a567d87996fedb0'\n"
+    },
+    {
+      "id": "wrong-oracle-value-in-memory",
+      "how": "one reference d nudged by 0.01 in an in-memory clone",
+      "refused": true,
+      "reason": "initial-again#0/good: d"
+    },
+    {
+      "id": "missing-contract-vector",
+      "how": "one contract vector removed from an in-memory clone",
+      "refused": true,
+      "reason": "contract: vector-count"
+    },
+    {
+      "id": "missing-reference-vector",
+      "how": "one reference vector removed from an in-memory clone",
+      "refused": true,
+      "reason": "reference: vector-count"
+    },
+    {
+      "id": "missing-vector-in-copy",
+      "how": "one contract vector removed from a disposable copy",
+      "refused": true,
+      "reason": "Frozen file digest mismatch: contract-vectors.json\n+ actual - expected\n\n+ 'f6c062e7b9292f01c7d935a1914c3033636a3b5dfa2d64f3b13cde1d3c9fb1ba'\n- '8bac63b44534e0a56f936997b13cd001f6786cdd23b166ad7a567d87996fedb0'\n"
+    },
+    {
+      "id": "candidate-throws",
+      "how": "the candidate throws a plain Error on its 50th call",
+      "refused": true,
+      "reason": "same-day-good-x3#2/hard: candidate-threw"
+    },
+    {
+      "id": "oracle-byte-flipped-and-inventory-rewritten",
+      "how": "one oracle byte flipped in a copy and PREREGISTRATION.sha256 rewritten to match",
+      "refused": true,
+      "reason": "PREREGISTRATION.sha256 differs from the reviewed digest\n+ actual - expected\n\n+ '7b0c83d1dafff2d5b7f31509098d303666977c5a791fbc1b564ea2d1da12f986'\n- 'b58c24f0a0b34f84527e1f9fc9797d63890b7dc69ee591efaf1230eaf1b5199d'\n"
+    },
+    {
+      "id": "oracle-byte-flipped",
+      "how": "one oracle byte flipped in a copy, inventories untouched",
+      "refused": true,
+      "reason": "Frozen file digest mismatch: oracle/fsrs4anki_scheduler.js\n+ actual - expected\n\n+ '48a8ec003c7ee0835fc1fd3129bceab8c0284a866354344b68cfb1c0c20e5396'\n- 'f323accb38ee17c792a7685a9c9ac7f5e7c3c7b9544d6e5f8a01e68000f1b84e'\n"
+    },
+    {
+      "id": "provenance-label-mismatch",
+      "how": "reference vectors claim a different oracle in an in-memory clone",
+      "refused": true,
+      "reason": "Reference vectors name a different oracle\n+ actual - expected\n\n+ 'fsrs4anki v6.1.1'\n- 'fsrs4anki v6.1.3 fsrs4anki_scheduler.js blob 724a2f445adfffb2cc3d7fae7a96ab37b948561c'\n"
+    }
+  ]
+}

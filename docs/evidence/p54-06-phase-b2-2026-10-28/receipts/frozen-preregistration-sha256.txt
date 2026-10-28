@@ -1,0 +1,8 @@
+PREREGISTRATION.md: OK
+scenarios.json: OK
+reference-vectors.json: OK
+contract-vectors.json: OK
+oracle/fsrs4anki_scheduler.js: OK
+oracle/LICENSE: OK
+proof/oracle.mjs: OK
+proof/generate-reference.mjs: OK

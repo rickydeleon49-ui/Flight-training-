@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: the candidate passes every oracle and contract vector, phase A and the transition contracts
+ok 1 - the candidate passes every oracle and contract vector, phase A and the transition contracts
+  ---
+  duration_ms: 84.386458
+  type: 'test'
+  ...
+# Subtest: every negative control makes the runner refuse success
+ok 2 - every negative control makes the runner refuse success
+  ---
+  duration_ms: 260.684083
+  type: 'test'
+  ...
+# Subtest: the candidate never mutates its prior and refuses in the preregistered order
+ok 3 - the candidate never mutates its prior and refuses in the preregistered order
+  ---
+  duration_ms: 5.340667
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 547.009583

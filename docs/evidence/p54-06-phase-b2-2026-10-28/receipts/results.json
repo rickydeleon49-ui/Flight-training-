@@ -1,0 +1,1531 @@
+{
+  "schema": "hfd-fsrs6-phase-b2-results/1",
+  "status": "PASS",
+  "scope": "Synthetic, disposable comparison only. Production stays on simple-v1; no migration or adoption.",
+  "candidateSha256": "85d4ad9ed0c5a24bd49da4c29410c7d04dac594d2b3b9350f574f5697b514324",
+  "oracle": "fsrs4anki v6.1.3 fsrs4anki_scheduler.js blob 724a2f445adfffb2cc3d7fae7a96ab37b948561c",
+  "summary": {
+    "failures": 0,
+    "reference": {
+      "vectors": 30,
+      "steps": 66,
+      "ratingOutcomes": 260,
+      "dExact": 260,
+      "sExact": 256,
+      "intervalExact": 44,
+      "intervalWindow": 114,
+      "failures": 0,
+      "deviations": {
+        "C2": 8,
+        "C1": 1,
+        "C3": 3
+      },
+      "limitations": 1,
+      "notComparableIntervals": 94
+    },
+    "contract": {
+      "vectors": 42,
+      "assertions": 51,
+      "failures": 0
+    },
+    "phaseA": {
+      "histories": 19,
+      "reviews": 78,
+      "correctnessFailures": 0,
+      "intendedDifferences": {
+        "sameInterval": 33,
+        "differentInterval": 39,
+        "lapseCountDiffers": 2,
+        "needsTransition": 3,
+        "sameRefusal": 3,
+        "notReachedAfterRefusal": 0
+      }
+    },
+    "transitions": {
+      "cases": 13,
+      "passed": 13,
+      "failed": 0
+    }
+  },
+  "reference": {
+    "failures": [],
+    "deviations": [
+      {
+        "where": "bound-max-d-huge-s#0/good",
+        "deviation": "C2",
+        "oracle": 36501,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-max-d-huge-s#0/easy",
+        "deviation": "C2",
+        "oracle": 36502,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-min-d-huge-s-early#0/good",
+        "deviation": "C2",
+        "oracle": 36501,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-min-d-huge-s-early#0/easy",
+        "deviation": "C2",
+        "oracle": 36502,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-tiny-s-same-day#0/again",
+        "deviation": "C1",
+        "oracle": 0,
+        "candidate": 0.01
+      },
+      {
+        "where": "bound-max-interval-cap#0/good",
+        "deviation": "C2",
+        "oracle": 36501,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-max-interval-cap#0/easy",
+        "deviation": "C2",
+        "oracle": 36502,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-stability-ceiling#0/hard",
+        "deviation": "C3",
+        "oracle": 1016881.89,
+        "candidate": 1000000
+      },
+      {
+        "where": "bound-stability-ceiling#0/good",
+        "deviation": "C3",
+        "oracle": 1028070.98,
+        "candidate": 1000000
+      },
+      {
+        "where": "bound-stability-ceiling#0/good",
+        "deviation": "C2",
+        "oracle": 36501,
+        "candidate": 36500
+      },
+      {
+        "where": "bound-stability-ceiling#0/easy",
+        "deviation": "C3",
+        "oracle": 1052574.13,
+        "candidate": 1000000
+      },
+      {
+        "where": "bound-stability-ceiling#0/easy",
+        "deviation": "C2",
+        "oracle": 36502,
+        "candidate": 36500
+      }
+    ],
+    "limitations": [
+      {
+        "where": "oracle-review-zero-elapsed#0",
+        "note": "oracle throws on a review with 0 elapsed days; no comparison",
+        "candidatePath": "same-day",
+        "candidate": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 10,
+          "reps": 2,
+          "lapses": 0,
+          "lastReviewedAt": "2000-01-01T00:00:00.000Z",
+          "dueAt": "2000-01-11T00:00:00.000Z"
+        }
+      }
+    ]
+  },
+  "contract": {
+    "failures": [],
+    "results": [
+      {
+        "id": "refuse-unknown-rating",
+        "refusal": "INVALID_RATING"
+      },
+      {
+        "id": "refuse-time-without-millis",
+        "refusal": "INVALID_TIME"
+      },
+      {
+        "id": "refuse-impossible-date",
+        "refusal": "INVALID_TIME"
+      },
+      {
+        "id": "refuse-simple-v1-state",
+        "refusal": "UNSUPPORTED_SCHEDULER_VERSION"
+      },
+      {
+        "id": "refuse-invalid-state-0",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-1",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-2",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-3",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-4",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-5",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-6",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-7",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-state-8",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-clock-1ms-behind",
+        "refusal": "CLOCK_BEHIND_LAST_REVIEW"
+      },
+      {
+        "id": "refuse-due-past-year-9999",
+        "refusal": "DUE_OUT_OF_RANGE"
+      },
+      {
+        "id": "accept-equal-clock-is-same-day",
+        "path": "same-day",
+        "elapsedDays": 0,
+        "intervalDays": 10,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 10,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-29T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "elapsed-floor-just-under-1-day",
+        "path": "same-day",
+        "elapsedDays": 0,
+        "intervalDays": 10,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 10,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-29T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "elapsed-floor-exactly-1-day",
+        "path": "review",
+        "elapsedDays": 1,
+        "intervalDays": 13,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 13.05,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-11-01T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "elapsed-floor-1.999-days",
+        "path": "review",
+        "elapsedDays": 1,
+        "intervalDays": 13,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 13.05,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-11-01T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "again-returns-in-10-minutes",
+        "path": "review",
+        "elapsedDays": 10,
+        "intervalDays": null,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 8.35,
+          "s": 1.39,
+          "reps": 4,
+          "lapses": 1,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-19T15:10:00.000Z"
+        }
+      },
+      {
+        "id": "again-on-new-card-is-not-a-lapse",
+        "path": "new",
+        "elapsedDays": null,
+        "intervalDays": null,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 6.41,
+          "s": 0.21,
+          "reps": 1,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-19T15:10:00.000Z"
+        }
+      },
+      {
+        "id": "product-cap-180-days",
+        "path": "review",
+        "elapsedDays": 30,
+        "intervalDays": 180,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 1,
+          "s": 30078.88,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2027-04-17T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "product-cap-holds-after-ordering",
+        "path": "review",
+        "elapsedDays": 30,
+        "intervalDays": 180,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 1,
+          "s": 30042.12,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2027-04-17T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "parity-cap-holds-after-ordering",
+        "path": "review",
+        "elapsedDays": 30003,
+        "intervalDays": 36500,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 1,
+          "s": 84347.21,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2126-09-25T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "stability-floor-0.01",
+        "path": "same-day",
+        "elapsedDays": 0,
+        "intervalDays": null,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 8.35,
+          "s": 0.01,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-19T15:10:00.000Z"
+        }
+      },
+      {
+        "id": "new-card-hard-waits-1-day",
+        "path": "new",
+        "elapsedDays": null,
+        "intervalDays": 1,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5.11,
+          "s": 1.29,
+          "reps": 1,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-10-20T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "refuse-invalid-last-reviewed",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-missing-last-reviewed",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-noncanonical-last-reviewed",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-invalid-due",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-negative-reps",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-fractional-lapses",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "refuse-stability-above-ceiling",
+        "refusal": "INVALID_STATE"
+      },
+      {
+        "id": "precedence-rating-before-state",
+        "refusal": "INVALID_RATING"
+      },
+      {
+        "id": "precedence-time-before-state",
+        "refusal": "INVALID_TIME"
+      },
+      {
+        "id": "precedence-version-before-state",
+        "refusal": "UNSUPPORTED_SCHEDULER_VERSION"
+      },
+      {
+        "id": "accept-stability-at-ceiling",
+        "path": "review",
+        "elapsedDays": 36501,
+        "intervalDays": 36500,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 1,
+          "s": 1000000,
+          "reps": 4,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2126-09-25T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "refuse-reps-at-safe-maximum",
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      },
+      {
+        "id": "accept-reps-just-below-safe-maximum",
+        "path": "review",
+        "elapsedDays": 10,
+        "intervalDays": 32,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 32.03,
+          "reps": 9007199254740991,
+          "lapses": 0,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-11-20T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "refuse-lapses-at-safe-maximum-on-again",
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      },
+      {
+        "id": "accept-lapses-at-safe-maximum-on-good",
+        "path": "review",
+        "elapsedDays": 10,
+        "intervalDays": 32,
+        "state": {
+          "schedulerVersion": "fsrs6-candidate-1",
+          "d": 5,
+          "s": 32.03,
+          "reps": 4,
+          "lapses": 9007199254740991,
+          "lastReviewedAt": "2026-10-19T15:00:00.000Z",
+          "dueAt": "2026-11-20T15:00:00.000Z"
+        }
+      },
+      {
+        "id": "precedence-counter-before-due",
+        "refusal": "COUNTER_OUT_OF_RANGE"
+      }
+    ]
+  },
+  "phaseA": {
+    "failures": [],
+    "histories": [
+      {
+        "id": "new-again",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 6.41,
+            "s": 0.21,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "new-hard",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 1,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 5.11,
+            "s": 1.29,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "new-good",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "new-easy",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "easy",
+            "simpleDays": 3,
+            "candidateDays": 8,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 1,
+            "s": 8.3,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "repeated-hard",
+        "historyClass": "retained",
+        "reviews": 20,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 1,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 5.11,
+            "s": 1.29,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 3,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 6.74,
+            "s": 3.25,
+            "path": "review"
+          },
+          {
+            "i": 2,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 5,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 7.83,
+            "s": 4.68,
+            "path": "review"
+          },
+          {
+            "i": 3,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 6,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 8.55,
+            "s": 5.72,
+            "path": "review"
+          },
+          {
+            "i": 4,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 7,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.03,
+            "s": 6.51,
+            "path": "review"
+          },
+          {
+            "i": 5,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 7,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.35,
+            "s": 7.14,
+            "path": "review"
+          },
+          {
+            "i": 6,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 8,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.56,
+            "s": 7.66,
+            "path": "review"
+          },
+          {
+            "i": 7,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 8,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.7,
+            "s": 8.11,
+            "path": "review"
+          },
+          {
+            "i": 8,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 9,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.79,
+            "s": 8.52,
+            "path": "review"
+          },
+          {
+            "i": 9,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 9,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.85,
+            "s": 8.9,
+            "path": "review"
+          },
+          {
+            "i": 10,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 9,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.89,
+            "s": 9.26,
+            "path": "review"
+          },
+          {
+            "i": 11,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 10,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.92,
+            "s": 9.6,
+            "path": "review"
+          },
+          {
+            "i": 12,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 10,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.94,
+            "s": 9.93,
+            "path": "review"
+          },
+          {
+            "i": 13,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 10,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.95,
+            "s": 10.25,
+            "path": "review"
+          },
+          {
+            "i": 14,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 11,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 10.57,
+            "path": "review"
+          },
+          {
+            "i": 15,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 11,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 10.89,
+            "path": "review"
+          },
+          {
+            "i": 16,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 11,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 11.2,
+            "path": "review"
+          },
+          {
+            "i": 17,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 12,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 11.51,
+            "path": "review"
+          },
+          {
+            "i": 18,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 12,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 11.82,
+            "path": "review"
+          },
+          {
+            "i": 19,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 12,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.96,
+            "s": 12.13,
+            "path": "review"
+          }
+        ]
+      },
+      {
+        "id": "repeated-again",
+        "historyClass": "retained",
+        "reviews": 20,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 6.41,
+            "s": 0.21,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 8.81,
+            "s": 0.08,
+            "path": "same-day"
+          },
+          {
+            "i": 2,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.6,
+            "s": 0.03,
+            "path": "same-day"
+          },
+          {
+            "i": 3,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.86,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 4,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.94,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 5,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.97,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 6,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 7,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 8,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 9,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 10,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 11,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 12,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 13,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 14,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 15,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 16,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 17,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 18,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          },
+          {
+            "i": 19,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 9.98,
+            "s": 0.01,
+            "path": "same-day"
+          }
+        ]
+      },
+      {
+        "id": "ladder-cap",
+        "historyClass": "retained",
+        "reviews": 11,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "good",
+            "simpleDays": 3,
+            "candidateDays": 7,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 7.32,
+            "path": "review"
+          },
+          {
+            "i": 2,
+            "rating": "good",
+            "simpleDays": 7,
+            "candidateDays": 20,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 19.83,
+            "path": "review"
+          },
+          {
+            "i": 3,
+            "rating": "good",
+            "simpleDays": 16,
+            "candidateDays": 45,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 45.1,
+            "path": "review"
+          },
+          {
+            "i": 4,
+            "rating": "good",
+            "simpleDays": 35,
+            "candidateDays": 95,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 95.43,
+            "path": "review"
+          },
+          {
+            "i": 5,
+            "rating": "good",
+            "simpleDays": 75,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 192.15,
+            "path": "review"
+          },
+          {
+            "i": 6,
+            "rating": "good",
+            "simpleDays": 150,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 374.91,
+            "path": "review"
+          },
+          {
+            "i": 7,
+            "rating": "good",
+            "simpleDays": 180,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 700.68,
+            "path": "review"
+          },
+          {
+            "i": 8,
+            "rating": "easy",
+            "simpleDays": 180,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 1,
+            "s": 1399.41,
+            "path": "review"
+          },
+          {
+            "i": 9,
+            "rating": "easy",
+            "simpleDays": 180,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 1,
+            "s": 2141.17,
+            "path": "review"
+          },
+          {
+            "i": 10,
+            "rating": "easy",
+            "simpleDays": 180,
+            "candidateDays": 180,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 1,
+            "s": 2846.68,
+            "path": "review"
+          }
+        ]
+      },
+      {
+        "id": "lapse-and-relearn",
+        "historyClass": "retained",
+        "reviews": 6,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "good",
+            "simpleDays": 3,
+            "candidateDays": 7,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 7.32,
+            "path": "review"
+          },
+          {
+            "i": 2,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 1,
+            "candidateLapses": 1,
+            "d": 7.4,
+            "s": 1.15,
+            "path": "review"
+          },
+          {
+            "i": 3,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 1,
+            "candidateLapses": 1,
+            "d": 9.14,
+            "s": 0.4,
+            "path": "same-day"
+          },
+          {
+            "i": 4,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 1,
+            "simpleLapses": 1,
+            "candidateLapses": 1,
+            "d": 9.42,
+            "s": 0.26,
+            "path": "same-day"
+          },
+          {
+            "i": 5,
+            "rating": "good",
+            "simpleDays": 3,
+            "candidateDays": 2,
+            "simpleLapses": 1,
+            "candidateLapses": 1,
+            "d": 9.41,
+            "s": 0.88,
+            "path": "review"
+          }
+        ]
+      },
+      {
+        "id": "twenty-days-overdue",
+        "historyClass": "retained",
+        "reviews": 3,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "good",
+            "simpleDays": 3,
+            "candidateDays": 7,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 7.32,
+            "path": "review"
+          },
+          {
+            "i": 2,
+            "rating": "good",
+            "simpleDays": 7,
+            "candidateDays": 58,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 58.24,
+            "path": "review"
+          }
+        ]
+      },
+      {
+        "id": "same-day-and-equal-time",
+        "historyClass": "retained",
+        "reviews": 5,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          },
+          {
+            "i": 1,
+            "rating": "hard",
+            "simpleDays": 1,
+            "candidateDays": 1,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 4.76,
+            "s": 1.34,
+            "path": "same-day"
+          },
+          {
+            "i": 2,
+            "rating": "easy",
+            "simpleDays": 7,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 3,
+            "s": 2.38,
+            "path": "same-day"
+          },
+          {
+            "i": 3,
+            "rating": "again",
+            "simpleDays": 0.006944444444444444,
+            "candidateDays": 0.006944444444444444,
+            "simpleLapses": 1,
+            "candidateLapses": 0,
+            "d": 7.69,
+            "s": 0.8,
+            "path": "same-day"
+          },
+          {
+            "i": 4,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 1,
+            "simpleLapses": 1,
+            "candidateLapses": 0,
+            "d": 7.68,
+            "s": 0.85,
+            "path": "same-day"
+          }
+        ]
+      },
+      {
+        "id": "new-after-reset",
+        "historyClass": "missing-after-reset",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "state-without-retained-events",
+        "historyClass": "missing",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": 1382400000,
+            "candidate": "UNSUPPORTED_SCHEDULER_VERSION",
+            "kind": "needs-transition"
+          }
+        ]
+      },
+      {
+        "id": "very-old-capped-card",
+        "historyClass": "retained",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": 15552000000,
+            "candidate": "UNSUPPORTED_SCHEDULER_VERSION",
+            "kind": "needs-transition"
+          }
+        ]
+      },
+      {
+        "id": "spring-elapsed-day",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "fall-elapsed-day",
+        "historyClass": "new",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "rating": "good",
+            "simpleDays": 1,
+            "candidateDays": 2,
+            "simpleLapses": 0,
+            "candidateLapses": 0,
+            "d": 2.12,
+            "s": 2.31,
+            "path": "new"
+          }
+        ]
+      },
+      {
+        "id": "clock-backward",
+        "historyClass": "refusal",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": "CLOCK_BEHIND_LAST_REVIEW",
+            "candidate": "UNSUPPORTED_SCHEDULER_VERSION",
+            "kind": "needs-transition"
+          }
+        ]
+      },
+      {
+        "id": "noncanonical-time",
+        "historyClass": "refusal",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": "INVALID_TIME",
+            "candidate": "INVALID_TIME",
+            "kind": "same-refusal"
+          }
+        ]
+      },
+      {
+        "id": "foreign-version",
+        "historyClass": "refusal",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": "UNSUPPORTED_SCHEDULER_VERSION",
+            "candidate": "UNSUPPORTED_SCHEDULER_VERSION",
+            "kind": "same-refusal"
+          }
+        ]
+      },
+      {
+        "id": "unknown-rating",
+        "historyClass": "refusal",
+        "reviews": 1,
+        "rows": [
+          {
+            "i": 0,
+            "simple": "INVALID_RATING",
+            "candidate": "INVALID_RATING",
+            "kind": "same-refusal"
+          }
+        ]
+      }
+    ],
+    "differences": {
+      "sameInterval": 33,
+      "differentInterval": 39,
+      "lapseCountDiffers": 2,
+      "needsTransition": 3,
+      "sameRefusal": 3,
+      "notReachedAfterRefusal": 0
+    }
+  },
+  "transitions": [
+    {
+      "id": "retained-complete-history",
+      "contract": "replayed under the candidate; method reconstructed",
+      "pass": true
+    },
+    {
+      "id": "retained-partial-history",
+      "contract": "fallback replay of the retained suffix, marked not-reconstructed; counters kept",
+      "pass": true
+    },
+    {
+      "id": "erased-history",
+      "contract": "stays erased; the card starts new",
+      "pass": true
+    },
+    {
+      "id": "unknown-version",
+      "contract": "refused",
+      "pass": true
+    },
+    {
+      "id": "unreviewed-state",
+      "contract": "no-op; stays new",
+      "pass": true
+    },
+    {
+      "id": "already-transitioned",
+      "contract": "no-op",
+      "pass": true
+    },
+    {
+      "id": "flagged-card",
+      "contract": "flag kept; schedule transitioned",
+      "pass": true
+    },
+    {
+      "id": "suspended-card",
+      "contract": "suspension kept (not lifted); schedule transitioned",
+      "pass": true
+    },
+    {
+      "id": "stale-generation",
+      "contract": "refused; refusal stored under its operation ID",
+      "pass": true
+    },
+    {
+      "id": "repeated-operation-id",
+      "contract": "the stored result is replayed, not recomputed",
+      "pass": true
+    },
+    {
+      "id": "pending-due-instant",
+      "contract": "kept until the next real review, then replaced by the candidate",
+      "pass": true
+    },
+    {
+      "id": "inconsistent-complete-history",
+      "contract": "refused when the history does not account for the state",
+      "pass": true
+    },
+    {
+      "id": "pure-and-deterministic",
+      "contract": "frozen inputs are untouched and two runs agree",
+      "pass": true
+    }
+  ],
+  "timing": {
+    "evaluationMs": 9.7,
+    "vectorMs": 3.3,
+    "phaseAAndTransitionsMs": 6.4,
+    "totalMs": 83
+  },
+  "environment": {
+    "node": "v22.23.3",
+    "typescript": "5.9.3",
+    "platform": "darwin",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M5",
+    "cpuCount": 10,
+    "unmeasured": [
+      "memory use",
+      "native (Rust) parity and responsiveness",
+      "installed-app responsiveness"
+    ]
+  }
+}
