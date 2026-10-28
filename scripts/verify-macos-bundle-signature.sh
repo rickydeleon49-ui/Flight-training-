@@ -48,8 +48,38 @@ verify_app() {
     echo "::error::Info.plist=not bound in bundle signature: $app" >&2
     failed=1
   fi
+  if [[ -n "$expected_team" ]]; then
+    # Opt-in Developer ID mode (scripts/build-signed-mac.sh). Adds checks on
+    # top of the ones above; CI's ad-hoc run leaves it unset.
+    if [[ "$details" != *"Authority=Developer ID Application: "*"($expected_team)"* ]]; then
+      echo "::error::Not signed by Developer ID Application ($expected_team): $app" >&2
+      failed=1
+    fi
+    if [[ "$details" != *"TeamIdentifier=$expected_team"* ]]; then
+      echo "::error::TeamIdentifier is not $expected_team: $app" >&2
+      failed=1
+    fi
+    if [[ ! "$details" =~ flags=0x[0-9a-f]+\([^\)]*runtime[^\)]*\) ]]; then
+      echo "::error::Hardened runtime flag missing: $app" >&2
+      failed=1
+    fi
+    if [[ "$details" == *"Signature=adhoc"* ]]; then
+      echo "::error::Ad-hoc signature where Developer ID was required: $app" >&2
+      failed=1
+    fi
+    if [[ "$details" != *"Identifier=com.herflightdeck.app"$'\n'* ]]; then
+      echo "::error::Bundle identifier is not com.herflightdeck.app: $app" >&2
+      failed=1
+    fi
+  fi
   [[ "$failed" == 0 ]] || fail "Incomplete or invalid bundle signature: $app"
 }
+
+# Optional: a 10-character Apple team ID turns on the Developer ID checks.
+expected_team="${HFD_EXPECT_DEVELOPER_ID_TEAM:-}"
+if [[ -n "$expected_team" && ! "$expected_team" =~ ^[A-Z0-9]{10}$ ]]; then
+  fail "HFD_EXPECT_DEVELOPER_ID_TEAM must be a 10-character Apple team ID."
+fi
 
 shopt -s nullglob
 [[ $# -gt 0 ]] || fail "Supply a DMG directory or one or more DMG paths (shell globs are accepted)."
