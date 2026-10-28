@@ -535,3 +535,27 @@ it("cancelled_other_worker_keeps_its_actions_even_with_newer_ready_kits", async 
   expect(screen.getByRole("link", { name: "Open that PDF in the Study Library" }).getAttribute("href")).toBe("/study/other%2Fpdf");
   expect(screen.getByRole("button", { name: "Discard that kit" })).toBeTruthy();
 });
+
+
+it("PACKS-07 keeps the source material in provenance outside its own material page", () => {
+  const props = { sourceMaterialTitle: material.title, kind: "practice-test" as const, content: { provider: "manual" as const } };
+  const view = render(h(StudyContentProvenance, props));
+  expect(screen.getByText("Source material:")).toBeTruthy();
+  expect(screen.getByText(material.title)).toBeTruthy();
+  view.rerender(h(StudyContentProvenance, { ...props, hideSourceMaterial: true }));
+  expect(screen.queryByText("Source material:")).toBeNull();
+  expect(screen.queryByText(material.title)).toBeNull();
+  expect(screen.getByText("Written by you")).toBeTruthy();
+});
+
+it("PACKS-07 section labels leave per-item edits and unavailable-source meaning visible", () => {
+  const valid = { status: "valid" as const, label: "Pulled from your PDF on this Mac" as const, sources: [] };
+  const view = render(h(PdfItemLabel, { provenance: valid, sectionLabelled: true }));
+  expect(view.container.textContent).toBe("");
+  view.rerender(h(PdfItemLabel, { provenance: valid, sectionLabelled: true, origin: "user" }));
+  expect(view.container.textContent).toBe("Edited by you");
+  view.rerender(h(PdfItemLabel, { provenance: valid, sectionLabelled: true, origin: "instructor" }));
+  expect(view.container.textContent).toBe("Corrected by your instructor");
+  view.rerender(h(PdfItemLabel, { provenance: { ...valid, status: "invalid", label: "PDF source details unavailable" }, sectionLabelled: true }));
+  expect(view.container.textContent).toBe("Source details unavailable");
+});

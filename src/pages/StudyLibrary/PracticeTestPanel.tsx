@@ -1296,7 +1296,7 @@ export function PracticeTestPanel({
         <SourcePageBadge page={question.sourcePage} materialId={materialId} />
       </div>
 
-      <PdfItemLabel provenance={question.pdfProvenance} origin={question.origin} />
+      <PdfItemLabel sectionLabelled={practiceTest.questions.every((item) => item.pdfProvenance?.status === "valid")} provenance={question.pdfProvenance} origin={question.origin} />
       <p className="small ai-copy">{question.questionText}</p>
 
       <div className="stack stack--2" role="radiogroup" aria-label="Answer choices">

@@ -628,7 +628,6 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
               Rebuild study kit
             </Button>
           ) : null}
-          <p className="tiny muted">{PDF_KIT_REMINDER}</p>
           <Dialog
             open={open && !questions}
             title="Review your PDF study kit"

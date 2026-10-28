@@ -77,7 +77,7 @@ import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeRegenerationReviewDialog } from "./PracticeRegenerationReviewDialog";
 import { RegenerationReviewDialog } from "./RegenerationReviewDialog";
 import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
-import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
+import { PdfItemLabel, PDF_KIT_LABEL, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { MaterialStartHere, useMaterialTips } from "./MaterialStartHere";
@@ -872,6 +872,7 @@ function MaterialDetailPage() {
                       </div>
 
                       <StudyContentProvenance
+                        hideSourceMaterial
                         sourceMaterialTitle={material.title}
                         content={studySet}
                         kind="study-aid"
@@ -1315,7 +1316,7 @@ function MaterialDetailPage() {
                           <AlertIcon size={16} />
                           <p className="tiny">
                             {pdfTest
-                              ? PDF_KIT_REMINDER
+                              ? `Study aid. ${PDF_KIT_REMINDER}`
                               : importedTest
                                 ? IMPORTED_CONTENT_DISCLAIMER
                                 : practiceTest.provider === "manual"
@@ -1335,6 +1336,7 @@ function MaterialDetailPage() {
                       </div>
 
                       <StudyContentProvenance
+                        hideSourceMaterial
                         sourceMaterialTitle={material.title}
                         content={practiceTest}
                         kind="practice-test"
@@ -1521,16 +1523,13 @@ function MaterialDetailPage() {
                         <CardHeader title="Your study kit" />
                         <CardBody>
                           <div className="stack stack--5">
-                            <div className="ai-disclaimer">
-                              <AlertIcon size={16} />
-                              <p className="tiny">{PDF_KIT_REMINDER}</p>
-                            </div>
-
                             {kitSections.length > 0 ? (
                               <section className="stack stack--3" aria-labelledby="kit-sections-title">
                                 <div>
                                   <p className="eyebrow">Study guide</p>
                                   <h4 id="kit-sections-title" className="ai-guide__title">{studySet?.title}</h4>
+                                  <p className="tiny muted">{PDF_KIT_LABEL}</p>
+                                  <p className="tiny muted">Study aid. {PDF_KIT_REMINDER}</p>
                                 </div>
                                 {kitSections.map(({ section, originalIndex }) => {
                                   const pages = [...new Set(section.pdfProvenance?.sources?.map((s) => s.page) ?? [])];
@@ -1543,7 +1542,7 @@ function MaterialDetailPage() {
                                       <h4>
                                         {section.heading}{" "}
                                         {section.pdfProvenance ? (
-                                          <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} />
+                                          <PdfItemLabel sectionLabelled provenance={section.pdfProvenance} origin={section.origin} />
                                         ) : (
                                           <AuthorBadge origin={section.origin} />
                                         )}
@@ -1564,7 +1563,9 @@ function MaterialDetailPage() {
                                 className={`stack stack--3${linkTarget?.kind === "card" && Boolean(studySet?.flashcards[linkTarget.index]?.pdfProvenance) ? " search-target" : ""}`}
                                 aria-labelledby="kit-flashcards-title"
                               >
-                                <div className="row row--between">
+                                <p className="tiny muted">{PDF_KIT_LABEL}</p>
+                                <p className="tiny muted">Study aid. {PDF_KIT_REMINDER}</p>
+                                <div className="row row--between row--wrap">
                                   <div>
                                     <p className="eyebrow">Flashcards</p>
                                     <h4 id="kit-flashcards-title" className="ai-guide__title">
@@ -1573,7 +1574,7 @@ function MaterialDetailPage() {
                                   </div>
                                   <div className="row row--wrap">
                                     {kitFlashcards[safeKitCardIndex]?.card.pdfProvenance ? (
-                                      <PdfItemLabel
+                                      <PdfItemLabel sectionLabelled
                                         provenance={kitFlashcards[safeKitCardIndex]?.card.pdfProvenance}
                                         origin={kitFlashcards[safeKitCardIndex]?.card.origin}
                                       />

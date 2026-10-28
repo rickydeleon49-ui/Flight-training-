@@ -194,3 +194,26 @@ it("PACKS-06 places matching materials before missed-topic panels during search,
   fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "   " } });
   expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
 });
+
+
+it("PACKS-07 puts title matches before content, but keeps content first for metadata-only matches", () => {
+  data.materials = [
+    makeMaterial({ id: "title", title: "PHAK — Pages 1–10" }),
+    makeMaterial({ id: "notes", title: "Other book", notes: "phak and rudder" }),
+  ];
+  contentSearch.hasMatches = true;
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const box = screen.getByRole("textbox", { name: "Search your library" });
+  fireEvent.change(box, { target: { value: "  phak  " } });
+  expect(before(screen.getByText("PHAK — Pages 1–10"), screen.getByText("Content search hit"))).toBe(true);
+  expect(screen.getAllByText("Content search hit")).toHaveLength(1);
+  const topics = screen.getByText("Find study materials for missed topics");
+  expect(topics.closest(".library__search-topics")).toBeTruthy();
+  fireEvent.change(box, { target: { value: "rudder" } });
+  expect(before(screen.getByText("Content search hit"), screen.getByText("Other book"))).toBe(true);
+  fireEvent.change(box, { target: { value: "Pages 1-10" } });
+  expect(before(screen.getByText("PHAK — Pages 1–10"), screen.getByText("Content search hit"))).toBe(true);
+  fireEvent.change(box, { target: { value: "   " } });
+  expect(before(screen.getByText("Content search hit"), screen.getByText("Other book"))).toBe(true);
+});

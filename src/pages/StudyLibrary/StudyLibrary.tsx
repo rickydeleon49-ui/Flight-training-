@@ -160,6 +160,10 @@ export function StudyLibrary() {
     return sortMaterials(matching, sort);
   }, [filtered, search, sort]);
 
+  const titleMatchesSearch = !!search.trim() && visible.some((material) =>
+    searchText(material.title).includes(searchText(search.trim())),
+  );
+
   const shownMaterials = useMemo(() => visible.slice(0, visibleLimit), [visible, visibleLimit]);
   const offlineBadges = useOfflineBadges(shownMaterials);
 
@@ -314,7 +318,9 @@ export function StudyLibrary() {
         </div>
       )}
 
+      {!titleMatchesSearch ? (
       <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
+      ) : null}
 
       {hasAny ? (
         <div className="filter-chips" style={{ marginBottom: "var(--space-5)" }}>
@@ -393,7 +399,11 @@ export function StudyLibrary() {
         </>
       )}
 
-      {search.trim() ? topicPanels : null}
+      {titleMatchesSearch ? (
+      <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />
+      ) : null}
+
+      {search.trim() ? <div className="library__search-topics">{topicPanels}</div> : null}
 
       </div>
       ) : null}
