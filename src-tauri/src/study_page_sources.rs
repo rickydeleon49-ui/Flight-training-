@@ -279,7 +279,7 @@ pub fn freeze(
 pub(crate) mod tests {
     use super::*;
     use lopdf::{dictionary, Document, Object};
-    fn pdf_bytes(pages: u32, salt: &str) -> Vec<u8> {
+    fn pdf_bytes(pages: u32, title: &str) -> Vec<u8> {
         let mut document = Document::with_version("1.5");
         let pages_id = document.new_object_id();
         let kids: Vec<Object> = (0..pages)
@@ -308,7 +308,7 @@ pub(crate) mod tests {
         document.trailer.set("Root", catalog_id);
         document.trailer.set(
             "Info",
-            Object::Dictionary(dictionary! { "Title" => Object::string_literal(salt) }),
+            Object::Dictionary(dictionary! { "Title" => Object::string_literal(title) }),
         );
         let mut out = Vec::new();
         document.save_to(&mut out).unwrap();
