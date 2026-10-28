@@ -62,8 +62,8 @@ only the specific entitlement it needs, with a comment, in a new round.
 
 ## What stays until a real signed release is verified
 
-The **Open Anyway** owner exception in `CLAUDE.md` and `README.md` stays in
-place. It is removed only after a real signed, notarized release has passed the
-first-run check above on an Apple Silicon Mac. The stapled ticket is on the DMG;
+The **Open Anyway** owner exception is retired once the first signed release
+(0.6.1) is verified: a real signed, notarized release must pass the first-run
+check above on an Apple Silicon Mac. The stapled ticket is on the DMG;
 the app copied out of it is covered by the same notarization, which Gatekeeper
 confirms online on first launch, so do the first launch while online.

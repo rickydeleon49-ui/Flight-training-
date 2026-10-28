@@ -167,12 +167,13 @@ authoritatively clears the exact binary. Physical installed-app validation is
 mandatory for each platform included in a release; the Mac-only candidate
 requires Apple Silicon validation before publication.
 
-A local Developer ID path is now prepared but not yet used for a release:
+Mac releases from 0.6.1 are signed with a Developer ID and notarized by Apple,
+so the app opens normally with no extra steps; checking the SHA-256 checksum
+against the published one is still a good habit.
 `scripts/build-signed-mac.sh <version>` builds, signs, notarizes and staples the
 Mac DMG on the owner's Mac from the exact release tag, using a keychain identity
 and the `hfd-notary` notarytool profile; credentials never enter the repository.
 Owner steps are in [docs/MAC_SIGNING_LOCAL_2026-10-28.md](docs/MAC_SIGNING_LOCAL_2026-10-28.md).
-The Open Anyway exception below remains until a signed release is verified.
 
 In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
 
@@ -184,12 +185,8 @@ In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
   the draft must remain private and held from distribution. Never instruct
   users to bypass, disable, or weaken operating system or browser protections
   (such as running quarantine removal commands or lowering Safe Browsing).
-  **Owner exception (16 October 2026):** an unsigned Mac build that the owner
-  has released may be opened through Apple's documented Privacy & Security →
-  **Open Anyway** step after its SHA-256 matches the published checksum. This
-  applies only to macOS's "could not verify" (unidentified developer) block,
-  never to an actual malware detection, and ends once Developer ID signing and
-  notarization are in place.
+  Mac releases from 0.6.1 are signed and notarized, so they open normally; the
+  earlier 'Open Anyway' owner exception is retired.
 - **Windows hold resolution:** The Windows hold may be resolved by authoritative
   Microsoft clearance of the exact installer (e.g. Microsoft Security Intelligence
   developer dispute) or by trusted code signing. If a detection cannot be cleared
