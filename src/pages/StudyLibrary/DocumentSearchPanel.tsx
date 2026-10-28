@@ -1,3 +1,4 @@
+import type { HomeworkSnapshot } from "@/domain/homework";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -111,6 +112,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
   const data = app?.data;
   const navigate = useNavigate();
   const [results, setResults] = useState<Results | null>(null);
+  const [homeworkLabels, setHomeworkLabels] = useState<Record<string, HomeworkSnapshot>>({});
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [notes, setNotes] = useState<Record<string, { text: string; error: boolean }>>({});
   // Only the newest request's answer is used.
@@ -205,6 +207,24 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
     const timer = window.setTimeout(() => void run(trimmed, scope ? scope.split("\n") : [], 0, mine), TYPING_PAUSE_MS);
     return () => window.clearTimeout(timer);
   }, [trimmed, scope, run, retire]);
+
+  // Titles are display-only: keep the saved hit and its digest unchanged.
+  const loadHomework = app?.repositories?.homework.get;
+  useEffect(() => {
+    let cancelled = false;
+    setHomeworkLabels({});
+    const assignmentIds = [...new Set(results?.saved?.groups.flatMap(g => g.passages
+      .filter(p => p.kind === "homework" || p.kind === "homework_activity")
+      .map(p => p.recordId.split(":")[0]!)) ?? [])];
+    if (loadHomework) void Promise.all(assignmentIds.map(async id => {
+      try { return await loadHomework(id); } catch { return null; }
+    })).then(snapshots => {
+      if (!cancelled) setHomeworkLabels(Object.fromEntries(snapshots
+        .filter((s): s is HomeworkSnapshot => s !== null)
+        .map(s => [s.assignment.id, s])));
+    });
+    return () => { cancelled = true; };
+  }, [results, loadHomework]);
 
   // Stop listening for answers once the panel goes away.
   useEffect(
@@ -417,7 +437,11 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
                       {group.passages.map((passage) => {
                         const key = `saved:${group.kind}:${group.materialId ?? ""}:${passage.kind}:${passage.recordId}`;
                         const note = notes[key];
-                        const label = savedKindLabel(passage.kind);
+                        const [assignmentId, activityId] = passage.recordId.split(":");
+                        const homework = (passage.kind === "homework" || passage.kind === "homework_activity") ? homeworkLabels[assignmentId!] : null;
+                        const label = homework ? `Homework · ${homework.assignment.title}` : savedKindLabel(passage.kind);
+                        const activityTitle = passage.kind === "homework_activity"
+                          ? homework?.activities.find(e => e.record.id === activityId && !e.record.removed_at)?.record.title : null;
                         const snippetId = `${baseId}-${key}`;
                         return (
                           <div key={key} className="stack stack--1">
@@ -426,12 +450,13 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
                               className="button button--secondary button--small"
                               data-search-result=""
                               style={{ textAlign: "left", justifyContent: "flex-start", whiteSpace: "normal" }}
-                              aria-label={`${group.title}, ${label}: open it`}
+                              aria-label={`${group.title}, ${label}${activityTitle ? `: ${activityTitle}` : ""}: open it`}
                               aria-describedby={snippetId}
                               onClick={() => void openSaved(group, passage)}
                             >
                               <span className="stack stack--1">
-                                <span className="tiny">{label}</span>
+                                <span className="tiny wrap-anywhere">{label}</span>
+                                {activityTitle ? <span className="small wrap-anywhere">{activityTitle}</span> : null}
                                 <span className="small wrap-anywhere" id={snippetId}>
                                   {snippetPieces(passage.snippet).map((piece, i) =>
                                     piece.mark ? <mark key={i}>{piece.text}</mark> : <span key={i}>{piece.text}</span>,
@@ -469,6 +494,6 @@ function DocumentSearch({ query, materials, materialFiltersActive = false }: { q
 
   // Put actual saved hits ahead of an empty PDF section, in DOM and reading order.
   return savedFound && !found
-    ? <>{savedCard}{documentsCard}</>
-    : <>{documentsCard}{savedCard}</>;
+    ? <div className="document-search-results stack stack--4">{savedCard}{documentsCard}</div>
+    : <div className="document-search-results stack stack--4">{documentsCard}{savedCard}</div>;
 }

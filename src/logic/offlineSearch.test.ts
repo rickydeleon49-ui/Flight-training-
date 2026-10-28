@@ -43,10 +43,10 @@ describe("coverageSentence", () => {
   });
   it("separates no match from not searched", () => {
     expect(coverageSentence({ ...none, searchedDocuments: 12, searchedPages: 3041, notPrepared: 4 }, 0)).toBe(
-      "No matches in 12 documents (3,041 pages). 4 documents aren't prepared for offline search yet.",
+      "No matches in 12 documents (3,041 pages). 4 documents aren't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.",
     );
     expect(coverageSentence({ ...none, notPrepared: 1 }, 0)).toBe(
-      "PDF text isn’t ready to search yet. 1 document isn't prepared for offline search yet.",
+      "PDF text isn’t ready to search yet. 1 document isn't prepared for offline search yet. Open each document in Study Library and choose “Read this PDF's text”.",
     );
   });
 
