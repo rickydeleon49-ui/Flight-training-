@@ -58,9 +58,9 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 **PACKS-07 + PDF-STUDY-01c + GLASS-01 merged in PR #287 (main `f4ea44d`):** Less repetition on study-kit pages; "Make a card" from a page note with owner-approved add-only migration 0024 (`study_page_sources` + bindings), "Position unverified" when the PDF is missing or changed; optional Glass appearance in Settings (owner request; Classic default, CSS only, contrast-tested). Claude reviewed the work and the installed-app student run passed on a fictional profile; all six exact-head checks passed; no tag or release.
 
-**PACKS-08 in progress:** Search topic panels hidden while searching, plainer card wording, bookmark rows wrap, card counts.
+**PACKS-08/09 + PDF-STUDY-01d/01e + VISUAL-01a plan merged in PR #288 (main `5f305af`):** Calmer search and page notes; "Your card"/"PDF card" counts; one "Card N options" control; a calmer Today line when nothing has a time estimate. "Make a question" turns a page note into a practice question in the existing editor (two blank options, no answer chosen), with the page source saved beside it using the approved 0024 tables (no new migration). Student-run polish: page-note buttons wrap, the editor opens at the new question, and "Question added to your practice test." confirms the save. The VISUAL-01 plan is in docs/VISUAL_01_PROPOSAL_2026-10-28.md. Claude reviewed the work, the installed-app student run and recheck passed, and all six exact-head checks passed on `76fcaa9`.
 
-**Row 11 PDF-STUDY-01 in progress:** 01d (page note → practice question) in progress. Next queue item after row 11 stays row 12 VISUAL-01.
+**Row 11 PDF-STUDY-01 done (01a–01e).** Highlights and an embedded reader stay gated. **Row 12 VISUAL-01:** plan merged; 01b developer-only proof in progress. **Row 13 ORAL-01:** plan written; 01b try-it dialog in progress.
 
 **Export verification:** native synthetic imports and HTML, CSV and Markdown ZIP saves work. ZIP guide sections stay separate, CSV formula mitigation is present, and Safari Letter/A4 preview plus A4 Save as PDF were exercised. The merged print correction keeps the practice heading and first question together in both paper sizes; the answer key stays separate. Physical printing remains untested.
 
