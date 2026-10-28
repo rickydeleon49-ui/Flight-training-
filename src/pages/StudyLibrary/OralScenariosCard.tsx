@@ -93,7 +93,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
                       {canMove ? (
                         <>
                           <Button size="small" onClick={() => move(at, at - 1)} disabled={at === 0} aria-label={`Move up: ${title}`}>
-                            Move up
+                            Up
                           </Button>
                           <Button
                             size="small"
@@ -101,7 +101,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
                             disabled={at === visible.length - 1}
                             aria-label={`Move down: ${title}`}
                           >
-                            Move down
+                            Down
                           </Button>
                         </>
                       ) : null}
@@ -132,7 +132,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
       <ConfirmDialog
         open={removing !== null}
         title="Remove this scenario?"
-        message="It leaves your list. Your notes and questions are kept."
+        message={removing ? `"${oralScenarioTitle(removing.prompt)}" leaves your list. Your notes and questions are kept.` : ""}
         confirmLabel="Remove"
         onConfirm={() => {
           const scenario = removing!;

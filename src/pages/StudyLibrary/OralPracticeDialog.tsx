@@ -136,9 +136,6 @@ export function OralPracticeDialog({
           </Field>
         ) : (
           <div aria-live="polite">
-            <h3 ref={revealRef} tabIndex={-1} className="small">
-              Your discussion points
-            </h3>
             {answer.trim() ? (
               <div className="stack stack--1">
                 <p className="tiny muted">Your answer</p>
@@ -147,6 +144,9 @@ export function OralPracticeDialog({
                 </p>
               </div>
             ) : null}
+            <h3 ref={revealRef} tabIndex={-1} className="small">
+              Your discussion points
+            </h3>
             <p className="tiny muted">Tick the points you covered.</p>
             <div className="stack stack--2">
               {points.map((point, at) => (
