@@ -1,0 +1,12 @@
+# Run from the repository root on 2026-10-28.
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH   # Node v22.23.3
+cd docs/evidence/p54-06-phase-b-2026-10-19 && shasum -a 256 -c PREREGISTRATION.sha256; cd -   # frozen-preregistration-sha256.*
+shasum -a 256 -c docs/evidence/p54-06-phase-b-2026-10-19/SHA256SUMS                        # frozen-sha256sums.*
+node --test docs/evidence/p54-06-phase-b-2026-10-19/proof/preregistration.test.mjs          # preregistration-tests.*
+/usr/bin/time -p node docs/evidence/p54-06-phase-b2-2026-10-28/proof/runner.mjs             # results.json/.time/.exit
+/usr/bin/time -p node docs/evidence/p54-06-phase-b2-2026-10-28/proof/runner.mjs --controls  # negative-controls.*
+node --test docs/evidence/p54-06-phase-b2-2026-10-28/proof/runner.test.mjs                  # runner-tests.*
+npx tsc --noEmit --strict --noUncheckedIndexedAccess --target es2022 --lib es2022 --module es2022 --moduleResolution bundler --types node docs/evidence/p54-06-phase-b2-2026-10-28/candidate/fsrs6Candidate.ts   # candidate-typecheck.*
+npx vitest run          # exit 0: 329 files passed, 4 skipped; 5834 tests passed, 6 skipped
+npm run typecheck       # exit 0
+git diff --check        # exit 0

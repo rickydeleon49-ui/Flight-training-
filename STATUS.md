@@ -1,3 +1,9 @@
+## 28 October 2026 — PRs #289–#291 merged
+
+PR #289 (main `a472327`) merged VISUAL-01b and ORAL-01b: a developer-only "cover a label" proof (browser dev mode only, absent from the production build) and a "Practice an oral question" try-it dialog that saves nothing, with polish from two student runs. PR #290 (main `d48a5e6`) merged ORAL-01c: her oral scenarios are saved using owner-approved add-only migration 0025 (oral_scenarios, oral_scenario_versions, oral_save_operations); her answers are never stored, and ORAL-01d is not approved. PR #291 (main `b2342ee`) merged VISUAL-01c: saved "cover a label" picture cards on PNG materials using owner-approved add-only migration 0026 (visual_card_regions, card_item_visual_regions); legacy text-card identity is unchanged, picture cards are omitted from exports, and backup/restore and deletion are guarded. Claude reviewed all three and the student runs passed; all six exact-head checks passed on each; no tag or release.
+
+Apple Developer signing: owner chose local-first Developer ID signing + notarization; preparation branch held until credentials exist.
+
 ## PR #288 merged: PACKS-08/09, PDF-STUDY-01d/01e, VISUAL-01a plan — 28 October 2026
 
 PR #288 merged PACKS-08/09, PDF-STUDY-01d/01e, and the VISUAL-01a plan into main (`5f305af`). It delivers calmer search and page notes, separate "Your card" and "PDF card" counts, a single "Card N options" control, and a calmer Today line when nothing has a time estimate. "Make a question" turns a page note into a practice question in the existing editor with the page source saved beside it using the approved 0024 tables (no new migration). Student-run polish wraps page-note buttons, opens the editor at the new question, and confirms saves with "Question added to your practice test." The VISUAL-01 plan is in docs/VISUAL_01_PROPOSAL_2026-10-28.md, and all six exact-head checks passed on `76fcaa9`.
