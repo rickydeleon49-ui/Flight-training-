@@ -167,6 +167,13 @@ authoritatively clears the exact binary. Physical installed-app validation is
 mandatory for each platform included in a release; the Mac-only candidate
 requires Apple Silicon validation before publication.
 
+A local Developer ID path is now prepared but not yet used for a release:
+`scripts/build-signed-mac.sh <version>` builds, signs, notarizes and staples the
+Mac DMG on the owner's Mac from the exact release tag, using a keychain identity
+and the `hfd-notary` notarytool profile; credentials never enter the repository.
+Owner steps are in [docs/MAC_SIGNING_LOCAL_2026-10-28.md](docs/MAC_SIGNING_LOCAL_2026-10-28.md).
+The Open Anyway exception below remains until a signed release is verified.
+
 In accordance with [the release review process](docs/RELEASE_REVIEW_PROCESS.md):
 
 - **Drafts stay private:** The default browser run produces a private CI artifact.
