@@ -376,3 +376,20 @@ it("shows only one picture surface when two review sessions are mounted, and swi
   expect(screen.getAllByRole("button", { name: /Reveal label/ })).toHaveLength(1);
   expect(await db.select("SELECT * FROM card_review_events")).toEqual([]);
 });
+
+it("keeps the existing cover after a click or a small slip, and draws only on a real drag", async () => {
+  const { VisualPicture } = await import("./VisualPicture");
+  const onDraw = vi.fn();
+  const { container } = render(
+    h(VisualPicture, { picture, cover: { x: 10, y: 10, w: 40, h: 20 }, turn: 0, covered: true, onDraw }),
+  );
+  const svg = container.querySelector("svg") as SVGSVGElement;
+  Object.assign(svg, { setPointerCapture: () => {} });
+  fireEvent.pointerDown(svg, { clientX: 50, clientY: 50, pointerId: 1 });
+  fireEvent.pointerMove(svg, { clientX: 53, clientY: 54, pointerId: 1 });
+  fireEvent.pointerUp(svg, { clientX: 53, clientY: 54, pointerId: 1 });
+  expect(onDraw).not.toHaveBeenCalled();
+  fireEvent.pointerDown(svg, { clientX: 50, clientY: 50, pointerId: 1 });
+  fireEvent.pointerUp(svg, { clientX: 90, clientY: 80, pointerId: 1 });
+  expect(onDraw).toHaveBeenCalled();
+});

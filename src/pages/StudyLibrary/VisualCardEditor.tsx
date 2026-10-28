@@ -194,7 +194,7 @@ export function VisualCardEditor({
       onClose={() => {
         if (!saving.current) onClose();
       }}
-      title="Cover a label"
+      title={cardIndex === undefined ? "Cover a label" : "Edit picture card"}
       description={
         uncertain
           ? "The save may already have happened. Try save again checks the same request; closing does not undo a saved card."

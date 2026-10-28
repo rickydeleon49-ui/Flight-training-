@@ -3,6 +3,8 @@ import type { PointerEvent } from "react";
 import { drawnCover, rotatedSize, rotationTransform, type Cover, type Turn } from "@/logic/visualCover";
 import type { VisualPicture as Picture } from "@/services/visualCards";
 
+const MIN_DRAG_PX = 8;
+
 /** Image and opaque cover share one transform, before the image's first frame. */
 export function VisualPicture({
   picture,
@@ -24,6 +26,8 @@ export function VisualPicture({
 
   const draw = (e: PointerEvent<SVGSVGElement>) => {
     if (!start.current || !onDraw) return;
+    // A click or a small slip keeps the cover she already has.
+    if (Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) < MIN_DRAG_PX) return;
     const r = e.currentTarget.getBoundingClientRect();
     onDraw(
       drawnCover(start.current, { x: e.clientX, y: e.clientY }, size, turn, {
