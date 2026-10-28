@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
+import { WeatherPreference } from "@/components/weather/AirportWeather";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Button,
@@ -870,6 +871,11 @@ export function Settings() {
               </div>
             </div>
           </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Airport weather" />
+          <CardBody><WeatherPreference /></CardBody>
         </Card>
 
         <Card>
