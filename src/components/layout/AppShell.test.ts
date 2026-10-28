@@ -108,15 +108,48 @@ describe("AppShell navigation disclosure", () => {
     expect(screen.getByRole("link", { name: "Study Library" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("opens Quick Find through Search and through the keyboard shortcut with the menu closed", () => {
+  it.each(["button", "Control shortcut", "Command shortcut"])("closes the narrow Menu before Quick Find opens via %s and returns focus to Menu", (entry) => {
     mount();
-    fireEvent.click(menu());
+    const menuButton = menu();
+    fireEvent.click(menuButton);
+    const search = screen.getByRole("button", { name: /^Search/ });
+    (entry === "button" ? search : screen.getByRole("link", { name: "Notes" })).focus();
+    if (entry === "button") fireEvent.click(search);
+    else fireEvent.keyDown(window, { key: "k", ctrlKey: entry === "Control shortcut", metaKey: entry === "Command shortcut" });
+    const box = screen.getByRole("textbox", { name: "Search everything" });
+    expect(document.getElementById("app-navigation")?.hidden).toBe(true);
+    expect(menuButton.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(box);
+    fireEvent.keyDown(box, { key: "Escape" });
+    expect(screen.queryByRole("textbox", { name: "Search everything" })).toBeNull();
+    expect(document.activeElement).toBe(menu());
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("returns focus to Menu after a mouse click on Search that left focus on the page (WebKit)", () => {
+    mount();
+    const menuButton = menu();
+    fireEvent.click(menuButton);
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(document.activeElement).toBe(document.body);
     fireEvent.click(screen.getByRole("button", { name: /^Search/ }));
-    expect(screen.getByRole("textbox", { name: "Search everything" })).toBeTruthy();
-    fireEvent.keyDown(screen.getByRole("textbox", { name: "Search everything" }), { key: "Escape" });
-    fireEvent.click(menu());
-    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-    expect(screen.getByRole("textbox", { name: "Search everything" })).toBeTruthy();
+    const box = screen.getByRole("textbox", { name: "Search everything" });
+    expect(menuButton.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.keyDown(box, { key: "Escape" });
+    expect(document.activeElement).toBe(menu());
+  });
+
+  it("keeps the desktop sidebar and its Search focus return when Quick Find closes", () => {
+    mount(1320);
+    const search = screen.getByRole("button", { name: /^Search/ });
+    search.focus();
+    fireEvent.click(search);
+    expect(document.getElementById("app-navigation")?.hidden).toBe(false);
+    const box = screen.getByRole("textbox", { name: "Search everything" });
+    expect(document.activeElement).toBe(box);
+    fireEvent.keyDown(box, { key: "Escape" });
+    expect(document.activeElement).toBe(search);
+    expect(screen.getAllByRole("link")).toHaveLength(sections.length);
   });
 
   it("closes the disclosure after choosing a real Quick Find route result", () => {

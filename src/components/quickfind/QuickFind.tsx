@@ -59,7 +59,7 @@ function isOpenShortcut(event: KeyboardEvent): boolean {
  * trapping and Escape are the platform's job rather than ours. WebKit before
  * macOS 12.3 has no modal <dialog>; useModalDialog covers that case.
  */
-export function QuickFind() {
+export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) {
   const { data } = useAppData();
   const location = useLocation();
   const navigate = useNavigate();
@@ -86,6 +86,7 @@ export function QuickFind() {
 
   useEffect(() => {
     const show = () => {
+      onBeforeOpen?.();
       setQuery("");
       setHighlighted(0);
       setOpen(true);
@@ -101,7 +102,7 @@ export function QuickFind() {
       window.removeEventListener("keydown", handler);
       window.removeEventListener(QUICK_FIND_EVENT, show);
     };
-  }, []);
+  }, [onBeforeOpen]);
 
   const modal = useModalDialog(dialogRef, open, {
     onEscape: () => setOpen(false),

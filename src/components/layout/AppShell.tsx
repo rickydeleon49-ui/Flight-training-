@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState, type ReactElement } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -93,6 +93,18 @@ export function AppShell() {
     }
     resizeFocusRef.current = null;
   }, [desktop]);
+
+  const beforeQuickFindOpen = useCallback(() => {
+    if (desktop) return;
+    // Give the dialog a visible return target before it captures focus.
+    // WebKit doesn't focus a button on mouse click, so an open Menu with focus
+    // on the page body also returns to the Menu button.
+    const active = document.activeElement;
+    if (navigationRef.current?.contains(active) || (menuOpen && (!active || active === document.body))) {
+      menuRef.current?.focus();
+    }
+    setMenuOpen(false);
+  }, [desktop, menuOpen]);
 
   const closeMenu = () => {
     if (!desktop) {
@@ -215,7 +227,7 @@ export function AppShell() {
         </div>
       </main>
       <ReminderPopup />
-      <QuickFind />
+      <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>
   );

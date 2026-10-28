@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createElement as h } from "react";
+import { createElement as h, useEffect } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useSearchParams } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -13,9 +13,19 @@ vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({ data, mutate: (...args: unknown[]) => mutateMock(...args) }),
 }));
 
+// Exercise the library's response to the content panel without native search.
+const contentSearch = vi.hoisted(() => ({ hasMatches: false }));
+vi.mock("./DocumentSearchPanel", () => ({
+  DocumentSearchPanel: ({ query, onMatchesChange }: { query: string; onMatchesChange: (found: boolean) => void }) => {
+    useEffect(() => onMatchesChange(contentSearch.hasMatches), [query, onMatchesChange]);
+    return contentSearch.hasMatches ? h("p", null, "Content search hit") : null;
+  },
+}));
+
 import { StudyLibrary } from "./StudyLibrary";
 
 beforeEach(() => {
+  contentSearch.hasMatches = false;
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
   localStorage.clear();
@@ -144,4 +154,31 @@ it("PACKS-04 disables automatic corrections in the Study Library search box", ()
   const box = screen.getByRole("textbox", { name: "Search your library" });
   for (const attribute of ["autocomplete", "autocorrect", "autocapitalize"]) expect(box.getAttribute(attribute)).toBe("off");
   expect(box.getAttribute("spellcheck")).toBe("false");
+});
+
+
+it("PACKS-05 omits the material empty card when content hits answer the search, and restores it for no hits", () => {
+  contentSearch.hasMatches = true;
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const box = screen.getByRole("textbox", { name: "Search your library" });
+  fireEvent.change(box, { target: { value: "rudder" } });
+  expect(screen.getByText("Content search hit")).toBeTruthy();
+  expect(screen.queryByText("Material 0")).toBeNull();
+  expect(screen.queryByText("No study materials match.")).toBeNull();
+  expect(screen.queryByText("Nothing matches those filters.")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+
+  // Material matches still render alongside content matches.
+  fireEvent.change(box, { target: { value: "Material 149" } });
+  expect(screen.getByText("Material 149")).toBeTruthy();
+  expect(screen.getByText("Showing 1 of 1 materials")).toBeTruthy();
+  expect(screen.getByText("Content search hit")).toBeTruthy();
+
+  // A later search without either kind of match keeps the usual recovery.
+  contentSearch.hasMatches = false;
+  fireEvent.change(box, { target: { value: "zzqx" } });
+  expect(screen.queryByText("Content search hit")).toBeNull();
+  expect(screen.getByText("Nothing matches those filters.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(screen.getByText("Material 0")).toBeTruthy();
 });
