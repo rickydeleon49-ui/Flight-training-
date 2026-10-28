@@ -863,6 +863,16 @@ fn apply_item(
     }
 
     materialize(tx, material_id, &version, &provider, now)?;
+    crate::study_page_sources::freeze(
+        tx,
+        material_id,
+        &version
+            .items
+            .iter()
+            .map(|i| (i.item_id.clone(), i.ordinal as usize))
+            .collect::<Vec<_>>(),
+    )
+    .map_err(storage)?;
 
     let current = read_state(tx, item_id)?;
     let revision = current.as_ref().map_or(0, |s| s.revision);

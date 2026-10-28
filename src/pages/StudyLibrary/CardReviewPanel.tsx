@@ -451,7 +451,7 @@ function SessionView({
           Card {session.position + 1} of {session.cards.length}
           {shown.kind === "new" ? " · new" : ""}
         </h4>
-        <SourcePageBadge page={item.sourcePage} materialId={materialId} />
+        <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
       </div>
       <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
         <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>

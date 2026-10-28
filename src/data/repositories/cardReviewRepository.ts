@@ -19,6 +19,7 @@ import type {
   CardReviewResult,
   CardReviewSnapshot,
 } from "@/domain/types";
+import { readCardPageSource, mergeCardPageSources } from "../studyPageSources";
 import { deriveCurrentCards } from "@/logic/cardIdentity";
 
 import type { SqlDatabase } from "../db";
@@ -83,7 +84,8 @@ export function cardReviewRepository(db: SqlDatabase) {
         [materialId],
       );
       const generation = generationRow ? int(generationRow.generation) : 0;
-      const current = await readCurrent(materialId);
+      const [saved] = await db.select<{flashcards_json:string}>("SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?", [materialId]);
+      const current = await deriveCurrentCards(materialId, saved?.flashcards_json ?? null);
       const states: Record<string, CardReviewItemState> = {};
       if (current.status !== "ok") return { materialId, generation, current: { status: current.status }, states };
       const rows = await db.select<Record<string, unknown>>(CURRENT_ITEM_STATES_SQL, [
@@ -101,6 +103,16 @@ export function cardReviewRepository(db: SqlDatabase) {
           flag: row.flag === null ? null : (String(row.flag) as CardFlagReason),
         };
       }
+      // Logical IDs and wording must come from the same ordered saved row.
+      const authored = saved ? JSON.parse(saved.flashcards_json) : [];
+      const items = await Promise.all(current.items.map(async (item, i) => {
+        const c = authored[i];
+        const query = (sql:string,params:import("../db").SqlValue[]) => db.select<Record<string,unknown>>(sql,params);
+        const frozen = await readCardPageSource(query,materialId,"frozen_card",item.itemId,item);
+        const authoredSource = c?.itemId ? await readCardPageSource(query,materialId,"authored_card",c.itemId,c) : undefined;
+        const pageSource = mergeCardPageSources(frozen, authoredSource);
+        return {...item,...(pageSource ? {pageSource} : {})};
+      }));
       return {
         materialId,
         generation,
@@ -108,8 +120,8 @@ export function cardReviewRepository(db: SqlDatabase) {
           status: "ok",
           versionId: current.versionId,
           contentHash: current.contentHash,
-          items: current.items.map(({ itemId, ordinal, front, back, sourcePage, origin }) => ({
-            itemId, ordinal, front, back, sourcePage, ...(origin ? { origin } : {}),
+          items: items.map(({ itemId, ordinal, front, back, sourcePage, origin, pageSource }) => ({
+            itemId, ordinal, front, back, sourcePage, ...(origin ? { origin } : {}), ...(pageSource ? {pageSource} : {}),
           })),
         },
         states,

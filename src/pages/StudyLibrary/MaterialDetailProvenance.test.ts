@@ -152,7 +152,8 @@ describe("MaterialDetail saved content provenance integration", () => {
     expect(guideProvenance).toBeTruthy();
     const guideScope = within(guideProvenance);
     expect(guideScope.getByText("Saved study aid provenance")).toBeTruthy();
-    expect(guideScope.getByText("Instrument Flying Handbook")).toBeTruthy();
+    expect(guideScope.queryByText("Instrument Flying Handbook")).toBeNull();
+    expect(guideScope.queryByText("Source material:")).toBeNull();
     expect(guideScope.getByText("Gemini")).toBeTruthy();
     expect(guideScope.getByText("gemini-1.5-flash-guide-model")).toBeTruthy();
     expect(guideScope.getByText("Generated Thursday, October 1")).toBeTruthy();
@@ -167,7 +168,8 @@ describe("MaterialDetail saved content provenance integration", () => {
     expect(testProvenance).toBeTruthy();
     const testScope = within(testProvenance);
     expect(testScope.getByText("Saved practice test provenance")).toBeTruthy();
-    expect(testScope.getByText("Instrument Flying Handbook")).toBeTruthy();
+    expect(testScope.queryByText("Instrument Flying Handbook")).toBeNull();
+    expect(testScope.queryByText("Source material:")).toBeNull();
     expect(testScope.getByText("Gemini")).toBeTruthy();
     expect(testScope.getByText("gemini-1.5-pro-test-model")).toBeTruthy();
     expect(testScope.getByText("Generated Friday, October 2")).toBeTruthy();
@@ -353,12 +355,12 @@ describe("MaterialDetail saved content provenance integration", () => {
     await openMaterial(mat.id);
 
     const guideProvenance = screen.getByLabelText("Saved study aid provenance");
-    expect(within(guideProvenance).getByText("Offline VFR Guide")).toBeTruthy();
+    expect(within(guideProvenance).queryByText("Offline VFR Guide")).toBeNull();
     expect(within(guideProvenance).getByText("gemini-1.5-flash-offline")).toBeTruthy();
     expect(within(guideProvenance).getByText("Generated Thursday, October 1")).toBeTruthy();
 
     const testProvenance = screen.getByLabelText("Saved practice test provenance");
-    expect(within(testProvenance).getByText("Offline VFR Guide")).toBeTruthy();
+    expect(within(testProvenance).queryByText("Offline VFR Guide")).toBeNull();
     expect(within(testProvenance).getByText("gemini-1.5-pro-offline")).toBeTruthy();
     expect(within(testProvenance).getByText("Generated Friday, October 2")).toBeTruthy();
 
@@ -375,11 +377,11 @@ describe("MaterialDetail saved content provenance integration", () => {
     await openMaterial(mat.id);
 
     const guideScopeDisconnected = within(screen.getByLabelText("Saved study aid provenance"));
-    expect(guideScopeDisconnected.getByText("Offline VFR Guide")).toBeTruthy();
+    expect(guideScopeDisconnected.queryByText("Offline VFR Guide")).toBeNull();
     expect(guideScopeDisconnected.getByText("gemini-1.5-flash-offline")).toBeTruthy();
     expect(guideScopeDisconnected.getByText("Generated Thursday, October 1")).toBeTruthy();
     const testScopeDisconnected = within(screen.getByLabelText("Saved practice test provenance"));
-    expect(testScopeDisconnected.getByText("Offline VFR Guide")).toBeTruthy();
+    expect(testScopeDisconnected.queryByText("Offline VFR Guide")).toBeNull();
     expect(testScopeDisconnected.getByText("gemini-1.5-pro-offline")).toBeTruthy();
     expect(testScopeDisconnected.getByText("Generated Friday, October 2")).toBeTruthy();
     expect(networkSpy).not.toHaveBeenCalled();
@@ -391,11 +393,11 @@ describe("MaterialDetail saved content provenance integration", () => {
     await openMaterial(mat.id);
 
     const guideScopeFailed = within(screen.getByLabelText("Saved study aid provenance"));
-    expect(guideScopeFailed.getByText("Offline VFR Guide")).toBeTruthy();
+    expect(guideScopeFailed.queryByText("Offline VFR Guide")).toBeNull();
     expect(guideScopeFailed.getByText("gemini-1.5-flash-offline")).toBeTruthy();
     expect(guideScopeFailed.getByText("Generated Thursday, October 1")).toBeTruthy();
     const testScopeFailed = within(screen.getByLabelText("Saved practice test provenance"));
-    expect(testScopeFailed.getByText("Offline VFR Guide")).toBeTruthy();
+    expect(testScopeFailed.queryByText("Offline VFR Guide")).toBeNull();
     expect(testScopeFailed.getByText("gemini-1.5-pro-offline")).toBeTruthy();
     expect(testScopeFailed.getByText("Generated Friday, October 2")).toBeTruthy();
     expect(networkSpy).not.toHaveBeenCalled();
@@ -493,12 +495,12 @@ describe("MaterialDetail saved content provenance integration", () => {
 
     // Initial Material 1 assertions:
     let guideProvenance = screen.getByLabelText("Saved study aid provenance");
-    expect(within(guideProvenance).getByText("Weather Meteorology 101")).toBeTruthy();
+    expect(within(guideProvenance).queryByText("Weather Meteorology 101")).toBeNull();
     expect(within(guideProvenance).getByText("gemini-model-weather-guide")).toBeTruthy();
     expect(within(guideProvenance).getByText("Generated Thursday, October 1")).toBeTruthy();
 
     let testProvenance = screen.getByLabelText("Saved practice test provenance");
-    expect(within(testProvenance).getByText("Weather Meteorology 101")).toBeTruthy();
+    expect(within(testProvenance).queryByText("Weather Meteorology 101")).toBeNull();
     expect(within(testProvenance).getByText("gemini-model-weather-test")).toBeTruthy();
     expect(within(testProvenance).getByText("Generated Thursday, October 1")).toBeTruthy();
 
@@ -512,14 +514,14 @@ describe("MaterialDetail saved content provenance integration", () => {
     });
 
     guideProvenance = screen.getByLabelText("Saved study aid provenance");
-    expect(within(guideProvenance).getByText("Navigation Flight Planning")).toBeTruthy();
+    expect(within(guideProvenance).queryByText("Navigation Flight Planning")).toBeNull();
     expect(within(guideProvenance).getByText("gemini-model-planning-guide")).toBeTruthy();
     expect(within(guideProvenance).getByText("Generated Friday, October 2")).toBeTruthy();
     expect(within(guideProvenance).queryByText("Weather Meteorology 101")).toBeNull();
     expect(within(guideProvenance).queryByText("gemini-model-weather-guide")).toBeNull();
 
     testProvenance = screen.getByLabelText("Saved practice test provenance");
-    expect(within(testProvenance).getByText("Navigation Flight Planning")).toBeTruthy();
+    expect(within(testProvenance).queryByText("Navigation Flight Planning")).toBeNull();
     expect(within(testProvenance).getByText("gemini-model-planning-test")).toBeTruthy();
     expect(within(testProvenance).getByText("Generated Friday, October 2")).toBeTruthy();
     expect(within(testProvenance).queryByText("Weather Meteorology 101")).toBeNull();

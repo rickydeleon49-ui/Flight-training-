@@ -475,3 +475,56 @@ describe("source badges retire their guidance when the view goes away (M4S1-R8)"
     expect(await tuple()).toBeNull();
   });
 });
+
+describe("Make a card from a page note (PDF-STUDY-01c)",()=>{
+  for(const first of [true,false]) it(`prefills exactly, Cancel/Escape write nothing, explicit double Save ${first ? 'creates first set' : 'appends'}`,async()=>{
+    await seed();
+    if(first) await db.execute("DELETE FROM ai_study_sets");
+    await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000001',?,3,'iv',?,'Exact question','Exact answer\nSecond line','verified','x','x')",[M,A]);
+    renderDetail();const scope=await panel();
+    const make=await within(scope).findByRole("button",{name:"Make a card"});
+    const counts=async()=>Promise.all(["ai_study_sets","study_set_history","study_page_sources","study_page_source_bindings","study_set_save_operations"].map(t=>db.select(`SELECT * FROM ${t}`)));
+    const before=await counts();const bookmark=await db.select("SELECT * FROM material_bookmarks");
+    fireEvent.click(make);
+    let dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await waitFor(()=>expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Exact question"));
+    expect((within(dialog).getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("Exact answer\nSecond line");
+    expect((within(dialog).getByLabelText("Source page (optional)") as HTMLInputElement).value).toBe("3");
+    expect(within(dialog).getByText(/From page 3 \(printed page iv\)/)).toBeTruthy();
+    expect(within(dialog).getByText(/Adding a card starts fresh reviews/)).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button",{name:"Cancel"}));
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
+    expect(await counts()).toEqual(before);
+    fireEvent.click(make);dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await within(dialog).findByLabelText("Question");
+    fireEvent.keyDown(dialog,{key:"Escape"});
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
+    expect(await counts()).toEqual(before);
+    fireEvent.click(make);dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await within(dialog).findByLabelText("Question");
+    const save=within(dialog).getByRole("button",{name:"Save"});fireEvent.click(save);fireEvent.click(save);
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
+    const sets=await createRepositories(db).documents.listAiStudySets();
+    expect(sets[0]!.flashcards).toHaveLength(first?1:2);
+    expect(sets[0]!.flashcards.at(-1)).toMatchObject({front:"Exact question",back:"Exact answer\nSecond line",sourcePage:3,pageSource:{printedLabel:"iv"}});
+    expect(await db.select("SELECT * FROM material_bookmarks")).toEqual(bookmark);
+    expect(await db.select("SELECT * FROM study_set_save_operations")).toHaveLength(1);
+  });
+});
+
+it("does not recreate a set removed between the bookmark preview and editor open",async()=>{
+  await seed();
+  await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000001',?,3,'iv',?,'Question','Answer','verified','x','x')",[M,A]);
+  renderDetail();const scope=await panel();
+  const original=db.select.bind(db);let reads=0;
+  db.select=async function<T>(sql:string,params:import("@/data/db").SqlValue[]=[]):Promise<T[]> {
+    if(sql.startsWith("SELECT title, summary, sections_json") && sql.includes("FROM ai_study_sets") && ++reads===2) await db.execute("DELETE FROM ai_study_sets WHERE source_material_id=?",[M]);
+    return original<T>(sql,params);
+  };
+  fireEvent.click(await within(scope).findByRole("button",{name:"Make a card"}));
+  const dialog=await screen.findByRole("dialog",{name:"Add a card"});
+  expect(await within(dialog).findByText(/This study set changed since this page was shown/)).toBeTruthy();
+  expect((within(dialog).getByRole("button",{name:"Save"}) as HTMLButtonElement).disabled).toBe(true);
+  expect(await db.select("SELECT * FROM ai_study_sets")).toEqual([]);
+  expect(await db.select("SELECT * FROM study_page_sources")).toEqual([]);
+});

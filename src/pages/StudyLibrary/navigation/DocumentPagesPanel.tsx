@@ -22,11 +22,16 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
-import type { NavigationBookmark, StudyMaterial } from "@/domain/types";
+import type { AiStudySet, NavigationBookmark, StudyMaterial } from "@/domain/types";
 import { NAVIGATION_LIMITS } from "@/data/navigationTransaction";
+import type { BookmarkCardSource } from "@/data/studyPageSources";
+import { newId } from "@/lib/id";
+import { previewStudyPageSource } from "@/services/studyPageSources";
+import { useOptionalAppData } from "@/state/AppDataContext";
 import { savedPlaceNote } from "@/logic/navigation";
 import type { NavigationStatus } from "@/state/navigation/controller";
 import { navigationMessage, useMaterialNavigation, useNavigationController } from "@/state/navigation/useDocumentNavigation";
+import { StudySetEditor } from "../StudySetEditor";
 
 /** What an open bookmark dialog was started on; fixed for that draft. */
 interface BookmarkDraft {
@@ -78,8 +83,64 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
   }
 }
 
+/** A first, card-only manual set, saved only when she presses Save. */
+function emptyCardSet(material: StudyMaterial): AiStudySet {
+  return {
+    sourceMaterialId: material.id,
+    title: material.title,
+    summary: "",
+    summaryOrigin: null,
+    sections: [],
+    flashcards: [],
+    sourceNotes: "",
+    provider: "manual",
+    model: "",
+    generatedAt: "",
+    updatedAt: "",
+    retired: [],
+  };
+}
+
 export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
+  const app = useOptionalAppData();
+  // "Make a card" opens the card editor prefilled from one page note.
+  const [cardDraft, setCardDraft] = useState<{ createFirst: boolean; seed: Omit<BookmarkCardSource, "itemId">; set: AiStudySet } | null>(null);
+  const cardEpoch = useRef(0);
+  useEffect(() => {
+    cardEpoch.current++;
+    setCardDraft(null);
+    return () => {
+      cardEpoch.current++;
+    };
+  }, [material.id]);
+  const makeCard = async (bookmark: NavigationBookmark) => {
+    const epoch = ++cardEpoch.current;
+    try {
+      if (!app?.repositories) return;
+      const read = await app.repositories.documents.readStudySetForEdit(material.id);
+      const preview = await previewStudyPageSource(material.id);
+      if (epoch !== cardEpoch.current) return;
+      setCardDraft({
+        createFirst: !read,
+        seed: {
+          source: {
+            id: newId(),
+            materialId: material.id,
+            materialTitle: material.title,
+            contentSha256: bookmark.originatingContentSha256,
+            physicalPage: bookmark.physicalPage,
+            printedLabel: bookmark.pageLabel,
+          },
+          bookmark: { ...bookmark },
+          preview,
+        },
+        set: read?.set ?? emptyCardSet(material),
+      });
+    } catch {
+      if (epoch === cardEpoch.current) setActionError("This card couldn't be opened. Try again.");
+    }
+  };
   const nav = useMaterialNavigation(material.id, repo, status);
   const [actionError, setActionError] = useState<string | null>(null);
   const [checkNote, setCheckNote] = useState<string | null>(null);
@@ -278,6 +339,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                           Open
                         </Button>
                       ) : null}
+                      <Button size="small" onClick={() => void makeCard(bookmark)}>Make a card</Button>
                       <Button size="small" variant="danger" className="destructive-action" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
                         Remove
                       </Button>
@@ -302,6 +364,17 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
               await nav.addBookmark({ ...input, contentSha256: draft.contentSha256 });
               setDraft(null);
             }}
+          />
+        ) : null}
+        {cardDraft ? (
+          <StudySetEditor
+            key={cardDraft.seed.source.id}
+            compact
+            material={material}
+            studySet={cardDraft.set}
+            bookmarkSeed={cardDraft.seed}
+            createFirst={cardDraft.createFirst}
+            onClose={() => setCardDraft(null)}
           />
         ) : null}
         <ConfirmDialog

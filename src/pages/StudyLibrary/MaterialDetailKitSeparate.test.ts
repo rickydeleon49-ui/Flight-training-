@@ -120,10 +120,12 @@ describe("KIT-SEPARATE: split display by origin", () => {
     const kitSection = { itemId: "kit-sec-1", heading: "Kit Aerodynamics", body: "Kit explanation of drag." };
 
     const geminiCard = { front: "What is Gemini Lift?", back: "Gemini lift answer.", sourcePage: 1 };
+    const kitSection2 = { itemId: "kit-sec-2", heading: "Kit Weight", body: "More kit content.", origin: "user" as const };
     const kitCard = { itemId: "kit-card-1", front: "What is Kit Drag?", back: "Kit drag answer.", sourcePage: 2 };
 
     const pdfKitSources = await kitSources(draftFixture, [
       { kind: "section", id: kitSection.itemId, content: kitSection, evidence: [evidence] },
+      { kind: "section", id: kitSection2.itemId, content: kitSection2, evidence: [evidence] },
       { kind: "card", id: kitCard.itemId, content: kitCard, evidence: [evidence] },
     ]);
 
@@ -136,7 +138,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
         title: "Flight Training Study Set",
         summary: "Gemini summary of the handbook.",
         summaryOrigin: null,
-        sections: [geminiSection, kitSection],
+        sections: [geminiSection, kitSection, kitSection2],
         flashcards: [geminiCard, kitCard],
         sourceNotes: "Gemini source notes.",
         provider: "gemini",
@@ -184,10 +186,50 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(within(backupSection).getAllByText("Pulled from your PDF on this Mac").length).toBeGreaterThan(0);
     expect(within(backupSection).getAllByText(/page 2$/).length).toBeGreaterThan(0);
 
+    // PACKS-07: each section carries the study-aid meaning once, never per item.
+    for (const name of ["Flight Training Study Set", "Card 1 of 1"]) {
+      const section = within(backupSection).getByRole("region", { name });
+      expect(within(section).getAllByText("Pulled from your PDF on this Mac")).toHaveLength(1);
+      expect(within(section).getAllByText("Study aid. Compare this kit with your PDF, current FAA guidance and your instructor.")).toHaveLength(1);
+    }
+    expect(within(document.getElementById("material-saved-pdf-kit")!).getAllByText(/Compare this kit/)).toHaveLength(2);
+    const visibleReminders = [...backupSection.querySelectorAll("p")].filter(note =>
+      !note.closest("dialog") && note.textContent?.includes("Compare this kit"),
+    );
+    expect(visibleReminders).toHaveLength(2);
+    expect(within(backupSection).getByText("Edited by you")).toBeTruthy();
+    expect(within(backupSection).getAllByText(/page 2$/)).toHaveLength(3);
+
     // Flipping the kit flashcard
     const kitCardButton = within(backupSection).getByRole("button", { name: "Reveal flashcard answer" });
     fireEvent.click(kitCardButton);
     expect(within(backupSection).getByText("Kit drag answer.")).toBeTruthy();
+  });
+
+  it("PACKS-07 labels saved PDF practice once while keeping question sources and edits", async () => {
+    const questions = [0, 1].map(index => ({
+      identity: crypto.randomUUID(), question: `Synthetic question ${index}?`,
+      options: ["Yes", "No"], correctIndex: 0, explanation: "Synthetic explanation.",
+      sourcePage: 2, ...(index === 1 ? { origin: "instructor" as const } : {}),
+    }));
+    await repos.documents.savePracticeAuthoring({
+      operationId: crypto.randomUUID(), sourceMaterialId: "pdf-mat-1", reason: "create", expected: null,
+      next: { title: "Synthetic practice", provider: "manual", model: "", questions, retired: [] },
+      pdfKitSources: await kitSources(draftFixture, questions.map(q => ({ kind: "question", id: q.identity, content: q, evidence: [evidence] }))),
+    });
+    await openMaterial("pdf-mat-1");
+    const practice = document.getElementById("material-practice-test")!;
+    const scope = within(practice);
+    await scope.findByText("Synthetic question 0?");
+    expect(scope.getAllByText("Pulled from your PDF on this Mac")).toHaveLength(1);
+    expect(scope.getAllByText("Study aid. Compare this kit with your PDF, current FAA guidance and your instructor.")).toHaveLength(1);
+    expect(scope.queryByText("Source material:")).toBeNull();
+    expect(scope.getByText("Source page 2")).toBeTruthy();
+    fireEvent.click(scope.getByRole("button", { name: "Question 2, unanswered" }));
+    await scope.findByText("Synthetic question 1?");
+    expect(scope.getAllByText("Pulled from your PDF on this Mac")).toHaveLength(1);
+    expect(scope.getByText("Corrected by your instructor")).toBeTruthy();
+    expect(scope.getByText("Source page 2")).toBeTruthy();
   });
 
   it("renders a set with no kit items as before with nothing extra in On this Mac (backup)", async () => {

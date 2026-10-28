@@ -1,0 +1,120 @@
+/* ------------------------------------------------------------------ *
+ * Optional "Glass" appearance: frosted translucent cards over a soft
+ * warm background (Settings → Appearance).
+ *
+ * Scoped strictly under :root[data-appearance="glass"] so the classic
+ * appearance remains completely untouched when glass is disabled.
+ *
+ * Live blur (backdrop-filter) is kept to the few surfaces that sit over
+ * other content: the sidebar and dialogs. Cards sit on a near-flat soft
+ * background, where a blur would cost GPU time on an 8 GB Mac for no
+ * visible gain, so they get the translucent surface only.
+ * ------------------------------------------------------------------ */
+
+:root[data-appearance="glass"] {
+  --glass-surface: rgba(255, 255, 255, 0.62);
+  --glass-surface-nested: rgba(255, 255, 255, 0.45);
+  --glass-surface-opaque: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-blur: blur(14px) saturate(140%);
+  --glass-shadow: 0 4px 20px rgba(23, 35, 60, 0.05);
+  --glass-radius: 20px;
+}
+
+/* Page background: soft warm gradient from her palette. The rgba layer is
+   for WebKit without color-mix (macOS 12); later engines use the tokens. */
+:root[data-appearance="glass"] body,
+:root[data-appearance="glass"] .shell {
+  background-color: var(--palette-ivory);
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(223, 167, 184, 0.32) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 10%, rgba(185, 173, 223, 0.32) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 100%, rgba(142, 191, 218, 0.3) 0%, transparent 60%);
+  background-image:
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--palette-rose) 32%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 10%, color-mix(in srgb, var(--palette-lavender) 32%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 100%, color-mix(in srgb, var(--palette-sky) 30%, transparent) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Cards: translucent frosted surface, no live blur. */
+:root[data-appearance="glass"] .card,
+:root[data-appearance="glass"] .material-card {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius);
+}
+
+/* A card inside a card stays lighter so the outer one still reads as the group. */
+:root[data-appearance="glass"] .card .card,
+:root[data-appearance="glass"] .card .material-card {
+  background: var(--glass-surface-nested);
+  box-shadow: none;
+}
+
+/* Quiet cards stay as quiet as in Classic. */
+:root[data-appearance="glass"] .card--quiet {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Settings choice controls take her accent instead of system blue. */
+:root[data-appearance="glass"] input[type="radio"],
+:root[data-appearance="glass"] input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+}
+
+/* Surfaces over other content: the live frosted blur. */
+:root[data-appearance="glass"] .sidebar,
+:root[data-appearance="glass"] .dialog,
+:root[data-appearance="glass"] .modal-fallback {
+  background: var(--glass-surface);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+:root[data-appearance="glass"] .sidebar {
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 2px 0 16px rgba(23, 35, 60, 0.04);
+}
+
+:root[data-appearance="glass"] .dialog,
+:root[data-appearance="glass"] .modal-fallback {
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 36px rgba(23, 35, 60, 0.12);
+}
+
+/* A gentle lift on study material cards, only when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-appearance="glass"] .material-card {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  :root[data-appearance="glass"] .material-card:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* Engines without backdrop-filter: near-opaque instead of see-through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-appearance="glass"] .sidebar,
+  :root[data-appearance="glass"] .dialog,
+  :root[data-appearance="glass"] .modal-fallback {
+    background: var(--glass-surface-opaque);
+  }
+}
+
+/* macOS "Reduce transparency": near-opaque surfaces and no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-appearance="glass"] .card,
+  :root[data-appearance="glass"] .material-card,
+  :root[data-appearance="glass"] .sidebar,
+  :root[data-appearance="glass"] .dialog,
+  :root[data-appearance="glass"] .modal-fallback {
+    background: var(--glass-surface-opaque);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

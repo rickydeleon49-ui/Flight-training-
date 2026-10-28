@@ -15,6 +15,12 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/layout.css";
 import "./components/ui/ui.css";
+import "./styles/glass.css";
+
+import { initAppearance } from "./lib/appearance";
+
+// Apply appearance before initial render so restored theme appears without flash.
+initAppearance();
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Root element is missing from index.html");

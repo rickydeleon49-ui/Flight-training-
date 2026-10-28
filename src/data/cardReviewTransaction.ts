@@ -29,6 +29,7 @@ import type {
 import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, versionOrigin, type CardVersion } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, scheduleCard, SchedulerRefusal, type CardSchedule } from "@/logic/cardScheduler";
 
+import { freezeCardSources } from "./studyPageSources";
 import { homeworkCardContextCodec } from "@/domain/homework";
 import { recordHomeworkCardRating, invalidateHomeworkCardRuns } from "./homeworkCards";
 import type { SqlValue } from "./db";
@@ -247,6 +248,7 @@ async function applyItem(
   if (!version.items.some((item) => item.itemId === action.itemId)) refuse("NOT_FOUND");
 
   await materialize(run, query, action.materialId, version, saved.provider, now);
+  await freezeCardSources(run, query, action.materialId, version.items, JSON.parse(saved.flashcardsJson));
 
   const current = await readState(query, action.itemId);
   const revision = current?.revision ?? 0;

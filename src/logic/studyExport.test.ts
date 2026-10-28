@@ -1,3 +1,5 @@
+import { buildFlashcardCsv } from "./flashcardCsv";
+import { buildHandoutHtml } from "./studyHandout";
 import { describe, expect, it } from "vitest";
 
 import type { AiStudySet, PracticeTest } from "@/domain/types";
@@ -419,4 +421,14 @@ describe("practice authorship export privacy (OFFLINE-03b)", () => {
       expect(Object.keys(question).sort()).toEqual(["correctIndex", "explanation", "options", "question", "sourcePage"]);
     }
   });
+});
+
+it("bookmark page anchors stay private in v1 packets, print and CSV while instructor corrections stay excluded",()=>{
+  const pageSource={id:"PRIVATE-SOURCE-ID",materialId:"material-1",materialTitle:"PRIVATE-SAVED-TITLE",contentSha256:"a".repeat(64),physicalPage:12,printedLabel:"PRIVATE-PRINTED-LABEL"};
+  const input=source({studySet:studySet({flashcards:[{front:"User card",back:"User answer",sourcePage:12,origin:"user",pageSource},{front:"Private correction",back:"CFI PRIVATE",sourcePage:12,origin:"instructor",pageSource}]})});
+  const packet=exportStudyPacket(input,ALL,NOW);
+  if(!packet.ok) throw Error(packet.message);
+  for(const text of [packet.text,buildHandoutHtml(input,ALL,{answerKey:true},NOW),buildFlashcardCsv([{source:input,selection:ALL}])]) {
+    for(const hidden of ["PRIVATE-SOURCE-ID","PRIVATE-SAVED-TITLE","PRIVATE-PRINTED-LABEL","pageSource","CFI PRIVATE"]) expect(text).not.toContain(hidden);
+  }
 });

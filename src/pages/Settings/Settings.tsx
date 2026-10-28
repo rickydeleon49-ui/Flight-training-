@@ -18,6 +18,12 @@ import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
 import { formatLongDate } from "@/lib/dates";
+import {
+  type Appearance,
+  applyAppearance,
+  getStoredAppearance,
+  setStoredAppearance,
+} from "@/lib/appearance";
 import { dataUrlBytes, PhotoError, readPhotoAsDataUrl } from "@/lib/image";
 import {
   appVersion,
@@ -146,6 +152,8 @@ export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
+  // Already applied at startup (main.tsx); this only reflects the saved choice.
+  const [appearance, setAppearance] = useState<Appearance>(getStoredAppearance);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [starterNote, setStarterNote] = useState<string | null>(null);
@@ -526,6 +534,13 @@ export function Settings() {
     if (result === null) update("accentColor", previous);
   };
 
+  /** The appearance changes immediately and persists in localStorage. */
+  const chooseAppearance = (choice: Appearance) => {
+    setAppearance(choice);
+    setStoredAppearance(choice);
+    applyAppearance(choice);
+  };
+
   const choosePhoto = async (file: File | undefined) => {
     if (!file) return;
     setPhotoError(null);
@@ -852,6 +867,60 @@ export function Settings() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Appearance" eyebrow="Visual style" />
+          <CardBody>
+            <div className="stack stack--3">
+              <p className="small muted">
+                Glass gives cards a soft frosted look. Classic is the standard look.
+              </p>
+              <div
+                className="row row--wrap"
+                role="radiogroup"
+                aria-label="Appearance"
+                style={{ gap: "var(--space-4)" }}
+              >
+                <label
+                  className="small"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--space-2)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="appearance"
+                    value="classic"
+                    checked={appearance === "classic"}
+                    onChange={() => chooseAppearance("classic")}
+                  />
+                  <span>Classic</span>
+                </label>
+                <label
+                  className="small"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--space-2)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="appearance"
+                    value="glass"
+                    checked={appearance === "glass"}
+                    onChange={() => chooseAppearance("glass")}
+                  />
+                  <span>Glass</span>
+                </label>
               </div>
             </div>
           </CardBody>

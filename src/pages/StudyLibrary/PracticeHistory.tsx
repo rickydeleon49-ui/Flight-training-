@@ -349,8 +349,8 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
   const showEraseAction = (attempts !== null && attempts.length > 0) || unresolvedErase;
 
   return (
-    <div className="stack stack--4">
-      <div className="row row--between">
+    <div className="stack stack--4 practice-history-detail">
+      <div className="row row--between row--wrap">
         <Link to="/study/history" className="small dim">
           ← Back to Practice History
         </Link>
@@ -418,7 +418,7 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
             <Card key={attempt.attemptId}>
               <CardBody>
                 <div className="row row--between row--wrap">
-                  <div className="stack stack--2">
+                  <div className="stack stack--2 practice-history-detail__summary">
                     <div className="row row--wrap row--gap-2">
                       <span className="strong">Score: {attempt.scorePercent}%</span>
                       <Badge tone={attempt.scorePercent >= 80 ? "complete" : "due"}>

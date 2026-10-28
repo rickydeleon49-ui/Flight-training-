@@ -31,9 +31,9 @@ function makeController(delivery?: ReturnType<typeof gate<void>>) {
   });
   const original = owner.openForGuidance.bind(owner);
   let calls = 0;
-  owner.openForGuidance = (id, message) => {
+  owner.openForGuidance = (id, message, saved) => {
     const first = calls++ === 0;
-    const pending = original(id, message).then(async value => { if (first && delivery) await delivery.promise; return value; });
+    const pending = original(id, message, saved).then(async value => { if (first && delivery) await delivery.promise; return value; });
     requests.push(pending);
     return pending;
   };
@@ -170,4 +170,44 @@ it("keeps keyboard focus while busy and ignores repeated activation", async () =
   expect(source.getAttribute("aria-disabled")).toBe("false");
   expect(document.activeElement).toBe(source);
   expect(opened).toEqual(["m"]);
+});
+
+const savedPageSource = {
+  id: "saved-source", materialId: "m", materialTitle: "Saved handbook title",
+  contentSha256: "a".repeat(64), physicalPage: 5, printedLabel: "iv",
+};
+it("a saved page source keeps its physical/printed labels when its material is missing, with no extra controls", async () => {
+  materials = [];
+  render(h(SourcePageBadge, {materialId: "m", page: 5, source: savedPageSource}));
+  expect(await screen.findByText("Source page 5 (printed page iv) · Position unverified")).toBeTruthy();
+  expect(screen.queryByRole("button", {name: /Open source:/})).toBeNull();
+  expect(screen.queryByRole("button", {name: "Copy page"})).toBeNull();
+  expect(opened).toEqual([]);
+  expect(inspections).toEqual([]);
+});
+it("a changed saved source never opens the replacement and calmly remains unverified", async () => {
+  render(h(SourcePageBadge, {materialId: "m", page: 5, source: {...savedPageSource, contentSha256: "b".repeat(64)}}));
+  fireEvent.click(screen.getByRole("button", {name: /Open source:/}));
+  await release(0);
+  expect(opened).toEqual([]);
+  expect(screen.getByRole("button", {name: /Source page 5 \(printed page iv\).*Position unverified/})).toBeTruthy();
+});
+
+it("changing the saved source retires an inspection even when material and page stay the same", async () => {
+  const view=render(h(SourcePageBadge,{materialId:"m",page:5,source:savedPageSource}));
+  fireEvent.click(screen.getByRole("button",{name:/Open source:/}));
+  view.rerender(h(SourcePageBadge,{materialId:"m",page:5,source:{...savedPageSource,id:"replacement-source",contentSha256:"b".repeat(64)}}));
+  await release(0);
+  expect(opened).toEqual([]);
+  expect(controller.status().kind).toBe("idle");
+});
+
+it("a restored matching file becomes verified after its original hash and page are checked on open", async () => {
+  render(h(SourcePageBadge,{materialId:"m",page:5,source:savedPageSource}));
+  // While the file is still being checked the badge claims nothing either way.
+  expect(screen.queryByRole("button",{name:/Position unverified/})).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:/Open source:/}));
+  await release(0);
+  expect(opened).toEqual(["m"]);
+  expect(screen.getByRole("button",{name:"Open source: Source page 5 (printed page iv)"})).toBeTruthy();
 });

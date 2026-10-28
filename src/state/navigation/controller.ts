@@ -218,7 +218,7 @@ export class NavigationController {
    * Open a document whose page reference has no trustworthy numbering. It is
    * opened as it is, with guidance, and no position is saved.
    */
-  async openForGuidance(materialId: string, guidance: string): Promise<NavigationStatus | null> {
+  async openForGuidance(materialId: string, guidance: string, saved?: SavedDestination): Promise<NavigationStatus | null> {
     const ticket = this.enter(materialId);
     ticket.settled = true;
     this.publish(ticket, { kind: "working", materialId, step: "checking" });
@@ -228,6 +228,7 @@ export class NavigationController {
     } catch (error) {
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
     }
+    if (saved && (saved.contentSha256 !== identity.contentSha256 || saved.physicalPage < 1 || saved.physicalPage > identity.totalPages)) return this.finish(ticket, {kind:"refused", materialId, message:"Position unverified"});
     // Retired while the file was being checked: the open is never dispatched.
     if (!this.isCurrent(ticket)) return null;
     this.publish(ticket, { kind: "working", materialId, step: "opening" });

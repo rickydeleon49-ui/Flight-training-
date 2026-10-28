@@ -734,3 +734,22 @@
 }
 
 .document-search-results { margin-bottom: var(--space-5); }
+
+.material-grid ~ .document-search-results {
+  margin-top: var(--space-5);
+}
+
+.library__search-topics {
+  margin-top: var(--space-5);
+}
+
+/* Let the attempt summary shrink within the wrapping row on narrow windows. */
+.practice-history-detail__summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.practice-history-detail .page-header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
