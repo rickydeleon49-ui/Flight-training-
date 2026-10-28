@@ -26,6 +26,8 @@ import {
   type ItemActionKind,
 } from "./useCardReview";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
+import { useSavedVisual } from "./useSavedVisual";
+import { VisualPicture } from "./VisualPicture";
 
 export const MALFORMED_CARDS_MESSAGE =
   "These saved cards can't be reviewed because they're damaged. Your study guide is still here. Regenerating or re-importing creates a fresh set.";
@@ -375,6 +377,9 @@ function SessionView({
   const navigationFrom = useRef<string | null>(null);
   const shown = session.cards[session.position];
   const item = shown ? items.find((candidate) => candidate.itemId === shown.itemId) : undefined;
+  const visual = useSavedVisual(materialId, item?.visualRegionId);
+  const [whole, setWhole] = useState<string | null>(null);
+  const visualReady = !item?.visualRegionId || Boolean(visual.loaded);
   const appData = useContext(AppDataContext);
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
@@ -403,13 +408,13 @@ function SessionView({
   }, [shown?.itemId]);
 
   const rate = (rating: CardRating) => {
-    if (review.blocked || !shown) return;
+    if (review.blocked || !shown || !visualReady) return;
     navigationFrom.current = shown.itemId;
     review.rate(rating);
   };
 
   const reveal = () => {
-    if (review.blocked) return;
+    if (review.blocked || !visualReady) return;
     review.reveal();
     heading.current?.focus({ preventScroll: true });
   };
@@ -420,7 +425,7 @@ function SessionView({
   const state = states[item.itemId];
   const now = review.clock.now();
   const waits = ratingWaits(state, now);
-  const busy = review.blocked;
+  const busy = review.blocked || !visualReady;
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (busy) return;
@@ -459,14 +464,51 @@ function SessionView({
           Card {session.position + 1} of {session.cards.length}
           {shown.kind === "new" ? " · new" : ""}
         </h4>
-        <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
+        {!item.visualRegionId || item.pageSource ? (
+          <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
+        ) : null}
       </div>
-      <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
-        <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>
-        <span>{item.front}</span>
-        {review.revealed ? <span className="card-review__answer">{item.back}</span> : null}
-      </div>
-      {review.revealed ? (
+      {item.visualRegionId ? (
+        visual.loaded ? (
+          <div className="stack stack--3">
+            <VisualPicture
+              key={item.itemId}
+              picture={visual.loaded.picture}
+              cover={visual.loaded.region}
+              turn={visual.loaded.region.rotation}
+              covered={whole !== item.itemId}
+            />
+            {review.revealed ? (
+              <p>{item.front}</p>
+            ) : (
+              <Button disabled={busy} onClick={reveal}>
+                Covered label 1. {item.front}. Reveal label
+              </Button>
+            )}
+            {review.revealed ? (
+              <>
+                <p role="status" className="card-review__answer">{item.back}</p>
+                <Button onClick={() => setWhole(item.itemId)}>Show whole picture</Button>
+              </>
+            ) : null}
+          </div>
+        ) : (
+          <div>
+            {visual.waiting ? (
+              <Button onClick={visual.activate}>Show this picture</Button>
+            ) : (
+              <p role={visual.error ? "alert" : "status"}>{visual.error ?? "Checking this picture…"}</p>
+            )}
+          </div>
+        )
+      ) : (
+        <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
+          <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>
+          <span>{item.front}</span>
+          {review.revealed ? <span className="card-review__answer">{item.back}</span> : null}
+        </div>
+      )}
+      {review.revealed && visualReady ? (
         <>
           <p className="tiny dim">{RATING_NOT_A_SCORE}</p>
           <div className="card-review__ratings" role="group" aria-label="Rate this card">
@@ -486,26 +528,28 @@ function SessionView({
             ))}
           </div>
           <p className="tiny dim">1–4 rate it.</p>
-          <AskGeminiPanel
-            materialId={materialId}
-            relativePath={resolvedFilePath}
-            context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
-            buttonLabel="Explain this"
-          />
+          {!item.visualRegionId ? (
+            <AskGeminiPanel
+              materialId={materialId}
+              relativePath={resolvedFilePath}
+              context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
+              buttonLabel="Explain this"
+            />
+          ) : null}
         </>
-      ) : (
+      ) : !item.visualRegionId ? (
         <div>
           <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onClick={reveal}>
             Show answer
           </Button>
           <p className="tiny dim">Space or Enter shows the answer.</p>
         </div>
-      )}
+      ) : null}
       <div className="row row--between">
         <CardOptions
           item={item}
           state={state}
-          disabled={busy}
+          disabled={review.blocked}
           onAction={(kind) => { navigationFrom.current = item.itemId; review.itemAction(item.itemId, kind); }}
         />
         <Button size="small" variant="ghost" onClick={review.endSession}>

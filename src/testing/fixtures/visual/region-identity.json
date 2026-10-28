@@ -1,0 +1,13 @@
+{
+  "ownerMaterialId": "owner",
+  "imageMaterialId": "image",
+  "imageSha256": "9a90085e0fa0c485160126cbc0b4c9a5d0cdc36cb7353e6fdf1e127ac61f6e41",
+  "imageWidth": 480,
+  "imageHeight": 240,
+  "x": 20,
+  "y": 30,
+  "w": 40,
+  "h": 15,
+  "rotation": 0,
+  "id": "0b932dbaff3fff05ae6c218c99606e30e0ed2f394622d0e54c2bc4d01fda539a"
+}

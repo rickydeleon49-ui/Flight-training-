@@ -40,18 +40,21 @@ const OTHER: &str = "mat-other";
 fn cards_a() -> Vec<CanonicalCard> {
     vec![
         CanonicalCard {
+            visual_region_id: None,
             front: "Synthetic card one: which letter follows A?".into(),
             back: "B".into(),
             source_page: Some(1),
             origin: None,
         },
         CanonicalCard {
+            visual_region_id: None,
             front: "Synthetic card two: which letter follows B?".into(),
             back: "C".into(),
             source_page: Some(2),
             origin: None,
         },
         CanonicalCard {
+            visual_region_id: None,
             front: "Synthetic card three: which letter follows C?".into(),
             back: "D".into(),
             source_page: None,

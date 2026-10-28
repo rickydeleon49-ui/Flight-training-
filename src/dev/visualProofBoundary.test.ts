@@ -50,8 +50,9 @@ describe("VISUAL-01b proof boundary", () => {
     try {
       await build({ root: ROOT, configFile: join(ROOT, "vite.config.ts"), mode: "production", logLevel: "silent", build: { outDir, emptyOutDir: true } });
       const text = walk(outDir).filter((p) => /\.(js|css|html)$/.test(p)).map((p) => readFileSync(p, "utf8")).join("\n");
+      expect(text).toContain("Save picture card"); // saved VISUAL-01c cards are production UI
       expect(text).toContain("Flight"); // sanity: the real app was built
-      for (const marker of ["Try it — this is not saved", "Try it \\u2014 this is not saved", "visual-proof", "Reveal label", "dev/VisualProof", "proof-stage"]) {
+      for (const marker of ["Try it — this is not saved", "Try it \\u2014 this is not saved", "visual-proof", "dev/VisualProof", "proof-stage"]) {
         expect(text.includes(marker), marker).toBe(false);
       }
     } finally {

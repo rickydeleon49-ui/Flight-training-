@@ -1,0 +1,18 @@
+.visual-card-editor { width: min(680px, calc(100vw - 24px)); }
+.visual-card-editor .button, .visual-card-editor input, .visual-card-editor select, .visual-picture select { min-height: 44px; }
+.visual-card-editor :focus-visible, .visual-picture :focus-visible { outline: 3px solid #604778; outline-offset: 3px; }
+.visual-picture { width: 100%; min-width: 0; }
+
+.visual-card-editor .icon-button { min-width: 44px; min-height: 44px; }
+/* Keep the form scrollable and the actions reachable when text is enlarged. */
+.visual-card-editor[open], .visual-card-editor.modal-fallback[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 24px);
+  overflow: hidden;
+}
+.visual-card-editor .dialog__header { flex: none; padding: 16px; gap: 12px; }
+.visual-card-editor .dialog__body { flex: 1 1 auto; min-height: 0; max-height: none; padding: 16px; }
+.visual-card-editor .dialog__footer { flex: none; padding: 12px 16px; gap: 8px; }
+.visual-card-editor fieldset { min-inline-size: 0; width: 100%; }
+.visual-card-editor input { max-width: 100%; }

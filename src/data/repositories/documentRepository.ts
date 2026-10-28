@@ -494,6 +494,20 @@ export function documentRepository(db: SqlDatabase) {
 
     /** One atomic study-set save, history first (OFFLINE-03a). */
     saveStudySet,
+    async readVisualRegion(id:string,owner:string) {
+      const {readVisualRegion}=await import("../visualCards");
+      return readVisualRegion((sql,params)=>db.select<Record<string,unknown>>(sql,params),id,owner);
+    },
+    async affectedVisualCards(imageId:string):Promise<string[]> {
+      const result:string[]=[];
+      for(const row of await db.select<{source_material_id:string;flashcards_json:string}>("SELECT source_material_id,flashcards_json FROM ai_study_sets")) {
+        for(const c of JSON.parse(row.flashcards_json)) if(c.visualRegionId && row.source_material_id!==imageId) {
+          const [r]=await db.select<{id:string}>("SELECT id FROM visual_card_regions WHERE id=? AND image_material_id=?",[c.visualRegionId,imageId]);
+          if(r)result.push(c.front);
+        }
+      }
+      return result;
+    },
 
     /** Earlier versions of a material's study set, newest first. */
     async listStudySetHistory(materialId: Id): Promise<StudySetHistoryEntry[]> {

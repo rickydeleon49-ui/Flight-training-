@@ -121,12 +121,16 @@ pub fn decode_for(v: &Value, material: &str, has_item: impl Fn(&str) -> bool) ->
     Ok(e)
 }
 pub fn fingerprint(c: &Value) -> String {
-    crate::practice_sessions::compute_canonical_hash(&json!([
-        c["front"],
-        c["back"],
-        c["sourcePage"],
-        c.get("origin").unwrap_or(&Value::Null)
-    ]))
+    let mut parts = vec![
+        c["front"].clone(),
+        c["back"].clone(),
+        c["sourcePage"].clone(),
+        c.get("origin").unwrap_or(&Value::Null).clone(),
+    ];
+    if let Some(id) = c.get("visualRegionId") {
+        parts.push(id.clone());
+    }
+    crate::practice_sessions::compute_canonical_hash(&json!(parts))
 }
 /// Missing or unreadable PDF is an explicitly unverified preview, never a cached identity.
 pub fn preview_on(conn: &Connection, root: &Path, material: &str) -> Check<Option<Preview>> {

@@ -133,6 +133,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
       }
     >
       <div className="stack stack--4">
+        <p className="small">Picture cards are omitted from study packets, CSV and handouts. Use a complete backup to keep pictures, covers and review history.</p>
         <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Include</legend>
           {available.guide ? (

@@ -16,7 +16,7 @@ type Query = (sql: string, params: SqlValue[]) => Promise<Record<string, unknown
 type Run = (sql: string, params: SqlValue[]) => Promise<void> | void;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const hex = /^[0-9a-f]{64}$/;
-export const cardSourceFingerprint = (c: Pick<StoredCard, "front" | "back" | "sourcePage" | "origin">) => sha256Hex(canonicalJson([c.front, c.back, c.sourcePage, c.origin ?? null]));
+export const cardSourceFingerprint = (c: Pick<StoredCard, "front" | "back" | "sourcePage" | "origin" | "visualRegionId">) => sha256Hex(canonicalJson([c.front, c.back, c.sourcePage, c.origin ?? null, ...(c.visualRegionId ? [c.visualRegionId] : [])]));
 /** A question made from a page note carries the same snapshot; its item is the question's identity. */
 export type BookmarkQuestionSource = BookmarkCardSource;
 type QuestionContent = Pick<PracticeAuthoringQuestion, "question" | "options" | "correctIndex" | "explanation" | "sourcePage" | "origin">;

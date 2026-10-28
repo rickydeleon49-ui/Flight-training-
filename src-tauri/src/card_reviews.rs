@@ -151,6 +151,7 @@ pub fn is_valid_card_text(text: &str, max: usize) -> bool {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CanonicalCard {
+    pub visual_region_id: Option<String>,
     pub front: String,
     pub back: String,
     pub source_page: Option<i64>,
@@ -238,7 +239,13 @@ pub fn parse_saved_cards(flashcards_json: Option<&str>) -> SavedCards {
             }
             Some(_) => return SavedCards::Malformed,
         };
+        let visual_region_id = match map.get("visualRegionId") {
+            None => None,
+            Some(Value::String(id)) if is_lower_hex_64(id) => Some(id.clone()),
+            _ => return SavedCards::Malformed,
+        };
         out.push(CanonicalCard {
+            visual_region_id,
             front: front.clone(),
             back: back.clone(),
             source_page,
@@ -256,6 +263,9 @@ pub fn canonical_cards_json(cards: &[CanonicalCard]) -> String {
         .map(|card| {
             let mut value =
                 json!({ "front": card.front, "back": card.back, "sourcePage": card.source_page });
+            if let Some(id) = &card.visual_region_id {
+                value["visualRegionId"] = json!(id);
+            }
             if let Some(origin) = &card.origin {
                 value["origin"] = json!(origin);
             }
@@ -754,6 +764,10 @@ fn materialize(
                     item_id: r.get(0)?,
                     ordinal: r.get(1)?,
                     card: CanonicalCard {
+                        visual_region_id: crate::visual_cards::frozen_id(
+                            tx,
+                            &r.get::<_, String>(0)?,
+                        )?,
                         front: r.get(2)?,
                         back: r.get(3)?,
                         source_page: r.get(4)?,
@@ -805,6 +819,15 @@ fn materialize(
                     item.card.source_page
                 ])
                 .map_err(storage)?;
+            if let Some(id) = &item.card.visual_region_id {
+                crate::visual_cards::check_owner(tx, id, material_id)
+                    .map_err(|_| CardReviewErrorCode::InvalidState)?;
+                tx.execute(
+                    "INSERT INTO card_item_visual_regions (item_id,region_id) VALUES (?1,?2)",
+                    params![item.item_id, id],
+                )
+                .map_err(storage)?;
+            }
             if let Some(origin) = &item.card.origin {
                 tx.execute(
                     "INSERT INTO card_item_origins (item_id, origin) VALUES (?1, ?2)",
@@ -862,6 +885,18 @@ fn apply_item(
         return Err(CardReviewErrorCode::NotFound);
     }
 
+    if let Some(id) = version
+        .items
+        .iter()
+        .find(|i| i.item_id == item_id)
+        .and_then(|i| i.card.visual_region_id.as_ref())
+    {
+        let r = crate::visual_cards::check_owner(tx, id, material_id)
+            .map_err(|_| CardReviewErrorCode::InvalidState)?;
+        if matches!(kind, ItemKind::Rate(_)) && r.image_material_id.is_none() {
+            return Err(CardReviewErrorCode::InvalidState);
+        }
+    }
     materialize(tx, material_id, &version, &provider, now)?;
     crate::study_page_sources::freeze(
         tx,
@@ -1194,8 +1229,50 @@ pub fn save_card_review_at(root: &Path, operation: &Value) -> Result<Value, Card
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| CardReviewErrorCode::StorageError.error())?;
+    let replay: bool = tx
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM card_review_operations WHERE operation_id=?1)",
+            [action.operation_id()],
+            |r| r.get(0),
+        )
+        .map_err(|_| CardReviewErrorCode::StorageError.error())?;
+    let verify_visual = || -> Result<(), CardReviewErrorWire> {
+        if let CardAction::Item {
+            material_id,
+            item_id,
+            kind: ItemKind::Rate(_),
+            ..
+        } = &action
+        {
+            if let Some((text, _)) =
+                read_saved_set(&tx, material_id).map_err(CardReviewErrorCode::error)?
+            {
+                if let SavedCards::Ok(cards) = parse_saved_cards(Some(&text)) {
+                    let v = card_version(material_id, &cards);
+                    if let Some(id) = v
+                        .items
+                        .iter()
+                        .find(|i| &i.item_id == item_id)
+                        .and_then(|i| i.card.visual_region_id.as_ref())
+                    {
+                        let r = crate::visual_cards::check_owner(&tx, id, material_id)
+                            .map_err(|_| CardReviewErrorCode::InvalidState.error())?;
+                        crate::visual_cards::verify_image(&tx, root, &r)
+                            .map_err(|_| CardReviewErrorCode::InvalidState.error())?;
+                    }
+                }
+            }
+        }
+        Ok(())
+    };
+    if !replay {
+        verify_visual()?;
+    }
     let result = execute_card_review_transaction(&tx, &action, operation)
         .map_err(CardReviewErrorCode::error)?;
+    if !replay {
+        verify_visual()?;
+    }
     tx.commit()
         .map_err(|_| CardReviewErrorCode::StorageError.error())?;
     Ok(result)

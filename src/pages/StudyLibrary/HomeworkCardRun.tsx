@@ -7,6 +7,8 @@ import { nextLocalMidnightUtc } from "@/logic/localDay";
 import type { Entry } from "./homeworkUi";
 import "./studyLibrary.css";
 import "./homework.css";
+import { useSavedVisual } from "./useSavedVisual";
+import { VisualPicture } from "./VisualPicture";
 
 const RATING_LABELS: Record<CardRating, string> = {
   again: "Again",
@@ -98,6 +100,9 @@ export function HomeworkCardRun({
 
   const remaining = run?.scope.item_ids.filter((id) => !run.ratings.some((x) => x.item_id === id)) ?? [];
   const item = cards?.current.status === "ok" ? cards.current.items.find((x) => x.itemId === remaining[0]) : undefined;
+  const visual = useSavedVisual(cards?.materialId ?? "", item?.visualRegionId);
+  const visualReady = !item?.visualRegionId || Boolean(visual.loaded);
+  const [whole, setWhole] = useState<string | null>(null);
 
   // Preserve focus across confirmed next card without stealing focus during editing or normal Tab
   useEffect(() => {
@@ -236,7 +241,7 @@ export function HomeworkCardRun({
   };
 
   const rate = (rating: CardRating) => {
-    if (disabled || busy || lock.current || pending.current || drift || !run || run.finished_at || !item || !cards || !revealed) return;
+    if (!visualReady || disabled || busy || lock.current || pending.current || drift || !run || run.finished_at || !item || !cards || !revealed) return;
     navigationFrom.current = item.itemId;
     void send({
       action: "rate",
@@ -258,13 +263,13 @@ export function HomeworkCardRun({
   };
 
   const reveal = () => {
-    if (disabled || busy || lock.current || !!pending.current || drift || !run || run.finished_at || !item || revealed) return;
+    if (!visualReady || disabled || busy || lock.current || !!pending.current || drift || !run || run.finished_at || !item || revealed) return;
     setRevealed(true);
     heading.current?.focus({ preventScroll: true });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled || busy || lock.current || pending.current || drift || !run || run.finished_at || !item) {
+    if (!visualReady || disabled || busy || lock.current || pending.current || drift || !run || run.finished_at || !item) {
       return;
     }
     if (event.repeat) {
@@ -330,12 +335,45 @@ export function HomeworkCardRun({
               </h4>
               {item ? (
                 <>
-                  <div className={`flashcard${revealed ? " is-revealed" : ""}`} aria-live="polite">
-                    <span className="tiny dim">{revealed ? "Answer" : "Question"}</span>
-                    <span>{item.front}</span>
-                    {revealed ? <span className="card-review__answer">{item.back}</span> : null}
-                  </div>
-                  {revealed ? (
+                  {item.visualRegionId ? (
+                    visual.loaded ? (
+                      <div className="stack stack--3">
+                        <VisualPicture
+                          key={item.itemId}
+                          picture={visual.loaded.picture}
+                          cover={visual.loaded.region}
+                          turn={visual.loaded.region.rotation}
+                          covered={whole !== item.itemId}
+                        />
+                        {revealed ? (
+                          <p>{item.front}</p>
+                        ) : (
+                          <Button onClick={reveal}>Covered label 1. {item.front}. Reveal label</Button>
+                        )}
+                        {revealed ? (
+                          <>
+                            <p role="status">{item.back}</p>
+                            <Button onClick={() => setWhole(item.itemId)}>Show whole picture</Button>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div>
+                        {visual.waiting ? (
+                          <Button onClick={visual.activate}>Show this picture</Button>
+                        ) : (
+                          <p role={visual.error ? "alert" : "status"}>{visual.error ?? "Checking this picture…"}</p>
+                        )}
+                      </div>
+                    )
+                  ) : (
+                    <div className={`flashcard${revealed ? " is-revealed" : ""}`} aria-live="polite">
+                      <span className="tiny dim">{revealed ? "Answer" : "Question"}</span>
+                      <span>{item.front}</span>
+                      {revealed ? <span className="card-review__answer">{item.back}</span> : null}
+                    </div>
+                  )}
+                  {revealed && visualReady ? (
                     <>
                       <div className="card-review__ratings" role="group" aria-label="Rate this card">
                         {RATING_ORDER.map((r, index) => (
@@ -351,7 +389,7 @@ export function HomeworkCardRun({
                       </div>
                       <p className="tiny dim">1–4 rate it (1: Again, 2: Hard, 3: Good, 4: Easy).</p>
                     </>
-                  ) : (
+                  ) : !item.visualRegionId ? (
                     <div>
                       <Button
                         disabled={disabled || busy || !!pending.current}
@@ -362,7 +400,7 @@ export function HomeworkCardRun({
                       </Button>
                       <p className="tiny dim">Space or Enter shows the answer.</p>
                     </div>
-                  )}
+                  ) : null}
                 </>
               ) : null}
             </div>

@@ -16,6 +16,7 @@ export type ItemKind = "summary" | "section" | "card";
 
 /** Fields have the same order as saved-search digests: summary; heading/body; front/back. */
 export interface StudyItem {
+  visualRegionId?: string;
   readonly kind: ItemKind;
   readonly itemId: string;
   readonly fields: readonly string[];
@@ -63,6 +64,7 @@ function validItem(item: StudyItem): void {
   if (!item || !kinds.includes(item.kind) || !identifier(item.itemId) || !origin(item.origin) || !Array.isArray(item.fields)) invalid();
   if ((item.kind === "summary") !== (item.itemId === "summary")) invalid();
   if (item.replaces !== undefined && (!identifier(item.replaces) || item.origin === undefined)) invalid();
+  if (item.visualRegionId !== undefined && (item.kind !== "card" || !/^[a-f0-9]{64}$/.test(item.visualRegionId))) invalid();
   if (item.sourcePage !== undefined && (item.kind !== "card" || (item.sourcePage !== null && (!Number.isInteger(item.sourcePage) || item.sourcePage < LIMITS.pageMin || item.sourcePage > LIMITS.pageMax)))) invalid();
   const caps = item.kind === "summary" ? [LIMITS.summary] : item.kind === "section" ? [LIMITS.heading, LIMITS.body] : [LIMITS.front, LIMITS.back];
   if (item.fields.length !== caps.length) invalid();
@@ -74,7 +76,15 @@ function validItem(item: StudyItem): void {
 }
 function cloneItem(item: StudyItem): StudyItem {
   validItem(item);
-  return Object.freeze({ kind: item.kind, itemId: item.itemId, fields: Object.freeze([...item.fields]), ...(item.origin ? { origin: item.origin } : {}), ...(item.replaces !== undefined ? { replaces: item.replaces } : {}), ...(item.sourcePage !== undefined ? { sourcePage: item.sourcePage } : {}) });
+  return Object.freeze({
+    ...(item.visualRegionId ? { visualRegionId: item.visualRegionId } : {}),
+    kind: item.kind,
+    itemId: item.itemId,
+    fields: Object.freeze([...item.fields]),
+    ...(item.origin ? { origin: item.origin } : {}),
+    ...(item.replaces !== undefined ? { replaces: item.replaces } : {}),
+    ...(item.sourcePage !== undefined ? { sourcePage: item.sourcePage } : {}),
+  });
 }
 function validateItems(items: readonly StudyItem[]): void {
   if (!Array.isArray(items) || items.length > 1 + LIMITS.sections + LIMITS.flashcards) invalid();
