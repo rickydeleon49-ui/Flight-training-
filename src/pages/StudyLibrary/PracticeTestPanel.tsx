@@ -1293,7 +1293,7 @@ export function PracticeTestPanel({
         <h3 ref={questionHeadingRef} tabIndex={-1} id="practice-test-title" className="ai-guide__title">
           Question {state.index + 1} of {totalQuestions}
         </h3>
-        <SourcePageBadge page={question.sourcePage} materialId={materialId} />
+        <SourcePageBadge source={question.pageSource} page={question.sourcePage} materialId={materialId} />
       </div>
 
       <PdfItemLabel sectionLabelled={practiceTest.questions.every((item) => item.pdfProvenance?.status === "valid")} provenance={question.pdfProvenance} origin={question.origin} />

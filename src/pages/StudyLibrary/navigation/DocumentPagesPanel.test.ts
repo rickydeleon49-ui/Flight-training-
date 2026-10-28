@@ -512,6 +512,50 @@ describe("Make a card from a page note (PDF-STUDY-01c)",()=>{
   });
 });
 
+describe("Make a question from a page note (PDF-STUDY-01d)",()=>{
+  for(const first of [true,false]) it(`prefills with no answer, Cancel writes nothing, blank answer can't save, double Save ${first ? 'creates the first test' : 'appends'}`,async()=>{
+    await seed();
+    if(!first) await createRepositories(db).documents.savePracticeAuthoring({operationId:crypto.randomUUID(),sourceMaterialId:M,reason:"create",expected:null,next:{title:"Mine",provider:"manual",model:"",questions:[{identity:crypto.randomUUID(),question:"Existing",options:["A","B"],correctIndex:1,explanation:"",sourcePage:null,origin:"user"}],retired:[]}});
+    await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000001',?,3,'iv',?,'Exact question','Exact notes\nSecond line','verified','x','x')",[M,A]);
+    const existing=await createRepositories(db).documents.readPracticeSnapshot(M);
+    renderDetail();const scope=await panel();
+    const make=await within(scope).findByRole("button",{name:"Make a question"});
+    const counts=async()=>Promise.all(["practice_tests","practice_test_versions","study_page_sources","study_page_source_bindings","practice_save_operations","study_set_history"].map(t=>db.select(`SELECT * FROM ${t}`)));
+    const before=await counts();const bookmark=await db.select("SELECT * FROM material_bookmarks");
+    const n=first?1:2;
+    fireEvent.click(make);
+    let dialog=await screen.findByRole("dialog",{name:"Make a question"});
+    await waitFor(()=>expect((within(dialog).getByLabelText(`Question ${n} wording`) as HTMLTextAreaElement).value).toBe("Exact question"));
+    expect((within(dialog).getByLabelText(`Question ${n} explanation (optional)`) as HTMLTextAreaElement).value).toBe("Exact notes\nSecond line");
+    expect((within(dialog).getByLabelText(`Question ${n} page (optional)`) as HTMLInputElement).value).toBe("3");
+    expect((within(dialog).getByLabelText(`Question ${n}, option 1`) as HTMLTextAreaElement).value).toBe("");
+    expect((within(dialog).getByLabelText(`Question ${n}, option 2`) as HTMLTextAreaElement).value).toBe("");
+    expect(within(dialog).getAllByRole("radio").filter(r=>(r as HTMLInputElement).name===`correct-${n-1}`).some(r=>(r as HTMLInputElement).checked)).toBe(false);
+    expect(within(dialog).getByText(/From page 3 \(printed page iv\)/)).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button",{name:"Cancel"}));
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Make a question"})).toBeNull());
+    expect(await counts()).toEqual(before);
+    fireEvent.click(make);dialog=await screen.findByRole("dialog",{name:"Make a question"});
+    await within(dialog).findByLabelText(`Question ${n} wording`);
+    const save=within(dialog).getByRole("button",{name:"Save"});
+    fireEvent.click(save);
+    expect(await within(dialog).findByText("Choose the correct answer.")).toBeTruthy();
+    expect(await counts()).toEqual(before);
+    fireEvent.change(within(dialog).getByLabelText(`Question ${n}, option 1`),{target:{value:"Yes"}});
+    fireEvent.change(within(dialog).getByLabelText(`Question ${n}, option 2`),{target:{value:"No"}});
+    fireEvent.click(within(dialog).getAllByRole("radio").filter(r=>(r as HTMLInputElement).name===`correct-${n-1}`)[0]!);
+    fireEvent.click(save);fireEvent.click(save);
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Make a question"})).toBeNull());
+    const snapshot=(await createRepositories(db).documents.readPracticeSnapshot(M))!;
+    expect(snapshot.questions).toHaveLength(n);
+    if(existing) expect(snapshot.questions[0]).toEqual(existing.questions[0]);
+    expect(snapshot.questions.at(-1)).toMatchObject({question:"Exact question",options:["Yes","No"],correctIndex:0,explanation:"Exact notes\nSecond line",sourcePage:3,origin:"user"});
+    expect(await db.select("SELECT * FROM material_bookmarks")).toEqual(bookmark);
+    expect(await db.select("SELECT * FROM study_page_sources")).toHaveLength(1);
+    expect(await db.select("SELECT * FROM practice_save_operations")).toHaveLength(first?1:2);
+  });
+});
+
 it("does not recreate a set removed between the bookmark preview and editor open",async()=>{
   await seed();
   await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000001',?,3,'iv',?,'Question','Answer','verified','x','x')",[M,A]);

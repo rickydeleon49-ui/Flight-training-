@@ -32,6 +32,8 @@ import { savedPlaceNote } from "@/logic/navigation";
 import type { NavigationStatus } from "@/state/navigation/controller";
 import { navigationMessage, useMaterialNavigation, useNavigationController } from "@/state/navigation/useDocumentNavigation";
 import { StudySetEditor } from "../StudySetEditor";
+import { PracticeNoteQuestion } from "../PracticeTestEditing";
+import type { NoteQuestionSeed } from "@/data/practiceAuthoringDraft";
 
 /** What an open bookmark dialog was started on; fixed for that draft. */
 interface BookmarkDraft {
@@ -106,10 +108,13 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const app = useOptionalAppData();
   // "Make a card" opens the card editor prefilled from one page note.
   const [cardDraft, setCardDraft] = useState<{ createFirst: boolean; seed: Omit<BookmarkCardSource, "itemId">; set: AiStudySet } | null>(null);
+  // "Make a question" opens the practice editor with one question from the note.
+  const [questionDraft, setQuestionDraft] = useState<NoteQuestionSeed | null>(null);
   const cardEpoch = useRef(0);
   useEffect(() => {
     cardEpoch.current++;
     setCardDraft(null);
+    setQuestionDraft(null);
     return () => {
       cardEpoch.current++;
     };
@@ -139,6 +144,29 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       });
     } catch {
       if (epoch === cardEpoch.current) setActionError("This card couldn't be opened. Try again.");
+    }
+  };
+  const makeQuestion = async (bookmark: NavigationBookmark) => {
+    const epoch = ++cardEpoch.current;
+    try {
+      if (!app?.repositories) return;
+      const preview = await previewStudyPageSource(material.id);
+      if (epoch !== cardEpoch.current) return;
+      setQuestionDraft({
+        identity: newId(),
+        source: {
+          id: newId(),
+          materialId: material.id,
+          materialTitle: material.title,
+          contentSha256: bookmark.originatingContentSha256,
+          physicalPage: bookmark.physicalPage,
+          printedLabel: bookmark.pageLabel,
+        },
+        bookmark: { ...bookmark },
+        preview,
+      });
+    } catch {
+      if (epoch === cardEpoch.current) setActionError("This question couldn't be opened. Try again.");
     }
   };
   const nav = useMaterialNavigation(material.id, repo, status);
@@ -340,6 +368,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                         </Button>
                       ) : null}
                       <Button size="small" onClick={() => void makeCard(bookmark)}>Make a card</Button>
+                      <Button size="small" onClick={() => void makeQuestion(bookmark)}>Make a question</Button>
                       <Button size="small" variant="danger" className="destructive-action" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
                         Remove
                       </Button>
@@ -375,6 +404,14 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             bookmarkSeed={cardDraft.seed}
             createFirst={cardDraft.createFirst}
             onClose={() => setCardDraft(null)}
+          />
+        ) : null}
+        {questionDraft && app?.repositories ? (
+          <PracticeNoteQuestion
+            key={questionDraft.source.id}
+            material={material}
+            seed={questionDraft}
+            onClose={() => setQuestionDraft(null)}
           />
         ) : null}
         <ConfirmDialog

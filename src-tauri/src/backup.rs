@@ -803,11 +803,111 @@ pub(crate) fn verify_schema_24_page_sources(connection: &Connection) -> Result<(
             if !found {
                 return Err("Damaged authored page source.".into());
             }
+        } else if kind == "frozen_question" {
+            verify_frozen_question_source(connection, &owner, &key, &hash, page)?;
+        } else if kind == "authored_question" {
+            verify_authored_question_source(connection, &owner, &key, &hash, page)?;
         } else {
             return Err("Unsupported page source binding.".into());
         }
     }
     Ok(())
+}
+
+/// A frozen question source must match its saved item exactly. An item that
+/// is gone leaves an unreachable row that the next practice save collects.
+fn verify_frozen_question_source(
+    connection: &Connection,
+    owner: &str,
+    key: &str,
+    hash: &str,
+    page: i64,
+) -> Result<(), String> {
+    let item: Option<(serde_json::Value, String)> = connection
+        .query_row(
+            "SELECT i.question_text,i.options_json,i.correct_index,i.explanation,i.source_page,o.origin,v.history_key FROM practice_test_items i JOIN practice_test_versions v ON v.id=i.version_id LEFT JOIN practice_item_origins o ON o.item_id=i.id WHERE i.id=?1",
+            [key],
+            |r| {
+                let options: String = r.get(1)?;
+                let mut q = serde_json::json!({
+                    "question": r.get::<_, String>(0)?,
+                    "options": serde_json::from_str::<serde_json::Value>(&options).unwrap_or(serde_json::Value::Null),
+                    "correctIndex": r.get::<_, i64>(2)?,
+                    "explanation": r.get::<_, String>(3)?,
+                    "sourcePage": r.get::<_, Option<i64>>(4)?,
+                });
+                if let Some(origin) = r
+                    .get::<_, Option<String>>(5)?
+                    .filter(|o| o == "user" || o == "instructor")
+                {
+                    q["origin"] = serde_json::json!(origin);
+                }
+                Ok((q, r.get::<_, String>(6)?))
+            },
+        )
+        .optional()
+        .map_err(|_| "Damaged frozen page source.")?;
+    let Some((question, history_key)) = item else {
+        return Ok(());
+    };
+    if history_key != owner
+        || question["sourcePage"] != page
+        || crate::study_page_sources::question_fingerprint(&question) != hash
+    {
+        return Err("Damaged frozen page source.".into());
+    }
+    Ok(())
+}
+
+/// A question draft's source must match that question in the current test or
+/// a preserved earlier version. A deleted material's drafts are collectable.
+fn verify_authored_question_source(
+    connection: &Connection,
+    owner: &str,
+    key: &str,
+    hash: &str,
+    page: i64,
+) -> Result<(), String> {
+    let live: bool = connection
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM study_materials WHERE id=?1)",
+            [owner],
+            |r| r.get(0),
+        )
+        .map_err(|_| "Damaged authored page source.")?;
+    if !live {
+        return Ok(());
+    }
+    let mut snapshots = vec![
+        crate::practice_authoring::read_current_snapshot(connection, owner)
+            .map_err(|_| "Damaged authored page source.")?,
+    ];
+    let mut stmt = connection
+        .prepare(
+            "SELECT previous_json FROM study_set_history WHERE material_id=?1 AND kind='practice'",
+        )
+        .map_err(|_| "Damaged authored page source.")?;
+    let rows = stmt
+        .query_map([owner], |r| r.get::<_, String>(0))
+        .map_err(|_| "Damaged authored page source.")?;
+    for row in rows {
+        let previous = row.map_err(|_| "Damaged authored page source.")?;
+        snapshots.push(crate::practice_authoring::snapshot_from_history_row(
+            &previous,
+        ));
+    }
+    for snapshot in snapshots.iter().flatten() {
+        for question in &snapshot.questions {
+            let q = crate::practice_authoring::question_value(question);
+            if question.identity == key
+                && q["sourcePage"] == page
+                && crate::study_page_sources::question_fingerprint(&q) == hash
+            {
+                return Ok(());
+            }
+        }
+    }
+    Err("Damaged authored page source.".into())
 }
 pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
@@ -15821,6 +15921,19 @@ mod tests {
                 let conn = crate::study_page_sources::tests::library(&root);
                 let op = crate::study_page_sources::tests::operation(None);
                 crate::study_sets::save_study_set_at(&root, &op).unwrap();
+                // PDF-STUDY-01d: a practice question made from the same page note.
+                use crate::study_page_sources::tests::{practice_op, question, NOTE_Q};
+                let mut q = practice_op(
+                    "5e700000-0000-4000-8000-0000000000b9",
+                    "create",
+                    serde_json::Value::Null,
+                    vec![question(NOTE_Q, "Question", 0)],
+                    serde_json::json!([]),
+                    None,
+                );
+                q["pageSource"]["source"]["id"] =
+                    serde_json::json!("5e700000-0000-4000-8000-0000000000ba");
+                crate::practice_authoring::save_practice_authoring_at(&root, &q).unwrap();
                 verify_application_connection(&conn).unwrap();
             }
             let archive = backup.join("sources.hfdbackup");
@@ -15836,31 +15949,35 @@ mod tests {
                 }
             }
             verify_application_connection(&conn).unwrap();
-            for table in ["study_page_sources", "study_page_source_bindings"] {
+            for (table, current) in [("study_page_sources", 2), ("study_page_source_bindings", 3)] {
                 assert_eq!(
                     m3_count(&conn, &format!("SELECT COUNT(*) FROM {table}"), &[]).unwrap(),
-                    if old { 0 } else { 1 }
+                    if old { 0 } else { current }
                 );
             }
             if !old {
                 let original_hash: String = conn
                     .query_row(
-                        "SELECT content_fingerprint FROM study_page_source_bindings LIMIT 1",
+                        "SELECT content_fingerprint FROM study_page_source_bindings WHERE binding_kind='authored_card'",
                         [],
                         |r| r.get(0),
                     )
                     .unwrap();
                 conn.execute(
-                    "UPDATE study_page_source_bindings SET content_fingerprint=?1",
+                    "UPDATE study_page_source_bindings SET content_fingerprint=?1 WHERE binding_kind='authored_card'",
                     ["f".repeat(64)],
                 )
                 .unwrap();
                 assert!(verify_application_connection(&conn).is_err());
                 conn.execute(
-                    "UPDATE study_page_source_bindings SET content_fingerprint=?1",
+                    "UPDATE study_page_source_bindings SET content_fingerprint=?1 WHERE binding_kind='authored_card'",
                     [original_hash],
                 )
                 .unwrap();
+                assert_eq!(
+                    m3_count(&conn, "SELECT COUNT(*) FROM study_page_source_bindings WHERE binding_kind IN ('authored_question','frozen_question')", &[]).unwrap(),
+                    2
+                );
                 verify_application_connection(&conn).unwrap();
                 conn.pragma_update(None, "foreign_keys", "OFF").unwrap();
                 conn.execute("UPDATE study_page_source_bindings SET source_id='5e700000-0000-4000-8000-999999999999'",[]).unwrap();

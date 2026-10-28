@@ -46,7 +46,7 @@ const uncertain = (error: unknown) =>
   error instanceof StudySetSaveError && (error.code === "IPC_TRANSPORT_ERROR" || error.code === "STORAGE_ERROR");
 
 /** Where a card made from a page note points, and whether that page could be checked. */
-function seedNote({ source, preview }: Omit<BookmarkCardSource, "itemId">): string {
+export function seedNote({ source, preview }: Omit<BookmarkCardSource, "itemId">): string {
   const page = `From page ${source.physicalPage}${source.printedLabel ? ` (printed page ${source.printedLabel})` : ""}.`;
   const checked = preview && preview.contentSha256 === source.contentSha256 && source.physicalPage <= preview.totalPages;
   return checked ? page : `${page} Position unverified: the PDF is missing or has changed.`;

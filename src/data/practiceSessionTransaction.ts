@@ -27,6 +27,7 @@ import type { SqlValue } from "./db";
 import { PracticeSessionError, type PracticeSessionErrorCode } from "./persistenceErrors";
 import { homeworkCardContextCodec, parseHomeworkJson, type HomeworkSnapshot } from "@/domain/homework";
 import { applyHomeworkOperation } from "./homeworkTransaction";
+import { collectQuestionSources } from "./studyPageSources";
 
 export type Query = (sql: string, params: SqlValue[]) => Promise<Record<string, unknown>[]> | Record<string, unknown>[];
 
@@ -1064,6 +1065,7 @@ export async function executeEraseHistoryAction(
       "DELETE FROM practice_test_versions WHERE history_key = ? AND is_active = 0",
       [historyKey],
     );
+    await collectQuestionSources(run, query);
 
     // 5. Store erasure receipt
     const resultObj: EraseHistoryResult = {

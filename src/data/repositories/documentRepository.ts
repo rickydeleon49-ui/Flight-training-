@@ -1,4 +1,4 @@
-import { readCardPageSource } from "../studyPageSources";
+import { collectQuestionSources, readCardPageSource } from "../studyPageSources";
 import { readPdfItemProvenance } from "../pdfKitSources";
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
@@ -761,6 +761,14 @@ export function documentRepository(db: SqlDatabase) {
 
     async remove(id: Id): Promise<void> {
       await db.execute("DELETE FROM study_materials WHERE id = ?", [id]);
+      // Her own question drafts go with the material; saved attempts keep
+      // their frozen sources. A failure here leaves only unreachable rows,
+      // which the next practice save collects.
+      try {
+        await collectQuestionSources((sql, params) => db.execute(sql, params), (sql, params) => db.select(sql, params));
+      } catch {
+        // The material is already removed; nothing she can see depends on this.
+      }
     },
 
     /**
