@@ -57,11 +57,16 @@ export function Recall({ question, answer, revealed, onReveal }: {
   revealed: boolean;
   onReveal: () => void;
 }) {
+  const asked = `Covered label 1. ${/[.?!]$/.test(question) ? question : `${question}.`}`;
   return (
     <section className="proof-recall">
-      <button type="button" className="button button--primary" onClick={onReveal} aria-disabled={revealed || undefined}>
-        Covered label 1. {/[.?!]$/.test(question) ? question : `${question}.`} Reveal label
-      </button>
+      {revealed ? (
+        <p>{asked}</p>
+      ) : (
+        <button type="button" className="button button--primary" onClick={onReveal}>
+          {asked} Reveal label
+        </button>
+      )}
       <div aria-live="polite" aria-atomic="true">
         {revealed ? <p className="proof-answer">{answer}</p> : null}
       </div>
@@ -215,6 +220,9 @@ function ProofSession({ onDone }: { onDone: () => void }) {
               Try to remember
             </Button>
           </div>
+          {!question.trim() || !answer.trim() ? (
+            <p className="field__hint">Write a question and its answer to try it.</p>
+          ) : null}
         </section>
       ) : (
         <section>
@@ -233,7 +241,7 @@ function ProofSession({ onDone }: { onDone: () => void }) {
             ) : null}
             <Button onClick={() => setPhase("author")}>Edit the cover</Button>
           </div>
-          {whole ? <p className="field__hint">This is the whole picture, from the same bytes you chose.</p> : null}
+          {whole ? <p className="field__hint">This is your whole picture, just as you chose it.</p> : null}
         </section>
       )}
       <div className="proof-actions">

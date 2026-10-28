@@ -25,6 +25,8 @@ describe("Recall", () => {
 
     rerender(<Recall question={QUESTION} answer={ANSWER} revealed onReveal={() => {}} />);
     expect(container.querySelector("[aria-live='polite']")!.textContent).toBe(ANSWER);
+    expect(screen.queryByRole("button", { name: /Reveal label/ })).toBeNull();
+    expect(screen.getByText(`Covered label 1. ${QUESTION}.`)).toBeTruthy();
   });
 });
 
@@ -74,7 +76,7 @@ describe("VisualProof session", () => {
     expect(document.querySelector("[data-cover]")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Show whole picture" }));
-    expect(screen.getByText(/whole picture, from the same bytes/)).toBeTruthy();
+    expect(screen.getByText(/whole picture, just as you chose it/)).toBeTruthy();
 
     // Try again re-covers in the same render.
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
