@@ -12,11 +12,12 @@ function gate<T>() {
   return { promise, resolve, reject };
 }
 const identity: InspectedNavigationIdentity = { materialId: "m", contentSha256: "a".repeat(64), totalPages: 50, verifiedAt: "x", changed: false };
+let materials: { id: string; filePath: string; title?: string }[];
 let controller: NavigationController;
 let inspections: ReturnType<typeof gate<InspectedNavigationIdentity>>[];
 let requests: Promise<unknown>[];
 let opened: string[];
-vi.mock("@/state/AppDataContext", () => ({ useOptionalAppData: () => ({ data: { materials: [{ id: "m", filePath: "synthetic.pdf" }] } }) }));
+vi.mock("@/state/AppDataContext", () => ({ useOptionalAppData: () => ({ data: { materials } }) }));
 vi.mock("@/state/navigation/useDocumentNavigation", () => ({ useNavigationController: () => {
   const owner = controller;
   const status = useSyncExternalStore(listener => owner.subscribe(listener), () => owner.status());
@@ -38,7 +39,7 @@ function makeController(delivery?: ReturnType<typeof gate<void>>) {
   };
   return owner;
 }
-beforeEach(() => { inspections = []; requests = []; opened = []; controller = makeController(); });
+beforeEach(() => { materials = [{ id: "m", filePath: "synthetic.pdf", title: "Current handbook" }]; inspections = []; requests = []; opened = []; controller = makeController(); });
 afterEach(cleanup);
 async function release(index: number, reject = false) {
   await act(async () => { if (reject) inspections[index]!.reject(new Error("retired inspection")); else inspections[index]!.resolve(identity); await requests[index]; });
@@ -121,4 +122,52 @@ it("a replacement controller cannot display an old badge's notice at a colliding
   inspections[1]!.resolve(identity); await unrelated;
   view.rerender(h(SourcePageBadge, { materialId: "m", page: 5 }));
   expect(screen.queryByRole("status")).toBeNull();
+});
+
+it.each([
+  ["Saved handbook", "Current handbook", "From: Saved handbook, page 5"],
+  ["  ", "Current handbook", "From: Current handbook, page 5"],
+  [null, "Current handbook", "From: Current handbook, page 5"],
+  [undefined, "Current handbook", "Source page 5"],
+  [undefined, undefined, "Source page 5"],
+])("uses title fallbacks only when materialTitle is passed (%s)", (saved, current, label) => {
+  materials = [{ id: "m", filePath: "synthetic.pdf", title: current }];
+  render(h(SourcePageBadge, { materialId: "m", page: 5, materialTitle: saved }));
+  expect(screen.getByText(label)).toBeTruthy();
+  expect(screen.getAllByRole("button")).toHaveLength(1);
+  expect(screen.getByRole("button", { name: `Open source: ${label}` }).textContent).toBe(label);
+});
+it.each([null, undefined, ""])("a missing page %s asks to check the source", page => {
+  render(h(SourcePageBadge, { materialId: "m", materialTitle: "Handbook", page }));
+  expect(screen.getByText("Check source")).toBeTruthy();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+it.each([{ rows: [] }, { rows: [{ id: "m", title: "Current handbook", filePath: "" }] }])("keeps the saved title without a material/file", ({ rows }) => {
+  materials = rows;
+  render(h(SourcePageBadge, { materialId: "m", materialTitle: "Saved handbook", page: 5 }));
+  expect(screen.getByText("From: Saved handbook, page 5")).toBeTruthy();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+it("retiring the material during inspection cannot open the old source", async () => {
+  const view = render(h(SourcePageBadge, { materialId: "m", page: 5 }));
+  fireEvent.click(screen.getByRole("button"));
+  view.rerender(h(SourcePageBadge, { materialId: null, page: 5 }));
+  await release(0);
+  expect(opened).toEqual([]);
+});
+
+it("keeps keyboard focus while busy and ignores repeated activation", async () => {
+  render(h(SourcePageBadge, { materialId: "m", page: 5 }));
+  const source = screen.getByRole("button");
+  source.focus();
+  fireEvent.click(source, { detail: 0 });
+  expect(source.getAttribute("aria-disabled")).toBe("true");
+  expect((source as HTMLButtonElement).disabled).toBe(false);
+  expect(document.activeElement).toBe(source);
+  fireEvent.click(source, { detail: 0 });
+  expect(inspections).toHaveLength(1);
+  await release(0);
+  expect(source.getAttribute("aria-disabled")).toBe("false");
+  expect(document.activeElement).toBe(source);
+  expect(opened).toEqual(["m"]);
 });

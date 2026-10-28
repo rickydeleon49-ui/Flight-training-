@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h, type ContextType } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRepositories, type Repositories } from "@/data/repositories";
@@ -199,11 +199,65 @@ describe("PracticeTestPanel", () => {
     expect(correct.className).toContain("practice-pill--current");
   });
 
+  it("material-page practice shows Source page without the loaded material title", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest, materialTitle: "Loaded handbook" }));
+    expect(screen.getByText("Source page 42")).toBeTruthy();
+    expect(screen.queryByText(/From:/)).toBeNull();
+    expect(screen.queryByText(/Loaded handbook/)).toBeNull();
+    expect(screen.queryByText(/Crosswind Landing Notes/)).toBeNull();
+  });
+
+  it("opening a source keeps the active question and hidden answer without session writes", async () => {
+    db.inspectNavigationIdentity = async materialId => ({ materialId, contentSha256: "a".repeat(64), totalPages: 50, verifiedAt: "x", changed: false });
+    const open = vi.fn().mockResolvedValue(undefined);
+    db.openNavigationDocument = open;
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest, materialTitle: "Loaded handbook" }));
+    const save = vi.spyOn(repos.practiceSessions, "saveSessionAction");
+    const before = await db.select("SELECT * FROM practice_attempts");
+    const responses = await db.select("SELECT * FROM practice_responses");
+    const options = screen.getAllByRole("radio");
+    const source = screen.getByRole("button", { name: "Open source: Source page 42" });
+    expect(source.tagName).toBe("BUTTON");
+    expect(source.tabIndex).toBe(0);
+    source.focus();
+    // jsdom does not synthesize the native button's default keyboard click.
+    // Check the parent leaves the key unconsumed, then deliver that activation.
+    expect(fireEvent.keyDown(source, { key: 'Enter' })).toBe(true);
+    fireEvent.keyUp(source, { key: 'Enter' });
+    fireEvent.click(source, { detail: 0 });
+    await within(source.parentElement!).findByRole("status");
+    expect(save).not.toHaveBeenCalled();
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(source);
+    expect(screen.getAllByRole("radio")).toEqual(options);
+    expect(options.every(option => option.getAttribute("aria-checked") === "false")).toBe(true);
+    expect(screen.queryByText(sampleTest.questions[0]!.explanation)).toBeNull();
+    expect(screen.getByText("Question 1 of 2")).toBeTruthy();
+    expect(save).not.toHaveBeenCalled();
+    expect(await db.select("SELECT * FROM practice_attempts")).toEqual(before);
+    expect(await db.select("SELECT * FROM practice_responses")).toEqual(responses);
+
+    fireEvent.click(options[1]!);
+    await screen.findByText("Correct");
+    const savedAttempts = await db.select("SELECT * FROM practice_attempts");
+    const savedResponses = await db.select("SELECT * FROM practice_responses");
+    save.mockClear();
+    source.focus();
+    fireEvent.click(source, { detail: 0 });
+    await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
+    expect(document.activeElement).toBe(source);
+    expect(screen.getAllByRole("radio")[1]!.getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByText(sampleTest.questions[0]!.explanation)).toBeTruthy();
+    expect(save).not.toHaveBeenCalled();
+    expect(await db.select("SELECT * FROM practice_attempts")).toEqual(savedAttempts);
+    expect(await db.select("SELECT * FROM practice_responses")).toEqual(savedResponses);
+  });
+
   it("renders the first question with options in radiogroup", async () => {
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
 
     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
-    expect(screen.getByText("Source p. 42")).toBeTruthy();
+    expect(screen.getByText(/page 42$/)).toBeTruthy();
     expect(screen.getByText(/standard traffic pattern altitude/)).toBeTruthy();
 
     const options = screen.getAllByRole("radio");

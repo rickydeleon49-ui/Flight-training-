@@ -341,7 +341,7 @@ export function PracticeMistakeFollowupPanel({
                 <div className="row row--wrap row--gap-2" style={{ alignItems: "center" }}>
                   <SourcePageBadge
                     page={candidate.item.sourcePage}
-                    materialId={attempt.sourceMaterialId}
+                    materialId={attempt.sourceMaterialId} materialTitle={attempt.sourceMaterialTitle?.trim() || version.sourceMaterialTitle}
                   />
                   <PdfItemLabel
                     provenance={candidate.item.pdfProvenance}
