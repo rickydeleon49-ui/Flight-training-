@@ -129,7 +129,7 @@ function SavedReference({ material, note, reference }: {
 
   return (
     <div className="faa-shelf__copy">
-      <p className="small wrap-anywhere">{faaEditionMessage(reference, note)}</p>
+      {faaEditionMessage(reference, note) ? <p className="small wrap-anywhere">{faaEditionMessage(reference, note)}</p> : null}
       <p className="small muted">Added {material.createdAt.slice(0, 10)}</p>
       <p className="small" role="status">{AVAILABILITY[availability]}</p>
       <div className="row row--wrap">

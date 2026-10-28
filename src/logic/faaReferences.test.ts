@@ -14,7 +14,7 @@ describe("FAA document shelf intake", () => {
       expect(draft).toMatchObject({ materialType: "reference", reviewStatus: "reference_only", priority: "later", tags: [], goalId: null, eventId: null });
       const note = draft.faaReference;
       expect(note).toMatchObject({ referenceId: reference.id, edition: reference.edition, ...imported.pdfIdentity });
-      expect(faaEditionMessage(reference, note)).toBe("Edition not checked");
+      expect(faaEditionMessage(reference, note)).toBe("");
       expect(draft.notes).toBe("");
       expect(draft.title).toBe(`${reference.title} — ${reference.edition}`);
     }
@@ -23,7 +23,7 @@ describe("FAA document shelf intake", () => {
   it("does not treat a convincing filename as proof; flags another edition calmly", () => {
     const draft = faaReferenceDraft(FAA_REFERENCES[0], "id", "FAA-S-ACS-6B", imported);
     expect(faaEditionMessage(FAA_REFERENCES[0], draft.faaReference)).toBe(
-      "Your copy: FAA-S-ACS-6B · Edition not checked",
+      "Your copy: FAA-S-ACS-6B",
     );
     const unknown = faaReferenceDraft(FAA_REFERENCES[0], "id", "", imported);
     expect(unknown.title).toBe(FAA_REFERENCES[0].title);

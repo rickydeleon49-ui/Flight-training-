@@ -57,7 +57,8 @@ export function faaReferenceDraft(reference: FaaReference, id: string, edition: 
 }
 
 export function faaEditionMessage(reference: FaaReference, note: FaaReferenceNote): string {
-  return note.edition && note.edition !== reference.edition ? `Your copy: ${note.edition} · Edition not checked` : "Edition not checked";
+  // The row already shows the listed edition; add hers only when she typed a different one.
+  return note.edition && note.edition !== reference.edition ? `Your copy: ${note.edition}` : "";
 }
 
 export type FaaAvailability = "checking" | "present" | "missing" | "changed" | "unknown" | "browser";
