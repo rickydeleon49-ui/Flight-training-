@@ -103,7 +103,7 @@ describe("the browser driver opening a schema-14 library", () => {
     const rows = withoutSchema16And17Columns(dumpTables(after, { exclude: ["schema_migrations"] }));
     for (const [table, content] of Object.entries(before)) expect(rows[table], table).toEqual(content);
     const added = Object.keys(rows).filter((t) => !(t in before)).sort();
-    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES, ...PDF_KIT_NEW_TABLES, "study_set_save_operations", "homework_assignments", "homework_activities", "homework_runs", "homework_operations", "homework_history", "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios"].sort());
+    expect(added).toEqual([...NAVIGATION_TABLES, ...MANUAL_STUDY_NEW_TABLES, ...PRACTICE_AUTHORING_NEW_TABLES, ...PDF_KIT_NEW_TABLES, "study_set_save_operations", "homework_assignments", "homework_activities", "homework_runs", "homework_operations", "homework_history", "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "visual_card_regions", "card_item_visual_regions"].sort());
     for (const table of added) expect(rows[table], table).toEqual([]);
   });
 

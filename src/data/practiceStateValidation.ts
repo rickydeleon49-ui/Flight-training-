@@ -250,6 +250,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 20) await validateHomeworkState(query, reference);
   if (newest >= 24) await validatePageSources(query, reference);
   if (newest >= 25) await validateOralScenarios(query, reference);
+  if (newest >= 26) await validateVisualCards(query, reference);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -827,7 +828,9 @@ export async function validateCardReviewState(query: ValidationQuery, reference:
       if (sourcePage !== null && (sourcePage < 1 || sourcePage > MAX_SOURCE_PAGE)) refuse(`Card ${itemId} has an out-of-bounds source page.`);
       const origin = optText(item, "origin");
       if (origin !== null && origin !== "user" && origin !== "instructor") refuse(`Card ${itemId} has an unknown origin.`);
-      cards.push(origin ? { front, back, sourcePage, origin } : { front, back, sourcePage });
+      const hasVisual=(await count(query,"SELECT COUNT(*) AS n FROM sqlite_master WHERE name='card_item_visual_regions'"))===1;
+      const [sidecar]=hasVisual ? await query("SELECT region_id FROM card_item_visual_regions WHERE item_id=?",[itemId]) : [];
+      cards.push({front,back,sourcePage,...(origin ? {origin}:{}),...(sidecar ? {visualRegionId:text(sidecar,"region_id")} : {})});
     }
     if ((await sha256Hex(canonicalJson(cards))) !== contentHash) refuse(`${owner} content hash does not match its cards.`);
     if (hasOrigins) {
@@ -1818,7 +1821,7 @@ export async function validateStudySetReceiptState(query: ValidationQuery, refer
   for (const row of await query(`SELECT * FROM ${table}`, [])) {
     try {
       const operation = decodeStudySetOperation(JSON.parse(text(row, "payload_json")));
-      if ((!operation.pdfKitSources && !operation.pageSource) || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
+      if ((!operation.pdfKitSources && !operation.pageSource && !operation.visualRegions) || operation.materialId !== row.material_id || operation.operationId !== row.operation_id || canonicalJson(operation) !== row.payload_json || await sha256Hex(canonicalJson(operation)) !== row.payload_hash) throw new Error();
       if (operation.pdfKitSources) await validatePdfKitContent(operation.pdfKitSources, operation.next as unknown as Record<string, unknown>);
     } catch { refuse("A study set save receipt is damaged."); }
   }
@@ -1931,6 +1934,17 @@ export async function validateHomeworkSources(query: ValidationQuery, snapshot: 
   }
 }
 
+export async function validateVisualCards(query: ValidationQuery, reference: ValidationQuery) {
+  for (const table of ["visual_card_regions","card_item_visual_regions"]) {
+    if (!same(await navigationColumns(query,table),await navigationColumns(reference,table)) || !same(await foreignKeyShapes(query,table),await foreignKeyShapes(reference,table)) || !same(await navigationKeyIndexes(query,table),await navigationKeyIndexes(reference,table)) || !same(checkConstraints(await tableSql(query,table)),checkConstraints(await tableSql(reference,table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`,[])).length) refuse("Damaged picture card schema.");
+  }
+  const sql="SELECT sql FROM sqlite_master WHERE name='visual_regions_owner'";
+  const [a]=await query(sql,[]), [b]=await reference(sql,[]);
+  if(!a || !b || normalizeSql(text(a,"sql"))!==normalizeSql(text(b,"sql"))) refuse("Damaged picture index.");
+  const {validateVisualReferences}=await import("./visualCards");
+  try {await validateVisualReferences(query);} catch {refuse("Damaged picture card references.");}
+}
+
 export async function validatePageSources(query: ValidationQuery, reference: ValidationQuery) {
   for (const table of ["study_page_sources","study_page_source_bindings"]) {
     if (!same(await navigationColumns(query,table),await navigationColumns(reference,table)) || !same(await foreignKeyShapes(query,table),await foreignKeyShapes(reference,table)) || !same(await navigationKeyIndexes(query,table),await navigationKeyIndexes(reference,table)) || !same(checkConstraints(await tableSql(query,table)),checkConstraints(await tableSql(reference,table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`,[])).length) refuse("Damaged page source schema.");
@@ -1944,6 +1958,9 @@ export async function validatePageSources(query: ValidationQuery, reference: Val
   for(const b of await query("SELECT b.*,s.physical_page FROM study_page_source_bindings b JOIN study_page_sources s ON s.id=b.source_id",[])) {
     if(b.binding_kind === "frozen_card") {
       const [c] = await query("SELECT i.front,i.back,i.source_page AS sourcePage,o.origin FROM card_items i JOIN card_versions v ON v.id=i.version_id LEFT JOIN card_item_origins o ON o.item_id=i.id WHERE i.id=? AND v.source_material_id=?",[text(b,"item_key"),text(b,"owner_key")]);
+      if(c && (await count(query,"SELECT COUNT(*) AS n FROM sqlite_master WHERE name='card_item_visual_regions'"))===1) {
+        const [v]=await query("SELECT region_id FROM card_item_visual_regions WHERE item_id=?",[text(b,"item_key")]); if(v)c.visualRegionId=v.region_id;
+      }
       if(!c || c.sourcePage !== b.physical_page || await cardSourceFingerprint(c as unknown as import("./studySetTransaction").StoredCard) !== b.content_fingerprint) refuse("Damaged frozen page source.");
     } else if(b.binding_kind === "authored_card") {
       const candidates = await query("SELECT flashcards_json AS cards FROM ai_study_sets WHERE source_material_id=? UNION ALL SELECT json_extract(previous_json,'$.flashcards_json') AS cards FROM study_set_history WHERE material_id=? AND kind='study_set'", [text(b,"owner_key"),text(b,"owner_key")]);

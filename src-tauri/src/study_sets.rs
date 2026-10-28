@@ -246,7 +246,7 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
         exact_keys(
             map,
             &["front", "back", "sourcePage"],
-            &["itemId", "origin", "replaces"],
+            &["itemId", "origin", "replaces", "visualRegionId"],
         )?;
         let source_page = match map.get("sourcePage") {
             Some(Value::Null) => Value::Null,
@@ -265,6 +265,15 @@ fn validate_cards(value: Option<&Value>, ids: &mut Vec<String>) -> Check<Value> 
         );
         stored.insert("back".into(), json!(bounded(map.get("back"), 1, MAX_BACK)?));
         stored.insert("sourcePage".into(), source_page);
+        if let Some(id) = map.get("visualRegionId") {
+            if !id
+                .as_str()
+                .is_some_and(crate::card_reviews::is_lower_hex_64)
+            {
+                return invalid();
+            }
+            stored.insert("visualRegionId".into(), id.clone());
+        }
         stored.extend(identity(map, ids)?);
         out.push(Value::Object(stored));
     }
@@ -461,6 +470,7 @@ impl SaveReason {
 /// A decoded save request.
 #[derive(Debug, Clone)]
 pub struct SaveOperation {
+    pub visual_regions: Option<Vec<crate::visual_cards::Region>>,
     pub page_source: Option<crate::study_page_sources::Envelope>,
     pub pdf_kit_sources: Option<crate::pdf_kit_sources::Sources>,
     pub payload: Value,
@@ -493,7 +503,7 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
     exact_keys(
         map,
         &["operationId", "materialId", "reason", "expected", "next"],
-        &["pdfKitSources", "pageSource"],
+        &["pdfKitSources", "pageSource", "visualRegions"],
     )?;
     let operation_id = match map.get("operationId") {
         Some(Value::String(id)) if is_lower_uuid_v4(id) => id.clone(),
@@ -542,7 +552,21 @@ pub fn decode_operation(value: &Value) -> Check<SaveOperation> {
     if page_source.is_some() && (next.is_none() || pdf_kit_sources.is_some()) {
         return invalid();
     }
+    let visual_regions: Option<Vec<crate::visual_cards::Region>> = map
+        .get("visualRegions")
+        .map(|v| serde_json::from_value(v.clone()).map_err(|_| StudySetErrorCode::InvalidArgument))
+        .transpose()?;
+    if let Some(regions) = &visual_regions {
+        if next.is_none() || regions.len() > 20 {
+            return invalid();
+        }
+        for r in regions {
+            r.validate()
+                .map_err(|_| StudySetErrorCode::InvalidArgument)?;
+        }
+    }
     Ok(SaveOperation {
+        visual_regions,
         page_source,
         pdf_kit_sources,
         payload: value.clone(),
@@ -668,7 +692,11 @@ pub fn apply_operation(
         (None, None) => recorded.is_some(),
         _ => false,
     };
-    if already && operation.pdf_kit_sources.is_none() && operation.page_source.is_none() {
+    if already
+        && operation.pdf_kit_sources.is_none()
+        && operation.page_source.is_none()
+        && operation.visual_regions.is_none()
+    {
         if recorded.is_some_and(|m| m != operation.material_id) {
             return Err(StudySetErrorCode::StaleContent);
         }
@@ -680,6 +708,22 @@ pub fn apply_operation(
         return Err(StudySetErrorCode::StaleContent);
     }
 
+    if let Some(next) = &operation.next {
+        if operation.visual_regions.is_some()
+            || next
+                .flashcards
+                .as_array()
+                .is_some_and(|cs| cs.iter().any(|c| c.get("visualRegionId").is_some()))
+        {
+            crate::visual_cards::write(
+                tx,
+                &operation.material_id,
+                operation.visual_regions.as_deref().unwrap_or(&[]),
+                &next.flashcards,
+            )
+            .map_err(|_| StudySetErrorCode::InvalidArgument)?;
+        }
+    }
     if let Some(previous) = &current {
         let provider = previous
             .get("provider")
@@ -763,7 +807,10 @@ pub fn apply_operation(
         &before,
         &operation.payload["next"]["flashcards"],
     )?;
-    if operation.pdf_kit_sources.is_some() || operation.page_source.is_some() {
+    if operation.pdf_kit_sources.is_some()
+        || operation.page_source.is_some()
+        || operation.visual_regions.is_some()
+    {
         tx.execute("INSERT INTO study_set_save_operations (operation_id,material_id,payload_json,payload_hash) VALUES (?1,?2,?3,?4)",params![operation.operation_id,operation.material_id,payload_json,payload_hash]).map_err(storage)?;
     }
     crate::homework::cards::invalidate_drift(tx, &operation.material_id, now)
@@ -850,7 +897,27 @@ fn save_on_at(
             }
         }
     }
+    let check_visual = || -> Check<()> {
+        // New descriptors require the exact available original. Existing immutable
+        // references may be retained/retired/restored after their image disappears;
+        // that never makes them rateable or substitutes a text card.
+        for region in operation.visual_regions.as_deref().unwrap_or(&[]) {
+            crate::visual_cards::verify_image(
+                &tx,
+                root.ok_or(StudySetErrorCode::SourceChanged)?,
+                region,
+            )
+            .map_err(|_| StudySetErrorCode::SourceChanged)?;
+        }
+        Ok(())
+    };
+    if !replay {
+        check_visual()?;
+    }
     let result = apply_operation(&tx, operation, now)?;
+    if !replay {
+        check_visual()?;
+    }
     if !replay {
         if let Some(e) = &operation.page_source {
             if crate::study_page_sources::preview_on(

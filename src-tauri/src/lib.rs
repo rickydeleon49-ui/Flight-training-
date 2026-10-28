@@ -52,13 +52,14 @@ mod study_export;
 mod study_packet;
 mod study_page_sources;
 mod study_sets;
+mod visual_cards;
 
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 25;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 26;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -217,6 +218,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0025_oral_scenarios.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 26,
+            description: "visual_card_regions",
+            sql: include_str!("../migrations/0026_visual_card_regions.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -311,6 +318,7 @@ pub fn run() {
             navigation::navigation_operation,
             navigation::inspect_navigation_identity,
             study_page_sources::preview_study_page_source,
+            visual_cards::read_visual_image,
             navigation::open_navigation_document,
             documents::save_material_operation,
             debrief::save_debrief_operation,

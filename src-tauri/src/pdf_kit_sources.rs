@@ -96,6 +96,9 @@ pub fn content(kind: &str, item: &Value) -> Value {
             "explanation",
             "sourcePage",
         ],
+        "card" if item.get("visualRegionId").is_some() => {
+            &["front", "back", "sourcePage", "visualRegionId"]
+        }
         "card" => &["front", "back", "sourcePage"],
         _ => &["heading", "body"],
     };

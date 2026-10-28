@@ -72,6 +72,7 @@ import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
 import { pdfAskContext } from "@/logic/pdfAskContext";
+import { VisualCardEditor } from "./VisualCardEditor";
 import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
 import { PracticeTestEditor, PracticeTestHistory } from "./PracticeTestEditing";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
@@ -104,7 +105,7 @@ function MaterialDetailPage() {
   useEffect(() => {
     if (startCardReview) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, []);
-  const { data, mutate, deleteWithUndo, repositories, dataRevision } = useAppData();
+  const { data, mutate, deleteWithUndo, repositories, dataRevision, refresh } = useAppData();
   const operations = useActionOperations();
   const today = todayIso();
 
@@ -122,6 +123,9 @@ function MaterialDetailPage() {
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   // Only decides whether a new study aid can be requested; saved ones show regardless.
   const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
+  const [coveringLabel, setCoveringLabel] = useState(false);
+  const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
+  const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
   const [targetCards, setTargetCards] = useState(40);
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
@@ -174,6 +178,16 @@ function MaterialDetailPage() {
   const isMountedRef = useRef(true);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+  const prepareDelete = async () => {
+    if (!repositories || !material) return;
+    try {
+      const affected = await repositories.documents.affectedVisualCards(material.id);
+      setAffectedVisual(affected);
+      setConfirmingDelete(true);
+    } catch {
+      setOpenError("The picture cards linked to this material couldn't be checked. Nothing was deleted. Try again.");
+    }
+  };
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -198,11 +212,21 @@ function MaterialDetailPage() {
     [studySet?.sections],
   );
   const guideFlashcards = useMemo(
-    () => (studySet?.flashcards ?? []).map((card, originalIndex) => ({ card, originalIndex })).filter(({ card }) => !card.pdfProvenance),
+    () =>
+      (studySet?.flashcards ?? [])
+        .map((card, originalIndex) => ({ card, originalIndex }))
+        .filter(({ card }) => !card.pdfProvenance && !card.visualRegionId),
     [studySet?.flashcards],
   );
   const kitFlashcards = useMemo(
     () => (studySet?.flashcards ?? []).map((card, originalIndex) => ({ card, originalIndex })).filter(({ card }) => Boolean(card.pdfProvenance)),
+    [studySet?.flashcards],
+  );
+  const visualFlashcards = useMemo(
+    () =>
+      (studySet?.flashcards ?? [])
+        .map((card, originalIndex) => ({ card, originalIndex }))
+        .filter(({ card }) => Boolean(card.visualRegionId)),
     [studySet?.flashcards],
   );
   const hasKitItems = kitSections.length > 0 || kitFlashcards.length > 0;
@@ -294,6 +318,8 @@ function MaterialDetailPage() {
   const importedSet = studySet?.provider === "import";
   // A set she wrote herself is labelled as hers, never as Gemini output.
   const manualSet = studySet?.provider === "manual";
+  const showStudyGuide =
+    Boolean(material?.filePath || studySet) && !(manualSet && !studySet.summary && studySet.sections.length === 0);
   const setHasHerItems = needsRegenerationReview(studySet);
   const importedTest = practiceTest?.provider === "import";
   const hasImported = importedSet || importedTest;
@@ -592,7 +618,7 @@ function MaterialDetailPage() {
             </Link>
             {!isPdf ? <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show tips" : "Hide tips"}</Button> : null}
             <Button onClick={() => setEditing(true)}>Edit</Button>
-            <Button variant="danger" className="destructive-action" onClick={() => setConfirmingDelete(true)}>
+            <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>
               Delete
             </Button>
           </div>
@@ -668,7 +694,7 @@ function MaterialDetailPage() {
             <nav className="row row--wrap material-jumps" aria-label="Jump to">
               <span className="tiny muted">Jump to</span>
               {[
-                ...(material.filePath || studySet ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
+                ...(showStudyGuide ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
                 ...(material.filePath || (studySet && studySet.flashcards.length > 0) ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
                 { id: "material-practice-heading", label: "Practice test" },
                 ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
@@ -751,7 +777,7 @@ function MaterialDetailPage() {
             </Card></div>
           ) : null}
 
-          {material.filePath || studySet ? (
+          {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
                 <CardHeader
@@ -1001,6 +1027,11 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap" style={{ alignItems: "center" }}>
+                      {material.filePath && /\.png$/i.test(material.filePath) ? (
+                        <Button size="small" onClick={() => setCoveringLabel(true)}>
+                          Cover a label
+                        </Button>
+                      ) : null}
                       {isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
@@ -1103,6 +1134,23 @@ function MaterialDetailPage() {
 
                   {studySet && studySet.flashcards.length > 0 ? (
                     <div className="stack stack--5">
+                      {visualFlashcards.length > 0 ? (
+                        <section aria-labelledby="visual-cards-title" className="stack stack--3">
+                          <h3 id="visual-cards-title" className="ai-guide__title">
+                            Your picture cards
+                          </h3>
+                          <ul className="visual-card-list">
+                            {visualFlashcards.map(({ card, originalIndex }) => (
+                              <li key={originalIndex}>
+                                <span title={card.front}>{card.front}</span>
+                                <Button size="small" onClick={() => setEditingVisualIndex(originalIndex)}>
+                                  Edit
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      ) : null}
                       {guideFlashcards.length > 0 ? (
                         <section
                           id="search-target-cards"
@@ -1862,10 +1910,22 @@ function MaterialDetailPage() {
         onCancel={() => setConfirmingPracticeTest(false)}
       />
 
+      {coveringLabel ? <VisualCardEditor material={material} onClose={() => setCoveringLabel(false)} /> : null}
+      {editingVisualIndex !== null ? (
+        <VisualCardEditor material={material} cardIndex={editingVisualIndex} onClose={() => setEditingVisualIndex(null)} />
+      ) : null}
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this material?"
-        message="Its notes, tags and links are removed. The file is deleted from this application's private storage. This also removes its card review history."
+        message={`Its notes, tags and links are removed. The file is deleted from this application's private storage. This also removes its card review history.${
+          visualFlashcards.length
+            ? ` Its ${visualFlashcards.length} picture card${visualFlashcards.length === 1 ? " is" : "s are"} removed too.`
+            : ""
+        }${
+          affectedVisual.length
+            ? ` These picture cards will become unavailable; their history is kept: ${affectedVisual.join("; ")}. Earlier exported backups still contain their saved content.`
+            : ""
+        }`}
         onConfirm={() => {
           setConfirmingDelete(false);
           // Unmount flushes notes so Undo restores the latest typing too.
@@ -1877,7 +1937,12 @@ function MaterialDetailPage() {
             // orphaned files or mismatched storage; having the material reappear
             // after the undo window if the file was locked is an accepted trade-off.
             run: async (repos) => {
-              await removeMaterialWithFile(repos, material);
+              try {
+                await removeMaterialWithFile(repos, material);
+              } catch (error) {
+                await refresh().catch(() => {});
+                throw error;
+              }
             },
           });
           navigate("/study");

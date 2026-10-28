@@ -9,6 +9,7 @@
  * Its id becomes the history row's id, so a retry after an uncertain answer
  * is recognised instead of applied twice.
  */
+import {decodeVisualRegion, writeVisualRegions, type VisualRegion} from "./visualCards";
 import { decodeBookmarkCardSource, writeBookmarkCardSource, carryCardSources, type BookmarkCardSource } from "./studyPageSources";
 import { decodePdfKitSources, validatePdfKitContent, writePdfKitSources, type PdfKitSources } from "./pdfKitSources";
 import { sha256Hex } from "@/logic/cardIdentity";
@@ -61,6 +62,7 @@ export interface StoredSection {
 }
 
 export interface StoredCard {
+  visualRegionId?: string;
   front: string;
   back: string;
   sourcePage: number | null;
@@ -91,6 +93,7 @@ export interface NextStudySet {
 }
 
 export interface StudySetSaveOperation {
+  visualRegions?: VisualRegion[];
   pageSource?: BookmarkCardSource;
   pdfKitSources?: PdfKitSources;
   operationId: string;
@@ -185,12 +188,14 @@ function validateCards(value: Json, ids: Set<string>): StoredCard[] {
   if (!Array.isArray(value) || value.length > STUDY_SET_LIMITS.cards) return invalid();
   return value.map((card) => {
     if (!isRecord(card)) return invalid();
-    exactKeys(card, ["front", "back", "sourcePage"], ["itemId", "origin", "replaces"]);
+    exactKeys(card, ["front", "back", "sourcePage"], ["itemId", "origin", "replaces", "visualRegionId"]);
+    if(has(card,"visualRegionId") && (typeof card.visualRegionId !== "string" || !HEX_64.test(card.visualRegionId))) invalid();
     const page = card.sourcePage;
     if (page !== null && !(typeof page === "number" && Number.isInteger(page) && page >= 1 && page <= STUDY_SET_LIMITS.sourcePage)) {
       invalid();
     }
     return {
+      ...(typeof card.visualRegionId === "string" ? {visualRegionId:card.visualRegionId} : {}),
       front: bounded(card.front, 1, STUDY_SET_LIMITS.front),
       back: bounded(card.back, 1, STUDY_SET_LIMITS.back),
       sourcePage: page as number | null,
@@ -282,7 +287,7 @@ const REASONS: readonly StudySetSaveReason[] = ["create", "edit", "correct", "de
 
 export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   if (!isRecord(value)) return invalid();
-  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"], ["pdfKitSources", "pageSource"]);
+  exactKeys(value, ["operationId", "materialId", "reason", "expected", "next"], ["pdfKitSources", "pageSource", "visualRegions"]);
   const { operationId, materialId, reason } = value;
   if (typeof operationId !== "string" || !UUID_V4_LOWER.test(operationId)) invalid();
   if (typeof materialId !== "string" || !materialId || new TextEncoder().encode(materialId).length > 200) invalid();
@@ -304,7 +309,12 @@ export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
     if (!next || pdfKitSources) invalid();
     try { pageSource = decodeBookmarkCardSource(value.pageSource, materialId as string, next!); } catch { invalid(); }
   }
-  return { ...(pageSource ? { pageSource } : {}), operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
+  let visualRegions: VisualRegion[] | undefined;
+  if (has(value,"visualRegions")) {
+    if (!next || !Array.isArray(value.visualRegions) || value.visualRegions.length>20) invalid();
+    try {visualRegions=(value.visualRegions as unknown[]).map(decodeVisualRegion);} catch {invalid();}
+  }
+  return { ...(visualRegions ? {visualRegions} : {}), ...(pageSource ? { pageSource } : {}), operationId: operationId as string, materialId: materialId as string, reason: reason as StudySetSaveReason, expected, next, ...(pdfKitSources ? { pdfKitSources } : {}) };
 }
 
 const HISTORY_REASON: Readonly<Record<StudySetSaveReason, string>> = {
@@ -426,12 +436,15 @@ async function apply(
     current && operation.next
       ? holds(current, operation.next) && (recorded !== undefined || operation.reason === "create")
       : !current && !operation.next && recorded !== undefined;
-  if (already && !operation.pdfKitSources && !operation.pageSource) {
+  if (already && !operation.pdfKitSources && !operation.pageSource && !operation.visualRegions) {
     if (recorded && recorded.material_id !== operation.materialId) throw new StudySetSaveError("STALE_CONTENT");
     return { status: "already_saved" };
   }
   if (recorded !== undefined || !sameRow(current, operation.expected)) throw new StudySetSaveError("STALE_CONTENT");
 
+  if (operation.next && (operation.visualRegions || operation.next.flashcards.some(c=>c.visualRegionId))) {
+    try {await writeVisualRegions(run,query,operation.materialId,operation.visualRegions??[],operation.next.flashcards);} catch {invalid();}
+  }
   if (current) {
     await run(
       `INSERT INTO study_set_history (id, material_id, kind, reason, previous_json, provider, created_at)
@@ -468,7 +481,7 @@ async function apply(
     catch (e) { if (e instanceof Error && e.message === "SOURCE_CHANGED") throw new StudySetSaveError("SOURCE_CHANGED"); throw e; }
   }
   if (next) await carryCardSources(run, query, operation.materialId, current ? JSON.parse(current.flashcards_json) : [], next.flashcards);
-  if (operation.pdfKitSources || operation.pageSource) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
+  if (operation.pdfKitSources || operation.pageSource || operation.visualRegions) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
   const { invalidateHomeworkCardRuns } = await import("./homeworkCards");
   await invalidateHomeworkCardRuns(run,query,operation.materialId,now,true);
   return { status: "saved" };

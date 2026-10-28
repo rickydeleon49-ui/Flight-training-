@@ -646,11 +646,12 @@ pub fn commit_delete_document_in(root: &Path, staged_id: &str) -> Result<(), Str
     let staged_file = trash.join(format!("{staged_id}.data"));
     let meta_file = trash.join(format!("{staged_id}.meta"));
 
-    if staged_file.exists() {
-        let _ = std::fs::remove_file(&staged_file);
-    }
-    if meta_file.exists() {
-        let _ = std::fs::remove_file(&meta_file);
+    for path in [&staged_file, &meta_file] {
+        match std::fs::remove_file(path) {
+            Ok(())=>{},
+            Err(e) if e.kind()==std::io::ErrorKind::NotFound=>{},
+            Err(_)=>return Err("The material was removed, but its file could not be cleared from private trash. Restart the app to try cleanup again.".into()),
+        }
     }
     Ok(())
 }
@@ -740,10 +741,7 @@ pub fn cleanup_staged_deletions_in(root: &Path) -> Result<usize, String> {
                         }
                     } else {
                         // Not referenced by the database: permanently purge
-                        if data_path.is_file() {
-                            let _ = std::fs::remove_file(&data_path);
-                        }
-                        let _ = std::fs::remove_file(&path);
+                        commit_delete_document_in(root, &meta.staged_id)?;
                         recovered_or_cleaned += 1;
                     }
                 }

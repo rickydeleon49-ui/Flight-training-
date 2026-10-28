@@ -58,6 +58,14 @@ The database is produced with SQLite's online backup API. This creates a consist
 
 `documents/` contains original uploads and generated PDF parts. Their database records retain titles, labels, page ranges, tags, study guides, flashcards, and relationships.
 
+## Saved picture cards (schema 26)
+
+Complete backups keep the original managed PNG bytes, current and historical card JSON, immutable `visual_card_regions`, frozen `card_item_visual_regions`, and existing ratings. Images stay in `documents/`; cards never create their own image copies. The archive remains version 3, and versions 1 and 2 retain their existing compatibility rules.
+
+Restore validates descriptor hashes and intrinsic bounds, material ownership, authored/history references, frozen card identity, sidecar foreign keys and the schema ceiling. Each present image must match its saved SHA-256 and dimensions and pass the bounded still-PNG header check. Missing managed images appear in `missingAtExport` as other missing documents do. A separately referenced image deleted from the library detaches its lookup, keeps the card's descriptor and history, and makes the visual card unavailable. It never becomes a text-only substitute.
+
+Database-only safety copies still depend on the managed files already on this Mac. Use a complete backup to carry the pictures too. Deleting current content does not erase earlier exported backups. Packet v1, CSV, Markdown and handouts omit picture cards, with a notice in the export dialogs; those formats cannot preserve a picture card.
+
 ## Version 2 compatibility
 
 Format version 2 archives contain `manifest.json`, `integrity.json`, `her-flight-deck.db`, and `documents/`. They were created before `missingAtExport` tracking was introduced. Format version 2 archives receive full SHA-256 cryptographic verification of every present file, path limits, archive size limits, and SQLite schema verification. To preserve backward compatibility for users whose library records referenced a document already missing from disk when the v2 archive was created, restore does not reject missing referenced documents; instead, it discloses any missing references in restore info and UI warnings while restoring all present files cleanly.

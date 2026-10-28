@@ -186,6 +186,7 @@ async function materialize(
   now: string,
 ): Promise<void> {
   const [stored] = await query("SELECT source_material_id, content_hash FROM card_versions WHERE id = ?", [version.versionId]);
+  const hasVisual=(await query("SELECT 1 FROM sqlite_master WHERE name='card_item_visual_regions'",[])).length>0;
   if (stored) {
     if (stored.source_material_id !== materialId || stored.content_hash !== version.contentHash) refuse("INVALID_STATE");
     const items = await query(
@@ -195,6 +196,10 @@ async function materialize(
       [version.versionId],
     );
     if (items.length !== version.items.length) refuse("INVALID_STATE");
+    for(const [index,row] of items.entries()) {
+      const [sidecar]=hasVisual ? await query("SELECT region_id FROM card_item_visual_regions WHERE item_id=?",[String(row.id)]) : [];
+      if((sidecar?.region_id??undefined)!==version.items[index]!.visualRegionId) refuse("INVALID_STATE");
+    }
     items.forEach((row, index) => {
       const item = version.items[index]!;
       const sourcePage = row.source_page === null ? null : int(row.source_page);
@@ -218,6 +223,11 @@ async function materialize(
         "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES (?, ?, ?, ?, ?, ?)",
         [item.itemId, version.versionId, item.ordinal, item.front, item.back, item.sourcePage],
       );
+      if(item.visualRegionId) {
+        const {readVisualRegion}=await import("./visualCards");
+        try {await readVisualRegion(query,item.visualRegionId,materialId);} catch {refuse("INVALID_STATE");}
+        await run("INSERT INTO card_item_visual_regions (item_id,region_id) VALUES (?,?)",[item.itemId,item.visualRegionId]);
+      }
       if (item.origin) await run("INSERT INTO card_item_origins (item_id, origin) VALUES (?, ?)", [item.itemId, item.origin]);
     }
     const origin = versionOrigin(version.items);
@@ -246,6 +256,10 @@ async function applyItem(
   const version = await cardVersion(action.materialId, cards.cards);
   if (version.contentHash !== action.versionContentHash) refuse("STALE_CONTENT");
   if (!version.items.some((item) => item.itemId === action.itemId)) refuse("NOT_FOUND");
+  const target=version.items.find(i=>i.itemId===action.itemId)!;
+  if(target.visualRegionId) {
+    try {const {readVisualRegion}=await import("./visualCards"); const r=await readVisualRegion(query,target.visualRegionId,action.materialId); if(action.action==="rate" && !r.imageMaterialId) refuse("INVALID_STATE");} catch {refuse("INVALID_STATE");}
+  }
 
   await materialize(run, query, action.materialId, version, saved.provider, now);
   await freezeCardSources(run, query, action.materialId, version.items, JSON.parse(saved.flashcardsJson));

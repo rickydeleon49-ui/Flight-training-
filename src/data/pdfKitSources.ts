@@ -58,7 +58,7 @@ export function pdfKitContent(itemKind: PdfKitSource["itemKind"], item: Record<s
   if (itemKind === "summary") return item;
   const q = item as Record<string, unknown>;
   const fields = itemKind === "question" ? ["question", "options", "correctIndex", "explanation", "sourcePage"] : itemKind === "card" ? ["front", "back", "sourcePage"] : ["heading", "body"];
-  return Object.fromEntries(fields.map(k => [k, q[k]]));
+  return Object.fromEntries([...fields.map(k => [k, q[k]]), ...(itemKind === "card" && q.visualRegionId ? [["visualRegionId",q.visualRegionId]] : [])]);
 }
 export const pdfKitContentHash = (kind: PdfKitSource["itemKind"], item: Record<string, unknown> | string) => sha256Hex(canonicalJson(pdfKitContent(kind, item)));
 

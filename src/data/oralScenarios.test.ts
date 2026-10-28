@@ -195,7 +195,7 @@ describe("verifier", () => {
     db.handle.exec(`UPDATE oral_scenario_versions SET points_json = '["Only one"]'`);
     await expect(validateApplicationDatabase(db.query, reference.query)).rejects.toBeInstanceOf(PracticeStateValidationError);
     const fresh = await raw();
-    fresh.db.handle.exec("INSERT INTO schema_migrations (version, description, applied_at) VALUES (26, 'future', 'x')");
+    fresh.db.handle.exec("INSERT INTO schema_migrations (version, description, applied_at) VALUES (27, 'future', 'x')");
     await expect(validateApplicationDatabase(fresh.db.query, fresh.reference.query)).rejects.toThrow(/newer format/);
   });
 

@@ -26,6 +26,7 @@ export const MAX_SOURCE_PAGE = 1_000;
 export type CardOrigin = "user" | "instructor";
 
 export interface CanonicalCard {
+  visualRegionId?: string;
   front: string;
   back: string;
   sourcePage: number | null;
@@ -135,14 +136,33 @@ export function parseSavedCards(flashcardsJson: string | null | undefined): Save
       if (value !== "user" && value !== "instructor") return { status: "malformed" };
       origin = value;
     }
-    cards.push({ front, back, sourcePage: sourcePage as number | null, ...(origin ? { origin } : {}) });
+    const visualRegionId = (card as Record<string, unknown>).visualRegionId;
+    if (
+      Object.prototype.hasOwnProperty.call(card, "visualRegionId") &&
+      (typeof visualRegionId !== "string" || !/^[0-9a-f]{64}$/.test(visualRegionId))
+    ) {
+      return { status: "malformed" };
+    }
+    cards.push({
+      ...(typeof visualRegionId === "string" ? { visualRegionId } : {}),
+      front,
+      back,
+      sourcePage: sourcePage as number | null,
+      ...(origin ? { origin } : {}),
+    });
   }
   return { status: "ok", cards };
 }
 
 /** The content-addressed version of a material's ordered cards. */
 export async function cardVersion(materialId: string, cards: readonly CanonicalCard[]): Promise<CardVersion> {
-  const canonical = cards.map(({ front, back, sourcePage, origin }) => (origin ? { front, back, sourcePage, origin } : { front, back, sourcePage }));
+  const canonical = cards.map(({ front, back, sourcePage, origin, visualRegionId }) => ({
+    front,
+    back,
+    sourcePage,
+    ...(origin ? { origin } : {}),
+    ...(visualRegionId ? { visualRegionId } : {}),
+  }));
   const contentHash = await sha256Hex(canonicalJson(canonical));
   const versionId = await sha256Hex(`${materialId}\u0000${contentHash}`);
   const items = await Promise.all(

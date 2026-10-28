@@ -80,6 +80,7 @@ export function hasHandwrittenItems(set: AiStudySet | null, test?: PracticeTest 
  * chose to include them. Every export path starts here, before serializing.
  */
 export function exportSourceFor(source: ExportSource, selection: Pick<ExportSelection, "instructorCorrections">): ExportSource {
+  source={...source,studySet:source.studySet ? {...source.studySet,flashcards:source.studySet.flashcards.filter(c=>!c.visualRegionId)} : null};
   const set = source.studySet;
   const test = source.practiceTest;
   if (selection.instructorCorrections === true || !hasInstructorCorrections(set, test)) return source;
@@ -211,6 +212,7 @@ export function exportFileName(title: string, extension: "json" | "html" | "ics"
 
 /** The packet object for the chosen parts, before validation. */
 export function buildExportPacket(source: ExportSource, selection: ExportSelection, createdAt: Date): Record<string, unknown> {
+  source={...source,studySet:source.studySet ? {...source.studySet,flashcards:source.studySet.flashcards.filter(c=>!c.visualRegionId)} : null};
   const available = exportableParts(source);
   const title = normalizeLine(source.material.title).slice(0, LIMITS.title) || "Study packet";
   const set = source.studySet;

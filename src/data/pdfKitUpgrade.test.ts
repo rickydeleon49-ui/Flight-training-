@@ -29,7 +29,7 @@ async function schema17() {
 function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, unknown[]>) {
   for (const [table, rows] of Object.entries(before)) expect(after[table], table).toEqual(rows);
   const added = Object.keys(after).filter((t) => !(t in before)).sort();
-  expect(added).toEqual(["flight_schools", "homework_activities", "homework_assignments", "homework_history", "homework_operations", "homework_runs", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "pdf_kit_item_sources", "pdf_kit_runs", "study_page_source_bindings", "study_page_sources", "study_set_save_operations"]);
+  expect(added).toEqual(["card_item_visual_regions", "flight_schools", "homework_activities", "homework_assignments", "homework_history", "homework_operations", "homework_runs", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "pdf_kit_item_sources", "pdf_kit_runs", "study_page_source_bindings", "study_page_sources", "study_set_save_operations", "visual_card_regions"]);
   for (const table of added) expect(after[table]).toEqual([]);
 }
 

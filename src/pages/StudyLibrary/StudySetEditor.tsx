@@ -1,5 +1,6 @@
 import type { BookmarkCardSource } from "@/data/studyPageSources";
 import { PdfItemLabel } from "./PdfItemLabel";
+import { VisualCardEditor } from "./VisualCardEditor";
 import "./StudySetEditor.css";
 import { useEffect, useRef, useState } from "react";
 
@@ -70,7 +71,7 @@ function sameContent(a: AiStudySet, b: AiStudySet): boolean {
     JSON.stringify([
       set.summary,
       set.sections.map((s) => [s.heading, s.body]),
-      set.flashcards.map((c) => [c.front, c.back, c.sourcePage]),
+      set.flashcards.map((c) => [c.front, c.back, c.sourcePage, c.visualRegionId]),
     ]);
   return text(a) === text(b);
 }
@@ -115,6 +116,7 @@ export function StudySetEditor({
   const [fields, setFields] = useState<string[]>([]);
   const [page, setPage] = useState("");
   const [fromInstructor, setFromInstructor] = useState(false);
+  const [visualIndex, setVisualIndex] = useState<number | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
   const close = () => {
@@ -358,6 +360,11 @@ export function StudySetEditor({
         {studySet.flashcards.map((card, index) => (
           <div className="row row--between row--wrap" key={`card-${index}`}>
             <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
+            {card.visualRegionId ? (
+              <Button size="small" onClick={() => setVisualIndex(index)}>
+                Move or resize cover
+              </Button>
+            ) : null}
             {itemActions({ kind: "card", index }, card.origin)}
           </div>
         ))}
@@ -373,6 +380,9 @@ export function StudySetEditor({
         {showHistory ? <StudySetHistory material={material} /> : null}
       </div>
 
+      {visualIndex !== null ? (
+        <VisualCardEditor material={material} cardIndex={visualIndex} onClose={() => setVisualIndex(null)} />
+      ) : null}
       <Dialog
         open={Boolean(action) && action?.mode !== "delete"}
         onClose={close}

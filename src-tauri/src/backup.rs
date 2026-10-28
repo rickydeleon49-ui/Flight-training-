@@ -661,6 +661,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 25 {
         verify_schema_25_oral_scenarios(connection)?;
     }
+    if newest_migration >= 26 {
+        verify_schema_26_visual_cards(connection)?;
+    }
     if newest_migration >= 20 {
         verify_schema_20_homework_semantics(connection)?;
     }
@@ -728,6 +731,45 @@ pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Re
     crate::homework::validate_database(connection)
 }
 
+pub(crate) fn verify_schema_26_visual_cards(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in ["visual_card_regions", "card_item_visual_regions"] {
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Damaged picture card schema.".into());
+        }
+    }
+    let actual: Option<String> = connection
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE name='visual_regions_owner'",
+            [],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|_| "Damaged picture index.")?;
+    let expected: String = reference
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE name='visual_regions_owner'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|_| "Damaged picture index.")?;
+    if actual.as_deref().map(normalize_sql) != Some(normalize_sql(&expected)) {
+        return Err("Damaged picture index.".into());
+    }
+    crate::visual_cards::validate_references(connection)?;
+    Ok(())
+}
+
 pub(crate) fn verify_schema_24_page_sources(connection: &Connection) -> Result<(), String> {
     let reference = get_reference_schema_connection()?;
     for table in ["study_page_sources", "study_page_source_bindings"] {
@@ -778,6 +820,12 @@ pub(crate) fn verify_schema_24_page_sources(connection: &Connection) -> Result<(
         let (owner, kind, key, hash, page) = row.map_err(|_| "Damaged page source.")?;
         if kind == "frozen_card" {
             let card:Option<serde_json::Value>=connection.query_row("SELECT i.front,i.back,i.source_page,o.origin FROM card_items i JOIN card_versions v ON v.id=i.version_id LEFT JOIN card_item_origins o ON o.item_id=i.id WHERE i.id=?1 AND v.source_material_id=?2",rusqlite::params![key,owner],|r|Ok(serde_json::json!({"front":r.get::<_,String>(0)?,"back":r.get::<_,String>(1)?,"sourcePage":r.get::<_,Option<i64>>(2)?,"origin":r.get::<_,Option<String>>(3)?}))).optional().map_err(|_|"Damaged page source.")?;
+            let card = card.map(|mut c| {
+                if let Ok(Some(id)) = crate::visual_cards::frozen_id(connection, &key) {
+                    c["visualRegionId"] = serde_json::json!(id);
+                }
+                c
+            });
             if card.as_ref().map_or(true, |c| {
                 crate::study_page_sources::fingerprint(c) != hash || c["sourcePage"] != page
             }) {
@@ -979,7 +1027,9 @@ pub(crate) fn verify_schema_19_study_receipts(connection: &Connection) -> Result
             serde_json::from_str(&payload).map_err(|_| "A study set save receipt is damaged.")?;
         let operation = crate::study_sets::decode_operation(&v)
             .map_err(|_| "A study set save receipt is damaged.")?;
-        if (operation.pdf_kit_sources.is_none() && operation.page_source.is_none())
+        if (operation.pdf_kit_sources.is_none()
+            && operation.page_source.is_none()
+            && operation.visual_regions.is_none())
             || operation.operation_id != id
             || operation.material_id != material
             || crate::practice_sessions::canonical_json(&operation.payload) != payload
@@ -4047,6 +4097,8 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
                 return Err(format!("Card {item_id} has an out-of-bounds source page."));
             }
             cards.push(CanonicalCard {
+                visual_region_id: crate::visual_cards::frozen_id(connection, &item_id)
+                    .map_err(|_| "Damaged visual sidecar.")?,
                 front,
                 back,
                 source_page,
@@ -4857,8 +4909,35 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     std::io::copy(&mut db_entry, &mut temp_file)
         .map_err(|e| format!("Could not inspect backup database: {e}"))?;
     drop(temp_file);
+    drop(db_entry);
 
     verify_application_database(&temp_db_path)?;
+    let conn = Connection::open(&temp_db_path).map_err(|_| "Could not inspect picture cards.")?;
+    if crate::visual_cards::exists(&conn) {
+        let mut stmt=conn.prepare("SELECT r.id,m.file_path FROM visual_card_regions r JOIN study_materials m ON m.id=r.image_material_id").map_err(|_|"Could not inspect picture cards.")?;
+        let rows = stmt
+            .query_map([], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?))
+            })
+            .map_err(|_| "Could not inspect picture cards.")?;
+        for pair in rows {
+            let (id, path) = pair.map_err(|_| "Damaged picture lookup.")?;
+            let path = path.ok_or("Damaged picture lookup.")?;
+            if !archive_documents.contains(&path) {
+                continue;
+            } // completeness and missingAtExport checked below
+            let r = crate::visual_cards::read_region(&conn, &id)?;
+            let entry = archive
+                .by_name(&format!("documents/{path}"))
+                .map_err(|_| "Missing picture bytes.")?;
+            let mut bytes = Vec::new();
+            entry
+                .take((crate::visual_cards::MAX_BYTES + 1) as u64)
+                .read_to_end(&mut bytes)
+                .map_err(|_| "Could not read picture bytes.")?;
+            crate::visual_cards::verify_bytes(&r, &bytes)?;
+        }
+    }
 
     let referenced_documents = query_referenced_documents(&temp_db_path)?;
     let referenced_set: HashSet<&str> = referenced_documents.iter().map(|s| s.as_str()).collect();
@@ -15944,6 +16023,7 @@ mod tests {
         );
     }
     include!("homework_backup_tests.rs");
+    include!("visual_backup_tests.rs");
     #[test]
     fn oral_scenarios_backup_round_trip_old_backup_and_newer_schema() {
         for old in [false, true] {

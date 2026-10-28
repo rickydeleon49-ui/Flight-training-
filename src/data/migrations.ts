@@ -34,6 +34,8 @@ import studyPageSources from "../../src-tauri/migrations/0024_study_page_sources
 import homeworkAnswers from "../../src-tauri/migrations/0023_homework_answers.sql?raw";
 import oralScenarios from "../../src-tauri/migrations/0025_oral_scenarios.sql?raw";
 
+import visualCardRegions from "../../src-tauri/migrations/0026_visual_card_regions.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -66,6 +68,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 23, description: "homework_answers", sql: homeworkAnswers },
   { version: 24, description: "study_page_sources", sql: studyPageSources },
   { version: 25, description: "oral_scenarios", sql: oralScenarios },
+  { version: 26, description: "visual_card_regions", sql: visualCardRegions },
 ];
 
 /**

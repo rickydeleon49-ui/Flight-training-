@@ -53,6 +53,7 @@ export function authoringStateOf(set: Pick<AiStudySet, "summary" | "summaryOrigi
       kind: "card",
       fields: [card.front, card.back],
       sourcePage: card.sourcePage,
+      ...(card.visualRegionId ? {visualRegionId: card.visualRegionId} : {}),
       ...(card.itemId !== undefined ? { itemId: card.itemId } : {}),
       ...(card.origin !== undefined ? { origin: card.origin } : {}),
       ...(card.replaces !== undefined ? { replaces: card.replaces } : {}),
@@ -66,6 +67,7 @@ export function nextSetOf(frame: SetFrame, state: AuthoringState): NextStudySet 
   const summary = state.items.find((item) => item.kind === "summary");
   const identity = (item: StudyItem) => ({
     itemId: item.itemId,
+    ...(item.visualRegionId ? {visualRegionId: item.visualRegionId} : {}),
     ...(item.origin ? { origin: item.origin } : {}),
     ...(item.replaces !== undefined ? { replaces: item.replaces } : {}),
   });
