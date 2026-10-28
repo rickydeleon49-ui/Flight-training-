@@ -18,5 +18,6 @@ it("PACKS-07 separates content search results by the normal spacing token", () =
 it("PACKS-08 wraps bookmark rows so title stays full width and buttons sit below when space is short", () => {
   expect(css).toMatch(/\.bookmark-row\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/);
   expect(css).toMatch(/\.bookmark-row__title\s*\{[^}]*flex:\s*1\s+1\s+16rem;[^}]*min-width:\s*0;/);
-  expect(css).toMatch(/\.bookmark-row__actions\s*\{[^}]*flex:\s*0\s+0\s+auto;/);
+  expect(css).toMatch(/\.bookmark-row__actions\s*\{[^}]*flex:\s*0\s+1\s+auto;[^}]*flex-wrap:\s*wrap;[^}]*min-width:\s*0;[^}]*max-width:\s*100%;/);
+  expect(css).toMatch(/\.bookmark-row__actions \.destructive-action\s*\{[^}]*margin-inline-start:/);
 });

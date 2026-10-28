@@ -61,8 +61,20 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   useEffect(() => { if (open && mirrorKey) remember(); }, [title, draft, expected, busy, open, mirrorKey]);
   const titleRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
-    if (open && expected !== undefined) titleRef.current?.focus();
+    if (open && expected !== undefined && !noteSeed) titleRef.current?.focus();
   }, [open, expected]);
+  // From a page note the new question is at the bottom: bring it into view and
+  // start in its first answer option, the empty field she must fill.
+  const noteOptionsRef = useRef<HTMLDivElement | null>(null);
+  const noteFocused = useRef(false);
+  useEffect(() => {
+    if (!open || expected === undefined || !noteSeed || noteFocused.current) return;
+    const first = noteOptionsRef.current?.querySelector("textarea");
+    if (!first) return;
+    noteFocused.current = true;
+    first.scrollIntoView?.({ block: "center" });
+    first.focus({ preventScroll: true });
+  }, [open, expected, draft.length]);
 
   useEffect(() => {
     let live = true;
@@ -194,7 +206,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
             return <fieldset key={index} className="stack stack--2" style={{ minWidth: 0 }}>
               <legend>Question {index + 1}</legend>{seed?.questions.some(q => q.identity === question.identity) ? <PdfItemLabel provenance={{ status: "valid", label: "Pulled from your PDF on this Mac", sources: [] }} origin={question.instructor ? "instructor" : !samePdfQuestion(question, seed.questions.find(q => q.identity === question.identity)!) ? "user" : undefined} /> : savedPdf ? <PdfItemLabel provenance={savedPdf} origin={question.instructor ? "instructor" : expected?.questions[savedIndex] && !samePdfQuestion(question, draftFromSnapshot(expected)[savedIndex]!) ? "user" : origin} /> : <AuthorBadge origin={origin} />}
               <Field label={`Question ${index + 1} wording`} error={validate ? messages.question : null}><TextArea rows={3} value={question.question} onChange={(event) => change(index, { question: event.target.value })} /></Field>
-              <div role="group" aria-label={`Question ${index + 1} answer options`} className="stack stack--2">
+              <div role="group" aria-label={`Question ${index + 1} answer options`} className="stack stack--2" ref={noteSeed && question.identity === noteSeed.identity ? noteOptionsRef : undefined}>
                 {question.options.map((option, at) => <div key={at} className="stack stack--2" style={{ minWidth: 0 }}>
                   <Field label={`Question ${index + 1}, option ${at + 1}`} error={validate ? messages.options[at] : null}><TextArea rows={2} value={option} onChange={(event) => change(index, { options: question.options.map((value, position) => position === at ? event.target.value : value) })} /></Field>
                   <div className="row row--wrap"><label><input type="radio" name={`correct-${index}`} checked={question.correctIndex === at} onChange={() => change(index, { correctIndex: at })} /> Correct answer: option {at + 1}</label>
@@ -234,8 +246,8 @@ export function PdfPracticeQuestions({ material, seed, onClose, onSourceChanged,
 }
 
 /** "Make a question" from a page note: the same editor, one prefilled question added. */
-export function PracticeNoteQuestion({ material, seed, onClose }: { material: StudyMaterial; seed: NoteQuestionSeed; onClose: () => void }) {
-  return <PracticeEditing material={material} creating noteSeed={seed} onClose={onClose} />;
+export function PracticeNoteQuestion({ material, seed, onClose, onSaved }: { material: StudyMaterial; seed: NoteQuestionSeed; onClose: () => void; onSaved?: () => void }) {
+  return <PracticeEditing material={material} creating noteSeed={seed} onClose={onClose} onSaved={onSaved} />;
 }
 
 export function StartManualPracticeTest({ material }: { material: StudyMaterial }) {

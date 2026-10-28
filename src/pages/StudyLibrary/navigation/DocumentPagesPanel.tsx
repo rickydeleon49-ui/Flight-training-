@@ -110,11 +110,13 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const [cardDraft, setCardDraft] = useState<{ createFirst: boolean; seed: Omit<BookmarkCardSource, "itemId">; set: AiStudySet } | null>(null);
   // "Make a question" opens the practice editor with one question from the note.
   const [questionDraft, setQuestionDraft] = useState<NoteQuestionSeed | null>(null);
+  const [questionAdded, setQuestionAdded] = useState(false);
   const cardEpoch = useRef(0);
   useEffect(() => {
     cardEpoch.current++;
     setCardDraft(null);
     setQuestionDraft(null);
+    setQuestionAdded(false);
     return () => {
       cardEpoch.current++;
     };
@@ -148,6 +150,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   };
   const makeQuestion = async (bookmark: NavigationBookmark) => {
     const epoch = ++cardEpoch.current;
+    setQuestionAdded(false);
     try {
       if (!app?.repositories) return;
       const preview = await previewStudyPageSource(material.id);
@@ -340,6 +343,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                 </Button>
               ) : null}
             </div>
+            {questionAdded ? <p className="tiny" role="status">Question added to your practice test.</p> : null}
             {showTips ? <p className="tiny muted">Save a named place so you can return to it later without remembering the page number.</p> : null}
             {desktop && !identity ? <p className="tiny muted">Check this file&apos;s pages before adding a bookmark.</p> : null}
             {bookmarks.length === 0 ? (
@@ -412,6 +416,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             material={material}
             seed={questionDraft}
             onClose={() => setQuestionDraft(null)}
+            onSaved={() => setQuestionAdded(true)}
           />
         ) : null}
         <ConfirmDialog

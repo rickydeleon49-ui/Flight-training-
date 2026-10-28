@@ -535,8 +535,10 @@ describe("Make a question from a page note (PDF-STUDY-01d)",()=>{
     fireEvent.click(within(dialog).getByRole("button",{name:"Cancel"}));
     await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Make a question"})).toBeNull());
     expect(await counts()).toEqual(before);
+    expect(screen.queryByText("Question added to your practice test.")).toBeNull();
     fireEvent.click(make);dialog=await screen.findByRole("dialog",{name:"Make a question"});
     await within(dialog).findByLabelText(`Question ${n} wording`);
+    await waitFor(()=>expect(document.activeElement).toBe(within(dialog).getByLabelText(`Question ${n}, option 1`)));
     const save=within(dialog).getByRole("button",{name:"Save"});
     fireEvent.click(save);
     expect(await within(dialog).findByText("Choose the correct answer.")).toBeTruthy();
@@ -546,6 +548,7 @@ describe("Make a question from a page note (PDF-STUDY-01d)",()=>{
     fireEvent.click(within(dialog).getAllByRole("radio").filter(r=>(r as HTMLInputElement).name===`correct-${n-1}`)[0]!);
     fireEvent.click(save);fireEvent.click(save);
     await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Make a question"})).toBeNull());
+    expect(screen.getByText("Question added to your practice test.").getAttribute("role")).toBe("status");
     const snapshot=(await createRepositories(db).documents.readPracticeSnapshot(M))!;
     expect(snapshot.questions).toHaveLength(n);
     if(existing) expect(snapshot.questions[0]).toEqual(existing.questions[0]);

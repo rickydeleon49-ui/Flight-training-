@@ -574,7 +574,13 @@
   min-width: 0;
 }
 .bookmark-row__actions {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.bookmark-row__actions .destructive-action {
+  margin-inline-start: var(--space-3);
 }
 
 /* Flashcards section (#material-flashcards) safeguards */
