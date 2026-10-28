@@ -53,6 +53,7 @@ mod study_packet;
 mod study_page_sources;
 mod study_sets;
 mod visual_cards;
+mod weather;
 
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
@@ -277,6 +278,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            weather::weather_session,
+            weather::get_airport_weather,
             extraction::service::offline_content_readiness,
             extraction::service::prepare_offline_content,
             extraction::search_api::search_offline_content,

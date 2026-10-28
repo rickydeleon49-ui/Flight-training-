@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
+import { AirportWeather } from "@/components/weather/AirportWeather";
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -35,6 +36,17 @@ import "./schedule.css";
 
 export function EventDetail() {
   const { eventId } = useParams();
+  const { hash } = useLocation();
+  useEffect(() => {
+    // A lesson opens at its top unless a link asks for its weather.
+    if (hash !== "#airport-weather") {
+      window.scrollTo?.(0, 0);
+      return;
+    }
+    const section = document.getElementById("airport-weather") ?? document.getElementById("lesson-preparation");
+    section?.scrollIntoView?.({ block: "start" });
+    section?.focus({ preventScroll: true });
+  }, [eventId, hash]);
   const navigate = useNavigate();
   const { data, mutate, deleteWithUndo } = useAppData();
   const operations = useActionOperations();
@@ -170,6 +182,7 @@ export function EventDetail() {
           <Card>
             <CardHeader
               title="Preparation"
+              headingId="lesson-preparation"
               action={
                 preparation && preparation.total > 0 ? (
                   <Badge tone={preparation.ready ? "complete" : "neutral"}>
@@ -230,6 +243,7 @@ export function EventDetail() {
                   </div>
                 )}
 
+                {event.eventType === "flight_lesson" && <AirportWeather key={event.id} />}
                 <div className="inline-add">
                   <TextInput
                     value={newPrepItem}

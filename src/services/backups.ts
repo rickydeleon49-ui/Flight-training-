@@ -10,6 +10,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 
 import { isTauri } from "@/data";
 import { formatLocalDay, todayIso } from "@/lib/dates";
+import { airportWeather } from "./weather";
 
 export interface BackupInfo {
   name: string;
@@ -94,6 +95,7 @@ export async function inspectCompleteBackup(sourcePath: string): Promise<Complet
 
 export async function stageCompleteRestore(sourcePath: string): Promise<CompleteBackupInfo> {
   if (!isTauri()) throw new Error("Restore needs the desktop application.");
+  airportWeather.clear();
   return invoke<CompleteBackupInfo>("stage_complete_restore", { sourcePath });
 }
 
@@ -105,6 +107,7 @@ export async function stageCompleteRestore(sourcePath: string): Promise<Complete
  */
 export async function stageLocalRestore(name: string): Promise<BackupInfo> {
   if (!isTauri()) throw new Error("Restore needs the desktop application.");
+  airportWeather.clear();
   return invoke<BackupInfo>("stage_local_restore", { name });
 }
 

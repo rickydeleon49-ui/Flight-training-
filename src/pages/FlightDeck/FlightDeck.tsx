@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -36,6 +36,7 @@ import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
 import { useAppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
+import { airportWeather } from "@/services/weather";
 import { AcsAreaMaterialCoveragePanel } from "@/pages/StudyLibrary/AcsAreaMaterialCoveragePanel";
 
 import "./flightDeck.css";
@@ -414,6 +415,7 @@ function FlightHoursCard({
 }
 
 function NextFlightCard({ model }: { model: Model }) {
+  const weatherOn = useSyncExternalStore(airportWeather.subscribe, () => airportWeather.snapshot().enabled);
   if (!model.nextFlight) {
     return (
       <Card>
@@ -537,6 +539,11 @@ function NextFlightCard({ model }: { model: Model }) {
           <Link className="button button--secondary button--block" to={`/schedule/${event.id}`}>
             Open lesson
           </Link>
+          {weatherOn && event.eventType === "flight_lesson" ? (
+            <Link className="small" to={`/schedule/${event.id}#airport-weather`}>
+              Airport weather
+            </Link>
+          ) : null}
         </div>
       </CardBody>
     </Card>
