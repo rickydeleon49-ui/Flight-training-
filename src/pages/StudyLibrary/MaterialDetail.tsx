@@ -56,6 +56,7 @@ import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { IMPORTED_CONTENT_DISCLAIMER } from "./ImportStudyPacketDialog";
 import { CardReviewPanel } from "./CardReviewPanel";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
+import { OralPracticeDialog } from "./OralPracticeDialog";
 import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
@@ -210,6 +211,7 @@ function MaterialDetailPage() {
 
   // A link from offline search (OFFLINE-02c §4): open the guide section,
   // card or practice question it names, only while it is unchanged.
+  const [oralOpen, setOralOpen] = useState(false);
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
   const [linkFailed, setLinkFailed] = useState(false);
   const [linkRetry, setLinkRetry] = useState(0);
@@ -1403,6 +1405,20 @@ function MaterialDetailPage() {
                 </CardBody>
               </Card>
             </div>
+
+          <Card>
+            <CardBody>
+              <div className="row row--between row--wrap row--gap-2" style={{ alignItems: "center" }}>
+                <p className="small muted" style={{ flex: "1 1 14rem" }}>
+                  Practice answering a question out loud, using a scenario you write yourself.
+                </p>
+                <Button size="small" variant="secondary" onClick={() => setOralOpen(true)}>
+                  Practice an oral question
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+          <OralPracticeDialog material={material} open={oralOpen} onClose={() => setOralOpen(false)} />
 
           <Card>
             <CardHeader
