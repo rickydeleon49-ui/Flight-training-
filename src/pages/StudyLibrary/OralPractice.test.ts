@@ -51,9 +51,11 @@ it("keeps the discussion points out of the page until she shows them", async () 
   mount();
   await toAnswerStep("carb heat first");
   for (const point of POINTS) expect(document.body.innerHTML).not.toContain(point);
-  expect(document.body.innerHTML).not.toContain("I covered this");
+  expect(document.body.innerHTML).not.toContain("Tick the points you covered");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   for (const point of POINTS) expect(await screen.findByText(point)).toBeTruthy();
+  // Her own answer stays in view beside the points.
+  expect(screen.getByText("carb heat first")).toBeTruthy();
   expect(screen.getAllByRole("checkbox")).toHaveLength(3);
   expect(screen.getByText("Try it — the scenario is not saved yet.")).toBeTruthy();
 });

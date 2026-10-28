@@ -188,6 +188,15 @@ export function OralPracticeDialog({
             <h3 ref={revealRef} tabIndex={-1} className="small">
               Your discussion points
             </h3>
+            {answer.trim() ? (
+              <div className="stack stack--1">
+                <p className="tiny muted">Your answer</p>
+                <p className="small wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
+                  {answer.trim()}
+                </p>
+              </div>
+            ) : null}
+            <p className="tiny muted">Tick the points you covered.</p>
             <div className="stack stack--2">
               {points.map((point, index) => (
                 <Checkbox
@@ -198,7 +207,6 @@ export function OralPracticeDialog({
                     setCovered((current) => current.map((value, at) => (at === index ? checked : value)))
                   }
                   label={<span className="wrap-anywhere">{point}</span>}
-                  meta="I covered this"
                 />
               ))}
             </div>

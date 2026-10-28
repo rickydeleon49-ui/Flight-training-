@@ -148,7 +148,7 @@ export function Notes() {
                 }
               />
               <TextArea
-                rows={4}
+                rows={Math.min(12, Math.max(4, draft.body.split("\n").length))}
                 value={draft.body}
                 aria-label="Note"
                 placeholder="The school on the north field returns calls after four. Ask about their discovery flight."
