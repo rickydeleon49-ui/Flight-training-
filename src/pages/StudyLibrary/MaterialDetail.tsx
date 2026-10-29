@@ -689,7 +689,7 @@ function MaterialDetailPage() {
             <Link className="button button--ghost" to="/study">
               Back
             </Link>
-            <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show tips" : "Hide tips"}</Button>
+            <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
             <Button onClick={() => setEditing(true)}>Edit</Button>
             <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>
               Delete

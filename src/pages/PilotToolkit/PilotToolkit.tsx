@@ -1222,6 +1222,7 @@ function ReminderTool({ state, save }: ToolProps) {
             <Checkbox
               checked={state.remindersEnabled}
               onChange={(enabled) => void setEnabled(enabled)}
+              strikethrough={false}
               label="Show system reminders"
               meta="Includes due actions, scheduled training, medical dates, and saved record expirations."
             />

@@ -90,7 +90,7 @@ it("jumps from right after Ask about this PDF to each present heading with focus
     ["Backup on this Mac", "On this Mac (backup)"],
   ];
   expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(destinations.map(([label]) => label));
-  fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   expect(screen.getByRole("button", { name: "Split automatically" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   for (const [label, title] of destinations) {
@@ -177,7 +177,7 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
 });
 
 const sectionTitles = ["Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
-it("shows a short muted tip under every section header and Hide tips hides them across visits", async () => {
+it("shows a short muted tip under every section header and Hide section tips hides them across visits", async () => {
   let view = await openPage();
   const tips = sectionTitles.map(title => {
     const header = screen.getByRole("heading", { name: title }).closest("header")!;
@@ -186,7 +186,7 @@ it("shows a short muted tip under every section header and Hide tips hides them 
     expect(tip.textContent?.length).toBeGreaterThan(20);
     return tip.textContent!;
   });
-  fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   for (const text of tips) expect(screen.queryByText(text, { exact: true })).toBeNull();
   expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
   expect(screen.queryByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeNull();
@@ -194,10 +194,11 @@ it("shows a short muted tip under every section header and Hide tips hides them 
   // Hiding guidance keeps the features and both backup panels usable.
   expect(screen.getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
   expect(screen.getByRole("textbox", { name: "Personal notes" })).toBeTruthy();
+  expect(localStorage.getItem("hfd:material-start-here:hidden")).toBe("1");
   view.unmount(); view = await openPage();
-  expect(screen.getByRole("button", { name: "Show tips" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Show section tips" })).toBeTruthy();
   for (const text of tips) expect(screen.queryByText(text, { exact: true })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Show tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show section tips" }));
   for (const text of tips) expect(screen.getByText(text, { exact: true })).toBeTruthy();
   view.unmount();
 });
@@ -211,9 +212,9 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
   expect(screen.queryByRole("region", { name: "On this Mac (backup)" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Write your own study guide" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   expect(screen.queryByText("Write what you want to remember. Your notes save as you type; watch for Saved.")).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Show tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show section tips" }));
   expect(screen.getByText("Write what you want to remember. Your notes save as you type; watch for Saved.")).toBeTruthy();
 });
 

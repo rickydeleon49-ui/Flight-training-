@@ -21,7 +21,8 @@ it("keeps narrow navigation sticky and leaves space above section destinations",
   const shell = readFileSync(new URL("../layout/shell.css", import.meta.url), "utf8");
   const narrow = shell.slice(shell.indexOf("@media (max-width: 999px)"));
   expect(narrow).toMatch(/\.shell\s*\{[^}]*display: block;/);
-  expect(narrow).toMatch(/\.sidebar\s*\{[^}]*position: sticky;[^}]*top: 0;[^}]*align-self: start;[^}]*z-index: 20;[^}]*max-height: 100vh;[^}]*overflow-y: auto;/);
+  expect(narrow).toMatch(/\.sidebar\s*\{[^}]*position: sticky;[^}]*top: 0;[^}]*align-self: start;[^}]*z-index: 20;[^}]*max-height: 100vh;[^}]*overflow: hidden;/);
+  expect(narrow).toMatch(/\.sidebar__navigation\s*\{[^}]*grid-column: 1 \/ -1;[^}]*min-height: 0;[^}]*overflow-y: auto;/);
   expect(narrow).toMatch(/\.sidebar__menu\s*\{[^}]*min-width: 44px;[^}]*min-height: 44px;/);
   expect(narrow).toContain("scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5))");
 });

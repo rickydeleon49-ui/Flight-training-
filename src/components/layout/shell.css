@@ -176,9 +176,11 @@
     z-index: 20;
     max-height: 100vh;
     height: auto;
-    overflow-y: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    grid-auto-rows: minmax(0, 1fr);
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
@@ -191,7 +193,13 @@
   }
   .brand { padding: 0; }
   .brand__tagline { display: none; }
-  .sidebar__navigation { flex-basis: 100%; }
+  /* Keep the header above the list; only the list scrolls in a short window. */
+  .sidebar__navigation {
+    grid-column: 1 / -1;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+  }
   .sidebar__footer { margin-top: 0; }
   .sidebar__note { display: none; }
   .content { padding: var(--space-5) var(--space-4) var(--space-7); }

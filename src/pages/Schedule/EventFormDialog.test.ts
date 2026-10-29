@@ -36,3 +36,11 @@ describe("EventFormDialog costs", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ estimatedCost: 275_50, actualCost: null }));
   });
 });
+
+it("marks the empty event title placeholder as an example", () => {
+  render(h(EventFormDialog, { open: true, goals: [], onClose: () => undefined, onSave: vi.fn() }));
+  const title = screen.getByLabelText("Title") as HTMLInputElement;
+  expect(title.value).toBe("");
+  expect(title.placeholder).toBe("e.g. Crosswind landings");
+  expect(title.classList.contains("input")).toBe(true);
+});

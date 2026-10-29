@@ -108,16 +108,16 @@ it("replaces the Start here panel on a PDF page with one link line to How to", a
   expect(await screen.findByRole("tab", { name: "How to", selected: true })).toBeTruthy();
 });
 
-it("keeps the Hide tips preference working on a PDF page, hiding the link line too", async () => {
+it("keeps the Hide section tips preference working on a PDF page, hiding the link line too", async () => {
   const view = renderAt("/study/howto-pdf");
   await screen.findByRole("heading", { name: "Personal notes" });
-  fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
   expect(localStorage.getItem("hfd:material-start-here:hidden")).toBe("1");
   view.unmount();
   renderAt("/study/howto-pdf");
   await screen.findByRole("heading", { name: "Personal notes" });
-  fireEvent.click(screen.getByRole("button", { name: "Show tips" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show section tips" }));
   expect(screen.getByRole("link", { name: "How to in Study Library" })).toBeTruthy();
 });
 

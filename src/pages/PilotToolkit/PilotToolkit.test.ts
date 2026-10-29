@@ -210,3 +210,13 @@ it("shows reminders in Toolkit and asks notification permission only through its
   fireEvent.click(screen.getByRole("checkbox", { name: /Show system reminders/ }));
   expect(requestPermission).toHaveBeenCalledOnce();
 });
+
+it("keeps checked reminder settings readable without a completion strike", () => {
+  data.toolkit = { ...data.toolkit, remindersEnabled: true };
+  render(h(MemoryRouter, null, h(PilotToolkit)));
+  fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
+  const checkbox = screen.getByRole("checkbox", { name: /Show system reminders/ }) as HTMLInputElement;
+  expect(checkbox.checked).toBe(true);
+  const label = checkbox.closest("label")!.querySelector<HTMLElement>(".checkbox__label")!;
+  expect(label.style.textDecoration).toBe("none");
+});
