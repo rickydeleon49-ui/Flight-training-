@@ -435,6 +435,7 @@ pub enum SaveReason {
     Delete,
     Regenerate,
     Restore,
+    RecoverCards,
     Remove,
 }
 
@@ -447,6 +448,7 @@ impl SaveReason {
             Some("delete") => Self::Delete,
             Some("regenerate") => Self::Regenerate,
             Some("restore") => Self::Restore,
+            Some("recover-cards") => Self::RecoverCards,
             Some("remove") => Self::Remove,
             _ => return invalid(),
         })
@@ -458,7 +460,7 @@ impl SaveReason {
             Self::Correct => "correct",
             Self::Delete | Self::Remove => "delete",
             Self::Regenerate => "regenerate",
-            Self::Restore => "restore",
+            Self::Restore | Self::RecoverCards => "restore",
         }
     }
 
@@ -611,6 +613,77 @@ fn parsed(row: &Map<String, Value>, column: &str) -> Value {
         .unwrap_or(Value::Null)
 }
 
+fn next_of_row(row: &Map<String, Value>) -> Check<NextSet> {
+    validate_next(&json!({
+        "title": row.get("title"), "summary": row.get("summary"),
+        "summaryOrigin": row.get("summary_origin"), "sections": parsed(row, "sections_json"),
+        "flashcards": parsed(row, "flashcards_json"), "sourceNotes": row.get("source_notes"),
+        "provider": row.get("provider"), "model": row.get("model"), "retired": parsed(row, "retired_json"),
+    }))
+}
+
+/// Only an unbroken chain of guide regenerations can explain a card wipe.
+/// TS twin: src/data/guideCardRecovery.ts. No history outside this material.
+fn guide_card_recovery(
+    tx: &Transaction,
+    material_id: &str,
+    current: Option<&Map<String, Value>>,
+) -> Check<Option<NextSet>> {
+    let Some(current) = current else {
+        return Ok(None);
+    };
+    let Ok(saved) = next_of_row(current) else {
+        return Ok(None);
+    };
+    if saved.flashcards != json!([])
+        || (js_trim(&saved.summary).is_empty() && saved.sections == json!([]))
+    {
+        return Ok(None);
+    }
+    let mut statement = tx.prepare("SELECT kind, reason, previous_json FROM study_set_history WHERE material_id = ?1 AND kind = 'study_set' ORDER BY rowid DESC").map_err(storage)?;
+    let entries = statement
+        .query_map([material_id], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(storage)?;
+    let mut after = saved.clone();
+    for entry in entries {
+        let (kind, reason, previous) = entry.map_err(storage)?;
+        if kind != "study_set" || reason != "regenerate" {
+            return Ok(None);
+        }
+        let before = serde_json::from_str::<Value>(&previous)
+            .ok()
+            .and_then(|value| decode_row(&value).ok())
+            .and_then(|row| next_of_row(&row).ok());
+        let Some(before) = before else {
+            return Ok(None);
+        };
+        if after.provider != "gemini"
+            || after.retired != before.retired
+            || (after.summary == before.summary && after.sections == before.sections)
+        {
+            return Ok(None);
+        }
+        if before
+            .flashcards
+            .as_array()
+            .is_some_and(|cards| !cards.is_empty())
+        {
+            return Ok(Some(NextSet {
+                flashcards: before.flashcards,
+                ..saved
+            }));
+        }
+        after = before;
+    }
+    Ok(None)
+}
+
 /// Whether the stored row already holds this content (timestamps aside).
 fn holds(row: &Map<String, Value>, next: &NextSet) -> bool {
     row.get("title") == Some(&json!(next.title))
@@ -706,6 +779,13 @@ pub fn apply_operation(
     }
     if recorded.is_some() || current != operation.expected {
         return Err(StudySetErrorCode::StaleContent);
+    }
+
+    if operation.reason == SaveReason::RecoverCards {
+        let recovery = guide_card_recovery(tx, &operation.material_id, current.as_ref())?;
+        if recovery.as_ref() != operation.next.as_ref() || recovery.is_none() {
+            return Err(StudySetErrorCode::StaleContent);
+        }
     }
 
     if let Some(next) = &operation.next {

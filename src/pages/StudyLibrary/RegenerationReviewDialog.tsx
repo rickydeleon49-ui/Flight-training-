@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button, Checkbox, Dialog } from "@/components/ui";
-import { holds, type StoredSetRow } from "@/data/studySetTransaction";
+import { holds, nextOfStored, type StoredSetRow } from "@/data/studySetTransaction";
 import { newId } from "@/lib/id";
 import { resolveRegeneration, StudyAuthoringError, type AuthoringState, type PreviewChoice, type PreviewItem } from "@/logic/studyAuthoring";
 import {
   authoringStateOf,
   mergeRegeneration,
+  preserveOtherStudyContent,
   nextSetOf,
   regenerationPreview,
   retiredWording,
@@ -74,6 +75,7 @@ export function RegenerationReviewDialog({
 }) {
   const { repositories } = useAppData();
   const answer = job.answer as GeneratedStudyAid;
+  const what = job.kind === "flashcards" ? "flashcards" : "study guide";
   const [opened, setOpened] = useState<{ stored: StoredSetRow; state: AuthoringState } | null>(null);
   const [preview, setPreview] = useState<readonly PreviewItem[] | null>(null);
   // Earlier wording behind each retirement fingerprint, from Previous versions.
@@ -106,12 +108,14 @@ export function RegenerationReviewDialog({
           const saved = await onSave(pending);
           if (live && !saved) {
             setSettling(false);
-            setProblem("Your reviewed study guide may already be saved, but this couldn't be confirmed. Close this and try again.");
+            setProblem(`Your reviewed ${what} may already be saved, but this couldn't be confirmed. Close this and try again.`);
           }
           return;
         }
         const state = authoringStateOf(read.set);
-        const classified = await regenerationPreview(state, answer);
+        // A guide review only adds generated cards when she has no saved cards.
+        const guideCards = state.items.some((item) => item.kind === "card") ? [] : answer.flashcards;
+        const classified = await regenerationPreview(state, job.kind === "flashcards" ? { ...answer, summary: "", sections: [] } : { ...answer, flashcards: guideCards });
         let earlier: ReadonlyMap<string, ItemText> = new Map();
         try {
           const entries = await repositories!.documents.listStudySetHistory(materialId);
@@ -129,8 +133,8 @@ export function RegenerationReviewDialog({
         if (!live) return;
         setProblem(
           failure instanceof StudyAuthoringError
-            ? "Part of your saved study guide is damaged, so it can't be merged with the new one. Nothing has been changed."
-            : "Your saved study guide couldn't be read. Nothing has been changed; try again.",
+            ? `Part of your saved ${what} is damaged, so it can't be merged with the new content. Nothing has been changed.`
+            : `Your saved ${what} couldn't be read. Nothing has been changed; try again.`,
         );
       }
     })();
@@ -148,8 +152,9 @@ export function RegenerationReviewDialog({
     });
 
   const unresolved = preview?.filter((entry) => entry.status === "unresolved" && !choices.has(entry.item.itemId)) ?? [];
-  const mine = opened?.state.items.filter((item) => item.origin !== undefined && item.kind !== "summary") ?? [];
-  const mySummary = opened?.state.items.find((item) => item.kind === "summary" && item.origin !== undefined);
+  const mine = opened?.state.items.filter((item) => item.origin !== undefined && (job.kind === "flashcards" ? item.kind === "card" : item.kind === "section")) ?? [];
+  const hasSavedCards = opened?.state.items.some((item) => item.kind === "card") ?? false;
+  const mySummary = job.kind === "flashcards" ? undefined : opened?.state.items.find((item) => item.kind === "summary" && item.origin !== undefined);
 
   const save = async () => {
     if (!preview || !opened || busyRef.current || unresolved.length > 0) return;
@@ -158,8 +163,8 @@ export function RegenerationReviewDialog({
     setProblem(null);
     try {
       const resolved = resolveRegeneration(preview, choices);
-      const merged = mergeRegeneration(opened.state, resolved, mode, keepMySummary);
-      const next = nextSetOf({ title: answer.title, sourceNotes: answer.sourceNotes, provider: "gemini", model: answer.model }, merged);
+      const merged = mergeRegeneration(opened.state, resolved, mode, keepMySummary, job.kind === "flashcards" ? ["card"] : hasSavedCards ? ["summary", "section"] : ["summary", "section", "card"]);
+      const next = preserveOtherStudyContent(nextSetOf({ title: answer.title, sourceNotes: answer.sourceNotes, provider: "gemini", model: answer.model }, merged), nextOfStored(opened.stored), job.kind === "flashcards" ? "flashcards" : "study-aid");
       // Within this review, the same choices reuse one operation, so saving
       // again after an unanswered save is recognised rather than repeated. A
       // save that committed before a reopen is caught when the review opens.
@@ -171,13 +176,13 @@ export function RegenerationReviewDialog({
       // holds the answer until it acknowledges it, and only that removes the
       // checkpoint. So nothing is cleared here, whatever the save reported.
       if (!saved) {
-        setProblem("The reviewed study guide wasn't saved. Your choices are still here; try saving again.");
+        setProblem(`The reviewed ${what} couldn't be saved. Your choices are still here; try saving again.`);
       }
     } catch (failure) {
       setProblem(
         failure instanceof StudyAuthoringError
           ? failure.message
-          : "The reviewed study guide couldn't be saved. Nothing has been changed.",
+          : `The reviewed ${what} couldn't be saved. Nothing has been changed.`,
       );
     } finally {
       busyRef.current = false;
@@ -193,14 +198,14 @@ export function RegenerationReviewDialog({
       onClose={() => {
         if (!busyRef.current) onClose();
       }}
-      title="Review the new study guide"
-      description="Your study guide has items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do."
+      title={`Review the new ${what}`}
+      description={`Your ${what} ${job.kind === "flashcards" ? "have" : "has"} items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.}`}
       dismissible={!busy}
       footer={
         <>
           <Button onClick={onClose} disabled={busy}>Cancel</Button>
           <Button variant="primary" onClick={() => void save()} disabled={busy || !preview || unresolved.length > 0}>
-            {busy ? "Saving…" : unresolved.length > 0 ? `Choose for ${unresolved.length} more` : "Save the reviewed study guide"}
+            {busy ? "Saving…" : unresolved.length > 0 ? `Choose for ${unresolved.length} more` : `Save the reviewed ${what}`}
           </Button>
         </>
       }
@@ -209,7 +214,7 @@ export function RegenerationReviewDialog({
         {problem ? <p className="field__error" role="alert">{problem}</p> : null}
         {!preview && !problem ? (
           <p className="tiny dim" role="status">
-            {settling ? "Checking whether your reviewed study guide was saved…" : "Comparing with your study guide…"}
+            {settling ? `Checking whether your reviewed ${what} was saved…` : `Comparing with your ${what}…`}
           </p>
         ) : null}
         {preview ? (
@@ -222,9 +227,9 @@ export function RegenerationReviewDialog({
               </label>
               <label className="row">
                 <input type="radio" name="regeneration-mode" checked={mode === "replace"} onChange={() => setMode("replace")} />
-                <span className="small">Replace everything with the new study guide</span>
+                <span className="small">Replace everything with the new {what}</span>
               </label>
-              <p className="tiny muted">Either way, what you have now is kept in Previous versions.</p>
+              <p className="tiny muted">{job.kind === "flashcards" ? "Your study guide stays as it is." : hasSavedCards ? "Your flashcards stay as they are." : "The new flashcards are added."} Either way, what you have now is kept in Previous versions.</p>
               {mode === "keep" && mySummary ? (
                 <Checkbox checked={keepMySummary} onChange={setKeepMySummary} label="Keep my summary instead of the new one" />
               ) : null}

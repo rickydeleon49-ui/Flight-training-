@@ -1,0 +1,93 @@
+{
+  "about": "CARDS-FIX-01 shared vector (synthetic). Replayed by src-tauri/src/study_sets_tests.rs and src/data/studySetTransaction.test.ts: the TypeScript offer must equal `recovered`, and the Rust guard must accept a recover-cards operation carrying it. Older cards (Z) are not the ones restored; the nearest cards before the wipe (A) are, after further guide regenerations.",
+  "materialId": "mat-study",
+  "steps": [
+    {
+      "reason": "create",
+      "next": {
+        "title": "Handbook guide",
+        "summary": "First guide.",
+        "summaryOrigin": null,
+        "sections": [{ "heading": "Weather", "body": "Fronts." }],
+        "flashcards": [{ "front": "Old Z?", "back": "Older card.", "sourcePage": 9 }],
+        "sourceNotes": "Synthetic notes.",
+        "provider": "gemini",
+        "model": "gemini-old",
+        "retired": []
+      }
+    },
+    {
+      "reason": "regenerate",
+      "next": {
+        "title": "Handbook guide",
+        "summary": "Second guide.",
+        "summaryOrigin": null,
+        "sections": [{ "heading": "Airspace", "body": "Class B." }],
+        "flashcards": [
+          { "front": "What is Class B?", "back": "Busy airspace.", "sourcePage": 3 },
+          { "front": "Clearance needed?", "back": "Yes.", "sourcePage": null }
+        ],
+        "sourceNotes": "Synthetic notes.",
+        "provider": "gemini",
+        "model": "gemini-cards",
+        "retired": []
+      }
+    },
+    {
+      "reason": "regenerate",
+      "next": {
+        "title": "Handbook guide",
+        "summary": "Third guide (wiped the cards).",
+        "summaryOrigin": null,
+        "sections": [{ "heading": "Airspace", "body": "Class B and C." }],
+        "flashcards": [],
+        "sourceNotes": "Synthetic notes.",
+        "provider": "gemini",
+        "model": "gemini-guide",
+        "retired": []
+      }
+    },
+    {
+      "reason": "regenerate",
+      "next": {
+        "title": "Handbook guide",
+        "summary": "Fourth guide.",
+        "summaryOrigin": null,
+        "sections": [{ "heading": "Airspace", "body": "Class B, C and D." }],
+        "flashcards": [],
+        "sourceNotes": "Synthetic notes.",
+        "provider": "gemini",
+        "model": "gemini-guide",
+        "retired": []
+      }
+    },
+    {
+      "reason": "regenerate",
+      "next": {
+        "title": "Handbook guide",
+        "summary": "Fifth guide.",
+        "summaryOrigin": null,
+        "sections": [{ "heading": "Airspace", "body": "All classes." }],
+        "flashcards": [],
+        "sourceNotes": "Synthetic notes.",
+        "provider": "gemini",
+        "model": "gemini-guide",
+        "retired": []
+      }
+    }
+  ],
+  "recovered": {
+    "title": "Handbook guide",
+    "summary": "Fifth guide.",
+    "summaryOrigin": null,
+    "sections": [{ "heading": "Airspace", "body": "All classes." }],
+    "flashcards": [
+      { "front": "What is Class B?", "back": "Busy airspace.", "sourcePage": 3 },
+      { "front": "Clearance needed?", "back": "Yes.", "sourcePage": null }
+    ],
+    "sourceNotes": "Synthetic notes.",
+    "provider": "gemini",
+    "model": "gemini-guide",
+    "retired": []
+  }
+}

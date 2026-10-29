@@ -153,6 +153,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     await waitFor(async () => expect(await repos.documents.listAiStudySets()).toHaveLength(1));
     const [saved] = await repos.documents.listAiStudySets();
     expect(saved?.sourceMaterialId).toBe("ch3");
+    // With no saved cards, the guide's own cards are kept (CARDS-FIX-01).
     // The card's page is the part's own page, shown once; it is not mapped onto the original again.
     expect(saved?.flashcards[0]?.sourcePage).toBe(3);
   });

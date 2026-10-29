@@ -8,6 +8,7 @@ vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
   default: `${process.cwd()}/node_modules/sql.js/dist/sql-wasm.wasm`,
 }));
 
+import { readFileSync } from "node:fs";
 import vectors from "@/testing/cardOriginVectors.json";
 import { canonicalJson, cardVersion, parseSavedCards, versionOrigin } from "@/logic/cardIdentity";
 import { prepareStudyEdit } from "@/logic/studyAuthoring";
@@ -89,6 +90,122 @@ for (const engine of ["node:sqlite", "sql.js"] as const) {
     db.select<{ id: string; reason: string; previous_json: string }>("SELECT id, reason, previous_json FROM study_set_history ORDER BY created_at, id");
 
   describe(`study-set saves (${engine})`, () => {
+
+    it("CARDS-FIX-01: recovers exact cards atomically, keeps the guide, retries once and keeps backups valid", async () => {
+      const db = await database();
+      const docs = documentRepository(db);
+      const original = { ...manualSet(), provider: "gemini" as const, summaryOrigin: null };
+      await docs.saveStudySet(op("create", null, original));
+      const before = (await docs.readStoredStudySet(M))!;
+      const guide = { ...original, title: "New guide", summary: "New guide text", flashcards: [] };
+      await docs.saveStudySet(op("regenerate", before, guide));
+      const offer = (await docs.readGuideCardRecovery(M))!;
+      expect(offer.next).toEqual({ ...guide, flashcards: original.flashcards });
+      const restore = op("recover-cards", offer.stored, offer.next);
+      expect(await docs.saveStudySet(restore)).toEqual({ status: "saved" });
+      expect(await docs.saveStudySet(restore)).toEqual({ status: "already_saved" });
+      expect(await docs.readGuideCardRecovery(M)).toBeNull();
+      expect((await docs.listAiStudySets())[0]!.flashcards).toEqual(original.flashcards);
+      expect(await history(db)).toHaveLength(2);
+      expect((await docs.listStudySetHistory(M))[0]!.reason).toBe("restore");
+      const reference = await createNodeSqliteDatabase();
+      opened.push(reference);
+      await validateApplicationDatabase((sql, params) => db.select(sql, params), (sql, params) => reference.select(sql, params));
+      // The same JSON history survives the normal backup/restore validation contract.
+      expect(JSON.parse((await history(db))[1]!.previous_json)).toEqual(offer.stored);
+    });
+
+
+    // Shared with src-tauri/src/study_sets_tests.rs: the Rust guard accepts this exact `recovered` set.
+    const recoveryVector = () => JSON.parse(readFileSync(`${process.cwd()}/src-tauri/fixtures/cards-recovery/chain.json`, "utf8")) as {
+      materialId: string; steps: { reason: StudySetSaveOperation["reason"]; next: NextStudySet }[]; recovered: NextStudySet;
+    };
+    const replayVector = async (docs: ReturnType<typeof documentRepository>) => {
+      const vector = recoveryVector();
+      expect(vector.materialId).toBe(M);
+      for (const step of vector.steps) await docs.saveStudySet(op(step.reason, await docs.readStoredStudySet(M), step.next));
+      return vector;
+    };
+
+    it("CARDS-FIX-01: shared vector — a wipe then further guide regenerations still offers the nearest generated cards", async () => {
+      const db = await database();
+      const docs = documentRepository(db);
+      const vector = await replayVector(docs);
+      const offer = (await docs.readGuideCardRecovery(M))!;
+      expect(canonicalJson(offer.next)).toBe(canonicalJson(vector.recovered));
+      expect(offer.next.flashcards.every(card => card.origin === undefined)).toBe(true);
+      expect(await docs.saveStudySet(op("recover-cards", offer.stored, offer.next))).toEqual({ status: "saved" });
+      const after = (await docs.listAiStudySets())[0]!;
+      expect(after.summary).toBe("Fifth guide.");
+      expect(after.flashcards.map(card => card.front)).toEqual(["What is Class B?", "Clearance needed?"]);
+      expect(await docs.readGuideCardRecovery(M)).toBeNull();
+    });
+
+    it("CARDS-FIX-01: restoring cards whose picture region is gone fails safely with nothing changed", async () => {
+      const db = await database();
+      const docs = documentRepository(db);
+      const vector = await replayVector(docs);
+      const rows = await db.select<{ id: string; previous_json: string }>("SELECT id, previous_json FROM study_set_history WHERE previous_json LIKE '%What is Class B?%'");
+      const previous = JSON.parse(rows[0]!.previous_json);
+      const cards = vector.recovered.flashcards.map((card, i) => (i === 0 ? { ...card, visualRegionId: "ab".repeat(32) } : card));
+      previous.flashcards_json = JSON.stringify(cards);
+      await db.execute("UPDATE study_set_history SET previous_json = ? WHERE id = ?", [JSON.stringify(previous), rows[0]!.id]);
+      const offer = (await docs.readGuideCardRecovery(M))!;
+      expect(offer.next.flashcards[0]!.visualRegionId).toBe("ab".repeat(32));
+      const before = await docs.readStoredStudySet(M);
+      const historyBefore = await history(db);
+      await expect(docs.saveStudySet(op("recover-cards", offer.stored, offer.next))).rejects.toBeInstanceOf(StudySetSaveError);
+      expect(await docs.readStoredStudySet(M)).toEqual(before);
+      expect(await history(db)).toEqual(historyBefore);
+    });
+
+    it("CARDS-FIX-01: later practice-test history does not hide a guide wipe", async () => {
+      const db = await database(); const docs = documentRepository(db);
+      const original = { ...manualSet(), provider: "gemini" as const };
+      await docs.saveStudySet(op("create", null, original));
+      await docs.saveStudySet(op("regenerate", (await docs.readStoredStudySet(M))!, { ...original, summary: "New guide", flashcards: [] }));
+      const practice = { sourceMaterialId: M, title: "Practice", provider: "gemini" as const, model: "p",
+        questions: [{ question: "Q?", options: ["A", "B"], correctIndex: 0, explanation: "Because", sourcePage: null }] };
+      await docs.savePracticeTest(practice);
+      await docs.savePracticeTest({ ...practice, title: "New practice" });
+      const offer = await docs.readGuideCardRecovery(M);
+      expect(offer?.next.flashcards).toEqual(original.flashcards);
+      await docs.saveStudySet(op("recover-cards", offer!.stored, offer!.next));
+      const reference = await createNodeSqliteDatabase(); opened.push(reference);
+      await validateApplicationDatabase((sql, params) => db.select(sql, params), (sql, params) => reference.select(sql, params));
+    });
+
+    it.each(["delete", "edit", "restore"] as const)("CARDS-FIX-01: deliberate clear (%s) never offers recovery or accepts a forged restore", async reason => {
+      const db = await database();
+      const docs = documentRepository(db);
+      const original = { ...manualSet(), provider: "gemini" as const };
+      await docs.saveStudySet(op("create", null, original));
+      const before = (await docs.readStoredStudySet(M))!;
+      const cleared = { ...original, summary: "Changed deliberately", flashcards: [] };
+      await docs.saveStudySet(op(reason, before, cleared));
+      expect(await docs.readGuideCardRecovery(M)).toBeNull();
+      const current = (await docs.readStoredStudySet(M))!;
+      expect(await refusal(docs.saveStudySet(op("recover-cards", current, { ...cleared, flashcards: original.flashcards })))).toBe("STALE_CONTENT");
+      expect(await docs.readStoredStudySet(M)).toEqual(current);
+    });
+
+    it("CARDS-FIX-01: recovery refuses new cards, a different guide, and another material's history", async () => {
+      const db = await database(); const docs = documentRepository(db);
+      const original = { ...manualSet(), provider: "gemini" as const };
+      await docs.saveStudySet(op("create", null, original));
+      await docs.saveStudySet(op("regenerate", (await docs.readStoredStudySet(M))!, { ...original, summary: "New guide", flashcards: [] }));
+      const offer = (await docs.readGuideCardRecovery(M))!;
+      expect(await refusal(docs.saveStudySet(op("recover-cards", offer.stored, { ...offer.next, summary: "Wrong guide" })))).toBe("STALE_CONTENT");
+      await db.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('other','Other',?,?)", [T0,T0]);
+      await docs.saveStudySet({ ...op("create", null, { ...original, summary: "New guide", flashcards: [] }), materialId: "other" });
+      expect(await docs.readGuideCardRecovery("other")).toBeNull();
+      const other = (await docs.readStoredStudySet("other"))!;
+      expect(await refusal(docs.saveStudySet({ ...op("recover-cards", other, offer.next), materialId: "other" }))).toBe("STALE_CONTENT");
+      await docs.saveStudySet(op("edit", offer.stored, { ...offer.next, flashcards: [{ front: "New", back: "Mine", sourcePage: null }] }));
+      expect(await docs.readGuideCardRecovery(M)).toBeNull();
+      expect(await refusal(docs.saveStudySet(op("recover-cards", offer.stored, offer.next)))).toBe("STALE_CONTENT");
+    });
+
     it("creates her own set without history, then keeps the whole previous set before an edit", async () => {
       const db = await database();
       const docs = documentRepository(db);

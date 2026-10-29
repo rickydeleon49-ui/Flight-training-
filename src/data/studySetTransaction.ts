@@ -1,3 +1,4 @@
+import { guideCardRecovery, type RecoveryHistoryRow } from "./guideCardRecovery";
 /**
  * Study sets she makes or edits herself (OFFLINE-03a): one atomic save that
  * keeps the whole previous set in `study_set_history` before anything
@@ -50,7 +51,7 @@ export const SET_COLUMNS = [
 
 export type StoredSetRow = { readonly [K in (typeof SET_COLUMNS)[number]]: K extends "summary_origin" ? string | null : string };
 
-export type StudySetSaveReason = "create" | "edit" | "correct" | "delete" | "regenerate" | "restore" | "remove";
+export type StudySetSaveReason = "create" | "edit" | "correct" | "delete" | "regenerate" | "restore" | "recover-cards" | "remove";
 export type ItemOriginValue = "user" | "instructor";
 
 export interface StoredSection {
@@ -283,7 +284,14 @@ export function decodeStoredRow(value: Json): StoredSetRow {
   return Object.fromEntries(SET_COLUMNS.map((column) => [column, value[column]])) as StoredSetRow;
 }
 
-const REASONS: readonly StudySetSaveReason[] = ["create", "edit", "correct", "delete", "regenerate", "restore", "remove"];
+/** A validated whole stored set, with timestamps left to the atomic save. */
+export function nextOfStored(row: StoredSetRow): NextStudySet {
+  return validateNextSet({ title: row.title, summary: row.summary, summaryOrigin: row.summary_origin,
+    sections: JSON.parse(row.sections_json), flashcards: JSON.parse(row.flashcards_json),
+    sourceNotes: row.source_notes, provider: row.provider, model: row.model, retired: JSON.parse(row.retired_json) });
+}
+
+const REASONS: readonly StudySetSaveReason[] = ["create", "edit", "correct", "delete", "regenerate", "restore", "recover-cards", "remove"];
 
 export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   if (!isRecord(value)) return invalid();
@@ -325,6 +333,7 @@ const HISTORY_REASON: Readonly<Record<StudySetSaveReason, string>> = {
   remove: "delete",
   regenerate: "regenerate",
   restore: "restore",
+  "recover-cards": "restore",
 };
 
 async function readRow(query: Query, materialId: string): Promise<StoredSetRow | null> {
@@ -441,6 +450,12 @@ async function apply(
     return { status: "already_saved" };
   }
   if (recorded !== undefined || !sameRow(current, operation.expected)) throw new StudySetSaveError("STALE_CONTENT");
+
+  if (operation.reason === "recover-cards") {
+    const history = await query("SELECT id, kind, reason, previous_json FROM study_set_history WHERE material_id = ? AND kind = 'study_set' ORDER BY rowid DESC", [operation.materialId]);
+    const recovery = guideCardRecovery(current, history as unknown as RecoveryHistoryRow[]);
+    if (!recovery || canonicalJson(recovery) !== canonicalJson(operation.next)) throw new StudySetSaveError("STALE_CONTENT");
+  }
 
   if (operation.next && (operation.visualRegions || operation.next.flashcards.some(c=>c.visualRegionId))) {
     try {await writeVisualRegions(run,query,operation.materialId,operation.visualRegions??[],operation.next.flashcards);} catch {invalid();}

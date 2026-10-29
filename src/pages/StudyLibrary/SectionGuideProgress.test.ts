@@ -96,7 +96,7 @@ describe("section guide progress and deliberate recovery", () => {
     expect(jobs.jobs[0]?.sectionGuide).toBe(false);
     vi.mocked(gemini.listGeminiJobs).mockResolvedValue([{ ...legacy, stage: "ready", result: AID }]);
     act(() => { vi.mocked(gemini.watchGeminiJobs).mock.calls[0]![0]({ id: "section-job", stage: "ready" }); });
-    await screen.findByRole("button", { name: "Save the new study guide and cards" });
+    await screen.findByRole("button", { name: "Save the new study guide" });
     expect(gemini.resumeStudyGuide).not.toHaveBeenCalled(); expect(gemini.restartStudyGuide).not.toHaveBeenCalled();
     expect(gemini.generateStudyAid).not.toHaveBeenCalled();
   });

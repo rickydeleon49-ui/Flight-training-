@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
@@ -16,6 +16,8 @@ import { MaterialDetail } from "./MaterialDetail";
 let db: TestDatabase;
 let repos: ReturnType<typeof createRepositories>;
 let geminiJobs: ReturnType<typeof useGeminiJobs>;
+let navigate: ReturnType<typeof useNavigate>;
+let appData: ReturnType<typeof useAppData>;
 
 vi.mock("@/data", () => ({
   getDatabase: () => Promise.resolve(db),
@@ -24,6 +26,8 @@ vi.mock("@/data", () => ({
 
 function Probe() {
   geminiJobs = useGeminiJobs();
+  navigate = useNavigate();
+  appData = useAppData();
   return null;
 }
 
@@ -94,6 +98,179 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     vi.restoreAllMocks();
   });
 
+
+  it("CARDS-FIX-01: a ready guide saves without changing saved cards and is above the guide", async () => {
+    const old = { sourceMaterialId: "mat-pdf", title: "Old guide", summary: "Saved guide body", sections: [],
+      flashcards: [{ front: "Old Q", back: "Old A", sourcePage: 1 }], sourceNotes: "", model: "old-model" };
+    await repos.documents.saveAiStudySet(old);
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
+      id: "ready-guide", kind: "study-aid", materialId: "mat-pdf", relativePath: "documents/handbook.pdf",
+      contentSha256: "", stage: "ready", createdAt: 1, updatedAt: 1, baseRevision: before.updatedAt,
+      result: { ...old, title: "New guide", summary: "New guide body", flashcards: [], model: "new-model" },
+    }]);
+    await openMaterial("mat-pdf");
+    const save = await screen.findByRole("button", { name: /Save the new study guide/ });
+    const beforeGuide = save.compareDocumentPosition(screen.getByText("Saved guide body")) & Node.DOCUMENT_POSITION_FOLLOWING;
+    const reason = screen.queryByText(/A new guide is waiting above/);
+    fireEvent.click(save);
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.summary).toBe("New guide body"));
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual(before.flashcards);
+    expect(beforeGuide).toBeTruthy();
+    expect(reason).toBeTruthy();
+  });
+
+  it("CARDS-FIX-01: new cards use the generating model while preserving the guide", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old guide", summary: "Keep guide", sections: [],
+      flashcards: [], sourceNotes: "Keep notes", model: "old-model" });
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ title: "Discard", summary: "Discard", sections: [],
+      flashcards: [{ front: "New Q", back: "New A", sourcePage: 1 }], sourceNotes: "Discard", model: "new-model" });
+    await openMaterial("mat-pdf");
+    await act(async () => { await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
+    expect((await repos.documents.listAiStudySets())[0]).toMatchObject({ model: "new-model", summary: "Keep guide", sourceNotes: "Keep notes" });
+  });
+
+  it.each(["keep", "replace"] as const)("CARDS-FIX-01: reviewed guide preserves generated and authored cards exactly (%s)", async mode => {
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-pdf", reason: "create", expected: null,
+      next: { title: "Old", summary: "My summary", summaryOrigin: "user", sections: [], sourceNotes: "", provider: "gemini", model: "old-model", retired: [],
+        flashcards: [{ front: "Generated Q", back: "A", sourcePage: 1 }, { front: "My Q", back: "B", sourcePage: null, itemId: "mine", origin: "user" }] } });
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
+      id: "review-guide", kind: "study-aid", materialId: "mat-pdf", relativePath: "documents/handbook.pdf", contentSha256: "", stage: "ready", createdAt: 1, updatedAt: 1, baseRevision: before.updatedAt,
+      result: { title: "New", summary: "New summary", sections: [], flashcards: [], sourceNotes: "", model: "new-model" },
+    }]);
+    await openMaterial("mat-pdf");
+    fireEvent.click(await screen.findByRole("button", { name: /Review the new study guide/ }));
+    const review = within(await screen.findByRole("dialog", { name: "Review the new study guide" }));
+    await review.findByLabelText(/Keep my items/);
+    if (mode === "replace") fireEvent.click(review.getByLabelText(/Replace everything/));
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual(before.flashcards);
+  });
+
+  it.each(["keep", "replace"] as const)("CARDS-FIX-01: a reviewed guide with no saved cards keeps its new cards (%s)", async mode => {
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-pdf", reason: "create", expected: null,
+      next: { title: "Old", summary: "My summary", summaryOrigin: "user", sections: [], sourceNotes: "", provider: "gemini", model: "old-model", retired: [], flashcards: [] } });
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
+      id: "review-guide-cards", kind: "study-aid", materialId: "mat-pdf", relativePath: "documents/handbook.pdf", contentSha256: "", stage: "ready", createdAt: 1, updatedAt: 1, baseRevision: before.updatedAt,
+      result: { title: "New", summary: "New summary", sections: [], flashcards: [{ front: "New Q", back: "New A", sourcePage: 2 }], sourceNotes: "", model: "new-model" },
+    }]);
+    await openMaterial("mat-pdf");
+    fireEvent.click(await screen.findByRole("button", { name: /Review the new study guide/ }));
+    const review = within(await screen.findByRole("dialog", { name: "Review the new study guide" }));
+    await review.findByLabelText(/Keep my items/);
+    expect(review.getByText(/The new flashcards are added\./)).toBeTruthy();
+    if (mode === "replace") fireEvent.click(review.getByLabelText(/Replace everything/));
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull());
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards.map(card => card.front)).toEqual(["New Q"]);
+  });
+
+  it.each(["keep", "replace"] as const)("CARDS-FIX-01: reviewed cards preserve all guide fields exactly (%s)", async mode => {
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-pdf", reason: "create", expected: null,
+      next: { title: "My guide", summary: "My summary", summaryOrigin: "instructor", sections: [{ heading: "My section", body: "Keep", itemId: "s", origin: "user" }], sourceNotes: "Notes", provider: "gemini", model: "old-model", retired: [],
+        flashcards: [{ front: "My Q", back: "B", sourcePage: null, itemId: "mine", origin: "user" }] } });
+    const before = (await repos.documents.readStudySetForEdit("mat-pdf"))!;
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ title: "Discard", summary: "Discard", sections: [{ heading: "Discard", body: "Discard" }],
+      flashcards: [{ front: "New Q", back: "New A", sourcePage: 1 }], sourceNotes: "Discard", model: "new-model" });
+    await openMaterial("mat-pdf");
+    await act(async () => { await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    fireEvent.click(await screen.findByRole("button", { name: "Review the new flashcards" }));
+    const review = within(await screen.findByRole("dialog", { name: "Review the new flashcards" }));
+    await review.findByLabelText(/Keep my items/);
+    if (mode === "replace") fireEvent.click(review.getByLabelText(/Replace everything/));
+    fireEvent.click(review.getByRole("button", { name: "Save the reviewed flashcards" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new flashcards" })).toBeNull());
+    const after = (await repos.documents.readStudySetForEdit("mat-pdf"))!;
+    for (const key of ["title", "summary", "summary_origin", "sections_json", "source_notes"] as const) expect(after.stored[key]).toEqual(before.stored[key]);
+    expect(after.set.model).toBe("new-model");
+  });
+
+  it.each(["restore", "dismiss"])("CARDS-FIX-01: recovery notice %s stays quiet across page visits", async action => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
+      flashcards: [{ front: "Lost Q", back: "Lost A", sourcePage: 1 }], sourceNotes: "", model: "old" });
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    await repos.documents.saveAiStudySet({ ...before, summary: "Current guide", flashcards: [] }); // released wipe
+    await repos.documents.create({ id: "other", title: "Other material" });
+    await openMaterial("mat-pdf");
+    expect(await screen.findByText("Your earlier 1 flashcards were replaced when a new study guide was saved.")).toBeTruthy();
+    const candidate = await repos.documents.readGuideCardRecovery("mat-pdf");
+    let finishRead!: (value: typeof candidate) => void;
+    if (action === "dismiss") {
+      const read = vi.spyOn(appData.repositories!.documents, "readGuideCardRecovery").mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
+      await act(async () => appData.refresh());
+      await waitFor(() => expect(read).toHaveBeenCalled());
+    }
+    fireEvent.click(screen.getByRole("button", { name: action === "restore" ? "Bring them back" : "Not now" }));
+    if (action === "dismiss") await act(async () => finishRead(candidate));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Bring them back" })).toBeNull());
+    // Revisit inside the same provider/session (a fresh app session may offer again).
+    await act(async () => navigate("/study/other"));
+    await screen.findByRole("heading", { name: "Other material" });
+    await act(async () => navigate("/study/mat-pdf"));
+    await screen.findByRole("heading", { name: "Synthetic Handbook" });
+    expect(screen.queryByRole("button", { name: "Bring them back" })).toBeNull();
+    const after = (await repos.documents.listAiStudySets())[0]!;
+    expect(after.summary).toBe("Current guide");
+    expect(after.flashcards).toEqual(action === "restore" ? before.flashcards : []);
+  });
+
+
+  it("CARDS-FIX-01: a failed restore stays visible and retries the same atomic operation", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
+      flashcards: [{ front: "Lost Q", back: "Lost A", sourcePage: 1 }], sourceNotes: "", model: "old" });
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    await repos.documents.saveAiStudySet({ ...before, summary: "Current guide", flashcards: [] });
+    await openMaterial("mat-pdf");
+    await screen.findByRole("button", { name: "Bring them back" });
+    let failures = 1;
+    db.beforeStatement = sql => {
+      if (failures && sql.includes("INSERT INTO ai_study_sets")) { failures--; throw new Error("synthetic storage failure"); }
+    };
+    fireEvent.click(screen.getByRole("button", { name: "Bring them back" }));
+    await screen.findByText("Your earlier cards couldn't be brought back. Nothing else was changed; try again.");
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Bring them back" }));
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual(before.flashcards));
+    expect((await repos.documents.listStudySetHistory("mat-pdf")).filter(entry => entry.reason === "restore")).toHaveLength(1);
+  });
+
+  it("CARDS-FIX-01: send confirmations name exactly the saved items being replaced", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
+      flashcards: [{ front: "Q", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
+    await openMaterial("mat-pdf");
+    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    expect(within(await waitFor(sendDialog)).getByText(/This replaces your 1 saved card\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
+    fireEvent.click(within(sendDialog()).getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    expect(within(await waitFor(sendDialog)).getByText(/This replaces your saved study guide\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
+    // The control it names really is there.
+    expect(screen.getByRole("button", { name: "Edit study guide" })).toBeTruthy();
+  });
+
+  it("CARDS-FIX-01: a cards-only set is warned without a restore promise it can't keep", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Cards", summary: "", sections: [],
+      flashcards: [{ front: "Q1", back: "A", sourcePage: 1 }, { front: "Q2", back: "B", sourcePage: 2 }], sourceNotes: "", model: "old" });
+    await openMaterial("mat-pdf");
+    expect(screen.queryByRole("button", { name: "Edit study guide" })).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    const dialog = within(await waitFor(sendDialog));
+    expect(dialog.getByText(/This replaces your 2 saved cards\./)).toBeTruthy();
+    expect(dialog.queryByText(/Previous versions|brought back/)).toBeNull();
+  });
+
+  it("CARDS-FIX-01: the recovery offer sits inside the Flashcards card", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
+      flashcards: [{ front: "Lost Q", back: "Lost A", sourcePage: 1 }], sourceNotes: "", model: "old" });
+    const before = (await repos.documents.listAiStudySets())[0]!;
+    await repos.documents.saveAiStudySet({ ...before, summary: "Current guide", flashcards: [] });
+    await openMaterial("mat-pdf");
+    const offer = await screen.findByText(/Your earlier 1 flashcards were replaced/);
+    expect(document.getElementById("material-flashcards")!.contains(offer)).toBe(true);
+  });
   it.each([false, true])("empty cards fail visibly, save nothing and can be retried (existing set: %s)", async (existing) => {
     if (existing) await repos.documents.saveAiStudySet({
       sourceMaterialId: "mat-pdf", title: "Keep this guide", summary: "Keep this summary",
@@ -584,7 +761,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     const job = geminiJobs.jobs.find((j) => j.materialId === "mat-pdf");
     expect(job?.kind).toBe("study-aid");
 
-    const saveBtn = await screen.findByRole("button", { name: "Save the new study guide and cards" });
+    const saveBtn = await screen.findByRole("button", { name: "Save the new study guide" });
     fireEvent.click(saveBtn);
 
     await waitFor(async () => {

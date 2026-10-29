@@ -150,6 +150,7 @@ export function mergeRegeneration(
   resolved: readonly StudyItem[],
   mode: RegenerationMode,
   keepMySummary: boolean,
+  kinds?: readonly StudyItem["kind"][],
 ): AuthoringState {
   const mine = (item: StudyItem) => item.origin !== undefined;
   const currentSummary = current.items.find((item) => item.kind === "summary");
@@ -158,7 +159,11 @@ export function mergeRegeneration(
   if (mode === "keep" && currentSummary && mine(currentSummary) && keepMySummary) summary = currentSummary;
   else if (newSummary) summary = newSummary;
   else if (mode === "keep" && currentSummary) summary = currentSummary;
-  const ofKind = (kind: StudyItem["kind"]) => [
+  if (kinds && !kinds.includes("summary")) summary = currentSummary;
+  const ofKind = (kind: StudyItem["kind"]) =>
+    (kinds ? !kinds.includes(kind) : kind === "card" && !resolved.some(item => item.kind === "card"))
+      ? current.items.filter(item => item.kind === kind)
+      : [
     ...resolved.filter((item) => item.kind === kind),
     ...(mode === "keep" ? current.items.filter((item) => item.kind === kind && mine(item)) : []),
   ];
@@ -210,4 +215,18 @@ export async function retiredWordingIndex(
 /** The earlier wording a retirement fingerprint stands for, when history still has it. */
 export function retiredWording(index: ReadonlyMap<string, ItemText>, entry: RetiredItem | null): ItemText | null {
   return entry ? index.get(`${entry.kind}\u0000${entry.textKey}`) ?? null : null;
+}
+
+/**
+ * Generation only replaces the part she requested, including on reviewed saves.
+ * A guide save never touches saved cards; when she has none yet, the cards
+ * generated with the guide (non-PDF guides) are kept instead of dropped.
+ */
+export function preserveOtherStudyContent(next: NextStudySet, current: NextStudySet | null, kind: "study-aid" | "flashcards"): NextStudySet {
+  if (kind === "study-aid") return { ...next, flashcards: current?.flashcards.length ? current.flashcards : next.flashcards };
+  return { ...next,
+    title: current?.title ?? next.title,
+    summary: current?.summary ?? "", summaryOrigin: current?.summaryOrigin ?? null,
+    sections: current?.sections ?? [], sourceNotes: current?.sourceNotes ?? next.sourceNotes,
+  };
 }

@@ -101,7 +101,7 @@ async function startStudyAid() {
 }
 
 async function acceptStudyAid() {
-  fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
 }
 
 const studySets = async () =>
@@ -285,7 +285,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     expect(await screen.findByText(/before the app was closed or reloaded/)).toBeTruthy();
     expect(await studySets()).toEqual([]);
     expect(screen.getByRole("button", { name: "Create study aid" }).hasAttribute("disabled")).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide" }));
     await screen.findByRole("heading", { name: "Recovered guide" });
     expect(acknowledge).toHaveBeenCalledWith("job-aaaaaaaaaaaaaaaaaaaaaaaa");
     expect(generate).not.toHaveBeenCalled();
@@ -303,7 +303,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     expect(screen.queryByText(/before the app was closed or reloaded/)).toBeNull();
   });
 
-  it("OFFLINE-03a: a committed save with an out-of-range page is recognised after its answer is lost", async () => {
+  it("OFFLINE-03a/CARDS-FIX-01: a committed first guide keeps its new cards (out-of-range page as no page) and is recognised after its answer is lost", async () => {
     await material("mat-a", "Material A");
     const wide = { ...AID, flashcards: [{ front: "Q", back: "A", sourcePage: 1001 }] };
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...wide, jobId: "job-666666666666666666666666", contentSha256: "" });
@@ -323,8 +323,24 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Save again" }));
     await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-666666666666666666666666"));
     expect(screen.queryByText(/Something newer was saved/)).toBeNull();
-    expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]!.sourcePage).toBeNull();
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual([{ front: "Q", back: "A", sourcePage: null }]);
     expect(await db.select("SELECT id FROM study_set_history")).toEqual([]);
+  });
+
+  it.each([
+    ["saved cards", [{ front: "Saved Q", back: "Saved A", sourcePage: null }], [{ front: "Saved Q", back: "Saved A", sourcePage: null }]],
+    ["no saved cards", [], [{ front: "New Q", back: "New A", sourcePage: 1 }]],
+  ])("CARDS-FIX-01: a non-PDF guide regeneration with %s never drops cards", async (_label, savedCards, expected) => {
+    await material("mat-a", "Material A");
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", title: "Old guide", summary: "Old summary.", sections: [],
+      flashcards: savedCards, sourceNotes: "", model: "old-model" });
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, flashcards: [{ front: "New Q", back: "New A", sourcePage: 1 }],
+      jobId: "job-777777777777777777777777", contentSha256: "" });
+    await open("/study/mat-a");
+    await startStudyAid();
+    await acceptStudyAid();
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]!.summary).toBe(AID.summary));
+    expect((await repos.documents.listAiStudySets())[0]!.flashcards).toEqual(expected);
   });
 
   it("OFFLINE-03a: after a restart, an answer already saved with a normalized page is recognised, not saved again", async () => {
@@ -335,7 +351,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await open("/study/mat-a");
     // Recognised as already saved while recovering: never offered again.
     await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("job-aaaaaaaaaaaaaaaaaaaaaaaa"));
-    expect(screen.queryByRole("button", { name: "Save the new study guide and cards" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save the new study guide" })).toBeNull();
     expect(screen.queryByText(/Something newer was saved/)).toBeNull();
     expect(await db.select("SELECT id FROM study_set_history")).toEqual([]);
   });
@@ -346,7 +362,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
       record({ stage: "ready", result: AID, relativePath: "documents/mat-a.txt" }),
     ]);
     await open("/study/mat-a");
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     expect(await screen.findByText(/changed or was removed while Gemini was working/)).toBeTruthy();
     expect(await studySets()).toEqual([]);
   });
@@ -456,7 +472,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
       record({ stage: "ready", result: { ...AID, title: "Old answer" }, baseRevision: "2020-01-01T00:00:00.000Z" }),
     ]);
     await open("/study/mat-a");
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     expect(await screen.findByText(/Something newer was saved/)).toBeTruthy();
     expect(await studySets()).toEqual([["mat-a", "Current guide"]]);
   });
@@ -776,7 +792,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     const generate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({ ...AID, title: "Batched guide", jobId: "job-333333333333333333333333", checkpointed: true });
     await open("/study/mat-a");
     await startStudyAid();
-    const accept = await screen.findByRole("button", { name: "Save the new study guide and cards" });
+    const accept = await screen.findByRole("button", { name: "Save the new study guide" });
     expect(await repos.documents.listAiStudySets()).toEqual(before);
     let failures = 1;
     db.beforeStatement = (sql: string) => {
