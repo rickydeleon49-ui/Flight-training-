@@ -33,7 +33,7 @@ export interface PracticeSessionRepository {
   eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult>;
   getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null>;
   getAttempt(attemptId: string): Promise<PracticeAttempt | null>;
-  getCompletedHistory(historyKey: string): Promise<CompletedHistoryItem[]>;
+  getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]>;
   getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]>;
   getActiveVersion(materialId: string): Promise<{ version: PracticeTestVersion; items: PracticeTestItem[] } | null>;
   getVersion(versionId: string): Promise<PracticeTestVersion | null>;
@@ -219,7 +219,8 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
       };
     },
 
-    async getCompletedHistory(historyKey: string): Promise<CompletedHistoryItem[]> {
+    async getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]> {
+      if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) throw new Error("Invalid history limit");
       const rows = await db.select<{
         attempt_id: string;
         version_id: string;
@@ -242,8 +243,8 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
          FROM practice_attempts a
          JOIN practice_test_versions v ON a.version_id = v.id
          WHERE v.history_key = ? AND a.status = 'completed'
-         ORDER BY a.completed_at DESC, a.id DESC`,
-        [historyKey],
+         ORDER BY a.completed_at DESC, a.id DESC${limit === undefined ? "" : " LIMIT ?"}`,
+        limit === undefined ? [historyKey] : [historyKey, limit],
       );
 
       return rows.map((r) => {

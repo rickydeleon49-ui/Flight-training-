@@ -83,6 +83,9 @@ import { PdfItemLabel, PDF_KIT_LABEL, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { MaterialStartHere, useMaterialTips } from "./MaterialStartHere";
+import { RelatedStudy } from "./RelatedStudy";
+import { jumpToMaterialHeading } from "./materialJump";
+import { selectRelatedStudy } from "@/logic/relatedStudy";
 
 export function MaterialDetail() {
   const { materialId } = useParams();
@@ -605,6 +608,8 @@ function MaterialDetailPage() {
     el?.scrollIntoView?.({ block: "start" });
     el?.focus();
   };
+  const relatedKinds = new Set(selectRelatedStudy({ material, studySets: data.aiStudySets,
+    questions: [], events: [], recentReviews: { status: "ready", value: [] } }).rows.map(row => row.kind));
 
   return (
     <>
@@ -694,19 +699,16 @@ function MaterialDetailPage() {
             <nav className="row row--wrap material-jumps" aria-label="Jump to">
               <span className="tiny muted">Jump to</span>
               {[
-                ...(showStudyGuide ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
-                ...(material.filePath || (studySet && studySet.flashcards.length > 0) ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
+                ...(showStudyGuide && !relatedKinds.has("guide") ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
+                ...((material.filePath || (studySet && studySet.flashcards.length > 0)) && !relatedKinds.has("cards") ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
                 { id: "material-practice-heading", label: "Practice test" },
                 ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
               ].map(({ id, label }) => (
-                <Button key={id} size="small" variant="ghost" onClick={() => {
-                  const heading = document.getElementById(id);
-                  heading?.focus({ preventScroll: true });
-                  heading?.scrollIntoView?.({ block: "start" });
-                }}>{label}</Button>
+                <Button key={id} size="small" variant="ghost" onClick={() => jumpToMaterialHeading(id)}>{label}</Button>
               ))}
             </nav>
           ) : null}
+          <RelatedStudy key={material.id} materialId={material.id} />
           {material.filePath ? (
             <div id="material-file-actions" tabIndex={-1}><Card>
               <CardBody>
@@ -1561,14 +1563,16 @@ function MaterialDetailPage() {
               onRestore={() => void restoreFile()} showTips={!tipsHidden} />
           ) : null}
 
-          {isPdf && material.filePath ? (
+          {isPdf && (material.filePath || hasKitItems) ? (
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
                 <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
-                {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
-                  <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div>
-                  <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
+                  {material.filePath ? <>
+                    <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div>
+                    <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
+                  </> : null}
                   {hasKitItems ? (
                     <div id="material-saved-pdf-kit" tabIndex={-1}>
                       <Card>

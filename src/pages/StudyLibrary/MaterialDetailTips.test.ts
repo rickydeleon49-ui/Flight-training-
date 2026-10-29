@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
@@ -116,6 +116,31 @@ it("only offers jumps to sections present on a PDF whose file has been detached"
   expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Practice test" }));
 });
 
+it("uses Related study for saved guide/cards without duplicate jumps or writes", async () => {
+  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved study",
+    summary: "Fictional summary", sections: [], flashcards: [{ front: "Fictional front", back: "Fictional answer", sourcePage: null }], sourceNotes: "", model: "test" });
+  await openPage();
+  const jumps = screen.getByRole("navigation", { name: "Jump to" });
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Practice test", "Backup on this Mac"]);
+  const details = screen.getByText("Related study").closest("details")!;
+  expect(details.open).toBe(false);
+  const writes = vi.spyOn(db, "execute");
+  const outbound = vi.spyOn(globalThis, "fetch");
+  details.open = true; fireEvent(details, new Event("toggle"));
+  await screen.findByRole("list", { name: "Related study destinations" });
+  await waitFor(() => expect(screen.queryByText("Checking recent saved reviews…")).toBeNull());
+  for (const [label, headingId] of [["Study guide: Synthetic saved study", "material-guide-heading"], ["Cards: Synthetic saved study", "material-cards-heading"]]) {
+    const heading = document.getElementById(headingId!)!;
+    heading.scrollIntoView = vi.fn();
+    fireEvent.click(screen.getByRole("button", { name: `${label} From this material` }));
+    expect(document.activeElement).toBe(heading);
+  }
+  details.open = false; fireEvent(details, new Event("toggle"));
+  await act(async () => {});
+  expect(writes).not.toHaveBeenCalled();
+  expect(outbound).not.toHaveBeenCalled();
+});
+
 it("orders the PDF workflow with both backup panels together at the bottom", async () => {
   await openPage();
   const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
@@ -127,7 +152,8 @@ it("orders the PDF workflow with both backup panels together at the bottom", asy
   expect(column.firstElementChild?.textContent).toContain("Start here");
   expect(column.children[1]).toBe(document.getElementById("material-ask-gemini"));
   expect(column.children[2]).toBe(screen.getByRole("navigation", { name: "Jump to" }));
-  expect(column.children[3]).toBe(file);
+  expect(column.children[3]?.textContent).toBe("Related study");
+  expect(column.children[4]).toBe(file);
   expect(file.compareDocumentPosition(geminiSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(geminiSection.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(column.lastElementChild).toBe(backup);
