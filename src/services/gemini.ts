@@ -229,7 +229,9 @@ export interface AskGeminiParams {
 export interface AskGeminiResult {
   model: string;
   answer: string;
-  sourcePages: number[];
+  sourcePages?: number[];
+  passages?: { page: number; quote: string }[];
+  notAnswered?: boolean;
 }
 
 /**
