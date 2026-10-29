@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { makeEvent } from "@/testing/factories";
+import { todayIso } from "@/lib/dates";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
 import type { AppData } from "@/state/AppDataContext";
 
@@ -52,7 +54,7 @@ beforeEach(() => {
   } as unknown as AppData;
 });
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
   it("establishes valid tab and panel relationships", () => {
@@ -190,4 +192,21 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
     expect(panel.id).toBe("toolkit-panel-records");
     expect(panel.getAttribute("aria-labelledby")).toBe("toolkit-tab-records");
   });
+});
+
+it("shows reminders in Toolkit and asks notification permission only through its switch", () => {
+  const requestPermission = vi.fn().mockResolvedValue("denied");
+  vi.stubGlobal("Notification", class { static permission = "default"; static requestPermission = requestPermission; });
+  data.events = [makeEvent({ title: "Fictional pattern work", date: todayIso() })];
+  data.toolkit = { ...data.toolkit, remindersEnabled: false };
+  render(h(MemoryRouter, null, h(PilotToolkit)));
+  expect(requestPermission).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
+  expect(screen.getByText("Fictional pattern work")).toBeTruthy();
+  expect(screen.getByText(/Your reminder list is here in Pilot Toolkit/)).toBeTruthy();
+  expect(screen.queryByText(/popup when the app opens/)).toBeNull();
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(requestPermission).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("checkbox", { name: /Show system reminders/ }));
+  expect(requestPermission).toHaveBeenCalledOnce();
 });

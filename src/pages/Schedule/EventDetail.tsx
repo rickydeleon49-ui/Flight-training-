@@ -247,7 +247,7 @@ export function EventDetail() {
                 <div className="inline-add">
                   <TextInput
                     value={newPrepItem}
-                    placeholder="Weather review"
+                    placeholder="e.g. Weather review"
                     aria-label="New preparation item"
                     onChange={(e) => setNewPrepItem(e.target.value)}
                     onKeyDown={(e) => {
@@ -257,7 +257,7 @@ export function EventDetail() {
                       }
                     }}
                   />
-                  <Button onClick={addPrepItem} disabled={!newPrepItem.trim()}>
+                  <Button variant="primary" onClick={addPrepItem} disabled={!newPrepItem.trim()}>
                     Add
                   </Button>
                 </div>

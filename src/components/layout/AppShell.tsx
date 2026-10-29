@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useRef, useState, type ReactElement } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
@@ -7,7 +7,7 @@ import {
   quickFindShortcutLabel,
 } from "@/components/quickfind/QuickFind";
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
-import { ReminderPopup } from "@/components/reminders/ReminderPopup";
+import { ReminderNotifications } from "@/components/reminders/ReminderNotifications";
 import { UndoBar } from "@/components/undo/UndoBar";
 import { useAppData } from "@/state/AppDataContext";
 import { overdueActions } from "@/logic/actions";
@@ -53,10 +53,26 @@ export function AppShell() {
   const location = useLocation();
   const today = todayIso();
   const menuRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
   const [desktop, setDesktop] = useState(() => window.matchMedia?.("(min-width: 1000px)").matches ?? true);
   const [menuOpen, setMenuOpen] = useState(false);
   const resizeFocusRef = useRef<"search" | "menu" | null>(null);
+
+  // Anchor destinations stay below the sticky header, including enlarged text.
+  useLayoutEffect(() => {
+    const sidebar = sidebarRef.current;
+    const shell = sidebar?.parentElement;
+    if (!sidebar || !shell || desktop) return;
+    const measure = () => shell.style.setProperty("--narrow-header-height", `${sidebar.getBoundingClientRect().height}px`);
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(sidebar);
+    return () => {
+      observer?.disconnect();
+      shell.style.removeProperty("--narrow-header-height");
+    };
+  }, [desktop]);
 
   const overdueCount = overdueActions(data.actions, today).length;
   const questionsToAsk = data.questions.filter((q) => q.status === "to_ask").length;
@@ -130,7 +146,7 @@ export function AppShell() {
 
   return (
     <div className="shell">
-      <aside className="sidebar" onKeyDown={(event) => {
+      <aside ref={sidebarRef} className="sidebar" onKeyDown={(event) => {
         if (event.key !== "Escape" || event.defaultPrevented || desktop || !menuOpen) return;
         const target = event.target as HTMLElement;
         if (target.closest("dialog, [role=dialog]")) return;
@@ -235,7 +251,7 @@ export function AppShell() {
           </Suspense>
         </div>
       </main>
-      <ReminderPopup />
+      <ReminderNotifications />
       <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>

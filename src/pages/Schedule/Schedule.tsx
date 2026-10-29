@@ -37,6 +37,7 @@ const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 export function Schedule() {
   const { data, mutate } = useAppData();
   const today = todayIso();
+  const [saved, setSaved] = useState<ScheduleEvent | null>(null);
   const [creating, setCreating] = useState(false);
   const [monthAnchor, setMonthAnchor] = useState(startOfMonth(today));
 
@@ -62,6 +63,7 @@ export function Schedule() {
     const created = await mutate((repos) => repos.schedule.create(draft));
     if (created === null) return;
     setCreating(false);
+    setSaved(created);
   };
 
   return (
@@ -75,6 +77,15 @@ export function Schedule() {
           </Button>
         }
       />
+
+      {saved ? (
+        <div className="row gap--3" style={{ marginBottom: "var(--space-4)", flexWrap: "wrap" }}>
+          <p role="status" className="small">Added “{saved.title}” to your schedule.</p>
+          {saved.eventType === "flight_lesson" ? (
+            <Link to={`/schedule/${saved.id}#lesson-preparation`}>Add preparation</Link>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="schedule">
         <div className="stack stack--5">
