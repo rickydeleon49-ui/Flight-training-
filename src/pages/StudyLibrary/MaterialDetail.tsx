@@ -154,6 +154,7 @@ function MaterialDetailPage() {
   // Only decides whether a new study aid can be requested; saved ones show regardless.
   const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
   const [coveringLabel, setCoveringLabel] = useState(false);
+  const [pictureSaved, setPictureSaved] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
   // Her usual card count stays chosen on this Mac; 40 until she picks another.
@@ -1217,6 +1218,7 @@ function MaterialDetailPage() {
                             : null
                         }
                       />
+                      <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
                       {visualFlashcards.length > 0 ? (
                         <section aria-labelledby="visual-cards-title" className="stack stack--3">
                           <h3 id="visual-cards-title" className="ai-guide__title">
@@ -2087,9 +2089,9 @@ function MaterialDetailPage() {
         onCancel={() => setConfirmingPracticeTest(false)}
       />
 
-      {coveringLabel ? <VisualCardEditor material={material} onClose={() => setCoveringLabel(false)} /> : null}
+      {coveringLabel ? <VisualCardEditor material={material} onSaved={() => setPictureSaved(true)} onClose={() => setCoveringLabel(false)} /> : null}
       {editingVisualIndex !== null ? (
-        <VisualCardEditor material={material} cardIndex={editingVisualIndex} onClose={() => setEditingVisualIndex(null)} />
+        <VisualCardEditor material={material} cardIndex={editingVisualIndex} onSaved={() => setPictureSaved(true)} onClose={() => setEditingVisualIndex(null)} />
       ) : null}
       <ConfirmDialog
         open={confirmingDelete}

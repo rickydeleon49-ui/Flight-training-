@@ -145,6 +145,7 @@ it("lists saved picture cards beside their creation path and edits the original 
     "Text card", "First picture?", "Another text card", "Updated second picture?",
   ]);
   expect(within(list).getByText("Updated second picture?")).toBeTruthy();
+  expect(screen.getByText("Picture card saved.").getAttribute("role")).toBe("status");
 });
 
 it.each([
