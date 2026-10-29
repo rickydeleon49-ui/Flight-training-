@@ -98,6 +98,11 @@ struct CompleteBackupManifest {
     created_at: u64,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     missing_at_export: Vec<String>,
+    /// Files whose FAA reference copy or picture-card details no longer
+    /// matched at export (the file was replaced in 0.6.1/0.6.2). They are
+    /// backed up as they are; only these skip the saved-details byte check.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    detached_at_export: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +135,16 @@ pub struct CompleteBackupInfo {
     pub missing_documents: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub unreferenced_documents: Vec<String>,
+    /// Picture cards whose picture is gone or no longer matches.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub unavailable_pictures: usize,
+    /// FAA reference copies whose PDF is gone or no longer matches.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub unavailable_references: usize,
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
 }
 
 #[derive(Debug)]
@@ -4889,6 +4904,78 @@ pub(crate) fn scan_staged_deletion_paths(trash_dir: &Path) -> Result<HashSet<Str
     Ok(staged)
 }
 
+/// Documents to be archived whose FAA reference copy or picture-card details
+/// no longer match their bytes on disk. A 0.6.1/0.6.2 file swap left these;
+/// declaring them keeps every later backup possible while a restore still
+/// refuses any other mismatch as damage.
+fn detached_documents(
+    root: &Path,
+    database: &Path,
+    to_archive: &HashSet<String>,
+) -> Result<Vec<String>, String> {
+    let conn = Connection::open_with_flags(
+        database,
+        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )
+    .map_err(|e| format!("Could not inspect database: {e}"))?;
+    let has = |table: &str| -> Result<bool, String> {
+        conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
+            [table],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Could not inspect database: {e}"))
+    };
+    let open = |path: &str| -> Result<File, String> {
+        let full = root
+            .join(DOCUMENTS_DIR)
+            .join(safe_relative_document_path(path)?);
+        File::open(full).map_err(|e| format!("Could not inspect document {path}: {e}"))
+    };
+    let mut detached = std::collections::BTreeSet::new();
+    if has("faa_reference_copies")? {
+        let mut stmt = conn
+            .prepare("SELECT m.file_path, f.content_sha256 FROM faa_reference_copies f JOIN study_materials m ON m.id=f.material_id WHERE m.file_path IS NOT NULL")
+            .map_err(|e| format!("Could not inspect FAA reference PDFs: {e}"))?;
+        let rows = stmt
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+            .map_err(|e| format!("Could not inspect FAA reference PDFs: {e}"))?;
+        for row in rows {
+            let (path, expected) =
+                row.map_err(|e| format!("Could not inspect FAA reference PDFs: {e}"))?;
+            if to_archive.contains(&path)
+                && sha256_file_from_reader(&mut open(&path)?)?.1 != expected
+            {
+                detached.insert(path);
+            }
+        }
+    }
+    if has("visual_card_regions")? {
+        let mut stmt = conn
+            .prepare("SELECT r.id, m.file_path FROM visual_card_regions r JOIN study_materials m ON m.id=r.image_material_id WHERE m.file_path IS NOT NULL")
+            .map_err(|e| format!("Could not inspect picture cards: {e}"))?;
+        let rows = stmt
+            .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+            .map_err(|e| format!("Could not inspect picture cards: {e}"))?;
+        for row in rows {
+            let (id, path) = row.map_err(|e| format!("Could not inspect picture cards: {e}"))?;
+            if !to_archive.contains(&path) || detached.contains(&path) {
+                continue;
+            }
+            let region = crate::visual_cards::read_region(&conn, &id)?;
+            let mut bytes = Vec::new();
+            open(&path)?
+                .take((crate::visual_cards::MAX_BYTES + 1) as u64)
+                .read_to_end(&mut bytes)
+                .map_err(|e| format!("Could not inspect document {path}: {e}"))?;
+            if crate::visual_cards::verify_bytes(&region, &bytes).is_err() {
+                detached.insert(path);
+            }
+        }
+    }
+    Ok(detached.into_iter().collect())
+}
+
 struct TempFileGuard<'a>(&'a Path);
 impl<'a> Drop for TempFileGuard<'a> {
     fn drop(&mut self) {
@@ -4901,7 +4988,7 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     archive: &mut ZipArchive<R>,
     manifest: &CompleteBackupManifest,
     archive_documents: &HashSet<String>,
-) -> Result<(Vec<String>, Vec<String>), String> {
+) -> Result<(Vec<String>, Vec<String>, usize, usize), String> {
     let mut db_entry = archive
         .by_name(DB_FILES[0])
         .map_err(|_| "That backup does not contain a Her Flight Deck database.".to_string())?;
@@ -4931,8 +5018,19 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
 
     verify_application_database(&temp_db_path)?;
     let conn = Connection::open(&temp_db_path).map_err(|_| "Could not inspect picture cards.")?;
+    let detached: HashSet<&str> = manifest
+        .detached_at_export
+        .iter()
+        .map(|s| s.as_str())
+        .collect();
+    // Picture regions whose picture is gone (image deleted, file removed or
+    // missing) or was declared changed at export. Their card text survives.
+    let mut unavailable_regions: HashSet<String> = HashSet::new();
+    let mut unavailable_pictures = 0usize;
+    // FAA reference copies whose PDF was removed or declared changed.
+    let mut unavailable_references = 0usize;
     if crate::visual_cards::exists(&conn) {
-        let mut stmt=conn.prepare("SELECT r.id,m.file_path FROM visual_card_regions r JOIN study_materials m ON m.id=r.image_material_id").map_err(|_|"Could not inspect picture cards.")?;
+        let mut stmt=conn.prepare("SELECT r.id,m.file_path FROM visual_card_regions r LEFT JOIN study_materials m ON m.id=r.image_material_id").map_err(|_|"Could not inspect picture cards.")?;
         let rows = stmt
             .query_map([], |r| {
                 Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?))
@@ -4940,8 +5038,12 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
             .map_err(|_| "Could not inspect picture cards.")?;
         for pair in rows {
             let (id, path) = pair.map_err(|_| "Damaged picture lookup.")?;
-            let path = path.ok_or("Damaged picture lookup.")?;
+            let Some(path) = path else {
+                unavailable_regions.insert(id);
+                continue;
+            };
             if !archive_documents.contains(&path) {
+                unavailable_regions.insert(id);
                 continue;
             } // completeness and missingAtExport checked below
             let r = crate::visual_cards::read_region(&conn, &id)?;
@@ -4953,8 +5055,16 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
                 .take((crate::visual_cards::MAX_BYTES + 1) as u64)
                 .read_to_end(&mut bytes)
                 .map_err(|_| "Could not read picture bytes.")?;
-            crate::visual_cards::verify_bytes(&r, &bytes)?;
+            if let Err(error) = crate::visual_cards::verify_bytes(&r, &bytes) {
+                // Only a picture declared changed when the backup was made may
+                // differ; anything else is a damaged archive.
+                if !detached.contains(path.as_str()) {
+                    return Err(error);
+                }
+                unavailable_regions.insert(id);
+            }
         }
+        unavailable_pictures = crate::visual_cards::cards_on_regions(&conn, &unavailable_regions)?;
     }
 
     // Schema verification above checks the stored identity's shape. Here the
@@ -4970,7 +5080,11 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
             .map_err(|_| "Could not inspect FAA reference PDFs.")?;
         for copy in copies {
             let (path, expected) = copy.map_err(|_| "Damaged FAA reference PDF details.")?;
-            let path = path.ok_or("Missing FAA reference PDF path.")?;
+            // A copy whose file was removed has no bytes to check.
+            let Some(path) = path else {
+                unavailable_references += 1;
+                continue;
+            };
             safe_relative_document_path(&path)?;
             // Preserve complete backups' explicit missing-at-export handling.
             if !archive_documents.contains(&path) {
@@ -4981,7 +5095,12 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
                 .map_err(|_| "Missing FAA reference PDF bytes.")?;
             let (_, actual, _) = sha256_file_from_reader(&mut entry)?;
             if actual != expected {
-                return Err("The FAA reference PDF does not match its saved copy details.".into());
+                if !detached.contains(path.as_str()) {
+                    return Err(
+                        "The FAA reference PDF does not match its saved copy details.".into(),
+                    );
+                }
+                unavailable_references += 1;
             }
         }
     }
@@ -5045,7 +5164,12 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     unreferenced_documents.sort();
     unreferenced_documents.dedup();
 
-    Ok((missing_documents, unreferenced_documents))
+    Ok((
+        missing_documents,
+        unreferenced_documents,
+        unavailable_pictures,
+        unavailable_references,
+    ))
 }
 
 pub(crate) fn inspect_archive(
@@ -5220,13 +5344,17 @@ pub(crate) fn inspect_archive(
         return Err("That backup does not contain a Her Flight Deck database.".to_string());
     }
 
-    let (missing_documents, unreferenced_documents) = if manifest.format_version
-        >= V2_ARCHIVE_VERSION
-    {
-        verify_archive_database_and_documents(root, &mut archive, &manifest, &archive_documents)?
-    } else {
-        (Vec::new(), Vec::new())
-    };
+    let (missing_documents, unreferenced_documents, unavailable_pictures, unavailable_references) =
+        if manifest.format_version >= V2_ARCHIVE_VERSION {
+            verify_archive_database_and_documents(
+                root,
+                &mut archive,
+                &manifest,
+                &archive_documents,
+            )?
+        } else {
+            (Vec::new(), Vec::new(), 0, 0)
+        };
 
     Ok(CompleteBackupInfo {
         app_version: manifest.app_version,
@@ -5237,6 +5365,8 @@ pub(crate) fn inspect_archive(
         path: source.to_string_lossy().to_string(),
         missing_documents,
         unreferenced_documents,
+        unavailable_pictures,
+        unavailable_references,
     })
 }
 
@@ -6249,49 +6379,53 @@ fn write_complete_backup_from_database_with_hook(
         let initial_disk_documents = scan_active_documents(&root.join(DOCUMENTS_DIR))
             .map_err(BackupExportError::Transient)?;
 
-        let (docs_to_archive, missing_at_export, orphans_at_export) = if verify_before_finish {
-            let referenced =
-                query_referenced_documents(database).map_err(BackupExportError::Transient)?;
+        let (docs_to_archive, missing_at_export, orphans_at_export, detached_at_export) =
+            if verify_before_finish {
+                let referenced =
+                    query_referenced_documents(database).map_err(BackupExportError::Transient)?;
 
-            let staged_deletions = scan_staged_deletion_paths(
-                &root.join(DOCUMENTS_DIR).join(crate::documents::TRASH_DIR),
-            )
-            .map_err(BackupExportError::Transient)?;
+                let staged_deletions = scan_staged_deletion_paths(
+                    &root.join(DOCUMENTS_DIR).join(crate::documents::TRASH_DIR),
+                )
+                .map_err(BackupExportError::Transient)?;
 
-            let mut missing: Vec<String> = Vec::new();
-            for doc in &referenced {
-                if !initial_disk_documents.contains(doc) {
-                    if pre_snapshot_documents.is_some_and(|pre| pre.contains(doc)) {
-                        return Err(BackupExportError::Transient(format!(
-                            "Referenced document disappeared after database snapshot: {doc}"
-                        )));
+                let mut missing: Vec<String> = Vec::new();
+                for doc in &referenced {
+                    if !initial_disk_documents.contains(doc) {
+                        if pre_snapshot_documents.is_some_and(|pre| pre.contains(doc)) {
+                            return Err(BackupExportError::Transient(format!(
+                                "Referenced document disappeared after database snapshot: {doc}"
+                            )));
+                        }
+                        if staged_deletions.contains(doc) {
+                            return Err(BackupExportError::Transient(format!(
+                                "A document deletion was in progress: {doc}"
+                            )));
+                        }
+                        missing.push(doc.clone());
                     }
-                    if staged_deletions.contains(doc) {
-                        return Err(BackupExportError::Transient(format!(
-                            "A document deletion was in progress: {doc}"
-                        )));
-                    }
-                    missing.push(doc.clone());
                 }
-            }
-            missing.sort();
+                missing.sort();
 
-            let mut orphans: Vec<String> = initial_disk_documents
-                .iter()
-                .filter(|doc| !referenced.contains(*doc))
-                .cloned()
-                .collect();
-            orphans.sort();
+                let mut orphans: Vec<String> = initial_disk_documents
+                    .iter()
+                    .filter(|doc| !referenced.contains(*doc))
+                    .cloned()
+                    .collect();
+                orphans.sort();
 
-            let to_archive: HashSet<String> = referenced
-                .into_iter()
-                .filter(|doc| initial_disk_documents.contains(doc))
-                .collect();
+                let to_archive: HashSet<String> = referenced
+                    .into_iter()
+                    .filter(|doc| initial_disk_documents.contains(doc))
+                    .collect();
 
-            (Some(to_archive), missing, orphans)
-        } else {
-            (None, Vec::new(), Vec::new())
-        };
+                let detached = detached_documents(root, database, &to_archive)
+                    .map_err(BackupExportError::Transient)?;
+
+                (Some(to_archive), missing, orphans, detached)
+            } else {
+                (None, Vec::new(), Vec::new(), Vec::new())
+            };
 
         let output = File::create(&temporary).map_err(|e| {
             BackupExportError::Permanent(format!("Could not create the backup file: {e}"))
@@ -6303,6 +6437,7 @@ fn write_complete_backup_from_database_with_hook(
             app_version: app_version.to_string(),
             created_at: unix_timestamp(),
             missing_at_export: missing_at_export.clone(),
+            detached_at_export,
         };
 
         archive
@@ -6459,12 +6594,15 @@ fn write_complete_backup_from_database_with_hook(
         // structural limits — before it is ever renamed into place or
         // reported as saved. Writing bytes successfully is not the same
         // guarantee as the result actually being a usable backup.
+        let (mut unavailable_pictures, mut unavailable_references) = (0, 0);
         if verify_before_finish {
-            inspect_archive(root, &temporary, app_version).map_err(|e| {
+            let inspected = inspect_archive(root, &temporary, app_version).map_err(|e| {
                 BackupExportError::Permanent(format!(
                     "The backup was written but did not pass its own integrity check: {e}"
                 ))
             })?;
+            unavailable_pictures = inspected.unavailable_pictures;
+            unavailable_references = inspected.unavailable_references;
         }
 
         if destination.exists() {
@@ -6506,6 +6644,8 @@ fn write_complete_backup_from_database_with_hook(
             path: destination.to_string_lossy().to_string(),
             missing_documents: missing_at_export,
             unreferenced_documents: orphans_at_export,
+            unavailable_pictures,
+            unavailable_references,
         })
     })();
 
@@ -8808,6 +8948,7 @@ mod tests {
                     app_version: app_version.to_string(),
                     created_at: 0,
                     missing_at_export: Vec::new(),
+                    detached_at_export: Vec::new(),
                 })
                 .unwrap()
                 .as_bytes(),
@@ -9108,6 +9249,7 @@ mod tests {
                     app_version: "0.2.0".to_string(),
                     created_at: 0,
                     missing_at_export: Vec::new(),
+                    detached_at_export: Vec::new(),
                 })
                 .unwrap()
                 .as_bytes(),
@@ -9731,6 +9873,7 @@ mod tests {
             app_version: "0.5.2".to_string(),
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
+            detached_at_export: Vec::new(),
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -9996,6 +10139,7 @@ mod tests {
             app_version: "0.5.2".to_string(),
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
+            detached_at_export: Vec::new(),
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -10079,6 +10223,7 @@ mod tests {
             app_version: "0.5.2".to_string(),
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
+            detached_at_export: Vec::new(),
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -10227,6 +10372,7 @@ mod tests {
             app_version: "0.5.2".to_string(),
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(), // unexpectedly undeclared omission!
+            detached_at_export: Vec::new(),
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&new_manifest).unwrap().as_bytes())
@@ -11448,6 +11594,7 @@ mod tests {
                 app_version: "0.3.0".into(),
                 created_at: 0,
                 missing_at_export: vec![],
+                detached_at_export: Vec::new(),
             })
             .unwrap()
             .as_bytes(),

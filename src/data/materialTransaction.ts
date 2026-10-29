@@ -237,6 +237,22 @@ async function handleCreate(
   };
 }
 
+/** Same refusals as the native `refuse_locked_file_change`. */
+export const FAA_FILE_LOCKED =
+  "This file is a saved FAA reference copy, so it can't be replaced or removed. Add the new file as its own material instead.";
+export const PICTURE_FILE_LOCKED =
+  "Picture cards use this picture, so it can't be replaced or removed. Add the new picture as its own material instead.";
+
+async function refuseLockedFileChange(query: Query, materialId: string): Promise<void> {
+  const used = async (table: string, column: string) => {
+    const present = await query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", [table]);
+    if (present.length === 0) return false;
+    return (await query(`SELECT 1 FROM ${table} WHERE ${column} = ? LIMIT 1`, [materialId])).length > 0;
+  };
+  if (await used("faa_reference_copies", "material_id")) throw new Error(FAA_FILE_LOCKED);
+  if (await used("visual_card_regions", "image_material_id")) throw new Error(PICTURE_FILE_LOCKED);
+}
+
 async function handleUpdate(
   run: Run,
   query: Query,
@@ -271,6 +287,9 @@ async function handleUpdate(
   const goalId = fields.goalId !== undefined ? fields.goalId : (existingRow.goal_id as SqlValue);
   const eventId = fields.eventId !== undefined ? fields.eventId : (existingRow.event_id as SqlValue);
   const notes = fields.notes !== undefined ? fields.notes : (existingRow.notes as SqlValue);
+  if (fields.filePath !== undefined && (fields.filePath ?? null) !== (existingRow.file_path ?? null)) {
+    await refuseLockedFileChange(query, operation.id);
+  }
   const filePath = fields.filePath !== undefined ? fields.filePath : (existingRow.file_path as SqlValue);
   const originalFileName =
     fields.originalFileName !== undefined

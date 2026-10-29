@@ -1124,7 +1124,7 @@ pub fn reattach_unlinked_file_in(
     }
 
     let docs_dir = root.join(DOCUMENTS_DIR);
-    let (safe_rel, _target_file, metadata) = active_managed_file(root, relative_path)?;
+    let (safe_rel, target_file, metadata) = active_managed_file(root, relative_path)?;
     let file_size = metadata.len() as i64;
     let file_name = Path::new(&safe_rel)
         .file_name()
@@ -1183,6 +1183,8 @@ pub fn reattach_unlinked_file_in(
             "File '{safe_rel}' is already attached to another study material."
         ));
     }
+
+    refuse_reattach_unless_same_file(&tx, material_id, &target_file)?;
 
     tx.execute(
         "UPDATE study_materials
@@ -1824,6 +1826,97 @@ fn handle_create_material(
     })
 }
 
+pub(crate) const FAA_FILE_LOCKED: &str = "This file is a saved FAA reference copy, so it can't be replaced or removed. Add the new file as its own material instead.";
+pub(crate) const PICTURE_FILE_LOCKED: &str = "Picture cards use this picture, so it can't be replaced or removed. Add the new picture as its own material instead.";
+
+/// An FAA reference copy and picture-card regions record the exact bytes of
+/// their material's file. Swapping or removing that file would leave records
+/// that no longer match, so the file stays fixed while they exist.
+fn refuse_locked_file_change(conn: &Connection, material_id: &str) -> Result<(), String> {
+    let used = |table: &str, column: &str| -> Result<bool, String> {
+        let present: bool = conn
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
+                [table],
+                |r| r.get(0),
+            )
+            .map_err(|e| format!("Could not check how this file is used: {e}"))?;
+        if !present {
+            return Ok(false);
+        }
+        conn.query_row(
+            &format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE {column}=?1)"),
+            [material_id],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Could not check how this file is used: {e}"))
+    };
+    if used("faa_reference_copies", "material_id")? {
+        return Err(FAA_FILE_LOCKED.to_string());
+    }
+    if used("visual_card_regions", "image_material_id")? {
+        return Err(PICTURE_FILE_LOCKED.to_string());
+    }
+    Ok(())
+}
+
+/// Re-attaching a moved file to a material behind an FAA copy or picture cards
+/// is a repair only when the file is the very one they recorded.
+fn refuse_reattach_unless_same_file(
+    conn: &Connection,
+    material_id: &str,
+    file: &Path,
+) -> Result<(), String> {
+    let check = |e: String| format!("Could not check how this file is used: {e}");
+    let has = |table: &str| -> Result<bool, String> {
+        conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
+            [table],
+            |r| r.get(0),
+        )
+        .map_err(|e| check(e.to_string()))
+    };
+    let read = || -> Result<Vec<u8>, String> {
+        std::fs::read(file).map_err(|e| format!("Could not read that file: {e}"))
+    };
+    if has("faa_reference_copies")? {
+        let expected: Option<String> = conn
+            .query_row(
+                "SELECT content_sha256 FROM faa_reference_copies WHERE material_id=?1",
+                [material_id],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(|e| check(e.to_string()))?;
+        if let Some(expected) = expected {
+            use sha2::{Digest, Sha256};
+            if format!("{:x}", Sha256::digest(read()?)) != expected {
+                return Err(FAA_FILE_LOCKED.to_string());
+            }
+        }
+    }
+    if has("visual_card_regions")? {
+        let mut stmt = conn
+            .prepare("SELECT id FROM visual_card_regions WHERE image_material_id=?1")
+            .map_err(|e| check(e.to_string()))?;
+        let ids = stmt
+            .query_map([material_id], |r| r.get::<_, String>(0))
+            .map_err(|e| check(e.to_string()))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| check(e.to_string()))?;
+        if !ids.is_empty() {
+            let bytes = read()?;
+            for id in ids {
+                let region = crate::visual_cards::read_region(conn, &id)?;
+                if crate::visual_cards::verify_bytes(&region, &bytes).is_err() {
+                    return Err(PICTURE_FILE_LOCKED.to_string());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 fn handle_update_material(
     tx: &rusqlite::Transaction,
     root: &Path,
@@ -1907,6 +2000,11 @@ fn handle_update_material(
         None => cur_event_id,
     };
     let notes = op.fields.notes.clone().unwrap_or(cur_notes);
+    if let Some(next) = &op.fields.file_path {
+        if next.as_deref() != cur_file_path.as_deref() {
+            refuse_locked_file_change(tx, &op.id)?;
+        }
+    }
     // Only a different file is new. Re-sending the recorded path (a metadata
     // edit of a material whose file has gone missing) stays allowed.
     if let Some(Some(path)) = &op.fields.file_path {

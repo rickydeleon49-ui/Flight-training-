@@ -149,3 +149,101 @@ fn faa_restore_rejects_pdf_tampering_even_with_rebound_archive_integrity() {
     assert_eq!(std::fs::read(target.join(DOCUMENTS_DIR).join("synthetic.pdf")).unwrap(), bytes);
     for path in [root, target, backups] { std::fs::remove_dir_all(path).unwrap(); }
 }
+
+fn faa_saved_copy(root: &Path) -> Vec<u8> {
+    pdf_kit_test_database(&root.join(DB_FILES[0]), 27);
+    std::fs::create_dir_all(root.join(DOCUMENTS_DIR)).unwrap();
+    let bytes = faa_test_pdf();
+    std::fs::write(root.join(DOCUMENTS_DIR).join("synthetic.pdf"), &bytes).unwrap();
+    let mut op = faa_test_operation();
+    op.faa_reference.as_mut().unwrap().content_sha256 = sha256_digest(&bytes);
+    crate::documents::save_material_operation_at(root, &op).unwrap();
+    bytes
+}
+
+#[test]
+fn faa_material_file_cannot_be_replaced_or_removed_but_metadata_edits_stay() {
+    let root = scratch("faa-lock");
+    faa_saved_copy(&root);
+    let mut other = faa_test_pdf();
+    other.extend_from_slice(b"\n% another synthetic PDF\n");
+    std::fs::write(root.join(DOCUMENTS_DIR).join("other.pdf"), &other).unwrap();
+    for file in [serde_json::Value::Null, serde_json::json!("other.pdf")] {
+        let op: crate::documents::MaterialSaveOperation = serde_json::from_value(serde_json::json!({"mode":"update","id":"faa","fields":{"filePath":file,"originalFileName":null,"fileSize":null}})).unwrap();
+        assert_eq!(crate::documents::save_material_operation_at(&root, &op).unwrap_err(), crate::documents::FAA_FILE_LOCKED);
+    }
+    let op: crate::documents::MaterialSaveOperation = serde_json::from_value(serde_json::json!({"mode":"update","id":"faa","fields":{"title":"My ACS","notes":"Area I","filePath":"synthetic.pdf"}})).unwrap();
+    crate::documents::save_material_operation_at(&root, &op).unwrap();
+    let conn = Connection::open(root.join(DB_FILES[0])).unwrap();
+    let row: (String, Option<String>) = conn.query_row("SELECT title,file_path FROM study_materials WHERE id='faa'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+    assert_eq!(row, ("My ACS".into(), Some("synthetic.pdf".into())));
+    drop(conn);
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn faa_copy_already_swapped_or_removed_still_backs_up_and_restores() {
+    for state in ["removed", "replaced"] {
+        let root = scratch("faa-broken");
+        let target = scratch("faa-broken-target");
+        let backups = scratch("faa-broken-archive");
+        faa_saved_copy(&root);
+        let mut other = faa_test_pdf();
+        other.extend_from_slice(b"\n% another synthetic PDF\n");
+        // The state a 0.6.1/0.6.2 "Remove" or "Choose file" left behind.
+        let conn = Connection::open(root.join(DB_FILES[0])).unwrap();
+        std::fs::remove_file(root.join(DOCUMENTS_DIR).join("synthetic.pdf")).unwrap();
+        if state == "removed" {
+            conn.execute("UPDATE study_materials SET file_path=NULL, original_file_name=NULL, file_size=NULL WHERE id='faa'", []).unwrap();
+        } else {
+            std::fs::write(root.join(DOCUMENTS_DIR).join("other.pdf"), &other).unwrap();
+            conn.execute("UPDATE study_materials SET file_path='other.pdf' WHERE id='faa'", []).unwrap();
+        }
+        let archive = backups.join("broken.hfdbackup");
+        let info = create_consistent_complete_backup_with_retry(&root, &archive, "0.6.3").unwrap();
+        assert_eq!(info.unavailable_references, 1, "{state}");
+        assert_eq!(inspect_archive(&target, &archive, "0.6.3").unwrap().unavailable_references, 1, "{state}");
+        let manifest: CompleteBackupManifest = {
+            let mut zip = ZipArchive::new(File::open(&archive).unwrap()).unwrap();
+            serde_json::from_reader(zip.by_name(ARCHIVE_MANIFEST).unwrap()).unwrap()
+        };
+        assert_eq!(manifest.detached_at_export, if state == "replaced" { vec!["other.pdf".to_string()] } else { vec![] });
+        stage_complete_restore_in(&target, &archive, "0.6.3").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        let restored = Connection::open(target.join(DB_FILES[0])).unwrap();
+        verify_application_connection(&restored).unwrap();
+        assert_eq!(m3_count(&restored, "SELECT COUNT(*) FROM faa_reference_copies", &[]).unwrap(), 1);
+        if state == "replaced" {
+            assert_eq!(std::fs::read(target.join(DOCUMENTS_DIR).join("other.pdf")).unwrap(), other);
+            // Only the declared file may differ: dropping the declaration makes
+            // the same archive a refused, damaged one.
+            let mut undeclared = manifest;
+            undeclared.detached_at_export.clear();
+            rewrite_entry(&archive, ARCHIVE_MANIFEST, &serde_json::to_vec(&undeclared).unwrap());
+            let fresh = scratch("faa-broken-fresh");
+            let error = stage_complete_restore_in(&fresh, &archive, "0.6.3").unwrap_err();
+            assert!(error.contains("FAA reference PDF"), "{error}");
+            let _ = std::fs::remove_dir_all(fresh);
+        }
+        drop(conn);
+        drop(restored);
+        for path in [root, target, backups] { let _ = std::fs::remove_dir_all(path); }
+    }
+}
+
+#[test]
+fn faa_reattach_accepts_only_the_recorded_pdf() {
+    let root = scratch("faa-reattach");
+    let bytes = faa_saved_copy(&root);
+    std::fs::remove_file(root.join(DOCUMENTS_DIR).join("synthetic.pdf")).unwrap();
+    let mut other = bytes.clone();
+    other.extend_from_slice(b"\n% another synthetic PDF\n");
+    std::fs::write(root.join(DOCUMENTS_DIR).join("other.pdf"), &other).unwrap();
+    assert_eq!(crate::documents::reattach_unlinked_file_in(&root, "faa", "other.pdf").unwrap_err(), crate::documents::FAA_FILE_LOCKED);
+    std::fs::write(root.join(DOCUMENTS_DIR).join("moved.pdf"), &bytes).unwrap();
+    crate::documents::reattach_unlinked_file_in(&root, "faa", "moved.pdf").unwrap();
+    let conn = Connection::open(root.join(DB_FILES[0])).unwrap();
+    assert_eq!(conn.query_row("SELECT file_path FROM study_materials WHERE id='faa'", [], |r| r.get::<_, String>(0)).unwrap(), "moved.pdf");
+    drop(conn);
+    std::fs::remove_dir_all(root).unwrap();
+}

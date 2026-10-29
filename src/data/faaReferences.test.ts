@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { MIGRATIONS, applyMigrations } from "./migrations";
 import { openEngine, openSqlJsEngine, ENGINES, type Engine } from "./testing/skillEvidenceEngines";
-import { executeMaterialSave } from "./materialTransaction";
+import { FAA_FILE_LOCKED, PICTURE_FILE_LOCKED, executeMaterialSave } from "./materialTransaction";
 import { validateApplicationDatabase } from "./practiceStateValidation";
 import { FAA_REFERENCES, faaReferenceDraft } from "@/logic/faaReferences";
 import { documentRepository } from "./repositories/documentRepository";
@@ -41,6 +41,25 @@ for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
     expect(db.query("SELECT * FROM study_materials")).toEqual(before);
     const reference = await engine(name);
     await validateApplicationDatabase(query(db), query(reference));
+  });
+
+  it("refuses to replace or remove the file behind an FAA copy or picture cards, but keeps metadata edits", async () => {
+    const db = await engine(name);
+    await save(db);
+    db.exec("INSERT INTO study_materials (id,title,file_path,created_at,updated_at) VALUES ('owner','Owner',NULL,'x','x'),('image','Panel','panel.png','x','x')");
+    db.exec("INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES ('" + "b".repeat(64) + "','owner','image','" + "c".repeat(64) + "',10,10,0,0,5,5,0)");
+    const update = (id: string, fields: import("./db").MaterialSaveFields) =>
+      executeMaterialSave((sql) => db.exec(sql), (sql, params) => db.run(sql, params), query(db), { mode: "update", id, fields });
+    for (const [id, message] of [["faa", FAA_FILE_LOCKED], ["image", PICTURE_FILE_LOCKED]] as const) {
+      await expect(update(id, { filePath: null, originalFileName: null, fileSize: null })).rejects.toThrow(message);
+      await expect(update(id, { filePath: "other.pdf" })).rejects.toThrow(message);
+    }
+    expect(db.query("SELECT id,file_path FROM study_materials WHERE id IN ('faa','image') ORDER BY id")).toEqual([
+      { id: "faa", file_path: "synthetic.pdf" }, { id: "image", file_path: "panel.png" },
+    ]);
+    await update("faa", { title: "My ACS", filePath: "synthetic.pdf" });
+    await update("image", { notes: "Panel notes" });
+    expect(db.query("SELECT title FROM study_materials WHERE id='faa'")).toEqual([{ title: "My ACS" }]);
   });
 
   it("commits copy details and empty notes together, and cascades deletion", async () => {
