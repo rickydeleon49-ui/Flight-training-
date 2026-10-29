@@ -1,4 +1,4 @@
-import type { AiStudySet, CompletedHistoryItem, Question, ScheduleEvent, StudyMaterial } from "@/domain/types";
+import type { CompletedHistoryItem, Question, ScheduleEvent, StudyMaterial } from "@/domain/types";
 import { attemptReviewPath } from "./practiceAttemptReview";
 import { savedDestination } from "./savedSearch";
 
@@ -7,41 +7,28 @@ export type RelatedStudyRead<T> =
   | { status: "failed" }
   | { status: "ready"; value: T };
 
+/** Only destinations on other pages; the guide and cards keep their Jump to chips. */
 export interface RelatedStudyRow {
-  kind: "guide" | "cards" | "review" | "question" | "lesson";
+  kind: "review" | "question" | "lesson";
   id: string;
   label: string;
   reason: "From this material" | "Linked by you";
-  target: { heading: string } | { path: string };
+  target: { path: string };
 }
 
 export interface RelatedStudyInput {
   material: StudyMaterial | null;
-  studySets: readonly AiStudySet[];
   questions: readonly Question[];
   events: readonly ScheduleEvent[];
   recentReviews: RelatedStudyRead<readonly CompletedHistoryItem[]>;
   limit?: number;
 }
 
-/** Material-owned content and deliberate links only. No inference or writes. */
+/** Deliberate links only. No inference or writes. */
 export function selectRelatedStudy(input: RelatedStudyInput) {
-  const { material, studySets, questions, events, recentReviews } = input;
+  const { material, questions, events, recentReviews } = input;
   const rows: RelatedStudyRow[] = [];
   if (!material) return { rows, hasMore: false, status: "ready" as const };
-  const set = studySets.find(s => s.sourceMaterialId === material.id);
-  const hasKitDestination = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
-  if (set && (set.summary.trim() || set.sections.some(s => s.body.trim()))) {
-    const heading = !set.summary.trim() && set.sections.every(s => s.pdfProvenance) && hasKitDestination
-      ? "material-saved-pdf-kit" : "material-guide-heading";
-    rows.push({ kind: "guide", id: material.id, label: heading === "material-saved-pdf-kit" ? `Study guide in your on-Mac kit: ${set.title}` : `Study guide: ${set.title}`, reason: "From this material", target: { heading } });
-  }
-  if (set?.flashcards.length) {
-    // Text and picture cards use Cards; kit-only cards live in the saved kit.
-    const heading = set.flashcards.every(c => c.pdfProvenance && !c.visualRegionId) && hasKitDestination
-      ? "material-saved-pdf-kit" : "material-cards-heading";
-    rows.push({ kind: "cards", id: material.id, label: `Cards: ${set.title}`, reason: "From this material", target: { heading } });
-  }
   if (recentReviews.status === "ready") {
     const review = [...recentReviews.value]
       .filter(r => r.historyKey === material.id)

@@ -116,12 +116,14 @@ it("only offers jumps to sections present on a PDF whose file has been detached"
   expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Practice test" }));
 });
 
-it("uses Related study for saved guide/cards without duplicate jumps or writes", async () => {
-  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved study",
+it("keeps the Study guide and Flashcards chips beside Related study when a question is linked, without writes", async () => {
+  const repos = createRepositories(db);
+  await repos.documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved study",
     summary: "Fictional summary", sections: [], flashcards: [{ front: "Fictional front", back: "Fictional answer", sourcePage: null }], sourceNotes: "", model: "test" });
+  const question = await repos.questions.create({ text: "Fictional linked question", materialId: "tips", status: "to_ask" });
   await openPage();
   const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Practice test", "Backup on this Mac"]);
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Study guide", "Flashcards", "Practice test", "Backup on this Mac"]);
   const details = document.getElementById("related-study")!.closest("details")!;
   expect(details.open).toBe(false);
   // The Related study chip opens the collapsed list.
@@ -131,18 +133,23 @@ it("uses Related study for saved guide/cards without duplicate jumps or writes",
   const writes = vi.spyOn(db, "execute");
   const outbound = vi.spyOn(globalThis, "fetch");
   details.open = true; fireEvent(details, new Event("toggle"));
-  await screen.findByRole("list", { name: "Related study destinations" });
+  const list = await screen.findByRole("list", { name: "Related study destinations" });
   await waitFor(() => expect(screen.queryByText("Checking recent saved reviews…")).toBeNull());
-  for (const [label, headingId] of [["Study guide: Synthetic saved study", "material-guide-heading"], ["Cards: Synthetic saved study", "material-cards-heading"]]) {
-    const heading = document.getElementById(headingId!)!;
-    heading.scrollIntoView = vi.fn();
-    fireEvent.click(screen.getByRole("button", { name: `${label} From this material` }));
-    expect(document.activeElement).toBe(heading);
-  }
+  // Only the off-page destination is listed; her guide and cards stay one click away.
+  expect(within(list).getAllByRole("link").map(link => link.getAttribute("href"))).toEqual([`/questions?question=${encodeURIComponent(question.id)}`]);
+  expect(within(list).queryByText(/Study guide|Cards:/)).toBeNull();
   details.open = false; fireEvent(details, new Event("toggle"));
   await act(async () => {});
   expect(writes).not.toHaveBeenCalled();
   expect(outbound).not.toHaveBeenCalled();
+});
+
+it("offers the Related study chip when only an instructor question is linked", async () => {
+  await createRepositories(db).documents.update("tips", { filePath: null });
+  await createRepositories(db).questions.create({ text: "Fictional linked question", materialId: "tips", status: "to_ask" });
+  await openPage();
+  const jumps = screen.getByRole("navigation", { name: "Jump to" });
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Practice test"]);
 });
 
 it("orders the PDF workflow with both backup panels together at the bottom", async () => {

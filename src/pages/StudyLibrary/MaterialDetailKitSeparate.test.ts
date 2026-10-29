@@ -206,7 +206,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(within(backupSection).getByText("Kit drag answer.")).toBeTruthy();
   });
 
-  it("keeps kit-only Related study destinations reachable when the PDF is detached", async () => {
+  it("keeps the saved kit visible when the PDF is detached, without listing it in Related study", async () => {
     const section = { itemId: "saved-kit-section", heading: "Fictional saved section", body: "Saved synthetic kit body" };
     const card = { itemId: "saved-kit-card", front: "Fictional kit question", back: "Fictional kit answer", sourcePage: 2 };
     const pdfKitSources = await kitSources(draftFixture, [
@@ -220,15 +220,11 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(screen.getByText("Saved synthetic kit body")).toBeTruthy();
     expect(document.getElementById("material-offline-study")).toBeNull();
     expect(document.getElementById("material-pdf-kit")).toBeNull();
+    expect(document.getElementById("material-saved-pdf-kit")).toBeTruthy();
     const details = document.getElementById("related-study")!.closest("details")!;
     details.open = true; fireEvent(details, new Event("toggle"));
-    const list = await screen.findByRole("list", { name: "Related study destinations" });
-    const target = document.getElementById("material-saved-pdf-kit")!;
-    target.scrollIntoView = vi.fn();
-    for (const label of ["Study guide in your on-Mac kit: Synthetic saved kit From this material", "Cards: Synthetic saved kit From this material"]) {
-      fireEvent.click(within(list).getByRole("button", { name: label }));
-      expect(document.activeElement).toBe(target);
-    }
+    expect(await screen.findByText("Nothing linked here yet.")).toBeTruthy();
+    expect(screen.queryByText(/on-Mac kit|Cards: Synthetic saved kit/)).toBeNull();
   });
 
   it("PACKS-07 labels saved PDF practice once while keeping question sources and edits", async () => {

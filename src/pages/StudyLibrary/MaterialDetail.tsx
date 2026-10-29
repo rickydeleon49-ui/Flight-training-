@@ -608,8 +608,9 @@ function MaterialDetailPage() {
     el?.scrollIntoView?.({ block: "start" });
     el?.focus();
   };
-  const relatedKinds = new Set(selectRelatedStudy({ material, studySets: data.aiStudySets,
-    questions: [], events: [], recentReviews: { status: "ready", value: [] } }).rows.map(row => row.kind));
+  // Saved reviews need an async read; they come from this material's practice test, so it stands in for them.
+  const hasRelatedStudy = Boolean(practiceTest) || selectRelatedStudy({ material, questions: data.questions, events: data.events,
+    recentReviews: { status: "ready", value: [] } }).rows.length > 0;
 
   return (
     <>
@@ -699,9 +700,9 @@ function MaterialDetailPage() {
             <nav className="row row--wrap material-jumps" aria-label="Jump to">
               <span className="tiny muted">Jump to</span>
               {[
-                ...(relatedKinds.size > 0 ? [{ id: "related-study", label: "Related study" }] : []),
-                ...(showStudyGuide && !relatedKinds.has("guide") ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
-                ...((material.filePath || (studySet && studySet.flashcards.length > 0)) && !relatedKinds.has("cards") ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
+                ...(hasRelatedStudy ? [{ id: "related-study", label: "Related study" }] : []),
+                ...(showStudyGuide ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
+                ...(material.filePath || (studySet && studySet.flashcards.length > 0) ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
                 { id: "material-practice-heading", label: "Practice test" },
                 ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
               ].map(({ id, label }) => (

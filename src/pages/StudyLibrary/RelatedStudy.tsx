@@ -5,7 +5,6 @@ import type { CompletedHistoryItem } from "@/domain/types";
 import type { PracticeSessionRepository } from "@/data/repositories/practiceSessionRepository";
 import { selectRelatedStudy, type RelatedStudyRead } from "@/logic/relatedStudy";
 import { useAppData } from "@/state/AppDataContext";
-import { jumpToMaterialHeading } from "./materialJump";
 
 export function RelatedStudy({ materialId }: { materialId: string }) {
   const { data, dataRevision, repositories } = useAppData();
@@ -48,14 +47,12 @@ function RelatedStudyContents({ materialId, data, repository, onRetry }: {
     return () => { live = false; };
   }, [materialId, repository]);
   const result = selectRelatedStudy({ material: data.materials.find(m => m.id === materialId) ?? null,
-    studySets: data.aiStudySets, questions: data.questions, events: data.events, recentReviews, limit: expanded ? 5 : 3 });
+    questions: data.questions, events: data.events, recentReviews, limit: expanded ? 5 : 3 });
   return <div className="stack stack--2 related-study__contents">
     {result.rows.length ? <ul ref={listRef} aria-label="Related study destinations">{result.rows.map(row => <li key={row.kind}>
-      {"path" in row.target ? <Link className="related-study__row" to={row.target.path}>
+      <Link className="related-study__row" to={row.target.path}>
         <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span><span className="related-study__go" aria-hidden="true">›</span>
-      </Link> : <button type="button" className="related-study__row" onClick={() => { if ("heading" in row.target) jumpToMaterialHeading(row.target.heading); }}>
-        <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span><span className="related-study__go" aria-hidden="true">›</span>
-      </button>}
+      </Link>
     </li>)}</ul> : result.status === "ready" ? <p className="small muted">Nothing linked here yet.</p> : null}
     {result.status === "loading" ? <p className="small muted" role="status">Checking recent saved reviews…</p> : null}
     {result.status === "failed" ? <div role="status"><p className="small muted">Recent saved reviews couldn't be checked.</p><Button variant="ghost" onClick={onRetry}>Try again</Button></div> : null}
