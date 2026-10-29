@@ -2,10 +2,16 @@ import { useCallback, useState } from "react";
 
 const PREFIX = "her-flight-deck.view.";
 
+/**
+ * "session" lasts while the app is open; "device" is a small preference kept
+ * on this computer, such as how many flashcards she likes to ask for.
+ */
+export type RememberFor = "session" | "device";
+
 /** Storage can be unavailable; a remembered filter is never worth an error. */
-function storage(): Storage | null {
+function storage(scope: RememberFor = "session"): Storage | null {
   try {
-    return window.sessionStorage;
+    return scope === "device" ? window.localStorage : window.sessionStorage;
   } catch {
     return null;
   }
@@ -23,9 +29,10 @@ export function useRememberedState<T>(
   initial: T,
   /** Rejects values from an older version of the app. */
   isValid: (value: unknown) => value is T,
+  scope: RememberFor = "session",
 ): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(() => {
-    const store = storage();
+    const store = storage(scope);
     if (!store) return initial;
     try {
       const raw = store.getItem(PREFIX + key);
@@ -40,14 +47,14 @@ export function useRememberedState<T>(
   const remember = useCallback(
     (next: T) => {
       setValue(next);
-      const store = storage();
+      const store = storage(scope);
       try {
         store?.setItem(PREFIX + key, JSON.stringify(next));
       } catch {
         // Out of space or unavailable; the filter still applies this visit.
       }
     },
-    [key],
+    [key, scope],
   );
 
   return [value, remember];
@@ -57,6 +64,12 @@ export function useRememberedState<T>(
 export function isOneOf<T extends string>(allowed: readonly T[]) {
   return (value: unknown): value is T =>
     typeof value === "string" && (allowed as readonly string[]).includes(value);
+}
+
+/** Guard for a number drawn from a known set. */
+export function isOneOfNumbers<T extends number>(allowed: readonly T[]) {
+  return (value: unknown): value is T =>
+    typeof value === "number" && (allowed as readonly number[]).includes(value);
 }
 
 /** Guard for free text, such as a search box. */

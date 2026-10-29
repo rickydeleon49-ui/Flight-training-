@@ -1449,8 +1449,12 @@ pub async fn generate_study_aid(
     base_revision: Option<String>,
     request_id: Option<String>,
     target_cards: Option<u32>,
+    cards_only: Option<bool>,
 ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
     let target = batches::target(target_cards)?;
+    // Only a flashcards request fails on an empty card set; a guide-and-cards
+    // request keeps its guide even when no cards came back.
+    let cards_only = cards_only.unwrap_or(false);
     // The context is recorded before the key is read, so a disconnect or key
     // change at any later point makes this operation stale.
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
@@ -1486,7 +1490,7 @@ pub async fn generate_study_aid(
         base_revision.as_deref(),
         &source,
         async {
-            batches::generate(&ctx, &source, &root, &material_id, target)
+            batches::generate(&ctx, &source, &root, &material_id, target, cards_only)
                 .await
                 .map_err(|m| format!("{m}\n{}", budget.details(None)))
         },

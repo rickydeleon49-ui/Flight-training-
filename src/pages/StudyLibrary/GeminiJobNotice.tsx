@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
 import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
+import { splitGeminiError } from "@/logic/geminiErrorText";
 import { useAppData } from "@/state/AppDataContext";
-import { isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
+import { EMPTY_FLASHCARDS_MESSAGE, isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
  * What became of a generation that did not simply save (GEN-REL-02): an answer
@@ -72,10 +73,19 @@ export function GeminiJobNotice({
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="ai-disclaimer" role="status">
           <AlertIcon size={16} />
-          <p className="tiny">
-            {job.draft.cards.length} / {job.draft.target} cards kept as a draft. Nothing has replaced your saved content.{" "}
-            {job.error}
-          </p>
+          <div className="stack stack--1">
+            {job.draft.cards.length > 0 ? (
+              <p className="tiny">
+                {job.draft.cards.length} / {job.draft.target} cards kept as a draft. Nothing has replaced your saved content.
+              </p>
+            ) : null}
+            {job.error ? (
+              <GeminiErrorText message={job.error} calm />
+            ) : job.phase === "failed" && job.draft.cards.length === 0 ? (
+              // Never just buttons: a failed empty draft always says what happened.
+              <p className="tiny">{EMPTY_FLASHCARDS_MESSAGE}</p>
+            ) : null}
+          </div>
         </div>
         <div className="row row--wrap">
           {onRetry && !busy ? (
@@ -84,7 +94,7 @@ export function GeminiJobNotice({
             </Button>
           ) : null}
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
-            Discard draft
+            {job.draft.cards.length > 0 ? "Discard draft" : "Dismiss"}
           </Button>
         </div>
       </div>
@@ -355,6 +365,27 @@ export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = f
         void jobs.dismiss(job.key).finally(() => { intent.current = false; setPending(false); setOpen(false); });
       }} />
   </>;
+}
+
+/**
+ * One Gemini failure: the plain sentence, with any technical trace folded
+ * away under "Details" so it never competes with what she should do next.
+ */
+export function GeminiErrorText({ message, calm = false }: { message: string; calm?: boolean }) {
+  const { text, details } = splitGeminiError(message);
+  return (
+    <div className="stack stack--1">
+      <p className={calm ? "tiny" : "field__error"} role={calm ? undefined : "alert"} style={{ whiteSpace: "pre-line" }}>
+        {text}
+      </p>
+      {details ? (
+        <details className="tiny dim">
+          <summary style={{ cursor: "pointer" }}>Details</summary>
+          <p className="tiny dim" style={{ whiteSpace: "pre-line" }}>{details}</p>
+        </details>
+      ) : null}
+    </div>
+  );
 }
 
 /** Earlier Gemini work could not be read back, so nothing new may start yet. */

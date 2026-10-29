@@ -534,6 +534,7 @@ function SessionView({
               relativePath={resolvedFilePath}
               context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
               buttonLabel="Explain this"
+              initialQuestion="Why is this the answer?"
             />
           ) : null}
         </>

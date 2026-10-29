@@ -206,7 +206,7 @@ describe("GEN-REL-05 card targets", () => {
     expect([...choice.options].map((option) => option.value)).toEqual(["20", "40", "60"]);
     fireEvent.change(choice, { target: { value: String(target) } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
-    await waitFor(() => expect(legacyGenerate).toHaveBeenCalledWith("documents/notes.txt", "root", undefined, expect.stringMatching(/^req-/), target));
+    await waitFor(() => expect(legacyGenerate).toHaveBeenCalledWith("documents/notes.txt", "root", undefined, expect.stringMatching(/^req-/), target, false));
     expect(generatePracticeTest).not.toHaveBeenCalled();
   });
 });

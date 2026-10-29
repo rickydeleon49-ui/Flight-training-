@@ -139,6 +139,20 @@ fn validate(aid: &GeneratedStudyAid, pages: Option<u32>, max_cards: usize) -> Re
     Ok(())
 }
 
+/// The back answers in its own words; a back that restates the front reads
+/// like the question twice when she flips the card.
+const CARD_BACK_RULE: &str =
+    "Each back must answer the front directly; never restate or repeat the front's question.";
+
+fn card_batch_prompt(
+    unit: usize,
+    target: impl std::fmt::Display,
+    previous: &str,
+    safety: &str,
+) -> String {
+    format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. {previous}Keep sections empty; title and summary briefly describe the batch. {CARD_BACK_RULE} {safety}")
+}
+
 fn unchanged(root: &Path, source: &LoadedSource) -> Result<(), String> {
     // LoadedSource keeps the SQLite file_path, relative to documents/ just
     // like ImportedDocument and stored_document_path. The journal's root is
@@ -161,6 +175,7 @@ pub(super) async fn generate(
     root: &Path,
     material: &str,
     target: u32,
+    cards_only: bool,
 ) -> Result<GeneratedStudyAid, String> {
     let id = gemini_jobs::with(root, |j| {
         j.list()
@@ -225,7 +240,7 @@ pub(super) async fn generate(
     } else {
         None
     };
-    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards or an empty array if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage).";
+    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage).";
     while !draft.complete && draft.next <= (target / 10) as usize {
         unchanged(root, source)?;
         let unit = draft.next;
@@ -237,8 +252,15 @@ pub(super) async fn generate(
         let prompt = if unit == 0 {
             format!("Create the study guide only. Omit flashcards. {safety}")
         } else {
-            let previous = serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?;
-            format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. Do not repeat these accepted cards: {previous}. Keep sections empty; title and summary briefly describe the batch. {safety}")
+            let previous = if draft.cards.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "Do not repeat these accepted cards: {}. ",
+                    serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?
+                )
+            };
+            card_batch_prompt(unit, target, &previous, safety)
         };
         let mut answer = study_aid_request(ctx, source, &prompt, if unit == 0 { 8192 } else { 4096 }, unit == 0).await.map_err(|message| {
             if message == gemini_cancel::CANCELLED && gemini_jobs::with(root, |j| j.admits(&id)) {
@@ -286,6 +308,15 @@ pub(super) async fn generate(
         if unit > 0 && (returned < BATCH || draft.cards.len() == before) {
             break;
         }
+    }
+    if draft.cards.is_empty() && cards_only {
+        // A flashcards-only request has nothing else to give her.
+        // Retry the card unit, retaining all request reservations and timing.
+        // A completed empty draft must never become a successful study set.
+        draft.complete = false;
+        draft.next = 1;
+        write(root, &id, &draft)?;
+        return Err("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.".into());
     }
     let mut answer = draft.guide.take().ok_or("The guide draft is incomplete.")?;
     answer.flashcards = draft.cards;
@@ -345,12 +376,21 @@ mod tests {
     }
     impl Rig {
         fn new() -> Self {
-            let root = TempDir::new();
-            let source = LoadedSource::new(
+            Self::with(LoadedSource::new(
                 super::super::generation_tests::pdf(2, "batch-source"),
                 "application/pdf",
                 "source.pdf",
-            );
+            ))
+        }
+        fn text() -> Self {
+            Self::with(LoadedSource::new(
+                b"Synthetic text source about the four forces.".to_vec(),
+                "text/plain",
+                "source.txt",
+            ))
+        }
+        fn with(source: LoadedSource) -> Self {
+            let root = TempDir::new();
             std::fs::create_dir(root.path().join("documents")).unwrap();
             std::fs::write(
                 root.path()
@@ -383,6 +423,9 @@ mod tests {
             .unwrap()
         }
         fn run(&self, target: u32) -> Result<GeneratedStudyAid, String> {
+            self.run_as(target, true)
+        }
+        fn run_as(&self, target: u32, cards_only: bool) -> Result<GeneratedStudyAid, String> {
             let (budget, _) = fake_budget(Duration::from_secs(300));
             let path = self.root.path().to_path_buf();
             let id = gemini_jobs::with(&path, |j| {
@@ -411,6 +454,7 @@ mod tests {
                 self.root.path(),
                 "material",
                 target,
+                cards_only,
             ))
         }
         fn count(&self) -> usize {
@@ -478,8 +522,15 @@ mod tests {
             budget: &budget,
             say: &|_| {},
         };
-        tauri::async_runtime::block_on(generate(&ctx, &r.source, r.root.path(), "material", 20))
-            .unwrap();
+        tauri::async_runtime::block_on(generate(
+            &ctx,
+            &r.source,
+            r.root.path(),
+            "material",
+            20,
+            true,
+        ))
+        .unwrap();
         let draft = read(r.root.path(), &id).unwrap();
         assert_eq!(draft.timing.as_ref().unwrap()["allowedMillis"], 600_000);
         assert!(draft.remaining_millis > 300_000);
@@ -540,8 +591,15 @@ mod tests {
             budget: &budget,
             say: &say,
         };
-        tauri::async_runtime::block_on(generate(&ctx, &r.source, r.root.path(), "material", 20))
-            .unwrap();
+        tauri::async_runtime::block_on(generate(
+            &ctx,
+            &r.source,
+            r.root.path(),
+            "material",
+            20,
+            true,
+        ))
+        .unwrap();
         let draft = read(r.root.path(), &id).unwrap();
         assert_eq!(draft.remaining_millis, 240_000);
         // Older drafts without the optional field remain readable with the
@@ -705,8 +763,118 @@ mod tests {
     }
 
     #[test]
+    fn completed_empty_draft_is_an_error_without_network() {
+        let root = TempDir::new();
+        let source = LoadedSource::new(b"Synthetic source".to_vec(), "text/plain", "source.txt");
+        let id = gemini_jobs::with(root.path(), |j| {
+            j.begin(
+                JobKind::StudyAid,
+                "material",
+                &source.scope,
+                &source.content_sha256,
+                None,
+            )
+        })
+        .unwrap();
+        let draft = Draft {
+            target: 20,
+            timing: None,
+            deadline: seconds() + 300,
+            remaining_millis: 300_000,
+            requests: [1, 1, 0, 0, 0, 0, 0],
+            next: 2,
+            complete: true,
+            admissions: 2,
+            guide: Some(serde_json::from_value(aid(0, 0)).unwrap()),
+            cards: vec![],
+        };
+        write(root.path(), &id, &draft).unwrap();
+        let (budget, _) = fake_budget(Duration::from_secs(300));
+        let http = generation_client().unwrap();
+        let cache = PreparedSources::new(
+            gemini_files::Policy::default(),
+            gemini_files::system_clock(),
+        );
+        let ctx = GenContext {
+            http: &http,
+            base: "http://127.0.0.1:1",
+            api_key: "synthetic-only",
+            choice: ModelChoice::Standard,
+            cache: &cache,
+            epoch: cache.epoch(),
+            budget: &budget,
+            say: &|_| {},
+        };
+        let answer = tauri::async_runtime::block_on(generate(
+            &ctx,
+            &source,
+            root.path(),
+            "material",
+            20,
+            true,
+        ));
+        assert_eq!(answer.unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
+        let kept = read(root.path(), &id).unwrap();
+        assert_eq!(kept.requests, [1, 1, 0, 0, 0, 0, 0]);
+        assert!(!kept.complete);
+        assert_eq!(kept.next, 1);
+    }
+
+    #[test]
+    fn empty_cards_fail_and_retry_keeps_reservations() {
+        let r = Rig::new();
+        let id = r.begin();
+        r.script(vec![aid(0, 0), aid(0, 0), aid(0, 3)]);
+        assert_eq!(r.run(20).unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
+        let draft = read(r.root.path(), &id).unwrap();
+        assert!(draft.cards.is_empty());
+        assert!(!draft.complete);
+        assert_eq!(draft.requests.iter().sum::<u32>(), 2);
+        assert_eq!(r.run(20).unwrap().flashcards.len(), 3);
+        assert_eq!(
+            read(r.root.path(), &id)
+                .unwrap()
+                .requests
+                .iter()
+                .sum::<u32>(),
+            3
+        );
+        let log = r.fake.log();
+        let prompts: Vec<_> = log
+            .iter()
+            .filter(|r| r.is_generate())
+            .map(|r| r.json().to_string())
+            .collect();
+        assert!(prompts.iter().all(|p| !p.contains("or an empty array")));
+        assert!(prompts
+            .iter()
+            .all(|p| !p.contains("Do not repeat these accepted cards")));
+    }
+
+    #[test]
+    fn guide_and_cards_request_keeps_its_guide_when_no_cards_come_back() {
+        // A non-PDF "study guide and cards" job: a fine guide, zero cards.
+        let r = Rig::text();
+        r.begin();
+        r.script(vec![aid(0, 0), aid(0, 0)]);
+        let answer = r.run_as(20, false).unwrap();
+        assert_eq!(answer.title, "Synthetic study aid");
+        assert_eq!(answer.summary, "Only synthetic facts.");
+        assert!(answer.flashcards.is_empty());
+        assert_eq!(r.count(), 2);
+    }
+
+    #[test]
+    fn flashcards_only_request_with_no_cards_is_an_error() {
+        let r = Rig::text();
+        r.begin();
+        r.script(vec![aid(0, 0), aid(0, 0)]);
+        assert_eq!(r.run_as(20, true).unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
+    }
+
+    #[test]
     fn short_empty_duplicate_and_repeated_batches_never_pad_or_commit_twice() {
-        for count in [0, 3, 10] {
+        for count in [3, 10] {
             let r = Rig::new();
             let id = r.begin();
             r.script(vec![aid(0, 0), aid(0, count), aid(0, count)]);
@@ -873,7 +1041,7 @@ mod tests {
             let token = registration.token.clone();
             let worker = scope.spawn(|| {
                 tauri::async_runtime::block_on(gemini_cancel::Cancellable::new(
-                    generate(&ctx, &r.source, r.root.path(), "material", 20),
+                    generate(&ctx, &r.source, r.root.path(), "material", 20, true),
                     token,
                 ))
             });
@@ -1038,7 +1206,8 @@ mod tests {
             &r.source,
             r.root.path(),
             "material",
-            20
+            20,
+            true
         ))
         .is_err());
         assert_eq!(r.count(), 1);
@@ -1049,5 +1218,15 @@ mod tests {
         assert_eq!(reopened.list()[0].stage, JobStage::Interrupted);
         assert!(reopened.list()[0].draft.is_some());
         assert!(reopened.list()[0].result.is_none());
+    }
+
+    #[test]
+    fn card_batch_prompt_asks_for_backs_that_do_not_restate_the_front() {
+        let prompt = super::card_batch_prompt(1, 40, "", "Use only facts.");
+        assert!(prompt.contains(super::CARD_BACK_RULE), "{prompt}");
+        assert!(
+            prompt.contains("never restate or repeat the front"),
+            "{prompt}"
+        );
     }
 }

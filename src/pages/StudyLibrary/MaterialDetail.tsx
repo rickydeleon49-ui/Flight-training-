@@ -48,6 +48,7 @@ import { geminiModelName, getGeminiStatus, type GeminiStatus } from "@/services/
 import { useAppData } from "@/state/AppDataContext";
 import { useMaterialNotes } from "@/state/useMaterialNotes";
 import { useActionOperations } from "@/state/useActions";
+import { isOneOfNumbers, useRememberedState } from "@/state/useRememberedState";
 
 import { canSplitPdfs } from "@/services/pdf";
 import { materialLinkAnchor, resolveMaterialLink, type MaterialLinkTarget } from "@/logic/savedSearch";
@@ -67,7 +68,10 @@ import { GuideBody } from "./GuideBody";
 import { OfflineStudyPanel } from "./OfflineStudyPanel";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
-import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
+
+const TARGET_CARD_COUNTS = [20, 40, 60] as const;
+type TargetCardCount = (typeof TARGET_CARD_COUNTS)[number];
+import { GeminiErrorText, GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
 import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
@@ -129,7 +133,13 @@ function MaterialDetailPage() {
   const [coveringLabel, setCoveringLabel] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
-  const [targetCards, setTargetCards] = useState(40);
+  // Her usual card count stays chosen on this Mac; 40 until she picks another.
+  const [targetCards, setTargetCards] = useRememberedState<TargetCardCount>(
+    "material.targetCards",
+    40,
+    isOneOfNumbers(TARGET_CARD_COUNTS),
+    "device",
+  );
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -172,9 +182,29 @@ function MaterialDetailPage() {
   const generating = working(studyJob?.phase);
   const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
-  const generationError = studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
-  const cardGenerationError = cardJob?.phase === "failed" ? cardJob.error : null;
-  const practiceGenerationError = practiceJob?.phase === "failed" ? practiceJob.error : null;
+  const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
+  // A failure that kept a draft is told once, by its notice, with Try again there.
+  // A job's real failure always wins over a start refusal.
+  const refusalFor = (kind: "study-aid" | "flashcards" | "practice-test") =>
+    startRefusal?.kind === kind ? startRefusal.message : null;
+  const studyFailure = studyJob?.phase === "failed" && !studyJob.sectionGuide && !studyJob.draft ? studyJob.error : null;
+  const cardFailure = cardJob?.phase === "failed" && !cardJob.draft ? cardJob.error : null;
+  const practiceFailure = practiceJob?.phase === "failed" && !practiceJob.draft ? practiceJob.error : null;
+  const generationError = studyFailure || refusalFor("study-aid");
+  const cardGenerationError = cardFailure || refusalFor("flashcards");
+  const practiceGenerationError = practiceFailure || refusalFor("practice-test");
+  // "Gemini is already working… Try again in a moment" is true only for that
+  // moment: it clears once Gemini goes idle or that kind's job moves on.
+  const geminiBusy = geminiJobs.busy || geminiJobs.locked();
+  const refusalWatch = useRef({ busy: geminiBusy, "study-aid": studyJob?.phase, flashcards: cardJob?.phase, "practice-test": practiceJob?.phase });
+  useEffect(() => {
+    const before = refusalWatch.current;
+    const now = { busy: geminiBusy, "study-aid": studyJob?.phase, flashcards: cardJob?.phase, "practice-test": practiceJob?.phase };
+    refusalWatch.current = now;
+    setStartRefusal((refusal) =>
+      refusal && ((before.busy && !now.busy) || before[refusal.kind] !== now[refusal.kind]) ? null : refusal,
+    );
+  }, [geminiBusy, studyJob?.phase, cardJob?.phase, practiceJob?.phase]);
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
     phase === "recovered" || phase === "save-failed" || phase === "discarding" || phase === "discard-failed";
@@ -442,8 +472,10 @@ function MaterialDetailPage() {
             ? { text: "Checking the Gemini connection…" }
             : !gemini.configured
               ? { text: "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.", settings: true }
-              : null;
-  const isGeneratingAny = geminiJobs.busy || geminiJobs.locked();
+              : geminiJobs.recovery !== "ready"
+                ? { text: "Gemini is still checking earlier work. Try again in a moment." }
+                : null;
+  const isGeneratingAny = geminiBusy;
   // Stage-appropriate recovery (GEN-REL-04): trying again goes through the
   // usual Send confirmation. A PDF already prepared with Google is reused, so
   // only the generation is repeated.
@@ -543,10 +575,13 @@ function MaterialDetailPage() {
   };
 
   const createStudyAid = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "study-aid", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "study-aid",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -560,6 +595,7 @@ function MaterialDetailPage() {
         },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "study-aid", message: refusal });
   };
 
   const queueStudyAid = async () => {
@@ -570,10 +606,13 @@ function MaterialDetailPage() {
   };
 
   const createFlashcards = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "flashcards", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "flashcards",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -587,13 +626,17 @@ function MaterialDetailPage() {
         },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "flashcards", message: refusal });
   };
 
   const createPracticeTest = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "practice-test", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "practice-test",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -601,6 +644,7 @@ function MaterialDetailPage() {
         onSaved: () => { if (isMountedRef.current) setPracticeJustSaved(true); },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "practice-test", message: refusal });
   };
 
   const jumpToFileSection = () => {
@@ -690,6 +734,7 @@ function MaterialDetailPage() {
                       relativePath={material.filePath ?? null}
                       context={pdfContext}
                       buttonLabel="Ask about this PDF"
+                      evidenceMode
                     />
                   </>
                 )}
@@ -824,7 +869,9 @@ function MaterialDetailPage() {
                           variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
                           onClick={() => {
-                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
+                            if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "study-aid", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingAi(true);
                           }}
                         >
                           {generating
@@ -965,9 +1012,7 @@ function MaterialDetailPage() {
 
                   {generationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {generationError}
-                      </p>
+                      <GeminiErrorText message={generationError} />
                       {retryStudy ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryStudy}>
@@ -1048,9 +1093,9 @@ function MaterialDetailPage() {
                               aria-label="Target cards"
                               className="select select--small"
                               value={targetCards}
-                              onChange={(event) => setTargetCards(Number(event.target.value))}
+                              onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}
                             >
-                              {[20, 40, 60].map((count) => (
+                              {TARGET_CARD_COUNTS.map((count) => (
                                 <option key={count} value={count}>
                                   {count}
                                 </option>
@@ -1062,7 +1107,9 @@ function MaterialDetailPage() {
                             variant={studySet && guideFlashcards.length > 0 ? "secondary" : "primary"}
                             disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
                             onClick={() => {
-                              if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
+                              if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "flashcards", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingCards(true);
                             }}
                           >
                             {generatingCards ? "Reading document…" : "Create flashcards"}
@@ -1097,9 +1144,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {cardGenerationError ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {cardGenerationError}
-                      </p>
+                      <GeminiErrorText message={cardGenerationError} />
                       {retryFlashcards ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryFlashcards}>
@@ -1199,6 +1244,7 @@ function MaterialDetailPage() {
                                 guideFlashcards[safeCardIndex].card.sourcePage,
                               )}
                               buttonLabel="Explain this"
+                              initialQuestion="Why is this the answer?"
                             />
                           ) : null}
                           <div className="row row--between">
@@ -1285,7 +1331,9 @@ function MaterialDetailPage() {
                           variant={practiceTest ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
                           onClick={() => {
-                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
+                            if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "practice-test", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingPracticeTest(true);
                           }}
                         >
                           {generatingPractice
@@ -1412,9 +1460,7 @@ function MaterialDetailPage() {
 
                   {practiceGenerationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {practiceGenerationError}
-                      </p>
+                      <GeminiErrorText message={practiceGenerationError} />
                       {retryPractice ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryPractice}>
@@ -1840,7 +1886,7 @@ function MaterialDetailPage() {
       />
 
       <ConfirmDialog
-        open={confirmingAi && !isGeneratingAny}
+        open={confirmingAi}
         title="Send this file to Google?"
         message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
@@ -1862,21 +1908,20 @@ function MaterialDetailPage() {
         }
         onConfirm={() => {
           setConfirmingAi(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createStudyAid();
         }}
         onCancel={() => setConfirmingAi(false)}
       >
         {!isPdf ? <><label className="field">Target cards
-          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
-            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}>
+            {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
         <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p></> : <p className="tiny dim">Your guide is built section by section. Finished sections are kept if you stop, and the completed guide waits for you to save it.</p>}
       </ConfirmDialog>
 
       <ConfirmDialog
-        open={confirmingCards && !isGeneratingAny}
+        open={confirmingCards}
         title="Send this file to Google?"
         message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
@@ -1884,21 +1929,20 @@ function MaterialDetailPage() {
         {...chooseChapterFirst(() => setConfirmingCards(false))}
         onConfirm={() => {
           setConfirmingCards(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createFlashcards();
         }}
         onCancel={() => setConfirmingCards(false)}
       >
         <label className="field">Target cards
-          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
-            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}>
+            {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
         <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them.{isPdf ? " For PDFs it is one request per 10 cards." : " Try again resumes any kept draft with the same target."}</p>
       </ConfirmDialog>
 
       <ConfirmDialog
-        open={confirmingPracticeTest && !isGeneratingAny}
+        open={confirmingPracticeTest}
         title="Send this file to Google?"
         message={
           practiceTest
@@ -1910,7 +1954,6 @@ function MaterialDetailPage() {
         {...chooseChapterFirst(() => setConfirmingPracticeTest(false))}
         onConfirm={() => {
           setConfirmingPracticeTest(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createPracticeTest();
         }}
         onCancel={() => setConfirmingPracticeTest(false)}

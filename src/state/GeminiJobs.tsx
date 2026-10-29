@@ -37,6 +37,12 @@ import {
   type GeneratedStudyAid,
 } from "@/services/gemini";
 
+export const EMPTY_FLASHCARDS_MESSAGE = "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.";
+
+function emptyCards(kind: GeminiJobKind, answer: Answer | null | undefined): boolean {
+  return kind === "flashcards" && !!answer && (answer as GeneratedStudyAid).flashcards.length === 0;
+}
+
 export function effectiveJobKind(record: GeminiJobRecord): GeminiJobKind {
   const reqId = record.requestId ?? (record as unknown as { request_id?: string }).request_id;
   if (record.kind === "study-aid" && typeof reqId === "string" && reqId.startsWith("flashcards:")) {
@@ -224,7 +230,7 @@ interface GeminiJobsValue {
   locked(): boolean;
   recovery: GeminiRecovery;
   retryRecovery(): void;
-  start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<void>;
+  start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<string | void>;
   queueGuide(target: GeminiJobTarget): Promise<string | null>;
   continueGuide(key: string, restart?: boolean): Promise<void>;
   saveAgain(key: string): Promise<void>;
@@ -454,6 +460,10 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     async (key: string, reviewed?: ReviewedRegeneration): Promise<boolean> => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
       if (!job?.answer) return false;
+      if (emptyCards(job.kind, job.answer)) {
+        update(key, { phase: "failed", error: EMPTY_FLASHCARDS_MESSAGE, answer: null });
+        return false;
+      }
       if (job.sectionGuide && !job.jobId) {
         update(key, { phase: "save-failed", error: SAVE_FAILED_MESSAGE });
         return false;
@@ -642,8 +652,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     async (kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions) => {
       // Take the shared lock synchronously, before anything awaits. Nothing
       // new starts until earlier work has been read back from the journal.
-      if (activeRef.current !== null || recoveryRef.current !== "ready") return;
-      if (jobsRef.current.some(job => job.materialId === target.materialId && job.kind === kind && job.sectionGuide)) return;
+      if (recoveryRef.current !== "ready") return "Gemini is still checking earlier work. Try again in a moment.";
+      if (activeRef.current !== null) return "Gemini is already working. Wait for it to finish or stop it, then try again.";
+      if (jobsRef.current.some(job => job.materialId === target.materialId && job.kind === kind && job.sectionGuide)) return "Finish or discard the study guide draft first, then try again.";
       // A draft waiting to be saved is never overwritten by asking again.
       const waiting = jobsRef.current.find(
         (job) =>
@@ -654,7 +665,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             job.phase === "discarding" ||
             job.phase === "discard-failed"),
       );
-      if (waiting) return;
+      if (waiting) return "Save or discard the earlier draft first, then try again.";
       const useSections = kind === "study-aid" && target.filePath.toLowerCase().endsWith(".pdf") && !jobsRef.current.some(job => job.materialId === target.materialId && job.draft);
       const key = newKey();
       activeRef.current = key;
@@ -743,7 +754,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             }
             answer = await resumeStudyGuide(request);
           } else answer = (kind === "study-aid" || kind === "flashcards")
-            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40)
+            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40, kind === "flashcards")
             : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.
@@ -806,6 +817,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
                 flashcards: (rest as GeneratedStudyAid).flashcards,
               }
             : (rest as Answer);
+        if (emptyCards(kind, jobAnswer)) {
+          update(key, { jobId, contentSha256, checkpointed: Boolean(checkpointed && jobId),
+            phase: "failed", error: EMPTY_FLASHCARDS_MESSAGE, answer: null, progress: null, stage: null });
+          return;
+        }
         // Study aids always wait for acceptance. An answer that beat a cancel
         // also waits, including practice tests.
         if (kind === "study-aid" || current()?.cancelAttempted) {
@@ -962,6 +978,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             // Replace everything happened to equal the provider's whole answer.
             if (effectiveKind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice") continue;
             const saved = await savedContent(repositoriesRef.current, effectiveKind, record.materialId);
+            if (emptyCards(effectiveKind, record.result)) continue;
             if (alreadySaved(effectiveKind, saved, record.result)) applied.add(record.id);
           } catch {
             // Shown for a deliberate decision instead.
@@ -1066,6 +1083,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             },
           ];
         }
+        next = next.map(job => emptyCards(job.kind, job.answer)
+          ? { ...job, phase: "failed", error: EMPTY_FLASHCARDS_MESSAGE, answer: null }
+          : job);
         commit(next);
         const running = next.find((job) => job.phase === "running" && job.jobId !== null && !job.local);
         if (running && activeRef.current === null) activeRef.current = running.key;
