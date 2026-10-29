@@ -7,7 +7,7 @@
 import { createElement as h, type ContextType } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ScheduleEvent } from "@/domain/types";
 import { addDays, todayIso } from "@/lib/dates";
@@ -15,9 +15,9 @@ import { AppDataContext, EMPTY_DATA } from "@/state/AppDataContext";
 import { makeEvent } from "@/testing/factories";
 import { EventDetail } from "./EventDetail";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-function show(event: ScheduleEvent) {
+function show(event: ScheduleEvent, hash = "") {
   const value = {
     repositories: null,
     data: { ...EMPTY_DATA, events: [event] },
@@ -30,13 +30,28 @@ function show(event: ScheduleEvent) {
     h(
       AppDataContext.Provider,
       { value },
-      h(MemoryRouter, { initialEntries: [`/schedule/${event.id}`] },
+      h(MemoryRouter, { initialEntries: [`/schedule/${event.id}${hash}`] },
         h(Routes, null, h(Route, { path: "/schedule/:eventId", element: h(EventDetail) }))),
     ),
   );
 }
 
 const yesterday = addDays(todayIso(), -1);
+
+it("opens the existing Preparation heading from a Related study lesson link", () => {
+  const scroll = vi.fn();
+  const previous = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+  Object.defineProperty(Element.prototype, "scrollIntoView", { value: scroll, configurable: true });
+  try {
+    show(makeEvent({ id: "synthetic-lesson" }), "#lesson-preparation");
+    const heading = document.getElementById("lesson-preparation")!;
+    expect(document.activeElement).toBe(heading);
+    expect(scroll).toHaveBeenCalledWith({ block: "start" });
+  } finally {
+    if (previous) Object.defineProperty(Element.prototype, "scrollIntoView", previous);
+    else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  }
+});
 
 describe("EventDetail cost recording", () => {
   it("offers to record a past lesson's estimate", () => {

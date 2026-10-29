@@ -800,3 +800,14 @@
 }
 
 .faa-shelf-dialog .icon-button { min-width: 44px; }
+/* One quiet, local navigation list; long saved titles stay readable. */
+.related-study { min-width: 0; border-block: 1px solid var(--border-subtle); }
+.related-study summary { min-height: 44px; padding: var(--space-3); cursor: pointer; overflow-wrap: anywhere; }
+.related-study__contents { padding: var(--space-3); }
+.related-study ul { list-style: none; padding: 0; margin: 0; }
+.related-study__row { display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); width: 100%; min-height: 44px; padding: var(--space-3); text-align: start; font: inherit; color: var(--text-primary); background: transparent; border: 0; border-radius: var(--radius-sm); text-decoration: none; overflow-wrap: anywhere; cursor: pointer; }
+.related-study__row { position: relative; padding-inline-end: calc(var(--space-3) + 1.25rem); border: 1px solid var(--border-subtle); margin-block-end: var(--space-2); }
+.related-study__go { position: absolute; inset-inline-end: var(--space-3); top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: var(--text-muted); }
+.related-study__row:hover { background: var(--accent-primary-fill); }
+.related-study :is(summary, button, a):focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.related-study .button { min-height: 44px; white-space: normal; }

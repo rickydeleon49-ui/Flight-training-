@@ -38,12 +38,12 @@ export function EventDetail() {
   const { eventId } = useParams();
   const { hash } = useLocation();
   useEffect(() => {
-    // A lesson opens at its top unless a link asks for its weather.
-    if (hash !== "#airport-weather") {
+    // Existing lesson sections can be opened directly from linked study.
+    if (hash !== "#airport-weather" && hash !== "#lesson-preparation") {
       window.scrollTo?.(0, 0);
       return;
     }
-    const section = document.getElementById("airport-weather") ?? document.getElementById("lesson-preparation");
+    const section = document.getElementById(hash.slice(1)) ?? document.getElementById("lesson-preparation");
     section?.scrollIntoView?.({ block: "start" });
     section?.focus({ preventScroll: true });
   }, [eventId, hash]);
