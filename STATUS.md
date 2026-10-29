@@ -1,3 +1,12 @@
+## 28 October 2026 — v0.6.1 published (first signed + notarized Mac release); PRs #292–#296 merged
+
+v0.6.1 is published as Latest from `main` at `629ee3d` (PR #294): the first Developer ID signed and Apple-notarized Mac release; downloaded DMG verified (checksum, Gatekeeper, stapler). Next release 0.6.2.
+PR #292 (`572f1db`): P54-06 phase B part 2; the synthetic FSRS-6 candidate matched the frozen oracle (difficulty 260/260, stability 256/260 with preregistered deviations, contract 42/42, transitions 13/13, 10/10 negative controls refused). Production stays on simple-v1; adoption is an owner decision.
+PR #293 (`87dd211`): WX-01 optional airport weather (METAR/TAF from NOAA/NWS), off by default, one request per button, ICAO code only, memory only.
+PR #295 (`fbe1955`): FAA-01 references shelf (ACS 6C + PHAK from her own PDFs, offline); add-only migration 0027; no network, no mappings, NASR deferred.
+PR #296 (`c2cdd99`): signed Mac releases; the "Open Anyway" exception is retired and the release Check timeout is 40 minutes.
+Next: Study Hub HUB-02/06 (plan first).
+
 ## 28 October 2026 — PRs #289–#291 merged
 
 PR #289 (main `a472327`) merged VISUAL-01b and ORAL-01b: a developer-only "cover a label" proof (browser dev mode only, absent from the production build) and a "Practice an oral question" try-it dialog that saves nothing, with polish from two student runs. PR #290 (main `d48a5e6`) merged ORAL-01c: her oral scenarios are saved using owner-approved add-only migration 0025 (oral_scenarios, oral_scenario_versions, oral_save_operations); her answers are never stored, and ORAL-01d is not approved. PR #291 (main `b2342ee`) merged VISUAL-01c: saved "cover a label" picture cards on PNG materials using owner-approved add-only migration 0026 (visual_card_regions, card_item_visual_regions); legacy text-card identity is unchanged, picture cards are omitted from exports, and backup/restore and deletion are guarded. Claude reviewed all three and the student runs passed; all six exact-head checks passed on each; no tag or release.

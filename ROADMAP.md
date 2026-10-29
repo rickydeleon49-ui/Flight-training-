@@ -6,7 +6,7 @@
 
 Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs/FEATURE_VALIDATION_0.6.1.md). Local work and shipped work are labeled separately.
 
-**Released:** v0.6.0, published as Latest from `main` at `7d7d878`. The next release is **0.6.1**; 0.5.2 and 0.5.6 are retired.
+**Released:** v0.6.1 is published as Latest (28 October 2026) from `main` at `629ee3d`, the first Developer ID signed and Apple-notarized Mac release. The next release is **0.6.2**; 0.5.2 and 0.5.6 are retired.
 
 **Done in `main` through v0.6.0:**
 - **Offline reading and search foundations:** OFFLINE-01, OFFLINE-02 and its saved-content search, and OFFLINE-03a/b, so she can write and edit her own summaries, cards and practice questions.
@@ -66,6 +66,16 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 **VISUAL-01c merged in PR #291 (main `b2342ee`):** saved 'cover a label' picture cards on PNG materials (owner-approved add-only migration 0026: visual_card_regions, card_item_visual_regions); legacy text-card identity unchanged; picture cards omitted from exports; backup/restore and deletion guarded. Claude reviewed the work and the installed-app student run and recheck passed on a fictional profile; all six exact-head checks passed; no tag or release.
 
+**P54-06 phase B part 2 merged in PR #292 (main `572f1db`):** synthetic FSRS-6 candidate matched the frozen oracle (difficulty 260/260, stability 256/260 with only the preregistered deviations; contract 42/42; transitions 13/13; 10/10 negative controls refused); Codex review RED on refusal order fixed. Production stays on simple-v1; adoption is a separate owner decision.
+
+**WX-01 airport weather merged in PR #293 (main `87dd211`):** optional (off by default) METAR/TAF from the NOAA/NWS Aviation Weather Center in a flight lesson's Preparation; one request per button, only the ICAO code sent, memory only, never go/no-go. Owner approved the plan and defaults.
+
+**Release 0.6.1 merged in PR #294 (main `629ee3d`) and published 28 October:** version bump, release notes, local signing script (`scripts/build-signed-mac.sh`). The DMG is Developer ID signed and Apple notarized; downloaded asset verified (checksum, Gatekeeper 'Notarized Developer ID', stapler).
+
+**FAA-01 references shelf merged in PR #295 (main `fbe1955`):** optional ACS 6C + PHAK shelf in Study Library from her own PDFs, opened offline; owner-approved add-only migration 0027 (`faa_reference_copies`); no network, no mappings (await reviewer), NASR deferred.
+
+**Signed Mac releases (PR #296, main `c2cdd99`):** the 'Open Anyway' owner exception is retired; release Check timeout raised to 40 minutes.
+
 **Row 11 PDF-STUDY-01 done (01a–01e).** Highlights and an embedded reader stay gated. **Row 12 VISUAL-01:** 01b/01c merged (#289, #291). **Row 13 ORAL-01:** 01b/01c merged (#289, #290).
 
 **Export verification:** native synthetic imports and HTML, CSV and Markdown ZIP saves work. ZIP guide sections stay separate, CSV formula mitigation is present, and Safari Letter/A4 preview plus A4 Save as PDF were exercised. The merged print correction keeps the practice heading and first question together in both paper sizes; the answer key stays separate. Physical printing remains untested.
@@ -74,7 +84,7 @@ Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs
 
 Only the owner reorders this list. Each item ships as one or more bounded slices, each with failing-first tests, Claude's independent review and exact-head CI.
 
-Rows 1–3 are complete in `main`, and v0.6.0 is published. Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims. Rows 10–11 are done. Row 12 VISUAL-01: 01b proof and 01c saved picture cards merged; 01d (PDF page pictures) stays gated. Row 13 ORAL-01: 01b and 01c saved scenarios merged; 01d (keeping her answers) not approved. Next: after-the-queue item 1, P54-06 phase B part 2.
+Rows 1–3 are complete in `main`, and v0.6.1 is published (signed and notarized). Row 4 export implementation and the student-found print-layout correction are merged. Row 5 has the complete current catalog and material-tag navigation in `main`; activity tracking and any broader ACS study view remain outstanding. Row 6 school comparison is merged in PR #270. Row 7 discovery-flight logging is merged in PR #271. Row 8 Study Flow continuation is merged in PR #272; next-flight preparation links and the observed narrow/large-text homework-action correction are merged in PR #273 with all local/exact-head/main CI and student checks green; keep the owner’s queue order and avoid readiness claims. Rows 10–11 are done. Row 12 VISUAL-01: 01b proof and 01c saved picture cards merged; 01d (PDF page pictures) stays gated. Row 13 ORAL-01: 01b and 01c saved scenarios merged; 01d (keeping her answers) not approved. After-the-queue items 1–3 are done for their approved slices (P54-06 B2, WX-01 01b, FAA-01 01b). Next: Study Hub HUB-02/06 (plan first).
 
 | # | Item | What she gets | Includes | Plan |
 | --- | --- | --- | --- | --- |
