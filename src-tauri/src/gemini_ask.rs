@@ -178,7 +178,7 @@ pub const ASK_PDF_INSTRUCTION: &str =
      Keep it short and clear. \
      Give a focused answer of about 300 words at most. If the topic needs more, cover the most important points \
      and end by offering to go deeper on a part she names. \
-     This is a study aid; remind her to check FAA guidance and her instructor for anything operational. \
+     Do not add your own study-aid reminder or disclaimer; the app already shows one. \
      Write plain text with no Markdown: no asterisks or headings; separate paragraphs with a blank line.";
 
 pub const ASK_GEMINI_BUDGET: Duration = Duration::from_secs(300);
@@ -207,6 +207,16 @@ pub struct AskAnswer {
     pub passages: Option<Vec<AskPassage>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub not_answered: Option<bool>,
+    /// Why a PDF answer has no checked quotes, when the app knows a fix.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence_unavailable: Option<EvidenceUnavailable>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceUnavailable {
+    /// No extraction exists for this exact PDF yet ("Read this PDF's text").
+    TextNotRead,
 }
 
 #[derive(Debug, Deserialize)]
@@ -323,6 +333,7 @@ pub fn parse_and_validate_answer(
         source_pages: None,
         passages: Some(passages),
         not_answered: Some(not_answered),
+        evidence_unavailable: None,
     })
 }
 
@@ -453,15 +464,23 @@ fn locally_checked_answer(
             source_pages: Some(vec![]),
             passages: None,
             not_answered: None,
+            evidence_unavailable: None,
         });
     }
     let cache = source.and(evidence_root).and_then(Cache::read_only);
     let page_count = source.and_then(|s| s.page_count);
-    parse_and_validate_answer(text, page_count, model, |page| {
+    let text_read = source
+        .zip(cache.as_ref())
+        .is_some_and(|(s, c)| c.summary(&s.content_sha256).is_some());
+    let mut answer = parse_and_validate_answer(text, page_count, model, |page| {
         let source = source?;
         let (outcome, text) = cache.as_ref()?.page(&source.content_sha256, page)?;
         (outcome == Outcome::Text).then_some(text)
-    })
+    })?;
+    if !text_read && answer.not_answered != Some(true) {
+        answer.evidence_unavailable = Some(EvidenceUnavailable::TextNotRead);
+    }
+    Ok(answer)
 }
 
 // The same preflight is used by the command and synthetic-key-store tests.
@@ -623,7 +642,25 @@ mod tests {
         let ask = |source: &LoadedSource| {
             locally_checked_answer(&reply, "synthetic-model", Some(source), Some(&root)).unwrap()
         };
-        assert!(ask(&source).passages.as_ref().unwrap().is_empty());
+        let unread = ask(&source);
+        assert!(unread.passages.as_ref().unwrap().is_empty());
+        assert_eq!(
+            unread.evidence_unavailable,
+            Some(EvidenceUnavailable::TextNotRead)
+        );
+        assert_eq!(
+            serde_json::to_value(&unread).unwrap()["evidenceUnavailable"],
+            "text_not_read"
+        );
+        // A not-answered reply needs no source-checking hint.
+        let not_answered = locally_checked_answer(
+            r#"{"answer":"No.","notAnswered":true,"passages":[]}"#,
+            "synthetic-model",
+            Some(&source),
+            Some(&root),
+        )
+        .unwrap();
+        assert_eq!(not_answered.evidence_unavailable, None);
         assert_eq!(
             std::fs::read_dir(&root).unwrap().count(),
             0,
@@ -650,6 +687,22 @@ mod tests {
             }
         }
         let before = std::fs::read(root.join(crate::extraction::cache::CACHE_FILE)).unwrap();
+        let read = ask(&source);
+        assert_eq!(read.evidence_unavailable, None);
+        assert!(serde_json::to_value(&read)
+            .unwrap()
+            .get("evidenceUnavailable")
+            .is_none());
+        // Text was read but the quote does not match: no hint, just unchecked.
+        let unmatched = locally_checked_answer(
+            &json!({"answer":"Fictional.","notAnswered":false,"passages":[{"page":1,"quote":"Not on the page."}]}).to_string(),
+            "synthetic-model",
+            Some(&source),
+            Some(&root),
+        )
+        .unwrap();
+        assert!(unmatched.passages.as_ref().unwrap().is_empty());
+        assert_eq!(unmatched.evidence_unavailable, None);
         assert_eq!(
             ask(&source).passages.unwrap(),
             vec![AskPassage {
@@ -662,11 +715,17 @@ mod tests {
             LoadedSource::new(synthetic_pdf(3), "application/pdf", "documents/a.pdf");
         replacement.page_count = Some(2);
         assert!(ask(&replacement).passages.as_ref().unwrap().is_empty());
+        assert_eq!(
+            ask(&replacement).evidence_unavailable,
+            Some(EvidenceUnavailable::TextNotRead),
+            "another file's text never counts as read"
+        );
         replacement.content_sha256 = "f".repeat(64);
         assert!(
             ask(&replacement).passages.as_ref().unwrap().is_empty(),
             "unknown extraction is not evidence"
         );
+        assert_eq!(ask(&replacement).evidence_unavailable, None);
         assert_eq!(
             std::fs::read(root.join(crate::extraction::cache::CACHE_FILE)).unwrap(),
             before,
@@ -1018,6 +1077,12 @@ mod tests {
         assert!(ASK_INSTRUCTION.contains("Cite PDF page numbers"));
         assert!(ASK_INSTRUCTION.contains("check FAA guidance and her instructor"));
         assert!(ASK_INSTRUCTION.contains("Write plain text with no Markdown"));
+        // The app shows its own study-aid line beside PDF answers.
+        assert!(ASK_PDF_INSTRUCTION.contains(
+            "Do not add your own study-aid reminder or disclaimer; the app already shows one."
+        ));
+        assert!(!ASK_PDF_INSTRUCTION.contains("remind her to check FAA guidance"));
+        assert!(!ASK_INSTRUCTION.contains("Do not add your own study-aid"));
         let request = build_ask_request(
             Some(json!({"inline_data": {"mime_type": "application/pdf", "data": "synthetic"}})),
             "",

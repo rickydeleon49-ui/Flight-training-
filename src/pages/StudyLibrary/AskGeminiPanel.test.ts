@@ -264,9 +264,10 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     ).toBeTruthy();
   });
 
-  it.each([false, true])("focuses and scrolls to the input after every answer (reduced motion: %s)", async (reducedMotion) => {
+  it.each([false, true])("keeps focus in the input and scrolls the new answer into view (reduced motion: %s)", async (reducedMotion) => {
     const matchMedia = vi.fn().mockReturnValue({ matches: reducedMotion });
     vi.stubGlobal("matchMedia", matchMedia);
+    const original = Element.prototype.scrollIntoView;
     try {
       vi.mocked(askGemini).mockImplementation(async (params) => ({
         answer: `Answer: ${params && typeof params === "object" ? params.question : ""}`, model: "gemini-3.5-flash", notAnswered: false, passages: [],
@@ -279,7 +280,11 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       const input = screen.getByRole("textbox", { name: "Ask a question" });
       expect(document.activeElement).toBe(input);
       const scroll = vi.fn();
-      input.scrollIntoView = scroll;
+      const scrolled: Element[] = [];
+      Element.prototype.scrollIntoView = function (this: Element, arg?: boolean | ScrollIntoViewOptions) {
+        scrolled.push(this);
+        scroll(arg);
+      };
 
       // Four replies also cover new answers after the six-turn history cap.
       for (let i = 1; i <= 4; i++) {
@@ -296,6 +301,9 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
         expect((input as HTMLInputElement).disabled).toBe(false);
         expect((input as HTMLInputElement).value).toBe("");
         expect(scroll).toHaveBeenLastCalledWith({ block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
+        const target = scrolled.at(-1)!;
+        expect(target).not.toBe(input);
+        expect(target.textContent).toContain(`Answer: Question ${i}`);
       }
       expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
       const reset = screen.getByRole("button", { name: "Ask another" });
@@ -309,6 +317,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Ask a question" }));
       expect(scroll).toHaveBeenCalledTimes(4);
     } finally {
+      Element.prototype.scrollIntoView = original;
       vi.unstubAllGlobals();
     }
   });
@@ -358,6 +367,42 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     expect(screen.queryByRole("log")).toBeNull();
     setItem.mockRestore();
+  });
+
+  it.each([false, true])("says how to enable source checking only when the PDF text is unread (heading present: %s)", async (withHeading) => {
+    const heading = document.createElement("h2");
+    heading.id = "material-backup-heading";
+    heading.tabIndex = -1;
+    heading.scrollIntoView = vi.fn();
+    if (withHeading) document.body.appendChild(heading);
+    try {
+      vi.mocked(askGemini)
+        .mockResolvedValueOnce({ answer: "Unread answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [], evidenceUnavailable: "text_not_read" })
+        .mockResolvedValueOnce({ answer: "Read answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
+      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+      fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+      const input = screen.getByLabelText("Ask a question");
+      fireEvent.change(input, { target: { value: "First?" } });
+      fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      await screen.findByText("Unread answer.");
+      const hint = screen.getByText((_, el) => el?.tagName === "P"
+        && el.textContent === "I couldn't check the supporting text — use “Read this PDF's text” first.");
+      const jump = within(hint).queryByRole("button", { name: "“Read this PDF's text”" });
+      expect(jump !== null).toBe(withHeading);
+      if (jump) {
+        fireEvent.click(jump);
+        expect(document.activeElement).toBe(heading);
+        expect(heading.scrollIntoView).toHaveBeenCalledWith({ block: "start" });
+      }
+      fireEvent.change(input, { target: { value: "Second?" } });
+      fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+      await screen.findByText("Read answer.");
+      // Text was read but nothing matched: the plain line, no pointer.
+      expect(screen.getAllByText(/I couldn't check the supporting text/)).toHaveLength(2);
+      expect(screen.getByText("I couldn't check the supporting text.")).toBeTruthy();
+    } finally {
+      heading.remove();
+    }
   });
 
   it("errors show plainly", async () => {

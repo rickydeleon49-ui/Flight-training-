@@ -4,6 +4,7 @@ import { Button, QuestionIcon } from "@/components/ui";
 import { checkAiSubmission } from "@/logic/aiSafety";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
+import { jumpToMaterialHeading } from "./materialJump";
 import { askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
@@ -29,8 +30,12 @@ interface ChatTurn {
   text: string;
   passages?: AskGeminiResult["passages"];
   notAnswered?: boolean;
+  textNotRead?: boolean;
   model?: string;
 }
+
+// "Read this PDF's text" lives under this heading in the material page.
+const READ_TEXT_HEADING = "material-backup-heading";
 
 interface InFlightAsk {
   id: string;
@@ -49,6 +54,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   const [error, setError] = useState<string | null>(null);
   const [stopped, setStopped] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastAnswerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<InFlightAsk | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [answerVersion, setAnswerVersion] = useState(0);
@@ -91,9 +97,8 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
 
   useEffect(() => {
     if (answerVersion === 0) return;
-    const input = inputRef.current;
-    input?.focus({ preventScroll: true });
-    input?.scrollIntoView?.({
+    inputRef.current?.focus({ preventScroll: true });
+    lastAnswerRef.current?.scrollIntoView?.({
       block: "nearest",
       behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
     });
@@ -159,7 +164,11 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
           ...prev,
           { role: "user" as const, text: trimmed },
           { role: "model" as const, text: result.answer, model: result.model,
-            ...(hasPdf ? { passages: result.passages, notAnswered: result.notAnswered } : {}),
+            ...(hasPdf ? {
+              passages: result.passages,
+              notAnswered: result.notAnswered,
+              textNotRead: result.evidenceUnavailable === "text_not_read",
+            } : {}),
           },
         ];
         return next.slice(-6);
@@ -272,6 +281,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
           {history.map((turn, idx) => (
             <div
               key={idx}
+              ref={idx === history.length - 1 && turn.role === "model" ? lastAnswerRef : undefined}
               className={`ask-gemini-turn ask-gemini-turn--${turn.role}`}
               style={{
                 padding: "var(--space-2)",
@@ -305,6 +315,16 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
                       </div>
                     ))}
                   </details>
+                ) : turn.textNotRead ? (
+                  <p className="small dim">
+                    I couldn't check the supporting text — use{" "}
+                    {document.getElementById(READ_TEXT_HEADING) ? (
+                      <button type="button" className="link-button" onClick={() => jumpToMaterialHeading(READ_TEXT_HEADING)}>
+                        “Read this PDF's text”
+                      </button>
+                    ) : "“Read this PDF's text”"}{" "}
+                    first.
+                  </p>
                 ) : <p className="small dim">I couldn't check the supporting text.</p>
               )}
             </div>

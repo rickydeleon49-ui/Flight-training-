@@ -232,6 +232,15 @@ export interface AskGeminiResult {
   sourcePages?: number[];
   passages?: { page: number; quote: string }[];
   notAnswered?: boolean;
+  /** Set only when a PDF answer could not be checked because its text has not been read yet. */
+  evidenceUnavailable?: "text_not_read" | null;
+}
+
+/** Only the one known reason passes; anything else means "no hint". */
+export function decodeAskGeminiResult(result: AskGeminiResult | null): AskGeminiResult | null {
+  if (!result) return result;
+  const { evidenceUnavailable, ...rest } = result;
+  return evidenceUnavailable === "text_not_read" ? { ...rest, evidenceUnavailable } : rest;
 }
 
 /**
@@ -258,14 +267,14 @@ export async function askGemini(
           history: maybeHistory ?? [],
         };
 
-  return invoke<AskGeminiResult | null>("ask_gemini", {
+  return decodeAskGeminiResult(await invoke<AskGeminiResult | null>("ask_gemini", {
     requestId: params.requestId ?? newId(),
     relativePath: params.relativePath ?? null,
     materialId: params.materialId,
     context: params.context,
     question: params.question,
     history: params.history ?? [],
-  });
+  }));
 }
 
 export interface AskGeminiProgressEvent {
