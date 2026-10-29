@@ -37,7 +37,7 @@ import {
   type GeneratedStudyAid,
 } from "@/services/gemini";
 
-const EMPTY_FLASHCARDS_MESSAGE = "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.";
+export const EMPTY_FLASHCARDS_MESSAGE = "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.";
 
 function emptyCards(kind: GeminiJobKind, answer: Answer | null | undefined): boolean {
   return kind === "flashcards" && !!answer && (answer as GeneratedStudyAid).flashcards.length === 0;
@@ -754,7 +754,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             }
             answer = await resumeStudyGuide(request);
           } else answer = (kind === "study-aid" || kind === "flashcards")
-            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40)
+            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40, kind === "flashcards")
             : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.

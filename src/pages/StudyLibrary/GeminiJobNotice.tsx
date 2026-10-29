@@ -4,7 +4,7 @@ import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
 import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
 import { splitGeminiError } from "@/logic/geminiErrorText";
 import { useAppData } from "@/state/AppDataContext";
-import { isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
+import { EMPTY_FLASHCARDS_MESSAGE, isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
 
 /**
  * What became of a generation that did not simply save (GEN-REL-02): an answer
@@ -79,7 +79,12 @@ export function GeminiJobNotice({
                 {job.draft.cards.length} / {job.draft.target} cards kept as a draft. Nothing has replaced your saved content.
               </p>
             ) : null}
-            {job.error ? <GeminiErrorText message={job.error} calm /> : null}
+            {job.error ? (
+              <GeminiErrorText message={job.error} calm />
+            ) : job.phase === "failed" && job.draft.cards.length === 0 ? (
+              // Never just buttons: a failed empty draft always says what happened.
+              <p className="tiny">{EMPTY_FLASHCARDS_MESSAGE}</p>
+            ) : null}
           </div>
         </div>
         <div className="row row--wrap">

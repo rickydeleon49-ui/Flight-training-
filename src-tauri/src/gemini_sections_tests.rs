@@ -1799,6 +1799,10 @@ fn validate_section_unescapes_newlines_before_digest_and_storage() {
             "## Heading\n\n- One\n- Two",
         ),
         (
+            "## Heading\\r\\n\\r\\n- One\\r\\n- Two",
+            "## Heading\n\n- One\n- Two",
+        ),
+        (
             "## Heading\nLiteral \\n stays.",
             "## Heading\nLiteral \\n stays.",
         ),

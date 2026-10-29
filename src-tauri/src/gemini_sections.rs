@@ -656,7 +656,7 @@ fn validate_section(
         .map_err(|_| "The section answer was incomplete; earlier sections are kept.")?;
     // Some model answers double-escape newlines inside the JSON body.
     let body = if !a.body.contains(['\n', '\r']) {
-        a.body.replace("\\n", "\n")
+        a.body.replace("\\r\\n", "\n").replace("\\n", "\n")
     } else {
         a.body
     };

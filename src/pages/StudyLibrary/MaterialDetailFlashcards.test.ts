@@ -141,6 +141,52 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     expect(screen.queryByText(/0 \/ 20 cards kept as a draft/)).toBeNull();
   });
 
+  it("a failed empty card draft with no error still says what happened", async () => {
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
+      id: "failed-silent", kind: "study-aid", requestId: "flashcards:req-silent", materialId: "mat-pdf",
+      relativePath: "documents/handbook.pdf", contentSha256: "", stage: "failed", createdAt: 1, updatedAt: 1,
+      draft: { target: 20, cards: [] },
+    }]);
+    await openMaterial("mat-pdf");
+    await waitFor(() => expect(geminiJobs.jobs.find(j => j.kind === "flashcards")?.phase).toBe("failed"));
+    expect(geminiJobs.jobs.find(j => j.kind === "flashcards")?.error).toBeNull();
+    expect(await screen.findByText("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeTruthy();
+  });
+
+  it("an 'already working' refusal clears once Gemini is idle and never hides a real failure", async () => {
+    const realFailure = "Gemini could not finish these flashcards. Try again in a little while.";
+    const busyRefusal = "Gemini is already working. Wait for it to finish or stop it, then try again.";
+    vi.spyOn(geminiService, "generateStudyAid").mockRejectedValue(new Error(realFailure));
+    let finishPractice!: (value: Awaited<ReturnType<typeof geminiService.generatePracticeTest>>) => void;
+    vi.spyOn(geminiService, "generatePracticeTest").mockImplementation(() => new Promise(resolve => { finishPractice = resolve; }));
+    const practiceAnswer = { title: "Test", questions: [{ question: "Q?", options: ["A", "B"], correctIndex: 0, explanation: "E", sourcePage: 1 }], model: "gemini-3.5-flash" };
+    await openMaterial("mat-pdf");
+
+    // 1. A refusal from a stale click clears when the other job finishes.
+    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    let dialog = await waitFor(sendDialog);
+    await act(async () => { void geminiJobs.start("practice-test", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    await waitFor(() => expect(geminiJobs.busy).toBe(true));
+    await act(async () => { fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" })); });
+    expect(await screen.findByText(busyRefusal)).toBeTruthy();
+    await act(async () => { finishPractice(practiceAnswer); });
+    await waitFor(() => expect(geminiJobs.busy || geminiJobs.locked()).toBe(false));
+    await waitFor(() => expect(screen.queryByText(busyRefusal)).toBeNull());
+
+    // 2. A real card failure is shown even when a later refusal is set.
+    await act(async () => { await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    expect(await screen.findByText(realFailure)).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Try again" })[0]!);
+    dialog = await waitFor(sendDialog);
+    await act(async () => { void geminiJobs.start("practice-test", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    await waitFor(() => expect(geminiJobs.busy).toBe(true));
+    await act(async () => { fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" })); });
+    expect(screen.getByText(realFailure)).toBeTruthy();
+    expect(screen.queryByText(busyRefusal)).toBeNull();
+    await act(async () => { finishPractice(practiceAnswer); });
+  });
+
   it("remembers the chosen target card count after leaving the page", async () => {
     await openMaterial("mat-pdf");
     fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
@@ -217,6 +263,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
         undefined,
         expect.stringMatching(/^flashcards:req-/),
         60,
+        true,
       ),
     );
 
@@ -684,6 +731,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
       undefined,
       expect.stringMatching(/^flashcards:req-/),
       40,
+      true,
     );
     expect(generateTestSpy).not.toHaveBeenCalled();
 

@@ -188,7 +188,7 @@ function parseBlocks(lines: string[], depth: number): GuideBlock[] {
 /** The blocks one guide body is shown as. */
 export function parseGuideBody(text: string): GuideBlock[] {
   // Repair older saved Gemini bodies for display without rewriting saved text.
-  const body = /[\r\n]/.test(text) ? text : text.replace(/\\n/g, "\n");
+  const body = /[\r\n]/.test(text) ? text : text.replace(/\\r\\n|\\n/g, "\n");
   const normalized = body.replace(/\r\n?/g, "\n").replace(/\t/g, "    ");
   if (normalized.length > GUIDE_FORMAT_LIMIT) {
     return normalized

@@ -184,9 +184,27 @@ function MaterialDetailPage() {
   const generatingPractice = working(practiceJob?.phase);
   const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
   // A failure that kept a draft is told once, by its notice, with Try again there.
-  const generationError = startRefusal?.kind === "study-aid" ? startRefusal.message : studyJob?.phase === "failed" && !studyJob.sectionGuide && !studyJob.draft ? studyJob.error : null;
-  const cardGenerationError = startRefusal?.kind === "flashcards" ? startRefusal.message : cardJob?.phase === "failed" && !cardJob.draft ? cardJob.error : null;
-  const practiceGenerationError = startRefusal?.kind === "practice-test" ? startRefusal.message : practiceJob?.phase === "failed" && !practiceJob.draft ? practiceJob.error : null;
+  // A job's real failure always wins over a start refusal.
+  const refusalFor = (kind: "study-aid" | "flashcards" | "practice-test") =>
+    startRefusal?.kind === kind ? startRefusal.message : null;
+  const studyFailure = studyJob?.phase === "failed" && !studyJob.sectionGuide && !studyJob.draft ? studyJob.error : null;
+  const cardFailure = cardJob?.phase === "failed" && !cardJob.draft ? cardJob.error : null;
+  const practiceFailure = practiceJob?.phase === "failed" && !practiceJob.draft ? practiceJob.error : null;
+  const generationError = studyFailure || refusalFor("study-aid");
+  const cardGenerationError = cardFailure || refusalFor("flashcards");
+  const practiceGenerationError = practiceFailure || refusalFor("practice-test");
+  // "Gemini is already working… Try again in a moment" is true only for that
+  // moment: it clears once Gemini goes idle or that kind's job moves on.
+  const geminiBusy = geminiJobs.busy || geminiJobs.locked();
+  const refusalWatch = useRef({ busy: geminiBusy, "study-aid": studyJob?.phase, flashcards: cardJob?.phase, "practice-test": practiceJob?.phase });
+  useEffect(() => {
+    const before = refusalWatch.current;
+    const now = { busy: geminiBusy, "study-aid": studyJob?.phase, flashcards: cardJob?.phase, "practice-test": practiceJob?.phase };
+    refusalWatch.current = now;
+    setStartRefusal((refusal) =>
+      refusal && ((before.busy && !now.busy) || before[refusal.kind] !== now[refusal.kind]) ? null : refusal,
+    );
+  }, [geminiBusy, studyJob?.phase, cardJob?.phase, practiceJob?.phase]);
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
     phase === "recovered" || phase === "save-failed" || phase === "discarding" || phase === "discard-failed";
@@ -457,7 +475,7 @@ function MaterialDetailPage() {
               : geminiJobs.recovery !== "ready"
                 ? { text: "Gemini is still checking earlier work. Try again in a moment." }
                 : null;
-  const isGeneratingAny = geminiJobs.busy || geminiJobs.locked();
+  const isGeneratingAny = geminiBusy;
   // Stage-appropriate recovery (GEN-REL-04): trying again goes through the
   // usual Send confirmation. A PDF already prepared with Google is reused, so
   // only the generation is repeated.

@@ -186,14 +186,18 @@ export async function generateStudyAid(
   baseRevision?: string,
   requestId?: string,
   targetCards = 40,
+  cardsOnly = false,
 ): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
+  // cardsOnly: a flashcards request fails on an empty card set; a guide-and-cards
+  // request keeps its guide even when no cards come back.
   return invoke<GeneratedStudyAid & GenerationJobIdentity>("generate_study_aid", {
     relativePath,
     materialId,
     baseRevision,
     requestId,
     targetCards,
+    cardsOnly,
   });
 }
 
