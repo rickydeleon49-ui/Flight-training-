@@ -144,7 +144,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
               aria-describedby={describedBy}
               aria-invalid={invalid}
               value={draft.title}
-              placeholder="Crosswind Landings"
+              placeholder="e.g. Crosswind landings"
               onChange={(e) => update("title", e.target.value)}
             />
           )}

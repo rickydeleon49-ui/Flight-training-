@@ -5,7 +5,7 @@
  * an amount of zero or less saved before the form refused them. jsdom only.
  */
 import { createElement as h, type ContextType } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -75,4 +75,17 @@ describe("EventDetail cost recording", () => {
     expect(screen.queryByRole("button", { name: /as an expense/ })).toBeNull();
     expect(screen.getByText(/Edit this lesson's cost to an amount above zero/)).toBeTruthy();
   });
+});
+
+it("makes preparation examples hints and enables the primary Add only for text", () => {
+  show(makeEvent({ id: "prep-synthetic" }));
+  const input = screen.getByRole("textbox", { name: "New preparation item" });
+  expect(input.getAttribute("placeholder")).toBe("e.g. Weather review");
+  const add = input.parentElement!.querySelector("button")!;
+  expect(add.classList.contains("button--primary")).toBe(true);
+  expect(add.disabled).toBe(true);
+  fireEvent.change(input, { target: { value: "Review fictional pattern notes" } });
+  expect(add.disabled).toBe(false);
+  fireEvent.change(input, { target: { value: "   " } });
+  expect(add.disabled).toBe(true);
 });

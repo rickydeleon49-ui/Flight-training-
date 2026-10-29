@@ -5,7 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
 import { FlightDeck } from "./FlightDeck";
-import { ReminderPopup } from "@/components/reminders/ReminderPopup";
+import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { makeAction, makeEvent, makeJournalEntry, makeMaterial, makePrepItem, makeQuestion } from "@/testing/factories";
 import type { HomeworkSnapshot } from "@/domain/homework";
@@ -16,6 +16,7 @@ vi.mock("@/state/AppDataContext", async (importOriginal) => ({
   ...await importOriginal<object>(),
   useAppData: () => ({
     data: appData,
+    status: "ready",
     dataRevision: 1,
     repositories: null,
     refresh: vi.fn(),
@@ -115,7 +116,7 @@ describe("FlightDeck and reminders bound homework actions", () => {
     expect(screen.queryByRole("button", { name: /Delete/i })).toBeNull();
   });
 
-  it("reminders_dialog_opens_homework_for_bound_action", async () => {
+  it("toolkit_reminders_opens_homework_for_bound_action", async () => {
     const actionId = "act-101";
     const hwId = "hw-202";
     const boundAction = makeAction({
@@ -150,7 +151,8 @@ describe("FlightDeck and reminders bound homework actions", () => {
     appData.actions = [boundAction];
     appData.homework = [hwSnapshot];
 
-    render(h(MemoryRouter, null, h(ReminderPopup)));
+    render(h(MemoryRouter, null, h(PilotToolkit)));
+    fireEvent.click(screen.getByRole("tab", { name: "Reminders" }));
 
     expect(await screen.findByText("Training reminders")).toBeTruthy();
     expect(screen.getByText("Homework overdue")).toBeTruthy();
