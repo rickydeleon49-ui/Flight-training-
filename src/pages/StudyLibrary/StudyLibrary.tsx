@@ -538,7 +538,7 @@ function MaterialCard({
         : "neutral";
 
   return (
-    <Link className="material-card" to={`/study/${material.id}`}>
+    <Link className="material-card" to={`/study/${material.id}`} state={{ fromLibrary: true }}>
       <span className="material-card__top">
         <span className="material-card__mark" aria-hidden="true">
           {material.filePath ? <DocumentIcon size={17} /> : <BookIcon size={17} />}

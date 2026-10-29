@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
@@ -211,4 +211,19 @@ it("opens legacy file-action deep links in the header menu", async () => {
   await open("?tab=more#material-file-actions");
   await waitFor(() => expect(document.getElementById("material-file-actions")?.closest("details")?.open).toBe(true));
   await waitFor(() => expect(document.activeElement).toBe(document.getElementById("material-file-actions")));
+});
+
+function Where() { const location = useLocation(); const type = useNavigationType();
+  return h("output", { "data-testid": "where" }, `${type} ${location.pathname}`); }
+it.each([
+  [true, "POP /study"],
+  [false, "PUSH /study"],
+])("'‹ Study Library' goes back to her place only when opened from the library (fromLibrary=%s)", async (fromLibrary, expected) => {
+  render(h(AppDataProvider, null, h(MemoryRouter, {
+    initialEntries: ["/study", { pathname: "/study/tips", state: fromLibrary ? { fromLibrary: true } : null }], initialIndex: 1,
+  }, h(Where), h(Ready))));
+  await screen.findByRole("tab", { name: "Study" });
+  pick("Notes");
+  fireEvent.click(screen.getByRole("link", { name: "‹ Study Library" }));
+  await waitFor(() => expect(screen.getByTestId("where").textContent).toBe(expected));
 });

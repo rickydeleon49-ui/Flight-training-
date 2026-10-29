@@ -112,8 +112,9 @@ function MaterialDetailPage() {
   const selectTab = (next: MaterialTab) => {
     const nextParams = materialTabParams(params, next);
     // React Router's search-only setter drops the hash. Retain preparation anchors.
-    if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true });
-    else setSearchParams(nextParams, { replace: true });
+    // Keep how she arrived, so "‹ Study Library" can still go back to her place.
+    if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true, state: location.state });
+    else setSearchParams(nextParams, { replace: true, state: location.state });
   };
   const [pendingJump, setPendingJump] = useState<string | null>(null);
   const tabForAnchor = (id: string) => {
@@ -738,7 +739,10 @@ function MaterialDetailPage() {
   const jumpToFileSection = () => jumpTo("material-file-actions");
   return (
     <>
-      <Link className="button button--ghost material-breadcrumb" to="/study">‹ Study Library</Link>
+      {/* Opened from the library: go back, so the list returns to where she was. */}
+      <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {
+        if ((location.state as { fromLibrary?: boolean } | null)?.fromLibrary) { event.preventDefault(); navigate(-1); }
+      }}>‹ Study Library</Link>
       <div className="material-detail-header">
       <PageHeader
         title={material.title}
