@@ -202,10 +202,46 @@ export function formatUnreferencedDocumentsNotice(
   return `${count} files in storage aren't linked to any material and were left out.`;
 }
 
+/**
+ * Notice for picture cards whose picture is gone or no longer matches. Their
+ * words come back; only the picture does not.
+ */
+export function formatUnavailablePicturesNotice(count: number | undefined): string {
+  if (!count || count <= 0) return "";
+  return count === 1
+    ? "1 picture card no longer has its picture. Its words are kept, but the picture won't show."
+    : `${count} picture cards no longer have their pictures. Their words are kept, but the pictures won't show.`;
+}
+
+/** Notice for FAA reference copies whose PDF is gone or no longer matches. */
+export function formatUnavailableReferencesNotice(count: number | undefined): string {
+  if (!count || count <= 0) return "";
+  return count === 1
+    ? "1 FAA reference copy no longer has its matching PDF. You can add the PDF again from FAA references."
+    : `${count} FAA reference copies no longer have their matching PDFs. You can add the PDFs again from FAA references.`;
+}
+
+/** Every notice shown before restoring a backup, in one line. */
+export function formatRestorePreviewNotice(candidate: {
+  missingDocuments?: string[];
+  unavailablePictures?: number;
+  unavailableReferences?: number;
+}): string {
+  return [
+    formatRestorePreviewMissingNotice(candidate.missingDocuments?.length ?? 0),
+    formatUnavailablePicturesNotice(candidate.unavailablePictures),
+    formatUnavailableReferencesNotice(candidate.unavailableReferences),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function formatBackupDocumentWarnings(
   backup: {
     missingDocuments?: string[];
     unreferencedDocuments?: string[];
+    unavailablePictures?: number;
+    unavailableReferences?: number;
   },
   materials?: MaterialTitleRef[],
 ): string[] {
@@ -215,6 +251,12 @@ export function formatBackupDocumentWarnings(
   }
   if (backup.unreferencedDocuments && backup.unreferencedDocuments.length > 0) {
     extraParts.push(formatUnreferencedDocumentsNotice(backup.unreferencedDocuments));
+  }
+  if (backup.unavailablePictures && backup.unavailablePictures > 0) {
+    extraParts.push(formatUnavailablePicturesNotice(backup.unavailablePictures));
+  }
+  if (backup.unavailableReferences && backup.unavailableReferences > 0) {
+    extraParts.push(formatUnavailableReferencesNotice(backup.unavailableReferences));
   }
   return extraParts;
 }
@@ -229,6 +271,8 @@ export function formatCompleteBackupSuccessNote(
     bytes: number;
     missingDocuments?: string[];
     unreferencedDocuments?: string[];
+    unavailablePictures?: number;
+    unavailableReferences?: number;
   },
   formatBytesFn: (bytes: number) => string,
   materials?: MaterialTitleRef[],
@@ -254,6 +298,8 @@ export function formatCompleteBackupReminderFailureNote(
     path: string;
     missingDocuments?: string[];
     unreferencedDocuments?: string[];
+    unavailablePictures?: number;
+    unavailableReferences?: number;
   },
   materials?: MaterialTitleRef[],
 ): string {

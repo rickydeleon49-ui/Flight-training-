@@ -369,6 +369,43 @@ pub fn validate_references(conn: &Connection) -> Check<()> {
     Ok(())
 }
 
+/// Current picture cards (what she sees) that show one of these regions.
+/// Frozen review items of older card versions are history and not counted.
+pub fn cards_on_regions(
+    conn: &Connection,
+    regions: &std::collections::HashSet<String>,
+) -> Check<usize> {
+    let mut items = std::collections::HashSet::new();
+    if regions.is_empty() {
+        return Ok(0);
+    }
+    let mut stmt = conn
+        .prepare("SELECT source_material_id, flashcards_json FROM ai_study_sets")
+        .map_err(|_| INVALID)?;
+    for row in stmt
+        .query_map([], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?))
+        })
+        .map_err(|_| INVALID)?
+    {
+        let (material, text) = row.map_err(|_| INVALID)?;
+        if let crate::card_reviews::SavedCards::Ok(cards) =
+            crate::card_reviews::parse_saved_cards(text.as_deref())
+        {
+            for item in crate::card_reviews::card_version(&material, &cards).items {
+                if item
+                    .card
+                    .visual_region_id
+                    .as_ref()
+                    .is_some_and(|id| regions.contains(id))
+                {
+                    items.insert(item.item_id);
+                }
+            }
+        }
+    }
+    Ok(items.len())
+}
 #[cfg(test)]
 #[path = "visual_cards_tests.rs"]
 pub(crate) mod tests;

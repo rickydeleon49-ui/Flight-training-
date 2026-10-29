@@ -93,6 +93,13 @@ export function MaterialFormDialog({
     }
   }, [open, material?.id]);
 
+  // An FAA copy or picture cards record this file's exact bytes, so it stays put.
+  const fileLock = material?.faaReference
+    ? "This file is a saved FAA reference copy, so it stays as it is. Add a new file as its own material."
+    : material?.usedByPictureCards
+      ? "Picture cards use this picture, so it stays as it is. Add a new picture as its own material."
+      : null;
+
   const update = <K extends keyof MaterialDraft>(key: K, value: MaterialDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
@@ -261,6 +268,7 @@ export function MaterialFormDialog({
               </div>
               <Button
                 size="small"
+                disabled={fileLock !== null}
                 onClick={() =>
                   setDraft((current) => ({
                     ...current,
@@ -275,12 +283,14 @@ export function MaterialFormDialog({
               </Button>
             </div>
           ) : (
-            <Button onClick={chooseFile} disabled={importing || !canHandleFiles()}>
+            <Button onClick={chooseFile} disabled={importing || !canHandleFiles() || fileLock !== null}>
               <DocumentIcon size={16} />
               {importing ? "Adding…" : "Choose a file"}
             </Button>
           )}
-          {!canHandleFiles() ? (
+          {fileLock ? (
+            <p className="tiny dim">{fileLock}</p>
+          ) : !canHandleFiles() ? (
             <p className="tiny dim">
               Adding a file needs the desktop application. You can still create this as a
               note with everything except the document.

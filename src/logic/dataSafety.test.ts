@@ -8,6 +8,10 @@ import {
   formatCompleteBackupSuccessNote,
   formatMissingDocumentsWarning,
   formatRestorePreviewMissingNotice,
+  formatRestorePreviewNotice,
+  formatUnavailablePicturesNotice,
+  formatUnavailableReferencesNotice,
+  formatCompleteBackupSuccessNote as successNote,
   formatUnreferencedDocumentsNotice,
   isFromNewerVersion,
   resolveDocumentDisplayName,
@@ -289,5 +293,34 @@ describe("document warning formatting", () => {
     expect(withWarnings).toContain(
       "1 file in storage isn't linked to any material and was left out.",
     );
+  });
+});
+
+describe("unavailable picture notices", () => {
+  it("flags picture cards whose picture is gone in the restore preview", () => {
+    expect(formatUnavailablePicturesNotice(0)).toBe("");
+    expect(formatUnavailablePicturesNotice(undefined)).toBe("");
+    expect(formatUnavailablePicturesNotice(1)).toBe(
+      "1 picture card no longer has its picture. Its words are kept, but the picture won't show.",
+    );
+    expect(formatUnavailablePicturesNotice(2)).toContain("2 picture cards no longer have their pictures.");
+    expect(formatRestorePreviewNotice({})).toBe("");
+    expect(formatRestorePreviewNotice({ missingDocuments: ["a.pdf"], unavailablePictures: 1 })).toBe(
+      "This backup lists 1 file that was already missing when it was made. 1 picture card no longer has its picture. Its words are kept, but the picture won't show.",
+    );
+  });
+});
+
+describe("unavailable FAA reference notices", () => {
+  it("tells her when an FAA reference PDF no longer matches, before restore and after a backup", () => {
+    expect(formatUnavailableReferencesNotice(0)).toBe("");
+    expect(formatUnavailableReferencesNotice(1)).toBe(
+      "1 FAA reference copy no longer has its matching PDF. You can add the PDF again from FAA references.",
+    );
+    expect(formatUnavailableReferencesNotice(2)).toContain("2 FAA reference copies no longer have their matching PDFs.");
+    expect(formatRestorePreviewNotice({ unavailableReferences: 1 })).toBe(formatUnavailableReferencesNotice(1));
+    const note = successNote({ files: 3, bytes: 10, unavailableReferences: 1 }, () => "10 B");
+    expect(note.hasWarnings).toBe(true);
+    expect(note.message).toContain("1 FAA reference copy no longer has its matching PDF.");
   });
 });
