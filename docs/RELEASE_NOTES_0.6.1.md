@@ -83,4 +83,3 @@ This version makes studying from your PDFs calmer, makes it easier to know your 
 
 - Oral-exam answers and airport weather are never saved.
 - Airport weather and Gemini need internet; everything else works offline.
-- The first time you open the app, macOS may say it can't verify the developer. First check that the download's checksum matches the one published with this release; then you can open it through System Settings → Privacy & Security → Open Anyway. (If this release is signed and notarized, this step isn't needed and this line is removed before publishing.)

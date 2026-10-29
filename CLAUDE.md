@@ -106,10 +106,10 @@ installs packages.
   unverified.
 - Never tell anyone to bypass SmartScreen or Defender, or to disable or weaken
   any operating-system protection (no `xattr -d`/quarantine removal, no
-  `spctl --master-disable`). **Owner exception (16 October 2026):** while Mac
-  builds are unsigned, the owner may have a known person open an owner-released
-  build through Apple's own Privacy & Security → **Open Anyway** step, only after
-  its SHA-256 matches the published checksum. This covers macOS's "could not
-  verify" (unidentified developer) block only, never a malware detection.
+  `spctl --master-disable`). **Mac releases are signed and notarized (from 0.6.1, 28 October
+  2026):** build the Mac DMG with `scripts/build-signed-mac.sh` (Developer ID +
+  Apple notarization) so it opens without any Gatekeeper step. The 16 October
+  2026 'Open Anyway' owner exception is retired; never suggest it. If a Mac
+  build is ever unsigned again, stop and ask the owner.
 - Keep secrets, real databases, private documents, installers, `node_modules`
   and `target/` out of Git.
