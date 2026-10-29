@@ -50,7 +50,7 @@ const FALLBACK_MODEL: &str = "gemini-3.5-flash-lite";
 /// The more capable model she can choose in Settings instead of `MODEL`.
 ///
 /// Newer and a little more thorough; it may use slightly more Google credits.
-/// Only used once she has chosen it. Pinned and checked before release,
+/// The default for new study aids. Pinned and checked before release,
 /// exactly like `MODEL`.
 const CAPABLE_MODEL: &str = "gemini-3.8-flash";
 
@@ -115,13 +115,12 @@ impl ModelChoice {
 }
 
 /// Her saved choice. Anything missing, unreadable or unrecognised means the
-/// standard model, so a damaged preference never sends a document to the
-/// costlier one.
+/// default model. An explicit Standard choice remains available.
 pub(crate) fn load_choice(root: &Path) -> ModelChoice {
     std::fs::read_to_string(root.join(MODEL_CHOICE_FILE))
         .ok()
         .and_then(|value| ModelChoice::parse(&value))
-        .unwrap_or(ModelChoice::Standard)
+        .unwrap_or(ModelChoice::MostCapable)
 }
 
 /// Save her choice, replacing any previous one.
@@ -419,7 +418,7 @@ impl Reporter {
     }
 
     /// The job has begun: from now on every event carries its id.
-    fn started(&self, job_id: &str) {
+    pub(crate) fn started(&self, job_id: &str) {
         *self.job_id.lock().unwrap_or_else(|e| e.into_inner()) = Some(job_id.to_string());
         self.emit(Some(Stage::Preparing), None);
     }
@@ -630,7 +629,7 @@ pub fn gemini_status(app: AppHandle) -> GeminiStatus {
     let choice = root
         .as_deref()
         .map(load_choice)
-        .unwrap_or(ModelChoice::Standard);
+        .unwrap_or(ModelChoice::MostCapable);
     GeminiStatus::new(configured, choice)
 }
 
@@ -2722,13 +2721,13 @@ mod tests {
     }
 
     #[test]
-    fn a_missing_damaged_or_unknown_choice_means_the_standard_model() {
+    fn a_missing_damaged_or_unknown_choice_defaults_to_gemini_3_8() {
         let root = choice_scratch("default");
-        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
         std::fs::write(root.join(MODEL_CHOICE_FILE), "pro-please").unwrap();
-        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
         std::fs::write(root.join(MODEL_CHOICE_FILE), [0xff, 0xfe, 0x00]).unwrap();
-        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
         let _ = std::fs::remove_dir_all(&root);
     }
 
@@ -2743,6 +2742,15 @@ mod tests {
         // The key file is a different file and is never touched.
         assert_ne!(MODEL_CHOICE_FILE, crate::secrets::KEY_FILE);
         assert!(!root.join(crate::secrets::KEY_FILE).exists());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_saved_standard_choice_stays_standard_after_the_default_switch() {
+        let root = choice_scratch("saved-standard");
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "standard").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        assert_eq!(load_choice(&root).primary(), "gemini-3.5-flash");
         let _ = std::fs::remove_dir_all(&root);
     }
 

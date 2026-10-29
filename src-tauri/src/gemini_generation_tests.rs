@@ -16,9 +16,9 @@ use crate::gemini_files::{Policy, PreparedSources};
 const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
 const OTHER_KEY: &str = "synthetic-key-BBBBBBBBBBBBBBBBBBBB";
 
-/// A real PDF of `pages` pages; `salt` changes its bytes but not its length
-/// when the salts have the same length.
-pub(super) fn pdf(pages: u32, salt: &str) -> Vec<u8> {
+/// A real PDF of `pages` pages; `title` changes its bytes but not its length
+/// when the titles have the same length.
+pub(super) fn pdf(pages: u32, title: &str) -> Vec<u8> {
     let mut document = Document::with_version("1.5");
     let pages_id = document.new_object_id();
     let kids: Vec<Object> = (0..pages)
@@ -42,7 +42,7 @@ pub(super) fn pdf(pages: u32, salt: &str) -> Vec<u8> {
     document.trailer.set("Root", catalog_id);
     document.trailer.set(
         "Info",
-        Object::Dictionary(dictionary! { "Title" => Object::string_literal(salt) }),
+        Object::Dictionary(dictionary! { "Title" => Object::string_literal(title) }),
     );
     let mut out = Vec::new();
     document.save_to(&mut out).unwrap();

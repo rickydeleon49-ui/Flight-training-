@@ -26,6 +26,12 @@ impl SectionError {
     fn source() -> Self {
         Self::new("SOURCE_CHANGED", "This PDF or your chosen pages changed. Keep your earlier work, or explicitly start a new guide.")
     }
+    /// A plain, student-safe reason she may read as written (GUIDE_FAILED).
+    /// Only the section request's own answer/refusal/timeout sentences use it;
+    /// any other internal text stays GUIDE_PAUSED and shows the generic line.
+    fn native(message: &str) -> Self {
+        Self::new("GUIDE_FAILED", message)
+    }
     fn plan_changed() -> Self {
         Self::new("PLAN_CHANGED", "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")
     }
@@ -761,8 +767,24 @@ fn assembly(d: &Draft) -> Result<GeneratedStudyAid, SectionError> {
             d.identity.selected_sha256,
             json!(provenance)
         ),
-        model: d.identity.model.clone(),
+        model: produced_by(d),
     })
+}
+/// The model that wrote most sections (ties go to the one that is not the
+/// frozen primary, so a fallback is never labelled as the stronger model).
+/// Each section's own model stays in the provenance above.
+fn produced_by(d: &Draft) -> String {
+    let mut counts: Vec<(&str, usize)> = Vec::new();
+    for c in d.results.values().filter_map(|r| r.content.as_ref()) {
+        match counts.iter_mut().find(|(m, _)| *m == c.model) {
+            Some((_, n)) => *n += 1,
+            None => counts.push((&c.model, 1)),
+        }
+    }
+    counts
+        .into_iter()
+        .max_by_key(|(m, n)| (*n, *m != d.identity.model))
+        .map_or_else(|| d.identity.model.clone(), |(m, _)| m.to_string())
 }
 
 pub(super) async fn activate(
@@ -771,6 +793,7 @@ pub(super) async fn activate(
     req: &SectionRequest,
     id: Option<&str>,
     hook: Hook<'_>,
+    started: Hook<'_>,
 ) -> Result<JobAnswer<GeneratedStudyAid>, SectionError> {
     // Compare ordered pages before parsing them, so a changed ordering is a
     // SOURCE_CHANGED refusal, including orderings invalid for a new guide.
@@ -793,6 +816,7 @@ pub(super) async fn activate(
         Some(id) => id.to_string(),
         None => admit(root, req, &new_draft(identity.clone()))?,
     };
+    ctx.budget.section_generation_limit();
     gemini_jobs::with(root, |j| j.activate_sections(&id))?;
     let mut running = RunningJob {
         root,
@@ -808,6 +832,8 @@ pub(super) async fn activate(
     ctx.budget.attach_admission(Arc::new(move || {
         gemini_jobs::with(&path, |j| j.admits(&job))
     }));
+    // Publish the id only after cancellation can be observed, like as_job_with.
+    started(&id);
     let work = async {
         let mut d = read_draft(root, &id)?;
         if d.results.values().any(|r| r.status != Status::Complete) {
@@ -878,7 +904,10 @@ pub(super) async fn activate(
                 return Err(gemini_files::STALE_CONTEXT.into());
             }
             hook("after-descriptor-commit");
-            for section in &identity.manifest {
+            // Once a section falls back, the rest of this run stays on the
+            // fallback: one switch per run, so it cannot drain the spare sends.
+            let mut model = ctx.choice.primary();
+            for (index, section) in identity.manifest.iter().enumerate() {
                 if read_draft(root, &id)?.results[&section.id].status == Status::Complete {
                     continue;
                 }
@@ -898,12 +927,21 @@ pub(super) async fn activate(
                     source_part(&selected, Some(lease.prepared())),
                 );
                 // No earlier answer appears in this request body.
-                let (raw, model) = section_generate(ctx, &body, hook).await?;
-                ctx.budget.reset_stage(Stage::Validating);
-                ctx.budget.validation_checkpoint()?;
-                let text = extract_text(&raw)?;
-                let content = validate_section(section, &text, &identity.chosen_pages, model)?;
-                ctx.budget.validation_checkpoint()?;
+                (ctx.say)(format!(
+                    "Writing section {} of {}: {}…",
+                    index + 1,
+                    identity.manifest.len(),
+                    section.heading
+                ));
+                let content = section_generate(
+                    ctx,
+                    &body,
+                    section,
+                    &identity.chosen_pages,
+                    &mut model,
+                    hook,
+                )
+                .await?;
                 hook("before-section-commit");
                 let mut d = read_draft(root, &id)?;
                 d.results.insert(
@@ -915,6 +953,11 @@ pub(super) async fn activate(
                 );
                 store(root, &id, &d)?;
                 hook("after-section-commit");
+                (ctx.say)(format!(
+                    "Section {} of {} saved.",
+                    index + 1,
+                    identity.manifest.len()
+                ));
                 if !ctx.budget.can_continue() {
                     return Err(gemini_cancel::CANCELLED.into());
                 }
@@ -978,13 +1021,16 @@ pub(super) async fn activate(
     }
 }
 
-// Section retries deliberately stay on the frozen model; at most three and
-// two extra submissions over the manifest, recorded before any send.
+// Reservations still bound sends to three per section and two extra per guide.
 async fn section_generate(
     ctx: &GenContext<'_>,
     body: &Value,
+    section: &Section,
+    pages: &[u32],
+    model: &mut &'static str,
     hook: Hook<'_>,
-) -> Result<(String, &'static str), SectionError> {
+) -> Result<ResultBody, SectionError> {
+    let mut shape_retried = false;
     for attempt in 1..=3 {
         if ctx.budget.start_attempt().is_none() {
             return Err(
@@ -996,26 +1042,74 @@ async fn section_generate(
         if !ctx.budget.can_continue() || !ctx.current() {
             return Err(gemini_cancel::CANCELLED.into());
         }
-        let retry_after = match generate_once(ctx, ctx.choice.primary(), body)
+        let retry_after = match generate_once(ctx, model, body)
             .await
             .map_err(|e| e.message)?
         {
-            Attempt::Answered(raw) => return Ok((raw, ctx.choice.primary())),
+            Attempt::Answered(raw) => {
+                ctx.budget.reset_stage(Stage::Validating);
+                ctx.budget.validation_checkpoint()?;
+                let validated = extract_text(&raw)
+                    .map_err(|e| SectionError::native(&e))
+                    .and_then(|text| {
+                        validate_section(section, &text, pages, model)
+                            .map_err(|e| SectionError::native(&e.message))
+                    });
+                ctx.budget.validation_checkpoint()?;
+                match validated {
+                    Ok(content) => return Ok(content),
+                    Err(error) => {
+                        if shape_retried || attempt == 3 {
+                            return Err(error);
+                        }
+                        shape_retried = true;
+                        if ctx.choice == ModelChoice::MostCapable && *model != ctx.choice.fallback()
+                        {
+                            *model = ctx.choice.fallback();
+                            (ctx.say)(ctx.choice.fallback_notice().to_string());
+                        }
+                        continue;
+                    }
+                }
+            }
             Attempt::Refused {
                 status,
                 body,
                 retry_after,
             } => {
-                if !is_retryable(status) || (status == 429 && is_lasting_quota(&body)) {
-                    return Err(describe_refusal(
+                if has_invalid_key_reason(&body) {
+                    return Err(SectionError::native(&describe_refusal(
                         RefusalContext::Generation,
                         status,
                         &body,
-                        ctx.choice.primary(),
-                    )
-                    .into());
+                        model,
+                    )));
+                }
+                if status == 429 && is_lasting_quota(&body) {
+                    return Err(SectionError::native(&quota_message()));
+                }
+                let access_fallback = status == 403 && !has_invalid_key_reason(&body);
+                let can_fallback = ctx.choice == ModelChoice::MostCapable
+                    && *model != ctx.choice.fallback()
+                    && (access_fallback || status == 404 || is_retryable(status));
+                if can_fallback && attempt < 3 {
+                    *model = ctx.choice.fallback();
+                    (ctx.say)(ctx.choice.fallback_notice().to_string());
+                    if access_fallback || status == 404 {
+                        continue;
+                    }
+                } else if !is_retryable(status) {
+                    return Err(SectionError::native(&describe_refusal(
+                        RefusalContext::Generation,
+                        status,
+                        &body,
+                        model,
+                    )));
                 }
                 retry_after
+            }
+            Attempt::Lost(lost @ (Lost::NoAnswerInTime | Lost::AnswerCutShort)) => {
+                return Err(SectionError::native(&lost_message(lost, ctx.budget)));
             }
             Attempt::Lost(_) => None,
         };
@@ -1159,7 +1253,10 @@ pub async fn resume_study_guide(
         budget: &budget,
         say: &say,
     };
-    activate(&ctx, &root, &request, job_id.as_deref(), &|_| {}).await
+    activate(&ctx, &root, &request, job_id.as_deref(), &|_| {}, &|id| {
+        reporter.started(id)
+    })
+    .await
 }
 #[tauri::command]
 pub async fn restart_study_guide(

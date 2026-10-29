@@ -159,3 +159,19 @@ fn a_failed_timing_checkpoint_cannot_dispatch_or_upgrade_legacy_drafts() {
     assert!(!legacy.stage_policy());
     assert_eq!(legacy.total().as_secs(), 300);
 }
+
+#[test]
+fn section_generating_wait_is_shorter_than_whole_document_wait() {
+    let (section, time) = fake_budget(ACTIVE_BUDGET);
+    section.section_generation_limit();
+    section.at(Stage::Generating);
+    time.advance(Duration::from_secs(239));
+    assert_eq!(section.request_timeout(), Some(Duration::from_secs(1)));
+    time.advance(Duration::from_secs(2));
+    assert_eq!(section.request_timeout(), None);
+    assert_eq!(section.total(), ACTIVE_BUDGET);
+    let (whole, time) = fake_budget(ACTIVE_BUDGET);
+    whole.at(Stage::Generating);
+    time.advance(Duration::from_secs(241));
+    assert_eq!(whole.request_timeout(), Some(Duration::from_secs(239)));
+}

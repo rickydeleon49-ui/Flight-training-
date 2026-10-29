@@ -36,6 +36,9 @@ struct Rig {
     cache: std::sync::Mutex<Arc<PreparedSources>>,
     http: Client,
     request: SectionRequest,
+    choice: ModelChoice,
+    stage_scale: f64,
+    started_ids: std::sync::Mutex<Vec<String>>,
     clock: Arc<std::sync::atomic::AtomicI64>,
     messages: std::sync::Mutex<Vec<String>>,
 }
@@ -51,6 +54,9 @@ impl Rig {
         let clock = Arc::new(std::sync::atomic::AtomicI64::new(1_700_000_000));
         let now = clock.clone();
         Self {
+            choice: ModelChoice::Standard,
+            stage_scale: 1.0,
+            started_ids: std::sync::Mutex::new(vec![]),
             clock,
             messages: std::sync::Mutex::new(vec![]),
             dir,
@@ -88,18 +94,21 @@ impl Rig {
         key: &str,
     ) -> Result<JobAnswer<GeneratedStudyAid>, SectionError> {
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
+        budget.scale_stages(self.stage_scale);
         let cache = self.cache.lock().unwrap().clone();
         let ctx = GenContext {
             http: &self.http,
             base: &self.fake.base,
             api_key: key,
-            choice: ModelChoice::Standard,
+            choice: self.choice,
             cache: &cache,
             epoch: cache.epoch(),
             budget: &budget,
             say: &|m| self.messages.lock().unwrap().push(m),
         };
-        tauri::async_runtime::block_on(activate(&ctx, self.dir.path(), req, id, hook))
+        tauri::async_runtime::block_on(activate(&ctx, self.dir.path(), req, id, hook, &|id| {
+            self.started_ids.lock().unwrap().push(id.to_string())
+        }))
     }
     fn id(&self) -> String {
         gemini_jobs::with(self.dir.path(), |j| j.list()[0].id.clone())
@@ -532,17 +541,18 @@ fn finish_3_kill_reopen_retry_only_section_4() {
     assert!(r.run(None).is_err());
     let id = r.id();
     let before = r.requests();
-    assert_eq!(before.len(), 4);
+    // Section 4's bad answer gets its one intended answer-shape retry.
+    assert_eq!(before.len(), 5);
     r.reopen();
-    assert_eq!(r.requests().len(), 4, "reopen sends nothing");
+    assert_eq!(r.requests().len(), 5, "reopen sends nothing");
     r.fake
         .behave(|b| b.generate_answer = Some(reply("Body 4", 16)));
     let result = r.run(Some(&id)).unwrap();
     assert_eq!(result.answer.sections.len(), 4);
     let after = r.requests();
-    assert_eq!(after.len(), 5);
+    assert_eq!(after.len(), 6);
     assert_eq!(
-        after[4], after[3],
+        after[5], after[3],
         "the exact unfinished request uses the retained PDF"
     );
     assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
@@ -575,7 +585,8 @@ fn overnight_retry_renews_activation_not_finished_sections() {
     r.fake
         .behave(|b| b.generate_answer = Some(reply("Second", 6)));
     assert!(r.run(Some(&id)).is_ok());
-    assert_eq!(r.requests().len(), 3);
+    // 2 first-run sends + the one shape retry of "bad" + 1 after renewal.
+    assert_eq!(r.requests().len(), 4);
     let d = read_draft(r.dir.path(), &id).unwrap();
     assert_eq!(d.activations.len(), 2);
     assert_eq!(d.activations[1].submissions, 1);
@@ -672,9 +683,15 @@ fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
         budget: &budget,
         say: &|m| r.messages.lock().unwrap().push(m),
     };
-    let err =
-        tauri::async_runtime::block_on(activate(&ctx, r.dir.path(), &r.request, None, &|_| {}))
-            .unwrap_err();
+    let err = tauri::async_runtime::block_on(activate(
+        &ctx,
+        r.dir.path(),
+        &r.request,
+        None,
+        &|_| {},
+        &|_| {},
+    ))
+    .unwrap_err();
     assert_eq!(err.code, "GUIDE_PAUSED");
     assert_eq!(
         err.message,
@@ -755,7 +772,8 @@ fn restart_requires_consent_and_keeps_old_draft() {
         serde_json::to_value(old).unwrap(),
         serde_json::to_value(read_draft(r.dir.path(), &id).unwrap()).unwrap()
     );
-    assert_eq!(r.requests().len(), 1);
+    // The bad answer's one shape retry; restart itself sends nothing.
+    assert_eq!(r.requests().len(), 2);
 }
 
 #[test]
@@ -1028,11 +1046,12 @@ fn selected_pdf_hash_and_request_page_mapping_survive_reopen() {
         .behave(|b| b.generate_answer = Some(reply("Second range", 11)));
     assert!(r.run_with(Some(&id), &req, &|_| {}).is_ok());
     let bodies = r.requests();
-    assert_eq!(bodies.len(), 3);
-    assert_eq!(bodies[1], bodies[2]);
+    // bodies[2] is the first run's one shape retry of the bad answer.
+    assert_eq!(bodies.len(), 4);
+    assert_eq!(bodies[1], bodies[3]);
     assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
     assert_eq!(r.fake.count(|q| q.is_lookup()), 1);
-    let prompt = bodies[2]["contents"][0]["parts"][0]["text"]
+    let prompt = bodies[3]["contents"][0]["parts"][0]["text"]
         .as_str()
         .unwrap();
     assert!(prompt.contains("\"pdfPage\":4,\"sourcePage\":11"));
@@ -1120,6 +1139,8 @@ fn legacy_retry_cannot_replace_a_later_section_draft() {
     assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list()), before);
 }
 
+// Section 2's "bad" answer gets its one intended answer-shape retry, so the
+// paused fixture has sent three generate requests (counts' third value).
 fn paused_reference(r: &Rig) -> (String, Value) {
     r.fake
         .behave(|b| b.generate_answers = vec![reply("Finished first", 1), "bad".into()]);
@@ -1154,14 +1175,14 @@ fn valid_remote_reference_survives_reopen_zero_uploads() {
     let r = Rig::new(10);
     let (id, _) = paused_reference(&r);
     let first = r.requests();
-    assert_eq!(counts(&r), (1, 0, 2));
+    assert_eq!(counts(&r), (1, 0, 3));
     r.reopen();
-    assert_eq!(counts(&r), (1, 0, 2));
+    assert_eq!(counts(&r), (1, 0, 3));
     r.fake
         .behave(|b| b.generate_answer = Some(reply("Second", 6)));
     r.run(Some(&id)).unwrap();
-    assert_eq!(counts(&r), (1, 1, 3));
-    assert_eq!(r.requests()[2], first[1]);
+    assert_eq!(counts(&r), (1, 1, 4));
+    assert_eq!(r.requests()[3], first[1]);
 }
 #[test]
 fn expired_reference_one_upload_no_finished_requests() {
@@ -1180,11 +1201,11 @@ fn expired_reference_one_upload_no_finished_requests() {
         r.fake
             .behave(|b| b.generate_answer = Some(reply("Second", 6)));
         r.run(Some(&id)).unwrap();
-        assert_eq!(counts(&r), (2, usize::from(missing), 3));
+        assert_eq!(counts(&r), (2, usize::from(missing), 4));
         let mut expected = first[1].clone();
         expected["contents"][0]["parts"][1]["file_data"]["file_uri"] =
             json!(format!("{}/v1beta/files/synthetic-2", r.fake.base));
-        assert_eq!(r.requests()[2], expected);
+        assert_eq!(r.requests()[3], expected);
     }
 }
 #[test]
@@ -1201,7 +1222,7 @@ fn lookup_failure_no_reupload() {
             r.run(Some(&id)).unwrap_err().code,
             "REFERENCE_LOOKUP_FAILED"
         );
-        assert_eq!(counts(&r), (1, 1, 2));
+        assert_eq!(counts(&r), (1, 1, 3));
     }
 }
 #[test]
@@ -1212,7 +1233,7 @@ fn auth_error_pauses_without_upload() {
         r.reopen();
         r.fake.behave(|b| b.lookup_status = Some(status));
         assert_eq!(r.run(Some(&id)).unwrap_err().code, "REFERENCE_AUTH_FAILED");
-        assert_eq!(counts(&r), (1, 1, 2));
+        assert_eq!(counts(&r), (1, 1, 3));
     }
 }
 #[test]
@@ -1247,7 +1268,7 @@ fn tampered_descriptor_fails_closed() {
             "DESCRIPTOR_INVALID",
             "{field}"
         );
-        assert_eq!(counts(&r), (1, 0, 2), "{field}");
+        assert_eq!(counts(&r), (1, 0, 3), "{field}");
     }
 }
 #[test]
@@ -1261,7 +1282,7 @@ fn key_change_requires_continue_no_upload() {
             .code,
         "KEY_CHANGED"
     );
-    assert_eq!(counts(&r), (1, 0, 2));
+    assert_eq!(counts(&r), (1, 0, 3));
 }
 #[test]
 fn descriptor_never_in_ipc_logs_exports_backups() {
@@ -1525,7 +1546,7 @@ fn nonactive_reference_pauses_without_replacement() {
             r.run(Some(&id)).unwrap_err().code,
             "REFERENCE_LOOKUP_FAILED"
         );
-        assert_eq!(counts(&r), (1, 1, 2));
+        assert_eq!(counts(&r), (1, 1, 3));
     }
 }
 
@@ -1568,7 +1589,7 @@ fn descriptor_public_fingerprint_cannot_forge_ownership() {
     });
     r.reopen();
     assert_eq!(r.run(Some(&id)).unwrap_err().code, "DESCRIPTOR_INVALID");
-    assert_eq!(counts(&r), (1, 0, 2));
+    assert_eq!(counts(&r), (1, 0, 3));
     let cache = r.cache.lock().unwrap().clone();
     assert!(tauri::async_runtime::block_on(discard_at(
         r.dir.path(),
@@ -1824,4 +1845,228 @@ fn validate_section_unescapes_newlines_before_digest_and_storage() {
         "model"
     )
     .is_err());
+}
+
+#[test]
+fn capable_model_max_tokens_answer_falls_back_to_standard_once() {
+    let mut r = Rig::new(4);
+    r.choice = ModelChoice::MostCapable;
+    r.fake.behave(|b| {
+        b.generate_answers = vec![
+            json!({"candidates":[{"finishReason":"MAX_TOKENS"}]}).to_string(),
+            reply("Synthetic section.", 1),
+        ]
+    });
+    let answer = r.run(None).unwrap();
+    assert_eq!(answer.answer.model, "gemini-3.5-flash");
+    let log = r.fake.log();
+    let requests: Vec<_> = log.iter().filter(|r| r.is_generate()).collect();
+    assert_eq!(requests.len(), 2);
+    assert!(requests[0].path.contains("gemini-3.8-flash"));
+    assert!(requests[1].path.contains("gemini-3.5-flash"));
+    assert!(r
+        .messages
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|m| m == r.choice.fallback_notice()));
+    let d = read_draft(r.dir.path(), &r.id()).unwrap();
+    assert_eq!(
+        d.results["section-01"].content.as_ref().unwrap().model,
+        "gemini-3.5-flash"
+    );
+}
+#[test]
+fn capable_model_403_falls_back_without_consuming_extra_reservations() {
+    let mut r = Rig::new(4);
+    r.choice = ModelChoice::MostCapable;
+    r.fake.behave(|b| {
+        b.generate_statuses = vec![(403, "{}".into())];
+        b.generate_answers = vec![reply("Synthetic section.", 1)];
+    });
+    r.run(None).unwrap();
+    assert_eq!(r.requests().len(), 2);
+    assert_eq!(
+        read_draft(r.dir.path(), &r.id()).unwrap().activations[0].submissions,
+        2
+    );
+}
+#[test]
+fn invalid_section_answer_is_reported_with_its_reason() {
+    let r = Rig::new(4);
+    r.fake
+        .behave(|b| b.generate_answers = vec![reply("Synthetic section.", 0); 3]);
+    let error = r.run(None).unwrap_err();
+    assert_eq!(error.code, "GUIDE_FAILED");
+    assert_eq!(
+        error.message,
+        "The section answer or its source pages were invalid; earlier sections are kept."
+    );
+    assert_eq!(
+        r.requests().len(),
+        2,
+        "an answer-shape failure retries only once"
+    );
+    assert_eq!(
+        gemini_jobs::with(r.dir.path(), |j| j.list()[0].error.clone()).as_deref(),
+        Some(error.message.as_str())
+    );
+}
+#[test]
+fn section_progress_names_each_section() {
+    let r = Rig::new(10);
+    r.answer(2);
+    r.run(None).unwrap();
+    let messages = r.messages.lock().unwrap();
+    assert_eq!(*r.started_ids.lock().unwrap(), vec![r.id()]);
+    assert!(messages
+        .iter()
+        .any(|m| m.starts_with("Writing section 1 of 2:")));
+    assert!(messages.iter().any(|m| m == "Section 1 of 2 saved."));
+    assert!(messages.iter().any(|m| m == "Section 2 of 2 saved."));
+}
+
+#[test]
+fn internal_section_failure_text_is_not_marked_as_a_plain_reason() {
+    let error = SectionError::from(
+        "Could not keep track of this study aid: Permission denied (os error 13)".to_string(),
+    );
+    assert_eq!(error.code, "GUIDE_PAUSED");
+}
+
+#[test]
+fn capable_fallback_stays_for_the_rest_of_the_guide() {
+    // 15 pages plan three sections (14 merge into two).
+    let mut r = Rig::new(15);
+    r.choice = ModelChoice::MostCapable;
+    r.fake.behave(|b| {
+        b.generate_answers = vec![
+            json!({"candidates":[{"finishReason":"MAX_TOKENS"}]}).to_string(),
+            reply("First", 1),
+            reply("Second", 6),
+            reply("Third", 11),
+        ]
+    });
+    let answer = r.run(None).unwrap();
+    assert_eq!(answer.answer.sections.len(), 3);
+    assert_eq!(answer.answer.model, "gemini-3.5-flash");
+    let log = r.fake.log();
+    let paths: Vec<_> = log
+        .iter()
+        .filter(|q| q.is_generate())
+        .map(|q| q.path.clone())
+        .collect();
+    assert_eq!(paths.len(), 4);
+    assert_eq!(
+        paths
+            .iter()
+            .filter(|p| p.contains("gemini-3.8-flash"))
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn native_section_failure_preserves_plain_reason_on_wire() {
+    let reason = "Gemini's answer reached its output limit. Try again.";
+    let error = SectionError::native(reason);
+    let wire = serde_json::to_value(&error).unwrap();
+    assert_eq!(wire["code"], "GUIDE_FAILED");
+    assert_eq!(wire["message"], reason);
+}
+
+#[test]
+fn section_first_header_timeout_stops_without_another_submission() {
+    let mut r = Rig::new(4);
+    r.stage_scale = 0.01;
+    r.fake
+        .behave(|b| b.generate_first_byte_delay = Some(Duration::from_secs(3)));
+    let started = std::time::Instant::now();
+    let error = r.run(None).unwrap_err();
+    assert_eq!(error.code, "GUIDE_FAILED");
+    assert_eq!(
+        error.message,
+        "Gemini is taking longer to answer. You can try again."
+    );
+    assert_eq!(
+        r.requests().len(),
+        1,
+        "a section timeout must not start another long wait"
+    );
+    assert!(started.elapsed() >= Duration::from_millis(2400));
+}
+#[test]
+fn capable_invalid_fallback_answer_does_not_retry_a_third_time() {
+    let mut r = Rig::new(4);
+    r.choice = ModelChoice::MostCapable;
+    r.fake.behave(|b| {
+        b.generate_answers =
+            vec![json!({"candidates":[{"finishReason":"MAX_TOKENS"}]}).to_string(); 3]
+    });
+    assert_eq!(r.run(None).unwrap_err().code, "GUIDE_FAILED");
+    assert_eq!(r.requests().len(), 2);
+}
+
+#[test]
+fn capable_unavailable_section_model_uses_standard_fallback() {
+    for status in [404, 429, 503] {
+        let mut r = Rig::new(4);
+        r.choice = ModelChoice::MostCapable;
+        r.fake.behave(|b| {
+            b.generate_statuses = vec![(status, "{}".into())];
+            b.generate_answers = vec![reply("Synthetic section.", 1)];
+        });
+        r.run(None).unwrap();
+        let log = r.fake.log();
+        let requests: Vec<_> = log.iter().filter(|r| r.is_generate()).collect();
+        assert_eq!(requests.len(), 2);
+        assert!(requests[1].path.contains("gemini-3.5-flash"));
+    }
+}
+
+#[test]
+fn cancelling_at_the_first_section_progress_event_is_not_reactivated() {
+    let dir = TempDir::new();
+    std::fs::create_dir(dir.path().join("documents")).unwrap();
+    std::fs::write(
+        dir.path().join("documents/a.pdf"),
+        generation_tests::pdf(4, "sections"),
+    )
+    .unwrap();
+    let request = SectionRequest {
+        material_id: "mat-a".into(),
+        relative_path: "a.pdf".into(),
+        chosen_pages: vec![1, 2, 3, 4],
+        base_revision: None,
+        request_id: None,
+    };
+    let http = generation_client().unwrap();
+    let cache = PreparedSources::new(gemini_files::Policy::default(), Arc::new(|| 1_700_000_000));
+    let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
+    let ctx = GenContext {
+        http: &http,
+        base: "http://127.0.0.1:9",
+        api_key: "synthetic-only",
+        choice: ModelChoice::MostCapable,
+        cache: &cache,
+        epoch: cache.epoch(),
+        budget: &budget,
+        say: &|_| {},
+    };
+    let error = tauri::async_runtime::block_on(activate(
+        &ctx,
+        dir.path(),
+        &request,
+        None,
+        &|_| {},
+        &|id| {
+            gemini_jobs::with(dir.path(), |j| j.cancel(id).unwrap());
+        },
+    ))
+    .unwrap_err();
+    assert_eq!(error.message, gemini_cancel::CANCELLED);
+    let record = gemini_jobs::with(dir.path(), |j| j.list()[0].clone());
+    assert_eq!(record.stage, gemini_jobs::JobStage::Cancelled);
+    let d = read_draft(dir.path(), &record.id).unwrap();
+    assert!(d.activations.iter().all(|a| a.submissions == 0));
 }

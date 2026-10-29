@@ -237,6 +237,13 @@ describe("CARDS-FIX-01: a disabled guide button always says why", () => {
     const record = waitingRecord();
     return { ...record, draft: { ...record.draft!, queueState: "running" } } as gemini.GeminiJobRecord;
   };
+  it.each(["cancelled", "interrupted"] as const)("%s draft with finished work keeps Regenerate disabled", async phase => {
+    const record = phase === "cancelled" ? cancelledRecord() : interrupted();
+    vi.mocked(gemini.listGeminiJobs).mockResolvedValue([{ ...record, draft: { ...record.draft!, results: { s0: { status: "complete" } } } }]);
+    await open();
+    const button = await screen.findByRole("button", { name: /Create study guide|Regenerate/ });
+    expect(button.hasAttribute("disabled")).toBe(true);
+  });
   it.each([
     ["waiting", () => waitingRecord(), "Your study guide draft above is waiting — continue or discard it first."],
     ["cancelled", () => cancelledRecord(), "You stopped the study guide draft above — continue or discard it first."],
@@ -245,7 +252,12 @@ describe("CARDS-FIX-01: a disabled guide button always says why", () => {
     vi.mocked(gemini.listGeminiJobs).mockResolvedValue([record()]);
     await open();
     const button = await screen.findByRole("button", { name: /Create study guide|Regenerate/ });
-    await waitFor(() => expect(button.hasAttribute("disabled")).toBe(true));
-    expect(await screen.findByText(reason)).toBeTruthy();
+    if (_label === "waiting") {
+      await waitFor(() => expect(button.hasAttribute("disabled")).toBe(true));
+      expect(await screen.findByText(reason)).toBeTruthy();
+    } else {
+      expect(button.hasAttribute("disabled")).toBe(false);
+      expect(screen.queryByText(reason)).toBeNull();
+    }
   });
 });

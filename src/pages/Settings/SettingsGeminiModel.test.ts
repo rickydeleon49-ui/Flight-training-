@@ -88,6 +88,7 @@ describe("Gemini model choice in Settings", () => {
     const capable = screen.getByRole("radio", { name: /Most capable — Gemini 3.8 Flash/ });
     expect((standard as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/Gemini 3.5 Flash · key saved on this computer/)).toBeTruthy();
+    expect(screen.queryByText(/is the default for new study aids/)).toBeNull();
 
     await act(async () => {
       fireEvent.click(capable);
@@ -97,6 +98,7 @@ describe("Gemini model choice in Settings", () => {
       "New study aids will use Gemini 3.8 Flash. Saved study guides and flashcards are unchanged.",
     );
     expect((capable as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText("Gemini 3.8 Flash is the default for new study aids.")).toBeTruthy();
     expect(screen.getByText(/Gemini 3.8 Flash · key saved on this computer/)).toBeTruthy();
     expect(
       screen.getByText(

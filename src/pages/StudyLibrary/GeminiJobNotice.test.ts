@@ -316,6 +316,25 @@ describe("GeminiJobNotice frontend tests", () => {
       expect(jobs.saveAgain).toHaveBeenCalledWith("job-ready-guide");
     });
 
+    it.each([
+      ["gemini-3.8-flash", "Gemini 3.8 Flash"],
+      ["gemini-3.5-flash", "Gemini 3.5 Flash"],
+    ])("names the produced-by model %s on the unsaved draft", (model, name) => {
+      const job = ready({ answer: { ...guideAnswer, model }, sections: draft(3, 3) });
+      render(h(GeminiJobNotice, { job, jobs: createMockJobs([job]) }));
+      expect(screen.getByText(`Made with ${name}.`)).toBeTruthy();
+      expect(screen.getByText("3 sections, ready to review and save.")).toBeTruthy();
+    });
+
+    it("uses the existing neutral notice for a ready draft, without a warning icon", () => {
+      const job = ready();
+      render(h(GeminiJobNotice, { job, jobs: createMockJobs([job]) }));
+      const notice = screen.getByRole("status");
+      expect(notice.classList.contains("file-row")).toBe(true);
+      expect(notice.classList.contains("ai-disclaimer")).toBe(false);
+      expect(notice.querySelector("svg")).toBeNull();
+    });
+
     it("a finished flashcard set counts the cards and says flashcards", () => {
       const answer: GeneratedStudyAid = {
         ...guideAnswer,
