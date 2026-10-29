@@ -11,7 +11,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: mocks.invoke }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: mocks.listen }));
 
 import { DesktopOnlyError } from "./documents";
-import { askGemini, cancelAskGemini, watchAskGeminiProgress } from "./gemini";
+import { askGemini, cancelAskGemini, decodeAskGeminiResult, watchAskGeminiProgress } from "./gemini";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(true);
@@ -35,7 +35,7 @@ describe("askGemini service", () => {
   it("invokes ask_gemini with correct payload when desktop is available", async () => {
     mocks.invoke.mockResolvedValue({
       answer: "Sample answer",
-      model: "gemini-3.5-flash", sourcePages: [3],
+      model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 3, quote: "Synthetic passage 3." }],
     });
 
     const res = await askGemini({
@@ -49,7 +49,7 @@ describe("askGemini service", () => {
 
     expect(res).toEqual({
       answer: "Sample answer",
-      model: "gemini-3.5-flash", sourcePages: [3],
+      model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 3, quote: "Synthetic passage 3." }],
     });
     expect(mocks.invoke).toHaveBeenCalledWith("ask_gemini", {
       requestId: "ask-service-test",
@@ -61,10 +61,21 @@ describe("askGemini service", () => {
     });
   });
 
+  it("strictly decodes why evidence is unavailable", async () => {
+    const base = { answer: "A", model: "gemini-3.5-flash", notAnswered: false, passages: [] };
+    mocks.invoke.mockResolvedValueOnce({ ...base, evidenceUnavailable: "text_not_read" });
+    expect(await askGemini({ materialId: "mat-1", context: "", question: "q" }))
+      .toStrictEqual({ ...base, evidenceUnavailable: "text_not_read" });
+    for (const odd of [null, undefined, "TEXT_NOT_READ", "unknown", true, 1, {}]) {
+      expect(decodeAskGeminiResult({ ...base, evidenceUnavailable: odd } as never)).toStrictEqual(base);
+    }
+    expect(decodeAskGeminiResult(null)).toBeNull();
+  });
+
   it("works with positional arguments as well", async () => {
     mocks.invoke.mockResolvedValue({
       answer: "Positional answer",
-      model: "gemini-3.5-flash", sourcePages: [],
+      model: "gemini-3.5-flash", notAnswered: false, passages: [],
     });
 
     const res = await askGemini(
@@ -76,7 +87,7 @@ describe("askGemini service", () => {
 
     expect(res).toEqual({
       answer: "Positional answer",
-      model: "gemini-3.5-flash", sourcePages: [],
+      model: "gemini-3.5-flash", notAnswered: false, passages: [],
     });
     expect(mocks.invoke).toHaveBeenCalledWith("ask_gemini", {
       requestId: expect.stringMatching(/^[A-Za-z0-9-]{1,64}$/),

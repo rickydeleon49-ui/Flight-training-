@@ -125,6 +125,23 @@ fn sibling(path: &Path, suffix: &str) -> PathBuf {
 }
 
 impl Cache {
+    /// Evidence checks may only read existing text; never create, repair or
+    /// populate the cache as a side effect of an Ask request.
+    pub fn read_only(root: &Path) -> Option<Self> {
+        let path = root.join(CACHE_FILE);
+        let conn = Connection::open_with_flags(
+            &path,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+        )
+        .ok()?;
+        conn.busy_timeout(std::time::Duration::from_millis(50))
+            .ok()?;
+        if !Self::trustworthy(&path, &conn) {
+            return None;
+        }
+        Some(Self { conn })
+    }
+
     /// Open the cache in `root`, replacing it if it is missing, from another
     /// schema, marked incomplete or fails SQLite's integrity check.
     pub fn open(root: &Path) -> Result<Self, String> {

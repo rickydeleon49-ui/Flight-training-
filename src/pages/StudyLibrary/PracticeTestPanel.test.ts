@@ -63,10 +63,10 @@ describe("PracticeTestPanel", () => {
     db?.close();
   });
 
-  async function renderPanel(ui: React.ReactElement) {
+  async function renderPanel(ui: React.ReactElement, filePath: string | null = "documents/test.pdf") {
     const value = {
       repositories: repos,
-      data: { ...EMPTY_DATA, materials: [makeMaterial({ id: "mat-1", filePath: "documents/test.pdf" })] },
+      data: { ...EMPTY_DATA, materials: [makeMaterial({ id: "mat-1", filePath })] },
       status: "ready",
       error: null,
     } as ContextType<typeof AppDataContext>;
@@ -75,13 +75,35 @@ describe("PracticeTestPanel", () => {
     return view;
   }
 
+  it("Why without a PDF keeps the original answer without evidence UI", async () => {
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({
+      answer: "A fictional practice explanation.", model: "gemini-3.5-flash", sourcePages: [],
+    });
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }), null);
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await screen.findByText("Not quite");
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why this answer?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("A fictional practice explanation.");
+    expect(ask.mock.calls[0]![0]).toMatchObject({ materialId: "mat-1", relativePath: null, history: [] });
+    expect((ask.mock.calls[0]![0] as geminiService.AskGeminiParams).context).toContain(sampleTest.questions[0]!.question);
+    expect(screen.getByText(/^Answered by /)).toBeTruthy();
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
+    expect(screen.queryByText("I couldn't check the supporting text.")).toBeNull();
+    expect(screen.queryByText("Not answered by these sources.")).toBeNull();
+    expect(screen.getByText("Your question, study context and recent conversation are sent to Google.")).toBeTruthy();
+    expect(screen.getByText("Study aid — check it against FAA guidance and your instructor.")).toBeTruthy();
+  });
+
   it("cancels a pending reply on answered-to-answered navigation and starts fresh", async () => {
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const cancel = vi.spyOn(geminiService, "cancelAskGemini").mockResolvedValue();
     let resolveOld!: (answer: geminiService.AskGeminiResult) => void;
     const ask = vi.spyOn(geminiService, "askGemini")
       .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
-      .mockResolvedValueOnce({ answer: "Current answer", model: "gemini-3.5-flash", sourcePages: [] });
+      .mockResolvedValueOnce({ answer: "Current answer", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     fireEvent.click(screen.getAllByRole("radio")[1]!);
     await screen.findByText("Correct");
@@ -101,7 +123,7 @@ describe("PracticeTestPanel", () => {
     await screen.findByText("Question 2 of 2");
     expect(cancel).toHaveBeenCalledExactlyOnceWith(old.requestId);
     expect(screen.queryByLabelText("Ask a question")).toBeNull();
-    await act(async () => { resolveOld({ answer: "Stale answer", model: "gemini-3.5-flash", sourcePages: [] }); });
+    await act(async () => { resolveOld({ answer: "Stale answer", model: "gemini-3.5-flash", notAnswered: false, passages: [] }); });
     expect(screen.queryByText("Stale answer")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "New question" } });
@@ -136,7 +158,7 @@ describe("PracticeTestPanel", () => {
     const test = { ...sampleTest, questions: [imported, sampleTest.questions[1]!] };
     await repos.documents.savePracticeTest(test);
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
-    const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer: "Bounded answer", model: "gemini-3.5-flash", sourcePages: [] });
+    const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer: "Bounded answer", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: test }));
     fireEvent.click(screen.getAllByRole("radio")[0]!);
     await screen.findByText("Not quite");
@@ -160,7 +182,7 @@ describe("PracticeTestPanel", () => {
     Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const answer = "A long synthetic explanation. ".repeat(200);
-    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", sourcePages: [] });
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
     expect(scroll).not.toHaveBeenCalled();
     fireEvent.click(screen.getAllByRole("radio")[0]!);

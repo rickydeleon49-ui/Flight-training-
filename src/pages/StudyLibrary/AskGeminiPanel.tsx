@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { Badge, Button, QuestionIcon } from "@/components/ui";
+import { Button, QuestionIcon } from "@/components/ui";
 import { checkAiSubmission } from "@/logic/aiSafety";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
-import { askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn } from "@/services/gemini";
+import { jumpToMaterialHeading } from "./materialJump";
+import { askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
   materialId: string;
@@ -27,31 +28,18 @@ export function formatFlashcardContext(front: string, back: string, sourcePage?:
 interface ChatTurn {
   role: "user" | "model";
   text: string;
-  sourcePages?: number[];
+  passages?: AskGeminiResult["passages"];
+  notAnswered?: boolean;
+  textNotRead?: boolean;
   model?: string;
 }
+
+// "Read this PDF's text" lives under this heading in the material page.
+const READ_TEXT_HEADING = "material-backup-heading";
 
 interface InFlightAsk {
   id: string;
   unlisten?: () => void;
-}
-
-export const GOOGLE_NOTE_STORAGE_KEY = "hfd_ask_gemini_google_note_seen";
-
-function checkGoogleNoteSeen(): boolean {
-  try {
-    return localStorage.getItem(GOOGLE_NOTE_STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function persistGoogleNoteSeen(): void {
-  try {
-    localStorage.setItem(GOOGLE_NOTE_STORAGE_KEY, "true");
-  } catch {
-    // Storage unavailable or disabled
-  }
 }
 
 export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPanelProps) {
@@ -65,8 +53,8 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stopped, setStopped] = useState(false);
-  const [googleNoteDismissed, setGoogleNoteDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastAnswerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<InFlightAsk | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [answerVersion, setAnswerVersion] = useState(0);
@@ -75,6 +63,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   // the material or its credential links immediately show the same refusal.
   const data = appData?.data;
   const material = data?.materials.find((item) => item.id === materialId);
+  const hasPdf = !!material?.filePath?.toLowerCase().endsWith(".pdf");
   const check = material && data
     ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context")
     : { allowed: false, reason: "This material is no longer available. Open it again before asking." };
@@ -108,21 +97,18 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
 
   useEffect(() => {
     if (answerVersion === 0) return;
-    const input = inputRef.current;
-    input?.focus({ preventScroll: true });
-    input?.scrollIntoView?.({
+    inputRef.current?.focus({ preventScroll: true });
+    lastAnswerRef.current?.scrollIntoView?.({
       block: "nearest",
       behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
     });
   }, [answerVersion]);
 
-  const showGoogleNote = !checkGoogleNoteSeen() && !googleNoteDismissed;
-
+  // Imported replacements reserve a fresh filePath. Metadata and study-context
+  // edits keep the same source, so retain its conversation and pending reply.
   useEffect(() => {
-    if (isOpen && showGoogleNote) {
-      persistGoogleNoteSeen();
-    }
-  }, [isOpen, showGoogleNote]);
+    resetConversation();
+  }, [materialId, material?.filePath]);
 
   const handleAsk = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -177,7 +163,13 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
         const next = [
           ...prev,
           { role: "user" as const, text: trimmed },
-          { role: "model" as const, text: result.answer, sourcePages: result.sourcePages, model: result.model },
+          { role: "model" as const, text: result.answer, model: result.model,
+            ...(hasPdf ? {
+              passages: result.passages,
+              notAnswered: result.notAnswered,
+              textNotRead: result.evidenceUnavailable === "text_not_read",
+            } : {}),
+          },
         ];
         return next.slice(-6);
       });
@@ -278,40 +270,18 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
         </div>
       </div>
 
-      {showGoogleNote && (
-        <div
-          className="row row--between"
-          role="note"
-          style={{
-            alignItems: "center",
-            padding: "var(--space-2)",
-            background: "var(--bg-surface, #fff)",
-            border: "1px solid var(--border-subtle, #cbd5e1)",
-            borderRadius: "var(--radius-sm, 4px)",
-            fontSize: "0.85rem",
-          }}
-        >
-          <span>Your question and this PDF are sent to Google.</span>
-          <button
-            type="button"
-            className="button button--ghost button--small"
-            style={{ padding: "0 var(--space-1)", minWidth: "auto", cursor: "pointer" }}
-            aria-label="Dismiss Google note"
-            onClick={() => {
-              setGoogleNoteDismissed(true);
-              persistGoogleNoteSeen();
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      <p className="tiny dim" role="note" style={{ margin: 0, overflowWrap: "anywhere" }}>
+        {material?.filePath
+          ? `Your question, full PDF “${material.originalFileName || material.title}”, study context and recent conversation are sent to Google.`
+          : "Your question, study context and recent conversation are sent to Google."}
+      </p>
 
       {history.length > 0 && (
         <div className="stack stack--2" role="log" aria-label="Conversation with Gemini">
           {history.map((turn, idx) => (
             <div
               key={idx}
+              ref={idx === history.length - 1 && turn.role === "model" ? lastAnswerRef : undefined}
               className={`ask-gemini-turn ask-gemini-turn--${turn.role}`}
               style={{
                 padding: "var(--space-2)",
@@ -330,18 +300,32 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
                   Answered by {geminiModelName(turn.model ?? "")}
                 </p>
               )}
-              {turn.sourcePages && turn.sourcePages.length > 0 && (
-                <div
-                  className="row row--gap-1 row--wrap"
-                  aria-label="Page references"
-                  style={{ marginTop: "var(--space-1)" }}
-                >
-                  {turn.sourcePages.map((page) => (
-                    <Badge key={page} tone="neutral">
-                      p. {page}
-                    </Badge>
-                  ))}
-                </div>
+              {hasPdf && turn.role === "model" && !turn.notAnswered && (
+                turn.passages && turn.passages.length > 0 ? (
+                  <details className="small" style={{ marginTop: "var(--space-1)" }}>
+                    <summary style={{ minHeight: 44, alignContent: "center", cursor: "pointer" }}>
+                      Sources ({turn.passages.length})
+                    </summary>
+                    {turn.passages.map((passage, index) => (
+                      <div key={index} className="stack stack--1">
+                        <span className="tiny dim">Page {passage.page}</span>
+                        <blockquote style={{ margin: "var(--space-1) 0 var(--space-2)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                          {passage.quote}
+                        </blockquote>
+                      </div>
+                    ))}
+                  </details>
+                ) : turn.textNotRead ? (
+                  <p className="small dim">
+                    I couldn't check the supporting text — use{" "}
+                    {document.getElementById(READ_TEXT_HEADING) ? (
+                      <button type="button" className="link-button" onClick={() => jumpToMaterialHeading(READ_TEXT_HEADING)}>
+                        “Read this PDF's text”
+                      </button>
+                    ) : "“Read this PDF's text”"}{" "}
+                    first.
+                  </p>
+                ) : <p className="small dim">I couldn't check the supporting text.</p>
               )}
             </div>
           ))}
@@ -394,7 +378,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
       </form>
 
       <p className="tiny dim" style={{ margin: 0 }}>
-        Study aid — check it against FAA guidance and your instructor.
+        {hasPdf ? "Study aid — check the sources and your instructor." : "Study aid — check it against FAA guidance and your instructor."}
       </p>
     </div>
   );

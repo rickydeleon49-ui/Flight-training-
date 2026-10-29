@@ -174,6 +174,31 @@ describe("card reviews in MaterialDetail", () => {
     ordinaryView.unmount();
   });
 
+  it("Explain this without a PDF keeps the original answer without evidence UI", async () => {
+    await seed();
+    vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
+    const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({
+      answer: "A fictional card explanation.", model: "gemini-3.5-flash", sourcePages: [],
+    });
+    renderDetail();
+    await reviewHeading();
+    await openSession();
+    fireEvent.click(button("Show answer"));
+    fireEvent.click(button("Explain this"));
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Explain this card?" } });
+    fireEvent.click(button("Ask"));
+    await screen.findByText("A fictional card explanation.");
+    expect(ask.mock.calls[0]![0]).toMatchObject({ materialId: M, relativePath: null, history: [] });
+    expect((ask.mock.calls[0]![0] as geminiService.AskGeminiParams).context).toContain(CARDS[0]!.front);
+    expect(screen.getByText(/^Answered by /)).toBeTruthy();
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
+    expect(screen.queryByText("I couldn't check the supporting text.")).toBeNull();
+    expect(screen.queryByText("Not answered by these sources.")).toBeNull();
+    expect(screen.getByText("Your question, study context and recent conversation are sent to Google.")).toBeTruthy();
+    expect(screen.getByText("Study aid — check it against FAA guidance and your instructor.")).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])("STUDENT-1: rating after a long Explain this answer reveals the next heading (reduced motion %s)", async (reduced) => {
     await seed();
     const scroll = vi.fn();
@@ -181,7 +206,7 @@ describe("card reviews in MaterialDetail", () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: reduced })));
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const answer = "A long synthetic card explanation. ".repeat(200);
-    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", sourcePages: [] });
+    vi.spyOn(geminiService, "askGemini").mockResolvedValue({ answer, model: "gemini-3.5-flash", notAnswered: false, passages: [] });
     renderDetail();
     await reviewHeading();
     await openSession();

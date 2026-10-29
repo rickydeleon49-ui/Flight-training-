@@ -19,6 +19,7 @@ static GLOBAL: extraction::alloc::Global = extraction::alloc::Global;
 mod fake_gemini;
 mod gemini;
 mod gemini_ask;
+mod gemini_ask_evidence;
 mod gemini_budget;
 mod gemini_cancel;
 mod gemini_files;
