@@ -119,3 +119,6 @@
 .lesson-brief__choices { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .lesson-brief__option { display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
 .lesson-brief__preview { width: 100%; height: 22rem; border: 1px solid var(--border-strong); border-radius: 6px; background: #fff; }
+
+/* Example copy is a hint, never an existing checklist item. */
+.inline-add .input::placeholder { font-style: italic; }

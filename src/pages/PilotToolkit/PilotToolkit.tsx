@@ -1208,7 +1208,7 @@ function ReminderTool({ state, save }: ToolProps) {
       try {
         await Notification.requestPermission();
       } catch {
-        /* The in-app popup still works. */
+        /* The reminder list is still available here. */
       }
     }
     await save((current) => ({ ...current, remindersEnabled: enabled }));
@@ -1216,13 +1216,14 @@ function ReminderTool({ state, save }: ToolProps) {
   return (
     <div className="toolkit-two-column">
       <Card>
-        <CardHeader title="Popup reminders" eyebrow="On this computer" />
+        <CardHeader title="Training reminders" eyebrow="On this computer" />
         <CardBody>
           <div className="stack stack--4">
             <Checkbox
               checked={state.remindersEnabled}
               onChange={(enabled) => void setEnabled(enabled)}
-              label="Show reminder popup when the app opens"
+              strikethrough={false}
+              label="Show system reminders"
               meta="Includes due actions, scheduled training, medical dates, and saved record expirations."
             />
             <Field label="How many days ahead">
@@ -1246,9 +1247,8 @@ function ReminderTool({ state, save }: ToolProps) {
               Save reminder window
             </Button>
             <p className="tiny dim">
-              The in-app popup is always available. If Windows and the desktop
-              webview grant notification permission, the app also requests a
-              system notification while it is running.
+              Your reminder list is here in Pilot Toolkit. System reminders can
+              appear once a day while the app is running, if you allow notifications.
             </p>
           </div>
         </CardBody>

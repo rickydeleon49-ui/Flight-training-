@@ -166,23 +166,40 @@
 .sidebar__menu[hidden] { display: none; }
 
 @media (max-width: 999px) {
-  /* The top bar keeps its own height; the page takes any spare height (no blank band). */
-  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  /* Normal flow gives the sticky bar the whole page as its containing block,
+     rather than confining it to the first grid row. It keeps its own height. */
+  .shell { display: block; }
   .sidebar {
-    position: static;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    z-index: 20;
+    max-height: 100vh;
     height: auto;
-    overflow: visible;
-    flex-direction: row;
-    flex-wrap: wrap;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    grid-auto-rows: minmax(0, 1fr);
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
     border-right: 0;
     border-bottom: 1px solid var(--border-subtle);
   }
+  .sidebar__menu { min-width: 44px; min-height: 44px; }
+  .shell .section-jump-target {
+    scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5));
+  }
   .brand { padding: 0; }
   .brand__tagline { display: none; }
-  .sidebar__navigation { flex-basis: 100%; }
+  /* Keep the header above the list; only the list scrolls in a short window. */
+  .sidebar__navigation {
+    grid-column: 1 / -1;
+    align-self: stretch;
+    min-height: 0;
+    overflow-y: auto;
+  }
   .sidebar__footer { margin-top: 0; }
   .sidebar__note { display: none; }
   .content { padding: var(--space-5) var(--space-4) var(--space-7); }

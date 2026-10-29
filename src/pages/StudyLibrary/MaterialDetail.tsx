@@ -87,7 +87,7 @@ import { PdfStudyKitPanel } from "./PdfStudyKitPanel";
 import { PdfItemLabel, PDF_KIT_LABEL, PDF_KIT_REMINDER } from "./PdfItemLabel";
 import { pdfLabelState } from "@/logic/pdfKitLabels";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
-import { MaterialStartHere, useMaterialTips } from "./MaterialStartHere";
+import { useMaterialTips } from "./materialTips";
 import { RelatedStudy } from "./RelatedStudy";
 import { jumpToMaterialHeading } from "./materialJump";
 import { selectRelatedStudy } from "@/logic/relatedStudy";
@@ -690,7 +690,7 @@ function MaterialDetailPage() {
             <Link className="button button--ghost" to="/study">
               Back
             </Link>
-            {!isPdf ? <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show tips" : "Hide tips"}</Button> : null}
+            <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
             <Button onClick={() => setEditing(true)}>Edit</Button>
             <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>
               Delete
@@ -727,12 +727,9 @@ function MaterialDetailPage() {
       <div className="detail material-detail">
         <div className="detail__column">
 
-          <div id="material-start-here">
-            <MaterialStartHere material={material} materials={data.materials} studySet={studySet}
-              geminiDraftWaiting={Boolean(studyJob?.answer && (draftWaiting(studyJob.phase) || studyJob.phase === "waiting-for-her"))}
-              fileMissing={fileMissing} practiceTestSaved={Boolean(practiceTest)}
-              tipsHidden={tipsHidden} onTipsHiddenChange={setTipsHidden} />
-          </div>
+          {isPdf && !tipsHidden ? (
+            <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
+          ) : null}
           {isPdf && material.filePath ? (
             <div id="material-ask-gemini"><Card>
               <CardHeader title="Ask about this PDF" />

@@ -244,3 +244,26 @@ it("PACKS-06 preserves Escape for a dialog inside the menu and for a child that 
   expect(menu().getAttribute("aria-expanded")).toBe("true");
   expect(document.activeElement).toBe(notes);
 });
+
+it("measures the narrow header for anchor clearance and releases the observer on desktop", () => {
+  let notify: () => void = () => undefined;
+  const disconnect = vi.fn();
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(callback: () => void) { notify = callback; }
+    observe = vi.fn();
+    disconnect = disconnect;
+  });
+  let height = 144;
+  const bounds = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({ height }) as DOMRect);
+  try {
+    mount(390);
+    const shell = document.querySelector<HTMLElement>(".shell")!;
+    expect(shell.style.getPropertyValue("--narrow-header-height")).toBe("144px");
+    height = 288;
+    act(() => notify());
+    expect(shell.style.getPropertyValue("--narrow-header-height")).toBe("288px");
+    resize(1100);
+    expect(shell.style.getPropertyValue("--narrow-header-height")).toBe("");
+    expect(disconnect).toHaveBeenCalledOnce();
+  } finally { bounds.mockRestore(); }
+});

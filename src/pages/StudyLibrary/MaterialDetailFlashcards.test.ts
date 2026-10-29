@@ -772,7 +772,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     });
   });
 
-  it("section order on a PDF page is Start here, Ask, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
+  it("section order on a PDF page is How to link, Ask, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
     await openMaterial("mat-pdf");
 
     const startHere = document.getElementById("material-start-here")!;
