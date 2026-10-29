@@ -32,16 +32,17 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); db.close(); vi.restoreAllMocks(); });
 
-it("places Start here first, connects its destinations, and explains file, page and review actions", async () => {
+it("places the How to link line first, keeps its destinations, and explains file, page and review actions", async () => {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study/tips"] }, h(Ready))));
-  await screen.findByRole("heading", { name: "Start here" });
+  await screen.findByRole("link", { name: "How to in Study Library" });
   await waitFor(() => expect(context.repositories).toBeTruthy());
   // The page chooser uses the same navigation repository in desktop mode;
   // only its capability is enabled here. No file is opened or inspected.
   vi.spyOn(context.repositories!.navigation, "canCheckFiles").mockReturnValue(true);
   // Trigger a normal app reload to render the desktop page controls.
   await context.mutate(repos => repos.documents.update("tips", { notes: "Synthetic note" }));
-  expect(screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")?.firstElementChild?.textContent).toContain("Start here");
+  expect(screen.getByRole("link", { name: "How to in Study Library" }).closest(".detail__column")?.firstElementChild).toBe(document.getElementById("material-start-here"));
+  expect(screen.queryByRole("heading", { name: "Start here" })).toBeNull();
   for (const id of ["material-file-actions", "material-offline-study", "material-pdf-kit", "material-study-guide"]) {
     expect(document.getElementById(id)).toBeTruthy();
   }
@@ -154,13 +155,13 @@ it("offers the Related study chip when only an instructor question is linked", a
 
 it("orders the PDF workflow with both backup panels together at the bottom", async () => {
   await openPage();
-  const column = screen.getByRole("heading", { name: "Start here" }).closest(".detail__column")!;
+  const column = document.getElementById("material-start-here")!.closest(".detail__column")!;
   const headings = within(column as HTMLElement).getAllByRole("heading", { level: 2 }).map(node => node.textContent);
-  expect(headings.slice(0, 11)).toEqual(["Start here", "Ask about this PDF", "Study guide", "Flashcards", "Practice test", "Practice an oral question", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
+  expect(headings.slice(0, 10)).toEqual(["Ask about this PDF", "Study guide", "Flashcards", "Practice test", "Practice an oral question", "Personal notes", "Next actions", "Questions from this material", "Find your place", "On this Mac (backup)"]);
   const file = document.getElementById("material-file-actions")!;
   const geminiSection = document.getElementById("material-study-guide")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
-  expect(column.firstElementChild?.textContent).toContain("Start here");
+  expect(column.firstElementChild?.textContent).toBe("New to this? See How to in Study Library.");
   expect(column.children[1]).toBe(document.getElementById("material-ask-gemini"));
   expect(column.children[2]).toBe(screen.getByRole("navigation", { name: "Jump to" }));
   expect(column.children[3]?.textContent).toBe("Related study");
@@ -187,7 +188,7 @@ it("shows a short muted tip under every section header and Hide tips hides them 
   });
   fireEvent.click(screen.getByRole("button", { name: "Hide tips" }));
   for (const text of tips) expect(screen.queryByText(text, { exact: true })).toBeNull();
-  expect(screen.queryByRole("list", { name: "PDF study steps" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
   expect(screen.queryByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeNull();
   expect(screen.queryByText("Save a named place so you can return to it later without remembering the page number.")).toBeNull();
   // Hiding guidance keeps the features and both backup panels usable.
@@ -205,6 +206,7 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
   await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
   await openPage();
   expect(screen.queryByRole("heading", { name: "Start here" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
   expect(screen.queryByRole("region", { name: "On this Mac (backup)" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();

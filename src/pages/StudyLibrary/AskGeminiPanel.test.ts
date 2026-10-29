@@ -1065,7 +1065,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(screen.getByRole("button", { name: /^Good:/ })).toBeTruthy();
   });
 
-  it("puts the PDF Ask card right after Start here, outside and above Study guide, and passes its context", async () => {
+  it("puts the PDF Ask card right after the How to link line, outside and above Study guide, and passes its context", async () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard rate turns are 3 degrees per second.",

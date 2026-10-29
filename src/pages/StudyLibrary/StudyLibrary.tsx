@@ -45,22 +45,24 @@ import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
+import { StudyHowTo } from "./StudyHowTo";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
 import { useLibraryDueStream } from "./useLibraryReviews";
 import { useOfflineBadges, type OfflineBadge } from "./useOfflineBadges";
 import "./studyLibrary.css";
 
-export type LibraryTab = "library" | "due" | "history";
+export type LibraryTab = "library" | "due" | "history" | "howto";
 const TABS: Array<{ value: LibraryTab; label: string }> = [
   { value: "library", label: "Library" },
   { value: "due", label: "Review due" },
   { value: "history", label: "History" },
+  { value: "howto", label: "How to" },
 ];
 
-/** The tab named in the address (`?tab=due`, `?tab=history`); anything else is the Library. */
+/** The tab named in the address (`?tab=due`, `?tab=history`, `?tab=howto`); anything else is the Library. */
 export function libraryTabFrom(params: URLSearchParams): LibraryTab {
   const tab = params.get("tab");
-  return tab === "due" || tab === "history" ? tab : "library";
+  return tab === "due" || tab === "history" || tab === "howto" ? tab : "library";
 }
 
 type StatusFilter = ReviewStatus | "all" | "next_up";
@@ -269,6 +271,11 @@ export function StudyLibrary() {
       {tab === "history" && cardLibrary ? (
         <div role="tabpanel" id="library-panel-history" aria-labelledby="library-tab-history">
           <StudyLibraryHistory repository={cardLibrary} materials={data.materials} dataRevision={dataRevision} />
+        </div>
+      ) : null}
+      {tab === "howto" ? (
+        <div role="tabpanel" id="library-panel-howto" aria-labelledby="library-tab-howto">
+          <StudyHowTo />
         </div>
       ) : null}
 
