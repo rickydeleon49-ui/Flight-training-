@@ -48,6 +48,7 @@ import {
   trainingCostForecast,
 } from "@/logic/toolkit";
 import { useAppData } from "@/state/AppDataContext";
+import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
 import "./pilotToolkit.css";
 
@@ -147,6 +148,11 @@ export function PilotToolkit() {
           saved ? <span className="small toolkit-saved">Saved.</span> : null
         }
       />
+      {data.toolkitUnreadable ? (
+        <p className="small" role="status">
+          {TOOLKIT_UNREADABLE_MESSAGE}
+        </p>
+      ) : null}
       <div
         className="filter-chips toolkit-tabs"
         role="tablist"

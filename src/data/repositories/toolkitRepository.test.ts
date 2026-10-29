@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { DEFAULT_TOOLKIT_STATE } from "@/logic/toolkit";
+import { TOOLKIT_UNREADABLE_MESSAGE } from "./toolkitRepository";
 import { createRepositories, type Repositories } from "./index";
 
 let db: TestDatabase;
@@ -28,6 +29,32 @@ describe("pilot toolkit persistence", () => {
     const saved = await repos.toolkit.get();
     expect(saved.targetAirline).toBe("A future employer");
     expect(saved.reminderLeadDays).toBe(14);
+  });
+
+  it.each([
+    ["not json", "not json"],
+    ["half-written row", '{"targetAirline":"Mine","credentials":[{"id":"c1"'],
+    ["a row from a newer build", JSON.stringify({ version: 2, targetAirline: "Mine", futureField: [1] })],
+    ["not an object", "[1,2,3]"],
+  ])("never overwrites an unreadable toolkit (%s)", async (_label, raw) => {
+    await db.execute(
+      "INSERT INTO pilot_toolkit (id, state_json, updated_at) VALUES ('toolkit', ?, '2026-10-29T00:00:00.000Z')",
+      [raw],
+    );
+    expect(await repos.toolkit.isUnreadable()).toBe(true);
+    const shown = await repos.toolkit.get();
+    await expect(repos.toolkit.save({ ...shown, targetAirline: "Default edit" })).rejects.toThrow(
+      TOOLKIT_UNREADABLE_MESSAGE,
+    );
+    const rows = await db.select<{ state_json: string }>("SELECT state_json FROM pilot_toolkit");
+    expect(rows).toEqual([{ state_json: raw }]);
+  });
+
+  it("saves normally when no toolkit row exists yet", async () => {
+    expect(await repos.toolkit.isUnreadable()).toBe(false);
+    await repos.toolkit.save({ ...(await repos.toolkit.get()), targetAirline: "First" });
+    expect(await repos.toolkit.isUnreadable()).toBe(false);
+    expect((await repos.toolkit.get()).targetAirline).toBe("First");
   });
 
   it("clears personal toolkit data back to safe defaults", async () => {
