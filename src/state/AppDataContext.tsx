@@ -64,6 +64,8 @@ export interface AppData {
   fundGoals: FundGoal[];
   flightSchools: FlightSchool[];
   toolkit: ToolkitState;
+  /** A saved toolkit exists but could not be read; saves are refused. */
+  toolkitUnreadable?: boolean;
   dailyPlan: DailyPlanState | null;
   homework?: import("@/domain/homework").HomeworkSnapshot[];
 }
@@ -185,6 +187,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     fundGoals,
     flightSchools,
     toolkit,
+    toolkitUnreadable,
     dailyPlan,
     homework,
   ] = await Promise.all([
@@ -206,6 +209,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     repositories.finance.listFundGoals(),
     repositories.flightSchools.list(),
     repositories.toolkit.get(),
+    repositories.toolkit.isUnreadable(),
     repositories.app.getDailyPlanState(),
     repositories.homework.listSnapshots(),
   ]);
@@ -229,6 +233,7 @@ async function loadAll(repositories: Repositories): Promise<AppData> {
     fundGoals,
     flightSchools,
     toolkit,
+    toolkitUnreadable,
     dailyPlan,
     homework,
   };

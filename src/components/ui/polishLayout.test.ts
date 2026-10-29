@@ -31,3 +31,10 @@ it("styles preparation example copy as a hint", () => {
   const schedule = readFileSync(new URL("../../pages/Schedule/schedule.css", import.meta.url), "utf8");
   expect(schedule).toMatch(/\.inline-add \.input::placeholder\s*\{[^}]*font-style: italic/);
 });
+
+it("gives main buttons and tabs a 44 px target with a 15 px label, secondary and danger buttons 44 px, small buttons stay compact", () => {
+  expect(ui).toMatch(/\.button--primary\s*\{[^}]*min-height:\s*var\(--space-7\);[^}]*font-size:\s*var\(--text-base\);/);
+  expect(ui).toMatch(/button\[role="tab"\]\s*\{[^}]*min-height:\s*var\(--space-7\);[^}]*font-size:\s*var\(--text-base\);/);
+  expect(ui).toMatch(/\.button--secondary,\s*\.button--danger\s*\{[^}]*min-height:\s*var\(--space-7\);/);
+  expect(ui).toMatch(/\.button--small\s*\{[^}]*min-height:\s*0;/);
+});

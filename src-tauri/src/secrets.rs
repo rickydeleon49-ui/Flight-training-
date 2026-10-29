@@ -60,10 +60,9 @@ pub fn save_key(root: &Path, key: &str) -> Result<(), String> {
     // Write beside the target and rename over it, so an interrupted write
     // cannot leave her with half a key and no way to tell.
     let writing = root.join(KEY_FILE_WRITING);
-    std::fs::write(&writing, key).map_err(|e| format!("Could not save the Gemini key: {e}"))?;
-    if let Err(error) = restrict(&writing) {
+    if let Err(e) = write_private(&writing, key) {
         let _ = std::fs::remove_file(&writing);
-        return Err(error);
+        return Err(format!("Could not save the Gemini key: {e}"));
     }
     std::fs::rename(&writing, key_path(root)).map_err(|e| {
         let _ = std::fs::remove_file(&writing);
@@ -80,20 +79,28 @@ pub fn forget_key(root: &Path) -> Result<(), String> {
     }
 }
 
-/// Readable and writable by her account alone, on platforms that say so.
-#[cfg(unix)]
-fn restrict(path: &Path) -> Result<(), String> {
-    use std::os::unix::fs::PermissionsExt;
+/// Write `contents` to a new file that is readable and writable by her
+/// account alone from the moment it exists, on platforms that say so. A file
+/// left behind by an interrupted save is removed first, because opening an
+/// existing file would keep whatever mode it already had.
+fn write_private(path: &Path, contents: &str) -> std::io::Result<()> {
+    use std::io::Write;
 
-    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))
-        .map_err(|e| format!("Could not restrict the Gemini key file: {e}"))
-}
-
-/// Windows keeps the application data folder inside her user profile and has
-/// no mode to set here.
-#[cfg(not(unix))]
-fn restrict(_path: &Path) -> Result<(), String> {
-    Ok(())
+    match std::fs::remove_file(path) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(e),
+    }
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(contents.as_bytes())?;
+    file.sync_all()
 }
 
 #[cfg(test)]
@@ -211,6 +218,25 @@ mod tests {
             .permissions()
             .mode();
         assert_eq!(mode & 0o777, 0o600);
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    /// The half-written file is private from creation, not tightened after
+    /// the key is already in it; a stale world-readable one is not reused.
+    #[cfg(unix)]
+    #[test]
+    fn the_key_is_never_written_into_a_readable_file() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = scratch("key-mode-at-creation");
+        let writing = root.join(KEY_FILE_WRITING);
+        std::fs::write(&writing, "stale").unwrap();
+        std::fs::set_permissions(&writing, std::fs::Permissions::from_mode(0o644)).unwrap();
+
+        write_private(&writing, KEY).unwrap();
+        let mode = std::fs::metadata(&writing).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
+        assert_eq!(std::fs::read_to_string(&writing).unwrap(), KEY);
         std::fs::remove_dir_all(&root).ok();
     }
 }
