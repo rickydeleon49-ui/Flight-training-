@@ -127,3 +127,10 @@ screenshots/
 
 # Python bytecode caches
 __pycache__/
+
+# Apple signing material (safety net; Developer ID keys stay in the keychain)
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision

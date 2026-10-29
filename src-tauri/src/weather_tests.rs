@@ -314,7 +314,11 @@ fn weather_transport_one_get_headers_no_data_and_errors() {
     let headers = requests[0].to_lowercase();
     assert!(headers.starts_with("get /fixture http/1.1"));
     assert!(headers.contains("accept: application/json"));
-    assert!(headers.contains("user-agent: herflightdeck/0.6.0 (lesson-preparation-weather)"));
+    // The version comes from the build, so a release bump never breaks this.
+    assert!(headers.contains(&format!(
+        "user-agent: herflightdeck/{} (lesson-preparation-weather)",
+        env!("CARGO_PKG_VERSION")
+    )));
     for forbidden in ["authorization:", "cookie:", "referer:"] {
         assert!(!headers.contains(forbidden));
     }
