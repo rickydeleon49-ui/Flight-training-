@@ -1,11 +1,13 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { Button, Card, CardBody, CardHeader, Field, TextArea } from "@/components/ui";
 import type { AiStudySet, PracticeTest, Question, StudyMaterial } from "@/domain/types";
 import { tokenizeAktrCodes } from "@/logic/aktrCodeInput";
 import {
-  findAcsStudyMaterialLinks,
-} from "@/logic/acsStudyMaterialLinks";
+  indexAcsRelatedStudy,
+  selectAcsRelatedStudy,
+  type AcsRelatedStudyIndex,
+} from "@/logic/relatedStudy";
+import { RelatedStudyList } from "./RelatedStudy";
 
 export interface AcsCodeLookupPanelProps {
   materials?: readonly StudyMaterial[];
@@ -45,20 +47,14 @@ export function AcsCodeLookupPanel({
 
     setSubmittedTokens(tokens);
 
-    const groups = findAcsStudyMaterialLinks({
-      codes: tokens,
-      materials,
-      aiStudySets,
-      practiceTests,
-      instructorQuestions: questions,
-    });
+    const groups = tokens.map((code) => selectAcsRelatedStudy(code, index));
 
     let currentCount = 0;
     let archivedCount = 0;
     let notFoundCount = 0;
 
     for (const g of groups) {
-      if (g.status === "current") {
+      if (g.status === "current" || g.status === "task" || g.status === "failed") {
         currentCount += 1;
       } else if (g.status === "archived") {
         archivedCount += 1;
@@ -73,18 +69,15 @@ export function AcsCodeLookupPanel({
     );
   };
 
-  const results = useMemo(() => {
-    if (submittedTokens === null) {
-      return null;
-    }
-    return findAcsStudyMaterialLinks({
-      codes: submittedTokens,
-      materials,
-      aiStudySets,
-      practiceTests,
-      instructorQuestions: questions,
-    });
-  }, [submittedTokens, materials, aiStudySets, practiceTests, questions]);
+  // One pass over the library; each code then reads only its own exact tags.
+  const index = useMemo(
+    () => indexAcsRelatedStudy({ materials, aiStudySets, practiceTests, questions }),
+    [materials, aiStudySets, practiceTests, questions],
+  );
+  const results = useMemo(
+    () => (submittedTokens === null ? null : submittedTokens.map((code) => selectAcsRelatedStudy(code, index))),
+    [submittedTokens, index],
+  );
 
   return (
     <Card className="acs-code-lookup-panel">
@@ -126,65 +119,8 @@ export function AcsCodeLookupPanel({
               <p className="dim small">No codes entered.</p>
             ) : (
               results.map((group) => {
-                if (group.status === "current") {
-                  return (
-                    <div
-                      key={group.code}
-                      className="acs-code-result-item"
-                      data-testid={`acs-code-result-${group.code}`}
-                    >
-                      <div>
-                        <strong>{group.code}</strong>
-                        {group.entry.description ? (
-                          <span className="dim"> — {group.entry.description}</span>
-                        ) : null}
-                      </div>
-
-                      {group.materials.length === 0 ? (
-                        <p className="dim small" style={{ margin: "var(--space-1) 0 0 0" }}>
-                          No tagged study materials exist for this topic code.
-                        </p>
-                      ) : (
-                        <ul style={{ margin: "var(--space-2) 0 0 0", paddingLeft: "var(--space-4)" }}>
-                          {group.materials.map((matLink) => {
-                            const counts: string[] = [];
-                            if (matLink.aiStudySets.length > 0) {
-                              counts.push(
-                                `${matLink.aiStudySets.length} study guide${
-                                  matLink.aiStudySets.length === 1 ? "" : "s"
-                                }/set${matLink.aiStudySets.length === 1 ? "" : "s"}`,
-                              );
-                            }
-                            if (matLink.practiceTests.length > 0) {
-                              counts.push(
-                                `${matLink.practiceTests.length} practice test${
-                                  matLink.practiceTests.length === 1 ? "" : "s"
-                                }`,
-                              );
-                            }
-                            if (matLink.instructorQuestions.length > 0) {
-                              counts.push(
-                                `${matLink.instructorQuestions.length} instructor question${
-                                  matLink.instructorQuestions.length === 1 ? "" : "s"
-                                }`,
-                              );
-                            }
-
-                            return (
-                              <li key={matLink.material.id}>
-                                <Link to={`/study/${matLink.material.id}`}>
-                                  {matLink.material.title}
-                                </Link>
-                                {counts.length > 0 ? (
-                                  <span className="dim small"> ({counts.join(", ")})</span>
-                                ) : null}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  );
+                if (group.status === "current" || group.status === "task" || group.status === "failed") {
+                  return <AcsCodeRelatedStudy key={group.code} code={group.code} title={group.title} index={index} />;
                 }
 
                 if (group.status === "archived") {
@@ -196,8 +132,8 @@ export function AcsCodeLookupPanel({
                     >
                       <div>
                         <strong>{group.code}</strong>
-                        {group.entry.description ? (
-                          <span className="dim"> — {group.entry.description}</span>
+                        {group.title ? (
+                          <span className="dim"> — {group.title}</span>
                         ) : null}
                         <span className="dim small"> (Archived code)</span>
                       </div>
@@ -229,5 +165,33 @@ export function AcsCodeLookupPanel({
         ) : null}
       </CardBody>
     </Card>
+  );
+}
+
+/** One looked-up code: the shared Related study list, three rows first, then all of them. */
+function AcsCodeRelatedStudy({ code, title, index }: { code: string; title: string | null; index: AcsRelatedStudyIndex }) {
+  const [expanded, setExpanded] = useState(false);
+  const group = selectAcsRelatedStudy(code, index, expanded);
+  return (
+    <div className="acs-code-result-item" data-testid={`acs-code-result-${code}`}>
+      <div>
+        <strong>{code}</strong>
+        {title ? <span className="dim"> — {title}</span> : null}
+      </div>
+      <div className="related-study related-study--plain">
+        <RelatedStudyList
+          label={`Related study for ${code}`}
+          rows={group.rows}
+          hasMore={group.hasMore}
+          expanded={expanded}
+          onShowMore={() => setExpanded(true)}
+          empty={group.status === "failed" ? null : "No tagged study materials exist for this topic code."}
+        >
+          {group.status === "failed" ? (
+            <p className="small muted" role="alert">Study for this code couldn&apos;t be checked. Try again in a moment.</p>
+          ) : null}
+        </RelatedStudyList>
+      </div>
+    </div>
   );
 }
