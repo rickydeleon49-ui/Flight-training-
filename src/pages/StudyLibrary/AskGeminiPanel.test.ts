@@ -1083,7 +1083,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(studyGuideSection.contains(askCard)).toBe(false);
     expect(within(studyGuideSection).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
     expect(await within(askCard).findByText("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.")).toBeTruthy();
-    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask about this PDF" });
+    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask" });
     expect(askPdfBtn.classList.contains("button--secondary")).toBe(true);
 
     fireEvent.click(askPdfBtn);
@@ -1114,7 +1114,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
     fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
     const askCard = () => screen.getByRole("dialog", { name: "Ask about this PDF" });
-    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask about this PDF" }));
+    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask" }));
 
     const ask = async (question: string) => {
       fireEvent.change(within(askCard()).getByLabelText("Ask a question"), { target: { value: question } });
@@ -1134,7 +1134,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
     await waitFor(() => expect(cancelAskGemini).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
-    await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask about this PDF" })).toBeTruthy());
+    await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask" })).toBeTruthy());
     expect(within(askCard()).queryByText("Answer for the original PDF.")).toBeNull();
     await act(async () => finishPending({ answer: "Late answer from the original PDF.", model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 3, quote: "Synthetic passage 3." }] }));
     expect(screen.queryByText("Late answer from the original PDF.")).toBeNull();
@@ -1154,7 +1154,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await waitFor(() =>
       expect(within(askCard).getByText("Connect Gemini in Settings to ask questions about this PDF.")).toBeTruthy(),
     );
-    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(within(askCard).queryByRole("button", { name: "Ask" })).toBeNull();
   });
 
   it("the too-big PDF shows the split line", async () => {
@@ -1165,7 +1165,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
     const askCard = screen.getByRole("dialog", { name: "Ask about this PDF" });
     expect(within(askCard).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
-    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(within(askCard).queryByRole("button", { name: "Ask" })).toBeNull();
     expect(within(askCard).queryByRole("region", { name: "Ask Gemini helper" })).toBeNull();
   });
 });

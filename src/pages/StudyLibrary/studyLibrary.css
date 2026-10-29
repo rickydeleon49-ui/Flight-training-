@@ -844,7 +844,7 @@
   scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5));
 }
 
-/* Material actions remain in flow so enlarged text never clips a floating menu. */
+/* Viewport-positioned actions leave the page in place, including enlarged text. */
 .material-detail-header .page-header { flex-wrap: wrap; gap: var(--space-4); }
 .material-detail-header .page-header > div { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .material-header-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
@@ -860,9 +860,16 @@
 }
 .material-actions-menu summary::-webkit-details-marker { display: none; }
 .material-actions-menu summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
-.material-actions-menu__items { display: flex; flex-direction: column; gap: var(--space-2); padding-block: var(--space-2); }
-.material-actions-menu__items .button { justify-content: flex-start; min-height: 44px; }
-.material-actions-menu .destructive-action { border-top: 1px solid var(--border-subtle); margin-top: var(--space-2); }
+.material-actions-menu__items {
+  position: fixed; z-index: 40; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-2); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface-card, white); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+}
+.material-actions-menu:not([open]) > .material-actions-menu__items { display: none; }
+.material-actions-menu__items .button { width: 100%; margin-inline: 0; flex-shrink: 0; justify-content: flex-start; min-height: 44px; }
+.material-actions-menu__items .destructive-action { border-top: 1px solid var(--border-subtle); margin-top: var(--space-2); }
 .material-notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 1080px) { .material-notes-grid { grid-template-columns: minmax(0, 1fr); } }
 

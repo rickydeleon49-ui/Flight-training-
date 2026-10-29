@@ -1,5 +1,6 @@
+import { useHistoryScroll } from "./useHistoryScroll";
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
-import { NavLink, Outlet, useLocation, useNavigationType } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import {
   QUICK_FIND_EVENT,
@@ -137,15 +138,7 @@ export function AppShell() {
     }
   }, [location.key, desktop]);
 
-  // A new page opens at its top, not where the last page was scrolled.
-  // Back keeps its place, and links to a section (#hash) keep their jump.
-  const navigationType = useNavigationType();
-  const lastPath = useRef(location.pathname);
-  useEffect(() => {
-    if (lastPath.current === location.pathname) return;
-    lastPath.current = location.pathname;
-    if (navigationType === "PUSH" && !location.hash) window.scrollTo?.(0, 0);
-  }, [location.pathname, location.hash, navigationType]);
+  useHistoryScroll();
 
   useEffect(() => {
     if (desktop) {

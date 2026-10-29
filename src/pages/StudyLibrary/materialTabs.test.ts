@@ -12,7 +12,9 @@ it("serializes without writing Study and preserves other parameters", () => {
 });
 it("maps anchors to their mounted panel, leaving the search note outside", () => {
   for (const id of ["search-target-summary", "search-target-guide-2", "search-target-cards"]) expect(materialTabForAnchor(id)).toBe("study");
-  for (const id of ["search-target-kit-cards", "read-pdf-text", "material-file-actions", "material-backup-heading", "related-study"]) expect(materialTabForAnchor(id)).toBe("more");
+  for (const id of ["search-target-kit-cards", "read-pdf-text", "material-file-details", "material-backup-heading", "related-study"]) expect(materialTabForAnchor(id)).toBe("more");
   expect(materialTabForAnchor("search-target-guide-2", true)).toBe("more");
   expect(materialTabForAnchor("search-target-note")).toBeNull();
 });
+
+it("leaves legacy file action links in the header", () => expect(materialTabForAnchor("material-file-actions")).toBeNull());

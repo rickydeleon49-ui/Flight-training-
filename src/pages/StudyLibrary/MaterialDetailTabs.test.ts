@@ -189,3 +189,26 @@ it("offers the existing manual guide editor for an empty material and keeps an e
   fireEvent.click(within(dialog).getByRole("button", { name: "Create study guide" }));
   expect(await screen.findByRole("button", { name: "Add a section" })).toBeTruthy();
 });
+
+it("offers a secondary Mac kit button that opens its destination", async () => {
+  await open();
+  const kit = screen.getByRole("button", { name: "or make a kit on this Mac" });
+  expect(kit.classList.contains("button--secondary")).toBe(true);
+  fireEvent.click(kit);
+  await waitFor(() => expect(screen.getByRole("tab", { name: "More" }).getAttribute("aria-selected")).toBe("true"));
+});
+
+it("offers file actions only in the header", async () => {
+  await open("?tab=more");
+  const panel = screen.getByRole("tabpanel");
+  for (const name of ["Split automatically", "Take out a chapter", "Open"]) {
+    expect(within(panel).queryByRole("button", { name })).toBeNull();
+    expect(screen.getAllByRole("button", { name })).toHaveLength(1);
+  }
+});
+
+it("opens legacy file-action deep links in the header menu", async () => {
+  await open("?tab=more#material-file-actions");
+  await waitFor(() => expect(document.getElementById("material-file-actions")?.closest("details")?.open).toBe(true));
+  await waitFor(() => expect(document.activeElement).toBe(document.getElementById("material-file-actions")));
+});

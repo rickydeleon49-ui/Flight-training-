@@ -15,7 +15,7 @@ export function materialTabParams(params: URLSearchParams, tab: MaterialTab): UR
 
 /** Search notes sit outside the panels; PDF provenance distinguishes kit sections. */
 export function materialTabForAnchor(anchor: string, pdfProvenance = false): MaterialTab | null {
-  if (anchor === "search-target-note") return null;
+  if (anchor === "search-target-note" || anchor === "material-file-actions") return null;
   if (pdfProvenance || anchor === "search-target-kit-cards" || anchor === "read-pdf-text" ||
       anchor === "related-study" || anchor.startsWith("material-file") ||
       anchor.startsWith("material-backup") || anchor.startsWith("material-mac") ||

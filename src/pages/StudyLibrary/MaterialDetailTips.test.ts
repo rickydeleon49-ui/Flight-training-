@@ -47,9 +47,9 @@ it("places the How to link line first, keeps its destinations, and explains file
     expect(document.getElementById(id)).toBeTruthy();
   }
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
-  expect(screen.getByText("Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.")).toBeTruthy();
-  expect(screen.getByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeTruthy();
-  expect(screen.getByText("Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page.")).toBeTruthy();
+  expect(screen.queryByText("Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.")).toBeNull();
+  expect(screen.queryByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeNull();
+  expect(screen.queryByText("Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page.")).toBeNull();
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
   expect(await screen.findByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
   // "Open at page" was removed (owner, 22 October): no trace of it or its tip.
@@ -112,12 +112,12 @@ it("orders the PDF workflow inside its tab homes with both backup panels togethe
   expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Questions for my instructor", "Next steps for this material", "Find your place"]);
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   const more = screen.getByRole("tabpanel", { name: "More" });
-  const file = document.getElementById("material-file-actions")!;
+  const file = document.getElementById("material-file-details")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
   expect(more.contains(file)).toBe(true);
   expect(file.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
-  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "Split or take out a chapter", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details and review status", "Details"]);
+  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "File details", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details and review status", "Details"]);
   expect(backup.contains(document.getElementById("material-offline-study"))).toBe(true);
   expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(true);
   expect(within(backup).getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
@@ -194,5 +194,5 @@ it("keeps file-backed text materials working without PDF-only controls", async (
   expect(screen.getByRole("heading", { name: "Gemini study assistant" })).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   expect(await screen.findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
-  expect(within(document.getElementById("material-file-actions")!).getByRole("button", { name: "Open" })).toBeTruthy();
+  expect(within(document.getElementById("material-file-actions")!.closest("details")!).getByRole("button", { name: "Open" })).toBeTruthy();
 });

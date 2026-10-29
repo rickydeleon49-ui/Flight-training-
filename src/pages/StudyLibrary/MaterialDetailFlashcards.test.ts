@@ -777,6 +777,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const startHere = document.getElementById("material-start-here")!;
     const fileActions = document.getElementById("material-file-actions")!;
+    const fileMenu = fileActions.closest("details")!;
     const studyGuide = document.getElementById("material-study-guide")!;
     const flashcards = document.getElementById("material-flashcards")!;
     const practiceTest = document.getElementById("material-practice-test")!;
@@ -791,7 +792,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const askCard = document.getElementById("material-ask-gemini")!;
     expect(askCard).toBeTruthy();
-    const order = [startHere, studyGuide, flashcards, practiceTest, fileActions, backup];
+    const order = [startHere, studyGuide, flashcards, practiceTest, document.getElementById("material-file-details")!, backup];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),
@@ -799,8 +800,8 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     }
 
     fireEvent.click(screen.getByRole("tab", { name: "More" }));
-    expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
-    expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Split automatically" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });
 
   it("the 'Your own' card and 'write your own' buttons are gone, while an already-saved hand-written guide displays and is editable", async () => {
@@ -935,6 +936,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     const flashcards = document.getElementById("material-flashcards")!;
     const practiceTest = document.getElementById("material-practice-test")!;
     const fileActions = document.getElementById("material-file-actions")!;
+    const fileMenu = fileActions.closest("details")!;
 
     expect(within(studyGuide).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
     expect(within(flashcards).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
@@ -954,6 +956,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     fireEvent.click(guideSplitBtn);
     await waitFor(() => expect(document.activeElement).toBe(fileActions));
     expect(fileActions.scrollIntoView).toHaveBeenCalled();
+    expect(fileMenu.open).toBe(true);
 
     document.body.focus();
     fireEvent.click(screen.getByRole("tab", { name: "Study" }));
@@ -968,7 +971,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await waitFor(() => expect(document.activeElement).toBe(fileActions));
 
     fireEvent.click(screen.getByRole("tab", { name: "More" }));
-    expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
-    expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Split automatically" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });
 });

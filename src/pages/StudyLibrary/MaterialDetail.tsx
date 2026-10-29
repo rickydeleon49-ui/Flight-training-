@@ -16,7 +16,6 @@ import {
   DocumentIcon,
   Dialog,
   EmptyState,
-  ExternalIcon,
   PlusIcon,
   Select,
   TextArea,
@@ -236,6 +235,10 @@ function MaterialDetailPage() {
     const destination = tabForAnchor(pendingJump);
     if (destination && tab !== destination) return;
     if (!document.getElementById(pendingJump)) return;
+    if (pendingJump === "material-file-actions") {
+      const menu = document.getElementById(pendingJump)?.closest("details");
+      if (menu) menu.open = true;
+    }
     const frame = requestAnimationFrame(() => {
       // The reading panel focuses its ready control after its async status arrives.
       if (pendingJump === "read-pdf-text") document.getElementById(pendingJump)?.scrollIntoView?.({ block: "start" });
@@ -596,6 +599,7 @@ function MaterialDetailPage() {
       await openDocument(material.filePath);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));
+      jumpTo("material-file-details");
     }
   };
 
@@ -755,7 +759,7 @@ function MaterialDetailPage() {
                 <Button onClick={() => setSplitting(true)}>Split automatically</Button>
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
-              {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); jumpToFileSection(); }}>Open</Button> : null}
+              {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
               <Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
               <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
             </MaterialActionsMenu>
@@ -915,7 +919,7 @@ function MaterialDetailPage() {
                 ) : null}
                 <CardBody>
                   {isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
-                    <button className="button button--ghost" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</button>
+                    <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
                   </p> : null}
                   {isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
@@ -1645,8 +1649,8 @@ function MaterialDetailPage() {
           {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
           <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
           {material.filePath ? (
-            <div id="material-file-actions" tabIndex={-1}><Card>
-              <CardHeader title={isPdf ? "Split or take out a chapter" : "File"} />
+            <div id="material-file-details" tabIndex={-1}><Card>
+              <CardHeader title="File details" />
               <CardBody>
                 <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
                   {fileMissing ? <AlertIcon /> : <DocumentIcon />}
@@ -1659,28 +1663,6 @@ function MaterialDetailPage() {
                     </p>
                   </div>
                   <div className="file-row__actions">
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                        <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                        {!tipsHidden ? <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p> : null}
-                      </div>
-                    ) : null}
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                      <Button variant="secondary" onClick={() => setSplittingManually(true)}>
-                        Take out a chapter
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p> : null}
-                      </div>
-                    ) : null}
-                    {!fileMissing && canHandleFiles() ? (
-                      <div className="file-action-tip">
-                      <Button onClick={open}>
-                        <ExternalIcon size={15} /> Open
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page." : "Opens the file in its usual app on your Mac."}</p> : null}
-                      </div>
-                    ) : null}
                     {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
                   </div>
                 </div>
@@ -1953,7 +1935,7 @@ function MaterialDetailPage() {
                       materialId={material.id}
                       relativePath={material.filePath ?? null}
                       context={pdfContext}
-                      buttonLabel="Ask about this PDF"
+                      buttonLabel="Ask"
                       evidenceMode
                     />
                   </>
