@@ -1,3 +1,4 @@
+import { guideCardRecovery, type RecoveryHistoryRow } from "../guideCardRecovery";
 import { collectQuestionSources, readCardPageSource } from "../studyPageSources";
 import { readPdfItemProvenance } from "../pdfKitSources";
 import { nowIso } from "@/lib/dates";
@@ -50,12 +51,14 @@ import {
   readCurrentSnapshot,
   snapshotFromHistoryRow,
 } from "../practiceAuthoring";
-import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
+import { generatedPage, needsRegenerationReview, preserveOtherStudyContent } from "@/logic/studySetEditing";
 import {
   decodeStoredRow,
+  nextOfStored,
   SET_COLUMNS,
   validateRetiredList,
   type StoredSetRow,
+  type NextStudySet,
   type StudySetSaveOperation,
   type StudySetSaveResult,
 } from "../studySetTransaction";
@@ -456,29 +459,30 @@ export function documentRepository(db: SqlDatabase) {
      * she retired is carried over. A set holding her own items is never
      * replaced here: regeneration reviews it with her first.
      */
-    async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">, guideJobId?: string): Promise<void> {
+    async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">, guideJobId?: string, kind?: "study-aid" | "flashcards"): Promise<void> {
       const current = await readStoredSet(input.sourceMaterialId);
       if (current && needsRegenerationReview(storedStudySet(input.sourceMaterialId, current))) {
         throw new Error(REVIEW_FIRST_MESSAGE);
       }
       const retired = current ? validateRetiredList(JSON.parse(current.retired_json)) : [];
+      const next: NextStudySet = {
+        title: input.title,
+        summary: input.summary,
+        summaryOrigin: null,
+        sections: input.sections.map(({ heading, body }) => ({ heading, body })),
+        // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
+        flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) })),
+        sourceNotes: input.sourceNotes,
+        provider: "gemini",
+        model: input.model,
+        retired,
+      };
       await saveStudySet({
         operationId: newId(),
         materialId: input.sourceMaterialId,
         reason: current ? "regenerate" : "create",
         expected: current,
-        next: {
-          title: input.title,
-          summary: input.summary,
-          summaryOrigin: null,
-          sections: input.sections.map(({ heading, body }) => ({ heading, body })),
-          // A page outside the PDF range can't be opened or reviewed; it is kept as no page.
-          flashcards: input.flashcards.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) })),
-          sourceNotes: input.sourceNotes,
-          provider: "gemini",
-          model: input.model,
-          retired,
-        },
+        next: kind ? preserveOtherStudyContent(next, current ? nextOfStored(current) : null, kind) : next,
       }, guideJobId);
     },
 
@@ -513,6 +517,14 @@ export function documentRepository(db: SqlDatabase) {
         }
       }
       return result;
+    },
+
+    /** Read-only offer; the atomic save checks the same history again. */
+    async readGuideCardRecovery(materialId: Id) {
+      const stored = await readStoredSet(materialId);
+      const history = await db.select<RecoveryHistoryRow>("SELECT id, kind, reason, previous_json FROM study_set_history WHERE material_id = ? AND kind = 'study_set' ORDER BY rowid DESC", [materialId]);
+      const next = guideCardRecovery(stored, history);
+      return stored && next ? { stored, next } : null;
     },
 
     /** Earlier versions of a material's study set, newest first. */

@@ -218,7 +218,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     await act(async () => answer.resolve({ ...AID, jobId: JOB, checkpointed: true }));
     expect(await screen.findByText(/before your cancel reached it/)).toBeTruthy();
     expect(await studySets()).toEqual([]);
-    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save the new study guide" }));
     await screen.findByRole("heading", { name: "Synthetic guide" });
     expect(await studySets()).toEqual([["mat-a", "Synthetic guide"]]);
   });
@@ -233,7 +233,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     expect(await screen.findByText(/did not answer within the 5 minutes/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     await screen.findByRole("heading", { name: "Synthetic guide" });
     expect(generate).toHaveBeenCalledTimes(2);
   });
@@ -274,7 +274,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     expect(screen.getByText("Gemini is reviewing this document")).toBeTruthy();
     expect(screen.queryByText(/stopped before Gemini's answer arrived/)).toBeNull();
     await act(async () => answer.resolve(AID));
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     await screen.findByRole("heading", { name: "Synthetic guide" });
     expect(await studySets()).toEqual([["mat-a", "Synthetic guide"]]);
   }, 10000);

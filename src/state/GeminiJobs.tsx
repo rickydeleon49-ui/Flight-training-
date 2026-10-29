@@ -304,14 +304,12 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   if (kind === "study-aid") {
     const s = saved as AiStudySet;
     const a = answer as GeneratedStudyAid;
-    // Compared as a plain save stores it: only these fields, and a page outside
-    // the PDF range as no page, so a committed save is recognised on retry.
+    // A guide save changes only guide fields. Existing cards are independent,
+    // so they cannot prevent recognition of a committed guide save.
     const sections = (list: AiStudySet["sections"]) => list.map(({ heading, body }) => ({ heading, body }));
-    const cards = (list: AiStudySet["flashcards"]) =>
-      list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
     return (
-      canonical([s.title, s.summary, sections(s.sections), cards(s.flashcards), s.sourceNotes, s.model]) ===
-      canonical([a.title, a.summary, sections(a.sections), cards(a.flashcards), a.sourceNotes, a.model])
+      canonical([s.title, s.summary, sections(s.sections), s.sourceNotes, s.model]) ===
+      canonical([a.title, a.summary, sections(a.sections), a.sourceNotes, a.model])
     );
   }
   if (kind === "flashcards") {
@@ -319,7 +317,7 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
     const a = answer as GeneratedStudyAid;
     const cards = (list: AiStudySet["flashcards"]) =>
       list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
-    return canonical(cards(s.flashcards)) === canonical(cards(a.flashcards));
+    return s.model === a.model && canonical(cards(s.flashcards)) === canonical(cards(a.flashcards));
   }
   const s = saved as PracticeTest;
   const a = answer as GeneratedPracticeTest;
@@ -532,7 +530,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               flashcards: aid.flashcards,
               sourceNotes: aid.sourceNotes,
               model: aid.model,
-            }, job.sectionGuide ? job.jobId ?? undefined : undefined);
+            }, job.sectionGuide ? job.jobId ?? undefined : undefined, "study-aid");
           } else if (job.kind === "flashcards") {
             const aid = answer as GeneratedStudyAid;
             const currentSet = saved as AiStudySet | undefined;
@@ -543,8 +541,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               sections: currentSet ? currentSet.sections : [],
               flashcards: aid.flashcards,
               sourceNotes: currentSet ? currentSet.sourceNotes : aid.sourceNotes,
-              model: currentSet?.model || aid.model,
-            });
+              model: aid.model,
+            }, undefined, "flashcards");
           } else {
             const test = answer as GeneratedPracticeTest;
             await repos.documents.savePracticeTest({
@@ -974,9 +972,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           if (forgottenRef.current.has(record.id)) continue;
           try {
             const effectiveKind = effectiveJobKind(record);
-            // A reviewed practice save settles through its receipt, even if
-            // Replace everything happened to equal the provider's whole answer.
-            if (effectiveKind === "practice-test" && reviewedSaveOf(record.id)?.kind === "practice") continue;
+            // Reviewed saves settle through their exact checkpoint, even when
+            // their requested part happens to equal the provider's answer.
+            if (reviewedSaveOf(record.id)) continue;
             const saved = await savedContent(repositoriesRef.current, effectiveKind, record.materialId);
             if (emptyCards(effectiveKind, record.result)) continue;
             if (alreadySaved(effectiveKind, saved, record.result)) applied.add(record.id);

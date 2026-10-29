@@ -1,3 +1,4 @@
+import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -476,6 +477,28 @@ function MaterialDetailPage() {
                 ? { text: "Gemini is still checking earlier work. Try again in a moment." }
                 : null;
   const isGeneratingAny = geminiBusy;
+  // What a send will replace, and where earlier versions really can be found:
+  // Previous versions lives under Edit study guide, which needs a guide.
+  const hasSavedGuide = Boolean(studySet && (studySet.summary || studySet.sections.length > 0));
+  const previousVersionsHint = hasSavedGuide ? "Earlier versions stay in Edit study guide → Previous versions. " : "";
+  const savedCardCount = studySet?.flashcards.length ?? 0;
+  const replaceCardsWarning = savedCardCount
+    ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. ${previousVersionsHint}`
+    : "";
+  const replaceGuideWarning = hasSavedGuide ? `This replaces your saved study guide. ${previousVersionsHint}` : "";
+  // Why Regenerate / Create is unavailable, in her words (CARDS-FIX-01).
+  const guideBlockedReason = (() => {
+    if (isOverLimit || !canOfferGemini || isGeneratingAny || !studyJob) return null;
+    if (draftWaiting(studyJob.phase)) return "A new guide is waiting above — save or discard it first.";
+    if (!studyJob.sectionGuide) return null;
+    if (studyJob.phase === "waiting-for-her" || studyJob.queueState === "waiting-for-her")
+      return "Your study guide draft above is waiting — continue or discard it first.";
+    if (studyJob.phase === "cancelled" || studyJob.queueState === "cancelled")
+      return "You stopped the study guide draft above — continue or discard it first.";
+    if (studyJob.phase === "failed" || studyJob.phase === "interrupted")
+      return "The study guide draft above didn't finish — try again or discard it first.";
+    return "Finish or discard the study guide draft above first.";
+  })();
   // Stage-appropriate recovery (GEN-REL-04): trying again goes through the
   // usual Send confirmation. A PDF already prepared with Google is reused, so
   // only the generation is repeated.
@@ -933,6 +956,24 @@ function MaterialDetailPage() {
                       />
                     ) : null
                   ) : null}
+                  {studyJob ? (
+                    <GeminiJobNotice
+                      job={studyJob}
+                      jobs={geminiJobs}
+                      onRetry={retryStudy}
+                      onReview={
+                        (setHasHerItems || studyJob.needsReview) && studyJob.answer
+                          ? () => setReviewingRegeneration(true)
+                          : undefined
+                      }
+                    />
+                  ) : null}
+                  {geminiJobs.jobs
+                    .filter((job) => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key)
+                    .map((job) => (
+                      <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
+                    ))}
+                  {guideBlockedReason ? <p className="tiny muted">{guideBlockedReason}</p> : null}
                   {studySet && (studySet.summary || guideSections.length > 0) ? (
                     <div className="stack stack--5">
                       <div className="ai-disclaimer">
@@ -1022,23 +1063,6 @@ function MaterialDetailPage() {
                       ) : null}
                     </div>
                   ) : null}
-                  {studyJob ? (
-                    <GeminiJobNotice
-                      job={studyJob}
-                      jobs={geminiJobs}
-                      onRetry={retryStudy}
-                      onReview={
-                        (setHasHerItems || studyJob.needsReview) && studyJob.answer
-                          ? () => setReviewingRegeneration(true)
-                          : undefined
-                      }
-                    />
-                  ) : null}
-                  {geminiJobs.jobs
-                    .filter((job) => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key)
-                    .map((job) => (
-                      <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
-                    ))}
                   {reviewingRegeneration &&
                   studyJob?.answer &&
                   (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
@@ -1061,6 +1085,9 @@ function MaterialDetailPage() {
             </div>
           ) : null}
 
+          {material.filePath || (studySet && studySet.flashcards.length > 0) ? null : (
+            <GuideCardRecoveryNotice materialId={material.id} standalone />
+          )}
           {material.filePath || (studySet && studySet.flashcards.length > 0) ? (
             <div id="material-flashcards" tabIndex={-1}>
               <Card>
@@ -1125,6 +1152,7 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
+                  <GuideCardRecoveryNotice materialId={material.id} />
                   {isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
@@ -1888,7 +1916,7 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingAi}
         title="Send this file to Google?"
-        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${replaceGuideWarning}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingAi(false))}
@@ -1923,7 +1951,7 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingCards}
         title="Send this file to Google?"
-        message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
+        message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${replaceCardsWarning}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingCards(false))}

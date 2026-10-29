@@ -9,9 +9,10 @@ import {
   mergeRegeneration,
   needsRegenerationReview,
   nextSetOf,
+  preserveOtherStudyContent,
   regenerationPreview,
 } from "./studySetEditing";
-import { validateNextSet } from "@/data/studySetTransaction";
+import { validateNextSet, type NextStudySet } from "@/data/studySetTransaction";
 
 const generated = (overrides: Partial<AiStudySet> = {}): AiStudySet => ({
   sourceMaterialId: "mat-a",
@@ -177,4 +178,27 @@ it("labels authors truthfully and never as Gemini", () => {
   expect(itemAuthorLabel("user")).toBe("Written by you");
   expect(itemAuthorLabel("instructor")).toBe("Instructor correction");
   expect(itemAuthorLabel("gemini")).toBe("Author unknown");
+});
+
+// CARDS-FIX-01: a guide has no generated cards; neither review mode may erase them.
+it.each(["keep", "replace"] as const)("a guide-only merge keeps every existing card (%s)", async (mode) => {
+  const current = authoringStateOf(generated());
+  const preview = await regenerationPreview(current, { summary: "New guide", sections: [], flashcards: [] });
+  const merged = mergeRegeneration(current, resolveRegeneration(preview, new Map()), mode, false);
+  expect(merged.items.filter(item => item.kind === "card")).toEqual(current.items.filter(item => item.kind === "card"));
+});
+
+describe("CARDS-FIX-01: preserveOtherStudyContent", () => {
+  const set = (flashcards: NextStudySet["flashcards"], summary = "Guide"): NextStudySet => ({
+    title: "T", summary, summaryOrigin: null, sections: [], flashcards, sourceNotes: "", provider: "gemini", model: "m", retired: [],
+  });
+  const saved = [{ front: "Saved", back: "A", sourcePage: null }];
+  const fresh = [{ front: "New", back: "B", sourcePage: 1 }];
+  it("a guide save keeps saved cards over generated ones", () => {
+    expect(preserveOtherStudyContent(set(fresh, "New"), set(saved), "study-aid").flashcards).toEqual(saved);
+  });
+  it("a guide save keeps generated cards when none are saved", () => {
+    expect(preserveOtherStudyContent(set(fresh, "New"), set([]), "study-aid").flashcards).toEqual(fresh);
+    expect(preserveOtherStudyContent(set(fresh, "New"), null, "study-aid").flashcards).toEqual(fresh);
+  });
 });

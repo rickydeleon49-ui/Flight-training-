@@ -415,3 +415,295 @@ fn an_altered_history_table_is_refused() {
         .unwrap_err()
         .contains("idx_study_set_history"));
 }
+
+#[test]
+fn cards_fix_guide_wipe_recovery_is_atomic_idempotent_and_backup_valid() {
+    let mut conn = database();
+    let mut original = manual_set();
+    original["provider"] = json!("gemini");
+    save_on(
+        &mut conn,
+        &operation(100, "create", Value::Null, original.clone()),
+        NOW,
+    )
+    .unwrap();
+    let before = row(&mut conn);
+    let mut guide = original.clone();
+    guide["summary"] = json!("New guide");
+    guide["flashcards"] = json!([]);
+    save_on(
+        &mut conn,
+        &operation(101, "regenerate", before, guide.clone()),
+        LATER,
+    )
+    .unwrap();
+    let wiped = row(&mut conn);
+    let mut restored = guide.clone();
+    restored["flashcards"] = original["flashcards"].clone();
+    let mut wrong = restored.clone();
+    wrong["summary"] = json!("Wrong guide");
+    assert_eq!(
+        save_on(
+            &mut conn,
+            &operation(102, "recover-cards", wiped.clone(), wrong),
+            LATER
+        ),
+        Err(StudySetErrorCode::StaleContent)
+    );
+    let restore = operation(103, "recover-cards", wiped, restored);
+    assert_eq!(save_on(&mut conn, &restore, LATER).unwrap().status, "saved");
+    assert_eq!(
+        save_on(&mut conn, &restore, LATER).unwrap().status,
+        "already_saved"
+    );
+    let after = row(&mut conn);
+    assert_eq!(
+        parsed(after.as_object().unwrap(), "flashcards_json"),
+        original["flashcards"]
+    );
+    assert_eq!(after["summary"], guide["summary"]);
+    assert_eq!(history(&conn).len(), 2);
+    assert_eq!(history(&conn)[1].1, "restore");
+    crate::backup::verify_application_connection(&conn).unwrap();
+}
+
+#[test]
+fn cards_fix_deliberate_clear_or_new_cards_never_recovers() {
+    for reason in ["delete", "edit", "restore", "regenerate"] {
+        let mut conn = database();
+        let mut original = manual_set();
+        original["provider"] = json!("gemini");
+        save_on(
+            &mut conn,
+            &operation(110, "create", Value::Null, original.clone()),
+            NOW,
+        )
+        .unwrap();
+        let before = row(&mut conn);
+        let mut clear = original.clone();
+        clear["flashcards"] = json!([]);
+        // A regeneration without a changed guide is not the guide-wipe pattern.
+        if reason != "regenerate" {
+            clear["summary"] = json!("Deliberately changed");
+        }
+        save_on(
+            &mut conn,
+            &operation(111, reason, before, clear.clone()),
+            LATER,
+        )
+        .unwrap();
+        let current = row(&mut conn);
+        let mut next = clear;
+        next["flashcards"] = original["flashcards"].clone();
+        assert_eq!(
+            save_on(
+                &mut conn,
+                &operation(112, "recover-cards", current.clone(), next),
+                LATER
+            ),
+            Err(StudySetErrorCode::StaleContent)
+        );
+        assert_eq!(row(&mut conn), current);
+    }
+}
+
+#[test]
+fn cards_fix_recovery_never_crosses_materials_or_overwrites_new_cards() {
+    let mut conn = database();
+    let mut original = manual_set();
+    original["provider"] = json!("gemini");
+    save_on(
+        &mut conn,
+        &operation(120, "create", Value::Null, original.clone()),
+        NOW,
+    )
+    .unwrap();
+    let before = row(&mut conn);
+    let mut guide = original.clone();
+    guide["summary"] = json!("New guide");
+    guide["flashcards"] = json!([]);
+    save_on(
+        &mut conn,
+        &operation(121, "regenerate", before, guide.clone()),
+        LATER,
+    )
+    .unwrap();
+    let wiped = row(&mut conn);
+    conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('other','Other',?1,?1)", [NOW]).unwrap();
+    let mut create = operation(122, "create", Value::Null, guide.clone());
+    create.material_id = "other".into();
+    save_on(&mut conn, &create, NOW).unwrap();
+    let tx = conn.transaction().unwrap();
+    let other = read_row(&tx, "other").unwrap();
+    assert!(guide_card_recovery(&tx, "other", other.as_ref())
+        .unwrap()
+        .is_none());
+    tx.rollback().unwrap();
+    let mut restored = guide;
+    restored["flashcards"] = original["flashcards"].clone();
+    let retry = operation(123, "recover-cards", wiped.clone(), restored.clone());
+    save_on(&mut conn, &operation(124, "edit", wiped, restored), LATER).unwrap();
+    assert_eq!(
+        save_on(&mut conn, &retry, LATER),
+        Err(StudySetErrorCode::StaleContent)
+    );
+}
+
+#[test]
+fn cards_fix_later_practice_history_does_not_hide_guide_recovery() {
+    let mut conn = database();
+    let mut original = manual_set();
+    original["provider"] = json!("gemini");
+    save_on(
+        &mut conn,
+        &operation(130, "create", Value::Null, original.clone()),
+        NOW,
+    )
+    .unwrap();
+    let before = row(&mut conn);
+    let mut guide = original;
+    guide["summary"] = json!("New guide");
+    guide["flashcards"] = json!([]);
+    save_on(
+        &mut conn,
+        &operation(131, "regenerate", before, guide),
+        LATER,
+    )
+    .unwrap();
+    // The practice payload belongs to the practice validator, not this detector.
+    conn.execute("INSERT INTO study_set_history (id,material_id,kind,reason,previous_json,provider,created_at) VALUES (?1,?2,'practice','edit','{}','gemini',?3)", params![op_id(132),M,LATER]).unwrap();
+    let tx = conn.transaction().unwrap();
+    let current = read_row(&tx, M).unwrap();
+    assert!(guide_card_recovery(&tx, M, current.as_ref())
+        .unwrap()
+        .is_some());
+    tx.rollback().unwrap();
+}
+
+/// Replays the shared CARDS-FIX-01 vector (also replayed by the TypeScript
+/// tests), returning the vector and the wiped row.
+fn replay_recovery_vector(conn: &mut Connection) -> (Value, Value) {
+    let vector: Value =
+        serde_json::from_str(include_str!("../fixtures/cards-recovery/chain.json")).unwrap();
+    assert_eq!(vector["materialId"], M);
+    for (i, step) in vector["steps"].as_array().unwrap().iter().enumerate() {
+        let expected = row(conn);
+        let op = operation(
+            140 + i as u32,
+            step["reason"].as_str().unwrap(),
+            expected,
+            step["next"].clone(),
+        );
+        assert_eq!(save_on(conn, &op, LATER).unwrap().status, "saved");
+    }
+    let current = row(conn);
+    (vector, current)
+}
+
+#[test]
+fn cards_fix_shared_vector_chain_restores_the_nearest_generated_cards() {
+    let mut conn = database();
+    let (vector, wiped) = replay_recovery_vector(&mut conn);
+    // Further guide regenerations after the wipe still leave the offer, and
+    // it names the cards just before the wipe, not the older ones.
+    let tx = conn.transaction().unwrap();
+    let current = read_row(&tx, M).unwrap();
+    let offer = guide_card_recovery(&tx, M, current.as_ref())
+        .unwrap()
+        .unwrap();
+    tx.rollback().unwrap();
+    let recovered = validate_next(&vector["recovered"]).unwrap();
+    assert_eq!(offer, recovered);
+    // The operation the TypeScript notice builds from the same vector.
+    let ts_built = decode_operation(&json!({
+        "operationId": op_id(150), "materialId": M, "reason": "recover-cards",
+        "expected": wiped, "next": vector["recovered"],
+    }))
+    .unwrap();
+    assert_eq!(
+        save_on(&mut conn, &ts_built, LATER).unwrap().status,
+        "saved"
+    );
+    let after = row(&mut conn);
+    let cards = parsed(after.as_object().unwrap(), "flashcards_json");
+    assert_eq!(cards, vector["recovered"]["flashcards"]);
+    assert!(cards
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|card| card.get("origin").is_none()));
+    assert_eq!(after["summary"], "Fifth guide.");
+    let tx = conn.transaction().unwrap();
+    let current = read_row(&tx, M).unwrap();
+    assert!(guide_card_recovery(&tx, M, current.as_ref())
+        .unwrap()
+        .is_none());
+    tx.rollback().unwrap();
+    crate::backup::verify_application_connection(&conn).unwrap();
+}
+
+#[test]
+fn cards_fix_plain_generated_cards_are_restored() {
+    let mut conn = database();
+    let mut original = manual_set();
+    original["provider"] = json!("gemini");
+    original["summaryOrigin"] = Value::Null;
+    original["sections"] = json!([{"heading": "Crosswind", "body": "Aileron into the wind."}]);
+    original["flashcards"] = json!([{"front": "Generated?", "back": "Yes.", "sourcePage": 4}]);
+    save_on(
+        &mut conn,
+        &operation(160, "create", Value::Null, original.clone()),
+        NOW,
+    )
+    .unwrap();
+    let before = row(&mut conn);
+    let mut guide = original.clone();
+    guide["summary"] = json!("New guide");
+    guide["flashcards"] = json!([]);
+    save_on(
+        &mut conn,
+        &operation(161, "regenerate", before, guide.clone()),
+        LATER,
+    )
+    .unwrap();
+    let wiped = row(&mut conn);
+    let mut restored = guide;
+    restored["flashcards"] = original["flashcards"].clone();
+    let restore = operation(162, "recover-cards", wiped, restored);
+    assert_eq!(save_on(&mut conn, &restore, LATER).unwrap().status, "saved");
+    assert_eq!(
+        parsed(row(&mut conn).as_object().unwrap(), "flashcards_json"),
+        original["flashcards"]
+    );
+}
+
+#[test]
+fn cards_fix_restore_with_a_missing_visual_region_changes_nothing() {
+    let mut conn = database();
+    let (vector, _) = replay_recovery_vector(&mut conn);
+    // The cards before the wipe pointed at a picture region that is gone.
+    let mut cards = vector["recovered"]["flashcards"].clone();
+    cards[0]["visualRegionId"] = json!("ab".repeat(32));
+    let (id, previous): (String, String) = conn
+        .query_row(
+            "SELECT id, previous_json FROM study_set_history WHERE material_id=?1 AND previous_json LIKE '%What is Class B?%'",
+            [M],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    let mut previous: Value = serde_json::from_str(&previous).unwrap();
+    previous["flashcards_json"] = json!(cards.to_string());
+    conn.execute(
+        "UPDATE study_set_history SET previous_json=?1 WHERE id=?2",
+        params![previous.to_string(), id],
+    )
+    .unwrap();
+    let current = row(&mut conn);
+    let entries = history(&conn).len();
+    let mut next = vector["recovered"].clone();
+    next["flashcards"] = cards;
+    let restore = operation(170, "recover-cards", current.clone(), next);
+    assert!(save_on(&mut conn, &restore, LATER).is_err());
+    assert_eq!(row(&mut conn), current);
+    assert_eq!(history(&conn).len(), entries);
+}

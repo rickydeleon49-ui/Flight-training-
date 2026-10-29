@@ -231,3 +231,21 @@ describe("GEN-02d: the generate-later queue", () => {
     noProviderText();
   });
 });
+
+describe("CARDS-FIX-01: a disabled guide button always says why", () => {
+  const interrupted = (): gemini.GeminiJobRecord => {
+    const record = waitingRecord();
+    return { ...record, draft: { ...record.draft!, queueState: "running" } } as gemini.GeminiJobRecord;
+  };
+  it.each([
+    ["waiting", () => waitingRecord(), "Your study guide draft above is waiting — continue or discard it first."],
+    ["cancelled", () => cancelledRecord(), "You stopped the study guide draft above — continue or discard it first."],
+    ["interrupted", interrupted, "The study guide draft above didn't finish — try again or discard it first."],
+  ] as const)("%s draft", async (_label, record, reason) => {
+    vi.mocked(gemini.listGeminiJobs).mockResolvedValue([record()]);
+    await open();
+    const button = await screen.findByRole("button", { name: /Create study guide|Regenerate/ });
+    await waitFor(() => expect(button.hasAttribute("disabled")).toBe(true));
+    expect(await screen.findByText(reason)).toBeTruthy();
+  });
+});

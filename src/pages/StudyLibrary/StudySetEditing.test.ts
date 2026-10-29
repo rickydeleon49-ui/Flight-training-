@@ -273,16 +273,15 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await open("/study/mat-a");
     await click(screen.findByRole("button", { name: "Regenerate" }, SLOW_RUNNER));
     await click(screen.findByRole("button", { name: "Send to Gemini" }, SLOW_RUNNER));
-    await click(screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
     const review = await dialog("Review the new study guide");
-    await review.findByText(/Bring it back: Card: What does the rudder do\?/, undefined, SLOW_RUNNER);
-    expect(review.getByLabelText(/Keep my items/)).toHaveProperty("checked", true);
+    expect(review.queryByText(/Bring it back: Card:/)).toBeNull();
+    expect(await review.findByLabelText(/Keep my items/, undefined, SLOW_RUNNER)).toHaveProperty("checked", true);
     await click(review.findByRole("button", { name: "Save the reviewed study guide" }));
 
     await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
     const set = await savedSet();
     expect(set.flashcards.map((card) => [card.front, card.origin ?? null])).toEqual([
-      ["When do you flare?", null],
       ["Which wing is lowered?", "user"],
     ]);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
@@ -301,7 +300,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await open("/study/mat-a");
     await click(screen.findByRole("button", { name: "Regenerate" }, SLOW_RUNNER));
     await click(screen.findByRole("button", { name: "Send to Gemini" }, SLOW_RUNNER));
-    await screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER);
+    await screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER);
     expect((await savedSet()).summary).toBe("Mine");
   });
 
@@ -316,7 +315,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await open("/study/mat-a");
     await click(screen.findByRole("button", { name: "Regenerate" }, SLOW_RUNNER));
     await click(screen.findByRole("button", { name: "Send to Gemini" }, SLOW_RUNNER));
-    await click(screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
     const review = await dialog("Review the new study guide");
     // The Save button shows before the comparison loads; wait for the choices.
     await review.findByLabelText(/Keep my items/, undefined, SLOW_RUNNER);
@@ -352,7 +351,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
     await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
-    expect((await savedSet()).flashcards.every((card) => card.origin === undefined)).toBe(true);
+    expect((await savedSet()).flashcards.some((card) => card.origin === "user")).toBe(true);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
   });
@@ -423,13 +422,13 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     expect((await savedSet()).summary).toBe("A new summary.");
   });
 
-  it("a regenerated card with a page outside the PDF range is reviewed and saved with no page", async () => {
+  it("a guide save ignores generated cards, including pages outside the PDF range", async () => {
     const review = await herEditThenRegenerate({
       flashcards: [{ front: "When do you flare?", back: "About ten feet up.", sourcePage: 1001 }],
     });
     fireEvent.click(review.getByRole("button", { name: "Save the reviewed study guide" }));
     await waitFor(async () => expect((await savedSet()).summary).toBe("A new summary."), SLOW_RUNNER);
-    expect((await savedSet()).flashcards.find((card) => card.front === "When do you flare?")!.sourcePage).toBeNull();
+    expect((await savedSet()).flashcards.find((card) => card.front === "When do you flare?")).toBeUndefined();
   });
 
   it("the review shows each item's full text and the earlier wording it resembles before she chooses", async () => {
@@ -459,18 +458,14 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await open("/study/mat-a");
     await click(screen.findByRole("button", { name: "Regenerate" }, SLOW_RUNNER));
     await click(screen.findByRole("button", { name: "Send to Gemini" }, SLOW_RUNNER));
-    await click(screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
     const review = await dialog("Review the new study guide");
-    const choice = within(await review.findByRole("region", { name: "Needs your choice" }, SLOW_RUNNER));
-    // The proposed answer, and the wrong answer her instructor corrected, are both shown.
-    expect(choice.getByText("Answer: It aligns the nose with runway.")).toBeTruthy();
-    expect(choice.getByText("Answer: Aligns the nose with the runway.")).toBeTruthy();
-    expect(choice.getByText(/something you corrected or rewrote/)).toBeTruthy();
-    // The held-back section shows its text; new cards show their answers.
-    const left = within(review.getByRole("region", { name: "Left out" }));
+    // Guide regeneration reviews sections; unrelated card candidates never appear.
+    expect(review.queryByRole("region", { name: "Needs your choice" })).toBeNull();
+    const left = within(await review.findByRole("region", { name: "Left out" }, SLOW_RUNNER));
     expect(left.getByText("Point the nose into the wind.")).toBeTruthy();
     const fresh = within(review.getByRole("region", { name: "New" }));
-    expect(fresh.getByText("Answer: About ten feet up.")).toBeTruthy();
+    expect(fresh.queryByText("Answer: About ten feet up.")).toBeNull();
     expect(fresh.getByText("A new summary.")).toBeTruthy();
   });
 
@@ -492,8 +487,8 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     db.saveStudySetAtomically = save;
     vi.spyOn(geminiService, "listGeminiJobs").mockResolvedValue(journalHoldsTheAnswer());
     await open("/study/mat-a");
-    await click(screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
     // The checkpoint is dropped only once the journal confirms it forgot the
     // answer, which follows the recognition above asynchronously.
@@ -550,8 +545,8 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
       await open("/study/mat-a");
       // The answer is offered again. Opening the review recognises the save it
       // already holds and confirms it, so she is never asked to choose twice.
-      await click(screen.findByRole("button", { name: "Review the new study guide and cards" }, SLOW_RUNNER));
-      await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+      await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Review the new study guide" })).toBeNull(), SLOW_RUNNER);
       expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
       const after = await savedSet();
       expect(herItems(after)).toEqual(before);
@@ -611,7 +606,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     // She leaves the answer behind instead. Neither way of not recording that
     // may throw her reviewed operation away.
     vi.mocked(geminiService.acknowledgeGeminiJob).mockRejectedValueOnce(new Error("synthetic journal write failure"));
-    await click(screen.findByRole("button", { name: "Discard the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Discard the new study guide" }, SLOW_RUNNER));
     expect(await screen.findByText(/might come back after the app restarts/, undefined, SLOW_RUNNER)).toBeTruthy();
     expect(localStorage.getItem(CHECKPOINT)).toBeTruthy();
     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValueOnce(false);
@@ -621,7 +616,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
 
     // Once it is written down, the answer is gone — and so is her save's record.
     await click(screen.findByRole("button", { name: "Try again" }, SLOW_RUNNER));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide" })).toBeNull(), SLOW_RUNNER);
     await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });
@@ -654,13 +649,13 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     // of; reading it back is what shows this answer was removed elsewhere.
     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false);
     vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([]);
-    await click(screen.findByRole("button", { name: "Discard the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Discard the new study guide" }, SLOW_RUNNER));
     await waitFor(() => expect(geminiService.acknowledgeGeminiJob).toHaveBeenCalled(), SLOW_RUNNER);
     // Confirmed absence is the answer being gone for good: the discard finishes,
     // so the operation it held is dropped and nothing is left to come back.
     await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
     expect(screen.queryByText(/might come back after the app restarts/)).toBeNull();
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });
 
@@ -668,7 +663,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await aReviewSheLeftUncommitted();
     vi.mocked(geminiService.acknowledgeGeminiJob).mockResolvedValue(false);
     vi.mocked(geminiService.listGeminiJobs).mockRejectedValue(new Error("synthetic journal read failure"));
-    await click(screen.findByRole("button", { name: "Discard the new study guide and cards" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Discard the new study guide" }, SLOW_RUNNER));
     expect(await screen.findByText(/might come back after the app restarts/, undefined, SLOW_RUNNER)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
     // A read that failed proves nothing: the answer may still be in the journal,
@@ -680,7 +675,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([]);
     await click(screen.findByRole("button", { name: "Try again" }, SLOW_RUNNER));
     await waitFor(() => expect(localStorage.getItem(CHECKPOINT)).toBeNull(), SLOW_RUNNER);
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide and cards" })).toBeNull(), SLOW_RUNNER);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Discard the new study guide" })).toBeNull(), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
   });
 });

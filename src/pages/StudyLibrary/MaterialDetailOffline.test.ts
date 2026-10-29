@@ -297,7 +297,7 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     expect((await repos.documents.listAiStudySets()).map((set) => set.title)).toEqual(["Saved VOR guide"]);
     expect(screen.getByRole("heading", { name: "Saved VOR guide" })).toBeTruthy();
     await act(async () => navigate("/study/mat-other"));
-    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide and cards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save the new study guide" }));
     await waitFor(async () => {
       const sets = await repos.documents.listAiStudySets();
       expect(sets.map((set) => [set.sourceMaterialId, set.title]).sort()).toEqual([
