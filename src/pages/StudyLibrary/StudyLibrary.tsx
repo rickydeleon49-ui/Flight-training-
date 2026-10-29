@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -79,6 +79,9 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
 const STATUS_VALUES = STATUS_FILTERS.map((filter) => filter.value);
 const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
 const MATERIAL_PAGE_SIZE = 100;
+/** Links that name the reference shelf (`/study#references`) open it. */
+export const REFERENCE_SHELF_ID = "references";
+const SHELF_STATES = ["open", "closed"] as const;
 
 export function StudyLibrary() {
   const { data, dataRevision, mutate, repositories } = useAppData();
@@ -116,6 +119,32 @@ export function StudyLibrary() {
     next.delete("q");
     setParams(next, { replace: true });
   }, [handedOver, params, setParams, setSearch]);
+  // Her own materials come first; the FAA books and the ACS lookup wait in one
+  // shelf below them, closed until she opens it (kept while the app is open).
+  const [shelf, setShelf] = useRememberedState<(typeof SHELF_STATES)[number]>(
+    "library.referenceShelf", "closed", isOneOf(SHELF_STATES),
+  );
+  const location = useLocation();
+  // Once per arriving link, so typing afterwards is left alone.
+  const shelfLinkFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (location.hash !== `#${REFERENCE_SHELF_ID}` || shelfLinkFor.current === location.key) return;
+    shelfLinkFor.current = location.key;
+    setShelf("open");
+    setSearch("");
+  }, [location.hash, location.key, setShelf, setSearch]);
+  useEffect(() => {
+    if (location.hash === `#${REFERENCE_SHELF_ID}` && shelf === "open") {
+      document.getElementById(REFERENCE_SHELF_ID)?.scrollIntoView?.({ block: "start" });
+    }
+  }, [location.hash, location.key, shelf]);
+  const searchBox = useRef<HTMLInputElement>(null);
+  const searchJustFocused = useRef(false);
+  const moreMenu = useRef<HTMLDetailsElement>(null);
+  const fromMoreMenu = (open: () => void) => () => {
+    if (moreMenu.current) moreMenu.current.open = false;
+    open();
+  };
   const [sort, setSort] = useRememberedState<MaterialSort>(
     "library.sort", "recent", isOneOf(SORT_VALUES),
   );
@@ -224,15 +253,17 @@ export function StudyLibrary() {
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
-            <Link to="/study/history" className="button button--secondary">
-              Practice history
-            </Link>
-            <Button variant="secondary" onClick={() => setExportingHandouts(true)} disabled={exportSources.length === 0}>
-              Export handout…
-            </Button>
-            <Button onClick={() => setImporting(true)} disabled={importing}>
-              <NoteIcon size={16} /> Import study packet…
-            </Button>
+            <details ref={moreMenu} className="library__actions-more">
+              <summary className="button button--secondary">More</summary>
+              <div className="library__actions-menu">
+                <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
+                  <NoteIcon size={16} /> Import study packet…
+                </Button>
+                <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
+                  Export handout…
+                </Button>
+              </div>
+            </details>
             <Button variant="primary" onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button>
@@ -291,6 +322,7 @@ export function StudyLibrary() {
               <SearchIcon size={16} />
             </span>
             <TextInput
+              ref={searchBox}
               value={search}
               placeholder={offlineStudyEnabled() ? "Search titles, PDFs, notes and homework" : "Search titles, notes and tags"}
               aria-label="Search your library"
@@ -298,8 +330,34 @@ export function StudyLibrary() {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
+              // Coming back to remembered words, typing replaces them. WebKit
+              // drops a focus selection on the click's mouseup, so that one
+              // mouseup is skipped.
+              onFocus={(e) => {
+                e.currentTarget.select();
+                searchJustFocused.current = true;
+              }}
+              onMouseUp={(e) => {
+                if (searchJustFocused.current) e.preventDefault();
+                searchJustFocused.current = false;
+              }}
+              onBlur={() => { searchJustFocused.current = false; }}
+              onKeyDown={() => { searchJustFocused.current = false; }}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {search ? (
+              <button
+                type="button"
+                className="search-field__clear"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearch("");
+                  searchBox.current?.focus();
+                }}
+              >
+                ×
+              </button>
+            ) : null}
           </div>
           <Select
             aria-label="Filter by topic"
@@ -346,9 +404,6 @@ export function StudyLibrary() {
           ))}
         </div>
       ) : null}
-
-      {!search.trim() ? <FaaReferences /> : null}
-      {!search.trim() ? topicPanels : null}
 
       {!hasAny ? (
         <Card>
@@ -408,6 +463,25 @@ export function StudyLibrary() {
           ) : null}
         </>
       )}
+
+      {!search.trim() ? (
+        <details
+          id={REFERENCE_SHELF_ID}
+          className="library__shelf"
+          open={shelf === "open"}
+          onToggle={(e) => {
+            const next = e.currentTarget.open ? "open" : "closed";
+            if (next !== shelf) setShelf(next);
+          }}
+        >
+          <summary className="library__shelf-summary">References and ACS lookup</summary>
+          <p className="tiny muted">Optional FAA books, and a finder for the ACS codes on a knowledge-test report.</p>
+          <div className="library__shelf-body">
+            <FaaReferences />
+            {topicPanels}
+          </div>
+        </details>
+      ) : null}
 
       {titleMatchesSearch ? (
       <DocumentSearchPanel onMatchesChange={onMatchesChange} query={search} materials={filtered} materialFiltersActive={status !== "all" || !!topic || !!type} />

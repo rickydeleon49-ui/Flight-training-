@@ -31,7 +31,7 @@ const PDF_STEPS: Array<{ title: string; text: string }> = [
 ];
 
 /** How a tour line's control is found on the Library tab. */
-export type HowToControl = "tab" | "link" | "button" | "field" | "heading";
+export type HowToControl = "tab" | "link" | "button" | "field" | "heading" | "disclosure";
 
 export interface HowToItem { label: string; control: HowToControl; text: string }
 
@@ -41,7 +41,7 @@ export const STUDY_LIBRARY_TOUR: Array<{ title: string; items: HowToItem[] }> = 
     items: [
       { label: "Library", control: "tab", text: "all your materials." },
       { label: "Review due", control: "tab", text: "flashcards that are ready to review today." },
-      { label: "History", control: "tab", text: "the flashcard reviews you've done." },
+      { label: "History", control: "tab", text: "the flashcard reviews you've done, with a link to your practice test scores." },
       { label: "How to", control: "tab", text: "this page." },
     ],
   },
@@ -49,10 +49,10 @@ export const STUDY_LIBRARY_TOUR: Array<{ title: string; items: HowToItem[] }> = 
     title: "Buttons at the top",
     items: [
       { label: "Homework", control: "link", text: "your homework activities, at your pace." },
-      { label: "Practice history", control: "link", text: "scores from practice tests you've finished." },
-      { label: "Export handout…", control: "button", text: "save study material as a handout to print or share." },
-      { label: "Import study packet…", control: "button", text: "bring in a study packet file someone made for you." },
       { label: "Add material", control: "button", text: "add a PDF, note or handout to your library." },
+      { label: "More", control: "disclosure", text: "opens two less-used choices: Import study packet… and Export handout…." },
+      { label: "Import study packet…", control: "button", text: "in More: bring in a study packet file someone made for you." },
+      { label: "Export handout…", control: "button", text: "in More: save study material as a handout to print or share." },
     ],
   },
   {
@@ -76,10 +76,11 @@ export const STUDY_LIBRARY_TOUR: Array<{ title: string; items: HowToItem[] }> = 
     ],
   },
   {
-    title: "Also on the Library tab",
+    title: "Below your materials",
     items: [
-      { label: "FAA references", control: "heading", text: "optional FAA books; add your own PDFs to study them without internet." },
-      { label: "Find study materials for missed topics", control: "heading", text: "enter the ACS codes from your knowledge-test report to find materials tagged with them." },
+      { label: "References and ACS lookup", control: "disclosure", text: "a folded shelf under your materials; open it for the two tools below." },
+      { label: "FAA references", control: "heading", text: "in the shelf: optional FAA books; add your own PDFs to study them without internet." },
+      { label: "Find study materials for missed topics", control: "heading", text: "in the shelf: enter the ACS codes from your knowledge-test report to find materials tagged with them." },
     ],
   },
 ];

@@ -3,6 +3,7 @@ import type {
   InputHTMLAttributes,
   ReactElement,
   ReactNode,
+  Ref,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
@@ -70,7 +71,7 @@ export function Field({ label, hint, error, full = false, children }: FieldProps
   );
 }
 
-export const TextInput = (props: InputHTMLAttributes<HTMLInputElement>) => (
+export const TextInput = (props: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) => (
   <input className="input" {...props} />
 );
 

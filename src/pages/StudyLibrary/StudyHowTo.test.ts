@@ -144,6 +144,7 @@ it("names only controls that exist in the Study Library, so the tour can't drift
       case "link": return screen.getByRole("link", { name: label });
       case "button": return screen.getByRole("button", { name: label });
       case "field": return screen.getByLabelText(label);
+      case "disclosure": return screen.getByText(label, { selector: "summary" });
       default: return screen.getByRole("heading", { name: label });
     }
   };

@@ -393,3 +393,19 @@ it("keeps the existing cover after a click or a small slip, and draws only on a 
   fireEvent.pointerUp(svg, { clientX: 90, clientY: 80, pointerId: 1 });
   expect(onDraw).toHaveBeenCalled();
 });
+
+it("POLISH-04 says Picture card saved. in Edit study guide after moving a cover, and not before", async () => {
+  await seedManualSet([{ front: "Picture?", back: "Alpha", picture: true }], { summary: "A guide summary" });
+  mount();
+  const edit = await screen.findByRole("button", { name: "Edit study guide" }) as HTMLButtonElement;
+  await waitFor(() => expect(edit.disabled).toBe(false));
+  fireEvent.click(edit);
+  await waitFor(() => expect(edit.getAttribute("aria-pressed")).toBe("true"));
+  fireEvent.click(await screen.findByRole("button", { name: "Move or resize cover" }));
+  await screen.findByRole("textbox", { name: "Question" });
+  expect(screen.queryByText("Picture card saved.")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
+  const status = await screen.findByText("Picture card saved.");
+  expect(status.getAttribute("role")).toBe("status");
+  expect(screen.queryByRole("textbox", { name: "Question" })).toBeNull();
+});

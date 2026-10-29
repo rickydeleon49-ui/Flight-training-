@@ -19,10 +19,13 @@ export function VisualCardEditor({
   material,
   cardIndex,
   onClose,
+  onSaved,
 }: {
   material: StudyMaterial;
   cardIndex?: number;
   onClose: () => void;
+  /** Called once the card is saved, just before the editor closes, so the page can say so. */
+  onSaved?: () => void;
 }) {
   const { repositories, mutate } = useAppData();
   const lease = useVisualImageLease(true);
@@ -165,6 +168,7 @@ export function VisualCardEditor({
       });
       if (!outcome) throw Error("This save could not be confirmed.");
       if (!outcome.ok) throw outcome.error;
+      onSaved?.();
       onClose();
     } catch (e) {
       const unknown = e instanceof StudySetSaveError && ["IPC_TRANSPORT_ERROR", "STORAGE_ERROR"].includes(e.code);

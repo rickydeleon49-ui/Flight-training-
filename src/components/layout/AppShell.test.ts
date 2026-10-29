@@ -267,3 +267,27 @@ it("measures the narrow header for anchor clearance and releases the observer on
     expect(disconnect).toHaveBeenCalledOnce();
   } finally { bounds.mockRestore(); }
 });
+
+describe("POLISH-04 new pages open at the top", () => {
+  it("scrolls to the top on a push to a new page, but not for a #section link, Back, or the same page", () => {
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    try {
+      mount(1320);
+      act(() => navTo("/study"));
+      expect(scrollTo).toHaveBeenCalledWith(0, 0);
+      scrollTo.mockClear();
+      act(() => navTo("/study?tab=due"));
+      expect(scrollTo).not.toHaveBeenCalled();
+      act(() => navTo("/study/x#read-pdf-text"));
+      expect(scrollTo).not.toHaveBeenCalled();
+      act(() => navTo(-1));
+      act(() => navTo(-1));
+      expect(scrollTo).not.toHaveBeenCalled();
+      act(() => navTo("/notes"));
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
