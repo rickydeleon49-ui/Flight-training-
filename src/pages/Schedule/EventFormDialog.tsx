@@ -11,7 +11,7 @@ import {
   type Profile,
   type ScheduleEvent,
 } from "@/domain/types";
-import { todayIso } from "@/lib/dates";
+import { formatLongDate, todayIso } from "@/lib/dates";
 import { moneyToInput, parseMoney } from "@/lib/money";
 
 export interface EventDraft {
@@ -47,6 +47,17 @@ const emptyDraft = (profile?: Profile): EventDraft => ({
   actualCost: null,
   status: "scheduled",
 });
+
+/**
+ * The date read back in words. Typing "11/05/2026" in one go into the Mac's
+ * date field can land on a different day without saying so, so she can
+ * always see which day the field really holds.
+ */
+export function eventDateCheck(date: string): string | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
+  // A "today" outside any real year makes the year always show.
+  return `Check the date: ${formatLongDate(date, "0000-01-01")}. Typing it? Press Tab between month, day and year.`;
+}
 
 interface Props {
   open: boolean;
@@ -172,7 +183,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
           )}
         </Field>
 
-        <Field label="Date" error={errors.date}>
+        <Field label="Date" error={errors.date} hint={eventDateCheck(draft.date)}>
           {({ id, describedBy, invalid }) => (
             <TextInput
               id={id}

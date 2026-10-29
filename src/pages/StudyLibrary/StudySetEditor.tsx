@@ -117,6 +117,7 @@ export function StudySetEditor({
   const [page, setPage] = useState("");
   const [fromInstructor, setFromInstructor] = useState(false);
   const [visualIndex, setVisualIndex] = useState<number | null>(null);
+  const [pictureSaved, setPictureSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
   const close = () => {
@@ -361,7 +362,7 @@ export function StudySetEditor({
           <div className="row row--between row--wrap" key={`card-${index}`}>
             <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
             {card.visualRegionId ? (
-              <Button size="small" onClick={() => setVisualIndex(index)}>
+              <Button size="small" onClick={() => { setPictureSaved(false); setVisualIndex(index); }}>
                 Move or resize cover
               </Button>
             ) : null}
@@ -371,6 +372,7 @@ export function StudySetEditor({
         <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "card" })}>
           Add a card
         </Button>
+        <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
       </div>
 
       <div>
@@ -381,7 +383,12 @@ export function StudySetEditor({
       </div>
 
       {visualIndex !== null ? (
-        <VisualCardEditor material={material} cardIndex={visualIndex} onClose={() => setVisualIndex(null)} />
+        <VisualCardEditor
+          material={material}
+          cardIndex={visualIndex}
+          onSaved={() => setPictureSaved(true)}
+          onClose={() => setVisualIndex(null)}
+        />
       ) : null}
       <Dialog
         open={Boolean(action) && action?.mode !== "delete"}

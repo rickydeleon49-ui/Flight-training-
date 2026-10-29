@@ -865,3 +865,55 @@
 .material-actions-menu .destructive-action { border-top: 1px solid var(--border-subtle); margin-top: var(--space-2); }
 .material-notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 1080px) { .material-notes-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* LIBRARY-CALM-01: one primary action in the header; the rest under More. */
+.library__actions-more { position: relative; }
+.library__actions-more > summary { list-style: none; cursor: pointer; }
+.library__actions-more > summary::-webkit-details-marker { display: none; }
+.library__actions-more > summary::after { content: " ▾"; }
+.library__actions-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-width: 14rem;
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(0, 0, 0, 0.12));
+}
+.library__actions-menu .button { justify-content: flex-start; }
+
+/* Her materials first; references and the ACS lookup wait below, folded. */
+.library__shelf {
+  margin-top: var(--space-6, 2rem);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.library__shelf-summary { cursor: pointer; font-weight: 600; padding: var(--space-2) 0; }
+.library__shelf-body { margin-top: var(--space-4); }
+
+/* POLISH-04: clear the remembered search in one click. */
+.search-field .input { padding-right: 2.3rem; }
+.search-field__clear {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.search-field__clear:hover,
+.search-field__clear:focus-visible { color: var(--text-primary); background: var(--surface-muted, rgba(0, 0, 0, 0.06)); }

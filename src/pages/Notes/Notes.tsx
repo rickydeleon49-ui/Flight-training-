@@ -50,6 +50,8 @@ export function Notes() {
   latestDraft.current = draft;
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
+  // "Saved." beside the button until she starts the next note.
+  const [justSaved, setJustSaved] = useState(false);
   const [editing, setEditing] = useState<Note | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<Note | null>(null);
   const [search, setSearch] = useRememberedState("notes.search", "", isText);
@@ -112,6 +114,7 @@ export function Notes() {
     if (result === null || latestDraft.current !== draft) return;
     setDraft(EMPTY_DRAFT);
     forget();
+    setJustSaved(true);
   };
 
   return (
@@ -148,30 +151,35 @@ export function Notes() {
                 value={draft.title}
                 aria-label="Title (optional)"
                 placeholder="Title — optional"
-                onChange={(e) =>
-                  setDraft((current) => ({ ...current, title: e.target.value }))
-                }
+                onChange={(e) => {
+                  setJustSaved(false);
+                  setDraft((current) => ({ ...current, title: e.target.value }));
+                }}
               />
               <TextArea
                 rows={Math.min(12, Math.max(4, draft.body.split("\n").length))}
                 value={draft.body}
                 aria-label="Note"
                 placeholder="The school on the north field returns calls after four. Ask about their discovery flight."
-                onChange={(e) =>
-                  setDraft((current) => ({ ...current, body: e.target.value }))
-                }
+                onChange={(e) => {
+                  setJustSaved(false);
+                  setDraft((current) => ({ ...current, body: e.target.value }));
+                }}
               />
               <div className="row row--between">
                 <span className="tiny dim">
                   Saved here only — nothing is sent anywhere.
                 </span>
-                <Button
-                  variant="primary"
-                  onClick={save}
-                  disabled={busy || !draft.body.trim()}
-                >
-                  Save note
-                </Button>
+                <span className="row">
+                  {justSaved ? <span className="small" role="status">Saved.</span> : null}
+                  <Button
+                    variant="primary"
+                    onClick={save}
+                    disabled={busy || !draft.body.trim()}
+                  >
+                    Save note
+                  </Button>
+                </span>
               </div>
             </div>
           </CardBody>
