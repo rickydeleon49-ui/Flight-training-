@@ -4957,6 +4957,35 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
         }
     }
 
+    // Schema verification above checks the stored identity's shape. Here the
+    // archive supplies the actual PDF bytes, which a database-only check cannot.
+    if newest_migration_version(&conn)? >= 27 {
+        let mut stmt = conn.prepare(
+            "SELECT m.file_path, f.content_sha256 FROM faa_reference_copies f JOIN study_materials m ON m.id=f.material_id",
+        ).map_err(|_| "Could not inspect FAA reference PDFs.")?;
+        let copies = stmt
+            .query_map([], |r| {
+                Ok((r.get::<_, Option<String>>(0)?, r.get::<_, String>(1)?))
+            })
+            .map_err(|_| "Could not inspect FAA reference PDFs.")?;
+        for copy in copies {
+            let (path, expected) = copy.map_err(|_| "Damaged FAA reference PDF details.")?;
+            let path = path.ok_or("Missing FAA reference PDF path.")?;
+            safe_relative_document_path(&path)?;
+            // Preserve complete backups' explicit missing-at-export handling.
+            if !archive_documents.contains(&path) {
+                continue;
+            }
+            let mut entry = archive
+                .by_name(&format!("documents/{path}"))
+                .map_err(|_| "Missing FAA reference PDF bytes.")?;
+            let (_, actual, _) = sha256_file_from_reader(&mut entry)?;
+            if actual != expected {
+                return Err("The FAA reference PDF does not match its saved copy details.".into());
+            }
+        }
+    }
+
     let referenced_documents = query_referenced_documents(&temp_db_path)?;
     let referenced_set: HashSet<&str> = referenced_documents.iter().map(|s| s.as_str()).collect();
     let missing_declared: HashSet<&str> = manifest

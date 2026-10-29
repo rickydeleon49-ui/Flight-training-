@@ -5,6 +5,7 @@ import {
   makeGoal,
   makeMilestone,
   makeProfile,
+  makePrepItem,
 } from "@/testing/factories";
 import { buildDashboard, greetingFor, type DashboardSources } from "./dashboard";
 
@@ -99,4 +100,16 @@ describe("the dashboard as a whole", () => {
     );
     expect(model.subtitle).toBe("Private Pilot • Current focus: Build Landing Confidence");
   });
+});
+
+it.each([
+  [false, "No preparation is listed yet for Crosswind Landings."],
+  [true, "You have completed the listed preparation for Crosswind Landings."],
+] as const)("describes listed preparation without readiness claims (has items=%s)", (hasItems, expected) => {
+  const event = makeEvent({ id: "lesson", date: "2026-09-06", title: "Crosswind Landings" });
+  const model = buildDashboard(sources({
+    events: [event],
+    prepItems: hasItems ? [makePrepItem({ eventId: "lesson", done: true })] : [],
+  }));
+  expect(model.encouragement).toBe(expected);
 });

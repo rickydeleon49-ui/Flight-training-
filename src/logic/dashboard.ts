@@ -227,6 +227,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       nextLessonDate: upcoming?.date ?? null,
       nextLessonTitle: upcoming?.title ?? null,
       outstandingPrepCount: preparation?.outstanding.length ?? 0,
+      totalPrepCount: preparation?.total ?? 0,
       overdueCount: overdue.length,
       allWaitingAreHomework: allOverdueHomework,
       completedThisWeek,

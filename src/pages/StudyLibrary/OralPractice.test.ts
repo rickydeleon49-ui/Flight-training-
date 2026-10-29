@@ -168,6 +168,8 @@ it("Write a note opens the Notes editor prefilled and saves only on Save note", 
   fireEvent.click((await screen.findAllByRole("checkbox"))[1]!);
   fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
   const body = (await screen.findByLabelText("Note")) as HTMLTextAreaElement;
+  expect(screen.queryByText(/Picked up where you left off/)).toBeNull();
+  expect(body.value).toMatch(/^Scenario:\nEngine roughness/);
   expect(body.value).toContain("Engine roughness at 3,000 feet");
   expect(body.value).toContain("carb heat first");
   expect(body.value).toContain("- Quokka bravo point");
@@ -257,4 +259,29 @@ it("parses one point per line and uses no scoring words or browser storage", () 
     const source = readFileSync(new URL(file, import.meta.url), "utf8");
     expect(source).not.toMatch(/score|%|correct|pass|localStorage|sessionStorage|fetch\(|setInterval/i);
   }
+});
+
+it.each([false, true])("only reports an actual earlier note draft (nonempty=%s)", async (nonempty) => {
+  localStorage.setItem("her-flight-deck.draft.notes.new", JSON.stringify({ title: "", body: nonempty ? "Earlier thought" : "" }));
+  await seed("Scenario Alpha");
+  mount();
+  await practise("Scenario Alpha", "New answer");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
+  const body = await screen.findByLabelText("Note") as HTMLTextAreaElement;
+  expect(Boolean(screen.queryByText(/Picked up where you left off/))).toBe(nonempty);
+  expect(body.value).toContain("Scenario:\nScenario Alpha");
+  if (nonempty) expect(body.value).toMatch(/^Earlier thought\n\nScenario:/);
+});
+
+it("separates the oral reveal sections and keeps comfortable checkbox targets", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  await practise("Scenario Alpha", "My answer");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  const heading = await screen.findByRole("heading", { name: "Your discussion points" });
+  expect(heading.parentElement?.classList.contains("oral-practice__reveal")).toBe(true);
+  const css = readFileSync("src/pages/StudyLibrary/studyLibrary.css", "utf8");
+  expect(css).toMatch(/\.oral-practice__reveal\s*\{[^}]*gap:\s*var\(--space-4\)/);
+  expect(css).toMatch(/\.oral-practice__reveal \.checkbox\s*\{[^}]*min-height:\s*44px/);
 });

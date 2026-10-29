@@ -7,6 +7,7 @@ const input = (overrides: Partial<EncouragementInput> = {}): EncouragementInput 
   nextLessonDate: null,
   nextLessonTitle: null,
   outstandingPrepCount: 0,
+  totalPrepCount: 0,
   overdueCount: 0,
   completedThisWeek: 0,
   openActionCount: 0,
@@ -33,11 +34,11 @@ describe("encouragementMessage", () => {
     expect(message).toBe("Your next lesson is tomorrow. 1 preparation item remains.");
   });
 
-  it("confirms readiness when nothing is outstanding", () => {
+  it("describes an empty preparation list without claiming readiness", () => {
     const message = encouragementMessage(
       input({ nextLessonDate: "2026-09-06", nextLessonTitle: "Crosswind Landings" }),
     );
-    expect(message).toBe("You are prepared for Crosswind Landings.");
+    expect(message).toBe("No preparation is listed yet for Crosswind Landings.");
   });
 
   it("acknowledges overdue work without blaming her", () => {

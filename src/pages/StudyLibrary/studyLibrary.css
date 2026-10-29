@@ -811,3 +811,14 @@
 .related-study__row:hover { background: var(--accent-primary-fill); }
 .related-study :is(summary, button, a):focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 .related-study .button { min-height: 44px; white-space: normal; }
+
+/* Keep the answer, discussion points and personal-outline reminder distinct. */
+.oral-practice__reveal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.oral-practice__reveal .checkbox {
+  min-height: 44px;
+}

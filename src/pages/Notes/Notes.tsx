@@ -55,7 +55,12 @@ export function Notes() {
   const [search, setSearch] = useRememberedState("notes.search", "", isText);
 
   // A note half-written when she closes the page is still worth keeping.
-  const { recovered, forget } = useDraftRecovery("notes.new", draft, setDraft);
+  const [recoveredContent, setRecoveredContent] = useState(false);
+  const { recovered, forget } = useDraftRecovery("notes.new", draft, (saved: NoteDraft) => {
+    if (!saved.title.trim() && !saved.body.trim()) return;
+    setRecoveredContent(true);
+    setDraft(saved);
+  });
 
   // "Write a note" from oral practice hands over text she can edit. It is
   // added under anything she had half-written, and saved only on Save note.
@@ -116,7 +121,7 @@ export function Notes() {
         subtitle="Somewhere to write it down without deciding where it goes first."
       />
 
-      {recovered ? (
+      {recovered && recoveredContent ? (
         <div className="draft-note" role="status">
           <p className="small">
             Picked up where you left off — this is what you had typed but not
