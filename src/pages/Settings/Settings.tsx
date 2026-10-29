@@ -1304,6 +1304,9 @@ export function Settings() {
               {gemini?.configured ? (
                 <fieldset className="gemini-model-choice stack stack--2">
                   <legend className="field__label">Model for new study aids</legend>
+                  {gemini.choice === "most-capable" ? (
+                    <p className="tiny dim">Gemini 3.8 Flash is the default for new study aids.</p>
+                  ) : null}
                   {(["standard", "most-capable"] as const).map((choice) => (
                     <label key={choice} className="small">
                       <input

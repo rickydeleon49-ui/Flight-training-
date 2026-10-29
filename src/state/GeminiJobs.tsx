@@ -79,10 +79,16 @@ function sectionDraft(record: GeminiJobRecord): SectionGuideDraft | undefined {
   };
 }
 
+/** A new stage or a new section step restarts the slow-step clock. */
+function stepStart(job: GeminiJob, event: { stage?: GeminiWorkStage | null; message?: string | null }): { stageSince?: number } {
+  const changed = (event.stage != null && event.stage !== job.stage) || (event.message != null && event.message !== job.progress);
+  return changed ? { stageSince: Date.now() } : {};
+}
+
 function recoveredSectionError(record: GeminiJobRecord): SectionGuideErrorCode | undefined {
   if (record.draft?.kind !== "guide-sections-v1" || !record.error) return undefined;
   const error = sectionGuideError(record.error);
-  return error.code === "GUIDE_PAUSED" ? undefined : error.code;
+  return error.code === "GUIDE_PAUSED" ? "GUIDE_FAILED" : error.code;
 }
 
 /**
@@ -159,6 +165,8 @@ export interface GeminiJob {
   maxAttempts?: number;
   /** When this window started it (ms since the epoch), for an honest elapsed time. */
   startedAt?: number;
+  /** When the current stage or section step began (ms), for the slow-step hint. */
+  stageSince?: number;
   /** When this job was first created or recorded (ms since the epoch). */
   createdAt?: number;
   /** A cancel is on its way to (or held by) the native side. */
@@ -723,6 +731,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               jobId: event.jobId ?? job.jobId,
               stage: event.stage ?? job.stage,
               progress: event.message ?? job.progress,
+              ...stepStart(job, event),
               attempt: event.attempt,
               maxAttempts: event.maxAttempts,
             });
@@ -867,7 +876,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     try {
       try { stop = await watchGeminiProgress(event => {
         const current = jobsRef.current.find(j => j.key === key);
-        if (current?.phase === "running" && belongsTo(current, event)) update(key, { stage: event.stage, attempt: event.attempt, maxAttempts: event.maxAttempts });
+        if (current?.phase === "running" && belongsTo(current, event)) update(key, { jobId: event.jobId ?? current.jobId, stage: event.stage ?? current.stage, progress: event.message ?? current.progress, ...stepStart(current, event), attempt: event.attempt, maxAttempts: event.maxAttempts });
       }); } catch { /* counts still come from the journal */ }
       let request = { ...job.sections.request, requestId };
       if (restart) {

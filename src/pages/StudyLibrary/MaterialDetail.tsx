@@ -184,16 +184,12 @@ function MaterialDetailPage() {
   const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
   const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
-  // A failure that kept a draft is told once, by its notice, with Try again there.
-  // A job's real failure always wins over a start refusal.
+  // Job notices show failures with recovery actions; refusals belong to this page.
   const refusalFor = (kind: "study-aid" | "flashcards" | "practice-test") =>
     startRefusal?.kind === kind ? startRefusal.message : null;
-  const studyFailure = studyJob?.phase === "failed" && !studyJob.sectionGuide && !studyJob.draft ? studyJob.error : null;
-  const cardFailure = cardJob?.phase === "failed" && !cardJob.draft ? cardJob.error : null;
-  const practiceFailure = practiceJob?.phase === "failed" && !practiceJob.draft ? practiceJob.error : null;
-  const generationError = studyFailure || refusalFor("study-aid");
-  const cardGenerationError = cardFailure || refusalFor("flashcards");
-  const practiceGenerationError = practiceFailure || refusalFor("practice-test");
+  const generationError = studyJob?.phase === "failed" ? null : refusalFor("study-aid");
+  const cardGenerationError = cardJob?.phase === "failed" ? null : refusalFor("flashcards");
+  const practiceGenerationError = practiceJob?.phase === "failed" ? null : refusalFor("practice-test");
   // "Gemini is already working… Try again in a moment" is true only for that
   // moment: it clears once Gemini goes idle or that kind's job moves on.
   const geminiBusy = geminiJobs.busy || geminiJobs.locked();
@@ -486,11 +482,13 @@ function MaterialDetailPage() {
     ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. ${previousVersionsHint}`
     : "";
   const replaceGuideWarning = hasSavedGuide ? `This replaces your saved study guide. ${previousVersionsHint}` : "";
+  const emptyFailedGuide = Boolean(studyJob?.sectionGuide && studyJob.sections?.ready === 0 &&
+    (studyJob.phase === "failed" || studyJob.phase === "cancelled" || studyJob.phase === "interrupted"));
   // Why Regenerate / Create is unavailable, in her words (CARDS-FIX-01).
   const guideBlockedReason = (() => {
     if (isOverLimit || !canOfferGemini || isGeneratingAny || !studyJob) return null;
     if (draftWaiting(studyJob.phase)) return "A new guide is waiting above — save or discard it first.";
-    if (!studyJob.sectionGuide) return null;
+    if (!studyJob.sectionGuide || emptyFailedGuide) return null;
     if (studyJob.phase === "waiting-for-her" || studyJob.queueState === "waiting-for-her")
       return "Your study guide draft above is waiting — continue or discard it first.";
     if (studyJob.phase === "cancelled" || studyJob.queueState === "cancelled")
@@ -603,6 +601,9 @@ function MaterialDetailPage() {
     if (!material?.filePath || !check?.allowed) {
       setStartRefusal({ kind: "study-aid", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
+    }
+    if (emptyFailedGuide && studyJob) {
+      await geminiJobs.dismiss(studyJob.key);
     }
     const refusal = await geminiJobs.start(
       "study-aid",
@@ -890,7 +891,7 @@ function MaterialDetailPage() {
                         <Button
                           size="small"
                           variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
-                          disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
+                          disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || (Boolean(studyJob?.sectionGuide) && !emptyFailedGuide)}
                           onClick={() => {
                             if (geminiJobs.locked()) {
                                 setStartRefusal({ kind: "study-aid", message: "Gemini is already working or checking earlier work. Try again in a moment." });
@@ -955,6 +956,18 @@ function MaterialDetailPage() {
                         onCancel={() => void geminiJobs.cancel(studyJob.key)}
                       />
                     ) : null
+                  ) : null}
+                  {generationError ? (
+                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                      <GeminiErrorText message={generationError} />
+                      {retryStudy ? (
+                        <div className="row row--wrap">
+                          <Button size="small" onClick={retryStudy}>
+                            Try again
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
                   {studyJob ? (
                     <GeminiJobNotice
@@ -1051,18 +1064,6 @@ function MaterialDetailPage() {
                     </p>
                   ) : null}
 
-                  {generationError ? (
-                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <GeminiErrorText message={generationError} />
-                      {retryStudy ? (
-                        <div className="row row--wrap">
-                          <Button size="small" onClick={retryStudy}>
-                            Try again
-                          </Button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
                   {reviewingRegeneration &&
                   studyJob?.answer &&
                   (studyJob.phase === "recovered" || studyJob.phase === "save-failed" || studyJob.phase === "saving") ? (
@@ -1399,6 +1400,33 @@ function MaterialDetailPage() {
                       />
                     ) : null
                   ) : null}
+                  {practiceGenerationError ? (
+                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                      <GeminiErrorText message={practiceGenerationError} />
+                      {retryPractice ? (
+                        <div className="row row--wrap">
+                          <Button size="small" onClick={retryPractice}>
+                            Try again
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {practiceJob ? (
+                    <GeminiJobNotice
+                      job={practiceJob}
+                      jobs={geminiJobs}
+                      onRetry={retryPractice}
+                      onReview={
+                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
+                          ? () => {
+                              if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true);
+                            }
+                          : undefined
+                      }
+                      reviewDisabled={activePracticeAttempt !== false}
+                    />
+                  ) : null}
                   {practiceMetadata.phase === "failed" ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
                       <div className="ai-disclaimer" role="alert">
@@ -1486,33 +1514,6 @@ function MaterialDetailPage() {
                     </p>
                   ) : null}
 
-                  {practiceGenerationError ? (
-                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <GeminiErrorText message={practiceGenerationError} />
-                      {retryPractice ? (
-                        <div className="row row--wrap">
-                          <Button size="small" onClick={retryPractice}>
-                            Try again
-                          </Button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {practiceJob ? (
-                    <GeminiJobNotice
-                      job={practiceJob}
-                      jobs={geminiJobs}
-                      onRetry={retryPractice}
-                      onReview={
-                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
-                          ? () => {
-                              if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true);
-                            }
-                          : undefined
-                      }
-                      reviewDisabled={activePracticeAttempt !== false}
-                    />
-                  ) : null}
                   {reviewingPracticeRegeneration &&
                   practiceJob?.answer &&
                   (practiceJob.phase === "recovered" || practiceJob.phase === "save-failed" || practiceJob.phase === "saving") ? (

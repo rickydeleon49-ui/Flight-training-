@@ -131,6 +131,7 @@ struct StageClock {
     processing: Option<Instant>,
     elapsed: std::collections::BTreeMap<String, u64>,
     scale: f64,
+    generating_seconds: u64,
 }
 impl StageClock {
     fn duration(&self, seconds: u64) -> Duration {
@@ -140,7 +141,7 @@ impl StageClock {
         Some(self.duration(match stage {
             Stage::Uploading | Stage::CheckingFile | Stage::Reading => 60,
             Stage::WaitingForFile => PROCESSING_SECONDS,
-            Stage::Generating => 480,
+            Stage::Generating => self.generating_seconds,
             Stage::Validating => 30,
             _ => return None,
         }))
@@ -222,8 +223,17 @@ impl Budget {
                 processing: None,
                 elapsed: Default::default(),
                 scale: 1.0,
+                generating_seconds: 480,
             }),
         }
+    }
+
+    /// A section is smaller than a whole-document request; keep the total budget.
+    pub(crate) fn section_generation_limit(&self) {
+        self.stages
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .generating_seconds = 240;
     }
 
     /// Follow this budget's stage changes.

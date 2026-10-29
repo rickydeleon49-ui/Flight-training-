@@ -244,3 +244,101 @@ describe("section guide progress and deliberate recovery", () => {
     expect(screen.getByText("1 of 1 section ready")).toBeTruthy();
   });
 });
+
+
+describe("GEMINI-38-01 visible recovery", () => {
+  it("a failed empty draft shows its reason above the saved guide and keeps Regenerate usable", async () => {
+    await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "m", ...AID });
+    const reason = "Gemini's answer reached its output limit. Try again.";
+    vi.mocked(gemini.resumeStudyGuide).mockImplementationOnce(async () => {
+      vi.mocked(gemini.listGeminiJobs).mockResolvedValue([record("failed", 0, 1)]);
+      throw { code: "GUIDE_FAILED", message: reason };
+    });
+    await open();
+    await act(async () => { await jobs.start("study-aid", { materialId: "m", filePath: "documents/m.pdf" }); });
+    const notice = screen.getByText(reason);
+    expect(notice.compareDocumentPosition(screen.getByText(/AI-generated study aid/)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Discard" })).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Regenerate" }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send to Gemini" }));
+    await waitFor(() => expect(gemini.acknowledgeGeminiJob).toHaveBeenCalledWith("section-job"));
+    await waitFor(() => expect(gemini.resumeStudyGuide).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(gemini.resumeStudyGuide).mock.calls[1]?.[1]).toBeUndefined();
+  });
+  it("a failed flashcards record without a draft can be dismissed after reload", async () => {
+    const failed = { ...record(), kind: "flashcards" as const, draft: undefined, error: "Gemini could not finish. Try again." };
+    vi.mocked(gemini.listGeminiJobs).mockResolvedValue([failed]);
+    vi.mocked(gemini.acknowledgeGeminiJob).mockImplementation(async () => {
+      vi.mocked(gemini.listGeminiJobs).mockResolvedValue([]); return true;
+    });
+    await open();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    await waitFor(() => expect(gemini.acknowledgeGeminiJob).toHaveBeenCalledWith("section-job"));
+    cleanup(); await open();
+    expect(screen.queryByRole("button", { name: "Dismiss" })).toBeNull();
+  });
+});
+
+
+it("section progress shows the native message, job id, and a hint after 60 seconds", async () => {
+  let resolve!: (v: gemini.GeneratedStudyAid) => void;
+  vi.mocked(gemini.resumeStudyGuide).mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  await open();
+  vi.useFakeTimers();
+  try {
+    await act(async () => { void jobs.start("study-aid", { materialId: "m", filePath: "documents/m.pdf" }); });
+    expect(gemini.resumeStudyGuide).toHaveBeenCalled();
+    const message = "Writing section 1 of 1: Pages 1–4…";
+    act(() => { vi.mocked(gemini.watchGeminiProgress).mock.calls.at(-1)![0]({ materialId: "m", kind: "study-aid", jobId: "section-job", stage: "generating", message, attempt: 1, maxAttempts: 3 }); });
+    expect(screen.getByText(message)).toBeTruthy();
+    expect(screen.queryByText(/Taking longer than usual/)).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(61_000); });
+    expect(screen.getByText(/Taking longer than usual/)).toBeTruthy();
+    expect(jobs.jobs[0]?.jobId).toBe("section-job");
+    await act(async () => { resolve(AID); });
+  } finally { vi.useRealTimers(); }
+});
+
+
+it("the slow-step hint restarts with each section's generating step", async () => {
+  let resolve!: (v: gemini.GeneratedStudyAid) => void;
+  vi.mocked(gemini.resumeStudyGuide).mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  await open();
+  vi.useFakeTimers();
+  try {
+    await act(async () => { void jobs.start("study-aid", { materialId: "m", filePath: "documents/m.pdf" }); });
+    const emit = (stage: gemini.GeminiWorkStage, message: string) => act(() => {
+      vi.mocked(gemini.watchGeminiProgress).mock.calls.at(-1)![0]({ materialId: "m", kind: "study-aid", jobId: "section-job", stage, message, attempt: 1, maxAttempts: 3 });
+    });
+    emit("generating", "Writing section 1 of 2: Pages 1–5…");
+    await act(async () => { await vi.advanceTimersByTimeAsync(70_000); });
+    emit("validating", "Section 1 of 2 saved.");
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+    emit("generating", "Writing section 2 of 2: Pages 6–10…");
+    expect(screen.queryByText(/Taking longer than usual/)).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(59_000); });
+    expect(screen.queryByText(/Taking longer than usual/)).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
+    expect(screen.getByText(/Taking longer than usual/)).toBeTruthy();
+    await act(async () => { resolve(AID); });
+  } finally { vi.useRealTimers(); }
+});
+
+it("a recovered failure with internal text shows only the plain generic sentence", async () => {
+  const internal = "Could not keep track of this study aid: Permission denied (os error 13)";
+  vi.mocked(gemini.listGeminiJobs).mockResolvedValue([{ ...record("failed", 0, 1), error: internal }]);
+  await open();
+  expect(screen.getByText(gemini.SECTION_GUIDE_MESSAGES.GUIDE_FAILED)).toBeTruthy();
+  expect(document.body.textContent).not.toContain("os error");
+});
+
+it("defaults new study aids to Gemini 3.8 Flash", async () => {
+  vi.mocked(gemini.getGeminiStatus).mockRestore();
+  expect(await gemini.getGeminiStatus()).toEqual({ configured: false, model: "gemini-3.8-flash", choice: "most-capable" });
+});
+it("keeps cancellation and stage recovery when a native reason uses GUIDE_FAILED", () => {
+  expect(gemini.sectionGuideError({ code: "GUIDE_FAILED", message: gemini.GEMINI_CANCELLED_MESSAGE }).code).toBe("CANCELLED");
+  expect(gemini.sectionGuideError({ code: "GUIDE_FAILED", message: "Gemini is taking longer to answer. You can try again." }).code).toBe("GENERATION_TIMEOUT");
+});

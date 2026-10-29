@@ -62,11 +62,11 @@ export interface GeneratedPracticeTest {
 }
 
 // Only ever seen outside the desktop shell, where Gemini cannot run at all.
-// Kept in step with MODEL in src-tauri/src/gemini.rs.
+// Kept in step with the default choice in src-tauri/src/gemini.rs.
 const unavailable: GeminiStatus = {
   configured: false,
-  model: "gemini-3.5-flash",
-  choice: "standard",
+  model: "gemini-3.8-flash",
+  choice: "most-capable",
 };
 
 export const geminiAvailable = (): boolean => isTauri();
@@ -377,20 +377,21 @@ export const SECTION_GUIDE_MESSAGES = {
   GENERATION_TIMEOUT: "Gemini is taking longer to answer. Your finished sections are kept.",
   READING_TIMEOUT: "The rest of the answer stopped arriving. Your finished sections are kept.",
   STAGE_TIMEOUT: "This step took longer than expected. Your finished sections are kept.",
+  GUIDE_FAILED: "Gemini could not finish this section.",
   GUIDE_PAUSED: "Your guide could not be finished. Your saved sections are kept. Try again when you're ready.",
 } as const;
 export type SectionGuideErrorCode = keyof typeof SECTION_GUIDE_MESSAGES;
 export class SectionGuideError extends Error {
-  constructor(readonly code: SectionGuideErrorCode) {
-    super(SECTION_GUIDE_MESSAGES[code]);
+  constructor(readonly code: SectionGuideErrorCode, message?: string) {
+    super(code === "GUIDE_FAILED" && message?.trim() && !/files\/|https?:\/\//i.test(message) ? message : SECTION_GUIDE_MESSAGES[code]);
     this.name = "SectionGuideError";
   }
 }
 export function sectionGuideError(error: unknown): SectionGuideError {
   if (error instanceof SectionGuideError) return error;
   const wire = error && typeof error === "object" ? error as { code?: unknown; message?: unknown } : null;
-  if (typeof wire?.code === "string" && Object.hasOwn(SECTION_GUIDE_MESSAGES, wire.code) && wire.code !== "GUIDE_PAUSED") {
-    return new SectionGuideError(wire.code as SectionGuideErrorCode);
+  if (typeof wire?.code === "string" && Object.hasOwn(SECTION_GUIDE_MESSAGES, wire.code) && wire.code !== "GUIDE_PAUSED" && wire.code !== "GUIDE_FAILED") {
+    return new SectionGuideError(wire.code as SectionGuideErrorCode, typeof wire.message === "string" ? wire.message : undefined);
   }
   // Legacy stage failures arrive inside GUIDE_PAUSED, as fixed native sentences.
   const message = typeof error === "string" ? error : wire?.message;
@@ -410,6 +411,7 @@ export function sectionGuideError(error: unknown): SectionGuideError {
   };
   if (typeof message === "string" && Object.hasOwn(known, message)) return new SectionGuideError(known[message]!);
   if (typeof message === "string" && (/^Her Flight Deck stopped before [^:]+: the 15 minutes it allows for one study aid had run out\./.test(message) || message === "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.")) return new SectionGuideError("STAGE_TIMEOUT");
+  if (wire?.code === "GUIDE_FAILED") return new SectionGuideError("GUIDE_FAILED", typeof message === "string" ? message : undefined);
   return new SectionGuideError("GUIDE_PAUSED");
 }
 export interface SectionGuideRequest {

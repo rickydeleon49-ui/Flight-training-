@@ -327,9 +327,9 @@ her current study guide, cards and review history stay as they were.
 **Standard** sends documents to Gemini 3.5 Flash (`gemini-3.5-flash`): fast and
 inexpensive, and it works with a free Google AI Studio key. **Most capable** sends
 them to Gemini 3.8 Flash (`gemini-3.8-flash`): newer and a little more thorough;
-it may use slightly more of your Google credits. Standard remains the default.
+it may use slightly more of your Google credits. New study aids use Gemini 3.8 Flash by default; an explicitly saved Standard choice is kept.
 The choice is stored in a `gemini-model` file beside the key, never in SQLite or
-a backup, and a missing or unreadable choice means Standard. The **Send this
+a backup, and a missing or unreadable choice uses Gemini 3.8 Flash. The **Send this
 file to Google?** message names the model that will read the file, and each
 saved study aid says which model made it. Older aids made with Gemini 4 Argon
 keep that label. If Gemini 3.8 Flash is unavailable to this key (`403`), temporarily

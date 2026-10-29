@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
-import { SECTION_GUIDE_MESSAGES, type GeminiWorkStage } from "@/services/gemini";
+import { SECTION_GUIDE_MESSAGES, SectionGuideError, type GeminiWorkStage } from "@/services/gemini";
 import { splitGeminiError } from "@/logic/geminiErrorText";
 import { useAppData } from "@/state/AppDataContext";
 import { EMPTY_FLASHCARDS_MESSAGE, isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
@@ -189,9 +189,9 @@ export function GeminiJobNotice({
     );
   }
 
-  if (job.phase === "superseded" || job.phase === "interrupted" || job.phase === "cancelled") {
+  if (job.phase === "superseded" || job.phase === "interrupted" || job.phase === "cancelled" || (job.phase === "failed" && !job.draft)) {
     const message =
-      job.phase === "superseded" || job.phase === "cancelled"
+      job.phase === "superseded" || job.phase === "cancelled" || job.phase === "failed"
         ? job.error
         : `Creating a new ${what} was interrupted when the app closed. Google may or may not have finished it, so nothing was saved and nothing was sent again. You can try again whenever you like.`;
     const retry = job.phase !== "superseded" && onRetry && !busy;
@@ -199,7 +199,7 @@ export function GeminiJobNotice({
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="ai-disclaimer" role="status">
           <AlertIcon size={16} />
-          <p className="tiny">{message}</p>
+          <GeminiErrorText message={message ?? "Gemini could not finish. Try again."} calm />
         </div>
         <div className="row row--wrap">
           {retry ? (
@@ -313,22 +313,23 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
     void jobs.continueGuide(job.key, restart).finally(() => { intent.current = false; setPending(false); });
   };
   const saved = job.sections?.ready ?? 0;
-  // A plan refused before its first section saved nothing to count, so the
-  // counting sentence would be false: the plain reason below is the message.
+  // Never imply there are finished sections when the first request failed.
   const message =
     job.phase === "cancelled" || job.queueState === "cancelled"
       ? SECTION_GUIDE_MESSAGES.CANCELLED
-      : keeping || !job.local
-        ? "Your finished sections are here. Continue when you're ready."
-        : saved === 0
-          ? null
+      : saved === 0
+        ? "Nothing was finished yet."
+        : keeping || !job.local
+          ? "Your finished sections are here. Continue when you're ready."
           : saved === 1
             ? "Your 1 finished section is saved. Try again to continue with section 2."
             : `Your ${saved} finished sections are saved. Try again to continue with section ${saved + 1}.`;
   return (
     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
       {message ? <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div> : null}
-      {code && code !== "CANCELLED" && !keeping ? <p className="tiny" role="alert">{SECTION_GUIDE_MESSAGES[code]}</p> : null}
+      {/* Only a reason classified as plain on the wire this session is shown as written; a
+          recovered journal string may be internal text, so it gets the generic sentence. */}
+      {code && code !== "CANCELLED" && !keeping ? <div role="alert"><GeminiErrorText message={code === "GUIDE_FAILED" ? new SectionGuideError(code, job.local ? job.error ?? undefined : undefined).message : SECTION_GUIDE_MESSAGES[code]} calm /></div> : null}
       <div className="row row--wrap">
         {sourceChanged && !keeping ? <>
           <Button size="small" variant="secondary" onClick={() => setKeeping(true)}>Keep my earlier work</Button>
@@ -469,7 +470,10 @@ export function GeminiProgressView({
           <p className="tiny" role="status">{job.sections.ready} of {job.sections.total} {job.sections.total === 1 ? "section" : "sections"} ready</p>
         ) : null}
         {job.sectionGuide && job.sections?.heading && !/files\/|https?:\/\//i.test(job.sections.heading) ? <p className="tiny dim">{job.sections.heading}</p> : null}
-        {job.progress && !job.sectionGuide && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
+        {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
+        {job.sectionGuide && job.stage === "generating" && !job.cancelRequested && now - (job.stageSince ?? job.startedAt ?? now) >= 60_000 ? (
+          <p className="tiny dim">Taking longer than usual. Gemini can take a few minutes on a section. Cancel keeps finished sections.</p>
+        ) : null}
         {job.cancelError ? (
           <p className="field__error" role="alert">
             {job.cancelError}
