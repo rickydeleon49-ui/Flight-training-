@@ -828,3 +828,18 @@
 /* The ACS lookup reuses the list inside each result, without the dividers. */
 .related-study--plain { border-block: 0; }
 .related-study--plain .related-study__contents { padding: var(--space-2) 0 0; }
+
+/* Mounted material panels use the native hidden attribute, including descendants. */
+.material-detail [role="tabpanel"][hidden] { display: none; }
+.material-tabs { overflow-x: auto; }
+.material-tabs .tab {
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.material-detail [role="tabpanel"],
+.material-detail [id^="search-target-"],
+.material-detail #read-pdf-text,
+.material-detail #material-file-actions {
+  scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5));
+}

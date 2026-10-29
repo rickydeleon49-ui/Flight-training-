@@ -240,7 +240,7 @@ describe("M1 D7 acceptance: Daily Flight Plan and debrief workflow", () => {
     const questionId = acceptance.question!.id;
 
     // 3. The action appears with its material; the question in lesson preparation.
-    await go(`/study/${seed.material.id}`);
+    await go(`/study/${seed.material.id}?tab=notes`);
     await screen.findByText("Chair-fly steep turns with pitch reference");
     await go(`/schedule/${seed.lesson.id}`);
     await screen.findByText("Ask: How much back pressure holds altitude at 45° bank?");

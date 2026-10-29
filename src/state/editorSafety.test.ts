@@ -86,7 +86,7 @@ afterEach(() => {
 });
 
 it("preserves actual material typing through refresh, navigation and database save", async () => {
-  await open("/study/a");
+  await open("/study/a?tab=notes");
   fireEvent.change(screen.getByRole("textbox", { name: "Personal notes" }), {
     target: { value: "latest text" },
   });
@@ -98,7 +98,7 @@ it("preserves actual material typing through refresh, navigation and database sa
       }) as HTMLTextAreaElement
     ).value,
   ).toBe("latest text");
-  await act(async () => navigate("/study/b"));
+  await act(async () => navigate("/study/b?tab=notes"));
   expect(
     (
       screen.getByRole("textbox", {
@@ -112,7 +112,7 @@ it("preserves actual material typing through refresh, navigation and database sa
         ?.notes,
     ).toBe("latest text"),
   );
-  await act(async () => navigate("/study/a"));
+  await act(async () => navigate("/study/a?tab=notes"));
   expect(
     (
       screen.getByRole("textbox", {
@@ -277,7 +277,7 @@ it("keeps the latest Undo request when several deletes arrive before a write fin
 });
 
 it("does not reset the material metadata dialog when autosave refreshes data", async () => {
-  await open("/study/a");
+  await open("/study/a?tab=notes");
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   const title = screen.getByDisplayValue("Handbook");
   fireEvent.change(title, { target: { value: "Changed title" } });
@@ -287,7 +287,7 @@ it("does not reset the material metadata dialog when autosave refreshes data", a
 });
 
 it("closes the edit dialog and updates the material upon saving changes", async () => {
-  await open("/study/a");
+  await open("/study/a?tab=notes");
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   const title = screen.getByDisplayValue("Handbook");
   fireEvent.change(title, { target: { value: "Updated Handbook Title" } });

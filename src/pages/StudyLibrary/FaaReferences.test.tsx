@@ -86,7 +86,7 @@ it("shows a missing saved file honestly, preserving the notes link and preventin
   mount();
   await screen.findByText(/File missing/);
   expect((screen.getByRole("button", { name: /Open offline:/ }) as HTMLButtonElement).disabled).toBe(true);
-  expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/id");
+  expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/id?tab=notes");
   expect(mocks.open).not.toHaveBeenCalled();
 });
 

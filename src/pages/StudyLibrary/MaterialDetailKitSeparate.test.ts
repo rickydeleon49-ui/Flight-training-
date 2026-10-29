@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { itemDigest } from "@/logic/savedSearch";
 import { kitSources } from "@/data/pdfStudyKitDraft";
 import type { PdfStudyKitDraft } from "@/services/documents";
 import * as geminiService from "@/services/gemini";
@@ -34,12 +35,12 @@ function Ready() {
     : null;
 }
 
-async function openMaterial(id: string) {
+async function openMaterial(id: string, search = "") {
   render(
     h(
       AppDataProvider,
       null,
-      h(MemoryRouter, { initialEntries: [`/study/${id}`] }, h(Ready)),
+      h(MemoryRouter, { initialEntries: [`/study/${id}${search}`] }, h(Ready)),
     ),
   );
   await screen.findByRole("heading", { name: "Flight Training Handbook" });
@@ -165,6 +166,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(within(flashcardsSection).getByText("What is Gemini Lift?")).toBeTruthy();
     expect(within(flashcardsSection).queryByText("What is Kit Drag?")).toBeNull();
 
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
     // 3. Verify Bottom "On this Mac (backup)" section
     const backupSection = document.getElementById("material-mac-backup")!;
     expect(backupSection).toBeTruthy();
@@ -221,10 +223,35 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(document.getElementById("material-offline-study")).toBeNull();
     expect(document.getElementById("material-pdf-kit")).toBeNull();
     expect(document.getElementById("material-saved-pdf-kit")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
     const details = document.getElementById("related-study")!.closest("details")!;
     details.open = true; fireEvent(details, new Event("toggle"));
     expect(await screen.findByText("Nothing linked here yet.")).toBeTruthy();
     expect(screen.queryByText(/on-Mac kit|Cards: Synthetic saved kit/)).toBeNull();
+  });
+
+  it.each(["card", "guide"] as const)("selects More before scrolling a %s search hit with PDF provenance", async (kind) => {
+    const section = { itemId: "linked-kit-section", heading: "Linked synthetic section", body: "Synthetic kit section text" };
+    const card = { itemId: "linked-kit-card", front: "Linked kit question", back: "Linked kit answer", sourcePage: 2 };
+    const pdfKitSources = await kitSources(draftFixture, [
+      { kind: "section", id: section.itemId, content: section, evidence: [evidence] },
+      { kind: "card", id: card.itemId, content: card, evidence: [evidence] },
+    ]);
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "pdf-mat-1", reason: "create", expected: null,
+      next: { title: "Synthetic linked kit", summary: "", summaryOrigin: null, sections: [section], flashcards: [card], sourceNotes: "", provider: "manual", model: "", retired: [] }, pdfKitSources });
+    const id = kind === "card" ? "search-target-kit-cards" : "search-target-guide-0";
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      if (this.id === id) expect(this.closest<HTMLElement>('[role="tabpanel"]')?.hidden).toBe(false);
+    });
+    const rev = await itemDigest(kind === "card" ? [card.front, card.back] : [section.heading, section.body]);
+    await openMaterial("pdf-mat-1", `?${kind}=0&rev=${rev}&tab=notes`);
+    await waitFor(() => expect(screen.getByRole("tab", { name: "More" }).getAttribute("aria-selected")).toBe("true"));
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
+    expect(document.getElementById(id)?.classList.contains("search-target")).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(document.getElementById(id)));
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    expect(screen.getByRole("tab", { name: "Study" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("PACKS-07 labels saved PDF practice once while keeping question sources and edits", async () => {
@@ -248,6 +275,14 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(scope.getByText("Source page 2")).toBeTruthy();
     fireEvent.click(scope.getByRole("button", { name: "Question 2, unanswered" }));
     await scope.findByText("Synthetic question 1?");
+    fireEvent.click(scope.getByRole("radio", { name: "Yes" }));
+    await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("pdf-mat-1")).toBeTruthy());
+    const attemptBefore = await repos.practiceSessions.getCurrentAttempt("pdf-mat-1");
+    const currentQuestion = scope.getByText("Synthetic question 1?");
+    fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    expect(scope.getByText("Synthetic question 1?")).toBe(currentQuestion);
+    expect((await repos.practiceSessions.getCurrentAttempt("pdf-mat-1"))?.attemptId).toBe(attemptBefore?.attemptId);
     expect(scope.getAllByText("Pulled from your PDF on this Mac")).toHaveLength(1);
     expect(scope.getByText("Corrected by your instructor")).toBeTruthy();
     expect(scope.getByText("Source page 2")).toBeTruthy();

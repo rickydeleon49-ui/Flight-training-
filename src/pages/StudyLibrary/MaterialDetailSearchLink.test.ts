@@ -129,8 +129,10 @@ describe("links from offline search", () => {
 
   it("opens a guide section while it is unchanged, and stops when its text changes with the same timestamp", async () => {
     const rev = await itemDigest([section.heading, section.body]);
-    await open(`?guide=0&rev=${rev}`);
+    await open(`?guide=0&rev=${rev}&tab=notes`);
     await waitFor(() => expect(highlighted("search-target-guide-0")).toBe(true));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Study" }).getAttribute("aria-selected")).toBe("true"));
+    await waitFor(() => expect(document.activeElement).toBe(document.getElementById("search-target-guide-0")));
     expect(highlighted("search-target-guide-1")).toBe(false);
 
     // Different text at the same index, saved with the very same updated_at.
@@ -148,9 +150,10 @@ describe("links from offline search", () => {
 
   it("shows the linked card", async () => {
     const rev = await itemDigest(["Second saved question", "Second saved answer"]);
-    await open(`?card=1&rev=${rev}`);
+    await open(`?card=1&rev=${rev}&tab=notes`);
     expect(await screen.findByRole("heading", { name: "Card 2 of 2" })).toBeTruthy();
     expect(highlighted("search-target-cards")).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(document.getElementById("search-target-cards")));
     // The card shows its question side, as always; the answer stays hidden.
     expect(screen.queryByText("Second saved answer")).toBeNull();
   });
@@ -169,4 +172,5 @@ it("PACKS-04 a material preparation link reaches the reading button on the full 
   const button = await screen.findByRole("button", { name: "Read this PDF's text" });
   await waitFor(() => expect(document.activeElement).toBe(button));
   expect(button.closest("#read-pdf-text")).toBeTruthy();
+  expect(screen.getByRole("tab", { name: "More" }).getAttribute("aria-selected")).toBe("true");
 });

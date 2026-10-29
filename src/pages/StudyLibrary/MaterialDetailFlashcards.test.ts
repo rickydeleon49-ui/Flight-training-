@@ -772,7 +772,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     });
   });
 
-  it("section order on a PDF page is How to link, Ask, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
+  it("keeps guide, flashcards and practice stacked in Study and the file with backup in More", async () => {
     await openMaterial("mat-pdf");
 
     const startHere = document.getElementById("material-start-here")!;
@@ -791,13 +791,14 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const askCard = document.getElementById("material-ask-gemini")!;
     expect(askCard).toBeTruthy();
-    const order = [startHere, askCard, fileActions, studyGuide, flashcards, practiceTest, backup];
+    const order = [startHere, askCard, studyGuide, flashcards, practiceTest, fileActions, backup];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),
       ).toBe(true);
     }
 
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
     expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
     expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });
@@ -949,18 +950,24 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     fileActions.scrollIntoView = vi.fn();
 
+    guideSplitBtn.focus();
     fireEvent.click(guideSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
     expect(fileActions.scrollIntoView).toHaveBeenCalled();
 
     document.body.focus();
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    cardsSplitBtn.focus();
     fireEvent.click(cardsSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
 
     document.body.focus();
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    testSplitBtn.focus();
     fireEvent.click(testSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
 
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
     expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
     expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });

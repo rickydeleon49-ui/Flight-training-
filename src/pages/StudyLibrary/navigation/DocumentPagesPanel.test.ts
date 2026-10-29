@@ -106,7 +106,7 @@ function renderDetail() {
       AppDataProvider,
       null,
       h(ControllerProbe),
-      h(MemoryRouter, { initialEntries: [`/study/${M}`] }, h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }))),
+      h(MemoryRouter, { initialEntries: [`/study/${M}?tab=notes`] }, h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }))),
     ),
   );
 }
@@ -205,9 +205,11 @@ describe("the pages panel", () => {
     renderDetail();
     const scope = await panel();
     inspectFails = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source:/ });
     fireEvent.click(badge);
     expect(await within(scope).findByText(NAVIGATION_ERROR_MESSAGES.FILE_MISSING)).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
     expect(within(scope).getByRole("button", { name: "Find and restore file" })).toBeTruthy();
   });
 
@@ -270,6 +272,7 @@ describe("source badges", () => {
     expect(await screen.findByText("Source page 12")).toBeTruthy();
     const before = await db.select("SELECT * FROM card_review_events");
     const attempts = await db.select("SELECT * FROM practice_attempts");
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source: .*page 12/ });
     fireEvent.click(badge);
     // The badge's own note (the panel's status line says the same).
@@ -462,6 +465,7 @@ describe("source badges retire their guidance when the view goes away (M4S1-R8)"
   it("leaving while the file is being checked opens nothing", async () => {
     await seed();
     const view = renderDetail();
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source:/ });
     const held = gate();
     inspectHeld = held.promise;

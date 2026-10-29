@@ -1,6 +1,6 @@
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
@@ -90,6 +90,7 @@ import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { useMaterialTips } from "./materialTips";
 import { RelatedStudy } from "./RelatedStudy";
 import { jumpToMaterialHeading } from "./materialJump";
+import { MATERIAL_TABS, materialTabFrom, materialTabParams, materialTabForAnchor, type MaterialTab } from "./materialTabs";
 import { selectRelatedStudy } from "@/logic/relatedStudy";
 
 export function MaterialDetail() {
@@ -104,6 +105,24 @@ function MaterialDetailPage() {
   const { materialId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [params, setSearchParams] = useSearchParams();
+  const tab = materialTabFrom(params);
+  const selectTab = (next: MaterialTab) => {
+    const nextParams = materialTabParams(params, next);
+    // React Router's search-only setter drops the hash. Retain preparation anchors.
+    if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true });
+    else setSearchParams(nextParams, { replace: true });
+  };
+  const [pendingJump, setPendingJump] = useState<string | null>(null);
+  const tabForAnchor = (id: string) => {
+    const guideIndex = /^search-target-guide-(\d+)$/.exec(id)?.[1];
+    return materialTabForAnchor(id, guideIndex !== undefined && Boolean(studySet?.sections[Number(guideIndex)]?.pdfProvenance));
+  };
+  const jumpTo = (id: string) => {
+    const destination = tabForAnchor(id);
+    if (destination && destination !== tab) selectTab(destination);
+    setPendingJump(id);
+  };
   // Opened from Review due: start this material's card session once. The
   // request is read once per visit and then cleared from history, so Back
   // or a reload never starts another session by itself.
@@ -208,6 +227,19 @@ function MaterialDetailPage() {
   const isMountedRef = useRef(true);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+  useEffect(() => {
+    if (!pendingJump) return;
+    const destination = tabForAnchor(pendingJump);
+    if (destination && tab !== destination) return;
+    if (!document.getElementById(pendingJump)) return;
+    const frame = requestAnimationFrame(() => {
+      // The reading panel focuses its ready control after its async status arrives.
+      if (pendingJump === "read-pdf-text") document.getElementById(pendingJump)?.scrollIntoView?.({ block: "start" });
+      else jumpToMaterialHeading(pendingJump);
+      setPendingJump(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingJump, tab, dataRevision]);
   const prepareDelete = async () => {
     if (!repositories || !material) return;
     try {
@@ -268,13 +300,26 @@ function MaterialDetailPage() {
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
   const [linkFailed, setLinkFailed] = useState(false);
   const [linkRetry, setLinkRetry] = useState(0);
-  const linkKey = location.search;
+  // Switching tabs must not re-resolve the same search hit and pull her back.
+  const linkParams = new URLSearchParams(location.search);
+  linkParams.delete("tab");
+  const linkKey = linkParams.toString();
   // The study set's own text: a link is checked again whenever it changes,
   // and not on every unrelated reload.
   const studyText = useMemo(
     () => (studySet ? JSON.stringify([studySet.summary, studySet.sections, studySet.flashcards]) : ""),
     [studySet],
   );
+  const hashHandled = useRef<string | null>(null);
+  useEffect(() => {
+    if (hashHandled.current === location.hash) return;
+    if (!material) return;
+    hashHandled.current = location.hash;
+    if (location.hash) {
+      try { jumpTo(decodeURIComponent(location.hash.slice(1))); }
+      catch { /* An invalid escaped anchor has no destination. */ }
+    }
+  }, [location.hash, material, studyText]);
   const scrolledFor = useRef<string | null>(null);
   const practiceRepository = repositories?.practiceSessions;
   useEffect(() => {
@@ -328,11 +373,22 @@ function MaterialDetailPage() {
     // not its timestamp, decides (two saves can share a timestamp).
   }, [linkKey, materialId, studyText, practiceRepository, linkRetry]);
   useEffect(() => {
-    const anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
+    let anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
     if (!anchor || scrolledFor.current === linkKey) return;
-    scrolledFor.current = linkKey;
-    document.getElementById(anchor)?.scrollIntoView?.({ block: "center" });
-  }, [linkTarget, linkKey]);
+    const isKit = linkTarget?.kind === "card"
+      ? Boolean(studySet?.flashcards[linkTarget.index]?.pdfProvenance)
+      : linkTarget?.kind === "guide" && Boolean(studySet?.sections[linkTarget.index]?.pdfProvenance);
+    if (isKit && linkTarget?.kind === "card") anchor = "search-target-kit-cards";
+    const destination = materialTabForAnchor(anchor, isKit);
+    if (destination && destination !== tab) { selectTab(destination); return; }
+    const element = document.getElementById(anchor);
+    if (!element) return;
+    const frame = requestAnimationFrame(() => {
+      scrolledFor.current = linkKey;
+      jumpToMaterialHeading(element.id, { block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [linkTarget, linkKey, tab, studySet]);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
@@ -340,10 +396,10 @@ function MaterialDetailPage() {
   // its questions arrive. Anchor to the stable practice section after that
   // layout change, only for a generation requested during this visit.
   useLayoutEffect(() => {
-    if (!practiceJustSaved || generatingPractice || !practiceTest) return;
+    if (tab !== "study" || !practiceJustSaved || generatingPractice || !practiceTest) return;
     setPracticeJustSaved(false);
     document.getElementById("material-practice-test")?.scrollIntoView?.({ block: "start", behavior: "auto" });
-  }, [practiceJustSaved, generatingPractice, practiceTest]);
+  }, [practiceJustSaved, generatingPractice, practiceTest, tab]);
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
   // A set she wrote herself is labelled as hers, never as Gemini output.
@@ -671,11 +727,7 @@ function MaterialDetailPage() {
     if (refusal && isMountedRef.current) setStartRefusal({ kind: "practice-test", message: refusal });
   };
 
-  const jumpToFileSection = () => {
-    const el = document.getElementById("material-file-actions");
-    el?.scrollIntoView?.({ block: "start" });
-    el?.focus();
-  };
+  const jumpToFileSection = () => jumpTo("material-file-actions");
   // Saved reviews need an async read; they come from this material's practice test, so it stands in for them.
   const hasRelatedStudy = Boolean(practiceTest) || selectRelatedStudy({ material, questions: data.questions, events: data.events,
     recentReviews: { status: "ready", value: [] } }).rows.length > 0;
@@ -724,7 +776,7 @@ function MaterialDetailPage() {
         </Card>
       ) : null}
 
-      <div className="detail material-detail">
+      <div className="material-detail stack stack--4">
         <div className="detail__column">
 
           {isPdf && !tipsHidden ? (
@@ -772,81 +824,38 @@ function MaterialDetailPage() {
                 { id: "material-practice-heading", label: "Practice test" },
                 ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
               ].map(({ id, label }) => (
-                <Button key={id} size="small" variant="ghost" onClick={() => jumpToMaterialHeading(id)}>{label}</Button>
+                <Button key={id} size="small" variant="ghost" onClick={() => jumpTo(id)}>{label}</Button>
               ))}
             </nav>
           ) : null}
-          <RelatedStudy key={material.id} materialId={material.id} />
-          {material.filePath ? (
-            <div id="material-file-actions" tabIndex={-1}><Card>
-              <CardBody>
-                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
-                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
-                  <div className="file-row__details">
-                    <p className="small truncate">{material.originalFileName}</p>
-                    <p className="tiny">
-                      {fileMissing
-                        ? "This file is no longer in your library storage."
-                        : formatFileSize(material.fileSize)}
-                    </p>
-                  </div>
-                  <div className="file-row__actions">
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                        <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                        {!tipsHidden ? <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p> : null}
-                      </div>
-                    ) : null}
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                      <Button variant="secondary" onClick={() => setSplittingManually(true)}>
-                        Take out a chapter
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p> : null}
-                      </div>
-                    ) : null}
-                    {!fileMissing && canHandleFiles() ? (
-                      <div className="file-action-tip">
-                      <Button onClick={open}>
-                        <ExternalIcon size={15} /> Open
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page." : "Opens the file in its usual app on your Mac."}</p> : null}
-                      </div>
-                    ) : null}
-                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
-                  </div>
-                </div>
-                {fileMissing ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="tiny muted">
-                      Everything you wrote is still here. Choose the original or a replacement
-                      copy; it will be copied back inside the desktop app.
-                    </p>
-                    <Button
-                      size="small"
-                      variant="primary"
-                      disabled={restoringFile}
-                      onClick={() => void restoreFile()}
-                    >
-                      {restoringFile ? "Restoring…" : "Find and restore file"}
-                    </Button>
-                  </div>
-                ) : null}
-                {openError ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error">{openError}</p>
-                    {!fileMissing ? (
-                      <Button size="small" onClick={() => void revealStoredFile()}>
-                        Show in Finder or File Explorer
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-                <SplitLineageDetails material={material} materials={data.materials} />
-              </CardBody>
-            </Card></div>
-          ) : null}
-
+        </div>
+        <div className="library-tabs material-tabs" role="tablist" aria-label="Study this material">
+          {MATERIAL_TABS.map((value, index) => (
+            <button key={value} type="button" role="tab" id={`material-tab-${value}`}
+              className={`library-tab tab${tab === value ? " is-active" : ""}`}
+              aria-selected={tab === value} aria-controls={`material-panel-${value}`}
+              tabIndex={tab === value ? 0 : -1}
+              onClick={() => selectTab(value)}
+              onKeyDown={(event) => {
+                const nextIndex = event.key === "ArrowRight" ? (index + 1) % 3
+                  : event.key === "ArrowLeft" ? (index + 2) % 3
+                  : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
+                if (nextIndex !== null) {
+                  event.preventDefault();
+                  const next = MATERIAL_TABS[nextIndex]!;
+                  selectTab(next);
+                  document.getElementById(`material-tab-${next}`)?.focus();
+                } else if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  selectTab(value);
+                  document.getElementById(`material-panel-heading-${value}`)?.focus({ preventScroll: true });
+                }
+              }}>{value === "study" ? "Study" : value === "notes" ? "Notes" : "More"}</button>
+          ))}
+        </div>
+        <section id="material-panel-study" role="tabpanel" aria-labelledby="material-tab-study" hidden={tab !== "study"}>
+          <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden">Study</h2>
+          <div className="detail__column">
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -1531,6 +1540,11 @@ function MaterialDetailPage() {
 
           <OralScenariosCard material={material} />
 
+          </div>
+        </section>
+        <section id="material-panel-notes" role="tabpanel" aria-labelledby="material-tab-notes" hidden={tab !== "notes"}>
+          <h2 id="material-panel-heading-notes" tabIndex={-1} className="visually-hidden">Notes</h2>
+          <div className="detail__column">
           <Card>
             <CardHeader
               title="Personal notes"
@@ -1637,6 +1651,82 @@ function MaterialDetailPage() {
               onRestore={() => void restoreFile()} showTips={!tipsHidden} />
           ) : null}
 
+          </div>
+        </section>
+        <section id="material-panel-more" role="tabpanel" aria-labelledby="material-tab-more" hidden={tab !== "more"}>
+          <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden">More</h2>
+          <div className="detail__column">
+          <RelatedStudy key={material.id} materialId={material.id} />
+          {material.filePath ? (
+            <div id="material-file-actions" tabIndex={-1}><Card>
+              <CardBody>
+                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
+                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
+                  <div className="file-row__details">
+                    <p className="small truncate">{material.originalFileName}</p>
+                    <p className="tiny">
+                      {fileMissing
+                        ? "This file is no longer in your library storage."
+                        : formatFileSize(material.fileSize)}
+                    </p>
+                  </div>
+                  <div className="file-row__actions">
+                    {canSplit ? (
+                      <div className="file-action-tip">
+                        <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                        {!tipsHidden ? <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p> : null}
+                      </div>
+                    ) : null}
+                    {canSplit ? (
+                      <div className="file-action-tip">
+                      <Button variant="secondary" onClick={() => setSplittingManually(true)}>
+                        Take out a chapter
+                      </Button>
+                      {!tipsHidden ? <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p> : null}
+                      </div>
+                    ) : null}
+                    {!fileMissing && canHandleFiles() ? (
+                      <div className="file-action-tip">
+                      <Button onClick={open}>
+                        <ExternalIcon size={15} /> Open
+                      </Button>
+                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page." : "Opens the file in its usual app on your Mac."}</p> : null}
+                      </div>
+                    ) : null}
+                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
+                  </div>
+                </div>
+                {fileMissing ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="tiny muted">
+                      Everything you wrote is still here. Choose the original or a replacement
+                      copy; it will be copied back inside the desktop app.
+                    </p>
+                    <Button
+                      size="small"
+                      variant="primary"
+                      disabled={restoringFile}
+                      onClick={() => void restoreFile()}
+                    >
+                      {restoringFile ? "Restoring…" : "Find and restore file"}
+                    </Button>
+                  </div>
+                ) : null}
+                {openError ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error">{openError}</p>
+                    {!fileMissing ? (
+                      <Button size="small" onClick={() => void revealStoredFile()}>
+                        Show in Finder or File Explorer
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <SplitLineageDetails material={material} materials={data.materials} />
+              </CardBody>
+            </Card></div>
+          ) : null}
+
           {isPdf && (material.filePath || hasKitItems) ? (
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
@@ -1644,7 +1734,7 @@ function MaterialDetailPage() {
                 {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
                   {material.filePath ? <>
-                    <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div>
+                    <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
                     <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
                   </> : null}
                   {hasKitItems ? (
@@ -1768,10 +1858,7 @@ function MaterialDetailPage() {
                 </div></CardBody>
               </Card>
             </section>
-          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div> : null}
-        </div>
-
-        <div className="detail__column">
+          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div> : null}
           <Card>
             <CardHeader title="Review status" />
             {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
@@ -1854,7 +1941,8 @@ function MaterialDetailPage() {
               ) : null}
             </CardBody>
           </Card>
-        </div>
+          </div>
+        </section>
       </div>
 
       {canSplit ? (

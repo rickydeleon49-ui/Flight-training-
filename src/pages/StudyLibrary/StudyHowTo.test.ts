@@ -90,6 +90,7 @@ it("reaches How to by keyboard from the History tab and records it in the addres
 
 it("replaces the Start here panel on a PDF page with one link line to How to", async () => {
   renderAt("/study/howto-pdf");
+  fireEvent.click(await screen.findByRole("tab", { name: "Notes" }));
   await screen.findByRole("heading", { name: "Personal notes" });
   expect(screen.queryByRole("heading", { name: "Start here" })).toBeNull();
   expect(screen.queryByRole("list", { name: "PDF study steps" })).toBeNull();
@@ -110,12 +111,14 @@ it("replaces the Start here panel on a PDF page with one link line to How to", a
 
 it("keeps the Hide section tips preference working on a PDF page, hiding the link line too", async () => {
   const view = renderAt("/study/howto-pdf");
+  fireEvent.click(await screen.findByRole("tab", { name: "Notes" }));
   await screen.findByRole("heading", { name: "Personal notes" });
   fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();
   expect(localStorage.getItem("hfd:material-start-here:hidden")).toBe("1");
   view.unmount();
   renderAt("/study/howto-pdf");
+  fireEvent.click(await screen.findByRole("tab", { name: "Notes" }));
   await screen.findByRole("heading", { name: "Personal notes" });
   fireEvent.click(screen.getByRole("button", { name: "Show section tips" }));
   expect(screen.getByRole("link", { name: "How to in Study Library" })).toBeTruthy();
