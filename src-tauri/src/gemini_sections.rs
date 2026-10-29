@@ -654,6 +654,12 @@ fn validate_section(
     }
     let a: Answer = serde_json::from_str(text)
         .map_err(|_| "The section answer was incomplete; earlier sections are kept.")?;
+    // Some model answers double-escape newlines inside the JSON body.
+    let body = if !a.body.contains(['\n', '\r']) {
+        a.body.replace("\\n", "\n")
+    } else {
+        a.body
+    };
     let mut source_pages = a.source_pages;
     source_pages.sort_unstable();
     source_pages.dedup();
@@ -661,8 +667,8 @@ fn validate_section(
     source_pages.truncate(10);
     // The prompt asks for at most REQUESTED_BODY_CHARS; models sometimes run
     // over, so accept anything the study set itself can store.
-    if a.body.trim().is_empty()
-        || a.body.chars().count() > crate::study_sets::MAX_BODY
+    if body.trim().is_empty()
+        || body.chars().count() > crate::study_sets::MAX_BODY
         || source_pages.is_empty()
     {
         return Err(
@@ -671,7 +677,7 @@ fn validate_section(
         );
     }
     let mut content = ResultBody {
-        body: a.body,
+        body,
         source_pages,
         content_digest: String::new(),
         model: model.into(),

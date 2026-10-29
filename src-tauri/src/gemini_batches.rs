@@ -225,7 +225,7 @@ pub(super) async fn generate(
     } else {
         None
     };
-    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards or an empty array if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage).";
+    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage).";
     while !draft.complete && draft.next <= (target / 10) as usize {
         unchanged(root, source)?;
         let unit = draft.next;
@@ -237,8 +237,15 @@ pub(super) async fn generate(
         let prompt = if unit == 0 {
             format!("Create the study guide only. Omit flashcards. {safety}")
         } else {
-            let previous = serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?;
-            format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. Do not repeat these accepted cards: {previous}. Keep sections empty; title and summary briefly describe the batch. {safety}")
+            let previous = if draft.cards.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "Do not repeat these accepted cards: {}. ",
+                    serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?
+                )
+            };
+            format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. {previous}Keep sections empty; title and summary briefly describe the batch. {safety}")
         };
         let mut answer = study_aid_request(ctx, source, &prompt, if unit == 0 { 8192 } else { 4096 }, unit == 0).await.map_err(|message| {
             if message == gemini_cancel::CANCELLED && gemini_jobs::with(root, |j| j.admits(&id)) {
@@ -286,6 +293,14 @@ pub(super) async fn generate(
         if unit > 0 && (returned < BATCH || draft.cards.len() == before) {
             break;
         }
+    }
+    if draft.cards.is_empty() {
+        // Retry the card unit, retaining all request reservations and timing.
+        // A completed empty draft must never become a successful study set.
+        draft.complete = false;
+        draft.next = 1;
+        write(root, &id, &draft)?;
+        return Err("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.".into());
     }
     let mut answer = draft.guide.take().ok_or("The guide draft is incomplete.")?;
     answer.flashcards = draft.cards;
@@ -705,8 +720,91 @@ mod tests {
     }
 
     #[test]
+    fn completed_empty_draft_is_an_error_without_network() {
+        let root = TempDir::new();
+        let source = LoadedSource::new(b"Synthetic source".to_vec(), "text/plain", "source.txt");
+        let id = gemini_jobs::with(root.path(), |j| {
+            j.begin(
+                JobKind::StudyAid,
+                "material",
+                &source.scope,
+                &source.content_sha256,
+                None,
+            )
+        })
+        .unwrap();
+        let draft = Draft {
+            target: 20,
+            timing: None,
+            deadline: seconds() + 300,
+            remaining_millis: 300_000,
+            requests: [1, 1, 0, 0, 0, 0, 0],
+            next: 2,
+            complete: true,
+            admissions: 2,
+            guide: Some(serde_json::from_value(aid(0, 0)).unwrap()),
+            cards: vec![],
+        };
+        write(root.path(), &id, &draft).unwrap();
+        let (budget, _) = fake_budget(Duration::from_secs(300));
+        let http = generation_client().unwrap();
+        let cache = PreparedSources::new(
+            gemini_files::Policy::default(),
+            gemini_files::system_clock(),
+        );
+        let ctx = GenContext {
+            http: &http,
+            base: "http://127.0.0.1:1",
+            api_key: "synthetic-only",
+            choice: ModelChoice::Standard,
+            cache: &cache,
+            epoch: cache.epoch(),
+            budget: &budget,
+            say: &|_| {},
+        };
+        let answer =
+            tauri::async_runtime::block_on(generate(&ctx, &source, root.path(), "material", 20));
+        assert_eq!(answer.unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
+        let kept = read(root.path(), &id).unwrap();
+        assert_eq!(kept.requests, [1, 1, 0, 0, 0, 0, 0]);
+        assert!(!kept.complete);
+        assert_eq!(kept.next, 1);
+    }
+
+    #[test]
+    fn empty_cards_fail_and_retry_keeps_reservations() {
+        let r = Rig::new();
+        let id = r.begin();
+        r.script(vec![aid(0, 0), aid(0, 0), aid(0, 3)]);
+        assert_eq!(r.run(20).unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
+        let draft = read(r.root.path(), &id).unwrap();
+        assert!(draft.cards.is_empty());
+        assert!(!draft.complete);
+        assert_eq!(draft.requests.iter().sum::<u32>(), 2);
+        assert_eq!(r.run(20).unwrap().flashcards.len(), 3);
+        assert_eq!(
+            read(r.root.path(), &id)
+                .unwrap()
+                .requests
+                .iter()
+                .sum::<u32>(),
+            3
+        );
+        let log = r.fake.log();
+        let prompts: Vec<_> = log
+            .iter()
+            .filter(|r| r.is_generate())
+            .map(|r| r.json().to_string())
+            .collect();
+        assert!(prompts.iter().all(|p| !p.contains("or an empty array")));
+        assert!(prompts
+            .iter()
+            .all(|p| !p.contains("Do not repeat these accepted cards")));
+    }
+
+    #[test]
     fn short_empty_duplicate_and_repeated_batches_never_pad_or_commit_twice() {
-        for count in [0, 3, 10] {
+        for count in [3, 10] {
             let r = Rig::new();
             let id = r.begin();
             r.script(vec![aid(0, 0), aid(0, count), aid(0, count)]);

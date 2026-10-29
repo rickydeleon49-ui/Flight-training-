@@ -1784,3 +1784,40 @@ fn cancelled_queue_item_stays_cancelled_after_reopen() {
     assert_eq!(d.queue_state, Some(QueueState::Cancelled));
     assert_eq!(r.fake.log().len(), requests_before);
 }
+
+#[test]
+fn validate_section_unescapes_newlines_before_digest_and_storage() {
+    let section = Section {
+        id: "section-01".into(),
+        heading: "Pages 1–5".into(),
+        page_start: 1,
+        page_end: 5,
+    };
+    for (raw, expected) in [
+        (
+            "## Heading\\n\\n- One\\n- Two",
+            "## Heading\n\n- One\n- Two",
+        ),
+        (
+            "## Heading\nLiteral \\n stays.",
+            "## Heading\nLiteral \\n stays.",
+        ),
+    ] {
+        let result = validate_section(
+            &section,
+            &json!({"body": raw, "sourcePages": [1]}).to_string(),
+            &[1, 2, 3, 4, 5],
+            "model",
+        )
+        .unwrap();
+        assert_eq!(result.body, expected);
+        assert_eq!(result.content_digest, digest(&result));
+    }
+    assert!(validate_section(
+        &section,
+        &json!({"body": "\\n\\n", "sourcePages": [1]}).to_string(),
+        &[1],
+        "model"
+    )
+    .is_err());
+}

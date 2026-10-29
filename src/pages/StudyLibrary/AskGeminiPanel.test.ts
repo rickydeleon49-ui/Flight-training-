@@ -113,6 +113,27 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     return { ...view, value };
   }
 
+  it("a correctly answered PDF quiz sends the editable starter question as context only", async () => {
+    vi.mocked(askGemini).mockResolvedValueOnce({
+      answer: "The supplied explanation supports this answer.", model: "gemini-3.5-flash",
+      notAnswered: true, passages: [{ page: 42, quote: "Unused evidence" }], evidenceUnavailable: "text_not_read",
+    });
+    await renderPracticePanel();
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    expect((screen.getByLabelText("Ask a question") as HTMLInputElement).value).toBe("Why is that the correct answer?");
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByText("The supplied explanation supports this answer.");
+    expect(vi.mocked(askGemini).mock.calls[0]![0]).toMatchObject({ relativePath: null, question: "Why is that the correct answer?" });
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
+    expect(screen.queryByText("Not answered by these sources.")).toBeNull();
+    expect(screen.queryByText(/check the supporting text/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Close Ask Gemini" }));
+    fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
+    expect((screen.getByLabelText("Ask a question") as HTMLInputElement).value).toBe("Why is that the correct answer?");
+  });
+
   it.each([["admin", true], ["credential", true], ["admin", false], ["credential", false]] as const)("refuses %s reclassification after a saved quiz and listener startup (file attached: %s)", async (kind, hasFile) => {
     const view = await renderPracticePanel();
     fireEvent.click(screen.getAllByRole("radio")[0]!);
@@ -140,7 +161,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     const credentials = kind === "credential" ? [{ materialId: "mat-1", title: "Synthetic medical" }] as typeof EMPTY_DATA.toolkit.credentials : [];
     const refusedData = { ...allowedData, materials: kind === "missing" ? [] : [refusedMaterial], toolkit: { ...EMPTY_DATA.toolkit, credentials } };
     const panel = (data: typeof allowedData) => h(AppDataContext.Provider, { value: { data } as ContextType<typeof AppDataContext> },
-      h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+      h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     const view = render(panel(refusedData));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     const input = screen.getByLabelText("Ask a question") as HTMLInputElement;
@@ -199,6 +220,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     // Type question
     const input = screen.getByLabelText("Ask a question");
+    expect((input as HTMLInputElement).value).toBe("Why is that the correct answer?");
     fireEvent.change(input, { target: { value: "Why isn't 800 feet standard?" } });
 
     // Submit question
@@ -211,7 +233,8 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     const callArgs = mockAsk.mock.calls[0]![0] as import("@/services/gemini").AskGeminiParams;
     expect(callArgs.materialId).toBe("mat-1");
-    expect(callArgs.relativePath).toBe("documents/traffic_pattern.pdf");
+    expect(callArgs.relativePath).toBeNull();
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(callArgs.question).toBe("Why isn't 800 feet standard?");
     expect(callArgs.context).toContain("What is the standard traffic pattern altitude");
     expect(callArgs.context).toContain("800 feet AGL");
@@ -230,7 +253,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     });
 
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         relativePath: "documents/test.pdf",
         context: "Sample context",
@@ -272,7 +295,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       vi.mocked(askGemini).mockImplementation(async (params) => ({
         answer: `Answer: ${params && typeof params === "object" ? params.question : ""}`, model: "gemini-3.5-flash", notAnswered: false, passages: [],
       }));
-      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+      render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
       const opener = screen.getByRole("button", { name: "Why? Ask Gemini" });
       opener.focus();
       expect(document.activeElement).toBe(opener);
@@ -324,7 +347,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
   it("keeps the complete disclosure visible before each send without writing storage", () => {
     const setItem = vi.spyOn(Storage.prototype, "setItem");
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     expect(screen.getByText(/recent conversation are sent to Google/)).toBeTruthy();
     expect(setItem).not.toHaveBeenCalled();
@@ -335,7 +358,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     vi.mocked(askGemini).mockResolvedValueOnce({ answer: "Original context answer.", model: "gemini-3.5-flash", sourcePages: [] });
     const data = { ...allowedData, materials: [makeMaterial({ id: "mat-1", filePath })] };
     render(h(AppDataContext.Provider, { value: { data } as ContextType<typeof AppDataContext> },
-      h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" })));
+      h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" })));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -353,7 +376,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     });
     const setItem = vi.spyOn(Storage.prototype, "setItem");
     const beforeDb = await db.select("SELECT * FROM study_materials");
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "A synthetic question?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -379,7 +402,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
       vi.mocked(askGemini)
         .mockResolvedValueOnce({ answer: "Unread answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [], evidenceUnavailable: "text_not_read" })
         .mockResolvedValueOnce({ answer: "Read answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
-      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+      render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Context" }));
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
       const input = screen.getByLabelText("Ask a question");
       fireEvent.change(input, { target: { value: "First?" } });
@@ -410,7 +433,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     mockAsk.mockRejectedValueOnce(new Error("Gemini is not connected. Connect it in Settings first."));
 
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         relativePath: "documents/test.pdf",
         context: "Context",
@@ -429,7 +452,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
   it("keeps the question and explains how to retry when offline", async () => {
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         relativePath: "documents/test.pdf",
         context: "Context",
@@ -463,7 +486,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     }));
 
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         relativePath: "documents/test.pdf",
         context: "Context",
@@ -510,7 +533,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     const sourceB = makeMaterial({ id: "mat-2", filePath: "documents/other.pdf" });
     const data = { ...allowedData, materials: [allowedMaterial, sourceB] };
     const panel = (id: string) => h(AppDataContext.Provider, { value: { data } as ContextType<typeof AppDataContext> },
-      h(AskGeminiPanel, { materialId: id, context: "Synthetic context" }));
+      h(AskGeminiPanel, { evidenceMode: true, materialId: id, context: "Synthetic context" }));
     const view = render(panel("mat-1"));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     const ask = (text: string) => {
@@ -540,7 +563,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
       .mockResolvedValueOnce({ answer: "Earlier valid answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [] })
       .mockRejectedValueOnce(message)
       .mockResolvedValueOnce({ answer: "Next valid answer.", model: "gemini-3.5-flash", notAnswered: false, passages: [] });
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     const ask = (question: string) => {
       fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: question } });
@@ -572,7 +595,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
       value: { data: { ...allowedData, materials: [{ ...allowedMaterial,
         ...(edited ? { updatedAt: "2026-10-28T20:00:00Z", title: "Edited title", notes: "Edited notes" } : {}),
       }] } } as ContextType<typeof AppDataContext>,
-    }, h(AskGeminiPanel, { materialId: "mat-1", context: edited ? "Updated study context" : "Original context" }));
+    }, h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: edited ? "Updated study context" : "Original context" }));
     const view = render(panel(false));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     const input = () => screen.getByLabelText("Ask a question") as HTMLInputElement;
@@ -598,7 +621,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
   });
 
   it("limits the question input to 1000 characters", () => {
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     expect((screen.getByLabelText("Ask a question") as HTMLInputElement).maxLength).toBe(1000);
   });
@@ -611,7 +634,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
       vi.mocked(askGemini)
         .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
         .mockImplementationOnce(() => new Promise((resolve) => { resolveNew = resolve; }));
-      render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+      render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Context" }));
       fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
       fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
       fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -648,7 +671,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     vi.mocked(askGemini).mockImplementationOnce(() => new Promise((_resolve, reject) => {
       rejectOld = reject;
     }));
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Old question" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -670,7 +693,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     });
 
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         context: "Sample aerodynamic context",
       }),
@@ -695,7 +718,7 @@ describe("AskGeminiPanel answer actions and reset", () => {
     });
 
     render(
-      h(AskGeminiPanel, {
+      h(AskGeminiPanel, { evidenceMode: true,
         materialId: "mat-1",
         context: "Context",
       }),
@@ -741,7 +764,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
   });
 
   async function start() {
-    const view = render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    const view = render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -800,7 +823,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
   it("closing while the listener starts prevents a native ask and releases the late listener", async () => {
     let ready!: (stop: () => void) => void;
     vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
-    render(h(AskGeminiPanel, { materialId: "mat-1", context: "Synthetic context" }));
+    render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
@@ -948,13 +971,16 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     // Open and ask
     fireEvent.click(explainBtn);
     const input = within(flashcardsSection).getByLabelText("Ask a question");
+    expect((input as HTMLInputElement).value).toBe("Why is this the answer?");
     fireEvent.change(input, { target: { value: "Why is Vy important?" } });
     fireEvent.click(within(flashcardsSection).getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(1));
     const args = mockAsk.mock.calls[0]![0] as any;
     expect(args.materialId).toBe("mat-pdf");
-    expect(args.relativePath).toBe("documents/handbook.pdf");
+    expect(args.relativePath).toBeNull();
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
+    expect(screen.queryByText(/check the supporting text/)).toBeNull();
     expect(args.question).toBe("Why is Vy important?");
     expect(args.context).toContain("What is Vy?");
     expect(args.context).toContain("Best rate of climb speed.");
@@ -989,13 +1015,16 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
     fireEvent.click(explainBtn);
     const input = screen.getByLabelText("Ask a question");
+    expect((input as HTMLInputElement).value).toBe("Why is this the answer?");
     fireEvent.change(input, { target: { value: "Explain Vx" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(1));
     const args = mockAsk.mock.calls[0]![0] as any;
     expect(args.materialId).toBe("mat-pdf");
-    expect(args.relativePath).toBe("documents/handbook.pdf");
+    expect(args.relativePath).toBeNull();
+    expect(screen.queryByText(/^Sources \(/)).toBeNull();
+    expect(screen.queryByText(/check the supporting text/)).toBeNull();
     expect(args.question).toBe("Explain Vx");
     expect(args.context).toContain("What is Vy?");
     expect(args.context).toContain("Best rate of climb speed.");
@@ -1065,6 +1094,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const args = mockAsk.mock.calls[0]![0] as any;
     expect(args.materialId).toBe("mat-pdf");
     expect(args.relativePath).toBe("documents/handbook.pdf");
+    expect(await screen.findByText("Sources (1)")).toBeTruthy();
     expect(args.question).toBe("What is a standard rate turn?");
     expect(args.context).toContain("Synthetic Handbook");
     expect(args.context).toContain("A synthetic study summary.");

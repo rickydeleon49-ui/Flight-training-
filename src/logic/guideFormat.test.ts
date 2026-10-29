@@ -220,3 +220,20 @@ describe("bounded work", () => {
     expect(performance.now() - started).toBeLessThan(1000);
   });
 });
+
+
+describe("double-escaped Gemini guide bodies", () => {
+  it("displays old saved headings and bullets without changing the body", () => {
+    const saved = "## Page Breakdown\\n\\n- Page 1: Lift\\n- Page 2: Weight";
+    expect(outline(parseGuideBody(saved))).toEqual([
+      ["heading", "Page Breakdown"],
+      ["ul", [[["paragraph", "Page 1: Lift"]], [["paragraph", "Page 2: Weight"]]]],
+    ]);
+    expect(saved).toBe("## Page Breakdown\\n\\n- Page 1: Lift\\n- Page 2: Weight");
+  });
+
+  it("leaves literal escapes alone in bodies with real newlines", () => {
+    const body = "## Notes\nLiteral \\n stays here.";
+    expect(outline(parseGuideBody(body))).toEqual([["heading", "Notes"], ["paragraph", "Literal \\n stays here."]]);
+  });
+});

@@ -172,9 +172,10 @@ function MaterialDetailPage() {
   const generating = working(studyJob?.phase);
   const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
-  const generationError = studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
-  const cardGenerationError = cardJob?.phase === "failed" ? cardJob.error : null;
-  const practiceGenerationError = practiceJob?.phase === "failed" ? practiceJob.error : null;
+  const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
+  const generationError = startRefusal?.kind === "study-aid" ? startRefusal.message : studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
+  const cardGenerationError = startRefusal?.kind === "flashcards" ? startRefusal.message : cardJob?.phase === "failed" ? cardJob.error : null;
+  const practiceGenerationError = startRefusal?.kind === "practice-test" ? startRefusal.message : practiceJob?.phase === "failed" ? practiceJob.error : null;
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
     phase === "recovered" || phase === "save-failed" || phase === "discarding" || phase === "discard-failed";
@@ -442,7 +443,9 @@ function MaterialDetailPage() {
             ? { text: "Checking the Gemini connection…" }
             : !gemini.configured
               ? { text: "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.", settings: true }
-              : null;
+              : geminiJobs.recovery !== "ready"
+                ? { text: "Gemini is still checking earlier work. Try again in a moment." }
+                : null;
   const isGeneratingAny = geminiJobs.busy || geminiJobs.locked();
   // Stage-appropriate recovery (GEN-REL-04): trying again goes through the
   // usual Send confirmation. A PDF already prepared with Google is reused, so
@@ -543,10 +546,13 @@ function MaterialDetailPage() {
   };
 
   const createStudyAid = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "study-aid", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "study-aid",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -560,6 +566,7 @@ function MaterialDetailPage() {
         },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "study-aid", message: refusal });
   };
 
   const queueStudyAid = async () => {
@@ -570,10 +577,13 @@ function MaterialDetailPage() {
   };
 
   const createFlashcards = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "flashcards", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "flashcards",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -587,13 +597,17 @@ function MaterialDetailPage() {
         },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "flashcards", message: refusal });
   };
 
   const createPracticeTest = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "practice-test", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
     }
-    await geminiJobs.start(
+    const refusal = await geminiJobs.start(
       "practice-test",
       { materialId: material.id, filePath: material.filePath },
       {
@@ -601,6 +615,7 @@ function MaterialDetailPage() {
         onSaved: () => { if (isMountedRef.current) setPracticeJustSaved(true); },
       },
     );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "practice-test", message: refusal });
   };
 
   const jumpToFileSection = () => {
@@ -690,6 +705,7 @@ function MaterialDetailPage() {
                       relativePath={material.filePath ?? null}
                       context={pdfContext}
                       buttonLabel="Ask about this PDF"
+                      evidenceMode
                     />
                   </>
                 )}
@@ -824,7 +840,9 @@ function MaterialDetailPage() {
                           variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || Boolean(studyJob?.sectionGuide)}
                           onClick={() => {
-                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingAi(true);
+                            if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "study-aid", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingAi(true);
                           }}
                         >
                           {generating
@@ -1062,7 +1080,9 @@ function MaterialDetailPage() {
                             variant={studySet && guideFlashcards.length > 0 ? "secondary" : "primary"}
                             disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
                             onClick={() => {
-                              if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingCards(true);
+                              if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "flashcards", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingCards(true);
                             }}
                           >
                             {generatingCards ? "Reading document…" : "Create flashcards"}
@@ -1199,6 +1219,7 @@ function MaterialDetailPage() {
                                 guideFlashcards[safeCardIndex].card.sourcePage,
                               )}
                               buttonLabel="Explain this"
+                              initialQuestion="Why is this the answer?"
                             />
                           ) : null}
                           <div className="row row--between">
@@ -1285,7 +1306,9 @@ function MaterialDetailPage() {
                           variant={practiceTest ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
                           onClick={() => {
-                            if (!isGeneratingAny && !geminiJobs.locked()) setConfirmingPracticeTest(true);
+                            if (geminiJobs.locked()) {
+                                setStartRefusal({ kind: "practice-test", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                              } else setConfirmingPracticeTest(true);
                           }}
                         >
                           {generatingPractice
@@ -1840,7 +1863,7 @@ function MaterialDetailPage() {
       />
 
       <ConfirmDialog
-        open={confirmingAi && !isGeneratingAny}
+        open={confirmingAi}
         title="Send this file to Google?"
         message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
@@ -1862,7 +1885,6 @@ function MaterialDetailPage() {
         }
         onConfirm={() => {
           setConfirmingAi(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createStudyAid();
         }}
         onCancel={() => setConfirmingAi(false)}
@@ -1876,7 +1898,7 @@ function MaterialDetailPage() {
       </ConfirmDialog>
 
       <ConfirmDialog
-        open={confirmingCards && !isGeneratingAny}
+        open={confirmingCards}
         title="Send this file to Google?"
         message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
@@ -1884,7 +1906,6 @@ function MaterialDetailPage() {
         {...chooseChapterFirst(() => setConfirmingCards(false))}
         onConfirm={() => {
           setConfirmingCards(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createFlashcards();
         }}
         onCancel={() => setConfirmingCards(false)}
@@ -1898,7 +1919,7 @@ function MaterialDetailPage() {
       </ConfirmDialog>
 
       <ConfirmDialog
-        open={confirmingPracticeTest && !isGeneratingAny}
+        open={confirmingPracticeTest}
         title="Send this file to Google?"
         message={
           practiceTest
@@ -1910,7 +1931,6 @@ function MaterialDetailPage() {
         {...chooseChapterFirst(() => setConfirmingPracticeTest(false))}
         onConfirm={() => {
           setConfirmingPracticeTest(false);
-          if (isGeneratingAny || geminiJobs.locked()) return;
           void createPracticeTest();
         }}
         onCancel={() => setConfirmingPracticeTest(false)}

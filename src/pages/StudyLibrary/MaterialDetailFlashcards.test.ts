@@ -94,6 +94,58 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     vi.restoreAllMocks();
   });
 
+  it.each([false, true])("empty cards fail visibly, save nothing and can be retried (existing set: %s)", async (existing) => {
+    if (existing) await repos.documents.saveAiStudySet({
+      sourceMaterialId: "mat-pdf", title: "Keep this guide", summary: "Keep this summary",
+      sections: [{ heading: "Keep", body: "My guide" }],
+      flashcards: [{ front: "Keep Q", back: "Keep A", sourcePage: 1 }], sourceNotes: "Keep notes", model: "gemini-3.5-flash",
+    });
+    const before = await repos.documents.listAiStudySets();
+    const generate = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValueOnce({
+      title: "Empty", summary: "Empty", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash",
+      jobId: "empty-job", checkpointed: true,
+    }).mockResolvedValueOnce({
+      title: "New cards", summary: "", sections: [], flashcards: [{ front: "New Q", back: "New A", sourcePage: 1 }], sourceNotes: "", model: "gemini-3.5-flash",
+    });
+    await openMaterial("mat-pdf");
+    await act(async () => { await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    expect(await screen.findByText("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.")).toBeTruthy();
+    expect(await repos.documents.listAiStudySets()).toEqual(before);
+    expect(geminiJobs.jobs.find(j => j.kind === "flashcards")?.phase).toBe("failed");
+    expect(geminiService.acknowledgeGeminiJob).not.toHaveBeenCalledWith("empty-job");
+    fireEvent.click(screen.getAllByRole("button", { name: "Try again" })[0]!);
+    fireEvent.click(within(await waitFor(sendDialog)).getByRole("button", { name: "Send to Gemini" }));
+    await waitFor(() => expect(generate).toHaveBeenCalledTimes(2));
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards[0]?.front).toBe("New Q"));
+  });
+
+  it("a recovered empty card result stays failed and is never offered for saving", async () => {
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
+      id: "empty-recovered", kind: "study-aid", requestId: "flashcards:old-request", materialId: "mat-pdf",
+      relativePath: "documents/handbook.pdf", contentSha256: "", stage: "ready", createdAt: 1, updatedAt: 1,
+      result: { title: "Empty", summary: "", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash" },
+    }]);
+    await openMaterial("mat-pdf");
+    expect(await screen.findByText("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.")).toBeTruthy();
+    expect(geminiJobs.jobs[0]?.phase).toBe("failed");
+    await act(async () => { await geminiJobs.saveAgain(geminiJobs.jobs[0]!.key); });
+    expect(await repos.documents.listAiStudySets()).toEqual([]);
+    expect(geminiService.acknowledgeGeminiJob).not.toHaveBeenCalledWith("empty-recovered");
+    expect(screen.queryByRole("button", { name: "Save the new flashcards" })).toBeNull();
+  });
+
+  it("shows a first-attempt refusal if journal recovery is still pending", async () => {
+    let finish!: (records: geminiService.GeminiJobRecord[]) => void;
+    vi.mocked(geminiService.listGeminiJobs).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study/mat-pdf"] }, h(Probe), h(Ready))));
+    await screen.findByRole("heading", { name: "Synthetic Handbook" });
+    expect((await screen.findAllByText("Gemini is still checking earlier work. Try again in a moment.")).length).toBeGreaterThan(0);
+    let refusal: string | void;
+    await act(async () => { refusal = await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    expect(refusal!).toBe("Gemini is still checking earlier work. Try again in a moment.");
+    await act(async () => finish([]));
+  });
+
   it("starting flashcards on a PDF calls generateStudyAid with the chosen target and never section-guide functions", async () => {
     const generateStudyAidSpy = vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
       title: "Cards Title",

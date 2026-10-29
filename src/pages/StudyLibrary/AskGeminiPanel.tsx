@@ -12,6 +12,8 @@ export interface AskGeminiPanelProps {
   relativePath?: string | null;
   context: string;
   buttonLabel?: string;
+  initialQuestion?: string;
+  evidenceMode?: boolean;
 }
 
 export function formatFlashcardContext(front: string, back: string, sourcePage?: number | null): string {
@@ -42,13 +44,13 @@ interface InFlightAsk {
   unlisten?: () => void;
 }
 
-export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPanelProps) {
+export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false }: AskGeminiPanelProps) {
   const appData = useOptionalAppData();
   // Read the latest classification even if it changes while the listener starts.
   const dataRef = useRef(appData);
   dataRef.current = appData;
   const [isOpen, setIsOpen] = useState(false);
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(initialQuestion);
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
   // the material or its credential links immediately show the same refusal.
   const data = appData?.data;
   const material = data?.materials.find((item) => item.id === materialId);
-  const hasPdf = !!material?.filePath?.toLowerCase().endsWith(".pdf");
+  const hasPdf = evidenceMode && !!material?.filePath?.toLowerCase().endsWith(".pdf");
   const check = material && data
     ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context")
     : { allowed: false, reason: "This material is no longer available. Open it again before asking." };
@@ -87,7 +89,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
     setStopped(false);
     setHistory([]);
     setError(null);
-    setQuestion("");
+    setQuestion(initialQuestion);
     setIsLoading(false);
   };
 
@@ -150,7 +152,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel }: AskGeminiPa
       if (!check.allowed) throw new Error(check.reason);
       const result = await askGemini({
         requestId: request.id,
-        relativePath: material.filePath ?? null,
+        relativePath: evidenceMode ? material.filePath ?? null : null,
         materialId,
         context,
         question: trimmed,
