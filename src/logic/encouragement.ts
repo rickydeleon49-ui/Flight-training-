@@ -14,6 +14,7 @@ export interface EncouragementInput {
   nextLessonDate: IsoDate | null;
   nextLessonTitle: string | null;
   outstandingPrepCount: number;
+  totalPrepCount: number;
   overdueCount: number;
   completedThisWeek: number;
   openActionCount: number;
@@ -45,7 +46,9 @@ export function encouragementMessage(input: EncouragementInput): string | null {
       } preparation ${item} ${verb}.`;
     }
     if (input.nextLessonTitle) {
-      return `You are prepared for ${input.nextLessonTitle}.`;
+      return input.totalPrepCount > 0
+        ? `You have completed the listed preparation for ${input.nextLessonTitle}.`
+        : `No preparation is listed yet for ${input.nextLessonTitle}.`;
     }
   }
 

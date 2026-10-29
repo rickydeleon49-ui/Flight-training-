@@ -135,7 +135,7 @@ export function OralPracticeDialog({
             />
           </Field>
         ) : (
-          <div aria-live="polite">
+          <div className="oral-practice__reveal" aria-live="polite">
             {answer.trim() ? (
               <div className="stack stack--1">
                 <p className="tiny muted">Your answer</p>

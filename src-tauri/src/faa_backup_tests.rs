@@ -115,3 +115,37 @@ fn faa_verifier_refuses_missing_table_drift_corruption_and_newer_schema() {
         for path in [root,backups] { std::fs::remove_dir_all(path).unwrap(); }
     }
 }
+
+#[test]
+fn faa_restore_rejects_pdf_tampering_even_with_rebound_archive_integrity() {
+    let root = scratch("faa-hash-source");
+    let target = scratch("faa-hash-target");
+    let backups = scratch("faa-hash-archive");
+    pdf_kit_test_database(&root.join(DB_FILES[0]), 27);
+    std::fs::create_dir_all(root.join(DOCUMENTS_DIR)).unwrap();
+    let bytes = faa_test_pdf();
+    std::fs::write(root.join(DOCUMENTS_DIR).join("synthetic.pdf"), &bytes).unwrap();
+    let mut op = faa_test_operation();
+    op.faa_reference.as_mut().unwrap().content_sha256 = sha256_digest(&bytes);
+    crate::documents::save_material_operation_at(&root, &op).unwrap();
+    let archive = backups.join("faa.hfdbackup");
+    create_consistent_complete_backup_with_retry(&root, &archive, "0.6.2").unwrap();
+    // Matching bytes pass the actual restore verifier.
+    stage_complete_restore_in(&target, &archive, "0.6.2").unwrap();
+    apply_pending_restore_in(&target).unwrap();
+    let mut tampered = bytes.clone();
+    tampered.extend_from_slice(b"\n% changed synthetic PDF bytes\n");
+    rewrite_entry(&archive, "documents/synthetic.pdf", &tampered);
+    let mut integrity: CompleteBackupIntegrity = {
+        let mut zip = ZipArchive::new(File::open(&archive).unwrap()).unwrap();
+        serde_json::from_reader(zip.by_name(ARCHIVE_INTEGRITY).unwrap()).unwrap()
+    };
+    let entry = integrity.files.iter_mut().find(|e| e.path == "documents/synthetic.pdf").unwrap();
+    entry.bytes = tampered.len() as u64;
+    entry.sha256 = sha256_digest(&tampered);
+    rewrite_entry(&archive, ARCHIVE_INTEGRITY, &serde_json::to_vec(&integrity).unwrap());
+    let error = stage_complete_restore_in(&target, &archive, "0.6.2").unwrap_err();
+    assert!(error.contains("FAA reference PDF"), "{error}");
+    assert_eq!(std::fs::read(target.join(DOCUMENTS_DIR).join("synthetic.pdf")).unwrap(), bytes);
+    for path in [root, target, backups] { std::fs::remove_dir_all(path).unwrap(); }
+}
