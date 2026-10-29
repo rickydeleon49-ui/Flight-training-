@@ -225,7 +225,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     const list = await screen.findByRole("list", { name: "Related study destinations" });
     const target = document.getElementById("material-saved-pdf-kit")!;
     target.scrollIntoView = vi.fn();
-    for (const label of ["Study guide: Synthetic saved kit From this material", "Cards: Synthetic saved kit From this material"]) {
+    for (const label of ["Study guide in your on-Mac kit: Synthetic saved kit From this material", "Cards: Synthetic saved kit From this material"]) {
       fireEvent.click(within(list).getByRole("button", { name: label }));
       expect(document.activeElement).toBe(target);
     }

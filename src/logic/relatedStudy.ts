@@ -34,7 +34,7 @@ export function selectRelatedStudy(input: RelatedStudyInput) {
   if (set && (set.summary.trim() || set.sections.some(s => s.body.trim()))) {
     const heading = !set.summary.trim() && set.sections.every(s => s.pdfProvenance) && hasKitDestination
       ? "material-saved-pdf-kit" : "material-guide-heading";
-    rows.push({ kind: "guide", id: material.id, label: `Study guide: ${set.title}`, reason: "From this material", target: { heading } });
+    rows.push({ kind: "guide", id: material.id, label: heading === "material-saved-pdf-kit" ? `Study guide in your on-Mac kit: ${set.title}` : `Study guide: ${set.title}`, reason: "From this material", target: { heading } });
   }
   if (set?.flashcards.length) {
     // Text and picture cards use Cards; kit-only cards live in the saved kit.
