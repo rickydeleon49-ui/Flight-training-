@@ -156,6 +156,8 @@
 .file-action-tip p { margin-top: var(--space-2); }
 .material-start-steps { padding-left: var(--space-5); margin: 0; }
 .material-start-steps li > p { margin-bottom: var(--space-2); }
+.study-howto__list { padding-left: var(--space-5); margin: var(--space-2) 0 0; }
+.study-howto__group summary { cursor: pointer; }
 
 .ai-working,
 .ai-disclaimer {
