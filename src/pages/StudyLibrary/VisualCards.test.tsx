@@ -55,7 +55,7 @@ const mount = () =>
     ),
   );
 async function draft() {
-  fireEvent.click(await screen.findByRole("button", { name: "Cover a label" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Add a picture card" }));
   await screen.findByRole("textbox", { name: "Question" });
   fireEvent.change(screen.getByRole("textbox", { name: "Question" }), { target: { value: "Which centre label?" } });
   fireEvent.change(screen.getByRole("textbox", { name: "Answer" }), { target: { value: "Bravo synthetic answer" } });
@@ -127,7 +127,7 @@ it("lists saved picture cards beside their creation path and edits the original 
   expect(rows[0]!.textContent).toBe("First picture?Edit");
   expect(rows[1]!.textContent).toBe("Second picture?Edit");
   const flashcards = list.closest("#material-flashcards")!;
-  expect(within(flashcards as HTMLElement).getByRole("button", { name: "Cover a label" })).toBeTruthy();
+  expect(within(flashcards as HTMLElement).getByRole("button", { name: "Add a picture card" })).toBeTruthy();
   expect(within(list).queryByRole("button", { name: "Delete" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Your study guide" })).toBeNull();
   expect(screen.queryByText("A study guide you wrote. Use Edit study guide to change sections.")).toBeNull();
@@ -187,7 +187,7 @@ it("keeps the separate warning for another material's cards that use this pictur
 
 it("starts with a simple cover form, explains disabled actions, and keeps exact and keyboard placement reachable", async () => {
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: "Cover a label" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Add a picture card" }));
   await screen.findByRole("textbox", { name: "Question" });
   const dialog = screen.getByRole("dialog");
   const summary = within(dialog).getByText("Other ways to place the cover (keyboard or exact numbers)");
@@ -244,7 +244,7 @@ it.each([
   const revealName = `Covered label 1. ${punctuated} Reveal label`;
   expect(screen.getByRole("button", { name: revealName })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Review cards" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
   expect(await screen.findByRole("button", { name: revealName })).toBeTruthy();
   mounted.unmount();
 
@@ -313,7 +313,7 @@ it("retries an uncertain save with the exact operation and reviews with the exis
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(ids).toHaveLength(2);
   expect(ids[0]).toBe(ids[1]);
-  fireEvent.click(await screen.findByRole("button", { name: "Review cards" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
   const reveal = await screen.findByRole("button", { name: /Covered label 1.*Reveal label/ });
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");
@@ -335,7 +335,7 @@ it("keeps a changed or missing picture unavailable with no answer or rating cont
   fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   vi.mocked(pictureService.readVisualPicture).mockRejectedValue(Error("This picture has changed."));
-  fireEvent.click(await screen.findByRole("button", { name: "Review cards" }));
+  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
   await screen.findByText("This picture has changed.");
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");

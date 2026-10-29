@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
@@ -96,7 +96,7 @@ it("keeps a revealed card and a live card review session mounted", async () => {
   const answer = screen.getByText("Synthetic card answer");
   pick("Notes"); pick("Study");
   expect(screen.getByText("Synthetic card answer")).toBe(answer);
-  fireEvent.click(await screen.findByRole("button", { name: "Review cards" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Review 1 card" }));
   fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
   const session = document.querySelector(".card-review__session")!;
   expect(session.textContent).toContain("Synthetic card answer");
@@ -111,4 +111,81 @@ it("keeps all tabs for a material without a file and handles unknown URL tabs", 
   pick("Notes"); expect(screen.getByRole("textbox", { name: "Personal notes" })).toBeTruthy();
   pick("More"); expect(screen.getByRole("combobox", { name: "Review status" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+});
+
+it("keeps Delete inside More, supports keyboard dismissal and returns focus for Edit", async () => {
+  await open();
+  const header = screen.getByRole("heading", { name: "Synthetic PDF" }).closest("header")!;
+  const deletion = within(header).getByRole("button", { name: "Delete" });
+  expect(deletion.closest("details")?.open).toBe(false);
+  expect(deletion.closest(".material-actions-menu")).toBeTruthy();
+  expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
+  const more = screen.getByText("More ▾");
+  more.focus(); fireEvent.keyDown(more, { key: "Enter" });
+  expect(more.closest("details")!.open).toBe(true);
+  expect(within(more.closest("details")!).getByRole("button", { name: "Delete" })).toBeTruthy();
+  fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+  expect(more.closest("details")!.open).toBe(false);
+  expect(document.activeElement).toBe(more);
+  fireEvent.click(more);
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  const dialog = await screen.findByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(document.activeElement).toBe(more));
+});
+it("opens PDF questions in a dialog even when Gemini is not configured", async () => {
+  await open();
+  const ask = screen.getByRole("button", { name: "Ask about this PDF" });
+  expect(ask.closest("header")).toBeTruthy();
+  ask.focus(); fireEvent.click(ask);
+  const dialog = await screen.findByRole("dialog", { name: "Ask about this PDF" });
+  expect(within(dialog).getByText("Connect Gemini in Settings to ask questions about this PDF.")).toBeTruthy();
+  fireEvent.keyDown(dialog, { key: "Escape" });
+  await waitFor(() => expect(document.activeElement).toBe(ask));
+});
+it("puts the numbered review action above browsing and updates the header status chip", async () => {
+  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic cards", summary: "Guide", sections: [],
+    flashcards: [{ front: "Fictional front", back: "Fictional back", sourcePage: null }], sourceNotes: "", model: "test" });
+  await open();
+  const review = await screen.findByRole("button", { name: "Review 1 card" });
+  expect(review.classList.contains("button--primary")).toBe(true);
+  expect(review.compareDocumentPosition(screen.getByRole("button", { name: "Reveal flashcard answer" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  pick("More");
+  fireEvent.change(screen.getByRole("combobox", { name: "Review status" }), { target: { value: "confident" } });
+  await waitFor(() => expect(document.querySelector(".material-header-meta")?.textContent).toContain("Confident"));
+});
+
+it("starts an acknowledged practice attempt, keeps it through tabs and links its completed saved review", async () => {
+  const repos = createRepositories(db);
+  await repos.documents.savePracticeTest({ sourceMaterialId: "tips", title: "Synthetic test", provider: "manual", model: "",
+    questions: [{ question: "Synthetic practice question", options: ["A", "B"], correctIndex: 0, explanation: "Synthetic explanation", sourcePage: null }] });
+  await open();
+  const start = await screen.findByRole("button", { name: "Start practice test" });
+  expect(start.classList.contains("button--primary")).toBe(true);
+  expect(screen.getByRole("button", { name: "Short saved review" }).hasAttribute("disabled")).toBe(true);
+  fireEvent.click(start);
+  await screen.findByText(/Resuming your attempt/);
+  const question = screen.getByRole("heading", { name: "Question 1 of 1" });
+  pick("Notes"); pick("Study");
+  expect(screen.getByRole("heading", { name: "Question 1 of 1" })).toBe(question);
+  fireEvent.click(screen.getAllByRole("radio")[1]!);
+  const score = await screen.findByRole("button", { name: "See score" });
+  await waitFor(() => expect(score.hasAttribute("disabled")).toBe(false));
+  fireEvent.click(score);
+  const completedLink = await screen.findByRole("link", { name: "Short saved review" });
+  const [attempt] = await repos.practiceSessions.getCompletedHistory("tips", 1);
+  const path = `/study/history/tips/${attempt!.attemptId}?review=missed`;
+  expect(completedLink.getAttribute("href")).toBe(`#${path}`);
+  cleanup();
+  await open();
+  const link = await screen.findByRole("link", { name: "Short saved review" });
+  expect(link.getAttribute("href")).toBe(path);
+});
+it("offers the existing manual guide editor for an empty material and keeps an empty new guide editable", async () => {
+  await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
+  await open();
+  fireEvent.click(screen.getByRole("button", { name: "Write your own study guide" }));
+  const dialog = await screen.findByRole("dialog", { name: "Write your own study guide" });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Create study guide" }));
+  expect(await screen.findByRole("button", { name: "Add a section" })).toBeTruthy();
 });

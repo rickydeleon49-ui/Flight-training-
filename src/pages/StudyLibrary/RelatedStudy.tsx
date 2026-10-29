@@ -6,9 +6,10 @@ import type { PracticeSessionRepository } from "@/data/repositories/practiceSess
 import { selectRelatedStudy, type RelatedStudyRead } from "@/logic/relatedStudy";
 import { useAppData } from "@/state/AppDataContext";
 
-export function RelatedStudy({ materialId }: { materialId: string }) {
+export function RelatedStudy({ materialId, initiallyOpen = false }: { materialId: string; initiallyOpen?: boolean }) {
   const { data, dataRevision, repositories } = useAppData();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
+  useEffect(() => { if (initiallyOpen) setOpen(true); }, [initiallyOpen]);
   const [retry, setRetry] = useState(0);
   const summaryRef = useRef<HTMLElement>(null);
   // Keying the reader retires results on restore/refresh and A→B→A visits,

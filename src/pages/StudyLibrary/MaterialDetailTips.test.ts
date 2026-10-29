@@ -71,7 +71,7 @@ it("keeps Delete apart from Edit at the end of the material header and still con
   await openPage();
   const edit = screen.getByRole("button", { name: "Edit" });
   const remove = screen.getByRole("button", { name: "Delete" });
-  expect(edit.nextElementSibling).toBe(remove);
+  expect(edit.closest("details")).toBe(remove.closest("details"));
   expect(remove.parentElement?.lastElementChild).toBe(remove);
   expect(remove.classList.contains("destructive-action")).toBe(true);
   expect(remove.classList.contains("button--danger")).toBe(true);
@@ -82,112 +82,52 @@ it("keeps Delete apart from Edit at the end of the material header and still con
   expect(context.data.materials.some(material => material.id === "tips")).toBe(true);
 });
 
-it("jumps from right after Ask about this PDF to each present heading with focus, even with tips hidden", async () => {
+it("uses tabs instead of Jump chips and keeps related destinations in More without writes", async () => {
+  const question = await createRepositories(db).questions.create({ text: "Fictional linked question", materialId: "tips", status: "to_ask" });
   await openPage();
-  const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(document.getElementById("material-ask-gemini")?.nextElementSibling).toBe(jumps);
-  const destinations = [
-    ["Study guide", "Study guide"],
-    ["Flashcards", "Flashcards"],
-    ["Practice test", "Practice test"],
-    ["Backup on this Mac", "On this Mac (backup)"],
-  ];
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(destinations.map(([label]) => label));
-  fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
+  expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
-  expect(screen.getByRole("button", { name: "Split automatically" })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
-  for (const [label, title] of destinations) {
-    const heading = document.getElementById(title === "On this Mac (backup)" ? "material-backup-heading" : title === "Study guide" ? "material-guide-heading" : title === "Flashcards" ? "material-cards-heading" : "material-practice-heading")!;
-    const scroll = vi.fn();
-    heading.scrollIntoView = scroll;
-    const button = within(jumps).getByRole("button", { name: label });
-    button.focus();
-    expect(document.activeElement).toBe(button);
-    fireEvent.click(button);
-    await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(screen.getByRole("heading", { name: title })).toBe(heading);
-    expect(heading.tabIndex).toBe(-1);
-    expect(heading.classList.contains("section-jump-target")).toBe(true);
-    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start" });
-  }
-});
-
-it("only offers jumps to sections present on a PDF whose file has been detached", async () => {
-  await createRepositories(db).documents.update("tips", { filePath: null });
-  await openPage();
-  const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Practice test"]);
-  fireEvent.click(within(jumps).getByRole("button", { name: "Practice test" }));
-  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Practice test" })));
-});
-
-it("keeps the Study guide and Flashcards chips beside Related study when a question is linked, without writes", async () => {
-  const repos = createRepositories(db);
-  await repos.documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic saved study",
-    summary: "Fictional summary", sections: [], flashcards: [{ front: "Fictional front", back: "Fictional answer", sourcePage: null }], sourceNotes: "", model: "test" });
-  const question = await repos.questions.create({ text: "Fictional linked question", materialId: "tips", status: "to_ask" });
-  await openPage();
-  const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Study guide", "Flashcards", "Practice test", "Backup on this Mac"]);
   const details = document.getElementById("related-study")!.closest("details")!;
-  expect(details.open).toBe(false);
-  // The Related study chip opens the collapsed list.
-  fireEvent.click(within(jumps).getByRole("button", { name: "Related study" }));
-  await waitFor(() => expect(details.open).toBe(true));
-  expect(document.activeElement).toBe(document.getElementById("related-study"));
-  details.open = false; fireEvent(details, new Event("toggle"));
-  const writes = vi.spyOn(db, "execute");
-  const outbound = vi.spyOn(globalThis, "fetch");
-  details.open = true; fireEvent(details, new Event("toggle"));
+  expect(details.open).toBe(true);
   const list = await screen.findByRole("list", { name: "Related study destinations" });
   await waitFor(() => expect(screen.queryByText("Checking recent saved reviews…")).toBeNull());
-  // Only the off-page destination is listed; her guide and cards stay one click away.
   expect(within(list).getAllByRole("link").map(link => link.getAttribute("href"))).toEqual([`/questions?question=${encodeURIComponent(question.id)}`]);
-  expect(within(list).queryByText(/Study guide|Cards:/)).toBeNull();
+  const writes = vi.spyOn(db, "execute");
+  const outbound = vi.spyOn(globalThis, "fetch");
   details.open = false; fireEvent(details, new Event("toggle"));
   await act(async () => {});
-  expect(writes).not.toHaveBeenCalled();
-  expect(outbound).not.toHaveBeenCalled();
-});
-
-it("offers the Related study chip when only an instructor question is linked", async () => {
-  await createRepositories(db).documents.update("tips", { filePath: null });
-  await createRepositories(db).questions.create({ text: "Fictional linked question", materialId: "tips", status: "to_ask" });
-  await openPage();
-  const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Practice test"]);
+  expect(writes).not.toHaveBeenCalled(); expect(outbound).not.toHaveBeenCalled();
 });
 
 it("orders the PDF workflow inside its tab homes with both backup panels together", async () => {
   await openPage();
   const common = document.getElementById("material-start-here")!.closest(".detail__column")!;
   expect(common.firstElementChild?.textContent).toBe("New to this? See How to in Study Library.");
-  expect(common.children[1]).toBe(document.getElementById("material-ask-gemini"));
-  expect(common.children[2]).toBe(screen.getByRole("navigation", { name: "Jump to" }));
+  expect(common.children).toHaveLength(1);
+  expect(screen.getByRole("button", { name: "Ask about this PDF" }).closest("header")).toBeTruthy();
   const study = screen.getByRole("tabpanel", { name: "Study" });
   expect(within(study).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Study", "Study guide", "Flashcards", "Practice test", "Practice an oral question"]);
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
   const notes = screen.getByRole("tabpanel", { name: "Notes" });
-  expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Next actions", "Questions from this material", "Find your place"]);
+  expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Questions for my instructor", "Next steps for this material", "Find your place"]);
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   const more = screen.getByRole("tabpanel", { name: "More" });
   const file = document.getElementById("material-file-actions")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
   expect(more.contains(file)).toBe(true);
   expect(file.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Review status", "Details"]);
+  expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
+  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "Split or take out a chapter", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details and review status", "Details"]);
   expect(backup.contains(document.getElementById("material-offline-study"))).toBe(true);
   expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(true);
-  expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
   expect(within(backup).getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();
   expect(within(backup).getByText("Making a PDF study kit works in the desktop app.")).toBeTruthy();
 });
 
 const selectSectionTab = (title: string) => fireEvent.click(screen.getByRole("tab", { name:
-  ["Personal notes", "Next actions", "Questions from this material", "Find your place"].includes(title) ? "Notes"
-  : ["Review status", "Details", "On this Mac (backup)"].includes(title) ? "More" : "Study" }));
-const sectionTitles = ["Study guide", "Flashcards", "Practice test", "Personal notes", "Next actions", "Questions from this material", "Find your place", "Review status", "Details", "On this Mac (backup)"];
+  ["Personal notes", "Next steps for this material", "Questions for my instructor", "Find your place"].includes(title) ? "Notes"
+  : ["Details and review status", "Details", "On this Mac (backup)"].includes(title) ? "More" : "Study" }));
+const sectionTitles = ["Study guide", "Flashcards", "Practice test", "Personal notes", "Next steps for this material", "Questions for my instructor", "Find your place", "Details and review status", "Details", "On this Mac (backup)"];
 it("shows a short muted tip under every section header and Hide section tips hides them across visits", async () => {
   let view = await openPage();
   const tips = sectionTitles.map(title => {
@@ -225,7 +165,7 @@ it("keeps non-PDF materials usable with only applicable sections and a tips togg
   expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
   expect(screen.queryByRole("region", { name: "On this Mac (backup)" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Find your place" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Write your own study guide" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Write your own study guide" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   expect(screen.queryByText("Write what you want to remember. Your notes save as you type; watch for Saved.")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Show section tips" }));
@@ -254,5 +194,5 @@ it("keeps file-backed text materials working without PDF-only controls", async (
   expect(screen.getByRole("heading", { name: "Gemini study assistant" })).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   expect(await screen.findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Open" })).toBeTruthy();
+  expect(within(document.getElementById("material-file-actions")!).getByRole("button", { name: "Open" })).toBeTruthy();
 });

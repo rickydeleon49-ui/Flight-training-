@@ -579,3 +579,23 @@ it("does not recreate a set removed between the bookmark preview and editor open
   expect(await db.select("SELECT * FROM ai_study_sets")).toEqual([]);
   expect(await db.select("SELECT * FROM study_page_sources")).toEqual([]);
 });
+
+it("offers the Study shortcut only with a saved page note and opens its existing card draft without a write", async () => {
+  await seed();
+  const view = renderDetail();
+  await panel();
+  fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+  expect(screen.queryByRole("button", { name: "Make a card" })).toBeNull();
+  view.unmount();
+  await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000002',?,3,'iv',?,'Fictional note question','Fictional note answer','verified','x','x')", [M,A]);
+  renderDetail(); await panel();
+  fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+  const make = await screen.findByRole("button", { name: "Make a card" });
+  const before = await db.select("SELECT * FROM study_set_save_operations");
+  fireEvent.click(make);
+  const dialog = await screen.findByRole("dialog", { name: "Add a card" });
+  expect(document.getElementById("material-tab-notes")?.getAttribute("aria-selected")).toBe("true");
+  expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Fictional note question");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(await db.select("SELECT * FROM study_set_save_operations")).toEqual(before);
+});
