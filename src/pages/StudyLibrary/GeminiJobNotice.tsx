@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
-import { SECTION_GUIDE_MESSAGES, SectionGuideError, type GeminiWorkStage } from "@/services/gemini";
+import { geminiModelName, SECTION_GUIDE_MESSAGES, SectionGuideError, type GeminiWorkStage } from "@/services/gemini";
 import { splitGeminiError } from "@/logic/geminiErrorText";
 import { useAppData } from "@/state/AppDataContext";
 import { EMPTY_FLASHCARDS_MESSAGE, isNewerJob, type GeminiJob, type useGeminiJobs } from "@/state/GeminiJobs";
@@ -105,14 +105,14 @@ export function GeminiJobNotice({
     const summary = readySummary(job);
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-        <div className="ai-disclaimer" role="status">
-          <AlertIcon size={16} />
+        <div className="file-row" role="status">
           <p className="tiny">
             {job.cancelAttempted
               ? `Gemini finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
               : job.local
                 ? `${readyTitle} It has not been saved yet.`
-                : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}{" "}
+                : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
+            {job.answer?.model ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
             {onReview
               ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : job.kind === "study-aid" ? "Saving it replaces your saved guide; any saved flashcards stay as they are." : job.kind === "flashcards" ? "Saving it replaces your saved cards; your study guide stays as it is." : "Saving it replaces what is saved now; completed practice history is kept."}
@@ -428,8 +428,8 @@ function elapsedWords(ms: number): string {
 }
 
 /**
- * A running generation (GEN-REL-04): the stage it has actually reached, the
- * attempt once there has been a retry, how long it has been going, and a way
+ * A running generation (GEN-REL-04): the stage it has actually reached,
+ * a calm retry message, how long it has been going, and a way
  * to cancel. There is no percentage, because nothing measures Gemini's own
  * progress.
  */
@@ -449,8 +449,7 @@ export function GeminiProgressView({
   }, []);
   const stage =
     job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
-  const attempt =
-    job.attempt && job.attempt > 1 && job.maxAttempts ? ` · ${job.kind === "study-aid" ? "request" : "attempt"} ${job.attempt} of ${job.maxAttempts}` : "";
+  const retrying = job.attempt !== undefined && job.attempt > 1;
   const elapsed = job.startedAt !== undefined ? elapsedWords(now - job.startedAt) : "";
   return (
     <div className="ai-working">
@@ -459,7 +458,7 @@ export function GeminiProgressView({
         <p className="small strong">{title}</p>
         <p className="tiny">
           <span role="status" aria-live="polite">
-            {job.cancelRequested ? "Cancelling…" : `${stage}${attempt}`}
+            {job.cancelRequested ? "Cancelling…" : retrying ? "Gemini is busy — trying again" : stage}
           </span>
           {elapsed ? <><span aria-hidden="true"> · </span><span className="dim">{elapsed}</span></> : null}
         </p>

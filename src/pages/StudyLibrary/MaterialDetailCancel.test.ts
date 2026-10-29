@@ -127,7 +127,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     vi.restoreAllMocks();
   });
 
-  it("announces the stage and request, keeps elapsed time visible outside the live status, and shows no percentage", async () => {
+  it("announces the stage and calm retry, keeps elapsed time visible outside the live status, and shows no percentage", async () => {
     const answer = deferred<geminiService.GeneratedStudyAid>();
     vi.spyOn(geminiService, "generateStudyAid").mockImplementation(() => answer.promise);
     await open("/study/mat-a");
@@ -140,7 +140,8 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
     expect(screen.getByText(/s so far/)).toBeTruthy();
     expect(status.textContent).not.toMatch(/s so far/);
     emit({ jobId: JOB, stage: "generating", attempt: 2 });
-    expect(screen.getByText(/Waiting for Gemini's answer · request 2 of 9/)).toBeTruthy();
+    expect(screen.getByText("Gemini is busy — trying again")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/(?:attempt|request) \d+ of \d+/i);
     expect(document.body.textContent).not.toMatch(/%/);
     // Another job's progress is never shown here.
     emit({ jobId: "job-dddddddddddddddddddddddd", stage: "reading" });

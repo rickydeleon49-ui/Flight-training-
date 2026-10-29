@@ -54,3 +54,16 @@ it("shows exactly one slow-upload line while preserving Cancel and stage text", 
   rerender(h(GeminiProgressView, { job: { ...current, stage: "generating" }, title: "Creating your study guide", onCancel: vi.fn() }));
   expect(screen.queryByText(words)).toBeNull();
 });
+
+it.each(["flashcards", "study-aid", "practice-test"] as const)("keeps %s retries calm, with elapsed time and Cancel", (kind) => {
+  const cancel = vi.fn();
+  const current = { ...job(), kind, attempt: 2, maxAttempts: 9, startedAt: Date.now() - 15000 };
+  const { rerender } = render(h(GeminiProgressView, { job: current, title: "Creating your study aid", onCancel: cancel }));
+  expect(screen.getByRole("status").textContent).toBe("Gemini is busy — trying again");
+  expect(screen.getByText("15 s so far")).toBeTruthy();
+  expect(document.body.textContent).not.toMatch(/(?:attempt|request) \d+ of \d+/i);
+  act(() => { screen.getByRole("button", { name: "Cancel" }).click(); });
+  expect(cancel).toHaveBeenCalledOnce();
+  rerender(h(GeminiProgressView, { job: { ...current, cancelRequested: true }, title: "Creating your study aid", onCancel: cancel }));
+  expect(screen.getByRole("status").textContent).toBe("Cancelling…");
+});
