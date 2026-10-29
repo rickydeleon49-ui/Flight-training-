@@ -53,7 +53,7 @@ export function selectRelatedStudy(input: RelatedStudyInput) {
   const question = questions.find(q => q.materialId === material.id && q.text.trim());
   if (question) rows.push({ kind: "question", id: question.id, label: `Instructor question: ${question.text}`, reason: "Linked by you", target: { path: savedDestination({ kind: "question", recordId: question.id, rev: null, snippet: "" }, null)! } });
   const lesson = events.find(e => e.eventType === "flight_lesson" && (e.id === material.eventId || e.materialIds.includes(material.id)));
-  if (lesson) rows.push({ kind: "lesson", id: lesson.id, label: `Lesson preparation: ${lesson.title}`, reason: "Linked by you", target: { path: `/schedule/${encodeURIComponent(lesson.id)}#lesson-preparation` } });
+  if (lesson) rows.push({ kind: "lesson", id: lesson.id, label: `Lesson preparation: ${lesson.title}`, reason: "Linked by you", target: { path: `/schedule/${encodeURIComponent(lesson.id)}` } });
   const limit = Number.isSafeInteger(input.limit) && input.limit! > 0 ? Math.min(input.limit!, 5) : 3;
   return { rows: rows.slice(0, limit), hasMore: rows.length > limit, status: recentReviews.status };
 }

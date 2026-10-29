@@ -22,7 +22,7 @@ describe("material Related study", () => {
     expect(full.rows.map(r => r.kind)).toEqual(["guide", "cards", "review", "question", "lesson"]);
     expect(full.rows.map(r => r.reason)).toEqual(["From this material", "From this material", "From this material", "Linked by you", "Linked by you"]);
     expect(full.rows.map(r => r.label)).toEqual(["Study guide: Synthetic guide", "Cards: Synthetic guide", "Recent saved review: Frozen original title", "Instructor question: Fictional question", "Lesson preparation: Crosswind Landings"]);
-    expect(full.rows.map(r => r.target)).toEqual([{ heading: "material-guide-heading" }, { heading: "material-cards-heading" }, { path: "/study/history/material%20%2F1/attempt%20%2F1?review=missed" }, { path: "/questions?question=q%20%2F1" }, { path: "/schedule/lesson%20%2F1#lesson-preparation" }]);
+    expect(full.rows.map(r => r.target)).toEqual([{ heading: "material-guide-heading" }, { heading: "material-cards-heading" }, { path: "/study/history/material%20%2F1/attempt%20%2F1?review=missed" }, { path: "/questions?question=q%20%2F1" }, { path: "/schedule/lesson%20%2F1" }]);
     expect(full.hasMore).toBe(false);
   });
 

@@ -121,9 +121,13 @@ it("uses Related study for saved guide/cards without duplicate jumps or writes",
     summary: "Fictional summary", sections: [], flashcards: [{ front: "Fictional front", back: "Fictional answer", sourcePage: null }], sourceNotes: "", model: "test" });
   await openPage();
   const jumps = screen.getByRole("navigation", { name: "Jump to" });
-  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Practice test", "Backup on this Mac"]);
-  const details = screen.getByText("Related study").closest("details")!;
+  expect(within(jumps).getAllByRole("button").map(button => button.textContent)).toEqual(["Related study", "Practice test", "Backup on this Mac"]);
+  const details = document.getElementById("related-study")!.closest("details")!;
   expect(details.open).toBe(false);
+  // The Related study chip opens the collapsed list.
+  fireEvent.click(within(jumps).getByRole("button", { name: "Related study" }));
+  expect(details.open).toBe(true);
+  details.open = false; fireEvent(details, new Event("toggle"));
   const writes = vi.spyOn(db, "execute");
   const outbound = vi.spyOn(globalThis, "fetch");
   details.open = true; fireEvent(details, new Event("toggle"));

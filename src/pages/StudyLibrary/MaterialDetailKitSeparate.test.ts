@@ -220,7 +220,7 @@ describe("KIT-SEPARATE: split display by origin", () => {
     expect(screen.getByText("Saved synthetic kit body")).toBeTruthy();
     expect(document.getElementById("material-offline-study")).toBeNull();
     expect(document.getElementById("material-pdf-kit")).toBeNull();
-    const details = screen.getByText("Related study").closest("details")!;
+    const details = document.getElementById("related-study")!.closest("details")!;
     details.open = true; fireEvent(details, new Event("toggle"));
     const list = await screen.findByRole("list", { name: "Related study destinations" });
     const target = document.getElementById("material-saved-pdf-kit")!;

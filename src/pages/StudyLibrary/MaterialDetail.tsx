@@ -699,6 +699,7 @@ function MaterialDetailPage() {
             <nav className="row row--wrap material-jumps" aria-label="Jump to">
               <span className="tiny muted">Jump to</span>
               {[
+                ...(relatedKinds.size > 0 ? [{ id: "related-study", label: "Related study" }] : []),
                 ...(showStudyGuide && !relatedKinds.has("guide") ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
                 ...((material.filePath || (studySet && studySet.flashcards.length > 0)) && !relatedKinds.has("cards") ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
                 { id: "material-practice-heading", label: "Practice test" },

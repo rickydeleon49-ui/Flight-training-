@@ -60,7 +60,7 @@ it("jumps to the existing headings with focus and opens exact saved attempt/ques
   fireEvent.click(screen.getByRole("link", { name: /Instructor question:/ }));
   expect(screen.getByLabelText("Location").textContent).toBe("/questions?question=exact-question");
   fireEvent.click(screen.getByRole("link", { name: /Lesson preparation:/ }));
-  expect(screen.getByLabelText("Location").textContent).toBe("/schedule/exact-lesson#lesson-preparation");
+  expect(screen.getByLabelText("Location").textContent).toBe("/schedule/exact-lesson");
 });
 
 it("reports read failure without empty or raw error text, and retries only the bounded read", async () => {

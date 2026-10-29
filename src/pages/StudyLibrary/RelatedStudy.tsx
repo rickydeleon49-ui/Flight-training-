@@ -17,7 +17,7 @@ export function RelatedStudy({ materialId }: { materialId: string }) {
   return <details className="related-study" open={open} onToggle={e => {
     setOpen(e.currentTarget.open);
   }}>
-    <summary ref={summaryRef}>Related study</summary>
+    <summary id="related-study" ref={summaryRef} tabIndex={-1}>Related study</summary>
     {open ? <RelatedStudyContents key={JSON.stringify([materialId, dataRevision, retry])}
       materialId={materialId} data={data} repository={repositories?.practiceSessions}
       onRetry={() => { setRetry(n => n + 1); summaryRef.current?.focus(); }} /> : null}
@@ -52,9 +52,9 @@ function RelatedStudyContents({ materialId, data, repository, onRetry }: {
   return <div className="stack stack--2 related-study__contents">
     {result.rows.length ? <ul ref={listRef} aria-label="Related study destinations">{result.rows.map(row => <li key={row.kind}>
       {"path" in row.target ? <Link className="related-study__row" to={row.target.path}>
-        <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span>
+        <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span><span className="related-study__go" aria-hidden="true">›</span>
       </Link> : <button type="button" className="related-study__row" onClick={() => { if ("heading" in row.target) jumpToMaterialHeading(row.target.heading); }}>
-        <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span>
+        <span>{row.label}</span>{" "}<span className="tiny muted">{row.reason}</span><span className="related-study__go" aria-hidden="true">›</span>
       </button>}
     </li>)}</ul> : result.status === "ready" ? <p className="small muted">Nothing linked here yet.</p> : null}
     {result.status === "loading" ? <p className="small muted" role="status">Checking recent saved reviews…</p> : null}
