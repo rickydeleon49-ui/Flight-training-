@@ -11,6 +11,42 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 const PROFILE_PREFIX: &str = "hfd-a2-save-";
 
+#[test]
+fn faa_shelf_pdf_intake_uses_actual_bytes_and_rejects_disguised_non_pdf() {
+    use lopdf::{dictionary, Document, Object};
+    let profile = Profile::new();
+    let mut pdf = Document::with_version("1.5");
+    let pages = pdf.new_object_id();
+    let page = pdf.add_object(dictionary! {
+        "Type" => "Page", "Parent" => pages,
+        "MediaBox" => vec![0.into(), 0.into(), 100.into(), 100.into()],
+    });
+    pdf.objects.insert(
+        pages,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages", "Count" => 1, "Kids" => vec![Object::Reference(page)],
+        }),
+    );
+    let catalog = pdf.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages });
+    pdf.trailer.set("Root", catalog);
+    let mut bytes = Vec::new();
+    pdf.save_to(&mut bytes).unwrap();
+    let path = profile.write_doc("synthetic.pdf", &bytes);
+    let identity = imported_pdf_identity(&path).unwrap();
+    assert_eq!(identity.total_pages, 1);
+    assert_eq!(
+        identity.content_sha256,
+        crate::navigation::identity_of_bytes(&bytes).unwrap().0
+    );
+    let fake = profile.write_doc(
+        "FAA-S-ACS-6C.pdf",
+        b"This filename is not proof of PDF content.",
+    );
+    assert!(imported_pdf_identity(&fake).is_err());
+    std::fs::remove_file(path).unwrap();
+    assert!(imported_pdf_identity(&profile.docs().join("synthetic.pdf")).is_err());
+}
+
 pub(super) struct Profile {
     root: PathBuf,
 }
@@ -81,6 +117,7 @@ impl Drop for Profile {
 
 pub(super) fn op(mode: &str, id: &str, tags: Option<&[&str]>) -> MaterialSaveOperation {
     MaterialSaveOperation {
+        faa_reference: None,
         mode: mode.to_string(),
         id: id.to_string(),
         fields: MaterialSaveFields {

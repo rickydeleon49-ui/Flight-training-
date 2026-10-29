@@ -38,6 +38,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
+import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
@@ -132,6 +133,7 @@ export function StudyLibrary() {
   const filtered = useMemo(
     () =>
       data.materials.filter((material) => {
+        if (material.faaReference) return false;
         if (status === "next_up" && material.priority !== "next_up") return false;
         if (status !== "all" && status !== "next_up" && material.reviewStatus !== status) return false;
         if (topic && material.topic !== topic) return false;
@@ -338,6 +340,7 @@ export function StudyLibrary() {
         </div>
       ) : null}
 
+      {!search.trim() ? <FaaReferences /> : null}
       {!search.trim() ? topicPanels : null}
 
       {!hasAny ? (

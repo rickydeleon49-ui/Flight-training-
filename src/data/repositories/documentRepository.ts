@@ -377,14 +377,20 @@ export function documentRepository(db: SqlDatabase) {
 
   return {
     async list(): Promise<StudyMaterial[]> {
-      const [rows, tags, lineage] = await Promise.all([
+      const [rows, tags, lineage, copies] = await Promise.all([
         db.select<Row>("SELECT * FROM study_materials ORDER BY created_at DESC"),
         tagsByMaterial(),
         lineageByMaterial(),
+        db.select<{ material_id: string; reference_id: import("@/domain/types").FaaReferenceCopy["referenceId"]; edition: string; content_sha256: string; total_pages: number }>("SELECT * FROM faa_reference_copies"),
       ]);
+      const shelf = new Map(copies.map((copy) => [copy.material_id, {
+        referenceId: copy.reference_id, edition: copy.edition,
+        contentSha256: copy.content_sha256, totalPages: copy.total_pages,
+      }]));
       return rows.map((row) => ({
         ...map(row, tags.get(row.id) ?? []),
         lineage: lineage.get(row.id) ?? null,
+        ...(shelf.has(row.id) ? { faaReference: shelf.get(row.id) } : {}),
       }));
     },
 
@@ -666,6 +672,7 @@ export function documentRepository(db: SqlDatabase) {
       const material = buildMaterial(input);
       const operation: import("../db").MaterialSaveOperation = {
         mode: "create",
+        faaReference: input.faaReference,
         id: material.id,
         fields: {
           title: material.title,
