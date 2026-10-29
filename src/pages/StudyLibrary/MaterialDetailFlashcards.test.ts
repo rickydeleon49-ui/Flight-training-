@@ -119,6 +119,41 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards[0]?.front).toBe("New Q"));
   });
 
+  it("a failed card job with a kept draft shows one calm message, the trace folded under Details", async () => {
+    const sentence = "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.";
+    const trace = "invalid or incomplete output; stage: checking Gemini's answer; generation attempts: 2; time: 0m 16s; last status: 200.";
+    vi.mocked(geminiService.listGeminiJobs).mockResolvedValueOnce([]).mockResolvedValue([{
+      id: "failed-cards", kind: "study-aid", requestId: "flashcards:req-x", materialId: "mat-pdf",
+      relativePath: "documents/handbook.pdf", contentSha256: "", stage: "failed", createdAt: 1, updatedAt: 1,
+      draft: { target: 20, cards: [] },
+    }]);
+    vi.spyOn(geminiService, "generateStudyAid").mockRejectedValue(new Error(`${sentence}\nDetails: ${trace}`));
+    await openMaterial("mat-pdf");
+    await act(async () => { await geminiJobs.start("flashcards", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
+    await waitFor(() => expect(geminiJobs.jobs.find(j => j.kind === "flashcards")?.draft).toBeTruthy());
+    expect(screen.getAllByText(sentence)).toHaveLength(1);
+    expect(screen.queryByText(/stage: checking/, { selector: "[role=alert], [role=alert] *" })).toBeNull();
+    const details = screen.getByText(trace).closest("details");
+    expect(details).toBeTruthy();
+    expect(details!.open).toBe(false);
+    expect(within(details!).getByText("Details")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Try again" })).toHaveLength(1);
+    expect(screen.queryByText(/0 \/ 20 cards kept as a draft/)).toBeNull();
+  });
+
+  it("remembers the chosen target card count after leaving the page", async () => {
+    await openMaterial("mat-pdf");
+    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    const first = within(await waitFor(sendDialog)).getByRole("combobox", { name: "Target cards" }) as HTMLSelectElement;
+    expect(first.value).toBe("40");
+    fireEvent.change(first, { target: { value: "60" } });
+    cleanup();
+    await openMaterial("mat-pdf");
+    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    const again = within(await waitFor(sendDialog)).getByRole("combobox", { name: "Target cards" }) as HTMLSelectElement;
+    expect(again.value).toBe("60");
+  });
+
   it("a recovered empty card result stays failed and is never offered for saving", async () => {
     vi.mocked(geminiService.listGeminiJobs).mockResolvedValue([{
       id: "empty-recovered", kind: "study-aid", requestId: "flashcards:old-request", materialId: "mat-pdf",

@@ -48,6 +48,7 @@ import { geminiModelName, getGeminiStatus, type GeminiStatus } from "@/services/
 import { useAppData } from "@/state/AppDataContext";
 import { useMaterialNotes } from "@/state/useMaterialNotes";
 import { useActionOperations } from "@/state/useActions";
+import { isOneOfNumbers, useRememberedState } from "@/state/useRememberedState";
 
 import { canSplitPdfs } from "@/services/pdf";
 import { materialLinkAnchor, resolveMaterialLink, type MaterialLinkTarget } from "@/logic/savedSearch";
@@ -67,7 +68,10 @@ import { GuideBody } from "./GuideBody";
 import { OfflineStudyPanel } from "./OfflineStudyPanel";
 import { StudyContentProvenance } from "./StudyContentProvenance";
 import "./studyLibrary.css";
-import { GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
+
+const TARGET_CARD_COUNTS = [20, 40, 60] as const;
+type TargetCardCount = (typeof TARGET_CARD_COUNTS)[number];
+import { GeminiErrorText, GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
 import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
@@ -129,7 +133,13 @@ function MaterialDetailPage() {
   const [coveringLabel, setCoveringLabel] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
-  const [targetCards, setTargetCards] = useState(40);
+  // Her usual card count stays chosen on this Mac; 40 until she picks another.
+  const [targetCards, setTargetCards] = useRememberedState<TargetCardCount>(
+    "material.targetCards",
+    40,
+    isOneOfNumbers(TARGET_CARD_COUNTS),
+    "device",
+  );
   const [confirmingAi, setConfirmingAi] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -173,9 +183,10 @@ function MaterialDetailPage() {
   const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
   const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
-  const generationError = startRefusal?.kind === "study-aid" ? startRefusal.message : studyJob?.phase === "failed" && !studyJob.sectionGuide ? studyJob.error : null;
-  const cardGenerationError = startRefusal?.kind === "flashcards" ? startRefusal.message : cardJob?.phase === "failed" ? cardJob.error : null;
-  const practiceGenerationError = startRefusal?.kind === "practice-test" ? startRefusal.message : practiceJob?.phase === "failed" ? practiceJob.error : null;
+  // A failure that kept a draft is told once, by its notice, with Try again there.
+  const generationError = startRefusal?.kind === "study-aid" ? startRefusal.message : studyJob?.phase === "failed" && !studyJob.sectionGuide && !studyJob.draft ? studyJob.error : null;
+  const cardGenerationError = startRefusal?.kind === "flashcards" ? startRefusal.message : cardJob?.phase === "failed" && !cardJob.draft ? cardJob.error : null;
+  const practiceGenerationError = startRefusal?.kind === "practice-test" ? startRefusal.message : practiceJob?.phase === "failed" && !practiceJob.draft ? practiceJob.error : null;
   // An answer waiting to be saved or discarded is never overwritten by asking again.
   const draftWaiting = (phase: GeminiJobPhase | undefined) =>
     phase === "recovered" || phase === "save-failed" || phase === "discarding" || phase === "discard-failed";
@@ -983,9 +994,7 @@ function MaterialDetailPage() {
 
                   {generationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {generationError}
-                      </p>
+                      <GeminiErrorText message={generationError} />
                       {retryStudy ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryStudy}>
@@ -1066,9 +1075,9 @@ function MaterialDetailPage() {
                               aria-label="Target cards"
                               className="select select--small"
                               value={targetCards}
-                              onChange={(event) => setTargetCards(Number(event.target.value))}
+                              onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}
                             >
-                              {[20, 40, 60].map((count) => (
+                              {TARGET_CARD_COUNTS.map((count) => (
                                 <option key={count} value={count}>
                                   {count}
                                 </option>
@@ -1117,9 +1126,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {cardGenerationError ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {cardGenerationError}
-                      </p>
+                      <GeminiErrorText message={cardGenerationError} />
                       {retryFlashcards ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryFlashcards}>
@@ -1435,9 +1442,7 @@ function MaterialDetailPage() {
 
                   {practiceGenerationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <p className="field__error" role="alert" style={{ whiteSpace: "pre-line" }}>
-                        {practiceGenerationError}
-                      </p>
+                      <GeminiErrorText message={practiceGenerationError} />
                       {retryPractice ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryPractice}>
@@ -1890,8 +1895,8 @@ function MaterialDetailPage() {
         onCancel={() => setConfirmingAi(false)}
       >
         {!isPdf ? <><label className="field">Target cards
-          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
-            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}>
+            {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
         <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p></> : <p className="tiny dim">Your guide is built section by section. Finished sections are kept if you stop, and the completed guide waits for you to save it.</p>}
@@ -1911,8 +1916,8 @@ function MaterialDetailPage() {
         onCancel={() => setConfirmingCards(false)}
       >
         <label className="field">Target cards
-          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value))}>
-            {[20, 40, 60].map((count) => <option key={count} value={count}>{count}</option>)}
+          <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}>
+            {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
         <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them.{isPdf ? " For PDFs it is one request per 10 cards." : " Try again resumes any kept draft with the same target."}</p>

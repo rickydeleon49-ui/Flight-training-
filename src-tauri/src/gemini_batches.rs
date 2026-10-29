@@ -139,6 +139,20 @@ fn validate(aid: &GeneratedStudyAid, pages: Option<u32>, max_cards: usize) -> Re
     Ok(())
 }
 
+/// The back answers in its own words; a back that restates the front reads
+/// like the question twice when she flips the card.
+const CARD_BACK_RULE: &str =
+    "Each back must answer the front directly; never restate or repeat the front's question.";
+
+fn card_batch_prompt(
+    unit: usize,
+    target: impl std::fmt::Display,
+    previous: &str,
+    safety: &str,
+) -> String {
+    format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. {previous}Keep sections empty; title and summary briefly describe the batch. {CARD_BACK_RULE} {safety}")
+}
+
 fn unchanged(root: &Path, source: &LoadedSource) -> Result<(), String> {
     // LoadedSource keeps the SQLite file_path, relative to documents/ just
     // like ImportedDocument and stored_document_path. The journal's root is
@@ -245,7 +259,7 @@ pub(super) async fn generate(
                     serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?
                 )
             };
-            format!("Create the next batch of at most 10 distinct grounded flashcards, batch {unit}, target maximum {target}. {previous}Keep sections empty; title and summary briefly describe the batch. {safety}")
+            card_batch_prompt(unit, target, &previous, safety)
         };
         let mut answer = study_aid_request(ctx, source, &prompt, if unit == 0 { 8192 } else { 4096 }, unit == 0).await.map_err(|message| {
             if message == gemini_cancel::CANCELLED && gemini_jobs::with(root, |j| j.admits(&id)) {
@@ -1147,5 +1161,15 @@ mod tests {
         assert_eq!(reopened.list()[0].stage, JobStage::Interrupted);
         assert!(reopened.list()[0].draft.is_some());
         assert!(reopened.list()[0].result.is_none());
+    }
+
+    #[test]
+    fn card_batch_prompt_asks_for_backs_that_do_not_restate_the_front() {
+        let prompt = super::card_batch_prompt(1, 40, "", "Use only facts.");
+        assert!(prompt.contains(super::CARD_BACK_RULE), "{prompt}");
+        assert!(
+            prompt.contains("never restate or repeat the front"),
+            "{prompt}"
+        );
     }
 }
