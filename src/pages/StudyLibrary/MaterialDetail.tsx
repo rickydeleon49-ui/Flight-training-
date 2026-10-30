@@ -1,6 +1,10 @@
 import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
+import { useTabListState, type TabListState } from "@react-stately/tabs";
+import { Item } from "react-stately/Item";
+import { mergeProps } from "react-aria";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -94,6 +98,41 @@ import { jumpToMaterialHeading } from "./materialJump";
 import { MATERIAL_TABS, materialTabFrom, materialTabParams, materialTabForAnchor, type MaterialTab } from "./materialTabs";
 import { MaterialActionsMenu } from "./MaterialActionsMenu";
 
+type MaterialTabChoice = { value: MaterialTab };
+const MATERIAL_TAB_CHOICES = MATERIAL_TABS.map((value) => ({ value }));
+const materialTabLabel = (value: MaterialTab) => value === "study" ? "Study" : value === "notes" ? "Notes" : "More";
+
+function MaterialTabButton({ value, state }: { value: MaterialTab; state: TabListState<MaterialTabChoice> }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const { tabProps, isSelected } = useTab({ key: value }, state, ref);
+  return <button
+    {...mergeProps(tabProps, {
+      onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          state.setSelectedKey(value);
+          document.getElementById(`material-panel-heading-${value}`)?.focus({ preventScroll: true });
+        }
+      },
+    })}
+    ref={ref} type="button" id={`material-tab-${value}`}
+    aria-controls={`material-panel-${value}`}
+    className={`library-tab tab${isSelected ? " is-active" : ""}`}
+  >{materialTabLabel(value)}</button>;
+}
+
+// Keep every panel mounted so notes, questions and active study sessions survive a switch.
+function MaterialTabPanel({ value, state, children }: { value: MaterialTab; state: TabListState<MaterialTabChoice>; children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const { tabPanelProps } = useTabPanel({ id: value }, state, ref);
+  return <section {...tabPanelProps} ref={ref} id={`material-panel-${value}`}
+    aria-labelledby={`material-tab-${value}`} hidden={state.selectedKey !== value}
+    // The existing hidden heading remains the explicit Enter/Space focus target.
+    tabIndex={undefined}>
+    {children}
+  </section>;
+}
+
 export function MaterialDetail() {
   const { materialId } = useParams();
   // Generations belong to the app, not to this page (GEN-REL-02): leaving the
@@ -117,6 +156,15 @@ function MaterialDetailPage() {
     if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true, state: location.state });
     else setSearchParams(nextParams, { replace: true, state: location.state });
   };
+  const tabState = useTabListState<MaterialTabChoice>({
+    selectedKey: tab,
+    onSelectionChange: (key) => selectTab(key as MaterialTab),
+    disabledKeys: [],
+    items: MATERIAL_TAB_CHOICES,
+    children: ({ value }) => <Item key={value} textValue={materialTabLabel(value)}>{materialTabLabel(value)}</Item>,
+  });
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const { tabListProps } = useTabList({ "aria-label": "Study this material", keyboardActivation: "automatic" }, tabState, tabListRef);
   const [pendingJump, setPendingJump] = useState<string | null>(null);
   const tabForAnchor = (id: string) => {
     const guideIndex = /^search-target-guide-(\d+)$/.exec(id)?.[1];
@@ -809,31 +857,10 @@ function MaterialDetailPage() {
             <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
           ) : null}
         </div>
-        <div className="library-tabs material-tabs" role="tablist" aria-label="Study this material">
-          {MATERIAL_TABS.map((value, index) => (
-            <button key={value} type="button" role="tab" id={`material-tab-${value}`}
-              className={`library-tab tab${tab === value ? " is-active" : ""}`}
-              aria-selected={tab === value} aria-controls={`material-panel-${value}`}
-              tabIndex={tab === value ? 0 : -1}
-              onClick={() => selectTab(value)}
-              onKeyDown={(event) => {
-                const nextIndex = event.key === "ArrowRight" ? (index + 1) % 3
-                  : event.key === "ArrowLeft" ? (index + 2) % 3
-                  : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
-                if (nextIndex !== null) {
-                  event.preventDefault();
-                  const next = MATERIAL_TABS[nextIndex]!;
-                  selectTab(next);
-                  document.getElementById(`material-tab-${next}`)?.focus();
-                } else if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  selectTab(value);
-                  document.getElementById(`material-panel-heading-${value}`)?.focus({ preventScroll: true });
-                }
-              }}>{value === "study" ? "Study" : value === "notes" ? "Notes" : "More"}</button>
-          ))}
+        <div {...tabListProps} ref={tabListRef} className="library-tabs material-tabs">
+          {MATERIAL_TABS.map((value) => <MaterialTabButton key={value} value={value} state={tabState} />)}
         </div>
-        <section id="material-panel-study" role="tabpanel" aria-labelledby="material-tab-study" hidden={tab !== "study"}>
+        <MaterialTabPanel value="study" state={tabState}>
           <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden">Study</h2>
           <div className="detail__column">
           {fileMissing ? <div className="card stack stack--3" role="status">
@@ -1544,8 +1571,8 @@ function MaterialDetailPage() {
           <OralScenariosCard material={material} />
 
           </div>
-        </section>
-        <section id="material-panel-notes" role="tabpanel" aria-labelledby="material-tab-notes" hidden={tab !== "notes"}>
+        </MaterialTabPanel>
+        <MaterialTabPanel value="notes" state={tabState}>
           <h2 id="material-panel-heading-notes" tabIndex={-1} className="visually-hidden">Notes</h2>
           <div className="detail material-notes-grid"><div className="detail__column">
           <Card>
@@ -1656,8 +1683,8 @@ function MaterialDetailPage() {
           ) : null}
 
           </div></div>
-        </section>
-        <section id="material-panel-more" role="tabpanel" aria-labelledby="material-tab-more" hidden={tab !== "more"}>
+        </MaterialTabPanel>
+        <MaterialTabPanel value="more" state={tabState}>
           <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden">More</h2>
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
@@ -1925,7 +1952,7 @@ function MaterialDetailPage() {
             </CardBody>
           </Card>
           </div>
-        </section>
+        </MaterialTabPanel>
       </div>
 
       {isPdf && material.filePath ? (

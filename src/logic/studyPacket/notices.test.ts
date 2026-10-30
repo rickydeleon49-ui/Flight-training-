@@ -106,7 +106,9 @@ describe("third-party notice for the React Aria tabs dependencies", () => {
       expect(lock.packages[`node_modules/${name}`].integrity).toBe(pin.integrity);
       expect(lock.packages[`node_modules/${name}`].license).toBe("Apache-2.0");
     }
-    expect(pkg.dependencies["react-aria"]).toBeUndefined();
+    // Declared directly because components import Item and mergeProps from them (ARIA-01a, 01d).
+    expect(pkg.dependencies["react-aria"]).toBe(lock.packages["node_modules/react-aria"].version);
+    expect(pkg.dependencies["react-stately"]).toBe(lock.packages["node_modules/react-stately"].version);
     expect(pkg.dependencies["react-aria-components"]).toBeUndefined();
   });
 
