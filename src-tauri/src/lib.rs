@@ -64,7 +64,7 @@ mod window_placement;
 use logging::log;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
-use tauri_plugin_window_state::StateFlags;
+use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
@@ -312,7 +312,13 @@ pub fn run() {
             }
             for window in &windows {
                 if window.create {
-                    tauri::WebviewWindowBuilder::from_config(app, window)?.build()?;
+                    let built = tauri::WebviewWindowBuilder::from_config(app, window)?.build()?;
+                    // Created after the restore gate, so the window-state plugin's
+                    // own restore can lose to the config's `center`; put her saved
+                    // size and place back explicitly (student run 30 Oct).
+                    let _ = built.restore_state(
+                        StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED,
+                    );
                 }
             }
             window_placement::keep_main_window_reachable(app.handle());
