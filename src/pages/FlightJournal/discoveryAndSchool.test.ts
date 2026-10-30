@@ -20,7 +20,7 @@ import { JournalForm } from "@/pages/FlightJournal/JournalForm";
 import { JournalEntryDetail } from "@/pages/FlightJournal/JournalEntryDetail";
 import { FlightJournal } from "@/pages/FlightJournal/FlightJournal";
 import { readDraft, writeDraft } from "@/lib/drafts";
-import { todayIso } from "@/lib/dates";
+import { formatTypedDate, todayIso } from "@/lib/dates";
 import { flightLogTotals, hasFlightLogData } from "@/logic/flightLog";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import type { DebriefSaveOperation } from "@/data/db";
@@ -111,7 +111,7 @@ describe("FLIGHTLOG-01: Discovery flight preset and School historical snapshot U
     expect(titleInput.value).toBe("Discovery flight");
 
     const dateInput = screen.getByLabelText("Date") as HTMLInputElement;
-    expect(dateInput.value).toBe(todayIso());
+    expect(dateInput.value).toBe(formatTypedDate(todayIso()));
 
     // Profile defaults must NOT be prefilled on a discovery preset
     const aircraftInput = screen.getByLabelText(/Aircraft type/i) as HTMLInputElement;

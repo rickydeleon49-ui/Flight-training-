@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Dialog, Field, TextInput } from "@/components/ui";
+import { Button, Dialog, TypedDateField, type TypedDateFieldHandle } from "@/components/ui";
 import { addDays, todayIso } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import type { NextAction } from "@/domain/types";
@@ -22,6 +22,7 @@ export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDi
   const { data } = useAppData();
   const boundHw = action ? data.homework?.find((h) => h.assignment.action_id === action.id && !h.assignment.archived) : undefined;
   const [date, setDate] = useState(todayIso());
+  const dateField = useRef<TypedDateFieldHandle>(null);
 
   useEffect(() => {
     if (action) setDate(todayIso());
@@ -74,7 +75,13 @@ export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDi
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={() => onReschedule(action, date)}>
+          <Button
+            variant="primary"
+            onClick={() => {
+              if (dateField.current?.check() === false || !date) return;
+              onReschedule(action, date);
+            }}
+          >
             Reschedule
           </Button>
         </>
@@ -96,16 +103,13 @@ export function RescheduleDialog({ action, onClose, onReschedule }: RescheduleDi
           ))}
         </div>
 
-        <Field label="Or pick a date">
-          {({ id }) => (
-            <TextInput
-              id={id}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          )}
-        </Field>
+        <TypedDateField
+          ref={dateField}
+          label="Or type a date"
+          required
+          value={date}
+          onChange={setDate}
+        />
       </div>
     </Dialog>
   );

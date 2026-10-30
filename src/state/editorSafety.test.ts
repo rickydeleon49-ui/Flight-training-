@@ -189,7 +189,7 @@ it("keeps a Settings edit when unrelated application data refreshes", async () =
 
 it("recovers a journal draft and preserves it through a background refresh", async () => {
   await open("/journal/new");
-  const input = screen.getByPlaceholderText("Crosswind Landings");
+  const input = screen.getByPlaceholderText("e.g. Crosswind Landings");
   fireEvent.change(input, { target: { value: "My debrief draft" } });
   await act(() => context.refresh());
   expect(screen.getByDisplayValue("My debrief draft")).toBeTruthy();

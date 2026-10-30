@@ -14,6 +14,8 @@ import {
   Select,
   TextArea,
   TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
 } from "@/components/ui";
 import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
@@ -160,6 +162,8 @@ export function Settings() {
   const [starterNote, setStarterNote] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  const startedField = useRef<TypedDateFieldHandle>(null);
+  const medicalField = useRef<TypedDateFieldHandle>(null);
   const [dataPath, setDataPath] = useState("");
   const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
@@ -510,6 +514,10 @@ export function Settings() {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const saveProfile = async () => {
+    // Both dates are optional, but a typed one that isn't a date is never saved as none.
+    const startedOk = startedField.current?.check() ?? true;
+    const medicalOk = medicalField.current?.check() ?? true;
+    if (!startedOk || !medicalOk) return;
     const result = await mutate((repos) =>
       repos.profile.update({
         ...draft,
@@ -704,39 +712,25 @@ export function Settings() {
                 )}
               </Field>
 
-              <Field
+              <TypedDateField
+                ref={startedField}
                 label="Training started"
                 hint={
                   duration
                     ? `That is ${duration} of training so far.`
                     : "Optional — your first flight counts, school or not."
                 }
-              >
-                {({ id, describedBy }) => (
-                  <TextInput
-                    id={id}
-                    type="date"
-                    aria-describedby={describedBy}
-                    value={draft.trainingStartedOn ?? ""}
-                    onChange={(e) => update("trainingStartedOn", e.target.value || null)}
-                  />
-                )}
-              </Field>
+                value={draft.trainingStartedOn ?? ""}
+                onChange={(date) => update("trainingStartedOn", date || null)}
+              />
 
-              <Field
+              <TypedDateField
+                ref={medicalField}
                 label="Medical certificate expires"
                 hint="Your own reminder — the certificate itself is what counts."
-              >
-                {({ id, describedBy }) => (
-                  <TextInput
-                    id={id}
-                    type="date"
-                    aria-describedby={describedBy}
-                    value={draft.medicalExpiry ?? ""}
-                    onChange={(e) => update("medicalExpiry", e.target.value || null)}
-                  />
-                )}
-              </Field>
+                value={draft.medicalExpiry ?? ""}
+                onChange={(date) => update("medicalExpiry", date || null)}
+              />
               {medicalConflict ? (
                 <p className="small" role="note" style={{ gridColumn: "1 / -1" }}>
                   Your saved medical record “{medicalConflict.record.title}” in the Pilot Toolkit

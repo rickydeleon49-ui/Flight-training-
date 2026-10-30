@@ -1,7 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  Field,
+  Select,
+  TextArea,
+  TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
+} from "@/components/ui";
 import { useAppData } from "@/state/AppDataContext";
 import {
   ACTION_CATEGORY_DESCRIPTIONS,
@@ -69,6 +78,7 @@ export function ActionFormDialog({
     emptyDraft(relatedType, relatedId, defaultCategory),
   );
   const [error, setError] = useState<string | null>(null);
+  const dueDateField = useRef<TypedDateFieldHandle>(null);
 
   // Reset whenever the dialog opens so a stale draft never leaks between uses.
   useEffect(() => {
@@ -94,10 +104,12 @@ export function ActionFormDialog({
     setDraft((current) => ({ ...current, [key]: value }));
 
   const submit = () => {
+    const dueDateOk = dueDateField.current?.check() ?? true;
     if (!draft.title.trim()) {
       setError("Give this action a short title so you know what to do.");
       return;
     }
+    if (!dueDateOk) return;
     onSave({ ...draft, title: draft.title.trim(), description: draft.description.trim() });
   };
 
@@ -181,17 +193,14 @@ export function ActionFormDialog({
           )}
         </Field>
 
-        <Field label="Due date" hint="Leave empty if it has no particular day.">
-          {({ id, describedBy }) => (
-            <TextInput
-              id={id}
-              aria-describedby={describedBy}
-              type="date"
-              value={draft.dueDate ?? ""}
-              onChange={(e) => update("dueDate", e.target.value || null)}
-            />
-          )}
-        </Field>
+        <TypedDateField
+          key={String(open)}
+          ref={dueDateField}
+          label="Due date"
+          hint="Leave empty if it has no particular day."
+          value={draft.dueDate ?? ""}
+          onChange={(date) => update("dueDate", date || null)}
+        />
 
         <Field label="How long will it take?" hint="Minutes. Optional.">
           {({ id, describedBy }) => (

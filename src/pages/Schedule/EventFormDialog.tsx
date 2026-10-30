@@ -1,6 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  Field,
+  Select,
+  TextArea,
+  TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
+} from "@/components/ui";
 import {
   EVENT_STATUS_OPTIONS,
   EVENT_TYPE_OPTIONS,
@@ -11,7 +20,7 @@ import {
   type Profile,
   type ScheduleEvent,
 } from "@/domain/types";
-import { formatLongDate, formatTypedDate, parseTypedDate, todayIso } from "@/lib/dates";
+import { todayIso } from "@/lib/dates";
 import { moneyToInput, parseMoney } from "@/lib/money";
 
 export interface EventDraft {
@@ -48,24 +57,6 @@ const emptyDraft = (profile?: Profile): EventDraft => ({
   status: "scheduled",
 });
 
-/**
- * The date is typed as text (QUICKFIX-01): the Mac's own date field turned
- * "11052026" typed in one go into December 29 without saying so. A typed
- * date is read back in words, or refused plainly; it is never changed.
- */
-export const NOT_A_DATE = "That isn't a date — try 11/05/2026.";
-
-export function eventDateCheck(date: string): string | undefined {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
-  // A "today" outside any real year makes the year always show.
-  return `That's ${formatLongDate(date, "0000-01-01")}.`;
-}
-
-function dateProblem(typed: string): string | undefined {
-  if (!typed.trim()) return "Choose a date.";
-  return parseTypedDate(typed) ? undefined : NOT_A_DATE;
-}
-
 interface Props {
   open: boolean;
   event?: ScheduleEvent | null;
@@ -80,7 +71,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const [draft, setDraft] = useState<EventDraft>(() => emptyDraft(profile));
   const [estimated, setEstimated] = useState("");
   const [actual, setActual] = useState("");
-  const [dateText, setDateText] = useState(() => formatTypedDate(todayIso()));
+  const dateField = useRef<TypedDateFieldHandle>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -101,13 +92,11 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
         actualCost: event.actualCost,
         status: event.status,
       });
-      setDateText(formatTypedDate(event.date));
       setEstimated(moneyToInput(event.estimatedCost));
       setActual(moneyToInput(event.actualCost));
     } else {
       const fresh = emptyDraft(profile);
       setDraft(fresh);
-      setDateText(formatTypedDate(fresh.date));
       setEstimated("");
       setActual("");
     }
@@ -119,9 +108,8 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const submit = () => {
     const found: Record<string, string> = {};
     if (!draft.title.trim()) found.title = "Give this a title so you recognise it later.";
-    const date = parseTypedDate(dateText);
-    const dateError = dateProblem(dateText);
-    if (dateError) found.date = dateError;
+    // The date field shows its own problem (not a date, or empty).
+    const dateOk = dateField.current?.check() ?? Boolean(draft.date);
 
     // Same rule as an expense in Finances: a cost is more than zero, or blank.
     const estimatedCost = estimated.trim() === "" ? null : parseMoney(estimated);
@@ -141,10 +129,9 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
     }
 
     setErrors(found);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0 || !dateOk || !draft.date) return;
 
-    if (!date) return;
-    onSave({ ...draft, date, title: draft.title.trim(), estimatedCost, actualCost });
+    onSave({ ...draft, title: draft.title.trim(), estimatedCost, actualCost });
   };
 
   return (
@@ -197,26 +184,13 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
           )}
         </Field>
 
-        <Field label="Date" error={errors.date} hint={eventDateCheck(parseTypedDate(dateText) ?? "")}>
-          {({ id, describedBy, invalid }) => (
-            <TextInput
-              id={id}
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              autoComplete="off"
-              value={dateText}
-              placeholder="e.g. 11/05/2026"
-              onChange={(e) => {
-                setDateText(e.target.value);
-                if (parseTypedDate(e.target.value)) setErrors(({ date: _date, ...rest }) => rest);
-              }}
-              onBlur={() => {
-                const problem = dateProblem(dateText);
-                setErrors(({ date: _date, ...rest }) => (problem ? { ...rest, date: problem } : rest));
-              }}
-            />
-          )}
-        </Field>
+        <TypedDateField
+          ref={dateField}
+          label="Date"
+          required
+          value={draft.date}
+          onChange={(date) => update("date", date)}
+        />
 
         <Field label="Start time">
           {({ id }) => (
