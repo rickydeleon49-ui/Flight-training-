@@ -6,7 +6,9 @@
 
 Feature-by-feature behavior, bugs and test coverage: [0.6.1 validation log](docs/FEATURE_VALIDATION_0.6.1.md). Local work and shipped work are labeled separately.
 
-**Released:** v0.6.1 is published as Latest (28 October 2026) from `main` at `629ee3d`, the first Developer ID signed and Apple-notarized Mac release. The next release is **0.6.2**; 0.5.2 and 0.5.6 are retired.
+**Released:** v0.6.3 is published as Latest (29 October 2026, signed and notarized) from `main` at `b3cca83`; v0.6.1 was the first Developer ID signed and Apple-notarized Mac release. The next release would be **0.6.4**; 0.5.2 and 0.5.6 are retired.
+
+**Batch 29 October (local, branch roadmap/batch-1029, not merged):** PHOTO-LOAD-01: profile photo now loads in the installed app (data: URL; security policy unchanged). QUICKFIX-01: Schedule date is typed text (11052026 = 11/05/2026; an impossible date is refused, never changed); card-replace warning says where earlier cards are; "Read this PDF's text" moved to the top of More; "e.g." placeholders. PROVIDER-01 P0 + P1: AI provider structure with Gemini behind it and one key file per provider; no visible change (Claude Haiku 5.5 comes in P2). TESTTOOLS-01: scheduler parity tests (TypeScript and Rust agree on 200 cases), accessibility checks on 6 screens, 8 unused code exports removed (dev-only tools: fast-check, proptest, axe-core, knip). Security: zod 4.6.7 and undici 8.12.3; unused @tauri-apps/plugin-fs JavaScript package removed. WINSTATE-01: window reopens where she left it (off-screen check); private log file in ~/Library/Logs that never records her file names, paths, keys or notes. JSDIFF-01: regenerate previews highlight changed words (diff 9.0.0). NIGHT-01: one quiet line under Night time gives sunset, when night begins and when night landings count, from the date and airport (suncalc + public-domain airport data; no new fields).
 
 **Done in `main` through v0.6.0:**
 - **Offline reading and search foundations:** OFFLINE-01, OFFLINE-02 and its saved-content search, and OFFLINE-03a/b, so she can write and edit her own summaries, cards and practice questions.
