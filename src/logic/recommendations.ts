@@ -429,7 +429,7 @@ export function buildRecommendationCandidates(
         estimatedMinutes: null, // Study materials are unestimated
         subRank: 1, // higher urgency than studying
         reason: {
-          summary: `Study material needs review: ${material.title}`,
+          summary: `Look at this again: ${material.title}`,
           sourceType: "material",
           sourceId: material.id,
         },
@@ -614,7 +614,10 @@ export function selectRecommendations(
 
     if (destination === "suggested") {
       if (budget !== null && budget > 0) {
-        if (candidate.estimatedMinutes === null) {
+        if (candidate.estimatedMinutes === null && candidate.kind === "study_material") {
+          // Study materials never carry an estimate; the suffix would repeat on every card.
+          explanation = candidate.reason.summary;
+        } else if (candidate.estimatedMinutes === null) {
           explanation = `${candidate.reason.summary} · No time estimate yet, included because it's important`;
         } else if (hasUnknownSuggested) {
           explanation = `${candidate.reason.summary} · About ${candidate.estimatedMinutes} min`;

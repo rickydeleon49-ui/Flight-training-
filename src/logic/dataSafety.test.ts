@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BACKUP_REMINDER_DAYS,
   backupHealth,
+  backupHealthTone,
   compareVersions,
   formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
@@ -67,6 +68,14 @@ describe("backupHealth", () => {
     });
     expect(health.state).toBe("never");
     expect(health.needsAttention).toBe(true);
+    expect(health.message).toBe("No complete backup yet. Safety copies stay on this Mac — save one complete backup somewhere else too.");
+  });
+
+  it("shows a missing or old backup as a calm amber next step and keeps red for an older-version backup", () => {
+    expect(backupHealthTone("never")).toEqual({ color: "var(--status-due-today)", lead: "Next step: " });
+    expect(backupHealthTone("stale")).toEqual({ color: "var(--status-due-today)", lead: "Next step: " });
+    expect(backupHealthTone("after-update")).toEqual({ color: "var(--status-danger)", lead: "Next step: " });
+    expect(backupHealthTone("protected")).toEqual({ color: "var(--status-complete)", lead: "Protected. " });
   });
 
   it("treats an unreadable stored date as no backup at all", () => {

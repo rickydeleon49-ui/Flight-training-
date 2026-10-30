@@ -145,7 +145,7 @@ export function TransactionFormDialog({
               aria-describedby={describedBy}
               aria-invalid={invalid}
               value={amount}
-              placeholder="275"
+              placeholder="e.g. 275"
               onChange={(e) => setAmount(e.target.value)}
             />
           )}
@@ -189,7 +189,7 @@ export function TransactionFormDialog({
             <TextInput
               id={id}
               value={description}
-              placeholder={isExpense ? "Flight lesson" : "Saved paycheck money"}
+              placeholder={isExpense ? "e.g. Flight lesson" : "e.g. Saved paycheck money"}
               onChange={(e) => setDescription(e.target.value)}
             />
           )}

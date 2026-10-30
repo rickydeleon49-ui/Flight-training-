@@ -122,7 +122,7 @@ it("keeps Delete inside More, supports keyboard dismissal and returns focus for 
   expect(deletion.closest("details")?.open).toBe(false);
   expect(deletion.closest(".material-actions-menu")).toBeTruthy();
   expect(screen.queryByRole("navigation", { name: "Jump to" })).toBeNull();
-  const more = screen.getByText("More ▾");
+  const more = screen.getByText("File ▾");
   more.focus(); fireEvent.keyDown(more, { key: "Enter" });
   expect(more.closest("details")!.open).toBe(true);
   expect(within(more.closest("details")!).getByRole("button", { name: "Delete" })).toBeTruthy();

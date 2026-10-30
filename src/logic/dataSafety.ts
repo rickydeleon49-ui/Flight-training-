@@ -82,7 +82,7 @@ export function backupHealth({
     return {
       state: "never",
       message:
-        "No complete backup has been saved yet. Save one now, and keep it somewhere other than this computer.",
+        "No complete backup yet. Safety copies stay on this Mac — save one complete backup somewhere else too.",
       needsAttention: true,
     };
   }
@@ -112,6 +112,19 @@ export function backupHealth({
     state: "protected",
     message: `Complete backup saved ${when}, from version ${lastBackupVersion || appVersion}.`,
     needsAttention: false,
+  };
+}
+
+/**
+ * How the backup sentence in Settings looks. Only a backup from an older app
+ * version is red; a missing or old backup is a calm amber next step, so the
+ * nudge stays honest without sounding like something already went wrong.
+ */
+export function backupHealthTone(state: BackupState): { color: string; lead: string } {
+  if (state === "protected") return { color: "var(--status-complete)", lead: "Protected. " };
+  return {
+    color: state === "after-update" ? "var(--status-danger)" : "var(--status-due-today)",
+    lead: "Next step: ",
   };
 }
 

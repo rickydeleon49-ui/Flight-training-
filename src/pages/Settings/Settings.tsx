@@ -55,6 +55,7 @@ import {
 } from "@/services/backups";
 import {
   backupHealth,
+  backupHealthTone,
   formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
   formatRestorePreviewNotice,
@@ -1096,13 +1097,9 @@ export function Settings() {
                 <p
                   className="small"
                   role="status"
-                  style={{
-                    color: protection.needsAttention
-                      ? "var(--status-danger)"
-                      : "var(--status-complete)",
-                  }}
+                  style={{ color: backupHealthTone(protection.state).color }}
                 >
-                  <strong>{protection.needsAttention ? "Worth doing now: " : "Protected. "}</strong>
+                  <strong>{backupHealthTone(protection.state).lead}</strong>
                   {protection.message}
                 </p>
               ) : null}

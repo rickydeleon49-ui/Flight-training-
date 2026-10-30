@@ -427,7 +427,7 @@ Example:
 
 ## Crosswind Landings
 
-**Status:** Working On
+**Status:** In progress
 
 Evidence:
 
@@ -463,7 +463,7 @@ Each goal can contain:
 Possible statuses:
 
 - Not Started
-- Working On
+- In Progress
 - Comfortable
 - Completed
 - Paused
@@ -543,7 +543,7 @@ Optional connection to a scheduled or completed lesson.
 
 ## Review Status
 
-- Needs Review
+- Review again
 - Studying
 - Confident
 - Reference Only
@@ -640,7 +640,7 @@ Examples:
 
 - Next Up
 - Studying
-- Needs Review
+- Review again
 - Confident
 - Reference Only
 

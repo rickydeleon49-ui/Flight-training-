@@ -37,12 +37,12 @@ export function MaterialActionsMenu({ children }: { children: ReactNode }) {
       event.preventDefault(); event.stopPropagation(); close();
     }
   }}>
-    <summary id="material-file-actions" ref={summary} aria-label="More actions: edit, split, open, delete" onKeyDown={event => {
+    <summary id="material-file-actions" ref={summary} aria-label="File actions: edit, split, open, delete" onKeyDown={event => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         if (details.current) details.current.open = !details.current.open;
       }
-    }}>More ▾</summary>
+    }}>File ▾</summary>
     <div ref={items} className="material-actions-menu__items" onClickCapture={event => {
       if ((event.target as HTMLElement).closest("button")) close();
     }}>{children}</div>

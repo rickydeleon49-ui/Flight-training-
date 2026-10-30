@@ -367,6 +367,8 @@ function assembleLockedSession(
 
   const explainSuggested = (c: RecommendationCandidate): string => {
     if (!timed) return c.reason.summary;
+    // Study materials never carry an estimate; the suffix would repeat on every card.
+    if (c.estimatedMinutes === null && c.kind === "study_material") return c.reason.summary;
     if (c.estimatedMinutes === null) {
       return `${c.reason.summary} · No time estimate yet, included because it's important`;
     }

@@ -112,7 +112,7 @@ export const SCENARIOS: Scenario[] = [
     name: "filtersAndSortTogether",
     setup: [
       { kind: "topic", value: "weather" },
-      { kind: "status", value: "Needs Review" },
+      { kind: "status", value: "Review again" },
       { kind: "query", value: "ground" },
     ],
     measured: [{ kind: "sort", value: "title" }],

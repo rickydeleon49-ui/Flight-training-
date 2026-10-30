@@ -9,7 +9,7 @@ it("floats within a narrow viewport, limits height and aligns every action inclu
   vi.stubGlobal("innerWidth", 390); vi.stubGlobal("innerHeight", 500);
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 280, right: 380, bottom: 170 } as DOMRect);
   render(h(MaterialActionsMenu, null, h("button", { className: "button" }, "Edit"), h("button", { className: "button destructive-action" }, "Delete")));
-  const summary = screen.getByText("More ▾");
+  const summary = screen.getByText("File ▾");
   fireEvent.keyDown(summary, { key: "Enter" });
   fireEvent(summary.closest("details")!, new Event("toggle"));
   const items = document.querySelector<HTMLElement>(".material-actions-menu__items")!;

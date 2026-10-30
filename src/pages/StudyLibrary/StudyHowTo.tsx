@@ -72,7 +72,7 @@ export const STUDY_LIBRARY_TOUR: Array<{ title: string; items: HowToItem[] }> = 
       { label: "Everything", control: "button", text: "every material." },
       { label: "Next Up", control: "button", text: "materials you gave Next Up priority." },
       { label: "Studying", control: "button", text: "what you're working on now." },
-      { label: "Needs Review", control: "button", text: "worth another look. Studying and Needs Review can be suggested in Today's Flight Plan." },
+      { label: "Review again", control: "button", text: "worth another look. Studying and Review again can be suggested in Today's Flight Plan." },
       { label: "Confident", control: "button", text: "material you know well." },
       { label: "Reference Only", control: "button", text: "kept to look things up, not to study." },
     ],
