@@ -243,12 +243,20 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
       flashcards: [{ front: "Q", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
     await openMaterial("mat-pdf");
     fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
-    expect(within(await waitFor(sendDialog)).getByText(/This replaces your 1 saved card\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
+    expect(within(await waitFor(sendDialog)).getByText(/^This replaces your 1 saved card\. To get it back, choose Restore in Edit study guide → Previous versions\./)).toBeTruthy();
     fireEvent.click(within(sendDialog()).getByRole("button", { name: "Cancel" }));
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
     expect(within(await waitFor(sendDialog)).getByText(/This replaces your saved study guide\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
     // The control it names really is there.
     expect(screen.getByRole("button", { name: "Edit study guide" })).toBeTruthy();
+  });
+
+  it("QUICKFIX-01: Read this PDF's text sits near the top of More, before the reference cards", async () => {
+    await openMaterial("mat-pdf");
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
+    const panel = document.getElementById("material-panel-more")!;
+    const ids = [...panel.querySelectorAll("#material-mac-backup, #related-study, #material-file-details")].map(e => e.id);
+    expect(ids).toEqual(["material-mac-backup", "related-study", "material-file-details"]);
   });
 
   it("CARDS-FIX-01: a cards-only set is warned without a restore promise it can't keep", async () => {
@@ -792,7 +800,8 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const askCard = document.getElementById("material-ask-gemini")!;
     expect(askCard).toBeTruthy();
-    const order = [startHere, studyGuide, flashcards, practiceTest, document.getElementById("material-file-details")!, backup];
+    // QUICKFIX-01: the backup card (Read this PDF's text) now comes before File details in More.
+    const order = [startHere, studyGuide, flashcards, practiceTest, backup, document.getElementById("material-file-details")!];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),

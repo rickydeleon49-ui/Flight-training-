@@ -11,7 +11,7 @@ import {
   type Profile,
   type ScheduleEvent,
 } from "@/domain/types";
-import { formatLongDate, todayIso } from "@/lib/dates";
+import { formatLongDate, formatTypedDate, parseTypedDate, todayIso } from "@/lib/dates";
 import { moneyToInput, parseMoney } from "@/lib/money";
 
 export interface EventDraft {
@@ -49,14 +49,21 @@ const emptyDraft = (profile?: Profile): EventDraft => ({
 });
 
 /**
- * The date read back in words. Typing "11/05/2026" in one go into the Mac's
- * date field can land on a different day without saying so, so she can
- * always see which day the field really holds.
+ * The date is typed as text (QUICKFIX-01): the Mac's own date field turned
+ * "11052026" typed in one go into December 29 without saying so. A typed
+ * date is read back in words, or refused plainly; it is never changed.
  */
+export const NOT_A_DATE = "That isn't a date — try 11/05/2026.";
+
 export function eventDateCheck(date: string): string | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
   // A "today" outside any real year makes the year always show.
-  return `Check the date: ${formatLongDate(date, "0000-01-01")}. Typing it? Press Tab between month, day and year.`;
+  return `That's ${formatLongDate(date, "0000-01-01")}.`;
+}
+
+function dateProblem(typed: string): string | undefined {
+  if (!typed.trim()) return "Choose a date.";
+  return parseTypedDate(typed) ? undefined : NOT_A_DATE;
 }
 
 interface Props {
@@ -73,6 +80,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const [draft, setDraft] = useState<EventDraft>(() => emptyDraft(profile));
   const [estimated, setEstimated] = useState("");
   const [actual, setActual] = useState("");
+  const [dateText, setDateText] = useState(() => formatTypedDate(todayIso()));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -93,10 +101,13 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
         actualCost: event.actualCost,
         status: event.status,
       });
+      setDateText(formatTypedDate(event.date));
       setEstimated(moneyToInput(event.estimatedCost));
       setActual(moneyToInput(event.actualCost));
     } else {
-      setDraft(emptyDraft(profile));
+      const fresh = emptyDraft(profile);
+      setDraft(fresh);
+      setDateText(formatTypedDate(fresh.date));
       setEstimated("");
       setActual("");
     }
@@ -108,7 +119,9 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const submit = () => {
     const found: Record<string, string> = {};
     if (!draft.title.trim()) found.title = "Give this a title so you recognise it later.";
-    if (!draft.date) found.date = "Choose a date.";
+    const date = parseTypedDate(dateText);
+    const dateError = dateProblem(dateText);
+    if (dateError) found.date = dateError;
 
     // Same rule as an expense in Finances: a cost is more than zero, or blank.
     const estimatedCost = estimated.trim() === "" ? null : parseMoney(estimated);
@@ -130,7 +143,8 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    onSave({ ...draft, title: draft.title.trim(), estimatedCost, actualCost });
+    if (!date) return;
+    onSave({ ...draft, date, title: draft.title.trim(), estimatedCost, actualCost });
   };
 
   return (
@@ -183,15 +197,23 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
           )}
         </Field>
 
-        <Field label="Date" error={errors.date} hint={eventDateCheck(draft.date)}>
+        <Field label="Date" error={errors.date} hint={eventDateCheck(parseTypedDate(dateText) ?? "")}>
           {({ id, describedBy, invalid }) => (
             <TextInput
               id={id}
-              type="date"
               aria-describedby={describedBy}
               aria-invalid={invalid}
-              value={draft.date}
-              onChange={(e) => update("date", e.target.value)}
+              autoComplete="off"
+              value={dateText}
+              placeholder="e.g. 11/05/2026"
+              onChange={(e) => {
+                setDateText(e.target.value);
+                if (parseTypedDate(e.target.value)) setErrors(({ date: _date, ...rest }) => rest);
+              }}
+              onBlur={() => {
+                const problem = dateProblem(dateText);
+                setErrors(({ date: _date, ...rest }) => (problem ? { ...rest, date: problem } : rest));
+              }}
             />
           )}
         </Field>
@@ -225,7 +247,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
             <TextInput
               id={id}
               value={draft.location}
-              placeholder="Cedar Field"
+              placeholder="e.g. Cedar Field"
               onChange={(e) => update("location", e.target.value)}
             />
           )}
@@ -261,7 +283,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
               aria-describedby={describedBy}
               aria-invalid={invalid}
               value={estimated}
-              placeholder="275"
+              placeholder="e.g. 275"
               onChange={(e) => setEstimated(e.target.value)}
             />
           )}
@@ -275,7 +297,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
               aria-describedby={describedBy}
               aria-invalid={invalid}
               value={actual}
-              placeholder="265"
+              placeholder="e.g. 265"
               onChange={(e) => setActual(e.target.value)}
             />
           )}
