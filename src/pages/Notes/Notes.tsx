@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useSearchFocus } from "@/state/useSearchFocus";
@@ -58,11 +58,24 @@ export function Notes() {
 
   // A note half-written when she closes the page is still worth keeping.
   const [recoveredContent, setRecoveredContent] = useState(false);
-  const { recovered, forget } = useDraftRecovery("notes.new", draft, (saved: NoteDraft) => {
-    if (!saved.title.trim() && !saved.body.trim()) return;
-    setRecoveredContent(true);
-    setDraft(saved);
-  });
+  const { recovered, forget, revision, forgetRevision } = useDraftRecovery(
+    "notes.new",
+    draft,
+    (saved: NoteDraft) => {
+      if (!saved.title.trim() && !saved.body.trim()) return;
+      setRecoveredContent(true);
+      setDraft(saved);
+    },
+    true,
+    // She came back while this note was saving and has not typed: it is
+    // saved now, so the box empties as after her own Save.
+    () => {
+      setRecoveredContent(false);
+      setDraft(EMPTY_DRAFT);
+      setJustSaved(true);
+    },
+  );
+  const mounted = useMounted();
 
   // "Write a note" from oral practice hands over text she can edit. It is
   // added under anything she had half-written, and saved only on Save note.
@@ -106,14 +119,18 @@ export function Notes() {
     if (!body) return;
     saving.current = true;
     setBusy(true);
+    const submitted = revision();
     const result = await mutate((repos) =>
       repos.notes.create({ title: draft.title.trim(), body }),
     );
     saving.current = false;
     setBusy(false);
-    if (result === null || latestDraft.current !== draft) return;
+    if (result === null) return;
+    // Only the stored copy this save submitted is dropped. If she left and
+    // came back while it ran, the page she is on now owns any newer typing.
+    forgetRevision(submitted);
+    if (!mounted.current || latestDraft.current !== draft) return;
     setDraft(EMPTY_DRAFT);
-    forget();
     setJustSaved(true);
   };
 
@@ -335,39 +352,125 @@ function NoteRow({
   );
 }
 
+interface EditDraft extends NoteDraft {
+  /**
+   * The saved note this draft started from. A draft from an earlier session
+   * is only applied when the note has not changed since (for example by a
+   * restore); otherwise she chooses. Drafts kept before this had none.
+   */
+  baseline?: NoteDraft | null;
+}
+
+const sameNote = (a: NoteDraft | null | undefined, b: NoteDraft) =>
+  a != null && a.title === b.title && a.body === b.body;
+
+/** True while the component is mounted; a save finishing later can check it. */
+function useMounted() {
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  return mounted;
+}
+
 function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   const { mutate } = useAppData();
-  const [draft, setDraft] = useState<NoteDraft>({
-    title: note.title,
-    body: note.body,
-  });
+  const saved: NoteDraft = { title: note.title, body: note.body };
+  const [draft, setDraft] = useState<EditDraft>({ ...saved, baseline: saved });
   const latestDraft = useRef(draft);
   latestDraft.current = draft;
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
-  const { forget } = useDraftRecovery(`notes.${note.id}`, draft, setDraft);
+  // What a running save sends; the note refreshing to it is not a conflict.
+  const [submitted, setSubmitted] = useState<NoteDraft | null>(null);
+  const mounted = useMounted();
+  const { forget, revision, forgetRevision } = useDraftRecovery<EditDraft>(
+    `notes.${note.id}`,
+    draft,
+    (stored) => {
+      if (typeof stored?.title !== "string" || typeof stored.body !== "string") return;
+      // Nothing to choose between: the draft already matches the saved note.
+      if (sameNote(stored, saved)) return;
+      setDraft({ title: stored.title, body: stored.body, baseline: stored.baseline ?? null });
+    },
+    true,
+    // The earlier editor's save finished exactly this text: it is saved.
+    () => {
+      if (!saving.current) onClose();
+    },
+  );
+
+  // The saved note changed since this draft began (a restore, or an older
+  // draft): nothing is written until she picks one.
+  const conflict = !sameNote(draft.baseline, saved) && !sameNote(submitted, saved);
+
+  const keepDraft = () =>
+    setDraft((current) => ({ ...current, baseline: { title: note.title, body: note.body } }));
+  const useSaved = () => {
+    forget();
+    setDraft({ title: note.title, body: note.body, baseline: { title: note.title, body: note.body } });
+  };
 
   const save = async () => {
-    if (saving.current) return;
+    if (saving.current || conflict) return;
     const body = draft.body.trim();
     if (!body) return;
+    const base = draft.baseline!;
+    const next: NoteDraft = { title: draft.title.trim(), body };
+    // Only what she changed is written, so an unchanged body is never sent.
+    const changes: Partial<NoteDraft> = {};
+    if (next.title !== base.title) changes.title = next.title;
+    if (next.body !== base.body) changes.body = next.body;
+    const stored = revision();
+    if (Object.keys(changes).length === 0) {
+      forgetRevision(stored);
+      onClose();
+      return;
+    }
     saving.current = true;
     setBusy(true);
-    const result = await mutate((repos) =>
-      repos.notes.update(note.id, { title: draft.title.trim(), body }),
-    );
-    saving.current = false;
-    setBusy(false);
-    if (result === null || latestDraft.current !== draft) return;
-    forget();
+    setSubmitted(next);
+    let result: unknown = null;
+    try {
+      result = await mutate((repos) => repos.notes.update(note.id, changes));
+    } finally {
+      saving.current = false;
+      setBusy(false);
+      setSubmitted(null);
+    }
+    if (result === null) return;
+    forgetRevision(stored);
+    // An editor closed while saving must not close one opened since.
+    if (!mounted.current) return;
+    if (latestDraft.current !== draft) {
+      // She kept typing: this save is now what that typing builds on.
+      setDraft((current) => ({ ...current, baseline: next }));
+      return;
+    }
     onClose();
   };
 
   return (
     <div className="note-row note-row--editing">
       <div className="stack stack--3" style={{ width: "100%" }}>
+        {conflict ? (
+          <div role="status">
+            <p>You have unsaved notes from earlier.</p>
+            <Button size="small" onClick={keepDraft}>Keep these</Button>{" "}
+            <Button size="small" onClick={useSaved}>Use the saved notes</Button>
+            <details>
+              <summary>Saved notes</summary>
+              {note.title ? <p><strong>{note.title}</strong></p> : null}
+              <p style={{ whiteSpace: "pre-wrap" }}>{note.body}</p>
+            </details>
+          </div>
+        ) : null}
         <TextInput
           value={draft.title}
+          readOnly={conflict}
           aria-label="Title (optional)"
           placeholder="Title — optional"
           onChange={(e) =>
@@ -377,6 +480,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
         <TextArea
           rows={5}
           value={draft.body}
+          readOnly={conflict}
           aria-label="Note"
           onChange={(e) =>
             setDraft((current) => ({ ...current, body: e.target.value }))
@@ -387,7 +491,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
             size="small"
             variant="primary"
             onClick={save}
-            disabled={busy || !draft.body.trim()}
+            disabled={busy || conflict || !draft.body.trim()}
           >
             Save changes
           </Button>

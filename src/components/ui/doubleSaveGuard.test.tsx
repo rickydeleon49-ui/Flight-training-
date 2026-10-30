@@ -16,8 +16,9 @@ import { MilestoneFormDialog } from "@/pages/FlightPath/MilestoneFormDialog";
 import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { Questions } from "@/pages/Questions/Questions";
 import { EventFormDialog } from "@/pages/Schedule/EventFormDialog";
+import { OralScenarioEditor } from "@/pages/StudyLibrary/OralScenarioEditor";
 import { AppDataContext, EMPTY_DATA, type AppData } from "@/state/AppDataContext";
-import { makeMilestone, makeTransaction } from "@/testing/factories";
+import { makeMaterial, makeMilestone, makeTransaction } from "@/testing/factories";
 
 vi.mock("@/pages/FlightPath/skills/SkillsSection", () => ({ SkillsSection: () => null }));
 
@@ -121,6 +122,48 @@ describe("form dialogs save once on a double-click", () => {
     fireEvent.click(button("Set one"));
     fireEvent.change(screen.getByLabelText("Target amount"), { target: { value: "5000" } });
     await expectGuarded("Save target", save);
+  });
+});
+
+describe("ASTRA-FIX-2 #3: editors outside the first six dialogs lock while saving", () => {
+  it("OralScenarioEditor locks fields, Cancel, Close and Escape, and unlocks after a failed save", async () => {
+    const save = slowSave();
+    const close = vi.fn();
+    withData(h(OralScenarioEditor, { material: makeMaterial(), scenario: null, open: true, onClose: close }), {}, save.fn);
+    fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "You see a line of storms ahead." } });
+    fireEvent.change(screen.getByLabelText("Discussion points"), { target: { value: "Turn back early" } });
+    await expectGuarded("Save scenario", save, close);
+  });
+
+  it("OralScenarioEditor closes only for its own finished save", async () => {
+    let finish: (value: unknown) => void = () => {};
+    const mutate = vi.fn(() => new Promise((resolve) => { finish = resolve; }));
+    const close = vi.fn();
+    withData(h(OralScenarioEditor, { material: makeMaterial(), scenario: null, open: true, onClose: close }), {}, mutate);
+    fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "Engine runs rough." } });
+    fireEvent.change(screen.getByLabelText("Discussion points"), { target: { value: "Carb heat" } });
+    fireEvent.click(button("Save scenario"));
+    // She cannot cancel and open another editor while this one saves.
+    fireEvent.click(button("Cancel"));
+    expect(close).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Scenario") as HTMLTextAreaElement).matches(":disabled")).toBe(true);
+    finish({ id: "s1" });
+    await waitFor(() => expect(close).toHaveBeenCalledTimes(1));
+  });
+
+  it("Questions › Save question locks what she typed until the save settles", async () => {
+    const save = slowSave();
+    withData(h(Questions), {}, save.fn);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "How much rudder?" } });
+    fireEvent.click(button("Save question"));
+    await waitFor(() => expect(save.fn).toHaveBeenCalledTimes(1));
+    for (const name of ["Your question", "Topic", "Ask at which lesson"]) {
+      expect(screen.getByLabelText(name).matches(":disabled")).toBe(true);
+    }
+    save.release();
+    await waitFor(() => expect(screen.getByLabelText("Your question").matches(":disabled")).toBe(false));
+    // The write failed, so her text is still there to retry.
+    expect((screen.getByLabelText("Your question") as HTMLTextAreaElement).value).toBe("How much rudder?");
   });
 });
 

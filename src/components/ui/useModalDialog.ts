@@ -68,9 +68,42 @@ const FOCUSABLE = [
 ].join(",");
 
 function focusableIn(container: HTMLElement): HTMLElement[] {
+  // `:disabled` also covers controls inside a disabled <fieldset> (a dialog
+  // locked while it saves), which `[disabled]` alone would still offer.
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-    (element) => !element.closest("[hidden]"),
+    (element) => !element.closest("[hidden]") && !element.matches(":disabled"),
   );
+}
+
+/**
+ * Fallback only: a dialog that locks its controls while saving would leave
+ * focus on a control that can no longer hold it. Focus moves to the dialog
+ * itself while locked, and back to the control she was on (or the first one
+ * usable) once the dialog unlocks.
+ */
+function watchLocking(entry: OpenModal): () => void {
+  if (typeof MutationObserver !== "function") return () => {};
+  const observer = new MutationObserver(() => {
+    if (top() !== entry) return;
+    const element = entry.element;
+    const active = document.activeElement as HTMLElement | null;
+    if (active && active !== element && element.contains(active) && active.matches(":disabled")) {
+      entry.lockedFrom = active;
+      element.focus();
+      return;
+    }
+    if (active !== element && active !== null && active !== document.body) return;
+    const items = focusableIn(element);
+    if (items.length === 0) {
+      if (active !== element) element.focus();
+      return;
+    }
+    const back = entry.lockedFrom;
+    entry.lockedFrom = null;
+    (back && back.isConnected && items.includes(back) ? back : items[0]!).focus();
+  });
+  observer.observe(entry.element, { subtree: true, attributes: true, attributeFilter: ["disabled"] });
+  return () => observer.disconnect();
 }
 
 interface OpenModal {
@@ -80,6 +113,8 @@ interface OpenModal {
   layer: number;
   /** Where focus goes back when this modal closes (re-pointed if its region closes first). */
   restoreTo: HTMLElement | null;
+  /** The control focus left when the dialog locked, to return to on unlock. */
+  lockedFrom: HTMLElement | null;
 }
 
 /** Open fallback modals, bottom to top. Only the top one handles keys and focus. */
@@ -214,6 +249,7 @@ export function useModalDialog(
       options: latest,
       layer: Math.max(0, ...stack.map((modal) => modal.layer)) + 1,
       restoreTo: document.activeElement as HTMLElement | null,
+      lockedFrom: null,
     };
 
     element.setAttribute("open", "");
@@ -225,8 +261,10 @@ export function useModalDialog(
     reconcileExclusion();
     setLayer(entry.layer);
     (latest.current.initialFocus?.() ?? focusableIn(element)[0] ?? element).focus();
+    const stopWatching = watchLocking(entry);
 
     return () => {
+      stopWatching();
       const wasTop = top() === entry;
       const index = stack.indexOf(entry);
       if (index >= 0) stack.splice(index, 1);

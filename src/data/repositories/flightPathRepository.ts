@@ -80,6 +80,24 @@ export function milestoneRepository(db: SqlDatabase) {
       );
     },
 
+    /**
+     * Move several milestones at once. One statement, so SQLite applies every
+     * position or none: a failure leaves the order she had.
+     */
+    async reorder(positions: Array<{ id: Id; position: number }>): Promise<void> {
+      if (positions.length === 0) return;
+      const ids = positions.map((entry) => entry.id);
+      if (new Set(ids).size !== ids.length) throw new Error("A milestone was listed twice in one move.");
+      const marks = ids.map(() => "?").join(", ");
+      const found = await db.select<{ id: string }>(`SELECT id FROM milestones WHERE id IN (${marks})`, ids);
+      if (found.length !== ids.length) throw new Error("That milestone no longer exists.");
+      const cases = positions.map(() => "WHEN ? THEN ?").join(" ");
+      await db.execute(
+        `UPDATE milestones SET position = CASE id ${cases} END, updated_at = ? WHERE id IN (${marks})`,
+        [...positions.flatMap((entry) => [entry.id, entry.position]), nowIso(), ...ids],
+      );
+    },
+
     async remove(id: Id): Promise<void> {
       await db.execute("DELETE FROM milestones WHERE id = ?", [id]);
     },

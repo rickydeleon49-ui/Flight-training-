@@ -59,9 +59,12 @@ export function appRepository(db: SqlDatabase) {
 
     /** Remember that a complete backup was saved, so staleness can be shown. */
     async recordCompleteBackup(backup: LastCompleteBackup): Promise<void> {
-      await this.set(LAST_BACKUP_AT, backup.at);
-      await this.set(LAST_BACKUP_VERSION, backup.version);
-      await this.set(LAST_BACKUP_PATH, backup.path);
+      // One statement, so time, version and path are written together or not at all.
+      await db.execute(
+        `INSERT INTO app_metadata (key, value) VALUES (?, ?), (?, ?), (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [LAST_BACKUP_AT, backup.at, LAST_BACKUP_VERSION, backup.version, LAST_BACKUP_PATH, backup.path],
+      );
     },
 
     /** The last complete backup she saved, or null if there has never been one. */

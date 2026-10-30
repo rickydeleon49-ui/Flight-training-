@@ -108,6 +108,32 @@ describe("Dialog without native modal support", () => {
     expect(document.activeElement).toBe(summary);
   });
 
+  it("ASTRA-FIX-2 #6: skips controls locked by a disabled fieldset, holds focus on the dialog, and returns it on unlock", async () => {
+    function Locking({ locked }: { locked: boolean }) {
+      return h(Dialog, {
+        open: true, title: "Saving", onClose: () => {}, dismissible: !locked,
+        footer: h("button", { type: "button", disabled: locked }, "Save"),
+        children: h("fieldset", { disabled: locked }, h("input", { "aria-label": "Title" })),
+      });
+    }
+    const ui = render(h(Locking, { locked: false }));
+    const dialog = screen.getByRole("dialog");
+    const title = screen.getByRole("textbox", { name: "Title" });
+    title.focus();
+    ui.rerender(h(Locking, { locked: true }));
+    expect(title.matches(":disabled")).toBe(true);
+    expect(title.hasAttribute("disabled")).toBe(false);
+    await act(async () => {});
+    expect(document.activeElement).toBe(dialog);
+    tab();
+    expect(document.activeElement).toBe(dialog);
+    tab(true);
+    expect(document.activeElement).toBe(dialog);
+    ui.rerender(h(Locking, { locked: false }));
+    await act(async () => {});
+    expect(document.activeElement).toBe(title);
+  });
+
   it("brings focus back when something outside tries to take it", () => {
     render(h(Page));
     openFromButton();

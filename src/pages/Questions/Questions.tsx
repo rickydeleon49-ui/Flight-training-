@@ -236,7 +236,12 @@ export function Questions() {
           <Card>
             <CardHeader title="Add a question" />
             <CardBody>
-              <div className="stack stack--3">
+              {/* Locked while it saves, so nothing she types then is cleared with it. */}
+              <fieldset
+                disabled={addBusy}
+                className="stack stack--3"
+                style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+              >
                 <TextArea
                   rows={2}
                   value={text}
@@ -266,7 +271,7 @@ export function Questions() {
                     {addBusy ? "Saving…" : "Save question"}
                   </Button>
                 </div>
-              </div>
+              </fieldset>
             </CardBody>
           </Card>
 

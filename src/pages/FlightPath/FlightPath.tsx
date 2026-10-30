@@ -88,11 +88,8 @@ export function FlightPath() {
   const moveMilestone = (milestone: Milestone, direction: "up" | "down") => {
     const updates = reorderMilestones(data.milestones, milestone.id, direction);
     if (updates.length === 0) return;
-    return mutate(async (repos) => {
-      for (const update of updates) {
-        await repos.milestones.update(update.id, { position: update.position });
-      }
-    });
+    // One atomic write: a failure part-way never leaves a half-moved list.
+    return mutate((repos) => repos.milestones.reorder(updates));
   };
 
   const saveMilestone = async (draft: MilestoneDraft) => {

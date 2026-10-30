@@ -33,3 +33,20 @@ it("does not recreate a forgotten draft on unmount", () => {
   hook.unmount();
   expect(readDraft("test")).toBeNull();
 });
+it("ASTRA-FIX-2 #1: a remounted form's newer draft survives the older form's forgetRevision", () => {
+  const first = renderHook(form);
+  act(() => first.result.current.setValue("A"));
+  const submitted = first.result.current.revision();
+  const finishLater = first.result.current.forgetRevision;
+  first.unmount();
+  const second = renderHook(form);
+  act(() => second.result.current.setValue("A then B"));
+  expect(finishLater(submitted)).toBe(false);
+  expect(readDraft("test")).toBe("A then B");
+  expect(second.result.current.forgetRevision(second.result.current.revision())).toBe(true);
+  expect(readDraft("test")).toBeNull();
+});
+it("restores drafts stored before revisions existed", () => {
+  writeDraft("test", "legacy text");
+  expect(renderHook(form).result.current.value).toBe("legacy text");
+});

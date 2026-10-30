@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button, Checkbox, Dialog, Field, TextArea } from "@/components/ui";
 import type { OralScenario } from "@/data/oralScenarios";
@@ -32,19 +32,24 @@ export function OralScenarioEditor({
   const [fromInstructor, setFromInstructor] = useState(false);
   const [problem, setProblem] = useState<ReturnType<typeof oralSetupProblem>>(null);
   const [saving, setSaving] = useState(false);
+  // Synchronous: a second click in the same render must not save twice.
+  const savingRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || savingRef.current) return;
     setPrompt(scenario?.prompt ?? "");
     setAssumptions(scenario?.assumptions ?? "");
     setPointsText(scenario?.points.join("\n") ?? "");
     setFromInstructor(scenario?.origin === "instructor");
     setProblem(null);
-    setSaving(false);
   }, [open, scenario]);
 
+  const close = () => {
+    if (!savingRef.current) onClose();
+  };
+
   const save = async () => {
-    if (saving) return;
+    if (savingRef.current) return;
     const found = oralSetupProblem(prompt, pointsText);
     setProblem(found);
     if (found) return;
@@ -65,31 +70,39 @@ export function OralScenarioEditor({
       onClose();
       return;
     }
+    savingRef.current = true;
     setSaving(true);
-    const result = await mutate((repos) =>
-      scenario
-        ? repos.oralScenarios.edit(material.id, scenario.id, scenario.versionNumber, content)
-        : repos.oralScenarios.create(material.id, content),
-    );
-    setSaving(false);
+    let result: unknown = null;
+    try {
+      result = await mutate((repos) =>
+        scenario
+          ? repos.oralScenarios.edit(material.id, scenario.id, scenario.versionNumber, content)
+          : repos.oralScenarios.create(material.id, content),
+      );
+    } finally {
+      // Released either way: on a failed save the dialog stays open so she can retry.
+      savingRef.current = false;
+      setSaving(false);
+    }
     if (result !== null) onClose();
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={close}
+      dismissible={!saving}
       title={scenario ? "Edit scenario" : "Add a scenario"}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={saving} onClick={close}>Cancel</Button>
           <Button variant="primary" onClick={() => void save()} disabled={saving}>
-            Save scenario
+            {saving ? "Saving…" : "Save scenario"}
           </Button>
         </>
       }
     >
-      <div className="stack stack--3">
+      <fieldset disabled={saving} className="stack stack--3" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field
           label="Scenario"
           hint="The question as an examiner might ask it. Write it, or copy it from your instructor."
@@ -118,7 +131,7 @@ export function OralScenarioEditor({
           onChange={setFromInstructor}
           label="My instructor gave me this"
         />
-      </div>
+      </fieldset>
     </Dialog>
   );
 }
