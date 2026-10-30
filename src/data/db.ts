@@ -8,6 +8,8 @@
  * one new implementation of this interface.
  */
 export interface SqlDatabase {
+  replaceMaterialLinksAtomically?(kind: import("./repositoryWriteTransaction").MaterialLinkKind, id: string, materialIds: string[]): Promise<void>;
+  createFundGoalAtomically?(goal: import("@/domain/types").FundGoal): Promise<void>;
   /** HW-01b: no sequential fallback. */
   saveHomeworkAtomically?(operation: import("@/domain/homework").HomeworkOperation): Promise<import("@/domain/homework").HomeworkResult>;
   /** ORAL-01c: one idempotent scenario save. No sequential fallback. */

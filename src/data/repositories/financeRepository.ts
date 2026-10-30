@@ -184,8 +184,7 @@ export function financeRepository(db: SqlDatabase) {
         return mapFundGoal(row);
       }
 
-      // Only one target is active at a time; retire any previous one.
-      await db.execute("UPDATE fund_goals SET active = 0, updated_at = ?", [timestamp]);
+      // Only one target is active at a time; retire any previous one atomically.
       const goal: FundGoal = {
         id: newId(),
         title: input.title,
@@ -194,11 +193,8 @@ export function financeRepository(db: SqlDatabase) {
         createdAt: timestamp,
         updatedAt: timestamp,
       };
-      await db.execute(
-        `INSERT INTO fund_goals (id, title, target, active, created_at, updated_at)
-         VALUES (?, ?, ?, 1, ?, ?)`,
-        [goal.id, goal.title, goal.target, goal.createdAt, goal.updatedAt],
-      );
+      if (!db.createFundGoalAtomically) throw new Error("Atomic savings target saves require transaction support.");
+      await db.createFundGoalAtomically(goal);
       return goal;
     },
 
