@@ -462,6 +462,37 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     expect(fresh.getByText("A new summary.")).toBeTruthy();
   });
 
+  it("a near repeat of a deleted section highlights the words that changed, in both versions", async () => {
+    const read = (await repos.documents.readStudySetForEdit("mat-a"))!;
+    const { authoringStateOf, frameOf, nextSetOf } = await import("@/logic/studySetEditing");
+    const { prepareStudyEdit } = await import("@/logic/studyAuthoring");
+    const state = authoringStateOf(read.set);
+    const removed = await prepareStudyEdit(state, { kind: "delete", itemId: state.items[1]!.itemId });
+    await repos.documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "mat-a", reason: "delete", expected: read.stored, next: nextSetOf(frameOf(read.set), removed.next) });
+
+    vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
+      ...AID,
+      sections: [{ heading: "Crab", body: "Point the nose firmly toward the wind." }],
+      jobId: "job-787878787878787878787878",
+      contentSha256: "",
+    });
+    await open("/study/mat-a");
+    await click(screen.findByRole("button", { name: "Regenerate" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Send to Gemini" }, SLOW_RUNNER));
+    await click(screen.findByRole("button", { name: "Review the new study guide" }, SLOW_RUNNER));
+    const review = await dialog("Review the new study guide");
+    const choice = await review.findByRole("region", { name: "Needs your choice" }, SLOW_RUNNER);
+    // The new wording marks what she would gain; the earlier wording marks what goes.
+    expect([...choice.querySelectorAll("ins")].map((node) => node.textContent)).toEqual(["added: firmly toward"]);
+    expect([...choice.querySelectorAll("del")].map((node) => node.textContent)).toEqual(["removed: into"]);
+    for (const node of choice.querySelectorAll("ins, del")) expect(node.querySelector(".visually-hidden")).not.toBeNull();
+    const paragraphs = [...choice.querySelectorAll("p.ai-copy")].map((node) => node.textContent);
+    expect(paragraphs).toEqual(["Point the nose added: firmly toward the wind.", "Point the nose removed: into the wind."]);
+    // Unpaired new items show as before, with nothing highlighted.
+    const fresh = review.getByRole("region", { name: "New" });
+    expect(fresh.querySelector("ins, del")).toBeNull();
+  });
+
   it("a reviewed save that committed before a restart is recognised after the restart, not applied again", async () => {
     const review = await herEditThenRegenerate();
     const save = db.saveStudySetAtomically!.bind(db);

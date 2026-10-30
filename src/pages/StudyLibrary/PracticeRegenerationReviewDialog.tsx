@@ -12,12 +12,17 @@ import { useAppData } from "@/state/AppDataContext";
 import type { GeminiJob } from "@/state/GeminiJobs";
 import { reviewedSaveOf, type ReviewedRegeneration } from "@/state/reviewedSaveCheckpoint";
 
-function QuestionContent({ question }: { question: PracticeAuthoringQuestion }) {
+import { ChangedWords } from "./ChangedWords";
+
+/** A question in full; with `compare`, the words that differ from the other version are highlighted. */
+function QuestionContent({ question, compare }: { question: PracticeAuthoringQuestion; compare?: { question: PracticeAuthoringQuestion; show: "added" | "removed" } }) {
+  const show = compare?.show ?? "added";
+  const other = compare?.question;
   return <div className="stack stack--1">
-    <p className="small wrap-anywhere"><strong>{question.question}</strong></p>
-    <ol>{question.options.map((option, index) => <li className="tiny wrap-anywhere" key={index}>{option}</li>)}</ol>
-    <p className="tiny wrap-anywhere">Correct answer: {question.options[question.correctIndex]}</p>
-    <p className="tiny wrap-anywhere">Explanation: {question.explanation}</p>
+    <p className="small wrap-anywhere"><strong><ChangedWords text={question.question} other={other?.question} show={show} /></strong></p>
+    <ol>{question.options.map((option, index) => <li className="tiny wrap-anywhere" key={index}><ChangedWords text={option} other={other?.options[index]} show={show} /></li>)}</ol>
+    <p className="tiny wrap-anywhere">Correct answer: <ChangedWords text={question.options[question.correctIndex] ?? ""} other={other ? other.options[other.correctIndex] : undefined} show={show} /></p>
+    <p className="tiny wrap-anywhere">Explanation: <ChangedWords text={question.explanation} other={other?.explanation} show={show} /></p>
   </div>;
 }
 
@@ -146,10 +151,10 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
           {preview.filter((entry) => entry.status === status).map((entry) => {
             const earlier = entry.match ? wording.get(`${entry.match.itemId}\u0000${entry.match.textKey}`) : null;
             return <div key={entry.item.identity} className="stack stack--2">
-              <QuestionContent question={entry.item} />
+              <QuestionContent question={entry.item} compare={earlier ? { question: earlier, show: "added" } : undefined} />
               {entry.match ? <div className="stack stack--1">
                 <p className="tiny muted">It looks like {entry.match.reason === "deleted" ? "something you deleted" : "something you corrected or rewrote"}:</p>
-                {earlier ? <QuestionContent question={earlier} /> : <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>}
+                {earlier ? <QuestionContent question={earlier} compare={{ question: entry.item, show: "removed" }} /> : <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>}
               </div> : null}
               {status === "held" ? <Checkbox disabled={busy} checked={choices.get(entry.item.identity) === "keep"}
                 onChange={(checked) => choose(entry.item.identity, checked ? "keep" : undefined)} label={`Bring it back: ${entry.item.question}`} /> : null}

@@ -129,6 +129,21 @@ describe("reviewing regenerated practice questions", () => {
     expect((await snapshot())!.questions.some((q) => q.question === old.question)).toBe(bringBack);
     expect((await snapshot())!.retired).toEqual(retired);
   });
+  it("a near repeat of a deleted question highlights the words that changed, in both versions", async () => {
+    const old = await deleteQuestion();
+    await regenerate({ ...GENERATED, questions: [{ question: "My crosswind landing question", options: ["Upwind wing", "Downwind wing"],
+      correctIndex: 0, explanation: "Keep the upwind wing lowered.", sourcePage: 4 }] });
+    const scope = await review();
+    const near = scope.getByRole("region", { name: "Needs your choice" });
+    expect([...near.querySelectorAll("ins")].map((node) => node.textContent)).toEqual(["added: landing ", "added: lowered"]);
+    expect([...near.querySelectorAll("del")].map((node) => node.textContent)).toEqual(["removed: low"]);
+    for (const node of near.querySelectorAll("ins, del")) expect(node.querySelector(".visually-hidden")).not.toBeNull();
+    // The earlier wording is still shown whole, and unchanged options are plain.
+    expect(within(near).getAllByText("Upwind wing")).toHaveLength(2);
+    expect(old.explanation).toBe("Keep the upwind wing low.");
+    expect([...near.querySelectorAll("p")].map((node) => node.textContent).filter((text) => text?.startsWith("Explanation:")))
+      .toEqual(["Explanation: Keep the upwind wing added: lowered.", "Explanation: Keep the upwind wing removed: low."]);
+  });
   it("Cancel writes nothing", async () => {
     await seed(); const before = await snapshot();
     await regenerate(); const scope = await review();

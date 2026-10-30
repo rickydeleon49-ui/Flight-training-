@@ -21,30 +21,39 @@ import { useAppData } from "@/state/AppDataContext";
 import { reviewedSaveOf, type ReviewedRegeneration } from "@/state/reviewedSaveCheckpoint";
 import type { GeminiJob } from "@/state/GeminiJobs";
 
+import { ChangedWords } from "./ChangedWords";
+
 const describe = (entry: PreviewItem) =>
   entry.item.kind === "summary" ? "Summary" : entry.item.kind === "section" ? `Section: ${entry.item.fields[0]}` : `Card: ${entry.item.fields[0]}`;
 
-/** An item's full text, so she can judge it before keeping or leaving it out. */
-function ItemContent({ kind, fields }: { kind: PreviewItem["item"]["kind"]; fields: readonly string[] }) {
-  if (kind === "summary") return <p className="tiny wrap-anywhere ai-copy">{fields[0]}</p>;
+/**
+ * An item's full text, so she can judge it before keeping or leaving it out.
+ * With `compare`, the words that differ from the other version are highlighted.
+ */
+function ItemContent({ kind, fields, compare }: {
+  kind: PreviewItem["item"]["kind"];
+  fields: readonly string[];
+  compare?: { fields: readonly string[]; show: "added" | "removed" };
+}) {
+  const field = (index: number) => <ChangedWords text={fields[index] ?? ""} other={compare?.fields[index]} show={compare?.show ?? "added"} />;
+  if (kind === "summary") return <p className="tiny wrap-anywhere ai-copy">{field(0)}</p>;
   return (
     <div className="stack stack--1">
       <p className="tiny wrap-anywhere">
-        <strong>{kind === "card" ? "Question: " : ""}{fields[0]}</strong>
+        <strong>{kind === "card" ? "Question: " : ""}{field(0)}</strong>
       </p>
-      <p className="tiny wrap-anywhere ai-copy">{kind === "card" ? `Answer: ${fields[1]}` : fields[1]}</p>
+      <p className="tiny wrap-anywhere ai-copy">{kind === "card" ? "Answer: " : ""}{field(1)}</p>
     </div>
   );
 }
 
 /** What a held or near-matching item resembles, from Previous versions when available. */
-function Resembles({ entry, wording }: { entry: PreviewItem; wording: ReadonlyMap<string, ItemText> }) {
-  const earlier = retiredWording(wording, entry.match);
+function Resembles({ entry, earlier }: { entry: PreviewItem; earlier: ItemText | undefined }) {
   return (
     <div className="stack stack--1" style={{ paddingLeft: "var(--space-3)" }}>
       <p className="tiny muted">It looks like {resembles(entry)}:</p>
       {earlier ? (
-        <ItemContent kind={entry.item.kind} fields={earlier} />
+        <ItemContent kind={entry.item.kind} fields={earlier} compare={{ fields: entry.item.fields, show: "removed" }} />
       ) : (
         <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>
       )}
@@ -242,11 +251,13 @@ export function RegenerationReviewDialog({
             {group("unresolved").length > 0 ? (
               <section className="stack stack--2" aria-label="Needs your choice">
                 <p className="small"><strong>Needs your choice</strong></p>
-                {group("unresolved").map((entry) => (
+                {group("unresolved").map((entry) => {
+                  const earlier = retiredWording(wording, entry.match) ?? undefined;
+                  return (
                   <div className="stack stack--1" key={entry.item.itemId}>
                     <p className="small wrap-anywhere">{describe(entry)}</p>
-                    <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
-                    <Resembles entry={entry} wording={wording} />
+                    <ItemContent kind={entry.item.kind} fields={entry.item.fields} compare={earlier ? { fields: earlier, show: "added" } : undefined} />
+                    <Resembles entry={entry} earlier={earlier} />
                     <div className="row row--wrap">
                       <label className="row">
                         <input type="radio" name={`choice-${entry.item.itemId}`} checked={choices.get(entry.item.itemId) === "omit"} onChange={() => choose(entry.item.itemId, "omit")} />
@@ -258,7 +269,8 @@ export function RegenerationReviewDialog({
                       </label>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </section>
             ) : null}
 
