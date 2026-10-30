@@ -8,7 +8,7 @@ Entries are added with the dependency that requires them. Earlier dependencies a
 that pre-existing gap is tracked in docs/STRUCTURED_STUDY_IMPORT_SLICE_A_IMPLEMENTATION_2026-10-03.md.
 
 -------------------------------------------------------------------------------
-zod 4.6.5
+zod 4.6.7
 https://github.com/colinhacks/zod
 npm: https://registry.npmjs.org/zod/-/zod-4.6.5.tgz
 License: MIT (text below, copied from the package's LICENSE file)
