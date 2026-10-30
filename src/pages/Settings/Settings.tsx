@@ -1,3 +1,5 @@
+import type { ProviderStatus } from "@/services/provider";
+import { ProviderControls } from "./ProviderControls";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -174,6 +176,7 @@ export function Settings() {
   const [localRestoreCandidate, setLocalRestoreCandidate] = useState<BackupInfo | null>(null);
   const [version, setVersion] = useState("");
   const [lastBackup, setLastBackup] = useState<LastCompleteBackup | null>(null);
+  const [providerConnection, setProviderConnection] = useState<ProviderStatus | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiBusy, setGeminiBusy] = useState(false);
@@ -326,7 +329,7 @@ export function Settings() {
   );
 
   useEffect(() => {
-    void getGeminiStatus().then(setGemini).catch(() => setGemini(null));
+    void getGeminiStatus(true).then(setGemini).catch(() => setGemini(null));
   }, []);
 
   const connectGemini = async () => {
@@ -334,7 +337,9 @@ export function Settings() {
     setGeminiNote("Checking the connection with Google…");
     setGeminiProblem(false);
     try {
-      const status = await configureGemini(geminiKey);
+      const key = geminiKey;
+      setGeminiKey("");
+      const status = await configureGemini(key);
       setGemini(status);
       setGeminiKey("");
       setGeminiNote("Gemini connected. Study tools are ready.");
@@ -1235,10 +1240,11 @@ export function Settings() {
 
         <Card>
           <CardHeader
-            title="Gemini study assistant"
-            eyebrow={gemini?.configured ? "Connected" : "Optional online AI"}
+            title="AI provider"
+            eyebrow={(providerConnection?.selected === "claude" ? providerConnection.providers.some((p) => p.id === "claude" && p.connected) : gemini?.configured) ? "Connected" : "Optional online AI"}
           />
           <CardBody>
+            <ProviderControls onStatus={setProviderConnection}>
             <div className="stack stack--4">
               <PlatformGuidance
                 mac="Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite."
@@ -1356,6 +1362,7 @@ export function Settings() {
                 </div>
               ) : null}
             </div>
+            </ProviderControls>
           </CardBody>
         </Card>
       </div>

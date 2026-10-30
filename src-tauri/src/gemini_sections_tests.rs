@@ -97,6 +97,7 @@ impl Rig {
         budget.scale_stages(self.stage_scale);
         let cache = self.cache.lock().unwrap().clone();
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: key,
@@ -674,6 +675,7 @@ fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
     let budget = Budget::new(Duration::ZERO);
     let cache = r.cache.lock().unwrap().clone();
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: "synthetic-only",
@@ -2044,6 +2046,7 @@ fn cancelling_at_the_first_section_progress_event_is_not_reactivated() {
     let cache = PreparedSources::new(gemini_files::Policy::default(), Arc::new(|| 1_700_000_000));
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &http,
         base: "http://127.0.0.1:9",
         api_key: "synthetic-only",

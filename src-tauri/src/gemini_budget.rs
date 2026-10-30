@@ -874,11 +874,29 @@ impl Budget {
 
     /// One sanitized line for the failure message: what was happening, not
     /// what was sent.
+    #[cfg(test)]
     pub(crate) fn details(&self, reference: Option<&str>) -> String {
+        self.details_for(reference, crate::provider::AnyProvider::default())
+    }
+    pub(crate) fn details_for(
+        &self,
+        reference: Option<&str>,
+        provider: crate::provider::AnyProvider,
+    ) -> String {
         let trace = self.trace.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let label = if provider.id() == crate::provider::ProviderId::Claude {
+            match trace.stage {
+                Stage::Generating => "waiting for Claude's answer",
+                Stage::Reading => "receiving Claude's answer",
+                Stage::Validating => "checking Claude's answer",
+                _ => trace.stage.label(),
+            }
+        } else {
+            trace.stage.label()
+        };
         let seconds = self.elapsed().as_secs();
         let mut parts = vec![
-            format!("stage: {}", trace.stage.label()),
+            format!("stage: {label}"),
             format!("generation attempts: {}", self.attempts()),
             format!("time: {}m {:02}s", seconds / 60, seconds % 60),
         ];

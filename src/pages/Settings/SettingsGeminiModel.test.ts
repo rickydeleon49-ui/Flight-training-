@@ -8,6 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import * as backupService from "@/services/backups";
+import * as appDataApi from "@/data";
+import * as providerService from "@/services/provider";
 import * as geminiService from "@/services/gemini";
 
 let db: TestDatabase;
@@ -52,6 +55,17 @@ describe("Gemini model choice in Settings", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows Connected in the AI provider header for selected Claude without a Gemini key", async () => {
+    vi.spyOn(appDataApi, "isTauri").mockReturnValue(true);
+    vi.spyOn(backupService, "backupsAvailable").mockReturnValue(false);
+    vi.spyOn(providerService, "providerStatus").mockResolvedValue({selected:"claude",providers:[{id:"gemini",connected:false},{id:"claude",connected:true}]});
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({...STANDARD,configured:false});
+    await open();
+    await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+    const header = screen.getByRole("heading",{name:"AI provider"}).closest("header")!;
+    await waitFor(()=>expect(header.querySelector(".card__eyebrow")!.textContent).toBe("Connected"));
+  });
+
   it("explains busy messages in two plain sentences with useful next steps", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
     await open();
@@ -65,7 +79,7 @@ describe("Gemini model choice in Settings", () => {
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
-    await screen.findByText("Gemini study assistant");
+    await screen.findByText("AI provider");
     expect(screen.queryByText("Model for new study aids")).toBeNull();
   });
 

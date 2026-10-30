@@ -14,13 +14,13 @@ use tauri::{AppHandle, Emitter};
 
 use crate::extraction::{cache::Cache, inspect::Outcome};
 use crate::gemini::{
-    current_key, extract_text, generate_with_retries_at, generation_client, load_choice,
-    load_submission_source, prepared_sources, run_generation, GenContext, LoadedSource,
+    generate_with_retries_at, generation_client, load_choice, load_submission_source,
+    prepared_sources, run_generation, GenContext, LoadedSource,
 };
 use crate::gemini_ask_evidence::{validated_evidence, AskPassage};
 use crate::gemini_budget::Budget;
 use crate::gemini_cancel::{CancelToken, Cancellable};
-use crate::gemini_files::{self, GOOGLE_BASE};
+use crate::gemini_files;
 use crate::storage;
 
 const ASK_PROGRESS_EVENT: &str = "ask-gemini-progress";
@@ -358,6 +358,7 @@ pub fn build_ask_request(
         .and_then(|part| {
             part.pointer("/file_data/mime_type")
                 .or_else(|| part.pointer("/inline_data/mime_type"))
+                .or_else(|| part.pointer("/source/media_type"))
         })
         .and_then(Value::as_str)
         == Some("application/pdf");
@@ -420,12 +421,18 @@ pub async fn ask_gemini_with(
         ctx.budget
             .run(generate_with_retries_at(ctx, &body))
             .await
-            .map_err(|_| gemini_files::out_of_time(ctx.budget, "asking Gemini"))?
+            .map_err(|_| {
+                gemini_files::out_of_time(
+                    ctx.budget,
+                    &format!("asking {}", ctx.provider.id().name()),
+                )
+            })?
             .map_err(|f| f.message)?
     };
 
-    let text = extract_text(&raw)?;
+    let text = ctx.provider.extract_text(&raw)?;
     locally_checked_answer(&text, model, source, evidence_root)
+        .map_err(|message| ctx.provider.wording(message))
 }
 
 fn locally_checked_answer(
@@ -511,16 +518,17 @@ pub async fn ask_gemini(
             // Recorded before the key is read, as every generation does, so a
             // disconnect or key change during this question makes it stale.
             let epoch = prepared_sources().epoch();
+            let provider = crate::provider::AnyProvider::selected(&storage::app_root(&app)?);
 
             ask_preflight_with(
                 relative_path.as_deref(),
-                || current_key(&storage::app_root(&app)?),
+                || crate::gemini::stored_key_for(&storage::app_root(&app)?, provider).map(Some),
                 |path| {
                     let app = &app;
                     let budget = &budget;
                     async move {
                         budget
-                            .run(load_submission_source(app, &path))
+                            .run(load_submission_source(app, &path, provider))
                             .await
                             .map_err(|_| {
                                 gemini_files::out_of_time(budget, "preparing the document")
@@ -537,14 +545,21 @@ pub async fn ask_gemini(
                     async move {
                         let root = storage::app_root(app)?;
                         let choice = load_choice(&root);
-                        let http = generation_client()?;
+                        let http = generation_client().map_err(|error| {
+                            if provider.id() == crate::provider::ProviderId::Claude {
+                                "Could not start the connection to Claude.".to_string()
+                            } else {
+                                error
+                            }
+                        })?;
                         let emit = |progress| {
                             let _ = app.emit(ASK_PROGRESS_EVENT, progress);
                         };
                         let say = progress_reporter(request_id, &emit);
                         let ctx = GenContext {
+                            provider,
                             http: &http,
-                            base: GOOGLE_BASE,
+                            base: provider.base(),
                             api_key: &api_key,
                             choice,
                             cache: prepared_sources(),
@@ -897,6 +912,7 @@ mod tests {
         let emit = |event| events.lock().unwrap().push(event);
         let say = progress_reporter("ask-progress-test", &emit);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,
@@ -971,6 +987,7 @@ mod tests {
             }
         };
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,
@@ -1166,6 +1183,7 @@ mod tests {
         let budget = Budget::new(ASK_GEMINI_BUDGET);
         let say = |_| ();
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,
@@ -1481,6 +1499,7 @@ mod tests {
         let budget = Budget::new(ASK_GEMINI_BUDGET);
         let say = |_| ();
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,
@@ -1539,6 +1558,7 @@ mod tests {
         let budget = Budget::new(ASK_GEMINI_BUDGET);
         let say = |_| ();
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,
@@ -1569,6 +1589,7 @@ mod tests {
         let budget = Budget::new(ASK_GEMINI_BUDGET);
         let say = |_| ();
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &rig.http,
             base: &rig.fake.base,
             api_key: KEY,

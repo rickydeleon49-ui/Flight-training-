@@ -68,6 +68,7 @@ export function describeFileSize(bytes: number): string {
 export function checkFileForGemini(
   fileName: string,
   bytes: number | null,
+  provider: "Gemini" | "Claude" = "Gemini",
 ): AiFileVerdict {
   const lower = fileName.toLowerCase();
   const match = TYPES.find((type) =>
@@ -78,7 +79,7 @@ export function checkFileForGemini(
     return {
       ready: false,
       reason:
-        "Gemini study tools read PDF, TXT, Markdown, PNG, JPG, and WebP files. " +
+        `${provider} study tools read PDF, TXT, Markdown, PNG, JPG, and WebP files. ` +
         "Convert this one to PDF first.",
     };
   }
@@ -89,7 +90,7 @@ export function checkFileForGemini(
       ready: false,
       reason:
         `This file is ${formatFileSize(bytes)}, over the ${describeFileSize(limit)} ` +
-        `limit for this kind of file. ${ADVICE[match.kind]}`,
+        `limit for this kind of file. ${provider === "Claude" && match.kind === "pdf" ? "Take out the chapter you are studying and try again." : ADVICE[match.kind]}`,
     };
   }
 

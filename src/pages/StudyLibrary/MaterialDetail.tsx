@@ -1,3 +1,4 @@
+import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -476,13 +477,15 @@ function MaterialDetailPage() {
   }
 
   // Nothing reaches Google without passing this, and without her saying yes.
-  const aiCheck = checkAiSubmission(material, data.toolkit.credentials);
+  const helper = providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini";
+  const aiCheck = checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model));
   // Whether Google would read it at all. Answered here rather than after a
   // click and an upload, so an oversized handbook is a next step and not a
   // wasted wait.
   const fileForAi = checkFileForGemini(
     material.originalFileName ?? material.filePath ?? "",
     material.fileSize,
+    helper,
   );
   // A handbook Google will not read can still be studied a chapter at a time.
   const isPdf = (material.originalFileName ?? material.filePath ?? "")
@@ -532,7 +535,7 @@ function MaterialDetailPage() {
           : gemini === null
             ? { text: "Checking the Gemini connection…" }
             : !gemini.configured
-              ? { text: "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.", settings: true }
+              ? { text: (providerCompany(gemini?.model) === "Anthropic" ? "Connect Claude in Settings to create or regenerate study aids from this document. Anything already saved stays available." : "Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available."), settings: true }
               : geminiJobs.recovery !== "ready"
                 ? { text: "Gemini is still checking earlier work. Try again in a moment." }
                 : null;
@@ -664,7 +667,7 @@ function MaterialDetailPage() {
 
   const createStudyAid = async () => {
     setStartRefusal(null);
-    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
     if (!material?.filePath || !check?.allowed) {
       setStartRefusal({ kind: "study-aid", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
@@ -690,7 +693,7 @@ function MaterialDetailPage() {
   };
 
   const queueStudyAid = async () => {
-    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials).allowed) {
+    if (!material?.filePath || !checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)).allowed) {
       return;
     }
     await geminiJobs.queueGuide({ materialId: material.id, filePath: material.filePath });
@@ -698,7 +701,7 @@ function MaterialDetailPage() {
 
   const createFlashcards = async () => {
     setStartRefusal(null);
-    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
     if (!material?.filePath || !check?.allowed) {
       setStartRefusal({ kind: "flashcards", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
@@ -722,7 +725,7 @@ function MaterialDetailPage() {
 
   const createPracticeTest = async () => {
     setStartRefusal(null);
-    const check = material ? checkAiSubmission(material, data.toolkit.credentials) : null;
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
     if (!material?.filePath || !check?.allowed) {
       setStartRefusal({ kind: "practice-test", message: check?.reason ?? "Attach a study file before asking Gemini." });
       return;
@@ -845,7 +848,7 @@ function MaterialDetailPage() {
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
                 <CardHeader
-                  title={isPdf ? "Study guide" : pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : "Gemini study assistant"}
+                  title={isPdf ? "Study guide" : pdfSet ? "Your PDF study kit" : importedSet ? "Imported study packet" : manualSet ? "Your study guide" : providerWording("Gemini study assistant", gemini?.model)}
                   headingId="material-guide-heading"
                   eyebrow={
                     importedSet
@@ -919,8 +922,8 @@ function MaterialDetailPage() {
                         : manualSet
                           ? "A study guide you wrote. Use Edit study guide to change sections."
                           : isPdf
-                            ? "Ask Gemini for a study guide from this file, then review and save the draft on this Mac."
-                            : "Ask Gemini for a study guide from this file, then review and save the draft on this Mac."}
+                            ? providerWording("Ask Gemini for a study guide from this file, then review and save the draft on this Mac.", gemini?.model)
+                            : providerWording("Ask Gemini for a study guide from this file, then review and save the draft on this Mac.", gemini?.model)}
                   </p>
                 ) : null}
                 <CardBody>
@@ -931,13 +934,13 @@ function MaterialDetailPage() {
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
+                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
                       </div>
                     </div>
                   ) : null}
                   {!isOverLimit && generationNotice ? (
                     <GenerationNoticeView
-                      notice={generationNotice}
+                      notice={{ ...generationNotice, text: providerWording(generationNotice.text, gemini?.model) }}
                       onSplit={jumpToFileSection}
                       onQueueLater={() => void queueStudyAid()}
                     />
@@ -945,6 +948,7 @@ function MaterialDetailPage() {
                   {generating ? (
                     studyJob ? (
                       <GeminiProgressView
+                        model={gemini?.model}
                         job={studyJob}
                         title="Gemini is reviewing this document"
                         onCancel={() => void geminiJobs.cancel(studyJob.key)}
@@ -953,7 +957,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {generationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <GeminiErrorText message={generationError} />
+                      <GeminiErrorText model={gemini?.model} message={generationError} />
                       {retryStudy ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryStudy}>
@@ -965,6 +969,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {studyJob ? (
                     <GeminiJobNotice
+                      model={gemini?.model}
                       job={studyJob}
                       jobs={geminiJobs}
                       onRetry={retryStudy}
@@ -978,7 +983,7 @@ function MaterialDetailPage() {
                   {geminiJobs.jobs
                     .filter((job) => job.materialId === materialId && job.kind === "study-aid" && job.sectionGuide && job.key !== studyJob?.key)
                     .map((job) => (
-                      <GeminiJobNotice key={job.key} job={job} jobs={geminiJobs} />
+                      <GeminiJobNotice model={gemini?.model} key={job.key} job={job} jobs={geminiJobs} />
                     ))}
                   {guideBlockedReason ? <p className="tiny muted">{guideBlockedReason}</p> : null}
                   {studySet && (studySet.summary || guideSections.length > 0) ? (
@@ -1073,7 +1078,7 @@ function MaterialDetailPage() {
                     />
                   ) : null}
                   {canOfferGemini && geminiJobs.recovery === "failed" ? (
-                    <GeminiRecoveryNotice onRetry={geminiJobs.retryRecovery} />
+                    <GeminiRecoveryNotice model={gemini?.model} onRetry={geminiJobs.retryRecovery} />
                   ) : null}
                 </CardBody>
               </Card>
@@ -1138,7 +1143,7 @@ function MaterialDetailPage() {
                               } else setConfirmingCards(true);
                             }}
                           >
-                            {generatingCards ? "Reading document…" : "Make new cards with Gemini"}
+                            {generatingCards ? "Reading document…" : `Make new cards with ${helper}`}
                           </Button>
                         </>
                       ) : null}
@@ -1156,13 +1161,14 @@ function MaterialDetailPage() {
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
+                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
                       </div>
                     </div>
                   ) : null}
                   {generatingCards ? (
                     cardJob ? (
                       <GeminiProgressView
+                        model={gemini?.model}
                         job={cardJob}
                         title="Gemini is creating flashcards"
                         onCancel={() => void geminiJobs.cancel(cardJob.key)}
@@ -1171,7 +1177,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {cardGenerationError ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
-                      <GeminiErrorText message={cardGenerationError} />
+                      <GeminiErrorText model={gemini?.model} message={cardGenerationError} />
                       {retryFlashcards ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryFlashcards}>
@@ -1183,6 +1189,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {cardJob ? (
                     <GeminiJobNotice
+                      model={gemini?.model}
                       job={cardJob}
                       jobs={geminiJobs}
                       onRetry={retryFlashcards}
@@ -1318,7 +1325,7 @@ function MaterialDetailPage() {
                         </section>
                       ) : !generatingCards && material.filePath && canOfferGemini ? (
                         <p className="small muted">
-                          Gemini will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
+                          {helper} will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
                         </p>
                       ) : null}
 
@@ -1326,7 +1333,7 @@ function MaterialDetailPage() {
                     </div>
                   ) : !generatingCards && material.filePath && canOfferGemini ? (
                     <p className="small muted">
-                      Gemini will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
+                      {helper} will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
                     </p>
                   ) : null}
                 </CardBody>
@@ -1385,7 +1392,7 @@ function MaterialDetailPage() {
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for Gemini — split it first.</p>
+                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
                       </div>
                     </div>
                   ) : null}
@@ -1394,6 +1401,7 @@ function MaterialDetailPage() {
                   {generatingPractice ? (
                     practiceJob ? (
                       <GeminiProgressView
+                        model={gemini?.model}
                         job={practiceJob}
                         title="Gemini is writing practice questions"
                         onCancel={() => void geminiJobs.cancel(practiceJob.key)}
@@ -1402,7 +1410,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {practiceGenerationError ? (
                     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
-                      <GeminiErrorText message={practiceGenerationError} />
+                      <GeminiErrorText model={gemini?.model} message={practiceGenerationError} />
                       {retryPractice ? (
                         <div className="row row--wrap">
                           <Button size="small" onClick={retryPractice}>
@@ -1414,6 +1422,7 @@ function MaterialDetailPage() {
                   ) : null}
                   {practiceJob ? (
                     <GeminiJobNotice
+                      model={gemini?.model}
                       job={practiceJob}
                       jobs={geminiJobs}
                       onRetry={retryPractice}
@@ -1509,7 +1518,7 @@ function MaterialDetailPage() {
                     </div>
                   ) : !generatingPractice && !hasImported && material.filePath && canOfferGemini ? (
                     <p className="small muted">
-                      Gemini will read only this file and create a multiple-choice practice test with
+                      {helper} will read only this file and create a multiple-choice practice test with
                       explanations. The result will be saved locally with your other data.
                     </p>
                   ) : null}
@@ -1658,7 +1667,7 @@ function MaterialDetailPage() {
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
                 <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
-                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
                   {material.filePath ? <>
                     <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
@@ -1925,18 +1934,18 @@ function MaterialDetailPage() {
                 {!aiCheck.allowed ? (
                   <p className="small muted">{aiCheck.reason}</p>
                 ) : isOverLimit ? (
-                  <p className="small muted">This PDF is too big for Gemini — split it first.</p>
+                  <p className="small muted">This PDF is too big for {helper} — split it first.</p>
                 ) : !canOfferGemini || fileMissing ? (
                   <p className="small muted">
                     {fileMissing
-                      ? "This PDF's file is missing, so Gemini can't read it."
+                      ? providerWording("This PDF's file is missing, so Gemini can't read it.", gemini?.model)
                       : !gemini?.configured
-                        ? "Connect Gemini in Settings to ask questions about this PDF."
-                        : (generationNotice?.text ?? "Gemini isn't available for this PDF right now.")}
+                        ? `Connect ${helper} in Settings to ask questions about this PDF.`
+                        : providerWording(generationNotice?.text ?? "Gemini isn't available for this PDF right now.", gemini?.model)}
                   </p>
                 ) : (
                   <>
-                    <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
+                    <p className="small muted">{providerWording("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.", gemini?.model)}</p>
                     <AskGeminiPanel
                       key={pdfAskConversationKey}
                       materialId={material.id}
@@ -2006,9 +2015,9 @@ function MaterialDetailPage() {
 
       <ConfirmDialog
         open={confirmingAi}
-        title="Send this file to Google?"
-        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${replaceGuideWarning}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
-        confirmLabel="Send to Gemini"
+        title={`Send this file to ${providerCompany(gemini?.model)}?`}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${replaceGuideWarning}${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`}
+        confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingAi(false))}
         extraActions={
@@ -2041,9 +2050,9 @@ function MaterialDetailPage() {
 
       <ConfirmDialog
         open={confirmingCards}
-        title="Send this file to Google?"
-        message={`${replaceCardsWarning || (importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : "")}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
-        confirmLabel="Send to Gemini"
+        title={`Send this file to ${providerCompany(gemini?.model)}?`}
+        message={`${replaceCardsWarning || (importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : "")}${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`}
+        confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingCards(false))}
         onConfirm={() => {
@@ -2062,13 +2071,13 @@ function MaterialDetailPage() {
 
       <ConfirmDialog
         open={confirmingPracticeTest}
-        title="Send this file to Google?"
+        title={`Send this file to ${providerCompany(gemini?.model)}?`}
         message={
           practiceTest
-            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`
-            : `${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`
+            : `${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`
         }
-        confirmLabel="Send to Gemini"
+        confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingPracticeTest(false))}
         onConfirm={() => {
@@ -2129,7 +2138,7 @@ function MaterialDetailPage() {
 export function geminiModelSentence(status: GeminiStatus | null): string {
   if (!status || typeof status.model !== "string" || !status.model) return "";
   const name = geminiModelName(status.model);
-  return status.choice === "most-capable"
+  return status.choice === "most-capable" && !status.model.startsWith("claude-")
     ? ` It will be read by ${name}, which may use slightly more of your Google credits.`
     : ` It will be read by ${name}.`;
 }

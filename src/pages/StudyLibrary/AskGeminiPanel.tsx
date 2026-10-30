@@ -1,3 +1,5 @@
+import { providerCompany } from "@/services/provider";
+import { isTauri } from "@/data";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button, QuestionIcon } from "@/components/ui";
@@ -5,7 +7,7 @@ import { checkAiSubmission } from "@/logic/aiSafety";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
 import { jumpToMaterialHeading } from "./materialJump";
-import { askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
+import { getGeminiStatus, askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
   materialId: string;
@@ -45,6 +47,10 @@ interface InFlightAsk {
 }
 
 export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false }: AskGeminiPanelProps) {
+  const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
+  const [providerReady, setProviderReady] = useState(!isTauri());
+  useEffect(() => { let mounted = true; void getGeminiStatus().then((status) => { if (mounted) { setCompany(providerCompany(status.model)); setProviderReady(true); } }).catch(() => { if (mounted) setProviderReady(false); }); return () => { mounted = false; }; }, []);
+  const helper = company === "Anthropic" ? "Claude" : "Gemini";
   const appData = useOptionalAppData();
   // Read the latest classification even if it changes while the listener starts.
   const dataRef = useRef(appData);
@@ -67,7 +73,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
   const material = data?.materials.find((item) => item.id === materialId);
   const hasPdf = evidenceMode && !!material?.filePath?.toLowerCase().endsWith(".pdf");
   const check = material && data
-    ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context")
+    ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context", company)
     : { allowed: false, reason: "This material is no longer available. Open it again before asking." };
   const refusal = check.allowed ? null : check.reason;
 
@@ -148,7 +154,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
       const data = dataRef.current?.data;
       const material = data?.materials.find((item) => item.id === materialId);
       if (!material || !data) throw new Error("This material is no longer available. Open it again before asking.");
-      const check = checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context");
+      const check = checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context", company);
       if (!check.allowed) throw new Error(check.reason);
       const result = await askGemini({
         requestId: request.id,
@@ -195,7 +201,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
         ) {
           setError("No internet right now. Your question is still here — press Ask again when you're back online.");
         } else {
-          setError(msg || "Gemini could not complete that request.");
+          setError(msg || `${helper} could not complete that request.`);
         }
       }
     } finally {
@@ -218,7 +224,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
           variant="secondary"
           onClick={() => setIsOpen(true)}
         >
-          <QuestionIcon size={14} /> {buttonLabel ?? "Why? Ask Gemini"}
+          <QuestionIcon size={14} /> {buttonLabel ?? `Why? Ask ${helper}`}
         </Button>
       </div>
     );
@@ -228,7 +234,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     <div
       className="stack stack--3 ask-gemini-panel"
       role="region"
-      aria-label="Ask Gemini helper"
+      aria-label={`Ask ${helper} helper`}
       style={{
         marginTop: "var(--space-2)",
         padding: "var(--space-3)",
@@ -239,7 +245,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     >
       <div className="row row--between" style={{ alignItems: "center" }}>
         <span className="small bold" style={{ color: "var(--fg-default)" }}>
-          Ask Gemini
+          Ask {helper}
         </span>
         <div className="row row--gap-2" style={{ alignItems: "center" }}>
           {(history.length > 0 || isLoading) && (
@@ -265,7 +271,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
               resetConversation();
               setIsOpen(false);
             }}
-            aria-label="Close Ask Gemini"
+            aria-label={`Close Ask ${helper}`}
           >
             Close
           </Button>
@@ -274,12 +280,12 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
 
       <p className="tiny dim" role="note" style={{ margin: 0, overflowWrap: "anywhere" }}>
         {material?.filePath
-          ? `Your question, full PDF “${material.originalFileName || material.title}”, study context and recent conversation are sent to Google.`
-          : "Your question, study context and recent conversation are sent to Google."}
+          ? `Your question, full PDF “${material.originalFileName || material.title}”, study context and recent conversation are sent to ${company}.`
+          : `Your question, study context and recent conversation are sent to ${company}.`}
       </p>
 
       {history.length > 0 && (
-        <div className="stack stack--2" role="log" aria-label="Conversation with Gemini">
+        <div className="stack stack--2" role="log" aria-label={`Conversation with ${helper}`}>
           {history.map((turn, idx) => (
             <div
               key={idx}
@@ -292,7 +298,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
               }}
             >
               <span className="tiny dim" style={{ display: "block", marginBottom: "var(--space-1)" }}>
-                {turn.role === "user" ? "You" : "Gemini"}
+                {turn.role === "user" ? "You" : (turn.model?.startsWith("claude-") ? "Claude" : "Gemini")}
               </span>
               <p className="small ai-copy" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
                 {turn.text}
@@ -362,14 +368,14 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
             placeholder="Ask a question about this..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            disabled={isLoading || !check.allowed}
+            disabled={!providerReady || isLoading || !check.allowed}
             aria-label="Ask a question"
           />
           <Button
             type="submit"
             variant="primary"
             size="small"
-            disabled={isLoading || !check.allowed || !question.trim()}
+            disabled={!providerReady || isLoading || !check.allowed || !question.trim()}
           >
             {isLoading ? "Asking…" : "Ask"}
           </Button>

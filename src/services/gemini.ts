@@ -38,6 +38,7 @@ export const GEMINI_MODEL_CHOICES: Record<
 /** A model ID as she would read it. Historical models keep their original labels. */
 export function geminiModelName(model: string): string {
   if (typeof model !== "string" || !model) return "Gemini";
+  if (model === "claude-haiku-5-5") return "Claude Haiku 5.5";
   if (model === "gemini-4-argon") return "Gemini 4 Argon";
   if (model === "gemini-3.5-flash") return "Gemini 3.5 Flash";
   if (model === "gemini-3.8-flash") return "Gemini 3.8 Flash";
@@ -71,9 +72,9 @@ const unavailable: GeminiStatus = {
 
 export const geminiAvailable = (): boolean => isTauri();
 
-export async function getGeminiStatus(): Promise<GeminiStatus> {
+export async function getGeminiStatus(geminiOnly = false): Promise<GeminiStatus> {
   if (!isTauri()) return unavailable;
-  return invoke<GeminiStatus>("gemini_status");
+  return geminiOnly ? invoke<GeminiStatus>("gemini_status", { geminiOnly: true }) : invoke<GeminiStatus>("gemini_status");
 }
 
 export async function openGeminiKeyPage(): Promise<void> {
@@ -171,7 +172,7 @@ export interface GeminiJobRecord {
   createdAt: number;
   updatedAt: number;
   result?: GeneratedStudyAid | GeneratedPracticeTest;
-  draft?: { kind?: string; queueState?: "waiting-for-her" | "running" | "paused" | "cancelled"; identity?: { chosenPages: number[]; baseRevision?: string | null; manifest: Array<{ id: string; heading: string; pageStart: number; pageEnd: number }> }; results?: Record<string, { status: "pending" | "in-flight" | "complete" }>; target?: number; cards?: StudyFlashcard[]; timing?: {
+  draft?: { kind?: string; queueState?: "waiting-for-her" | "running" | "paused" | "cancelled"; identity?: { model?: string; chosenPages: number[]; baseRevision?: string | null; manifest: Array<{ id: string; heading: string; pageStart: number; pageEnd: number }> }; results?: Record<string, { status: "pending" | "in-flight" | "complete" }>; target?: number; cards?: StudyFlashcard[]; timing?: {
     policy: string; ceilingMillis: number; allowedMillis: number; remainingMillis: number;
     deadlineUtc: number; uploadBytes: number; sampleMillis: number; sampleBytes: number;
     activeStage?: GeminiWorkStage;

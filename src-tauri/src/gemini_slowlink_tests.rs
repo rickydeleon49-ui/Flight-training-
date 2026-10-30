@@ -61,6 +61,7 @@ impl Rig {
 
     fn run(&self, budget: &Budget) -> Result<GeneratedStudyAid, String> {
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: KEY,

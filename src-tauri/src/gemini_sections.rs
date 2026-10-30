@@ -501,8 +501,13 @@ fn source(
         .collect();
     let manifest = plan(&request.chosen_pages, &hints)?;
     let selected = crate::pdf::selected_bytes(&bytes, &request.chosen_pages)?;
-    check_size("application/pdf", selected.len() as u64)?;
-    let loaded = LoadedSource::new(selected, "application/pdf", &request.relative_path);
+    if model.starts_with("claude-") {
+        crate::provider::claude::check_size(selected.len() as u64)?;
+    } else {
+        check_size("application/pdf", selected.len() as u64)?;
+    }
+    let mut loaded = LoadedSource::new(selected, "application/pdf", &request.relative_path);
+    loaded.page_count = Some(request.chosen_pages.len() as u32);
     let identity = Identity {
         material_id: request.material_id.clone(),
         relative_path: request.relative_path.clone(),
@@ -550,7 +555,11 @@ pub(crate) fn queue_study_guide_at(
     req: &SectionRequest,
     choice: ModelChoice,
 ) -> Result<String, SectionError> {
-    let (identity, _) = source(root, req, choice.primary())?;
+    let (identity, _) = source(
+        root,
+        req,
+        AnyProvider::selected(root).models(choice.into()).0,
+    )?;
     let mut draft = new_draft(identity);
     draft.queue_state = Some(QueueState::WaitingForHer);
     gemini_jobs::with(root, |j| {
@@ -699,7 +708,12 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
         .filter(|(_, p)| **p >= section.page_start && **p <= section.page_end)
         .map(|(i, p)| json!({"pdfPage":i+1,"sourcePage":p}))
         .collect();
-    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
+    let helper = if identity.model.starts_with("claude-") {
+        "Claude"
+    } else {
+        "Gemini"
+    };
+    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::section())}})
 }
 fn reserve(root: &Path, id: &str, section: &str) -> Option<u32> {
@@ -758,7 +772,14 @@ fn assembly(d: &Draft) -> Result<GeneratedStudyAid, SectionError> {
         .collect();
     Ok(GeneratedStudyAid {
         title: "Section study guide".into(),
-        summary: "Gemini study aid. Check against current FAA material and her instructor.".into(),
+        summary: format!(
+            "{} study aid. Check against current FAA material and her instructor.",
+            if produced_by(d).starts_with("claude-") {
+                "Claude"
+            } else {
+                "Gemini"
+            }
+        ),
         sections,
         flashcards: vec![],
         source_notes: format!(
@@ -806,7 +827,18 @@ pub(super) async fn activate(
     }) {
         return Err(SectionError::source());
     }
-    let (identity, selected) = source(root, req, ctx.choice.primary())?;
+    if let Some(old) = old.as_ref() {
+        let owner = if old.identity.model.starts_with("claude-") {
+            crate::provider::ProviderId::Claude
+        } else {
+            crate::provider::ProviderId::Gemini
+        };
+        if owner != ctx.provider.id() {
+            let name = owner.name();
+            return Err(SectionError::native(&format!("This draft was started with {name}. Use {name} in Settings to continue it, or discard it and start a new one. Your finished work is kept.")));
+        }
+    }
+    let (identity, selected) = source(root, req, ctx.primary())?;
     if let Some(old) = old.as_ref() {
         if old.identity != identity {
             return Err(identity_mismatch_error(&old.identity, &identity));
@@ -854,67 +886,73 @@ pub(super) async fn activate(
             })) {
                 return Err(gemini_budget::CHECKPOINT_FAILED.into());
             }
-            let restored = match d.prepared_file.as_ref() {
-                Some(descriptor) => ctx
-                    .cache
-                    .resume_reference(
-                        descriptor,
-                        ctx.http,
-                        ctx.base,
-                        ctx.api_key,
-                        &selected.as_source(),
-                        ctx.epoch,
-                        ctx.budget,
-                    )
-                    .await
-                    .map_err(reference_error)?,
-                None => None,
-            };
-            let lease = match restored {
-                Some(lease) => lease,
-                None => {
-                    ctx.cache
-                        .prepare(
+            let lease = if ctx.provider.id() == crate::provider::ProviderId::Claude {
+                crate::provider::claude::check_source(&selected)?;
+                None
+            } else {
+                let restored = match d.prepared_file.as_ref() {
+                    Some(descriptor) => ctx
+                        .cache
+                        .resume_reference(
+                            descriptor,
                             ctx.http,
                             ctx.base,
                             ctx.api_key,
                             &selected.as_source(),
                             ctx.epoch,
-                            d.prepared_file.as_ref().map(|d| d.name()),
                             ctx.budget,
-                            ctx.say,
                         )
-                        .await?
+                        .await
+                        .map_err(reference_error)?,
+                    None => None,
+                };
+                let lease = match restored {
+                    Some(lease) => lease,
+                    None => {
+                        ctx.cache
+                            .prepare(
+                                ctx.http,
+                                ctx.base,
+                                ctx.api_key,
+                                &selected.as_source(),
+                                ctx.epoch,
+                                d.prepared_file.as_ref().map(|d| d.name()),
+                                ctx.budget,
+                                ctx.say,
+                            )
+                            .await?
+                    }
+                };
+                let descriptor = gemini_files::Descriptor::from_lease(
+                    &lease,
+                    ctx.base,
+                    ctx.api_key,
+                    &identity.selected_sha256,
+                )
+                .map_err(reference_error)?;
+                hook("before-descriptor-commit");
+                if !ctx.cache.retain_committed(&lease, &id, || {
+                    // Timing checkpoints may have advanced while preparation ran.
+                    let mut latest = read_draft(root, &id)?;
+                    latest.prepared_file = Some(descriptor);
+                    store(root, &id, &latest)
+                })? {
+                    return Err(gemini_files::STALE_CONTEXT.into());
                 }
+                hook("after-descriptor-commit");
+                Some(lease)
             };
-            let descriptor = gemini_files::Descriptor::from_lease(
-                &lease,
-                ctx.base,
-                ctx.api_key,
-                &identity.selected_sha256,
-            )
-            .map_err(reference_error)?;
-            hook("before-descriptor-commit");
-            if !ctx.cache.retain_committed(&lease, &id, || {
-                // Timing checkpoints may have advanced while preparation ran.
-                let mut latest = read_draft(root, &id)?;
-                latest.prepared_file = Some(descriptor);
-                store(root, &id, &latest)
-            })? {
-                return Err(gemini_files::STALE_CONTEXT.into());
-            }
-            hook("after-descriptor-commit");
             // Once a section falls back, the rest of this run stays on the
             // fallback: one switch per run, so it cannot drain the spare sends.
-            let mut model = ctx.choice.primary();
+            let mut model = ctx.primary();
             for (index, section) in identity.manifest.iter().enumerate() {
                 if read_draft(root, &id)?.results[&section.id].status == Status::Complete {
                     continue;
                 }
-                if source(root, req, ctx.choice.primary())?.0 != identity {
+                if source(root, req, ctx.primary())?.0 != identity {
                     return Err(SectionError::source());
                 }
-                if !ctx.current() || !lease.is_current() {
+                if !ctx.current() || lease.as_ref().is_some_and(|lease| !lease.is_current()) {
                     return Err(gemini_files::STALE_CONTEXT.into());
                 }
                 hook("before-reservation");
@@ -924,7 +962,8 @@ pub(super) async fn activate(
                 let body = request_body(
                     section,
                     &identity,
-                    source_part(&selected, Some(lease.prepared())),
+                    ctx.provider
+                        .source_part(&selected, lease.as_ref().map(|l| l.prepared())),
                 );
                 // No earlier answer appears in this request body.
                 (ctx.say)(format!(
@@ -962,11 +1001,13 @@ pub(super) async fn activate(
                     return Err(gemini_cancel::CANCELLED.into());
                 }
             }
-            ctx.cache
-                .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
-                .await;
+            if let Some(lease) = lease {
+                ctx.cache
+                    .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
+                    .await;
+            }
         }
-        if source(root, req, ctx.choice.primary())?.0 != identity {
+        if source(root, req, ctx.primary())?.0 != identity {
             return Err(SectionError::source());
         }
         let answer = assembly(&read_draft(root, &id)?)?;
@@ -1049,7 +1090,8 @@ async fn section_generate(
             Attempt::Answered(raw) => {
                 ctx.budget.reset_stage(Stage::Validating);
                 ctx.budget.validation_checkpoint()?;
-                let validated = extract_text(&raw)
+                let validated = ctx
+                    .extract_text(&raw)
                     .map_err(|e| SectionError::native(&e))
                     .and_then(|text| {
                         validate_section(section, &text, pages, model)
@@ -1063,9 +1105,11 @@ async fn section_generate(
                             return Err(error);
                         }
                         shape_retried = true;
-                        if ctx.choice == ModelChoice::MostCapable && *model != ctx.choice.fallback()
+                        if ctx.primary() != ctx.fallback()
+                            && ctx.choice == ModelChoice::MostCapable
+                            && *model != ctx.fallback()
                         {
-                            *model = ctx.choice.fallback();
+                            *model = ctx.fallback();
                             (ctx.say)(ctx.choice.fallback_notice().to_string());
                         }
                         continue;
@@ -1077,39 +1121,52 @@ async fn section_generate(
                 body,
                 retry_after,
             } => {
-                if has_invalid_key_reason(&body) {
-                    return Err(SectionError::native(&describe_refusal(
-                        RefusalContext::Generation,
-                        status,
-                        &body,
-                        model,
-                    )));
-                }
-                if status == 429 && is_lasting_quota(&body) {
-                    return Err(SectionError::native(&quota_message()));
-                }
-                let access_fallback = status == 403 && !has_invalid_key_reason(&body);
-                let can_fallback = ctx.choice == ModelChoice::MostCapable
-                    && *model != ctx.choice.fallback()
-                    && (access_fallback || status == 404 || is_retryable(status));
-                if can_fallback && attempt < 3 {
-                    *model = ctx.choice.fallback();
-                    (ctx.say)(ctx.choice.fallback_notice().to_string());
-                    if access_fallback || status == 404 {
-                        continue;
+                if ctx.provider.id() == crate::provider::ProviderId::Claude {
+                    if !matches!(status, 408 | 429 | 500 | 502 | 503 | 504 | 529) {
+                        return Err(SectionError::native(
+                            &crate::provider::claude::error_message(status),
+                        ));
                     }
-                } else if !is_retryable(status) {
-                    return Err(SectionError::native(&describe_refusal(
-                        RefusalContext::Generation,
-                        status,
-                        &body,
-                        model,
-                    )));
+                    retry_after
+                } else {
+                    if has_invalid_key_reason(&body) {
+                        return Err(SectionError::native(&describe_refusal(
+                            RefusalContext::Generation,
+                            status,
+                            &body,
+                            model,
+                        )));
+                    }
+                    if status == 429 && is_lasting_quota(&body) {
+                        return Err(SectionError::native(&quota_message()));
+                    }
+                    let access_fallback = status == 403 && !has_invalid_key_reason(&body);
+                    let can_fallback = ctx.choice == ModelChoice::MostCapable
+                        && *model != ctx.fallback()
+                        && (access_fallback || status == 404 || is_retryable(status));
+                    if can_fallback && attempt < 3 {
+                        *model = ctx.fallback();
+                        (ctx.say)(ctx.choice.fallback_notice().to_string());
+                        if access_fallback || status == 404 {
+                            continue;
+                        }
+                    } else if !is_retryable(status) {
+                        return Err(SectionError::native(&describe_refusal(
+                            RefusalContext::Generation,
+                            status,
+                            &body,
+                            model,
+                        )));
+                    }
+                    retry_after
                 }
-                retry_after
             }
             Attempt::Lost(lost @ (Lost::NoAnswerInTime | Lost::AnswerCutShort)) => {
-                return Err(SectionError::native(&lost_message(lost, ctx.budget)));
+                return Err(SectionError::native(&lost_message_for(
+                    lost,
+                    ctx.budget,
+                    ctx.provider,
+                )));
             }
             Attempt::Lost(_) => None,
         };
@@ -1121,6 +1178,12 @@ async fn section_generate(
         {
             break;
         }
+    }
+    if ctx.provider.id() == crate::provider::ProviderId::Claude {
+        return Err(SectionError::native(&format!(
+            "{} Your finished sections are kept.",
+            crate::provider::claude::error_message(529)
+        )));
     }
     Err("The section could not finish; completed sections are kept. Try again to continue.".into())
 }
@@ -1142,7 +1205,11 @@ fn restart_draft(
     if old.identity.material_id != req.material_id {
         return Err(SectionError::source());
     }
-    let (identity, _) = source(root, req, choice.primary())?;
+    let (identity, _) = source(
+        root,
+        req,
+        AnyProvider::selected(root).models(choice.into()).0,
+    )?;
     let mut draft = new_draft(identity);
     draft.supersedes = Some(old_id.into());
     admit(root, req, &draft)
@@ -1234,22 +1301,31 @@ pub async fn resume_study_guide(
         .map(|id| read_draft(&root, id))
         .transpose()?
         .is_some_and(|d| d.results.values().all(|r| r.status == Status::Complete));
+    let epoch = prepared_sources().epoch();
+    let provider = AnyProvider::selected(&root);
     let key = if complete {
         String::new()
     } else {
-        stored_key(&app)?
+        stored_key_for(&root, provider)?
     };
-    let http = generation_client()?;
+    let http = generation_client().map_err(|error| {
+        if provider.id() == crate::provider::ProviderId::Claude {
+            "Could not start the connection to Claude.".to_string()
+        } else {
+            error
+        }
+    })?;
     let reporter = reporter_for(&app, &request.material_id, JobKind::StudyAid);
     reporter.follow(&budget);
-    let say = |m| reporter.say(m);
+    let say = |m| reporter.say(provider.wording(m));
     let ctx = GenContext {
+        provider,
         http: &http,
-        base: GOOGLE_BASE,
+        base: provider.base(),
         api_key: &key,
         choice: load_choice(&root),
         cache: prepared_sources(),
-        epoch: prepared_sources().epoch(),
+        epoch,
         budget: &budget,
         say: &say,
     };
@@ -1257,6 +1333,10 @@ pub async fn resume_study_guide(
         reporter.started(id)
     })
     .await
+    .map_err(|mut error| {
+        error.message = provider.wording(error.message);
+        error
+    })
 }
 #[tauri::command]
 pub async fn restart_study_guide(

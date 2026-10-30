@@ -179,10 +179,23 @@ pub(crate) async fn generate_once(
     model: &str,
     body: &Value,
 ) -> Result<Attempt, Failure> {
+    generate_once_for(ctx, crate::provider::AnyProvider::default(), model, body).await
+}
+
+pub(crate) async fn generate_once_for(
+    ctx: &GenContext<'_>,
+    provider: crate::provider::AnyProvider,
+    model: &str,
+    body: &Value,
+) -> Result<Attempt, Failure> {
     // Every request has only what remains of the generation's one budget.
     ctx.budget.reset_stage(Stage::Generating);
     let Some(timeout) = ctx.budget.upload_timeout() else {
-        return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
+        return Err(gemini_files::out_of_time(
+            ctx.budget,
+            &format!("asking {}", provider.id().name()),
+        )
+        .into());
     };
     if !ctx.budget.checkpoint() {
         return Err(gemini_budget::CHECKPOINT_FAILED.to_string().into());
@@ -195,7 +208,7 @@ pub(crate) async fn generate_once(
     let sent = ctx
         .budget
         .guard_stage(
-            GeminiProvider
+            provider
                 .request(ctx.http, ctx.base, ctx.api_key, model, body)
                 .timeout(timeout)
                 .send(),
@@ -239,7 +252,7 @@ pub(crate) async fn generate_once(
             Ok(chunk) => match chunk {
                 Ok(Some(chunk)) => {
                     if bytes.len().saturating_add(chunk.len()) > MAX_ANSWER_BYTES {
-                        return Err("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string().into());
+                        return Err(provider.wording("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string()).into());
                     }
                     if !chunk.is_empty() {
                         ctx.budget.reset_stage(Stage::Reading);
@@ -252,8 +265,9 @@ pub(crate) async fn generate_once(
             },
         }
     }
-    let raw = String::from_utf8(bytes)
-        .map_err(|_| Failure::from("Gemini's answer was not readable text.".to_string()))?;
+    let raw = String::from_utf8(bytes).map_err(|_| {
+        Failure::from(provider.wording("Gemini's answer was not readable text.".to_string()))
+    })?;
 
     if (200..300).contains(&status) {
         Ok(Attempt::Answered(raw))

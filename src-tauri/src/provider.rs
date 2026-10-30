@@ -1,5 +1,4 @@
-//! Provider boundary for native AI operations. Only Gemini can send requests;
-//! Claude has storage and status support in preparation for P2.
+//! Provider boundary for native AI operations.
 use std::path::Path;
 use std::time::Duration;
 
@@ -14,7 +13,10 @@ use crate::gemini_files::{
     self, Lease, LookupFailure, Prepared, PreparedSources, RemoteFile, Retired,
 };
 
+pub(crate) mod claude;
 pub(crate) mod schemas;
+mod wording;
+use claude::ClaudeProvider;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -100,8 +102,8 @@ fn status_at(root: &Path) -> Result<ProviderStatus, String> {
 }
 
 fn select_at(root: &Path, id: ProviderId) -> Result<(), String> {
-    if id == ProviderId::Claude {
-        return Err("Claude isn't available yet.".to_string());
+    if id == ProviderId::Claude && crate::secrets::load_key_for(root, id)?.is_none() {
+        return Err("Connect Claude first.".to_string());
     }
     save_choice(root, id)
 }
@@ -112,8 +114,70 @@ pub(crate) fn provider_status(app: tauri::AppHandle) -> Result<ProviderStatus, S
 }
 
 #[tauri::command]
-pub(crate) fn select_provider(app: tauri::AppHandle, id: ProviderId) -> Result<(), String> {
-    select_at(&crate::storage::app_root(&app)?, id)
+pub(crate) async fn select_provider(app: tauri::AppHandle, id: ProviderId) -> Result<(), String> {
+    let root = crate::storage::app_root(&app)?;
+    select_at(&root, id)?;
+    crate::gemini::end_prepared_context(
+        crate::secrets::load_key_for(&root, ProviderId::Gemini)
+            .ok()
+            .flatten(),
+    )
+    .await;
+    Ok(())
+}
+
+#[tauri::command]
+pub(crate) async fn configure_provider(
+    app: tauri::AppHandle,
+    id: ProviderId,
+    api_key: String,
+) -> Result<ProviderStatus, String> {
+    let key = api_key.trim();
+    if key.len() < 20 {
+        return Err(format!("Paste the complete {} API key.", id.name()));
+    }
+    let root = crate::storage::app_root(&app)?;
+    configure_at(&root, id, key, AnyProvider::from(id).verify_key(key)).await?;
+    crate::gemini::end_prepared_context(
+        crate::secrets::load_key_for(&root, ProviderId::Gemini)
+            .ok()
+            .flatten(),
+    )
+    .await;
+    status_at(&root)
+}
+
+async fn configure_at(
+    root: &Path,
+    id: ProviderId,
+    key: &str,
+    verify: impl std::future::Future<Output = Result<(), String>>,
+) -> Result<(), String> {
+    verify.await?;
+    crate::secrets::save_key_for(root, id, key)
+}
+
+#[tauri::command]
+pub(crate) async fn disconnect_provider(
+    app: tauri::AppHandle,
+    id: ProviderId,
+) -> Result<ProviderStatus, String> {
+    let root = crate::storage::app_root(&app)?;
+    let gemini_key = crate::secrets::load_key_for(&root, ProviderId::Gemini)
+        .ok()
+        .flatten();
+    disconnect_at(&root, id)?;
+    crate::gemini::end_prepared_context(gemini_key).await;
+    status_at(&root)
+}
+
+fn disconnect_at(root: &Path, id: ProviderId) -> Result<(), String> {
+    // Save the fallback before removing the selected key: a failed preference
+    // write must not leave study tools pointing at a disconnected helper.
+    if id == ProviderId::Claude && load_choice(root) == id {
+        save_choice(root, ProviderId::Gemini)?;
+    }
+    crate::secrets::forget_key_for(root, id)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -138,6 +202,7 @@ pub(crate) enum RefusalKind {
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum AnyProvider {
     Gemini(GeminiProvider),
+    Claude(ClaudeProvider),
 }
 
 impl Default for AnyProvider {
@@ -146,25 +211,76 @@ impl Default for AnyProvider {
     }
 }
 
+impl From<ProviderId> for AnyProvider {
+    fn from(id: ProviderId) -> Self {
+        match id {
+            ProviderId::Gemini => Self::default(),
+            ProviderId::Claude => Self::Claude(ClaudeProvider),
+        }
+    }
+}
+
 impl AnyProvider {
+    pub(crate) fn selected(root: &Path) -> Self {
+        load_choice(root).into()
+    }
+    pub(crate) fn base(self) -> &'static str {
+        match self {
+            Self::Gemini(_) => crate::gemini_files::GOOGLE_BASE,
+            Self::Claude(_) => claude::BASE,
+        }
+    }
+    pub(crate) fn request(
+        self,
+        http: &Client,
+        base: &str,
+        key: &str,
+        model: &str,
+        body: &Value,
+    ) -> reqwest::RequestBuilder {
+        match self {
+            Self::Gemini(p) => p.request(http, base, key, model, body),
+            Self::Claude(p) => p.request(http, base, key, model, body),
+        }
+    }
+    pub(crate) fn wording(self, text: String) -> String {
+        match self {
+            Self::Gemini(_) => text,
+            Self::Claude(_) => wording::MESSAGES
+                .iter()
+                .find(|(original, _)| *original == text)
+                .map_or(text.clone(), |(_, claude)| (*claude).to_string()),
+        }
+    }
+    pub(crate) fn extract_text(self, raw: &str) -> Result<String, String> {
+        match self {
+            Self::Gemini(_) => crate::gemini::extract_text(raw),
+            Self::Claude(_) => claude::extract_text(raw),
+        }
+    }
+
     pub(crate) fn id(self) -> ProviderId {
         match self {
             Self::Gemini(_) => ProviderId::Gemini,
+            Self::Claude(_) => ProviderId::Claude,
         }
     }
     pub(crate) fn models(self, tier: Tier) -> (&'static str, &'static str) {
         match self {
             Self::Gemini(p) => p.models(tier),
+            Self::Claude(_) => (claude::MODEL, claude::MODEL),
         }
     }
     pub(crate) async fn verify_key(self, key: &str) -> Result<(), String> {
         match self {
             Self::Gemini(p) => p.verify_key(key).await,
+            Self::Claude(p) => p.verify_key(key).await,
         }
     }
     pub(crate) fn source_part(self, source: &LoadedSource, prepared: Option<&Prepared>) -> Value {
         match self {
             Self::Gemini(_) => crate::gemini::provider_impl::source_part(source, prepared),
+            Self::Claude(_) => claude::source_part(source),
         }
     }
     pub(crate) async fn prepare_pdf<'a>(
@@ -175,6 +291,7 @@ impl AnyProvider {
     ) -> Result<Lease<'a>, String> {
         match self {
             Self::Gemini(p) => p.prepare_pdf(ctx, source, avoid).await,
+            Self::Claude(_) => Err("Claude sends PDFs with each request.".into()),
         }
     }
     pub(crate) async fn lookup(
@@ -188,6 +305,7 @@ impl AnyProvider {
     ) -> Result<RemoteFile, LookupFailure> {
         match self {
             Self::Gemini(p) => p.lookup(http, base, key, name, mime, budget).await,
+            Self::Claude(_) => Err(LookupFailure::Other("Claude has no stored file.".into())),
         }
     }
     pub(crate) async fn upload(
@@ -201,6 +319,7 @@ impl AnyProvider {
     ) -> Result<RemoteFile, String> {
         match self {
             Self::Gemini(p) => p.upload(http, base, key, bytes, mime, budget).await,
+            Self::Claude(_) => Err("Claude sends PDFs with each request.".into()),
         }
     }
     pub(crate) async fn delete(
@@ -213,6 +332,7 @@ impl AnyProvider {
     ) -> bool {
         match self {
             Self::Gemini(p) => p.delete(http, base, key, name, timeout).await,
+            Self::Claude(_) => true,
         }
     }
     pub(crate) async fn retire(
@@ -224,6 +344,7 @@ impl AnyProvider {
     ) -> usize {
         match self {
             Self::Gemini(p) => p.retire(cache, http, key, files).await,
+            Self::Claude(_) => 0,
         }
     }
     pub(crate) async fn generate_json(
@@ -234,6 +355,7 @@ impl AnyProvider {
     ) -> Result<Attempt, Failure> {
         match self {
             Self::Gemini(p) => p.generate_json(ctx, model, body).await,
+            Self::Claude(p) => p.generate_json(ctx, model, body).await,
         }
     }
     pub(crate) fn describe_refusal(
@@ -244,11 +366,13 @@ impl AnyProvider {
     ) -> RefusalKind {
         match self {
             Self::Gemini(p) => p.refusal(status, body, retry_after),
+            Self::Claude(_) => claude::refusal(status, retry_after),
         }
     }
     pub(crate) fn translate_schema(self, schema: &Schema) -> Value {
         match self {
             Self::Gemini(_) => schema.gemini_json(),
+            Self::Claude(_) => claude::translate_schema(&schema.gemini_json()),
         }
     }
 }
@@ -467,7 +591,7 @@ mod tests {
         let root = TempRoot::new();
         assert_eq!(
             select_at(root.path(), ProviderId::Claude).unwrap_err(),
-            "Claude isn't available yet."
+            "Connect Claude first."
         );
         assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
         save_choice(root.path(), ProviderId::Gemini).unwrap();
@@ -495,8 +619,44 @@ mod tests {
                 Some("synthetic-key")
             );
         }
-        // The only dispatchable provider remains Gemini even with a stored Claude preference.
         assert_eq!(AnyProvider::default().id(), ProviderId::Gemini);
+        select_at(root.path(), ProviderId::Claude).unwrap();
+        assert_eq!(AnyProvider::selected(root.path()).id(), ProviderId::Claude);
+    }
+
+    #[test]
+    fn failed_claude_verification_preserves_saved_key_and_choice() {
+        let root = TempRoot::new();
+        crate::secrets::save_key_for(root.path(), ProviderId::Claude, "synthetic-old").unwrap();
+        let error = tauri::async_runtime::block_on(configure_at(
+            root.path(),
+            ProviderId::Claude,
+            "synthetic-new",
+            async { Err("Claude didn't accept this key. Check it in Settings.".into()) },
+        ))
+        .unwrap_err();
+        assert!(error.starts_with("Claude didn't accept"));
+        assert_eq!(
+            crate::secrets::load_key_for(root.path(), ProviderId::Claude)
+                .unwrap()
+                .as_deref(),
+            Some("synthetic-old")
+        );
+        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
+        tauri::async_runtime::block_on(configure_at(
+            root.path(),
+            ProviderId::Claude,
+            "synthetic-new",
+            async { Ok(()) },
+        ))
+        .unwrap();
+        assert_eq!(
+            crate::secrets::load_key_for(root.path(), ProviderId::Claude)
+                .unwrap()
+                .as_deref(),
+            Some("synthetic-new")
+        );
+        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
     }
 
     #[test]
@@ -543,7 +703,7 @@ mod tests {
             .json(&body)
             .build()
             .unwrap();
-        let AnyProvider::Gemini(provider) = AnyProvider::default();
+        let provider = GeminiProvider;
         let new = provider
             .request(&http, base, "synthetic-only", model, &body)
             .build()
@@ -605,5 +765,45 @@ mod tests {
             AnyProvider::default().translate_schema(&Schema::string().enumeration(&["a", "b"])),
             json!({"type":"STRING", "enum":["a", "b"]})
         );
+    }
+
+    #[test]
+    fn disconnect_selected_claude_saves_gemini_and_keeps_other_key() {
+        let root = TempRoot::new();
+        let root = root.path();
+        crate::secrets::save_key_for(root, ProviderId::Gemini, "synthetic-gemini").unwrap();
+        crate::secrets::save_key_for(root, ProviderId::Claude, "synthetic-claude").unwrap();
+        save_choice(root, ProviderId::Claude).unwrap();
+        disconnect_at(root, ProviderId::Claude).unwrap();
+        assert_eq!(load_choice(root), ProviderId::Gemini);
+        assert_eq!(
+            crate::secrets::load_key_for(root, ProviderId::Claude).unwrap(),
+            None
+        );
+        assert_eq!(
+            crate::secrets::load_key_for(root, ProviderId::Gemini)
+                .unwrap()
+                .as_deref(),
+            Some("synthetic-gemini")
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("ai-provider"))
+                .unwrap()
+                .trim(),
+            "gemini"
+        );
+    }
+    #[test]
+    fn claude_fixed_messages_are_explicit_and_do_not_rewrite_filenames() {
+        let provider = AnyProvider::from(ProviderId::Claude);
+        for (original, message) in wording::MESSAGES {
+            assert_eq!(provider.wording((*original).into()), *message);
+            assert!(!message.contains("Gemini") && !message.contains("Google"));
+            assert!(!message.contains("billing") && !message.contains("free tier"));
+        }
+        let message = "Could not read Google Earth for pilots.pdf: fictional failure";
+        assert_eq!(provider.wording(message.into()), message);
+        let message = "My Google and Gemini notes";
+        assert_eq!(provider.wording(message.into()), message);
     }
 }

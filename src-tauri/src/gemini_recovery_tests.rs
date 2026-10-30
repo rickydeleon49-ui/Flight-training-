@@ -38,6 +38,7 @@ impl Rig {
         );
         let say = |m| self.said.lock().unwrap().push(m);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: KEY,
@@ -414,6 +415,7 @@ fn connection_refusal_retries_are_bounded_without_reaching_a_provider() {
     let source = LoadedSource::new(b"synthetic".to_vec(), "text/plain", "documents/a.txt");
     let say = |_| {};
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &base,
         api_key: KEY,
@@ -443,6 +445,7 @@ fn journal_failure_keeps_sanitized_diagnostics_and_restart_does_not_repeat_work(
     std::fs::create_dir_all(&dir).unwrap();
     let say = |_| {};
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,

@@ -20,7 +20,10 @@
     },
     {
       "identifier": "opener:allow-open-url",
-      "allow": [{ "url": "https://aistudio.google.com/**" }]
+      "allow": [
+        { "url": "https://aistudio.google.com/**" },
+        { "url": "https://platform.claude.com/settings/keys" }
+      ]
     },
     "sql:default",
     "sql:allow-load",
