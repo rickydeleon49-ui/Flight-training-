@@ -41,8 +41,11 @@ pub enum Readiness {
     Checking,
     NotPrepared,
     Preparing,
+    #[serde(rename_all = "camelCase")]
     Searchable {
         pages: u32,
+        /// Readable pages with so little text they likely are pictures of it.
+        few_text_pages: u32,
     },
     #[serde(rename_all = "camelCase")]
     Partial {
@@ -50,6 +53,7 @@ pub enum Readiness {
         pages: u32,
         image_pages: u32,
         reason: PartialReason,
+        few_text_pages: u32,
     },
     CouldNotProcess {
         code: String,
@@ -57,11 +61,15 @@ pub enum Readiness {
 }
 
 /// The §4.4 summary: exact counts, a specific reason only when it is known.
-pub fn summarize(c: Counts) -> Readiness {
+/// `few_text_pages` comes from [`Cache::few_text_pages`] (SCANNED-01).
+pub fn summarize(c: Counts, few_text_pages: u32) -> Readiness {
     let pages = c.pages();
     let searchable = c.text + c.blank;
     if searchable == pages {
-        return Readiness::Searchable { pages };
+        return Readiness::Searchable {
+            pages,
+            few_text_pages,
+        };
     }
     let reason = if c.text_unreadable + c.unknown + c.failed > 0 {
         PartialReason::SomeUnreadable
@@ -73,6 +81,7 @@ pub fn summarize(c: Counts) -> Readiness {
         pages,
         image_pages: c.image_only,
         reason,
+        few_text_pages,
     }
 }
 
@@ -314,7 +323,7 @@ impl Service {
         match cache.summary(&sha) {
             None => Readiness::NotPrepared,
             Some(Summary::Failed(code)) => Readiness::CouldNotProcess { code },
-            Some(Summary::Complete(counts)) => summarize(counts),
+            Some(Summary::Complete(counts)) => summarize(counts, cache.few_text_pages(&sha)),
         }
     }
 
@@ -605,19 +614,34 @@ mod tests {
             blank: 1,
             ..Counts::default()
         };
-        assert_eq!(summarize(all), Readiness::Searchable { pages: 10 });
+        assert_eq!(
+            summarize(all, 0),
+            Readiness::Searchable {
+                pages: 10,
+                few_text_pages: 0
+            }
+        );
+        assert_eq!(
+            summarize(all, 3),
+            Readiness::Searchable {
+                pages: 10,
+                few_text_pages: 3
+            },
+            "pages that look like pictures of text are passed through"
+        );
         let images = Counts {
             text: 8,
             image_only: 2,
             ..Counts::default()
         };
         assert_eq!(
-            summarize(images),
+            summarize(images, 1),
             Readiness::Partial {
                 searchable: 8,
                 pages: 10,
                 image_pages: 2,
-                reason: PartialReason::ImagePages
+                reason: PartialReason::ImagePages,
+                few_text_pages: 1
             }
         );
         for c in [
@@ -640,7 +664,7 @@ mod tests {
                 ..Counts::default()
             },
         ] {
-            let Readiness::Partial { reason, .. } = summarize(c) else {
+            let Readiness::Partial { reason, .. } = summarize(c, 0) else {
                 panic!()
             };
             assert_eq!(
@@ -654,7 +678,7 @@ mod tests {
             ..Counts::default()
         };
         assert!(matches!(
-            summarize(empty_text),
+            summarize(empty_text, 0),
             Readiness::Partial { searchable: 0, .. }
         ));
     }

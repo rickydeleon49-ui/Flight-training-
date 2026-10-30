@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { describeReadiness, MAX_OFFLINE_INPUT_BYTES } from "./offlineReadiness";
+import { describeReadiness, fewTextSentence, MAX_OFFLINE_INPUT_BYTES } from "./offlineReadiness";
 
 describe("describeReadiness", () => {
   it("states exact counts when everything is searchable", () => {
@@ -34,6 +34,50 @@ describe("describeReadiness", () => {
     expect(
       describeReadiness({ state: "partial", searchable: 0, pages: 1, imagePages: 1, reason: "imagePages" }).detail,
     ).toContain("Text read on 0 of 1 page.");
+  });
+
+  describe("pages that look like pictures of text (SCANNED-01)", () => {
+    it("adds nothing when no page has too little text", () => {
+      for (const few of [undefined, 0]) {
+        expect(describeReadiness({ state: "searchable", pages: 40, fewTextPages: few }).detail).toBe(
+          "Text read on this Mac: all 40 pages.",
+        );
+        expect(
+          describeReadiness({ state: "partial", searchable: 41, pages: 50, imagePages: 9, reason: "imagePages", fewTextPages: few })
+            .detail,
+        ).toBe("Text read on 41 of 50 pages. 9 pages are images; text recognition would be needed to search them.");
+      }
+      expect(fewTextSentence(0, 40)).toBe("");
+      expect(fewTextSentence(3, 0)).toBe("");
+    });
+
+    it("adds one plain sentence when some pages have too little text", () => {
+      expect(describeReadiness({ state: "searchable", pages: 40, fewTextPages: 3 }).detail).toBe(
+        "Text read on this Mac: all 40 pages. 3 of 40 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+      );
+      expect(
+        describeReadiness({ state: "partial", searchable: 497, pages: 524, imagePages: 0, reason: "someUnreadable", fewTextPages: 2 })
+          .detail,
+      ).toBe(
+        "Text read on 497 of 524 pages. Some pages couldn't be read. 2 of 524 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+      );
+    });
+
+    it("uses singular wording for one page", () => {
+      expect(fewTextSentence(1, 40)).toBe(" 1 of 40 pages has little or no readable text (often a blank page or a picture of text), so search and quotes can't use it.");
+      expect(fewTextSentence(1, 1)).toBe(" 1 of 1 page has little or no readable text (often a blank page or a picture of text), so search and quotes can't use it.");
+    });
+
+    it("says all when every page has too little text", () => {
+      expect(describeReadiness({ state: "searchable", pages: 12, fewTextPages: 12 }).detail).toBe(
+        "Text read on this Mac: all 12 pages. All 12 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+      );
+      expect(fewTextSentence(99, 12)).toContain("All 12 pages");
+    });
+
+    it("never calls a page scanned", () => {
+      expect(fewTextSentence(3, 40)).not.toMatch(/scan/i);
+    });
   });
 
   it("offers reading only when the file is verified and not yet prepared", () => {

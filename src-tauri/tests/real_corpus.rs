@@ -372,7 +372,7 @@ fn run_read_and_kit(
         }
 
         match readiness {
-            Readiness::Searchable { pages } => {
+            Readiness::Searchable { pages, .. } => {
                 total_pages_opt = Some(pages);
                 if let Ok(cache) = Cache::open(lib_path) {
                     if let Some(Summary::Complete(counts)) = cache.summary(target.sha) {

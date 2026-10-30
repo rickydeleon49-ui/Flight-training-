@@ -98,7 +98,10 @@ fn a_new_session_checks_first_then_reuses_the_cache() {
     assert_eq!(first.readiness("guide.pdf"), Readiness::Checking);
     assert_eq!(
         first.prepare("guide.pdf", no_cancel()),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
 
     let second = root.session();
@@ -110,7 +113,10 @@ fn a_new_session_checks_first_then_reuses_the_cache() {
     verify(&second, &root, "guide.pdf");
     assert_eq!(
         second.readiness("guide.pdf"),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
 }
 
@@ -137,7 +143,8 @@ fn rollback_to_older_bytes_and_forward_again_never_shows_stale_readiness() {
             searchable: 0,
             pages: 1,
             image_pages: 1,
-            reason: PartialReason::ImagePages
+            reason: PartialReason::ImagePages,
+            few_text_pages: 0
         }
     );
 
@@ -145,7 +152,13 @@ fn rollback_to_older_bytes_and_forward_again_never_shows_stale_readiness() {
     std::fs::write(root.doc("chart.pdf"), &a).unwrap();
     let s = root.session();
     verify(&s, &root, "chart.pdf");
-    assert_eq!(s.readiness("chart.pdf"), Readiness::Searchable { pages: 1 });
+    assert_eq!(
+        s.readiness("chart.pdf"),
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
+    );
 }
 
 #[test]
@@ -160,7 +173,10 @@ fn a_database_only_restore_resolves_by_the_bytes_on_disk() {
     verify(&s, &root, "restored-name.pdf");
     assert_eq!(
         s.readiness("restored-name.pdf"),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
 }
 
@@ -223,7 +239,10 @@ fn same_stamp_different_bytes_is_caught_across_sessions_and_at_action_time() {
     // Within the old session the stamp still matches, but acting re-hashes.
     assert_eq!(
         s1.prepare("same.pdf", no_cancel()),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
     let cache = Cache::open(&root.0).unwrap();
     let sha_b = her_flight_deck_lib::extraction::service::hash_file(&path).unwrap();
@@ -341,7 +360,10 @@ fn a_transient_identity_failure_is_not_cached_against_the_original_bytes() {
     );
     assert_eq!(
         s.prepare("swap.pdf", no_cancel()),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
 }
 
@@ -361,7 +383,13 @@ fn queued_work_is_deduplicated_serialized_and_completes() {
         "a duplicate is accepted but not queued twice"
     );
     svc.wait_idle();
-    assert_eq!(svc.readiness("q.pdf"), Readiness::Searchable { pages: 1 });
+    assert_eq!(
+        svc.readiness("q.pdf"),
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
+    );
 }
 
 #[test]
@@ -394,7 +422,10 @@ fn failures_before_identity_is_verified_are_never_cached() {
     // The same bytes still prepare normally.
     assert_eq!(
         s.prepare("pre.pdf", no_cancel()),
-        Readiness::Searchable { pages: 1 }
+        Readiness::Searchable {
+            pages: 1,
+            few_text_pages: 1
+        }
     );
 }
 
@@ -496,4 +527,24 @@ fn prepared_real_pdf_is_searchable_and_its_destination_is_revalidated() {
         verify_destination(&svc, "text", sha).unwrap(),
         Destination::Changed
     );
+}
+
+#[test]
+fn readiness_counts_pages_that_look_like_pictures_of_text() {
+    let root = Root::new("fewtext");
+    let long = "Weight and balance moments add up across every station";
+    std::fs::write(root.doc("full.pdf"), pdf(Some(long))).unwrap();
+    std::fs::write(root.doc("thin.pdf"), pdf(Some("Page 3"))).unwrap();
+    let s = root.session();
+    for (name, few) in [("full.pdf", 0), ("thin.pdf", 1)] {
+        verify(&s, &root, name);
+        assert_eq!(
+            s.prepare(name, no_cancel()),
+            Readiness::Searchable {
+                pages: 1,
+                few_text_pages: few
+            },
+            "{name}"
+        );
+    }
 }

@@ -22,8 +22,15 @@ export type OfflineReadiness =
   | { state: "checking" }
   | { state: "notPrepared" }
   | { state: "preparing" }
-  | { state: "searchable"; pages: number }
-  | { state: "partial"; searchable: number; pages: number; imagePages: number; reason: PartialReason }
+  | { state: "searchable"; pages: number; fewTextPages?: number }
+  | {
+      state: "partial";
+      searchable: number;
+      pages: number;
+      imagePages: number;
+      reason: PartialReason;
+      fewTextPages?: number;
+    }
   | { state: "couldNotProcess"; code: string };
 
 export interface MaterialReadiness {
