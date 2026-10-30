@@ -21,7 +21,8 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, State};
 pub const SETTLE_EVENT: &str = "settle-before-quit";
 /// The longest quitting waits for the frontend.
 pub const SETTLE_LIMIT: Duration = Duration::from_millis(2000);
-/// The id of our own Quit menu item.
+/// The id of our own Quit menu item (the custom menu is macOS-only).
+#[cfg(target_os = "macos")]
 pub const QUIT_MENU_ID: &str = "quit";
 
 /// One quit at a time: the first request wins, later ones are ignored.
