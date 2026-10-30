@@ -371,3 +371,80 @@ describe("practice question authoring on the material page", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+// QUIT-01: typing in any practice editor is kept as she types, so quitting
+// with the dialog open never loses it.
+describe("practice question drafts", () => {
+  const mirrorKey = `hfd:practice-questions:${materialId}`;
+  const stored = () => JSON.parse(localStorage.getItem(mirrorKey) ?? "null");
+
+  it("keeps a manual first test's typing and opens it again by itself", async () => {
+    await open(`/study/${materialId}`);
+    fireEvent.click(await screen.findByRole("button", { name: "Write your own practice questions" }));
+    const create = await dialog("Write your own practice questions");
+    await fill(create, "Question 1 wording", "Typed before quitting");
+    await waitFor(() => expect(stored()?.draft[0]?.question).toBe("Typed before quitting"));
+    cleanup(); // As if she quit with the dialog open.
+
+    await open(`/study/${materialId}`);
+    const again = await dialog("Write your own practice questions");
+    await waitFor(() => expect(again.getByLabelText("Question 1 wording")).toHaveProperty("value", "Typed before quitting"));
+    expect(again.queryByText(/unsaved changes to these questions from earlier/)).toBeNull();
+    expect(again.getByText("We kept your unsaved changes from last time. Save them, or Cancel to drop them.")).toBeTruthy();
+    await fill(again, "Question 1, option 1", "One");
+    await fill(again, "Question 1, option 2", "Two");
+    fireEvent.click(again.getByRole("button", { name: "Save" }));
+    await waitFor(async () => expect((await snapshot())?.questions[0]?.question).toBe("Typed before quitting"), SLOW_RUNNER);
+    expect(stored()).toBeNull();
+  });
+
+  it("keeps an edit's typing, asks when the saved test changed, and can use the saved questions", async () => {
+    await seed();
+    await open(`/study/${materialId}`);
+    const edit = await editor();
+    await fill(edit, "Question 1 wording", "My unsaved edit");
+    cleanup();
+    await directEdit("Changed elsewhere");
+
+    await open(`/study/${materialId}`);
+    const again = await dialog("Edit questions");
+    await again.findByText("You have unsaved changes to these questions from earlier.");
+    expect(again.getByLabelText("Question 1 wording")).toHaveProperty("value", "My unsaved edit");
+    expect(again.getByRole("button", { name: "Save" })).toHaveProperty("disabled", true);
+    fireEvent.click(again.getByRole("button", { name: "Use the saved questions" }));
+    await waitFor(() => expect(again.getByLabelText("Question 1 wording")).toHaveProperty("value", "Changed elsewhere"));
+    expect(again.queryByText(/from earlier/)).toBeNull();
+  });
+
+  it("keeping a draft over a changed test is refused at save, never overwriting", async () => {
+    await seed();
+    await open(`/study/${materialId}`);
+    const edit = await editor();
+    await fill(edit, "Question 1 wording", "Mine");
+    cleanup();
+    await directEdit("Changed elsewhere");
+
+    await open(`/study/${materialId}`);
+    const again = await dialog("Edit questions");
+    fireEvent.click(await again.findByRole("button", { name: "Keep these" }));
+    fireEvent.click(again.getByRole("button", { name: "Save" }));
+    await again.findByText(PRACTICE_AUTHORING_ERROR_MESSAGES.STALE_CONTENT);
+    expect((await snapshot())?.questions[0]?.question).toBe("Changed elsewhere");
+  });
+
+  it("Cancel lets the draft go, and nothing opens by itself next time", async () => {
+    await seed();
+    await open(`/study/${materialId}`);
+    const edit = await editor();
+    // A normal open says nothing about kept changes.
+    expect(edit.queryByText(/We kept your unsaved changes/)).toBeNull();
+    await fill(edit, "Question 1 wording", "Throw away");
+    fireEvent.click(edit.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit questions" })).toBeNull());
+    expect(stored()).toBeNull();
+    cleanup();
+    await open(`/study/${materialId}`);
+    await screen.findByRole("button", { name: "Edit questions" });
+    expect(screen.queryByRole("dialog", { name: "Edit questions" })).toBeNull();
+  });
+});

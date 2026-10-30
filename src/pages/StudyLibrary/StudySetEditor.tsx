@@ -21,6 +21,7 @@ import {
 } from "@/logic/studyAuthoring";
 import { authoringStateOf, emptyManualSet, frameOf, itemAuthorLabel, nextSetOf } from "@/logic/studySetEditing";
 import { useAppData } from "@/state/AppDataContext";
+import { useDraftRecovery } from "@/state/useDraftRecovery";
 
 /** Which item an action is about, as she sees it on the page. */
 export type ItemTarget = { kind: "summary" } | { kind: "section" | "card"; index: number };
@@ -76,7 +77,38 @@ function sameContent(a: AiStudySet, b: AiStudySet): boolean {
   return text(a) === text(b);
 }
 
+/** Why a dialog opened by itself after she quit with it open. */
+export const KEPT_DRAFT_NOTE = "We kept your unsaved changes from last time. Save them, or Cancel to drop them.";
+
 const NOUN = { summary: "summary", section: "section", card: "card" } as const;
+
+/**
+ * Unsaved typing in an open editing dialog, kept as she types (QUIT-01), so
+ * quitting or closing the window never loses it. `baseline` is the stored set
+ * the dialog opened from; `pending` keeps an uncertain save's operation, so a
+ * retry after relaunch is still the same save.
+ */
+export interface StudySetEditorDraft {
+  action: Action;
+  fields: string[];
+  page: string;
+  fromInstructor: boolean;
+  baseline: StoredSetRow | null;
+  pending: { key: string; operation: StudySetSaveOperation } | null;
+}
+
+/** Where an editor keeps its draft: the study guide's editor, or one "Add a card". */
+export const studySetDraftKey = (materialId: string, card?: string) =>
+  card === undefined ? `study-set-editor.${materialId}` : `study-set-editor.${materialId}.card.${card}`;
+
+function isEditorDraft(value: unknown): value is StudySetEditorDraft {
+  const draft = value as StudySetEditorDraft | null;
+  return Boolean(
+    draft && typeof draft === "object" && draft.action && typeof draft.action.mode === "string" &&
+      draft.action.mode !== "delete" && Array.isArray(draft.fields) && draft.fields.every((field) => typeof field === "string") &&
+      typeof draft.page === "string" && typeof draft.fromInstructor === "boolean" && "baseline" in draft,
+  );
+}
 
 export interface StudySetEditorProps {
   material: StudyMaterial;
@@ -119,9 +151,38 @@ export function StudySetEditor({
   const [visualIndex, setVisualIndex] = useState<number | null>(null);
   const [pictureSaved, setPictureSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // A draft from an earlier session while its dialog opens again, and whether
+  // the saved set moved on since that draft began.
+  const [restoring, setRestoring] = useState<StudySetEditorDraft | null>(null);
+  const [conflict, setConflict] = useState(false);
+  // The dialog opened by itself from a kept draft: say why.
+  const [reopened, setReopened] = useState(false);
+  const autoOpenedRef = useRef(false);
+
+  const live: StudySetEditorDraft | null =
+    action && action.mode !== "delete" && opened
+      ? { action, fields, page, fromInstructor, baseline: opened.stored, pending: pendingRef.current }
+      : null;
+  const draftKey = studySetDraftKey(material.id, compact ? bookmarkSeed?.bookmark.id ?? "new" : undefined);
+  const { forget } = useDraftRecovery<StudySetEditorDraft | null>(
+    draftKey,
+    restoring ?? live,
+    (stored) => {
+      if (!isEditorDraft(stored)) return;
+      autoOpenedRef.current = true;
+      setReopened(true);
+      setRestoring(stored);
+      void openFor(stored.action, stored);
+    },
+    Boolean(repositories),
+  );
 
   const close = () => {
     if (busyRef.current) return;
+    forget();
+    setRestoring(null);
+    setConflict(false);
+    setReopened(false);
     setAction(null);
     setOpened(null);
     setOpenError(null);
@@ -130,15 +191,28 @@ export function StudySetEditor({
     onClose?.();
   };
 
-  const begin = async (next: Action) => {
+  const begin = (next: Action) => openFor(next, null);
+
+  /** Open a dialog, fresh or with a draft from an earlier session. */
+  const openFor = async (next: Action, draft: StudySetEditorDraft | null) => {
     if (busyRef.current || !repositories) return;
     setAction(next);
     setOpened(null);
     setOpenError(null);
     setError(null);
-    pendingRef.current = null;
-    setFromInstructor(false);
-    setPage("");
+    setConflict(false);
+    if (draft) {
+      setFields([...draft.fields]);
+      setPage(draft.page);
+      setFromInstructor(draft.fromInstructor);
+      pendingRef.current = draft.pending;
+    } else {
+      setRestoring(null);
+      setReopened(false);
+      pendingRef.current = null;
+      setFromInstructor(false);
+      setPage("");
+    }
     try {
       const read: { stored: StoredSetRow | null; set: AiStudySet } | null =
         await repositories.documents.readStudySetForEdit(material.id) ??
@@ -148,6 +222,18 @@ export function StudySetEditor({
         return;
       }
       const state = authoringStateOf(read.set);
+      if (draft) {
+        // Her text stays on screen. The save still expects the set her draft
+        // began from, so if it moved on the save is refused, never overwrites.
+        if (next.mode !== "add" && !locate(state, next.target)) {
+          setOpenError("That item is no longer in this study set.");
+          return;
+        }
+        setOpened({ ...read, state, stored: draft.baseline });
+        setConflict(JSON.stringify(read.stored) !== JSON.stringify(draft.baseline));
+        setRestoring(null);
+        return;
+      }
       setOpened({ ...read, state });
       if (next.mode === "add") {
         setFields(bookmarkSeed ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
@@ -169,7 +255,6 @@ export function StudySetEditor({
     }
   };
 
-  const autoOpenedRef = useRef(false);
   useEffect(() => {
     if (compact && repositories && !autoOpenedRef.current) {
       autoOpenedRef.current = true;
@@ -236,6 +321,27 @@ export function StudySetEditor({
     else setError(outcome?.message ?? "This change couldn't be saved. Nothing has been saved; your text is still here.");
   };
 
+  /** The same calm choice as her notes: keep the earlier typing, or the saved one. */
+  const conflictChoice = (what: string) =>
+    reopened && !conflict && action ? (
+      <p className="tiny muted" role="status">{KEPT_DRAFT_NOTE}</p>
+    ) : conflict && action ? (
+      <div role="status" className="stack stack--2">
+        <p>You have unsaved changes to this {what} from earlier.</p>
+        <div className="row row--wrap">
+          <Button onClick={() => setConflict(false)}>Keep these</Button>
+          <Button
+            onClick={() => {
+              forget();
+              void begin(action);
+            }}
+          >
+            Use the saved {what}
+          </Button>
+        </div>
+      </div>
+    ) : null;
+
   if (compact) {
     return (
       <Dialog
@@ -248,7 +354,7 @@ export function StudySetEditor({
         footer={
           <>
             <Button onClick={close} disabled={busy}>Cancel</Button>
-            <Button variant="primary" onClick={() => void save()} disabled={busy || !opened}>
+            <Button variant="primary" onClick={() => void save()} disabled={busy || !opened || conflict}>
               {busy ? "Saving…" : "Save"}
             </Button>
           </>
@@ -256,6 +362,7 @@ export function StudySetEditor({
       >
         <div className="stack stack--3">
           {openError ? <p className="field__error" role="alert">{openError}</p> : null}
+          {conflictChoice("card")}
           {opened ? (
             <>
               <p className="tiny muted">
@@ -398,7 +505,7 @@ export function StudySetEditor({
         footer={
           <>
             <Button onClick={close} disabled={busy}>Cancel</Button>
-            <Button variant="primary" onClick={() => void save()} disabled={busy || !opened}>
+            <Button variant="primary" onClick={() => void save()} disabled={busy || !opened || conflict}>
               {busy ? "Saving…" : "Save"}
             </Button>
           </>
@@ -406,6 +513,7 @@ export function StudySetEditor({
       >
         <div className="stack stack--3">
           {openError ? <p className="field__error" role="alert">{openError}</p> : null}
+          {conflictChoice(noun)}
           {opened ? (
             <>
               {labels.map((label, index) => (

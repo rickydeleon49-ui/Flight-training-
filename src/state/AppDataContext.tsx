@@ -33,6 +33,7 @@ import type {
 } from "@/domain/types";
 import { defaultToolkitState } from "@/logic/toolkit";
 import { hidePending } from "@/logic/pendingDeletes";
+import { onSettleBeforeQuit, reportSettled } from "@/services/quit";
 import type { DailyPlanState } from "@/logic/dailyPlan";
 import type { Id } from "@/domain/types";
 import { GeminiJobsProvider } from "./GeminiJobs";
@@ -368,6 +369,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setPending(null);
     await mutate(waiting.run);
   }, [mutate]);
+
+  // Quitting (QUIT-01): carry out a deletion still in its Undo window, let
+  // every queued write finish, then tell the Rust side it may quit. The
+  // answer goes even if something failed, so quitting never waits on an
+  // error; Rust gives up after two seconds anyway.
+  useEffect(() => {
+    let settling = false;
+    const stop = onSettleBeforeQuit(async () => {
+      if (settling) return;
+      settling = true;
+      try {
+        await commitPending();
+        await writeQueue.current;
+      } finally {
+        void reportSettled().catch(() => undefined);
+      }
+    }).catch(() => () => {});
+    return () => {
+      void stop.then((unlisten) => unlisten());
+    };
+  }, [commitPending]);
 
   const deleteWithUndo = useCallback(
     (request: PendingDelete) => {

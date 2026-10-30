@@ -438,6 +438,15 @@ And uninstalling on Windows offers to delete application data; leaving that
 box unticked is what keeps her records. A complete backup on another drive is
 the only thing that survives ticking it.
 
+**Quitting finishes her work first.** Quit, Cmd-Q, the close button and Cmd-W
+let any waiting save finish before the app closes, never for more than about
+two seconds. Undo lasts seven seconds or until she quits, whichever comes
+first: a deletion still waiting is carried out at quit. Unsaved card and
+practice-question typing is kept as a draft while she types and offered back
+when she opens that editor again. Logging out, shutting down, Force Quit or a
+crash cannot be held up; drafts still survive those, but a deletion still in
+its Undo window is not carried out, so that item is simply back on relaunch.
+
 ---
 
 ## Architecture
