@@ -187,7 +187,7 @@ describe("Glass appearance styles (glass.css)", () => {
     const ivory = parseHex(ivoryHex);
     // Worst case: the strongest palette tint (32%) behind the page, with the
     // 62% white glass card over it. Secondary text also sits on the bare page.
-    const tints = ["--palette-rose", "--palette-lavender", "--palette-sky"].map((t) => parseHex(getHexToken(t)));
+    const tints = ["--palette-rose", "--palette-lavender", "--palette-sky", "--palette-mint"].map((t) => parseHex(getHexToken(t)));
     // Read the real strengths from glass.css so a stronger look can't skip this check.
     const tintAlpha = Math.max(...[...glassCss.matchAll(/radial-gradient\([^,]+,\s*rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/g)].map((m) => Number(m[1])));
     const cardAlpha = Number(glassCss.match(/--glass-surface:\s*rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/)![1]);
@@ -208,5 +208,11 @@ describe("Glass appearance styles (glass.css)", () => {
     expect(secondaryContrast).toBeGreaterThanOrEqual(4.5);
     expect(overdueContrast).toBeGreaterThanOrEqual(4.5);
     expect(dueTodayContrast).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("tints the Glass background with the chosen accent's pastel, not a fixed blend", () => {
+    const modern = glassCss.match(/background-image:[^;]*color-mix[^;]*;/)![0];
+    expect(modern).toContain("var(--accent-secondary)");
+    expect(modern).not.toMatch(/--palette-(rose|lavender|sky)\)/);
   });
 });
