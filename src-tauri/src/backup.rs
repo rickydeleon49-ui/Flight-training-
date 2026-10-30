@@ -6175,7 +6175,11 @@ pub(crate) fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), St
     // to be opened — including when the marker file is missing, which is
     // exactly the case where we know least about what wrote it. `copy_database`
     // does nothing on a genuine first run, when there is no database yet.
-    copy_database(root, &format!("before-{current}"))?;
+    if let Err(error) = copy_database(root, &format!("before-{current}")) {
+        crate::safety_notices::record_upgrade_failure(root);
+        return Err(error);
+    }
+    crate::safety_notices::clear_upgrade_failure(root);
     prune(root)?;
 
     std::fs::write(&marker, current)
@@ -6208,6 +6212,7 @@ fn create_consistent_local_backup(root: &Path) -> Result<String, String> {
         let _ = std::fs::remove_dir(&destination);
         return Err(format!("Could not save the database backup: {error}"));
     }
+    crate::safety_notices::clear_upgrade_failure(root);
     Ok(destination.to_string_lossy().to_string())
 }
 
@@ -8540,7 +8545,9 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
 /// was in front.
 pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
     let root = app_root(app)?;
-    startup_restore_outcome(handle_startup_restore_in(&root)?)
+    let decision = handle_startup_restore_in(&root)?;
+    crate::safety_notices::record_restore_outcome(&root, &decision);
+    startup_restore_outcome(decision)
 }
 
 fn startup_restore_outcome(decision: StartupRestoreDecision) -> Result<bool, String> {
@@ -9283,6 +9290,22 @@ mod tests {
         assert!(refusal.contains("unexpected file"), "{refusal}");
 
         std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn failed_upgrade_copy_records_notice_until_a_later_copy_succeeds() {
+        let root = scratch("upgrade-notice");
+        write_database(&root.join(DB_FILES[0]), "her record");
+        std::fs::write(root.join(BACKUP_DIR), b"obstruction").unwrap();
+        assert!(backup_if_upgraded_in(&root, "0.3.0").is_err());
+        assert!(root.join("upgrade-copy-failed").is_file());
+        assert!(!root.join(VERSION_FILE).exists());
+        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her record");
+        std::fs::remove_file(root.join(BACKUP_DIR)).unwrap();
+        backup_if_upgraded_in(&root, "0.3.0").unwrap();
+        assert!(!root.join("upgrade-copy-failed").exists());
+        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her record");
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
