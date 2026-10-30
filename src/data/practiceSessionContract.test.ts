@@ -390,6 +390,25 @@ describe("Practice Session Persistence Contract (M2 PR 1)", () => {
     expect(history).toHaveLength(1);
     expect(history[0]!.attemptId).toBe(start.attemptId);
     expect(history[0]!.scorePercent).toBe(33.3);
+
+    // The recent-attempts read returns completed attempts only, newest first.
+    const retake = await repo.saveSessionAction({
+      action: "start_or_resume",
+      operationId: crypto.randomUUID(),
+      materialId: matId,
+      versionId: active.version.id,
+    });
+    assertSessionState(retake);
+    const recent = await repo.getRecentCompletedAttempts(10);
+    expect(recent.map((a) => a.id)).toEqual([start.attemptId]);
+    expect(recent[0]).toMatchObject({
+      status: "completed",
+      sourceMaterialId: matId,
+      totalQuestions: 3,
+      answeredCount: 2,
+      scorePercent: 33.3,
+    });
+    await expect(repo.getRecentCompletedAttempts(0)).rejects.toThrow("Invalid attempt limit");
   });
 
   it("REQ-08: retake attempt abandons current attempt with expectedAttemptId and creates fresh attempt", async () => {
