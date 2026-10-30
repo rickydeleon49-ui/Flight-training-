@@ -67,6 +67,22 @@ describe("Offline study panel", () => {
     expect(screen.queryByRole("button", { name: "Read it now" })).toBeNull();
   });
 
+  it("adds the picture-of-text sentence to the same notice only when there are such pages", async () => {
+    service.readiness.mockResolvedValue([row({ state: "searchable", pages: 40, fewTextPages: 3 })]);
+    const view = render(h(OfflineStudyPanel, { material: pdf }));
+    const status = await screen.findByRole("status");
+    expect(status.textContent).toBe(
+      "Text read on this Mac: all 40 pages. 3 of them have little or no searchable text (often a blank page or a picture of text), so search and quotes can't use them.",
+    );
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    view.unmount();
+
+    service.readiness.mockResolvedValue([row({ state: "searchable", pages: 40, fewTextPages: 0 })]);
+    render(h(OfflineStudyPanel, { material: pdf }));
+    expect((await screen.findByRole("status")).textContent).toBe("Text read on this Mac: all 40 pages.");
+    expect(screen.queryByText(/little or no searchable text/)).toBeNull();
+  });
+
   it("looks again while a state is settling, until it settles", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     service.readiness

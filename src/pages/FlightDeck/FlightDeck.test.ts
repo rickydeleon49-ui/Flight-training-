@@ -12,6 +12,7 @@ import { makeAction, makeEvent, makeJournalEntry, makeMaterial, makePrepItem, ma
 import type { HomeworkSnapshot } from "@/domain/homework";
 
 let appData: AppData;
+let repositoriesMock: unknown = null;
 
 vi.mock("@/state/AppDataContext", async (importOriginal) => ({
   ...await importOriginal<object>(),
@@ -19,7 +20,7 @@ vi.mock("@/state/AppDataContext", async (importOriginal) => ({
     data: appData,
     status: "ready",
     dataRevision: 1,
-    repositories: null,
+    repositories: repositoriesMock,
     refresh: vi.fn(),
     mutate: vi.fn().mockResolvedValue({ ok: true }),
   }),
@@ -34,6 +35,7 @@ if (typeof window !== "undefined") {
 
 beforeEach(() => {
   sessionStorage.clear();
+  repositoriesMock = null;
   appData = {
     ...EMPTY_DATA,
     toolkit: {
@@ -733,5 +735,83 @@ describe("FlightDeck and reminders bound homework actions", () => {
       expect(screen.getByText("1 flight")).toBeTruthy();
       expect(screen.getByText("across 0 flights in 30 days")).toBeTruthy();
     });
+  });
+});
+
+describe("FlightDeck practice-test line", () => {
+  const attempt = (id: string, completedAt: string, scorePercent: number) => ({
+    id,
+    versionId: "v-1",
+    sourceMaterialId: "mat-1",
+    sourceMaterialTitle: "Weather",
+    startedAt: completedAt,
+    completedAt,
+    status: "completed" as const,
+    revision: 1,
+    totalQuestions: 10,
+    answeredCount: 10,
+    correctCount: Math.round(scorePercent / 10),
+    incorrectCount: 10 - Math.round(scorePercent / 10),
+    dontKnowCount: 0,
+    scorePercent,
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-20T12:00:00"));
+    appData.materials = [makeMaterial({ id: "mat-1", title: "Weather" })];
+    appData.practiceTests = [
+      {
+        sourceMaterialId: "mat-1",
+        title: "Weather check",
+        questions: [],
+        provider: "local",
+        model: "",
+        generatedAt: "2026-10-01T10:00:00Z",
+        updatedAt: "2026-10-01T10:00:00Z",
+      } as unknown as AppData["practiceTests"][number],
+    ];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows her recent average and links to the Study Library", async () => {
+    repositoriesMock = {
+      practiceSessions: {
+        getRecentCompletedAttempts: vi.fn().mockResolvedValue([
+          attempt("a6", "2026-10-19T15:00:00", 90),
+          attempt("a5", "2026-10-18T15:00:00", 80),
+          attempt("a4", "2026-10-17T15:00:00", 80),
+          attempt("a3", "2026-10-16T15:00:00", 70),
+          attempt("a2", "2026-10-15T15:00:00", 70),
+          attempt("a1", "2026-10-14T15:00:00", 60),
+        ]),
+      },
+    };
+    render(h(MemoryRouter, null, h(FlightDeck)));
+
+    const link = await screen.findByRole("link", {
+      name: "Your last 5 practice tests averaged 78%, up from 60%.",
+    });
+    expect(link.getAttribute("href")).toBe("/study");
+  });
+
+  it("gently nudges when she has fewer than three recent attempts", async () => {
+    repositoriesMock = {
+      practiceSessions: {
+        getRecentCompletedAttempts: vi.fn().mockResolvedValue([
+          attempt("a1", "2026-10-19T15:00:00", 90),
+        ]),
+      },
+    };
+    render(h(MemoryRouter, null, h(FlightDeck)));
+
+    const link = await screen.findByRole("link", {
+      name: "Take a practice test to see how you're doing.",
+    });
+    expect(link.getAttribute("href")).toBe("/study");
+    expect(screen.queryByText(/over your last/)).toBeNull();
   });
 });

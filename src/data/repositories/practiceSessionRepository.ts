@@ -33,6 +33,8 @@ export interface PracticeSessionRepository {
   eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult>;
   getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null>;
   getAttempt(attemptId: string): Promise<PracticeAttempt | null>;
+  /** Her newest completed attempts across every test, newest first (read only). */
+  getRecentCompletedAttempts(limit: number): Promise<PracticeAttempt[]>;
   getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]>;
   getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]>;
   getActiveVersion(materialId: string): Promise<{ version: PracticeTestVersion; items: PracticeTestItem[] } | null>;
@@ -40,6 +42,46 @@ export interface PracticeSessionRepository {
   getItems(versionId: string): Promise<PracticeTestItem[]>;
   getResponses(attemptId: string): Promise<PracticeResponse[]>;
   getConversionStatus(materialId: string): Promise<{ legacyMigratedAt: string | null; legacyError: string | null } | null>;
+}
+
+interface AttemptRow {
+  id: string;
+  version_id: string;
+  source_material_id: string | null;
+  source_material_title: string;
+  started_at: string;
+  completed_at: string | null;
+  status: string;
+  revision: number;
+  total_questions: number;
+  answered_count: number;
+  correct_count: number;
+  incorrect_count: number;
+  dont_know_count: number;
+  score_percent: number | null;
+}
+
+const ATTEMPT_COLUMNS = `id, version_id, source_material_id, source_material_title,
+                started_at, completed_at, status, revision, total_questions,
+                answered_count, correct_count, incorrect_count, dont_know_count, score_percent`;
+
+function attemptFromRow(row: AttemptRow): PracticeAttempt {
+  return {
+    id: row.id,
+    versionId: row.version_id,
+    sourceMaterialId: row.source_material_id,
+    sourceMaterialTitle: row.source_material_title,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    status: row.status as PracticeAttemptStatus,
+    revision: Number(row.revision),
+    totalQuestions: Number(row.total_questions),
+    answeredCount: Number(row.answered_count),
+    correctCount: Number(row.correct_count),
+    incorrectCount: Number(row.incorrect_count),
+    dontKnowCount: Number(row.dont_know_count),
+    scorePercent: row.score_percent !== null ? Number(row.score_percent) : null,
+  };
 }
 
 export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepository {
@@ -174,49 +216,28 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
     },
 
     async getAttempt(attemptId: string): Promise<PracticeAttempt | null> {
-      const rows = await db.select<{
-        id: string;
-        version_id: string;
-        source_material_id: string | null;
-        source_material_title: string;
-        started_at: string;
-        completed_at: string | null;
-        status: string;
-        revision: number;
-        total_questions: number;
-        answered_count: number;
-        correct_count: number;
-        incorrect_count: number;
-        dont_know_count: number;
-        score_percent: number | null;
-      }>(
-        `SELECT id, version_id, source_material_id, source_material_title,
-                started_at, completed_at, status, revision, total_questions,
-                answered_count, correct_count, incorrect_count, dont_know_count, score_percent
+      const rows = await db.select<AttemptRow>(
+        `SELECT ${ATTEMPT_COLUMNS}
          FROM practice_attempts
          WHERE id = ?`,
         [attemptId],
       );
 
       const row = rows[0];
-      if (!row) return null;
+      return row ? attemptFromRow(row) : null;
+    },
 
-      return {
-        id: row.id,
-        versionId: row.version_id,
-        sourceMaterialId: row.source_material_id,
-        sourceMaterialTitle: row.source_material_title,
-        startedAt: row.started_at,
-        completedAt: row.completed_at,
-        status: row.status as PracticeAttemptStatus,
-        revision: Number(row.revision),
-        totalQuestions: Number(row.total_questions),
-        answeredCount: Number(row.answered_count),
-        correctCount: Number(row.correct_count),
-        incorrectCount: Number(row.incorrect_count),
-        dontKnowCount: Number(row.dont_know_count),
-        scorePercent: row.score_percent !== null ? Number(row.score_percent) : null,
-      };
+    async getRecentCompletedAttempts(limit: number): Promise<PracticeAttempt[]> {
+      if (!Number.isSafeInteger(limit) || limit < 1) throw new Error("Invalid attempt limit");
+      const rows = await db.select<AttemptRow>(
+        `SELECT ${ATTEMPT_COLUMNS}
+         FROM practice_attempts
+         WHERE status = 'completed'
+         ORDER BY completed_at DESC, id DESC
+         LIMIT ?`,
+        [limit],
+      );
+      return rows.map(attemptFromRow);
     },
 
     async getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]> {

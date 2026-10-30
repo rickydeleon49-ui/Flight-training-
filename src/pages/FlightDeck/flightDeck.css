@@ -231,3 +231,16 @@
   text-transform: uppercase;
   color: var(--accent-primary);
 }
+
+/* One quiet practice-test line at the foot of Today's plan. */
+.practice-readiness {
+  margin: 0;
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+.practice-readiness a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong, currentColor);
+  text-underline-offset: 2px;
+}

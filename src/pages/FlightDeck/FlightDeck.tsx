@@ -1,4 +1,4 @@
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -29,12 +29,18 @@ import {
   type IsoDate,
   type JournalEntry,
   type NextAction,
+  type PracticeAttempt,
 } from "@/domain/types";
 import { describeRelativeDate, formatLongDate, formatShortDate, formatTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { buildDashboard } from "@/logic/dashboard";
 import { flightActivity, flightLogTotals, formatHours } from "@/logic/flightLog";
-import { useAppData } from "@/state/AppDataContext";
+import {
+  ATTEMPTS_TO_READ,
+  buildPracticeReadiness,
+  practiceReadinessText,
+} from "@/logic/practiceReadiness";
+import { useAppData, type AppData } from "@/state/AppDataContext";
 import { useActionOperations } from "@/state/useActions";
 import { airportWeather } from "@/services/weather";
 import { AcsAreaMaterialCoveragePanel } from "@/pages/StudyLibrary/AcsAreaMaterialCoveragePanel";
@@ -293,6 +299,7 @@ export function FlightDeck() {
                   ))}
                 </div>
               )}
+              <PracticeReadinessLine data={data} today={model.today} />
             </CardBody>
           </Card>
 
@@ -359,6 +366,54 @@ export function FlightDeck() {
 /* ----------------------------- Sub-cards ----------------------------- */
 
 type Model = ReturnType<typeof buildDashboard>;
+
+/**
+ * One quiet line about her recent practice-test scores, or a gentle nudge to
+ * take one. It reads her saved attempts only and never predicts a result.
+ */
+function PracticeReadinessLine({ data, today }: { data: AppData; today: IsoDate }) {
+  const { repositories, dataRevision } = useAppData();
+  const sessions = repositories?.practiceSessions;
+  const [attempts, setAttempts] = useState<PracticeAttempt[] | null>(null);
+
+  useEffect(() => {
+    if (!sessions) {
+      setAttempts(null);
+      return;
+    }
+    let current = true;
+    sessions
+      .getRecentCompletedAttempts(ATTEMPTS_TO_READ)
+      .then((rows) => {
+        if (current) setAttempts(rows);
+      })
+      .catch(() => {
+        // A quiet extra: if the history can't be read, show nothing.
+        if (current) setAttempts(null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [sessions, dataRevision]);
+
+  if (attempts === null) return null;
+  const materialIds = new Set(data.materials.map((material) => material.id));
+  const text = practiceReadinessText(
+    buildPracticeReadiness({
+      attempts,
+      materialIds,
+      hasPracticeTest: data.practiceTests.some((test) => materialIds.has(test.sourceMaterialId)),
+      today,
+    }),
+  );
+  if (!text) return null;
+
+  return (
+    <p className="practice-readiness tiny muted">
+      <Link to="/study">{text}</Link>
+    </p>
+  );
+}
 
 function FlightHoursCard({
   entries,

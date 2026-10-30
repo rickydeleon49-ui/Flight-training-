@@ -24,6 +24,19 @@ pub const CACHE_FILE: &str = "content-cache.db";
 pub const EXTRACTOR_VERSION: i64 = 2;
 const SCHEMA: &str = "2";
 
+/// A readable page with fewer non-space characters than this is likely a
+/// picture of text rather than real text (SCANNED-01).
+pub const FEW_TEXT_CHARS: usize = 40;
+
+/// True when `text` has fewer than [`FEW_TEXT_CHARS`] non-space characters.
+pub fn is_few_text(text: &str) -> bool {
+    text.chars()
+        .filter(|c| !c.is_whitespace())
+        .take(FEW_TEXT_CHARS)
+        .count()
+        < FEW_TEXT_CHARS
+}
+
 /// Snippet match markers (design §6.3). Canonical text never contains them,
 /// so every marker in a snippet came from FTS5.
 pub const MARK_START: char = '\u{E000}';
@@ -431,6 +444,32 @@ impl Cache {
         .optional()
     }
 
+    /// How many readable pages have so little text that they are probably
+    /// pictures of text (a scan with a stray header or page number). Only
+    /// `text` pages count: image and blank pages are reported on their own.
+    /// SQLite strips common whitespace to narrow the rows cheaply; the exact
+    /// count is then checked here, so other whitespace never adds a page.
+    pub fn few_text_pages(&self, sha256: &str) -> u32 {
+        let candidates = self.conn.prepare(
+            "SELECT text FROM page_text
+             WHERE content_sha256 = ?1 AND extractor_version = ?2 AND outcome = 'text'
+               AND length(replace(replace(replace(replace(replace(text, ' ', ''),
+                     char(10), ''), char(13), ''), char(9), ''), char(12), '')) < ?3",
+        );
+        let Ok(mut stmt) = candidates else {
+            return 0;
+        };
+        let Ok(rows) = stmt.query_map(
+            params![sha256, EXTRACTOR_VERSION, FEW_TEXT_CHARS as i64],
+            |r| r.get::<_, String>(0),
+        ) else {
+            return 0;
+        };
+        rows.filter_map(Result::ok)
+            .filter(|t| is_few_text(t))
+            .count() as u32
+    }
+
     /// One page's outcome and text, for the search work that follows.
     pub fn page(&self, sha256: &str, index: u32) -> Option<(Outcome, String)> {
         self.conn
@@ -540,6 +579,57 @@ mod tests {
             reopened.summary(&sha).is_some(),
             "a complete cache survives reopening"
         );
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn few_text_threshold_counts_non_space_characters() {
+        assert!(is_few_text(""));
+        assert!(is_few_text(&"a".repeat(39)));
+        assert!(!is_few_text(&"a".repeat(40)));
+        // Spaces, line breaks and other whitespace never count as text.
+        let spaced: String = "ab \n\u{a0}\u{2003}\t".repeat(19) + "c";
+        assert!(is_few_text(&spaced), "39 non-space characters");
+        assert!(!is_few_text(&(spaced + "d")), "40 non-space characters");
+    }
+
+    #[test]
+    fn few_text_pages_counts_only_thin_readable_pages() {
+        let root = temp();
+        let mut cache = Cache::open(&root).unwrap();
+        let full = "x".repeat(40);
+        let thin = "Page 3  ".repeat(7); // 56 characters, 35 non-space
+        let cases: [(&str, Vec<PageResult>, u32); 3] = [
+            ("none", vec![page(0, Outcome::Text, &full)], 0),
+            (
+                "some",
+                vec![
+                    page(0, Outcome::Text, &full),
+                    page(1, Outcome::Text, &thin),
+                    page(2, Outcome::ImageOnly, ""),
+                    page(3, Outcome::Blank, ""),
+                    page(4, Outcome::Failed, "x"),
+                ],
+                1,
+            ),
+            (
+                "all",
+                vec![page(0, Outcome::Text, "12"), page(1, Outcome::Text, &thin)],
+                2,
+            ),
+        ];
+        for (i, (label, pages, want)) in cases.into_iter().enumerate() {
+            let sha = format!("{i}").repeat(64);
+            cache
+                .publish(&Extraction {
+                    peak_bytes: 0,
+                    sha256: sha.clone(),
+                    pages,
+                })
+                .unwrap();
+            assert_eq!(cache.few_text_pages(&sha), want, "{label}");
+        }
+        assert_eq!(cache.few_text_pages(&"f".repeat(64)), 0, "not prepared");
         let _ = std::fs::remove_dir_all(root);
     }
 

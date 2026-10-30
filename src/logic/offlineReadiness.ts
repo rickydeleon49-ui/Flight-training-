@@ -30,6 +30,20 @@ export const MAX_INPUT_BYTES = MAX_OFFLINE_INPUT_BYTES;
 
 const pages = (n: number) => `${n} page${n === 1 ? "" : "s"}`;
 
+/**
+ * SCANNED-01: readable pages with under ~40 non-space characters (counted in
+ * Rust) are probably pictures of text. One plain sentence, or nothing when
+ * there are none. It says "look like", since this is a likely cause.
+ */
+export function fewTextSentence(few: number | undefined, total: number): string {
+  if (!few || few <= 0 || total <= 0) return "";
+  const n = Math.min(few, total);
+  const one = n === 1;
+  const subject = total === 1 ? "It" : n === total ? `All ${total} pages` : `${n} of them`;
+  // Blank and figure-only pages also land here, so don't claim they are scans.
+  return ` ${subject} ${one ? "has" : "have"} little or no searchable text (often a blank page or a picture of text), so search and quotes can't use ${one ? "it" : "them"}.`;
+}
+
 /** Friendly reasons for a whole-file refusal. Unknown codes stay generic. */
 const REFUSALS: Record<string, string> = {
   encrypted: "It's password-protected, so its text can't be read.",
@@ -85,7 +99,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "searchable":
       return {
         label: "Text read",
-        detail: `Text read on this Mac: all ${pages(r.pages)}.`,
+        detail: `Text read on this Mac: all ${pages(r.pages)}.` + fewTextSentence(r.fewTextPages, r.pages),
         tone: "complete",
         canPrepare: false,
         settling: false,
@@ -98,7 +112,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
           : " Some pages couldn't be read.";
       return {
         label: "Partly read",
-        detail: base + reason,
+        detail: base + reason + fewTextSentence(r.fewTextPages, r.pages),
         tone: "due",
         canPrepare: false,
         settling: false,
