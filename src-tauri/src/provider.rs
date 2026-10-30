@@ -1,5 +1,5 @@
-//! Provider boundary for native AI operations. P0 deliberately selects only
-//! Gemini; no preference writer, command or student-facing surface exists.
+//! Provider boundary for native AI operations. Only Gemini can send requests;
+//! Claude has storage and status support in preparation for P2.
 use std::path::Path;
 use std::time::Duration;
 
@@ -21,19 +21,99 @@ pub(crate) mod schemas;
 pub(crate) enum ProviderId {
     #[default]
     Gemini,
+    Claude,
 }
 
-/// Read only. Unknown, unreadable and missing preferences retain Gemini.
-/// P0 does not connect this reader to Settings or write any app data.
-#[allow(dead_code)]
+impl ProviderId {
+    pub(crate) fn name(self) -> &'static str {
+        match self {
+            Self::Gemini => "Gemini",
+            Self::Claude => "Claude",
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Gemini => "gemini",
+            Self::Claude => "claude",
+        }
+    }
+}
+
+/// Unknown, unreadable and missing preferences retain Gemini.
 pub(crate) fn load_choice(root: &Path) -> ProviderId {
     std::fs::read_to_string(root.join("ai-provider"))
         .ok()
         .and_then(|s| match s.trim() {
             "gemini" => Some(ProviderId::Gemini),
+            "claude" => Some(ProviderId::Claude),
             _ => None,
         })
         .unwrap_or_else(|| AnyProvider::default().id())
+}
+
+/// Replace the preference beside its target so readers never see a partial ID.
+pub(crate) fn save_choice(root: &Path, provider: ProviderId) -> Result<(), String> {
+    use std::io::Write;
+    std::fs::create_dir_all(root)
+        .map_err(|e| format!("Could not create the application data directory: {e}"))?;
+    let writing = root.join("ai-provider.writing");
+    let result = (|| -> std::io::Result<()> {
+        let mut file = std::fs::File::create(&writing)?;
+        file.write_all(provider.as_str().as_bytes())?;
+        file.sync_all()?;
+        std::fs::rename(&writing, root.join("ai-provider"))
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(writing);
+    }
+    result.map_err(|e| format!("Could not save the AI provider choice: {e}"))
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct ProviderConnection {
+    id: ProviderId,
+    connected: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct ProviderStatus {
+    selected: ProviderId,
+    providers: Vec<ProviderConnection>,
+}
+
+// Status reads files only: it never verifies a key or contacts a provider.
+fn status_at(root: &Path) -> Result<ProviderStatus, String> {
+    let providers = [ProviderId::Gemini, ProviderId::Claude]
+        .into_iter()
+        .map(|id| {
+            crate::secrets::load_key_for(root, id).map(|key| ProviderConnection {
+                id,
+                connected: key.is_some(),
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ProviderStatus {
+        selected: load_choice(root),
+        providers,
+    })
+}
+
+fn select_at(root: &Path, id: ProviderId) -> Result<(), String> {
+    if id == ProviderId::Claude {
+        return Err("Claude isn't available yet.".to_string());
+    }
+    save_choice(root, id)
+}
+
+#[tauri::command]
+pub(crate) fn provider_status(app: tauri::AppHandle) -> Result<ProviderStatus, String> {
+    status_at(&crate::storage::app_root(&app)?)
+}
+
+#[tauri::command]
+pub(crate) fn select_provider(app: tauri::AppHandle, id: ProviderId) -> Result<(), String> {
+    select_at(&crate::storage::app_root(&app)?, id)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -316,6 +396,110 @@ mod tests {
         }
     }
     #[test]
+    fn choices_round_trip_and_replace_without_touching_keys() {
+        let parent = TempRoot::new();
+        let root = parent.path().join("new-root");
+        for id in [ProviderId::Claude, ProviderId::Gemini] {
+            save_choice(&root, id).unwrap();
+            assert_eq!(load_choice(&root), id);
+            assert_eq!(
+                std::fs::read_to_string(root.join("ai-provider")).unwrap(),
+                id.as_str()
+            );
+            assert!(!root.join("ai-provider.writing").exists());
+            assert_eq!(
+                serde_json::from_str::<ProviderId>(&serde_json::to_string(&id).unwrap()).unwrap(),
+                id
+            );
+        }
+        assert!(!root.join("gemini-key").exists());
+        assert!(!root.join("claude-key").exists());
+    }
+
+    #[test]
+    fn choice_failed_rename_keeps_target_and_cleans_temporary_file() {
+        let root = TempRoot::new();
+        std::fs::create_dir(root.path().join("ai-provider")).unwrap();
+        assert!(save_choice(root.path(), ProviderId::Gemini).is_err());
+        assert!(root.path().join("ai-provider").is_dir());
+        assert!(!root.path().join("ai-provider.writing").exists());
+    }
+
+    #[test]
+    fn status_serializes_only_ids_and_connection_flags() {
+        let root = TempRoot::new();
+        let empty = serde_json::to_value(status_at(root.path()).unwrap()).unwrap();
+        assert_eq!(
+            empty,
+            json!({"selected":"gemini", "providers":[
+                {"id":"gemini", "connected":false}, {"id":"claude", "connected":false}
+            ]})
+        );
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            crate::secrets::save_key_for(
+                root.path(),
+                id,
+                &format!("synthetic-secret-{}", id.as_str()),
+            )
+            .unwrap();
+        }
+        save_choice(root.path(), ProviderId::Claude).unwrap();
+        let value = serde_json::to_value(status_at(root.path()).unwrap()).unwrap();
+        assert_eq!(
+            value,
+            json!({"selected":"claude", "providers":[
+                {"id":"gemini", "connected":true}, {"id":"claude", "connected":true}
+            ]})
+        );
+        assert!(!value.to_string().contains("synthetic-secret"));
+    }
+
+    #[test]
+    fn status_read_failure_never_contains_key_material() {
+        let root = TempRoot::new();
+        std::fs::write(root.path().join("gemini-key"), b"synthetic-secret-\xff").unwrap();
+        let error = status_at(root.path()).unwrap_err();
+        assert!(!error.contains("synthetic-secret"));
+    }
+
+    #[test]
+    fn selecting_claude_is_refused_without_any_writes() {
+        let root = TempRoot::new();
+        assert_eq!(
+            select_at(root.path(), ProviderId::Claude).unwrap_err(),
+            "Claude isn't available yet."
+        );
+        assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
+        save_choice(root.path(), ProviderId::Gemini).unwrap();
+        assert!(select_at(root.path(), ProviderId::Claude).is_err());
+        assert_eq!(
+            std::fs::read_to_string(root.path().join("ai-provider")).unwrap(),
+            "gemini"
+        );
+    }
+
+    #[test]
+    fn selecting_gemini_persists_choice_and_preserves_both_keys() {
+        let root = TempRoot::new();
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            crate::secrets::save_key_for(root.path(), id, "synthetic-key").unwrap();
+        }
+        save_choice(root.path(), ProviderId::Claude).unwrap();
+        select_at(root.path(), ProviderId::Gemini).unwrap();
+        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            assert_eq!(
+                crate::secrets::load_key_for(root.path(), id)
+                    .unwrap()
+                    .as_deref(),
+                Some("synthetic-key")
+            );
+        }
+        // The only dispatchable provider remains Gemini even with a stored Claude preference.
+        assert_eq!(AnyProvider::default().id(), ProviderId::Gemini);
+    }
+
+    #[test]
     fn choice_absent() {
         let root = TempRoot::new();
         assert_eq!(load_choice(root.path()), ProviderId::Gemini);
@@ -324,11 +508,11 @@ mod tests {
     #[test]
     fn choice_unknown() {
         let root = TempRoot::new();
-        std::fs::write(root.path().join("ai-provider"), "claude").unwrap();
+        std::fs::write(root.path().join("ai-provider"), "unknown-provider").unwrap();
         assert_eq!(load_choice(root.path()), ProviderId::Gemini);
         assert_eq!(
             std::fs::read_to_string(root.path().join("ai-provider")).unwrap(),
-            "claude"
+            "unknown-provider"
         );
     }
     #[test]

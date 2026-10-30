@@ -8981,6 +8981,9 @@ mod tests {
             Path::new(crate::secrets::KEY_FILE),
             false
         ));
+        // Nor any other provider's key or the provider choice (PROVIDER-01).
+        assert!(!allowed_archive_path(Path::new("claude-key"), false));
+        assert!(!allowed_archive_path(Path::new("ai-provider"), false));
         assert!(!allowed_archive_path(Path::new("documents"), false));
         assert!(!allowed_archive_path(Path::new(DB_FILES[0]), true));
     }
