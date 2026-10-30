@@ -39,6 +39,9 @@ pub mod pdf_study_kit;
 #[cfg(test)]
 mod pdf_study_kit_tests;
 mod provider;
+mod quit_settlement;
+#[cfg(test)]
+mod quit_settlement_tests;
 #[cfg(test)]
 mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
@@ -267,7 +270,7 @@ pub fn run() {
     for window in &mut context.config_mut().app.windows {
         window.create = false;
     }
-    let result = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -284,6 +287,25 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
+        // Quitting settles her pending work first (QUIT-01): our own Quit item
+        // for Cmd-Q, and the close button or Cmd-W held until it is done.
+        .manage(quit_settlement::Settlement::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                quit_settlement::begin_quit(window.app_handle());
+            }
+        });
+    // Tauri sets its default menu only on macOS; ours replaces it there alone.
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .menu(quit_settlement::app_menu)
+        .on_menu_event(|app, event| {
+            if event.id() == quit_settlement::QUIT_MENU_ID {
+                quit_settlement::begin_quit(app);
+            }
+        });
+    let result = builder
         .setup(move |app| {
             logging::attach(app.handle());
             // A user-requested full restore is staged during the previous run
@@ -412,6 +434,7 @@ pub fn run() {
             backup::data_directory,
             backup::open_data_folder,
             backup::app_version,
+            quit_settlement::settled_before_quit,
         ])
         .run(context);
     if result.is_err() {

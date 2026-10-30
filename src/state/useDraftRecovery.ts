@@ -109,6 +109,8 @@ export function useDraftRecovery<T>(
     // 400 ms of typing, and async unload work cannot finish after webview exit.
     // The revision goes first: if the value cannot be stored, an older save
     // finishing later still sees that it no longer owns the draft.
+    // Null means "nothing open to keep": leave what is stored alone.
+    if (value === null) return;
     const json = JSON.stringify(value);
     if (json === storedJson.current) return; // Unchanged: same revision.
     const revision = newId();

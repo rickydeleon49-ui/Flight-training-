@@ -15,6 +15,27 @@ const MAX_QUESTIONS = 200;
 const MAX_OPTIONS = 8;
 const MIN_OPTIONS = 2;
 const length = (text: string) => [...text].length;
+
+/** Where an editor keeps its typing (QUIT-01): a PDF kit run, a page note, or the material's own test. */
+export function practiceMirrorKey(materialId: string, seed?: PdfQuestionSeed, noteSeed?: NoteQuestionSeed): string {
+  if (seed) return `hfd:pdf-kit-questions:${seed.journal.runId}`;
+  if (noteSeed) return `hfd:practice-questions:${materialId}:note:${noteSeed.bookmark.id}`;
+  return `hfd:practice-questions:${materialId}`;
+}
+
+interface PracticeMirror { title: string; draft: UiQuestion[]; expected: PracticeSnapshot | null; pending: { key: string; operation: PracticeSaveOperation } | null; noteIdentity?: string }
+
+/** The kept typing, or null when there is none or it is not usable. */
+function readMirror(key: string): PracticeMirror | null {
+  try {
+    const mirror = JSON.parse(localStorage.getItem(key) ?? "null");
+    if (mirror && typeof mirror.title === "string" && Array.isArray(mirror.draft) && mirror.draft.length <= MAX_QUESTIONS && mirror.draft.every((q: UiQuestion) => typeof q.question === "string" && Array.isArray(q.options) && q.options.every(o => typeof o === "string") && typeof q.explanation === "string" && typeof q.pageInput === "string")) return mirror as PracticeMirror;
+  } catch { /* Unavailable storage or a damaged copy: open the saved questions instead. */ }
+  return null;
+}
+function dropMirror(key: string) {
+  try { localStorage.removeItem(key); } catch { /* Nothing to do. */ }
+}
 type UiQuestion = PracticeDraftQuestion & { pageInput: string };
 const emptyQuestion = (): UiQuestion => ({ pageInput: "", identity: null, question: "", options: ["", ""], correctIndex: 0, explanation: "", sourcePage: null, instructor: false });
 const problemText = (error: unknown) => error instanceof PracticeAuthoringError
@@ -49,16 +70,19 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [reloading, setReloading] = useState(false);
+  // Typing kept from an earlier session, made on questions that have changed since.
+  const [conflict, setConflict] = useState(false);
   const busyRef = useRef(false);
   const readRef = useRef(0);
   const pending = useRef<{ key: string; operation: PracticeSaveOperation } | null>(null);
-  const mirrorKey = seed ? `hfd:pdf-kit-questions:${seed.journal.runId}` : null;
+  // Every editor keeps its typing as she types, so quitting never loses it.
+  const mirrorKey = practiceMirrorKey(material.id, seed, noteSeed);
   const remember = () => {
-    if (!mirrorKey || expected === undefined) return;
-    try { localStorage.setItem(mirrorKey, JSON.stringify({ title, draft, expected, pending: pending.current })); }
+    if (expected === undefined) return;
+    try { localStorage.setItem(mirrorKey, JSON.stringify({ title, draft, expected, pending: pending.current, ...(noteSeed ? { noteIdentity: noteSeed.identity } : {}) })); }
     catch { setError("Draft recovery is unavailable. Keep this window open until your questions are saved."); }
   };
-  useEffect(() => { if (open && mirrorKey) remember(); }, [title, draft, expected, busy, open, mirrorKey]);
+  useEffect(() => { if (open) remember(); }, [title, draft, expected, busy, open, mirrorKey]);
   const titleRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (open && expected !== undefined && !noteSeed) titleRef.current?.focus();
@@ -90,7 +114,10 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     setOpen(false);
     setDeleting(null);
     setReloading(false);
-    remember();
+    setConflict(false);
+    // A PDF kit's drafts wait for her; anywhere else Cancel means she let them go.
+    if (seed) remember();
+    else dropMirror(mirrorKey);
     if (!seed) pending.current = null;
     onClose?.();
   };
@@ -99,16 +126,23 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     const request = ++readRef.current;
     setExpected(undefined);
     setError(null);
+    setConflict(false);
     try {
       const current = await repositories.documents.readPracticeSnapshot(material.id);
       if (readRef.current !== request) return;
-      if (mirrorKey && useMirror) {
-        try {
-          const mirror = JSON.parse(localStorage.getItem(mirrorKey) ?? "null");
-          if (mirror && typeof mirror.title === "string" && Array.isArray(mirror.draft) && mirror.draft.length <= MAX_QUESTIONS && mirror.draft.every((q: UiQuestion) => typeof q.question === "string" && Array.isArray(q.options) && q.options.every(o => typeof o === "string") && typeof q.explanation === "string" && typeof q.pageInput === "string")) {
-            setExpected(mirror.expected); setTitle(mirror.title); setDraft(mirror.draft); pending.current = mirror.pending; setValidate(false); setStale(false); return;
-          }
-        } catch { /* Reopen the authoritative journal when the typing mirror is unavailable. */ }
+      const mirror = useMirror ? readMirror(mirrorKey) : null;
+      if (mirror) {
+        let restored = mirror.draft;
+        let restoredPending = mirror.pending;
+        // A page note's question gets a new identity each time it is opened.
+        if (noteSeed && mirror.noteIdentity && mirror.noteIdentity !== noteSeed.identity) {
+          restored = restored.map((q) => q.identity === mirror.noteIdentity ? { ...q, identity: noteSeed.identity } : q);
+          restoredPending = null;
+        }
+        setExpected(mirror.expected); setTitle(mirror.title); setDraft(restored); pending.current = restoredPending; setValidate(false); setStale(false);
+        // The saves still expect what her typing began from, so nothing newer is overwritten.
+        if (!seed) setConflict(JSON.stringify(mirror.expected ?? null) !== JSON.stringify(current ?? null));
+        return;
       }
       setExpected(current);
       setTitle(current?.title ?? material.title);
@@ -156,7 +190,8 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
       if (result?.ok) {
         setOpen(false);
         if (!seed) pending.current = null;
-        remember();
+        if (seed) remember();
+        else dropMirror(mirrorKey);
         onSaved?.();
         onClose?.();
       } else {
@@ -173,6 +208,15 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   const label = noteSeed ? "Make a question" : seed ? "Review draft questions" : creating ? "Write your own practice questions" : "Edit questions";
   const hasTest = data.practiceTests.some((test) => test.sourceMaterialId === material.id);
   const applicable = !seed && !noteSeed && (creating ? !hasTest : hasTest);
+  // Typing kept from before she quit opens again by itself, once, when editing is allowed.
+  const autoChecked = useRef(false);
+  useEffect(() => {
+    if (seed || noteSeed || autoChecked.current || !repositories || attempt === null) return;
+    autoChecked.current = true;
+    if (!applicable || blocked || !readMirror(mirrorKey)) return;
+    setOpen(true);
+    void load(true);
+  }, [repositories, attempt, applicable, blocked]);
   const wasOpen = useRef(false);
   useEffect(() => {
     // A successful first save replaces its opener with Edit questions.
@@ -189,12 +233,19 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     <Dialog open={open} onClose={close} title={label} dismissible={!busy} initialFocus={() => titleRef.current} footer={<>
       <Button onClick={close} disabled={busy}>Cancel</Button>
       {seed ? <Button disabled={busy} onClick={() => { onLeaveOut?.(); close(); }}>Leave questions out</Button> : null}
-      <Button variant="primary" disabled={busy || expected === undefined || Boolean((seed || noteSeed) && (blocked || attempt === null))} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
+      <Button variant="primary" disabled={busy || expected === undefined || conflict || Boolean((seed || noteSeed) && (blocked || attempt === null))} onClick={() => void save()}>{busy ? "Saving…" : "Save"}</Button>
     </>}>
       <div className="stack stack--3" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
         {seed ? <p className="tiny muted">{PDF_KIT_REMINDER} Your saved questions stay here; these drafts are added only when you save.</p> : null}
         {seed && blocked ? <p role="alert">Finish or abandon your current attempt before saving these questions.</p> : null}
         {noteSeed && blocked ? <p role="alert">Finish or abandon your current attempt before saving this question.</p> : null}
+        {conflict ? <div role="status" className="stack stack--2">
+          <p>You have unsaved changes to these questions from earlier.</p>
+          <div className="row row--wrap">
+            <Button onClick={() => setConflict(false)}>Keep these</Button>
+            <Button onClick={() => { dropMirror(mirrorKey); void load(false); }}>Use the saved questions</Button>
+          </div>
+        </div> : null}
         {expected === undefined ? <p role="status">Opening…</p> : <fieldset disabled={busy} className="stack stack--3" style={{ minWidth: 0, border: 0, padding: 0 }}>
           <Field label="Practice test title" error={validate ? titleError : null}><input className="input" ref={titleRef} value={title} onChange={(event) => { pending.current = null; setTitle(event.target.value); }} /></Field>
           {draft.map((question, index) => {
