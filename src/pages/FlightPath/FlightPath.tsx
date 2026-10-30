@@ -39,6 +39,7 @@ import { useActionOperations } from "@/state/useActions";
 import { GoalFormDialog, type GoalDraft } from "./GoalFormDialog";
 import { MilestoneFormDialog, type MilestoneDraft } from "./MilestoneFormDialog";
 import { SkillsSection } from "./skills/SkillsSection";
+import { BeforeYouEnroll } from "./BeforeYouEnroll";
 import "./flightPath.css";
 
 export function FlightPath() {
@@ -106,6 +107,7 @@ export function FlightPath() {
     return (
       <>
         <PageHeader title="Flight Path" subtitle="Where you are going, and what you are working toward." />
+        <BeforeYouEnroll profile={data.profile} />
         <Card>
           <EmptyState
             icon={<RouteIcon size={30} />}
@@ -147,6 +149,8 @@ export function FlightPath() {
             : "Where you are going, and what you are working toward."
         }
       />
+
+      <BeforeYouEnroll profile={data.profile} />
 
       <div className="path">
         {data.milestones.map((milestone, index) => (

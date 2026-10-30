@@ -135,3 +135,21 @@
   border-color: var(--border-strong);
 }
 .waypoint--unassigned .waypoint__title { color: var(--text-secondary); }
+.enroll-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.enroll-footnote {
+  margin-top: var(--space-4);
+}
+
+.enroll-hide {
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
