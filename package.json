@@ -1,7 +1,7 @@
 {
   "name": "her-flight-deck",
   "private": true,
-  "version": "0.6.3",
+  "version": "0.6.4",
   "type": "module",
   "description": "A personal flight-training companion that keeps study, lessons, goals, notes, finances, and next steps organized in one place.",
   "scripts": {
