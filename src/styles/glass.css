@@ -21,8 +21,9 @@
   --glass-radius: 20px;
 }
 
-/* Page background: soft warm gradient from her palette. The rgba layer is
-   for WebKit without color-mix (macOS 12); later engines use the tokens. */
+/* Page background: a soft glow in her chosen accent's pastel (Berry rose,
+   Lavender, Sky or Mint), so the whole screen matches the accent. The rgba
+   layer is a fixed blend for WebKit without color-mix (macOS 12). */
 :root[data-appearance="glass"] body,
 :root[data-appearance="glass"] .shell {
   background-color: var(--palette-ivory);
@@ -31,9 +32,9 @@
     radial-gradient(ellipse at 100% 10%, rgba(185, 173, 223, 0.32) 0%, transparent 60%),
     radial-gradient(ellipse at 70% 100%, rgba(142, 191, 218, 0.3) 0%, transparent 60%);
   background-image:
-    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--palette-rose) 32%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse at 100% 10%, color-mix(in srgb, var(--palette-lavender) 32%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 100%, color-mix(in srgb, var(--palette-sky) 30%, transparent) 0%, transparent 60%);
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--accent-secondary) 32%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 10%, color-mix(in srgb, var(--accent-secondary) 24%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 100%, color-mix(in srgb, var(--accent-secondary) 18%, transparent) 0%, transparent 60%);
   background-attachment: fixed;
 }
 
