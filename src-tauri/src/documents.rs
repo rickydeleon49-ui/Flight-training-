@@ -14,6 +14,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::time::Duration;
 use tauri::AppHandle;
 
+use crate::logging::log;
 use crate::storage::app_root;
 
 /// Subdirectory of app data that holds imported study materials.
@@ -698,14 +699,15 @@ pub fn cleanup_staged_deletions_in(root: &Path) -> Result<usize, String> {
 
     let db_path = root.join("her-flight-deck.db");
     if !db_path.is_file() {
-        eprintln!("Database file is missing; skipping staged deletion cleanup.");
+        log::warn!("Database file is missing; skipping staged deletion cleanup.");
         return Ok(0);
     }
 
     let referenced_documents = match crate::backup::query_referenced_documents(&db_path) {
         Ok(docs) => docs,
-        Err(err) => {
-            eprintln!("Could not inspect database for staged deletion cleanup: {err}");
+        Err(_) => {
+            // The error can name the database's location; leave it out.
+            log::warn!("Could not inspect the database for staged deletion cleanup.");
             return Ok(0);
         }
     };
@@ -744,14 +746,14 @@ pub fn cleanup_staged_deletions_in(root: &Path) -> Result<usize, String> {
                                 Ok(()) => true,
                                 Err(err) => {
                                     if is_already_exists_error(&err) || target.exists() {
-                                        eprintln!(
-                                            "Conflict restoring staged document {safe_rel}: destination file already exists at {}",
-                                            target.display()
+                                        // Her file's name and location stay out of the log.
+                                        log::warn!(
+                                            "Could not restore a staged document: a file already exists in its place."
                                         );
                                     } else {
-                                        eprintln!(
-                                            "Could not restore staged document {safe_rel} from {}: {err}",
-                                            data_path.display()
+                                        log::warn!(
+                                            "Could not restore a staged document: {:?}",
+                                            err.kind()
                                         );
                                     }
                                     false

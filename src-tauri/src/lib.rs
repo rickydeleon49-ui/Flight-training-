@@ -27,6 +27,7 @@ mod gemini_jobs;
 mod homework;
 #[doc(hidden)]
 pub mod lineage;
+mod logging;
 mod navigation;
 mod oral_scenarios;
 #[doc(hidden)]
@@ -57,9 +58,12 @@ mod study_page_sources;
 mod study_sets;
 mod visual_cards;
 mod weather;
+mod window_placement;
 
+use logging::log;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
+use tauri_plugin_window_state::StateFlags;
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
@@ -242,14 +246,14 @@ pub fn migrations() -> Vec<Migration> {
 /// front and the restored app can appear hidden behind other windows.
 fn bring_main_window_forward(app: &tauri::AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
-        eprintln!("Restore finished, but the main window was not found to bring forward.");
+        log::warn!("Restore finished, but the main window was not found to bring forward.");
         return;
     };
     if let Err(error) = window.show() {
-        eprintln!("Restore finished, but the window could not be shown: {error}");
+        log::warn!("Restore finished, but the window could not be shown: {error}");
     }
     if let Err(error) = window.set_focus() {
-        eprintln!("Restore finished, but the window could not be brought forward: {error}");
+        log::warn!("Restore finished, but the window could not be brought forward: {error}");
     }
 }
 
@@ -259,12 +263,25 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        // Size, position and maximized only: visibility and decorations stay
+        // as `tauri.conf.json` sets them. The state file is in the app config
+        // folder, which complete backups never include (allowlist).
+        .plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
+                .build(),
+        )
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
         .setup(|app| {
+            logging::attach(app.handle());
+            // The window-state plugin restored the window when it was
+            // created; make sure that left its title bar on a real screen.
+            window_placement::keep_main_window_reachable(app.handle());
+
             // A user-requested full restore is staged during the previous run
             // and installed here, before SQLite opens the database. Startup
             // blocks if an ambiguous restore cannot be safely resolved.
@@ -276,13 +293,14 @@ pub fn run() {
 
             // Before the frontend opens the database, and therefore before any
             // migration runs, copy it aside if this is a new version's first run.
-            if let Err(error) = backup::backup_if_upgraded(app.handle()) {
-                eprintln!("Could not back up before upgrading: {error}");
+            // The error text can name her data folder, so it is not logged.
+            if backup::backup_if_upgraded(app.handle()).is_err() {
+                log::error!("Could not make the safety copy before upgrading.");
             }
 
             // Clean up any interrupted staged deletions from previous runs.
-            if let Err(error) = documents::cleanup_staged_deletions(app.handle()) {
-                eprintln!("Could not clean up staged deletions: {error}");
+            if documents::cleanup_staged_deletions(app.handle()).is_err() {
+                log::warn!("Could not clean up staged deletions; will try again next launch.");
             }
             Ok(())
         })
