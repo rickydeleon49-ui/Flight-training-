@@ -25,7 +25,7 @@ it("keeps Gemini content and closes the quiet disclosure by default", async () =
 it("clears the key on submission, connects then switches without deleting anything", async () => {
   let state = status("gemini");
   vi.mocked(provider.providerStatus).mockImplementation(async()=>state);
-  const connect = vi.spyOn(provider,"configureProvider").mockImplementation(async()=> { state=status("gemini",true); return state; });
+  const connect = vi.spyOn(provider,"configureProvider").mockImplementation(async()=> { state=status("claude",true); return state; });
   const choose = vi.spyOn(provider,"selectProvider").mockImplementation(async(id)=> { state=status(id,true); });
   const disconnect = vi.spyOn(provider,"disconnectProvider");
   const { container } = open();
@@ -33,12 +33,14 @@ it("clears the key on submission, connects then switches without deleting anythi
   fireEvent.change(screen.getByLabelText("Claude API key"),{target:{value:"synthetic-claude-key-only"}});
   fireEvent.click(screen.getByRole("button",{name:"Connect Claude"}));
   expect((screen.getByLabelText("Claude API key") as HTMLInputElement).value).toBe("");
-  await screen.findByRole("button",{name:"Use Claude"});
+  await screen.findByText("Claude is connected and will be used for your study tools. Your saved study material is kept.");
   expect(connect).toHaveBeenCalledWith("claude","synthetic-claude-key-only");
-  fireEvent.click(screen.getByRole("button",{name:"Use Claude"}));
   await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
-  expect(choose).toHaveBeenCalledWith("claude");
-  expect(screen.queryByRole("radio")).toBeNull();
+  expect(container.querySelector("details")!.open).toBe(false);
+  expect(container.querySelector("details")!.textContent).toContain("Gemini setup unchanged");
+  expect(screen.getByRole("button",{name:"Disconnect Claude"}).closest("details")).toBeNull();
+  expect(screen.getAllByRole("radio").every(input => input.closest("details") === container.querySelector("details"))).toBe(true);
+  container.querySelector("details")!.open=true;
   fireEvent.click(screen.getByRole("button",{name:"Use Gemini"}));
   await screen.findByRole("radio",{name:"Most capable"});
   expect(choose).toHaveBeenLastCalledWith("gemini");

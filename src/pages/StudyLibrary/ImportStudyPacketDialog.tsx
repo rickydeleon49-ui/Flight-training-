@@ -288,7 +288,7 @@ function PreviewView({ preview }: { preview: Preview }) {
         <div className="stack stack--1">
           <p className="tiny">{IMPORTED_CONTENT_DISCLAIMER}</p>
           <p className="tiny">
-            Nothing is uploaded. Questions, answers, and explanations come from the packet, rather than Her Flight Deck or Gemini.
+            Nothing is uploaded. Questions, answers, and explanations come from the packet, rather than Her Flight Deck or an AI provider.
           </p>
         </div>
       </div>

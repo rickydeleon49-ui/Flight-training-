@@ -103,8 +103,10 @@ impl ClaudeProvider {
             }
         }
         content.extend(text);
+        // Effort "medium" (Haiku 5.5's default): the live test's "low" guide
+        // skipped the recovery steps; at Haiku's price completeness wins.
         json!({"model":model,"max_tokens":16000,"messages":[{"role":"user","content":content}],
-            "output_config":{"effort":"low","format":{"type":"json_schema",
+            "output_config":{"effort":"medium","format":{"type":"json_schema",
                 "schema":translate_schema(&body["generationConfig"]["responseSchema"])}}})
     }
     pub(crate) fn request(

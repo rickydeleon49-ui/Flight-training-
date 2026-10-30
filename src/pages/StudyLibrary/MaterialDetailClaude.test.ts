@@ -72,11 +72,16 @@ describe("Claude confirmations and model labels", () => {
     vi.restoreAllMocks();
   });
 
-  it("names Anthropic, its disclosure and the answering model", async () => {
+  it.each([false, true])("names Anthropic, its disclosure and the answering model (PDF: %s)", async (pdf) => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({configured:true, model:"claude-haiku-5-5",choice:"standard"});
     const generate=vi.spyOn(geminiService,"generateStudyAid").mockResolvedValue({title:"Fictional guide",summary:"Synthetic summary",sections:[{heading:"Wing",body:"Fictional wing."}],flashcards:[],sourceNotes:"",model:"claude-haiku-5-5"});
-    const material=await seedMaterial(); await open(material.id);
-    expect(await screen.findByRole("heading",{name:"Claude study assistant"})).toBeTruthy();
+    const material = pdf
+      ? await createRepositories(db).documents.create({ id: "mat-pdf", title: "Synthetic PDF", filePath: "documents/synthetic.pdf", originalFileName: "synthetic.pdf", fileSize: 2048 })
+      : await seedMaterial();
+    await open(material.id);
+    expect(await screen.findByRole("heading",{name: pdf ? "Study guide" : "Claude study assistant"})).toBeTruthy();
+    expect(screen.getByText(pdf ? /Claude will read this PDF and build a study guide section by section/ : /Claude will read only this file and create a source-based study guide/)).toBeTruthy();
+    if (pdf) return; // PDF generation itself uses the separate native section path.
     fireEvent.click(await screen.findByRole("button",{name:"Create study aid"}));
     const dialog=await screen.findByRole("dialog",{name:"Send this file to Anthropic?"});
     expect(dialog.textContent).toContain("It will be read by Claude Haiku 5.5.");
@@ -89,5 +94,8 @@ describe("Claude confirmations and model labels", () => {
     expect(await screen.findByText(/AI-generated study aid \(made with Claude Haiku 5.5\)/)).toBeTruthy();
     const saved=await createRepositories(db).documents.listAiStudySets();
     expect(saved[0]!.model).toBe("claude-haiku-5-5");
+    const provenance = screen.getByLabelText("Saved study aid provenance");
+    expect(provenance.textContent).toContain("Claude");
+    expect(provenance.textContent).not.toContain("Gemini");
   });
 });

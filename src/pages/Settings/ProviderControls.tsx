@@ -26,14 +26,7 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
     setStatus(await providerStatus());
     setNote(`New study aids will use ${id === "claude" ? "Claude Haiku 5.5" : "Gemini"}. Your saved study material is kept.`);
   }
-  return <div className="stack stack--4">
-    {status.selected === "gemini" ? children : <div className="stack stack--2">
-      <p className="small strong">Claude Haiku 5.5 · {connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
-      <p className="tiny dim">{CLAUDE_PRIVACY}</p>
-      <div><Button disabled={busy} onClick={() => void run(() => choose("gemini"))}>Use Gemini</Button></div>
-    </div>}
-    <details>
-      <summary className="small">Use a different provider</summary>
+  const claude = (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <p className="small strong">Claude (Anthropic)</p>
         <p className="tiny dim">{CLAUDE_PRIVACY}</p>
@@ -46,9 +39,22 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
           <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
         </div> : <div className="row row--wrap">
           <TextInput type="password" autoComplete="off" aria-label="Claude API key" placeholder="Paste Claude API key" value={key} onChange={(event) => setKey(event.target.value)} disabled={busy || !isTauri()} />
-          <Button disabled={busy || !isTauri() || key.trim().length < 20} onClick={() => { const submitted = key; setKey(""); void run(async () => { setStatus(await configureProvider("claude", submitted)); setNote("Claude connected. Choose Use Claude when you are ready."); }); }}>{busy ? "Connecting…" : "Connect Claude"}</Button>
+          <Button disabled={busy || !isTauri() || key.trim().length < 20} onClick={() => { const submitted = key; setKey(""); void run(async () => { setStatus(await configureProvider("claude", submitted)); setNote("Claude is connected and will be used for your study tools. Your saved study material is kept."); }); }}>{busy ? "Connecting…" : "Connect Claude"}</Button>
         </div>}
       </div>
+  );
+  return <div className="stack stack--4">
+    {status.selected === "gemini" ? children : <div className="stack stack--2">
+      <p className="small strong">Claude Haiku 5.5 · {connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
+      <p className="tiny dim">{CLAUDE_PRIVACY}</p>
+      <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
+    </div>}
+    <details key={status.selected}>
+      <summary className="small">Use a different provider</summary>
+      {status.selected === "gemini" ? claude : <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+        {children}
+        <div><Button disabled={busy} onClick={() => void run(() => choose("gemini"))}>Use Gemini</Button></div>
+      </div>}
     </details>
     {note && <p className="small" role={problem ? "alert" : "status"}>{note}</p>}
   </div>;

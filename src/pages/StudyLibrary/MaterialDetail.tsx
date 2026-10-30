@@ -1057,9 +1057,9 @@ function MaterialDetailPage() {
                     </div>
                   ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                     <p className="small muted">
-                      {isPdf
+                      {providerWording(isPdf
                         ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally."
-                        : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally."}
+                        : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.", gemini?.model)}
                     </p>
                   ) : null}
 

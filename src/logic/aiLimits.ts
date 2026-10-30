@@ -137,7 +137,7 @@ export function checkSplitRange(
       ok: false,
       pages,
       reason:
-        `That is ${pages.toLocaleString()} pages. Google reads ` +
+        `That is ${pages.toLocaleString()} pages. This app prepares ` +
         `${maxPagesPerSplit.toLocaleString()} at a time, so choose a smaller range — a ` +
         `chapter makes a better study aid than a whole book anyway.`,
     };

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getGeminiStatus } from "@/services/gemini";
 import { Card, CardBody, CardHeader } from "@/components/ui";
 
 /**
@@ -86,6 +88,24 @@ export const STUDY_LIBRARY_TOUR: Array<{ title: string; items: HowToItem[] }> = 
 ];
 
 export function StudyHowTo() {
+  const [model, setModel] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void getGeminiStatus().then(status => { if (active) setModel(status.model); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  const claude = model?.startsWith("claude-");
+  const steps = PDF_STEPS.map((step, index) => {
+    if (!claude) return step;
+    const text = index === 0
+      ? "Choose a chapter to focus on, or study a PDF as it is. Claude reads up to 300 pages or 32 MB per request, whichever comes first. A bigger PDF can be split into parts on its page."
+      : index === 1
+        ? "Her Flight Deck sends the file to Anthropic after you confirm. It builds your guide section by section; the completed draft waits for you to save it."
+        : index === 3
+          ? "Ask Claude for multiple-choice questions from the PDF, then check the answers and explanations against your source."
+          : step.text;
+    return { ...step, text };
+  });
   return (
     <div className="stack stack--5 study-howto">
       <Card>
@@ -93,7 +113,7 @@ export function StudyHowTo() {
         <CardBody><div className="stack stack--4">
           <p className="small muted">Start with a chapter you want to study. You can come back to any step.</p>
           <ol className="stack stack--4 material-start-steps" aria-label="PDF study steps">
-            {PDF_STEPS.map(step => (
+            {steps.map(step => (
               <li key={step.title}>
                 <p className="small strong">{step.title}</p>
                 <p className="tiny muted">{step.text}</p>

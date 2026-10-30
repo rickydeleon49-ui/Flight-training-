@@ -185,7 +185,7 @@ fn claude_study_aid_records_headers_document_before_text_and_schema() {
     let body = request.json();
     assert_eq!(body["model"], claude::MODEL);
     assert_eq!(body["max_tokens"], 16000);
-    assert_eq!(body["output_config"]["effort"], "low");
+    assert_eq!(body["output_config"]["effort"], "medium");
     for key in ["temperature", "top_p", "top_k", "thinking", "citations"] {
         assert!(body.get(key).is_none());
     }

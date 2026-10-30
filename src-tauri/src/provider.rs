@@ -154,7 +154,11 @@ async fn configure_at(
     verify: impl std::future::Future<Output = Result<(), String>>,
 ) -> Result<(), String> {
     verify.await?;
-    crate::secrets::save_key_for(root, id, key)
+    crate::secrets::save_key_for(root, id, key)?;
+    if id == ProviderId::Claude {
+        save_choice(root, id)?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -656,7 +660,7 @@ mod tests {
                 .as_deref(),
             Some("synthetic-new")
         );
-        assert_eq!(load_choice(root.path()), ProviderId::Gemini);
+        assert_eq!(load_choice(root.path()), ProviderId::Claude);
     }
 
     #[test]

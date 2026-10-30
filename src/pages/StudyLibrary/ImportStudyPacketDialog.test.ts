@@ -427,12 +427,12 @@ describe("SB-R1 confirmation preview regressions", () => {
     expect(dialog.textContent).toContain("the file's source details");
   });
 
-  it("SB-R1: confirms that nothing is uploaded and answers come from the packet rather than Her Flight Deck or Gemini", async () => {
+  it("SB-R1: confirms that nothing is uploaded and answers come from the packet rather than Her Flight Deck or an AI provider", async () => {
     await openLibrary();
     await openPreview();
     const dialog = importDialog();
     expect(dialog.textContent).toContain("Nothing is uploaded");
-    expect(dialog.textContent).toContain("Questions, answers, and explanations come from the packet, rather than Her Flight Deck or Gemini");
+    expect(dialog.textContent).toContain("Questions, answers, and explanations come from the packet, rather than Her Flight Deck or an AI provider");
   });
 
   it("SB-R1: truthfully handles guide-only packets with explicit absence wording", async () => {

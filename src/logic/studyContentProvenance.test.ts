@@ -366,3 +366,13 @@ it.each([{}, { summary: "My summary" }, { questions: [{}] }])("manual content wi
   });
   expect(result.originLabel).toBe("Written by you");
 });
+
+// The legacy stored category stays "gemini" for either online provider.
+it.each(["claude-haiku-5-5", "claude-future-model", "gemini-3.5-flash", "gemini-retired-model"])("uses stored model %s for origin without changing saved data", model => {
+  const content = Object.freeze({ provider: "gemini" as const, model, generatedAt: "2026-10-03T12:00:00Z" });
+  const before = JSON.stringify(content);
+  const result = formatStudyContentProvenance("Synthetic source", content);
+  expect(result.originLabel).toBe(model.startsWith("claude-") ? "Claude" : "Gemini");
+  expect(result.modelLabel).toBe(model);
+  expect(JSON.stringify(content)).toBe(before);
+});
