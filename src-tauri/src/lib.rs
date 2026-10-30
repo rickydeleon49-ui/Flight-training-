@@ -36,6 +36,7 @@ mod pdf_kit_sources;
 pub mod pdf_study_kit;
 #[cfg(test)]
 mod pdf_study_kit_tests;
+mod provider;
 #[cfg(test)]
 mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any

@@ -12,6 +12,7 @@ use lopdf::{dictionary, Document, Object};
 use super::*;
 use crate::fake_gemini::FakeGemini;
 use crate::gemini_files::{Policy, PreparedSources};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 
 const KEY: &str = "synthetic-key-AAAAAAAAAAAAAAAAAAAA";
 const OTHER_KEY: &str = "synthetic-key-BBBBBBBBBBBBBBBBBBBB";

@@ -700,7 +700,7 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
         .map(|(i, p)| json!({"pdfPage":i+1,"sourcePage":p}))
         .collect();
     let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
-    json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}})
+    json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::section())}})
 }
 fn reserve(root: &Path, id: &str, section: &str) -> Option<u32> {
     // Both the durable reservation and cancellation decision use this lock.
