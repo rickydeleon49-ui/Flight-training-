@@ -86,19 +86,20 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title="Edit milestone"
       description="A stage of your training. These are yours to shape."
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
             {busy ? "Saving…" : "Save changes"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="Name" error={error} full>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -144,7 +145,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

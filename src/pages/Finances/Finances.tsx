@@ -25,7 +25,7 @@ import {
   type Transaction,
   type TransactionType,
 } from "@/domain/types";
-import { formatMonthYear, formatShortDate, todayIso } from "@/lib/dates";
+import { formatMonthYear, formatShortDate } from "@/lib/dates";
 import { formatMoney, moneyToInput, parseMoney } from "@/lib/money";
 import {
   fundSummary,
@@ -39,11 +39,12 @@ import { useAppData } from "@/state/AppDataContext";
 
 import { TransactionFormDialog, type TransactionDraft } from "./TransactionFormDialog";
 import { SchoolComparisonPanel } from "./SchoolComparisonPanel";
+import { useLocalToday } from "@/state/useLocalToday";
 import "./finances.css";
 
 export function Finances() {
   const { data, mutate, deleteWithUndo } = useAppData();
-  const today = todayIso();
+  const today = useLocalToday();
 
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -427,13 +428,14 @@ function FundGoalDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title="Savings target"
       description="An amount you are working toward for the next stage of training."
       narrow
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button
             variant="primary"
             disabled={busy}
@@ -459,7 +461,7 @@ function FundGoalDialog({
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="What is it for?" full>
           {({ id }) => (
             <TextInput id={id} value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -478,7 +480,7 @@ function FundGoalDialog({
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

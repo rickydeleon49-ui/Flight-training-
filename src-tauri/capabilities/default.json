@@ -22,7 +22,10 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         { "url": "https://aistudio.google.com/**" },
-        { "url": "https://platform.claude.com/settings/keys" }
+        { "url": "https://platform.claude.com/settings/keys" },
+        { "url": "https://www.faa.gov/pilots/become/faq" },
+        { "url": "https://www.faa.gov/faq/when-required-what-class-medical-certificate-must-student-pilot-have" },
+        { "url": "https://www.faa.gov/pilots/become/student_cert" }
       ]
     },
     "sql:default",

@@ -115,18 +115,19 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title={goal ? "Edit goal" : "Add a goal"}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
             {busy ? "Saving…" : goal ? "Save changes" : "Add goal"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="Goal" error={error} full>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -224,7 +225,7 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

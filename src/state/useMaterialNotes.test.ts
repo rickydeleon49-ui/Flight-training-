@@ -34,6 +34,7 @@ it("keeps newer text through a delayed autosave refresh and drains it in order",
     initialProps: { saved: "original" },
   });
   act(() => hook.result.current.setNotes("first"));
+  expect(readDraft<{ baseline: string }>("material.a.notes")?.baseline).toBe("original");
   await act(() => vi.advanceTimersByTimeAsync(700));
   act(() => hook.result.current.setNotes("newer"));
   hook.rerender({ saved: "first" });
@@ -41,6 +42,7 @@ it("keeps newer text through a delayed autosave refresh and drains it in order",
   expect(hook.result.current.notes).toBe("newer");
   expect(hook.result.current.status).toBe("saving");
   expect(stored()?.text).toBe("newer");
+  expect(readDraft<{ baseline: string }>("material.a.notes")?.baseline).toBe("first");
   expect(save.mock.calls).toEqual([["first"], ["newer"]]);
   await act(async () => second.resolve());
   expect(hook.result.current.status).toBe("saved");
@@ -135,4 +137,44 @@ it("still saves newer text if storage fills after an earlier draft was kept", as
   expect(save).toHaveBeenCalledExactlyOnceWith("newest text");
   expect(hook.result.current.status).toBe("saved");
   expect(stored()).toBeNull();
+});
+
+it.each(["old baseline", undefined])("holds restored or legacy drafts until she chooses (%s)", async (baseline) => {
+  localStorage.setItem("her-flight-deck.draft.material.a.notes", JSON.stringify({ text: "earlier typing", revision: "r", baseline }));
+  const save = vi.fn().mockResolvedValue(undefined);
+  const hook = renderHook(() => useMaterialNotes("a", "restored saved notes", save));
+  expect(hook.result.current.notes).toBe("earlier typing");
+  await act(() => vi.advanceTimersByTimeAsync(1000));
+  await act(() => hook.result.current.retry());
+  expect(save).not.toHaveBeenCalled();
+  expect(hook.result.current.conflict).toBe(true);
+  hook.unmount();
+  expect(stored()?.text).toBe("earlier typing");
+  const reopened = renderHook(() => useMaterialNotes("a", "restored saved notes", save));
+  await act(async () => reopened.result.current.keepDraft());
+  expect(save).toHaveBeenCalledExactlyOnceWith("earlier typing");
+  expect(stored()).toBeNull();
+});
+
+it("discards a conflicting draft only after Use the saved notes", async () => {
+  localStorage.setItem("her-flight-deck.draft.material.a.notes", JSON.stringify({ text: "earlier", revision: "r", baseline: "old" }));
+  const save = vi.fn();
+  const hook = renderHook(() => useMaterialNotes("a", "restored", save));
+  expect(stored()?.text).toBe("earlier");
+  act(() => hook.result.current.useSaved());
+  expect(hook.result.current.notes).toBe("restored");
+  expect(hook.result.current.conflict).toBe(false);
+  expect(stored()).toBeNull();
+  await act(() => vi.advanceTimersByTimeAsync(1000));
+  hook.unmount();
+  expect(save).not.toHaveBeenCalled();
+});
+
+it("autosaves a recovered draft with the same baseline", async () => {
+  localStorage.setItem("her-flight-deck.draft.material.a.notes", JSON.stringify({ text: "earlier", revision: "r", baseline: "saved" }));
+  const save = vi.fn().mockResolvedValue(undefined);
+  const hook = renderHook(() => useMaterialNotes("a", "saved", save));
+  expect(hook.result.current.conflict).toBe(false);
+  await act(() => vi.advanceTimersByTimeAsync(700));
+  expect(save).toHaveBeenCalledExactlyOnceWith("earlier");
 });

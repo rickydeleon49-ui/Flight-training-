@@ -51,11 +51,25 @@ function withData(component: ReactElement, data: Partial<AppData> = {}, mutate =
 const button = (name: string | RegExp) => screen.getByRole("button", { name }) as HTMLButtonElement;
 
 /** Two fast clicks → one save; while saving the button says so; after a failed save it works again. */
-async function expectGuarded(name: string, save: ReturnType<typeof slowSave>) {
+async function expectGuarded(name: string, save: ReturnType<typeof slowSave>, close?: ReturnType<typeof vi.fn>) {
   fireEvent.click(button(name));
   fireEvent.click(screen.getByRole("button", { name: /Saving…|^Add$/ }));
   await waitFor(() => expect(save.fn).toHaveBeenCalledTimes(1));
   expect(button("Saving…").disabled).toBe(true);
+  const dialog = screen.queryByRole("dialog");
+  if (dialog) {
+    for (const field of dialog.querySelectorAll("input, textarea, select")) {
+      expect(field.matches(":disabled")).toBe(true);
+    }
+    expect(button("Cancel").disabled).toBe(true);
+    expect(button("Close").disabled).toBe(true);
+    fireEvent.click(button("Cancel"));
+    fireEvent.click(button("Close"));
+    fireEvent(dialog, new Event("cancel", { bubbles: true, cancelable: true }));
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.getByRole("dialog")).toBe(dialog);
+    if (close) expect(close).not.toHaveBeenCalled();
+  }
   // The parent kept the dialog open (the write failed): Save is back.
   save.release();
   await waitFor(() => expect(button(name).disabled).toBe(false));
@@ -74,16 +88,18 @@ describe("form dialogs save once on a double-click", () => {
 
   it("TransactionFormDialog", async () => {
     const save = slowSave();
-    render(h(TransactionFormDialog, { open: true, type: "expense", events: [], onClose: vi.fn(), onSave: save.fn }));
+    const close = vi.fn();
+    render(h(TransactionFormDialog, { open: true, type: "expense", events: [], onClose: close, onSave: save.fn }));
     fireEvent.change(screen.getByLabelText(/^Amount/), { target: { value: "275" } });
-    await expectGuarded("Record expense", save);
+    await expectGuarded("Record expense", save, close);
   });
 
   it("EventFormDialog", async () => {
     const save = slowSave();
-    render(h(EventFormDialog, { open: true, goals: [], onClose: vi.fn(), onSave: save.fn }));
+    const close = vi.fn();
+    render(h(EventFormDialog, { open: true, goals: [], onClose: close, onSave: save.fn }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Pattern work" } });
-    await expectGuarded("Add event", save);
+    await expectGuarded("Add event", save, close);
   });
 
   it("GoalFormDialog", async () => {

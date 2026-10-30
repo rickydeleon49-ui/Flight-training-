@@ -150,18 +150,19 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title={event ? "Edit event" : "Add to your schedule"}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
             {busy ? "Saving…" : event ? "Save changes" : "Add event"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="Title" error={errors.title} full>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -300,7 +301,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

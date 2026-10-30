@@ -159,19 +159,20 @@ export function ActionFormDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title={action ? "Edit action" : "Add a next action"}
       description="Say what to do next, specifically enough to act on."
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
             {busy ? "Saving…" : action ? "Save changes" : "Add action"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="What needs to happen?" error={error} full>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -246,7 +247,7 @@ export function ActionFormDialog({
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

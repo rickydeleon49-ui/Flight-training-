@@ -482,7 +482,7 @@ function MaterialDetailPage() {
       });
   }, []);
 
-  const { notes, setNotes, status: notesStatus, recoverable, retry } = useMaterialNotes(
+  const { notes, setNotes, status: notesStatus, recoverable, retry, conflict: notesConflict, keepDraft, useSaved } = useMaterialNotes(
     materialId ?? "", material?.notes ?? "",
     (text) => mutate((repos) => repos.documents.update(materialId!, { notes: text })),
   );
@@ -1609,9 +1609,18 @@ function MaterialDetailPage() {
                 )
               }
             />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
+            {!tipsHidden && !notesConflict ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
             <CardBody>
+              {notesConflict ? (
+                <div role="status">
+                  <p>You have unsaved notes from earlier.</p>
+                  <Button onClick={keepDraft}>Keep these</Button>{" "}
+                  <Button onClick={useSaved}>Use the saved notes</Button>
+                  <details><summary>Saved notes</summary><p style={{ whiteSpace: "pre-wrap" }}>{material.notes || "No saved notes."}</p></details>
+                </div>
+              ) : null}
               <TextArea
+                readOnly={notesConflict}
                 rows={6}
                 value={notes}
                 aria-label="Personal notes"
