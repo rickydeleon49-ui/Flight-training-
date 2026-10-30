@@ -42,6 +42,8 @@ Every added feature gets an entry describing behavior, validation, bugs found an
 | Window state restoration and private logging (WINSTATE-01) | LOCAL, batch-1029 | 7 placement tests; log privacy source test. | Installed-app check (window reopens, unplugged monitor, log file appears) pending. |
 | Regenerate preview changed-words highlight (JSDIFF-01) | LOCAL, batch-1029 | One test per dialog fails when reverted; ~3 kB gzip added, only in the material page chunk. | Installed-app look not yet checked. |
 | Sunset and night-begins hint under Night time (NIGHT-01) | LOCAL, batch-1029 | 7 logic + 2 form tests (revert-checked); suncalc within seconds of NOAA's equations at KPAO, KJFK, PANC, KMIA; no field value ever changes; airport data is a 343 kB lazy chunk. | Not compared with NOAA's live site; installed-app check pending. |
+| One typed date field everywhere (DATES-01) | LOCAL, batch-1029 | Student run reproduced 11052026 → 12/29/2026 in the Flight Log's native date field. All 13 native date inputs replaced; 30 new tests incl. real-SQLite saves for Flight Log, Settings and Pilot Toolkit; source test keeps type="date" out; revert-checks fail as expected. Reschedule and observation dates are now required (they could save empty). | Installed-app re-check passed (Flight Log, Settings, Finances; goal read-back was below the dialog fold → now scrolled into view). |
+| Log file records the app version at launch (WINSTATE-01 follow-up) | LOCAL, batch-1029 | Student run found the log empty after a normal launch; now one "Her Flight Deck <version> started." line, nothing of hers. | — |
 
 ## Versioned card reviews and continuity (approved C-D3)
 
