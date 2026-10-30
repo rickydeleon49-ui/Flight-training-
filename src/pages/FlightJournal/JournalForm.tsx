@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -17,6 +17,7 @@ import { todayIso } from "@/lib/dates";
 import { writeDraft } from "@/lib/drafts";
 import { newId } from "@/lib/id";
 import { flightTimeProblem, flightTimesChanged } from "@/logic/flightLog";
+import { loadAirportIndex, nightHint, nightHintText, type AirportIndex } from "@/logic/nightHint";
 import type { DebriefSaveOperation } from "@/data/db";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
@@ -141,6 +142,24 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const { data, mutate } = useAppData();
 
   const [mode, setMode] = useState<"quick" | "full">(initialMode);
+
+  // The airport table is loaded only once the full flight log is on screen,
+  // for the quiet sunset / night line under Night flight time.
+  const [airports, setAirports] = useState<AirportIndex | null>(null);
+  useEffect(() => {
+    if (mode !== "full" || airports) return;
+    let active = true;
+    loadAirportIndex()
+      .then((index) => {
+        if (active) setAirports(index);
+      })
+      .catch(() => {
+        // No table, no line: the form works exactly as before.
+      });
+    return () => {
+      active = false;
+    };
+  }, [mode, airports]);
 
   const existing = entryId ? data.journalEntries.find((entry) => entry.id === entryId) : null;
 
@@ -662,6 +681,13 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     }
   };
 
+  const nightHintAirport = draft.departureAirport.trim() || draft.arrivalAirport.trim();
+  const nightLine = useMemo(() => {
+    if (!airports) return null;
+    const hint = nightHint(draft.date, nightHintAirport, airports);
+    return hint ? nightHintText(hint, draft.date) : null;
+  }, [airports, draft.date, nightHintAirport]);
+
   const lessons = data.events.filter((event) => event.eventType === "flight_lesson");
   const isDiscoveryPreset = !entryId && !existing && !recovered && searchParams.get("mode") === "discovery";
 
@@ -1111,14 +1137,15 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                 )}
               </Field>
 
-              <Field label="Night flight time">
-                {({ id }) => (
+              <Field label="Night flight time" hint={nightLine ?? undefined}>
+                {({ id, describedBy }) => (
                   <TextInput
                     id={id}
                     type="number"
                     disabled={isSaving}
                     step="0.1"
                     min="0"
+                    aria-describedby={describedBy}
                     value={draft.nightTime ?? ""}
                     placeholder="0.0"
                     onChange={(e) => update("nightTime", optionalNumber(e.target.value))}

@@ -20,7 +20,47 @@ describe("third-party notice for the zod dependency", () => {
     const license = read("node_modules/zod/LICENSE");
     expect(license).toContain("Copyright (c) 2025 Colin McDonnell");
     expect(notice).toContain("zod 4.6.7");
-    expect(notice.endsWith(license)).toBe(true);
+    expect(notice).toContain(`zod 4.6.7\n`);
+    expect(notice).toContain(`-\n\n${license}`);
+  });
+});
+
+describe("third-party notice for the suncalc dependency", () => {
+  it("pins exactly suncalc 2.1.1, which ships its own types", () => {
+    const pkg = JSON.parse(read("package.json"));
+    expect(pkg.dependencies.suncalc).toBe("2.1.1");
+    expect(pkg.devDependencies["@types/suncalc"]).toBeUndefined();
+    const lock = JSON.parse(read("package-lock.json"));
+    expect(lock.packages["node_modules/suncalc"].version).toBe("2.1.1");
+    expect(lock.packages["node_modules/suncalc"].integrity).toBe(
+      "sha512-ufMOPzYRk5aomEs3g+qeJGdCPZWC3TL94E0HQagoSusFnNXCvfuewWBroY3lxRHqA7IA8UGvgg7dcrSSDJsuEg==",
+    );
+  });
+
+  it("ships the package's own BSD-2-Clause copyright and conditions unchanged", () => {
+    const notice = read("public/THIRD_PARTY_NOTICES.txt");
+    const license = read("node_modules/suncalc/LICENSE");
+    expect(license).toContain("Copyright (c) 2026, Volodymyr Agafonkin");
+    expect(notice).toContain("suncalc 2.1.1");
+    expect(notice).toContain("License: BSD-2-Clause");
+    expect(notice).toContain(`-\n\n${license}`);
+  });
+});
+
+describe("notice for the OurAirports airport data", () => {
+  it("names the public-domain source, pinned commit and checksum the build script uses", () => {
+    const notice = read("public/THIRD_PARTY_NOTICES.txt");
+    const script = read("scripts/build-airport-coords.mjs");
+    const commit = /SOURCE_COMMIT = "([0-9a-f]{40})"/.exec(script)?.[1];
+    const sha = /SOURCE_SHA256 = "([0-9a-f]{64})"/.exec(script)?.[1];
+    expect(commit).toBeTruthy();
+    expect(notice).toContain("https://github.com/davidmegginson/ourairports-data");
+    expect(notice).toContain(`Commit: ${commit}`);
+    expect(notice).toContain(`SHA-256 ${sha}`);
+    expect(notice).toContain("License: public domain (The Unlicense)");
+    expect(notice).toContain("This is free and unencumbered software released into the public domain.");
+    const data = JSON.parse(read("src/data/airportCoords.json"));
+    expect(data.source).toContain(commit);
   });
 });
 
