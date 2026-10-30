@@ -390,6 +390,7 @@ describe("practice question drafts", () => {
     const again = await dialog("Write your own practice questions");
     await waitFor(() => expect(again.getByLabelText("Question 1 wording")).toHaveProperty("value", "Typed before quitting"));
     expect(again.queryByText(/unsaved changes to these questions from earlier/)).toBeNull();
+    expect(again.getByText("We kept your unsaved changes from last time. Save them, or Cancel to drop them.")).toBeTruthy();
     await fill(again, "Question 1, option 1", "One");
     await fill(again, "Question 1, option 2", "Two");
     fireEvent.click(again.getByRole("button", { name: "Save" }));
@@ -435,6 +436,8 @@ describe("practice question drafts", () => {
     await seed();
     await open(`/study/${materialId}`);
     const edit = await editor();
+    // A normal open says nothing about kept changes.
+    expect(edit.queryByText(/We kept your unsaved changes/)).toBeNull();
     await fill(edit, "Question 1 wording", "Throw away");
     fireEvent.click(edit.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit questions" })).toBeNull());

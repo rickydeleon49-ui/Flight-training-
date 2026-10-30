@@ -77,6 +77,9 @@ function sameContent(a: AiStudySet, b: AiStudySet): boolean {
   return text(a) === text(b);
 }
 
+/** Why a dialog opened by itself after she quit with it open. */
+export const KEPT_DRAFT_NOTE = "We kept your unsaved changes from last time. Save them, or Cancel to drop them.";
+
 const NOUN = { summary: "summary", section: "section", card: "card" } as const;
 
 /**
@@ -152,6 +155,8 @@ export function StudySetEditor({
   // the saved set moved on since that draft began.
   const [restoring, setRestoring] = useState<StudySetEditorDraft | null>(null);
   const [conflict, setConflict] = useState(false);
+  // The dialog opened by itself from a kept draft: say why.
+  const [reopened, setReopened] = useState(false);
   const autoOpenedRef = useRef(false);
 
   const live: StudySetEditorDraft | null =
@@ -165,6 +170,7 @@ export function StudySetEditor({
     (stored) => {
       if (!isEditorDraft(stored)) return;
       autoOpenedRef.current = true;
+      setReopened(true);
       setRestoring(stored);
       void openFor(stored.action, stored);
     },
@@ -176,6 +182,7 @@ export function StudySetEditor({
     forget();
     setRestoring(null);
     setConflict(false);
+    setReopened(false);
     setAction(null);
     setOpened(null);
     setOpenError(null);
@@ -201,6 +208,7 @@ export function StudySetEditor({
       pendingRef.current = draft.pending;
     } else {
       setRestoring(null);
+      setReopened(false);
       pendingRef.current = null;
       setFromInstructor(false);
       setPage("");
@@ -315,7 +323,9 @@ export function StudySetEditor({
 
   /** The same calm choice as her notes: keep the earlier typing, or the saved one. */
   const conflictChoice = (what: string) =>
-    conflict && action ? (
+    reopened && !conflict && action ? (
+      <p className="tiny muted" role="status">{KEPT_DRAFT_NOTE}</p>
+    ) : conflict && action ? (
       <div role="status" className="stack stack--2">
         <p>You have unsaved changes to this {what} from earlier.</p>
         <div className="row row--wrap">

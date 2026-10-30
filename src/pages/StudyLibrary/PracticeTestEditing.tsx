@@ -8,7 +8,7 @@ import { formatLocalDay } from "@/lib/dates";
 import { useAppData } from "@/state/AppDataContext";
 import type { PdfQuestionSeed } from "@/data/pdfStudyKitDraft";
 import { PdfItemLabel, PDF_KIT_REMINDER } from "./PdfItemLabel";
-import { AuthorBadge, seedNote } from "./StudySetEditor";
+import { AuthorBadge, KEPT_DRAFT_NOTE, seedNote } from "./StudySetEditor";
 
 // Mirrors the decoder bounds in practiceAuthoring.ts without changing that contract.
 const MAX_QUESTIONS = 200;
@@ -72,6 +72,8 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   const [reloading, setReloading] = useState(false);
   // Typing kept from an earlier session, made on questions that have changed since.
   const [conflict, setConflict] = useState(false);
+  // Opened by itself from typing kept after a quit: say why.
+  const [reopened, setReopened] = useState(false);
   const busyRef = useRef(false);
   const readRef = useRef(0);
   const pending = useRef<{ key: string; operation: PracticeSaveOperation } | null>(null);
@@ -115,6 +117,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     setDeleting(null);
     setReloading(false);
     setConflict(false);
+    setReopened(false);
     // A PDF kit's drafts wait for her; anywhere else Cancel means she let them go.
     if (seed) remember();
     else dropMirror(mirrorKey);
@@ -189,6 +192,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
       });
       if (result?.ok) {
         setOpen(false);
+        setReopened(false);
         if (!seed) pending.current = null;
         if (seed) remember();
         else dropMirror(mirrorKey);
@@ -214,6 +218,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     if (seed || noteSeed || autoChecked.current || !repositories || attempt === null) return;
     autoChecked.current = true;
     if (!applicable || blocked || !readMirror(mirrorKey)) return;
+    setReopened(true);
     setOpen(true);
     void load(true);
   }, [repositories, attempt, applicable, blocked]);
@@ -239,11 +244,12 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
         {seed ? <p className="tiny muted">{PDF_KIT_REMINDER} Your saved questions stay here; these drafts are added only when you save.</p> : null}
         {seed && blocked ? <p role="alert">Finish or abandon your current attempt before saving these questions.</p> : null}
         {noteSeed && blocked ? <p role="alert">Finish or abandon your current attempt before saving this question.</p> : null}
+        {reopened && !conflict ? <p className="tiny muted" role="status">{KEPT_DRAFT_NOTE}</p> : null}
         {conflict ? <div role="status" className="stack stack--2">
           <p>You have unsaved changes to these questions from earlier.</p>
           <div className="row row--wrap">
             <Button onClick={() => setConflict(false)}>Keep these</Button>
-            <Button onClick={() => { dropMirror(mirrorKey); void load(false); }}>Use the saved questions</Button>
+            <Button onClick={() => { dropMirror(mirrorKey); setReopened(false); void load(false); }}>Use the saved questions</Button>
           </div>
         </div> : null}
         {expected === undefined ? <p role="status">Opening…</p> : <fieldset disabled={busy} className="stack stack--3" style={{ minWidth: 0, border: 0, padding: 0 }}>

@@ -78,6 +78,7 @@ describe("study-set editor drafts", { timeout: 60_000 }, () => {
     const again = within(await screen.findByRole("dialog", { name: "Edit this summary" }, SLOW));
     await waitFor(() => expect(again.getByLabelText("Summary")).toHaveProperty("value", "My unsaved summary."));
     expect(again.queryByText(/unsaved changes to this summary from earlier/)).toBeNull();
+    expect(again.getByText("We kept your unsaved changes from last time. Save them, or Cancel to drop them.")).toBeTruthy();
     fireEvent.click(again.getByRole("button", { name: "Save" }));
     await waitFor(async () => expect(await savedSummary()).toBe("My unsaved summary."), SLOW);
     await waitFor(() => expect(readDraft(key)).toBeNull());
@@ -119,6 +120,8 @@ describe("study-set editor drafts", { timeout: 60_000 }, () => {
   it("Cancel lets the draft go", async () => {
     mount();
     const dialog = await openSummary();
+    // A normal open says nothing about kept changes.
+    expect(dialog.queryByText(/We kept your unsaved changes/)).toBeNull();
     fireEvent.change(dialog.getByLabelText("Summary"), { target: { value: "Throw away." } });
     fireEvent.click(dialog.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Edit this summary" })).toBeNull());
