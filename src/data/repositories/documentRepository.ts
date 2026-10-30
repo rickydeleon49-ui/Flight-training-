@@ -380,12 +380,14 @@ export function documentRepository(db: SqlDatabase) {
 
   return {
     async list(): Promise<StudyMaterial[]> {
-      const [rows, tags, lineage, copies] = await Promise.all([
+      const [rows, tags, lineage, copies, pictures] = await Promise.all([
         db.select<Row>("SELECT * FROM study_materials ORDER BY created_at DESC"),
         tagsByMaterial(),
         lineageByMaterial(),
         db.select<{ material_id: string; reference_id: import("@/domain/types").FaaReferenceCopy["referenceId"]; edition: string; content_sha256: string; total_pages: number }>("SELECT * FROM faa_reference_copies"),
+        db.select<{ image_material_id: string }>("SELECT DISTINCT image_material_id FROM visual_card_regions WHERE image_material_id IS NOT NULL"),
       ]);
+      const pictureIds = new Set(pictures.map((row) => row.image_material_id));
       const shelf = new Map(copies.map((copy) => [copy.material_id, {
         referenceId: copy.reference_id, edition: copy.edition,
         contentSha256: copy.content_sha256, totalPages: copy.total_pages,
@@ -394,6 +396,7 @@ export function documentRepository(db: SqlDatabase) {
         ...map(row, tags.get(row.id) ?? []),
         lineage: lineage.get(row.id) ?? null,
         ...(shelf.has(row.id) ? { faaReference: shelf.get(row.id) } : {}),
+        ...(pictureIds.has(row.id) ? { usedByPictureCards: true } : {}),
       }));
     },
 

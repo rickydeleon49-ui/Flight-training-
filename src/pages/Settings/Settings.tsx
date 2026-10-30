@@ -52,7 +52,7 @@ import {
   backupHealth,
   formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
-  formatRestorePreviewMissingNotice,
+  formatRestorePreviewNotice,
   restoreWarning,
 } from "@/logic/dataSafety";
 import { trainingDuration } from "@/logic/keyDates";
@@ -456,9 +456,10 @@ export function Settings() {
         setBackupNote(warning);
         return;
       }
-      if (candidate.missingDocuments && candidate.missingDocuments.length > 0) {
+      const previewNotice = formatRestorePreviewNotice(candidate);
+      if (previewNotice) {
         setBackupProblem(true);
-        setBackupNote(formatRestorePreviewMissingNotice(candidate.missingDocuments.length));
+        setBackupNote(previewNotice);
       }
       setRestoreCandidate(candidate);
     } catch (error) {
@@ -1380,7 +1381,7 @@ export function Settings() {
         title="Restore this complete backup?"
         message={
           restoreCandidate
-            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). ${restoreCandidate.missingDocuments && restoreCandidate.missingDocuments.length > 0 ? `${formatRestorePreviewMissingNotice(restoreCandidate.missingDocuments.length)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). ${formatRestorePreviewNotice(restoreCandidate) ? `${formatRestorePreviewNotice(restoreCandidate)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"

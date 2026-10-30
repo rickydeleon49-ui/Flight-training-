@@ -36,7 +36,7 @@ function Ready() {
 }
 
 async function openMaterial(id: string) {
-  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}`] }, h(Probe), h(Ready))));
+  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}?tab=more`] }, h(Probe), h(Ready))));
   await waitFor(() => expect(status).toBe("ready"));
   await screen.findByText("Added");
 }

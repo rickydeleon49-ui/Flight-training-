@@ -998,7 +998,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     // Start review session
-    const reviewBtn = await screen.findByRole("button", { name: "Review cards" });
+    const reviewBtn = await screen.findByRole("button", { name: /^Review \d+ cards?$/ });
     fireEvent.click(reviewBtn);
 
     await screen.findByRole("button", { name: "Show answer" });
@@ -1035,7 +1035,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     // Start review session and show answer
-    const reviewBtn = await screen.findByRole("button", { name: "Review cards" });
+    const reviewBtn = await screen.findByRole("button", { name: /^Review \d+ cards?$/ });
     fireEvent.click(reviewBtn);
     await screen.findByRole("button", { name: "Show answer" });
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
@@ -1076,13 +1076,14 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     const studyGuideSection = document.getElementById("material-study-guide")!;
-    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
+    const askCard = screen.getByRole("dialog", { name: "Ask about this PDF" });
     const startHere = document.getElementById("material-start-here")!;
-    expect(startHere.nextElementSibling?.contains(askCard)).toBe(true);
-    expect(askCard.compareDocumentPosition(studyGuideSection) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(startHere.textContent).toContain("New to this?");
+    expect(studyGuideSection.contains(askCard)).toBe(false);
     expect(within(studyGuideSection).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
     expect(await within(askCard).findByText("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.")).toBeTruthy();
-    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask about this PDF" });
+    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask" });
     expect(askPdfBtn.classList.contains("button--secondary")).toBe(true);
 
     fireEvent.click(askPdfBtn);
@@ -1111,8 +1112,9 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
 
     await seedFlashcardMaterial();
     await openMaterial("mat-pdf");
-    const askCard = () => screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
-    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask about this PDF" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
+    const askCard = () => screen.getByRole("dialog", { name: "Ask about this PDF" });
+    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask" }));
 
     const ask = async (question: string) => {
       fireEvent.change(within(askCard()).getByLabelText("Ask a question"), { target: { value: question } });
@@ -1123,6 +1125,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await ask("One more question");
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
 
+    fireEvent.click(within(askCard()).getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
     fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
@@ -1130,7 +1133,8 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => expect(cancelAskGemini).toHaveBeenCalled());
-    await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask about this PDF" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
+    await waitFor(() => expect(within(askCard()).getByRole("button", { name: "Ask" })).toBeTruthy());
     expect(within(askCard()).queryByText("Answer for the original PDF.")).toBeNull();
     await act(async () => finishPending({ answer: "Late answer from the original PDF.", model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 3, quote: "Synthetic passage 3." }] }));
     expect(screen.queryByText("Late answer from the original PDF.")).toBeNull();
@@ -1145,11 +1149,12 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await seedFlashcardMaterial();
     await openMaterial("mat-pdf");
 
-    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
+    const askCard = screen.getByRole("dialog", { name: "Ask about this PDF" });
     await waitFor(() =>
       expect(within(askCard).getByText("Connect Gemini in Settings to ask questions about this PDF.")).toBeTruthy(),
     );
-    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(within(askCard).queryByRole("button", { name: "Ask" })).toBeNull();
   });
 
   it("the too-big PDF shows the split line", async () => {
@@ -1157,9 +1162,10 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await seedFlashcardMaterial(60 * 1024 * 1024);
     await openMaterial("mat-pdf");
 
-    const askCard = screen.getByRole("heading", { name: "Ask about this PDF" }).closest(".card")! as HTMLElement;
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
+    const askCard = screen.getByRole("dialog", { name: "Ask about this PDF" });
     expect(within(askCard).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
-    expect(within(askCard).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
+    expect(within(askCard).queryByRole("button", { name: "Ask" })).toBeNull();
     expect(within(askCard).queryByRole("region", { name: "Ask Gemini helper" })).toBeNull();
   });
 });

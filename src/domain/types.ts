@@ -225,6 +225,8 @@ export interface FaaReferenceCopy {
 
 export interface StudyMaterial {
   faaReference?: FaaReferenceCopy;
+  /** True when picture cards crop this material's picture, so its file stays fixed. */
+  usedByPictureCards?: boolean;
   id: Id;
   title: string;
   materialType: MaterialType;

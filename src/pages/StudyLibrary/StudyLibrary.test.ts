@@ -187,13 +187,13 @@ it("PACKS-08 does not show missed-topic panels while a search is typed, and show
   render(h(MemoryRouter, null, h(StudyLibrary)));
   const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
   const topics = () => screen.getByText("Find study materials for missed topics");
-  expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
+  expect(before(screen.getByText("Material 0"), topics())).toBe(true);
   fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "Material 149" } });
   expect(screen.getByText("Material 149")).toBeTruthy();
   expect(screen.queryByText("Find study materials for missed topics")).toBeNull();
   expect(screen.queryByText("ACS Area Material Coverage")).toBeNull();
   fireEvent.change(screen.getByRole("textbox", { name: "Search your library" }), { target: { value: "   " } });
-  expect(before(topics(), screen.getByText("Material 0"))).toBe(true);
+  expect(before(screen.getByText("Material 0"), topics())).toBe(true);
 });
 
 
@@ -224,8 +224,68 @@ it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards
     referenceId: "private-acs", edition: "", contentSha256: "a".repeat(64), totalPages: 1,
   } }), makeMaterial({ id: "ordinary", title: "My own reading", notes: "FAA reference: Private Pilot Airplane ACS" })];
   render(h(MemoryRouter, null, h(StudyLibrary)));
-  expect(screen.getByRole("link", { name: /Notes and bookmarks: Private Pilot Airplane ACS/ }).getAttribute("href")).toBe("/study/faa");
+  expect(screen.getByRole("link", { name: /Notes and bookmarks: Private Pilot Airplane ACS/ }).getAttribute("href")).toBe("/study/faa?tab=notes");
   expect(document.querySelectorAll(".material-card")).toHaveLength(1);
   expect(screen.getByText("My own reading")).toBeTruthy();
   expect(screen.queryByRole("link", { name: /^Private Pilot Airplane ACS$/ })).toBeNull();
+});
+
+it("LIBRARY-CALM-01 shows her materials first and folds FAA references and the ACS lookup into one closed shelf below", () => {
+  const view = render(h(MemoryRouter, null, h(StudyLibrary)));
+  const shelf = screen.getByText("References and ACS lookup", { selector: "summary" }).parentElement as HTMLDetailsElement;
+  expect(shelf.tagName).toBe("DETAILS");
+  expect(shelf.open).toBe(false);
+  const grid = screen.getByText("Material 0").closest(".material-grid")!;
+  expect(grid.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(shelf.contains(screen.getByRole("heading", { name: "FAA references" }))).toBe(true);
+  expect(shelf.contains(screen.getByText("Find study materials for missed topics"))).toBe(true);
+  expect(shelf.contains(screen.getByText("ACS Area Material Coverage"))).toBe(true);
+  // Opening it is remembered while the app is open.
+  shelf.open = true;
+  fireEvent(shelf, new Event("toggle"));
+  view.unmount();
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  expect((screen.getByText("References and ACS lookup", { selector: "summary" }).parentElement as HTMLDetailsElement).open).toBe(true);
+});
+
+it("LIBRARY-CALM-01 a link to the shelf (/study#references) opens it, even over a remembered search", () => {
+  sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("Material 149"));
+  render(h(MemoryRouter, { initialEntries: ["/study#references"] }, h(StudyLibrary)));
+  const shelf = document.getElementById("references") as HTMLDetailsElement;
+  expect(shelf).not.toBeNull();
+  expect(shelf.open).toBe(true);
+  expect((screen.getByRole("textbox", { name: "Search your library" }) as HTMLInputElement).value).toBe("");
+});
+
+it("LIBRARY-CALM-01 keeps one primary header action; import and export live in More; Practice history is on the History tab instead", () => {
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const header = screen.getByRole("heading", { name: "Study Library" }).closest("header, .page-header") ?? document.body;
+  expect(header.querySelectorAll(".button--primary")).toHaveLength(1);
+  expect(within(header as HTMLElement).getByRole("button", { name: /Add material/ }).className).toContain("button--primary");
+  const more = screen.getByText("More", { selector: "summary" }).parentElement as HTMLDetailsElement;
+  expect(more.open).toBe(false);
+  expect(more.contains(screen.getByRole("button", { name: /Import study packet/ }))).toBe(true);
+  expect(more.contains(screen.getByRole("button", { name: "Export handout…" }))).toBe(true);
+  expect(screen.queryByRole("link", { name: "Practice history" })).toBeNull();
+  // Choosing an item closes the menu.
+  more.open = true;
+  fireEvent.click(screen.getByRole("button", { name: /Import study packet/ }));
+  expect(more.open).toBe(false);
+});
+
+it("POLISH-04 search: focus selects the remembered words so typing replaces them, and × clears them", () => {
+  sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("aerodynamics"));
+  render(h(MemoryRouter, null, h(StudyLibrary)));
+  const box = screen.getByRole("textbox", { name: "Search your library" }) as HTMLInputElement;
+  expect(box.value).toBe("aerodynamics");
+  fireEvent.focus(box);
+  expect([box.selectionStart, box.selectionEnd]).toEqual([0, "aerodynamics".length]);
+  // The click that focused it does not undo the selection (WebKit mouseup).
+  expect(fireEvent.mouseUp(box)).toBe(false);
+  expect(fireEvent.mouseUp(box)).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+  expect(box.value).toBe("");
+  expect(document.activeElement).toBe(box);
+  expect(screen.getByText("Material 0")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
 });

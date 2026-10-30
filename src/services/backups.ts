@@ -35,6 +35,10 @@ export interface CompleteBackupInfo {
   path: string;
   missingDocuments?: string[];
   unreferencedDocuments?: string[];
+  /** Picture cards whose picture is gone or no longer matches. */
+  unavailablePictures?: number;
+  /** FAA reference copies whose PDF is gone or no longer matches. */
+  unavailableReferences?: number;
 }
 
 export const backupsAvailable = (): boolean => isTauri();

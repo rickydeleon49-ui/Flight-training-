@@ -90,7 +90,7 @@ function Ready() {
 }
 
 async function openMaterial(id: string, title: string) {
-  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}`] }, h(Probe), h(Ready))));
+  render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}?tab=more`] }, h(Probe), h(Ready))));
   await screen.findByRole("heading", { name: title });
 }
 

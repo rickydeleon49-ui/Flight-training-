@@ -52,6 +52,7 @@ interface DocumentPagesPanelProps {
   restoring: boolean;
   onRestore: () => void;
   showTips?: boolean;
+  onPageNotesAvailable?: (available: boolean) => void;
 }
 
 const WORKING: Record<string, string> = {
@@ -103,7 +104,7 @@ function emptyCardSet(material: StudyMaterial): AiStudySet {
   };
 }
 
-export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true }: DocumentPagesPanelProps) {
+export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true, onPageNotesAvailable }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
   const app = useOptionalAppData();
   // "Make a card" opens the card editor prefilled from one page note.
@@ -216,6 +217,9 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   useEffect(() => {
     setDraft((current) => (current && current.materialId !== material.id ? null : current));
   }, [material.id]);
+
+  const pageNotesAvailable = Boolean(nav.state?.bookmarks.length);
+  useEffect(() => { onPageNotesAvailable?.(pageNotesAvailable); }, [pageNotesAvailable, onPageNotesAvailable]);
 
   if (!repo?.supported() || !controller) return null;
   const desktop = repo.canCheckFiles();
@@ -371,7 +375,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                           Open
                         </Button>
                       ) : null}
-                      <Button size="small" onClick={() => void makeCard(bookmark)}>Make a card</Button>
+                      <Button size="small" data-material-make-card onClick={() => void makeCard(bookmark)}>Make a card</Button>
                       <Button size="small" onClick={() => void makeQuestion(bookmark)}>Make a question</Button>
                       <Button size="small" variant="danger" className="destructive-action" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
                         Remove

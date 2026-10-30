@@ -1,6 +1,6 @@
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
@@ -14,8 +14,8 @@ import {
   CardHeader,
   ConfirmDialog,
   DocumentIcon,
+  Dialog,
   EmptyState,
-  ExternalIcon,
   PlusIcon,
   Select,
   TextArea,
@@ -78,7 +78,7 @@ import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
 import { pdfAskContext } from "@/logic/pdfAskContext";
 import { VisualCardEditor } from "./VisualCardEditor";
-import { AuthorBadge, StudySetEditor } from "./StudySetEditor";
+import { AuthorBadge, StartManualStudySet, StudySetEditor } from "./StudySetEditor";
 import { PracticeTestEditor, PracticeTestHistory } from "./PracticeTestEditing";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeRegenerationReviewDialog } from "./PracticeRegenerationReviewDialog";
@@ -90,7 +90,8 @@ import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { useMaterialTips } from "./materialTips";
 import { RelatedStudy } from "./RelatedStudy";
 import { jumpToMaterialHeading } from "./materialJump";
-import { selectRelatedStudy } from "@/logic/relatedStudy";
+import { MATERIAL_TABS, materialTabFrom, materialTabParams, materialTabForAnchor, type MaterialTab } from "./materialTabs";
+import { MaterialActionsMenu } from "./MaterialActionsMenu";
 
 export function MaterialDetail() {
   const { materialId } = useParams();
@@ -100,10 +101,31 @@ export function MaterialDetail() {
 }
 
 function MaterialDetailPage() {
+  const [pageNotesAvailable, setPageNotesAvailable] = useState(false);
+  const [askingPdf, setAskingPdf] = useState(false);
   const [activePracticeAttempt, setActivePracticeAttempt] = useState<boolean | null>(null);
   const { materialId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [params, setSearchParams] = useSearchParams();
+  const tab = materialTabFrom(params);
+  const selectTab = (next: MaterialTab) => {
+    const nextParams = materialTabParams(params, next);
+    // React Router's search-only setter drops the hash. Retain preparation anchors.
+    // Keep how she arrived, so "‹ Study Library" can still go back to her place.
+    if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true, state: location.state });
+    else setSearchParams(nextParams, { replace: true, state: location.state });
+  };
+  const [pendingJump, setPendingJump] = useState<string | null>(null);
+  const tabForAnchor = (id: string) => {
+    const guideIndex = /^search-target-guide-(\d+)$/.exec(id)?.[1];
+    return materialTabForAnchor(id, guideIndex !== undefined && Boolean(studySet?.sections[Number(guideIndex)]?.pdfProvenance));
+  };
+  const jumpTo = (id: string) => {
+    const destination = tabForAnchor(id);
+    if (destination && destination !== tab) selectTab(destination);
+    setPendingJump(id);
+  };
   // Opened from Review due: start this material's card session once. The
   // request is read once per visit and then cleared from history, so Back
   // or a reload never starts another session by itself.
@@ -132,6 +154,7 @@ function MaterialDetailPage() {
   // Only decides whether a new study aid can be requested; saved ones show regardless.
   const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
   const [coveringLabel, setCoveringLabel] = useState(false);
+  const [pictureSaved, setPictureSaved] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
   // Her usual card count stays chosen on this Mac; 40 until she picks another.
@@ -208,6 +231,23 @@ function MaterialDetailPage() {
   const isMountedRef = useRef(true);
 
   const material = data.materials.find((candidate) => candidate.id === materialId) ?? null;
+  useEffect(() => {
+    if (!pendingJump) return;
+    const destination = tabForAnchor(pendingJump);
+    if (destination && tab !== destination) return;
+    if (!document.getElementById(pendingJump)) return;
+    if (pendingJump === "material-file-actions") {
+      const menu = document.getElementById(pendingJump)?.closest("details");
+      if (menu) menu.open = true;
+    }
+    const frame = requestAnimationFrame(() => {
+      // The reading panel focuses its ready control after its async status arrives.
+      if (pendingJump === "read-pdf-text") document.getElementById(pendingJump)?.scrollIntoView?.({ block: "start" });
+      else jumpToMaterialHeading(pendingJump);
+      setPendingJump(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingJump, tab, dataRevision]);
   const prepareDelete = async () => {
     if (!repositories || !material) return;
     try {
@@ -268,13 +308,26 @@ function MaterialDetailPage() {
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
   const [linkFailed, setLinkFailed] = useState(false);
   const [linkRetry, setLinkRetry] = useState(0);
-  const linkKey = location.search;
+  // Switching tabs must not re-resolve the same search hit and pull her back.
+  const linkParams = new URLSearchParams(location.search);
+  linkParams.delete("tab");
+  const linkKey = linkParams.toString();
   // The study set's own text: a link is checked again whenever it changes,
   // and not on every unrelated reload.
   const studyText = useMemo(
     () => (studySet ? JSON.stringify([studySet.summary, studySet.sections, studySet.flashcards]) : ""),
     [studySet],
   );
+  const hashHandled = useRef<string | null>(null);
+  useEffect(() => {
+    if (hashHandled.current === location.hash) return;
+    if (!material) return;
+    hashHandled.current = location.hash;
+    if (location.hash) {
+      try { jumpTo(decodeURIComponent(location.hash.slice(1))); }
+      catch { /* An invalid escaped anchor has no destination. */ }
+    }
+  }, [location.hash, material, studyText]);
   const scrolledFor = useRef<string | null>(null);
   const practiceRepository = repositories?.practiceSessions;
   useEffect(() => {
@@ -328,11 +381,22 @@ function MaterialDetailPage() {
     // not its timestamp, decides (two saves can share a timestamp).
   }, [linkKey, materialId, studyText, practiceRepository, linkRetry]);
   useEffect(() => {
-    const anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
+    let anchor = linkTarget ? materialLinkAnchor(linkTarget) : null;
     if (!anchor || scrolledFor.current === linkKey) return;
-    scrolledFor.current = linkKey;
-    document.getElementById(anchor)?.scrollIntoView?.({ block: "center" });
-  }, [linkTarget, linkKey]);
+    const isKit = linkTarget?.kind === "card"
+      ? Boolean(studySet?.flashcards[linkTarget.index]?.pdfProvenance)
+      : linkTarget?.kind === "guide" && Boolean(studySet?.sections[linkTarget.index]?.pdfProvenance);
+    if (isKit && linkTarget?.kind === "card") anchor = "search-target-kit-cards";
+    const destination = materialTabForAnchor(anchor, isKit);
+    if (destination && destination !== tab) { selectTab(destination); return; }
+    const element = document.getElementById(anchor);
+    if (!element) return;
+    const frame = requestAnimationFrame(() => {
+      scrolledFor.current = linkKey;
+      jumpToMaterialHeading(element.id, { block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [linkTarget, linkKey, tab, studySet]);
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
@@ -340,16 +404,16 @@ function MaterialDetailPage() {
   // its questions arrive. Anchor to the stable practice section after that
   // layout change, only for a generation requested during this visit.
   useLayoutEffect(() => {
-    if (!practiceJustSaved || generatingPractice || !practiceTest) return;
+    if (tab !== "study" || !practiceJustSaved || generatingPractice || !practiceTest) return;
     setPracticeJustSaved(false);
     document.getElementById("material-practice-test")?.scrollIntoView?.({ block: "start", behavior: "auto" });
-  }, [practiceJustSaved, generatingPractice, practiceTest]);
+  }, [practiceJustSaved, generatingPractice, practiceTest, tab]);
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
   // A set she wrote herself is labelled as hers, never as Gemini output.
   const manualSet = studySet?.provider === "manual";
   const showStudyGuide =
-    Boolean(material?.filePath || studySet) && !(manualSet && !studySet.summary && studySet.sections.length === 0);
+    Boolean(material?.filePath || studySet) && !(manualSet && !studySet.summary && studySet.sections.length === 0 && studySet.flashcards.length > 0);
   const setHasHerItems = needsRegenerationReview(studySet);
   const importedTest = practiceTest?.provider === "import";
   const hasImported = importedSet || importedTest;
@@ -536,6 +600,7 @@ function MaterialDetailPage() {
       await openDocument(material.filePath);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));
+      jumpTo("material-file-details");
     }
   };
 
@@ -671,33 +736,41 @@ function MaterialDetailPage() {
     if (refusal && isMountedRef.current) setStartRefusal({ kind: "practice-test", message: refusal });
   };
 
-  const jumpToFileSection = () => {
-    const el = document.getElementById("material-file-actions");
-    el?.scrollIntoView?.({ block: "start" });
-    el?.focus();
-  };
-  // Saved reviews need an async read; they come from this material's practice test, so it stands in for them.
-  const hasRelatedStudy = Boolean(practiceTest) || selectRelatedStudy({ material, questions: data.questions, events: data.events,
-    recentReviews: { status: "ready", value: [] } }).rows.length > 0;
-
+  const jumpToFileSection = () => jumpTo("material-file-actions");
   return (
     <>
+      {/* Opened from the library: go back, so the list returns to where she was. */}
+      <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {
+        if ((location.state as { fromLibrary?: boolean } | null)?.fromLibrary) { event.preventDefault(); navigate(-1); }
+      }}>‹ Study Library</Link>
+      <div className="material-detail-header">
       <PageHeader
         title={material.title}
-        subtitle={`${MATERIAL_TYPE_LABELS[material.materialType]} · ${TOPIC_LABELS[material.topic]}`}
+        subtitle={<span className="material-header-meta">
+          <span>{isPdf ? "PDF · " : ""}{MATERIAL_TYPE_LABELS[material.materialType]} · {TOPIC_LABELS[material.topic]}</span>
+          <span className="tag">{REVIEW_STATUS_LABELS[material.reviewStatus]}</span>
+          {material.tags.map(tag => <span className="tag" key={tag}>{tag}</span>)}
+          {fileMissing ? <span className="tag">File missing</span> : null}
+          {tab !== "study" && [studyJob, cardJob, practiceJob].some(job => draftWaiting(job?.phase)) ?
+            <button className="button button--ghost" onClick={() => selectTab("study")}>Draft waiting</button> : null}
+        </span>}
         action={
-          <div className="row row--wrap">
-            <Link className="button button--ghost" to="/study">
-              Back
-            </Link>
-            <Button size="small" variant="ghost" aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
-            <Button onClick={() => setEditing(true)}>Edit</Button>
-            <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>
-              Delete
-            </Button>
+          <div className="row row--wrap material-header-actions">
+            {isPdf && material.filePath ? <Button variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
+            <MaterialActionsMenu>
+              <Button onClick={() => setEditing(true)}>Edit</Button>
+              {canSplit ? <>
+                <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
+              </> : null}
+              {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
+              <Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
+              <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
+            </MaterialActionsMenu>
           </div>
         }
       />
+      </div>
 
       {linkTarget && (linkTarget.kind === "practice" || linkTarget.kind === "problem") ? (
         <Card>
@@ -724,129 +797,48 @@ function MaterialDetailPage() {
         </Card>
       ) : null}
 
-      <div className="detail material-detail">
+      <div className="material-detail stack stack--4">
         <div className="detail__column">
 
           {isPdf && !tipsHidden ? (
             <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
           ) : null}
-          {isPdf && material.filePath ? (
-            <div id="material-ask-gemini"><Card>
-              <CardHeader title="Ask about this PDF" />
-              <CardBody>
-                {!aiCheck.allowed ? (
-                  <p className="small muted">{aiCheck.reason}</p>
-                ) : isOverLimit ? (
-                  <p className="small muted">This PDF is too big for Gemini — split it first.</p>
-                ) : !canOfferGemini || fileMissing ? (
-                  <p className="small muted">
-                    {fileMissing
-                      ? "This PDF's file is missing, so Gemini can't read it."
-                      : !gemini?.configured
-                        ? "Connect Gemini in Settings to ask questions about this PDF."
-                        : (generationNotice?.text ?? "Gemini isn't available for this PDF right now.")}
-                  </p>
-                ) : (
-                  <>
-                    <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
-                    <AskGeminiPanel
-                      key={pdfAskConversationKey}
-                      materialId={material.id}
-                      relativePath={material.filePath ?? null}
-                      context={pdfContext}
-                      buttonLabel="Ask about this PDF"
-                      evidenceMode
-                    />
-                  </>
-                )}
-              </CardBody>
-            </Card></div>
-          ) : null}
-          {isPdf ? (
-            <nav className="row row--wrap material-jumps" aria-label="Jump to">
-              <span className="tiny muted">Jump to</span>
-              {[
-                ...(hasRelatedStudy ? [{ id: "related-study", label: "Related study" }] : []),
-                ...(showStudyGuide ? [{ id: "material-guide-heading", label: "Study guide" }] : []),
-                ...(material.filePath || (studySet && studySet.flashcards.length > 0) ? [{ id: "material-cards-heading", label: "Flashcards" }] : []),
-                { id: "material-practice-heading", label: "Practice test" },
-                ...(material.filePath ? [{ id: "material-backup-heading", label: "Backup on this Mac" }] : []),
-              ].map(({ id, label }) => (
-                <Button key={id} size="small" variant="ghost" onClick={() => jumpToMaterialHeading(id)}>{label}</Button>
-              ))}
-            </nav>
-          ) : null}
-          <RelatedStudy key={material.id} materialId={material.id} />
-          {material.filePath ? (
-            <div id="material-file-actions" tabIndex={-1}><Card>
-              <CardBody>
-                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
-                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
-                  <div className="file-row__details">
-                    <p className="small truncate">{material.originalFileName}</p>
-                    <p className="tiny">
-                      {fileMissing
-                        ? "This file is no longer in your library storage."
-                        : formatFileSize(material.fileSize)}
-                    </p>
-                  </div>
-                  <div className="file-row__actions">
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                        <Button onClick={() => setSplitting(true)}>Split automatically</Button>
-                        {!tipsHidden ? <p className="tiny muted">Makes parts of up to 50 MB; each becomes its own library item. Your original stays as it is.</p> : null}
-                      </div>
-                    ) : null}
-                    {canSplit ? (
-                      <div className="file-action-tip">
-                      <Button variant="secondary" onClick={() => setSplittingManually(true)}>
-                        Take out a chapter
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">Choose a page range, like 12–40, to make a smaller copy.</p> : null}
-                      </div>
-                    ) : null}
-                    {!fileMissing && canHandleFiles() ? (
-                      <div className="file-action-tip">
-                      <Button onClick={open}>
-                        <ExternalIcon size={15} /> Open
-                      </Button>
-                      {!tipsHidden ? <p className="tiny muted">{isPdf ? "Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page." : "Opens the file in its usual app on your Mac."}</p> : null}
-                      </div>
-                    ) : null}
-                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
-                  </div>
-                </div>
-                {fileMissing ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="tiny muted">
-                      Everything you wrote is still here. Choose the original or a replacement
-                      copy; it will be copied back inside the desktop app.
-                    </p>
-                    <Button
-                      size="small"
-                      variant="primary"
-                      disabled={restoringFile}
-                      onClick={() => void restoreFile()}
-                    >
-                      {restoringFile ? "Restoring…" : "Find and restore file"}
-                    </Button>
-                  </div>
-                ) : null}
-                {openError ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error">{openError}</p>
-                    {!fileMissing ? (
-                      <Button size="small" onClick={() => void revealStoredFile()}>
-                        Show in Finder or File Explorer
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-                <SplitLineageDetails material={material} materials={data.materials} />
-              </CardBody>
-            </Card></div>
-          ) : null}
-
+        </div>
+        <div className="library-tabs material-tabs" role="tablist" aria-label="Study this material">
+          {MATERIAL_TABS.map((value, index) => (
+            <button key={value} type="button" role="tab" id={`material-tab-${value}`}
+              className={`library-tab tab${tab === value ? " is-active" : ""}`}
+              aria-selected={tab === value} aria-controls={`material-panel-${value}`}
+              tabIndex={tab === value ? 0 : -1}
+              onClick={() => selectTab(value)}
+              onKeyDown={(event) => {
+                const nextIndex = event.key === "ArrowRight" ? (index + 1) % 3
+                  : event.key === "ArrowLeft" ? (index + 2) % 3
+                  : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
+                if (nextIndex !== null) {
+                  event.preventDefault();
+                  const next = MATERIAL_TABS[nextIndex]!;
+                  selectTab(next);
+                  document.getElementById(`material-tab-${next}`)?.focus();
+                } else if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  selectTab(value);
+                  document.getElementById(`material-panel-heading-${value}`)?.focus({ preventScroll: true });
+                }
+              }}>{value === "study" ? "Study" : value === "notes" ? "Notes" : "More"}</button>
+          ))}
+        </div>
+        <section id="material-panel-study" role="tabpanel" aria-labelledby="material-tab-study" hidden={tab !== "study"}>
+          <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden">Study</h2>
+          <div className="detail__column">
+          {fileMissing ? <div className="card stack stack--3" role="status">
+            <p>This study file is missing. Everything you wrote is still here.</p>
+            <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button>
+          </div> : null}
+          {!material.filePath && !studySet ? <Card><CardBody>
+            <p className="small muted">Write a study guide in your own words.</p>
+            <StartManualStudySet material={material} />
+          </CardBody></Card> : null}
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -930,6 +922,9 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
+                  {isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
+                    <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
+                  </p> : null}
                   {isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
@@ -1049,7 +1044,7 @@ function MaterialDetailPage() {
 
                       {editingSet ? <StudySetEditor material={material} studySet={studySet} /> : null}
                     </div>
-                  ) : editingSet && studySet ? (
+                  ) : studySet && (editingSet || (manualSet && !studySet.summary && studySet.sections.length === 0 && studySet.flashcards.length === 0)) ? (
                     <div className="stack stack--5">
                       <StudySetEditor material={material} studySet={studySet} />
                     </div>
@@ -1101,9 +1096,13 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap" style={{ alignItems: "center" }}>
+                      {pageNotesAvailable ? <Button size="small" onClick={() => {
+                        selectTab("notes");
+                        requestAnimationFrame(() => document.querySelector<HTMLButtonElement>("[data-material-make-card]")?.click());
+                      }}>Make a card</Button> : null}
                       {material.filePath && /\.png$/i.test(material.filePath) ? (
                         <Button size="small" onClick={() => setCoveringLabel(true)}>
-                          Cover a label
+                          Add a picture card
                         </Button>
                       ) : null}
                       {isOverLimit ? (
@@ -1129,7 +1128,7 @@ function MaterialDetailPage() {
                           </label>
                           <Button
                             size="small"
-                            variant={studySet && guideFlashcards.length > 0 ? "secondary" : "primary"}
+                            variant="secondary"
                             disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase)}
                             onClick={() => {
                               if (geminiJobs.locked()) {
@@ -1137,7 +1136,7 @@ function MaterialDetailPage() {
                               } else setConfirmingCards(true);
                             }}
                           >
-                            {generatingCards ? "Reading document…" : "Create flashcards"}
+                            {generatingCards ? "Reading document…" : "Make new cards with Gemini"}
                           </Button>
                         </>
                       ) : null}
@@ -1209,6 +1208,25 @@ function MaterialDetailPage() {
 
                   {studySet && studySet.flashcards.length > 0 ? (
                     <div className="stack stack--5">
+                      <CardReviewPanel numberedAction
+                        materialId={material.id}
+                        materialTitle={material.title}
+                        materialFilePath={material.filePath ?? null}
+                        repository={repositories?.cardReviews}
+                        contentKey={studySet.updatedAt}
+                        autoStart={startCardReview}
+                        studySet={studySet}
+                        browseCard={
+                          guideFlashcards[safeCardIndex]
+                            ? {
+                                index: guideFlashcards[safeCardIndex].originalIndex,
+                                front: guideFlashcards[safeCardIndex].card.front,
+                                back: guideFlashcards[safeCardIndex].card.back,
+                              }
+                            : null
+                        }
+                      />
+                      <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
                       {visualFlashcards.length > 0 ? (
                         <section aria-labelledby="visual-cards-title" className="stack stack--3">
                           <h3 id="visual-cards-title" className="ai-guide__title">
@@ -1302,24 +1320,7 @@ function MaterialDetailPage() {
                         </p>
                       ) : null}
 
-                      <CardReviewPanel
-                        materialId={material.id}
-                        materialTitle={material.title}
-                        materialFilePath={material.filePath ?? null}
-                        repository={repositories?.cardReviews}
-                        contentKey={studySet.updatedAt}
-                        autoStart={startCardReview}
-                        studySet={studySet}
-                        browseCard={
-                          guideFlashcards[safeCardIndex]
-                            ? {
-                                index: guideFlashcards[safeCardIndex].originalIndex,
-                                front: guideFlashcards[safeCardIndex].card.front,
-                                back: guideFlashcards[safeCardIndex].card.back,
-                              }
-                            : null
-                        }
-                      />
+
                     </div>
                   ) : !generatingCards && material.filePath && canOfferGemini ? (
                     <p className="small muted">
@@ -1354,7 +1355,7 @@ function MaterialDetailPage() {
                       ) : canOfferGemini ? (
                         <Button
                           size="small"
-                          variant={practiceTest ? "secondary" : "primary"}
+                          variant="secondary"
                           disabled={isGeneratingAny || fileMissing || draftWaiting(practiceJob?.phase)}
                           onClick={() => {
                             if (geminiJobs.locked()) {
@@ -1497,7 +1498,7 @@ function MaterialDetailPage() {
                         kind="practice-test"
                       />
 
-                      <PracticeTestPanel
+                      <PracticeTestPanel entrySummary
                         practiceTest={practiceTest}
                         materialId={material.id}
                         key={practiceTest.updatedAt}
@@ -1531,6 +1532,11 @@ function MaterialDetailPage() {
 
           <OralScenariosCard material={material} />
 
+          </div>
+        </section>
+        <section id="material-panel-notes" role="tabpanel" aria-labelledby="material-tab-notes" hidden={tab !== "notes"}>
+          <h2 id="material-panel-heading-notes" tabIndex={-1} className="visually-hidden">Notes</h2>
+          <div className="detail material-notes-grid"><div className="detail__column">
           <Card>
             <CardHeader
               title="Personal notes"
@@ -1569,40 +1575,9 @@ function MaterialDetailPage() {
             </CardBody>
           </Card>
 
+          </div><div className="detail__column">
           <Card>
-            <CardHeader
-              title="Next actions"
-              action={
-                <Button size="small" onClick={() => setAddingAction(true)}>
-                  <PlusIcon size={14} /> Add
-                </Button>
-              }
-            />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Give this material a small next step, and add a date if you have one in mind.</p> : null}
-            <CardBody flush>
-              {relatedActions.length === 0 ? (
-                <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
-                  What should you do with this material? &ldquo;Review pages 4&ndash;8 before
-                  Saturday&rdquo; is more useful than &ldquo;study&rdquo;.
-                </p>
-              ) : (
-                <div style={{ paddingBottom: "var(--space-3)" }}>
-                  {relatedActions.map((action) => (
-                    <ActionRow
-                      key={action.id}
-                      action={action}
-                      today={today}
-                      onToggle={operations.toggle}
-                      onDelete={operations.remove}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader title="Questions from this material" />
+            <CardHeader title="Questions for my instructor" />
             {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Keep questions here to ask later; they also appear on your Questions page.</p> : null}
             <CardBody>
               <div className="stack stack--3">
@@ -1632,9 +1607,98 @@ function MaterialDetailPage() {
               </div>
             </CardBody>
           </Card>
+          <Card>
+            <CardHeader
+              title="Next steps for this material"
+              action={
+                <Button size="small" onClick={() => setAddingAction(true)}>
+                  <PlusIcon size={14} /> Add
+                </Button>
+              }
+            />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Give this material a small next step, and add a date if you have one in mind.</p> : null}
+            <CardBody flush>
+              {relatedActions.length === 0 ? (
+                <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
+                  What should you do with this material? &ldquo;Review pages 4&ndash;8 before
+                  Saturday&rdquo; is more useful than &ldquo;study&rdquo;.
+                </p>
+              ) : (
+                <div style={{ paddingBottom: "var(--space-3)" }}>
+                  {relatedActions.map((action) => (
+                    <ActionRow
+                      key={action.id}
+                      action={action}
+                      today={today}
+                      onToggle={operations.toggle}
+                      onDelete={operations.remove}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
           {isPdf && material.filePath ? (
             <DocumentPagesPanel material={material} fileMissing={fileMissing} restoring={restoringFile}
-              onRestore={() => void restoreFile()} showTips={!tipsHidden} />
+              onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable} />
+          ) : null}
+
+          </div></div>
+        </section>
+        <section id="material-panel-more" role="tabpanel" aria-labelledby="material-tab-more" hidden={tab !== "more"}>
+          <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden">More</h2>
+          <div className="detail__column">
+          <p className="small muted">Less-used tools for this file.</p>
+          {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
+          <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
+          {material.filePath ? (
+            <div id="material-file-details" tabIndex={-1}><Card>
+              <CardHeader title="File details" />
+              <CardBody>
+                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
+                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
+                  <div className="file-row__details">
+                    <p className="small truncate">{material.originalFileName}</p>
+                    <p className="tiny">
+                      {fileMissing
+                        ? "This file is no longer in your library storage."
+                        : formatFileSize(material.fileSize)}
+                    </p>
+                  </div>
+                  <div className="file-row__actions">
+                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
+                  </div>
+                </div>
+                {fileMissing ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="tiny muted">
+                      Everything you wrote is still here. Choose the original or a replacement
+                      copy; it will be copied back inside the desktop app.
+                    </p>
+                    <Button
+                      size="small"
+                      variant="primary"
+                      disabled={restoringFile}
+                      onClick={() => void restoreFile()}
+                    >
+                      {restoringFile ? "Restoring…" : "Find and restore file"}
+                    </Button>
+                  </div>
+                ) : null}
+                {openError ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error">{openError}</p>
+                    {!fileMissing ? (
+                      <Button size="small" onClick={() => void revealStoredFile()}>
+                        Show in Finder or File Explorer
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <SplitLineageDetails material={material} materials={data.materials} />
+              </CardBody>
+            </Card></div>
           ) : null}
 
           {isPdf && (material.filePath || hasKitItems) ? (
@@ -1644,7 +1708,7 @@ function MaterialDetailPage() {
                 {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use Gemini? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
                   {material.filePath ? <>
-                    <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div>
+                    <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
                     <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
                   </> : null}
                   {hasKitItems ? (
@@ -1768,12 +1832,9 @@ function MaterialDetailPage() {
                 </div></CardBody>
               </Card>
             </section>
-          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={location.hash === "#read-pdf-text"} /></div> : null}
-        </div>
-
-        <div className="detail__column">
+          ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div> : null}
           <Card>
-            <CardHeader title="Review status" />
+            <CardHeader title="Details and review status" />
             {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
             <CardBody>
               <div className="stack stack--4">
@@ -1808,11 +1869,8 @@ function MaterialDetailPage() {
                 )}
               </div>
             </CardBody>
-          </Card>
-
-          <Card>
             <CardHeader title="Details" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit at the top to change its details.</p> : null}
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit in More actions to change its details.</p> : null}
             <CardBody>
               <dl className="definition">
                 <dt>Type</dt>
@@ -1854,8 +1912,40 @@ function MaterialDetailPage() {
               ) : null}
             </CardBody>
           </Card>
-        </div>
+          </div>
+        </section>
       </div>
+
+      {isPdf && material.filePath ? (
+            <Dialog open={askingPdf} onClose={() => setAskingPdf(false)} title="Ask about this PDF" className="material-ask-dialog">
+            <div id="material-ask-gemini">
+                {!aiCheck.allowed ? (
+                  <p className="small muted">{aiCheck.reason}</p>
+                ) : isOverLimit ? (
+                  <p className="small muted">This PDF is too big for Gemini — split it first.</p>
+                ) : !canOfferGemini || fileMissing ? (
+                  <p className="small muted">
+                    {fileMissing
+                      ? "This PDF's file is missing, so Gemini can't read it."
+                      : !gemini?.configured
+                        ? "Connect Gemini in Settings to ask questions about this PDF."
+                        : (generationNotice?.text ?? "Gemini isn't available for this PDF right now.")}
+                  </p>
+                ) : (
+                  <>
+                    <p className="small muted">Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.</p>
+                    <AskGeminiPanel
+                      key={pdfAskConversationKey}
+                      materialId={material.id}
+                      relativePath={material.filePath ?? null}
+                      context={pdfContext}
+                      buttonLabel="Ask"
+                      evidenceMode
+                    />
+                  </>
+                )}
+            </div></Dialog>
+      ) : null}
 
       {canSplit ? (
         <SplitPdfDialog
@@ -1985,9 +2075,9 @@ function MaterialDetailPage() {
         onCancel={() => setConfirmingPracticeTest(false)}
       />
 
-      {coveringLabel ? <VisualCardEditor material={material} onClose={() => setCoveringLabel(false)} /> : null}
+      {coveringLabel ? <VisualCardEditor material={material} onSaved={() => setPictureSaved(true)} onClose={() => setCoveringLabel(false)} /> : null}
       {editingVisualIndex !== null ? (
-        <VisualCardEditor material={material} cardIndex={editingVisualIndex} onClose={() => setEditingVisualIndex(null)} />
+        <VisualCardEditor material={material} cardIndex={editingVisualIndex} onSaved={() => setPictureSaved(true)} onClose={() => setEditingVisualIndex(null)} />
       ) : null}
       <ConfirmDialog
         open={confirmingDelete}

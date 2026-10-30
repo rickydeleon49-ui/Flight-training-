@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 
 import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorNote } from "@/components/ui";
-import { formatRestorePreviewMissingNotice, restoreWarning } from "@/logic/dataSafety";
+import { formatRestorePreviewNotice, restoreWarning } from "@/logic/dataSafety";
 import {
   backupErrorMessage,
   backupLocalDay,
@@ -66,9 +66,10 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         setNote(warning);
         return;
       }
-      if (candidate.missingDocuments && candidate.missingDocuments.length > 0) {
+      const previewNotice = formatRestorePreviewNotice(candidate);
+      if (previewNotice) {
         setProblem(true);
-        setNote(formatRestorePreviewMissingNotice(candidate.missingDocuments.length));
+        setNote(previewNotice);
       }
       setArchiveCandidate(candidate);
     } catch (failure) {
@@ -234,7 +235,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         title="Restore this complete backup?"
         message={
           archiveCandidate
-            ? `This backup was created ${formatBackupDate(archiveCandidate.createdAt)} with app version ${archiveCandidate.appVersion}. It contains ${archiveCandidate.files} files (${formatBytes(archiveCandidate.bytes)}). ${archiveCandidate.missingDocuments && archiveCandidate.missingDocuments.length > 0 ? `${formatRestorePreviewMissingNotice(archiveCandidate.missingDocuments.length)} ` : ""}The app will keep a recoverable copy of what is here now, install this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(archiveCandidate.createdAt)} with app version ${archiveCandidate.appVersion}. It contains ${archiveCandidate.files} files (${formatBytes(archiveCandidate.bytes)}). ${formatRestorePreviewNotice(archiveCandidate) ? `${formatRestorePreviewNotice(archiveCandidate)} ` : ""}The app will keep a recoverable copy of what is here now, install this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"

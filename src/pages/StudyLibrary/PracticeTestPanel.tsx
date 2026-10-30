@@ -1,3 +1,4 @@
+import { ShortSavedReviewLink } from "./ShortSavedReviewLink";
 import { PdfItemLabel } from "./PdfItemLabel";
 import { practiceAskContext } from "@/logic/practiceAskContext";
 import { AskGeminiPanel } from "./AskGeminiPanel";
@@ -27,6 +28,7 @@ import "./studyLibrary.css";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export interface PracticeTestPanelProps {
+  entrySummary?: boolean;
   /** Lets adjacent authoring controls follow this panel's live attempt state. */
   onAttemptChange?: (active: boolean) => void;
   practiceTest: PracticeTest;
@@ -378,6 +380,7 @@ function pendingLabel(intent: SessionIntent | null): string {
 }
 
 export function PracticeTestPanel({
+  entrySummary = false,
   practiceTest,
   materialId: propMaterialId,
   materialTitle: _materialTitle,
@@ -1223,7 +1226,7 @@ export function PracticeTestPanel({
               href={`#${attemptReviewPath(reviewHistoryKey, result.attemptId, "missed")}`}
               className="button button--secondary"
             >
-              Review missed or skipped questions
+              {entrySummary ? "Short saved review" : "Review missed or skipped questions"}
             </a>
           )}
           {materialId && (
@@ -1253,6 +1256,13 @@ export function PracticeTestPanel({
   return (
     <div className="stack stack--3" aria-labelledby="practice-test-title">
       {notices}
+
+      {entrySummary ? <div className="row row--wrap">
+        {!state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
+          if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
+        }}>Start practice test</Button> : null}
+        <ShortSavedReviewLink materialId={materialId} />
+      </div> : null}
 
       {/* Deliberate start/resume: an attempt is acknowledged before an answer sticks. */}
       <div className="ai-disclaimer" role="status">

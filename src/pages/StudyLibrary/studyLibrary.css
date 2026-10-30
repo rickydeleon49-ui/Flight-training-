@@ -828,3 +828,99 @@
 /* The ACS lookup reuses the list inside each result, without the dividers. */
 .related-study--plain { border-block: 0; }
 .related-study--plain .related-study__contents { padding: var(--space-2) 0 0; }
+
+/* Mounted material panels use the native hidden attribute, including descendants. */
+.material-detail [role="tabpanel"][hidden] { display: none; }
+.material-tabs { overflow-x: auto; }
+.material-tabs .tab {
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.material-detail [role="tabpanel"],
+.material-detail [id^="search-target-"],
+.material-detail #read-pdf-text,
+.material-detail #material-file-actions {
+  scroll-margin-top: calc(var(--narrow-header-height, 0px) + var(--space-5));
+}
+
+/* Viewport-positioned actions leave the page in place, including enlarged text. */
+.material-detail-header .page-header { flex-wrap: wrap; gap: var(--space-4); }
+.material-detail-header .page-header > div { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.material-header-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.material-header-actions { align-items: flex-start; max-width: 100%; }
+.material-detail-header .button, .material-breadcrumb, .material-ask-dialog .button {
+  min-height: 44px; height: auto; white-space: normal; overflow-wrap: anywhere; max-width: 100%;
+}
+.material-actions-menu { min-width: 0; max-width: 100%; }
+.material-actions-menu summary {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md); cursor: pointer;
+}
+.material-actions-menu summary::-webkit-details-marker { display: none; }
+.material-actions-menu summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.material-actions-menu__items {
+  position: fixed; z-index: 40; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-2); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface-card, white); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+}
+.material-actions-menu:not([open]) > .material-actions-menu__items { display: none; }
+.material-actions-menu__items .button { width: 100%; margin-inline: 0; flex-shrink: 0; justify-content: flex-start; min-height: 44px; }
+.material-actions-menu__items .destructive-action { border-top: 1px solid var(--border-subtle); margin-top: var(--space-2); }
+.material-notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1080px) { .material-notes-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* LIBRARY-CALM-01: one primary action in the header; the rest under More. */
+.library__actions-more { position: relative; }
+.library__actions-more > summary { list-style: none; cursor: pointer; }
+.library__actions-more > summary::-webkit-details-marker { display: none; }
+.library__actions-more > summary::after { content: " ▾"; }
+.library__actions-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-width: 14rem;
+  padding: var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(0, 0, 0, 0.12));
+}
+.library__actions-menu .button { justify-content: flex-start; }
+
+/* Her materials first; references and the ACS lookup wait below, folded. */
+.library__shelf {
+  margin-top: var(--space-6, 2rem);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.library__shelf-summary { cursor: pointer; font-weight: 600; padding: var(--space-2) 0; }
+.library__shelf-body { margin-top: var(--space-4); }
+
+/* POLISH-04: clear the remembered search in one click. */
+.search-field .input { padding-right: 2.3rem; }
+.search-field__clear {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.search-field__clear:hover,
+.search-field__clear:focus-visible { color: var(--text-primary); background: var(--surface-muted, rgba(0, 0, 0, 0.06)); }

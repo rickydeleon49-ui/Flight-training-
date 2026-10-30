@@ -242,7 +242,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
       flashcards: [{ front: "Q", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
     await openMaterial("mat-pdf");
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     expect(within(await waitFor(sendDialog)).getByText(/This replaces your 1 saved card\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
     fireEvent.click(within(sendDialog()).getByRole("button", { name: "Cancel" }));
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
@@ -256,7 +256,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
       flashcards: [{ front: "Q1", back: "A", sourcePage: 1 }, { front: "Q2", back: "B", sourcePage: 2 }], sourceNotes: "", model: "old" });
     await openMaterial("mat-pdf");
     expect(screen.queryByRole("button", { name: "Edit study guide" })).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const dialog = within(await waitFor(sendDialog));
     expect(dialog.getByText(/This replaces your 2 saved cards\./)).toBeTruthy();
     expect(dialog.queryByText(/Previous versions|brought back/)).toBeNull();
@@ -341,7 +341,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await openMaterial("mat-pdf");
 
     // 1. A refusal from a stale click clears when the other job finishes.
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     let dialog = await waitFor(sendDialog);
     await act(async () => { void geminiJobs.start("practice-test", { materialId: "mat-pdf", filePath: "documents/handbook.pdf" }); });
     await waitFor(() => expect(geminiJobs.busy).toBe(true));
@@ -366,13 +366,13 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
   it("remembers the chosen target card count after leaving the page", async () => {
     await openMaterial("mat-pdf");
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const first = within(await waitFor(sendDialog)).getByRole("combobox", { name: "Target cards" }) as HTMLSelectElement;
     expect(first.value).toBe("40");
     fireEvent.change(first, { target: { value: "60" } });
     cleanup();
     await openMaterial("mat-pdf");
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const again = within(await waitFor(sendDialog)).getByRole("combobox", { name: "Target cards" }) as HTMLSelectElement;
     expect(again.value).toBe("60");
   });
@@ -420,7 +420,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await openMaterial("mat-pdf");
 
     // Click "Create flashcards"
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
 
     // Confirm dialog opens with Target cards chooser
     const dialog = await waitFor(sendDialog);
@@ -482,7 +482,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     await openMaterial("mat-pdf");
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
 
@@ -519,7 +519,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     await openMaterial("mat-pdf");
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
 
@@ -569,7 +569,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     await openMaterial("mat-pdf");
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
 
@@ -642,7 +642,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     // Action buttons render in their respective sections
     expect(
-      within(flashcardsSection).getByRole("button", { name: "Create flashcards" }),
+      within(flashcardsSection).getByRole("button", { name: "Make new cards with Gemini" }),
     ).toBeTruthy();
     expect(
       within(practiceSection).getByRole("button", { name: "Create practice test" }),
@@ -656,7 +656,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     await openMaterial("mat-pdf");
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
     const dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
 
@@ -772,11 +772,12 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     });
   });
 
-  it("section order on a PDF page is How to link, Ask, file, Study guide, Flashcards, Practice test, ..., backup last", async () => {
+  it("keeps guide, flashcards and practice stacked in Study and the file with backup in More", async () => {
     await openMaterial("mat-pdf");
 
     const startHere = document.getElementById("material-start-here")!;
     const fileActions = document.getElementById("material-file-actions")!;
+    const fileMenu = fileActions.closest("details")!;
     const studyGuide = document.getElementById("material-study-guide")!;
     const flashcards = document.getElementById("material-flashcards")!;
     const practiceTest = document.getElementById("material-practice-test")!;
@@ -791,15 +792,16 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const askCard = document.getElementById("material-ask-gemini")!;
     expect(askCard).toBeTruthy();
-    const order = [startHere, askCard, fileActions, studyGuide, flashcards, practiceTest, backup];
+    const order = [startHere, studyGuide, flashcards, practiceTest, document.getElementById("material-file-details")!, backup];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),
       ).toBe(true);
     }
 
-    expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
-    expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
+    expect(within(fileMenu).getByRole("button", { name: "Split automatically" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });
 
   it("the 'Your own' card and 'write your own' buttons are gone, while an already-saved hand-written guide displays and is editable", async () => {
@@ -898,7 +900,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     // 2. Create flashcards button starts flashcards
     const flashcards = document.getElementById("material-flashcards")!;
-    fireEvent.click(within(flashcards).getByRole("button", { name: "Create flashcards" }));
+    fireEvent.click(within(flashcards).getByRole("button", { name: "Make new cards with Gemini" }));
     dialog = await waitFor(sendDialog);
     fireEvent.click(within(dialog).getByRole("button", { name: "Send to Gemini" }));
     await waitFor(() => expect(generateAidSpy).toHaveBeenCalledTimes(1));
@@ -934,13 +936,14 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     const flashcards = document.getElementById("material-flashcards")!;
     const practiceTest = document.getElementById("material-practice-test")!;
     const fileActions = document.getElementById("material-file-actions")!;
+    const fileMenu = fileActions.closest("details")!;
 
     expect(within(studyGuide).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
     expect(within(flashcards).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
     expect(within(practiceTest).getByText("This PDF is too big for Gemini — split it first.")).toBeTruthy();
 
     expect(within(studyGuide).queryByRole("button", { name: "Create study guide" })).toBeNull();
-    expect(within(flashcards).queryByRole("button", { name: "Create flashcards" })).toBeNull();
+    expect(within(flashcards).queryByRole("button", { name: "Make new cards with Gemini" })).toBeNull();
     expect(within(practiceTest).queryByRole("button", { name: "Create practice test" })).toBeNull();
 
     const guideSplitBtn = within(studyGuide).getByRole("button", { name: "Split file" });
@@ -949,19 +952,26 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     fileActions.scrollIntoView = vi.fn();
 
+    guideSplitBtn.focus();
     fireEvent.click(guideSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
     expect(fileActions.scrollIntoView).toHaveBeenCalled();
+    expect(fileMenu.open).toBe(true);
 
     document.body.focus();
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    cardsSplitBtn.focus();
     fireEvent.click(cardsSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
 
     document.body.focus();
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    testSplitBtn.focus();
     fireEvent.click(testSplitBtn);
-    expect(document.activeElement).toBe(fileActions);
+    await waitFor(() => expect(document.activeElement).toBe(fileActions));
 
-    expect(within(fileActions).getByRole("button", { name: "Split automatically" })).toBeTruthy();
-    expect(within(fileActions).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "More" }));
+    expect(within(fileMenu).getByRole("button", { name: "Split automatically" })).toBeTruthy();
+    expect(within(fileMenu).getByRole("button", { name: "Take out a chapter" })).toBeTruthy();
   });
 });

@@ -302,3 +302,24 @@ it("retry after failed save preserves user inputs and succeeds on second attempt
   // Committed file guide.pdf was NEVER sent to cleanup
   expect(files.cleanup).not.toHaveBeenCalledWith(["guide.pdf"]);
 });
+
+it("keeps the file of an FAA copy or picture-card picture fixed while metadata stays editable", async () => {
+  for (const [extra, reason] of [
+    [{ faaReference: { referenceId: "phak", edition: "", contentSha256: "a".repeat(64), totalPages: 1 } }, /saved FAA reference copy/],
+    [{ usedByPictureCards: true }, /Picture cards use this picture/],
+  ] as const) {
+    const onSave = vi.fn().mockResolvedValue(true);
+    render(h(MaterialFormDialog, {
+      open: true,
+      material: makeMaterial({ filePath: "kept.pdf", originalFileName: "kept.pdf", ...extra }),
+      goals: [], events: [], newMaterialId: "mat-1", onClose: vi.fn(), onSave,
+    }));
+    expect(screen.getByRole("button", { name: "Remove" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText(reason)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    expect(onSave.mock.calls[0]?.[0]).toMatchObject({ filePath: "kept.pdf" });
+    expect(files.cleanup).not.toHaveBeenCalledWith(["kept.pdf"]);
+    cleanup();
+  }
+});

@@ -1,0 +1,30 @@
+// @vitest-environment jsdom
+import { createElement as h } from "react";
+import { readFileSync } from "node:fs";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { MaterialActionsMenu } from "./MaterialActionsMenu";
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+it("floats within a narrow viewport, limits height and aligns every action including Delete", () => {
+  vi.stubGlobal("innerWidth", 390); vi.stubGlobal("innerHeight", 500);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 280, right: 380, bottom: 170 } as DOMRect);
+  render(h(MaterialActionsMenu, null, h("button", { className: "button" }, "Edit"), h("button", { className: "button destructive-action" }, "Delete")));
+  const summary = screen.getByText("More ▾");
+  fireEvent.keyDown(summary, { key: "Enter" });
+  fireEvent(summary.closest("details")!, new Event("toggle"));
+  const items = document.querySelector<HTMLElement>(".material-actions-menu__items")!;
+  expect(parseFloat(items.style.left)).toBeGreaterThanOrEqual(8);
+  expect(parseFloat(items.style.maxHeight)).toBeLessThanOrEqual(322);
+  expect(parseFloat(items.style.top)).toBe(174);
+  expect(parseFloat(items.style.left) + parseFloat(items.style.width)).toBeLessThanOrEqual(382);
+  vi.stubGlobal("innerWidth", 200);
+  fireEvent(window, new Event("resize"));
+  expect(parseFloat(items.style.left) + parseFloat(items.style.width)).toBeLessThanOrEqual(192);
+  const css = readFileSync("src/pages/StudyLibrary/studyLibrary.css", "utf8");
+  expect(css).toMatch(/\.material-actions-menu__items\s*\{[^}]*position:\s*fixed/s);
+  expect(css).toMatch(/\.material-actions-menu__items\s*\{[^}]*overflow-y:\s*auto/s);
+  expect(css).toMatch(/\.material-actions-menu__items \.button\s*\{[^}]*width:\s*100%/s);
+  fireEvent.keyDown(screen.getByText("Delete"), { key: "Escape" });
+  expect(summary.closest("details")!.open).toBe(false);
+  expect(document.activeElement).toBe(summary);
+});

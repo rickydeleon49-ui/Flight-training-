@@ -71,9 +71,18 @@
 
 .button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Main actions and tabs get a 15 px label; every full-size button is a
+   44 px target. Small buttons stay compact for dense rows. */
 .button--primary {
+  min-height: var(--space-7);
+  font-size: var(--text-base);
   background: var(--accent-primary);
   color: var(--text-on-accent);
+}
+.button--secondary, .button--danger { min-height: var(--space-7); }
+button[role="tab"] {
+  min-height: var(--space-7);
+  font-size: var(--text-base);
 }
 .button--primary:hover:not(:disabled) { background: var(--accent-primary-hover); }
 
@@ -104,7 +113,7 @@
 }
 .button--danger:hover:not(:disabled) { background: var(--status-overdue-fill); }
 
-.button--small { padding: 0.3rem 0.75rem; font-size: var(--text-xs); }
+.button--small { min-height: 0; padding: 0.3rem 0.75rem; font-size: var(--text-xs); }
 .button--block { width: 100%; }
 
 /* Icon-only control. Always paired with a visually hidden label. */

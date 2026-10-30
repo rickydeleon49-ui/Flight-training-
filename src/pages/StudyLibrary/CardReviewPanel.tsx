@@ -45,6 +45,7 @@ const FLAG_LABELS: Record<CardFlagReason, string> = {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 interface CardReviewPanelProps {
+  numberedAction?: boolean;
   materialId: string;
   materialTitle: string;
   repository: CardReviewRepository | undefined;
@@ -58,7 +59,7 @@ interface CardReviewPanelProps {
   studySet?: AiStudySet | null;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet, numberedAction = false }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
@@ -171,12 +172,12 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
         </div>
         {review.session ? null : (
           <Button
-            size="small"
+            size={numberedAction ? undefined : "small"}
             variant="primary"
             disabled={!reviewable || review.blocked || review.starting}
             onClick={() => void review.startSession()}
           >
-            {review.starting ? "Opening…" : "Review cards"}
+            {review.starting ? "Opening…" : numberedAction && reviewable ? `Review ${plural(summary.dueNow || Math.min(summary.newCount, 10), "card")}` : "Review cards"}
           </Button>
         )}
       </div>

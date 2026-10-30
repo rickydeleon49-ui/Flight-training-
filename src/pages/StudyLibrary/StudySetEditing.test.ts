@@ -9,7 +9,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
-import { StartManualStudySet } from "@/pages/StudyLibrary/StudySetEditor";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
@@ -34,20 +33,14 @@ function Probe() {
   return null;
 }
 function Ready() {
-  const { status, data } = useAppData();
-  const material = data.materials.find((m) => m.id === "mat-n");
+  const { status } = useAppData();
   return status === "ready"
     ? h(
         Routes,
         null,
         h(Route, {
           path: "/study/:materialId",
-          element: h(
-            "div",
-            null,
-            h(MaterialDetail),
-            material ? h(StartManualStudySet, { material }) : null,
-          ),
+          element: h(MaterialDetail),
         }),
       )
     : null;

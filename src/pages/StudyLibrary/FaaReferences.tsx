@@ -135,7 +135,7 @@ function SavedReference({ material, note, reference }: {
       <div className="row row--wrap">
         <Button onClick={() => void open()} disabled={busy || availability !== "present"}
           aria-label={`Open offline: ${material.title}`}>{busy ? "Opening…" : "Open offline"}</Button>
-        <Link className="button button--secondary" to={`/study/${material.id}`}>Notes and bookmarks<span className="visually-hidden">: {reference.title}</span></Link>
+        <Link className="button button--secondary" to={`/study/${material.id}?tab=notes`}>Notes and bookmarks<span className="visually-hidden">: {reference.title}</span></Link>
       </div>
       {message ? <p className="small" role="status">{message}</p> : null}
     </div>

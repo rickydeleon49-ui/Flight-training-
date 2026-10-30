@@ -267,3 +267,68 @@ it("measures the narrow header for anchor clearance and releases the observer on
     expect(disconnect).toHaveBeenCalledOnce();
   } finally { bounds.mockRestore(); }
 });
+
+describe("POLISH-04 new pages open at the top", () => {
+  it("scrolls to the top on a push to a new page, but not for a #section link or the same page", () => {
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    try {
+      mount(1320);
+      act(() => navTo("/study"));
+      expect(scrollTo).toHaveBeenCalledWith(0, 0);
+      scrollTo.mockClear();
+      act(() => navTo("/study?tab=due"));
+      expect(scrollTo).not.toHaveBeenCalled();
+      act(() => navTo("/study/x#read-pdf-text"));
+      expect(scrollTo).not.toHaveBeenCalled();
+      act(() => navTo("/notes"));
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+it("restores each history entry after rendering, including Forward and delayed page height", () => {
+  const frames: FrameRequestCallback[] = [];
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  let y = 0;
+  vi.stubGlobal("scrollY", 0);
+  vi.stubGlobal("scrollX", 0);
+  const scrollTo = vi.fn((_x: number, next: number) => { y = next; vi.stubGlobal("scrollY", y); });
+  vi.stubGlobal("scrollTo", scrollTo);
+  let grow = () => {};
+  vi.stubGlobal("ResizeObserver", class { constructor(callback: () => void) { grow = callback; } observe() {} disconnect() {} });
+  const frame = () => act(() => { const pending = frames.splice(0); pending.forEach(callback => callback(0)); });
+  let height = 3000;
+  const originalHeight = Object.getOwnPropertyDescriptor(document.documentElement, "scrollHeight");
+  Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, get: () => height });
+  try {
+    mount(1320);
+    vi.stubGlobal("scrollY", 740); fireEvent.scroll(window);
+    act(() => navTo("/study")); frame();
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+    vi.stubGlobal("scrollY", 250); fireEvent.scroll(window);
+    height = 100;
+    act(() => navTo(-1));
+    scrollTo.mockClear();
+    expect(scrollTo).not.toHaveBeenCalled();
+    frame();
+    height = 3000; act(() => grow()); frame();
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 740);
+    act(() => navTo(1)); frame();
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 250);
+    scrollTo.mockClear();
+    act(() => navTo("/study/x#read-pdf-text")); frame();
+    expect(scrollTo).not.toHaveBeenCalled();
+    act(() => navTo(-1)); frame();
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 250);
+    scrollTo.mockClear();
+    act(() => navTo(1)); frame();
+    expect(scrollTo).not.toHaveBeenCalled();
+  } finally {
+    if (originalHeight) Object.defineProperty(document.documentElement, "scrollHeight", originalHeight);
+    else delete (document.documentElement as unknown as Record<string, unknown>).scrollHeight;
+  }
+});

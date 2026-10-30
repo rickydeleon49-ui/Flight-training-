@@ -1,3 +1,4 @@
+import { useHistoryScroll } from "./useHistoryScroll";
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
@@ -136,6 +137,8 @@ export function AppShell() {
       menuRef.current?.focus();
     }
   }, [location.key, desktop]);
+
+  useHistoryScroll();
 
   useEffect(() => {
     if (desktop) {

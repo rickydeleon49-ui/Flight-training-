@@ -106,7 +106,7 @@ function renderDetail() {
       AppDataProvider,
       null,
       h(ControllerProbe),
-      h(MemoryRouter, { initialEntries: [`/study/${M}`] }, h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }))),
+      h(MemoryRouter, { initialEntries: [`/study/${M}?tab=notes`] }, h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) }))),
     ),
   );
 }
@@ -205,9 +205,11 @@ describe("the pages panel", () => {
     renderDetail();
     const scope = await panel();
     inspectFails = new NavigationError("FILE_MISSING", NAVIGATION_ERROR_MESSAGES.FILE_MISSING);
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source:/ });
     fireEvent.click(badge);
     expect(await within(scope).findByText(NAVIGATION_ERROR_MESSAGES.FILE_MISSING)).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
     expect(within(scope).getByRole("button", { name: "Find and restore file" })).toBeTruthy();
   });
 
@@ -270,6 +272,7 @@ describe("source badges", () => {
     expect(await screen.findByText("Source page 12")).toBeTruthy();
     const before = await db.select("SELECT * FROM card_review_events");
     const attempts = await db.select("SELECT * FROM practice_attempts");
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source: .*page 12/ });
     fireEvent.click(badge);
     // The badge's own note (the panel's status line says the same).
@@ -462,6 +465,7 @@ describe("source badges retire their guidance when the view goes away (M4S1-R8)"
   it("leaving while the file is being checked opens nothing", async () => {
     await seed();
     const view = renderDetail();
+    fireEvent.click(await screen.findByRole("tab", { name: "Study" }));
     const badge = await screen.findByRole("button", { name: /Open source:/ });
     const held = gate();
     inspectHeld = held.promise;
@@ -574,4 +578,24 @@ it("does not recreate a set removed between the bookmark preview and editor open
   expect((within(dialog).getByRole("button",{name:"Save"}) as HTMLButtonElement).disabled).toBe(true);
   expect(await db.select("SELECT * FROM ai_study_sets")).toEqual([]);
   expect(await db.select("SELECT * FROM study_page_sources")).toEqual([]);
+});
+
+it("offers the Study shortcut only with a saved page note and opens its existing card draft without a write", async () => {
+  await seed();
+  const view = renderDetail();
+  await panel();
+  fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+  expect(screen.queryByRole("button", { name: "Make a card" })).toBeNull();
+  view.unmount();
+  await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000002',?,3,'iv',?,'Fictional note question','Fictional note answer','verified','x','x')", [M,A]);
+  renderDetail(); await panel();
+  fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+  const make = await screen.findByRole("button", { name: "Make a card" });
+  const before = await db.select("SELECT * FROM study_set_save_operations");
+  fireEvent.click(make);
+  const dialog = await screen.findByRole("dialog", { name: "Add a card" });
+  expect(document.getElementById("material-tab-notes")?.getAttribute("aria-selected")).toBe("true");
+  expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Fictional note question");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(await db.select("SELECT * FROM study_set_save_operations")).toEqual(before);
 });
