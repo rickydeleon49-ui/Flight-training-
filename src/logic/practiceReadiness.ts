@@ -108,14 +108,14 @@ export function buildPracticeReadiness(input: PracticeReadinessInput): PracticeR
 export function practiceReadinessText(readiness: PracticeReadiness): string | null {
   if (readiness.kind === "none") return null;
   if (readiness.kind === "nudge") return "Take a practice test to see how you're doing.";
-  const base = `Practice tests: ${readiness.recentAverage}% over your last ${readiness.recentCount}`;
+  const base = `Your last ${readiness.recentCount} practice tests averaged ${readiness.recentAverage}%`;
   switch (readiness.trend) {
     case "up":
-      return `${base} (up from ${readiness.previousAverage}%).`;
+      return `${base}, up from ${readiness.previousAverage}%.`;
     case "down":
-      return `${base} (down from ${readiness.previousAverage}%).`;
+      return `${base}, down from ${readiness.previousAverage}%.`;
     case "steady":
-      return `${base} (steady).`;
+      return `${base}, about the same as before.`;
     default:
       return `${base}.`;
   }

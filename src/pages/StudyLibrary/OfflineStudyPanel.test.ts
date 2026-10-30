@@ -72,7 +72,7 @@ describe("Offline study panel", () => {
     const view = render(h(OfflineStudyPanel, { material: pdf }));
     const status = await screen.findByRole("status");
     expect(status.textContent).toBe(
-      "Text read on this Mac: all 40 pages. 3 of 40 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+      "Text read on this Mac: all 40 pages. 3 of them have little or no searchable text (often a blank page or a picture of text), so search and quotes can't use them.",
     );
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     view.unmount();
@@ -80,7 +80,7 @@ describe("Offline study panel", () => {
     service.readiness.mockResolvedValue([row({ state: "searchable", pages: 40, fewTextPages: 0 })]);
     render(h(OfflineStudyPanel, { material: pdf }));
     expect((await screen.findByRole("status")).textContent).toBe("Text read on this Mac: all 40 pages.");
-    expect(screen.queryByText(/little or no readable text/)).toBeNull();
+    expect(screen.queryByText(/little or no searchable text/)).toBeNull();
   });
 
   it("looks again while a state is settling, until it settles", async () => {

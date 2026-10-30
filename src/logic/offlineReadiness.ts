@@ -39,9 +39,9 @@ export function fewTextSentence(few: number | undefined, total: number): string 
   if (!few || few <= 0 || total <= 0) return "";
   const n = Math.min(few, total);
   const one = n === 1;
-  const subject = n === total && total > 1 ? `All ${total} pages` : `${n} of ${pages(total)}`;
+  const subject = total === 1 ? "It" : n === total ? `All ${total} pages` : `${n} of them`;
   // Blank and figure-only pages also land here, so don't claim they are scans.
-  return ` ${subject} ${one ? "has" : "have"} little or no readable text (often a blank page or a picture of text), so search and quotes can't use ${one ? "it" : "them"}.`;
+  return ` ${subject} ${one ? "has" : "have"} little or no searchable text (often a blank page or a picture of text), so search and quotes can't use ${one ? "it" : "them"}.`;
 }
 
 /** Friendly reasons for a whole-file refusal. Unknown codes stay generic. */

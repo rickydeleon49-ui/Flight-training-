@@ -793,7 +793,7 @@ describe("FlightDeck practice-test line", () => {
     render(h(MemoryRouter, null, h(FlightDeck)));
 
     const link = await screen.findByRole("link", {
-      name: "Practice tests: 78% over your last 5 (up from 60%).",
+      name: "Your last 5 practice tests averaged 78%, up from 60%.",
     });
     expect(link.getAttribute("href")).toBe("/study");
   });

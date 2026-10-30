@@ -53,24 +53,24 @@ describe("describeReadiness", () => {
 
     it("adds one plain sentence when some pages have too little text", () => {
       expect(describeReadiness({ state: "searchable", pages: 40, fewTextPages: 3 }).detail).toBe(
-        "Text read on this Mac: all 40 pages. 3 of 40 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+        "Text read on this Mac: all 40 pages. 3 of them have little or no searchable text (often a blank page or a picture of text), so search and quotes can't use them.",
       );
       expect(
         describeReadiness({ state: "partial", searchable: 497, pages: 524, imagePages: 0, reason: "someUnreadable", fewTextPages: 2 })
           .detail,
       ).toBe(
-        "Text read on 497 of 524 pages. Some pages couldn't be read. 2 of 524 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+        "Text read on 497 of 524 pages. Some pages couldn't be read. 2 of them have little or no searchable text (often a blank page or a picture of text), so search and quotes can't use them.",
       );
     });
 
     it("uses singular wording for one page", () => {
-      expect(fewTextSentence(1, 40)).toBe(" 1 of 40 pages has little or no readable text (often a blank page or a picture of text), so search and quotes can't use it.");
-      expect(fewTextSentence(1, 1)).toBe(" 1 of 1 page has little or no readable text (often a blank page or a picture of text), so search and quotes can't use it.");
+      expect(fewTextSentence(1, 40)).toBe(" 1 of them has little or no searchable text (often a blank page or a picture of text), so search and quotes can't use it.");
+      expect(fewTextSentence(1, 1)).toBe(" It has little or no searchable text (often a blank page or a picture of text), so search and quotes can't use it.");
     });
 
     it("says all when every page has too little text", () => {
       expect(describeReadiness({ state: "searchable", pages: 12, fewTextPages: 12 }).detail).toBe(
-        "Text read on this Mac: all 12 pages. All 12 pages have little or no readable text (often a blank page or a picture of text), so search and quotes can't use them.",
+        "Text read on this Mac: all 12 pages. All 12 pages have little or no searchable text (often a blank page or a picture of text), so search and quotes can't use them.",
       );
       expect(fewTextSentence(99, 12)).toContain("All 12 pages");
     });

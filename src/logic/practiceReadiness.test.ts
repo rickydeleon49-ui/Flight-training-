@@ -73,29 +73,29 @@ describe("buildPracticeReadiness", () => {
   });
 
   it("summarises three attempts without a comparison", () => {
-    expect(text(series([70, 80, 91]))).toBe("Practice tests: 80% over your last 3.");
+    expect(text(series([70, 80, 91]))).toBe("Your last 3 practice tests averaged 80%.");
   });
 
   it("still summarises when she has no practice test left but has recent attempts", () => {
     expect(text(series([70, 80, 90]), { hasPracticeTest: false })).toBe(
-      "Practice tests: 80% over your last 3.",
+      "Your last 3 practice tests averaged 80%.",
     );
   });
 
   it("compares the last five with the up-to-five before them", () => {
     // Last 5: 90 80 80 70 70 = 78; before: 70 70 = 70.
     expect(text(series([90, 80, 80, 70, 70, 70, 70]))).toBe(
-      "Practice tests: 78% over your last 5 (up from 70%).",
+      "Your last 5 practice tests averaged 78%, up from 70%.",
     );
     // Only the five before count, not older ones.
     expect(text(series([60, 60, 60, 60, 60, 80, 80, 80, 80, 80, 10, 10]))).toBe(
-      "Practice tests: 60% over your last 5 (down from 80%).",
+      "Your last 5 practice tests averaged 60%, down from 80%.",
     );
   });
 
   it("calls equal rounded averages steady", () => {
     expect(text(series([70, 70, 70, 70, 70, 70.4]))).toBe(
-      "Practice tests: 70% over your last 5 (steady).",
+      "Your last 5 practice tests averaged 70%, about the same as before.",
     );
   });
 
@@ -136,7 +136,7 @@ describe("buildPracticeReadiness", () => {
 
   it("counts a finished attempt with skipped questions at its stored score (skips count as wrong)", () => {
     expect(text([...series([80, 80]), attempt("p3", "2026-10-10T12:00:00Z", 50, { answeredCount: 6 })])).toBe(
-      "Practice tests: 70% over your last 3.",
+      "Your last 3 practice tests averaged 70%.",
     );
   });
 
@@ -149,7 +149,7 @@ describe("buildPracticeReadiness", () => {
     expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
     expect(
       text([...series([80, 80]), attempt("m2", "2026-10-10T12:00:00Z", 50, { sourceMaterialId: "mat-2" })]),
-    ).toBe("Practice tests: 70% over your last 3.");
+    ).toBe("Your last 3 practice tests averaged 70%.");
   });
 
   it("counts only the last 30 local days, today included", () => {
@@ -161,7 +161,7 @@ describe("buildPracticeReadiness", () => {
     ];
     expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
     expect(text([...attempts, attempt("mid", "2026-10-01T12:00:00Z", 60)])).toBe(
-      "Practice tests: 80% over your last 3.",
+      "Your last 3 practice tests averaged 80%.",
     );
   });
 
@@ -175,7 +175,7 @@ describe("buildPracticeReadiness", () => {
     expect(buildPracticeReadiness(input(attempts))).toEqual({ kind: "nudge" });
     // 03:00 UTC on 21 October is 20 October (today) in California: inside.
     expect(text([...series([80, 80]), attempt("eve", "2026-10-21T03:00:00Z", 80)])).toBe(
-      "Practice tests: 80% over your last 3.",
+      "Your last 3 practice tests averaged 80%.",
     );
   });
 

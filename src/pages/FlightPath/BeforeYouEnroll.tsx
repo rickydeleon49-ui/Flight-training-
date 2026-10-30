@@ -44,7 +44,7 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
   }
 
   return (
-    <Card variant="quiet">
+    <Card variant="quiet" className="enroll-card">
       <CardHeader title="Before you enroll" action={
         <button type="button" className="enroll-hide small" onClick={() => remember({ ...progress, hidden: true })}>Hide</button>
       } />
