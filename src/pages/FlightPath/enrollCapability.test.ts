@@ -7,5 +7,5 @@ it("allows exactly the three FAA URLs used by Before you enroll", () => {
   expect(urls).toHaveLength(3);
   const capability = JSON.parse(readFileSync("src-tauri/capabilities/default.json", "utf8"));
   const permission = capability.permissions.find((p: { identifier?: string }) => p.identifier === "opener:allow-open-url");
-  expect(permission.allow.filter((entry: { url: string }) => entry.url.includes("faa.gov"))).toEqual(urls.map((url) => ({ url })));
+  expect(permission.allow.filter((entry: { url: string }) => new URL(entry.url).hostname === "www.faa.gov")).toEqual(urls.map((url) => ({ url })));
 });
