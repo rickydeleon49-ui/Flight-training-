@@ -46,6 +46,7 @@ mod practice_authoring;
 #[cfg(test)]
 mod practice_authoring_tests;
 mod practice_sessions;
+mod repository_writes;
 mod secrets;
 mod skill_evidence;
 mod storage;
@@ -316,6 +317,8 @@ pub fn run() {
             homework::save_homework_atomically,
             oral_scenarios::save_oral_scenario_operation,
             study_sets::save_study_set_atomically,
+            repository_writes::replace_material_links_atomically,
+            repository_writes::create_fund_goal_atomically,
             practice_sessions::run_practice_legacy_conversion,
             card_reviews::save_card_review_atomically,
             card_library::get_library_review_due,

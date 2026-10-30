@@ -183,13 +183,9 @@ export function journalRepository(db: SqlDatabase) {
     },
 
     async setMaterials(journalId: Id, materialIds: Id[]): Promise<void> {
-      await db.execute("DELETE FROM journal_materials WHERE journal_id = ?", [journalId]);
-      for (const materialId of materialIds) {
-        await db.execute(
-          "INSERT INTO journal_materials (journal_id, material_id) VALUES (?, ?)",
-          [journalId, materialId],
-        );
-      }
+      if (!db.replaceMaterialLinksAtomically) throw new Error("Atomic material link saves require transaction support.");
+      // A material listed twice is still one link (the link table refuses duplicates).
+      await db.replaceMaterialLinksAtomically("journal", journalId, [...new Set(materialIds)]);
     },
 
     async saveAtomically(operation: import("../db").DebriefSaveOperation): Promise<void> {

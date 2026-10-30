@@ -142,13 +142,9 @@ export function scheduleRepository(db: SqlDatabase) {
     },
 
     async setMaterials(eventId: Id, materialIds: Id[]): Promise<void> {
-      await db.execute("DELETE FROM event_materials WHERE event_id = ?", [eventId]);
-      for (const materialId of materialIds) {
-        await db.execute(
-          "INSERT INTO event_materials (event_id, material_id) VALUES (?, ?)",
-          [eventId, materialId],
-        );
-      }
+      if (!db.replaceMaterialLinksAtomically) throw new Error("Atomic material link saves require transaction support.");
+      // A material listed twice is still one link (the link table refuses duplicates).
+      await db.replaceMaterialLinksAtomically("schedule", eventId, [...new Set(materialIds)]);
     },
 
     async remove(id: Id): Promise<void> {
