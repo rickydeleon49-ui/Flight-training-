@@ -14,3 +14,18 @@ it("wraps header actions, preserves 44px controls and collapses Notes at enlarge
  expect(css).toMatch(/\.material-actions-menu__items \.button\s*\{[^}]*min-height:\s*44px/s);
  expect(css).toMatch(/@media \(max-width: 1080px\)\s*\{\s*\.material-notes-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
 });
+
+it("shows a button-style focus ring on the section heading that Enter/Space focuses", () => {
+ const css = readFileSync(new URL("./studyLibrary.css", import.meta.url), "utf8");
+ const rule = css.match(/\.material-panel-heading:focus-visible\s*\{([^}]*)\}/s)?.[1] ?? "";
+ expect(rule).toMatch(/position:\s*static/);
+ expect(rule).toMatch(/clip:\s*auto/);
+ expect(rule).toMatch(/outline:\s*2px solid var\(--accent-primary\)/);
+ expect(rule).toMatch(/outline-offset:\s*2px/);
+});
+
+it("draws the underline-tab focus ring inside the tab so the scrolling row cannot clip it", () => {
+ const css = readFileSync(new URL("./studyLibrary.css", import.meta.url), "utf8");
+ expect(css).toMatch(/\.library-tabs\s*\{[^}]*overflow-x:\s*auto/s);
+ expect(css).toMatch(/\.library-tab:focus-visible\s*\{[^}]*outline-offset:\s*-4px/s);
+});

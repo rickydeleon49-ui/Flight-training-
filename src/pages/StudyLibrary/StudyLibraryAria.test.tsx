@@ -66,6 +66,17 @@ it("ArrowRight/Left, Home and End select and focus tabs, keep one tab stop, and 
   await waitFor(() => expect(screen.queryByText("Checking cards…")).toBeNull());
 });
 
+it("Review due on a profile with no cards settles on All caught up (no endless loading)", async () => {
+  open();
+  act(() => screen.getAllByRole("tab")[0]!.focus());
+  fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
+  selected(1, true);
+  await screen.findByText("All caught up!");
+  expect(screen.queryByText("Checking your flashcards…")).toBeNull();
+  expect(screen.getByRole("button", { name: "Check again" })).toHaveProperty("disabled", false);
+  expect(screen.getByText(/Last check looked at 0 materials and 0 cards/)).toBeTruthy();
+});
+
 for (const [index, key] of keys.entries()) {
   it(`deep link ?tab=${key} selects the existing panel and passes axe`, async () => {
     const { container } = open(`/study?tab=${key}`);

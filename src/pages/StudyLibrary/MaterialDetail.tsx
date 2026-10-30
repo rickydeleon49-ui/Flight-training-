@@ -861,7 +861,7 @@ function MaterialDetailPage() {
           {MATERIAL_TABS.map((value) => <MaterialTabButton key={value} value={value} state={tabState} />)}
         </div>
         <MaterialTabPanel value="study" state={tabState}>
-          <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden">Study</h2>
+          <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden material-panel-heading">Study</h2>
           <div className="detail__column">
           {fileMissing ? <div className="card stack stack--3" role="status">
             <p>This study file is missing. Everything you wrote is still here.</p>
@@ -1573,7 +1573,7 @@ function MaterialDetailPage() {
           </div>
         </MaterialTabPanel>
         <MaterialTabPanel value="notes" state={tabState}>
-          <h2 id="material-panel-heading-notes" tabIndex={-1} className="visually-hidden">Notes</h2>
+          <h2 id="material-panel-heading-notes" tabIndex={-1} className="visually-hidden material-panel-heading">Notes</h2>
           <div className="detail material-notes-grid"><div className="detail__column">
           <Card>
             <CardHeader
@@ -1685,7 +1685,7 @@ function MaterialDetailPage() {
           </div></div>
         </MaterialTabPanel>
         <MaterialTabPanel value="more" state={tabState}>
-          <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden">More</h2>
+          <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden material-panel-heading">More</h2>
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
           {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}

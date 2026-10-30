@@ -55,7 +55,7 @@ function selected(index: number, focused = false) {
     expect(panel.hidden).toBe(i !== index);
     const heading = document.getElementById(`material-panel-heading-${values[i]}`)!;
     expect(heading.tagName).toBe("H2");
-    expect(heading.className).toBe("visually-hidden");
+    expect(heading.className).toBe("visually-hidden material-panel-heading");
   });
   if (focused) expect(document.activeElement).toBe(tabs[index]);
 }
