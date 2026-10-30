@@ -60,6 +60,7 @@ function cardDraft(record: GeminiJobRecord): { target: number; cards: unknown[] 
 }
 
 export interface SectionGuideDraft {
+  model?: string;
   ready: number;
   total: number;
   heading?: string;
@@ -74,6 +75,7 @@ function sectionDraft(record: GeminiJobRecord): SectionGuideDraft | undefined {
     ready: manifest.filter(s => d.results?.[s.id]?.status === "complete").length,
     total: manifest.length,
     heading: manifest.find(s => d.results?.[s.id]?.status !== "complete")?.heading,
+    ...(typeof d.identity.model === "string" ? { model: d.identity.model } : {}),
     request: { materialId: record.materialId, relativePath: record.relativePath,
       chosenPages: d.identity.chosenPages, baseRevision: d.identity.baseRevision ?? null },
   };

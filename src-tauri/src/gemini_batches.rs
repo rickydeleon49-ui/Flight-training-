@@ -213,6 +213,19 @@ pub(super) async fn generate(
         )?;
     }
     let mut draft = read(root, &id)?;
+    if !draft.complete {
+        if let Some(guide) = &draft.guide {
+            let started_with = if guide.model.starts_with("claude-") {
+                crate::provider::ProviderId::Claude
+            } else {
+                crate::provider::ProviderId::Gemini
+            };
+            if started_with != ctx.provider.id() {
+                let name = started_with.name();
+                return Err(format!("This draft was started with {name}. Use {name} in Settings to continue it, or discard it and start a new one. Your finished work is kept."));
+            }
+        }
+    }
     if source.bytes.is_empty()
         || (source.mime == "text/plain" && source.bytes.iter().all(u8::is_ascii_whitespace))
     {
@@ -439,6 +452,7 @@ mod tests {
                 gemini_jobs::with(&path, |j| j.admit_bounded(&id))
             }));
             let ctx = GenContext {
+                provider: crate::provider::AnyProvider::default(),
                 http: &self.http,
                 base: &self.fake.base,
                 api_key: "synthetic-only",
@@ -513,6 +527,7 @@ mod tests {
             gemini_jobs::with(&root, |j| j.checkpoint_timing(&timing_id, timing.clone())).is_ok()
         }));
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: "synthetic-only",
@@ -582,6 +597,7 @@ mod tests {
             }
         };
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: "synthetic-only",
@@ -796,6 +812,7 @@ mod tests {
             gemini_files::system_clock(),
         );
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &http,
             base: "http://127.0.0.1:1",
             api_key: "synthetic-only",
@@ -1028,6 +1045,7 @@ mod tests {
             }
         };
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: "synthetic-only",
@@ -1192,6 +1210,7 @@ mod tests {
             }
         };
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: "synthetic-only",

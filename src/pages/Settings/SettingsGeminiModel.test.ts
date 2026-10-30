@@ -8,6 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import * as backupService from "@/services/backups";
+import * as appDataApi from "@/data";
+import * as providerService from "@/services/provider";
 import * as geminiService from "@/services/gemini";
 
 let db: TestDatabase;
@@ -52,6 +55,24 @@ describe("Gemini model choice in Settings", () => {
     vi.restoreAllMocks();
   });
 
+  it.each([false, true])("shows active Claude first and keeps Gemini setup in a closed disclosure (Gemini connected: %s)", async (configured) => {
+    vi.spyOn(appDataApi, "isTauri").mockReturnValue(true);
+    vi.spyOn(backupService, "backupsAvailable").mockReturnValue(false);
+    vi.spyOn(providerService, "providerStatus").mockResolvedValue({selected:"claude",providers:[{id:"gemini",connected:false},{id:"claude",connected:true}]});
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({...STANDARD,configured});
+    await open();
+    await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+    const header = screen.getByRole("heading",{name:"AI provider"}).closest("header")!;
+    const card = header.closest(".card")!;
+    const disclosure = card.querySelector("details")!;
+    expect(disclosure.open).toBe(false);
+    expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")).toBeNull();
+    expect(disclosure.textContent).toContain("Gemini can turn a selected Study Library document");
+    if (configured) expect(screen.getByRole("radio", { name: /Standard —/ }).closest("details")).toBe(disclosure);
+    else expect(screen.getByLabelText("Gemini API key").closest("details")).toBe(disclosure);
+    await waitFor(()=>expect(header.querySelector(".card__eyebrow")!.textContent).toBe("Connected"));
+  });
+
   it("explains busy messages in two plain sentences with useful next steps", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(STANDARD);
     await open();
@@ -65,7 +86,7 @@ describe("Gemini model choice in Settings", () => {
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
-    await screen.findByText("Gemini study assistant");
+    await screen.findByText("AI provider");
     expect(screen.queryByText("Model for new study aids")).toBeNull();
   });
 
@@ -128,4 +149,30 @@ describe("Gemini model choice in Settings", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Could not save the Gemini model choice");
     expect((screen.getByRole("radio", { name: /Standard — Gemini 3.5 Flash/ }) as HTMLInputElement).checked).toBe(true);
   });
+});
+
+function visibleCardText(card: Element): string {
+  const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+  const parts: string[] = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const parent = node.parentElement!;
+    if (parent.closest('[hidden], [aria-hidden="true"]')) continue;
+    const details = parent.closest("details");
+    if (details && !details.open && !parent.closest("summary")) continue;
+    const text = node.textContent?.replace(/\s+/g, " ").trim();
+    if (text) parts.push(text);
+  }
+  return parts.join(" ");
+}
+it.each([STANDARD, { ...STANDARD, configured: false }])("keeps the Gemini-default provider card visible text unchanged (connected: $configured)", async (status) => {
+  localStorage.clear();
+  db = await createNodeSqliteDatabase();
+  vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status);
+  try {
+    await open();
+    await screen.findByText(status.configured ? /Gemini 3.5 Flash · key saved/ : "Gemini setup is available in the desktop application.");
+    const card = screen.getByRole("heading", { name: "AI provider" }).closest(".card")!;
+    expect(visibleCardText(card)).toMatchSnapshot();
+  } finally { cleanup(); db.close(); vi.restoreAllMocks(); }
 });

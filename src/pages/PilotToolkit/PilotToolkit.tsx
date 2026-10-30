@@ -1,4 +1,7 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
+import { useTabListState, type TabListState } from "@react-stately/tabs";
+import { Item } from "react-stately/Item";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -64,7 +67,8 @@ type Tool =
   | "reminders"
   | "career";
 
-const TOOLS: Array<{ id: Tool; label: string }> = [
+type ToolChoice = { id: Tool; label: string };
+const TOOLS: ToolChoice[] = [
   { id: "readiness", label: "Checkride" },
   { id: "report", label: "Instructor Report" },
   { id: "records", label: "Certificates" },
@@ -75,41 +79,43 @@ const TOOLS: Array<{ id: Tool; label: string }> = [
   { id: "career", label: "Career Portfolio" },
 ];
 
+function PilotToolTab({ choice, state }: { choice: ToolChoice; state: TabListState<ToolChoice> }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const { tabProps, isSelected } = useTab({ key: choice.id }, state, ref);
+  return (
+    <button
+      {...tabProps}
+      ref={ref}
+      // Preserve click-to-focus, including synthetic/assistive-technology clicks.
+      onClick={(event) => {
+        tabProps.onClick?.(event);
+        ref.current?.focus();
+      }}
+      type="button"
+      id={`toolkit-tab-${choice.id}`}
+      aria-controls={`toolkit-panel-${choice.id}`}
+      className={`filter-chip${isSelected ? " is-active" : ""}`}
+    >
+      {choice.label}
+    </button>
+  );
+}
+
 export function PilotToolkit() {
   const { data, mutate } = useAppData();
   const [tool, setTool] = useState<Tool>("readiness");
   const [saved, setSaved] = useState(false);
-  const tabRefs = useRef<Partial<Record<Tool, HTMLButtonElement | null>>>({});
-
-  const tabId = (id: Tool) => `toolkit-tab-${id}`;
-  const panelId = (id: Tool) => `toolkit-panel-${id}`;
-
-  const selectTab = (id: Tool) => {
-    setTool(id);
-    tabRefs.current[id]?.focus();
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTool: Tool) => {
-    const currentIndex = TOOLS.findIndex((t) => t.id === currentTool);
-    if (currentIndex === -1) return;
-
-    let nextIndex = -1;
-    if (event.key === "ArrowRight") {
-      nextIndex = (currentIndex + 1) % TOOLS.length;
-    } else if (event.key === "ArrowLeft") {
-      nextIndex = (currentIndex - 1 + TOOLS.length) % TOOLS.length;
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = TOOLS.length - 1;
-    }
-
-    const nextItem = TOOLS[nextIndex];
-    if (nextItem) {
-      event.preventDefault();
-      selectTab(nextItem.id);
-    }
-  };
+  const tabState = useTabListState<ToolChoice>({
+    selectedKey: tool,
+    onSelectionChange: (key) => setTool(key as Tool),
+    disabledKeys: [],
+    items: TOOLS,
+    children: (choice) => <Item key={choice.id} textValue={choice.label}>{choice.label}</Item>,
+  });
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const { tabListProps } = useTabList({ "aria-label": "Pilot tools", keyboardActivation: "automatic" }, tabState, tabListRef);
+  const tabPanelRef = useRef<HTMLDivElement>(null);
+  const { tabPanelProps } = useTabPanel({}, tabState, tabPanelRef);
 
   // Owned here, not by the medical card, so a choice still saving keeps both
   // buttons locked when she switches tabs and comes back.
@@ -156,35 +162,18 @@ export function PilotToolkit() {
         </p>
       ) : null}
       <div
+        {...tabListProps}
+        ref={tabListRef}
         className="filter-chips toolkit-tabs"
-        role="tablist"
-        aria-label="Pilot tools"
       >
-        {TOOLS.map((item) => (
-          <button
-            type="button"
-            role="tab"
-            id={tabId(item.id)}
-            aria-controls={panelId(item.id)}
-            aria-selected={tool === item.id}
-            tabIndex={tool === item.id ? 0 : -1}
-            className={`filter-chip${tool === item.id ? " is-active" : ""}`}
-            onClick={() => selectTab(item.id)}
-            onKeyDown={(e) => handleKeyDown(e, item.id)}
-            ref={(el) => {
-              tabRefs.current[item.id] = el;
-            }}
-            key={item.id}
-          >
-            {item.label}
-          </button>
-        ))}
+        {TOOLS.map((choice) => <PilotToolTab key={choice.id} choice={choice} state={tabState} />)}
       </div>
 
       <div
-        role="tabpanel"
-        id={panelId(tool)}
-        aria-labelledby={tabId(tool)}
+        {...tabPanelProps}
+        ref={tabPanelRef}
+        id={`toolkit-panel-${tool}`}
+        aria-labelledby={`toolkit-tab-${tool}`}
         tabIndex={0}
         className="toolkit-tabpanel"
       >

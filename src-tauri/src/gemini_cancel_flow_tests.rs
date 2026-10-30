@@ -93,6 +93,7 @@ impl Rig {
             reporter.started(id);
         };
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: KEY,
@@ -268,6 +269,7 @@ fn a_cancel_recorded_first_wins_over_an_answer_that_has_just_arrived() {
         gemini_jobs::with(root, |j| j.cancel(&id)).unwrap();
         let say = |_m: String| {};
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: KEY,
@@ -460,6 +462,7 @@ fn r3_a_cancel_by_request_reaches_a_running_job_without_knowing_its_id() {
         let running = scope.spawn(|| {
             let say = |_m: String| {};
             let ctx = GenContext {
+                provider: crate::provider::AnyProvider::default(),
                 http: &r.http,
                 base: &r.fake.base,
                 api_key: KEY,
@@ -554,6 +557,7 @@ fn cancel_at_stage(label: &str, source: LoadedSource, at: gemini_budget::Stage) 
     }));
     let say = |_m: String| {};
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,
@@ -614,6 +618,7 @@ fn run_with_cancel_at(
     let started = |id: &str| *job.lock().unwrap() = Some(id.to_string());
     let say = |_m: String| {};
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,
@@ -681,6 +686,7 @@ fn r10_a_cancel_at_a_fresh_uploads_readiness_check_sends_no_check_delete_or_gene
     let say = |_m: String| {};
     let source = pdf();
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,

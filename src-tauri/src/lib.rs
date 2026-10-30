@@ -359,6 +359,8 @@ pub fn run() {
             pdf::split_pdf_automatically,
             provider::provider_status,
             provider::select_provider,
+            provider::configure_provider,
+            provider::disconnect_provider,
             gemini::gemini_status,
             gemini::configure_gemini,
             gemini::disconnect_gemini,

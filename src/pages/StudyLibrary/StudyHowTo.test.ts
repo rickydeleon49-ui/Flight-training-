@@ -155,3 +155,20 @@ it("names only controls that exist in the Study Library, so the tour can't drift
   expect(items.length).toBeGreaterThanOrEqual(20);
   for (const item of items) expect(find(item.label, item.control), item.label).toBeTruthy();
 });
+
+it("names the selected Claude provider and its request limits in How to", async () => {
+  vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "claude-haiku-5-5", choice: "standard" });
+  renderAt("/study?tab=howto");
+  await screen.findByText(/Claude reads up to 300 pages or 32 MB per request/);
+  const steps = screen.getByRole("list", { name: "PDF study steps" });
+  expect(steps.textContent).toContain("sends the file to Anthropic after you confirm");
+  expect(steps.textContent).toContain("Ask Claude for multiple-choice questions");
+  expect(steps.textContent).not.toMatch(/Gemini|Google|50 MB|1,000 pages/);
+});
+
+it("keeps Gemini How to wording and limits", async () => {
+  renderAt("/study?tab=howto");
+  await screen.findByRole("list", { name: "PDF study steps" });
+  expect(screen.getByRole("list", { name: "PDF study steps" }).textContent).toContain("Gemini reads up to 50 MB or 1,000 pages");
+  expect(screen.getByRole("list", { name: "PDF study steps" }).textContent).toContain("sends the file to Google after you confirm");
+});

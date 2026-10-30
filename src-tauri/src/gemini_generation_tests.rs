@@ -85,6 +85,7 @@ impl Rig {
         let say = |m: String| self.said.lock().unwrap().push(m);
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: key,
@@ -100,6 +101,7 @@ impl Rig {
         let say = |m: String| self.said.lock().unwrap().push(m);
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: key,
@@ -786,6 +788,7 @@ fn r1_a_generation_begun_before_disconnect_is_refused_without_any_request() {
     r.cache.invalidate_all();
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,
@@ -970,6 +973,7 @@ impl Rig {
         let say = |m: String| self.said.lock().unwrap().push(m);
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &self.http,
             base: &self.fake.base,
             api_key: KEY,
@@ -1128,6 +1132,7 @@ fn r13_every_generation_is_recorded_so_none_can_bypass_the_lock() {
         let say = |m: String| r.said.lock().unwrap().push(m);
         let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
         let ctx = GenContext {
+            provider: crate::provider::AnyProvider::default(),
             http: &r.http,
             base: &r.fake.base,
             api_key: KEY,
@@ -1172,6 +1177,7 @@ fn r2_an_answer_that_cannot_be_checkpointed_is_handed_over_marked_as_not_kept() 
     let say = |m: String| r.said.lock().unwrap().push(m);
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let ctx = GenContext {
+        provider: crate::provider::AnyProvider::default(),
         http: &r.http,
         base: &r.fake.base,
         api_key: KEY,

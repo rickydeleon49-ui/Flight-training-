@@ -85,3 +85,45 @@ describe("third-party notice for the diff (jsdiff) dependency", () => {
     expect(notice).toContain(license);
   });
 });
+
+describe("third-party notice for the React Aria tabs dependencies", () => {
+  it("pins exactly the two approved direct dependencies and their tarball integrity", () => {
+    const pkg = JSON.parse(read("package.json"));
+    const lock = JSON.parse(read("package-lock.json"));
+    const pins = {
+      "@react-aria/tabs": {
+        version: "3.12.1",
+        integrity: "sha512-fGMxbqSnqtn3GRiicLfnhWcnD6Auch0qCyt5ArfndYrISmSZkzq7PVZtDj85TEqC6p8WSw/M7HjWBBUX5/Of0g==",
+      },
+      "@react-stately/tabs": {
+        version: "3.9.1",
+        integrity: "sha512-xS9ByN7OMqvU9wyZJ8MnDvRTdsmB+GUP1whlRh4NmxWGmL4SDXKd4slSUGfb2lRi8lgT0OCAjd9om80HJP0p3w==",
+      },
+    };
+    for (const [name, pin] of Object.entries(pins)) {
+      expect(pkg.dependencies[name]).toBe(pin.version);
+      expect(lock.packages[`node_modules/${name}`].version).toBe(pin.version);
+      expect(lock.packages[`node_modules/${name}`].integrity).toBe(pin.integrity);
+      expect(lock.packages[`node_modules/${name}`].license).toBe("Apache-2.0");
+    }
+    // Declared directly because components import Item and mergeProps from them (ARIA-01a, 01d).
+    expect(pkg.dependencies["react-aria"]).toBe(lock.packages["node_modules/react-aria"].version);
+    expect(pkg.dependencies["react-stately"]).toBe(lock.packages["node_modules/react-stately"].version);
+    expect(pkg.dependencies["react-aria-components"]).toBeUndefined();
+  });
+
+  it("ships the identical monorepo license and names every installed Spectrum package", () => {
+    const notice = read("public/THIRD_PARTY_NOTICES.txt");
+    const license = read("node_modules/@react-aria/tabs/LICENSE");
+    expect(license).toContain("Copyright 2019 Adobe");
+    expect(notice).toContain("License: Apache-2.0");
+    expect(notice).toContain(`-\n\n${license}`);
+    const lock = JSON.parse(read("package-lock.json"));
+    for (const [path, entry] of Object.entries(lock.packages)) {
+      if (!/^node_modules\/(?:@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/|react-aria$|react-stately$)/.test(path)) continue;
+      expect(read(`${path}/LICENSE`)).toBe(license);
+      const name = path.replace("node_modules/", "");
+      expect(notice).toContain(`${name} ${(entry as { version: string }).version}\n`);
+    }
+  });
+});

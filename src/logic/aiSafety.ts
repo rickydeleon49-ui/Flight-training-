@@ -30,6 +30,7 @@ export function checkAiSubmission(
   material: StudyMaterial,
   credentials: CredentialRecord[],
   content: "file" | "study_context" = "file",
+  company: "Google" | "Anthropic" = "Google",
 ): AiSubmissionCheck {
   if (!material.filePath && content === "file") {
     return {
@@ -44,7 +45,7 @@ export function checkAiSubmission(
       allowed: false,
       reason:
         `This file is attached to your record "${attachedTo.title}". Certificates, ` +
-        "medicals and identification are never sent to Google. Keep a separate copy " +
+        `medicals and identification are never sent to ${company}. Keep a separate copy ` +
         "in the library if you want a study aid from part of it.",
     };
   }
@@ -58,6 +59,11 @@ export function checkAiSubmission(
     };
   }
 
+  if (company === "Anthropic") {
+    return { allowed: true, reason: content === "study_context"
+      ? "Your question and study context will be sent to Anthropic. Send study material only — never anything personal or identifying."
+      : `“${material.originalFileName ?? material.title}” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying.` };
+  }
   if (content === "study_context") {
     return { allowed: true, reason: "Your question and study context will be sent to Google. Send study material only — never anything personal or identifying." };
   }
@@ -83,8 +89,9 @@ export function checkAiSubmission(
  * the one request. A split part names the pages of the original it holds, so
  * "only this chapter" is visible before anything is sent.
  */
-export function geminiSendDisclosure(material: StudyMaterial): string {
+export function geminiSendDisclosure(material: StudyMaterial, company: "Google" | "Anthropic" = "Google"): string {
   const name = material.originalFileName ?? material.title;
+  if (company === "Anthropic") return `Only “${name}” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed.`;
   const isPdf = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
   const lineage = material.lineage;
   const pages = lineage ? `, pages ${lineage.sourcePageStart}–${lineage.sourcePageEnd} of “${lineage.sourceTitle}”,` : "";

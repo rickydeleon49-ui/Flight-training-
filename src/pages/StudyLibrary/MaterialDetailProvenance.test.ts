@@ -108,7 +108,7 @@ afterEach(() => {
 });
 
 describe("MaterialDetail saved content provenance integration", () => {
-  it("renders distinct provenance for study guide and practice test without cross-borrowing or using configured model", async () => {
+  it.each(["gemini", "claude"])("renders distinct %s provenance for study guide and practice test without cross-borrowing or using configured model", async (helper) => {
     const mat = await repos.documents.create({
       id: "mat-cross-test",
       title: "Instrument Flying Handbook",
@@ -125,7 +125,7 @@ describe("MaterialDetail saved content provenance integration", () => {
       sections: [{ heading: "Pitch Control", body: "Altimeter and VSI usage." }],
       flashcards: [{ front: "Primary pitch instrument?", back: "Altimeter.", sourcePage: 12 }],
       sourceNotes: "FAA-H-8083-15B",
-      model: "gemini-1.5-flash-guide-model",
+      model: `${helper}-guide-model`,
     });
 
     vi.setSystemTime(new Date("2026-10-02T16:00:00.000Z"));
@@ -142,7 +142,7 @@ describe("MaterialDetail saved content provenance integration", () => {
           sourcePage: 15,
         },
       ],
-      model: "gemini-1.5-pro-test-model",
+      model: `${helper}-test-model`,
     });
 
     await openMaterial(mat.id);
@@ -154,12 +154,12 @@ describe("MaterialDetail saved content provenance integration", () => {
     expect(guideScope.getByText("Saved study aid provenance")).toBeTruthy();
     expect(guideScope.queryByText("Instrument Flying Handbook")).toBeNull();
     expect(guideScope.queryByText("Source material:")).toBeNull();
-    expect(guideScope.getByText("Gemini")).toBeTruthy();
-    expect(guideScope.getByText("gemini-1.5-flash-guide-model")).toBeTruthy();
+    expect(guideScope.getByText(helper === "claude" ? "Claude" : "Gemini")).toBeTruthy();
+    expect(guideScope.getByText(`${helper}-guide-model`)).toBeTruthy();
     expect(guideScope.getByText("Generated Thursday, October 1")).toBeTruthy();
 
     // Verify study aid provenance does NOT borrow practice test or configured settings metadata:
-    expect(guideScope.queryByText("gemini-1.5-pro-test-model")).toBeNull();
+    expect(guideScope.queryByText(`${helper}-test-model`)).toBeNull();
     expect(guideScope.queryByText("gemini-3.5-flash-configured-in-settings")).toBeNull();
     expect(guideScope.queryByText("Generated Friday, October 2")).toBeNull();
 
@@ -170,12 +170,12 @@ describe("MaterialDetail saved content provenance integration", () => {
     expect(testScope.getByText("Saved practice test provenance")).toBeTruthy();
     expect(testScope.queryByText("Instrument Flying Handbook")).toBeNull();
     expect(testScope.queryByText("Source material:")).toBeNull();
-    expect(testScope.getByText("Gemini")).toBeTruthy();
-    expect(testScope.getByText("gemini-1.5-pro-test-model")).toBeTruthy();
+    expect(testScope.getByText(helper === "claude" ? "Claude" : "Gemini")).toBeTruthy();
+    expect(testScope.getByText(`${helper}-test-model`)).toBeTruthy();
     expect(testScope.getByText("Generated Friday, October 2")).toBeTruthy();
 
     // Verify practice test provenance does NOT borrow study aid or configured settings metadata:
-    expect(testScope.queryByText("gemini-1.5-flash-guide-model")).toBeNull();
+    expect(testScope.queryByText(`${helper}-guide-model`)).toBeNull();
     expect(testScope.queryByText("gemini-3.5-flash-configured-in-settings")).toBeNull();
     expect(testScope.queryByText("Generated Thursday, October 1")).toBeNull();
   });

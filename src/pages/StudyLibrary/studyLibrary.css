@@ -680,7 +680,8 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   color: var(--text-primary);
   font-weight: 600;
 }
-.library-tab:focus-visible { outline: 2px solid var(--category-study-edge); outline-offset: 2px; }
+/* Inset ring: the scrolling tab row clips anything drawn outside the tab. Clear of the active underline. */
+.library-tab:focus-visible { outline: 2px solid var(--category-study-edge); outline-offset: -4px; }
 .section-title { margin: 0; font-size: 1.15rem; }
 .library-review__filters { gap: var(--space-3); align-items: center; }
 .library-review__list {
@@ -849,6 +850,21 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   min-height: 44px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+/* Enter/Space on a tab moves focus to its hidden section heading; show it, ringed like buttons, while focused. */
+.material-panel-heading:focus-visible {
+  position: static;
+  width: fit-content;
+  height: auto;
+  margin: 0 0 var(--space-3);
+  padding: 0 var(--space-2);
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  font-size: 1.15rem;
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .material-detail [role="tabpanel"],
 .material-detail [id^="search-target-"],

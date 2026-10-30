@@ -189,7 +189,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
               <p className="tiny dim">
                 {verdict.pages.toLocaleString()} {verdict.pages === 1 ? "page" : "pages"}. A
                 safety copy of your library is saved first, and this chapter becomes its own
-                Study Library item — Gemini can create a study guide or practice test from it,
+                Study Library item — your selected AI provider can create a study guide or practice test from it,
                 just like any other document. Anything over{" "}
                 {describeFileSize(MAX_PDF_BYTES)} once saved is refused; illustrated pages take
                 more space than plain text, so a heavily illustrated range may need to be

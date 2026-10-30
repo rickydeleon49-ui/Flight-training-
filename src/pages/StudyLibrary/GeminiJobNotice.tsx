@@ -1,3 +1,4 @@
+import { providerCompany, providerWording } from "@/services/provider";
 import { useEffect, useRef, useState } from "react";
 
 import { AlertIcon, Button, ConfirmDialog } from "@/components/ui";
@@ -17,6 +18,7 @@ export function GeminiJobNotice({
   onRetry,
   onReview,
   reviewDisabled = false,
+  model,
 }: {
   job: GeminiJob;
   jobs: ReturnType<typeof useGeminiJobs>;
@@ -28,7 +30,11 @@ export function GeminiJobNotice({
    */
   onReview?: () => void;
   reviewDisabled?: boolean;
+  model?: string;
 }) {
+  const helperModel = job.answer?.model ?? job.sections?.model ?? model;
+  const helper = providerCompany(helperModel) === "Anthropic" ? "Claude" : "Gemini";
+  const company = providerCompany(helperModel);
   const what = job.kind === "study-aid" ? "study guide" : job.kind === "flashcards" ? "flashcards" : "practice test";
   const readyTitle =
     job.kind === "study-aid"
@@ -65,7 +71,7 @@ export function GeminiJobNotice({
     job.sectionGuide &&
     (["failed", "interrupted", "cancelled"].includes(job.phase) || job.queueState === "cancelled")
   ) {
-    return <SectionGuideNotice job={job} jobs={jobs} />;
+    return <SectionGuideNotice job={job} jobs={jobs} model={helperModel} />;
   }
 
   if (job.draft && ["failed", "interrupted", "cancelled"].includes(job.phase)) {
@@ -80,10 +86,10 @@ export function GeminiJobNotice({
               </p>
             ) : null}
             {job.error ? (
-              <GeminiErrorText message={job.error} calm />
+              <GeminiErrorText model={job.answer?.model ?? job.sections?.model ?? model} message={job.error} calm />
             ) : job.phase === "failed" && job.draft.cards.length === 0 ? (
               // Never just buttons: a failed empty draft always says what happened.
-              <p className="tiny">{EMPTY_FLASHCARDS_MESSAGE}</p>
+              <p className="tiny">{providerWording(EMPTY_FLASHCARDS_MESSAGE, helperModel)}</p>
             ) : null}
           </div>
         </div>
@@ -108,10 +114,10 @@ export function GeminiJobNotice({
         <div className="file-row" role="status">
           <p className="tiny">
             {job.cancelAttempted
-              ? `Gemini finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
+              ? `${helper} finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
               : job.local
                 ? `${readyTitle} It has not been saved yet.`
-                : `Gemini finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
+                : `${helper} finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
             {job.answer?.model ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
             {onReview
               ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
@@ -193,13 +199,13 @@ export function GeminiJobNotice({
     const message =
       job.phase === "superseded" || job.phase === "cancelled" || job.phase === "failed"
         ? job.error
-        : `Creating a new ${what} was interrupted when the app closed. Google may or may not have finished it, so nothing was saved and nothing was sent again. You can try again whenever you like.`;
+        : `Creating a new ${what} was interrupted when the app closed. ${company} may or may not have finished it, so nothing was saved and nothing was sent again. You can try again whenever you like.`;
     const retry = job.phase !== "superseded" && onRetry && !busy;
     return (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="ai-disclaimer" role="status">
           <AlertIcon size={16} />
-          <GeminiErrorText message={message ?? "Gemini could not finish. Try again."} calm />
+          <GeminiErrorText model={job.answer?.model ?? job.sections?.model ?? model} message={message ?? "Gemini could not finish. Try again."} calm />
         </div>
         <div className="row row--wrap">
           {retry ? (
@@ -300,7 +306,7 @@ function QueuedSectionGuideNotice({
 }
 
 /** Section drafts never share the legacy retry or one-click discard path. */
-function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<typeof useGeminiJobs> }) {
+function SectionGuideNotice({ job, jobs, model }: { job: GeminiJob; jobs: ReturnType<typeof useGeminiJobs>; model?: string }) {
   const [keeping, setKeeping] = useState(false);
   const [pending, setPending] = useState(false);
   const intent = useRef(false);
@@ -329,7 +335,7 @@ function SectionGuideNotice({ job, jobs }: { job: GeminiJob; jobs: ReturnType<ty
       {message ? <div className="ai-disclaimer" role="status"><AlertIcon size={16} /><p className="tiny">{message}</p></div> : null}
       {/* Only a reason classified as plain on the wire this session is shown as written; a
           recovered journal string may be internal text, so it gets the generic sentence. */}
-      {code && code !== "CANCELLED" && !keeping ? <div role="alert"><GeminiErrorText message={code === "GUIDE_FAILED" ? new SectionGuideError(code, job.local ? job.error ?? undefined : undefined).message : SECTION_GUIDE_MESSAGES[code]} calm /></div> : null}
+      {code && code !== "CANCELLED" && !keeping ? <div role="alert"><GeminiErrorText model={model} message={code === "GUIDE_FAILED" ? new SectionGuideError(code, job.local ? job.error ?? undefined : undefined).message : SECTION_GUIDE_MESSAGES[code]} calm /></div> : null}
       <div className="row row--wrap">
         {sourceChanged && !keeping ? <>
           <Button size="small" variant="secondary" onClick={() => setKeeping(true)}>Keep my earlier work</Button>
@@ -372,8 +378,9 @@ export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = f
  * One Gemini failure: the plain sentence, with any technical trace folded
  * away under "Details" so it never competes with what she should do next.
  */
-export function GeminiErrorText({ message, calm = false }: { message: string; calm?: boolean }) {
-  const { text, details } = splitGeminiError(message);
+export function GeminiErrorText({ message, calm = false, model }: { message: string; calm?: boolean; model?: string }) {
+  const { text: original, details } = splitGeminiError(message);
+  const text = providerWording(original, model);
   return (
     <div className="stack stack--1">
       <p className={calm ? "tiny" : "field__error"} role={calm ? undefined : "alert"} style={{ whiteSpace: "pre-line" }}>
@@ -390,13 +397,14 @@ export function GeminiErrorText({ message, calm = false }: { message: string; ca
 }
 
 /** Earlier Gemini work could not be read back, so nothing new may start yet. */
-export function GeminiRecoveryNotice({ onRetry }: { onRetry: () => void }) {
+export function GeminiRecoveryNotice({ onRetry, model }: { onRetry: () => void; model?: string }) {
+  const helper = providerCompany(model) === "Anthropic" ? "Claude" : "Gemini";
   return (
     <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
       <div className="ai-disclaimer" role="alert">
         <AlertIcon size={16} />
         <p className="tiny">
-          Her Flight Deck could not check for study aids Gemini was already working on, so a new one cannot be
+          Her Flight Deck could not check for study aids {helper} was already working on, so a new one cannot be
           started yet, in case one is waiting to be saved. Saved content is unchanged.
         </p>
       </div>
@@ -437,16 +445,19 @@ export function GeminiProgressView({
   job,
   title,
   onCancel,
+  model,
 }: {
   job: GeminiJob;
   title: string;
   onCancel: () => void;
+  model?: string;
 }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+  const words = (text: string) => providerWording(text, job.answer?.model ?? job.sections?.model ?? model);
   const stage =
     job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
   const retrying = job.attempt !== undefined && job.attempt > 1;
@@ -455,10 +466,10 @@ export function GeminiProgressView({
     <div className="ai-working">
       <span className="ai-working__dot" aria-hidden="true" />
       <div className="stack stack--2">
-        <p className="small strong">{title}</p>
+        <p className="small strong">{words(title)}</p>
         <p className="tiny">
           <span role="status" aria-live="polite">
-            {job.cancelRequested ? "Cancelling…" : retrying ? "Gemini is busy — trying again" : stage}
+            {job.cancelRequested ? "Cancelling…" : retrying ? words("Gemini is busy — trying again") : words(stage)}
           </span>
           {elapsed ? <><span aria-hidden="true"> · </span><span className="dim">{elapsed}</span></> : null}
         </p>
@@ -469,13 +480,13 @@ export function GeminiProgressView({
           <p className="tiny" role="status">{job.sections.ready} of {job.sections.total} {job.sections.total === 1 ? "section" : "sections"} ready</p>
         ) : null}
         {job.sectionGuide && job.sections?.heading && !/files\/|https?:\/\//i.test(job.sections.heading) ? <p className="tiny dim">{job.sections.heading}</p> : null}
-        {job.progress && !job.cancelRequested ? <p className="tiny dim">{job.progress}</p> : null}
+        {job.progress && !job.cancelRequested ? <p className="tiny dim">{words(job.progress)}</p> : null}
         {job.sectionGuide && job.stage === "generating" && !job.cancelRequested && now - (job.stageSince ?? job.startedAt ?? now) >= 60_000 ? (
-          <p className="tiny dim">Taking longer than usual. Gemini can take a few minutes on a section. Cancel keeps finished sections.</p>
+          <p className="tiny dim">{words("Taking longer than usual. Gemini can take a few minutes on a section. Cancel keeps finished sections.")}</p>
         ) : null}
         {job.cancelError ? (
           <p className="field__error" role="alert">
-            {job.cancelError}
+            {words(job.cancelError)}
           </p>
         ) : null}
         {job.phase === "running" ? (

@@ -21,7 +21,7 @@ use crate::provider::{AnyProvider, Tier};
 pub(crate) mod provider_impl;
 use crate::gemini_budget::{self, Budget, Stage, MAX_GENERATION_ATTEMPTS};
 use crate::gemini_cancel;
-use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
+use crate::gemini_files::{self, PreparedSources, Source};
 use crate::gemini_jobs::{self, CancelOutcome, JobKind, JobRecord, JobStage};
 use crate::lineage::calculate_sha256;
 use crate::pdf;
@@ -335,9 +335,17 @@ fn check_page_count(pages: u32) -> Result<(), String> {
 /// its length is unknown, not known to be too great, and Google may well read
 /// it. Refusing on a failed count would be inventing a reason to say no.
 async fn check_pdf_length(path: &Path) -> Result<Option<u32>, String> {
+    check_pdf_length_for(path, AnyProvider::default()).await
+}
+
+async fn check_pdf_length_for(path: &Path, provider: AnyProvider) -> Result<Option<u32>, String> {
     match pdf::count_pages(path.to_path_buf()).await {
         Ok(pages) => {
-            check_page_count(pages)?;
+            if provider.id() == crate::provider::ProviderId::Claude {
+                crate::provider::claude::check_pages(pages)?;
+            } else {
+                check_page_count(pages)?;
+            }
             Ok(Some(pages))
         }
         Err(_) => Ok(None),
@@ -580,13 +588,37 @@ pub(crate) fn current_key(root: &Path) -> Result<Option<String>, String> {
     Ok(migrate_legacy_key(root))
 }
 
-pub(crate) fn stored_key(app: &AppHandle) -> Result<String, String> {
-    current_key(&app_root(app)?)?
-        .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())
+pub(crate) fn stored_key_for(root: &Path, provider: AnyProvider) -> Result<String, String> {
+    let key = if provider.id() == crate::provider::ProviderId::Gemini {
+        current_key(root)?
+    } else {
+        secrets::load_key_for(root, provider.id())?
+    };
+    key.ok_or_else(|| {
+        format!(
+            "{} is not connected. Connect it in Settings first.",
+            provider.id().name()
+        )
+    })
 }
 
 #[tauri::command]
-pub fn gemini_status(app: AppHandle) -> GeminiStatus {
+pub fn gemini_status(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus {
+    if !gemini_only.unwrap_or(false) {
+        if let Ok(root) = app_root(&app) {
+            let provider = AnyProvider::selected(&root);
+            if provider.id() == crate::provider::ProviderId::Claude {
+                return GeminiStatus {
+                    configured: secrets::load_key_for(&root, provider.id())
+                        .ok()
+                        .flatten()
+                        .is_some(),
+                    model: crate::provider::claude::MODEL,
+                    choice: "standard",
+                };
+            }
+        }
+    }
     let root = app_root(&app).ok();
     let configured = root
         .as_deref()
@@ -643,7 +675,7 @@ pub async fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
 
 /// End the prepared-source context and retire, best effort and bounded, the
 /// uploads made with `previous_key`. Anything not removed expires at Google.
-async fn end_prepared_context(previous_key: Option<String>) {
+pub(crate) async fn end_prepared_context(previous_key: Option<String>) {
     let retired = prepared_sources().invalidate_all();
     let (Some(key), false) = (previous_key, retired.is_empty()) else {
         return;
@@ -717,15 +749,18 @@ impl LoadedSource {
 pub(crate) async fn prepare_submission(
     app: &AppHandle,
     relative_path: &str,
-) -> Result<(String, LoadedSource), String> {
-    let api_key = stored_key(app)?;
-    let source = load_submission_source(app, relative_path).await?;
-    Ok((api_key, source))
+) -> Result<(AnyProvider, String, LoadedSource), String> {
+    let root = app_root(app)?;
+    let provider = AnyProvider::selected(&root);
+    let api_key = stored_key_for(&root, provider)?;
+    let source = load_submission_source(app, relative_path, provider).await?;
+    Ok((provider, api_key, source))
 }
 
 pub(crate) async fn load_submission_source(
     app: &AppHandle,
     relative_path: &str,
+    provider: AnyProvider,
 ) -> Result<LoadedSource, String> {
     let path = documents::stored_document_path(app, relative_path)?;
     let metadata = std::fs::metadata(&path).map_err(|e| {
@@ -739,11 +774,18 @@ pub(crate) async fn load_submission_source(
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("document");
-    let mime = mime_type(file_name)?;
+    let mime = mime_type(file_name).map_err(|message| provider.wording(message))?;
+    if provider.id() == crate::provider::ProviderId::Claude {
+        crate::provider::claude::check_size(metadata.len())?;
+    }
     check_size(mime, metadata.len())?;
     // Size is only half of Google's PDF limit; the other half is pages.
     let page_count = if mime == "application/pdf" {
-        check_pdf_length(&path).await?
+        if provider.id() == crate::provider::ProviderId::Gemini {
+            check_pdf_length(&path).await?
+        } else {
+            check_pdf_length_for(&path, provider).await?
+        }
     } else {
         None
     };
@@ -756,6 +798,9 @@ pub(crate) async fn load_submission_source(
     })?;
     let mut source = LoadedSource::new(bytes, mime, relative_path);
     source.page_count = page_count;
+    if provider.id() == crate::provider::ProviderId::Claude {
+        crate::provider::claude::check_source(&source)?;
+    }
     Ok(source)
 }
 
@@ -773,6 +818,7 @@ pub(crate) fn prepared_sources() -> &'static PreparedSources {
 /// Everything one generation needs, without the window: tests run the same
 /// code against a loopback endpoint.
 pub(crate) struct GenContext<'a> {
+    pub(crate) provider: AnyProvider,
     pub(crate) http: &'a Client,
     pub(crate) base: &'a str,
     pub(crate) api_key: &'a str,
@@ -786,8 +832,16 @@ pub(crate) struct GenContext<'a> {
 }
 
 impl GenContext<'_> {
-    /// Provider is an operation parameter so existing contexts and fixtures keep
-    /// their construction contract during this zero-behaviour-change slice.
+    fn primary(&self) -> &'static str {
+        self.provider.models(self.choice.into()).0
+    }
+    fn fallback(&self) -> &'static str {
+        self.provider.models(self.choice.into()).1
+    }
+    fn extract_text(&self, raw: &str) -> Result<String, String> {
+        self.provider.extract_text(raw)
+    }
+    /// Concrete provider dispatch retains the same shared transport guards.
     async fn generate_json(
         &self,
         provider: AnyProvider,
@@ -811,12 +865,6 @@ impl GenContext<'_> {
     }
 }
 
-/// How the selected source appears in a request. A PDF is referred to by its
-/// prepared copy; it is never also embedded.
-fn source_part(source: &LoadedSource, prepared: Option<&gemini_files::Prepared>) -> Value {
-    AnyProvider::default().source_part(source, prepared)
-}
-
 /// Run one generation over the selected source. A PDF is prepared once and
 /// referred to; anything else is sent inline as before.
 ///
@@ -837,7 +885,7 @@ pub(crate) async fn run_generation(
 ) -> Result<(String, &'static str), String> {
     // Also bound cache coalescing, readiness and best-effort cleanup awaits.
     // Dropping a lease queues its owned remote file for later cleanup.
-    match ctx
+    let outcome = match ctx
         .budget
         .run(run_generation_inner(ctx, source, build))
         .await
@@ -855,8 +903,16 @@ pub(crate) async fn run_generation(
                 } else {
                     Lost::NoAnswerInTime
                 };
-                ctx.budget.categorize(lost.category());
-                Err(lost_message(lost, ctx.budget))
+                ctx.budget.categorize(
+                    if ctx.provider.id() == crate::provider::ProviderId::Claude
+                        && lost == Lost::Unreachable
+                    {
+                        "could not reach Claude"
+                    } else {
+                        lost.category()
+                    },
+                );
+                Err(lost_message_for(lost, ctx.budget, ctx.provider))
             } else {
                 Err(gemini_files::out_of_time(
                     ctx.budget,
@@ -864,7 +920,8 @@ pub(crate) async fn run_generation(
                 ))
             }
         }
-    }
+    };
+    outcome.map_err(|message| ctx.provider.wording(message))
 }
 
 async fn run_generation_inner(
@@ -872,8 +929,12 @@ async fn run_generation_inner(
     source: &LoadedSource,
     build: &(dyn Fn(Value) -> Value + Sync),
 ) -> Result<(String, &'static str), String> {
-    if source.mime != "application/pdf" {
-        let body = build(AnyProvider::default().source_part(source, None));
+    if ctx.provider.id() == crate::provider::ProviderId::Claude {
+        crate::provider::claude::check_source(source)?;
+    }
+    if source.mime != "application/pdf" || ctx.provider.id() == crate::provider::ProviderId::Claude
+    {
+        let body = build(ctx.provider.source_part(source, None));
         return generate_with_retries_at(ctx, &body)
             .await
             .map_err(|f| f.message);
@@ -1216,7 +1277,7 @@ where
     let recorded = match &outcome {
         Ok(answer) => match serde_json::to_value(answer) {
             Ok(value) => running.finish(Ok(value)),
-            Err(_) => running.finish(Err("Gemini's answer could not be kept.")),
+            Err(_) => running.finish(Err("The answer could not be kept.")),
         },
         Err(message) => running.finish(Err(message)),
     };
@@ -1411,23 +1472,30 @@ pub async fn generate_study_aid(
     // change at any later point makes this operation stale.
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let epoch = prepared_sources().epoch();
-    let (api_key, source) = budget
+    let (provider, api_key, source) = budget
         .run(prepare_submission(&app, &relative_path))
         .await
         .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
-    let http = generation_client()?;
+    let http = generation_client().map_err(|error| {
+        if provider.id() == crate::provider::ProviderId::Claude {
+            "Could not start the connection to Claude.".to_string()
+        } else {
+            error
+        }
+    })?;
     // The invocation budget already includes source preparation.
     // Progress names this job and reports the stages actually reached.
     let reporter = reporter_for(&app, &material_id, JobKind::StudyAid);
     reporter.limit.store(9, Ordering::SeqCst);
     reporter.follow(&budget);
-    let progress = |message: String| reporter.say(message);
+    let progress = |message: String| reporter.say(provider.wording(message));
     let started = |job_id: &str| reporter.started(job_id);
     let ctx = GenContext {
+        provider,
         http: &http,
-        base: GOOGLE_BASE,
+        base: provider.base(),
         api_key: &api_key,
         choice,
         cache: prepared_sources(),
@@ -1444,7 +1512,13 @@ pub async fn generate_study_aid(
         async {
             batches::generate(&ctx, &source, &root, &material_id, target, cards_only)
                 .await
-                .map_err(|m| format!("{m}\n{}", budget.details(None)))
+                .map_err(|m| {
+                    format!(
+                        "{}\n{}",
+                        provider.wording(m),
+                        budget.details_for(None, provider)
+                    )
+                })
         },
         &job_changed(&app),
         JobHooks {
@@ -1455,6 +1529,7 @@ pub async fn generate_study_aid(
         },
     )
     .await
+    .map_err(|message| provider.wording(message))
 }
 
 /// The study guide and flashcards, from the selected source.
@@ -1511,9 +1586,11 @@ async fn study_aid_request(
     ctx.budget.reset_stage(Stage::Validating);
     ctx.budget.validation_checkpoint()?;
     ctx.budget.categorize("invalid or incomplete output");
-    let text = extract_text(&raw)?;
-    let mut value: Value = serde_json::from_str(&text)
-        .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
+    let text = ctx.extract_text(&raw)?;
+    let mut value: Value = serde_json::from_str(&text).map_err(|_| {
+        ctx.provider
+            .wording("Gemini's study guide was incomplete. Try generating it again.".to_string())
+    })?;
     // Guide cards are outside this unit's contract. Ignore even malformed cards
     // before deserializing; only separately validated card units enter the set.
     if guide_only {
@@ -1521,8 +1598,10 @@ async fn study_aid_request(
             object.insert("flashcards".to_string(), json!([]));
         }
     }
-    let mut result: GeneratedStudyAid = serde_json::from_value(value)
-        .map_err(|_| "Gemini's study guide was incomplete. Try generating it again.".to_string())?;
+    let mut result: GeneratedStudyAid = serde_json::from_value(value).map_err(|_| {
+        ctx.provider
+            .wording("Gemini's study guide was incomplete. Try generating it again.".to_string())
+    })?;
     result.model = model_used.to_string();
     ctx.budget.validation_checkpoint()?;
     Ok(result)
@@ -1631,22 +1710,29 @@ pub async fn generate_practice_test(
     // change at any later point makes this operation stale.
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     let epoch = prepared_sources().epoch();
-    let (api_key, source) = budget
+    let (provider, api_key, source) = budget
         .run(prepare_submission(&app, &relative_path))
         .await
         .map_err(|_| gemini_files::out_of_time(&budget, "preparing the document"))??;
     let root = app_root(&app)?;
     let choice = load_choice(&root);
-    let http = generation_client()?;
+    let http = generation_client().map_err(|error| {
+        if provider.id() == crate::provider::ProviderId::Claude {
+            "Could not start the connection to Claude.".to_string()
+        } else {
+            error
+        }
+    })?;
     // The invocation budget already includes source preparation.
     // Progress names this job and reports the stages actually reached.
     let reporter = reporter_for(&app, &material_id, JobKind::PracticeTest);
     reporter.follow(&budget);
-    let progress = |message: String| reporter.say(message);
+    let progress = |message: String| reporter.say(provider.wording(message));
     let started = |job_id: &str| reporter.started(job_id);
     let ctx = GenContext {
+        provider,
         http: &http,
-        base: GOOGLE_BASE,
+        base: provider.base(),
         api_key: &api_key,
         choice,
         cache: prepared_sources(),
@@ -1661,9 +1747,13 @@ pub async fn generate_practice_test(
         base_revision.as_deref(),
         &source,
         async {
-            practice_test_with(&ctx, &source)
-                .await
-                .map_err(|m| format!("{m}\n{}", budget.details(None)))
+            practice_test_with(&ctx, &source).await.map_err(|m| {
+                format!(
+                    "{}\n{}",
+                    provider.wording(m),
+                    budget.details_for(None, provider)
+                )
+            })
         },
         &job_changed(&app),
         JobHooks {
@@ -1674,6 +1764,7 @@ pub async fn generate_practice_test(
         },
     )
     .await
+    .map_err(|message| provider.wording(message))
 }
 
 /// A practice test from the selected source; the same prepared PDF a study
@@ -1710,11 +1801,13 @@ async fn practice_test_with(
     ctx.budget.reset_stage(Stage::Validating);
     ctx.budget.validation_checkpoint()?;
     ctx.budget.categorize("invalid or incomplete output");
-    let text = extract_text(&raw)?;
+    let text = ctx.extract_text(&raw)?;
     let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
-        "Gemini's practice test was incomplete. Try generating it again.".to_string()
+        ctx.provider
+            .wording("Gemini's practice test was incomplete. Try generating it again.".to_string())
     })?;
-    let mut result = sanitize_practice_test(result)?;
+    let mut result =
+        sanitize_practice_test(result).map_err(|message| ctx.provider.wording(message))?;
     result.model = model_used.to_string();
     ctx.budget.validation_checkpoint()?;
     Ok(result)
@@ -1726,7 +1819,7 @@ async fn generate_once(
     model: &str,
     body: &Value,
 ) -> Result<Attempt, Failure> {
-    ctx.generate_json(AnyProvider::default(), model, body).await
+    ctx.generate_json(ctx.provider, model, body).await
 }
 
 /// Why generation ended without an answer: the message, and the status of a
@@ -1772,8 +1865,21 @@ pub(crate) async fn generate_with_retries_at(
     ctx: &GenContext<'_>,
     body: &Value,
 ) -> Result<(String, &'static str), Failure> {
+    generate_with_retries_inner(ctx, body)
+        .await
+        .map_err(|mut failure| {
+            failure.message = ctx.provider.wording(failure.message);
+            failure
+        })
+}
+
+async fn generate_with_retries_inner(
+    ctx: &GenContext<'_>,
+    body: &Value,
+) -> Result<(String, &'static str), Failure> {
     let choice = ctx.choice;
-    let mut model = choice.primary();
+    let mut model = ctx.primary();
+    let has_fallback = ctx.primary() != ctx.fallback();
     let mut on_fallback = false;
     let mut setback: Option<Setback> = None;
     let mut retry = 0u32;
@@ -1785,12 +1891,16 @@ pub(crate) async fn generate_with_retries_at(
             return Err(GenContext::stale());
         }
         if ctx.budget.remaining().is_zero() {
-            return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
+            return Err(gemini_files::out_of_time(
+                ctx.budget,
+                &format!("asking {}", ctx.provider.id().name()),
+            )
+            .into());
         }
         let Some(attempt) = ctx.budget.start_attempt() else {
             break;
         };
-        if attempt == MAX_GENERATION_ATTEMPTS && !on_fallback {
+        if has_fallback && attempt == MAX_GENERATION_ATTEMPTS && !on_fallback {
             // The last attempt goes to the backup model: a model-specific
             // capacity or rate limit may spare it.
             model = choice.fallback();
@@ -1800,13 +1910,21 @@ pub(crate) async fn generate_with_retries_at(
 
         let mut retry_after = None;
         match generate_once(ctx, model, body).await? {
-            Attempt::Answered(raw) => return Ok((raw, model)),
+            Attempt::Answered(raw) => {
+                if !ctx.current() {
+                    return Err(GenContext::stale());
+                }
+                return Ok((raw, model));
+            }
             Attempt::Refused {
                 status,
                 body,
                 retry_after: asked,
             } => {
-                if status == 429 && is_lasting_quota(&body) {
+                if ctx.provider.id() == crate::provider::ProviderId::Gemini
+                    && status == 429
+                    && is_lasting_quota(&body)
+                {
                     ctx.budget.categorize("quota used up");
                     return Err(Failure {
                         message: quota_message(),
@@ -1816,7 +1934,8 @@ pub(crate) async fn generate_with_retries_at(
                 // Access to the capable model can differ from Standard.
                 // Try Standard without suggesting billing is required.
                 // An explicitly invalid key remains terminal for both models.
-                if !on_fallback
+                if has_fallback
+                    && !on_fallback
                     && choice == ModelChoice::MostCapable
                     && status == 403
                     && !matches!(
@@ -1829,10 +1948,16 @@ pub(crate) async fn generate_with_retries_at(
                     (ctx.say)(choice.fallback_notice().to_string());
                     continue;
                 }
-                if !is_retryable(status) {
+                if !is_retryable(status)
+                    && !(ctx.provider.id() == crate::provider::ProviderId::Claude && status == 529)
+                {
                     ctx.budget.categorize("refused");
                     return Err(Failure {
-                        message: describe_refusal(RefusalContext::Generation, status, &body, model),
+                        message: if ctx.provider.id() == crate::provider::ProviderId::Claude {
+                            crate::provider::claude::error_message(status)
+                        } else {
+                            describe_refusal(RefusalContext::Generation, status, &body, model)
+                        },
                         status: Some(status),
                     });
                 }
@@ -1842,7 +1967,7 @@ pub(crate) async fn generate_with_retries_at(
                     Setback::Busy
                 });
                 retry_after = asked;
-                if !on_fallback && moves_straight_to_fallback(choice, status) {
+                if has_fallback && !on_fallback && moves_straight_to_fallback(choice, status) {
                     model = choice.fallback();
                     on_fallback = true;
                     (ctx.say)(choice.fallback_notice().to_string());
@@ -1850,8 +1975,16 @@ pub(crate) async fn generate_with_retries_at(
             }
             Attempt::Lost(lost @ (Lost::NoAnswerInTime | Lost::AnswerCutShort)) => {
                 // The request had all the time that was left.
-                ctx.budget.categorize(lost.category());
-                return Err(lost_message(lost, ctx.budget).into());
+                ctx.budget.categorize(
+                    if ctx.provider.id() == crate::provider::ProviderId::Claude
+                        && lost == Lost::Unreachable
+                    {
+                        "could not reach Claude"
+                    } else {
+                        lost.category()
+                    },
+                );
+                return Err(lost_message_for(lost, ctx.budget, ctx.provider).into());
             }
             Attempt::Lost(lost) => setback = Some(Setback::Lost(lost)),
         }
@@ -1861,20 +1994,28 @@ pub(crate) async fn generate_with_retries_at(
         }
         let pause = retry_after.unwrap_or_else(|| backoff_delay(retry, jitter_millis()));
         retry += 1;
-        (ctx.say)(waiting_message(setback, ctx.budget.attempts() + 1, pause));
+        (ctx.say)(ctx.provider.wording(waiting_message_for(
+            setback,
+            ctx.budget.attempts() + 1,
+            pause,
+            ctx.provider,
+        )));
         if !ctx.budget.pause(pause).await {
             if ctx.budget.cancelled() {
                 return Err(gemini_cancel::CANCELLED.to_string().into());
             }
             ctx.budget.categorize("time limit reached");
             return Err(match retry_after {
-                Some(asked) => retry_after_message(asked, ctx.budget),
+                Some(asked) => retry_after_message_for(asked, ctx.budget, ctx.provider),
                 None => gemini_files::out_of_time(ctx.budget, "trying again"),
             }
             .into());
         }
     }
 
+    if ctx.provider.id() == crate::provider::ProviderId::Claude {
+        return Err(crate::provider::claude::error_message(529).into());
+    }
     let tried = ctx.budget.attempts();
     Err(match setback {
         Some(Setback::RateLimited) => {
@@ -1882,8 +2023,16 @@ pub(crate) async fn generate_with_retries_at(
             rate_limit_message()
         }
         Some(Setback::Lost(lost)) => {
-            ctx.budget.categorize(lost.category());
-            lost_message(lost, ctx.budget)
+            ctx.budget.categorize(
+                if ctx.provider.id() == crate::provider::ProviderId::Claude
+                    && lost == Lost::Unreachable
+                {
+                    "could not reach Claude"
+                } else {
+                    lost.category()
+                },
+            );
+            lost_message_for(lost, ctx.budget, ctx.provider)
         }
         _ => {
             ctx.budget.categorize("Google busy");
@@ -1891,6 +2040,42 @@ pub(crate) async fn generate_with_retries_at(
         }
     }
     .into())
+}
+
+fn waiting_message_for(
+    setback: Option<Setback>,
+    next: u32,
+    pause: Duration,
+    provider: AnyProvider,
+) -> String {
+    if provider.id() == crate::provider::ProviderId::Gemini {
+        return waiting_message(setback, next, pause);
+    }
+    let seconds = pause.as_millis().div_ceil(1000);
+    let what = match setback {
+        Some(Setback::Lost(Lost::Unreachable)) => "Could not reach Claude.",
+        Some(Setback::Lost(_)) => "The connection to Claude was interrupted. Anthropic may have processed the request; trying again may incur additional charges.",
+        _ => "Claude is busy or rate-limited.",
+    };
+    format!("{what} Waiting {seconds} seconds, then trying again — attempt {next} of {MAX_GENERATION_ATTEMPTS}.")
+}
+fn retry_after_message_for(asked: Duration, budget: &Budget, provider: AnyProvider) -> String {
+    if provider.id() == crate::provider::ProviderId::Gemini {
+        return retry_after_message(asked, budget);
+    }
+    let wait = gemini_budget::describe(asked);
+    format!("Claude asked Her Flight Deck to wait {wait} before trying again. Nothing was saved; try again after that.")
+}
+fn lost_message_for(lost: Lost, budget: &Budget, provider: AnyProvider) -> String {
+    if provider.id() == crate::provider::ProviderId::Gemini {
+        return lost_message(lost, budget);
+    }
+    match lost {
+        Lost::Unreachable => "Could not reach Claude. Check the internet connection and try again.",
+        Lost::NoAnswerInTime => "Claude is taking longer to answer. Nothing was saved. Try a chapter or fewer pages.",
+        Lost::AnswerCutShort => "The rest of Claude's answer stopped arriving. Nothing was saved. Try a chapter or fewer pages.",
+        Lost::Dropped => "The connection to Claude was interrupted. Anthropic may have processed the request; trying again may incur additional charges. Nothing was saved.",
+    }.to_string()
 }
 
 /// Whether a refusal from the chosen model should skip the waiting and go
@@ -2546,3 +2731,7 @@ mod batches;
 
 #[path = "gemini_sections.rs"]
 pub(crate) mod sections;
+
+#[cfg(test)]
+#[path = "provider/claude_tests.rs"]
+mod claude_tests;
