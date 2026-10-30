@@ -93,24 +93,27 @@ afterEach(() => {
 const sendDialog = () => screen.getByRole("dialog", { name: "Send this file to Google?" });
 
 describe("choosing what to send (GEN-REL-01)", () => {
-  it("a whole PDF can be narrowed to a chapter first, which opens the page chooser and sends nothing", async () => {
+  it.each([
+    { provider: "Google", model: "gemini-3.5-flash", action: "Create study guide" },
+    { provider: "Google", model: "gemini-3.5-flash", action: "Make new cards with Gemini" },
+    { provider: "Google", model: "gemini-3.5-flash", action: "Create practice test" },
+    { provider: "Anthropic", model: "claude-haiku-5-5", action: "Create study guide" },
+    { provider: "Anthropic", model: "claude-haiku-5-5", action: "Make new cards with Claude" },
+    { provider: "Anthropic", model: "claude-haiku-5-5", action: "Create practice test" },
+  ])("$provider: $action offers fewer pages, opens the chooser and sends nothing", async ({ provider, model, action }) => {
+    vi.mocked(geminiService.getGeminiStatus).mockResolvedValue({ configured: true, model, choice: "standard" });
+    const generateStudyAid = vi.spyOn(geminiService, "generateStudyAid");
+    const queueStudyGuide = vi.spyOn(geminiService, "queueStudyGuide");
     await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
-    const dialog = await waitFor(sendDialog);
-    fireEvent.click(within(dialog).getByRole("button", { name: "Choose a chapter or pages first" }));
+    fireEvent.click(await screen.findByRole("button", { name: action }));
+    const dialog = await screen.findByRole("dialog", { name: `Send this file to ${provider}?` });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Choose fewer pages to send" }));
     expect(await screen.findByRole("dialog", { name: "Take out a chapter" })).toBeTruthy();
-    expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: `Send this file to ${provider}?` })).toBeNull();
     expect(resumeStudyGuide).not.toHaveBeenCalled();
+    expect(generateStudyAid).not.toHaveBeenCalled();
     expect(generatePracticeTest).not.toHaveBeenCalled();
-  });
-
-  it("the practice-test confirmation offers the same choice", async () => {
-    await openMaterial("root", "Synthetic Handbook");
-    fireEvent.click(await screen.findByRole("button", { name: "Create practice test" }));
-    const dialog = await waitFor(sendDialog);
-    fireEvent.click(within(dialog).getByRole("button", { name: "Choose a chapter or pages first" }));
-    expect(await screen.findByRole("dialog", { name: "Take out a chapter" })).toBeTruthy();
-    expect(generatePracticeTest).not.toHaveBeenCalled();
+    expect(queueStudyGuide).not.toHaveBeenCalled();
   });
 
   it("says exactly what leaves this Mac and that Google keeps a temporary copy", async () => {
@@ -184,7 +187,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     await openMaterial("notes", "Synthetic Notes");
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     const dialog = await waitFor(sendDialog);
-    expect(within(dialog).queryByRole("button", { name: "Choose a chapter or pages first" })).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: "Choose fewer pages to send" })).toBeNull();
     expect(dialog.textContent).toMatch(/sent with this request only/);
     expect(dialog.textContent).not.toMatch(/48 hours/);
   });

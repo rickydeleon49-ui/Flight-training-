@@ -10,6 +10,7 @@ mod card_reviews;
 mod debrief;
 mod documents;
 pub mod extraction;
+mod safety_notices;
 
 /// Counts requested allocation bytes; capped only in the extraction worker.
 #[global_allocator]
@@ -63,7 +64,7 @@ mod window_placement;
 use logging::log;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
-use tauri_plugin_window_state::StateFlags;
+use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
@@ -259,7 +260,14 @@ fn bring_main_window_forward(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    // Do not create a webview (and therefore open SQLite) until the restore
+    // gate passes. A blocked launch needs only a native dialog and its event loop.
+    let mut context = tauri::generate_context!();
+    let windows = context.config().app.windows.clone();
+    for window in &mut context.config_mut().app.windows {
+        window.create = false;
+    }
+    let result = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -276,20 +284,20 @@ pub fn run() {
                 .add_migrations(DB_URL, migrations())
                 .build(),
         )
-        .setup(|app| {
+        .setup(move |app| {
             logging::attach(app.handle());
-            // The window-state plugin restored the window when it was
-            // created; make sure that left its title bar on a real screen.
-            window_placement::keep_main_window_reachable(app.handle());
-
             // A user-requested full restore is staged during the previous run
             // and installed here, before SQLite opens the database. Startup
             // blocks if an ambiguous restore cannot be safely resolved.
-            let restored = backup::handle_startup_restore(app.handle())
-                .map_err(Box::<dyn std::error::Error>::from)?;
-            if restored {
-                bring_main_window_forward(app.handle());
-            }
+            let outcome = backup::handle_startup_restore(app.handle());
+            let folder = app.path().app_config_dir().ok();
+            let restored = match safety_notices::startup_gate(outcome, folder.as_deref()) {
+                Ok(restored) => restored,
+                Err(message) => {
+                    safety_notices::show_blocked_startup(app.handle(), message);
+                    return Ok(());
+                }
+            };
 
             // Before the frontend opens the database, and therefore before any
             // migration runs, copy it aside if this is a new version's first run.
@@ -302,6 +310,22 @@ pub fn run() {
             if documents::cleanup_staged_deletions(app.handle()).is_err() {
                 log::warn!("Could not clean up staged deletions; will try again next launch.");
             }
+            for window in &windows {
+                if window.create {
+                    let built = tauri::WebviewWindowBuilder::from_config(app, window)?.build()?;
+                    // Created after the restore gate, so the window-state plugin's
+                    // own restore can lose to the config's `center`; put her saved
+                    // size and place back explicitly (student run 30 Oct).
+                    let _ = built.restore_state(
+                        StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED,
+                    );
+                }
+            }
+            window_placement::keep_main_window_reachable(app.handle());
+            if restored {
+                bring_main_window_forward(app.handle());
+            }
+            safety_notices::show_restore_outcome(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -384,10 +408,13 @@ pub fn run() {
             backup::stage_local_restore,
             backup::restart_for_restore,
             backup::list_backups,
+            safety_notices::upgrade_copy_failed,
             backup::data_directory,
             backup::open_data_folder,
             backup::app_version,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Her Flight Deck");
+        .run(context);
+    if result.is_err() {
+        log::error!("Her Flight Deck could not open.");
+    }
 }

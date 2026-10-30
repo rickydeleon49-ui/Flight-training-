@@ -23,20 +23,20 @@ import {
   monthGrid,
   parseIsoDate,
   startOfMonth,
-  todayIso,
   WEEKDAY_INITIALS,
 } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { useAppData } from "@/state/AppDataContext";
 
 import { EventFormDialog, type EventDraft } from "./EventFormDialog";
+import { useLocalToday } from "@/state/useLocalToday";
 import "./schedule.css";
 
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function Schedule() {
   const { data, mutate } = useAppData();
-  const today = todayIso();
+  const today = useLocalToday();
   const [saved, setSaved] = useState<ScheduleEvent | null>(null);
   const [creating, setCreating] = useState(false);
   const [monthAnchor, setMonthAnchor] = useState(startOfMonth(today));

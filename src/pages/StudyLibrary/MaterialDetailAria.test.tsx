@@ -126,3 +126,21 @@ it("follows right-to-left arrow direction through the tab hook", async () => {
   fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
   selected(0, true);
 });
+
+it.each(["Keep these", "Use the saved notes"])("asks before replacing restored notes: %s", async (choice) => {
+  const repo = createRepositories(db);
+  await repo.documents.update("tips", { notes: "Restored synthetic notes" });
+  localStorage.setItem("her-flight-deck.draft.material.tips.notes", JSON.stringify({ text: "Earlier synthetic typing", revision: "recovery", baseline: "Before restore" }));
+  await open("?tab=notes");
+  expect(await screen.findByText("You have unsaved notes from earlier.")).toBeTruthy();
+  expect((screen.getByLabelText("Personal notes") as HTMLTextAreaElement).readOnly).toBe(true);
+  expect(screen.getByText("Restored synthetic notes")).toBeTruthy();
+  // Longer than the ordinary autosave delay; database must remain untouched.
+  await act(() => new Promise((resolve) => setTimeout(resolve, 800)));
+  expect((await repo.documents.list()).find((m) => m.id === "tips")?.notes).toBe("Restored synthetic notes");
+  fireEvent.click(screen.getByRole("button", { name: choice }));
+  const expected = choice === "Keep these" ? "Earlier synthetic typing" : "Restored synthetic notes";
+  await waitFor(async () => expect((await repo.documents.list()).find((m) => m.id === "tips")?.notes).toBe(expected));
+  expect((screen.getByLabelText("Personal notes") as HTMLTextAreaElement).value).toBe(expected);
+  expect(localStorage.getItem("her-flight-deck.draft.material.tips.notes")).toBeNull();
+});

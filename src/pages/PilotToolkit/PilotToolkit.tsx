@@ -513,36 +513,47 @@ function RecordsTool({
   const expiresField = useRef<TypedDateFieldHandle>(null);
   const today = todayIso();
 
+  // A double-click must not add the record twice.
+  const adding = useRef(false);
+  const [addBusy, setAddBusy] = useState(false);
   const add = async () => {
+    if (adding.current) return;
     // Both dates are optional, but a typed one that isn't a date is never saved as none.
     const issuedOk = issuedField.current?.check() ?? true;
     const expiresOk = expiresField.current?.check() ?? true;
     if (!draft.title.trim() || !issuedOk || !expiresOk) return;
-    const record: CredentialRecord = {
-      id: newId(),
-      type: draft.type,
-      title: draft.title.trim(),
-      identifier: draft.identifier.trim(),
-      issuedOn: draft.issuedOn || null,
-      expiresOn: draft.expiresOn || null,
-      notes: draft.notes.trim(),
-      materialId: draft.materialId || null,
-    };
-    if (
-      await save((current) => ({
-        ...current,
-        credentials: [...current.credentials, record],
-      }))
-    )
-      setDraft({
-        type: "pilot_certificate",
-        title: "",
-        identifier: "",
-        issuedOn: "",
-        expiresOn: "",
-        notes: "",
-        materialId: "",
-      });
+    adding.current = true;
+    setAddBusy(true);
+    try {
+      const record: CredentialRecord = {
+        id: newId(),
+        type: draft.type,
+        title: draft.title.trim(),
+        identifier: draft.identifier.trim(),
+        issuedOn: draft.issuedOn || null,
+        expiresOn: draft.expiresOn || null,
+        notes: draft.notes.trim(),
+        materialId: draft.materialId || null,
+      };
+      if (
+        await save((current) => ({
+          ...current,
+          credentials: [...current.credentials, record],
+        }))
+      )
+        setDraft({
+          type: "pilot_certificate",
+          title: "",
+          identifier: "",
+          issuedOn: "",
+          expiresOn: "",
+          notes: "",
+          materialId: "",
+        });
+    } finally {
+      adding.current = false;
+      setAddBusy(false);
+    }
   };
 
   return (
@@ -621,8 +632,8 @@ function RecordsTool({
             className="row row--wrap"
             style={{ marginTop: "var(--space-4)" }}
           >
-            <Button variant="primary" onClick={() => void add()}>
-              Add record
+            <Button variant="primary" onClick={() => void add()} disabled={addBusy}>
+              {addBusy ? "Saving…" : "Add record"}
             </Button>
             <Link className="button button--secondary" to="/study">
               Upload a document copy
@@ -907,15 +918,26 @@ function emptySafety(): Omit<SafetyCheck, "id" | "date"> {
 function SafetyTool({ state, save }: ToolProps) {
   const [draft, setDraft] = useState(emptySafety);
   const completed = SAFETY_ITEMS.filter(([key]) => draft[key]).length;
+  // A double-click must not save the check-in twice.
+  const recording = useRef(false);
+  const [recordBusy, setRecordBusy] = useState(false);
   const record = async () => {
+    if (recording.current) return;
+    recording.current = true;
+    setRecordBusy(true);
     const check: SafetyCheck = { id: newId(), date: nowIso(), ...draft };
-    if (
-      await save((current) => ({
-        ...current,
-        safetyChecks: [check, ...current.safetyChecks].slice(0, 100),
-      }))
-    )
-      setDraft(emptySafety());
+    try {
+      if (
+        await save((current) => ({
+          ...current,
+          safetyChecks: [check, ...current.safetyChecks].slice(0, 100),
+        }))
+      )
+        setDraft(emptySafety());
+    } finally {
+      recording.current = false;
+      setRecordBusy(false);
+    }
   };
   return (
     <div className="toolkit-two-column">
@@ -964,8 +986,8 @@ function SafetyTool({ state, save }: ToolProps) {
                 }
               />
             </Field>
-            <Button variant="primary" onClick={() => void record()}>
-              Save this check-in
+            <Button variant="primary" onClick={() => void record()} disabled={recordBusy}>
+              {recordBusy ? "Saving…" : "Save this check-in"}
             </Button>
             <p className="tiny dim">
               This prompt never makes a go/no-go decision. Stop and involve the
@@ -1037,15 +1059,25 @@ function QuizTool({ state, save }: ToolProps) {
     setSelected(null);
     setChecked(false);
   };
+  // A double-click on Finish quiz must not save the attempt twice.
+  const finishing = useRef(false);
+  const [finishBusy, setFinishBusy] = useState(false);
   const next = async () => {
-    if (selected === null) return;
+    if (selected === null || finishing.current) return;
     const nextAnswers = [...answers, selected];
     if (index === QUIZ_QUESTIONS.length - 1) {
+      finishing.current = true;
+      setFinishBusy(true);
       const attempt = makeQuizAttempt(nextAnswers, nowIso(), newId());
-      await save((current) => ({
-        ...current,
-        quizAttempts: [attempt, ...current.quizAttempts].slice(0, 50),
-      }));
+      try {
+        await save((current) => ({
+          ...current,
+          quizAttempts: [attempt, ...current.quizAttempts].slice(0, 50),
+        }));
+      } finally {
+        finishing.current = false;
+        setFinishBusy(false);
+      }
       setRunning(false);
       return;
     }
@@ -1163,8 +1195,10 @@ function QuizTool({ state, save }: ToolProps) {
                 Check answer
               </Button>
             ) : (
-              <Button variant="primary" onClick={() => void next()}>
-                {index === QUIZ_QUESTIONS.length - 1
+              <Button variant="primary" onClick={() => void next()} disabled={finishBusy}>
+                {finishBusy
+                  ? "Saving…"
+                  : index === QUIZ_QUESTIONS.length - 1
                   ? "Finish quiz"
                   : "Next question"}
               </Button>

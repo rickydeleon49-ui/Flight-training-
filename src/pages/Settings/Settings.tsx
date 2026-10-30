@@ -45,6 +45,7 @@ import {
   formatBytes,
   inspectCompleteBackup,
   listBackups,
+  upgradeCopyFailed,
   restartForRestore,
   openDataFolder,
   stageCompleteRestore,
@@ -169,6 +170,7 @@ export function Settings() {
   const [dataPath, setDataPath] = useState("");
   const [folderOpenError, setFolderOpenError] = useState<string | null>(null);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [upgradeFailed, setUpgradeFailed] = useState(false);
   const [backupNote, setBackupNote] = useState<string | null>(null);
   const [backupProblem, setBackupProblem] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
@@ -302,6 +304,7 @@ export function Settings() {
 
   const refreshBackups = async () => {
     if (!backupsAvailable()) return;
+    setUpgradeFailed(await upgradeCopyFailed());
     setDataPath(await dataDirectory());
     setBackups(await listBackups());
     setVersion(await appVersion());
@@ -1074,6 +1077,11 @@ export function Settings() {
                 }
               />
 
+              {upgradeFailed ? (
+                <p className="small" role="alert">
+                  The safety copy before the last update couldn't be made. Make a complete backup now.
+                </p>
+              ) : null}
               {backupNote ? (
                 <p
                   className="small"
@@ -1159,7 +1167,8 @@ export function Settings() {
                 The database copies below are made automatically before an update runs
                 for the first time. They stay on this computer and hold your records,
                 lessons and settings — not the uploaded files themselves, which are
-                never moved. Use <strong>Save complete backup</strong> for protection
+                never moved. The 10 newest copies are kept. Use{" "}
+                <strong>Save complete backup</strong> for protection
                 against losing this computer.
               </p>
 

@@ -64,7 +64,8 @@ interface Props {
   /** Supplies the defaults for a new event. */
   profile?: Profile;
   onClose: () => void;
-  onSave: (draft: EventDraft) => void;
+  /** Resolves when the save has finished (the parent closes the dialog on success). */
+  onSave: (draft: EventDraft) => void | Promise<void>;
 }
 
 export function EventFormDialog({ open, event = null, goals, profile, onClose, onSave }: Props) {
@@ -72,6 +73,9 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const [estimated, setEstimated] = useState("");
   const [actual, setActual] = useState("");
   const dateField = useRef<TypedDateFieldHandle>(null);
+  // A double-click (or click + Enter) must not create it twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -105,7 +109,8 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
   const update = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
-  const submit = () => {
+  const submit = async () => {
+    if (saving.current) return;
     const found: Record<string, string> = {};
     if (!draft.title.trim()) found.title = "Give this a title so you recognise it later.";
     // The date field shows its own problem (not a date, or empty).
@@ -131,24 +136,33 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
     setErrors(found);
     if (Object.keys(found).length > 0 || !dateOk || !draft.date) return;
 
-    onSave({ ...draft, title: draft.title.trim(), estimatedCost, actualCost });
+    saving.current = true;
+    setBusy(true);
+    try {
+      await onSave({ ...draft, title: draft.title.trim(), estimatedCost, actualCost });
+    } finally {
+      // Released either way: on a failed save the dialog stays open so she can retry.
+      saving.current = false;
+      setBusy(false);
+    }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title={event ? "Edit event" : "Add to your schedule"}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
-            {event ? "Save changes" : "Add event"}
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
+          <Button variant="primary" onClick={submit} disabled={busy}>
+            {busy ? "Saving…" : event ? "Save changes" : "Add event"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="Title" error={errors.title} full>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -287,7 +301,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

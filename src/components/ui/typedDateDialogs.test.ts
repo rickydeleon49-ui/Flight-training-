@@ -82,7 +82,7 @@ describe("DATES-01 dialogs save a typed date as typed", () => {
     expect(input.value).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
   });
 
-  it("GoalFormDialog: target date, optional", () => {
+  it("GoalFormDialog: target date, optional", async () => {
     const onSave = vi.fn();
     render(h(GoalFormDialog, { open: true, milestoneId: null, milestones: [], onClose: () => undefined, onSave }));
     fireEvent.change(screen.getByLabelText("Goal"), { target: { value: "Crosswinds" } });
@@ -93,7 +93,8 @@ describe("DATES-01 dialogs save a typed date as typed", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add goal" }));
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ targetDate: null }));
     typeDate("Target date", "11052026");
-    fireEvent.click(screen.getByRole("button", { name: "Add goal" }));
+    // Save is "Saving…" until the first save has finished (FULLAPP-065 double-click guard).
+    fireEvent.click(await screen.findByRole("button", { name: "Add goal" }));
     expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ targetDate: "2026-11-05" }));
   });
 

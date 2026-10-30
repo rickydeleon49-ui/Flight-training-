@@ -5448,6 +5448,7 @@ pub(crate) enum InjectedFault {
     InstallDocsRename,
     ReturnDbRename(usize),
     ReturnDocsRename,
+    ReturnDocsMetadata,
     RootReadDir,
     BackupsReadDir,
     PendingEntryRead,
@@ -6175,7 +6176,11 @@ pub(crate) fn backup_if_upgraded_in(root: &Path, current: &str) -> Result<(), St
     // to be opened — including when the marker file is missing, which is
     // exactly the case where we know least about what wrote it. `copy_database`
     // does nothing on a genuine first run, when there is no database yet.
-    copy_database(root, &format!("before-{current}"))?;
+    if let Err(error) = copy_database(root, &format!("before-{current}")) {
+        crate::safety_notices::record_upgrade_failure(root);
+        return Err(error);
+    }
+    crate::safety_notices::clear_upgrade_failure(root);
     prune(root)?;
 
     std::fs::write(&marker, current)
@@ -6208,6 +6213,7 @@ fn create_consistent_local_backup(root: &Path) -> Result<String, String> {
         let _ = std::fs::remove_dir(&destination);
         return Err(format!("Could not save the database backup: {error}"));
     }
+    crate::safety_notices::clear_upgrade_failure(root);
     Ok(destination.to_string_lossy().to_string())
 }
 
@@ -7525,36 +7531,43 @@ fn execute_rollback(root: &Path, journal: &mut RestoreJournal) -> Result<(), Str
                 "Cannot return protected documents: destination {DOCUMENTS_DIR} in active directory is obstructed"
             ));
         } else {
-            let src_meta = match std::fs::symlink_metadata(&src_docs) {
-                Ok(m) => m,
+            #[cfg(test)]
+            let inspection = check_injected_fault(InjectedFault::ReturnDocsMetadata)
+                .and_then(|()| std::fs::symlink_metadata(&src_docs));
+            #[cfg(not(test))]
+            let inspection = std::fs::symlink_metadata(&src_docs);
+            let src_meta = match inspection {
+                Ok(m) => Some(m),
                 Err(e) => {
                     errors.push(format!(
                         "Could not inspect recovery documents directory: {e}"
                     ));
-                    std::fs::metadata(&rollback).unwrap()
+                    None
                 }
             };
-            if is_symlink_or_reparse(&src_meta) {
-                errors.push(
-                    "Recovery documents directory is an unsafe symlink or reparse point".into(),
-                );
-            } else {
-                #[cfg(test)]
-                let fault_res = check_injected_fault(InjectedFault::ReturnDocsRename);
-                #[cfg(not(test))]
-                let fault_res = Ok::<(), std::io::Error>(());
-
-                if let Err(e) = fault_res {
-                    errors.push(format!("Could not return protected documents: {e}"));
+            if let Some(src_meta) = src_meta {
+                if is_symlink_or_reparse(&src_meta) {
+                    errors.push(
+                        "Recovery documents directory is an unsafe symlink or reparse point".into(),
+                    );
                 } else {
-                    match std::fs::rename(&src_docs, &dest_docs) {
-                        Ok(()) => {
-                            journal.protected_documents = false;
-                        }
-                        Err(e) => {
-                            errors.push(format!(
-                                "Could not return protected documents to active directory: {e}"
-                            ));
+                    #[cfg(test)]
+                    let fault_res = check_injected_fault(InjectedFault::ReturnDocsRename);
+                    #[cfg(not(test))]
+                    let fault_res = Ok::<(), std::io::Error>(());
+
+                    if let Err(e) = fault_res {
+                        errors.push(format!("Could not return protected documents: {e}"));
+                    } else {
+                        match std::fs::rename(&src_docs, &dest_docs) {
+                            Ok(()) => {
+                                journal.protected_documents = false;
+                            }
+                            Err(e) => {
+                                errors.push(format!(
+                                    "Could not return protected documents to active directory: {e}"
+                                ));
+                            }
                         }
                     }
                 }
@@ -8540,7 +8553,9 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
 /// was in front.
 pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
     let root = app_root(app)?;
-    startup_restore_outcome(handle_startup_restore_in(&root)?)
+    let decision = handle_startup_restore_in(&root)?;
+    crate::safety_notices::record_restore_outcome(&root, &decision);
+    startup_restore_outcome(decision)
 }
 
 fn startup_restore_outcome(decision: StartupRestoreDecision) -> Result<bool, String> {
@@ -9283,6 +9298,22 @@ mod tests {
         assert!(refusal.contains("unexpected file"), "{refusal}");
 
         std::fs::remove_dir_all(&elsewhere).unwrap();
+    }
+
+    #[test]
+    fn failed_upgrade_copy_records_notice_until_a_later_copy_succeeds() {
+        let root = scratch("upgrade-notice");
+        write_database(&root.join(DB_FILES[0]), "her record");
+        std::fs::write(root.join(BACKUP_DIR), b"obstruction").unwrap();
+        assert!(backup_if_upgraded_in(&root, "0.3.0").is_err());
+        assert!(root.join("upgrade-copy-failed").is_file());
+        assert!(!root.join(VERSION_FILE).exists());
+        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her record");
+        std::fs::remove_file(root.join(BACKUP_DIR)).unwrap();
+        backup_if_upgraded_in(&root, "0.3.0").unwrap();
+        assert!(!root.join("upgrade-copy-failed").exists());
+        assert_eq!(database_contents(&root.join(DB_FILES[0])), "her record");
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
@@ -14728,6 +14759,85 @@ mod tests {
             }),
         )
         .unwrap()
+    }
+
+    #[test]
+    fn astra_documents_metadata_failure_preserves_documents_and_recovers() {
+        let root = scratch("astra-meta-return-root");
+        write_database(&root.join(DB_FILES[0]), "active db");
+        let orig_db_identity = round3_identity(&root.join(DB_FILES[0]), DB_FILES[0]);
+
+        let rollback = root.join("backups/before-restore-astra-meta");
+        let rollback_docs = rollback.join(DOCUMENTS_DIR);
+        std::fs::create_dir_all(&rollback_docs).unwrap();
+
+        // Two distinct original synthetic document payloads
+        let doc1_path = rollback_docs.join("manual.pdf");
+        let doc2_path = rollback_docs.join("checklist.txt");
+        std::fs::write(&doc1_path, b"%PDF-1.4 original document bytes").unwrap();
+        std::fs::write(&doc2_path, b"Preflight checklist: original items").unwrap();
+        let doc1_identity = round3_identity(&doc1_path, "manual.pdf");
+        let doc2_identity = round3_identity(&doc2_path, "checklist.txt");
+
+        let pending = root.join(RESTORE_PENDING_DIR);
+        std::fs::create_dir_all(&pending).unwrap();
+        write_database(&pending.join(DB_FILES[0]), "staged db");
+        write_restore_plan(&pending, RestoreKind::Complete, "astra-meta-return").unwrap();
+        let plan = read_restore_plan_for_ownership(&pending).unwrap().unwrap();
+
+        let mut journal = RestoreJournal::new("backups/before-restore-astra-meta".into(), true);
+        journal.operation_id = plan.operation_id.clone();
+        journal.phase = RestorePhase::Protected;
+        journal.protected_documents = true;
+        journal.original_db_artifacts = vec![orig_db_identity];
+        journal.original_document_artifacts = vec![doc1_identity.clone(), doc2_identity.clone()];
+        write_journal(&root, &journal).unwrap();
+
+        // Inject ReturnDocsMetadata fault during rollback
+        let guard = ScopedFault::set(InjectedFault::ReturnDocsMetadata);
+        let first = handle_startup_restore_in(&root).unwrap();
+        let fired = ScopedFault::fired_count();
+        drop(guard);
+
+        assert!(
+            fired >= 1,
+            "ReturnDocsMetadata fault must fire: fired={fired}"
+        );
+        assert!(
+            matches!(first, StartupRestoreDecision::BlockedUnresolved { .. }),
+            "First startup must block unresolved when document return fails: {first:?}"
+        );
+        // Documents preserved in rollback folder
+        assert_eq!(round3_identity(&doc1_path, "manual.pdf"), doc1_identity);
+        assert_eq!(round3_identity(&doc2_path, "checklist.txt"), doc2_identity);
+        assert!(
+            !root.join(DOCUMENTS_DIR).exists(),
+            "Active documents dir must not be partially created on failure"
+        );
+
+        // Second startup: fault cleared, rollback returns documents
+        let second = handle_startup_restore_in(&root).unwrap();
+        assert!(
+            matches!(second, StartupRestoreDecision::RolledBackRecovered { .. }),
+            "Second startup must recover rolled back documents: {second:?}"
+        );
+        assert_eq!(
+            round3_identity(&root.join(DOCUMENTS_DIR).join("manual.pdf"), "manual.pdf"),
+            doc1_identity
+        );
+        assert_eq!(
+            round3_identity(
+                &root.join(DOCUMENTS_DIR).join("checklist.txt"),
+                "checklist.txt"
+            ),
+            doc2_identity
+        );
+
+        // Third startup: proceeds normally
+        let third = handle_startup_restore_in(&root).unwrap();
+        assert_eq!(third, StartupRestoreDecision::ProceedNormally);
+
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

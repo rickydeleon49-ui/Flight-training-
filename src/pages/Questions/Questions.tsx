@@ -203,15 +203,25 @@ export function Questions() {
     (question) => question.status === "to_ask" && (question.eventId === lesson?.id || question.eventId === null),
   );
 
+  // A double-click must not save the question twice.
+  const adding = useRef(false);
+  const [addBusy, setAddBusy] = useState(false);
   const add = async () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    const result = await mutate((repos) =>
-      repos.questions.create({ text: trimmed, topic, eventId: eventId || null }),
-    );
-    if (result === null) return;
-    setText("");
-    setEventId("");
+    if (!trimmed || adding.current) return;
+    adding.current = true;
+    setAddBusy(true);
+    try {
+      const result = await mutate((repos) =>
+        repos.questions.create({ text: trimmed, topic, eventId: eventId || null }),
+      );
+      if (result === null) return;
+      setText("");
+      setEventId("");
+    } finally {
+      adding.current = false;
+      setAddBusy(false);
+    }
   };
 
   return (
@@ -226,7 +236,12 @@ export function Questions() {
           <Card>
             <CardHeader title="Add a question" />
             <CardBody>
-              <div className="stack stack--3">
+              {/* Locked while it saves, so nothing she types then is cleared with it. */}
+              <fieldset
+                disabled={addBusy}
+                className="stack stack--3"
+                style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+              >
                 <TextArea
                   rows={2}
                   value={text}
@@ -252,11 +267,11 @@ export function Questions() {
                     onChange={(value) => setEventId(value)}
                     style={{ width: "auto" }}
                   />
-                  <Button variant="primary" onClick={add} disabled={!text.trim()}>
-                    Save question
+                  <Button variant="primary" onClick={add} disabled={addBusy || !text.trim()}>
+                    {addBusy ? "Saving…" : "Save question"}
                   </Button>
                 </div>
-              </div>
+              </fieldset>
             </CardBody>
           </Card>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
@@ -50,6 +50,9 @@ export function FlightPath() {
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
   const [deletingMilestone, setDeletingMilestone] = useState<Milestone | null>(null);
   const [newMilestone, setNewMilestone] = useState("");
+  // Enter held down or a double-click must not add the stage twice.
+  const addingMilestone = useRef(false);
+  const [milestoneBusy, setMilestoneBusy] = useState(false);
 
   // Goals with no stage — created that way, or left behind when a milestone
   // was deleted. Without this they would exist but be invisible.
@@ -67,22 +70,26 @@ export function FlightPath() {
 
   const addMilestone = async () => {
     const title = newMilestone.trim();
-    if (!title) return;
-    const created = await mutate((repos) =>
-      repos.milestones.create({ title, position: data.milestones.length }),
-    );
-    if (created === null) return;
-    setNewMilestone("");
+    if (!title || addingMilestone.current) return;
+    addingMilestone.current = true;
+    setMilestoneBusy(true);
+    try {
+      const created = await mutate((repos) =>
+        repos.milestones.create({ title, position: data.milestones.length }),
+      );
+      if (created === null) return;
+      setNewMilestone("");
+    } finally {
+      addingMilestone.current = false;
+      setMilestoneBusy(false);
+    }
   };
 
   const moveMilestone = (milestone: Milestone, direction: "up" | "down") => {
     const updates = reorderMilestones(data.milestones, milestone.id, direction);
     if (updates.length === 0) return;
-    return mutate(async (repos) => {
-      for (const update of updates) {
-        await repos.milestones.update(update.id, { position: update.position });
-      }
-    });
+    // One atomic write: a failure part-way never leaves a half-moved list.
+    return mutate((repos) => repos.milestones.reorder(updates));
   };
 
   const saveMilestone = async (draft: MilestoneDraft) => {
@@ -127,7 +134,7 @@ export function FlightPath() {
                     }
                   }}
                 />
-                <Button variant="primary" onClick={addMilestone} disabled={!newMilestone.trim()}>
+                <Button variant="primary" onClick={addMilestone} disabled={milestoneBusy || !newMilestone.trim()}>
                   Add
                 </Button>
               </div>
@@ -210,7 +217,7 @@ export function FlightPath() {
                 }
               }}
             />
-            <Button onClick={addMilestone} disabled={!newMilestone.trim()}>
+            <Button onClick={addMilestone} disabled={milestoneBusy || !newMilestone.trim()}>
               <PlusIcon size={14} /> Milestone
             </Button>
           </div>
@@ -384,6 +391,8 @@ function GoalCard({
   const today = todayIso();
   const [addingAction, setAddingAction] = useState(false);
   const [newItem, setNewItem] = useState("");
+  const addingItem = useRef(false);
+  const [itemBusy, setItemBusy] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const evidence = goalEvidence(goal, {
@@ -405,12 +414,19 @@ function GoalCard({
 
   const addChecklistItem = async () => {
     const title = newItem.trim();
-    if (!title) return;
-    const result = await mutate((repos) =>
-      repos.goals.addChecklistItem(goal.id, title, checklist.length),
-    );
-    if (result === null) return;
-    setNewItem("");
+    if (!title || addingItem.current) return;
+    addingItem.current = true;
+    setItemBusy(true);
+    try {
+      const result = await mutate((repos) =>
+        repos.goals.addChecklistItem(goal.id, title, checklist.length),
+      );
+      if (result === null) return;
+      setNewItem("");
+    } finally {
+      addingItem.current = false;
+      setItemBusy(false);
+    }
   };
 
   return (
@@ -537,7 +553,7 @@ function GoalCard({
                 }
               }}
             />
-            <Button onClick={addChecklistItem} disabled={!newItem.trim()}>
+            <Button onClick={addChecklistItem} disabled={itemBusy || !newItem.trim()}>
               Add
             </Button>
           </div>

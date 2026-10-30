@@ -37,7 +37,8 @@ interface Props {
   transaction?: Transaction | null;
   events: ScheduleEvent[];
   onClose: () => void;
-  onSave: (draft: TransactionDraft) => void;
+  /** Resolves when the save has finished (the parent closes the dialog on success). */
+  onSave: (draft: TransactionDraft) => void | Promise<void>;
 }
 
 export function TransactionFormDialog({
@@ -56,6 +57,9 @@ export function TransactionFormDialog({
   const [eventId, setEventId] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const dateField = useRef<TypedDateFieldHandle>(null);
+  // A double-click (or click + Enter) must not record the money twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   const effectiveType = transaction?.type ?? type;
   const isExpense = effectiveType === "expense";
@@ -80,7 +84,8 @@ export function TransactionFormDialog({
     }
   }, [open, transaction?.id, isExpense]);
 
-  const submit = () => {
+  const submit = async () => {
+    if (saving.current) return;
     const found: Record<string, string> = {};
     const cents = parseMoney(amount);
     if (cents === null) found.amount = "Enter an amount like 275 or 275.50.";
@@ -91,15 +96,23 @@ export function TransactionFormDialog({
     setErrors(found);
     if (Object.keys(found).length > 0 || !dateOk || !date) return;
 
-    onSave({
-      type: effectiveType,
-      amount: cents as number,
-      date,
-      category: isExpense ? category : "other",
-      description: description.trim(),
-      notes: notes.trim(),
-      eventId: eventId || null,
-    });
+    saving.current = true;
+    setBusy(true);
+    try {
+      await onSave({
+        type: effectiveType,
+        amount: cents as number,
+        date,
+        category: isExpense ? category : "other",
+        description: description.trim(),
+        notes: notes.trim(),
+        eventId: eventId || null,
+      });
+    } finally {
+      // Released either way: on a failed save the dialog stays open so she can retry.
+      saving.current = false;
+      setBusy(false);
+    }
   };
 
   const title = transaction
@@ -111,18 +124,19 @@ export function TransactionFormDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title={title}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
-            {transaction ? "Save changes" : isExpense ? "Record expense" : "Add funds"}
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
+          <Button variant="primary" onClick={submit} disabled={busy}>
+            {busy ? "Saving…" : transaction ? "Save changes" : isExpense ? "Record expense" : "Add funds"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="Amount" hint="Dollars." error={errors.amount}>
           {({ id, describedBy, invalid }) => (
             <TextInput
@@ -186,7 +200,7 @@ export function TransactionFormDialog({
             <TextArea id={id} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

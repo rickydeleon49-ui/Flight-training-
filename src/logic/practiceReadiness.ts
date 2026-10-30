@@ -107,7 +107,7 @@ export function buildPracticeReadiness(input: PracticeReadinessInput): PracticeR
 /** The words she reads, or null when nothing should be shown. */
 export function practiceReadinessText(readiness: PracticeReadiness): string | null {
   if (readiness.kind === "none") return null;
-  if (readiness.kind === "nudge") return "Take a practice test to see how you're doing.";
+  if (readiness.kind === "nudge") return "Take a practice test this month to see how you're doing.";
   const base = `Your last ${readiness.recentCount} practice tests averaged ${readiness.recentAverage}%`;
   switch (readiness.trend) {
     case "up":

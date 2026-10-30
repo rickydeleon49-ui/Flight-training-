@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -25,7 +25,7 @@ import {
   type Transaction,
   type TransactionType,
 } from "@/domain/types";
-import { formatMonthYear, formatShortDate, todayIso } from "@/lib/dates";
+import { formatMonthYear, formatShortDate } from "@/lib/dates";
 import { formatMoney, moneyToInput, parseMoney } from "@/lib/money";
 import {
   fundSummary,
@@ -39,11 +39,12 @@ import { useAppData } from "@/state/AppDataContext";
 
 import { TransactionFormDialog, type TransactionDraft } from "./TransactionFormDialog";
 import { SchoolComparisonPanel } from "./SchoolComparisonPanel";
+import { useLocalToday } from "@/state/useLocalToday";
 import "./finances.css";
 
 export function Finances() {
   const { data, mutate, deleteWithUndo } = useAppData();
-  const today = todayIso();
+  const today = useLocalToday();
 
   const [formType, setFormType] = useState<TransactionType | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -415,39 +416,52 @@ function FundGoalDialog({
   currentTitle: string;
   currentTarget: number | null;
   onClose: () => void;
-  onSave: (title: string, target: number) => void;
+  onSave: (title: string, target: number) => void | Promise<void>;
 }) {
   const [title, setTitle] = useState(currentTitle);
+  // A double-click must not save the target twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState(moneyToInput(currentTarget));
   const [error, setError] = useState<string | null>(null);
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving.current) onClose(); }}
+      dismissible={!busy}
       title="Savings target"
       description="An amount you are working toward for the next stage of training."
       narrow
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={() => { if (!saving.current) onClose(); }}>Cancel</Button>
           <Button
             variant="primary"
-            onClick={() => {
+            disabled={busy}
+            onClick={async () => {
+              if (saving.current) return;
               const cents = parseMoney(target);
               if (cents === null || cents <= 0) {
                 setError("Enter an amount like 5000.");
                 return;
               }
-              onSave(title.trim() || "Savings target", cents);
+              saving.current = true;
+              setBusy(true);
+              try {
+                await onSave(title.trim() || "Savings target", cents);
+              } finally {
+                saving.current = false;
+                setBusy(false);
+              }
             }}
           >
-            Save target
+            {busy ? "Saving…" : "Save target"}
           </Button>
         </>
       }
     >
-      <div className="form-grid">
+      <fieldset disabled={busy} className="form-grid" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <Field label="What is it for?" full>
           {({ id }) => (
             <TextInput id={id} value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -466,7 +480,7 @@ function FundGoalDialog({
             />
           )}
         </Field>
-      </div>
+      </fieldset>
     </Dialog>
   );
 }

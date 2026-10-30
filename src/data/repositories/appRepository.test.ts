@@ -54,6 +54,21 @@ describe("application metadata", () => {
     expect(await db.select("SELECT key FROM app_metadata")).toHaveLength(3);
   });
 
+  it("ASTRA-FIX-2 #8: a failed backup record leaves the earlier time, version and path together", async () => {
+    const first = { at: "2026-09-01T10:00:00.000Z", version: "0.2.0", path: "first.hfdbackup" };
+    await repos.app.recordCompleteBackup(first);
+    for (const event of ["INSERT", "UPDATE"]) {
+      await db.execute(
+        `CREATE TRIGGER fail_path_${event} BEFORE ${event} ON app_metadata
+         WHEN NEW.key = 'last_complete_backup_path' BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END`,
+      );
+    }
+    await expect(
+      repos.app.recordCompleteBackup({ at: "2026-09-06T10:00:00.000Z", version: "0.3.0", path: "second.hfdbackup" }),
+    ).rejects.toThrow();
+    expect(await repos.app.lastCompleteBackup()).toEqual(first);
+  });
+
   it("persists and reads daily plan session state", async () => {
     expect(await repos.app.getDailyPlanState()).toBeNull();
 

@@ -176,3 +176,9 @@ export const formatBackupDate = (createdAt: number): string =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(createdAt * 1000));
+
+/** Whether a pre-update safety copy failed; kept until a later copy succeeds. */
+export async function upgradeCopyFailed(): Promise<boolean> {
+  if (!isTauri()) return false;
+  return invoke<boolean>("upgrade_copy_failed");
+}

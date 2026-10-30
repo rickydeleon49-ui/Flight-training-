@@ -193,6 +193,9 @@ function MaterialDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
+  // Enter held down or a double-click must not add the question twice.
+  const addingQuestion = useRef(false);
+  const [questionBusy, setQuestionBusy] = useState(false);
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -479,7 +482,7 @@ function MaterialDetailPage() {
       });
   }, []);
 
-  const { notes, setNotes, status: notesStatus, recoverable, retry } = useMaterialNotes(
+  const { notes, setNotes, status: notesStatus, recoverable, retry, conflict: notesConflict, keepDraft, useSaved } = useMaterialNotes(
     materialId ?? "", material?.notes ?? "",
     (text) => mutate((repos) => repos.documents.update(materialId!, { notes: text })),
   );
@@ -557,7 +560,7 @@ function MaterialDetailPage() {
   const chooseChapterFirst = (closeConfirmation: () => void) =>
     canSplit
       ? {
-          secondaryLabel: "Choose a chapter or pages first",
+          secondaryLabel: "Choose fewer pages to send",
           onSecondary: () => {
             closeConfirmation();
             setSplittingManually(true);
@@ -642,12 +645,19 @@ function MaterialDetailPage() {
 
   const addQuestion = async () => {
     const text = newQuestion.trim();
-    if (!text) return;
-    const result = await mutate((repos) =>
-      repos.questions.create({ text, topic: material.topic, materialId: material.id }),
-    );
-    if (result === null) return;
-    setNewQuestion("");
+    if (!text || addingQuestion.current) return;
+    addingQuestion.current = true;
+    setQuestionBusy(true);
+    try {
+      const result = await mutate((repos) =>
+        repos.questions.create({ text, topic: material.topic, materialId: material.id }),
+      );
+      if (result === null) return;
+      setNewQuestion("");
+    } finally {
+      addingQuestion.current = false;
+      setQuestionBusy(false);
+    }
   };
 
   const open = async () => {
@@ -1599,9 +1609,18 @@ function MaterialDetailPage() {
                 )
               }
             />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
+            {!tipsHidden && !notesConflict ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
             <CardBody>
+              {notesConflict ? (
+                <div role="status">
+                  <p>You have unsaved notes from earlier.</p>
+                  <Button onClick={keepDraft}>Keep these</Button>{" "}
+                  <Button onClick={useSaved}>Use the saved notes</Button>
+                  <details><summary>Saved notes</summary><p style={{ whiteSpace: "pre-wrap" }}>{material.notes || "No saved notes."}</p></details>
+                </div>
+              ) : null}
               <TextArea
+                readOnly={notesConflict}
                 rows={6}
                 value={notes}
                 aria-label="Personal notes"
@@ -1642,7 +1661,7 @@ function MaterialDetailPage() {
                       }
                     }}
                   />
-                  <Button onClick={addQuestion} disabled={!newQuestion.trim()}>
+                  <Button onClick={addQuestion} disabled={questionBusy || !newQuestion.trim()}>
                     Add
                   </Button>
                 </div>

@@ -117,7 +117,7 @@ export function scheduleRepository(db: SqlDatabase) {
           event.actualCost, event.status, event.createdAt, event.updatedAt,
         ],
       );
-      await this.setMaterials(event.id, event.materialIds);
+      if (event.materialIds.length > 0) await this.setMaterials(event.id, event.materialIds);
       return event;
     },
 

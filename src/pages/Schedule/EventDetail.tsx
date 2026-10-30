@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { AirportWeather } from "@/components/weather/AirportWeather";
@@ -58,6 +58,11 @@ export function EventDetail() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newPrepItem, setNewPrepItem] = useState("");
+  // Enter held down or a double-click must not add the item (or the cost) twice.
+  const addingPrep = useRef(false);
+  const [prepBusy, setPrepBusy] = useState(false);
+  const recordingCost = useRef(false);
+  const [costBusy, setCostBusy] = useState(false);
   const [materialToAttach, setMaterialToAttach] = useState("");
 
   const event = data.events.find((candidate) => candidate.id === eventId) ?? null;
@@ -118,12 +123,19 @@ export function EventDetail() {
 
   const addPrepItem = async () => {
     const title = newPrepItem.trim();
-    if (!title) return;
-    const result = await mutate((repos) =>
-      repos.schedule.addPrepItem(event.id, title, prepItems.length),
-    );
-    if (result === null) return;
-    setNewPrepItem("");
+    if (!title || addingPrep.current) return;
+    addingPrep.current = true;
+    setPrepBusy(true);
+    try {
+      const result = await mutate((repos) =>
+        repos.schedule.addPrepItem(event.id, title, prepItems.length),
+      );
+      if (result === null) return;
+      setNewPrepItem("");
+    } finally {
+      addingPrep.current = false;
+      setPrepBusy(false);
+    }
   };
 
   const attachMaterial = async (materialId: Id) => {
@@ -135,18 +147,25 @@ export function EventDetail() {
     setMaterialToAttach("");
   };
 
-  const recordCost = () => {
+  const recordCost = async () => {
     const amount = event.actualCost ?? event.estimatedCost;
-    if (amount == null) return;
-    return mutate((repos) =>
-      repos.finance.recordLessonCost({
-        eventId: event.id,
-        amount,
-        date: event.date,
-        description: event.title,
-        goalId: event.goalId,
-      }),
-    );
+    if (amount == null || recordingCost.current) return;
+    recordingCost.current = true;
+    setCostBusy(true);
+    try {
+      await mutate((repos) =>
+        repos.finance.recordLessonCost({
+          eventId: event.id,
+          amount,
+          date: event.date,
+          description: event.title,
+          goalId: event.goalId,
+        }),
+      );
+    } finally {
+      recordingCost.current = false;
+      setCostBusy(false);
+    }
   };
 
   return (
@@ -257,7 +276,7 @@ export function EventDetail() {
                       }
                     }}
                   />
-                  <Button variant="primary" onClick={addPrepItem} disabled={!newPrepItem.trim()}>
+                  <Button variant="primary" onClick={addPrepItem} disabled={prepBusy || !newPrepItem.trim()}>
                     Add
                   </Button>
                 </div>
@@ -413,7 +432,7 @@ export function EventDetail() {
                   </p>
                 ) : hasHappened ? (
                   <>
-                    <Button variant="primary" block onClick={recordCost}>
+                    <Button variant="primary" block onClick={recordCost} disabled={costBusy}>
                       Record{" "}
                       {formatMoney((event.actualCost ?? event.estimatedCost) as number)} as an
                       expense
