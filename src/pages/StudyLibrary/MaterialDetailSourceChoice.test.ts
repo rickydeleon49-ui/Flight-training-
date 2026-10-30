@@ -129,13 +129,15 @@ describe("choosing what to send (GEN-REL-01)", () => {
       fireEvent.click(await screen.findByRole("button", { name: button }));
       const dialog = await waitFor(sendDialog);
       const message = dialog.querySelector("p.muted")?.textContent ?? "";
-      expect(message).toMatch(/Only “handbook\.pdf” leaves this Mac\. Your copy on this Mac is not changed\./);
+      expect(message).toMatch(/Your copy on this Mac is not changed\./);
+      expect(message).not.toMatch(/Only “handbook\.pdf” leaves this Mac/);
       expect(message).not.toMatch(/temporary copy|asks Google to delete/);
-      // Before the model line: the send warning (2) and what leaves this Mac (2), down from 6.
-      expect(message.split(" It will be read by")[0]!.split(/(?<=[.!?])\s+/).filter(Boolean).length).toBeLessThanOrEqual(4);
+      // Before the model line: the send warning (2) and what leaves this Mac (1), down from 6.
+      expect(message.split(" It will be read by")[0]!.split(/(?<=[.!?])\s+/).filter(Boolean).length).toBeLessThanOrEqual(3);
       const details = dialog.querySelector("details");
       expect(details?.open).toBe(false);
       expect(details?.querySelector("summary")?.textContent).toBe("What Google keeps");
+      expect(details?.textContent).toMatch(/Only “handbook\.pdf” leaves this Mac/);
       expect(details?.textContent).toMatch(/temporary copy for up to 48 hours/);
       fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());

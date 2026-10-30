@@ -7,7 +7,7 @@
  * study aid says which model actually made it (which can be the fallback).
  */
 import { createElement as h } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -99,5 +99,49 @@ describe("Claude confirmations and model labels", () => {
     const provenance = screen.getByLabelText("Saved study aid provenance");
     expect(provenance.textContent).toContain("Claude");
     expect(provenance.textContent).not.toContain("Gemini");
+  });
+
+  it("Google guide dialog message has exactly 5 sentences and Claude dialog text is unchanged", async () => {
+    // 1. Google guide dialog with a saved guide has exactly 5 sentences
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "gemini-2.5-flash", choice: "standard" });
+    const repos = createRepositories(db);
+    const pdfMaterial = await repos.documents.create({
+      id: "mat-pdf-5s",
+      title: "Synthetic PDF",
+      filePath: "documents/synthetic.pdf",
+      originalFileName: "synthetic.pdf",
+      fileSize: 2048,
+    });
+    await repos.documents.saveAiStudySet({
+      sourceMaterialId: pdfMaterial.id,
+      title: "Existing Guide",
+      summary: "Existing summary",
+      sections: [{ heading: "Section 1", body: "Content" }],
+      flashcards: [],
+      sourceNotes: "",
+      model: "gemini-2.5-flash",
+    });
+    await open(pdfMaterial.id);
+    fireEvent.click(await screen.findByRole("button", { name: "Regenerate" }));
+    const googleDialog = await screen.findByRole("dialog", { name: "Send this file to Google?" });
+    const googleMessage = googleDialog.querySelector("p.muted")?.textContent ?? "";
+    const sentenceEndings = (googleMessage.match(/\.(?:\s+|$)/g) ?? []).length;
+    expect(sentenceEndings).toBe(5);
+    expect(googleDialog.querySelector("details")).not.toBeNull();
+    fireEvent.click(within(googleDialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());
+    cleanup();
+
+    // 2. Claude dialog text is unchanged
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: true, model: "claude-haiku-5-5", choice: "standard" });
+    const textMaterial = await seedMaterial();
+    await open(textMaterial.id);
+    fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
+    const claudeDialog = await screen.findByRole("dialog", { name: "Send this file to Anthropic?" });
+    const claudeMessage = claudeDialog.querySelector("p.muted")?.textContent ?? "";
+    expect(claudeMessage).toBe(
+      "“handbook.txt” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying. Only “handbook.txt” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed. It will be read by Claude Haiku 5.5.",
+    );
+    expect(claudeDialog.querySelector("details")).toBeNull();
   });
 });

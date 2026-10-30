@@ -92,8 +92,7 @@ export function checkAiSubmission(
 export function geminiSendDisclosure(material: StudyMaterial, company: "Google" | "Anthropic" = "Google"): string {
   const { message, details } = geminiSendDisclosureParts(material, company);
   if (!details) return message;
-  const unchanged = " Your copy on this Mac is not changed.";
-  return `${message.slice(0, -unchanged.length)} ${details}${unchanged}`;
+  return `${details} ${message}`;
 }
 
 /**
@@ -114,8 +113,9 @@ export function geminiSendDisclosureParts(
     return { message: `Only “${name}” leaves this Mac. It is sent with this request only; it is not stored for reuse. Your copy on this Mac is not changed.` };
   }
   return {
-    message: `Only “${name}”${pages} leaves this Mac. Your copy on this Mac is not changed.`,
+    message: "Your copy on this Mac is not changed.",
     details:
+      `Only “${name}”${pages} leaves this Mac. ` +
       "Google keeps a temporary copy for up to 48 hours so a study guide and " +
       "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
       "the file changes or you disconnect Gemini; otherwise Google removes it when it expires.",

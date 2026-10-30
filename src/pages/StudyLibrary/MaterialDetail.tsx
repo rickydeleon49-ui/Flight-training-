@@ -592,14 +592,17 @@ function MaterialDetailPage() {
   // What a send will replace, and where earlier versions really can be found:
   // Previous versions lives under Edit study guide, which needs a guide.
   const hasSavedGuide = Boolean(studySet && (studySet.summary || studySet.sections.length > 0));
-  const previousVersionsHint = hasSavedGuide ? "Earlier versions stay in Edit study guide → Previous versions. " : "";
   const savedCardCount = studySet?.flashcards.length ?? 0;
   // Each replaced set is kept whole in Previous versions, so Restore there
   // brings these cards back (QUICKFIX-01: say so for cards, not "versions").
   const replaceCardsWarning = savedCardCount
-    ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. ${hasSavedGuide ? `To get ${savedCardCount === 1 ? "it" : "them"} back, choose Restore in Edit study guide → Previous versions. ` : ""}`
+    ? hasSavedGuide
+      ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}; to get ${savedCardCount === 1 ? "it" : "them"} back, choose Restore in Edit study guide → Previous versions. `
+      : `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. `
     : "";
-  const replaceGuideWarning = hasSavedGuide ? `This replaces your saved study guide. ${previousVersionsHint}` : "";
+  const replaceGuideWarning = hasSavedGuide
+    ? "This replaces your saved study guide; earlier versions stay in Edit study guide → Previous versions. "
+    : "";
   const emptyFailedGuide = Boolean(studyJob?.sectionGuide && studyJob.sections?.ready === 0 &&
     (studyJob.phase === "failed" || studyJob.phase === "cancelled" || studyJob.phase === "interrupted"));
   // Why Regenerate / Create is unavailable, in her words (CARDS-FIX-01).

@@ -22,8 +22,9 @@ const withFile = (overrides = {}) =>
 describe("geminiSendDisclosureParts (POLISH-064)", () => {
   it("moves only what Google keeps into details; joined it reads exactly as before", () => {
     const parts = geminiSendDisclosureParts(withFile());
-    expect(parts.message).toBe("Only “notes.pdf” leaves this Mac. Your copy on this Mac is not changed.");
+    expect(parts.message).toBe("Your copy on this Mac is not changed.");
     expect(parts.details).toContain("48 hours");
+    expect(parts.details).toMatch(/^Only “notes\.pdf” leaves this Mac\. Google keeps/);
     expect(geminiSendDisclosure(withFile())).toBe(
       "Only “notes.pdf” leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and " +
         "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
