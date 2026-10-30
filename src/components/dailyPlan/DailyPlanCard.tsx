@@ -395,7 +395,7 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
                           <span className="tiny muted">No time estimate</span>
                         )}
                       </div>
-                      <h4 className="daily-plan-item__title">{item.title}</h4>
+                      <h3 className="daily-plan-item__title">{item.title}</h3>
                       <p className="daily-plan-item__explanation">{item.explanation}</p>
                       {candidate.requiresSourceCheck ? (
                         <p className="daily-plan-item__source-note tiny muted">

@@ -34,9 +34,6 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   return Math.round(ms / 86_400_000);
 }
 
-export const isOverdue = (due: IsoDate | null, today: IsoDate): boolean =>
-  due !== null && due < today;
-
 export const startOfMonth = (date: IsoDate): IsoDate => `${date.slice(0, 7)}-01`;
 
 const MONTHS = [

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import type { AppData } from "@/state/AppDataContext";
 import { makeAction, makeMaterial } from "@/testing/factories";
+import { expectNoA11yViolations } from "@/testing/a11y";
 
 let data: AppData;
 let mutateMock = vi.fn().mockResolvedValue(null);
@@ -46,8 +47,9 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-it("shows a bounded first page, loads more, and searches all materials", () => {
+it("shows a bounded first page, loads more, and searches all materials", async () => {
   render(h(MemoryRouter, null, h(StudyLibrary)));
+  await expectNoA11yViolations(document.body);
 
   expect((screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText("Material 0")).toBeTruthy();

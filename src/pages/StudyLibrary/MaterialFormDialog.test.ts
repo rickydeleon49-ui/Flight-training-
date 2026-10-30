@@ -3,6 +3,7 @@ import { createElement as h } from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { makeMaterial } from "@/testing/factories";
+import { expectNoA11yViolations } from "@/testing/a11y";
 
 const files = vi.hoisted(() => ({
   pick: vi.fn(),
@@ -35,6 +36,7 @@ it("removes a newly imported file when the material form is cancelled", async ()
 
   fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
   await screen.findByText("new.pdf");
+  await expectNoA11yViolations(document.body);
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   await waitFor(() => expect(files.cleanup).toHaveBeenCalledWith(["new.pdf"]));

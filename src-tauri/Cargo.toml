@@ -45,6 +45,9 @@ unicode-normalization = "=0.1.25"
 # OFFLINE-02 deadline tests. `functions` adds no crate; release builds keep
 # the feature set above.
 rusqlite = { version = "0.32", features = ["backup", "functions"] }
+# Tests only (TESTTOOLS-01): property tests for the simple-v1 scheduler twin.
+# MIT OR Apache-2.0; never linked into the app.
+proptest = { version = "=1.12.0", default-features = false, features = ["std"] }
 
 [profile.release]
 codegen-units = 1

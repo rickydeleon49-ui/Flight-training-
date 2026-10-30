@@ -51,10 +51,6 @@ export function isMixedPdfKit(content: PdfLabelContent | null | undefined): bool
   return valid > 0 && valid < items.length;
 }
 
-export function hasPdfContent(content: PdfLabelContent | null | undefined): boolean {
-  return kitContentItems(content).some(Boolean);
-}
-
 /** The set header takes the PDF label only when every item has valid PDF provenance. */
 export function pdfLabelState(content: PdfLabelContent | null | undefined): "valid" | "invalid" | undefined {
   if (!content) return undefined;

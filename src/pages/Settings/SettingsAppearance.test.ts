@@ -15,6 +15,7 @@ import {
 } from "@/lib/appearance";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { expectNoA11yViolations } from "@/testing/a11y";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -72,6 +73,7 @@ describe("Appearance setting in Settings", () => {
     expect(
       screen.getByText("Glass gives cards a soft frosted look. Classic is the standard look."),
     ).toBeTruthy();
+  await expectNoA11yViolations(document.body);
   });
 
   it("choosing Glass sets the data-appearance attribute and saves it", async () => {

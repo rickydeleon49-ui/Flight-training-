@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_DATA, type AppData } from "@/state/AppDataContext";
 import { FlightDeck } from "./FlightDeck";
+import { expectNoA11yViolations } from "@/testing/a11y";
 import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { makeAction, makeEvent, makeJournalEntry, makeMaterial, makePrepItem, makeQuestion } from "@/testing/factories";
@@ -186,6 +187,7 @@ describe("FlightDeck and reminders bound homework actions", () => {
     const bannerItems = screen.getAllByText("Your recommended items are above.");
     expect(bannerItems.length).toBe(2);
     expect(screen.queryByText(/Nothing is waiting/i)).toBeNull();
+    await expectNoA11yViolations(document.body);
 
     cleanup();
 
