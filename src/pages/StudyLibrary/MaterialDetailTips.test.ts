@@ -56,7 +56,11 @@ it("places the How to link line first, keeps its destinations, and explains file
   expect(screen.queryByText(/Open at page/)).toBeNull();
   expect(screen.getByText("Save a named place so you can return to it later without remembering the page number.")).toBeTruthy();
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
-  expect(screen.getByText("Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.")).toBeTruthy();
+  expect(screen.getByText("Review again and Studying make this material eligible for suggestions in Today's Flight Plan.")).toBeTruthy();
+  // One word, one meaning: the file menu says "File", only the tab says "More".
+  expect(screen.getByText("See how this material is organized. Use Edit under File to change its details.")).toBeTruthy();
+  expect(document.getElementById("material-file-actions")?.textContent).toBe("File ▾");
+  expect(screen.getAllByText(/^More\b/).filter(el => el.closest("[role=tab]") || el.closest("summary")).map(el => el.textContent)).toEqual(["More"]);
   expect(screen.getByText("Records today's date as your last review. Choose your review status separately.")).toBeTruthy();
 });
 

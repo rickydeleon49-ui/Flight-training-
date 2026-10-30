@@ -236,6 +236,16 @@ describe("D2 — Pure Recommendation Selector", () => {
       expect(result.remaining).toHaveLength(0);
     });
 
+    it("gives a study material a short summary without the no-estimate suffix", () => {
+      const [candidate] = buildRecommendationCandidates(
+        { today: TODAY, materials: [mockMaterial({ id: "mat-r", title: "Airspace chart", reviewStatus: "needs_review" })] },
+        TODAY,
+      );
+      expect(candidate?.reason.summary).toBe("Look at this again: Airspace chart");
+      const result = selectRecommendations([candidate!], { timeBudget: 30, maxItems: 3 });
+      expect(result.suggested[0]?.explanation).toBe("Look at this again: Airspace chart");
+    });
+
     it("respects a 10-minute budget with mixed known and unknown duration candidates", () => {
       const result = selectRecommendations(candidates, { timeBudget: 10, maxItems: 3 });
 

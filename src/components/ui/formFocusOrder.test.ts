@@ -15,6 +15,7 @@ vi.mock("@/state/AppDataContext", () => ({
 import { ActionFormDialog } from "@/components/actions/ActionFormDialog";
 import { GoalFormDialog } from "@/pages/FlightPath/GoalFormDialog";
 import { MilestoneFormDialog } from "@/pages/FlightPath/MilestoneFormDialog";
+import { TransactionFormDialog } from "@/pages/Finances/TransactionFormDialog";
 import type { Milestone } from "@/domain/types";
 
 afterEach(cleanup);
@@ -54,4 +55,16 @@ it("MilestoneFormDialog focuses the stage name before the target date", () => {
   const onSave = vi.fn();
   render(h(MilestoneFormDialog, { open: true, milestone, onClose: () => undefined, onSave }));
   emptyTitleAndBadDate("Name", "Target date", "Save changes", "Give this stage a name.", onSave);
+});
+
+it("POLISH-065: example hints start with 'e.g.' so they never look like a real value", () => {
+  render(h(GoalFormDialog, { open: true, milestoneId: null, milestones: [], onClose: () => undefined, onSave: vi.fn() }));
+  const goal = screen.getByLabelText("Goal") as HTMLInputElement;
+  expect(goal.value).toBe("");
+  expect(goal.placeholder).toBe("e.g. Crosswind landings");
+  cleanup();
+  render(h(TransactionFormDialog, { open: true, type: "expense", events: [], onClose: () => undefined, onSave: vi.fn() }));
+  const amount = screen.getByLabelText(/^Amount/) as HTMLInputElement;
+  expect(amount.value).toBe("");
+  expect(amount.placeholder).toBe("e.g. 275");
 });

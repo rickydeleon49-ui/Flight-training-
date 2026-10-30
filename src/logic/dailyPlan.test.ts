@@ -861,6 +861,21 @@ describe("D4 — Daily Plan State & Logic", () => {
       expect(hwRec!.reason.summary).toBe("Homework due today");
     });
 
+    it("keeps study material cards short: a plain summary and no repeated no-estimate suffix", () => {
+      const sources: RecommendationSources = {
+        today: TODAY,
+        materials: [mockMaterial({ id: "mat-r", title: "Airspace chart", reviewStatus: "needs_review" })],
+        actions: [mockAction({ id: "act-unknown", title: "Review emergency checklist", estimatedMinutes: null, priority: "important", dueDate: TODAY })],
+      };
+      const { result } = computeDailyPlan(sources, null, { timeBudget: 30, today: TODAY });
+      const material = result.suggested.find((s) => s.id === "material:mat-r");
+      expect(material?.explanation).toBe("Look at this again: Airspace chart");
+      // Other unestimated work still says why it is included.
+      expect(result.suggested.find((s) => s.id === "action:act-unknown")?.explanation).toBe(
+        "Due today · No time estimate yet, included because it's important",
+      );
+    });
+
     it("plan_logic_unchanged_by_wording (same inputs → same item IDs, order and budget numbers as before)", () => {
       const sources: RecommendationSources = {
         today: TODAY,

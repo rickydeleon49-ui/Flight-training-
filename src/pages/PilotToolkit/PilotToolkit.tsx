@@ -359,7 +359,7 @@ function InstructorReport() {
                 ))}
               </ul>
             ) : (
-              <p className="small muted">No goals marked Working On.</p>
+              <p className="small muted">No goals marked In progress.</p>
             )}
           </CardBody>
         </Card>
@@ -492,6 +492,16 @@ function MedicalDateConflictCard({
   );
 }
 
+const BLANK_CREDENTIAL_DRAFT = {
+  type: "pilot_certificate" as CredentialType,
+  title: "",
+  identifier: "",
+  issuedOn: "",
+  expiresOn: "",
+  notes: "",
+  materialId: "",
+};
+
 function RecordsTool({
   state,
   save,
@@ -499,15 +509,9 @@ function RecordsTool({
   medicalChoosing,
 }: ToolProps & { medicalChoice: PendingChoice; medicalChoosing: boolean }) {
   const { data, deleteWithUndo } = useAppData();
-  const [draft, setDraft] = useState({
-    type: "pilot_certificate" as CredentialType,
-    title: "",
-    identifier: "",
-    issuedOn: "",
-    expiresOn: "",
-    notes: "",
-    materialId: "",
-  });
+  const [draft, setDraft] = useState(BLANK_CREDENTIAL_DRAFT);
+  const draftStarted = (Object.keys(BLANK_CREDENTIAL_DRAFT) as (keyof typeof BLANK_CREDENTIAL_DRAFT)[])
+    .some((key) => draft[key] !== BLANK_CREDENTIAL_DRAFT[key]);
   const [removing, setRemoving] = useState<CredentialRecord | null>(null);
   const issuedField = useRef<TypedDateFieldHandle>(null);
   const expiresField = useRef<TypedDateFieldHandle>(null);
@@ -541,15 +545,7 @@ function RecordsTool({
           credentials: [...current.credentials, record],
         }))
       )
-        setDraft({
-          type: "pilot_certificate",
-          title: "",
-          identifier: "",
-          issuedOn: "",
-          expiresOn: "",
-          notes: "",
-          materialId: "",
-        });
+        setDraft(BLANK_CREDENTIAL_DRAFT);
     } finally {
       adding.current = false;
       setAddBusy(false);
@@ -635,6 +631,11 @@ function RecordsTool({
             <Button variant="primary" onClick={() => void add()} disabled={addBusy}>
               {addBusy ? "Saving…" : "Add record"}
             </Button>
+            {draftStarted ? (
+              <Button variant="ghost" onClick={() => setDraft(BLANK_CREDENTIAL_DRAFT)} disabled={addBusy}>
+                Clear
+              </Button>
+            ) : null}
             <Link className="button button--secondary" to="/study">
               Upload a document copy
             </Link>

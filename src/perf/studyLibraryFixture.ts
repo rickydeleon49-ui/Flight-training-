@@ -135,7 +135,7 @@ export async function seedFixtureMaterials(db: SqlDatabase, materials: FixtureMa
   await db.saveMaterialsAtomically(studyMaterials);
 }
 
-export type StatusChip = "Everything" | "Next Up" | "Studying" | "Needs Review" | "Confident" | "Reference Only";
+export type StatusChip = "Everything" | "Next Up" | "Studying" | "Review again" | "Confident" | "Reference Only";
 
 export interface LibraryView {
   query: string;
@@ -149,7 +149,7 @@ export const DEFAULT_VIEW: LibraryView = { query: "", topic: "", type: "", statu
 
 const CHIP_STATUS: Record<Exclude<StatusChip, "Everything" | "Next Up">, ReviewStatus> = {
   Studying: "studying",
-  "Needs Review": "needs_review",
+  "Review again": "needs_review",
   Confident: "confident",
   "Reference Only": "reference_only",
 };

@@ -220,3 +220,20 @@ it("keeps checked reminder settings readable without a completion strike", () =>
   const label = checkbox.closest("label")!.querySelector<HTMLElement>(".checkbox__label")!;
   expect(label.style.textDecoration).toBe("none");
 });
+
+it("lets her clear a half-typed certificate form, and shows Clear only when something is typed", () => {
+  render(h(MemoryRouter, null, h(PilotToolkit)));
+  fireEvent.click(screen.getByRole("tab", { name: "Certificates" }));
+  expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  const title = screen.getByRole("textbox", { name: "Title" }) as HTMLInputElement;
+  fireEvent.change(title, { target: { value: "Student pilot certificate" } });
+  fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+  expect(title.value).toBe("");
+  expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+});
+
+it("says 'In progress' in the instructor report when no goal is being worked on", () => {
+  render(h(MemoryRouter, null, h(PilotToolkit)));
+  fireEvent.click(screen.getByRole("tab", { name: "Instructor Report" }));
+  expect(screen.getByText("No goals marked In progress.")).toBeTruthy();
+});

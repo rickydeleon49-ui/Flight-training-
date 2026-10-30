@@ -120,7 +120,7 @@ export type GoalStatus =
   | "paused";
 export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
   not_started: "Not Started",
-  working_on: "Working On",
+  working_on: "In progress",
   comfortable: "Comfortable",
   completed: "Completed",
   paused: "Paused",
@@ -208,7 +208,7 @@ export const TOPIC_OPTIONS = options(TOPIC_LABELS);
 
 export type ReviewStatus = "needs_review" | "studying" | "confident" | "reference_only";
 export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-  needs_review: "Needs Review",
+  needs_review: "Review again",
   studying: "Studying",
   confident: "Confident",
   reference_only: "Reference Only",

@@ -94,7 +94,7 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "Everything" },
   { value: "next_up", label: "Next Up" },
   { value: "studying", label: "Studying" },
-  { value: "needs_review", label: "Needs Review" },
+  { value: "needs_review", label: "Review again" },
   { value: "confident", label: "Confident" },
   { value: "reference_only", label: "Reference Only" },
 ];

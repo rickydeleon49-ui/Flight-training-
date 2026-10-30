@@ -1908,7 +1908,7 @@ function MaterialDetailPage() {
                     mutate((repos) => repos.documents.update(material.id, { reviewStatus: value }))
                   }
                 />
-                {!tipsHidden ? <p className="tiny muted">Needs Review and Studying make this material eligible for suggestions in Today's Flight Plan.</p> : null}
+                {!tipsHidden ? <p className="tiny muted">Review again and Studying make this material eligible for suggestions in Today's Flight Plan.</p> : null}
                 <Button
                   block
                   onClick={() =>
@@ -1932,7 +1932,7 @@ function MaterialDetailPage() {
               </div>
             </CardBody>
             <CardHeader title="Details" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit in More actions to change its details.</p> : null}
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit under File to change its details.</p> : null}
             <CardBody>
               <dl className="definition">
                 <dt>Type</dt>

@@ -145,7 +145,7 @@ export function TransactionFormDialog({
               aria-describedby={describedBy}
               aria-invalid={invalid}
               value={amount}
-              placeholder="275"
+              placeholder="e.g. 275"
               onChange={(e) => setAmount(e.target.value)}
             />
           )}

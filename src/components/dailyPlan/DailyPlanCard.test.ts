@@ -170,6 +170,16 @@ describe("Daily Flight Plan card", () => {
     expect(screen.queryByText(/About 0 of your/)).toBeNull();
   });
 
+  it("says study items have no set time when only study materials are suggested", async () => {
+    await repos.documents.create({ id: "mat-r", title: "Airspace chart", filePath: "documents/airspace.pdf", originalFileName: "airspace.pdf", fileSize: 2048, reviewStatus: "needs_review" });
+    await mount();
+    await waitFor(() => expect(suggestedTitles()).toEqual(["Review: Airspace chart"]));
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    await waitFor(() => expect(screen.getByText("Study items have no set time; pick what fits.")).toBeTruthy());
+    expect(screen.queryByText(/These don't have time estimates yet/)).toBeNull();
+    expect(screen.queryByText(/included because it's important/)).toBeNull();
+  });
+
   it("keeps the 'About N of your M minutes' sentence when an item has an estimate", async () => {
     await action("Alpha", 10);
     await action("Bravo", null);

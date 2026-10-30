@@ -136,7 +136,7 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
               aria-invalid={invalid}
               ref={titleInput}
               value={draft.title}
-              placeholder="Crosswind landings"
+              placeholder="e.g. Crosswind landings"
               onChange={(e) => update("title", e.target.value)}
             />
           )}
