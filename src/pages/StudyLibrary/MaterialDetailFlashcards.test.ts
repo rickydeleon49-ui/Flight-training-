@@ -243,10 +243,10 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
       flashcards: [{ front: "Q", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
     await openMaterial("mat-pdf");
     fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
-    expect(within(await waitFor(sendDialog)).getByText(/^This replaces your 1 saved card\. To get it back, choose Restore in Edit study guide → Previous versions\./)).toBeTruthy();
+    expect(within(await waitFor(sendDialog)).getByText(/^This replaces your 1 saved card; to get it back, choose Restore in Edit study guide → Previous versions\./)).toBeTruthy();
     fireEvent.click(within(sendDialog()).getByRole("button", { name: "Cancel" }));
     fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
-    expect(within(await waitFor(sendDialog)).getByText(/This replaces your saved study guide\. Earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
+    expect(within(await waitFor(sendDialog)).getByText(/This replaces your saved study guide; earlier versions stay in Edit study guide → Previous versions\./)).toBeTruthy();
     // The control it names really is there.
     expect(screen.getByRole("button", { name: "Edit study guide" })).toBeTruthy();
   });
