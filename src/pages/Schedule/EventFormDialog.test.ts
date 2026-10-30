@@ -45,22 +45,55 @@ it("marks the empty event title placeholder as an example", () => {
   expect(title.classList.contains("input")).toBe(true);
 });
 
-describe("POLISH-04 event date read back", () => {
-  it("reads the chosen date back in words with the year, so a mistyped day is visible", () => {
-    show();
-    const date = screen.getByLabelText("Date");
-    fireEvent.change(date, { target: { value: "2026-12-29" } });
-    const hint = screen.getByText(/^Check the date: Tuesday, December 29, 2026\./);
+describe("QUICKFIX-01 event date is typed and never changed", () => {
+  it("saves 11052026 typed in one go as November 5, 2026, and reads it back in words", () => {
+    const onSave = show();
+    const date = screen.getByLabelText("Date") as HTMLInputElement;
+    expect(date.type).toBe("text");
+    expect(date.placeholder).toBe("e.g. 11/05/2026");
+    fireEvent.change(date, { target: { value: "11052026" } });
+    const hint = screen.getByText("That's Thursday, November 5, 2026.");
     expect(date.getAttribute("aria-describedby")).toBe(hint.id);
-    fireEvent.change(date, { target: { value: "2026-11-05" } });
-    expect(screen.getByText(/^Check the date: Thursday, November 5, 2026\. Typing it\? Press Tab between month, day and year\.$/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-11-05" }));
+  });
+
+  it("refuses a date that doesn't exist with a plain line, and saves nothing", () => {
+    const onSave = show();
+    const date = screen.getByLabelText("Date");
+    fireEvent.change(date, { target: { value: "13/29/2026" } });
+    fireEvent.blur(date);
+    expect(screen.getByText("That isn't a date — try 11/05/2026.")).toBeTruthy();
+    expect(screen.queryByText(/^That's /)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.change(date, { target: { value: "12/29/2026" } });
+    expect(screen.queryByText("That isn't a date — try 11/05/2026.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ date: "2026-12-29" }));
+  });
+
+  it("shows an existing event's date the way she types it", () => {
+    render(h(EventFormDialog, {
+      open: true, goals: [], onClose: () => undefined, onSave: vi.fn(),
+      event: { id: "e1", title: "Stalls", eventType: "flight_lesson", date: "2026-11-05", startTime: null, endTime: null,
+        location: "", instructor: "", notes: "", goalId: null, estimatedCost: null, actualCost: null, status: "scheduled" } as never,
+    }));
+    expect((screen.getByLabelText("Date") as HTMLInputElement).value).toBe("11/05/2026");
   });
 
   it("shows no read back for an empty date, only the existing error on save", () => {
     show();
     fireEvent.change(screen.getByLabelText("Date"), { target: { value: "" } });
-    expect(screen.queryByText(/Check the date/)).toBeNull();
+    expect(screen.queryByText(/^That's /)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add event" }));
     expect(screen.getByText("Choose a date.")).toBeTruthy();
+  });
+
+  it("marks the other example placeholders with e.g.", () => {
+    show();
+    expect((screen.getByLabelText("Location") as HTMLInputElement).placeholder).toBe("e.g. Cedar Field");
+    expect((screen.getByLabelText("Estimated cost") as HTMLInputElement).placeholder).toBe("e.g. 275");
+    expect((screen.getByLabelText("Actual cost") as HTMLInputElement).placeholder).toBe("e.g. 265");
   });
 });

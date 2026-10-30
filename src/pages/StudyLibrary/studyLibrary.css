@@ -205,6 +205,19 @@
 .ai-guide__section h4 { margin: 0 0 var(--space-2); }
 .ai-copy { white-space: pre-wrap; }
 
+/* What changed between an earlier and a new version (JSDIFF-01). Words carry
+   screen-reader text too, so the meaning is never colour alone. */
+ins.changed-words,
+del.changed-words {
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 0.1em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+ins.changed-words { background: var(--category-complete-fill); text-decoration: underline; text-decoration-color: var(--category-complete-edge); text-underline-offset: 0.15em; }
+del.changed-words { background: var(--status-overdue-fill); text-decoration: line-through; text-decoration-color: var(--status-overdue); }
+
 /* A guide body's formatting (P54-03): lists, quotes and tables, nothing loaded. */
 .guide-body { display: flex; flex-direction: column; gap: var(--space-2); overflow-wrap: anywhere; }
 .guide-body p { margin: 0; white-space: pre-wrap; }

@@ -935,7 +935,10 @@ impl PreparedSources {
             if self.retained(&r) {
                 continue;
             }
-            if delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout).await {
+            if crate::provider::AnyProvider::default()
+                .delete(http, &r.base, api_key, &r.name, self.policy.delete_timeout)
+                .await
+            {
                 removed += 1;
             }
         }
@@ -994,7 +997,10 @@ impl PreparedSources {
             let timeout = self.policy.delete_timeout.min(budget.remaining());
             if matches!(
                 budget
-                    .run(delete(http, &r.base, api_key, &r.name, timeout))
+                    .run(
+                        crate::provider::AnyProvider::default()
+                            .delete(http, &r.base, api_key, &r.name, timeout)
+                    )
                     .await,
                 Ok(true)
             ) {
@@ -1204,7 +1210,10 @@ impl PreparedSources {
         say: &(dyn Fn(String) + Sync),
     ) -> Result<i64, NotReady> {
         let cached = &lease.prepared;
-        match lookup(http, base, api_key, &cached.name, &cached.mime, budget).await {
+        match crate::provider::AnyProvider::default()
+            .lookup(http, base, api_key, &cached.name, &cached.mime, budget)
+            .await
+        {
             Ok(file) if file.state == FileState::Active => {
                 Ok(file.expires_at.unwrap_or(cached.expires_at))
             }
@@ -1381,7 +1390,9 @@ impl PreparedSources {
         budget: &Budget,
         say: &(dyn Fn(String) + Sync),
     ) -> Result<Prepared, String> {
-        let file = upload(http, base, api_key, source.bytes, source.mime, budget).await?;
+        let file = crate::provider::AnyProvider::default()
+            .upload(http, base, api_key, source.bytes, source.mime, budget)
+            .await?;
         let file = match self
             .wait_until_active(http, base, api_key, file.clone(), budget, say)
             .await
@@ -1460,7 +1471,7 @@ impl PreparedSources {
             budget.at(Stage::WaitingForFile);
             pause = (pause * 2).min(self.policy.poll_cap);
             polls += 1;
-            file = match lookup(http, base, api_key, &file.name, &file.mime, budget).await {
+            file = match crate::provider::AnyProvider::default().lookup(http, base, api_key, &file.name, &file.mime, budget).await {
                 Ok(next) => next,
                 Err(LookupFailure::Missing) => {
                     return Err(NotReady::Unusable("The uploaded copy of this PDF disappeared from Google before it was ready. Try again.".to_string()))

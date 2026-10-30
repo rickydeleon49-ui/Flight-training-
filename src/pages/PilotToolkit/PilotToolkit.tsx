@@ -14,6 +14,8 @@ import {
   Select,
   TextArea,
   TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
 } from "@/components/ui";
 import {
   CREDENTIAL_TYPE_LABELS,
@@ -518,10 +520,15 @@ function RecordsTool({
     materialId: "",
   });
   const [removing, setRemoving] = useState<CredentialRecord | null>(null);
+  const issuedField = useRef<TypedDateFieldHandle>(null);
+  const expiresField = useRef<TypedDateFieldHandle>(null);
   const today = todayIso();
 
   const add = async () => {
-    if (!draft.title.trim()) return;
+    // Both dates are optional, but a typed one that isn't a date is never saved as none.
+    const issuedOk = issuedField.current?.check() ?? true;
+    const expiresOk = expiresField.current?.check() ?? true;
+    if (!draft.title.trim() || !issuedOk || !expiresOk) return;
     const record: CredentialRecord = {
       id: newId(),
       type: draft.type,
@@ -586,24 +593,18 @@ function RecordsTool({
                 }
               />
             </Field>
-            <Field label="Issued">
-              <TextInput
-                type="date"
-                value={draft.issuedOn}
-                onChange={(event) =>
-                  setDraft({ ...draft, issuedOn: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Expires">
-              <TextInput
-                type="date"
-                value={draft.expiresOn}
-                onChange={(event) =>
-                  setDraft({ ...draft, expiresOn: event.target.value })
-                }
-              />
-            </Field>
+            <TypedDateField
+              ref={issuedField}
+              label="Issued"
+              value={draft.issuedOn}
+              onChange={(issuedOn) => setDraft((current) => ({ ...current, issuedOn }))}
+            />
+            <TypedDateField
+              ref={expiresField}
+              label="Expires"
+              value={draft.expiresOn}
+              onChange={(expiresOn) => setDraft((current) => ({ ...current, expiresOn }))}
+            />
             <Field
               label="Attached library file"
               hint="Upload document copies in the Study Library first."

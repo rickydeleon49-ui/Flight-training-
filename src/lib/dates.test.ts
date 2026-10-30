@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { describeRelativeDate, formatLocalDay, formatLongDate, formatShortDate, localDayOf } from "./dates";
+import { describeRelativeDate, formatLocalDay, formatLongDate, formatShortDate, formatTypedDate, localDayOf, parseTypedDate } from "./dates";
 
 /**
  * Runs the enclosing describe block in `zone`, then puts process.env.TZ back
@@ -190,5 +190,25 @@ describe("formatLocalDay", () => {
       expect(formatLocalDay("2026-10-16T03:56:14.075Z", today)).toBe("Friday, October 16");
       expect(formatLocalDay("2025-12-31T23:59:59Z", today)).toBe("Wednesday, December 31, 2025");
     });
+  });
+});
+
+describe("QUICKFIX-01 parseTypedDate", () => {
+  it("reads a typed month/day/year, with or without separators, as the same day", () => {
+    for (const typed of ["11052026", "11/05/2026", "11/5/2026", "11-05-2026", " 11.05.2026 ", "2026-11-05"]) {
+      expect(parseTypedDate(typed)).toBe("2026-11-05");
+    }
+  });
+
+  it("refuses anything that isn't a real day instead of moving it", () => {
+    for (const typed of ["", "1105", "110526", "13/05/2026", "02/30/2026", "00/10/2026", "11/05/26", "Nov 5", "1105202"]) {
+      expect(parseTypedDate(typed)).toBeNull();
+    }
+    expect(parseTypedDate("02/29/2028")).toBe("2028-02-29");
+  });
+
+  it("writes a stored day back the way she types it", () => {
+    expect(formatTypedDate("2026-11-05")).toBe("11/05/2026");
+    expect(formatTypedDate("")).toBe("");
   });
 });

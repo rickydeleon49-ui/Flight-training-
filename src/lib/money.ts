@@ -16,10 +16,6 @@ export function formatMoney(cents: Cents, options: { showCents?: boolean } = {})
   });
 }
 
-/** Compact form for dense rows, e.g. "~$275". */
-export const formatApproxMoney = (cents: Cents): string =>
-  `~${formatMoney(Math.round(cents / 100) * 100, { showCents: false })}`;
-
 /**
  * Parse user input into cents. Accepts "275", "$275.50", "1,200".
  * Returns null when the text is not a usable amount, so forms can explain

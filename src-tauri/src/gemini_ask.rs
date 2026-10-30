@@ -384,33 +384,11 @@ pub fn build_ask_request(
     parts.push(json!({"text": format!("Question:\n{}", question.trim())}));
 
     let response_schema = if has_pdf {
-        json!({
-            "type": "OBJECT",
-            "required": ["answer", "notAnswered", "passages"],
-            "properties": {
-                "answer": {"type": "STRING", "maxLength": MAX_ANSWER_CHARS},
-                "notAnswered": {"type": "BOOLEAN"},
-                "passages": {
-                    "type": "ARRAY", "maxItems": 3,
-                    "items": {
-                        "type": "OBJECT", "required": ["page", "quote"],
-                        "properties": {
-                            "page": {"type": "INTEGER", "minimum": 1},
-                            "quote": {"type": "STRING", "maxLength": 400}
-                        }
-                    }
-                }
-            }
-        })
+        crate::provider::AnyProvider::default()
+            .translate_schema(&crate::provider::schemas::ask_pdf())
     } else {
-        json!({
-            "type": "OBJECT",
-            "required": ["answer", "sourcePages"],
-            "properties": {
-                "answer": {"type": "STRING"},
-                "sourcePages": {"type": "ARRAY", "items": {"type": "INTEGER"}}
-            }
-        })
+        crate::provider::AnyProvider::default()
+            .translate_schema(&crate::provider::schemas::ask_text())
     };
     json!({
         "contents": [{"role": "user", "parts": parts}],

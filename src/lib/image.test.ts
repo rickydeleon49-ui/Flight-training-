@@ -1,6 +1,10 @@
+// @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { dataUrlBytes, fitWithin, PHOTO_MAX_EDGE } from "./image";
+import { dataUrlBytes, fitWithin, loadImage, PHOTO_MAX_EDGE } from "./image";
 
 describe("fitWithin", () => {
   it("scales a large landscape photo down by its longest edge", () => {
@@ -35,5 +39,36 @@ describe("dataUrlBytes", () => {
 
   it("returns zero for something that is not a data URL", () => {
     expect(dataUrlBytes("not-a-data-url")).toBe(0);
+  });
+});
+
+describe("loadImage", () => {
+  it("loads the picked file through a data: URL, which the app's CSP allows", async () => {
+    const seen: string[] = [];
+    const RealImage = globalThis.Image;
+    class FakeImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      set src(value: string) {
+        seen.push(value);
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    globalThis.Image = FakeImage as unknown as typeof Image;
+    try {
+      const file = new File([new Uint8Array([1, 2, 3])], "me.png", { type: "image/png" });
+      await loadImage(file);
+    } finally {
+      globalThis.Image = RealImage;
+    }
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.startsWith("data:image/png;base64,")).toBe(true);
+  });
+
+  it("matches the CSP: images may come from 'self' and data: only", () => {
+    const conf = JSON.parse(readFileSync(resolve(__dirname, "../../src-tauri/tauri.conf.json"), "utf8"));
+    const csp: string = conf.app.security.csp;
+    const imgSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("img-src"));
+    expect(imgSrc).toBe("img-src 'self' data:");
   });
 });

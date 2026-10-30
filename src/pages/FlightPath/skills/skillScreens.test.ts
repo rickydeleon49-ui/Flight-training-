@@ -130,6 +130,27 @@ describe("the skill page", () => {
     expect(await db.select("SELECT wording, revision FROM skill_observations")).toEqual([{ wording: "Changed", revision: 3 }]);
   });
 
+  it("DATES-01: the edit dialog saves 11052026 typed in one go as 2026-11-05, and refuses a day that doesn't exist", async () => {
+    const journalId = await debrief();
+    await record(journalId, "Original");
+    await mount("/flight-path/skills/builtin.normal_landing", [["/flight-path/skills/:skillId", h(SkillPage)]]);
+    const list = await screen.findByRole("list", { name: "Evidence history" });
+    fireEvent.click(within(list).getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit this observation" });
+    const date = within(dialog).getByLabelText("Date observed") as HTMLInputElement;
+    expect(date.value).toBe("10/01/2026");
+    const save = within(dialog).getByRole("button", { name: "Save changes" });
+    fireEvent.change(date, { target: { value: "13292026" } });
+    fireEvent.click(save);
+    expect(within(dialog).getByText("That isn't a date — try 11/05/2026.")).toBeTruthy();
+    expect(await db.select("SELECT observed_on FROM skill_observations")).toEqual([{ observed_on: "2026-10-01" }]);
+    fireEvent.change(date, { target: { value: "11052026" } });
+    expect(within(dialog).getByText("That's Thursday, November 5, 2026.")).toBeTruthy();
+    fireEvent.click(save);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(await db.select("SELECT observed_on FROM skill_observations")).toEqual([{ observed_on: "2026-11-05" }]);
+  });
+
   it("a route change disposes the previous skill's edit dialog without writing its draft", async () => {
     const journalId = await debrief();
     await record(journalId, "First skill observation");
@@ -253,7 +274,7 @@ describe("a debrief's Skill evidence card", () => {
     const who = within(dialog).getByRole("group", { name: "Who said it?" });
     expect(within(who).getByLabelText(/My instructor \(I'm writing down what they said\)/)).toBeTruthy();
     expect(within(who).getByLabelText(/Me \(my own observation\)/)).toBeTruthy();
-    expect(within(dialog).getByLabelText("Date observed")).toHaveProperty("value", "2026-10-01");
+    expect(within(dialog).getByLabelText("Date observed")).toHaveProperty("value", "10/01/2026");
     fireEvent.change(within(dialog).getByLabelText("Skill"), { target: { value: "builtin.crosswind_landing" } });
     fireEvent.change(within(dialog).getByLabelText("Came from"), { target: { value: "instructor_feedback" } });
     fireEvent.change(within(dialog).getByLabelText("Instructor name (optional)"), { target: { value: "Sam" } });

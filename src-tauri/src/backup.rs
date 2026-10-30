@@ -21,6 +21,7 @@ use tauri::AppHandle;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
 
+use crate::logging::log;
 use crate::storage::app_root;
 
 /// Where copies are kept, inside application data.
@@ -8050,8 +8051,9 @@ where
                     Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
                         Ok(true) => {
                             if let Err(e) = remove_pending_directory_safely(&pending) {
-                                eprintln!(
-                                    "Warning: Could not remove staged restore directory: {e}"
+                                log::warn!(
+                                    "Could not remove the staged restore folder: {:?}",
+                                    e.kind()
                                 );
                                 cleanup_succeeded = false;
                             }
@@ -8061,8 +8063,8 @@ where
                         }
                     },
                     Ok(None) => {}
-                    Err(e) => {
-                        eprintln!("Warning: Cannot inspect pending restore directory: {e}");
+                    Err(_) => {
+                        log::warn!("Could not inspect the pending restore folder.");
                         cleanup_succeeded = false;
                     }
                 }
@@ -8145,8 +8147,9 @@ where
                     Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
                         Ok(true) => {
                             if let Err(e) = remove_pending_directory_safely(&pending) {
-                                eprintln!(
-                                    "Warning: Could not remove staged restore directory: {e}"
+                                log::warn!(
+                                    "Could not remove the staged restore folder: {:?}",
+                                    e.kind()
                                 );
                                 cleanup_succeeded = false;
                             }
@@ -8156,8 +8159,8 @@ where
                         }
                     },
                     Ok(None) => {}
-                    Err(e) => {
-                        eprintln!("Warning: Cannot inspect pending restore directory: {e}");
+                    Err(_) => {
+                        log::warn!("Could not inspect the pending restore folder.");
                         cleanup_succeeded = false;
                     }
                 }
@@ -8189,22 +8192,22 @@ where
         Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
             Ok(true) => {
                 if let Err(e) = remove_pending_directory_safely(&pending) {
-                    eprintln!("Warning: Could not remove staged restore directory: {e}");
+                    log::warn!("Could not remove the staged restore folder: {:?}", e.kind());
                     cleanup_succeeded = false;
                 }
             }
             Ok(false) => {
-                eprintln!("Warning: Pending restore directory ownership does not match journal");
+                log::warn!("The pending restore folder does not match the restore journal.");
                 cleanup_succeeded = false;
             }
-            Err(e) => {
-                eprintln!("Warning: Cannot verify ownership of pending restore directory: {e}");
+            Err(_) => {
+                log::warn!("Could not verify who owns the pending restore folder.");
                 cleanup_succeeded = false;
             }
         },
         Ok(None) => {}
-        Err(e) => {
-            eprintln!("Warning: Pending restore directory is unsafe: {e}");
+        Err(_) => {
+            log::warn!("The pending restore folder is unsafe; it was left in place.");
             cleanup_succeeded = false;
         }
     }
@@ -8227,8 +8230,10 @@ where
 fn forget_gemini_jobs(root: &Path) -> bool {
     match crate::gemini_jobs::clear_after_restore(root) {
         Ok(()) => true,
-        Err(error) => {
-            eprintln!("Could not forget Gemini jobs after restoring: {error}; will try again at the next launch.");
+        Err(_) => {
+            log::warn!(
+                "Could not forget Gemini jobs after restoring; will try again at the next launch."
+            );
             false
         }
     }
@@ -8345,7 +8350,10 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
                     Ok(true) => {
                         if let Err(e) = remove_pending_directory_safely(&pending) {
-                            eprintln!("Warning: Could not remove staged restore directory: {e}");
+                            log::warn!(
+                                "Could not remove the staged restore folder: {:?}",
+                                e.kind()
+                            );
                             cleanup_succeeded = false;
                         }
                     }
@@ -8397,7 +8405,10 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
                     Ok(true) => {
                         if let Err(e) = remove_pending_directory_safely(&pending) {
-                            eprintln!("Warning: Could not remove staged restore directory: {e}");
+                            log::warn!(
+                                "Could not remove the staged restore folder: {:?}",
+                                e.kind()
+                            );
                             cleanup_succeeded = false;
                         }
                     }
@@ -8454,8 +8465,9 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                     Ok(Some(_)) => match verify_pending_cleanup_permission(&pending, &journal) {
                         Ok(true) => {
                             if let Err(e) = remove_pending_directory_safely(&pending) {
-                                eprintln!(
-                                    "Warning: Could not remove staged restore directory: {e}"
+                                log::warn!(
+                                    "Could not remove the staged restore folder: {:?}",
+                                    e.kind()
                                 );
                                 cleanup_succeeded = false;
                             }
@@ -8535,12 +8547,12 @@ fn startup_restore_outcome(decision: StartupRestoreDecision) -> Result<bool, Str
     match decision {
         StartupRestoreDecision::ProceedNormally => Ok(false),
         StartupRestoreDecision::RestoreCompleted => Ok(true),
-        StartupRestoreDecision::StagingRefusedUnchanged { reason } => {
-            eprintln!("Pending restore refused: {reason}; current data unchanged.");
+        StartupRestoreDecision::StagingRefusedUnchanged { .. } => {
+            log::warn!("A pending restore was refused; current data unchanged.");
             Ok(false)
         }
-        StartupRestoreDecision::RolledBackRecovered { reason } => {
-            eprintln!("Pending restore failed: {reason}; previous data was recovered.");
+        StartupRestoreDecision::RolledBackRecovered { .. } => {
+            log::error!("A pending restore failed; the previous data was recovered.");
             Ok(false)
         }
         StartupRestoreDecision::BlockedUnresolved {
@@ -8981,6 +8993,9 @@ mod tests {
             Path::new(crate::secrets::KEY_FILE),
             false
         ));
+        // Nor any other provider's key or the provider choice (PROVIDER-01).
+        assert!(!allowed_archive_path(Path::new("claude-key"), false));
+        assert!(!allowed_archive_path(Path::new("ai-provider"), false));
         assert!(!allowed_archive_path(Path::new("documents"), false));
         assert!(!allowed_archive_path(Path::new(DB_FILES[0]), true));
     }

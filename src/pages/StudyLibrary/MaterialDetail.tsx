@@ -542,8 +542,10 @@ function MaterialDetailPage() {
   const hasSavedGuide = Boolean(studySet && (studySet.summary || studySet.sections.length > 0));
   const previousVersionsHint = hasSavedGuide ? "Earlier versions stay in Edit study guide → Previous versions. " : "";
   const savedCardCount = studySet?.flashcards.length ?? 0;
+  // Each replaced set is kept whole in Previous versions, so Restore there
+  // brings these cards back (QUICKFIX-01: say so for cards, not "versions").
   const replaceCardsWarning = savedCardCount
-    ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. ${previousVersionsHint}`
+    ? `This replaces your ${savedCardCount} saved ${savedCardCount === 1 ? "card" : "cards"}. ${hasSavedGuide ? `To get ${savedCardCount === 1 ? "it" : "them"} back, choose Restore in Edit study guide → Previous versions. ` : ""}`
     : "";
   const replaceGuideWarning = hasSavedGuide ? `This replaces your saved study guide. ${previousVersionsHint}` : "";
   const emptyFailedGuide = Boolean(studyJob?.sectionGuide && studyJob.sections?.ready === 0 &&
@@ -1651,56 +1653,7 @@ function MaterialDetailPage() {
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
           {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
-          <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
-          {material.filePath ? (
-            <div id="material-file-details" tabIndex={-1}><Card>
-              <CardHeader title="File details" />
-              <CardBody>
-                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
-                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
-                  <div className="file-row__details">
-                    <p className="small truncate">{material.originalFileName}</p>
-                    <p className="tiny">
-                      {fileMissing
-                        ? "This file is no longer in your library storage."
-                        : formatFileSize(material.fileSize)}
-                    </p>
-                  </div>
-                  <div className="file-row__actions">
-                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
-                  </div>
-                </div>
-                {fileMissing ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="tiny muted">
-                      Everything you wrote is still here. Choose the original or a replacement
-                      copy; it will be copied back inside the desktop app.
-                    </p>
-                    <Button
-                      size="small"
-                      variant="primary"
-                      disabled={restoringFile}
-                      onClick={() => void restoreFile()}
-                    >
-                      {restoringFile ? "Restoring…" : "Find and restore file"}
-                    </Button>
-                  </div>
-                ) : null}
-                {openError ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error">{openError}</p>
-                    {!fileMissing ? (
-                      <Button size="small" onClick={() => void revealStoredFile()}>
-                        Show in Finder or File Explorer
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-                <SplitLineageDetails material={material} materials={data.materials} />
-              </CardBody>
-            </Card></div>
-          ) : null}
-
+          {/* Reading the PDF's text sits with the other tools, above the reference cards (QUICKFIX-01). */}
           {isPdf && (material.filePath || hasKitItems) ? (
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
@@ -1833,6 +1786,56 @@ function MaterialDetailPage() {
               </Card>
             </section>
           ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div> : null}
+          <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
+          {material.filePath ? (
+            <div id="material-file-details" tabIndex={-1}><Card>
+              <CardHeader title="File details" />
+              <CardBody>
+                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
+                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
+                  <div className="file-row__details">
+                    <p className="small truncate">{material.originalFileName}</p>
+                    <p className="tiny">
+                      {fileMissing
+                        ? "This file is no longer in your library storage."
+                        : formatFileSize(material.fileSize)}
+                    </p>
+                  </div>
+                  <div className="file-row__actions">
+                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
+                  </div>
+                </div>
+                {fileMissing ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="tiny muted">
+                      Everything you wrote is still here. Choose the original or a replacement
+                      copy; it will be copied back inside the desktop app.
+                    </p>
+                    <Button
+                      size="small"
+                      variant="primary"
+                      disabled={restoringFile}
+                      onClick={() => void restoreFile()}
+                    >
+                      {restoringFile ? "Restoring…" : "Find and restore file"}
+                    </Button>
+                  </div>
+                ) : null}
+                {openError ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error">{openError}</p>
+                    {!fileMissing ? (
+                      <Button size="small" onClick={() => void revealStoredFile()}>
+                        Show in Finder or File Explorer
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <SplitLineageDetails material={material} materials={data.materials} />
+              </CardBody>
+            </Card></div>
+          ) : null}
+
           <Card>
             <CardHeader title="Details and review status" />
             {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
@@ -2039,7 +2042,7 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingCards}
         title="Send this file to Google?"
-        message={`${importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : ""}${replaceCardsWarning}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
+        message={`${replaceCardsWarning || (importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : "")}${aiCheck.reason} ${geminiSendDisclosure(material)}${geminiModelSentence(gemini)}`}
         confirmLabel="Send to Gemini"
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingCards(false))}

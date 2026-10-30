@@ -4,9 +4,9 @@
  * erase dialogs. Every write goes through the list's controller, so retries
  * replay exact requests and late answers never reach another list.
  */
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
-import { Badge, Button, ConfirmDialog, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import { Badge, Button, ConfirmDialog, Dialog, Field, Select, TextArea, TextInput, TypedDateField, type TypedDateFieldHandle } from "@/components/ui";
 import type { EvidenceItem, NextAction, SkillAttribution } from "@/domain/types";
 import {
   ATTRIBUTION_CHOICES,
@@ -211,12 +211,15 @@ function EditObservationDialog({ item, controller, onClose }: { item: EvidenceIt
   const ids = useId();
   const [wording, setWording] = useState(item.wording);
   const [observedOn, setObservedOn] = useState(item.observedOn);
+  const dateField = useRef<TypedDateFieldHandle>(null);
   const [attribution, setAttribution] = useState<SkillAttribution>(item.attribution);
   const [instructorName, setInstructorName] = useState(item.instructorName);
   const result = useActionResult();
   const length = Array.from(wording).length;
   const name = attribution === "instructor_transcribed" ? instructorName : "";
-  const save = () =>
+  const save = () => {
+    // A date that isn't one is refused in the field, never saved as another day.
+    if (dateField.current?.check() === false || !observedOn) return;
     void result.run(
       () =>
         controller.runAction(
@@ -229,6 +232,7 @@ function EditObservationDialog({ item, controller, onClose }: { item: EvidenceIt
         ),
       onClose,
     );
+  };
   return (
     <Dialog
       open
@@ -264,9 +268,7 @@ function EditObservationDialog({ item, controller, onClose }: { item: EvidenceIt
       <Field label="What was said or noticed" hint={`${length} of 2000 characters`}>
         <TextArea disabled={result.pending} value={wording} onChange={(e) => setWording(e.target.value)} rows={4} />
       </Field>
-      <Field label="Date observed">
-        <TextInput disabled={result.pending} type="date" value={observedOn} onChange={(e) => setObservedOn(e.target.value)} />
-      </Field>
+      <TypedDateField ref={dateField} disabled={result.pending} label="Date observed" required value={observedOn} onChange={setObservedOn} />
       {result.message ? (
         <div role="alert" className="small skill-evidence__error">
           <p>{result.message.text}</p>

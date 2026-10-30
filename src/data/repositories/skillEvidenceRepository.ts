@@ -60,5 +60,3 @@ export function skillEvidenceRepository(db: SqlDatabase) {
     },
   };
 }
-
-export type SkillEvidenceRepository = ReturnType<typeof skillEvidenceRepository>;

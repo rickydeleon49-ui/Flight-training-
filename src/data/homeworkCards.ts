@@ -24,7 +24,6 @@ export const homeworkRunRow = (r: HomeworkRun) => {
         started_at: r.started_at, finished_at: r.finished_at, invalidated_at: r.invalidated_at
     };
 };
-export const cardRunRow = (r: HomeworkRun) => homeworkRunRow(r);
 
 export async function homeworkCardQueue(query: ValidationQuery, materialId: string, at: string, midnight: string) {
     const repo = cardReviewRepository({ select: async <T>(s: string, p: SqlValue[] = []) => await query(s, p) as T[], execute: async () => { } });
@@ -60,7 +59,6 @@ export async function validateHomeworkRunWrites(query: ValidationQuery, previous
         }
     }
 }
-export const validateHomeworkCardWrites = validateHomeworkRunWrites;
 
 function ratingAction(s: HomeworkSnapshot, r: HomeworkCardRun, x: HomeworkCardRun["ratings"][number]): Extract<CardItemAction, {
     action: "rate";

@@ -1,6 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  Field,
+  Select,
+  TextArea,
+  TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
+} from "@/components/ui";
 import {
   MILESTONE_STATUS_LABELS,
   type Milestone,
@@ -33,6 +42,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
     targetDate: null,
   });
   const [error, setError] = useState<string | null>(null);
+  const targetDateField = useRef<TypedDateFieldHandle>(null);
 
   useEffect(() => {
     if (!open || !milestone) return;
@@ -49,10 +59,12 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
     setDraft((current) => ({ ...current, [key]: value }));
 
   const submit = () => {
+    const targetDateOk = targetDateField.current?.check() ?? true;
     if (!draft.title.trim()) {
       setError("Give this stage a name.");
       return;
     }
+    if (!targetDateOk) return;
     onSave({ ...draft, title: draft.title.trim() });
   };
 
@@ -96,17 +108,14 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
           )}
         </Field>
 
-        <Field label="Target date" hint="Optional.">
-          {({ id, describedBy }) => (
-            <TextInput
-              id={id}
-              type="date"
-              aria-describedby={describedBy}
-              value={draft.targetDate ?? ""}
-              onChange={(e) => update("targetDate", e.target.value || null)}
-            />
-          )}
-        </Field>
+        <TypedDateField
+          key={String(open)}
+          ref={targetDateField}
+          label="Target date"
+          hint="Optional."
+          value={draft.targetDate ?? ""}
+          onChange={(date) => update("targetDate", date || null)}
+        />
 
         <Field label="Description" full>
           {({ id }) => (

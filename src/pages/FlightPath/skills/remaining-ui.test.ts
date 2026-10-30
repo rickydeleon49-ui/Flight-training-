@@ -180,11 +180,28 @@ describe("M3-R8 whole-draft acknowledgment", () => {
     await ctx.release();
     await waitFor(() => expect(wording().value).toBe(""));
     expect(screen.queryByLabelText("Your unsaved changes")).toBeNull();
-    expect(date().value).toBe("2026-10-01");
+    expect(date().value).toBe("10/01/2026");
     fireEvent.change(wording(), { target: { value: "A second note" } });
     fireEvent.click(screen.getByRole("button", { name: "Save observation" }));
     await waitFor(() => expect(wording().value).toBe(""));
     expect(ctx.rows()).toEqual([ORIGINAL, ["A second note", "2026-10-01", "instructor_transcribed", ""]]);
+  });
+
+  it("DATES-01: saves 11052026 typed in one go as 2026-11-05, and Enter with a day that doesn't exist saves nothing", async () => {
+    const ctx = await setup();
+    renderForm(ctx);
+    await screen.findByText(EMPTY);
+    fireEvent.change(wording(), { target: { value: "Typed date" } });
+    fireEvent.change(date(), { target: { value: "13292026" } });
+    fireEvent.submit(date().form!);
+    expect(screen.getByText("That isn't a date — try 11/05/2026.")).toBeTruthy();
+    await act(async () => undefined);
+    expect(ctx.rows()).toEqual([]);
+    fireEvent.change(date(), { target: { value: "11052026" } });
+    fireEvent.submit(date().form!);
+    await waitFor(() => expect(wording().value).toBe(""));
+    expect(ctx.rows()).toEqual([["Typed date", "2026-11-05", "instructor_transcribed", ""]]);
+    expect(date().value).toBe("11052026");
   });
 
   it("[M3-R8] Replace: a change made while the replacement is saving is kept and offered again", async () => {

@@ -158,14 +158,6 @@ export const DocumentIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const ExternalIcon = (p: IconProps) => (
-  <Icon {...p}>
-    <path d="M13.5 4.5H19.5V10.5" />
-    <path d="M19.5 4.5 11 13" />
-    <path d="M18 14.5v4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6h4" />
-  </Icon>
-);
-
 export const NoteIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M5 4.5h14v10L14 20H5z" />

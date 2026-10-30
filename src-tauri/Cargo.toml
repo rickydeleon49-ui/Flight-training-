@@ -39,12 +39,21 @@ sha2 = "0.10"
 hex = "0.4"
 rusqlite = { version = "0.32", features = ["backup"] }
 unicode-normalization = "=0.1.25"
+# Owner-approved 29 October 2026 (WINSTATE-01): the window reopens where she
+# left it, and a small rotating log file replaces bare stderr prints. Locked
+# at window-state 2.4.1 and log 2.9.2, the newest releases that still build on
+# the locked Tauri 2.11 (2.5.0 / 2.10.x need Tauri 2.12).
+tauri-plugin-window-state = "2"
+tauri-plugin-log = "2"
 
 [dev-dependencies]
 # Tests only: a test-only SQL function holds a running statement for the
 # OFFLINE-02 deadline tests. `functions` adds no crate; release builds keep
 # the feature set above.
 rusqlite = { version = "0.32", features = ["backup", "functions"] }
+# Tests only (TESTTOOLS-01): property tests for the simple-v1 scheduler twin.
+# MIT OR Apache-2.0; never linked into the app.
+proptest = { version = "=1.12.0", default-features = false, features = ["std"] }
 
 [profile.release]
 codegen-units = 1

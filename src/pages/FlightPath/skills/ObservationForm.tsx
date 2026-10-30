@@ -16,7 +16,7 @@
  */
 import { useEffect, useId, useRef, useState } from "react";
 
-import { Button, Field, Select, TextArea, TextInput } from "@/components/ui";
+import { Button, Field, Select, TextArea, TextInput, TypedDateField, type TypedDateFieldHandle } from "@/components/ui";
 import type { SkillAttribution, SkillListEntry, SkillSourceField } from "@/domain/types";
 import { canonicalJson } from "@/logic/cardIdentity";
 import { ATTRIBUTION_CHOICES, SOURCE_FIELD_WORDS } from "@/logic/skillEvidence";
@@ -85,6 +85,7 @@ export function ObservationForm({
     live.current = { ...live.current, ...patch };
     setFields(live.current);
   };
+  const dateField = useRef<TypedDateFieldHandle>(null);
   const epoch = useRef(0);
   const mounted = useRef(false);
   useEffect(() => {
@@ -109,6 +110,8 @@ export function ObservationForm({
   });
 
   function submit(path: "create" | "replace" | "new") {
+    // A date that isn't one is refused in the field, never saved as another day.
+    if (dateField.current?.check() === false || !live.current.observedOn) return;
     if (path === "new") {
       if (!controller.startNewDraft(draftKey)) return;
       epoch.current += 1;
@@ -195,9 +198,7 @@ export function ObservationForm({
       <Field label="Came from">
         <Select value={fields.sourceField} options={sourceOptions} onChange={(value) => change({ sourceField: value })} />
       </Field>
-      <Field label="Date observed">
-        <TextInput type="date" value={fields.observedOn} onChange={(e) => change({ observedOn: e.target.value })} />
-      </Field>
+      <TypedDateField ref={dateField} label="Date observed" required value={fields.observedOn} onChange={(observedOn) => change({ observedOn })} />
       <Button type="submit" variant="primary" disabled={saving || !fields.skillId || fields.wording.trim() === "" || length > 2000}>
         {saving ? "Saving…" : "Save observation"}
       </Button>

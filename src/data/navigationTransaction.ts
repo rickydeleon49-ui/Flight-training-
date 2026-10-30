@@ -469,6 +469,3 @@ export async function executeNavigationOperation(exec: Exec, run: Run, query: Qu
     throw error;
   }
 }
-
-/** Whether an operation only reads (and so needs no durable write in browser mode). */
-export const isReadOnlyNavigationOperation = (op: NavigationOperation): boolean => op.kind === "read";

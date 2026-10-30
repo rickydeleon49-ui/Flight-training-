@@ -34,9 +34,6 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   return Math.round(ms / 86_400_000);
 }
 
-export const isOverdue = (due: IsoDate | null, today: IsoDate): boolean =>
-  due !== null && due < today;
-
 export const startOfMonth = (date: IsoDate): IsoDate => `${date.slice(0, 7)}-01`;
 
 const MONTHS = [
@@ -70,6 +67,29 @@ function isRealCalendarDay(day: string): boolean {
     check.getUTCMonth() === month - 1 &&
     check.getUTCDate() === date
   );
+}
+
+/**
+ * A date she typed, as 'YYYY-MM-DD', or null when it isn't a real day.
+ * Month first, as on US forms: "11/05/2026", "11-5-2026" and "11052026" are
+ * all November 5, 2026; the stored form "2026-11-05" is accepted too.
+ * Nothing is guessed or moved: a day that doesn't exist is refused, so a
+ * typed date is never saved as a different one.
+ */
+export function parseTypedDate(text: string): IsoDate | null {
+  const typed = text.trim();
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(typed);
+  const us = /^(\d{1,2})[/.\- ](\d{1,2})[/.\- ](\d{4})$/.exec(typed) ?? /^(\d{2})(\d{2})(\d{4})$/.exec(typed);
+  const [year, month, day] = iso ? [iso[1]!, iso[2]!, iso[3]!] : us ? [us[3]!, us[1]!, us[2]!] : [];
+  if (!year || !month || !day) return null;
+  const date = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  return isRealCalendarDay(date) ? date : null;
+}
+
+/** A stored day the way she types it: "11/05/2026". */
+export function formatTypedDate(date: IsoDate): string {
+  const match = CALENDAR_DAY.exec(date);
+  return match ? `${match[2]}/${match[3]}/${match[1]}` : "";
 }
 
 /**

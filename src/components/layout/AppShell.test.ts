@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EMPTY_DATA } from "@/state/AppDataContext";
 import { AppShell } from "./AppShell";
+import { expectNoA11yViolations } from "@/testing/a11y";
 
 vi.mock("@/components/gemini/GeminiOrphanNotices", () => ({ GeminiOrphanNotices: () => null }));
 vi.mock("@/state/AppDataContext", async (importOriginal) => ({
@@ -57,6 +58,15 @@ afterEach(() => {
 });
 
 describe("AppShell navigation disclosure", () => {
+  it("has no axe violations, landmarks included, at desktop width and with the narrow menu open", async () => {
+    mount(1200);
+    await expectNoA11yViolations(document.body, { landmarks: true });
+    cleanup();
+    mount(644);
+    fireEvent.click(menu());
+    await expectNoA11yViolations(document.body, { landmarks: true });
+  });
+
   it.each([644, 900, 999])("starts closed at %i with a native, focusable Menu button and hidden navigation", (width) => {
     mount(width);
     expect(menu().tagName).toBe("BUTTON");

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -12,11 +12,14 @@ import {
   Select,
   TextArea,
   TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
 } from "@/components/ui";
 import { todayIso } from "@/lib/dates";
 import { writeDraft } from "@/lib/drafts";
 import { newId } from "@/lib/id";
 import { flightTimeProblem, flightTimesChanged } from "@/logic/flightLog";
+import { loadAirportIndex, nightHint, nightHintText, type AirportIndex } from "@/logic/nightHint";
 import type { DebriefSaveOperation } from "@/data/db";
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
@@ -142,6 +145,24 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
 
   const [mode, setMode] = useState<"quick" | "full">(initialMode);
 
+  // The airport table is loaded only once the full flight log is on screen,
+  // for the quiet sunset / night line under Night flight time.
+  const [airports, setAirports] = useState<AirportIndex | null>(null);
+  useEffect(() => {
+    if (mode !== "full" || airports) return;
+    let active = true;
+    loadAirportIndex()
+      .then((index) => {
+        if (active) setAirports(index);
+      })
+      .catch(() => {
+        // No table, no line: the form works exactly as before.
+      });
+    return () => {
+      active = false;
+    };
+  }, [mode, airports]);
+
   const existing = entryId ? data.journalEntries.find((entry) => entry.id === entryId) : null;
 
   const [addToPlan, setAddToPlan] = useState(false);
@@ -151,6 +172,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
+  const dateField = useRef<TypedDateFieldHandle>(null);
 
   // Safeguards against duplicate submissions and ensures idempotent retries:
   const createdEntryIdRef = useRef<string | null>(existing ? existing.id : null);
@@ -441,6 +463,8 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     // Prevent duplicate submissions from rapid repeated clicks.
     if (isSavingRef.current) return;
 
+    // A typed date that isn't one is refused in the field, never saved as another day.
+    if (dateField.current?.check() === false) return;
     if (!draft.date) {
       setError("Choose the date of this lesson.");
       return;
@@ -662,6 +686,13 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
     }
   };
 
+  const nightHintAirport = draft.departureAirport.trim() || draft.arrivalAirport.trim();
+  const nightLine = useMemo(() => {
+    if (!airports) return null;
+    const hint = nightHint(draft.date, nightHintAirport, airports);
+    return hint ? nightHintText(hint, draft.date) : null;
+  }, [airports, draft.date, nightHintAirport]);
+
   const lessons = data.events.filter((event) => event.eventType === "flight_lesson");
   const isDiscoveryPreset = !entryId && !existing && !recovered && searchParams.get("mode") === "discovery";
 
@@ -772,17 +803,13 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
               </p>
             ) : null}
             <div className="form-grid">
-              <Field label="Date">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    type="date"
-                    disabled={isSaving}
-                    value={draft.date}
-                    onChange={(e) => update("date", e.target.value)}
-                  />
-                )}
-              </Field>
+              <TypedDateField
+                ref={dateField}
+                label="Date"
+                disabled={isSaving}
+                value={draft.date}
+                onChange={(date) => update("date", date)}
+              />
 
               <Field label="Lesson">
                 {({ id }) => (
@@ -806,7 +833,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.title}
-                    placeholder="Crosswind Landings"
+                    placeholder="e.g. Crosswind Landings"
                     onChange={(e) => update("title", e.target.value)}
                   />
                 )}
@@ -911,17 +938,13 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
               </p>
             ) : null}
             <div className="form-grid">
-              <Field label="Date">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    type="date"
-                    disabled={isSaving}
-                    value={draft.date}
-                    onChange={(e) => update("date", e.target.value)}
-                  />
-                )}
-              </Field>
+              <TypedDateField
+                ref={dateField}
+                label="Date"
+                disabled={isSaving}
+                value={draft.date}
+                onChange={(date) => update("date", date)}
+              />
 
               <Field label="Lesson">
                 {({ id }) => (
@@ -945,7 +968,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.title}
-                    placeholder="Crosswind Landings"
+                    placeholder="e.g. Crosswind Landings"
                     onChange={(e) => update("title", e.target.value)}
                   />
                 )}
@@ -957,7 +980,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.aircraftType}
-                    placeholder="Cessna 172S"
+                    placeholder="e.g. Cessna 172S"
                     onChange={(e) => update("aircraftType", e.target.value)}
                   />
                 )}
@@ -969,7 +992,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.aircraftId}
-                    placeholder="N172SP"
+                    placeholder="e.g. N172SP"
                     onChange={(e) => update("aircraftId", e.target.value)}
                   />
                 )}
@@ -981,7 +1004,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.departureAirport}
-                    placeholder="KSQL"
+                    placeholder="e.g. KSQL"
                     onChange={(e) => update("departureAirport", e.target.value)}
                   />
                 )}
@@ -993,7 +1016,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.arrivalAirport}
-                    placeholder="KSQL"
+                    placeholder="e.g. KSQL"
                     onChange={(e) => update("arrivalAirport", e.target.value)}
                   />
                 )}
@@ -1005,7 +1028,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.instructorName}
-                    placeholder="CFI name"
+                    placeholder="e.g. your CFI's name"
                     onChange={(e) => update("instructorName", e.target.value)}
                   />
                 )}
@@ -1111,14 +1134,15 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                 )}
               </Field>
 
-              <Field label="Night flight time">
-                {({ id }) => (
+              <Field label="Night flight time" hint={nightLine ?? undefined}>
+                {({ id, describedBy }) => (
                   <TextInput
                     id={id}
                     type="number"
                     disabled={isSaving}
                     step="0.1"
                     min="0"
+                    aria-describedby={describedBy}
                     value={draft.nightTime ?? ""}
                     placeholder="0.0"
                     onChange={(e) => update("nightTime", optionalNumber(e.target.value))}
@@ -1328,7 +1352,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                         disabled={isSaving}
                         aria-describedby={describedBy}
                         value={draft.nextActionTitle ?? ""}
-                        placeholder="Review flare timing"
+                        placeholder="e.g. Review flare timing"
                         onChange={(e) => handleNextActionTitleChange(e.target.value)}
                       />
                       {((draft.wasDifficult ?? "").trim() || (draft.instructorFeedback ?? "").trim()) &&

@@ -1,4 +1,4 @@
-//! The Gemini key, kept beside her other data.
+//! Provider keys, kept beside her other data.
 //!
 //! It used to live in the operating system's credential manager. On macOS a
 //! keychain item is bound to the code signature of the application that saved
@@ -18,14 +18,24 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::provider::ProviderId;
+
 /// The file holding the key, directly inside the application data folder.
 pub const KEY_FILE: &str = "gemini-key";
 
 /// Where a partly written key waits before it replaces the real one.
+#[cfg(test)]
 const KEY_FILE_WRITING: &str = "gemini-key.writing";
 
-fn key_path(root: &Path) -> PathBuf {
-    root.join(KEY_FILE)
+fn key_file(provider: ProviderId) -> &'static str {
+    match provider {
+        ProviderId::Gemini => KEY_FILE,
+        ProviderId::Claude => "claude-key",
+    }
+}
+
+fn key_path(root: &Path, provider: ProviderId) -> PathBuf {
+    root.join(key_file(provider))
 }
 
 /// Read the stored key.
@@ -34,7 +44,11 @@ fn key_path(root: &Path) -> PathBuf {
 /// error: the old credential manager could not tell those apart, so a refusal
 /// to hand the key over looked exactly like never having saved one.
 pub fn load_key(root: &Path) -> Result<Option<String>, String> {
-    match std::fs::read_to_string(key_path(root)) {
+    load_key_for(root, ProviderId::Gemini)
+}
+
+pub(crate) fn load_key_for(root: &Path, provider: ProviderId) -> Result<Option<String>, String> {
+    match std::fs::read_to_string(key_path(root, provider)) {
         Ok(contents) => {
             let trimmed = contents.trim();
             if trimmed.is_empty() {
@@ -44,12 +58,19 @@ pub fn load_key(root: &Path) -> Result<Option<String>, String> {
             }
         }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(format!("Could not read the saved Gemini key: {e}")),
+        Err(e) => Err(format!(
+            "Could not read the saved {} key: {e}",
+            provider.name()
+        )),
     }
 }
 
 /// Save the key, replacing any previous one.
 pub fn save_key(root: &Path, key: &str) -> Result<(), String> {
+    save_key_for(root, ProviderId::Gemini, key)
+}
+
+pub(crate) fn save_key_for(root: &Path, provider: ProviderId, key: &str) -> Result<(), String> {
     let key = key.trim();
     if key.is_empty() {
         return Err("There is no key to save.".to_string());
@@ -59,23 +80,27 @@ pub fn save_key(root: &Path, key: &str) -> Result<(), String> {
 
     // Write beside the target and rename over it, so an interrupted write
     // cannot leave her with half a key and no way to tell.
-    let writing = root.join(KEY_FILE_WRITING);
+    let writing = root.join(format!("{}.writing", key_file(provider)));
     if let Err(e) = write_private(&writing, key) {
         let _ = std::fs::remove_file(&writing);
-        return Err(format!("Could not save the Gemini key: {e}"));
+        return Err(format!("Could not save the {} key: {e}", provider.name()));
     }
-    std::fs::rename(&writing, key_path(root)).map_err(|e| {
+    std::fs::rename(&writing, key_path(root, provider)).map_err(|e| {
         let _ = std::fs::remove_file(&writing);
-        format!("Could not save the Gemini key: {e}")
+        format!("Could not save the {} key: {e}", provider.name())
     })
 }
 
 /// Remove the stored key. Not having one is not a failure.
 pub fn forget_key(root: &Path) -> Result<(), String> {
-    match std::fs::remove_file(key_path(root)) {
+    forget_key_for(root, ProviderId::Gemini)
+}
+
+pub(crate) fn forget_key_for(root: &Path, provider: ProviderId) -> Result<(), String> {
+    match std::fs::remove_file(key_path(root, provider)) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(format!("Could not remove the Gemini key: {e}")),
+        Err(e) => Err(format!("Could not remove the {} key: {e}", provider.name())),
     }
 }
 
@@ -126,6 +151,76 @@ mod tests {
         ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn provider_keys_are_isolated_through_save_replace_and_forget() {
+        let root = scratch("provider-isolation");
+        save_key(&root, KEY).unwrap();
+        let gemini_bytes = std::fs::read(root.join("gemini-key")).unwrap();
+        save_key_for(&root, ProviderId::Claude, "  synthetic-claude-key\n").unwrap();
+        assert_eq!(
+            std::fs::read(root.join("gemini-key")).unwrap(),
+            gemini_bytes
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("claude-key")).unwrap(),
+            "synthetic-claude-key"
+        );
+        save_key_for(&root, ProviderId::Claude, "replacement-claude-key").unwrap();
+        assert_eq!(load_key(&root).unwrap().as_deref(), Some(KEY));
+        assert_eq!(
+            load_key_for(&root, ProviderId::Claude).unwrap().as_deref(),
+            Some("replacement-claude-key")
+        );
+        forget_key(&root).unwrap();
+        assert_eq!(
+            load_key_for(&root, ProviderId::Claude).unwrap().as_deref(),
+            Some("replacement-claude-key")
+        );
+        save_key(&root, KEY).unwrap();
+        forget_key_for(&root, ProviderId::Claude).unwrap();
+        forget_key_for(&root, ProviderId::Claude).unwrap();
+        assert_eq!(load_key(&root).unwrap().as_deref(), Some(KEY));
+        assert_eq!(load_key_for(&root, ProviderId::Claude).unwrap(), None);
+        assert!(!root.join("claude-key.writing").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn both_provider_files_are_private_even_after_stale_temporary_files() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = scratch("provider-private");
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            let writing = root.join(format!("{}.writing", key_file(id)));
+            std::fs::write(&writing, "stale").unwrap();
+            std::fs::set_permissions(&writing, std::fs::Permissions::from_mode(0o644)).unwrap();
+            save_key_for(&root, id, "synthetic-key").unwrap();
+            assert_eq!(
+                std::fs::metadata(key_path(&root, id))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o600
+            );
+            assert!(!writing.exists());
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn claude_empty_and_unreadable_keys_follow_existing_rules() {
+        let root = scratch("claude-key-errors");
+        assert_eq!(load_key_for(&root, ProviderId::Claude).unwrap(), None);
+        assert!(save_key_for(&root, ProviderId::Claude, "  ").is_err());
+        std::fs::write(root.join("claude-key"), " \n").unwrap();
+        assert_eq!(load_key_for(&root, ProviderId::Claude).unwrap(), None);
+        std::fs::remove_file(root.join("claude-key")).unwrap();
+        std::fs::create_dir(root.join("claude-key")).unwrap();
+        assert!(load_key_for(&root, ProviderId::Claude).is_err());
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

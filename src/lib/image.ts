@@ -34,19 +34,29 @@ export function fitWithin(
   };
 }
 
-/** Load a File into an HTMLImageElement, revoking the object URL afterwards. */
-function loadImage(file: File): Promise<HTMLImageElement> {
+/** Read a File as a data URL. */
+function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new PhotoError("That file could not be read as an image."));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Load a File into an HTMLImageElement.
+ *
+ * Goes through a data URL rather than a blob: object URL because the app's
+ * CSP allows `img-src 'self' data:` only; a blob: URL is refused in the
+ * installed app and the photo never loads.
+ */
+export async function loadImage(file: File): Promise<HTMLImageElement> {
+  const url = await readAsDataUrl(file);
+  return new Promise((resolve, reject) => {
     const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new PhotoError("That file could not be read as an image."));
-    };
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new PhotoError("That file could not be read as an image."));
     image.src = url;
   });
 }

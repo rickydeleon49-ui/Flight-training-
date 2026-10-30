@@ -11,6 +11,7 @@ import * as gemini from "@/services/gemini";
 import * as pdf from "@/services/pdf";
 import * as offline from "@/services/offlineContent";
 import { MaterialDetail } from "./MaterialDetail";
+import { expectNoA11yViolations } from "@/testing/a11y";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -53,6 +54,7 @@ it("defaults to Study with three wired tabs and mounted hidden panels", async ()
   }
   expect(screen.queryByRole("textbox", { name: "Personal notes" })).toBeNull();
   expect(document.querySelector('textarea[aria-label="Personal notes"]')).toBeTruthy();
+  await expectNoA11yViolations(document.body);
 });
 it("replaces URL state, preserves parameters and omits Study", async () => {
   await open("?tab=notes&keep=yes");

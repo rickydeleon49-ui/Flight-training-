@@ -1,6 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Button, Dialog, Field, Select, TextArea, TextInput } from "@/components/ui";
+import {
+  Button,
+  Dialog,
+  Field,
+  Select,
+  TextArea,
+  TextInput,
+  TypedDateField,
+  type TypedDateFieldHandle,
+} from "@/components/ui";
 import {
   EXPENSE_CATEGORY_OPTIONS,
   type ExpenseCategory,
@@ -46,6 +55,7 @@ export function TransactionFormDialog({
   const [notes, setNotes] = useState("");
   const [eventId, setEventId] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const dateField = useRef<TypedDateFieldHandle>(null);
 
   const effectiveType = transaction?.type ?? type;
   const isExpense = effectiveType === "expense";
@@ -75,10 +85,11 @@ export function TransactionFormDialog({
     const cents = parseMoney(amount);
     if (cents === null) found.amount = "Enter an amount like 275 or 275.50.";
     else if (cents <= 0) found.amount = "Enter an amount greater than zero.";
-    if (!date) found.date = "Choose a date.";
+    // The date field shows its own problem (not a date, or empty).
+    const dateOk = dateField.current?.check() ?? Boolean(date);
 
     setErrors(found);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0 || !dateOk || !date) return;
 
     onSave({
       type: effectiveType,
@@ -126,18 +137,7 @@ export function TransactionFormDialog({
           )}
         </Field>
 
-        <Field label="Date" error={errors.date}>
-          {({ id, describedBy, invalid }) => (
-            <TextInput
-              id={id}
-              type="date"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          )}
-        </Field>
+        <TypedDateField ref={dateField} label="Date" required value={date} onChange={setDate} />
 
         {isExpense ? (
           <Field label="Category">

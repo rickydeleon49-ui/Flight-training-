@@ -9,7 +9,6 @@ use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use keyring::Entry;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -17,6 +16,9 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter};
 
 use crate::documents;
+use crate::provider::{AnyProvider, Tier};
+#[path = "provider/gemini.rs"]
+pub(crate) mod provider_impl;
 use crate::gemini_budget::{self, Budget, Stage, MAX_GENERATION_ATTEMPTS};
 use crate::gemini_cancel;
 use crate::gemini_files::{self, PreparedSources, Source, GOOGLE_BASE};
@@ -25,6 +27,7 @@ use crate::lineage::calculate_sha256;
 use crate::pdf;
 use crate::secrets;
 use crate::storage::app_root;
+use provider_impl::{describe_refusal, has_invalid_key_reason, is_lasting_quota};
 
 /// Where the key used to be kept. Retained only long enough to move an
 /// existing key across; once no one is upgrading from 0.3.0 or earlier this
@@ -71,6 +74,15 @@ pub(crate) enum ModelChoice {
     MostCapable,
 }
 
+impl From<ModelChoice> for Tier {
+    fn from(choice: ModelChoice) -> Self {
+        match choice {
+            ModelChoice::Standard => Tier::Standard,
+            ModelChoice::MostCapable => Tier::MostCapable,
+        }
+    }
+}
+
 impl ModelChoice {
     fn as_str(self) -> &'static str {
         match self {
@@ -89,18 +101,12 @@ impl ModelChoice {
 
     /// The model asked first.
     fn primary(self) -> &'static str {
-        match self {
-            ModelChoice::Standard => MODEL,
-            ModelChoice::MostCapable => CAPABLE_MODEL,
-        }
+        AnyProvider::default().models(self.into()).0
     }
 
     /// The model asked once when the primary stays busy or is unavailable.
     fn fallback(self) -> &'static str {
-        match self {
-            ModelChoice::Standard => FALLBACK_MODEL,
-            ModelChoice::MostCapable => MODEL,
-        }
+        AnyProvider::default().models(self.into()).1
     }
 
     /// What she is told when the request moves to the fallback.
@@ -449,7 +455,7 @@ fn reporter_for(app: &AppHandle, material_id: &str, kind: JobKind) -> Arc<Report
 }
 
 /// What one generation request came to.
-enum Attempt {
+pub(crate) enum Attempt {
     /// The response body, ready to be parsed.
     Answered(String),
     /// Google replied, but not with a result.
@@ -464,7 +470,7 @@ enum Attempt {
 
 /// How a request ended without Google's reply in hand.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Lost {
+pub(crate) enum Lost {
     /// No connection was made: nothing reached Google, so trying again is safe.
     Unreachable,
     /// Google had the request, but no reply arrived in the time left.
@@ -579,46 +585,6 @@ pub(crate) fn stored_key(app: &AppHandle) -> Result<String, String> {
         .ok_or_else(|| "Gemini is not connected. Connect it in Settings first.".to_string())
 }
 
-async fn verify_key(api_key: &str) -> Result<(), String> {
-    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{MODEL}");
-    let http = client(VERIFY_TIMEOUT)?;
-
-    // A busy model must not read as a bad key. Connecting is the one moment
-    // she has no way to tell those apart, so an overload is waited out here
-    // rather than reported as something wrong with what she pasted.
-    let mut response = http
-        .get(&url)
-        .header("x-goog-api-key", api_key)
-        .send()
-        .await
-        .map_err(|e| describe_transport_error(&e))?;
-    for attempt in 0..MAX_ATTEMPTS {
-        if !is_retryable(response.status().as_u16()) || attempt + 1 == MAX_ATTEMPTS {
-            break;
-        }
-        tokio::time::sleep(backoff_delay(attempt, jitter_millis())).await;
-        response = http
-            .get(&url)
-            .header("x-goog-api-key", api_key)
-            .send()
-            .await
-            .map_err(|e| describe_transport_error(&e))?;
-    }
-
-    if response.status().is_success() {
-        return Ok(());
-    }
-
-    let status = response.status();
-    let detail = response.text().await.unwrap_or_default();
-    Err(describe_refusal(
-        RefusalContext::Verification,
-        status.as_u16(),
-        &detail,
-        MODEL,
-    ))
-}
-
 #[tauri::command]
 pub fn gemini_status(app: AppHandle) -> GeminiStatus {
     let root = app_root(&app).ok();
@@ -650,7 +616,7 @@ pub async fn configure_gemini(app: AppHandle, api_key: String) -> Result<GeminiS
     if trimmed.len() < 20 {
         return Err("Paste the complete Gemini API key from Google AI Studio.".to_string());
     }
-    verify_key(trimmed).await?;
+    AnyProvider::default().verify_key(trimmed).await?;
     let root = app_root(&app)?;
     let previous = current_key(&root).ok().flatten();
     secrets::save_key(&root, trimmed)?;
@@ -684,7 +650,9 @@ async fn end_prepared_context(previous_key: Option<String>) {
     };
     if let Ok(http) = client(VERIFY_TIMEOUT) {
         tauri::async_runtime::spawn(async move {
-            prepared_sources().retire(&http, &key, retired).await;
+            AnyProvider::default()
+                .retire(prepared_sources(), &http, &key, retired)
+                .await;
         });
     }
 }
@@ -818,6 +786,17 @@ pub(crate) struct GenContext<'a> {
 }
 
 impl GenContext<'_> {
+    /// Provider is an operation parameter so existing contexts and fixtures keep
+    /// their construction contract during this zero-behaviour-change slice.
+    async fn generate_json(
+        &self,
+        provider: AnyProvider,
+        model: &str,
+        body: &Value,
+    ) -> Result<Attempt, Failure> {
+        provider.generate_json(self, model, body).await
+    }
+
     /// False once the prepared-source context this generation began in has
     /// ended (disconnect or a new key).
     fn current(&self) -> bool {
@@ -835,12 +814,7 @@ impl GenContext<'_> {
 /// How the selected source appears in a request. A PDF is referred to by its
 /// prepared copy; it is never also embedded.
 fn source_part(source: &LoadedSource, prepared: Option<&gemini_files::Prepared>) -> Value {
-    match prepared {
-        Some(p) => json!({"file_data": {"mime_type": p.mime, "file_uri": p.uri}}),
-        None => {
-            json!({"inline_data": {"mime_type": source.mime, "data": BASE64.encode(&source.bytes)}})
-        }
-    }
+    AnyProvider::default().source_part(source, prepared)
 }
 
 /// Run one generation over the selected source. A PDF is prepared once and
@@ -899,38 +873,27 @@ async fn run_generation_inner(
     build: &(dyn Fn(Value) -> Value + Sync),
 ) -> Result<(String, &'static str), String> {
     if source.mime != "application/pdf" {
-        let body = build(source_part(source, None));
+        let body = build(AnyProvider::default().source_part(source, None));
         return generate_with_retries_at(ctx, &body)
             .await
             .map_err(|f| f.message);
     }
     let view = source.as_source();
-    let lease = ctx
-        .cache
-        .prepare(
-            ctx.http,
-            ctx.base,
-            ctx.api_key,
-            &view,
-            ctx.epoch,
-            None,
-            ctx.budget,
-            ctx.say,
-        )
-        .await?;
+    let lease = AnyProvider::default().prepare_pdf(ctx, &view, None).await?;
     let outcome = generate_on(ctx, source, &lease, build).await;
     let outcome = match outcome {
         Err(failure) if matches!(failure.status, Some(400 | 403 | 404)) => {
             let prepared = lease.prepared().clone();
-            match gemini_files::lookup(
-                ctx.http,
-                ctx.base,
-                ctx.api_key,
-                &prepared.name,
-                &prepared.mime,
-                ctx.budget,
-            )
-            .await
+            match AnyProvider::default()
+                .lookup(
+                    ctx.http,
+                    ctx.base,
+                    ctx.api_key,
+                    &prepared.name,
+                    &prepared.mime,
+                    ctx.budget,
+                )
+                .await
             {
                 Ok(file) if file.state == gemini_files::FileState::Active => Err(failure.message),
                 Err(
@@ -942,18 +905,8 @@ async fn run_generation_inner(
                         .finish_admitted(lease, ctx.http, ctx.api_key, ctx.budget)
                         .await;
                     (ctx.say)("The prepared copy of this PDF was no longer available at Google, so it is being prepared once more.".to_string());
-                    let again = ctx
-                        .cache
-                        .prepare(
-                            ctx.http,
-                            ctx.base,
-                            ctx.api_key,
-                            &view,
-                            ctx.epoch,
-                            Some(&prepared.name),
-                            ctx.budget,
-                            ctx.say,
-                        )
+                    let again = AnyProvider::default()
+                        .prepare_pdf(ctx, &view, Some(&prepared.name))
                         .await?;
                     let outcome = generate_on(ctx, source, &again, build)
                         .await
@@ -994,7 +947,7 @@ async fn generate_on(
     if !lease.is_current() {
         return Err(GenContext::stale());
     }
-    let body = build(source_part(source, Some(lease.prepared())));
+    let body = build(AnyProvider::default().source_part(source, Some(lease.prepared())));
     generate_with_retries_at(ctx, &body).await
 }
 
@@ -1539,38 +1492,7 @@ async fn study_aid_request(
             ]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "responseSchema": {
-                    "type": "OBJECT",
-                    "required": ["title", "summary", "sections", "flashcards", "sourceNotes"],
-                    "properties": {
-                        "title": {"type": "STRING"},
-                        "summary": {"type": "STRING"},
-                        "sections": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "required": ["heading", "body"],
-                                "properties": {
-                                    "heading": {"type": "STRING"},
-                                    "body": {"type": "STRING"}
-                                }
-                            }
-                        },
-                        "flashcards": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "required": ["front", "back", "sourcePage"],
-                                "properties": {
-                                    "front": {"type": "STRING"},
-                                    "back": {"type": "STRING"},
-                                    "sourcePage": {"type": "INTEGER", "nullable": true}
-                                }
-                            }
-                        },
-                        "sourceNotes": {"type": "STRING"}
-                    }
-                },
+                "responseSchema": crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::study_aid()),
                 "maxOutputTokens": output_tokens
             }
         });
@@ -1779,30 +1701,7 @@ async fn practice_test_with(
             ]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "responseSchema": {
-                    "type": "OBJECT",
-                    "required": ["title", "questions"],
-                    "properties": {
-                        "title": {"type": "STRING"},
-                        "questions": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "required": ["question", "options", "correctIndex", "explanation", "sourcePage"],
-                                "properties": {
-                                    "question": {"type": "STRING"},
-                                    "options": {
-                                        "type": "ARRAY",
-                                        "items": {"type": "STRING"}
-                                    },
-                                    "correctIndex": {"type": "INTEGER"},
-                                    "explanation": {"type": "STRING"},
-                                    "sourcePage": {"type": "INTEGER", "nullable": true}
-                                }
-                            }
-                        }
-                    }
-                },
+                "responseSchema": crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::practice_test()),
                 "maxOutputTokens": 8192
             }
         })
@@ -1827,94 +1726,7 @@ async fn generate_once(
     model: &str,
     body: &Value,
 ) -> Result<Attempt, Failure> {
-    // Every request has only what remains of the generation's one budget.
-    ctx.budget.reset_stage(Stage::Generating);
-    let Some(timeout) = ctx.budget.upload_timeout() else {
-        return Err(gemini_files::out_of_time(ctx.budget, "asking Gemini").into());
-    };
-    if !ctx.budget.checkpoint() {
-        return Err(gemini_budget::CHECKPOINT_FAILED.to_string().into());
-    }
-    // Immediately before the request: a cancel recorded by now prevents it,
-    // however far one poll of the work has run (GENREL04-R5).
-    if !ctx.budget.admit() {
-        return Err(gemini_cancel::CANCELLED.to_string().into());
-    }
-    let url = format!("{}/v1beta/models/{model}:generateContent", ctx.base);
-    let sent = ctx
-        .budget
-        .guard_stage(
-            ctx.http
-                .post(url)
-                .header("x-goog-api-key", ctx.api_key)
-                .json(body)
-                .timeout(timeout)
-                .send(),
-        )
-        .await;
-    let mut response = match sent {
-        Err(()) if ctx.budget.cancelled() => {
-            return Err(gemini_cancel::CANCELLED.to_string().into())
-        }
-        Err(()) => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
-        Ok(sent) => match sent {
-            Ok(response) => response,
-            // Checked first: a connect timeout is also a timeout, but nothing
-            // reached Google, so it is safe to try again.
-            Err(error) if error.is_connect() => return Ok(Attempt::Lost(Lost::Unreachable)),
-            Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::NoAnswerInTime)),
-            Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
-        },
-    };
-
-    let status = response.status().as_u16();
-    ctx.budget.saw_status(status);
-    let retry_after = gemini_budget::retry_after(
-        response
-            .headers()
-            .get("retry-after")
-            .and_then(|v| v.to_str().ok()),
-    );
-    ctx.budget.reset_stage(Stage::Reading);
-    if !ctx.budget.checkpoint() {
-        return Err(gemini_budget::CHECKPOINT_FAILED.to_string().into());
-    }
-    const MAX_ANSWER_BYTES: usize = 1024 * 1024;
-    let mut bytes = Vec::new();
-    loop {
-        match ctx.budget.guard_stage(response.chunk()).await {
-            Err(()) if ctx.budget.cancelled() => {
-                return Err(gemini_cancel::CANCELLED.to_string().into())
-            }
-            Err(()) => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
-            Ok(chunk) => match chunk {
-                Ok(Some(chunk)) => {
-                    if bytes.len().saturating_add(chunk.len()) > MAX_ANSWER_BYTES {
-                        return Err("Gemini's answer exceeded the 1 MiB response limit. The earlier draft is kept.".to_string().into());
-                    }
-                    if !chunk.is_empty() {
-                        ctx.budget.reset_stage(Stage::Reading);
-                    }
-                    bytes.extend_from_slice(&chunk);
-                }
-                Ok(None) => break,
-                Err(error) if error.is_timeout() => return Ok(Attempt::Lost(Lost::AnswerCutShort)),
-                Err(_) => return Ok(Attempt::Lost(Lost::Dropped)),
-            },
-        }
-    }
-    let raw = String::from_utf8(bytes)
-        .map_err(|_| Failure::from("Gemini's answer was not readable text.".to_string()))?;
-
-    if (200..300).contains(&status) {
-        Ok(Attempt::Answered(raw))
-    } else {
-        Ok(Attempt::Refused {
-            status,
-            body: raw,
-            retry_after,
-        })
-    }
+    ctx.generate_json(AnyProvider::default(), model, body).await
 }
 
 /// Why generation ended without an answer: the message, and the status of a
@@ -2007,7 +1819,10 @@ pub(crate) async fn generate_with_retries_at(
                 if !on_fallback
                     && choice == ModelChoice::MostCapable
                     && status == 403
-                    && !has_invalid_key_reason(&body)
+                    && !matches!(
+                        AnyProvider::default().describe_refusal(status, &body, None),
+                        crate::provider::RefusalKind::InvalidKey
+                    )
                 {
                     model = choice.fallback();
                     on_fallback = true;
@@ -2156,39 +1971,6 @@ fn lost_message(lost: Lost, budget: &Budget) -> String {
     }
 }
 
-/// Whether a 429 is a lasting quota rather than a moment's rate limit: a daily
-/// allowance used up, or none at all on this plan. Read from Google's error
-/// details only; the message text is never shown.
-fn is_lasting_quota(raw: &str) -> bool {
-    let Ok(value) = serde_json::from_str::<Value>(raw) else {
-        return false;
-    };
-    let violations = value
-        .pointer("/error/details")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(|detail| detail.get("violations").and_then(Value::as_array))
-        .flatten();
-    let mut lasting = false;
-    for violation in violations {
-        let id = violation
-            .get("quotaId")
-            .and_then(Value::as_str)
-            .unwrap_or("");
-        if id.contains("PerDay") {
-            lasting = true;
-        }
-        if violation
-            .get("quotaValue")
-            .is_some_and(|v| v.as_str() == Some("0") || v.as_u64() == Some(0))
-        {
-            lasting = true;
-        }
-    }
-    lasting
-}
-
 /// Said after generation's retries and backup model ended on a rate limit.
 fn rate_limit_message() -> String {
     "Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string()
@@ -2211,81 +1993,10 @@ fn busy_now_message(context: RefusalContext) -> String {
     }
 }
 
-fn has_invalid_key_reason(raw: &str) -> bool {
-    let Ok(val) = serde_json::from_str::<Value>(raw) else {
-        return false;
-    };
-    if let Some(details) = val.pointer("/error/details").and_then(Value::as_array) {
-        for item in details {
-            if let Some(reason) = item.get("reason").and_then(Value::as_str) {
-                if reason.eq_ignore_ascii_case("API_KEY_INVALID") {
-                    return true;
-                }
-            }
-        }
-    }
-    if let Some(reason) = val.pointer("/error/reason").and_then(Value::as_str) {
-        if reason.eq_ignore_ascii_case("API_KEY_INVALID") {
-            return true;
-        }
-    }
-    if let Some(msg) = val.pointer("/error/message").and_then(Value::as_str) {
-        if msg.contains("API_KEY_INVALID") || msg.contains("API key not valid") {
-            return true;
-        }
-    }
-    false
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RefusalContext {
     Verification,
     Generation,
-}
-
-/// Turn a refusal Google will not reconsider into something worth reading.
-///
-/// It sees one response, not the retries around it, so its rate-limit and busy
-/// wording claims no attempts or backup model. Generation's own exhausted
-/// outcomes use `busy_message` and `rate_limit_message`, which do.
-fn describe_refusal(context: RefusalContext, status: u16, body: &str, model: &str) -> String {
-    if has_invalid_key_reason(body) {
-        return "Google did not accept that key. Check it in Google AI Studio and try again."
-            .to_string();
-    }
-    match status {
-        400 => match context {
-            RefusalContext::Verification => {
-                "Google rejected the connection check as invalid. Check your request or try again.".to_string()
-            }
-            RefusalContext::Generation => {
-                "Google rejected the request as invalid. Check the document format or try a different file.".to_string()
-            }
-        },
-        401 => {
-            "Google did not accept the authentication credentials. Check your API key in Google AI Studio and try again.".to_string()
-        }
-        403 if model == CAPABLE_MODEL => {
-            "Google did not allow this key to use Gemini 3.8 Flash. Check this key's model access in Google AI Studio, or choose the standard model in Settings.".to_string()
-        }
-        403 => {
-            "Google denied project or API access. Check API key restrictions, API enablement, permissions, or project/billing configuration in Google AI Studio or Google Cloud Console.".to_string()
-        }
-        // Google retires a model on a published date. When that day comes this
-        // build asks for something that no longer exists, and the honest answer
-        // is that the application needs updating, not that her key is wrong.
-        402 => "Google requires payment or additional credits for this request. Automatic retries have stopped; check billing in Google AI Studio.".to_string(),
-        404 => format!(
-            "Google could not find the {model} model or does not support this request for it. Check for an app update and the model's availability for this project in Google AI Studio. A 404 alone does not establish model retirement."
-        ),
-        429 => rate_limited_now_message(context),
-        500..=504 => busy_now_message(context),
-        // Fixed wording: Google's own message text is never repeated, since it
-        // can echo an uploaded file's name or address, or other request values.
-        _ => format!(
-            "Google refused the request ({status}). Nothing was saved; try again in a few minutes, or try a different file."
-        ),
-    }
 }
 
 #[cfg(test)]
