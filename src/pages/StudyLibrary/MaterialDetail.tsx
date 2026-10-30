@@ -560,7 +560,7 @@ function MaterialDetailPage() {
   const chooseChapterFirst = (closeConfirmation: () => void) =>
     canSplit
       ? {
-          secondaryLabel: "Choose a chapter or pages first",
+          secondaryLabel: "Choose fewer pages to send",
           onSecondary: () => {
             closeConfirmation();
             setSplittingManually(true);
