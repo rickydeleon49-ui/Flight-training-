@@ -281,7 +281,7 @@ export function FlightJournal() {
                     Planning comparison only. Logged categories can overlap, and the rules
                     include specific training, cross-country, night, instrument, takeoff,
                     landing, endorsement, and proficiency requirements. Confirm qualifying
-                    time with her instructor and authoritative logbook.
+                    time with your instructor and authoritative logbook.
                     {timeChecks.length > 0
                       ? " These totals include the flights above whose times don't add up yet."
                       : ""}

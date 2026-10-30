@@ -940,7 +940,7 @@ export function Settings() {
               <p className="small muted">
                 Includes a complete career roadmap from training foundations through ATP and
                 airline applications, along with lesson checklists, debrief prompts, record
-                organizers, and official FAA starting points. It never replaces her instructor,
+                organizers, and official FAA starting points. It never replaces your instructor,
                 logbook, aircraft documents, or current regulations.
               </p>
               <div className="row row--wrap">
@@ -1267,7 +1267,7 @@ export function Settings() {
               ) : geminiAvailable() ? (
                 <div className="stack stack--3">
                   <div className="setup-steps small">
-                    <p><strong>1.</strong> Open Google AI Studio and sign in with her Google account.</p>
+                    <p><strong>1.</strong> Open Google AI Studio and sign in with your Google account.</p>
                     <p><strong>2.</strong> Choose <em>Create API key</em>, then copy the key.</p>
                     <p><strong>3.</strong> Paste it below. The complete key is never shown again.</p>
                   </div>
@@ -1340,7 +1340,7 @@ export function Settings() {
                 Google states that free-tier content may be used to improve its products. Do
                 not analyze medical records, certificates, addresses, or documents containing
                 sensitive personal information. AI study material must be checked against the
-                current source, FAA publications, aircraft documents, and her instructor.
+                current source, FAA publications, aircraft documents, and your instructor.
               </p>
 
               {gemini?.configured ? (

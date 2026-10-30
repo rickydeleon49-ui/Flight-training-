@@ -773,7 +773,7 @@ fn assembly(d: &Draft) -> Result<GeneratedStudyAid, SectionError> {
     Ok(GeneratedStudyAid {
         title: "Section study guide".into(),
         summary: format!(
-            "{} study aid. Check against current FAA material and her instructor.",
+            "{} study aid. Check against current FAA material and your instructor.",
             if produced_by(d).starts_with("claude-") {
                 "Claude"
             } else {

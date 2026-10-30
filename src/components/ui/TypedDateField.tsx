@@ -79,6 +79,9 @@ export function TypedDateField({
   const emitted = useRef(value);
   const box = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  // A click into the box selects what is there, so typing replaces the date
+  // (student run polish-064: the caret landed mid-date and garbled it).
+  const clickedIn = useRef(false);
 
   // A day set from outside (a reset, a quick choice) replaces the text.
   useEffect(() => {
@@ -141,6 +144,17 @@ export function TypedDateField({
           const date = nextProblem ? "" : (parseTypedDate(next) ?? "");
           emitted.current = date;
           onChange(date);
+        }}
+        onMouseDown={() => {
+          clickedIn.current = document.activeElement !== input.current;
+        }}
+        onFocus={(event) => {
+          if (event.currentTarget.value) event.currentTarget.select();
+        }}
+        onMouseUp={(event) => {
+          // The mouse-up would otherwise drop the selection on a caret.
+          if (clickedIn.current && event.currentTarget.value) event.preventDefault();
+          clickedIn.current = false;
         }}
         onBlur={() => setRevealed(true)}
       />

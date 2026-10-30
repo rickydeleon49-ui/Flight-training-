@@ -2075,7 +2075,7 @@ function MaterialDetailPage() {
             {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
-        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them. Try again resumes any kept draft with the same target.</p></> : <p className="tiny dim">Your guide is built section by section. Finished sections are kept if you stop, and the completed guide waits for you to save it.</p>}
+        <p className="tiny dim">Short sources may give you fewer cards.</p></> : <p className="tiny dim">Finished sections are kept if you stop.</p>}
       </ConfirmDialog>
 
       <ConfirmDialog
@@ -2098,7 +2098,7 @@ function MaterialDetailPage() {
             {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
-        <p className="tiny dim">A maximum, not a promise. Short sources may support fewer distinct cards. Completed sets wait for you to save them.{isPdf ? " For PDFs it is one request per 10 cards." : " Try again resumes any kept draft with the same target."}</p>
+        <p className="tiny dim">Short sources may give you fewer cards.</p>
       </ConfirmDialog>
 
       <ConfirmDialog
