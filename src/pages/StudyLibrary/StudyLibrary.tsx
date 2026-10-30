@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
+import { useTabListState, type TabListState } from "@react-stately/tabs";
+// The pinned tabs package delegates collections to this transitive package.
+import { Item } from "react-stately/Item";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -52,12 +56,31 @@ import { useOfflineBadges, type OfflineBadge } from "./useOfflineBadges";
 import "./studyLibrary.css";
 
 export type LibraryTab = "library" | "due" | "history" | "howto";
-const TABS: Array<{ value: LibraryTab; label: string }> = [
+type LibraryTabChoice = { value: LibraryTab; label: string };
+const TABS: LibraryTabChoice[] = [
   { value: "library", label: "Library" },
   { value: "due", label: "Review due" },
   { value: "history", label: "History" },
   { value: "howto", label: "How to" },
 ];
+
+/** Keep our DOM and stable deep-link ids while the hook owns keyboard/focus behavior. */
+function LibraryTabButton({ choice, state }: { choice: LibraryTabChoice; state: TabListState<LibraryTabChoice> }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const { tabProps, isSelected } = useTab({ key: choice.value }, state, ref);
+  return (
+    <button
+      {...tabProps}
+      ref={ref}
+      type="button"
+      id={`library-tab-${choice.value}`}
+      aria-controls={`library-panel-${choice.value}`}
+      className={`library-tab${isSelected ? " is-active" : ""}`}
+    >
+      {choice.label}
+    </button>
+  );
+}
 
 /** The tab named in the address (`?tab=due`, `?tab=history`, `?tab=howto`); anything else is the Library. */
 export function libraryTabFrom(params: URLSearchParams): LibraryTab {
@@ -88,6 +111,23 @@ export function StudyLibrary() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = libraryTabFrom(params);
+  const tabState = useTabListState<LibraryTabChoice>({
+    selectedKey: tab,
+    onSelectionChange: (key) => {
+      if (key === tab) return;
+      const next = new URLSearchParams(params);
+      if (key === "library") next.delete("tab");
+      else next.set("tab", String(key));
+      setParams(next);
+    },
+    disabledKeys: [],
+    items: TABS,
+    children: (choice) => <Item key={choice.value} textValue={choice.label}>{choice.label}</Item>,
+  });
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const { tabListProps } = useTabList({ "aria-label": "Study Library views", keyboardActivation: "automatic" }, tabState, tabListRef);
+  const tabPanelRef = useRef<HTMLDivElement>(null);
+  const { tabPanelProps } = useTabPanel({}, tabState, tabPanelRef);
   const cardLibrary = repositories?.cardLibrary;
   const [binderStatus, setBinderStatus] = useState<BinderStatus | null>(null);
   const materialsWithCards = useMemo(
@@ -271,47 +311,28 @@ export function StudyLibrary() {
         }
       />
 
-      <div className="library-tabs" role="tablist" aria-label="Study Library views">
-        {TABS.map((choice) => (
-          <button
-            type="button"
-            role="tab"
-            key={choice.value}
-            id={`library-tab-${choice.value}`}
-            aria-selected={tab === choice.value}
-            aria-controls={`library-panel-${choice.value}`}
-            className={`library-tab${tab === choice.value ? " is-active" : ""}`}
-            onClick={() => {
-              if (choice.value === tab) return;
-              const next = new URLSearchParams(params);
-              if (choice.value === "library") next.delete("tab");
-              else next.set("tab", choice.value);
-              setParams(next);
-            }}
-          >
-            {choice.label}
-          </button>
-        ))}
+      <div {...tabListProps} ref={tabListRef} className="library-tabs">
+        {TABS.map((choice) => <LibraryTabButton key={choice.value} choice={choice} state={tabState} />)}
       </div>
 
       {tab === "due" && cardLibrary ? (
-        <div role="tabpanel" id="library-panel-due" aria-labelledby="library-tab-due">
+        <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-due" aria-labelledby="library-tab-due">
           <StudyLibraryReviewDue repository={cardLibrary} dataRevision={dataRevision} />
         </div>
       ) : null}
       {tab === "history" && cardLibrary ? (
-        <div role="tabpanel" id="library-panel-history" aria-labelledby="library-tab-history">
+        <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-history" aria-labelledby="library-tab-history">
           <StudyLibraryHistory repository={cardLibrary} materials={data.materials} dataRevision={dataRevision} />
         </div>
       ) : null}
       {tab === "howto" ? (
-        <div role="tabpanel" id="library-panel-howto" aria-labelledby="library-tab-howto">
+        <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-howto" aria-labelledby="library-tab-howto">
           <StudyHowTo />
         </div>
       ) : null}
 
       {tab === "library" ? (
-      <div role="tabpanel" id="library-panel-library" aria-labelledby="library-tab-library">
+      <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-library" aria-labelledby="library-tab-library">
       {hasAny && cardLibrary ? (
         <BinderReviewStatus repository={cardLibrary} dataRevision={dataRevision} onStatus={setBinderStatus} />
       ) : null}
