@@ -123,7 +123,7 @@ function PlatformGuidance({
   if (isMacOS()) {
     return (
       <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
-        <strong>On macOS:</strong> {mac}
+        {mac}
       </p>
     );
   }
@@ -148,7 +148,7 @@ function MacNote({ children }: { children: ReactNode }) {
   if (!isMacOS()) return null;
   return (
     <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
-      <strong>On macOS:</strong> {children}
+      {children}
     </p>
   );
 }
@@ -605,7 +605,7 @@ export function Settings() {
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>
-            <MacNote>Use Save profile before closing the window with the red button.</MacNote>
+            <MacNote>Press Save profile before closing the window.</MacNote>
             <div className="form-grid">
               <Field label="What should we call you?">
                 {({ id }) => (
@@ -662,9 +662,6 @@ export function Settings() {
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
-            <MacNote>
-              Dates use the Mac&rsquo;s region and calendar settings; these fields remain optional.
-            </MacNote>
             <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
               None of this is required. Before you have settled on a school you can
               leave it empty, or fill in only the parts that are true today.
@@ -826,7 +823,7 @@ export function Settings() {
 
               <div className="row">
                 <Button variant="primary" onClick={saveProfile}>
-                  Save
+                  Save profile
                 </Button>
                 {saved ? (
                   <span className="small" style={{ color: "var(--status-complete)" }}>
@@ -841,7 +838,6 @@ export function Settings() {
         <Card>
           <CardHeader title="Look and feel" eyebrow="Accent colour" />
           <CardBody>
-            <MacNote>The accent follows Her Flight Deck on this Mac and changes immediately.</MacNote>
             <div className="stack stack--4">
               <p className="small muted">
                 Changes the accent used across the application. Takes effect straight away.
@@ -1210,7 +1206,6 @@ export function Settings() {
               mac={
                 <>
                   Her Flight Deck supports macOS 12 or newer. Use only an official candidate installer.
-                  If macOS displays a security warning, record the exact message for investigation.
                   Do not attempt to disable Gatekeeper or bypass platform security protections.
                 </>
               }
@@ -1348,11 +1343,13 @@ export function Settings() {
                 current source, FAA publications, aircraft documents, and her instructor.
               </p>
 
-              <p className="tiny dim">
-                <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
-                message means Google is overloaded, not that your key is wrong. Her Flight Deck
-                already waits and retries; if it keeps happening, try again later or switch to Standard.
-              </p>
+              {gemini?.configured ? (
+                <p className="tiny dim">
+                  <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
+                  message means Google is overloaded, not that your key is wrong. Her Flight Deck
+                  already waits and retries; if it keeps happening, try again later or switch to Standard.
+                </p>
+              ) : null}
 
               {gemini?.configured ? (
                 <div>

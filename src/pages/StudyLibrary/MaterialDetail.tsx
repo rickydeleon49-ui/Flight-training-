@@ -36,7 +36,7 @@ import {
 import { formatLocalDay, nowIso, todayIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import { actionsFor } from "@/logic/actions";
-import { checkAiSubmission, geminiSendDisclosure } from "@/logic/aiSafety";
+import { checkAiSubmission, geminiSendDisclosureParts } from "@/logic/aiSafety";
 import { checkFileForGemini } from "@/logic/aiLimits";
 import { restoreDocumentCopy } from "@/logic/documentRecovery";
 import {
@@ -527,6 +527,7 @@ function MaterialDetailPage() {
   // Nothing reaches Google without passing this, and without her saying yes.
   const helper = providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini";
   const aiCheck = checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model));
+  const sendDisclosure = geminiSendDisclosureParts(material, providerCompany(gemini?.model));
   // Whether Google would read it at all. Answered here rather than after a
   // click and an upload, so an oversized handbook is a next step and not a
   // wasted wait.
@@ -2043,7 +2044,9 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingAi}
         title={`Send this file to ${providerCompany(gemini?.model)}?`}
-        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${replaceGuideWarning}${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`}
+        message={`${importedSet ? `${IMPORT_GUIDE_REGENERATE_WARNING} ` : ""}${replaceGuideWarning}${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)}`}
+        details={sendDisclosure.details}
+        detailsSummary="What Google keeps"
         confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingAi(false))}
@@ -2078,7 +2081,9 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingCards}
         title={`Send this file to ${providerCompany(gemini?.model)}?`}
-        message={`${replaceCardsWarning || (importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : "")}${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`}
+        message={`${replaceCardsWarning || (importedSet ? `${IMPORT_CARDS_REGENERATE_WARNING} ` : "")}${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)}`}
+        details={sendDisclosure.details}
+        detailsSummary="What Google keeps"
         confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingCards(false))}
@@ -2101,9 +2106,11 @@ function MaterialDetailPage() {
         title={`Send this file to ${providerCompany(gemini?.model)}?`}
         message={
           practiceTest
-            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`
-            : `${aiCheck.reason} ${geminiSendDisclosure(material, providerCompany(gemini?.model))}${geminiModelSentence(gemini)}`
+            ? `${importedTest ? IMPORT_TEST_REGENERATE_WARNING : "This will replace your current practice test with newly generated questions."} Regenerating closes any unfinished practice session while completed history remains preserved under its original version. ${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)}`
+            : `${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)}`
         }
+        details={sendDisclosure.details}
+        detailsSummary="What Google keeps"
         confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
         destructive={false}
         {...chooseChapterFirst(() => setConfirmingPracticeTest(false))}

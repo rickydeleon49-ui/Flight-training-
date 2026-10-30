@@ -123,6 +123,25 @@ describe("choosing what to send (GEN-REL-01)", () => {
     expect(text).toMatch(/copy on this Mac is not changed/);
   });
 
+  it("POLISH-064: keeps what Google stores behind a collapsed \"What Google keeps\"", async () => {
+    await openMaterial("root", "Synthetic Handbook");
+    for (const button of ["Create study guide", "Create practice test"]) {
+      fireEvent.click(await screen.findByRole("button", { name: button }));
+      const dialog = await waitFor(sendDialog);
+      const message = dialog.querySelector("p.muted")?.textContent ?? "";
+      expect(message).toMatch(/Only “handbook\.pdf” leaves this Mac\. Your copy on this Mac is not changed\./);
+      expect(message).not.toMatch(/temporary copy|asks Google to delete/);
+      // Before the model line: the send warning (2) and what leaves this Mac (2), down from 6.
+      expect(message.split(" It will be read by")[0]!.split(/(?<=[.!?])\s+/).filter(Boolean).length).toBeLessThanOrEqual(4);
+      const details = dialog.querySelector("details");
+      expect(details?.open).toBe(false);
+      expect(details?.querySelector("summary")?.textContent).toBe("What Google keeps");
+      expect(details?.textContent).toMatch(/temporary copy for up to 48 hours/);
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());
+    }
+  });
+
   it("cancelling sends nothing", async () => {
     await openMaterial("root", "Synthetic Handbook");
     fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));

@@ -90,17 +90,34 @@ export function checkAiSubmission(
  * "only this chapter" is visible before anything is sent.
  */
 export function geminiSendDisclosure(material: StudyMaterial, company: "Google" | "Anthropic" = "Google"): string {
+  const { message, details } = geminiSendDisclosureParts(material, company);
+  if (!details) return message;
+  const unchanged = " Your copy on this Mac is not changed.";
+  return `${message.slice(0, -unchanged.length)} ${details}${unchanged}`;
+}
+
+/**
+ * The same disclosure split for the confirm dialog: `message` stays visible and
+ * `details` (what Google keeps for a PDF) sits in a collapsed "What Google
+ * keeps" section. Nothing is dropped; joined, they read as before.
+ */
+export function geminiSendDisclosureParts(
+  material: StudyMaterial,
+  company: "Google" | "Anthropic" = "Google",
+): { message: string; details?: string } {
   const name = material.originalFileName ?? material.title;
-  if (company === "Anthropic") return `Only “${name}” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed.`;
+  if (company === "Anthropic") return { message: `Only “${name}” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed.` };
   const isPdf = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
   const lineage = material.lineage;
   const pages = lineage ? `, pages ${lineage.sourcePageStart}–${lineage.sourcePageEnd} of “${lineage.sourceTitle}”,` : "";
   if (!isPdf) {
-    return `Only “${name}” leaves this Mac. It is sent with this request only; it is not stored for reuse. Your copy on this Mac is not changed.`;
+    return { message: `Only “${name}” leaves this Mac. It is sent with this request only; it is not stored for reuse. Your copy on this Mac is not changed.` };
   }
-  return (
-    `Only “${name}”${pages} leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and ` +
-    "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
-    "the file changes or you disconnect Gemini; otherwise Google removes it when it expires. Your copy on this Mac is not changed."
-  );
+  return {
+    message: `Only “${name}”${pages} leaves this Mac. Your copy on this Mac is not changed.`,
+    details:
+      "Google keeps a temporary copy for up to 48 hours so a study guide and " +
+      "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
+      "the file changes or you disconnect Gemini; otherwise Google removes it when it expires.",
+  };
 }

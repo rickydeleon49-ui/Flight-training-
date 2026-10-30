@@ -73,8 +73,7 @@ describe("nightHint", () => {
   it("writes one plain line in the given time zone", () => {
     const hint = nightHint("2026-11-05", "KPAO", index)!;
     expect(nightHintText(hint, "2026-11-05", "America/Los_Angeles")).toBe(
-      "At KPAO on Nov 5: sunset 5:06 PM. Night begins 5:33 PM; night landings for currency count from 6:06 PM. " +
-        "Times are in your Mac's time zone.",
+      "KPAO, Nov 5: sunset 5:06 PM. Night from 5:33 PM; night landings count from 6:06 PM (your Mac's time).",
     );
   });
 
