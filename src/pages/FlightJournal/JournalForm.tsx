@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
+import { useTabListState, type TabListState } from "@react-stately/tabs";
+// Collection items come from react-stately (declared alongside the tabs hooks).
+import { Item } from "react-stately/Item";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -115,6 +119,30 @@ const emptyDraft = (): DebriefDraft => ({
 const optionalNumber = (value: string): number | null =>
   value.trim() === "" ? null : Number(value);
 
+type DebriefModeChoice = { value: "quick" | "full"; label: string };
+const DEBRIEF_MODES: DebriefModeChoice[] = [
+  { value: "quick", label: "Quick debrief" },
+  { value: "full", label: "Full flight log & debrief" },
+];
+
+function DebriefModeTab({ choice, state }: { choice: DebriefModeChoice; state: TabListState<DebriefModeChoice> }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const { tabProps, isSelected, isDisabled } = useTab({ key: choice.value }, state, ref);
+  return (
+    <button
+      {...tabProps}
+      ref={ref}
+      type="button"
+      disabled={isDisabled}
+      id={`debrief-mode-tab-${choice.value}`}
+      aria-controls="debrief-mode-panel"
+      className={`filter-chip${isSelected ? " is-active" : ""}`}
+    >
+      {choice.label}
+    </button>
+  );
+}
+
 /**
  * Writing or editing a lesson debrief in quick mode or full log mode.
  *
@@ -171,6 +199,19 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const [questionWithdrawn, setQuestionWithdrawn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const tabState = useTabListState<DebriefModeChoice>({
+    selectedKey: mode,
+    onSelectionChange: (key) => setMode(key as "quick" | "full"),
+    // The keyboard delegate reads disabledKeys even when the whole list is disabled.
+    disabledKeys: isSaving ? DEBRIEF_MODES.map((choice) => choice.value) : [],
+    isDisabled: isSaving,
+    items: DEBRIEF_MODES,
+    children: (choice) => <Item key={choice.value} textValue={choice.label}>{choice.label}</Item>,
+  });
+  const tabListRef = useRef<HTMLDivElement>(null);
+  const { tabListProps } = useTabList({ "aria-label": "Debrief editor mode", keyboardActivation: "automatic", isDisabled: isSaving }, tabState, tabListRef);
+  const tabPanelRef = useRef<HTMLDivElement>(null);
+  const { tabPanelProps } = useTabPanel({}, tabState, tabPanelRef);
   const isSavingRef = useRef(false);
   const dateField = useRef<TypedDateFieldHandle>(null);
 
@@ -727,31 +768,12 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       />
 
       <div
+        {...tabListProps}
+        ref={tabListRef}
         className="view-tabs filter-chips"
         style={{ marginBottom: "var(--space-4)" }}
-        role="tablist"
-        aria-label="Debrief editor mode"
       >
-        <button
-          type="button"
-          role="tab"
-          disabled={isSaving}
-          className={`filter-chip${mode === "quick" ? " is-active" : ""}`}
-          aria-selected={mode === "quick"}
-          onClick={() => setMode("quick")}
-        >
-          Quick debrief
-        </button>
-        <button
-          type="button"
-          role="tab"
-          disabled={isSaving}
-          className={`filter-chip${mode === "full" ? " is-active" : ""}`}
-          aria-selected={mode === "full"}
-          onClick={() => setMode("full")}
-        >
-          Full flight log & debrief
-        </button>
+        {DEBRIEF_MODES.map((choice) => <DebriefModeTab key={choice.value} choice={choice} state={tabState} />)}
       </div>
 
       {recovered ? (
@@ -779,6 +801,12 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         </div>
       ) : null}
 
+      <div
+        {...tabPanelProps}
+        ref={tabPanelRef}
+        id="debrief-mode-panel"
+        aria-labelledby={`debrief-mode-tab-${mode}`}
+      >
       <fieldset
         disabled={isSaving}
         aria-busy={isSaving}
@@ -1496,6 +1524,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
         </div>
       ) : null}
       </fieldset>
+      </div>
 
       <div className="row" style={{ marginTop: "var(--space-5)" }}>
         <Button variant="primary" disabled={isSaving} onClick={save}>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
-// The pinned tabs package delegates collections to this transitive package.
+// Collection items come from react-stately (declared alongside the tabs hooks).
 import { Item } from "react-stately/Item";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
