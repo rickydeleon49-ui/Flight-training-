@@ -137,3 +137,27 @@ describe("TypedDateField", () => {
     expect(typedDateProblem("13292026")).toBe(NOT_A_DATE);
   });
 });
+
+describe("TypedDateField keeps what she must see in view (batch-1029 re-check)", () => {
+  it("scrolls the read-back into view while she types, and takes her to a bad date on save", () => {
+    const scroll = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    try {
+      const { input, ref } = show();
+      input.focus();
+      fireEvent.change(input, { target: { value: "11052026" } });
+      expect(scroll).toHaveBeenCalled();
+      scroll.mockClear();
+      fireEvent.change(input, { target: { value: "13292026" } });
+      input.blur();
+      act(() => {
+        expect(ref.current?.check()).toBe(false);
+      });
+      expect(document.activeElement).toBe(input);
+      expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
+});

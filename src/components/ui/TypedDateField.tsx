@@ -77,6 +77,8 @@ export function TypedDateField({
   // A problem shows once she leaves the box or tries to save, never mid-typing.
   const [revealed, setRevealed] = useState(false);
   const emitted = useRef(value);
+  const box = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
 
   // A day set from outside (a reset, a quick choice) replaces the text.
   useEffect(() => {
@@ -90,6 +92,12 @@ export function TypedDateField({
   useImperativeHandle(ref, () => ({
     check: () => {
       setRevealed(true);
+      // A tall form can leave the field off-screen when Save is pressed:
+      // take her to it so the plain message is seen.
+      if (problem) {
+        input.current?.focus();
+        input.current?.scrollIntoView?.({ block: "center" });
+      }
       return !problem;
     },
   }), [problem]);
@@ -102,12 +110,20 @@ export function TypedDateField({
   const errorId = message ? `${id}-error` : undefined;
   const describedBy = [readBackId, hintId, errorId].filter(Boolean).join(" ") || undefined;
 
+  // The read-back or message sits under the box; in a scrolling dialog keep
+  // it in view (student re-check: the goal form hid it below the fold).
+  const shown = readBack ?? message;
+  useEffect(() => {
+    if (shown && document.activeElement === input.current) box.current?.scrollIntoView?.({ block: "nearest" });
+  }, [shown]);
+
   return (
-    <div className={`field${full ? " field--full" : ""}`}>
+    <div ref={box} className={`field${full ? " field--full" : ""}`}>
       <label className="field__label" htmlFor={id}>
         {label}
       </label>
       <input
+        ref={input}
         className="input"
         id={id}
         type="text"
