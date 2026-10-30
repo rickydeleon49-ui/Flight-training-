@@ -520,9 +520,9 @@ export function Settings() {
 
   const saveProfile = async () => {
     // Both dates are optional, but a typed one that isn't a date is never saved as none.
-    const startedOk = startedField.current?.check() ?? true;
-    const medicalOk = medicalField.current?.check() ?? true;
-    if (!startedOk || !medicalOk) return;
+    // Stop at the first one that fails, so focus lands on the upper field.
+    if (!(startedField.current?.check() ?? true)) return;
+    if (!(medicalField.current?.check() ?? true)) return;
     const result = await mutate((repos) =>
       repos.profile.update({
         ...draft,

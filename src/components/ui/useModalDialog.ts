@@ -63,6 +63,8 @@ const FOCUSABLE = [
   "textarea:not([disabled])",
   "[tabindex]:not([tabindex='-1'])",
   "[contenteditable='true']",
+  // A <details> toggle (e.g. "What Google keeps") is focusable too.
+  "details > summary:first-of-type",
 ].join(",");
 
 function focusableIn(container: HTMLElement): HTMLElement[] {

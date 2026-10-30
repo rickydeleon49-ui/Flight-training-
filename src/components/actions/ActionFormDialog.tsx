@@ -79,6 +79,7 @@ export function ActionFormDialog({
   );
   const [error, setError] = useState<string | null>(null);
   const dueDateField = useRef<TypedDateFieldHandle>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
 
   // Reset whenever the dialog opens so a stale draft never leaks between uses.
   useEffect(() => {
@@ -104,12 +105,13 @@ export function ActionFormDialog({
     setDraft((current) => ({ ...current, [key]: value }));
 
   const submit = () => {
-    const dueDateOk = dueDateField.current?.check() ?? true;
+    // Reading order: the title sits above the date, so it is checked first.
     if (!draft.title.trim()) {
       setError("Give this action a short title so you know what to do.");
+      titleInput.current?.focus();
       return;
     }
-    if (!dueDateOk) return;
+    if (!(dueDateField.current?.check() ?? true)) return;
     onSave({ ...draft, title: draft.title.trim(), description: draft.description.trim() });
   };
 
@@ -163,6 +165,7 @@ export function ActionFormDialog({
               id={id}
               aria-describedby={describedBy}
               aria-invalid={invalid}
+              ref={titleInput}
               value={draft.title}
               placeholder="Review crosswind landing notes"
               onChange={(e) => update("title", e.target.value)}

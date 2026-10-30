@@ -26,28 +26,33 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
     setStatus(await providerStatus());
     setNote(`New study aids will use ${id === "claude" ? "Claude Haiku 5.5" : "Gemini"}. Your saved study material is kept.`);
   }
+  const getKey = <div><a className="small" href={CLAUDE_KEY_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => {
+    if (isTauri()) { event.preventDefault(); void run(async () => { await openUrl(CLAUDE_KEY_URL); }); }
+  }}>Get a key</a></div>;
+  const keyBox = <div className="row row--wrap">
+    <TextInput type="password" autoComplete="off" aria-label="Claude API key" placeholder="Paste Claude API key" value={key} onChange={(event) => setKey(event.target.value)} disabled={busy || !isTauri()} />
+    <Button disabled={busy || !isTauri() || key.trim().length < 20} onClick={() => { const submitted = key; setKey(""); void run(async () => { setStatus(await configureProvider("claude", submitted)); setNote("Claude is connected and will be used for your study tools. Your saved study material is kept."); }); }}>{busy ? "Connecting…" : "Connect Claude"}</Button>
+  </div>;
   const claude = (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <p className="small strong">Claude (Anthropic)</p>
         <p className="tiny dim">{CLAUDE_PRIVACY}</p>
         <p className="tiny dim">Your key stays on this computer and is not included in backups.</p>
-        <div><a className="small" href={CLAUDE_KEY_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => {
-          if (isTauri()) { event.preventDefault(); void run(async () => { await openUrl(CLAUDE_KEY_URL); }); }
-        }}>Get a key</a></div>
+        {getKey}
         {connected ? <div className="row row--wrap">
           {status.selected !== "claude" && <Button disabled={busy} onClick={() => void run(() => choose("claude"))}>Use Claude</Button>}
           <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
-        </div> : <div className="row row--wrap">
-          <TextInput type="password" autoComplete="off" aria-label="Claude API key" placeholder="Paste Claude API key" value={key} onChange={(event) => setKey(event.target.value)} disabled={busy || !isTauri()} />
-          <Button disabled={busy || !isTauri() || key.trim().length < 20} onClick={() => { const submitted = key; setKey(""); void run(async () => { setStatus(await configureProvider("claude", submitted)); setNote("Claude is connected and will be used for your study tools. Your saved study material is kept."); }); }}>{busy ? "Connecting…" : "Connect Claude"}</Button>
-        </div>}
+        </div> : keyBox}
       </div>
   );
   return <div className="stack stack--4">
     {status.selected === "gemini" ? children : <div className="stack stack--2">
       <p className="small strong">Claude Haiku 5.5 · {connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
       <p className="tiny dim">{CLAUDE_PRIVACY}</p>
-      <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
+      {connected
+        ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
+        // Claude chosen but its key is missing: let her put a key back in.
+        : <>{getKey}{keyBox}</>}
     </div>}
     <details key={status.selected}>
       <summary className="small">Use a different provider</summary>

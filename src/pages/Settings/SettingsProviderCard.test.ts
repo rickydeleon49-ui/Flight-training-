@@ -82,3 +82,18 @@ it("reports the selected Gemini connection even when only Claude is connected", 
   await waitFor(()=>expect(provider.providerStatus).toHaveBeenCalled());
   await waitFor(()=>expect(onStatus).toHaveBeenLastCalledWith({selected:"gemini",providers:[{id:"gemini",connected:false},{id:"claude",connected:true}]}));
 });
+it("BUGFIX-064: Claude chosen but its key is missing shows the key box and keeps Use Gemini", async () => {
+  vi.mocked(provider.providerStatus).mockResolvedValue(status("claude", false));
+  const connect = vi.spyOn(provider, "configureProvider").mockResolvedValue(status("claude", true));
+  const { container } = open();
+  await screen.findByText(/Claude Haiku 5.5 · Connect Claude to use study tools/);
+  expect(screen.queryByRole("button", { name: "Disconnect Claude" })).toBeNull();
+  const input = screen.getByLabelText("Claude API key");
+  expect(input.closest("details")).toBeNull();
+  fireEvent.change(input, { target: { value: "synthetic-claude-key-only" } });
+  fireEvent.click(screen.getByRole("button", { name: "Connect Claude" }));
+  await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+  expect(connect).toHaveBeenCalledWith("claude", "synthetic-claude-key-only");
+  container.querySelector("details")!.open = true;
+  expect(screen.getByRole("button", { name: "Use Gemini" })).toBeTruthy();
+});

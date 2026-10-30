@@ -64,6 +64,7 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
   const [draft, setDraft] = useState<GoalDraft>(() => emptyDraft(milestoneId));
   const [error, setError] = useState<string | null>(null);
   const targetDateField = useRef<TypedDateFieldHandle>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -88,12 +89,13 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
     setDraft((current) => ({ ...current, [key]: value }));
 
   const submit = () => {
-    const targetDateOk = targetDateField.current?.check() ?? true;
+    // Reading order: the title sits above the date, so it is checked first.
     if (!draft.title.trim()) {
       setError("Give this goal a short name.");
+      titleInput.current?.focus();
       return;
     }
-    if (!targetDateOk) return;
+    if (!(targetDateField.current?.check() ?? true)) return;
     onSave({ ...draft, title: draft.title.trim() });
   };
 
@@ -118,6 +120,7 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
               id={id}
               aria-describedby={describedBy}
               aria-invalid={invalid}
+              ref={titleInput}
               value={draft.title}
               placeholder="Crosswind landings"
               onChange={(e) => update("title", e.target.value)}
