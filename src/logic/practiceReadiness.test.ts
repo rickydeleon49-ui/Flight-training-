@@ -63,8 +63,8 @@ afterEach(() => {
 
 describe("buildPracticeReadiness", () => {
   it("nudges when she has fewer than three recent attempts and a test to take", () => {
-    expect(text([])).toBe("Take a practice test to see how you're doing.");
-    expect(text(series([80, 90]))).toBe("Take a practice test to see how you're doing.");
+    expect(text([])).toBe("Take a practice test this month to see how you're doing.");
+    expect(text(series([80, 90]))).toBe("Take a practice test this month to see how you're doing.");
   });
 
   it("shows nothing when she has no practice test to take", () => {

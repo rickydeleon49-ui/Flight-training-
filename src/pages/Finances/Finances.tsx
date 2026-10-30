@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -415,9 +415,12 @@ function FundGoalDialog({
   currentTitle: string;
   currentTarget: number | null;
   onClose: () => void;
-  onSave: (title: string, target: number) => void;
+  onSave: (title: string, target: number) => void | Promise<void>;
 }) {
   const [title, setTitle] = useState(currentTitle);
+  // A double-click must not save the target twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState(moneyToInput(currentTarget));
   const [error, setError] = useState<string | null>(null);
 
@@ -433,16 +436,25 @@ function FundGoalDialog({
           <Button onClick={onClose}>Cancel</Button>
           <Button
             variant="primary"
-            onClick={() => {
+            disabled={busy}
+            onClick={async () => {
+              if (saving.current) return;
               const cents = parseMoney(target);
               if (cents === null || cents <= 0) {
                 setError("Enter an amount like 5000.");
                 return;
               }
-              onSave(title.trim() || "Savings target", cents);
+              saving.current = true;
+              setBusy(true);
+              try {
+                await onSave(title.trim() || "Savings target", cents);
+              } finally {
+                saving.current = false;
+                setBusy(false);
+              }
             }}
           >
-            Save target
+            {busy ? "Saving…" : "Save target"}
           </Button>
         </>
       }

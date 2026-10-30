@@ -1167,7 +1167,8 @@ export function Settings() {
                 The database copies below are made automatically before an update runs
                 for the first time. They stay on this computer and hold your records,
                 lessons and settings — not the uploaded files themselves, which are
-                never moved. Use <strong>Save complete backup</strong> for protection
+                never moved. The 10 newest copies are kept. Use{" "}
+                <strong>Save complete backup</strong> for protection
                 against losing this computer.
               </p>
 

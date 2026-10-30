@@ -193,6 +193,9 @@ function MaterialDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [addingAction, setAddingAction] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
+  // Enter held down or a double-click must not add the question twice.
+  const addingQuestion = useRef(false);
+  const [questionBusy, setQuestionBusy] = useState(false);
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -642,12 +645,19 @@ function MaterialDetailPage() {
 
   const addQuestion = async () => {
     const text = newQuestion.trim();
-    if (!text) return;
-    const result = await mutate((repos) =>
-      repos.questions.create({ text, topic: material.topic, materialId: material.id }),
-    );
-    if (result === null) return;
-    setNewQuestion("");
+    if (!text || addingQuestion.current) return;
+    addingQuestion.current = true;
+    setQuestionBusy(true);
+    try {
+      const result = await mutate((repos) =>
+        repos.questions.create({ text, topic: material.topic, materialId: material.id }),
+      );
+      if (result === null) return;
+      setNewQuestion("");
+    } finally {
+      addingQuestion.current = false;
+      setQuestionBusy(false);
+    }
   };
 
   const open = async () => {
@@ -1642,7 +1652,7 @@ function MaterialDetailPage() {
                       }
                     }}
                   />
-                  <Button onClick={addQuestion} disabled={!newQuestion.trim()}>
+                  <Button onClick={addQuestion} disabled={questionBusy || !newQuestion.trim()}>
                     Add
                   </Button>
                 </div>

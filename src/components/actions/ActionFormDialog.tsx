@@ -38,7 +38,8 @@ export interface ActionDraft {
 interface ActionFormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (draft: ActionDraft) => void;
+  /** Resolves when the save has finished (the parent closes the dialog on success). */
+  onSave: (draft: ActionDraft) => void | Promise<void>;
   /** Present when editing; absent when creating. */
   action?: NextAction | null;
   /** Pre-attaches a new action to whatever screen created it. */
@@ -80,6 +81,9 @@ export function ActionFormDialog({
   const [error, setError] = useState<string | null>(null);
   const dueDateField = useRef<TypedDateFieldHandle>(null);
   const titleInput = useRef<HTMLInputElement>(null);
+  // A double-click (or click + Enter) must not create the action twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   // Reset whenever the dialog opens so a stale draft never leaks between uses.
   useEffect(() => {
@@ -104,7 +108,8 @@ export function ActionFormDialog({
   const update = <K extends keyof ActionDraft>(key: K, value: ActionDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
-  const submit = () => {
+  const submit = async () => {
+    if (saving.current) return;
     // Reading order: the title sits above the date, so it is checked first.
     if (!draft.title.trim()) {
       setError("Give this action a short title so you know what to do.");
@@ -112,7 +117,15 @@ export function ActionFormDialog({
       return;
     }
     if (!(dueDateField.current?.check() ?? true)) return;
-    onSave({ ...draft, title: draft.title.trim(), description: draft.description.trim() });
+    saving.current = true;
+    setBusy(true);
+    try {
+      await onSave({ ...draft, title: draft.title.trim(), description: draft.description.trim() });
+    } finally {
+      // Released either way: on a failed save the dialog stays open so she can retry.
+      saving.current = false;
+      setBusy(false);
+    }
   };
 
   if (boundHw) {
@@ -152,8 +165,8 @@ export function ActionFormDialog({
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
-            {action ? "Save changes" : "Add action"}
+          <Button variant="primary" onClick={submit} disabled={busy}>
+            {busy ? "Saving…" : action ? "Save changes" : "Add action"}
           </Button>
         </>
       }

@@ -34,7 +34,17 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
   );
   const [linkError, setLinkError] = useState(false);
 
-  if (profile.flightSchool.trim() || profile.trainingStartedOn || progress.hidden) return null;
+  if (profile.flightSchool.trim() || profile.trainingStartedOn) return null;
+  // Hide is not a dead end: until she has a school, one quiet link brings the card back.
+  if (progress.hidden) {
+    return (
+      <p className="enroll-show">
+        <button type="button" className="enroll-hide small" onClick={() => remember({ ...progress, hidden: false })}>
+          Show first steps
+        </button>
+      </p>
+    );
+  }
 
   function openSource(event: MouseEvent<HTMLAnchorElement>, url: string) {
     if (!isTauri()) return;

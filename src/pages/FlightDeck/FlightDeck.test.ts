@@ -809,7 +809,7 @@ describe("FlightDeck practice-test line", () => {
     render(h(MemoryRouter, null, h(FlightDeck)));
 
     const link = await screen.findByRole("link", {
-      name: "Take a practice test to see how you're doing.",
+      name: "Take a practice test this month to see how you're doing.",
     });
     expect(link.getAttribute("href")).toBe("/study");
     expect(screen.queryByText(/over your last/)).toBeNull();

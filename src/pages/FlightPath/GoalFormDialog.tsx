@@ -57,7 +57,8 @@ interface Props {
   milestoneId: Id | null;
   milestones: Milestone[];
   onClose: () => void;
-  onSave: (draft: GoalDraft) => void;
+  /** Resolves when the save has finished (the parent closes the dialog on success). */
+  onSave: (draft: GoalDraft) => void | Promise<void>;
 }
 
 export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onClose, onSave }: Props) {
@@ -65,6 +66,9 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
   const [error, setError] = useState<string | null>(null);
   const targetDateField = useRef<TypedDateFieldHandle>(null);
   const titleInput = useRef<HTMLInputElement>(null);
+  // A double-click (or click + Enter) must not create it twice.
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -88,7 +92,8 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
   const update = <K extends keyof GoalDraft>(key: K, value: GoalDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
-  const submit = () => {
+  const submit = async () => {
+    if (saving.current) return;
     // Reading order: the title sits above the date, so it is checked first.
     if (!draft.title.trim()) {
       setError("Give this goal a short name.");
@@ -96,7 +101,15 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
       return;
     }
     if (!(targetDateField.current?.check() ?? true)) return;
-    onSave({ ...draft, title: draft.title.trim() });
+    saving.current = true;
+    setBusy(true);
+    try {
+      await onSave({ ...draft, title: draft.title.trim() });
+    } finally {
+      // Released either way: on a failed save the dialog stays open so she can retry.
+      saving.current = false;
+      setBusy(false);
+    }
   };
 
   return (
@@ -107,8 +120,8 @@ export function GoalFormDialog({ open, goal = null, milestoneId, milestones, onC
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={submit}>
-            {goal ? "Save changes" : "Add goal"}
+          <Button variant="primary" onClick={submit} disabled={busy}>
+            {busy ? "Saving…" : goal ? "Save changes" : "Add goal"}
           </Button>
         </>
       }

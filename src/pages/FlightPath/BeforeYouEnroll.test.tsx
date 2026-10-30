@@ -81,6 +81,27 @@ it("keeps Hide across remounts", () => {
   expect(heading()).toBeNull();
 });
 
+it("Show first steps brings a hidden card back, with its ticks, on the same storage", () => {
+  const view = render(page());
+  fireEvent.click(screen.getAllByRole("checkbox")[0]!);
+  fireEvent.click(screen.getByRole("button", { name: "Hide" }));
+  expect(heading()).toBeNull();
+  view.unmount();
+  render(page());
+  fireEvent.click(screen.getByRole("button", { name: "Show first steps" }));
+  expect(heading()).not.toBeNull();
+  expect((screen.getAllByRole("checkbox")[0] as HTMLInputElement).checked).toBe(true);
+  expect(screen.queryByRole("button", { name: "Show first steps" })).toBeNull();
+  expect(JSON.parse(localStorage.getItem("her-flight-deck.view.before-you-enroll")!).hidden).toBe(false);
+});
+
+it("offers no Show first steps link once a school is chosen", () => {
+  localStorage.setItem("her-flight-deck.view.before-you-enroll", JSON.stringify({ hidden: true, done: [] }));
+  data.profile.flightSchool = "Example school";
+  render(page());
+  expect(screen.queryByRole("button", { name: "Show first steps" })).toBeNull();
+});
+
 it.each([["Finances", "/finances", "Training finances"], ["Study Library", "/study", "Your study library"]])(
   "opens the existing %s route", (name, href, title) => {
     render(page());
