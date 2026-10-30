@@ -216,6 +216,9 @@ describe("card reviews in MaterialDetail", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Explain?" } });
     fireEvent.click(button("Ask"));
     await screen.findByText(answer.trim());
+    // The answer's own scroll runs in an effect after it renders; on a slow
+    // runner it can land after a bare mockClear (CI flake on PR #310).
+    await waitFor(() => expect(scroll).toHaveBeenCalledWith(expect.objectContaining({ block: "nearest" })));
     scroll.mockClear();
     fireEvent.click(button(/^Good: again in/));
     const heading = await screen.findByRole("heading", { name: "Card 2 of 3 · new" });

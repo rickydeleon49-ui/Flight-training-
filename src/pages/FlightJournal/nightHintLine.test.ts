@@ -45,14 +45,14 @@ const values = () =>
   ["Date", "Departure airport", "Arrival airport", "Night flight time", "Total flight time"].map(
     (label) => field(label).value,
   );
-const lineText = /^At .+ on .+: sunset .+\. Night begins .+; night landings for currency count from .+\. Times are in your Mac's time zone\.$/;
+const lineText = /^[A-Z0-9]+, .+: sunset .+\. Night from .+; night landings count from .+ \(your Mac's time\)\.$/;
 
 describe("night hint line under Night flight time", () => {
   it("appears for a known airport, is tied to the input, and changes no field", async () => {
     await loadAirportIndex();
     const mutate = show();
     const night = field("Night flight time");
-    expect(screen.queryByText(/Night begins/)).toBeNull();
+    expect(screen.queryByText(/Night from/)).toBeNull();
     expect(night.getAttribute("aria-describedby")).toBeNull();
 
     fireEvent.change(field("Date"), { target: { value: "2026-11-05" } });
@@ -60,9 +60,9 @@ describe("night hint line under Night flight time", () => {
     fireEvent.change(night, { target: { value: "1.2" } });
     const before = values();
 
-    const line = await screen.findByText(/Night begins/);
+    const line = await screen.findByText(/Night from/);
     expect(line.textContent).toMatch(lineText);
-    expect(line.textContent).toMatch(/^At KPAO on Nov 5: sunset /);
+    expect(line.textContent).toMatch(/^KPAO, Nov 5: sunset /);
     expect(line.className).toBe("field__hint");
     expect(night.getAttribute("aria-describedby")).toBe(line.id);
     expect(values()).toEqual(before);
@@ -74,15 +74,15 @@ describe("night hint line under Night flight time", () => {
     show();
     fireEvent.change(field("Date"), { target: { value: "2026-11-05" } });
     fireEvent.change(field("Arrival airport"), { target: { value: "SQL" } });
-    expect((await screen.findByText(/Night begins/)).textContent).toMatch(/^At SQL on Nov 5: /);
+    expect((await screen.findByText(/Night from/)).textContent).toMatch(/^SQL, Nov 5: /);
 
     fireEvent.change(field("Departure airport"), { target: { value: "NOPE1" } });
-    await waitFor(() => expect(screen.queryByText(/Night begins/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/Night from/)).toBeNull());
     expect(field("Night flight time").getAttribute("aria-describedby")).toBeNull();
 
     fireEvent.change(field("Departure airport"), { target: { value: "" } });
     fireEvent.change(field("Date"), { target: { value: "" } });
-    await waitFor(() => expect(screen.queryByText(/Night begins/)).toBeNull());
+    await waitFor(() => expect(screen.queryByText(/Night from/)).toBeNull());
     expect(values()).toEqual(["", "", "SQL", "", ""]);
   });
 });

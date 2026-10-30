@@ -104,6 +104,9 @@ interface ConfirmDialogProps {
   open: boolean;
   title: string;
   message: string;
+  /** Supporting facts kept out of the main message, behind a collapsed summary. */
+  details?: string;
+  detailsSummary?: string;
   confirmLabel?: string;
   destructive?: boolean;
   /**
@@ -127,6 +130,8 @@ export function ConfirmDialog({
   open,
   title,
   message,
+  details,
+  detailsSummary = "More details",
   confirmLabel = "Delete",
   destructive = true,
   pending = false,
@@ -166,6 +171,12 @@ export function ConfirmDialog({
       }
     >
       <p className="muted">{message}</p>
+      {details ? (
+        <details className="tiny dim">
+          <summary>{detailsSummary}</summary>
+          <p>{details}</p>
+        </details>
+      ) : null}
       {children}
       {pending ? (
         <p className="tiny muted" role="status">

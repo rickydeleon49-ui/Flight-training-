@@ -87,6 +87,8 @@ describe("Claude confirmations and model labels", () => {
     expect(dialog.textContent).toContain("It will be read by Claude Haiku 5.5.");
     expect(dialog.textContent).toContain("Anthropic: your files are not used for training and are deleted within 30 days.");
     expect(dialog.textContent).not.toMatch(/Google|Gemini|48 hours/);
+    expect(dialog.textContent).toContain("Short sources may give you fewer cards.");
+    expect(dialog.textContent).not.toContain("A maximum, not a promise");
     expect(generate).not.toHaveBeenCalled();
     await act(async()=>{fireEvent.click(screen.getByRole("button",{name:"Send to Claude"}));});
     await waitFor(()=>expect(generate).toHaveBeenCalledTimes(1));

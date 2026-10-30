@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { makeMaterial } from "@/testing/factories";
 import type { CredentialRecord } from "@/domain/types";
-import { checkAiSubmission } from "./aiSafety";
+import { checkAiSubmission, geminiSendDisclosure, geminiSendDisclosureParts } from "./aiSafety";
 
 const record = (overrides: Partial<CredentialRecord> = {}): CredentialRecord => ({
   id: "rec-1",
@@ -18,6 +18,21 @@ const record = (overrides: Partial<CredentialRecord> = {}): CredentialRecord => 
 
 const withFile = (overrides = {}) =>
   makeMaterial({ filePath: "abc-notes.pdf", originalFileName: "notes.pdf", ...overrides });
+
+describe("geminiSendDisclosureParts (POLISH-064)", () => {
+  it("moves only what Google keeps into details; joined it reads exactly as before", () => {
+    const parts = geminiSendDisclosureParts(withFile());
+    expect(parts.message).toBe("Only “notes.pdf” leaves this Mac. Your copy on this Mac is not changed.");
+    expect(parts.details).toContain("48 hours");
+    expect(geminiSendDisclosure(withFile())).toBe(
+      "Only “notes.pdf” leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and " +
+        "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
+        "the file changes or you disconnect Gemini; otherwise Google removes it when it expires. Your copy on this Mac is not changed.",
+    );
+    expect(geminiSendDisclosureParts(withFile(), "Anthropic").details).toBeUndefined();
+    expect(geminiSendDisclosureParts(withFile({ filePath: "a.txt", originalFileName: "a.txt" })).details).toBeUndefined();
+  });
+});
 
 describe("checkAiSubmission", () => {
   it("allows ordinary study material, naming the file in the warning", () => {

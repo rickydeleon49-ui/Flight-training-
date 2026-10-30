@@ -124,7 +124,7 @@ export function OfflineStudyPanel({ material, focusRequested = false }: { materi
             ) : wording.canPrepare ? (
               <div className="row row--wrap">
                 <Button size="small" variant="primary" disabled={asking} onClick={() => void prepare()}>
-                  Read this PDF's text
+                  Read it now
                 </Button>
               </div>
             ) : null}

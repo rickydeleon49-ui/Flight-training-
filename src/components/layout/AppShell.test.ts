@@ -293,6 +293,10 @@ describe("POLISH-04 new pages open at the top", () => {
       expect(scrollTo).not.toHaveBeenCalled();
       act(() => navTo("/notes"));
       expect(scrollTo).toHaveBeenCalledTimes(1);
+      // POLISH-064: FAA shelf → "Notes and bookmarks" opens the material at the top.
+      act(() => navTo("/study/faa-phak?tab=notes"));
+      expect(scrollTo).toHaveBeenCalledTimes(2);
+      expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
     } finally {
       vi.unstubAllGlobals();
     }

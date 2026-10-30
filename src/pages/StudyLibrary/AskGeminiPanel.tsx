@@ -49,7 +49,11 @@ interface InFlightAsk {
 export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false }: AskGeminiPanelProps) {
   const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
   const [providerReady, setProviderReady] = useState(!isTauri());
-  useEffect(() => { let mounted = true; void getGeminiStatus().then((status) => { if (mounted) { setCompany(providerCompany(status.model)); setProviderReady(true); } }).catch(() => { if (mounted) setProviderReady(false); }); return () => { mounted = false; }; }, []);
+  // If the check fails she is told so (not just shown greyed-out buttons);
+  // reopening the panel checks again.
+  const [statusFailed, setStatusFailed] = useState(false);
+  const [statusAttempt, setStatusAttempt] = useState(0);
+  useEffect(() => { let mounted = true; void getGeminiStatus().then((status) => { if (mounted) { setCompany(providerCompany(status.model)); setProviderReady(true); setStatusFailed(false); } }).catch(() => { if (mounted) { setProviderReady(false); setStatusFailed(true); } }); return () => { mounted = false; }; }, [statusAttempt]);
   const helper = company === "Anthropic" ? "Claude" : "Gemini";
   const appData = useOptionalAppData();
   // Read the latest classification even if it changes while the listener starts.
@@ -222,7 +226,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
           type="button"
           size="small"
           variant="secondary"
-          onClick={() => setIsOpen(true)}
+          onClick={() => { if (statusFailed) setStatusAttempt((n) => n + 1); setIsOpen(true); }}
         >
           <QuestionIcon size={14} /> {buttonLabel ?? `Why? Ask ${helper}`}
         </Button>
@@ -355,6 +359,10 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
         >
           {refusal || error}
         </div>
+      )}
+
+      {statusFailed && (
+        <p className="small" role="alert">Could not check your AI connection. Close and reopen this panel to try again.</p>
       )}
 
       <form onSubmit={handleAsk} className="stack stack--2">

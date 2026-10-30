@@ -93,6 +93,21 @@ describe("Dialog without native modal support", () => {
     expect(document.activeElement).toBe(save);
   });
 
+  it("BUGFIX-064 P-1: Tab and Shift+Tab cycle through a <details> summary as the last control", () => {
+    render(h(Dialog, {
+      open: true, title: "Send to Google", onClose: () => {},
+      footer: h("details", null, h("summary", null, "What Google keeps"), h("p", null, "Synthetic")),
+      children: h("input", { "aria-label": "Title" }),
+    }));
+    const close = screen.getByRole("button", { name: "Close" });
+    const summary = screen.getByText("What Google keeps");
+    summary.focus();
+    tab();
+    expect(document.activeElement).toBe(close);
+    tab(true);
+    expect(document.activeElement).toBe(summary);
+  });
+
   it("brings focus back when something outside tries to take it", () => {
     render(h(Page));
     openFromButton();

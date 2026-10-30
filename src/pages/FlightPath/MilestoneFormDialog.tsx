@@ -43,6 +43,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
   });
   const [error, setError] = useState<string | null>(null);
   const targetDateField = useRef<TypedDateFieldHandle>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open || !milestone) return;
@@ -59,12 +60,13 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
     setDraft((current) => ({ ...current, [key]: value }));
 
   const submit = () => {
-    const targetDateOk = targetDateField.current?.check() ?? true;
+    // Reading order: the title sits above the date, so it is checked first.
     if (!draft.title.trim()) {
       setError("Give this stage a name.");
+      titleInput.current?.focus();
       return;
     }
-    if (!targetDateOk) return;
+    if (!(targetDateField.current?.check() ?? true)) return;
     onSave({ ...draft, title: draft.title.trim() });
   };
 
@@ -90,6 +92,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
               id={id}
               aria-describedby={describedBy}
               aria-invalid={invalid}
+              ref={titleInput}
               value={draft.title}
               placeholder="Build Landing Confidence"
               onChange={(e) => update("title", e.target.value)}

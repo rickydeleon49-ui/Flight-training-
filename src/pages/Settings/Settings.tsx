@@ -123,7 +123,7 @@ function PlatformGuidance({
   if (isMacOS()) {
     return (
       <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
-        <strong>On macOS:</strong> {mac}
+        {mac}
       </p>
     );
   }
@@ -148,7 +148,7 @@ function MacNote({ children }: { children: ReactNode }) {
   if (!isMacOS()) return null;
   return (
     <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
-      <strong>On macOS:</strong> {children}
+      {children}
     </p>
   );
 }
@@ -520,9 +520,9 @@ export function Settings() {
 
   const saveProfile = async () => {
     // Both dates are optional, but a typed one that isn't a date is never saved as none.
-    const startedOk = startedField.current?.check() ?? true;
-    const medicalOk = medicalField.current?.check() ?? true;
-    if (!startedOk || !medicalOk) return;
+    // Stop at the first one that fails, so focus lands on the upper field.
+    if (!(startedField.current?.check() ?? true)) return;
+    if (!(medicalField.current?.check() ?? true)) return;
     const result = await mutate((repos) =>
       repos.profile.update({
         ...draft,
@@ -605,7 +605,7 @@ export function Settings() {
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>
-            <MacNote>Use Save profile before closing the window with the red button.</MacNote>
+            <MacNote>Press Save profile before closing the window.</MacNote>
             <div className="form-grid">
               <Field label="What should we call you?">
                 {({ id }) => (
@@ -662,9 +662,6 @@ export function Settings() {
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
-            <MacNote>
-              Dates use the Mac&rsquo;s region and calendar settings; these fields remain optional.
-            </MacNote>
             <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
               None of this is required. Before you have settled on a school you can
               leave it empty, or fill in only the parts that are true today.
@@ -826,7 +823,7 @@ export function Settings() {
 
               <div className="row">
                 <Button variant="primary" onClick={saveProfile}>
-                  Save
+                  Save profile
                 </Button>
                 {saved ? (
                   <span className="small" style={{ color: "var(--status-complete)" }}>
@@ -841,7 +838,6 @@ export function Settings() {
         <Card>
           <CardHeader title="Look and feel" eyebrow="Accent colour" />
           <CardBody>
-            <MacNote>The accent follows Her Flight Deck on this Mac and changes immediately.</MacNote>
             <div className="stack stack--4">
               <p className="small muted">
                 Changes the accent used across the application. Takes effect straight away.
@@ -944,7 +940,7 @@ export function Settings() {
               <p className="small muted">
                 Includes a complete career roadmap from training foundations through ATP and
                 airline applications, along with lesson checklists, debrief prompts, record
-                organizers, and official FAA starting points. It never replaces her instructor,
+                organizers, and official FAA starting points. It never replaces your instructor,
                 logbook, aircraft documents, or current regulations.
               </p>
               <div className="row row--wrap">
@@ -1210,7 +1206,6 @@ export function Settings() {
               mac={
                 <>
                   Her Flight Deck supports macOS 12 or newer. Use only an official candidate installer.
-                  If macOS displays a security warning, record the exact message for investigation.
                   Do not attempt to disable Gatekeeper or bypass platform security protections.
                 </>
               }
@@ -1272,7 +1267,7 @@ export function Settings() {
               ) : geminiAvailable() ? (
                 <div className="stack stack--3">
                   <div className="setup-steps small">
-                    <p><strong>1.</strong> Open Google AI Studio and sign in with her Google account.</p>
+                    <p><strong>1.</strong> Open Google AI Studio and sign in with your Google account.</p>
                     <p><strong>2.</strong> Choose <em>Create API key</em>, then copy the key.</p>
                     <p><strong>3.</strong> Paste it below. The complete key is never shown again.</p>
                   </div>
@@ -1345,14 +1340,16 @@ export function Settings() {
                 Google states that free-tier content may be used to improve its products. Do
                 not analyze medical records, certificates, addresses, or documents containing
                 sensitive personal information. AI study material must be checked against the
-                current source, FAA publications, aircraft documents, and her instructor.
+                current source, FAA publications, aircraft documents, and your instructor.
               </p>
 
-              <p className="tiny dim">
-                <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
-                message means Google is overloaded, not that your key is wrong. Her Flight Deck
-                already waits and retries; if it keeps happening, try again later or switch to Standard.
-              </p>
+              {gemini?.configured ? (
+                <p className="tiny dim">
+                  <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
+                  message means Google is overloaded, not that your key is wrong. Her Flight Deck
+                  already waits and retries; if it keeps happening, try again later or switch to Standard.
+                </p>
+              ) : null}
 
               {gemini?.configured ? (
                 <div>

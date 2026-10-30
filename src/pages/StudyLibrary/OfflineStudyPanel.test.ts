@@ -58,13 +58,13 @@ describe("Offline study panel", () => {
     expect(await screen.findByText("Not read yet")).toBeTruthy();
     expect(
       screen.getByText(
-        "This PDF isn't ready to search on your Mac yet. Choose “Read this PDF's text” below once, then you can search its text without internet. Nothing is sent anywhere.",
+        "This PDF isn't ready to search on your Mac yet. Choose “Read it now” below once, then you can search its text without internet. Nothing is sent anywhere.",
       ),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Read this PDF's text" }));
+    fireEvent.click(screen.getByRole("button", { name: "Read it now" }));
     expect(await screen.findByText("Reading text…")).toBeTruthy();
     expect(service.prepare).toHaveBeenCalledWith("m1");
-    expect(screen.queryByRole("button", { name: "Read this PDF's text" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Read it now" })).toBeNull();
   });
 
   it("looks again while a state is settling, until it settles", async () => {
@@ -101,7 +101,7 @@ describe("Offline study panel", () => {
       await vi.advanceTimersByTimeAsync(RECHECK_MS);
     });
     expect(await screen.findByText("Reading didn't finish this time. You can try again.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Read this PDF's text" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Read it now" })).toBeTruthy();
   });
 
   it("drops the old file's answer when the file is replaced under the same material", async () => {
@@ -145,7 +145,7 @@ describe("Offline study panel", () => {
     service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
     service.prepare.mockRejectedValue("offline_extraction_disabled");
     render(h(OfflineStudyPanel, { material: pdf }));
-    fireEvent.click(await screen.findByRole("button", { name: "Read this PDF's text" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Read it now" }));
     expect(await screen.findByText("Reading this PDF's text couldn't start. Please try again.")).toBeTruthy();
     expect(screen.queryByText(/offline_extraction_disabled/)).toBeNull();
   });
@@ -165,7 +165,7 @@ describe("Offline study panel", () => {
         "This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.",
       ),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Read this PDF's text" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Read it now" })).toBeNull();
 
     const normalPdf = makeMaterial({
       id: "normal",
@@ -174,12 +174,20 @@ describe("Offline study panel", () => {
       fileSize: 20 * 1024 * 1024,
     });
     rerender(h(OfflineStudyPanel, { material: normalPdf }));
-    expect(await screen.findByRole("button", { name: "Read this PDF's text" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Read it now" })).toBeTruthy();
     expect(
       screen.queryByText(
         "This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.",
       ),
     ).toBeNull();
+  });
+
+  it("POLISH-064: the card heading names the task once and the button reads Read it now", async () => {
+    service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
+    render(h(OfflineStudyPanel, { material: pdf }));
+    await screen.findByRole("heading", { name: "Read this PDF's text" });
+    expect(screen.getByRole("button", { name: "Read it now" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Read this PDF's text" })).toBeNull();
   });
 
   it("does not render any old phrases (Offline study, Prepare for offline study, Not prepared, Searchable, etc.)", async () => {
@@ -255,7 +263,7 @@ it("PACKS-04 focuses and scrolls to Read this PDF's text after status loads, onl
   try {
     service.readiness.mockResolvedValue([row({ state: "notPrepared" })]);
     const view = render(h(OfflineStudyPanel, { material: pdf, focusRequested: true }));
-    const button = await screen.findByRole("button", { name: "Read this PDF's text" });
+    const button = await screen.findByRole("button", { name: "Read it now" });
     expect(document.activeElement).toBe(button);
     expect(scroll).toHaveBeenCalledWith({ block: "center" });
     expect(scroll.mock.instances[0]).toBe(button);
@@ -265,7 +273,7 @@ it("PACKS-04 focuses and scrolls to Read this PDF's text after status loads, onl
     expect(scroll).toHaveBeenCalledTimes(1);
     view.unmount();
     render(h(OfflineStudyPanel, { material: pdf }));
-    await screen.findByRole("button", { name: "Read this PDF's text" });
+    await screen.findByRole("button", { name: "Read it now" });
     expect(scroll).toHaveBeenCalledTimes(1);
   } finally {
     Element.prototype.scrollIntoView = previousScroll;
@@ -279,5 +287,5 @@ it("PACKS-04 waits through checking before focusing the reading control", async 
   await screen.findByText("Checking…");
   expect(document.activeElement?.id).not.toBe("read-pdf-text");
   await act(async () => { await vi.advanceTimersByTimeAsync(RECHECK_MS); });
-  expect(document.activeElement).toBe(await screen.findByRole("button", { name: "Read this PDF's text" }));
+  expect(document.activeElement).toBe(await screen.findByRole("button", { name: "Read it now" }));
 });

@@ -117,8 +117,7 @@ export function nightHintText(hint: NightHint, date: string, timeZone?: string):
     : date;
   const t = (value: Date) => formatHintTime(value, timeZone);
   return (
-    `At ${hint.code} on ${label}: sunset ${t(hint.sunset)}. ` +
-    `Night begins ${t(hint.nightBegins)}; night landings for currency count from ${t(hint.currencyLandingsFrom)}. ` +
-    "Times are in your Mac's time zone."
+    `${hint.code}, ${label}: sunset ${t(hint.sunset)}. ` +
+    `Night from ${t(hint.nightBegins)}; night landings count from ${t(hint.currencyLandingsFrom)} (your Mac's time).`
   );
 }

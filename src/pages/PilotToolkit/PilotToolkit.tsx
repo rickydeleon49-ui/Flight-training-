@@ -252,7 +252,7 @@ function ReadinessTool({ state, save }: ToolProps) {
             <span style={{ width: `${summary.percent}%` }} />
           </div>
           <p className="small muted toolkit-note">
-            This organizes conversations with her instructor. Only the
+            This organizes conversations with your instructor. Only the
             instructor, current regulations, required endorsements, and examiner
             process determine eligibility.
           </p>
@@ -281,7 +281,7 @@ function ReadinessTool({ state, save }: ToolProps) {
       ))}
       <p className="tiny dim">
         Use the current Private Pilot Airman Certification Standards and review
-        every item with her instructor; this is intentionally not an exhaustive
+        every item with your instructor; this is intentionally not an exhaustive
         regulatory checklist.
       </p>
     </div>

@@ -434,6 +434,8 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     const dialog = await waitFor(sendDialog);
     const targetSelect = within(dialog).getByRole("combobox", { name: "Target cards" });
     expect(targetSelect).toBeTruthy();
+    expect(within(dialog).getByText("Short sources may give you fewer cards.")).toBeTruthy();
+    expect(dialog.textContent).not.toContain("A maximum, not a promise");
 
     // Select 60 cards
     fireEvent.change(targetSelect, { target: { value: "60" } });
@@ -614,9 +616,9 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     // It has NO Target cards combobox
     expect(within(dialog).queryByRole("combobox", { name: "Target cards" })).toBeNull();
-    expect(
-      within(dialog).getByText(/Your guide is built section by section/),
-    ).toBeTruthy();
+    // One short sentence under the details toggle (POLISH-064b).
+    expect(within(dialog).getByText("Finished sections are kept if you stop.")).toBeTruthy();
+    expect(within(dialog).queryByText(/Your guide is built section by section/)).toBeNull();
   });
 
   it("the Flashcards section and Practice test section render in order below the guide", async () => {

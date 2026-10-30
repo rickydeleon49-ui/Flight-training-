@@ -8,7 +8,8 @@
 //! corner can still mean a window almost entirely off-screen, and a saved
 //! size could be below the configured minimum, so after the plugin has run
 //! `keep_main_window_reachable` makes sure the title bar can be grabbed on
-//! some screen and the minimum size holds. It never changes anything when
+//! some screen and the minimum size holds; a reachable window larger than
+//! its screen is shrunk to fit that screen. It never changes anything when
 //! the window is already fine.
 
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
@@ -48,6 +49,32 @@ fn is_reachable(window: Rect, screen: Rect) -> bool {
     width >= i64::from(MIN_REACHABLE_WIDTH.min(window.width)) && height > 0
 }
 
+/// A reachable window larger than its screen (say a big external monitor was
+/// unplugged) shrinks to that screen's work area, never below `min`, and
+/// moves just enough to fit; when the screen is smaller than `min`, its
+/// top-left corner goes to the screen's top-left. Axes that already fit are
+/// left alone.
+fn fit_on(window: Rect, screen: Rect, min: (u32, u32)) -> Rect {
+    let axis = |origin: i32, size: u32, screen_origin: i32, space: u32, min: u32| {
+        if size <= space {
+            return (origin, size);
+        }
+        let size = space.max(min);
+        let last = i64::from(screen_origin) + i64::from(space) - i64::from(size);
+        let origin =
+            i64::from(origin).clamp(i64::from(screen_origin), last.max(i64::from(screen_origin)));
+        (i32::try_from(origin).unwrap_or(screen_origin), size)
+    };
+    let (x, width) = axis(window.x, window.width, screen.x, screen.width, min.0);
+    let (y, height) = axis(window.y, window.height, screen.y, screen.height, min.1);
+    Rect {
+        x,
+        y,
+        width,
+        height,
+    }
+}
+
 /// Where the window should be instead, or `None` when it is already fine.
 /// `screens` are work areas with the primary screen first; `min` is the
 /// minimum size in physical pixels.
@@ -59,8 +86,9 @@ pub(crate) fn corrected_placement(window: Rect, screens: &[Rect], min: (u32, u32
         height,
         ..window
     };
-    if screens.iter().any(|screen| is_reachable(sized, *screen)) {
-        return (sized != window).then_some(sized);
+    if let Some(screen) = screens.iter().find(|screen| is_reachable(sized, **screen)) {
+        let fitted = fit_on(sized, *screen, min);
+        return (fitted != window).then_some(fitted);
     }
     let screen = *screens.first()?;
     let width = width.min(screen.width).max(min.0);
@@ -172,7 +200,7 @@ mod tests {
             x,
             y,
             width: 2640,
-            height: 1760,
+            height: 1600,
         }
     }
 
@@ -193,7 +221,11 @@ mod tests {
 
     #[test]
     fn a_window_on_an_unplugged_screen_comes_back_centered_on_the_primary_one() {
-        let fixed = corrected_placement(window(4000, 300), &[LAPTOP], MIN).unwrap();
+        let saved = Rect {
+            height: 1760,
+            ..window(4000, 300)
+        };
+        let fixed = corrected_placement(saved, &[LAPTOP], MIN).unwrap();
         assert_eq!(fixed.width, 2640);
         assert_eq!(fixed.height, 1750);
         assert_eq!(fixed.x, 120);
@@ -225,6 +257,69 @@ mod tests {
         let fixed = corrected_placement(small, &[LAPTOP], MIN).unwrap();
         assert_eq!((fixed.x, fixed.y), (100, 100));
         assert_eq!((fixed.width, fixed.height), MIN);
+    }
+
+    #[test]
+    fn a_window_larger_than_its_screen_shrinks_to_fit_it() {
+        // Saved on a big external monitor that shared the laptop's origin.
+        let big = Rect {
+            x: 0,
+            y: 50,
+            width: 3400,
+            height: 2000,
+        };
+        let fixed = corrected_placement(big, &[LAPTOP], MIN).unwrap();
+        assert_eq!(fixed, LAPTOP);
+        assert!(is_reachable(fixed, LAPTOP));
+    }
+
+    #[test]
+    fn a_too_tall_window_lower_down_moves_up_to_fit() {
+        let tall = Rect {
+            x: 100,
+            y: 300,
+            width: 2000,
+            height: 2000,
+        };
+        let fixed = corrected_placement(tall, &[LAPTOP], MIN).unwrap();
+        assert_eq!(
+            fixed,
+            Rect {
+                x: 100,
+                y: 50,
+                width: 2000,
+                height: 1750,
+            }
+        );
+    }
+
+    #[test]
+    fn a_screen_smaller_than_the_minimum_keeps_the_minimum_with_its_corner_on_screen() {
+        let small_screen = Rect {
+            x: 0,
+            y: 25,
+            width: 1000,
+            height: 1200,
+        };
+        let big = Rect {
+            x: 400,
+            y: 300,
+            width: 3000,
+            height: 2000,
+        };
+        let fixed = corrected_placement(big, &[small_screen], MIN).unwrap();
+        assert_eq!(
+            fixed,
+            Rect {
+                x: 0,
+                y: 25,
+                width: 1200,
+                height: 1400,
+            }
+        );
+        assert!(is_reachable(fixed, small_screen));
+        // Already in place: nothing more to do next launch.
+        assert_eq!(corrected_placement(fixed, &[small_screen], MIN), None);
     }
 
     #[test]

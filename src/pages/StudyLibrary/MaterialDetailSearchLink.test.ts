@@ -169,7 +169,7 @@ it("PACKS-04 a material preparation link reaches the reading button on the full 
   vi.spyOn(offlineService, "offlineStudyEnabled").mockReturnValue(true);
   vi.spyOn(offlineService, "offlineContentReadiness").mockResolvedValue([{ materialId: "mat-saved", readiness: { state: "notPrepared" } }]);
   await open("#read-pdf-text");
-  const button = await screen.findByRole("button", { name: "Read this PDF's text" });
+  const button = await screen.findByRole("button", { name: "Read it now" });
   await waitFor(() => expect(document.activeElement).toBe(button));
   expect(button.closest("#read-pdf-text")).toBeTruthy();
   expect(screen.getByRole("tab", { name: "More" }).getAttribute("aria-selected")).toBe("true");

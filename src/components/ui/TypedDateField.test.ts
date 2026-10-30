@@ -130,6 +130,41 @@ describe("TypedDateField", () => {
     ]);
   });
 
+  it("selects the whole date when she clicks or tabs into a box that already holds one", () => {
+    const { input } = show({ value: "2026-10-29" });
+    expect(input.value).toBe("10/29/2026");
+    // A click: mouse-down, focus, then the mouse-up that would drop a caret mid-date.
+    fireEvent.mouseDown(input);
+    input.focus();
+    const up = new MouseEvent("mouseup", { bubbles: true, cancelable: true });
+    input.dispatchEvent(up);
+    expect(up.defaultPrevented).toBe(true);
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, input.value.length]);
+    // A later click inside the box she is already in places the caret as usual.
+    fireEvent.mouseDown(input);
+    const again = new MouseEvent("mouseup", { bubbles: true, cancelable: true });
+    input.dispatchEvent(again);
+    expect(again.defaultPrevented).toBe(false);
+    // Keyboard: leaving and tabbing back selects it all again.
+    input.blur();
+    input.setSelectionRange(3, 3);
+    input.focus();
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, input.value.length]);
+    // Typing then replaces it and reads the new day back.
+    fireEvent.change(input, { target: { value: "11052026" } });
+    expect(screen.getByText("That's Thursday, November 5, 2026.")).toBeTruthy();
+  });
+
+  it("leaves an empty box alone on focus", () => {
+    const { input } = show();
+    fireEvent.mouseDown(input);
+    input.focus();
+    const up = new MouseEvent("mouseup", { bubbles: true, cancelable: true });
+    input.dispatchEvent(up);
+    expect(up.defaultPrevented).toBe(false);
+    expect(input.value).toBe("");
+  });
+
   it("typedDateProblem names each problem", () => {
     expect(typedDateProblem("")).toBeUndefined();
     expect(typedDateProblem(" ", { required: true })).toBe("Choose a date.");

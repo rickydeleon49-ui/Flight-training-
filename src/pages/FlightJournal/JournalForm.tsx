@@ -954,7 +954,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
             <p className="small muted" style={{ marginBottom: "var(--space-5)" }}>
               {isDiscoveryPreset
                 ? "Flight times, aircraft, and school are optional. Copy only times agreed with your instructor, and keep the instructor-endorsed logbook authoritative."
-                : "Copy flight times from the entry agreed with her instructor. Categories can overlap, so the application does not calculate PIC, solo, instrument, or cross-country time. Keep the instructor-endorsed logbook as the authoritative record."}
+                : "Copy flight times from the entry agreed with your instructor. Categories can overlap, so the application does not calculate PIC, solo, instrument, or cross-country time. Keep the instructor-endorsed logbook as the authoritative record."}
             </p>
             {error ? (
               <p
