@@ -12,9 +12,9 @@ import {
 
 describe("plain status labels (POLISH-065)", () => {
   it("shows plain words while the stored values stay the same", () => {
-    expect(GOAL_STATUS_LABELS.working_on).toBe("In progress");
+    expect(GOAL_STATUS_LABELS.working_on).toBe("In Progress");
     expect(REVIEW_STATUS_LABELS.needs_review).toBe("Review again");
-    expect(GOAL_STATUS_OPTIONS.find((o) => o.value === "working_on")?.label).toBe("In progress");
+    expect(GOAL_STATUS_OPTIONS.find((o) => o.value === "working_on")?.label).toBe("In Progress");
     expect(REVIEW_STATUS_OPTIONS.find((o) => o.value === "needs_review")?.label).toBe("Review again");
     expect(Object.keys(GOAL_STATUS_LABELS)).toEqual(["not_started", "working_on", "comfortable", "completed", "paused"]);
     expect(Object.keys(REVIEW_STATUS_LABELS)).toEqual(["needs_review", "studying", "confident", "reference_only"]);

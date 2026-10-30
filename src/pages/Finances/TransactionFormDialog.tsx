@@ -189,7 +189,7 @@ export function TransactionFormDialog({
             <TextInput
               id={id}
               value={description}
-              placeholder={isExpense ? "Flight lesson" : "Saved paycheck money"}
+              placeholder={isExpense ? "e.g. Flight lesson" : "e.g. Saved paycheck money"}
               onChange={(e) => setDescription(e.target.value)}
             />
           )}

@@ -235,5 +235,5 @@ it("lets her clear a half-typed certificate form, and shows Clear only when some
 it("says 'In progress' in the instructor report when no goal is being worked on", () => {
   render(h(MemoryRouter, null, h(PilotToolkit)));
   fireEvent.click(screen.getByRole("tab", { name: "Instructor Report" }));
-  expect(screen.getByText("No goals marked In progress.")).toBeTruthy();
+  expect(screen.getByText("No goals marked In Progress.")).toBeTruthy();
 });

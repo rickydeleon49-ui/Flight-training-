@@ -359,7 +359,7 @@ function InstructorReport() {
                 ))}
               </ul>
             ) : (
-              <p className="small muted">No goals marked In progress.</p>
+              <p className="small muted">No goals marked In Progress.</p>
             )}
           </CardBody>
         </Card>
@@ -572,7 +572,7 @@ function RecordsTool({
             <Field label="Title">
               <TextInput
                 value={draft.title}
-                placeholder="Third-class medical"
+                placeholder="e.g. Third-class medical"
                 onChange={(event) =>
                   setDraft({ ...draft, title: event.target.value })
                 }

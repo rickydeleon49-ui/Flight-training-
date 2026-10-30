@@ -463,7 +463,7 @@ Each goal can contain:
 Possible statuses:
 
 - Not Started
-- In progress
+- In Progress
 - Comfortable
 - Completed
 - Paused

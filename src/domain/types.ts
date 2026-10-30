@@ -120,7 +120,7 @@ export type GoalStatus =
   | "paused";
 export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
   not_started: "Not Started",
-  working_on: "In progress",
+  working_on: "In Progress",
   comfortable: "Comfortable",
   completed: "Completed",
   paused: "Paused",
