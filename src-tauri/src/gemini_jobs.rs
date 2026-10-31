@@ -23,9 +23,12 @@
 //! dismissed it. At most `MAX_JOBS` are kept.
 //!
 //! Format: `{"schema": "hfd-gemini-jobs/1", "jobs": [...]}`, written beside the
-//! target and renamed over it. A journal that cannot be read is set aside as
-//! `gemini-jobs.unreadable-<unix-ms>.json` (never overwriting an earlier one)
-//! rather than trusted or silently deleted, and a fresh empty journal is
+//! target and renamed over it. Each job is read on its own: a record this
+//! build cannot read (a job kind from a newer build, say) is dropped, and the
+//! others are kept. A journal that cannot be read, or that had any record
+//! dropped, is first set aside as `gemini-jobs.unreadable-<unix-ms>.json`
+//! (never overwriting an earlier one; only the 5 newest are kept) rather than
+//! trusted or silently deleted, and a fresh journal holding the valid jobs is
 //! written. The set-aside copy is diagnostic only: its presence never blocks a
 //! later launch. Only a launch that cannot set the bad journal aside, or cannot
 //! write the fresh one, refuses new work. A legacy `gemini-jobs.unreadable.json`
@@ -259,9 +262,10 @@ impl Journal {
         }
         let unclean = match outcome {
             ReadOutcome::Read => false,
-            // The bad journal was set aside; start a fresh, empty one. Only if
-            // that fails is there no clean journal this launch.
-            ReadOutcome::SetAside => write(root, &[]).is_err(),
+            // The original was set aside; write a fresh journal holding only
+            // the jobs that were valid. Only if that fails is there no clean
+            // journal this launch.
+            ReadOutcome::SetAside => write(root, &jobs).is_err(),
             ReadOutcome::Stuck => true,
         };
         // A restore marker beside the journal means a restore committed
@@ -1046,7 +1050,8 @@ fn write(root: &Path, jobs: &[JobRecord]) -> Result<(), String> {
 enum ReadOutcome {
     /// Read, or absent: nothing to distrust.
     Read,
-    /// Unreadable, and moved aside under a unique diagnostic name.
+    /// Unreadable in whole or in part, and moved aside under a unique
+    /// diagnostic name; the valid jobs (if any) are still to be rewritten.
     SetAside,
     /// Unreadable, and still in place: nothing clean this launch.
     Stuck,
@@ -1065,12 +1070,48 @@ fn set_aside(root: &Path, path: &Path) -> std::io::Result<PathBuf> {
             continue;
         }
         std::fs::rename(path, &target)?;
+        prune_set_aside(root);
         return Ok(target);
     }
     Err(std::io::Error::new(
         std::io::ErrorKind::AlreadyExists,
         "no free name for the unreadable jobs list",
     ))
+}
+
+/// Set-aside copies kept at most; older ones are removed.
+const MAX_SET_ASIDE: usize = 5;
+
+/// Keep only the `MAX_SET_ASIDE` newest `gemini-jobs.unreadable-<digits>.json`.
+/// Nothing else is touched, never the legacy `gemini-jobs.unreadable.json`.
+fn prune_set_aside(root: &Path) {
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+    let mut found: Vec<(u128, PathBuf)> = entries
+        .flatten()
+        .filter_map(|entry| {
+            let name = entry.file_name().into_string().ok()?;
+            let stamp = name
+                .strip_prefix(JOURNAL_UNREADABLE_PREFIX)?
+                .strip_suffix(".json")?;
+            if stamp.is_empty() || !stamp.bytes().all(|b| b.is_ascii_digit()) {
+                return None;
+            }
+            if !entry.file_type().ok()?.is_file() {
+                return None;
+            }
+            Some((stamp.parse().ok()?, entry.path()))
+        })
+        .collect();
+    if found.len() <= MAX_SET_ASIDE {
+        return;
+    }
+    found.sort();
+    let excess = found.len() - MAX_SET_ASIDE;
+    for (_, path) in found.into_iter().take(excess) {
+        let _ = std::fs::remove_file(path);
+    }
 }
 
 /// The jobs on disk; an unreadable journal is set aside, never trusted.
@@ -1083,27 +1124,10 @@ fn read(root: &Path) -> (Vec<JobRecord>, ReadOutcome) {
         None
     } else {
         match std::fs::read(&path) {
-            Ok(bytes) => serde_json::from_slice::<File>(&bytes).ok().filter(|f| {
-                f.schema == SCHEMA
-                    && f.jobs.len() <= MAX_JOBS
-                    && f.jobs.iter().all(|j| {
-                        valid_job_id(&j.id)
-                            && valid_identity(&j.material_id)
-                            && valid_identity(&j.relative_path)
-                            && j.draft.as_ref().map_or(true, |d| {
-                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
-                            })
-                            && j.result.as_ref().map_or(true, |d| {
-                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
-                            })
-                    })
-                    && f.jobs
-                        .iter()
-                        .map(|j| &j.id)
-                        .collect::<std::collections::HashSet<_>>()
-                        .len()
-                        == f.jobs.len()
-            }),
+            Ok(bytes) => serde_json::from_slice::<Envelope>(&bytes)
+                .ok()
+                .filter(|f| f.schema == SCHEMA && f.jobs.len() <= MAX_JOBS)
+                .map(|f| keep_valid_jobs(f.jobs)),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 return (Vec::new(), ReadOutcome::Read)
             }
@@ -1111,12 +1135,55 @@ fn read(root: &Path) -> (Vec<JobRecord>, ReadOutcome) {
         }
     };
     match parsed {
-        Some(file) => (file.jobs, ReadOutcome::Read),
+        Some((jobs, false)) => (jobs, ReadOutcome::Read),
+        // Something was dropped, or nothing could be read: the original is
+        // kept aside first, so no record is ever lost by the rewrite.
+        Some((jobs, true)) => match set_aside(root, &path) {
+            Ok(_) => (jobs, ReadOutcome::SetAside),
+            Err(_) => (Vec::new(), ReadOutcome::Stuck),
+        },
         None => match set_aside(root, &path) {
             Ok(_) => (Vec::new(), ReadOutcome::SetAside),
             Err(_) => (Vec::new(), ReadOutcome::Stuck),
         },
     }
+}
+
+/// The journal's envelope, with each job still unparsed, so that one record
+/// this build cannot read (a job kind from a newer build, say) never costs
+/// the others.
+#[derive(Deserialize)]
+struct Envelope {
+    schema: String,
+    jobs: Vec<Value>,
+}
+
+/// Every job that parses and passes the per-job checks, and whether any was
+/// dropped. Jobs sharing an id are all dropped: which one is real is unknown.
+fn keep_valid_jobs(raw: Vec<Value>) -> (Vec<JobRecord>, bool) {
+    let total = raw.len();
+    let parsed: Vec<JobRecord> = raw
+        .into_iter()
+        .filter_map(|v| serde_json::from_value::<JobRecord>(v).ok())
+        .filter(|j| {
+            valid_job_id(&j.id)
+                && valid_identity(&j.material_id)
+                && valid_identity(&j.relative_path)
+                && j.draft.as_ref().map_or(true, |d| {
+                    serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                })
+                && j.result.as_ref().map_or(true, |d| {
+                    serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                })
+        })
+        .collect();
+    let mut seen: HashMap<String, usize> = HashMap::new();
+    for job in &parsed {
+        *seen.entry(job.id.clone()).or_default() += 1;
+    }
+    let kept: Vec<JobRecord> = parsed.into_iter().filter(|j| seen[&j.id] == 1).collect();
+    let dropped = kept.len() != total;
+    (kept, dropped)
 }
 
 /* ------------------------------------------------------------------ */
