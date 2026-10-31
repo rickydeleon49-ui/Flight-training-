@@ -397,6 +397,36 @@ fn claude_ask_uses_pdf_contract_and_rejects_unverified_quote() {
     assert_schema(&body["output_config"]["format"]["schema"]);
 }
 #[test]
+fn claude_ask_cut_off_by_max_tokens_says_to_ask_a_shorter_question() {
+    let fake = FakeClaude::start(vec![(
+        200,
+        json!({"stop_reason":"max_tokens","content":[{"type":"text","text":"{\"answer\":\"Partial"}]})
+            .to_string(),
+        None,
+    )]);
+    let (http, cache, budget) = (
+        generation_client().unwrap(),
+        cache(),
+        Budget::new(Duration::from_secs(30)),
+    );
+    let ctx = context(&fake, &http, &cache, &budget, &|_| {});
+    let error = tauri::async_runtime::block_on(crate::gemini_ask::ask_gemini_with(
+        &ctx,
+        None,
+        None,
+        "Card context",
+        "Why?",
+        &[],
+    ))
+    .unwrap_err();
+    assert_eq!(
+        error,
+        "Claude's answer got too long and was cut off. Try asking a shorter or more specific question."
+    );
+    assert_eq!(fake.log().len(), 1);
+    assert_eq!(fake.log()[0].json()["max_tokens"], 16000);
+}
+#[test]
 fn claude_text_source_uses_text_not_document() {
     let fake = FakeClaude::start(vec![reply(aid())]);
     let (http, cache, budget) = (
