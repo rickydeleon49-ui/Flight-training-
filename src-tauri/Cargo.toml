@@ -4,7 +4,8 @@ version = "0.6.5"
 description = "A personal flight-training companion"
 authors = ["Her Flight Deck"]
 edition = "2021"
-rust-version = "1.77.2"
+# File::try_lock became stable in Rust 1.89 (SINGLE-COPY).
+rust-version = "1.89"
 
 [lib]
 name = "her_flight_deck_lib"
@@ -45,6 +46,11 @@ unicode-normalization = "=0.1.25"
 # the locked Tauri 2.11 (2.5.0 / 2.10.x need Tauri 2.12).
 tauri-plugin-window-state = "2"
 tauri-plugin-log = "2"
+
+# Owner-approved 30 October 2026. 2.4.0 supports the locked Tauri 2.11;
+# newer plugin releases require Tauri 2.12. Rust-only, Apache-2.0 OR MIT.
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "=2.4.0"
 
 [dev-dependencies]
 # Tests only: a test-only SQL function holds a running statement for the

@@ -183,12 +183,114 @@ fn an_unreadable_journal_is_set_aside_not_trusted_or_deleted() {
         std::fs::write(dir.path().join(JOURNAL_FILE), &bytes).unwrap();
         let journal = Journal::open(dir.path());
         assert!(journal.list().is_empty(), "{label}");
+        let aside = set_aside_files(dir.path());
+        assert_eq!(aside.len(), 1, "{label}");
         assert_eq!(
-            std::fs::read(dir.path().join(JOURNAL_UNREADABLE)).unwrap(),
+            std::fs::read(&aside[0]).unwrap(),
             bytes,
             "{label}: kept as it was"
         );
     }
+}
+
+/// Set-aside unreadable journals (timestamped form), sorted.
+fn set_aside_files(root: &Path) -> Vec<PathBuf> {
+    let mut found: Vec<PathBuf> = std::fs::read_dir(root)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with(JOURNAL_UNREADABLE_PREFIX) && n.ends_with(".json"))
+        })
+        .collect();
+    found.sort();
+    found
+}
+
+/// JOBS-QUARANTINE: a set-aside journal is diagnostic only. The launch that
+/// set it aside, and every later one, accepts new work.
+#[test]
+fn an_unreadable_journal_set_aside_never_blocks_this_or_a_later_launch() {
+    let dir = TempDir::new("unreadable-not-sticky");
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+
+    let mut first = Journal::open(dir.path());
+    assert!(
+        first.list().is_empty(),
+        "nothing from the bad journal is offered"
+    );
+    assert_eq!(set_aside_files(dir.path()).len(), 1);
+    let fresh = read(dir.path());
+    assert!(
+        fresh.0.is_empty() && fresh.1 == ReadOutcome::Read,
+        "a fresh, empty journal replaces it"
+    );
+    let id = first
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .expect("the same launch accepts new work");
+    first.failed(&id, "synthetic").unwrap();
+    assert_eq!(first.acknowledge(&id), Ok(true));
+
+    // Next launch: the set-aside file is still there and changes nothing.
+    let mut second = Journal::open(dir.path());
+    assert!(second
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+
+    // A second bad journal never overwrites the first set-aside copy.
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"also bad").unwrap();
+    let mut third = Journal::open(dir.path());
+    let aside = set_aside_files(dir.path());
+    assert_eq!(aside.len(), 2, "both copies kept");
+    assert_eq!(std::fs::read(&aside[0]).unwrap(), b"{not json");
+    assert_eq!(std::fs::read(&aside[1]).unwrap(), b"also bad");
+    assert!(third
+        .begin(JobKind::StudyAid, "mat-c", "documents/c.pdf", SHA, None)
+        .is_ok());
+}
+
+/// Older versions left `gemini-jobs.unreadable.json` behind, and its mere
+/// presence blocked every launch. It is now left in place and ignored.
+#[test]
+fn a_legacy_unreadable_marker_does_not_block() {
+    let dir = TempDir::new("legacy-unreadable");
+    let legacy = dir.path().join("gemini-jobs.unreadable.json");
+    std::fs::write(&legacy, b"{old}").unwrap();
+    let mut journal = Journal::open(dir.path());
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
+    assert_eq!(std::fs::read(&legacy).unwrap(), b"{old}", "never deleted");
+}
+
+/// If the bad journal cannot be set aside, this launch has no clean journal:
+/// nothing is offered or started, and the refusal does not claim a restore.
+#[cfg(unix)]
+#[test]
+fn an_unreadable_journal_that_cannot_be_set_aside_blocks_only_that_launch() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TempDir::new("unreadable-stuck");
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
+    let mut stuck = Journal::open(dir.path());
+    let refused = stuck.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None);
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(stuck.list().is_empty());
+    assert_eq!(refused, Err(UNREADABLE.to_string()));
+    assert!(!UNREADABLE.contains("restor"));
+    assert_eq!(
+        std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap(),
+        b"{not json",
+        "left untouched, never trusted"
+    );
+
+    // Once the folder is writable again, the next launch recovers.
+    let mut next = Journal::open(dir.path());
+    assert_eq!(set_aside_files(dir.path()).len(), 1);
+    assert!(next
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
 }
 
 #[test]
@@ -471,12 +573,15 @@ fn r14_a_clear_that_really_fails_keeps_the_launch_quarantined() {
 /* ------------------------------------------------------------------ */
 
 #[test]
-fn r16_a_journal_too_large_to_read_back_is_never_written() {
+fn r16_eight_maximum_size_jobs_fit_the_journal_and_read_back() {
+    // Each job may hold a draft and a result at the per-answer cap; eight of
+    // them fit the journal with headroom, so a paid answer is never refused
+    // because others are waiting.
+    assert!(MAX_JOURNAL_BYTES >= (MAX_JOBS * 2 * MAX_RESULT_BYTES) as u64 * 3 / 2);
     let dir = TempDir::new("r16");
     let mut journal = Journal::open(dir.path());
     let near = MAX_RESULT_BYTES - 64;
     let mut kept = Vec::new();
-    let mut refused = None;
     for i in 0..MAX_JOBS {
         let id = journal
             .begin(
@@ -487,19 +592,12 @@ fn r16_a_journal_too_large_to_read_back_is_never_written() {
                 None,
             )
             .unwrap();
-        match journal.ready(&id, json!({"title": "x".repeat(near)})) {
-            Ok(()) => kept.push(id),
-            Err(_) => {
-                refused = Some(id);
-                break;
-            }
-        }
+        journal
+            .ready(&id, json!({"title": "x".repeat(near)}))
+            .unwrap();
+        kept.push(id);
     }
-    assert!(
-        refused.is_some(),
-        "the file bound is reached before eight near-limit answers"
-    );
-    // Everything already kept reads back intact after a restart.
+    // Everything kept reads back intact after a restart.
     let reopened = Journal::open(dir.path());
     let ready: Vec<String> = reopened
         .list()
@@ -508,7 +606,7 @@ fn r16_a_journal_too_large_to_read_back_is_never_written() {
         .map(|j| j.id)
         .collect();
     assert_eq!(ready, kept);
-    assert!(!dir.path().join(JOURNAL_UNREADABLE).exists());
+    assert!(set_aside_files(dir.path()).is_empty());
 }
 
 /* ------------------------------------------------------------------ */
@@ -800,4 +898,221 @@ fn pdf_kit_cancel_cleanup_failure_preserves_record() {
         Journal::open(dir.path()).list()[0].stage,
         JobStage::Cancelled
     );
+}
+
+/// Set aside, but the fresh journal cannot be written: no clean journal this
+/// launch, so nothing new starts. The original is only copied aside, so it is
+/// still the journal: the next launch, once writable, recovers every valid
+/// Ready answer she has not saved yet.
+#[test]
+fn an_unreadable_journal_whose_fresh_replacement_cannot_be_written_keeps_its_ready_jobs() {
+    let dir = TempDir::new("unreadable-no-fresh");
+    let (mut disk, a, b) = two_good_jobs(&dir);
+    disk["jobs"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"id": "job-from-a-newer-build", "kind": "kind-from-the-future"}));
+    let original = serde_json::to_vec(&disk).unwrap();
+    std::fs::write(dir.path().join(JOURNAL_FILE), &original).unwrap();
+    // A directory where the writer's temporary file goes makes every write fail.
+    std::fs::create_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
+    let mut blocked = Journal::open(dir.path());
+    assert_eq!(
+        set_aside_files(dir.path()).len(),
+        1,
+        "set aside all the same"
+    );
+    assert_eq!(
+        blocked.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None),
+        Err(UNREADABLE.to_string())
+    );
+    assert_eq!(
+        std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap(),
+        original,
+        "the failed rewrite leaves the original journal in place"
+    );
+    std::fs::remove_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
+    let mut next = Journal::open(dir.path());
+    assert_eq!(ids(&next), vec![a, b], "the Ready answers survive");
+    assert!(next.list().iter().all(|j| j.stage == JobStage::Ready));
+    assert_eq!(read(dir.path()).1, ReadOutcome::Read, "now rewritten clean");
+    assert!(next
+        .begin(JobKind::StudyAid, "mat-c", "documents/c.pdf", SHA, None)
+        .is_ok());
+}
+
+/// The copy just made is never the one pruned, even when earlier set-aside
+/// files carry later stamps (the Mac's clock went backwards).
+#[test]
+fn pruning_never_removes_the_copy_just_set_aside() {
+    let dir = TempDir::new("set-aside-clock");
+    let future = u128::from(u64::MAX) - 10;
+    for step in 0..6u128 {
+        std::fs::write(
+            dir.path()
+                .join(format!("{JOURNAL_UNREADABLE_PREFIX}{}.json", future + step)),
+            b"old",
+        )
+        .unwrap();
+    }
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    Journal::open(dir.path());
+    let aside = set_aside_files(dir.path());
+    assert_eq!(aside.len(), 5);
+    assert!(aside
+        .iter()
+        .any(|p| std::fs::read(p).unwrap() == b"{not json"));
+}
+
+/* ------------------------------------------------------------------ */
+/* JOBS-QUARANTINE follow-up: tolerant per-record read, set-aside cap   */
+/* ------------------------------------------------------------------ */
+
+/// A valid journal with two good jobs; returns its JSON and the two ids.
+fn two_good_jobs(dir: &TempDir) -> (Value, String, String) {
+    let mut journal = Journal::open(dir.path());
+    let a = journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&a, answer("Kept A")).unwrap();
+    let b = journal
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .unwrap();
+    journal.ready(&b, answer("Kept B")).unwrap();
+    let disk: Value =
+        serde_json::from_slice(&std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap()).unwrap();
+    (disk, a, b)
+}
+
+fn ids(journal: &Journal) -> Vec<String> {
+    journal.list().into_iter().map(|j| j.id).collect()
+}
+
+#[test]
+fn one_bad_job_among_good_ones_keeps_the_good_ones_and_sets_the_file_aside() {
+    let dir = TempDir::new("tolerant-bad");
+    let (mut disk, a, b) = two_good_jobs(&dir);
+    disk["jobs"]
+        .as_array_mut()
+        .unwrap()
+        .insert(1, json!({"id": "", "kind": "study-aid"}));
+    let original = serde_json::to_vec(&disk).unwrap();
+    std::fs::write(dir.path().join(JOURNAL_FILE), &original).unwrap();
+
+    let mut journal = Journal::open(dir.path());
+    assert_eq!(ids(&journal), vec![a.clone(), b.clone()]);
+    let aside = set_aside_files(dir.path());
+    assert_eq!(aside.len(), 1);
+    assert_eq!(std::fs::read(&aside[0]).unwrap(), original, "nothing lost");
+    let fresh = read(dir.path());
+    assert_eq!(fresh.1, ReadOutcome::Read, "the rewritten journal is clean");
+    assert_eq!(fresh.0.len(), 2);
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-c", "documents/c.pdf", SHA, None)
+        .is_ok());
+}
+
+#[test]
+fn an_unknown_job_kind_or_field_from_a_newer_build_never_drops_the_others() {
+    let dir = TempDir::new("tolerant-unknown");
+    let (mut disk, a, b) = two_good_jobs(&dir);
+    // A future field on a known job is ignored, not fatal.
+    disk["jobs"][0]["someFutureField"] = json!({"x": 1});
+    let mut future = disk["jobs"][1].clone();
+    future["id"] = json!("job-from-a-newer-build");
+    future["kind"] = json!("kind-from-the-future");
+    disk["jobs"].as_array_mut().unwrap().push(future);
+    std::fs::write(
+        dir.path().join(JOURNAL_FILE),
+        serde_json::to_vec(&disk).unwrap(),
+    )
+    .unwrap();
+
+    let journal = Journal::open(dir.path());
+    assert_eq!(ids(&journal), vec![a, b]);
+    assert_eq!(
+        set_aside_files(dir.path()).len(),
+        1,
+        "the unknown job is kept aside"
+    );
+}
+
+#[test]
+fn duplicate_ids_are_dropped_together_and_whole_file_failures_still_set_aside() {
+    let dir = TempDir::new("tolerant-dup");
+    let (mut disk, _a, b) = two_good_jobs(&dir);
+    let copy = disk["jobs"][0].clone();
+    disk["jobs"].as_array_mut().unwrap().push(copy);
+    std::fs::write(
+        dir.path().join(JOURNAL_FILE),
+        serde_json::to_vec(&disk).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(ids(&Journal::open(dir.path())), vec![b]);
+
+    // Whole-file failures (wrong schema; too many jobs) keep nothing.
+    let dir = TempDir::new("tolerant-envelope");
+    let (mut disk, _, _) = two_good_jobs(&dir);
+    let job = disk["jobs"][0].clone();
+    disk["jobs"] = json!(vec![job; MAX_JOBS + 1]);
+    std::fs::write(
+        dir.path().join(JOURNAL_FILE),
+        serde_json::to_vec(&disk).unwrap(),
+    )
+    .unwrap();
+    assert!(Journal::open(dir.path()).list().is_empty());
+    assert_eq!(set_aside_files(dir.path()).len(), 1);
+}
+
+#[test]
+fn only_the_five_newest_set_aside_files_are_kept_and_nothing_else_is_touched() {
+    let dir = TempDir::new("set-aside-cap");
+    for stamp in 1..=6u32 {
+        std::fs::write(
+            dir.path()
+                .join(format!("{JOURNAL_UNREADABLE_PREFIX}{stamp}.json")),
+            stamp.to_string(),
+        )
+        .unwrap();
+    }
+    let others = [
+        "gemini-jobs.unreadable.json",
+        "gemini-jobs.unreadable-notes.json",
+        "gemini-jobs.unreadable-12.json.bak",
+        "unrelated.json",
+    ];
+    for name in others {
+        std::fs::write(dir.path().join(name), name).unwrap();
+    }
+    // The seventh set-aside (current time, so the newest).
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    Journal::open(dir.path());
+
+    let aside = set_aside_files(dir.path());
+    let kept: Vec<String> = aside
+        .iter()
+        .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
+        .filter(|n| {
+            n[JOURNAL_UNREADABLE_PREFIX.len()..n.len() - 5]
+                .bytes()
+                .all(|b| b.is_ascii_digit())
+        })
+        .collect();
+    assert_eq!(kept.len(), 5, "{kept:?}");
+    for gone in [1, 2] {
+        assert!(!dir
+            .path()
+            .join(format!("{JOURNAL_UNREADABLE_PREFIX}{gone}.json"))
+            .exists());
+    }
+    assert!(kept
+        .iter()
+        .any(|n| std::fs::read(dir.path().join(n)).unwrap() == b"{not json"));
+    for name in others {
+        assert_eq!(
+            std::fs::read(dir.path().join(name)).unwrap(),
+            name.as_bytes(),
+            "{name} untouched"
+        );
+    }
 }

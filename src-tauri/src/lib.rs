@@ -4,6 +4,18 @@
 //! database setup, while product logic lives in the TypeScript layer behind
 //! repository abstractions.
 
+// rust-version 1.89 (for File::try_lock in startup_guard) turns on newer
+// style lints across older code; they are style-only, so they stay off here
+// rather than churning unrelated files.
+#![allow(
+    clippy::unnecessary_map_or,
+    clippy::manual_is_multiple_of,
+    clippy::manual_noop_waker,
+    clippy::chunks_exact_to_as_chunks,
+    // Older clippy that lacks one of the lints above must not fail -D warnings.
+    unknown_lints
+)]
+
 mod backup;
 mod card_library;
 mod card_reviews;
@@ -55,6 +67,7 @@ mod practice_sessions;
 mod repository_writes;
 mod secrets;
 mod skill_evidence;
+mod startup_guard;
 mod storage;
 mod study_export;
 mod study_packet;
@@ -270,23 +283,20 @@ pub fn run() {
     for window in &mut context.config_mut().app.windows {
         window.create = false;
     }
-    let builder = tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Official plugin must be registered before every other plugin.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _, _| {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }));
+    let builder = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        // Size, position and maximized only: visibility and decorations stay
-        // as `tauri.conf.json` sets them. The state file is in the app config
-        // folder, which complete backups never include (allowlist).
-        .plugin(
-            tauri_plugin_window_state::Builder::new()
-                .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
-                .build(),
-        )
-        .plugin(
-            tauri_plugin_sql::Builder::default()
-                .add_migrations(DB_URL, migrations())
-                .build(),
-        )
         // Quitting settles her pending work first (QUIT-01): our own Quit item
         // for Cmd-Q, and the close button or Cmd-W held until it is done.
         .manage(quit_settlement::Settlement::default())
@@ -307,7 +317,39 @@ pub fn run() {
         });
     let result = builder
         .setup(move |app| {
+            // Resolve without app_root(): that helper creates the folder.
+            // Refuse before logging, restore, backups, cleanup, or a webview
+            // can write anything in the library. QA uses its configured root.
+            let ownership = app.path().app_config_dir()
+                .map_err(|_| "Her Flight Deck couldn't find your study library. Please close the app and try again.".to_owned())
+                .and_then(|root| startup_guard::acquire(&root, app.package_info()));
+            let unlocked = match ownership {
+                Ok(lock) => { let unlocked = !lock.locked; app.manage(lock); unlocked }
+                Err(message) => {
+                    use tauri_plugin_dialog::DialogExt;
+                    let handle = app.handle().clone();
+                    app.dialog().message(message).title("Your study library")
+                        .show(move |_| handle.exit(1));
+                    return Ok(());
+                }
+            };
+            // Register data-writing plugins only after ownership is established.
+            // Window-state writes on Exit even without a window; SQL may preload
+            // databases from config during plugin setup.
+            app.handle().plugin(
+                tauri_plugin_window_state::Builder::new()
+                    .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
+                    .build(),
+            )?;
+            app.handle().plugin(
+                tauri_plugin_sql::Builder::default()
+                    .add_migrations(DB_URL, migrations())
+                    .build(),
+            )?;
             logging::attach(app.handle());
+            if unlocked {
+                log::warn!("This volume cannot lock the study library; opened without the lock.");
+            }
             // A user-requested full restore is staged during the previous run
             // and installed here, before SQLite opens the database. Startup
             // blocks if an ambiguous restore cannot be safely resolved.
@@ -418,6 +460,7 @@ pub fn run() {
             gemini::sections::resume_study_guide,
             gemini::sections::restart_study_guide,
             gemini::generate_practice_test,
+            gemini::study_kit::generate_study_kit,
             gemini_ask::ask_gemini,
             gemini_ask::cancel_ask_gemini,
             gemini::gemini_jobs,

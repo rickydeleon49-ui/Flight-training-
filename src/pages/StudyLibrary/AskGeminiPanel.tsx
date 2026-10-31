@@ -7,6 +7,9 @@ import { checkAiSubmission } from "@/logic/aiSafety";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { newId } from "@/lib/id";
 import { jumpToMaterialHeading } from "./materialJump";
+import { citedPdfPage, guideTopics, isVagueQuestion, sentLine, notAnsweredMessage, pageRangeLabel, vagueQuestionReply } from "@/logic/askHelp";
+import { MAX_OFFLINE_INPUT_BYTES } from "@/logic/offlineReadiness";
+import { offlineContentReadiness, offlineStudyEnabled, prepareOfflineContent, type OfflineReadiness } from "@/services/offlineContent";
 import { getGeminiStatus, askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
@@ -16,6 +19,10 @@ export interface AskGeminiPanelProps {
   buttonLabel?: string;
   initialQuestion?: string;
   evidenceMode?: boolean;
+  /** Card and practice Why?: the card's or question's source page. */
+  sourcePage?: number | null;
+  /** What the panel explains, for the "Sent:" line. */
+  contextNoun?: "card" | "question";
 }
 
 export function formatFlashcardContext(front: string, back: string, sourcePage?: number | null): string {
@@ -32,10 +39,14 @@ export function formatFlashcardContext(front: string, back: string, sourcePage?:
 interface ChatTurn {
   role: "user" | "model";
   text: string;
+  /** This answer came from the attached PDF, so its Sources are shown. */
+  evidence?: boolean;
   passages?: AskGeminiResult["passages"];
   notAnswered?: boolean;
   textNotRead?: boolean;
   model?: string;
+  /** Card and practice Why?: the PDF pages whose read text was sent. */
+  contextPages?: number[];
 }
 
 // "Read this PDF's text" lives under this heading in the material page.
@@ -46,7 +57,54 @@ interface InFlightAsk {
   unlisten?: () => void;
 }
 
-export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false }: AskGeminiPanelProps) {
+/** How often, and for how long, a background text read is looked at. */
+export const AUTO_READ_POLL_MS = 1500;
+export const AUTO_READ_MAX_MS = 120_000;
+
+function readPages(readiness: OfflineReadiness | null | undefined): number | null {
+  if (readiness?.state === "searchable" || readiness?.state === "partial") return readiness.pages;
+  return null;
+}
+
+/**
+ * Reads this PDF's text on her Mac (the same local read as "Read it now"), so
+ * Ask can check its sources. Nothing is sent anywhere. Resolves with the page
+ * count once read, or null when it isn't needed, isn't possible or fails;
+ * then Ask behaves as it did before.
+ */
+export async function readPdfTextInBackground(
+  materialId: string,
+  onReading: () => void,
+  isCurrent: () => boolean,
+  wait: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<number | null> {
+  try {
+    const [row] = await offlineContentReadiness([materialId]);
+    let readiness = row?.readiness;
+    if (!readiness || !isCurrent()) return null;
+    if (readiness.state === "notPrepared") {
+      onReading();
+      readiness = (await prepareOfflineContent(materialId)).readiness;
+    } else if (readiness.state === "preparing" || readiness.state === "checking") {
+      onReading();
+    } else {
+      return readPages(readiness);
+    }
+    const started = Date.now();
+    while ((readiness.state === "preparing" || readiness.state === "checking") && Date.now() - started < AUTO_READ_MAX_MS) {
+      await wait(AUTO_READ_POLL_MS);
+      if (!isCurrent()) return null;
+      const [next] = await offlineContentReadiness([materialId]);
+      if (!next) return null;
+      readiness = next.readiness;
+    }
+    return readPages(readiness);
+  } catch {
+    return null;
+  }
+}
+
+export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
   const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
   const [providerReady, setProviderReady] = useState(!isTauri());
   // If the check fails she is told so (not just shown greyed-out buttons);
@@ -66,6 +124,12 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
   const [error, setError] = useState<string | null>(null);
   const [stopped, setStopped] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
+  const [hint, setHint] = useState<string | null>(null);
+  const [readingText, setReadingText] = useState(false);
+  const [pageCount, setPageCount] = useState<number | null>(null);
+  const readRef = useRef<Promise<unknown> | null>(null);
   const lastAnswerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<InFlightAsk | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -75,7 +139,13 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
   // the material or its credential links immediately show the same refusal.
   const data = appData?.data;
   const material = data?.materials.find((item) => item.id === materialId);
-  const hasPdf = evidenceMode && !!material?.filePath?.toLowerCase().endsWith(".pdf");
+  const isPdfFile = !!material?.filePath?.toLowerCase().endsWith(".pdf");
+  const hasPdf = evidenceMode && isPdfFile;
+  // Card and practice Why? never send the PDF: the text read on this Mac of the
+  // cited page and two pages either side goes with the card instead.
+  const cardText = !evidenceMode && isPdfFile;
+  const topics = guideTopics(data?.aiStudySets.find((set) => set.sourceMaterialId === materialId)?.sections);
+  const range = pageRangeLabel(pageCount ?? material?.lineage?.childPageCount ?? null);
   const check = material && data
     ? checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context", company)
     : { allowed: false, reason: "This material is no longer available. Open it again before asking." };
@@ -101,11 +171,37 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     setError(null);
     setQuestion(initialQuestion);
     setIsLoading(false);
+    setHint(null);
+  };
+
+  const closePanel = () => {
+    resetConversation();
+    returnFocus.current = true;
+    setIsOpen(false);
   };
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus({ preventScroll: true });
+    else if (returnFocus.current) {
+      returnFocus.current = false;
+      openerRef.current?.focus({ preventScroll: true });
+    }
   }, [isOpen]);
+
+  // Opening Ask on a PDF whose text hasn't been read reads it on her Mac in
+  // the background, so answers can show checked Sources.
+  const readFile = isOpen && (hasPdf || cardText) && offlineStudyEnabled() && (material?.fileSize ?? 0) <= MAX_OFFLINE_INPUT_BYTES
+    ? material?.filePath ?? null
+    : null;
+  useEffect(() => {
+    if (!readFile) return;
+    let current = true;
+    const run = readPdfTextInBackground(materialId, () => { if (current) setReadingText(true); }, () => current)
+      .then((pages) => { if (current && pages) setPageCount(pages); })
+      .finally(() => { if (current) { setReadingText(false); readRef.current = null; } });
+    readRef.current = run;
+    return () => { current = false; readRef.current = null; setReadingText(false); };
+  }, [materialId, readFile]);
 
   useEffect(() => {
     if (answerVersion === 0) return;
@@ -127,6 +223,14 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     const trimmed = question.trim();
     if (!trimmed || isLoading) return;
     setStopped(false);
+    setHint(null);
+
+    // On Ask about this PDF a bare "why?" names no part yet; ask her which,
+    // without sending. A follow-up in a conversation, or a card's Why?, has context.
+    if (hasPdf && history.length === 0 && isVagueQuestion(trimmed)) {
+      setHint(vagueQuestionReply(topics));
+      return;
+    }
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setError("No internet right now. Your question is still here — press Ask again when you're back online.");
@@ -160,23 +264,32 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
       if (!material || !data) throw new Error("This material is no longer available. Open it again before asking.");
       const check = checkAiSubmission(material, data.toolkit.credentials, material.filePath ? "file" : "study_context", company);
       if (!check.allowed) throw new Error(check.reason);
+      // Let a background text read finish first, so this answer can use it.
+      if (readRef.current) {
+        await readRef.current.catch(() => {});
+        if (requestRef.current !== request) return;
+      }
       const result = await askGemini({
         requestId: request.id,
-        relativePath: evidenceMode ? material.filePath ?? null : null,
+        relativePath: evidenceMode || cardText ? material.filePath ?? null : null,
         materialId,
         context,
         question: trimmed,
         history: turnsToSend,
+        ...(evidenceMode ? {} : { cardWhy: { citedPage: cardText ? citedPdfPage(sourcePage, material.lineage) : null } }),
       });
 
       if (requestRef.current !== request) return;
       if (!result) return;
+      const evidence = hasPdf;
       setHistory((prev) => {
         const next = [
           ...prev,
           { role: "user" as const, text: trimmed },
           { role: "model" as const, text: result.answer, model: result.model,
-            ...(hasPdf ? {
+            ...(!evidenceMode && cardText ? { contextPages: result.contextPages ?? [] } : {}),
+            ...(evidence ? {
+              evidence: true,
               passages: result.passages,
               notAnswered: result.notAnswered,
               textNotRead: result.evidenceUnavailable === "text_not_read",
@@ -223,6 +336,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     return (
       <div style={{ marginTop: "var(--space-2)" }}>
         <Button
+          ref={openerRef}
           type="button"
           size="small"
           variant="secondary"
@@ -239,6 +353,13 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
       className="stack stack--3 ask-gemini-panel"
       role="region"
       aria-label={`Ask ${helper} helper`}
+      onKeyDown={(event) => {
+        // Inside a dialog, Escape closes the dialog itself.
+        if (event.key !== "Escape" || event.currentTarget.closest("dialog")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        closePanel();
+      }}
       style={{
         marginTop: "var(--space-2)",
         padding: "var(--space-3)",
@@ -247,7 +368,11 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
         background: "var(--bg-surface-raised, #f8fafc)",
       }}
     >
-      <div className="row row--between" style={{ alignItems: "center" }}>
+      {/* Stays at the top while answers scroll, so Ask another never moves. */}
+      <div
+        className="row row--between ask-gemini-panel__header"
+        style={{ alignItems: "center", position: "sticky", top: 0, zIndex: 1, background: "var(--bg-surface-raised, #f8fafc)" }}
+      >
         <span className="small bold" style={{ color: "var(--fg-default)" }}>
           Ask {helper}
         </span>
@@ -271,10 +396,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
             type="button"
             size="small"
             variant="ghost"
-            onClick={() => {
-              resetConversation();
-              setIsOpen(false);
-            }}
+            onClick={closePanel}
             aria-label={`Close Ask ${helper}`}
           >
             Close
@@ -283,7 +405,9 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
       </div>
 
       <p className="tiny dim" role="note" style={{ margin: 0, overflowWrap: "anywhere" }}>
-        {material?.filePath
+        {cardText
+          ? `Your question, this ${contextNoun}, the text of the pages around its source page (if read on this Mac) and recent conversation are sent to ${company}. The PDF itself is not sent.`
+          : evidenceMode && material?.filePath
           ? `Your question, full PDF “${material.originalFileName || material.title}”, study context and recent conversation are sent to ${company}.`
           : `Your question, study context and recent conversation are sent to ${company}.`}
       </p>
@@ -305,14 +429,17 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
                 {turn.role === "user" ? "You" : (turn.model?.startsWith("claude-") ? "Claude" : "Gemini")}
               </span>
               <p className="small ai-copy" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                {turn.text}
+                {turn.role === "model" && turn.evidence && turn.notAnswered ? notAnsweredMessage(range, topics) : turn.text}
               </p>
               {turn.role === "model" && (
                 <p className="tiny dim" style={{ margin: "var(--space-1) 0 0" }}>
                   Answered by {geminiModelName(turn.model ?? "")}
                 </p>
               )}
-              {hasPdf && turn.role === "model" && !turn.notAnswered && (
+              {turn.role === "model" && turn.contextPages && (
+                <p className="tiny dim" style={{ margin: 0 }}>{sentLine(contextNoun, turn.contextPages)}</p>
+              )}
+              {turn.evidence && turn.role === "model" && !turn.notAnswered && (
                 turn.passages && turn.passages.length > 0 ? (
                   <details className="small" style={{ marginTop: "var(--space-1)" }}>
                     <summary style={{ minHeight: 44, alignContent: "center", cursor: "pointer" }}>
@@ -345,6 +472,8 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
       )}
 
       {stopped && <p className="small dim" role="status">Stopped that question.</p>}
+
+      {hint && <p className="small" role="status" style={{ margin: 0 }}>{hint}</p>}
 
       {(refusal || error) && (
         <div
@@ -388,6 +517,9 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
             {isLoading ? "Asking…" : "Ask"}
           </Button>
         </div>
+        {readingText && (
+          <p className="tiny dim" role="status" style={{ margin: 0 }}>Reading this PDF on your Mac…</p>
+        )}
         {isLoading && progress && (
           <p className="small dim" role="status" style={{ margin: 0 }}>{progress}</p>
         )}

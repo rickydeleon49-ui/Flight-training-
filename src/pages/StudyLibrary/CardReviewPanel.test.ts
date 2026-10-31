@@ -110,8 +110,8 @@ function deferred<T>() {
 }
 
 async function openSession() {
-  await waitFor(() => expect(screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ }).hasAttribute("disabled")).toBe(false));
-  fireEvent.click(screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ }));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(false));
+  fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }));
   return screen.findByRole("button", { name: "Show answer" });
 }
 
@@ -314,7 +314,7 @@ describe("card reviews in MaterialDetail", () => {
   it("full session with keyboard, then done-for-now; no Gemini, network or practice write", async () => {
     await seed();
     renderDetail();
-    expect((await reviewHeading()).textContent).toBe("3 new cards · none due");
+    expect((await reviewHeading()).textContent).toBe("3 new cards");
     expect(screen.getByText("Card 1 of 3")).toBeTruthy(); // the browse carousel stays
     await openSession();
     expect(sessionRegion().getByText(/^Card 1 of 3 · new/)).toBeTruthy();
@@ -365,7 +365,7 @@ describe("card reviews in MaterialDetail", () => {
 
     vi.setSystemTime(new Date(at(T0, 9 * MINUTE)));
     const nine = renderDetail();
-    expect((await reviewHeading()).textContent).toBe("1 new card · none due");
+    expect((await reviewHeading()).textContent).toBe("1 new card");
     nine.unmount();
 
     vi.setSystemTime(new Date(at(T0, 10 * MINUTE)));
@@ -507,7 +507,7 @@ describe("card reviews in MaterialDetail", () => {
     expect(resets).toHaveLength(2);
     expect(resets[1]).toEqual(resets[0]);
     expect(await counts()).toMatchObject({ generation: 1, events: 0, states: 0 });
-    await waitFor(() => expect(screen.getByRole("heading", { level: 3, name: "3 new cards · none due" })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("heading", { level: 3, name: "3 new cards" })).toBeTruthy());
   });
 
   it("Reset: a committed reset whose acknowledgement was lost is confirmed by Check again, never sent twice", async () => {
@@ -542,7 +542,7 @@ describe("card reviews in MaterialDetail", () => {
     expect(await counts()).toMatchObject({ events: 0, generation: 1 });
     const writes = vi.spyOn(db, "saveCardReviewAtomically");
     fireEvent.click(button("Refresh"));
-    expect((await reviewHeading()).textContent).toBe("3 new cards · none due");
+    expect((await reviewHeading()).textContent).toBe("3 new cards");
     expect(writes).not.toHaveBeenCalled();
   });
 
@@ -563,10 +563,10 @@ describe("card reviews in MaterialDetail", () => {
     fireEvent.click(button("Pause this card (not now)"));
     expect(await screen.findByText("Paused. It stays out of reviews until you resume it.")).toBeTruthy();
     expect(await screen.findByRole("heading", { name: "Paused and flagged cards" })).toBeTruthy();
-    expect((await reviewHeading()).textContent).toBe("2 new cards · none due");
+    expect((await reviewHeading()).textContent).toBe("2 new cards");
     expect(await counts()).toMatchObject({ events: 0, states: 1 });
     fireEvent.click(await screen.findByRole("button", { name: `Resume card: ${CARDS[0]!.front}` }));
-    await waitFor(async () => expect((await reviewHeading()).textContent).toBe("3 new cards · none due"));
+    await waitFor(async () => expect((await reviewHeading()).textContent).toBe("3 new cards"));
   });
 
   it("all cards paused or flagged, damaged cards, no cards, and a read failure each show their own state", async () => {
@@ -588,7 +588,7 @@ describe("card reviews in MaterialDetail", () => {
     }
     const paused = renderDetail();
     expect((await reviewHeading()).textContent).toBe("Nothing to review — all cards are paused or flagged.");
-    expect(screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(true);
     paused.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = ? WHERE source_material_id = ?", [
@@ -601,7 +601,7 @@ describe("card reviews in MaterialDetail", () => {
         "These saved cards can't be reviewed because they're damaged. Your study guide is still here. Regenerating or re-importing creates a fresh set.",
       ),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Review (\d+ cards?|cards)$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ })).toBeNull();
     damaged.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = '[]' WHERE source_material_id = ?", [M]);
@@ -652,7 +652,7 @@ describe("card reviews in MaterialDetail", () => {
       }),
     );
     await reviewHeading();
-    const reviewBtn = screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ });
+    const reviewBtn = screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ });
     expect(reviewBtn.hasAttribute("disabled")).toBe(false);
 
     // Click Review cards -> enters starting state and reaches held getDueQueue
@@ -675,10 +675,10 @@ describe("card reviews in MaterialDetail", () => {
     await act(async () => queueHold.resolve([]));
 
     // Button is back to "Review cards" and enabled
-    await waitFor(() => expect(screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ }).hasAttribute("disabled")).toBe(false));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(false));
 
     // Can start review session cleanly on v2
-    fireEvent.click(screen.getByRole("button", { name: /^Review (\d+ cards?|cards)$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }));
     expect(await screen.findByRole("button", { name: "Show answer" })).toBeTruthy();
   });
 
@@ -789,7 +789,7 @@ describe("card reviews in MaterialDetail", () => {
     };
     await seed([userCard, pdfCard]);
     renderDetail();
-    expect((await reviewHeading()).textContent).toBe("2 new cards · none due (1 you wrote, 1 from your PDF)");
+    expect((await reviewHeading()).textContent).toBe("2 new cards (1 you wrote, 1 from your PDF)");
   });
 
   it("shows where 24 new cards come from: 1 you wrote, 23 from your PDF", async () => {
@@ -802,13 +802,13 @@ describe("card reviews in MaterialDetail", () => {
     }));
     await seed([userCard, ...pdfCards]);
     renderDetail();
-    expect((await reviewHeading()).textContent).toBe("24 new cards · none due (1 you wrote, 23 from your PDF)");
+    expect((await reviewHeading()).textContent).toBe("24 new cards — 10 at a time (1 you wrote, 23 from your PDF)");
   });
 
   it("keeps the old sentence when all cards come from a single source", async () => {
     await seed(CARDS);
     renderDetail();
-    expect((await reviewHeading()).textContent).toBe("3 new cards · none due");
+    expect((await reviewHeading()).textContent).toBe("3 new cards");
   });
 });
 

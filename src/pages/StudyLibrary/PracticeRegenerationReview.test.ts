@@ -90,6 +90,10 @@ describe("reviewing regenerated practice questions", () => {
     const scope = await review();
     expect(await snapshot()).toEqual(before);
     expect(await receipts()).toHaveLength(1);
+    // Answers start hidden so reading the new questions doesn't spoil them.
+    expect(scope.queryByText("Correct answer: Altimeter")).toBeNull();
+    expect(scope.queryByText("Explanation: Read the altimeter.")).toBeNull();
+    fireEvent.click(scope.getByRole("button", { name: "Show answers" }));
     expect(scope.getByText("Correct answer: Altimeter")).toBeTruthy();
     expect(scope.getByText("Explanation: Read the altimeter.")).toBeTruthy();
     expect(scope.getByLabelText("Keep my questions")).toHaveProperty("checked", true);
@@ -123,6 +127,7 @@ describe("reviewing regenerated practice questions", () => {
     const scope = await review();
     const held = within(scope.getByRole("region", { name: "Left out" }));
     expect(held.getByLabelText(`Bring it back: ${old.question}`)).toHaveProperty("checked", false);
+    fireEvent.click(scope.getByRole("button", { name: "Show answers" }));
     expect(held.getAllByText(`Correct answer: ${old.options[0]}`)).toHaveLength(2); // candidate + earlier snapshot
     if (bringBack) fireEvent.click(held.getByLabelText(`Bring it back: ${old.question}`));
     await save(scope);
@@ -135,6 +140,7 @@ describe("reviewing regenerated practice questions", () => {
       correctIndex: 0, explanation: "Keep the upwind wing lowered.", sourcePage: 4 }] });
     const scope = await review();
     const near = scope.getByRole("region", { name: "Needs your choice" });
+    fireEvent.click(scope.getByRole("button", { name: "Show answers" }));
     expect([...near.querySelectorAll("ins")].map((node) => node.textContent)).toEqual(["added: landing ", "added: lowered"]);
     expect([...near.querySelectorAll("del")].map((node) => node.textContent)).toEqual(["removed: low"]);
     for (const node of near.querySelectorAll("ins, del")) expect(node.querySelector(".visually-hidden")).not.toBeNull();

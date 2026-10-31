@@ -113,7 +113,7 @@ export interface GenerationJobIdentity {
   checkpointed?: boolean;
 }
 
-export type GeminiJobKind = "study-aid" | "practice-test" | "flashcards";
+export type GeminiJobKind = "study-aid" | "practice-test" | "flashcards" | "study-kit";
 export type GeminiJobStage = "running" | "ready" | "failed" | "interrupted" | "cancelled";
 
 /**
@@ -229,6 +229,11 @@ export interface AskGeminiParams {
   context: string;
   question: string;
   history?: AskGeminiHistoryTurn[];
+  /**
+   * Card and practice Why?: the PDF itself is never sent; the text read on
+   * this Mac of the cited page and two pages either side goes instead.
+   */
+  cardWhy?: { citedPage: number | null };
 }
 
 export interface AskGeminiResult {
@@ -239,6 +244,8 @@ export interface AskGeminiResult {
   notAnswered?: boolean;
   /** Set only when a PDF answer could not be checked because its text has not been read yet. */
   evidenceUnavailable?: "text_not_read" | null;
+  /** Card and practice Why?: the PDF pages whose read text was sent ([] = none). */
+  contextPages?: number[];
 }
 
 /** Only the one known reason passes; anything else means "no hint". */
@@ -279,6 +286,7 @@ export async function askGemini(
     context: params.context,
     question: params.question,
     history: params.history ?? [],
+    ...(params.cardWhy ? { cardWhy: params.cardWhy } : {}),
   }));
 }
 
@@ -306,7 +314,7 @@ export async function cancelAskGemini(requestId: string): Promise<void> {
 export async function listGeminiJobs(): Promise<GeminiJobRecord[]> {
   if (!isTauri()) return [];
   const jobs = await invoke<GeminiJobRecord[]>("gemini_jobs");
-  return jobs.filter(job => job.kind === "study-aid" || job.kind === "practice-test");
+  return jobs.filter(job => job.kind === "study-aid" || job.kind === "practice-test" || job.kind === "study-kit");
 }
 
 /** A finished generation was saved or dismissed: the journal forgets it. */
@@ -440,4 +448,16 @@ export async function restartStudyGuide(jobId: string, consent: boolean, request
   try {
     return await invoke<GeneratedStudyAid & GenerationJobIdentity>("restart_study_guide", { jobId, consent, request });
   } catch (error) { throw sectionGuideError(error); }
+}
+
+export interface GeneratedStudyKit {
+  parts: {
+    guide?: { answer?: GeneratedStudyAid; error?: string };
+    cards?: { answer?: GeneratedStudyAid; error?: string };
+    questions?: { answer?: GeneratedPracticeTest; error?: string };
+  };
+}
+export async function generateStudyKit(target: { filePath: string; materialId: string }, baseRevision: string | null, practiceRevision: string | null, requestId: string): Promise<GeneratedStudyKit & GenerationJobIdentity> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<GeneratedStudyKit & GenerationJobIdentity>("generate_study_kit", { relativePath: target.filePath, materialId: target.materialId, baseRevision, practiceRevision, requestId });
 }

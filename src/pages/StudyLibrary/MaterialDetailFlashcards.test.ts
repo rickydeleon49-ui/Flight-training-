@@ -604,9 +604,9 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     expect(within(guideCard).getByText("Study guide")).toBeTruthy();
     expect(within(guideCard).queryByText("Guide and flashcards")).toBeNull();
 
-    // Text says "build a study guide section by section"
+    // Text says "write a basic study guide in one go"
     expect(
-      within(guideCard).getByText(/Gemini will read this PDF and build a study guide section by section/),
+      within(guideCard).getByText(/Gemini will read this PDF and write a basic study guide in one go/),
     ).toBeTruthy();
     expect(within(guideCard).queryByText(/guide and flashcards/)).toBeNull();
 
@@ -617,7 +617,7 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     // It has NO Target cards combobox
     expect(within(dialog).queryByRole("combobox", { name: "Target cards" })).toBeNull();
     // One short sentence under the details toggle (POLISH-064b).
-    expect(within(dialog).getByText("Finished sections are kept if you stop.")).toBeTruthy();
+    expect(within(dialog).getByText("If you stop, any finished part is kept.")).toBeTruthy();
     expect(within(dialog).queryByText(/Your guide is built section by section/)).toBeNull();
   });
 

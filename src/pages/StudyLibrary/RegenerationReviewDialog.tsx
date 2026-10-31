@@ -22,6 +22,7 @@ import { reviewedSaveOf, type ReviewedRegeneration } from "@/state/reviewedSaveC
 import type { GeminiJob } from "@/state/GeminiJobs";
 
 import { ChangedWords } from "./ChangedWords";
+import { GuideBody } from "./GuideBody";
 
 const describe = (entry: PreviewItem) =>
   entry.item.kind === "summary" ? "Summary" : entry.item.kind === "section" ? `Section: ${entry.item.fields[0]}` : `Card: ${entry.item.fields[0]}`;
@@ -30,7 +31,8 @@ const describe = (entry: PreviewItem) =>
  * An item's full text, so she can judge it before keeping or leaving it out.
  * With `compare`, the words that differ from the other version are highlighted.
  */
-function ItemContent({ kind, fields, compare }: {
+/** Exported for its rendering test. */
+export function ItemContent({ kind, fields, compare }: {
   kind: PreviewItem["item"]["kind"];
   fields: readonly string[];
   compare?: { fields: readonly string[]; show: "added" | "removed" };
@@ -42,7 +44,13 @@ function ItemContent({ kind, fields, compare }: {
       <p className="tiny wrap-anywhere">
         <strong>{kind === "card" ? "Question: " : ""}{field(0)}</strong>
       </p>
-      <p className="tiny wrap-anywhere ai-copy">{kind === "card" ? "Answer: " : ""}{field(1)}</p>
+      {kind === "section" && !compare ? (
+        // The same renderer as the saved guide, so headings and bullets read
+        // as they will once saved (not as raw "###" and "-").
+        <GuideBody text={fields[1] ?? ""} className="tiny wrap-anywhere ai-copy" />
+      ) : (
+        <p className="tiny wrap-anywhere ai-copy">{kind === "card" ? "Answer: " : ""}{field(1)}</p>
+      )}
     </div>
   );
 }
@@ -208,7 +216,11 @@ export function RegenerationReviewDialog({
         if (!busyRef.current) onClose();
       }}
       title={`Review the new ${what}`}
-      description={`Your ${what} ${job.kind === "flashcards" ? "have" : "has"} items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.}`}
+      description={
+        job.studyKitPart && mine.length === 0 && !mySummary
+          ? `You already have ${job.kind === "flashcards" ? "saved flashcards" : "a saved study guide"}. Choose what to keep; nothing is saved until you do.`
+          : `Your ${what} ${job.kind === "flashcards" ? "have" : "has"} items you wrote, corrected or deleted. Choose what to keep; nothing is saved until you do.`
+      }
       dismissible={!busy}
       footer={
         <>

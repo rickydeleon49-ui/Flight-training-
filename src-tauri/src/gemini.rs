@@ -1343,6 +1343,7 @@ pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
             .list()
             .into_iter()
             .filter(|r| r.kind != JobKind::PdfKit)
+            .flat_map(study_kit::review_records)
             .collect()
     }))
 }
@@ -1433,6 +1434,9 @@ pub fn cancel_gemini_job(
 #[tauri::command]
 pub async fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
     let root = app_root(&app)?;
+    if job_id.contains('#') {
+        return gemini_jobs::with(&root, |j| j.acknowledge_kit_part(&job_id));
+    }
     let key = current_key(&root).ok().flatten();
     let (removed, descriptor) = sections::take_discard_at(&root, &job_id, prepared_sources())?;
     if let (true, Some((descriptor, sha)), Some(key), Ok(http)) =
@@ -1607,6 +1611,8 @@ async fn study_aid_request(
     Ok(result)
 }
 
+pub(crate) const OUTPUT_LIMIT_MESSAGE: &str = "Gemini's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.";
+
 /// Pull the model's actual answer out of Gemini's response envelope.
 ///
 /// Shared by every kind of generation this application asks Gemini for, so a
@@ -1627,7 +1633,7 @@ pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     {
         match reason {
             "STOP" => {},
-            "MAX_TOKENS" => return Err("Gemini's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.".to_string()),
+            "MAX_TOKENS" => return Err(OUTPUT_LIMIT_MESSAGE.to_string()),
             "SAFETY" | "RECITATION" | "BLOCKLIST" | "PROHIBITED_CONTENT" | "SPII" => return Err("Gemini blocked this answer. Nothing was saved; check the selected source before trying again.".to_string()),
             _ => return Err("Gemini stopped before completing its answer. Nothing was saved; try a smaller selected source.".to_string()),
         }
@@ -1689,7 +1695,132 @@ fn sanitize_practice_test(
             "Gemini's practice test did not come back usable. Try generating it again.".to_string(),
         );
     }
+    // Models put the correct answer in the same place far too often (mostly
+    // the second option), and shuffling each question on its own still lets
+    // one letter win a short test. So the correct positions are dealt across
+    // the whole test from seeded rounds of every position (each position
+    // comes up once per round), seeded by the test's own question texts.
+    let seed = test
+        .questions
+        .iter()
+        .flat_map(|q| q.question.bytes().chain(std::iter::once(0)))
+        .fold(FNV_OFFSET, fnv_step);
+    let mut next = seeded_random(seed);
+    let width = test
+        .questions
+        .iter()
+        .map(|q| q.options.len())
+        .max()
+        .unwrap_or(2);
+    let mut round: Vec<usize> = Vec::new();
+    for question in &mut test.questions {
+        if keeps_model_order(question) {
+            continue;
+        }
+        if round.is_empty() {
+            round = (0..width).collect();
+            for i in (1..round.len()).rev() {
+                let j = (next() % (i as u64 + 1)) as usize;
+                round.swap(i, j);
+            }
+        }
+        let target = round.pop().unwrap_or(0) % question.options.len();
+        place_correct_option(question, target);
+    }
     Ok(test)
+}
+
+const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+
+fn fnv_step(h: u64, b: u8) -> u64 {
+    (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3)
+}
+
+/// xorshift64*: stable across builds and platforms.
+fn seeded_random(seed: u64) -> impl FnMut() -> u64 {
+    let mut state = seed | 1;
+    move || {
+        state ^= state >> 12;
+        state ^= state << 25;
+        state ^= state >> 27;
+        state.wrapping_mul(0x2545_f491_4f6c_dd1d)
+    }
+}
+
+/// "All of the above", "Both A and B", "None of these": an option that
+/// points at the others only reads right in its original position.
+fn refers_to_other_options(option: &str) -> bool {
+    let o = option.to_lowercase();
+    [
+        "of the above",
+        "of these",
+        "of the other",
+        "both a",
+        "both b",
+        "both c",
+        "a and b",
+        "b and c",
+        "a and c",
+    ]
+    .iter()
+    .any(|p| o.contains(p))
+}
+
+/// An explanation that names an option by letter or position, or an option
+/// that points at the others, would read wrong after a reorder, so that
+/// question keeps the model's order.
+fn keeps_model_order(question: &PracticeQuestion) -> bool {
+    names_an_option(&question.explanation)
+        || question.options.iter().any(|o| refers_to_other_options(o))
+}
+
+/// Put the correct option at `target` and order the others deterministically,
+/// seeded by the question's own text.
+fn place_correct_option(question: &mut PracticeQuestion, target: usize) {
+    let correct = question.correct_index as usize;
+    let mut options = std::mem::take(&mut question.options);
+    let answer = options.remove(correct);
+    let mut next = seeded_random(question.question.bytes().fold(FNV_OFFSET, fnv_step));
+    for i in (1..options.len()).rev() {
+        let j = (next() % (i as u64 + 1)) as usize;
+        options.swap(i, j);
+    }
+    let target = target.min(options.len());
+    options.insert(target, answer);
+    question.options = options;
+    question.correct_index = target as u32;
+}
+
+/// Whether text refers to an answer choice by letter or position ("option B",
+/// "(c)", "the first choice"), which a reorder would make wrong.
+fn names_an_option(text: &str) -> bool {
+    let words: Vec<&str> = text
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+    let letter = |w: &str| {
+        w.len() == 1
+            && w.chars()
+                .all(|c| c.is_ascii_alphabetic() || c.is_ascii_digit())
+    };
+    let lower = text.to_lowercase();
+    if ["(a)", "(b)", "(c)", "(d)", "(e)"]
+        .iter()
+        .any(|t| lower.contains(t))
+    {
+        return true;
+    }
+    words.windows(2).any(|pair| {
+        let (first, second) = (pair[0].to_lowercase(), pair[1].to_lowercase());
+        (matches!(
+            first.as_str(),
+            "option" | "options" | "choice" | "choices" | "answer" | "letter"
+        ) && letter(pair[1]))
+            || (matches!(
+                first.as_str(),
+                "first" | "second" | "third" | "fourth" | "fifth" | "last"
+            ) && matches!(second.as_str(), "option" | "choice" | "answer"))
+    }) || words.iter().any(|w| matches!(*w, "B" | "C" | "D" | "E"))
 }
 
 /// Create a multiple-choice practice test from the selected study document.
@@ -1779,7 +1910,7 @@ async fn practice_test_with(
          Return JSON only with: title (string) and questions (10-20 objects with question, options as an array of \
          3 to 5 short answer choices, correctIndex as the zero-based index into options of the single correct \
          choice, explanation, and sourcePage as a page number or null). Each question must have exactly one \
-         correct option. Keep the questions clear for a student pilot studying this material. When the source is \
+         correct option. Never refer to option letters or positions in explanations. Keep the questions clear for a student pilot studying this material. When the source is \
          ambiguous or may be outdated, say so in the explanation rather than guessing. This is a practice test, \
          not operational flight instruction; the learner must verify every answer against current FAA material, \
          aircraft documentation, and their instructor.";
@@ -2521,6 +2652,161 @@ mod tests {
         assert_eq!(sanitized.questions.len(), 2);
     }
 
+    fn four_options(question: &str, explanation: &str) -> PracticeQuestion {
+        PracticeQuestion {
+            question: question.to_string(),
+            options: ["Lift", "Drag", "Weight", "Thrust"]
+                .map(String::from)
+                .to_vec(),
+            correct_index: 1,
+            explanation: explanation.to_string(),
+            source_page: Some(1),
+        }
+    }
+
+    fn one_question_test(q: PracticeQuestion) -> GeneratedPracticeTest {
+        GeneratedPracticeTest {
+            title: "One".to_string(),
+            questions: vec![q],
+            model: String::new(),
+        }
+    }
+
+    fn ten_question_test() -> GeneratedPracticeTest {
+        GeneratedPracticeTest {
+            title: "Forces".to_string(),
+            questions: (0..10)
+                .map(|i| {
+                    let mut q = four_options(
+                        &format!("Live-bench question {i} about the four forces?"),
+                        "Drag opposes thrust.",
+                    );
+                    // The model mostly picks one position; here always A.
+                    q.options.swap(0, 1);
+                    q.correct_index = 0;
+                    q
+                })
+                .collect(),
+            model: String::new(),
+        }
+    }
+
+    #[test]
+    fn correct_positions_are_balanced_across_a_ten_question_test() {
+        let first = sanitize_practice_test(ten_question_test()).unwrap();
+        let again = sanitize_practice_test(ten_question_test()).unwrap();
+        let mut counts = [0; 4];
+        for (a, b) in first.questions.iter().zip(&again.questions) {
+            assert_eq!(a.options, b.options, "same order every time");
+            assert_eq!(a.correct_index, b.correct_index);
+            assert_eq!(a.options[a.correct_index as usize], "Drag");
+            counts[a.correct_index as usize] += 1;
+        }
+        for (position, count) in counts.iter().enumerate() {
+            assert!(
+                (2..=3).contains(count),
+                "position {position} correct {count} times: {counts:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn skipped_questions_keep_their_order_inside_a_balanced_test() {
+        let mut test = ten_question_test();
+        test.questions[3].explanation = "Option A is right: drag opposes thrust.".to_string();
+        test.questions[7].options[3] = "All of the above".to_string();
+        let before3 = test.questions[3].options.clone();
+        let before7 = test.questions[7].options.clone();
+        let sanitized = sanitize_practice_test(test).unwrap();
+        assert_eq!(sanitized.questions[3].options, before3);
+        assert_eq!(sanitized.questions[3].correct_index, 0);
+        assert_eq!(sanitized.questions[7].options, before7);
+        assert_eq!(sanitized.questions[7].correct_index, 0);
+        let mut counts = [0; 4];
+        for (i, q) in sanitized.questions.iter().enumerate() {
+            if i != 3 && i != 7 {
+                counts[q.correct_index as usize] += 1;
+            }
+        }
+        assert!(counts.iter().all(|c| (1..=3).contains(c)), "{counts:?}");
+    }
+
+    #[test]
+    fn options_are_shuffled_deterministically_and_the_answer_follows() {
+        let questions = || -> Vec<_> {
+            (0..20)
+                .map(|i| {
+                    four_options(
+                        &format!("Question {i} about the four forces?"),
+                        "Drag opposes thrust.",
+                    )
+                })
+                .collect()
+        };
+        let test = |qs: Vec<PracticeQuestion>| GeneratedPracticeTest {
+            title: "Forces".to_string(),
+            questions: qs,
+            model: String::new(),
+        };
+        let first = sanitize_practice_test(test(questions())).unwrap();
+        let again = sanitize_practice_test(test(questions())).unwrap();
+        let mut positions = std::collections::HashSet::new();
+        for (a, b) in first.questions.iter().zip(&again.questions) {
+            assert_eq!(a.options, b.options, "same order every time");
+            assert_eq!(
+                a.options[a.correct_index as usize], "Drag",
+                "answer follows"
+            );
+            let mut sorted = a.options.clone();
+            sorted.sort();
+            assert_eq!(sorted, ["Drag", "Lift", "Thrust", "Weight"]);
+            positions.insert(a.correct_index);
+        }
+        assert!(
+            positions.len() >= 3,
+            "the answer is no longer always second: {positions:?}"
+        );
+    }
+
+    #[test]
+    fn an_option_pointing_at_the_others_keeps_the_model_order() {
+        for last in ["All of the above", "None of these", "Both A and B"] {
+            let mut q = four_options(
+                "Which forces act on an airplane in flight?",
+                "All four act at once.",
+            );
+            q.options[3] = last.to_string();
+            q.correct_index = 3;
+            let before = q.options.clone();
+            let q = &sanitize_practice_test(one_question_test(q))
+                .unwrap()
+                .questions[0];
+            assert_eq!(q.options, before, "{last}");
+            assert_eq!(q.correct_index, 3);
+        }
+    }
+
+    #[test]
+    fn an_explanation_naming_an_option_keeps_the_model_order() {
+        for explanation in [
+            "Option B is right because drag opposes thrust.",
+            "B is correct: drag opposes thrust.",
+            "The answer is (b), drag.",
+            "The second choice is correct.",
+        ] {
+            assert!(names_an_option(explanation), "{explanation}");
+            let q = four_options("Which force opposes thrust?", explanation);
+            let q = &sanitize_practice_test(one_question_test(q))
+                .unwrap()
+                .questions[0];
+            assert_eq!(q.options, ["Lift", "Drag", "Weight", "Thrust"]);
+            assert_eq!(q.correct_index, 1);
+        }
+        assert!(!names_an_option(
+            "A stall happens when the critical angle of attack is exceeded."
+        ));
+    }
+
     #[test]
     fn a_correct_index_past_the_end_of_its_own_options_is_dropped() {
         let mut broken = valid_question();
@@ -2728,6 +3014,8 @@ mod cancel_flow_tests;
 
 #[path = "gemini_batches.rs"]
 mod batches;
+#[path = "study_kit.rs"]
+pub(crate) mod study_kit;
 
 #[path = "gemini_sections.rs"]
 pub(crate) mod sections;

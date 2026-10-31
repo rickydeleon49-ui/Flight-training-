@@ -113,10 +113,10 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     return { ...view, value };
   }
 
-  it("a correctly answered PDF quiz sends the editable starter question as context only", async () => {
+  it("a correctly answered PDF quiz sends its page text, never the PDF, and says what was sent", async () => {
+    // No text had been read on this Mac: the question went alone.
     vi.mocked(askGemini).mockResolvedValueOnce({
-      answer: "The supplied explanation supports this answer.", model: "gemini-3.5-flash",
-      notAnswered: true, passages: [{ page: 42, quote: "Unused evidence" }], evidenceUnavailable: "text_not_read",
+      answer: "The supplied explanation supports this answer.", model: "gemini-3.5-flash", sourcePages: [], contextPages: [],
     });
     await renderPracticePanel();
     fireEvent.click(screen.getAllByRole("radio")[1]!);
@@ -125,7 +125,10 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     expect((screen.getByLabelText("Ask a question") as HTMLInputElement).value).toBe("Why is that the correct answer?");
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await screen.findByText("The supplied explanation supports this answer.");
-    expect(vi.mocked(askGemini).mock.calls[0]![0]).toMatchObject({ relativePath: null, question: "Why is that the correct answer?" });
+    expect(vi.mocked(askGemini).mock.calls[0]![0]).toMatchObject({
+      relativePath: "documents/traffic_pattern.pdf", cardWhy: { citedPage: 42 }, question: "Why is that the correct answer?",
+    });
+    expect(screen.getByText("Sent: this question only")).toBeTruthy();
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(screen.queryByText("Not answered by these sources.")).toBeNull();
     expect(screen.queryByText(/check the supporting text/)).toBeNull();
@@ -141,7 +144,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     let ready!: (stop: () => void) => void;
     vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why does the pattern matter?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     // Replace the current snapshot while the Ask listener is still pending.
     const material = makeMaterial({ id: "mat-1", filePath: hasFile ? "documents/private.pdf" : null,
@@ -174,7 +177,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     view.rerender(panel(allowedData));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(input.disabled).toBe(false);
-    fireEvent.change(input, { target: { value: "Why?" } });
+    fireEvent.change(input, { target: { value: "Why does the pattern matter?" } });
     expect(ask.disabled).toBe(false);
     view.rerender(panel(refusedData));
     expect(screen.getByRole("alert").textContent).toBe(reason);
@@ -204,7 +207,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Standard altitude gives adequate terrain clearance.",
-      model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 42, quote: "Synthetic passage 42." }],
+      model: "gemini-3.5-flash", sourcePages: [], contextPages: [40, 41, 42, 43, 44],
     });
 
     await renderPracticePanel();
@@ -233,7 +236,10 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
 
     const callArgs = mockAsk.mock.calls[0]![0] as import("@/services/gemini").AskGeminiParams;
     expect(callArgs.materialId).toBe("mat-1");
-    expect(callArgs.relativePath).toBeNull();
+    // Item 4: the read text of the cited page ±2 goes along (native), never the PDF.
+    expect(callArgs.relativePath).toBe("documents/traffic_pattern.pdf");
+    expect(callArgs.cardWhy).toEqual({ citedPage: 42 });
+    expect(await screen.findByText("Sent: this question and the text of pages 40–44")).toBeTruthy();
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(callArgs.question).toBe("Why isn't 800 feet standard?");
     expect(callArgs.context).toContain("What is the standard traffic pattern altitude");
@@ -360,7 +366,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     render(h(AppDataContext.Provider, { value: { data } as ContextType<typeof AppDataContext> },
       h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" })));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why does the pattern matter?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await screen.findByText("Original context answer.");
     expect(vi.mocked(askGemini).mock.calls[0]![0]).toMatchObject({ relativePath: filePath });
@@ -380,7 +386,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "A synthetic question?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-    await screen.findByText(notAnswered ? "Not answered by these sources." : "I couldn't check the supporting text.");
+    await screen.findByText(notAnswered ? "That isn't in these pages. Try another chapter, or ask your instructor." : "I couldn't check the supporting text.");
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(screen.queryByText(/^Page /)).toBeNull();
     expect(screen.queryByText("I couldn't check the supporting text.") !== null).toBe(!notAnswered);
@@ -766,7 +772,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
   async function start() {
     const view = render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why does the pattern matter?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await waitFor(() => expect(askGemini).toHaveBeenCalledTimes(1));
     const { requestId } = vi.mocked(askGemini).mock.calls[0]![0] as AskGeminiParams;
@@ -825,7 +831,7 @@ describe("AskGeminiPanel request progress and cancellation", () => {
     vi.mocked(watchAskGeminiProgress).mockImplementationOnce(() => new Promise((resolve) => { ready = resolve; }));
     render(h(AskGeminiPanel, { evidenceMode: true, materialId: "mat-1", context: "Synthetic context" }));
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why does the pattern matter?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(askGemini).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Close Ask Gemini" }));
@@ -939,7 +945,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
       h(CardReviewPanel, { materialId: "mat-pdf", materialTitle: material.title, repository: repos.cardReviews, autoStart: true })));
     fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
     fireEvent.click(screen.getByRole("button", { name: "Explain this" }));
-    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why?" } });
+    fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "Why does the pattern matter?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect((await screen.findByRole("alert")).textContent).toBe(reason);
     expect(askGemini).not.toHaveBeenCalled();
@@ -949,7 +955,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Vy gives the best climb rate.",
-      model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 15, quote: "Synthetic passage 15." }],
+      model: "gemini-3.5-flash", sourcePages: [], contextPages: [13, 14, 15, 16, 17],
     });
 
     await seedFlashcardMaterial();
@@ -978,7 +984,9 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(1));
     const args = mockAsk.mock.calls[0]![0] as any;
     expect(args.materialId).toBe("mat-pdf");
-    expect(args.relativePath).toBeNull();
+    expect(args.relativePath).toBe("documents/handbook.pdf");
+    expect(args.cardWhy).toEqual({ citedPage: 15 });
+    expect(await screen.findByText("Sent: this card and the text of pages 13–17")).toBeTruthy();
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(screen.queryByText(/check the supporting text/)).toBeNull();
     expect(args.question).toBe("Why is Vy important?");
@@ -991,14 +999,14 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     const mockAsk = vi.mocked(askGemini);
     mockAsk.mockResolvedValueOnce({
       answer: "Vx clears obstacles on departure.",
-      model: "gemini-3.5-flash", notAnswered: false, passages: [{ page: 14, quote: "Synthetic passage 14." }],
+      model: "gemini-3.5-flash", sourcePages: [], contextPages: [13, 14, 15, 16, 17],
     });
 
     await seedFlashcardMaterial();
     await openMaterial("mat-pdf");
 
     // Start review session
-    const reviewBtn = await screen.findByRole("button", { name: /^Review \d+ cards?$/ });
+    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ });
     fireEvent.click(reviewBtn);
 
     await screen.findByRole("button", { name: "Show answer" });
@@ -1022,7 +1030,9 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(1));
     const args = mockAsk.mock.calls[0]![0] as any;
     expect(args.materialId).toBe("mat-pdf");
-    expect(args.relativePath).toBeNull();
+    expect(args.relativePath).toBe("documents/handbook.pdf");
+    expect(args.cardWhy).toEqual({ citedPage: 15 });
+    expect(await screen.findByText("Sent: this card and the text of pages 13–17")).toBeTruthy();
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(screen.queryByText(/check the supporting text/)).toBeNull();
     expect(args.question).toBe("Explain Vx");
@@ -1035,7 +1045,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
 
     // Start review session and show answer
-    const reviewBtn = await screen.findByRole("button", { name: /^Review \d+ cards?$/ });
+    const reviewBtn = await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ });
     fireEvent.click(reviewBtn);
     await screen.findByRole("button", { name: "Show answer" });
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));

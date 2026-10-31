@@ -228,12 +228,13 @@ impl Budget {
         }
     }
 
-    /// A section is smaller than a whole-document request; keep the total budget.
-    pub(crate) fn section_generation_limit(&self) {
+    /// The generating wait for one section request (the whole-document wait
+    /// is 480 seconds); the total budget is kept.
+    pub(crate) fn section_generation_limit(&self, seconds: u64) {
         self.stages
             .lock()
             .unwrap_or_else(|e| e.into_inner())
-            .generating_seconds = 240;
+            .generating_seconds = seconds;
     }
 
     /// Follow this budget's stage changes.

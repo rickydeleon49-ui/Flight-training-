@@ -23,8 +23,16 @@
 //! dismissed it. At most `MAX_JOBS` are kept.
 //!
 //! Format: `{"schema": "hfd-gemini-jobs/1", "jobs": [...]}`, written beside the
-//! target and renamed over it. A journal that cannot be read is set aside as
-//! `gemini-jobs.unreadable.json` rather than trusted or silently deleted.
+//! target and renamed over it. Each job is read on its own: a record this
+//! build cannot read (a job kind from a newer build, say) is dropped, and the
+//! others are kept. A journal that cannot be read, or that had any record
+//! dropped, is first set aside as `gemini-jobs.unreadable-<unix-ms>.json`
+//! (never overwriting an earlier one; only the 5 newest are kept) rather than
+//! trusted or silently deleted, and a fresh journal holding the valid jobs is
+//! written. The set-aside copy is diagnostic only: its presence never blocks a
+//! later launch. Only a launch that cannot set the bad journal aside, or cannot
+//! write the fresh one, refuses new work. A legacy `gemini-jobs.unreadable.json`
+//! from older versions is left where it is and ignored.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -35,15 +43,21 @@ use serde_json::Value;
 
 pub(crate) const JOURNAL_FILE: &str = "gemini-jobs.json";
 const JOURNAL_WRITING: &str = "gemini-jobs.json.writing";
-const JOURNAL_UNREADABLE: &str = "gemini-jobs.unreadable.json";
+/// Prefix of a set-aside unreadable journal: `<prefix><unix-ms>.json`.
+const JOURNAL_UNREADABLE_PREFIX: &str = "gemini-jobs.unreadable-";
 const SCHEMA: &str = "hfd-gemini-jobs/1";
 
 /// Jobs kept at once. A new job never pushes out a running one.
 pub(crate) const MAX_JOBS: usize = 8;
-/// A journal larger than this is not read: a validated answer is far smaller.
-const MAX_JOURNAL_BYTES: u64 = 16 * 1024 * 1024;
-/// One validated answer kept as a checkpoint.
-const MAX_RESULT_BYTES: usize = 2 * 1024 * 1024;
+/// A journal larger than this is not read. Every job may hold a draft and a
+/// result, each up to MAX_RESULT_BYTES, so this is MAX_JOBS of those with 50%
+/// headroom (8 × 2 × 4 MiB × 1.5 = 96 MiB): a paid answer that fits its own
+/// cap is never refused because other jobs are waiting.
+const MAX_JOURNAL_BYTES: u64 = (MAX_JOBS * 2 * MAX_RESULT_BYTES * 3 / 2) as u64;
+/// One validated answer (or draft) kept as a checkpoint. A guide of 40
+/// sections at study_sets::MAX_BODY (20,000 characters) each, even at 4 UTF-8
+/// bytes a character, is about 3.2 MB, so 4 MiB keeps it after it was paid.
+const MAX_RESULT_BYTES: usize = 4 * 1024 * 1024;
 /// Identity fields the window passes in.
 const MAX_ID_BYTES: usize = 200;
 
@@ -53,6 +67,10 @@ pub(crate) const FULL: &str =
     "Several finished answers are waiting to be saved or discarded. Save or discard one of them first, so none is lost.";
 pub(crate) const RESTORING: &str =
     "Her Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.";
+/// This launch could not set an unreadable jobs list aside and start a fresh
+/// one. Reopening retries that. Provider-neutral, so it needs no variant.
+pub(crate) const UNREADABLE: &str =
+    "Her Flight Deck couldn't read its list of AI jobs and couldn't start a fresh one, so nothing new can be asked yet. Quit and reopen the app, then try again.";
 pub(crate) const WAITING: &str =
     "A finished answer for this document is waiting to be saved or discarded. Save or discard it first, so it is not lost.";
 
@@ -62,6 +80,7 @@ pub(crate) enum JobKind {
     StudyAid,
     PracticeTest,
     PdfKit,
+    StudyKit,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -207,6 +226,9 @@ pub(crate) struct Journal {
     /// cleared. It lasts the whole launch if clearing fails, so the next
     /// launch's retry can never clear answers made in the meantime.
     quarantined: bool,
+    /// What a refusal says while `quarantined`: `RESTORING`, or `UNREADABLE`
+    /// when only the jobs list itself could not be replaced.
+    refusal: &'static str,
     /// Requests cancelled before their job began (GEN-REL-04). Checked under
     /// the same lock as `begin`, so a cancel can never slip between them.
     pending_cancels: Vec<String>,
@@ -220,7 +242,7 @@ impl Journal {
     /// Read the journal as a freshly started app does: anything still
     /// `running` was cut off by the app closing, so it becomes `interrupted`.
     pub(crate) fn open(root: &Path) -> Journal {
-        let (mut jobs, unreadable) = read(root);
+        let (mut jobs, outcome) = read(root);
         let mut changed = false;
         for job in &mut jobs {
             if job.stage == JobStage::Running {
@@ -244,14 +266,23 @@ impl Journal {
             // next start reads that as interrupted too: the same answer.
             let _ = write(root, &jobs);
         }
+        let unclean = match outcome {
+            ReadOutcome::Read => false,
+            // The original was copied aside; replace it with a fresh journal
+            // holding only the jobs that were valid. Only if that fails is
+            // there no clean journal this launch (the original, valid jobs
+            // included, is still in place for the next launch).
+            ReadOutcome::SetAside => write(root, &jobs).is_err(),
+            ReadOutcome::Stuck => true,
+        };
+        // A restore marker beside the journal means a restore committed
+        // and has not finished tidying up: its old jobs are not trusted.
+        let restoring = root.join(crate::backup::RESTORE_JOURNAL_FILE).exists();
         Journal {
             root: root.to_path_buf(),
             jobs,
-            // A restore marker beside the journal means a restore committed
-            // and has not finished tidying up: its old jobs are not trusted.
-            quarantined: unreadable
-                || root.join(crate::backup::RESTORE_JOURNAL_FILE).exists()
-                || root.join(JOURNAL_UNREADABLE).exists(),
+            quarantined: restoring || unclean,
+            refusal: if restoring { RESTORING } else { UNREADABLE },
             pending_cancels: Vec::new(),
             live: std::collections::HashSet::new(),
         }
@@ -333,7 +364,7 @@ impl Journal {
         request_id: Option<&str>,
     ) -> Result<String, String> {
         if self.quarantined {
-            return Err(RESTORING.to_string());
+            return Err(self.refusal.to_string());
         }
         if let Some(request) = request_id {
             if !valid_identity(request) {
@@ -363,11 +394,35 @@ impl Journal {
         }
         // A finished answer is never thrown away by asking again: she saves or
         // discards it first.
-        if self
-            .jobs
-            .iter()
-            .any(|j| j.material_id == material_id && j.kind == kind && j.stage == JobStage::Ready)
-        {
+        // A kit whose remaining parts all failed holds nothing to save, so it
+        // blocks nothing; a new kit replaces it.
+        let kit_part_waits = |j: &JobRecord, part: &str| {
+            j.result
+                .as_ref()
+                .is_some_and(|r| r["parts"][part].get("answer").is_some())
+        };
+        if self.jobs.iter().any(|j| {
+            j.material_id == material_id
+                && j.stage == JobStage::Ready
+                && if j.kind == JobKind::StudyKit {
+                    if kind == JobKind::StudyKit {
+                        ["guide", "cards", "questions"]
+                            .iter()
+                            .any(|part| kit_part_waits(j, part))
+                    } else {
+                        let part = if kind == JobKind::PracticeTest {
+                            "questions"
+                        } else if request_id.is_some_and(|id| id.starts_with("flashcards:")) {
+                            "cards"
+                        } else {
+                            "guide"
+                        };
+                        kit_part_waits(j, part)
+                    }
+                } else {
+                    j.kind == kind || kind == JobKind::StudyKit
+                }
+        }) {
             return Err(WAITING.to_string());
         }
         // An older failed or interrupted outcome of the same request is
@@ -560,7 +615,7 @@ impl Journal {
         draft: Value,
     ) -> Result<String, String> {
         if self.quarantined {
-            return Err(RESTORING.into());
+            return Err(self.refusal.to_string());
         }
         let supersedes = draft.get("supersedes").and_then(Value::as_str);
         let prior = self.jobs.iter().any(|j| {
@@ -583,9 +638,12 @@ impl Journal {
         }
         if self.jobs.iter().any(|j| {
             j.material_id == material
-                && j.kind == JobKind::StudyAid
                 && j.stage == JobStage::Ready
-                && j.draft.is_none()
+                && ((j.kind == JobKind::StudyAid && j.draft.is_none())
+                    || (j.kind == JobKind::StudyKit
+                        && j.result
+                            .as_ref()
+                            .is_some_and(|r| r["parts"]["guide"].get("answer").is_some())))
         }) {
             return Err(WAITING.into());
         }
@@ -646,7 +704,7 @@ impl Journal {
     /// One worker owns an activation until its guard settles, even after Cancel.
     pub(crate) fn activate_sections(&mut self, id: &str) -> Result<(), String> {
         if self.quarantined {
-            return Err(RESTORING.into());
+            return Err(self.refusal.to_string());
         }
         if !self.live.is_empty() || self.jobs.iter().any(|j| j.stage == JobStage::Running) {
             return Err(BUSY.into());
@@ -951,6 +1009,43 @@ impl Journal {
         Ok(true)
     }
 
+    /// A kit stays one bounded job until every part was saved or dismissed.
+    /// Commit removal of just this part before acknowledging it to the window.
+    pub(crate) fn acknowledge_kit_part(&mut self, id: &str) -> Result<bool, String> {
+        let Some((parent, part)) = id.split_once('#') else {
+            return Ok(false);
+        };
+        if !["guide", "cards", "questions"].contains(&part)
+            || self.quarantined
+            || self.live.contains(parent)
+        {
+            return Ok(false);
+        }
+        let mut next = self.jobs.clone();
+        let Some(job) = next
+            .iter_mut()
+            .find(|j| j.id == parent && j.kind == JobKind::StudyKit && j.stage == JobStage::Ready)
+        else {
+            return Ok(false);
+        };
+        let Some(parts) = job
+            .result
+            .as_mut()
+            .and_then(|r| r.get_mut("parts"))
+            .and_then(Value::as_object_mut)
+        else {
+            return Ok(false);
+        };
+        if parts.remove(part).is_none() {
+            return Ok(false);
+        }
+        if parts.is_empty() {
+            next.retain(|j| j.id != parent);
+        }
+        self.commit(next)?;
+        Ok(true)
+    }
+
     /// A backup was restored: nothing recorded against the previous library
     /// may be saved into the restored one.
     ///
@@ -963,6 +1058,7 @@ impl Journal {
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
                 Err(_) => {
                     self.quarantined = true;
+                    self.refusal = RESTORING;
                     return Err(error);
                 }
             }
@@ -1020,8 +1116,96 @@ fn write(root: &Path, jobs: &[JobRecord]) -> Result<(), String> {
     Ok(())
 }
 
+/// How `read` found the journal.
+#[derive(Debug, PartialEq, Eq)]
+enum ReadOutcome {
+    /// Read, or absent: nothing to distrust.
+    Read,
+    /// Unreadable in whole or in part, and copied aside under a unique
+    /// diagnostic name; the valid jobs (if any) are still to be rewritten
+    /// over the original.
+    SetAside,
+    /// Unreadable, and still in place: nothing clean this launch.
+    Stuck,
+}
+
+/// Copy an unreadable journal to `gemini-jobs.unreadable-<unix-ms>.json`,
+/// never over an earlier one. The caller holds the journal lock.
+fn set_aside(root: &Path, path: &Path) -> std::io::Result<PathBuf> {
+    let base = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    for step in 0..1000 {
+        let target = root.join(format!("{JOURNAL_UNREADABLE_PREFIX}{}.json", base + step));
+        if std::fs::symlink_metadata(&target).is_ok() {
+            continue;
+        }
+        // Copy, never move: the original stays the journal until `write`
+        // atomically replaces it, so a failed or interrupted rewrite loses
+        // nothing and the next launch simply tries again.
+        let copied = (|| {
+            let mut source = std::fs::File::open(path)?;
+            let mut copy = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&target)?;
+            std::io::copy(&mut source, &mut copy)?;
+            copy.sync_all()
+        })();
+        if let Err(error) = copied {
+            let _ = std::fs::remove_file(&target);
+            return Err(error);
+        }
+        prune_set_aside(root, &target);
+        return Ok(target);
+    }
+    Err(std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        "no free name for the unreadable jobs list",
+    ))
+}
+
+/// Set-aside copies kept at most; older ones are removed.
+const MAX_SET_ASIDE: usize = 5;
+
+/// Keep only the `MAX_SET_ASIDE` newest `gemini-jobs.unreadable-<digits>.json`.
+/// Nothing else is touched, never the legacy `gemini-jobs.unreadable.json`,
+/// and never `keep`, the copy just made (even if the clock went backwards).
+fn prune_set_aside(root: &Path, keep: &Path) {
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+    let mut found: Vec<(u128, PathBuf)> = entries
+        .flatten()
+        .filter_map(|entry| {
+            let name = entry.file_name().into_string().ok()?;
+            let stamp = name
+                .strip_prefix(JOURNAL_UNREADABLE_PREFIX)?
+                .strip_suffix(".json")?;
+            if stamp.is_empty() || !stamp.bytes().all(|b| b.is_ascii_digit()) {
+                return None;
+            }
+            if !entry.file_type().ok()?.is_file() || entry.path() == keep {
+                return None;
+            }
+            Some((stamp.parse().ok()?, entry.path()))
+        })
+        .collect();
+    // `keep` takes one of the places.
+    let others = MAX_SET_ASIDE - 1;
+    if found.len() <= others {
+        return;
+    }
+    found.sort();
+    let excess = found.len() - others;
+    for (_, path) in found.into_iter().take(excess) {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
 /// The jobs on disk; an unreadable journal is set aside, never trusted.
-fn read(root: &Path) -> (Vec<JobRecord>, bool) {
+fn read(root: &Path) -> (Vec<JobRecord>, ReadOutcome) {
     let path = root.join(JOURNAL_FILE);
     let too_large = std::fs::metadata(&path)
         .map(|m| m.len() > MAX_JOURNAL_BYTES)
@@ -1030,38 +1214,67 @@ fn read(root: &Path) -> (Vec<JobRecord>, bool) {
         None
     } else {
         match std::fs::read(&path) {
-            Ok(bytes) => serde_json::from_slice::<File>(&bytes).ok().filter(|f| {
-                f.schema == SCHEMA
-                    && f.jobs.len() <= MAX_JOBS
-                    && f.jobs.iter().all(|j| {
-                        valid_job_id(&j.id)
-                            && valid_identity(&j.material_id)
-                            && valid_identity(&j.relative_path)
-                            && j.draft.as_ref().map_or(true, |d| {
-                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
-                            })
-                            && j.result.as_ref().map_or(true, |d| {
-                                serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
-                            })
-                    })
-                    && f.jobs
-                        .iter()
-                        .map(|j| &j.id)
-                        .collect::<std::collections::HashSet<_>>()
-                        .len()
-                        == f.jobs.len()
-            }),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return (Vec::new(), false),
+            Ok(bytes) => serde_json::from_slice::<Envelope>(&bytes)
+                .ok()
+                .filter(|f| f.schema == SCHEMA && f.jobs.len() <= MAX_JOBS)
+                .map(|f| keep_valid_jobs(f.jobs)),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return (Vec::new(), ReadOutcome::Read)
+            }
             Err(_) => None,
         }
     };
     match parsed {
-        Some(file) => (file.jobs, false),
-        None => {
-            let _ = std::fs::rename(&path, root.join(JOURNAL_UNREADABLE));
-            (Vec::new(), true)
-        }
+        Some((jobs, false)) => (jobs, ReadOutcome::Read),
+        // Something was dropped, or nothing could be read: the original is
+        // copied aside first, and stays the journal until the rewrite
+        // replaces it, so no record is ever lost by the rewrite.
+        Some((jobs, true)) => match set_aside(root, &path) {
+            Ok(_) => (jobs, ReadOutcome::SetAside),
+            Err(_) => (Vec::new(), ReadOutcome::Stuck),
+        },
+        None => match set_aside(root, &path) {
+            Ok(_) => (Vec::new(), ReadOutcome::SetAside),
+            Err(_) => (Vec::new(), ReadOutcome::Stuck),
+        },
     }
+}
+
+/// The journal's envelope, with each job still unparsed, so that one record
+/// this build cannot read (a job kind from a newer build, say) never costs
+/// the others.
+#[derive(Deserialize)]
+struct Envelope {
+    schema: String,
+    jobs: Vec<Value>,
+}
+
+/// Every job that parses and passes the per-job checks, and whether any was
+/// dropped. Jobs sharing an id are all dropped: which one is real is unknown.
+fn keep_valid_jobs(raw: Vec<Value>) -> (Vec<JobRecord>, bool) {
+    let total = raw.len();
+    let parsed: Vec<JobRecord> = raw
+        .into_iter()
+        .filter_map(|v| serde_json::from_value::<JobRecord>(v).ok())
+        .filter(|j| {
+            valid_job_id(&j.id)
+                && valid_identity(&j.material_id)
+                && valid_identity(&j.relative_path)
+                && j.draft.as_ref().map_or(true, |d| {
+                    serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                })
+                && j.result.as_ref().map_or(true, |d| {
+                    serde_json::to_vec(d).is_ok_and(|b| b.len() <= MAX_RESULT_BYTES)
+                })
+        })
+        .collect();
+    let mut seen: HashMap<String, usize> = HashMap::new();
+    for job in &parsed {
+        *seen.entry(job.id.clone()).or_default() += 1;
+    }
+    let kept: Vec<JobRecord> = parsed.into_iter().filter(|j| seen[&j.id] == 1).collect();
+    let dropped = kept.len() != total;
+    (kept, dropped)
 }
 
 /* ------------------------------------------------------------------ */
@@ -1094,6 +1307,7 @@ pub(crate) fn clear_after_restore(root: &Path) -> Result<(), String> {
     {
         return with(root, |journal| {
             journal.quarantined = true;
+            journal.refusal = RESTORING;
             Err("synthetic failure to clear the Gemini jobs".to_string())
         });
     }

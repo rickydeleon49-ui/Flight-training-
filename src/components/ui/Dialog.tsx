@@ -151,22 +151,27 @@ export function ConfirmDialog({
       dismissible={!pending}
       footer={
         <>
-          <Button onClick={onCancel} disabled={pending}>
-            Cancel
-          </Button>
+          {/* Alternatives come first; Cancel and the real action stay
+              together at the end, so the action is always bottom right and
+              never wraps onto a line of its own. */}
           {secondaryLabel && onSecondary ? (
             <Button variant="secondary" onClick={onSecondary} disabled={pending}>
               {secondaryLabel}
             </Button>
           ) : null}
           {extraActions}
-          <Button
-            variant={destructive ? "danger" : "primary"}
-            onClick={onConfirm}
-            disabled={pending}
-          >
-            {pending && pendingLabel ? pendingLabel : confirmLabel}
-          </Button>
+          <span className="dialog__footer-main">
+            <Button onClick={onCancel} disabled={pending}>
+              Cancel
+            </Button>
+            <Button
+              variant={destructive ? "danger" : "primary"}
+              onClick={onConfirm}
+              disabled={pending}
+            >
+              {pending && pendingLabel ? pendingLabel : confirmLabel}
+            </Button>
+          </span>
         </>
       }
     >

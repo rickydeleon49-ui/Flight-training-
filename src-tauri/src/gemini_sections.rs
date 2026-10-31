@@ -3,8 +3,18 @@ use super::*;
 use std::collections::BTreeMap;
 
 const KIND: &str = "guide-sections-v1";
-const PLANNER: &str = "pdf-outline-5-10-v1";
-const PROMPT: &str = "guide-section-prompt-v1";
+/// The planner new guides use: one request for up to PART_PAGES chosen pages,
+/// like asking a chat about the whole PDF; longer selections split into as
+/// few parts as possible, preferring chapter starts.
+const PLANNER: &str = "pdf-parts-150-v1";
+/// The earlier planner (5 pages, up to 10 inside a heading). Drafts and queued
+/// guides started with it keep it, so they still resume after an update.
+const LEGACY_PLANNER: &str = "pdf-outline-5-10-v1";
+/// The prompt new guides use: a basic section (short overview + key points).
+const PROMPT: &str = "guide-section-prompt-v2";
+/// The earlier, longer prompt. Drafts started with it finish with it, so one
+/// guide never mixes the two styles.
+const LEGACY_PROMPT: &str = "guide-section-prompt-v1";
 const SCHEMA_VERSION: &str = "guide-section-answer-v1";
 /// The most sections one guide may hold, so one activation stays finishable.
 const MAX_SECTIONS: usize = 40;
@@ -224,7 +234,64 @@ struct PlannedSection {
     merged_count: usize,
 }
 
-fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
+/// Chosen pages one request may cover. 150 pages stay well inside Gemini's
+/// document limits and Claude's 300-page / 32 MB request guards.
+const PART_PAGES: usize = 150;
+/// The planner and prompt one guide is made with.
+#[derive(Clone, Copy, Debug)]
+struct Recipe {
+    planner: &'static str,
+    prompt: &'static str,
+}
+const CURRENT: Recipe = Recipe {
+    planner: PLANNER,
+    prompt: PROMPT,
+};
+/// The recipe a draft keeps: its own versions when this app still knows them,
+/// otherwise the current ones (which then report PLAN_CHANGED to the draft).
+fn recipe_for(identity: &Identity) -> Recipe {
+    Recipe {
+        planner: if identity.planner_version == LEGACY_PLANNER {
+            LEGACY_PLANNER
+        } else {
+            PLANNER
+        },
+        prompt: if identity.prompt_version == LEGACY_PROMPT {
+            LEGACY_PROMPT
+        } else {
+            PROMPT
+        },
+    }
+}
+/// The generating wait for one request: a part of up to 150 pages gets the
+/// whole-document wait (480 s); an earlier five-page section keeps 240 s. The
+/// 900-second activation total is unchanged: one part always fits, and a
+/// second part that runs out of it pauses with the first kept, then resumes.
+fn generating_seconds(recipe: Recipe) -> u64 {
+    if recipe.planner == LEGACY_PLANNER {
+        240
+    } else {
+        480
+    }
+}
+fn plan_for(
+    planner: &str,
+    pages: &[u32],
+    hints: &[(u32, u32, String)],
+) -> Result<Vec<Section>, SectionError> {
+    if planner == LEGACY_PLANNER {
+        plan_legacy(pages, hints)
+    } else {
+        plan(pages, hints)
+    }
+}
+fn too_many_sections() -> SectionError {
+    SectionError::new(
+        "TOO_MANY_SECTIONS",
+        "Choose fewer pages; this guide needs more than 40 sections.",
+    )
+}
+fn check_pages(pages: &[u32]) -> Result<(), SectionError> {
     if pages.is_empty()
         || pages.len() > 1000
         || pages[0] == 0
@@ -235,6 +302,57 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
             "Choose PDF pages in source order.",
         ));
     }
+    Ok(())
+}
+
+/// The current planner: each run of consecutive chosen pages is one request
+/// when it has at most PART_PAGES pages; a longer run splits into the fewest
+/// parts, ending a part just before a chapter start when one keeps that count.
+fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
+    check_pages(pages)?;
+    let starts: Vec<u32> = hints.iter().map(|(start, _, _)| *start).collect();
+    let mut output = Vec::new();
+    let mut run_start = 0;
+    for at in 0..pages.len() {
+        if at + 1 == pages.len() || pages[at + 1] != pages[at] + 1 {
+            split_run(&pages[run_start..=at], &starts, &mut output);
+            run_start = at + 1;
+        }
+    }
+    condense(output, MAX_SECTIONS).ok_or_else(too_many_sections)
+}
+fn split_run(run: &[u32], starts: &[u32], output: &mut Vec<PlannedSection>) {
+    let mut at = 0;
+    while at < run.len() {
+        let left = run.len() - at;
+        let parts = left.div_ceil(PART_PAGES);
+        let even = left.div_ceil(parts);
+        // The chapter start nearest the even split that still leaves the rest
+        // within the remaining parts.
+        let size = (1..left.min(PART_PAGES + 1))
+            .filter(|&len| left - len <= PART_PAGES * (parts - 1))
+            .filter(|&len| starts.contains(&run[at + len]))
+            .min_by_key(|&len| len.abs_diff(even))
+            .unwrap_or(even);
+        let (first, last) = (run[at], run[at + size - 1]);
+        output.push(PlannedSection {
+            section: Section {
+                id: String::new(),
+                heading: format!("Pages {first}–{last}"),
+                page_start: first,
+                page_end: last,
+            },
+            has_hint: false,
+            first_heading: String::new(),
+            merged_count: 1,
+        });
+        at += size;
+    }
+}
+
+/// The earlier five-page planner, kept unchanged for drafts made with it.
+fn plan_legacy(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
+    check_pages(pages)?;
     let mut output: Vec<PlannedSection> = Vec::new();
     let mut at = 0;
     while at < pages.len() {
@@ -326,13 +444,7 @@ fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, Sec
     }
     // Many headings are worth keeping, so a long outline never refuses on its
     // own: neighbours merge until the guide fits the limit.
-    let manifest = condense(output, MAX_SECTIONS).ok_or_else(|| {
-        SectionError::new(
-            "TOO_MANY_SECTIONS",
-            "Choose fewer pages; this guide needs more than 40 sections.",
-        )
-    })?;
-    Ok(manifest)
+    condense(output, MAX_SECTIONS).ok_or_else(too_many_sections)
 }
 
 /// Merge neighbouring sections until at most `limit` remain, keeping the first
@@ -417,6 +529,7 @@ fn source(
     root: &Path,
     request: &SectionRequest,
     model: &str,
+    recipe: Recipe,
 ) -> Result<(Identity, LoadedSource), SectionError> {
     let safe = documents::safe_relative_path(&request.relative_path)?;
     let path = root.join(documents::DOCUMENTS_DIR).join(safe);
@@ -499,7 +612,7 @@ fn source(
             )
         })
         .collect();
-    let manifest = plan(&request.chosen_pages, &hints)?;
+    let manifest = plan_for(recipe.planner, &request.chosen_pages, &hints)?;
     let selected = crate::pdf::selected_bytes(&bytes, &request.chosen_pages)?;
     if model.starts_with("claude-") {
         crate::provider::claude::check_size(selected.len() as u64)?;
@@ -514,10 +627,10 @@ fn source(
         original_sha256: calculate_sha256(&bytes),
         selected_sha256: loaded.content_sha256.clone(),
         chosen_pages: request.chosen_pages.clone(),
-        planner_version: PLANNER.into(),
+        planner_version: recipe.planner.into(),
         manifest,
         model: model.into(),
-        prompt_version: PROMPT.into(),
+        prompt_version: recipe.prompt.into(),
         schema_version: SCHEMA_VERSION.into(),
         base_revision: request.base_revision.clone(),
     };
@@ -559,6 +672,7 @@ pub(crate) fn queue_study_guide_at(
         root,
         req,
         AnyProvider::selected(root).models(choice.into()).0,
+        CURRENT,
     )?;
     let mut draft = new_draft(identity);
     draft.queue_state = Some(QueueState::WaitingForHer);
@@ -653,8 +767,18 @@ fn digest(content: &ResultBody) -> String {
         .unwrap(),
     )
 }
-/// Section length asked of the model, well under study_sets::MAX_BODY.
-const REQUESTED_BODY_CHARS: usize = 12_000;
+/// Length asked of the model for one basic guide part: a 2–3 sentence
+/// overview (~400 characters) plus 6–10 topic headings with 2–4 short bullets
+/// each (~450–650 a topic) is about 3,000–7,000 characters, so 8,000 fits the
+/// largest without inviting long paragraphs. Validation still accepts up to
+/// study_sets::MAX_BODY.
+const REQUESTED_BODY_CHARS: usize = 8_000;
+/// Output tokens for one part: the answer is about 2,000–2,500 tokens, and
+/// Gemini 3.x counts its thinking on up to 150 pages in the same allowance,
+/// so 16,384 leaves room for both (the old 8,192 risked a cut-off answer).
+const PART_OUTPUT_TOKENS: u32 = 16_384;
+/// The length the earlier, longer prompt asked for (older drafts only).
+const LEGACY_BODY_CHARS: usize = 12_000;
 fn validate_section(
     s: &Section,
     text: &str,
@@ -700,6 +824,25 @@ fn validate_section(
     content.content_digest = digest(&content);
     Ok(content)
 }
+/// Study kits use the same section validator, so a guide that runs over the
+/// requested 8,000 characters is kept up to what a study set can store
+/// (study_sets::MAX_BODY), exactly like a guide part.
+pub(super) fn validate_basic_kit_guide(
+    value: &Value,
+    pages: &[u32],
+    model: &str,
+) -> Result<(String, Vec<u32>), String> {
+    let section = Section {
+        id: "study-kit".into(),
+        heading: "Study guide".into(),
+        page_start: 1,
+        page_end: pages.last().copied().unwrap_or(0),
+    };
+    let result =
+        validate_section(&section, &value.to_string(), pages, model).map_err(|e| e.message)?;
+    Ok((result.body, result.source_pages))
+}
+
 fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
     let mapping: Vec<_> = identity
         .chosen_pages
@@ -713,8 +856,29 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
     } else {
         "Gemini"
     };
-    let prompt = format!("{PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping));
-    json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::section())}})
+    let prompt = if identity.prompt_version == LEGACY_PROMPT {
+        format!("{LEGACY_PROMPT}: Write only section {} ({}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most {LEGACY_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", section.id, section.heading, json!(mapping))
+    } else {
+        let number = identity
+            .manifest
+            .iter()
+            .position(|s| s.id == section.id)
+            .map_or(1, |i| i + 1);
+        let what = match identity.manifest.len() {
+            1 => format!("a study guide for the attached PDF ({})", section.heading),
+            n => format!(
+                "part {number} of {n} ({}) of a study guide for the attached PDF",
+                section.heading
+            ),
+        };
+        format!("{PROMPT}: Write {what}. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid). No long paragraphs. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", json!(mapping))
+    };
+    let tokens = if identity.prompt_version == LEGACY_PROMPT {
+        8192
+    } else {
+        PART_OUTPUT_TOKENS
+    };
+    json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":tokens,"responseSchema":crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::section())}})
 }
 fn reserve(root: &Path, id: &str, section: &str) -> Option<u32> {
     // Both the durable reservation and cancellation decision use this lock.
@@ -838,7 +1002,8 @@ pub(super) async fn activate(
             return Err(SectionError::native(&format!("This draft was started with {name}. Use {name} in Settings to continue it, or discard it and start a new one. Your finished work is kept.")));
         }
     }
-    let (identity, selected) = source(root, req, ctx.primary())?;
+    let recipe = old.as_ref().map_or(CURRENT, |d| recipe_for(&d.identity));
+    let (identity, selected) = source(root, req, ctx.primary(), recipe)?;
     if let Some(old) = old.as_ref() {
         if old.identity != identity {
             return Err(identity_mismatch_error(&old.identity, &identity));
@@ -848,7 +1013,8 @@ pub(super) async fn activate(
         Some(id) => id.to_string(),
         None => admit(root, req, &new_draft(identity.clone()))?,
     };
-    ctx.budget.section_generation_limit();
+    ctx.budget
+        .section_generation_limit(generating_seconds(recipe));
     gemini_jobs::with(root, |j| j.activate_sections(&id))?;
     let mut running = RunningJob {
         root,
@@ -949,7 +1115,7 @@ pub(super) async fn activate(
                 if read_draft(root, &id)?.results[&section.id].status == Status::Complete {
                     continue;
                 }
-                if source(root, req, ctx.primary())?.0 != identity {
+                if source(root, req, ctx.primary(), recipe)?.0 != identity {
                     return Err(SectionError::source());
                 }
                 if !ctx.current() || lease.as_ref().is_some_and(|lease| !lease.is_current()) {
@@ -966,12 +1132,10 @@ pub(super) async fn activate(
                         .source_part(&selected, lease.as_ref().map(|l| l.prepared())),
                 );
                 // No earlier answer appears in this request body.
-                (ctx.say)(format!(
-                    "Writing section {} of {}: {}…",
-                    index + 1,
-                    identity.manifest.len(),
-                    section.heading
-                ));
+                (ctx.say)(match identity.manifest.len() {
+                    1 => "Gemini is writing your study guide…".to_string(),
+                    n => format!("Writing part {} of {n}: {}…", index + 1, section.heading),
+                });
                 let content = section_generate(
                     ctx,
                     &body,
@@ -992,11 +1156,10 @@ pub(super) async fn activate(
                 );
                 store(root, &id, &d)?;
                 hook("after-section-commit");
-                (ctx.say)(format!(
-                    "Section {} of {} saved.",
-                    index + 1,
-                    identity.manifest.len()
-                ));
+                (ctx.say)(match identity.manifest.len() {
+                    1 => "Study guide written.".to_string(),
+                    n => format!("Part {} of {n} saved.", index + 1),
+                });
                 if !ctx.budget.can_continue() {
                     return Err(gemini_cancel::CANCELLED.into());
                 }
@@ -1007,7 +1170,7 @@ pub(super) async fn activate(
                     .await;
             }
         }
-        if source(root, req, ctx.primary())?.0 != identity {
+        if source(root, req, ctx.primary(), recipe)?.0 != identity {
             return Err(SectionError::source());
         }
         let answer = assembly(&read_draft(root, &id)?)?;
@@ -1209,6 +1372,7 @@ fn restart_draft(
         root,
         req,
         AnyProvider::selected(root).models(choice.into()).0,
+        CURRENT,
     )?;
     let mut draft = new_draft(identity);
     draft.supersedes = Some(old_id.into());
@@ -1247,7 +1411,7 @@ pub(crate) fn save_guide_at(
         base_revision: d.identity.base_revision.clone(),
         request_id: None,
     };
-    let (identity, _) = source(root, &request, &d.identity.model)?;
+    let (identity, _) = source(root, &request, &d.identity.model, recipe_for(&d.identity))?;
     if identity != d.identity {
         return Err(identity_mismatch_error(&d.identity, &identity).into());
     }

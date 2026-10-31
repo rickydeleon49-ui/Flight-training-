@@ -98,7 +98,7 @@ it("keeps a revealed card and a live card review session mounted", async () => {
   const answer = screen.getByText("Synthetic card answer");
   pick("Notes"); pick("Study");
   expect(screen.getByText("Synthetic card answer")).toBe(answer);
-  fireEvent.click(await screen.findByRole("button", { name: "Review 1 card" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Start 1 new card" }));
   fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
   const session = document.querySelector(".card-review__session")!;
   expect(session.textContent).toContain("Synthetic card answer");
@@ -149,7 +149,7 @@ it("puts the numbered review action above browsing and updates the header status
   await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic cards", summary: "Guide", sections: [],
     flashcards: [{ front: "Fictional front", back: "Fictional back", sourcePage: null }], sourceNotes: "", model: "test" });
   await open();
-  const review = await screen.findByRole("button", { name: "Review 1 card" });
+  const review = await screen.findByRole("button", { name: "Start 1 new card" });
   expect(review.classList.contains("button--primary")).toBe(true);
   expect(review.compareDocumentPosition(screen.getByRole("button", { name: "Reveal flashcard answer" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   pick("More");

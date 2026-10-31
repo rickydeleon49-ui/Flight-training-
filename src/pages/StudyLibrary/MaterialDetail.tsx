@@ -1,3 +1,4 @@
+import { inspectPdf } from "@/services/pdf";
 import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -100,6 +101,16 @@ import { MaterialActionsMenu } from "./MaterialActionsMenu";
 
 type MaterialTabChoice = { value: MaterialTab };
 const MATERIAL_TAB_CHOICES = MATERIAL_TABS.map((value) => ({ value }));
+/** The section where a waiting draft of this kind is reviewed. */
+function draftAnchor(job: GeminiJob): string {
+  if (job.kind === "flashcards") return "material-flashcards";
+  if (job.kind === "practice-test") return "material-practice-test";
+  return "material-study-guide";
+}
+
+/** Shown on Make my study kit only when a guide, cards or questions are already saved. */
+const KIT_REPLACE_NOTE = "This makes a new kit. When you save, it replaces your saved guide, flashcards or questions — your earlier versions stay in Previous versions.";
+const KIT_PAGES_NOTE = "The study kit reads up to 150 pages. Pick the pages you want — they become their own item in your library, then press Make my study kit there.";
 const materialTabLabel = (value: MaterialTab) => value === "study" ? "Study" : value === "notes" ? "Notes" : "More";
 
 function MaterialTabButton({ value, state }: { value: MaterialTab; state: TabListState<MaterialTabChoice> }) {
@@ -143,6 +154,12 @@ export function MaterialDetail() {
 function MaterialDetailPage() {
   const [pageNotesAvailable, setPageNotesAvailable] = useState(false);
   const [askingPdf, setAskingPdf] = useState(false);
+  // Closing Ask about this PDF (Escape or Close) returns focus to its button.
+  const askPdfButton = useRef<HTMLButtonElement>(null);
+  const closeAskPdf = () => {
+    setAskingPdf(false);
+    window.setTimeout(() => askPdfButton.current?.focus({ preventScroll: true }), 0);
+  };
   const [activePracticeAttempt, setActivePracticeAttempt] = useState<boolean | null>(null);
   const { materialId } = useParams();
   const navigate = useNavigate();
@@ -227,6 +244,12 @@ function MaterialDetailPage() {
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
   const [reviewingPracticeRegeneration, setReviewingPracticeRegeneration] = useState(false);
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
+  const [confirmingKit, setConfirmingKit] = useState(false);
+  const [kitMessage, setKitMessage] = useState<string | null>(null);
+  // Where the earlier draft that blocks a study kit waits, for "Show me".
+  const [kitDraftAnchor, setKitDraftAnchor] = useState<string | null>(null);
+  const [splitNote, setSplitNote] = useState<string | undefined>(undefined);
+  const [savingKit, setSavingKit] = useState(false);
   const [confirmingCards, setConfirmingCards] = useState(false);
   const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
@@ -239,6 +262,7 @@ function MaterialDetailPage() {
       (latest, candidate) => (!latest || isNewerJob(candidate, latest) ? candidate : latest),
       undefined,
     );
+  const kitJob = geminiJobs.jobs.find(job => job.materialId === materialId && job.kind === "study-kit");
   const cardJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "flashcards",
   );
@@ -727,6 +751,60 @@ function MaterialDetailPage() {
     return null;
   };
 
+  // All three kit parts ready, none replacing anything she edited: one Save
+  // runs each part's own safe save in turn. A part that cannot be saved stays
+  // as a draft with its own message; the others stay saved.
+  const kitParts = [studyJob, cardJob, practiceJob];
+  const canSaveWholeKit = !setHasHerItems && !practiceNeedsReview && kitParts.every((job) =>
+    job?.studyKitPart && job.answer && job.phase === "recovered" && !job.needsReview && !job.reviewed);
+  const saveWholeKit = async () => {
+    setSavingKit(true);
+    try {
+      for (const job of kitParts) if (job) await geminiJobs.saveAgain(job.key);
+    } finally { setSavingKit(false); }
+  };
+  const kitReplacesSaved = Boolean(
+    (studySet && (studySet.sections.length > 0 || studySet.flashcards.length > 0)) || (practiceTest && practiceTest.questions.length > 0),
+  );
+  const kitDraftsWaiting = geminiJobs.jobs.some((job) => job.materialId === material?.id && job.studyKitPart && Boolean(job.answer));
+
+  const prepareStudyKit = async () => {
+    if (!material?.filePath) return;
+    setKitMessage(null);
+    setKitDraftAnchor(null);
+    // Each refusal comes before the consent dialog, so she never confirms a
+    // request that cannot be sent.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setKitMessage("No internet right now. Press Make my study kit again when you're back online.");
+      return;
+    }
+    const waiting = geminiJobs.jobs.filter((job) => job.materialId === material.id && (job.answer || job.sectionGuide));
+    if (waiting.length > 0) {
+      if (waiting.some((job) => job.studyKitPart && job.answer)) {
+        setKitMessage("Save or discard your study kit drafts first.");
+      } else {
+        setKitMessage("Save or discard the earlier drafts first, then make a study kit.");
+        setKitDraftAnchor(draftAnchor(waiting[0]!));
+      }
+      return;
+    }
+    try {
+      const pdf = await inspectPdf(material.filePath);
+      if (pdf.pages > 150 || !fileForAi.ready) {
+        if (canSplit) {
+          setKitMessage(KIT_PAGES_NOTE);
+          setSplitNote(KIT_PAGES_NOTE);
+          setSplittingManually(true);
+        } else {
+          // The page chooser is not available here, so name what is.
+          setKitMessage(pdf.pages > 150
+            ? "This PDF is over 150 pages. Use Create study guide, which makes the guide in parts."
+            : "Choose a chapter and try again.");
+        }
+      } else setConfirmingKit(true);
+    } catch { setKitMessage("Could not count this PDF's pages. Choose a chapter and try again."); }
+  };
+
   const createStudyAid = async () => {
     setStartRefusal(null);
     const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
@@ -823,7 +901,7 @@ function MaterialDetailPage() {
         </span>}
         action={
           <div className="row row--wrap material-header-actions">
-            {isPdf && material.filePath ? <Button variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
+            {isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <Button onClick={() => setEditing(true)}>Edit</Button>
               {canSplit ? <>
@@ -885,6 +963,25 @@ function MaterialDetailPage() {
             <p className="small muted">Write a study guide in your own words.</p>
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}
+          {isPdf ? <Card><CardBody>
+            <div className="stack stack--3">
+              <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
+              <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
+              {kitMessage ? <p role="status">{kitMessage}</p> : null}
+              {kitMessage && kitDraftAnchor ? (
+                <div className="row row--wrap">
+                  <Button size="small" variant="secondary" onClick={() => jumpTo(kitDraftAnchor)}>Show me</Button>
+                </div>
+              ) : null}
+              {canSaveWholeKit || savingKit ? (
+                <div className="row row--wrap">
+                  <Button variant="primary" disabled={savingKit} onClick={() => void saveWholeKit()}>{savingKit ? "Saving…" : "Save all three"}</Button>
+                  <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
+                </div>
+              ) : null}
+              {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
+            </div>
+          </CardBody></Card> : null}
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -925,7 +1022,7 @@ function MaterialDetailPage() {
                       ) : canOfferGemini ? (
                         <Button
                           size="small"
-                          variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
+                          variant={isPdf || (studySet && (studySet.summary || guideSections.length > 0)) ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || (Boolean(studyJob?.sectionGuide) && !emptyFailedGuide)}
                           onClick={() => {
                             if (geminiJobs.locked()) {
@@ -1099,7 +1196,7 @@ function MaterialDetailPage() {
                   ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                     <p className="small muted">
                       {providerWording(isPdf
-                        ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally."
+                        ? "Gemini will read this PDF and write a basic study guide in one go (a very long PDF in a few parts). Nothing is saved until you check the draft and save it."
                         : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.", gemini?.model)}
                     </p>
                   ) : null}
@@ -1337,6 +1434,7 @@ function MaterialDetailPage() {
                                 guideFlashcards[safeCardIndex].card.back,
                                 guideFlashcards[safeCardIndex].card.sourcePage,
                               )}
+                              sourcePage={guideFlashcards[safeCardIndex].card.sourcePage}
                               buttonLabel="Explain this"
                               initialQuestion="Why is this the answer?"
                             />
@@ -1551,6 +1649,7 @@ function MaterialDetailPage() {
                       />
 
                       <PracticeTestPanel entrySummary
+                        startHeld={kitDraftsWaiting ? "Save or discard your study kit drafts first, then start the practice test." : undefined}
                         practiceTest={practiceTest}
                         materialId={material.id}
                         key={practiceTest.updatedAt}
@@ -1979,7 +2078,7 @@ function MaterialDetailPage() {
       </div>
 
       {isPdf && material.filePath ? (
-            <Dialog open={askingPdf} onClose={() => setAskingPdf(false)} title="Ask about this PDF" className="material-ask-dialog">
+            <Dialog open={askingPdf} onClose={closeAskPdf} title="Ask about this PDF" className="material-ask-dialog">
             <div id="material-ask-gemini">
                 {!aiCheck.allowed ? (
                   <p className="small muted">{aiCheck.reason}</p>
@@ -2033,9 +2132,11 @@ function MaterialDetailPage() {
         <ManualSplitDialog
           open={splittingManually}
           material={material}
-          onClose={() => setSplittingManually(false)}
+          note={splitNote}
+          onClose={() => { setSplittingManually(false); setSplitNote(undefined); }}
           onCreated={(materialId) => {
             setSplittingManually(false);
+            setSplitNote(undefined);
             navigate(`/study/${materialId}`);
           }}
         />
@@ -2062,6 +2163,15 @@ function MaterialDetailPage() {
           setAddingAction(false);
         }}
       />
+
+      <ConfirmDialog open={confirmingKit} title={`Send this file to ${providerCompany(gemini?.model)}?`}
+        message={`${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)} You review and save each part separately.${kitReplacesSaved ? ` ${KIT_REPLACE_NOTE}` : ""}`}
+        details={sendDisclosure.details} detailsSummary="What the provider keeps" confirmLabel="Make my study kit" destructive={false}
+        {...chooseChapterFirst(() => setConfirmingKit(false))}
+        onCancel={() => setConfirmingKit(false)} onConfirm={() => {
+          setConfirmingKit(false);
+          if (material.filePath) void geminiJobs.startKit({materialId: material.id, filePath: material.filePath}, {preflight: preflight(material.filePath)}).then(message => { if (message) setKitMessage(message); });
+        }} />
 
       <ConfirmDialog
         open={confirmingAi}
@@ -2097,7 +2207,7 @@ function MaterialDetailPage() {
             {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
-        <p className="tiny dim">Short sources may give you fewer cards.</p></> : <p className="tiny dim">Finished sections are kept if you stop.</p>}
+        <p className="tiny dim">Short sources may give you fewer cards.</p></> : <p className="tiny dim">If you stop, any finished part is kept.</p>}
       </ConfirmDialog>
 
       <ConfirmDialog

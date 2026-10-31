@@ -18,7 +18,8 @@ import * as offline from "@/services/offlineContent";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 import { MaterialDetail } from "./MaterialDetail";
-import { STUDY_LIBRARY_TOUR } from "./StudyHowTo";
+import * as pdf from "@/services/pdf";
+import { PDF_PAGE_TOUR, PDF_STEPS, PRIVACY_HELP, REVIEW_HELP, STUDY_LIBRARY_TOUR, TROUBLE_HELP } from "./StudyHowTo";
 import { StudyLibrary, libraryTabFrom } from "./StudyLibrary";
 
 let db: TestDatabase;
@@ -38,7 +39,7 @@ function Ready() {
 }
 const renderAt = (path: string) => render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
 
-const STEP_TITLES = ["Choose a study-size PDF", "Create a study guide", "Create flashcards", "Try a practice test (optional)", "Review and save"];
+const STEP_TITLES = ["Choose a study-size PDF", "Make my study kit", "Wait a few minutes", "Check each part, then save it", "Longer PDFs", "Redo one part if you need to"];
 
 beforeEach(async () => {
   localStorage.clear();
@@ -59,7 +60,7 @@ it("reads ?tab=howto as the How to tab", () => {
   expect(libraryTabFrom(new URLSearchParams("tab=howto"))).toBe("howto");
 });
 
-it("puts How to after History and shows the five general steps from a deep link", async () => {
+it("puts How to after History and shows the general steps from a deep link", async () => {
   renderAt("/study?tab=howto");
   const tab = await screen.findByRole("tab", { name: "How to", selected: true });
   const tabs = screen.getAllByRole("tab").map(node => node.textContent);
@@ -68,10 +69,12 @@ it("puts How to after History and shows the five general steps from a deep link"
   expect(panel.getAttribute("aria-labelledby")).toBe(tab.id);
   const steps = within(panel).getByRole("list", { name: "PDF study steps" });
   const items = within(steps).getAllByRole("listitem");
-  expect(items).toHaveLength(5);
+  expect(items).toHaveLength(STEP_TITLES.length);
+  expect(PDF_STEPS.map(step => step.title)).toEqual(STEP_TITLES);
+  expect(steps.textContent).not.toMatch(/section by section/);
   STEP_TITLES.forEach((title, index) => expect(items[index]!.textContent).toContain(title));
   expect(within(panel).getByText(/No internet\?/).textContent).toContain("on-Mac study kit");
-  expect(within(panel).getByText(/Read this PDF's text/)).toBeTruthy();
+  expect(within(panel).getByText(/Want to search a PDF without internet/).textContent).toContain("Read this PDF's text");
   // Generic: no per-material status and no buttons that need a material.
   expect(within(panel).queryByRole("button")).toBeNull();
   expect(within(panel).queryByText(/Do this next|Done|When you're ready/)).toBeNull();
@@ -159,16 +162,76 @@ it("names only controls that exist in the Study Library, so the tour can't drift
 it("names the selected Claude provider and its request limits in How to", async () => {
   vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "claude-haiku-5-5", choice: "standard" });
   renderAt("/study?tab=howto");
-  await screen.findByText(/Claude reads up to 300 pages or 32 MB per request/);
+  await screen.findByText(/Claude reads up to 300 pages and about 23 MB per request/);
   const steps = screen.getByRole("list", { name: "PDF study steps" });
-  expect(steps.textContent).toContain("sends the file to Anthropic after you confirm");
-  expect(steps.textContent).toContain("Ask Claude for multiple-choice questions");
+  expect(steps.textContent).toContain("sends the PDF to Anthropic only after you confirm");
+  expect(steps.textContent).toContain("Make new cards with Claude");
   expect(steps.textContent).not.toMatch(/Gemini|Google|50 MB|1,000 pages/);
+  // The whole page speaks of Claude only, including the folded help.
+  const panel = screen.getByRole("tabpanel");
+  expect(panel.textContent).not.toMatch(/Gemini|Google/);
+  expect(within(panel).getByRole("list", { name: "Claude is busy" }).textContent).toContain("Her Flight Deck tries again briefly");
+  expect(within(panel).getByRole("list", { name: "Standard or Most capable" }).textContent).toContain("Claude Haiku 5.5");
+  expect(within(panel).getByRole("list", { name: "What is sent, and when" }).textContent).toContain("deleted within 30 days");
 });
 
 it("keeps Gemini How to wording and limits", async () => {
   renderAt("/study?tab=howto");
   await screen.findByRole("list", { name: "PDF study steps" });
-  expect(screen.getByRole("list", { name: "PDF study steps" }).textContent).toContain("Gemini reads up to 50 MB or 1,000 pages");
-  expect(screen.getByRole("list", { name: "PDF study steps" }).textContent).toContain("sends the file to Google after you confirm");
+  const steps = screen.getByRole("list", { name: "PDF study steps" }).textContent;
+  expect(steps).toContain("Gemini reads a PDF up to 50 MB or 1,000 pages");
+  expect(steps).toContain("sends the PDF to Google only after you confirm");
+  expect(steps).toContain("up to 150 pages");
+  expect(steps).toContain("Cancel stops it, and nothing is saved");
+  expect(screen.getByRole("list", { name: "Gemini is busy" }).textContent).toContain("Gemini 3.5 Flash");
+});
+
+it("folds the PDF page tour, reviewing, problems and privacy help into closed groups after the library tour", async () => {
+  renderAt("/study?tab=howto");
+  const panel = await screen.findByRole("tabpanel");
+  const titles = ["Getting around the Study Library", "On a PDF's page", "Reviewing and practicing", "When something goes wrong", "Privacy and cost"];
+  const headings = titles.map(name => within(panel).getByRole("heading", { name }));
+  headings.slice(1).forEach((heading, index) => expect(headings[index]!.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
+  for (const details of panel.querySelectorAll("details")) expect((details as HTMLDetailsElement).open).toBe(false);
+  for (const group of PDF_PAGE_TOUR) {
+    const list = within(panel).getByRole("list", { name: group.title });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(group.items.length);
+  }
+  for (const group of [...REVIEW_HELP, ...TROUBLE_HELP, ...PRIVACY_HELP]) {
+    const list = within(panel).getByRole("list", { name: group.title.replace("{ai}", "Gemini") });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(group.notes.length);
+  }
+  expect(within(panel).queryByRole("button")).toBeNull();
+  expect(panel.textContent).toContain("Check it against FAA material and your instructor");
+});
+
+it("names only controls that exist on a PDF's page, so the page tour can't drift", async () => {
+  vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
+  vi.spyOn(gemini, "listGeminiJobs").mockResolvedValue([]);
+  vi.spyOn(gemini, "watchGeminiJobs").mockResolvedValue(() => {});
+  vi.spyOn(pdf, "canSplitPdfs").mockReturnValue(true);
+  renderAt("/study/howto-pdf");
+  await screen.findByRole("button", { name: "Create study guide" });
+  const fill = (label: string) => label.replace("{ai}", "Gemini");
+  const find = (label: string, control: string) => {
+    switch (control) {
+      case "tab": return screen.getByRole("tab", { name: label });
+      case "button": return screen.getByRole("button", { name: label });
+      case "field": return screen.getAllByLabelText(label)[0];
+      case "disclosure": return [...document.querySelectorAll("summary")].find(node => node.textContent?.trim().startsWith(label));
+      default: return screen.getByRole("heading", { name: label });
+    }
+  };
+  let checked = 0;
+  for (const group of PDF_PAGE_TOUR) {
+    if (group.tab) fireEvent.click(screen.getByRole("tab", { name: group.tab }));
+    if (group.tab === "More") await waitFor(() => expect(document.getElementById("read-pdf-text")).toBeTruthy());
+    if (group.menu) fireEvent.click(document.getElementById("material-file-actions")!);
+    for (const item of group.items) {
+      if (item.control === "situational") continue;
+      expect(find(fill(item.label), item.control), item.label).toBeTruthy();
+      checked += 1;
+    }
+  }
+  expect(checked).toBeGreaterThanOrEqual(25);
 });

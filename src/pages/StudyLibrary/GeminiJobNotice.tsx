@@ -1,3 +1,4 @@
+import { GuideBody } from "./GuideBody";
 import { providerCompany, providerWording } from "@/services/provider";
 import { useEffect, useRef, useState } from "react";
 
@@ -35,7 +36,7 @@ export function GeminiJobNotice({
   const helperModel = job.answer?.model ?? job.sections?.model ?? model;
   const helper = providerCompany(helperModel) === "Anthropic" ? "Claude" : "Gemini";
   const company = providerCompany(helperModel);
-  const what = job.kind === "study-aid" ? "study guide" : job.kind === "flashcards" ? "flashcards" : "practice test";
+  const what = job.kind === "study-kit" ? "study kit" : job.kind === "study-aid" ? "study guide" : job.kind === "flashcards" ? "flashcards" : "practice test";
   const readyTitle =
     job.kind === "study-aid"
       ? "Your new study guide is ready."
@@ -115,17 +116,19 @@ export function GeminiJobNotice({
           <p className="tiny">
             {job.cancelAttempted
               ? `${helper} finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
-              : job.local
+              : job.local || job.studyKitPart
                 ? `${readyTitle} It has not been saved yet.`
                 : `${helper} finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
             {job.answer?.model ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
-            {onReview
+            {job.studyKitPart && !onReview ? "Read it below, then save or discard it. Each part is saved separately." : onReview
               ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : job.kind === "study-aid" ? "Saving it replaces your saved guide; any saved flashcards stay as they are." : job.kind === "flashcards" ? "Saving it replaces your saved cards; your study guide stays as it is." : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>
         {onReview && reviewDisabled ? <p className="tiny muted">Finish or abandon your current practice attempt before reviewing these questions.</p> : null}
+        {job.studyKitPart && !job.checkpointed ? <p className="tiny" role="alert">This draft could not be kept on this computer. Keep this window open until you save or discard it.</p> : null}
         {summary ? <p className="tiny">{summary}</p> : null}
+        {job.studyKitPart && job.answer ? <StudyKitPartPreview job={job} what={what} /> : null}
         <div className="row row--wrap">
           {onReview ? (
             <Button size="small" disabled={busy || reviewDisabled} onClick={onReview}>
@@ -229,6 +232,36 @@ export function GeminiJobNotice({
  * note is hashes and JSON for a section guide, which pushed the buttons off
  * the screen; it stays stored and is shown under the saved study aid.
  */
+/** Use the same guide renderer and plain card/question fields as saved study aids. */
+function StudyKitPartPreview({ job, what }: { job: GeminiJob; what: string }) {
+  // Reading the draft should not spoil the test, so answers start hidden.
+  const [showAnswers, setShowAnswers] = useState(false);
+  const answer = job.answer;
+  if (!answer) return null;
+  return <details>
+    <summary>Read the new {what}</summary>
+    <div className="stack stack--3">
+      {"questions" in answer ? <div className="row row--wrap">
+        <Button size="small" variant="secondary" onClick={() => setShowAnswers((shown) => !shown)}>{showAnswers ? "Hide answers" : "Show answers"}</Button>
+      </div> : null}
+      {"questions" in answer ? answer.questions.map((question, index) => <div key={index}>
+        <p>{question.question}</p>
+        <ol>{question.options.map((option, n) => <li key={n}>{option}{showAnswers && n === question.correctIndex ? " (correct answer)" : ""}</li>)}</ol>
+        {showAnswers ? <p>{question.explanation}</p> : null}
+        <p>Source page {question.sourcePage}</p>
+      </div>) : job.kind === "flashcards" ? answer.flashcards.map((card, index) => <div key={index}>
+        <p><strong>{card.front}</strong></p><p>{card.back}</p><p>Source page {card.sourcePage}</p>
+      </div>) : <>
+        {answer.sections.map((section, index) => <div key={index}>
+          <p><strong>{section.heading}</strong></p><GuideBody text={section.body} />
+        </div>)}
+        <p className="tiny muted">{answer.sourceNotes}</p>
+      </>}
+      <p className="tiny muted">AI study aid. Check against current FAA material and your instructor.</p>
+    </div>
+  </details>;
+}
+
 function readySummary(job: GeminiJob): string | null {
   const answer = job.answer;
   if (!answer) return null;
@@ -482,7 +515,7 @@ export function GeminiProgressView({
         {job.sectionGuide && job.sections?.heading && !/files\/|https?:\/\//i.test(job.sections.heading) ? <p className="tiny dim">{job.sections.heading}</p> : null}
         {job.progress && !job.cancelRequested ? <p className="tiny dim">{words(job.progress)}</p> : null}
         {job.sectionGuide && job.stage === "generating" && !job.cancelRequested && now - (job.stageSince ?? job.startedAt ?? now) >= 60_000 ? (
-          <p className="tiny dim">{words("Taking longer than usual. Gemini can take a few minutes on a section. Cancel keeps finished sections.")}</p>
+          <p className="tiny dim">{words("Taking longer than usual. Gemini can take a few minutes on a long PDF. Cancel keeps any finished part.")}</p>
         ) : null}
         {job.cancelError ? (
           <p className="field__error" role="alert">

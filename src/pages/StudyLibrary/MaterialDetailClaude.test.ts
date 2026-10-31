@@ -80,7 +80,7 @@ describe("Claude confirmations and model labels", () => {
       : await seedMaterial();
     await open(material.id);
     expect(await screen.findByRole("heading",{name: pdf ? "Study guide" : "Claude study assistant"})).toBeTruthy();
-    expect(screen.getByText(pdf ? /Claude will read this PDF and build a study guide section by section/ : /Claude will read only this file and create a source-based study guide/)).toBeTruthy();
+    expect(screen.getByText(pdf ? /Claude will read this PDF and write a basic study guide in one go/ : /Claude will read only this file and create a source-based study guide/)).toBeTruthy();
     if (pdf) return; // PDF generation itself uses the separate native section path.
     fireEvent.click(await screen.findByRole("button",{name:"Create study aid"}));
     const dialog=await screen.findByRole("dialog",{name:"Send this file to Anthropic?"});

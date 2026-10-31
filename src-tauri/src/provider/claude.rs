@@ -105,7 +105,18 @@ impl ClaudeProvider {
         content.extend(text);
         // Effort "medium" (Haiku 5.5's default): the live test's "low" guide
         // skipped the recovery steps; at Haiku's price completeness wins.
-        json!({"model":model,"max_tokens":16000,"messages":[{"role":"user","content":content}],
+        // A combined kit needs room for all three outputs plus Haiku 5.5's
+        // default adaptive thinking (128K output cap). Existing requests
+        // retain their accepted 16,000-token Claude allowance.
+        let tokens = if body["generationConfig"]["responseSchema"]["properties"]
+            .get("guide")
+            .is_some()
+        {
+            crate::gemini::study_kit::KIT_OUTPUT_TOKENS
+        } else {
+            16000
+        };
+        json!({"model":model,"max_tokens":tokens,"messages":[{"role":"user","content":content}],
             "output_config":{"effort":"medium","format":{"type":"json_schema",
                 "schema":translate_schema(&body["generationConfig"]["responseSchema"])}}})
     }
@@ -204,12 +215,14 @@ pub(crate) fn refusal(status: u16, retry_after: Option<Duration>) -> RefusalKind
     }
 }
 
+pub(crate) const OUTPUT_LIMIT_MESSAGE: &str = "Claude's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.";
+
 pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     let envelope: Value = serde_json::from_str(raw)
         .map_err(|_| "Claude returned an unreadable response.".to_string())?;
     match envelope["stop_reason"].as_str() {
         Some("end_turn") => {},
-        Some("max_tokens") => return Err("Claude's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.".into()),
+        Some("max_tokens") => return Err(OUTPUT_LIMIT_MESSAGE.into()),
         Some("refusal") => return Err("Claude declined to answer this one. Try a different section or question.".into()),
         _ => return Err("Claude stopped before completing its answer. Nothing was saved; try a smaller selected source.".into()),
     }
