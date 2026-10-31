@@ -8,12 +8,13 @@ export interface PracticeDraftQuestion {
   correctIndex: number;
   explanation: string;
   sourcePage: number | null;
+  acsTask?: string | null;
   instructor: boolean;
 }
 
 export function draftFromSnapshot(snapshot: PracticeSnapshot): PracticeDraftQuestion[] {
-  return snapshot.questions.map(({ identity, question, options, correctIndex, explanation, sourcePage, origin }) => ({
-    identity, question, options: [...options], correctIndex, explanation, sourcePage, instructor: origin === "instructor",
+  return snapshot.questions.map(({ identity, question, options, correctIndex, explanation, sourcePage, origin, acsTask }) => ({
+    identity, question, options: [...options], correctIndex, explanation, sourcePage, ...(acsTask ? { acsTask } : {}), instructor: origin === "instructor",
   }));
 }
 
@@ -32,13 +33,13 @@ export async function buildPracticeEditOperation(args: {
     const before = expected?.questions.find((question) => question.identity === item.identity);
     const fields = {
       question: item.question, options: [...item.options], correctIndex: item.correctIndex,
-      explanation: item.explanation, sourcePage: item.sourcePage,
+      explanation: item.explanation, sourcePage: item.sourcePage, acsTask: item.acsTask ?? undefined,
     };
     const sameFields = before && before.question === item.question &&
       JSON.stringify(before.options) === JSON.stringify(item.options) && before.correctIndex === item.correctIndex &&
       before.explanation === item.explanation && before.sourcePage === item.sourcePage;
     if (before && sameFields && (before.origin === "instructor") === item.instructor) {
-      questions.push({ ...before, options: [...before.options] });
+      questions.push({ ...before, options: [...before.options], acsTask: item.acsTask ?? undefined });
       continue;
     }
     const origin = item.instructor || before?.origin === "instructor" ? "instructor" : "user";

@@ -38,7 +38,7 @@ export async function practiceRegenerationPreview(current: PracticeSnapshot, gen
   for (const candidate of generated) {
     const item: PracticeAuthoringQuestion = {
       identity: crypto.randomUUID(), question: candidate.question, options: [...candidate.options],
-      correctIndex: candidate.correctIndex, explanation: candidate.explanation, sourcePage: candidate.sourcePage,
+      correctIndex: candidate.correctIndex, explanation: candidate.explanation, sourcePage: candidate.sourcePage, ...(candidate.acsTask ? { acsTask: candidate.acsTask } : {}),
     };
     const { textKey, terms } = await practiceRetirementRecord(item, "deleted");
     let exact: PracticeRetirementRecord | null = null, best: PracticeRetirementRecord | null = null, score = NEAR_MATCH_THRESHOLD;

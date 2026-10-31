@@ -1,3 +1,4 @@
+import { ACS_TASK_CATALOG } from "@/logic/acsTaskCatalog";
 import { useEffect, useRef, useState } from "react";
 import { Button, Checkbox, ConfirmDialog, Dialog, Field, TextArea, TextInput } from "@/components/ui";
 import { appendPracticeRetirements } from "@/data/practiceAuthoring";
@@ -276,6 +277,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
                 {validate && (messages.answer || messages.count) ? <p role="alert" className="field__error">{messages.answer || messages.count}</p> : null}
               </div>
               <Field label={`Question ${index + 1} explanation (optional)`} error={validate ? messages.explanation : null} hint={length(question.explanation) >= 4_500 ? `${length(question.explanation).toLocaleString()} / 5,000 characters` : undefined}><TextArea rows={3} value={question.explanation} onChange={(event) => change(index, { explanation: event.target.value })} /></Field>
+              <Field label={`Question ${index + 1} ACS task (optional)`}><select value={question.acsTask ?? ""} onChange={event => change(index, { acsTask: event.target.value || null })}><option value="">No ACS task</option>{ACS_TASK_CATALOG.map(task => <option key={task.code} value={task.code}>{task.code} · {task.title}</option>)}</select></Field>
               <Field label={`Question ${index + 1} page (optional)`} error={validate ? messages.page : null}><TextInput type="text" inputMode="numeric" value={question.pageInput} onChange={(event) => change(index, { pageInput: event.target.value, sourcePage: event.target.value.trim() === "" ? null : Number(event.target.value) })} /></Field>
               {noteSeed && question.identity === noteSeed.identity ? <p className="tiny muted">{seedNote(noteSeed)}</p> : null}
               <Checkbox label="My instructor corrected this" checked={instructor || question.instructor} disabled={instructor} onChange={(checked) => change(index, { instructor: checked })} />

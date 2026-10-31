@@ -84,6 +84,7 @@ fn question() -> Schema {
     Schema::object(
         &[
             ("question", Schema::string()),
+            ("acsTask", Schema::string().nullable(true)),
             (
                 "options",
                 Schema::array(Schema::string()).min_items(3).max_items(3),
@@ -95,6 +96,7 @@ fn question() -> Schema {
         ],
         &[
             "question",
+            "acsTask",
             "options",
             "correctIndex",
             "explanation",

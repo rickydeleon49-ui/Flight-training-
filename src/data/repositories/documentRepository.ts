@@ -247,18 +247,18 @@ const mapPracticeTest = (row: PracticeTestRow): PracticeTest => ({
 });
 
 /**
- * The mirror stores the five content fields only, so a question's real
- * origin comes from the material's active version — the same authoritative
- * rows `readCurrentSnapshot` reads. An origin is copied only onto the mirror
- * question it belongs to (same ordinal, same five fields); when no origin is
+ * The mirror stores the five content fields only. Origin and ACS task come
+ * from the material's active version — the same authoritative rows
+ * `readCurrentSnapshot` reads. Metadata is copied only onto the mirror
+ * question it belongs to (same ordinal, same five fields); when no metadata is
  * stored the key stays absent, so legacy and quarantined rows keep their
  * exact mirror output.
  */
-function withStoredOrigins(test: PracticeTest, snapshot: PracticeSnapshot | null): PracticeTest {
+function withStoredQuestionMetadata(test: PracticeTest, snapshot: PracticeSnapshot | null): PracticeTest {
   if (!snapshot || snapshot.questions.length !== test.questions.length) return test;
   const questions = test.questions.map((question, index) => {
     const stored = snapshot.questions[index]!;
-    if (stored.origin === undefined) return question;
+    if (stored.origin === undefined && !stored.acsTask) return question;
     if (
       question.question !== stored.question ||
       question.correctIndex !== stored.correctIndex ||
@@ -269,7 +269,7 @@ function withStoredOrigins(test: PracticeTest, snapshot: PracticeSnapshot | null
     ) {
       return question;
     }
-    return { ...question, origin: stored.origin };
+    return { ...question, ...(stored.origin ? { origin: stored.origin } : {}), ...(stored.acsTask ? { acsTask: stored.acsTask } : {}) };
   });
   return { ...test, questions };
 }
@@ -565,7 +565,7 @@ export function documentRepository(db: SqlDatabase) {
           (sql, params) => db.select(sql, params),
           test.sourceMaterialId,
         );
-        const authored = withStoredOrigins(test, snapshot);
+        const authored = withStoredQuestionMetadata(test, snapshot);
         if (snapshot) {
           authored.questions = await Promise.all(authored.questions.map(async (question, index) => {
             const item = snapshot.questions[index];
@@ -636,6 +636,7 @@ export function documentRepository(db: SqlDatabase) {
         correctIndex: question.correctIndex,
         explanation: question.explanation,
         sourcePage: question.sourcePage,
+        ...(question.acsTask ? { acsTask: question.acsTask } : {}),
         identity: newId(),
       }));
       const dropped: PracticeRetirementRecord[] = [];

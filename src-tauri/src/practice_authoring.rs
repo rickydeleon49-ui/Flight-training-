@@ -179,6 +179,7 @@ pub struct RetirementRecord {
 /// identity; never server state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthoringQuestion {
+    pub acs_task: Option<String>,
     pub question: String,
     pub options: Vec<String>,
     pub correct_index: i64,
@@ -317,7 +318,7 @@ pub fn decode_question(value: &Value) -> Check<AuthoringQuestion> {
             "sourcePage",
             "identity",
         ],
-        &["origin", "replaces"],
+        &["origin", "replaces", "acsTask"],
     )?;
     let Value::String(question) = &map["question"] else {
         return invalid();
@@ -371,6 +372,10 @@ pub fn decode_question(value: &Value) -> Check<AuthoringQuestion> {
         return invalid();
     }
     let mut out = AuthoringQuestion {
+        acs_task: map
+            .get("acsTask")
+            .and_then(Value::as_str)
+            .and_then(crate::acs_tasks::normalize),
         question: question.clone(),
         options: parsed_options,
         correct_index,
@@ -883,6 +888,9 @@ pub fn question_value(question: &AuthoringQuestion) -> Value {
         "sourcePage".into(),
         question.source_page.map(Value::from).unwrap_or(Value::Null),
     );
+    if let Some(task) = &question.acs_task {
+        map.insert("acsTask".into(), json!(task));
+    }
     map.insert("identity".into(), json!(question.identity));
     if let Some(origin) = &question.origin {
         map.insert("origin".into(), json!(origin));
@@ -963,6 +971,7 @@ struct VersionFields {
 
 /// The item columns of one `SnapshotSourceRows.items` entry.
 struct ItemFields {
+    acs_task: Option<String>,
     id: String,
     question_text: String,
     options_json: String,
@@ -1011,6 +1020,7 @@ pub fn build_snapshot_from_rows(rows: &SnapshotSourceRows) -> Check<Snapshot> {
         };
         let replaces = origin.as_ref().and_then(|_| item.replaces_id.clone());
         questions.push(AuthoringQuestion {
+            acs_task: item.acs_task.clone(),
             question: item.question_text.clone(),
             options: parse_options(&item.options_json)?,
             correct_index: item.correct_index,
@@ -1047,17 +1057,26 @@ pub fn build_snapshot_from_rows(rows: &SnapshotSourceRows) -> Check<Snapshot> {
 const SNAPSHOT_SELECT: &str = "
   SELECT v.id, v.version_number, v.title, v.provider, v.model, v.created_at,
          i.id AS item_id_row, i.ordinal, i.question_text, i.options_json, i.correct_index,
-         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin
+         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task
     FROM practice_test_versions v
     JOIN practice_test_items i ON i.version_id = v.id
     LEFT JOIN practice_item_origins o ON o.item_id = i.id
+    LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id
    WHERE v.source_material_id = ?1 AND v.is_active = 1
    ORDER BY i.ordinal ASC";
 
 /// Mirrors the TS `readCurrentSnapshot`: the material's current test exactly
 /// as stored, or null when there is none.
 pub fn read_current_snapshot(conn: &Connection, material_id: &str) -> Check<Option<Snapshot>> {
-    let mut statement = conn.prepare(SNAPSHOT_SELECT).map_err(storage)?;
+    let select = if crate::acs_tasks::table_exists(conn).map_err(storage)? {
+        SNAPSHOT_SELECT.to_string()
+    } else {
+        SNAPSHOT_SELECT.replace("a.acs_task", "NULL").replace(
+            "    LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id\n",
+            "",
+        )
+    };
+    let mut statement = conn.prepare(&select).map_err(storage)?;
     let rows = statement
         .query_map(params![material_id], |row| {
             Ok((
@@ -1070,6 +1089,10 @@ pub fn read_current_snapshot(conn: &Connection, material_id: &str) -> Check<Opti
                     created_at: row.get(5)?,
                 },
                 ItemFields {
+                    // A tag from another catalog edition reads as untagged.
+                    acs_task: row
+                        .get::<_, Option<String>>(16)?
+                        .and_then(|t| crate::acs_tasks::normalize(&t)),
                     id: row.get(6)?,
                     question_text: row.get(8)?,
                     options_json: row.get(9)?,
@@ -1440,6 +1463,13 @@ pub fn apply_operation(
             ],
         )
         .map_err(storage)?;
+        if let Some(task) = &question.acs_task {
+            tx.execute(
+                "INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?1, ?2)",
+                params![item_id, task],
+            )
+            .map_err(storage)?;
+        }
         if let Some(origin) = &question.origin {
             tx.execute(
                 "INSERT INTO practice_item_origins (item_id, origin) VALUES (?1, ?2)",

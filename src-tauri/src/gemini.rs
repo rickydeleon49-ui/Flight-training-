@@ -1655,6 +1655,8 @@ pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PracticeQuestion {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    acs_task: Option<String>,
     question: String,
     options: Vec<String>,
     correct_index: u32,
@@ -1689,6 +1691,12 @@ pub struct GeneratedPracticeTest {
 fn sanitize_practice_test(
     mut test: GeneratedPracticeTest,
 ) -> Result<GeneratedPracticeTest, String> {
+    for question in &mut test.questions {
+        question.acs_task = question
+            .acs_task
+            .as_deref()
+            .and_then(crate::acs_tasks::normalize);
+    }
     test.questions.retain(|question| {
         !question.question.trim().is_empty()
             && !question.explanation.trim().is_empty()
@@ -1925,7 +1933,11 @@ async fn practice_test_with(
          not operational flight instruction; the learner must verify every answer against current FAA material, \
          aircraft documentation, and their instructor.";
 
-    let prompt = format!("{prompt} {}", kit_evidence::QUOTE_RULE);
+    let prompt = format!(
+        "{prompt} {} {}",
+        kit_evidence::QUOTE_RULE,
+        crate::acs_tasks::prompt()
+    );
     let build = |part: Value| {
         json!({
             "contents": [{"role": "user", "parts": [
@@ -2646,8 +2658,25 @@ mod tests {
         assert!(mime_type("syllabus.docx").is_err());
     }
 
+    #[test]
+    fn sanitize_practice_tasks_never_guesses() {
+        for (input, expected) in [
+            ("PA.II.A", Some("PA.II.A")),
+            (" pa.ii.a ", Some("PA.II.A")),
+            ("PA.II.Z", None),
+            ("PA.II.A.K1", None),
+            ("garbage", None),
+        ] {
+            let mut q = valid_question();
+            q.acs_task = Some(input.into());
+            let result = sanitize_practice_test(one_question_test(q)).unwrap();
+            assert_eq!(result.questions[0].acs_task.as_deref(), expected);
+        }
+    }
+
     fn valid_question() -> PracticeQuestion {
         PracticeQuestion {
+            acs_task: None,
             question: "What is the standard traffic pattern altitude?".to_string(),
             options: vec!["800 ft AGL".to_string(), "1,000 ft AGL".to_string()],
             correct_index: 1,
@@ -2671,6 +2700,7 @@ mod tests {
 
     fn four_options(question: &str, explanation: &str) -> PracticeQuestion {
         PracticeQuestion {
+            acs_task: None,
             question: question.to_string(),
             options: ["Lift", "Drag", "Weight", "Thrust"]
                 .map(String::from)

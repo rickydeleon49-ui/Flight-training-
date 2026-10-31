@@ -83,6 +83,17 @@ beforeEach(async () => {
 afterEach(() => { cleanup(); db.close(); vi.restoreAllMocks(); });
 
 describe("reviewing regenerated practice questions", () => {
+  it("shows a task chip for tagged draft questions and none for untagged questions", async () => {
+    await seed();
+    await regenerate({ ...GENERATED, questions: [
+      { ...GENERATED.questions[0]!, acsTask: "PA.II.A" },
+      { ...GENERATED.questions[0]!, question: "A distinct untagged draft question" },
+    ] });
+    const scope = await review();
+    expect(scope.getAllByText("PA.II.A · Preflight Assessment")).toHaveLength(1);
+    expect(scope.getByText("A distinct untagged draft question")).toBeTruthy();
+  });
+
   it("waits for Save, then keeps hers verbatim after the new questions", async () => {
     await seed([question(), question({ question: "Instructor correction question", origin: "instructor" })]);
     const before = (await snapshot())!;

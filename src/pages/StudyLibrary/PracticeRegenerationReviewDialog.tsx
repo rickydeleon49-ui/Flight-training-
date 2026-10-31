@@ -1,3 +1,4 @@
+import { AcsTaskChip } from "./AcsTaskChip";
 import { useEffect, useRef, useState } from "react";
 
 import { Button, Checkbox, Dialog } from "@/components/ui";
@@ -20,6 +21,7 @@ function QuestionContent({ question, compare, showAnswers }: { question: Practic
   const other = compare?.question;
   return <div className="stack stack--1">
     <p className="small wrap-anywhere"><strong><ChangedWords text={question.question} other={other?.question} show={show} /></strong></p>
+    <AcsTaskChip code={question.acsTask} />
     <ol>{question.options.map((option, index) => <li className="tiny wrap-anywhere" key={index}><ChangedWords text={option} other={other?.options[index]} show={show} /></li>)}</ol>
     {showAnswers ? <>
       <p className="tiny wrap-anywhere">Correct answer: <ChangedWords text={question.options[question.correctIndex] ?? ""} other={other ? other.options[other.correctIndex] : undefined} show={show} /></p>
