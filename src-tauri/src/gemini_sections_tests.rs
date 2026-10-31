@@ -603,6 +603,14 @@ fn a_draft_from_the_earlier_planner_resumes_and_saves() {
         .as_str()
         .unwrap()
         .contains("guide-section-prompt-v1: Write only section section-02 (Pages 6–10)"));
+    // The plain-terms line is for new guides only; the legacy recipe is untouched.
+    assert!(r
+        .requests()
+        .iter()
+        .all(|request| !request["contents"][0]["parts"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Explain each technical term")));
     // The older draft keeps its own, longer prompt to the end.
     assert!(r.requests()[5]["contents"][0]["parts"][0]["text"]
         .as_str()
@@ -683,7 +691,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
         let pages: Vec<_> = (first..=last)
             .map(|p| json!({"pdfPage":p,"sourcePage":p}))
             .collect();
-        let prompt=format!("guide-section-prompt-v2: Write part {} of 4 (Pages {first}–{last}) of a study guide for the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. No long paragraphs. Return JSON with body (nonempty Markdown, at most 8000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
+        let prompt=format!("guide-section-prompt-v2: Write part {} of 4 (Pages {first}–{last}) of a study guide for the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid). No long paragraphs. Return JSON with body (nonempty Markdown, at most 8000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
         let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":16384,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
         assert_eq!(*body, expected);
         assert!(
@@ -2075,6 +2083,9 @@ fn a_whole_pdf_guide_is_one_request_with_plain_progress() {
         "guide-section-prompt-v2: Write a study guide for the attached PDF (Pages 1–95). "
     ));
     assert!(text.contains("at most 8000 characters"));
+    assert!(text.contains(
+        "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid)."
+    ));
     assert_eq!(
         requests[0]["generationConfig"]["maxOutputTokens"],
         PART_OUTPUT_TOKENS

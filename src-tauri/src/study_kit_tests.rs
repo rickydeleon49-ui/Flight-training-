@@ -146,6 +146,10 @@ fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
     assert!(prompt.contains(r#"{"pdfPage":150,"sourcePage":150}"#));
     assert!(prompt.contains("never the number printed on the page"));
     assert!(prompt.contains("Never refer to option letters or positions in explanations."));
+    assert!(prompt.starts_with("study-kit-prompt-v2: "));
+    assert!(prompt.contains(
+        "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid)"
+    ));
     let props = &body["generationConfig"]["responseSchema"]["properties"];
     assert_eq!(props.as_object().unwrap().len(), 3);
     let cards = AnyProvider::default().translate_schema(&crate::provider::schemas::study_aid());

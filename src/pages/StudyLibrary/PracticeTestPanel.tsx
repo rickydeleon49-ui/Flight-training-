@@ -1393,6 +1393,8 @@ export function PracticeTestPanel({
             materialId={materialId}
             relativePath={currentMaterial?.filePath ?? null}
             context={askGeminiContext}
+            sourcePage={question.sourcePage ?? null}
+            contextNoun="question"
             initialQuestion="Why is that the correct answer?"
           />
         </div>

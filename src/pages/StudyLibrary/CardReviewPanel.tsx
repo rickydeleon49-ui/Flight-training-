@@ -15,6 +15,7 @@ import type { CardReviewRepository } from "@/data/repositories/cardReviewReposit
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
 import { AppDataContext } from "@/state/AppDataContext";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
+import { reviewButtonLabel, reviewStatusLine } from "@/logic/cardReviewStatus";
 
 import { ResetCardReviewsDialog } from "./ResetCardReviewsDialog";
 import {
@@ -155,9 +156,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
       ? `All caught up. Next review: ${summary.nextDayAt === nextAt ? shortLocalDay(nextAt, zone) : describeReturn(nextAt, now, zone)}.`
       : "All caught up.";
   } else {
-    statusLine = [summary.newCount > 0 ? plural(summary.newCount, "new card") : null, summary.dueNow > 0 ? `${plural(summary.dueNow, "card")} due` : "none due"]
-      .filter(Boolean)
-      .join(" · ");
+    statusLine = reviewStatusLine(summary.dueNow, summary.newCount);
   }
   if (hasMixedSources) statusLine = `${statusLine} (${userCount} you wrote, ${pdfCount} from your PDF)`;
 
@@ -177,7 +176,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
             disabled={!reviewable || review.blocked || review.starting}
             onClick={() => void review.startSession()}
           >
-            {review.starting ? "Opening…" : numberedAction && reviewable ? `Review ${plural(summary.dueNow || Math.min(summary.newCount, 10), "card")}` : "Review cards"}
+            {review.starting ? "Opening…" : numberedAction && reviewable ? reviewButtonLabel(summary.dueNow, summary.newCount) : "Review cards"}
           </Button>
         )}
       </div>
@@ -534,6 +533,7 @@ function SessionView({
               materialId={materialId}
               relativePath={resolvedFilePath}
               context={formatFlashcardContext(item.front, item.back, item.sourcePage)}
+              sourcePage={item.sourcePage}
               buttonLabel="Explain this"
               initialQuestion="Why is this the answer?"
             />

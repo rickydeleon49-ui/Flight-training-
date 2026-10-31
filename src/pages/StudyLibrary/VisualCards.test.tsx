@@ -245,7 +245,7 @@ it.each([
   const revealName = `Covered label 1. ${punctuated} Reveal label`;
   expect(screen.getByRole("button", { name: revealName })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
   expect(await screen.findByRole("button", { name: revealName })).toBeTruthy();
   mounted.unmount();
 
@@ -314,7 +314,7 @@ it("retries an uncertain save with the exact operation and reviews with the exis
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(ids).toHaveLength(2);
   expect(ids[0]).toBe(ids[1]);
-  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
   const reveal = await screen.findByRole("button", { name: /Covered label 1.*Reveal label/ });
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");
@@ -336,7 +336,7 @@ it("keeps a changed or missing picture unavailable with no answer or rating cont
   fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   vi.mocked(pictureService.readVisualPicture).mockRejectedValue(Error("This picture has changed."));
-  fireEvent.click(await screen.findByRole("button", { name: /^Review \d+ cards?$/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
   await screen.findByText("This picture has changed.");
   const session = screen.getByLabelText(/^Card review session/);
   expect(session.textContent).not.toContain("Bravo synthetic answer");

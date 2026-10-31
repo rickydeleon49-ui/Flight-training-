@@ -314,7 +314,7 @@ describe("relearning readiness while a material stays open", () => {
     observe();
     render(panel());
     await settle();
-    expect(heading()).toBe("3 new cards · none due");
+    expect(heading()).toBe("3 new cards");
     fireEvent.click(screen.getByRole("button", { name: "Review cards" }));
     await settle(sessionReady("1 of 3"));
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
@@ -331,7 +331,7 @@ describe("relearning readiness while a material stays open", () => {
     const before = await stored();
     const reads = selects.length; // after the test's own reads of stored rows
     expect(screen.getAllByRole("listitem")).toHaveLength(1); // one recent review
-    expect(heading()).toBe("2 new cards · none due"); // card 2's rating is not confirmed
+    expect(heading()).toBe("2 new cards"); // card 2's rating is not confirmed
 
     await advance(10 * MINUTE);
     await focusWindow();

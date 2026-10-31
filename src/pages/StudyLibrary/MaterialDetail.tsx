@@ -108,6 +108,8 @@ function draftAnchor(job: GeminiJob): string {
   return "material-study-guide";
 }
 
+/** Shown on Make my study kit only when a guide, cards or questions are already saved. */
+const KIT_REPLACE_NOTE = "This makes a new kit. When you save, it replaces your saved guide, flashcards or questions — your earlier versions stay in Previous versions.";
 const KIT_PAGES_NOTE = "The study kit reads up to 150 pages. Pick the pages you want — they become their own item in your library, then press Make my study kit there.";
 const materialTabLabel = (value: MaterialTab) => value === "study" ? "Study" : value === "notes" ? "Notes" : "More";
 
@@ -152,6 +154,12 @@ export function MaterialDetail() {
 function MaterialDetailPage() {
   const [pageNotesAvailable, setPageNotesAvailable] = useState(false);
   const [askingPdf, setAskingPdf] = useState(false);
+  // Closing Ask about this PDF (Escape or Close) returns focus to its button.
+  const askPdfButton = useRef<HTMLButtonElement>(null);
+  const closeAskPdf = () => {
+    setAskingPdf(false);
+    window.setTimeout(() => askPdfButton.current?.focus({ preventScroll: true }), 0);
+  };
   const [activePracticeAttempt, setActivePracticeAttempt] = useState<boolean | null>(null);
   const { materialId } = useParams();
   const navigate = useNavigate();
@@ -755,6 +763,9 @@ function MaterialDetailPage() {
       for (const job of kitParts) if (job) await geminiJobs.saveAgain(job.key);
     } finally { setSavingKit(false); }
   };
+  const kitReplacesSaved = Boolean(
+    (studySet && (studySet.sections.length > 0 || studySet.flashcards.length > 0)) || (practiceTest && practiceTest.questions.length > 0),
+  );
   const kitDraftsWaiting = geminiJobs.jobs.some((job) => job.materialId === material?.id && job.studyKitPart && Boolean(job.answer));
 
   const prepareStudyKit = async () => {
@@ -890,7 +901,7 @@ function MaterialDetailPage() {
         </span>}
         action={
           <div className="row row--wrap material-header-actions">
-            {isPdf && material.filePath ? <Button variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
+            {isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <Button onClick={() => setEditing(true)}>Edit</Button>
               {canSplit ? <>
@@ -1423,6 +1434,7 @@ function MaterialDetailPage() {
                                 guideFlashcards[safeCardIndex].card.back,
                                 guideFlashcards[safeCardIndex].card.sourcePage,
                               )}
+                              sourcePage={guideFlashcards[safeCardIndex].card.sourcePage}
                               buttonLabel="Explain this"
                               initialQuestion="Why is this the answer?"
                             />
@@ -2066,7 +2078,7 @@ function MaterialDetailPage() {
       </div>
 
       {isPdf && material.filePath ? (
-            <Dialog open={askingPdf} onClose={() => setAskingPdf(false)} title="Ask about this PDF" className="material-ask-dialog">
+            <Dialog open={askingPdf} onClose={closeAskPdf} title="Ask about this PDF" className="material-ask-dialog">
             <div id="material-ask-gemini">
                 {!aiCheck.allowed ? (
                   <p className="small muted">{aiCheck.reason}</p>
@@ -2153,7 +2165,7 @@ function MaterialDetailPage() {
       />
 
       <ConfirmDialog open={confirmingKit} title={`Send this file to ${providerCompany(gemini?.model)}?`}
-        message={`${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)} You review and save each part separately. Any saved parts you replace keep their earlier versions.`}
+        message={`${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)} You review and save each part separately.${kitReplacesSaved ? ` ${KIT_REPLACE_NOTE}` : ""}`}
         details={sendDisclosure.details} detailsSummary="What the provider keeps" confirmLabel="Make my study kit" destructive={false}
         {...chooseChapterFirst(() => setConfirmingKit(false))}
         onCancel={() => setConfirmingKit(false)} onConfirm={() => {

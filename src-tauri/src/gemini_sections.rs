@@ -871,7 +871,7 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
                 section.heading
             ),
         };
-        format!("{PROMPT}: Write {what}. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. No long paragraphs. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", json!(mapping))
+        format!("{PROMPT}: Write {what}. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid). No long paragraphs. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", json!(mapping))
     };
     let tokens = if identity.prompt_version == LEGACY_PROMPT {
         8192

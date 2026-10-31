@@ -229,6 +229,11 @@ export interface AskGeminiParams {
   context: string;
   question: string;
   history?: AskGeminiHistoryTurn[];
+  /**
+   * Card and practice Why?: the PDF itself is never sent; the text read on
+   * this Mac of the cited page and two pages either side goes instead.
+   */
+  cardWhy?: { citedPage: number | null };
 }
 
 export interface AskGeminiResult {
@@ -239,6 +244,8 @@ export interface AskGeminiResult {
   notAnswered?: boolean;
   /** Set only when a PDF answer could not be checked because its text has not been read yet. */
   evidenceUnavailable?: "text_not_read" | null;
+  /** Card and practice Why?: the PDF pages whose read text was sent ([] = none). */
+  contextPages?: number[];
 }
 
 /** Only the one known reason passes; anything else means "no hint". */
@@ -279,6 +286,7 @@ export async function askGemini(
     context: params.context,
     question: params.question,
     history: params.history ?? [],
+    ...(params.cardWhy ? { cardWhy: params.cardWhy } : {}),
   }));
 }
 

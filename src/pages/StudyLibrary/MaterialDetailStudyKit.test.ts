@@ -267,3 +267,16 @@ it("the practice questions draft hides answers until Show answers",async()=>{
   fireEvent.click(screen.getByRole("button",{name:"Hide answers"}));
   expect(screen.queryByText(/\(correct answer\)/)).toBeNull();
 });
+it("ASK-FINAL 7: a repeat kit press says plainly it replaces saved parts, only when something is saved",async()=>{
+  const note="This makes a new kit. When you save, it replaces your saved guide, flashcards or questions — your earlier versions stay in Previous versions.";
+  await open();fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  let confirm=await screen.findByRole("dialog",{name:"Send this file to Google?"});
+  expect(confirm.textContent).toContain("You review and save each part separately.");
+  expect(confirm.textContent).not.toContain(note);
+  fireEvent.click(within(confirm).getByRole("button",{name:"Cancel"}));
+  cleanup();db.close();db=await createNodeSqliteDatabase();repos=createRepositories(db);
+  await open(()=>repos.documents.saveAiStudySet({sourceMaterialId:"kit-material",title:"Saved",summary:"Saved guide",sections:[{heading:"Lift",body:"Lift supports flight."}],flashcards:[],sourceNotes:"",model:"test"}));
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  confirm=await screen.findByRole("dialog",{name:"Send this file to Google?"});
+  expect(confirm.textContent).toContain(note);
+});
