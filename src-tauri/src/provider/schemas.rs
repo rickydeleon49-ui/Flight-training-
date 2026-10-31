@@ -11,17 +11,7 @@ pub(crate) fn study_aid() -> Schema {
                     &["heading", "body"],
                 )),
             ),
-            (
-                "flashcards",
-                Schema::array(Schema::object(
-                    &[
-                        ("front", Schema::string()),
-                        ("back", Schema::string()),
-                        ("sourcePage", Schema::integer().nullable(true)),
-                    ],
-                    &["front", "back", "sourcePage"],
-                )),
-            ),
+            ("flashcards", Schema::array(card())),
             ("sourceNotes", Schema::string()),
         ],
         &["title", "summary", "sections", "flashcards", "sourceNotes"],
@@ -31,25 +21,7 @@ pub(crate) fn practice_test() -> Schema {
     Schema::object(
         &[
             ("title", Schema::string()),
-            (
-                "questions",
-                Schema::array(Schema::object(
-                    &[
-                        ("question", Schema::string()),
-                        ("options", Schema::array(Schema::string())),
-                        ("correctIndex", Schema::integer()),
-                        ("explanation", Schema::string()),
-                        ("sourcePage", Schema::integer().nullable(true)),
-                    ],
-                    &[
-                        "question",
-                        "options",
-                        "correctIndex",
-                        "explanation",
-                        "sourcePage",
-                    ],
-                )),
-            ),
+            ("questions", Schema::array(question())),
         ],
         &["title", "questions"],
     )
@@ -93,5 +65,54 @@ pub(crate) fn ask_text() -> Schema {
             ("sourcePages", Schema::array(Schema::integer())),
         ],
         &["answer", "sourcePages"],
+    )
+}
+
+/// Reuse the exact single-generator shapes inside one response envelope.
+fn card() -> Schema {
+    Schema::object(
+        &[
+            ("front", Schema::string()),
+            ("back", Schema::string()),
+            ("sourcePage", Schema::integer().nullable(true)),
+        ],
+        &["front", "back", "sourcePage"],
+    )
+}
+fn question() -> Schema {
+    Schema::object(
+        &[
+            ("question", Schema::string()),
+            ("options", Schema::array(Schema::string())),
+            ("correctIndex", Schema::integer()),
+            ("explanation", Schema::string()),
+            ("sourcePage", Schema::integer().nullable(true)),
+        ],
+        &[
+            "question",
+            "options",
+            "correctIndex",
+            "explanation",
+            "sourcePage",
+        ],
+    )
+}
+pub(crate) fn study_kit() -> Schema {
+    Schema::object(
+        &[
+            (
+                "guide",
+                Schema::object(
+                    &[
+                        ("body", Schema::string().max_length(8000)),
+                        ("sourcePages", Schema::array(Schema::integer())),
+                    ],
+                    &["body", "sourcePages"],
+                ),
+            ),
+            ("cards", Schema::array(card())),
+            ("questions", Schema::array(question())),
+        ],
+        &["guide", "cards", "questions"],
     )
 }

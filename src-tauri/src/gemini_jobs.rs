@@ -80,6 +80,7 @@ pub(crate) enum JobKind {
     StudyAid,
     PracticeTest,
     PdfKit,
+    StudyKit,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -392,11 +393,24 @@ impl Journal {
         }
         // A finished answer is never thrown away by asking again: she saves or
         // discards it first.
-        if self
-            .jobs
-            .iter()
-            .any(|j| j.material_id == material_id && j.kind == kind && j.stage == JobStage::Ready)
-        {
+        if self.jobs.iter().any(|j| {
+            j.material_id == material_id
+                && j.stage == JobStage::Ready
+                && (j.kind == kind
+                    || kind == JobKind::StudyKit
+                    || (j.kind == JobKind::StudyKit && {
+                        let part = if kind == JobKind::PracticeTest {
+                            "questions"
+                        } else if request_id.is_some_and(|id| id.starts_with("flashcards:")) {
+                            "cards"
+                        } else {
+                            "guide"
+                        };
+                        j.result
+                            .as_ref()
+                            .is_some_and(|r| r["parts"][part].get("answer").is_some())
+                    }))
+        }) {
             return Err(WAITING.to_string());
         }
         // An older failed or interrupted outcome of the same request is
@@ -612,9 +626,12 @@ impl Journal {
         }
         if self.jobs.iter().any(|j| {
             j.material_id == material
-                && j.kind == JobKind::StudyAid
                 && j.stage == JobStage::Ready
-                && j.draft.is_none()
+                && ((j.kind == JobKind::StudyAid && j.draft.is_none())
+                    || (j.kind == JobKind::StudyKit
+                        && j.result
+                            .as_ref()
+                            .is_some_and(|r| r["parts"]["guide"].get("answer").is_some())))
         }) {
             return Err(WAITING.into());
         }
@@ -975,6 +992,43 @@ impl Journal {
             .collect();
         if next.len() == self.jobs.len() {
             return Ok(false);
+        }
+        self.commit(next)?;
+        Ok(true)
+    }
+
+    /// A kit stays one bounded job until every part was saved or dismissed.
+    /// Commit removal of just this part before acknowledging it to the window.
+    pub(crate) fn acknowledge_kit_part(&mut self, id: &str) -> Result<bool, String> {
+        let Some((parent, part)) = id.split_once('#') else {
+            return Ok(false);
+        };
+        if !["guide", "cards", "questions"].contains(&part)
+            || self.quarantined
+            || self.live.contains(parent)
+        {
+            return Ok(false);
+        }
+        let mut next = self.jobs.clone();
+        let Some(job) = next
+            .iter_mut()
+            .find(|j| j.id == parent && j.kind == JobKind::StudyKit && j.stage == JobStage::Ready)
+        else {
+            return Ok(false);
+        };
+        let Some(parts) = job
+            .result
+            .as_mut()
+            .and_then(|r| r.get_mut("parts"))
+            .and_then(Value::as_object_mut)
+        else {
+            return Ok(false);
+        };
+        if parts.remove(part).is_none() {
+            return Ok(false);
+        }
+        if parts.is_empty() {
+            next.retain(|j| j.id != parent);
         }
         self.commit(next)?;
         Ok(true)

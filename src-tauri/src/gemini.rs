@@ -1343,6 +1343,7 @@ pub fn gemini_jobs(app: AppHandle) -> Result<Vec<JobRecord>, String> {
             .list()
             .into_iter()
             .filter(|r| r.kind != JobKind::PdfKit)
+            .flat_map(study_kit::review_records)
             .collect()
     }))
 }
@@ -1433,6 +1434,9 @@ pub fn cancel_gemini_job(
 #[tauri::command]
 pub async fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bool, String> {
     let root = app_root(&app)?;
+    if job_id.contains('#') {
+        return gemini_jobs::with(&root, |j| j.acknowledge_kit_part(&job_id));
+    }
     let key = current_key(&root).ok().flatten();
     let (removed, descriptor) = sections::take_discard_at(&root, &job_id, prepared_sources())?;
     if let (true, Some((descriptor, sha)), Some(key), Ok(http)) =
@@ -2730,6 +2734,8 @@ mod cancel_flow_tests;
 
 #[path = "gemini_batches.rs"]
 mod batches;
+#[path = "study_kit.rs"]
+pub(crate) mod study_kit;
 
 #[path = "gemini_sections.rs"]
 pub(crate) mod sections;

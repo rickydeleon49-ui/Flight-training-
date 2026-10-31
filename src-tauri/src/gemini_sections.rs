@@ -824,6 +824,27 @@ fn validate_section(
     content.content_digest = digest(&content);
     Ok(content)
 }
+/// Study kits use the same section validator and additionally enforce their
+/// requested 8,000-character limit.
+pub(super) fn validate_basic_kit_guide(
+    value: &Value,
+    pages: &[u32],
+    model: &str,
+) -> Result<(String, Vec<u32>), String> {
+    let section = Section {
+        id: "study-kit".into(),
+        heading: "Study guide".into(),
+        page_start: 1,
+        page_end: pages.last().copied().unwrap_or(0),
+    };
+    let result =
+        validate_section(&section, &value.to_string(), pages, model).map_err(|e| e.message)?;
+    if result.body.chars().count() > REQUESTED_BODY_CHARS {
+        return Err("The guide was too long.".into());
+    }
+    Ok((result.body, result.source_pages))
+}
+
 fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
     let mapping: Vec<_> = identity
         .chosen_pages

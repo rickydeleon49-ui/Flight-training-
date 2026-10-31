@@ -105,7 +105,11 @@ fn pair(card: &Flashcard) -> (String, String) {
     (normalized(&card.front), normalized(&card.back))
 }
 
-fn validate(aid: &GeneratedStudyAid, pages: Option<u32>, max_cards: usize) -> Result<(), String> {
+pub(super) fn validate(
+    aid: &GeneratedStudyAid,
+    pages: Option<u32>,
+    max_cards: usize,
+) -> Result<(), String> {
     let bad_text = |s: &str| s.trim().is_empty() || s.len() > 16_000;
     if bad_text(&aid.title)
         || aid.title.len() > 500

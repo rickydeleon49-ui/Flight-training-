@@ -30,7 +30,7 @@ export function GeminiOrphanNotices() {
 function OrphanNotice({ job, onDismiss }: { job: GeminiJob; onDismiss: () => void }) {
   const jobs = useGeminiJobs();
   const helper = (job.answer?.model ?? job.sections?.model)?.startsWith("claude-") ? "Claude" : "Gemini";
-  const what = job.kind === "study-aid" ? "study guide and cards" : "practice test";
+  const what = job.kind === "study-kit" ? "study kit" : job.kind === "flashcards" ? "flashcards" : job.kind === "study-aid" ? "study guide and cards" : "practice test";
   const message =
     job.phase === "discard-failed"
       ? job.error

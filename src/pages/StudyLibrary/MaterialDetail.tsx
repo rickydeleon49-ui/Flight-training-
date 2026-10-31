@@ -1,3 +1,4 @@
+import { inspectPdf } from "@/services/pdf";
 import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -227,6 +228,8 @@ function MaterialDetailPage() {
   const [practiceNeedsReview, setPracticeNeedsReview] = useState(false);
   const [reviewingPracticeRegeneration, setReviewingPracticeRegeneration] = useState(false);
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
+  const [confirmingKit, setConfirmingKit] = useState(false);
+  const [kitMessage, setKitMessage] = useState<string | null>(null);
   const [confirmingCards, setConfirmingCards] = useState(false);
   const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
@@ -239,6 +242,7 @@ function MaterialDetailPage() {
       (latest, candidate) => (!latest || isNewerJob(candidate, latest) ? candidate : latest),
       undefined,
     );
+  const kitJob = geminiJobs.jobs.find(job => job.materialId === materialId && job.kind === "study-kit");
   const cardJob = geminiJobs.jobs.find(
     (job) => job.materialId === materialId && job.kind === "flashcards",
   );
@@ -727,6 +731,18 @@ function MaterialDetailPage() {
     return null;
   };
 
+  const prepareStudyKit = async () => {
+    if (!material?.filePath) return;
+    setKitMessage(null);
+    try {
+      const pdf = await inspectPdf(material.filePath);
+      if (pdf.pages > 150 || !fileForAi.ready) {
+        setKitMessage("Choose up to 150 pages first. Use Choose fewer pages to send, then make your study kit from that part.");
+        setSplittingManually(true);
+      } else setConfirmingKit(true);
+    } catch { setKitMessage("Could not count this PDF's pages. Choose a chapter and try again."); }
+  };
+
   const createStudyAid = async () => {
     setStartRefusal(null);
     const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
@@ -885,6 +901,14 @@ function MaterialDetailPage() {
             <p className="small muted">Write a study guide in your own words.</p>
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}
+          {isPdf ? <Card><CardBody>
+            <div className="stack stack--3">
+              <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
+              <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
+              {kitMessage ? <p role="status">{kitMessage}</p> : null}
+              {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
+            </div>
+          </CardBody></Card> : null}
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -925,7 +949,7 @@ function MaterialDetailPage() {
                       ) : canOfferGemini ? (
                         <Button
                           size="small"
-                          variant={studySet && (studySet.summary || guideSections.length > 0) ? "secondary" : "primary"}
+                          variant={isPdf || (studySet && (studySet.summary || guideSections.length > 0)) ? "secondary" : "primary"}
                           disabled={isGeneratingAny || fileMissing || draftWaiting(studyJob?.phase) || (Boolean(studyJob?.sectionGuide) && !emptyFailedGuide)}
                           onClick={() => {
                             if (geminiJobs.locked()) {
@@ -1015,7 +1039,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryStudy}
                       onReview={
-                        (setHasHerItems || studyJob.needsReview) && studyJob.answer
+                        (setHasHerItems || studyJob.needsReview || (studyJob.studyKitPart && Boolean(studySet))) && studyJob.answer
                           ? () => setReviewingRegeneration(true)
                           : undefined
                       }
@@ -1235,7 +1259,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryFlashcards}
                       onReview={
-                        (setHasHerItems || cardJob.needsReview) && cardJob.answer
+                        (setHasHerItems || cardJob.needsReview || (cardJob.studyKitPart && Boolean(studySet))) && cardJob.answer
                           ? () => setReviewingCardRegeneration(true)
                           : undefined
                       }
@@ -1468,7 +1492,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryPractice}
                       onReview={
-                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
+                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview || (practiceJob.studyKitPart && Boolean(practiceTest)))
                           ? () => {
                               if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true);
                             }
@@ -2062,6 +2086,15 @@ function MaterialDetailPage() {
           setAddingAction(false);
         }}
       />
+
+      <ConfirmDialog open={confirmingKit} title={`Send this file to ${providerCompany(gemini?.model)}?`}
+        message={`${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)} You review and save each part separately. Any saved parts you replace keep their earlier versions.`}
+        details={sendDisclosure.details} detailsSummary="What the provider keeps" confirmLabel="Make my study kit" destructive={false}
+        {...chooseChapterFirst(() => setConfirmingKit(false))}
+        onCancel={() => setConfirmingKit(false)} onConfirm={() => {
+          setConfirmingKit(false);
+          if (material.filePath) void geminiJobs.startKit({materialId: material.id, filePath: material.filePath}, {preflight: preflight(material.filePath)}).then(message => { if (message) setKitMessage(message); });
+        }} />
 
       <ConfirmDialog
         open={confirmingAi}
