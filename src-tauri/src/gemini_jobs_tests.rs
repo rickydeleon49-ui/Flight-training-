@@ -471,12 +471,15 @@ fn r14_a_clear_that_really_fails_keeps_the_launch_quarantined() {
 /* ------------------------------------------------------------------ */
 
 #[test]
-fn r16_a_journal_too_large_to_read_back_is_never_written() {
+fn r16_eight_maximum_size_jobs_fit_the_journal_and_read_back() {
+    // Each job may hold a draft and a result at the per-answer cap; eight of
+    // them fit the journal with headroom, so a paid answer is never refused
+    // because others are waiting.
+    assert!(MAX_JOURNAL_BYTES >= (MAX_JOBS * 2 * MAX_RESULT_BYTES) as u64 * 3 / 2);
     let dir = TempDir::new("r16");
     let mut journal = Journal::open(dir.path());
     let near = MAX_RESULT_BYTES - 64;
     let mut kept = Vec::new();
-    let mut refused = None;
     for i in 0..MAX_JOBS {
         let id = journal
             .begin(
@@ -487,19 +490,12 @@ fn r16_a_journal_too_large_to_read_back_is_never_written() {
                 None,
             )
             .unwrap();
-        match journal.ready(&id, json!({"title": "x".repeat(near)})) {
-            Ok(()) => kept.push(id),
-            Err(_) => {
-                refused = Some(id);
-                break;
-            }
-        }
+        journal
+            .ready(&id, json!({"title": "x".repeat(near)}))
+            .unwrap();
+        kept.push(id);
     }
-    assert!(
-        refused.is_some(),
-        "the file bound is reached before eight near-limit answers"
-    );
-    // Everything already kept reads back intact after a restart.
+    // Everything kept reads back intact after a restart.
     let reopened = Journal::open(dir.path());
     let ready: Vec<String> = reopened
         .list()

@@ -40,10 +40,15 @@ const SCHEMA: &str = "hfd-gemini-jobs/1";
 
 /// Jobs kept at once. A new job never pushes out a running one.
 pub(crate) const MAX_JOBS: usize = 8;
-/// A journal larger than this is not read: a validated answer is far smaller.
-const MAX_JOURNAL_BYTES: u64 = 16 * 1024 * 1024;
-/// One validated answer kept as a checkpoint.
-const MAX_RESULT_BYTES: usize = 2 * 1024 * 1024;
+/// A journal larger than this is not read. Every job may hold a draft and a
+/// result, each up to MAX_RESULT_BYTES, so this is MAX_JOBS of those with 50%
+/// headroom (8 × 2 × 4 MiB × 1.5 = 96 MiB): a paid answer that fits its own
+/// cap is never refused because other jobs are waiting.
+const MAX_JOURNAL_BYTES: u64 = (MAX_JOBS * 2 * MAX_RESULT_BYTES * 3 / 2) as u64;
+/// One validated answer (or draft) kept as a checkpoint. A guide of 40
+/// sections at study_sets::MAX_BODY (20,000 characters) each, even at 4 UTF-8
+/// bytes a character, is about 3.2 MB, so 4 MiB keeps it after it was paid.
+const MAX_RESULT_BYTES: usize = 4 * 1024 * 1024;
 /// Identity fields the window passes in.
 const MAX_ID_BYTES: usize = 200;
 

@@ -163,7 +163,7 @@ fn a_failed_timing_checkpoint_cannot_dispatch_or_upgrade_legacy_drafts() {
 #[test]
 fn section_generating_wait_is_shorter_than_whole_document_wait() {
     let (section, time) = fake_budget(ACTIVE_BUDGET);
-    section.section_generation_limit();
+    section.section_generation_limit(240);
     section.at(Stage::Generating);
     time.advance(Duration::from_secs(239));
     assert_eq!(section.request_timeout(), Some(Duration::from_secs(1)));
@@ -174,4 +174,13 @@ fn section_generating_wait_is_shorter_than_whole_document_wait() {
     whole.at(Stage::Generating);
     time.advance(Duration::from_secs(241));
     assert_eq!(whole.request_timeout(), Some(Duration::from_secs(239)));
+    // A whole-PDF guide part (planner pdf-parts-150-v1) gets the full wait.
+    let (part, time) = fake_budget(ACTIVE_BUDGET);
+    part.section_generation_limit(480);
+    part.at(Stage::Generating);
+    time.advance(Duration::from_secs(479));
+    assert_eq!(part.request_timeout(), Some(Duration::from_secs(1)));
+    time.advance(Duration::from_secs(2));
+    assert_eq!(part.request_timeout(), None);
+    assert_eq!(part.total(), ACTIVE_BUDGET);
 }
