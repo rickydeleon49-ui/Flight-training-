@@ -203,6 +203,9 @@ describe("PracticeTestPanel", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "Ask a question" }), { target: { value: "Why?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await screen.findByText(answer.trim());
+    // The answer's own scroll-into-view runs in an effect after it renders;
+    // wait for it so it cannot land after the counter is cleared (CI flake).
+    await waitFor(() => expect(scroll).toHaveBeenCalledWith(expect.objectContaining({ block: "nearest" })));
     scroll.mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     const heading = await screen.findByRole("heading", { name: "Question 2 of 2" });
