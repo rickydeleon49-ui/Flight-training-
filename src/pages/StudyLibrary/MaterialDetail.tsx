@@ -1123,7 +1123,7 @@ function MaterialDetailPage() {
                   ) : canOfferGemini && !fileMissing && !generating && !hasImported ? (
                     <p className="small muted">
                       {providerWording(isPdf
-                        ? "Gemini will read this PDF and build a study guide section by section. Finished sections are kept if you stop; the completed draft waits for you to save it locally."
+                        ? "Gemini will read this PDF and write a basic study guide in one go (a very long PDF in a few parts). Nothing is saved until you check the draft and save it."
                         : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.", gemini?.model)}
                     </p>
                   ) : null}
@@ -2130,7 +2130,7 @@ function MaterialDetailPage() {
             {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
           </select>
         </label>
-        <p className="tiny dim">Short sources may give you fewer cards.</p></> : <p className="tiny dim">Finished sections are kept if you stop.</p>}
+        <p className="tiny dim">Short sources may give you fewer cards.</p></> : <p className="tiny dim">If you stop, any finished part is kept.</p>}
       </ConfirmDialog>
 
       <ConfirmDialog
