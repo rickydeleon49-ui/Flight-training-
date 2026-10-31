@@ -390,6 +390,7 @@ pub(crate) struct Schema {
     minimum: Option<i64>,
     max_length: Option<usize>,
     max_items: Option<usize>,
+    min_items: Option<usize>,
     enum_values: Option<Vec<String>>,
 }
 #[derive(Clone, Debug)]
@@ -411,6 +412,7 @@ impl Schema {
             minimum: None,
             max_length: None,
             max_items: None,
+            min_items: None,
             enum_values: None,
         }
     }
@@ -447,6 +449,10 @@ impl Schema {
         self.max_length = Some(value);
         self
     }
+    pub(crate) fn min_items(mut self, value: usize) -> Self {
+        self.min_items = Some(value);
+        self
+    }
     pub(crate) fn max_items(mut self, value: usize) -> Self {
         self.max_items = Some(value);
         self
@@ -481,6 +487,9 @@ impl Schema {
         }
         if let Some(v) = self.max_length {
             value["maxLength"] = json!(v);
+        }
+        if let Some(v) = self.min_items {
+            value["minItems"] = json!(v);
         }
         if let Some(v) = self.max_items {
             value["maxItems"] = json!(v);

@@ -537,6 +537,9 @@ pub struct Flashcard {
     front: String,
     back: String,
     source_page: Option<u32>,
+    /// Draft-only; saved card/question writers select their existing fields.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    verification_note: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -1563,6 +1566,7 @@ async fn study_aid_request(
     output_tokens: u32,
     guide_only: bool,
 ) -> Result<GeneratedStudyAid, String> {
+    let prompt = format!("{prompt} {}", kit_evidence::QUOTE_RULE);
     let build = |part: Value| {
         let mut request = json!({
             "contents": [{"role": "user", "parts": [
@@ -1601,6 +1605,9 @@ async fn study_aid_request(
         if let Some(object) = value.as_object_mut() {
             object.insert("flashcards".to_string(), json!([]));
         }
+    }
+    if let Some(items) = value.get_mut("flashcards") {
+        kit_evidence::check_source_items(items, source, false);
     }
     let mut result: GeneratedStudyAid = serde_json::from_value(value).map_err(|_| {
         ctx.provider
@@ -1653,6 +1660,9 @@ pub struct PracticeQuestion {
     correct_index: u32,
     explanation: String,
     source_page: Option<u32>,
+    /// Draft-only; saved card/question writers select their existing fields.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    verification_note: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -1908,13 +1918,14 @@ async fn practice_test_with(
         "Create an accurate private-pilot practice test from the attached source. \
          Use only facts supported by the source. Do not invent regulations, procedures, numbers, or page references. \
          Return JSON only with: title (string) and questions (10-20 objects with question, options as an array of \
-         3 to 5 short answer choices, correctIndex as the zero-based index into options of the single correct \
+         exactly 3 options, one correct, two plausible wrong answers of similar length, like the FAA knowledge test, correctIndex as the zero-based index into options of the single correct \
          choice, explanation, and sourcePage as a page number or null). Each question must have exactly one \
          correct option. Never refer to option letters or positions in explanations. Keep the questions clear for a student pilot studying this material. When the source is \
          ambiguous or may be outdated, say so in the explanation rather than guessing. This is a practice test, \
          not operational flight instruction; the learner must verify every answer against current FAA material, \
          aircraft documentation, and their instructor.";
 
+    let prompt = format!("{prompt} {}", kit_evidence::QUOTE_RULE);
     let build = |part: Value| {
         json!({
             "contents": [{"role": "user", "parts": [
@@ -1933,10 +1944,15 @@ async fn practice_test_with(
     ctx.budget.validation_checkpoint()?;
     ctx.budget.categorize("invalid or incomplete output");
     let text = ctx.extract_text(&raw)?;
-    let result: GeneratedPracticeTest = serde_json::from_str(&text).map_err(|_| {
+    let mut value: Value = serde_json::from_str(&text).map_err(|_| {
         ctx.provider
             .wording("Gemini's practice test was incomplete. Try generating it again.".to_string())
     })?;
+    if let Some(items) = value.get_mut("questions") {
+        kit_evidence::check_source_items(items, source, true);
+    }
+    let result: GeneratedPracticeTest = serde_json::from_value(value)
+        .map_err(|_| "The practice questions could not be read.".to_string())?;
     let mut result =
         sanitize_practice_test(result).map_err(|message| ctx.provider.wording(message))?;
     result.model = model_used.to_string();
@@ -2638,6 +2654,7 @@ mod tests {
             explanation: "1,000 ft AGL is the standard pattern altitude absent other guidance."
                 .to_string(),
             source_page: Some(42),
+            verification_note: None,
         }
     }
 
@@ -2661,6 +2678,7 @@ mod tests {
             correct_index: 1,
             explanation: explanation.to_string(),
             source_page: Some(1),
+            verification_note: None,
         }
     }
 
@@ -2681,6 +2699,7 @@ mod tests {
                         &format!("Live-bench question {i} about the four forces?"),
                         "Drag opposes thrust.",
                     );
+                    q.options.pop();
                     // The model mostly picks one position; here always A.
                     q.options.swap(0, 1);
                     q.correct_index = 0;
@@ -2695,7 +2714,7 @@ mod tests {
     fn correct_positions_are_balanced_across_a_ten_question_test() {
         let first = sanitize_practice_test(ten_question_test()).unwrap();
         let again = sanitize_practice_test(ten_question_test()).unwrap();
-        let mut counts = [0; 4];
+        let mut counts = [0; 3];
         for (a, b) in first.questions.iter().zip(&again.questions) {
             assert_eq!(a.options, b.options, "same order every time");
             assert_eq!(a.correct_index, b.correct_index);
@@ -2704,7 +2723,7 @@ mod tests {
         }
         for (position, count) in counts.iter().enumerate() {
             assert!(
-                (2..=3).contains(count),
+                (3..=4).contains(count),
                 "position {position} correct {count} times: {counts:?}"
             );
         }
@@ -2714,7 +2733,7 @@ mod tests {
     fn skipped_questions_keep_their_order_inside_a_balanced_test() {
         let mut test = ten_question_test();
         test.questions[3].explanation = "Option A is right: drag opposes thrust.".to_string();
-        test.questions[7].options[3] = "All of the above".to_string();
+        test.questions[7].options[2] = "All of the above".to_string();
         let before3 = test.questions[3].options.clone();
         let before7 = test.questions[7].options.clone();
         let sanitized = sanitize_practice_test(test).unwrap();
@@ -2722,7 +2741,7 @@ mod tests {
         assert_eq!(sanitized.questions[3].correct_index, 0);
         assert_eq!(sanitized.questions[7].options, before7);
         assert_eq!(sanitized.questions[7].correct_index, 0);
-        let mut counts = [0; 4];
+        let mut counts = [0; 3];
         for (i, q) in sanitized.questions.iter().enumerate() {
             if i != 3 && i != 7 {
                 counts[q.correct_index as usize] += 1;
@@ -3014,6 +3033,8 @@ mod cancel_flow_tests;
 
 #[path = "gemini_batches.rs"]
 mod batches;
+#[path = "kit_evidence.rs"]
+mod kit_evidence;
 #[path = "study_kit.rs"]
 pub(crate) mod study_kit;
 

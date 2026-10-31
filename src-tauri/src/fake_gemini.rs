@@ -185,8 +185,8 @@ pub(crate) struct FakeGemini {
     sim: Arc<Mutex<Sim>>,
 }
 
-const STUDY_AID: &str = r#"{"title":"Synthetic airspace","summary":"A synthetic summary.","sections":[{"heading":"Class B","body":"Synthetic body."}],"flashcards":[{"front":"Q","back":"A","sourcePage":1}],"sourceNotes":"Synthetic notes."}"#;
-const PRACTICE_TEST: &str = r#"{"title":"Synthetic quiz","questions":[{"question":"Q?","options":["A","B","C"],"correctIndex":1,"explanation":"Because.","sourcePage":2}]}"#;
+const STUDY_AID: &str = r#"{"title":"Synthetic airspace","summary":"A synthetic summary.","sections":[{"heading":"Class B","body":"Synthetic body."}],"flashcards":[{"front":"Q","back":"A","sourcePage":1,"quote":"Synthetic body."}],"sourceNotes":"Synthetic notes."}"#;
+const PRACTICE_TEST: &str = r#"{"title":"Synthetic quiz","questions":[{"question":"Q?","options":["A","B","C"],"correctIndex":1,"explanation":"Because.","sourcePage":2,"quote":"Synthetic body."}]}"#;
 
 impl FakeGemini {
     pub fn start() -> FakeGemini {

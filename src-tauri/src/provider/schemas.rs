@@ -75,18 +75,23 @@ fn card() -> Schema {
             ("front", Schema::string()),
             ("back", Schema::string()),
             ("sourcePage", Schema::integer().nullable(true)),
+            ("quote", Schema::string().max_length(300)),
         ],
-        &["front", "back", "sourcePage"],
+        &["front", "back", "sourcePage", "quote"],
     )
 }
 fn question() -> Schema {
     Schema::object(
         &[
             ("question", Schema::string()),
-            ("options", Schema::array(Schema::string())),
+            (
+                "options",
+                Schema::array(Schema::string()).min_items(3).max_items(3),
+            ),
             ("correctIndex", Schema::integer()),
             ("explanation", Schema::string()),
             ("sourcePage", Schema::integer().nullable(true)),
+            ("quote", Schema::string().max_length(300)),
         ],
         &[
             "question",
@@ -94,6 +99,7 @@ fn question() -> Schema {
             "correctIndex",
             "explanation",
             "sourcePage",
+            "quote",
         ],
     )
 }

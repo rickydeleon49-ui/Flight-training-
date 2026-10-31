@@ -249,8 +249,10 @@ function StudyKitPartPreview({ job, what }: { job: GeminiJob; what: string }) {
         <ol>{question.options.map((option, n) => <li key={n}>{option}{showAnswers && n === question.correctIndex ? " (correct answer)" : ""}</li>)}</ol>
         {showAnswers ? <p>{question.explanation}</p> : null}
         <p>Source page {question.sourcePage}</p>
+        {question.verificationNote ? <p className="tiny muted">{question.verificationNote}</p> : null}
       </div>) : job.kind === "flashcards" ? answer.flashcards.map((card, index) => <div key={index}>
         <p><strong>{card.front}</strong></p><p>{card.back}</p><p>Source page {card.sourcePage}</p>
+        {card.verificationNote ? <p className="tiny muted">{card.verificationNote}</p> : null}
       </div>) : <>
         {answer.sections.map((section, index) => <div key={index}>
           <p><strong>{section.heading}</strong></p><GuideBody text={section.body} />

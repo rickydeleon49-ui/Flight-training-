@@ -207,6 +207,9 @@ export function RegenerationReviewDialog({
     }
   };
 
+  const verificationNote = (entry: PreviewItem) => entry.item.kind === "card"
+    ? answer.flashcards.find((c) => c.front === entry.item.fields[0] && c.back === entry.item.fields[1])?.verificationNote
+    : undefined;
   const group = (status: PreviewItem["status"]) => preview?.filter((entry) => entry.status === status) ?? [];
 
   return (
@@ -268,6 +271,7 @@ export function RegenerationReviewDialog({
                   return (
                   <div className="stack stack--1" key={entry.item.itemId}>
                     <p className="small wrap-anywhere">{describe(entry)}</p>
+                    {verificationNote(entry) ? <p className="tiny muted">{verificationNote(entry)}</p> : null}
                     <ItemContent kind={entry.item.kind} fields={entry.item.fields} compare={earlier ? { fields: earlier, show: "added" } : undefined} />
                     <Resembles entry={entry} earlier={earlier} />
                     <div className="row row--wrap">
@@ -296,6 +300,7 @@ export function RegenerationReviewDialog({
                       onChange={(checked) => choose(entry.item.itemId, checked ? "keep" : undefined)}
                       label={`Bring it back: ${describe(entry)}`}
                     />
+                    {verificationNote(entry) ? <p className="tiny muted">{verificationNote(entry)}</p> : null}
                     <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
                   </div>
                 ))}
@@ -307,7 +312,8 @@ export function RegenerationReviewDialog({
               {group("new").map((entry) => (
                 <div className="stack stack--1" key={entry.item.itemId}>
                   {entry.item.kind === "summary" ? <p className="tiny"><strong>Summary</strong></p> : null}
-                  <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
+                  {verificationNote(entry) ? <p className="tiny muted">{verificationNote(entry)}</p> : null}
+                    <ItemContent kind={entry.item.kind} fields={entry.item.fields} />
                 </div>
               ))}
             </section>

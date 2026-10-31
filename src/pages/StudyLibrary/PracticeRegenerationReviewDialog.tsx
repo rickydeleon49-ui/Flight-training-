@@ -158,6 +158,7 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
           {preview.filter((entry) => entry.status === status).map((entry) => {
             const earlier = entry.match ? wording.get(`${entry.match.itemId}\u0000${entry.match.textKey}`) : null;
             return <div key={entry.item.identity} className="stack stack--2">
+              {answer.questions.find((q) => q.question === entry.item.question)?.verificationNote ? <p className="tiny muted">{answer.questions.find((q) => q.question === entry.item.question)?.verificationNote}</p> : null}
               <QuestionContent question={entry.item} compare={earlier ? { question: earlier, show: "added" } : undefined} showAnswers={showAnswers} />
               {entry.match ? <div className="stack stack--1">
                 <p className="tiny muted">It looks like {entry.match.reason === "deleted" ? "something you deleted" : "something you corrected or rewrote"}:</p>

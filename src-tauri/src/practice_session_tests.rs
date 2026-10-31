@@ -2477,3 +2477,38 @@ fn req_erase_history_restart_refusal_and_backup_validation() {
         PracticeSessionErrorCode::InvalidState
     );
 }
+
+#[test]
+fn saved_four_choice_questions_still_load_and_accept_the_fourth_answer() {
+    let raw = r#"[{"question":"Synthetic saved question?","options":["A","B","C","D"],"correctIndex":3,"explanation":"D is supported.","sourcePage":1}]"#;
+    let loaded = validate_legacy_questions(raw).unwrap();
+    assert_eq!(loaded[0].options.len(), 4);
+    assert_eq!(loaded[0].options[loaded[0].correct_index], "D");
+    let dir = TempDir::new("old-four-choices");
+    let conn = setup_test_db(dir.path());
+    let (version, items) = seed_material_and_v1(&conn, "old-four", "Synthetic old quiz");
+    conn.execute(
+        "UPDATE practice_test_items SET correct_index = 3 WHERE id = ?1",
+        [&items[0]],
+    )
+    .unwrap();
+    drop(conn);
+    let started = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action":"start_or_resume", "operationId":"11111111-1111-4111-8111-111111111111",
+            "materialId":"old-four", "versionId":version
+        }),
+    )
+    .unwrap();
+    let answered = save_practice_session_at(
+        dir.path(),
+        &serde_json::json!({
+            "action":"record_response", "operationId":"22222222-2222-4222-8222-222222222222",
+            "attemptId":started["attemptId"], "itemId":items[0], "expectedRevision":0,
+            "selectedIndex":3,"isDontKnow":false
+        }),
+    )
+    .unwrap();
+    assert_eq!(answered["isCorrect"], true);
+}

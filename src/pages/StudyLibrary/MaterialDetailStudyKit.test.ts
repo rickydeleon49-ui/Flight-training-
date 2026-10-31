@@ -300,3 +300,22 @@ it("clears the earlier-draft refusal and Show me after its last draft is discard
   await waitFor(() => expect(screen.queryByText("Save or discard the earlier drafts first, then make a study kit.")).toBeNull());
   expect(screen.queryByRole("button", {name:"Show me"})).toBeNull();
 });
+it("shows unverified notes only in the draft and omits them from saved cards and questions", async () => {
+  records = parts();
+  const cards = records[1]!.result as service.GeneratedStudyAid;
+  const questions = records[2]!.result as service.GeneratedPracticeTest;
+  cards.flashcards[0]!.verificationNote = "Couldn't check this against the page";
+  questions.questions[0]!.verificationNote = "Couldn't check more than half of these items against the pages. All items were kept for you to review.";
+  await open();
+  expect(await screen.findByText("Couldn't check this against the page")).toBeTruthy();
+  expect(screen.getByText("Couldn't check more than half of these items against the pages. All items were kept for you to review.")).toBeTruthy();
+  expect(await repos.documents.listAiStudySets()).toHaveLength(0);
+  expect(await repos.documents.listPracticeTests()).toHaveLength(0);
+  fireEvent.click(screen.getByRole("button", { name: "Save the new flashcards" }));
+  await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
+  expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]).not.toHaveProperty("verificationNote");
+  fireEvent.click(screen.getByRole("button", { name: "Save the new practice test" }));
+  await waitFor(async () => expect(await repos.documents.listPracticeTests()).toHaveLength(1));
+  expect((await repos.documents.listPracticeTests())[0]!.questions[0]).not.toHaveProperty("verificationNote");
+  expect(screen.queryByText("Couldn't check this against the page")).toBeNull();
+});

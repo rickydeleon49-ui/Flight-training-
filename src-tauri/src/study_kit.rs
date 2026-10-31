@@ -36,7 +36,7 @@ fn request_body(part: Value, pages: u32) -> Value {
         .map(|p| json!({"pdfPage":p,"sourcePage":p}))
         .collect();
     let mapping = json!(mapping);
-    let prompt = format!("study-kit-prompt-v2: Make a basic study kit for a beginner from ONLY the attached selected PDF pages 1–{pages}. Read ONLY these selected PDF pages and cite their sourcePage numbers: {mapping}. sourcePage is the page's position in the attached file (1 = first page), never the number printed on the page. Do not discuss other pages. Use only supported facts. Do not invent procedures, regulations, numbers or page references. If ambiguous or outdated, say so rather than guessing. Return JSON with three parts: guide {{body, sourcePages}}, cards, questions. The guide must follow guide-section-prompt-v2: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), in the guide, cards and questions. No long paragraphs; body at most 8000 characters. Make about 20 distinct cards with front, back, sourcePage; each back answers the front directly, never repeats the question. Make about 10 multiple-choice questions with question, 3–5 options, correctIndex (zero-based single correct choice), explanation, sourcePage. Never refer to option letters or positions in explanations. Cite the pages actually used. This is an AI study aid to check against current FAA material, aircraft documents and her instructor, not operational flight instruction.");
+    let prompt = format!("study-kit-prompt-v3: Make a basic study kit for a beginner from ONLY the attached selected PDF pages 1–{pages}. Read ONLY these selected PDF pages and cite their sourcePage numbers: {mapping}. sourcePage is the page's position in the attached file (1 = first page), never the number printed on the page. Do not discuss other pages. Use only supported facts. Do not invent procedures, regulations, numbers or page references. If ambiguous or outdated, say so rather than guessing. Return JSON with three parts: guide {{body, sourcePages}}, cards, questions. The guide must follow guide-section-prompt-v2: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), in the guide, cards and questions. No long paragraphs; body at most 8000 characters. Make about 20 distinct cards with front, back, sourcePage, quote; each back answers the front directly, never repeats the question. Make about 10 multiple-choice questions with question, exactly 3 options, one correct, two plausible wrong answers of similar length, like the FAA knowledge test, correctIndex (zero-based single correct choice), explanation, sourcePage, quote. Every card and question must include a required quote of at most 300 characters, copied word-for-word from its cited sourcePage. Never refer to option letters or positions in explanations. Cite the pages actually used. This is an AI study aid to check against current FAA material, aircraft documents and her instructor, not operational flight instruction.");
     // Guide ~2,500 tokens + 20 cards ~3,000 + 10 questions ~3,000,
     // with space for JSON and thinking across 150 pages.
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],
@@ -85,8 +85,9 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
             json!({"title":"Practice questions", "questions":value["questions"], "model":model}),
         )
         .map_err(|_| "Invalid questions")?;
-        test.questions
-            .retain(|q| q.source_page.is_some_and(|p| p != 0 && p <= pages));
+        test.questions.retain(|q| {
+            q.options.len() == 3 && q.source_page.is_some_and(|p| p != 0 && p <= pages)
+        });
         let mut test = sanitize_practice_test(test)?;
         test.questions.truncate(MAX_KIT_QUESTIONS);
         serde_json::to_value(test).map_err(|e| e.to_string())
@@ -110,6 +111,49 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
         "cards":part(cards, "flashcard", &make_cards),
         "questions":part(questions, "practice question", "Create practice test or Regenerate")},
         "practiceRevision":practice_revision})
+}
+
+/// Check both item types against one local page-text cache for this response.
+fn validate_checked(
+    mut value: Value,
+    pages: u32,
+    model: &str,
+    practice_revision: Option<&str>,
+    mut read_page: impl FnMut(u32) -> Option<String>,
+) -> Value {
+    // Share missing-page results too, so an extraction failure is not retried.
+    let mut cache = std::collections::HashMap::new();
+    let mut read = |p| cache.entry(p).or_insert_with(|| read_page(p)).clone();
+    let cards = value
+        .get_mut("cards")
+        .map(|items| kit_evidence::check_items(items, pages, false, &mut read))
+        .unwrap_or_default();
+    let questions = value
+        .get_mut("questions")
+        .map(|items| kit_evidence::check_items(items, pages, true, &mut read))
+        .unwrap_or_default();
+    let mut result = validate(value, pages, model, practice_revision);
+    // Structural validation can drop the first raw item. Keep the one-time
+    // majority notice on the first item that actually reaches her draft.
+    for (part, field, counts) in [
+        ("cards", "flashcards", &cards),
+        ("questions", "questions", &questions),
+    ] {
+        if counts.majority_fallback {
+            if let Some(first) = result
+                .get_mut("parts")
+                .and_then(|v| v.get_mut(part))
+                .and_then(|v| v.get_mut("answer"))
+                .and_then(|v| v.get_mut(field))
+                .and_then(Value::as_array_mut)
+                .and_then(|a| a.first_mut())
+            {
+                first["verificationNote"] = json!(kit_evidence::FALLBACK);
+            }
+        }
+    }
+    result["quoteCounts"] = json!({"cards":cards,"questions":questions});
+    result
 }
 
 async fn generate(
@@ -136,7 +180,8 @@ async fn generate(
         }
     })?;
     let value = serde_json::from_str(&text).map_err(|_| INCOMPLETE.to_string())?;
-    let result = validate(value, pages, model, practice_revision);
+    let mut local = kit_evidence::PageText::new(source);
+    let result = validate_checked(value, pages, model, practice_revision, |p| local.page(p));
     ctx.budget.validation_checkpoint()?;
     Ok(result)
 }

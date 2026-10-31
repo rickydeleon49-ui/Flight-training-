@@ -48,6 +48,11 @@ fn normalized(text: &str) -> String {
     joined.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+pub(crate) fn quote_matches(page: &str, quote: &str) -> bool {
+    let quote = normalized(quote);
+    !quote.is_empty() && normalized(page).contains(&quote)
+}
+
 pub fn validated_evidence(
     text: &str,
     page_count: Option<u32>,
@@ -79,9 +84,7 @@ pub fn validated_evidence(
             if !page_count.is_some_and(|count| p.page <= count) {
                 return false;
             }
-            let quote = normalized(&p.quote);
-            !quote.is_empty()
-                && read_page(p.page).is_some_and(|page| normalized(&page).contains(&quote))
+            read_page(p.page).is_some_and(|page| quote_matches(&page, &p.quote))
         })
         .collect();
     (false, passages)

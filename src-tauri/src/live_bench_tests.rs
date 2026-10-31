@@ -60,6 +60,9 @@ struct KitRow {
     guide_pages_bad: usize,
     cards: usize,
     cards_dropped: usize,
+    dropped_by_quote: usize,
+    unverified: usize,
+    dropped_by_choices: usize,
     cards_pages_bad: usize,
     questions: usize,
     questions_dropped: usize,
@@ -256,7 +259,14 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     row.guide_pages_bad = value["guide"]["sourcePages"].as_array().map_or(0, |a| {
         a.iter().filter(|p| page_bad(p.as_u64(), pages)).count()
     });
-    let result = validate(value, pages, model, None);
+    let mut local = kit_evidence::PageText::new(source);
+    let result = validate_checked(value, pages, model, None, |p| local.page(p));
+    for kind in ["cards", "questions"] {
+        let c = &result["quoteCounts"][kind];
+        row.dropped_by_quote += c["droppedByQuote"].as_u64().unwrap_or(0) as usize;
+        row.unverified += c["unverified"].as_u64().unwrap_or(0) as usize;
+        row.dropped_by_choices += c["droppedByChoices"].as_u64().unwrap_or(0) as usize;
+    }
     let parts = &result["parts"];
     for part in ["guide", "cards", "questions"] {
         if let Some(e) = parts[part]["error"].as_str() {
@@ -364,13 +374,13 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
         s,
         "# Live bench\n\nModel choice: {model}. Sends: {sends} of {max_sends}.\n"
     );
-    s.push_str("| PDF | pages | kit s | finish | guide w/h/b | cards (dropped) | qs (dropped) | correct A/B/C/D… | bad pages | Why? (s, sentences, refused) | flags |\n|---|---|---|---|---|---|---|---|---|---|---|\n");
+    s.push_str("| PDF | pages | kit s | finish | guide w/h/b | cards (dropped) | qs (dropped) | dropped by quote | unverified | dropped by choices | correct A/B/C | bad pages | Why? (s, sentences, refused) | flags |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
     for r in rows {
         let pages = r.pages.map_or("?".into(), |p| p.to_string());
         let Some(k) = &r.kit else {
             let _ = writeln!(
                 s,
-                "| {} ({:.1} MB) | {pages} | – | – | – | – | – | – | – | – | {} |",
+                "| {} ({:.1} MB) | {pages} | – | – | – | – | – | – | – | – | – | – | – | {} |",
                 r.name,
                 r.mb,
                 r.skipped.as_deref().unwrap_or("")
@@ -422,7 +432,7 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
         }
         let _ = writeln!(
             s,
-            "| {} ({:.1} MB) | {pages} | {:.0} | {} | {guide} | {} ({}) | {} ({}) | {} | {bad} | {} | {} |",
+            "| {} ({:.1} MB) | {pages} | {:.0} | {} | {guide} | {} ({}) | {} ({}) | {} | {} | {} | {} | {bad} | {} | {} |",
             r.name,
             r.mb,
             k.seconds,
@@ -431,6 +441,9 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
             k.cards_dropped,
             k.questions,
             k.questions_dropped,
+            k.dropped_by_quote,
+            k.unverified,
+            k.dropped_by_choices,
             if hist.is_empty() { "–".into() } else { hist },
             if whys.is_empty() { "–".into() } else { whys },
             if flags.is_empty() { "ok".into() } else { flags.join(", ") }
