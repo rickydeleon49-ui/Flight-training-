@@ -125,7 +125,7 @@ impl Rig {
     fn answer(&self, count: usize) {
         self.fake.behave(|b| {
             b.generate_answers = (0..count)
-                .map(|n| reply("Synthetic section body.", n as u32 * 5 + 1))
+                .map(|n| reply("Synthetic section body.", n as u32 * 150 + 1))
                 .collect()
         });
     }
@@ -139,39 +139,34 @@ impl Rig {
     }
 }
 
+const LEGACY: Recipe = Recipe {
+    planner: LEGACY_PLANNER,
+    prompt: LEGACY_PROMPT,
+};
+
+fn ranges(manifest: &[Section]) -> Vec<(u32, u32)> {
+    manifest
+        .iter()
+        .map(|s| (s.page_start, s.page_end))
+        .collect()
+}
+
 #[test]
 fn planner_bounds() {
-    let p = plan(&(1..=16).collect::<Vec<_>>(), &[]).unwrap();
+    let pages = |n: u32| (1..=n).collect::<Vec<_>>();
+    let p = plan(&pages(16), &[]).unwrap();
+    assert_eq!(ranges(&p), [(1, 16)]);
+    assert_eq!(p[0].heading, "Pages 1–16");
+    assert_eq!(p[0].id, "section-01");
+    // The 1,000-page cap is unchanged: 1,000 pages split into 7 parts.
+    let most = plan(&pages(1000), &[]).unwrap();
+    assert_eq!(most.len(), 7);
+    assert!(most.iter().all(|s| s.page_end - s.page_start < 150));
     assert_eq!(
-        p.iter()
-            .map(|s| (s.page_start, s.page_end))
-            .collect::<Vec<_>>(),
-        [(1, 5), (6, 10), (11, 16)]
+        most.iter().flat_map(|s| s.page_start..=s.page_end).count(),
+        1000
     );
-    let hints = vec![(1, 24, "Chapter".to_string())];
-    assert_eq!(
-        plan(&(1..=24).collect::<Vec<_>>(), &hints)
-            .unwrap()
-            .iter()
-            .map(|s| (s.page_start, s.page_end))
-            .collect::<Vec<_>>(),
-        [(1, 10), (11, 20), (21, 24)]
-    );
-    // A long selection is never refused for having too many sections: it
-    // merges to the limit instead.
-    let merged = plan(&(1..=201).collect::<Vec<_>>(), &[]).unwrap();
-    assert_eq!(merged.len(), MAX_SECTIONS);
-    assert_eq!(merged[0].heading, "Pages 1–5");
-    assert_eq!(
-        merged
-            .iter()
-            .flat_map(|s| s.page_start..=s.page_end)
-            .count(),
-        201
-    );
-    let over = plan(&(1..=205).collect::<Vec<_>>(), &[]).unwrap();
-    assert_eq!(over.len(), MAX_SECTIONS);
-    assert_eq!(over[0].heading, "Pages 1–10");
+    assert_eq!(plan(&pages(1001), &[]).unwrap_err().code, "INVALID_PAGES");
     // Only a selection that cannot merge below the limit — more separate runs
     // than the guide can hold — is still refused.
     assert_eq!(
@@ -201,11 +196,10 @@ fn planner_bounds() {
         "model"
     )
     .is_err());
-    // A dense section that runs past the requested 12,000 characters (as a
-    // 6-page fuel-system section did on the real Powerplant handbook) is kept.
+    // A dense section that runs far past the requested 4,500 characters is kept.
     assert!(validate_section(
         s,
-        &json!({"body":"x".repeat(17_500),"sourcePages":[1]}).to_string(),
+        &json!({"body":"x".repeat(19_500),"sourcePages":[1]}).to_string(),
         &(1..=16).collect::<Vec<_>>(),
         "model"
     )
@@ -221,7 +215,9 @@ fn a_heading_on_every_page_merges_into_at_most_40_sections() {
         .iter()
         .map(|page| (*page, *page, format!("Heading {page}")))
         .collect();
-    let manifest = plan(&pages, &hints).unwrap();
+    let manifest = plan_legacy(&pages, &hints).unwrap();
+    // The current planner keeps the whole selection as one request.
+    assert_eq!(ranges(&plan(&pages, &hints).unwrap()), [(1, 102)]);
     assert!(
         manifest.len() <= MAX_SECTIONS,
         "{} sections",
@@ -304,7 +300,7 @@ fn heading_every_two_pages_plans_into_at_most_21_sensible_sections() {
     let hints: Vec<(u32, u32, String)> = (0..51)
         .map(|i| (i * 2 + 1, i * 2 + 2, format!("Heading {}", i * 2 + 1)))
         .collect();
-    let manifest = plan(&pages, &hints).unwrap();
+    let manifest = plan_legacy(&pages, &hints).unwrap();
     assert!(
         manifest.len() <= 21,
         "expected at most 21 sections, got {}",
@@ -411,9 +407,25 @@ fn outlined_pdf(pages: u32, chapters: u32) -> Vec<u8> {
 
 #[test]
 fn a_deep_outline_plans_from_chapter_headings_only() {
+    // The current planner reads the whole 102-page outlined PDF in one request.
+    let whole = Rig::new(102);
+    std::fs::write(
+        whole.dir.path().join("documents/a.pdf"),
+        outlined_pdf(102, 5),
+    )
+    .unwrap();
+    let (current, _) = source(
+        whole.dir.path(),
+        &whole.request,
+        "gemini-2.5-flash",
+        CURRENT,
+    )
+    .unwrap();
+    assert_eq!(ranges(&current.manifest), [(1, 102)]);
+    // Drafts from the earlier planner keep its chapter-heading sections.
     let r = Rig::new(102);
     std::fs::write(r.dir.path().join("documents/a.pdf"), outlined_pdf(102, 5)).unwrap();
-    let (identity, _) = source(r.dir.path(), &r.request, "gemini-2.5-flash").unwrap();
+    let (identity, _) = source(r.dir.path(), &r.request, "gemini-2.5-flash", LEGACY).unwrap();
     assert!(identity.manifest.len() <= MAX_SECTIONS);
     // Five chapters over 102 pages give ten-page sections; the 102 sub-headings
     // never become boundaries, because they would not fit the guide.
@@ -444,7 +456,8 @@ fn a_deep_outline_plans_from_chapter_headings_only() {
         outlined_pdf(10, 3),
     )
     .unwrap();
-    let (small_plan, _) = source(small.dir.path(), &small.request, "gemini-2.5-flash").unwrap();
+    let (small_plan, _) =
+        source(small.dir.path(), &small.request, "gemini-2.5-flash", LEGACY).unwrap();
     assert_eq!(
         small_plan
             .manifest
@@ -456,45 +469,150 @@ fn a_deep_outline_plans_from_chapter_headings_only() {
 }
 
 #[test]
-fn an_unchanged_plan_keeps_its_sections() {
-    // The merge must not shift a plan that already fits the limit.
+fn whole_pdfs_up_to_150_pages_are_one_request() {
+    let pages = |n: u32| (1..=n).collect::<Vec<_>>();
+    // Before: 4, 19, 30 and 60 requests with five-page sections.
+    assert_eq!(plan_legacy(&pages(20), &[]).unwrap().len(), 4);
+    assert_eq!(plan_legacy(&pages(95), &[]).unwrap().len(), 19);
+    assert_eq!(plan_legacy(&pages(150), &[]).unwrap().len(), 30);
+    assert_eq!(plan_legacy(&pages(300), &[]).unwrap().len(), 40);
+    // After: one request up to 150 pages, then as few parts as possible.
+    assert_eq!(ranges(&plan(&pages(7), &[]).unwrap()), [(1, 7)]);
+    assert_eq!(ranges(&plan(&pages(20), &[]).unwrap()), [(1, 20)]);
+    assert_eq!(ranges(&plan(&pages(95), &[]).unwrap()), [(1, 95)]);
+    assert_eq!(ranges(&plan(&pages(150), &[]).unwrap()), [(1, 150)]);
     assert_eq!(
-        plan(&(1..=16).collect::<Vec<_>>(), &[])
-            .unwrap()
-            .iter()
-            .map(|s| (s.page_start, s.page_end, s.heading.clone()))
-            .collect::<Vec<_>>(),
-        [
-            (1, 5, "Pages 1–5".to_string()),
-            (6, 10, "Pages 6–10".to_string()),
-            (11, 16, "Pages 11–16".to_string()),
-        ]
+        ranges(&plan(&pages(151), &[]).unwrap()),
+        [(1, 76), (77, 151)]
     );
     assert_eq!(
-        plan(
-            &(1..=24).collect::<Vec<_>>(),
-            &[(1, 24, "Chapter".to_string())]
-        )
+        ranges(&plan(&pages(300), &[]).unwrap()),
+        [(1, 150), (151, 300)]
+    );
+    assert_eq!(plan(&pages(301), &[]).unwrap().len(), 3);
+    // Chapters inside a short PDF never split it.
+    let hints = vec![
+        (1, 40, "Chapter 1".to_string()),
+        (41, 95, "Chapter 2".to_string()),
+    ];
+    assert_eq!(ranges(&plan(&pages(95), &hints).unwrap()), [(1, 95)]);
+}
+
+#[test]
+fn long_pdfs_split_at_chapter_starts() {
+    let pages: Vec<u32> = (1..=300).collect();
+    let hints = vec![
+        (1, 120, "Chapter 1".to_string()),
+        (121, 230, "Chapter 2".to_string()),
+        (231, 300, "Chapter 3".to_string()),
+    ];
+    // Two parts either way; the cut moves to the chapter start nearest the
+    // even split that keeps both parts within 150 pages.
+    assert_eq!(
+        ranges(&plan(&pages, &hints).unwrap()),
+        [(1, 150), (151, 300)]
+    );
+    let hints = vec![
+        (1, 140, "Chapter 1".to_string()),
+        (141, 300, "Chapter 2".to_string()),
+    ];
+    assert_eq!(
+        ranges(&plan(&pages, &hints).unwrap()),
+        [(1, 150), (151, 300)]
+    );
+    let pages: Vec<u32> = (1..=280).collect();
+    let hints = vec![
+        (1, 130, "Chapter 1".to_string()),
+        (131, 280, "Chapter 2".to_string()),
+    ];
+    assert_eq!(
+        ranges(&plan(&pages, &hints).unwrap()),
+        [(1, 130), (131, 280)]
+    );
+    // A chapter start that would force a third part is not used.
+    let hints = vec![(1, 100, "A".to_string()), (101, 300, "B".to_string())];
+    assert_eq!(
+        ranges(&plan(&(1..=300).collect::<Vec<_>>(), &hints).unwrap()),
+        [(1, 150), (151, 300)]
+    );
+    // Separate chosen runs stay separate requests.
+    let mut gappy: Vec<u32> = (1..=10).collect();
+    gappy.extend(20..=30);
+    assert_eq!(ranges(&plan(&gappy, &[]).unwrap()), [(1, 10), (20, 30)]);
+}
+
+#[test]
+fn the_earlier_planner_still_plans_as_before() {
+    // Drafts and queued guides saved before this update keep five-page
+    // sections, so the recomputed plan must match the stored one exactly.
+    assert_eq!(
+        ranges(&plan_legacy(&(1..=16).collect::<Vec<_>>(), &[]).unwrap()),
+        [(1, 5), (6, 10), (11, 16)]
+    );
+    assert_eq!(
+        ranges(
+            &plan_legacy(
+                &(1..=24).collect::<Vec<_>>(),
+                &[(1, 24, "Chapter".to_string())],
+            )
+            .unwrap()
+        ),
+        [(1, 10), (11, 20), (21, 24)]
+    );
+}
+
+#[test]
+fn a_draft_from_the_earlier_planner_resumes_and_saves() {
+    let r = Rig::new(20);
+    init_database(r.dir.path());
+    let (identity, _) = source(
+        r.dir.path(),
+        &r.request,
+        crate::provider::AnyProvider::default()
+            .models(r.choice.into())
+            .0,
+        LEGACY,
+    )
+    .unwrap();
+    assert_eq!(identity.manifest.len(), 4);
+    let id = admit(r.dir.path(), &r.request, &new_draft(identity)).unwrap();
+    // The first activation finishes one five-page section, then pauses.
+    r.fake
+        .behave(|b| b.generate_answers = vec![reply("First", 1), "bad".into()]);
+    assert!(r.run(Some(&id)).is_err());
+    r.reopen();
+    r.fake.behave(|b| {
+        b.generate_answers = vec![reply("Second", 6), reply("Third", 11), reply("Fourth", 16)]
+    });
+    let result = r.run(Some(&id)).unwrap();
+    assert_eq!(
+        result
+            .answer
+            .sections
+            .iter()
+            .map(|s| s.heading.as_str())
+            .collect::<Vec<_>>(),
+        ["Pages 1–5", "Pages 6–10", "Pages 11–15", "Pages 16–20"]
+    );
+    let d = read_draft(r.dir.path(), &id).unwrap();
+    assert_eq!(d.identity.planner_version, LEGACY_PLANNER);
+    assert_eq!(d.identity.prompt_version, LEGACY_PROMPT);
+    // 2 sends + the shape retry of "bad", then the three unfinished sections.
+    assert_eq!(r.requests().len(), 6);
+    assert!(r.requests()[3]["contents"][0]["parts"][0]["text"]
+        .as_str()
         .unwrap()
-        .iter()
-        .map(|s| (s.id.clone(), s.page_start, s.page_end))
-        .collect::<Vec<_>>(),
-        [
-            ("section-01".to_string(), 1, 10),
-            ("section-02".to_string(), 11, 20),
-            ("section-03".to_string(), 21, 24),
-        ]
-    );
-    // 200 pages with no bookmarks still plan as forty five-page sections.
+        .contains("guide-section-prompt-v1: Write only section section-02 (Pages 6–10)"));
+    // The older draft keeps its own, longer prompt to the end.
+    assert!(r.requests()[5]["contents"][0]["parts"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("at most 12000 characters"));
     assert_eq!(
-        plan(&(1..=200).collect::<Vec<_>>(), &[])
+        save_guide_at(r.dir.path(), &id, &save_operation(&result.answer))
             .unwrap()
-            .iter()
-            .map(|s| (s.page_start, s.page_end))
-            .collect::<Vec<_>>(),
-        (0..40u32)
-            .map(|n| (n * 5 + 1, n * 5 + 5))
-            .collect::<Vec<_>>()
+            .status,
+        "saved"
     );
 }
 
@@ -506,7 +624,8 @@ fn merging_never_mixes_two_chosen_runs() {
         .iter()
         .map(|page| (*page, *page, format!("Heading {page}")))
         .collect();
-    let manifest = plan(&pages, &hints).unwrap();
+    let manifest = plan_legacy(&pages, &hints).unwrap();
+    assert_eq!(ranges(&plan(&pages, &hints).unwrap()), [(1, 60), (62, 102)]);
     assert!(
         manifest.len() <= MAX_SECTIONS,
         "{} sections",
@@ -532,10 +651,10 @@ fn merging_never_mixes_two_chosen_runs() {
 
 #[test]
 fn finish_3_kill_reopen_retry_only_section_4() {
-    let r = Rig::new(20);
+    let r = Rig::new(600);
     r.fake.behave(|b| {
         b.generate_answers = (1..=3)
-            .map(|n| reply(&format!("Body {n}"), (n - 1) * 5 + 1))
+            .map(|n| reply(&format!("Body {n}"), (n - 1) * 150 + 1))
             .chain(["bad JSON".into()])
             .collect()
     });
@@ -547,7 +666,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
     r.reopen();
     assert_eq!(r.requests().len(), 5, "reopen sends nothing");
     r.fake
-        .behave(|b| b.generate_answer = Some(reply("Body 4", 16)));
+        .behave(|b| b.generate_answer = Some(reply("Body 4", 451)));
     let result = r.run(Some(&id)).unwrap();
     assert_eq!(result.answer.sections.len(), 4);
     let after = r.requests();
@@ -559,13 +678,13 @@ fn finish_3_kill_reopen_retry_only_section_4() {
     assert_eq!(r.fake.count(|q| q.is_upload_finalize()), 1);
     assert_eq!(r.fake.count(|q| q.is_lookup()), 1);
     for (i, body) in after[..4].iter().enumerate() {
-        let first = i as u32 * 5 + 1;
-        let last = first + 4;
+        let first = i as u32 * 150 + 1;
+        let last = first + 149;
         let pages: Vec<_> = (first..=last)
             .map(|p| json!({"pdfPage":p,"sourcePage":p}))
             .collect();
-        let prompt=format!("guide-section-prompt-v1: Write only section section-{:02} (Pages {first}–{last}) from the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Return JSON with body (nonempty Markdown, at most 12000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
-        let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":8192,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
+        let prompt=format!("guide-section-prompt-v2: Write part {} of 4 (Pages {first}–{last}) of a study guide for the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. No long paragraphs. Return JSON with body (nonempty Markdown, at most 8000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
+        let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":16384,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
         assert_eq!(*body, expected);
         assert!(
             !body.to_string().contains("Body "),
@@ -576,7 +695,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
 
 #[test]
 fn overnight_retry_renews_activation_not_finished_sections() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.fake
         .behave(|b| b.generate_answers = vec![reply("First", 1), "bad".into()]);
     assert!(r.run(None).is_err());
@@ -584,7 +703,7 @@ fn overnight_retry_renews_activation_not_finished_sections() {
     gemini_jobs::with(r.dir.path(), |j| j.test_expire_sections(&id));
     r.reopen();
     r.fake
-        .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+        .behave(|b| b.generate_answer = Some(reply("Second", 151)));
     assert!(r.run(Some(&id)).is_ok());
     // 2 first-run sends + the one shape retry of "bad" + 1 after renewal.
     assert_eq!(r.requests().len(), 4);
@@ -617,7 +736,7 @@ fn complete_guide_save_retry_zero_network() {
 
 #[test]
 fn changed_pdf_or_pages_requires_consent() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.fake.behave(|b| b.generate_answer = Some("bad".into()));
     assert!(r.run(None).is_err());
     let id = r.id();
@@ -630,7 +749,7 @@ fn changed_pdf_or_pages_requires_consent() {
     );
     std::fs::write(
         r.dir.path().join("documents/a.pdf"),
-        generation_tests::pdf(10, "changed"),
+        generation_tests::pdf(300, "changed"),
     )
     .unwrap();
     assert_eq!(r.run(Some(&id)).unwrap_err().code, "SOURCE_CHANGED");
@@ -639,7 +758,7 @@ fn changed_pdf_or_pages_requires_consent() {
 
 #[test]
 fn updated_app_plan_version_returns_plan_changed() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.fake.behave(|b| b.generate_answer = Some("bad".into()));
     assert!(r.run(None).is_err());
     let id = r.id();
@@ -662,7 +781,7 @@ fn updated_app_plan_version_returns_plan_changed() {
     // If PDF hash changes as well, it returns SOURCE_CHANGED
     std::fs::write(
         r.dir.path().join("documents/a.pdf"),
-        generation_tests::pdf(10, "changed"),
+        generation_tests::pdf(300, "changed"),
     )
     .unwrap();
     let source_err = r.run(Some(&id)).unwrap_err();
@@ -671,7 +790,7 @@ fn updated_app_plan_version_returns_plan_changed() {
 
 #[test]
 fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let budget = Budget::new(Duration::ZERO);
     let cache = r.cache.lock().unwrap().clone();
     let ctx = GenContext {
@@ -712,10 +831,10 @@ fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
 
 #[test]
 fn pdf_changed_between_sections_stops_before_next_request() {
-    let r = Rig::new(20);
+    let r = Rig::new(600);
     r.fake.behave(|b| {
         b.generate_answers = (1..=4)
-            .map(|n| reply(&format!("Body {n}"), (n - 1) * 5 + 1))
+            .map(|n| reply(&format!("Body {n}"), (n - 1) * 150 + 1))
             .collect()
     });
     let commits = std::sync::atomic::AtomicUsize::new(0);
@@ -726,7 +845,7 @@ fn pdf_changed_between_sections_stops_before_next_request() {
                 assert_eq!(d.results["section-02"].status, Status::Complete);
                 std::fs::write(
                     r.dir.path().join("documents/a.pdf"),
-                    generation_tests::pdf(20, "changed between sections"),
+                    generation_tests::pdf(600, "changed between sections"),
                 )
                 .unwrap();
             }
@@ -746,7 +865,7 @@ fn pdf_changed_between_sections_stops_before_next_request() {
         assert_eq!(result.status, Status::Complete);
         let content = result.content.as_ref().unwrap();
         assert_eq!(content.body, format!("Body {n}"));
-        assert_eq!(content.source_pages, vec![(n - 1) * 5 + 1]);
+        assert_eq!(content.source_pages, vec![(n - 1) * 150 + 1]);
     }
     for n in 3..=4 {
         let result = &d.results[&format!("section-{n:02}")];
@@ -780,7 +899,7 @@ fn restart_requires_consent_and_keeps_old_draft() {
 
 #[test]
 fn checkpoint_failure_stops_next_section() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.answer(2);
     let root = r.dir.path().to_path_buf();
     assert!(r
@@ -802,7 +921,7 @@ fn checkpoint_failure_stops_next_section() {
 #[test]
 fn cancel_before_dispatch_and_after_checkpoint() {
     for point in ["before-reservation", "after-section-commit"] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         r.answer(2);
         let root = r.dir.path().to_path_buf();
         let result = r.run_with(None, &r.request, &move |at| {
@@ -1024,7 +1143,7 @@ fn fresh_request_cannot_bypass_restart_consent() {
 
 #[test]
 fn section_attempts_and_activation_ledger_are_durable_and_bounded() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     // Two retries on the first section exhaust both spare submissions. The
     // second section still gets its one initial submission, never a retry.
     r.fake.behave(|b| {
@@ -1186,14 +1305,14 @@ fn edit_descriptor(r: &Rig, edit: impl FnOnce(&mut Value)) {
 }
 #[test]
 fn valid_remote_reference_survives_reopen_zero_uploads() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (id, _) = paused_reference(&r);
     let first = r.requests();
     assert_eq!(counts(&r), (1, 0, 3));
     r.reopen();
     assert_eq!(counts(&r), (1, 0, 3));
     r.fake
-        .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+        .behave(|b| b.generate_answer = Some(reply("Second", 151)));
     r.run(Some(&id)).unwrap();
     assert_eq!(counts(&r), (1, 1, 4));
     assert_eq!(r.requests()[3], first[1]);
@@ -1201,7 +1320,7 @@ fn valid_remote_reference_survives_reopen_zero_uploads() {
 #[test]
 fn expired_reference_one_upload_no_finished_requests() {
     for missing in [false, true] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         let first = r.requests();
         if missing {
@@ -1213,7 +1332,7 @@ fn expired_reference_one_upload_no_finished_requests() {
         }
         r.reopen();
         r.fake
-            .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+            .behave(|b| b.generate_answer = Some(reply("Second", 151)));
         r.run(Some(&id)).unwrap();
         assert_eq!(counts(&r), (2, usize::from(missing), 4));
         let mut expected = first[1].clone();
@@ -1225,7 +1344,7 @@ fn expired_reference_one_upload_no_finished_requests() {
 #[test]
 fn lookup_failure_no_reupload() {
     for transport in [false, true] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         r.reopen();
         r.fake.behave(|b| {
@@ -1242,7 +1361,7 @@ fn lookup_failure_no_reupload() {
 #[test]
 fn auth_error_pauses_without_upload() {
     for status in [401, 403] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         r.reopen();
         r.fake.behave(|b| b.lookup_status = Some(status));
@@ -1267,7 +1386,7 @@ fn tampered_descriptor_fails_closed() {
         ("unknown", json!("secret")),
         ("null", Value::Null),
     ] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         edit_descriptor(&r, |d| {
             if field == "null" {
@@ -1287,7 +1406,7 @@ fn tampered_descriptor_fails_closed() {
 }
 #[test]
 fn key_change_requires_continue_no_upload() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (id, _) = paused_reference(&r);
     r.reopen();
     assert_eq!(
@@ -1301,7 +1420,7 @@ fn key_change_requires_continue_no_upload() {
 #[test]
 fn descriptor_never_in_ipc_logs_exports_backups() {
     use std::io::Read;
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (id, descriptor) = paused_reference(&r);
     assert_eq!(
         descriptor
@@ -1340,7 +1459,7 @@ fn descriptor_never_in_ipc_logs_exports_backups() {
     let debug = format!("{records:?}");
     let logs = serde_json::to_string(&*r.messages.lock().unwrap()).unwrap();
     r.fake
-        .behave(|b| b.generate_answer = Some(reply("Second", 6)));
+        .behave(|b| b.generate_answer = Some(reply("Second", 151)));
     let answer = r.run(Some(&id)).unwrap();
     let export = serde_json::to_string(&answer).unwrap();
     init_database(r.dir.path());
@@ -1388,7 +1507,7 @@ fn descriptor_never_in_ipc_logs_exports_backups() {
 #[test]
 fn paused_reference_retained_until_expiry_or_discard() {
     for expire in [false, true] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (_, _) = paused_reference(&r);
         let cache = r.cache.lock().unwrap().clone();
         let retired = cache.invalidate_all();
@@ -1406,7 +1525,7 @@ fn paused_reference_retained_until_expiry_or_discard() {
 }
 #[test]
 fn delete_only_owned_with_matching_key() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (id, _) = paused_reference(&r);
     let cache = r.cache.lock().unwrap().clone();
     let retired = cache.invalidate_all();
@@ -1484,7 +1603,7 @@ fn descriptor_checkpoint_failure_no_section_request() {
 }
 #[test]
 fn shared_reference_retains_other_draft_on_discard() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (first, _) = paused_reference(&r);
     let mut req = r.request.clone();
     req.material_id = "mat-b".into();
@@ -1522,7 +1641,7 @@ fn shared_reference_retains_other_draft_on_discard() {
 #[test]
 fn discard_reference_wrong_key_or_tampering_never_deletes() {
     for tamper in [false, true] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         if tamper {
             edit_descriptor(&r, |d| {
@@ -1552,7 +1671,7 @@ fn discard_reference_wrong_key_or_tampering_never_deletes() {
 #[test]
 fn nonactive_reference_pauses_without_replacement() {
     for state in ["PROCESSING", "FAILED", "UNKNOWN"] {
-        let r = Rig::new(10);
+        let r = Rig::new(300);
         let (id, _) = paused_reference(&r);
         r.fake.set_state("files/synthetic-1", state);
         r.reopen();
@@ -1567,7 +1686,7 @@ fn nonactive_reference_pauses_without_replacement() {
 #[test]
 fn descriptor_public_fingerprint_cannot_forge_ownership() {
     use sha2::{Digest, Sha256};
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let (id, _) = paused_reference(&r);
     edit_descriptor(&r, |d| {
         d["name"] = json!("files/foreign");
@@ -1619,7 +1738,7 @@ fn descriptor_public_fingerprint_cannot_forge_ownership() {
 
 #[test]
 fn queue_creates_waiting_draft_with_zero_network() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     assert_eq!(r.fake.count(|r| r.is_generate()), 0);
     assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
@@ -1633,7 +1752,7 @@ fn queue_creates_waiting_draft_with_zero_network() {
 
 #[test]
 fn queue_reopen_no_network() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     assert_eq!(r.fake.log().len(), 0);
     r.reopen();
@@ -1647,7 +1766,7 @@ fn queue_reopen_no_network() {
 
 #[test]
 fn running_and_paused_queue_items_wait_for_her_after_reopen() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let mut queued = Vec::new();
     for state in ["running", "paused", "cancelled"] {
         let mut req = r.request.clone();
@@ -1700,11 +1819,11 @@ fn running_and_paused_queue_items_wait_for_her_after_reopen() {
 
 #[test]
 fn start_now_resumes_through_existing_rules() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     assert_eq!(r.fake.log().len(), 0);
     r.fake.behave(|b| {
-        b.generate_answers = vec![reply("First", 1), reply("Second", 6)];
+        b.generate_answers = vec![reply("First", 1), reply("Second", 151)];
     });
     let outcome = r.run(Some(&job_id)).unwrap();
     assert_eq!(outcome.job_id.as_deref(), Some(job_id.as_str()));
@@ -1717,7 +1836,7 @@ fn start_now_resumes_through_existing_rules() {
 
 #[test]
 fn unrequested_material_never_uploads() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let _job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     std::fs::write(
         r.dir.path().join("documents/b.pdf"),
@@ -1731,7 +1850,7 @@ fn unrequested_material_never_uploads() {
         base_revision: None,
         request_id: None,
     };
-    let (other_id, _) = source(r.dir.path(), &other_req, "gemini-2.5-flash").unwrap();
+    let (other_id, _) = source(r.dir.path(), &other_req, "gemini-2.5-flash", CURRENT).unwrap();
     assert_eq!(other_id.material_id, "mat-b");
     r.reopen();
     assert_eq!(r.fake.count(|r| r.is_upload_finalize()), 0);
@@ -1784,7 +1903,7 @@ fn queue_overflow_refused_without_eviction() {
 
 #[test]
 fn cancel_waiting_item_removes_it_without_network() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     assert_eq!(gemini_jobs::with(r.dir.path(), |j| j.list().len()), 1);
     let outcome = cancel_job(r.dir.path(), &job_id, &|_| {}).unwrap();
@@ -1798,7 +1917,7 @@ fn cancel_waiting_item_removes_it_without_network() {
 
 #[test]
 fn cancelled_queue_item_stays_cancelled_after_reopen() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.answer(2);
     let job_id = queue_study_guide_at(r.dir.path(), &r.request, ModelChoice::Standard).unwrap();
     let root = r.dir.path().to_path_buf();
@@ -1928,16 +2047,44 @@ fn invalid_section_answer_is_reported_with_its_reason() {
 }
 #[test]
 fn section_progress_names_each_section() {
-    let r = Rig::new(10);
+    let r = Rig::new(300);
     r.answer(2);
     r.run(None).unwrap();
     let messages = r.messages.lock().unwrap();
     assert_eq!(*r.started_ids.lock().unwrap(), vec![r.id()]);
     assert!(messages
         .iter()
-        .any(|m| m.starts_with("Writing section 1 of 2:")));
-    assert!(messages.iter().any(|m| m == "Section 1 of 2 saved."));
-    assert!(messages.iter().any(|m| m == "Section 2 of 2 saved."));
+        .any(|m| m.starts_with("Writing part 1 of 2:")));
+    assert!(messages.iter().any(|m| m == "Part 1 of 2 saved."));
+    assert!(messages.iter().any(|m| m == "Part 2 of 2 saved."));
+}
+
+#[test]
+fn a_whole_pdf_guide_is_one_request_with_plain_progress() {
+    let r = Rig::new(95);
+    r.answer(1);
+    let result = r.run(None).unwrap();
+    assert_eq!(result.answer.sections.len(), 1);
+    assert_eq!(result.answer.sections[0].heading, "Pages 1–95");
+    let requests = r.requests();
+    assert_eq!(requests.len(), 1);
+    let text = requests[0]["contents"][0]["parts"][0]["text"]
+        .as_str()
+        .unwrap();
+    assert!(text.starts_with(
+        "guide-section-prompt-v2: Write a study guide for the attached PDF (Pages 1–95). "
+    ));
+    assert!(text.contains("at most 8000 characters"));
+    assert_eq!(
+        requests[0]["generationConfig"]["maxOutputTokens"],
+        PART_OUTPUT_TOKENS
+    );
+    let messages = r.messages.lock().unwrap();
+    assert!(messages.iter().any(|m| m == "Writing your study guide…"));
+    assert!(messages.iter().any(|m| m == "Study guide written."));
+    assert!(!messages
+        .iter()
+        .any(|m| m.contains("part ") || m.contains("Part ")));
 }
 
 #[test]
@@ -1951,14 +2098,14 @@ fn internal_section_failure_text_is_not_marked_as_a_plain_reason() {
 #[test]
 fn capable_fallback_stays_for_the_rest_of_the_guide() {
     // 15 pages plan three sections (14 merge into two).
-    let mut r = Rig::new(15);
+    let mut r = Rig::new(450);
     r.choice = ModelChoice::MostCapable;
     r.fake.behave(|b| {
         b.generate_answers = vec![
             json!({"candidates":[{"finishReason":"MAX_TOKENS"}]}).to_string(),
             reply("First", 1),
-            reply("Second", 6),
-            reply("Third", 11),
+            reply("Second", 151),
+            reply("Third", 301),
         ]
     });
     let answer = r.run(None).unwrap();
@@ -1994,7 +2141,7 @@ fn section_first_header_timeout_stops_without_another_submission() {
     let mut r = Rig::new(4);
     r.stage_scale = 0.01;
     r.fake
-        .behave(|b| b.generate_first_byte_delay = Some(Duration::from_secs(3)));
+        .behave(|b| b.generate_first_byte_delay = Some(Duration::from_secs(6)));
     let started = std::time::Instant::now();
     let error = r.run(None).unwrap_err();
     assert_eq!(error.code, "GUIDE_FAILED");
@@ -2007,7 +2154,8 @@ fn section_first_header_timeout_stops_without_another_submission() {
         1,
         "a section timeout must not start another long wait"
     );
-    assert!(started.elapsed() >= Duration::from_millis(2400));
+    // A whole-PDF part waits the full 480 s (4.8 s at this scale).
+    assert!(started.elapsed() >= Duration::from_millis(4800));
 }
 #[test]
 fn capable_invalid_fallback_answer_does_not_retry_a_third_time() {
@@ -2084,4 +2232,25 @@ fn cancelling_at_the_first_section_progress_event_is_not_reactivated() {
     assert_eq!(record.stage, gemini_jobs::JobStage::Cancelled);
     let d = read_draft(dir.path(), &record.id).unwrap();
     assert!(d.activations.iter().all(|a| a.submissions == 0));
+}
+
+#[test]
+fn the_generating_wait_follows_the_plan_version() {
+    assert_eq!(generating_seconds(LEGACY), 240);
+    assert_eq!(generating_seconds(CURRENT), 480);
+    // An unknown planner falls back to the current recipe (then PLAN_CHANGED).
+    let mut identity = source_identity_for_test();
+    identity.planner_version = "pdf-outline-earlier-version".into();
+    assert_eq!(generating_seconds(recipe_for(&identity)), 480);
+    identity.planner_version = LEGACY_PLANNER.into();
+    assert_eq!(generating_seconds(recipe_for(&identity)), 240);
+    // A whole-document wait leaves one 480-second part inside the total.
+    assert!(gemini_budget::ACTIVE_BUDGET.as_secs() > generating_seconds(CURRENT));
+}
+
+fn source_identity_for_test() -> Identity {
+    let r = Rig::new(5);
+    source(r.dir.path(), &r.request, "gemini-2.5-flash", CURRENT)
+        .unwrap()
+        .0
 }
