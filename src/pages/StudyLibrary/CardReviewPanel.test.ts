@@ -277,6 +277,30 @@ describe("card reviews in MaterialDetail", () => {
     expect(sessionRegion().queryByText("1–4 rate it.")).toBeNull();
   });
 
+  it("keeps pointer-down focus from scrolling Show answer before its single click", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    const showAnswer = await openSession();
+    const heading = sessionRegion().getByRole("heading", { name: "Card 1 of 3 · new" });
+    heading.focus();
+    // jsdom has no layout or native mousedown focus/scroll. Model that default:
+    // if allowed, focusing a clipped bottom-edge button moves it before mouseup.
+    const focusScroll = vi.fn();
+    showAnswer.addEventListener("focus", focusScroll);
+    const allowDefault = fireEvent.mouseDown(showAnswer, { button: 0 });
+    if (allowDefault) showAnswer.focus();
+    expect(allowDefault).toBe(false);
+    expect(focusScroll).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(heading);
+    expect(sessionRegion().queryByText("B")).toBeNull();
+    fireEvent.mouseUp(showAnswer, { button: 0 });
+    fireEvent.click(showAnswer);
+    expect(sessionRegion().getByText("B")).toBeTruthy();
+    expect(sessionRegion().getByRole("group", { name: "Rate this card" })).toBeTruthy();
+    expect(document.activeElement).toBe(heading);
+  });
+
   it("focuses the card heading upon reveal so digit shortcuts work from activeElement", async () => {
     await seed();
     renderDetail();

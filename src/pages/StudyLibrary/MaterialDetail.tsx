@@ -151,6 +151,9 @@ export function MaterialDetail() {
   return <MaterialDetailPage key={materialId} />;
 }
 
+const KIT_DRAFTS_WAITING = "Save or discard your study kit drafts first.";
+const EARLIER_DRAFTS_WAITING = "Save or discard the earlier drafts first, then make a study kit.";
+
 function MaterialDetailPage() {
   const [pageNotesAvailable, setPageNotesAvailable] = useState(false);
   const [askingPdf, setAskingPdf] = useState(false);
@@ -256,6 +259,14 @@ function MaterialDetailPage() {
   // One Gemini generation at a time across the whole app, whichever page asked;
   // the lock is taken synchronously before anything awaits (src/state/GeminiJobs).
   const geminiJobs = useGeminiJobs();
+  const waitingKitDrafts = geminiJobs.jobs.filter((job) => job.materialId === materialId && (job.answer || job.sectionGuide));
+  const waitingKitDraftKey = JSON.stringify([materialId, waitingKitDrafts.map((job) => [job.key, Boolean(job.studyKitPart)])]);
+  // A saved/discarded draft can invalidate both the refusal and its destination.
+  // Only the draft refusals go stale this way; other kit messages stay.
+  useEffect(() => {
+    setKitMessage((message) => (message === KIT_DRAFTS_WAITING || message === EARLIER_DRAFTS_WAITING ? null : message));
+    setKitDraftAnchor(null);
+  }, [waitingKitDraftKey]);
   const studyJob = geminiJobs.jobs
     .filter((job) => job.materialId === materialId && job.kind === "study-aid")
     .reduce<GeminiJob | undefined>(
@@ -778,12 +789,12 @@ function MaterialDetailPage() {
       setKitMessage("No internet right now. Press Make my study kit again when you're back online.");
       return;
     }
-    const waiting = geminiJobs.jobs.filter((job) => job.materialId === material.id && (job.answer || job.sectionGuide));
+    const waiting = waitingKitDrafts;
     if (waiting.length > 0) {
       if (waiting.some((job) => job.studyKitPart && job.answer)) {
-        setKitMessage("Save or discard your study kit drafts first.");
+        setKitMessage(KIT_DRAFTS_WAITING);
       } else {
-        setKitMessage("Save or discard the earlier drafts first, then make a study kit.");
+        setKitMessage(EARLIER_DRAFTS_WAITING);
         setKitDraftAnchor(draftAnchor(waiting[0]!));
       }
       return;

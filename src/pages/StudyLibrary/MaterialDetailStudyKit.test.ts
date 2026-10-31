@@ -280,3 +280,23 @@ it("ASK-FINAL 7: a repeat kit press says plainly it replaces saved parts, only w
   confirm=await screen.findByRole("dialog",{name:"Send this file to Google?"});
   expect(confirm.textContent).toContain(note);
 });
+
+it.each(["discard", "save"])("clears the kit refusal after the last draft is %s", async (action) => {
+  records=[parts()[0]!]; await open();
+  await screen.findByRole("button", {name:"Save the new study guide"});
+  fireEvent.click(screen.getByRole("button", {name:"Make my study kit"}));
+  expect(await screen.findByText("Save or discard your study kit drafts first.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", {name: action === "discard" ? "Discard it" : "Save the new study guide"}));
+  await waitFor(() => expect(records).toHaveLength(0));
+  await waitFor(() => expect(screen.queryByText("Save or discard your study kit drafts first.")).toBeNull());
+});
+it("clears the earlier-draft refusal and Show me after its last draft is discarded", async () => {
+  records=[{...parts()[2]!,id:"job-bbbbbbbbbbbbbbbbbbbbbbbb",requestId:"practice:1",draft:undefined}]; await open();
+  await screen.findByRole("button", {name:"Save the new practice test"});
+  fireEvent.click(screen.getByRole("button", {name:"Make my study kit"}));
+  expect(await screen.findByRole("button", {name:"Show me"})).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", {name:"Discard it"}));
+  await waitFor(() => expect(records).toHaveLength(0));
+  await waitFor(() => expect(screen.queryByText("Save or discard the earlier drafts first, then make a study kit.")).toBeNull());
+  expect(screen.queryByRole("button", {name:"Show me"})).toBeNull();
+});

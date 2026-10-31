@@ -63,7 +63,11 @@ describe("1: reading the PDF's text in the background", () => {
     mocks.ask.mockResolvedValue({ answer: "Not answered by these sources.", model: "gemini-3.5-flash", notAnswered: true, passages: [] });
     renderPanel({ evidenceMode: true });
     fireEvent.click(screen.getByRole("button", { name: "Why? Ask Gemini" }));
-    expect(await screen.findByText("Reading this PDF on your Mac…")).toBeTruthy();
+    const reading = await screen.findByText("Reading this PDF on your Mac…");
+    expect(reading.getAttribute("role")).toBe("status");
+    expect(reading.classList.contains("small")).toBe(true);
+    expect(reading.classList.contains("dim")).toBe(false);
+    expect(reading.querySelector('.spinner[aria-hidden="true"]')).toBeTruthy();
     expect(mocks.prepare).toHaveBeenCalledExactlyOnceWith("mat-1");
     ask("Why does the compass lag in a turn?");
     await new Promise((resolve) => setTimeout(resolve, 20));
