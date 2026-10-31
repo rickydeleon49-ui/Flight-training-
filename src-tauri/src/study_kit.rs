@@ -37,6 +37,7 @@ fn request_body(part: Value, pages: u32) -> Value {
         .collect();
     let mapping = json!(mapping);
     let prompt = format!("study-kit-prompt-v3: Make a basic study kit for a beginner from ONLY the attached selected PDF pages 1–{pages}. Read ONLY these selected PDF pages and cite their sourcePage numbers: {mapping}. sourcePage is the page's position in the attached file (1 = first page), never the number printed on the page. Do not discuss other pages. Use only supported facts. Do not invent procedures, regulations, numbers or page references. If ambiguous or outdated, say so rather than guessing. Return JSON with three parts: guide {{body, sourcePages}}, cards, questions. The guide must follow guide-section-prompt-v2: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), in the guide, cards and questions. No long paragraphs; body at most 8000 characters. Make about 20 distinct cards with front, back, sourcePage, quote; each back answers the front directly, never repeats the question. Make about 10 multiple-choice questions with question, exactly 3 options, one correct, two plausible wrong answers of similar length, like the FAA knowledge test, correctIndex (zero-based single correct choice), explanation, sourcePage, quote. Every card and question must include a required quote of at most 300 characters, copied word-for-word as one continuous passage (no ellipses) from its cited sourcePage. Never refer to option letters or positions in explanations. Cite the pages actually used. This is an AI study aid to check against current FAA material, aircraft documents and her instructor, not operational flight instruction.");
+    let prompt = format!("{prompt} {}", crate::acs_tasks::prompt());
     // Guide ~2,500 tokens + 20 cards ~3,000 + 10 questions ~3,000,
     // with space for JSON and thinking across 150 pages.
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],
@@ -294,3 +295,17 @@ mod tests;
 #[cfg(test)]
 #[path = "live_bench_tests.rs"]
 mod live_bench;
+
+#[cfg(test)]
+mod acs_tests {
+    use super::*;
+    #[test]
+    fn kit_prompt_contains_every_task() {
+        let body = request_body(json!({"text":"Synthetic source"}), 1);
+        let body = body.to_string();
+        for (code, _) in crate::acs_tasks::ACS_TASKS {
+            assert!(body.contains(code));
+        }
+        assert!(body.contains("chosen ONLY from this list, or null if none fits clearly"));
+    }
+}

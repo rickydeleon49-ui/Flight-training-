@@ -1,3 +1,4 @@
+import { normalizeAcsTask } from "@/logic/acsTaskCatalog";
 import { homeworkAssert } from "@/domain/homework";
 /**
  * Initialization validation for the single-connection drivers (sql.js in the
@@ -252,6 +253,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 25) await validateOralScenarios(query, reference);
   if (newest >= 26) await validateVisualCards(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
+  await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
 
 /** The schema-11 practice contract (native `verify_schema_11_semantics`). */
@@ -2099,5 +2101,22 @@ export async function validateFaaReferences(query: ValidationQuery, reference: V
         typeof row.edition !== "string" || [...row.edition].length > 200 ||
         typeof row.content_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(row.content_sha256) ||
         !Number.isSafeInteger(row.total_pages) || Number(row.total_pages) < 1) refuse("Damaged FAA reference details.");
+  }
+}
+
+/** An older backup may omit this additive metadata table entirely. */
+export async function validatePracticeAcsTasks(query: ValidationQuery, reference: ValidationQuery, required = false): Promise<void> {
+  const table = "practice_item_acs_tasks";
+  const [present] = await query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [table]);
+  if (!present) {
+    if (required) refuse("Missing practice ACS task table.");
+    return;
+  }
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+      !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+      !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+      (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged practice ACS task table.");
+  for (const row of await query(`SELECT acs_task FROM ${table}`, [])) {
+    if (typeof row.acs_task !== "string" || normalizeAcsTask(row.acs_task) !== row.acs_task) refuse("Damaged practice ACS task.");
   }
 }

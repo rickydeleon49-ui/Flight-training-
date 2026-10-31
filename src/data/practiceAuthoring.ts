@@ -1,3 +1,4 @@
+import { normalizeAcsTask } from "@/logic/acsTaskCatalog";
 /**
  * Practice-question authoring (OFFLINE-03b round 1).
  *
@@ -148,7 +149,7 @@ export async function practiceContentHash(questions: readonly PracticeAuthoringQ
 
 function decodeQuestion(value: Json): PracticeAuthoringQuestion {
   if (!isRecord(value)) refuse("INVALID_ARGUMENT");
-  exactKeys(value, ["question", "options", "correctIndex", "explanation", "sourcePage", "identity"], ["origin", "replaces"]);
+  exactKeys(value, ["question", "options", "correctIndex", "explanation", "sourcePage", "identity"], ["origin", "replaces", "acsTask"]);
   if (typeof value.question !== "string") refuse("INVALID_ARGUMENT");
   const questionLength = codePointLength(value.question);
   if (questionLength === 0 || questionLength > MAX_QUESTION_CHARS) refuse("INVALID_ARGUMENT");
@@ -175,6 +176,7 @@ function decodeQuestion(value: Json): PracticeAuthoringQuestion {
     correctIndex,
     explanation: value.explanation,
     sourcePage: sourcePage as number | null,
+    ...(normalizeAcsTask(value.acsTask) ? { acsTask: normalizeAcsTask(value.acsTask) } : {}),
     identity,
   };
   if (has(value, "origin")) out.origin = originOf(value.origin);
@@ -479,6 +481,7 @@ export function buildSnapshotFromRows(rows: SnapshotSourceRows): PracticeSnapsho
       explanation: String(item["explanation"] ?? ""),
       sourcePage: sourcePage === null || sourcePage === undefined ? null : Number(sourcePage),
       identity,
+      ...(normalizeAcsTask(item["acs_task"]) ? { acsTask: normalizeAcsTask(item["acs_task"]) } : {}),
       ...(origin === "user" || origin === "instructor" ? { origin: origin as StudyItemOrigin } : {}),
       ...(origin && replaces ? { replaces } : {}),
     };
@@ -505,16 +508,19 @@ export function buildSnapshotFromRows(rows: SnapshotSourceRows): PracticeSnapsho
 const SNAPSHOT_SELECT = `
   SELECT v.id, v.version_number, v.title, v.provider, v.model, v.created_at,
          i.id AS item_id_row, i.ordinal, i.question_text, i.options_json, i.correct_index,
-         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin
+         i.explanation, i.source_page, i.logical_id, i.replaces_id, o.origin, a.acs_task
     FROM practice_test_versions v
     JOIN practice_test_items i ON i.version_id = v.id
     LEFT JOIN practice_item_origins o ON o.item_id = i.id
+    LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id
    WHERE v.source_material_id = ? AND v.is_active = 1
    ORDER BY i.ordinal ASC`;
 
 /** The material's current test exactly as stored, or null when there is none. */
 export async function readCurrentSnapshot(query: Query, materialId: string): Promise<PracticeSnapshot | null> {
-  const rows = await query(SNAPSHOT_SELECT, [materialId]);
+  const [table] = await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'practice_item_acs_tasks'", []);
+  const select = table ? SNAPSHOT_SELECT : SNAPSHOT_SELECT.replace("a.acs_task", "NULL AS acs_task").replace("    LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id\n", "");
+  const rows = await query(select, [materialId]);
   if (rows.length === 0) return null;
   const version = rows[0]!;
   const items = rows.map((row) => ({
@@ -527,6 +533,7 @@ export async function readCurrentSnapshot(query: Query, materialId: string): Pro
     logical_id: row["logical_id"],
     replaces_id: row["replaces_id"],
     origin: row["origin"],
+    acs_task: row["acs_task"],
   }));
   const [mirror] = await query("SELECT retired_json FROM practice_tests WHERE source_material_id = ?", [materialId]);
   return buildSnapshotFromRows({
@@ -921,6 +928,7 @@ async function applyOperation(
         question.replaces ?? null,
       ],
     );
+    if (question.acsTask) await run("INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?, ?)", [itemId, question.acsTask]);
     if (question.origin) {
       await run("INSERT INTO practice_item_origins (item_id, origin) VALUES (?, ?)", [itemId, question.origin]);
     }

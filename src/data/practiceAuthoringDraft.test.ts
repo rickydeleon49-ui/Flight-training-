@@ -87,3 +87,33 @@ describe("practice draft operations accepted by the real transaction", () => {
     expect(snapshot.retired).toEqual([]);
   });
 });
+
+it("changes and clears only the task without retiring or rewriting generated content", async () => {
+  const before = await seed([undefined]);
+  const draft = draftFromSnapshot(before);
+  draft[0]!.acsTask = "PA.II.A";
+  const tagged = await save(before, draft);
+  expect(tagged.snapshot.questions[0]!.acsTask).toBe("PA.II.A");
+  expect(tagged.snapshot.questions[0]!.origin).toBeUndefined();
+  expect(tagged.snapshot.retired).toEqual([]);
+  const clear = draftFromSnapshot(tagged.snapshot);
+  clear[0]!.acsTask = null;
+  const after = await save(tagged.snapshot, clear);
+  expect(after.snapshot.questions[0]!.acsTask).toBeUndefined();
+  expect(after.snapshot.questions[0]!.identity).toBe(before.questions[0]!.identity);
+  expect(after.snapshot.retired).toEqual([]);
+});
+
+it("validates task metadata and permits an older backup without the table", async () => {
+  const { validatePracticeAcsTasks } = await import("./practiceStateValidation");
+  const query = (sql: string, params: import("./db").SqlValue[]) => db.select<Record<string, unknown>>(sql, params);
+  const before = await seed([undefined]);
+  const draft = draftFromSnapshot(before); draft[0]!.acsTask = "PA.II.A";
+  await save(before, draft);
+  await validatePracticeAcsTasks(query, query, true);
+  await db.execute("UPDATE practice_item_acs_tasks SET acs_task='PA.II.Z'");
+  await expect(validatePracticeAcsTasks(query, query)).rejects.toThrow("Damaged practice ACS task.");
+  await db.execute("DROP TABLE practice_item_acs_tasks");
+  await validatePracticeAcsTasks(query, query);
+  await expect(validatePracticeAcsTasks(query, query, true)).rejects.toThrow("Missing practice ACS task table.");
+});

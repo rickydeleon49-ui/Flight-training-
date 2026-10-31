@@ -38,6 +38,8 @@ import visualCardRegions from "../../src-tauri/migrations/0026_visual_card_regio
 
 import faaReferenceCopies from "../../src-tauri/migrations/0027_faa_reference_copies.sql?raw";
 
+import practiceItemAcsTasks from "../../src-tauri/migrations/0028_practice_item_acs_tasks.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -72,6 +74,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 25, description: "oral_scenarios", sql: oralScenarios },
   { version: 26, description: "visual_card_regions", sql: visualCardRegions },
   { version: 27, description: "faa_reference_copies", sql: faaReferenceCopies },
+  { version: 28, description: "practice_item_acs_tasks", sql: practiceItemAcsTasks },
 ];
 
 /**

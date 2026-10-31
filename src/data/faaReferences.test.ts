@@ -13,7 +13,7 @@ const imported = { relativePath: "synthetic.pdf", originalFileName: "synthetic.p
   pdfIdentity: { contentSha256: "a".repeat(64), totalPages: 2 } };
 const draft = () => faaReferenceDraft(FAA_REFERENCES[0], "faa", "6B", imported);
 const query = (db: Engine) => async (sql: string, params: import("./db").SqlValue[]) => db.query(sql, params);
-async function engine(name: typeof ENGINES[number], through = 27) {
+async function engine(name: typeof ENGINES[number], through = MIGRATIONS.at(-1)!.version) {
   const db = await openEngine(name); handles.push(db);
   db.exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, description TEXT, applied_at TEXT)");
   for (const migration of MIGRATIONS.filter((m) => m.version <= through)) {
@@ -30,13 +30,13 @@ async function save(db: Engine, overrides = {}) {
 }
 
 for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
-  it("adds only the empty table to schema 26, preserving personal notes", async () => {
+  it("adds empty tables to schema 26, preserving personal notes", async () => {
     const db = await engine(name, 26);
     db.exec("INSERT INTO study_materials (id,title,notes,created_at,updated_at) VALUES ('old','My notes','Keep my words','x','x')");
     const before = db.query("SELECT * FROM study_materials");
     const tables = db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name);
     await applyMigrations((sql) => db.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 26).map((m) => m.version)));
-    expect(db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name).filter((t) => !tables.includes(t))).toEqual(["faa_reference_copies"]);
+    expect(db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name).filter((t) => !tables.includes(t))).toEqual(["faa_reference_copies", "practice_item_acs_tasks"]);
     expect(db.query("SELECT * FROM faa_reference_copies")).toEqual([]);
     expect(db.query("SELECT * FROM study_materials")).toEqual(before);
     const reference = await engine(name);
@@ -95,7 +95,7 @@ for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
         ["content_sha256 NOT GLOB '*[^0-9a-f]*'", "1"],
         ["DEFAULT ''", "DEFAULT 'changed'"],
         ["ON DELETE CASCADE", "ON DELETE NO ACTION"],
-      ].map(([from, to]) => "DROP TABLE faa_reference_copies; " + MIGRATIONS.at(-1)!.sql.replace(from!, to!)),
+      ].map(([from, to]) => "DROP TABLE faa_reference_copies; " + MIGRATIONS.find(m => m.version === 27)!.sql.replace(from!, to!)),
     ]) {
       const db = await engine(name);
       db.exec(change);
@@ -105,7 +105,7 @@ for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
 
   it("refuses a newer schema", async () => {
     const db = await engine(name), reference = await engine(name);
-    db.exec("INSERT INTO schema_migrations VALUES (28, 'future', 'x')");
+    db.exec("INSERT INTO schema_migrations VALUES (29, 'future', 'x')");
     await expect(validateApplicationDatabase(query(db), query(reference))).rejects.toThrow(/newer/);
   });
 });

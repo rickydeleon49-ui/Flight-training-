@@ -644,6 +644,7 @@ fn verify_application_connection_with_ceiling(
             "That backup was created by a newer database format. Update the app first.".to_string(),
         );
     }
+    verify_practice_acs_tasks(connection, newest_migration >= 28)?;
     if newest_migration >= 11 {
         verify_schema_11_semantics(connection)?;
     }
@@ -748,6 +749,35 @@ pub(crate) fn verify_schema_20_homework_semantics(connection: &Connection) -> Re
         }
     }
     crate::homework::validate_database(connection)
+}
+
+/// Older backups have no side table and remain untagged after upgrade.
+fn verify_practice_acs_tasks(connection: &Connection, required: bool) -> Result<(), String> {
+    let present = crate::acs_tasks::table_exists(connection).map_err(|e| e.to_string())?;
+    if !present {
+        return if required {
+            Err("Missing practice ACS task table.".into())
+        } else {
+            Ok(())
+        };
+    }
+    let reference = get_reference_schema_connection()?;
+    let table = "practice_item_acs_tasks";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+        || m3_count(
+            connection,
+            "SELECT COUNT(*) FROM pragma_foreign_key_check('practice_item_acs_tasks')",
+            &[],
+        )? != 0
+    {
+        return Err("Damaged practice ACS task table.".into());
+    }
+    // Tag values are NOT checked against today's catalog: a future ACS
+    // edition must never make an older backup unrestorable. Unknown tags
+    // simply read as untagged.
+    Ok(())
 }
 
 pub(crate) fn verify_schema_27_faa_references(connection: &Connection) -> Result<(), String> {
@@ -15596,6 +15626,76 @@ mod tests {
         drop(restored);
         for path in [root, target, backup] {
             std::fs::remove_dir_all(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn acs_task_backup_round_trip_and_older_backup_upgrade() {
+        for old in [false, true] {
+            let root = scratch("acs-backup");
+            let target = scratch("acs-target");
+            let backup = scratch("acs-archive");
+            let path = root.join(DB_FILES[0]);
+            pdf_kit_test_database(
+                &path,
+                if old {
+                    27
+                } else {
+                    crate::CURRENT_SCHEMA_VERSION
+                },
+            );
+            let conn = Connection::open(&path).unwrap();
+            conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('mat-a','Synthetic','now','now')", []).unwrap();
+            let mut operation = serde_json::json!({
+                "operationId":"fa000000-0000-4000-8000-0000000000e0", "sourceMaterialId":"mat-a",
+                "reason":"create", "expected":null,
+                "next":{"title":"Synthetic", "provider":"gemini", "model":"synthetic", "retired":[],
+                    "questions":[{"identity":"fa000000-0000-4000-8000-0000000000e1", "question":"Synthetic question",
+                        "options":["First","Second"], "correctIndex":0, "explanation":"Synthetic explanation", "sourcePage":null}]}
+            });
+            if !old {
+                operation["next"]["questions"][0]["acsTask"] = serde_json::json!("PA.II.A");
+            }
+            crate::practice_authoring::save_practice_authoring_at(&root, &operation).unwrap();
+            verify_application_connection(&conn).unwrap();
+            drop(conn);
+            let archive = backup.join("acs.hfdbackup");
+            create_consistent_complete_backup_with_retry(&root, &archive, "0.6.6").unwrap();
+            stage_complete_restore_in(&target, &archive, "0.6.6").unwrap();
+            apply_pending_restore_in(&target).unwrap();
+            let conn = Connection::open(target.join(DB_FILES[0])).unwrap();
+            if old {
+                assert!(!crate::acs_tasks::table_exists(&conn).unwrap());
+                for migration in crate::migrations().into_iter().filter(|m| m.version > 27) {
+                    conn.execute_batch(migration.sql).unwrap();
+                    conn.execute(
+                        "INSERT INTO _sqlx_migrations VALUES (?1)",
+                        [migration.version],
+                    )
+                    .unwrap();
+                }
+            }
+            verify_application_connection(&conn).unwrap();
+            let snapshot = crate::practice_authoring::read_current_snapshot(&conn, "mat-a")
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                snapshot.questions[0].acs_task.as_deref(),
+                if old { None } else { Some("PA.II.A") }
+            );
+            if !old {
+                conn.execute("UPDATE practice_item_acs_tasks SET acs_task='PA.II.Z'", [])
+                    .unwrap();
+                verify_application_connection(&conn).expect("unknown tag must not block restore");
+                let snapshot = crate::practice_authoring::read_current_snapshot(&conn, "mat-a")
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(snapshot.questions[0].acs_task, None);
+            }
+            drop(conn);
+            for path in [root, target, backup] {
+                std::fs::remove_dir_all(path).unwrap();
+            }
         }
     }
 

@@ -447,6 +447,7 @@ export interface AiStudySet {
 }
 
 export interface PracticeQuestion {
+  acsTask?: string | null;
   pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   question: string;
   /** At least two choices; `correctIndex` always points inside this array. */
@@ -479,6 +480,7 @@ export interface PracticeTest {
 
 /** One question with its stable logical identity and optional provenance. */
 export interface PracticeAuthoringQuestion {
+  acsTask?: string | null;
   question: string;
   options: string[];
   correctIndex: number;
@@ -571,6 +573,7 @@ export interface PracticeTestVersion {
 }
 
 export interface PracticeTestItem {
+  acsTask?: string | null;
   pdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   /** The page note this exact saved item was made from, if any. */
   pageSource?: import("@/data/studyPageSources").PageSource;

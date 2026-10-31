@@ -448,3 +448,18 @@ describe("practice question drafts", () => {
     expect(screen.queryByRole("dialog", { name: "Edit questions" })).toBeNull();
   });
 });
+
+it("lets her choose and clear the ACS task in the existing editor", async () => {
+  await seed();
+  await open(`/study/${materialId}`);
+  const edit = await editor();
+  const picker = edit.getByRole("combobox", { name: "Question 1 ACS task (optional)" });
+  expect(within(picker).getAllByRole("option")).toHaveLength(62);
+  fireEvent.change(picker, { target: { value: "PA.II.A" } });
+  await saveAndClose(edit);
+  expect((await snapshot())?.questions[0]?.acsTask).toBe("PA.II.A");
+  const again = await editor();
+  fireEvent.change(again.getByRole("combobox", { name: "Question 1 ACS task (optional)" }), { target: { value: "" } });
+  await saveAndClose(again);
+  expect((await snapshot())?.questions[0]?.acsTask).toBeUndefined();
+});

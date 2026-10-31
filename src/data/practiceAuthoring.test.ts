@@ -1341,3 +1341,39 @@ describe("pure contract guards and hash stability", () => {
     expect(await practiceContentHash([{ ...q, origin: undefined }])).not.toBe(await practiceContentHash([q]));
   });
 });
+
+describe("ACS task metadata", () => {
+  it("saves, reads, histories, clears and cascades tags without changing the hash", async () => {
+    const f = await nodeFixture();
+    const q = question();
+    const tagged = { ...q, acsTask: " pa.ii.a " };
+    expect(await practiceContentHash([tagged])).toBe(await practiceContentHash([q]));
+    await save(f.db, { operationId: uid(), sourceMaterialId: f.materialId, reason: "create", expected: null, next: nextOf([tagged]) });
+    const current = (await snapshotOf(f))!;
+    expect(current.questions[0]!.acsTask).toBe("PA.II.A");
+    const cleared = { ...current.questions[0]!, acsTask: null };
+    await save(f.db, { operationId: uid(), sourceMaterialId: f.materialId, reason: "edit", expected: current, next: nextOf([cleared]) });
+    expect((await snapshotOf(f))!.questions[0]!.acsTask).toBeUndefined();
+    const history = await f.db.select<{ previous_json: string }>("SELECT previous_json FROM study_set_history WHERE kind='practice'", []);
+    expect(JSON.parse(history[0]!.previous_json).questions[0].acsTask).toBe("PA.II.A");
+    expect((await f.db.select("SELECT * FROM practice_item_acs_tasks", [])).length).toBe(1);
+    await f.db.execute("DELETE FROM practice_test_items", []);
+    expect(await f.db.select("SELECT * FROM practice_item_acs_tasks", [])).toEqual([]);
+  });
+  it("reads an older database without the optional table as untagged", async () => {
+    const f = await nodeFixture();
+    await save(f.db, { operationId: uid(), sourceMaterialId: f.materialId, reason: "create", expected: null, next: nextOf([question()]) });
+    await f.db.execute("DROP TABLE practice_item_acs_tasks", []);
+    expect((await snapshotOf(f))!.questions[0]!.acsTask).toBeUndefined();
+  });
+});
+
+it("keeps generated kit/test tags through the document save and display readers", async () => {
+  const f = await nodeFixture();
+  const documents = documentRepository(f.db);
+  const q = question({ acsTask: "PA.II.A" });
+  const { identity: _identity, ...generated } = q;
+  await documents.savePracticeTest({ sourceMaterialId: f.materialId, title: "Synthetic kit practice", questions: [generated], provider: "gemini", model: "synthetic" });
+  expect((await snapshotOf(f))!.questions[0]!.acsTask).toBe("PA.II.A");
+  expect((await documents.listPracticeTests())[0]!.questions[0]!.acsTask).toBe("PA.II.A");
+});

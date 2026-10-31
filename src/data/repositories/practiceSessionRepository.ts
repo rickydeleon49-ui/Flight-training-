@@ -388,13 +388,15 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         logical_id: string | null;
         replaces_id: string | null;
         origin: string | null;
+        acs_task: string | null;
       }>(
         `SELECT v.source_material_id AS material_id, v.history_key, i.id, i.version_id, i.ordinal, i.question_text, i.options_json,
                 i.correct_index, i.explanation, i.source_page,
-                i.logical_id, i.replaces_id, o.origin
+                i.logical_id, i.replaces_id, o.origin, a.acs_task
          FROM practice_test_items i
          JOIN practice_test_versions v ON v.id = i.version_id
          LEFT JOIN practice_item_origins o ON o.item_id = i.id
+         LEFT JOIN practice_item_acs_tasks a ON a.item_id = i.id
          WHERE i.version_id = ?
          ORDER BY i.ordinal ASC`,
         [versionId],
@@ -412,6 +414,7 @@ export function practiceSessionRepository(db: SqlDatabase): PracticeSessionRepos
         correctIndex: Number(r.correct_index),
         explanation: r.explanation,
         sourcePage: r.source_page !== null ? Number(r.source_page) : null,
+        ...(r.acs_task ? { acsTask: r.acs_task } : {}),
         logicalId: r.logical_id,
         replaces: r.replaces_id,
         ...(r.origin === "user" || r.origin === "instructor" ? { origin: r.origin } : {}),

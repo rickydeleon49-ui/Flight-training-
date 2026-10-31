@@ -1138,3 +1138,66 @@ fn edited_kit_item_keeps_sources_and_shows_edit_origin() {
         1
     );
 }
+
+#[test]
+fn acs_task_round_trip_history_hash_and_cascade() {
+    let dir = TempDir::new("acs-task");
+    let conn = seeded_database(dir.path());
+    let q = q_json(
+        "fa000000-0000-4000-8000-0000000000e1",
+        "Synthetic ACS question",
+        None,
+        None,
+    );
+    let mut tagged = q.clone();
+    tagged["acsTask"] = json!(" pa.ii.a ");
+    let plain = super::practice_authoring::decode_question(&q).unwrap();
+    let parsed = super::practice_authoring::decode_question(&tagged).unwrap();
+    assert_eq!(
+        super::practice_authoring::practice_content_hash(&[plain]),
+        super::practice_authoring::practice_content_hash(&[parsed])
+    );
+    save_practice_authoring_at(
+        dir.path(),
+        &op(
+            "fa000000-0000-4000-8000-0000000000e0",
+            "mat-a",
+            "create",
+            Value::Null,
+            Some(next_json("ACS", "gemini", vec![tagged], vec![])),
+        ),
+    )
+    .unwrap();
+    let before = snapshot_json(&conn, "mat-a");
+    assert_eq!(before["questions"][0]["acsTask"], "PA.II.A");
+    save_practice_authoring_at(
+        dir.path(),
+        &op(
+            "fa000000-0000-4000-8000-0000000000e2",
+            "mat-a",
+            "edit",
+            before,
+            Some(next_json("ACS", "gemini", vec![q], vec![])),
+        ),
+    )
+    .unwrap();
+    assert!(snapshot_json(&conn, "mat-a")["questions"][0]
+        .get("acsTask")
+        .is_none());
+    let history: String = conn
+        .query_row(
+            "SELECT previous_json FROM study_set_history WHERE kind='practice'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        serde_json::from_str::<Value>(&history).unwrap()["questions"][0]["acsTask"],
+        "PA.II.A"
+    );
+    conn.execute("DELETE FROM practice_test_items", []).unwrap();
+    assert_eq!(
+        count_rows(&conn, "SELECT COUNT(*) FROM practice_item_acs_tasks"),
+        0
+    );
+}

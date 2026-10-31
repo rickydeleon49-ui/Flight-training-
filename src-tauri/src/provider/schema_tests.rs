@@ -53,9 +53,10 @@ fn practice_test_schema_identity() {
                 "type": "ARRAY",
                 "items": {
                     "type": "OBJECT",
-                    "required": ["question", "options", "correctIndex", "explanation", "sourcePage", "quote"],
+                    "required": ["question", "acsTask", "options", "correctIndex", "explanation", "sourcePage", "quote"],
                     "properties": {
                         "question": {"type": "STRING"},
+                        "acsTask": {"type": "STRING", "nullable": true},
                         "options": {
                             "type": "ARRAY", "minItems": 3, "maxItems": 3,
                             "items": {"type": "STRING"}

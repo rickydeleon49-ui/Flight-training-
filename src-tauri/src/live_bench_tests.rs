@@ -69,6 +69,8 @@ struct KitRow {
     questions_pages_bad: usize,
     positions: Vec<usize>,
     letter_explanations: usize,
+    acs_tags: Vec<String>,
+    raw_acs: Vec<String>,
     part_errors: Vec<String>,
     error: Option<String>,
     sample_cards: Vec<(String, String, u32)>,
@@ -260,6 +262,12 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
         a.iter().filter(|p| page_bad(p.as_u64(), pages)).count()
     });
     let raw_value = value.clone();
+    row.raw_acs = raw_value["questions"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|q| q["acsTask"].to_string())
+        .collect();
     let mut local = kit_evidence::PageText::new(source);
     let result = validate_checked(value, pages, model, None, |p| local.page(p));
     dump_drops(&raw_value, &result, &mut local);
@@ -317,6 +325,8 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
             if names_letter(q["explanation"].as_str().unwrap_or_default()) {
                 row.letter_explanations += 1;
             }
+            row.acs_tags
+                .push(q["acsTask"].as_str().unwrap_or("none").to_string());
         }
         row.questions_pages_bad = questions
             .iter()
@@ -539,6 +549,12 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
                 s,
                 "- Correct positions: {:?}; explanations naming a letter: {}",
                 k.positions, k.letter_explanations
+            );
+            let _ = writeln!(
+                s,
+                "- ACS tasks per question: {} (raw from model: {})",
+                k.acs_tags.join(", "),
+                k.raw_acs.join(", ")
             );
             let _ = writeln!(
                 s,

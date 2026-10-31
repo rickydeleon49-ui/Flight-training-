@@ -510,16 +510,18 @@ fn claude_flashcard_batches_and_practice_use_selected_provider() {
     assert_eq!(answer.answer.flashcards.len(), 1);
     assert_eq!(fake.log().len(), 2);
     let fake = FakeClaude::start(vec![reply(
-        json!({"title":"Fictional quiz","questions":[{"question":"Wing?","options":["Blue","Red","Green"],"correctIndex":0,"explanation":"Fictional wing is blue.","sourcePage":null,"quote":"The fictional wing is blue."}]}),
+        json!({"title":"Fictional quiz","questions":[{"question":"Wing?","options":["Blue","Red","Green"],"correctIndex":0,"explanation":"Fictional wing is blue.","sourcePage":null,"acsTask":" pa.ii.a ","quote":"The fictional wing is blue."}]}),
     )]);
     let budget = Budget::new(Duration::from_secs(30));
     let ctx = context(&fake, &http, &cache, &budget, &|_| {});
-    assert_eq!(
-        tauri::async_runtime::block_on(practice_test_with(&ctx, &source))
-            .unwrap()
-            .model,
-        claude::MODEL
-    );
+    let generated = tauri::async_runtime::block_on(practice_test_with(&ctx, &source)).unwrap();
+    assert_eq!(generated.model, claude::MODEL);
+    assert_eq!(generated.questions[0].acs_task.as_deref(), Some("PA.II.A"));
+    let request = fake.log()[0].json().to_string();
+    for (code, _) in crate::acs_tasks::ACS_TASKS {
+        assert!(request.contains(code));
+    }
+    assert!(request.contains("chosen ONLY from this list, or null if none fits clearly"));
     assert_eq!(fake.log()[0].path, "/v1/messages");
 
     // An unfinished batch must not silently mix answers from two providers.
@@ -763,6 +765,31 @@ fn section_draft_provider_switch_is_clear_before_http_for_queued_and_restarted_g
             assert_eq!(
                 gemini_jobs::with(&root.0, |j| j.list()[0].draft.clone()),
                 before
+            );
+        }
+    }
+}
+
+#[test]
+fn claude_and_gemini_question_schemas_share_nullable_acs_task() {
+    for schema in [
+        crate::provider::schemas::practice_test(),
+        crate::provider::schemas::study_kit(),
+    ] {
+        for provider in [AnyProvider::default(), AnyProvider::Claude(ClaudeProvider)] {
+            let translated = provider.translate_schema(&schema);
+            let question = &translated["properties"]["questions"]["items"];
+            assert!(question["properties"].get("acsTask").is_some());
+            assert!(question["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("acsTask")));
+            let task = &question["properties"]["acsTask"];
+            assert!(
+                task["nullable"] == true
+                    || task["type"]
+                        .as_array()
+                        .is_some_and(|types| types.contains(&json!("null")))
             );
         }
     }
