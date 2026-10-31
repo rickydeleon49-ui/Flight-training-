@@ -1062,7 +1062,7 @@ function MaterialDetailPage() {
                     </div>
                   }
                 />
-                {!tipsHidden ? (
+                {!tipsHidden && !hasSavedGuide ? (
                   <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
                     {pdfSet
                       ? "Review the guide saved from your PDF text, and follow page references back to the source."
@@ -1086,13 +1086,6 @@ function MaterialDetailPage() {
                         <p className="tiny">This PDF is too big for {helper} — split it first.</p>
                       </div>
                     </div>
-                  ) : null}
-                  {!isOverLimit && generationNotice ? (
-                    <GenerationNoticeView
-                      notice={{ ...generationNotice, text: providerWording(generationNotice.text, gemini?.model) }}
-                      onSplit={jumpToFileSection}
-                      onQueueLater={() => void queueStudyAid()}
-                    />
                   ) : null}
                   {generating ? (
                     studyJob ? (
@@ -1210,6 +1203,14 @@ function MaterialDetailPage() {
                         ? "Gemini will read this PDF and write a basic study guide in one go (a very long PDF in a few parts). Nothing is saved until you check the draft and save it."
                         : "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.", gemini?.model)}
                     </p>
+                  ) : null}
+
+                  {!isOverLimit && generationNotice ? (
+                    <GenerationNoticeView
+                      notice={{ ...generationNotice, text: providerWording(generationNotice.text, gemini?.model) }}
+                      onSplit={jumpToFileSection}
+                      onQueueLater={() => void queueStudyAid()}
+                    />
                   ) : null}
 
                   {reviewingRegeneration &&

@@ -728,7 +728,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
           <ConfirmDialog
             open={confirmDiscard}
             title="Discard this study kit?"
-            message="Your saved study set and questions stay. Only the unsaved kit is removed."
+            message="Discard the unsaved kit and keep your saved study set and questions."
             confirmLabel="Discard kit"
             destructive
             onCancel={() => { setConfirmDiscard(false); setConfirmOther(null); }}

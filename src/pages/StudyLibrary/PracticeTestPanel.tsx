@@ -102,6 +102,7 @@ interface PanelState {
   phase: Phase;
   version: PracticeTestVersion | null;
   items: PracticeTestItem[] | null;
+  freshVersionId: string | null;
   attempt: PracticeSessionState | null;
   completedResult: PracticeCompletedResult | null;
   index: number;
@@ -118,6 +119,7 @@ type PanelAction =
   | { type: "load_started"; generation: number; materialId: string }
   | {
       type: "snapshot_adopted";
+      freshVersionId: string | null;
       generation: number;
       version: PracticeTestVersion;
       items: PracticeTestItem[];
@@ -155,6 +157,7 @@ function initialPanelState(materialId: string, generation: number): PanelState {
     phase: "loading",
     version: null,
     items: null,
+    freshVersionId: null,
     attempt: null,
     completedResult: null,
     index: 0,
@@ -198,6 +201,7 @@ function panelReducer(state: PanelState, action: PanelAction): PanelState {
         phase: "ready",
         version: action.version,
         items: action.items,
+        freshVersionId: action.freshVersionId,
         attempt: action.attempt,
         completedResult: null,
         index: replacedAttempt ? resumeIndex(action.attempt, action.items) : state.index,
@@ -401,6 +405,7 @@ export function PracticeTestPanel({
     () => initialPanelState(materialId, 1),
   );
   const [confirmingAbandon, setConfirmingAbandon] = useState(false);
+  const [continuedOlderAttempt, setContinuedOlderAttempt] = useState<string | null>(null);
   useEffect(() => {
     onAttemptChange?.(state.attempt !== null && state.completedResult === null);
   }, [onAttemptChange, state.attempt, state.completedResult]);
@@ -512,11 +517,26 @@ export function PracticeTestPanel({
           dispatch({ type: "snapshot_unavailable", generation });
           return;
         }
+        // Resume the attempt's frozen questions, never pair its responses with
+        // another version. A changed set gets a deliberate choice before resume.
+        let frozen = active;
+        if (attempt && attempt.versionId !== active.version.id) {
+          const [version, items] = await Promise.all([
+            repositories.getVersion(attempt.versionId), repositories.getItems(attempt.versionId),
+          ]);
+          if (!version || items.length === 0) throw new Error("Missing practice attempt questions");
+          frozen = { version, items };
+        }
+        if (!isCurrent(generation)) return;
+        const content = (items: PracticeTestItem[]) => JSON.stringify(items.map(item => [
+          item.questionText, item.options, item.correctIndex, item.explanation, item.sourcePage,
+        ]));
         dispatch({
           type: "snapshot_adopted",
           generation,
-          version: active.version,
-          items: active.items,
+          version: frozen.version,
+          items: frozen.items,
+          freshVersionId: attempt && content(frozen.items) !== content(active.items) ? active.version.id : null,
           attempt,
         });
         if (refreshedNotice) {
@@ -581,11 +601,17 @@ export function PracticeTestPanel({
           throw new Error("Missing or incomplete replacement practice test version");
         }
       }
+      if (!attempt && renderedRef.current.freshVersionId) {
+        const active = await repositories.getActiveVersion(materialId);
+        if (!active || active.items.length === 0) throw new Error("Missing current practice questions");
+        version = active.version;
+        items = active.items;
+      }
       if (!isCurrent(generation)) return { version: null, items: null };
       dispatch({ type: "attempt_adopted", generation, attempt, version, items, preserveDraft });
       return { version, items };
     },
-    [dispatch, isCurrent, repositories],
+    [dispatch, isCurrent, repositories, materialId],
   );
 
   const runIntentRef = useRef<
@@ -1002,7 +1028,7 @@ export function PracticeTestPanel({
         // by the contract.
         expectedAttemptId: inProgress ? inProgress.attemptId : null,
         materialId: current.materialId,
-        versionId: current.version.id,
+        versionId: current.freshVersionId ?? current.version.id,
       },
       heldAnswer: null,
     });
@@ -1244,6 +1270,22 @@ export function PracticeTestPanel({
         </div>
       </div>
     );
+  }
+
+  if (state.attempt && state.freshVersionId && state.attempt.versionId !== state.freshVersionId && continuedOlderAttempt !== state.attempt.attemptId) {
+    return <div className="stack stack--4">
+      {notices}
+      <p>The questions have changed since you started this attempt.</p>
+      <p className="small muted">Starting fresh marks the earlier attempt abandoned and keeps its saved answers.</p>
+      <div><Button variant="primary" disabled={!canEdit} onClick={() => {
+        if (!state.attempt || !state.freshVersionId) return;
+        void beginIntent({ payload: {
+          action: "retake_attempt", operationId: crypto.randomUUID(), materialId,
+          versionId: state.freshVersionId, expectedAttemptId: state.attempt.attemptId,
+        }, heldAnswer: null });
+      }}>Start a fresh test</Button></div>
+      <div><Button variant="secondary" disabled={!canEdit} onClick={() => setContinuedOlderAttempt(state.attempt!.attemptId)}>Continue earlier attempt</Button></div>
+    </div>;
   }
 
   if (!question) return <div className="stack stack--3">{notices}</div>;

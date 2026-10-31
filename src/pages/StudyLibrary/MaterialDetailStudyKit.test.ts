@@ -51,7 +51,9 @@ it("offers one main action with its short line and keeps all single actions",asy
 });
 it("says plainly what to do in each notice: read it, then save or discard it",async()=>{
   records=parts();await open();
-  expect((await screen.findAllByText(/Read it below, then save or discard it. Each part is saved separately./)).length).toBe(3);
+  for (const part of ["study guide", "flashcards", "practice test"]) {
+    expect(await screen.findByText(`Review the new ${part} below, then save or discard it.`)).toBeTruthy();
+  }
   expect(screen.queryByText(/Review this part before saving/)).toBeNull();
 });
 it("with no internet says so before the consent dialog and sends nothing",async()=>{

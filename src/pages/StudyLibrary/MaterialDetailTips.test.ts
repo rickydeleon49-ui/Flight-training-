@@ -201,3 +201,26 @@ it("keeps file-backed text materials working without PDF-only controls", async (
   expect(await screen.findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
   expect(within(document.getElementById("material-file-actions")!.closest("details")!).getByRole("button", { name: "Open" })).toBeTruthy();
 });
+
+
+it("places a saved Gemini guide before the connection placeholder", async () => {
+  await createRepositories(db).documents.saveStudySet({ operationId: crypto.randomUUID(), materialId: "tips", reason: "create", expected: null,
+    next: { title: "Synthetic saved guide", summary: "Saved Gemini summary", summaryOrigin: null, sections: [], flashcards: [], sourceNotes: "", provider: "gemini", model: "synthetic", retired: [] } });
+  await openPage();
+  const summary = await screen.findByText("Saved Gemini summary");
+  const notice = await screen.findByText("Connect the free Gemini API in Settings to create or regenerate study aids from this document. Anything already saved stays available.");
+  expect(summary.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.queryByText("Ask Gemini for a study guide from this file, then review and save the draft on this Mac.")).toBeNull();
+});
+
+it("shows the saved practice Start action without opening a disclosure", async () => {
+  await createRepositories(db).documents.savePracticeTest({ sourceMaterialId: "tips", title: "Synthetic questions", provider: "gemini", model: "synthetic",
+    questions: [{ question: "Synthetic question", options: ["One", "Two", "Three"], correctIndex: 0, explanation: "Synthetic explanation", sourcePage: null }] });
+  await openPage();
+  const start = await screen.findByRole("button", { name: "Start practice test" });
+  expect(start.closest("details:not([open])")).toBeNull();
+  expect(start.closest('[role="tabpanel"]')?.getAttribute("hidden")).toBeNull();
+  fireEvent.click(start);
+  await waitFor(() => expect(context.data.practiceTests).toHaveLength(1));
+  await waitFor(async () => expect(await context.repositories!.practiceSessions.getCurrentAttempt("tips")).not.toBeNull());
+});

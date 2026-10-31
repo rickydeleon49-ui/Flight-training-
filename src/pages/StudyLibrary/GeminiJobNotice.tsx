@@ -114,13 +114,15 @@ export function GeminiJobNotice({
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <div className="file-row" role="status">
           <p className="tiny">
-            {job.cancelAttempted
+            {job.studyKitPart && !onReview && !job.cancelAttempted
+              ? `Review the new ${what} below, then save or discard it.`
+              : job.cancelAttempted
               ? `${helper} finished a new ${what} before your cancel reached it. It has not been saved: save it, or discard it.`
               : job.local || job.studyKitPart
                 ? `${readyTitle} It has not been saved yet.`
                 : `${helper} finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
-            {job.answer?.model ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
-            {job.studyKitPart && !onReview ? "Read it below, then save or discard it. Each part is saved separately." : onReview
+            {job.answer?.model && !job.studyKitPart ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
+            {job.studyKitPart && !onReview ? "" : onReview
               ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : job.kind === "study-aid" ? "Saving it replaces your saved guide; any saved flashcards stay as they are." : job.kind === "flashcards" ? "Saving it replaces your saved cards; your study guide stays as it is." : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
@@ -398,7 +400,7 @@ export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = f
   return <>
     <Button size="small" variant="secondary" disabled={jobs.busy || disabled || pending} onClick={() => setOpen(true)}>{label}</Button>
     <ConfirmDialog open={open} title="Discard this guide draft?"
-      message="This deletes the finished sections in this draft. Your saved study guide stays as it is."
+      message="Discard this draft and keep your saved study guide."
       confirmLabel="Discard draft" pending={pending} pendingLabel="Discarding…"
       onCancel={() => setOpen(false)} onConfirm={() => {
         if (intent.current) return;
