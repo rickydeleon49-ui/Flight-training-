@@ -168,3 +168,15 @@ describe("everything of hers survives a close and reopen", () => {
     }
   });
 });
+
+describe("device id", () => {
+  it("creates a UUID once and returns the same one afterwards", async () => {
+    const first = await repos.app.ensureDeviceId();
+    expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(await repos.app.ensureDeviceId()).toBe(first);
+    const rows = await db.select<{ value: string }>(
+      "SELECT value FROM app_metadata WHERE key = 'device_id'",
+    );
+    expect(rows).toEqual([{ value: first }]);
+  });
+});

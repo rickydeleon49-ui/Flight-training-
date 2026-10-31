@@ -297,6 +297,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
         await initializeAirlineStarterPack(repositories);
+        void repositories.app.ensureDeviceId().catch(() => {});
         return loadAll(repositories);
       })();
     }

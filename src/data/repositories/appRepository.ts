@@ -19,6 +19,7 @@ const LAST_BACKUP_AT = "last_complete_backup_at";
 const LAST_BACKUP_VERSION = "last_complete_backup_version";
 const LAST_BACKUP_PATH = "last_complete_backup_path";
 const DAILY_PLAN_KEY = "daily_plan_session";
+const DEVICE_ID = "device_id";
 
 /** Product-level metadata that is not part of her personal training record. */
 export function appRepository(db: SqlDatabase) {
@@ -37,6 +38,15 @@ export function appRepository(db: SqlDatabase) {
          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
         [key, value],
       );
+    },
+
+    /** This device's stable id, created on first use. Written into backups. */
+    async ensureDeviceId(): Promise<string> {
+      const existing = await this.get(DEVICE_ID);
+      if (existing) return existing;
+      const id = crypto.randomUUID();
+      await this.set(DEVICE_ID, id);
+      return id;
     },
 
     /**
