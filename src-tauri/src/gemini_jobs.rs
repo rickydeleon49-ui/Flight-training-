@@ -268,9 +268,10 @@ impl Journal {
         }
         let unclean = match outcome {
             ReadOutcome::Read => false,
-            // The original was set aside; write a fresh journal holding only
-            // the jobs that were valid. Only if that fails is there no clean
-            // journal this launch.
+            // The original was copied aside; replace it with a fresh journal
+            // holding only the jobs that were valid. Only if that fails is
+            // there no clean journal this launch (the original, valid jobs
+            // included, is still in place for the next launch).
             ReadOutcome::SetAside => write(root, &jobs).is_err(),
             ReadOutcome::Stuck => true,
         };
@@ -393,12 +394,22 @@ impl Journal {
         }
         // A finished answer is never thrown away by asking again: she saves or
         // discards it first.
+        // A kit whose remaining parts all failed holds nothing to save, so it
+        // blocks nothing; a new kit replaces it.
+        let kit_part_waits = |j: &JobRecord, part: &str| {
+            j.result
+                .as_ref()
+                .is_some_and(|r| r["parts"][part].get("answer").is_some())
+        };
         if self.jobs.iter().any(|j| {
             j.material_id == material_id
                 && j.stage == JobStage::Ready
-                && (j.kind == kind
-                    || kind == JobKind::StudyKit
-                    || (j.kind == JobKind::StudyKit && {
+                && if j.kind == JobKind::StudyKit {
+                    if kind == JobKind::StudyKit {
+                        ["guide", "cards", "questions"]
+                            .iter()
+                            .any(|part| kit_part_waits(j, part))
+                    } else {
                         let part = if kind == JobKind::PracticeTest {
                             "questions"
                         } else if request_id.is_some_and(|id| id.starts_with("flashcards:")) {
@@ -406,10 +417,11 @@ impl Journal {
                         } else {
                             "guide"
                         };
-                        j.result
-                            .as_ref()
-                            .is_some_and(|r| r["parts"][part].get("answer").is_some())
-                    }))
+                        kit_part_waits(j, part)
+                    }
+                } else {
+                    j.kind == kind || kind == JobKind::StudyKit
+                }
         }) {
             return Err(WAITING.to_string());
         }
@@ -1109,14 +1121,15 @@ fn write(root: &Path, jobs: &[JobRecord]) -> Result<(), String> {
 enum ReadOutcome {
     /// Read, or absent: nothing to distrust.
     Read,
-    /// Unreadable in whole or in part, and moved aside under a unique
-    /// diagnostic name; the valid jobs (if any) are still to be rewritten.
+    /// Unreadable in whole or in part, and copied aside under a unique
+    /// diagnostic name; the valid jobs (if any) are still to be rewritten
+    /// over the original.
     SetAside,
     /// Unreadable, and still in place: nothing clean this launch.
     Stuck,
 }
 
-/// Move an unreadable journal to `gemini-jobs.unreadable-<unix-ms>.json`,
+/// Copy an unreadable journal to `gemini-jobs.unreadable-<unix-ms>.json`,
 /// never over an earlier one. The caller holds the journal lock.
 fn set_aside(root: &Path, path: &Path) -> std::io::Result<PathBuf> {
     let base = std::time::SystemTime::now()
@@ -1128,8 +1141,23 @@ fn set_aside(root: &Path, path: &Path) -> std::io::Result<PathBuf> {
         if std::fs::symlink_metadata(&target).is_ok() {
             continue;
         }
-        std::fs::rename(path, &target)?;
-        prune_set_aside(root);
+        // Copy, never move: the original stays the journal until `write`
+        // atomically replaces it, so a failed or interrupted rewrite loses
+        // nothing and the next launch simply tries again.
+        let copied = (|| {
+            let mut source = std::fs::File::open(path)?;
+            let mut copy = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&target)?;
+            std::io::copy(&mut source, &mut copy)?;
+            copy.sync_all()
+        })();
+        if let Err(error) = copied {
+            let _ = std::fs::remove_file(&target);
+            return Err(error);
+        }
+        prune_set_aside(root, &target);
         return Ok(target);
     }
     Err(std::io::Error::new(
@@ -1142,8 +1170,9 @@ fn set_aside(root: &Path, path: &Path) -> std::io::Result<PathBuf> {
 const MAX_SET_ASIDE: usize = 5;
 
 /// Keep only the `MAX_SET_ASIDE` newest `gemini-jobs.unreadable-<digits>.json`.
-/// Nothing else is touched, never the legacy `gemini-jobs.unreadable.json`.
-fn prune_set_aside(root: &Path) {
+/// Nothing else is touched, never the legacy `gemini-jobs.unreadable.json`,
+/// and never `keep`, the copy just made (even if the clock went backwards).
+fn prune_set_aside(root: &Path, keep: &Path) {
     let Ok(entries) = std::fs::read_dir(root) else {
         return;
     };
@@ -1157,17 +1186,19 @@ fn prune_set_aside(root: &Path) {
             if stamp.is_empty() || !stamp.bytes().all(|b| b.is_ascii_digit()) {
                 return None;
             }
-            if !entry.file_type().ok()?.is_file() {
+            if !entry.file_type().ok()?.is_file() || entry.path() == keep {
                 return None;
             }
             Some((stamp.parse().ok()?, entry.path()))
         })
         .collect();
-    if found.len() <= MAX_SET_ASIDE {
+    // `keep` takes one of the places.
+    let others = MAX_SET_ASIDE - 1;
+    if found.len() <= others {
         return;
     }
     found.sort();
-    let excess = found.len() - MAX_SET_ASIDE;
+    let excess = found.len() - others;
     for (_, path) in found.into_iter().take(excess) {
         let _ = std::fs::remove_file(path);
     }
@@ -1196,7 +1227,8 @@ fn read(root: &Path) -> (Vec<JobRecord>, ReadOutcome) {
     match parsed {
         Some((jobs, false)) => (jobs, ReadOutcome::Read),
         // Something was dropped, or nothing could be read: the original is
-        // kept aside first, so no record is ever lost by the rewrite.
+        // copied aside first, and stays the journal until the rewrite
+        // replaces it, so no record is ever lost by the rewrite.
         Some((jobs, true)) => match set_aside(root, &path) {
             Ok(_) => (jobs, ReadOutcome::SetAside),
             Err(_) => (Vec::new(), ReadOutcome::Stuck),

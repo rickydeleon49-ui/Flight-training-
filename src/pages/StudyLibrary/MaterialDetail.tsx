@@ -101,6 +101,7 @@ import { MaterialActionsMenu } from "./MaterialActionsMenu";
 
 type MaterialTabChoice = { value: MaterialTab };
 const MATERIAL_TAB_CHOICES = MATERIAL_TABS.map((value) => ({ value }));
+const KIT_PAGES_NOTE = "The study kit reads up to 150 pages. Pick the pages you want — they become their own item in your library, then press Make my study kit there.";
 const materialTabLabel = (value: MaterialTab) => value === "study" ? "Study" : value === "notes" ? "Notes" : "More";
 
 function MaterialTabButton({ value, state }: { value: MaterialTab; state: TabListState<MaterialTabChoice> }) {
@@ -230,6 +231,8 @@ function MaterialDetailPage() {
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
   const [confirmingKit, setConfirmingKit] = useState(false);
   const [kitMessage, setKitMessage] = useState<string | null>(null);
+  const [splitNote, setSplitNote] = useState<string | undefined>(undefined);
+  const [savingKit, setSavingKit] = useState(false);
   const [confirmingCards, setConfirmingCards] = useState(false);
   const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
@@ -731,14 +734,49 @@ function MaterialDetailPage() {
     return null;
   };
 
+  // All three kit parts ready, none replacing anything she edited: one Save
+  // runs each part's own safe save in turn. A part that cannot be saved stays
+  // as a draft with its own message; the others stay saved.
+  const kitParts = [studyJob, cardJob, practiceJob];
+  const canSaveWholeKit = !setHasHerItems && !practiceNeedsReview && kitParts.every((job) =>
+    job?.studyKitPart && job.answer && job.phase === "recovered" && !job.needsReview && !job.reviewed);
+  const saveWholeKit = async () => {
+    setSavingKit(true);
+    try {
+      for (const job of kitParts) if (job) await geminiJobs.saveAgain(job.key);
+    } finally { setSavingKit(false); }
+  };
+  const kitDraftsWaiting = geminiJobs.jobs.some((job) => job.materialId === material?.id && job.studyKitPart && Boolean(job.answer));
+
   const prepareStudyKit = async () => {
     if (!material?.filePath) return;
     setKitMessage(null);
+    // Each refusal comes before the consent dialog, so she never confirms a
+    // request that cannot be sent.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setKitMessage("No internet right now. Press Make my study kit again when you're back online.");
+      return;
+    }
+    const waiting = geminiJobs.jobs.filter((job) => job.materialId === material.id && (job.answer || job.sectionGuide));
+    if (waiting.length > 0) {
+      setKitMessage(waiting.some((job) => job.studyKitPart && job.answer)
+        ? "Save or discard your study kit drafts first."
+        : "Save or discard the earlier drafts first, then make a study kit.");
+      return;
+    }
     try {
       const pdf = await inspectPdf(material.filePath);
       if (pdf.pages > 150 || !fileForAi.ready) {
-        setKitMessage("Choose up to 150 pages first. Use Choose fewer pages to send, then make your study kit from that part.");
-        setSplittingManually(true);
+        if (canSplit) {
+          setKitMessage(KIT_PAGES_NOTE);
+          setSplitNote(KIT_PAGES_NOTE);
+          setSplittingManually(true);
+        } else {
+          // The page chooser is not available here, so name what is.
+          setKitMessage(pdf.pages > 150
+            ? "This PDF is over 150 pages. Use Create study guide, which makes the guide in parts."
+            : "Choose a chapter and try again.");
+        }
       } else setConfirmingKit(true);
     } catch { setKitMessage("Could not count this PDF's pages. Choose a chapter and try again."); }
   };
@@ -906,6 +944,12 @@ function MaterialDetailPage() {
               <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
               <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
               {kitMessage ? <p role="status">{kitMessage}</p> : null}
+              {canSaveWholeKit || savingKit ? (
+                <div className="row row--wrap">
+                  <Button variant="primary" disabled={savingKit} onClick={() => void saveWholeKit()}>{savingKit ? "Saving…" : "Save all three"}</Button>
+                  <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
+                </div>
+              ) : null}
               {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
             </div>
           </CardBody></Card> : null}
@@ -1039,7 +1083,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryStudy}
                       onReview={
-                        (setHasHerItems || studyJob.needsReview || (studyJob.studyKitPart && Boolean(studySet))) && studyJob.answer
+                        (setHasHerItems || studyJob.needsReview) && studyJob.answer
                           ? () => setReviewingRegeneration(true)
                           : undefined
                       }
@@ -1259,7 +1303,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryFlashcards}
                       onReview={
-                        (setHasHerItems || cardJob.needsReview || (cardJob.studyKitPart && Boolean(studySet))) && cardJob.answer
+                        (setHasHerItems || cardJob.needsReview) && cardJob.answer
                           ? () => setReviewingCardRegeneration(true)
                           : undefined
                       }
@@ -1492,7 +1536,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryPractice}
                       onReview={
-                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview || (practiceJob.studyKitPart && Boolean(practiceTest)))
+                        practiceJob.answer && (practiceJob.needsReview || practiceJob.reviewed || practiceNeedsReview)
                           ? () => {
                               if (activePracticeAttempt === false) setReviewingPracticeRegeneration(true);
                             }
@@ -1575,6 +1619,7 @@ function MaterialDetailPage() {
                       />
 
                       <PracticeTestPanel entrySummary
+                        startHeld={kitDraftsWaiting ? "Save or discard your study kit drafts first, then start the practice test." : undefined}
                         practiceTest={practiceTest}
                         materialId={material.id}
                         key={practiceTest.updatedAt}
@@ -2057,9 +2102,11 @@ function MaterialDetailPage() {
         <ManualSplitDialog
           open={splittingManually}
           material={material}
-          onClose={() => setSplittingManually(false)}
+          note={splitNote}
+          onClose={() => { setSplittingManually(false); setSplitNote(undefined); }}
           onCreated={(materialId) => {
             setSplittingManually(false);
+            setSplitNote(undefined);
             navigate(`/study/${materialId}`);
           }}
         />

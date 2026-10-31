@@ -11,7 +11,9 @@
     clippy::unnecessary_map_or,
     clippy::manual_is_multiple_of,
     clippy::manual_noop_waker,
-    clippy::chunks_exact_to_as_chunks
+    clippy::chunks_exact_to_as_chunks,
+    // Older clippy that lacks one of the lints above must not fail -D warnings.
+    unknown_lints
 )]
 
 mod backup;
@@ -321,8 +323,8 @@ pub fn run() {
             let ownership = app.path().app_config_dir()
                 .map_err(|_| "Her Flight Deck couldn't find your study library. Please close the app and try again.".to_owned())
                 .and_then(|root| startup_guard::acquire(&root, app.package_info()));
-            match ownership {
-                Ok(lock) => { app.manage(lock); }
+            let unlocked = match ownership {
+                Ok(lock) => { let unlocked = !lock.locked; app.manage(lock); unlocked }
                 Err(message) => {
                     use tauri_plugin_dialog::DialogExt;
                     let handle = app.handle().clone();
@@ -330,7 +332,7 @@ pub fn run() {
                         .show(move |_| handle.exit(1));
                     return Ok(());
                 }
-            }
+            };
             // Register data-writing plugins only after ownership is established.
             // Window-state writes on Exit even without a window; SQL may preload
             // databases from config during plugin setup.
@@ -345,6 +347,9 @@ pub fn run() {
                     .build(),
             )?;
             logging::attach(app.handle());
+            if unlocked {
+                log::warn!("This volume cannot lock the study library; opened without the lock.");
+            }
             // A user-requested full restore is staged during the previous run
             // and installed here, before SQLite opens the database. Startup
             // blocks if an ambiguous restore cannot be safely resolved.

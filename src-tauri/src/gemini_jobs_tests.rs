@@ -901,11 +901,19 @@ fn pdf_kit_cancel_cleanup_failure_preserves_record() {
 }
 
 /// Set aside, but the fresh journal cannot be written: no clean journal this
-/// launch, so nothing new starts; the next launch, once writable, recovers.
+/// launch, so nothing new starts. The original is only copied aside, so it is
+/// still the journal: the next launch, once writable, recovers every valid
+/// Ready answer she has not saved yet.
 #[test]
-fn an_unreadable_journal_whose_fresh_replacement_cannot_be_written_blocks_that_launch() {
+fn an_unreadable_journal_whose_fresh_replacement_cannot_be_written_keeps_its_ready_jobs() {
     let dir = TempDir::new("unreadable-no-fresh");
-    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    let (mut disk, a, b) = two_good_jobs(&dir);
+    disk["jobs"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"id": "job-from-a-newer-build", "kind": "kind-from-the-future"}));
+    let original = serde_json::to_vec(&disk).unwrap();
+    std::fs::write(dir.path().join(JOURNAL_FILE), &original).unwrap();
     // A directory where the writer's temporary file goes makes every write fail.
     std::fs::create_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
     let mut blocked = Journal::open(dir.path());
@@ -918,11 +926,42 @@ fn an_unreadable_journal_whose_fresh_replacement_cannot_be_written_blocks_that_l
         blocked.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None),
         Err(UNREADABLE.to_string())
     );
+    assert_eq!(
+        std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap(),
+        original,
+        "the failed rewrite leaves the original journal in place"
+    );
     std::fs::remove_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
     let mut next = Journal::open(dir.path());
+    assert_eq!(ids(&next), vec![a, b], "the Ready answers survive");
+    assert!(next.list().iter().all(|j| j.stage == JobStage::Ready));
+    assert_eq!(read(dir.path()).1, ReadOutcome::Read, "now rewritten clean");
     assert!(next
-        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .begin(JobKind::StudyAid, "mat-c", "documents/c.pdf", SHA, None)
         .is_ok());
+}
+
+/// The copy just made is never the one pruned, even when earlier set-aside
+/// files carry later stamps (the Mac's clock went backwards).
+#[test]
+fn pruning_never_removes_the_copy_just_set_aside() {
+    let dir = TempDir::new("set-aside-clock");
+    let future = u128::from(u64::MAX) - 10;
+    for step in 0..6u128 {
+        std::fs::write(
+            dir.path()
+                .join(format!("{JOURNAL_UNREADABLE_PREFIX}{}.json", future + step)),
+            b"old",
+        )
+        .unwrap();
+    }
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    Journal::open(dir.path());
+    let aside = set_aside_files(dir.path());
+    assert_eq!(aside.len(), 5);
+    assert!(aside
+        .iter()
+        .any(|p| std::fs::read(p).unwrap() == b"{not json"));
 }
 
 /* ------------------------------------------------------------------ */

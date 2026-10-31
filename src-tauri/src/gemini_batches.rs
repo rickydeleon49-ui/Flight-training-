@@ -126,21 +126,28 @@ pub(super) fn validate(
             "Gemini's batch was incomplete or too large. The earlier draft is kept.".to_string(),
         );
     }
-    for card in &aid.flashcards {
-        if bad_text(&card.front)
-            || bad_text(&card.back)
-            || card.front.len() > 2000
-            || card.back.len() > 4000
-            || match (pages, card.source_page) {
-                (Some(n), Some(p)) => p == 0 || p > n,
-                (Some(_), None) | (None, Some(_)) => true,
-                (None, None) => false,
-            }
-        {
-            return Err("A card had missing or invalid source references or text. The earlier draft is kept.".to_string());
-        }
+    if aid.flashcards.iter().any(|card| !card_ok(card, pages)) {
+        return Err(
+            "A card had missing or invalid source references or text. The earlier draft is kept."
+                .to_string(),
+        );
     }
     Ok(())
+}
+
+/// One card's own rule: nonblank, bounded text and a source page inside the
+/// document (or no page when the document has no page count).
+pub(super) fn card_ok(card: &Flashcard, pages: Option<u32>) -> bool {
+    let bad_text = |s: &str| s.trim().is_empty() || s.len() > 16_000;
+    !(bad_text(&card.front)
+        || bad_text(&card.back)
+        || card.front.len() > 2000
+        || card.back.len() > 4000
+        || match (pages, card.source_page) {
+            (Some(n), Some(p)) => p == 0 || p > n,
+            (Some(_), None) | (None, Some(_)) => true,
+            (None, None) => false,
+        })
 }
 
 /// The back answers in its own words; a back that restates the front reads

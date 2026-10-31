@@ -17,6 +17,8 @@ interface Props {
   material: StudyMaterial;
   onClose: () => void;
   onCreated: (materialId: string) => void;
+  /** One plain line on why the chooser opened (the study kit's page limit). */
+  note?: string;
 }
 
 /**
@@ -27,7 +29,7 @@ interface Props {
  * taken before anything about her library changes, so a failure partway
  * through never costs more than this one attempt.
  */
-export function ManualSplitDialog({ open, material, onClose, onCreated }: Props) {
+export function ManualSplitDialog({ open, material, onClose, onCreated, note }: Props) {
   const { mutate, repositories, refresh } = useAppData();
   const [outline, setOutline] = useState<PdfOutline | null>(null);
   const [firstPage, setFirstPage] = useState("1");
@@ -137,6 +139,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated }: Props)
       }
     >
       <div className="stack stack--4">
+        {note ? <p className="small">{note}</p> : null}
         <p className="small muted">
           {outline
             ? `${material.originalFileName ?? material.title} — ${outline.pages.toLocaleString()} pages, ${formatFileSize(material.fileSize)}.`

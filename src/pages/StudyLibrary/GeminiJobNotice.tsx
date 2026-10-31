@@ -120,7 +120,7 @@ export function GeminiJobNotice({
                 ? `${readyTitle} It has not been saved yet.`
                 : `${helper} finished a new ${what} for this document before the app was closed or reloaded. It has not been saved yet.`}
             {job.answer?.model ? <> <span>Made with {geminiModelName(job.answer.model)}.</span></> : null}{" "}
-            {job.studyKitPart ? "Review this part before saving. You can save or discard each part separately." : onReview
+            {job.studyKitPart && !onReview ? "Read it below, then save or discard it. Each part is saved separately." : onReview
               ? `Your ${job.kind === "study-aid" ? "study guide has items" : job.kind === "flashcards" ? "study set has flashcards" : "practice test has questions"} you wrote, corrected or deleted, so you choose what to keep before anything is saved.`
               : job.kind === "study-aid" ? "Saving it replaces your saved guide; any saved flashcards stay as they are." : job.kind === "flashcards" ? "Saving it replaces your saved cards; your study guide stays as it is." : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>

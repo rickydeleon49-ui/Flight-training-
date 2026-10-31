@@ -105,13 +105,14 @@ impl ClaudeProvider {
         content.extend(text);
         // Effort "medium" (Haiku 5.5's default): the live test's "low" guide
         // skipped the recovery steps; at Haiku's price completeness wins.
-        // A combined kit needs room for all three outputs. Existing requests
+        // A combined kit needs room for all three outputs plus Haiku 5.5's
+        // default adaptive thinking (128K output cap). Existing requests
         // retain their accepted 16,000-token Claude allowance.
         let tokens = if body["generationConfig"]["responseSchema"]["properties"]
             .get("guide")
             .is_some()
         {
-            32768
+            crate::gemini::study_kit::KIT_OUTPUT_TOKENS
         } else {
             16000
         };

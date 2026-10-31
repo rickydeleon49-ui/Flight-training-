@@ -2080,7 +2080,9 @@ fn a_whole_pdf_guide_is_one_request_with_plain_progress() {
         PART_OUTPUT_TOKENS
     );
     let messages = r.messages.lock().unwrap();
-    assert!(messages.iter().any(|m| m == "Writing your study guide…"));
+    assert!(messages
+        .iter()
+        .any(|m| m == "Gemini is writing your study guide…"));
     assert!(messages.iter().any(|m| m == "Study guide written."));
     assert!(!messages
         .iter()

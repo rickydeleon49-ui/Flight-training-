@@ -17,4 +17,6 @@ pub(super) const MESSAGES: &[(&str, &str)] = &[
     ("Gemini is already working on another study aid. Wait for it to finish, then try again.", "Claude is already working on another study aid. Wait for it to finish, then try again."),
     ("Her Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.", "Her Flight Deck is still finishing restoring a backup, so Claude cannot be asked for anything new yet. Quit and reopen the app to finish."),
     ("Gemini's answer was too large to keep, so it was not saved. Try a smaller chapter.", "Claude's answer was too large to keep, so it was not saved. Try a smaller chapter."),
+    ("Gemini is writing your study kit…", "Claude is writing your study kit…"),
+    ("Gemini is writing your study guide…", "Claude is writing your study guide…"),
 ];

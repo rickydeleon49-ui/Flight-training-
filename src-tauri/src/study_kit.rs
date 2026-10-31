@@ -3,7 +3,18 @@
 use super::*;
 
 pub(crate) const PAGE_MESSAGE: &str = "Choose up to 150 pages first. Use Choose fewer pages to send, then make your study kit from that part.";
-const INCOMPLETE: &str = "The study kit answer was cut off or incomplete. Nothing was saved. Choose fewer pages and try again.";
+const INCOMPLETE: &str = "The study kit got too long and was cut off. Try fewer pages, or make one part at a time with its own button.";
+/// Output allowance for the whole kit. Gemini 3.x and Claude Haiku 5.5 both
+/// think by default, and that thinking over up to 150 pages counts in the
+/// same allowance as the ~9,000-token answer (guide, 20 cards, 10 questions).
+/// 49,152 stays within both caps: Gemini 3.5/3.8 Flash 65,536 output tokens;
+/// Claude Haiku 5.5 128K (provider/claude.rs sends the same figure).
+pub(crate) const KIT_OUTPUT_TOKENS: u32 = 49_152;
+pub(crate) const SENDING: &str = "Sending your PDF…";
+pub(crate) const WRITING: &str = "Gemini is writing your study kit…";
+/// Most cards and questions one kit keeps.
+const MAX_KIT_CARDS: usize = 60;
+const MAX_KIT_QUESTIONS: usize = 20;
 
 fn check_source(source: &LoadedSource) -> Result<u32, String> {
     if source.mime != "application/pdf" {
@@ -19,11 +30,17 @@ fn check_source(source: &LoadedSource) -> Result<u32, String> {
 }
 
 fn request_body(part: Value, pages: u32) -> Value {
-    let prompt = format!("study-kit-prompt-v1: Make a basic study kit for a beginner from ONLY the attached selected PDF pages 1–{pages}. Cite sourcePage numbers from this PDF; do not discuss other pages. Use only supported facts. Do not invent procedures, regulations, numbers or page references. If ambiguous or outdated, say so rather than guessing. Return JSON with three parts: guide {{body, sourcePages}}, cards, questions. The guide must follow guide-section-prompt-v2: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. No long paragraphs; body at most 8000 characters. Make about 20 distinct cards with front, back, sourcePage; each back answers the front directly, never repeats the question. Make about 10 multiple-choice questions with question, 3–5 options, correctIndex (zero-based single correct choice), explanation, sourcePage. Cite the pages actually used. This is an AI study aid to check against current FAA material, aircraft documents and her instructor, not operational flight instruction.");
+    // The same pdfPage→sourcePage list the guide parts send. The kit reads the
+    // whole stored PDF, so each sourcePage is the page's position in the file.
+    let mapping: Vec<_> = (1..=pages)
+        .map(|p| json!({"pdfPage":p,"sourcePage":p}))
+        .collect();
+    let mapping = json!(mapping);
+    let prompt = format!("study-kit-prompt-v1: Make a basic study kit for a beginner from ONLY the attached selected PDF pages 1–{pages}. Read ONLY these selected PDF pages and cite their sourcePage numbers: {mapping}. sourcePage is the page's position in the attached file (1 = first page), never the number printed on the page. Do not discuss other pages. Use only supported facts. Do not invent procedures, regulations, numbers or page references. If ambiguous or outdated, say so rather than guessing. Return JSON with three parts: guide {{body, sourcePages}}, cards, questions. The guide must follow guide-section-prompt-v2: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. No long paragraphs; body at most 8000 characters. Make about 20 distinct cards with front, back, sourcePage; each back answers the front directly, never repeats the question. Make about 10 multiple-choice questions with question, 3–5 options, correctIndex (zero-based single correct choice), explanation, sourcePage. Never refer to option letters or positions in explanations. Cite the pages actually used. This is an AI study aid to check against current FAA material, aircraft documents and her instructor, not operational flight instruction.");
     // Guide ~2,500 tokens + 20 cards ~3,000 + 10 questions ~3,000,
-    // with space for JSON and Gemini thinking across 150 pages.
+    // with space for JSON and thinking across 150 pages.
     json!({"contents":[{"role":"user","parts":[{"text":prompt},part]}],
-        "generationConfig":{"responseMimeType":"application/json","maxOutputTokens":32768,
+        "generationConfig":{"responseMimeType":"application/json","maxOutputTokens":KIT_OUTPUT_TOKENS,
         "responseSchema":AnyProvider::default().translate_schema(&crate::provider::schemas::study_kit())}})
 }
 
@@ -42,36 +59,46 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
             result["sourceNotes"] = json!(format!("Source pages: {}. AI study aid. Check against current FAA material and your instructor.", pages.iter().map(u32::to_string).collect::<Vec<_>>().join(", ")));
             result
         });
+    // One bad card or question costs only itself: each is checked by the
+    // single generators' own per-item rule, and a part fails only when none
+    // of its items remain.
     let cards = (|| -> Result<Value, String> {
-        let mut v = aid(value["cards"].clone(), None, model);
-        // Existing batch validation requires a descriptive nonblank summary.
-        v["summary"] = json!("Flashcards from your PDF");
-        let parsed: GeneratedStudyAid =
-            serde_json::from_value(v.clone()).map_err(|_| "Invalid cards")?;
-        batches::validate(&parsed, Some(pages), 60)?;
+        let mut parsed: GeneratedStudyAid =
+            serde_json::from_value(aid(value["cards"].clone(), None, model))
+                .map_err(|_| "Invalid cards")?;
+        parsed
+            .flashcards
+            .retain(|card| batches::card_ok(card, Some(pages)));
+        parsed.flashcards.truncate(MAX_KIT_CARDS);
         if parsed.flashcards.is_empty() {
             return Err("No cards".into());
         }
+        // Existing batch validation requires a descriptive nonblank summary.
+        parsed.summary = "Flashcards from your PDF".into();
+        batches::validate(&parsed, Some(pages), MAX_KIT_CARDS)?;
+        let mut v = serde_json::to_value(parsed).map_err(|e| e.to_string())?;
+        v["summary"] = json!("Flashcards from your PDF");
         Ok(v)
     })();
     let questions = (|| -> Result<Value, String> {
-        let test: GeneratedPracticeTest = serde_json::from_value(
+        let mut test: GeneratedPracticeTest = serde_json::from_value(
             json!({"title":"Practice questions", "questions":value["questions"], "model":model}),
         )
         .map_err(|_| "Invalid questions")?;
-        let expected = test.questions.len();
-        let test = sanitize_practice_test(test)?;
-        if test.questions.len() != expected
-            || expected > 20
-            || test
-                .questions
-                .iter()
-                .any(|q| q.source_page.is_none_or(|p| p == 0 || p > pages))
-        {
-            return Err("Invalid questions".into());
-        }
+        test.questions
+            .retain(|q| q.source_page.is_some_and(|p| p != 0 && p <= pages));
+        let mut test = sanitize_practice_test(test)?;
+        test.questions.truncate(MAX_KIT_QUESTIONS);
         serde_json::to_value(test).map_err(|e| e.to_string())
     })();
+    // The error is stored inside the result, past the wording pass, so it
+    // names the real button for the provider that made it.
+    let helper = if model.starts_with("claude-") {
+        "Claude"
+    } else {
+        "Gemini"
+    };
+    let make_cards = format!("Make new cards with {helper}");
     let part = |answer: Result<Value, String>, name: &str, button: &str| match answer {
         Ok(answer) => json!({"answer":answer}),
         Err(_) => {
@@ -80,7 +107,7 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
     };
     json!({"parts":{
         "guide":part(guide, "study guide", "Create study guide or Regenerate"),
-        "cards":part(cards, "flashcard", "Make new cards"),
+        "cards":part(cards, "flashcard", &make_cards),
         "questions":part(questions, "practice question", "Create practice test or Regenerate")},
         "practiceRevision":practice_revision})
 }
@@ -91,8 +118,14 @@ async fn generate(
     practice_revision: Option<&str>,
 ) -> Result<Value, String> {
     let pages = check_source(source)?;
-    (ctx.say)("Making your study kit…".into());
-    let (raw, model) = run_generation(ctx, source, &|part| request_body(part, pages)).await?;
+    // The line follows the real stage: sending (and, for Gemini, the upload
+    // message), then writing once the request itself goes out.
+    (ctx.say)(SENDING.into());
+    let (raw, model) = run_generation(ctx, source, &|part| {
+        (ctx.say)(WRITING.into());
+        request_body(part, pages)
+    })
+    .await?;
     ctx.budget.reset_stage(Stage::Validating);
     ctx.budget.validation_checkpoint()?;
     let text = ctx.extract_text(&raw).map_err(|message| {

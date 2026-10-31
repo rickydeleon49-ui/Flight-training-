@@ -528,20 +528,25 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           }
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
-          if (job.studyKitPart && saved) return "review" as const;
-          if ((saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
+          // Kit parts share one study set, so saving one part moves its
+          // revision past the others' base: that alone is not "newer". Her
+          // own edits still go to review just below.
+          const siblingSave = job.studyKitPart && (job.kind === "study-aid" || job.kind === "flashcards");
+          if (!siblingSave && (saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
           // Her own items, corrections and deletions are never replaced
           // without her review (OFFLINE-03a).
           if ((job.kind === "study-aid" || job.kind === "flashcards") && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
           if (job.kind === "practice-test" && needsPracticeRegenerationReview(await repos.documents.readPracticeSnapshot(job.materialId))) return "review" as const;
           if (job.kind === "study-aid") {
             const aid = answer as GeneratedStudyAid;
+            // A kit guide has no cards of its own: it keeps the saved ones.
+            const keptCards = job.studyKitPart ? (saved as AiStudySet | undefined)?.flashcards : undefined;
             await repos.documents.saveAiStudySet({
               sourceMaterialId: job.materialId,
               title: aid.title,
               summary: aid.summary,
               sections: aid.sections,
-              flashcards: aid.flashcards,
+              flashcards: keptCards ?? aid.flashcards,
               sourceNotes: aid.sourceNotes,
               model: aid.model,
             }, job.sectionGuide ? job.jobId ?? undefined : undefined, "study-aid");
@@ -1118,7 +1123,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
 
   const startKit = useCallback(async (target: GeminiJobTarget, options?: StartOptions) => {
     if (activeRef.current !== null || recoveryRef.current !== "ready") return "Wait for the current study aid to finish, then try again.";
-    if (jobsRef.current.some(j => j.materialId === target.materialId && (j.answer || j.sectionGuide || j.studyKitPart))) return "Save or discard the earlier drafts first, then make a study kit.";
+    // A failed kit part holds nothing to save, so it never blocks a new kit.
+    if (jobsRef.current.some(j => j.materialId === target.materialId && (j.answer || j.sectionGuide))) return "Save or discard the earlier drafts first, then make a study kit.";
     const key = newKey();
     const requestId = newRequestId();
     activeRef.current = key;

@@ -13,6 +13,22 @@ const UNAVAILABLE: &str =
 #[derive(Debug)]
 pub(crate) struct LibraryLock {
     _file: File,
+    /// False when this volume cannot lock files at all (a network or
+    /// read-only volume): the app opens anyway, and the single-instance
+    /// plugin still keeps a second copy from starting.
+    pub(crate) locked: bool,
+}
+
+/// Another copy holding the lock refuses; a volume that cannot lock files
+/// (lock unsupported, read-only) must never keep her out on every launch, so
+/// that continues without the lock.
+fn lock_outcome(result: Result<(), std::fs::TryLockError>) -> Result<bool, String> {
+    match result {
+        Ok(()) => Ok(true),
+        Err(std::fs::TryLockError::WouldBlock) => Err(ALREADY_OPEN.to_owned()),
+        // lib.rs logs a warning once logging is attached.
+        Err(std::fs::TryLockError::Error(_)) => Ok(false),
+    }
 }
 
 /// Parse using the same semver type Tauri uses, without another dependency.
@@ -44,11 +60,11 @@ pub(crate) fn acquire(root: &Path, current: &tauri::PackageInfo) -> Result<Libra
         .truncate(false)
         .open(root.join(LOCK_FILE))
         .map_err(|_| UNAVAILABLE.to_owned())?;
-    file.try_lock().map_err(|error| match error {
-        std::fs::TryLockError::WouldBlock => ALREADY_OPEN.to_owned(),
-        std::fs::TryLockError::Error(_) => UNAVAILABLE.to_owned(),
-    })?;
-    let lock = LibraryLock { _file: file };
+    let locked = lock_outcome(file.try_lock())?;
+    let lock = LibraryLock {
+        _file: file,
+        locked,
+    };
     // A running copy may have updated the marker between the first check and
     // acquiring ownership. No restore, backup, cleanup or DB work precedes this.
     check_version(root, current)?;
@@ -146,10 +162,28 @@ mod tests {
     }
 
     #[test]
+    fn a_volume_that_cannot_lock_opens_without_the_lock() {
+        for kind in [
+            std::io::ErrorKind::Unsupported,
+            std::io::ErrorKind::ReadOnlyFilesystem,
+            std::io::ErrorKind::Other,
+        ] {
+            let error = std::fs::TryLockError::Error(std::io::Error::from(kind));
+            assert_eq!(lock_outcome(Err(error)), Ok(false), "{kind:?}");
+        }
+        assert_eq!(
+            lock_outcome(Err(std::fs::TryLockError::WouldBlock)),
+            Err(ALREADY_OPEN.to_owned())
+        );
+        assert_eq!(lock_outcome(Ok(())), Ok(true));
+    }
+
+    #[test]
     fn lock_refuses_without_writes_and_releases_on_drop() {
         let root = Scratch::new();
         let current = package("0.6.5");
         let first = acquire(&root.0, &current).unwrap();
+        assert!(first.locked);
         std::fs::write(root.0.join(LOCK_FILE), "do not truncate").unwrap();
         std::fs::write(root.0.join("her-flight-deck.db"), "synthetic DB").unwrap();
         let before = root.snapshot();

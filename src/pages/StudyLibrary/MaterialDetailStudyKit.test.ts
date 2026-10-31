@@ -16,8 +16,9 @@ let records: service.GeminiJobRecord[];
 let calls: ReturnType<typeof vi.spyOn>;
 let repos: ReturnType<typeof createRepositories>;
 function Ready() { return useAppData().status === "ready" ? h(Routes, null, h(Route, {path:"/study/:materialId",element:h(MaterialDetail)})) : null; }
-async function open() {
+async function open(before?: () => Promise<unknown>) {
   await repos.documents.create({id:"kit-material",title:"Synthetic PDF",filePath:"synthetic.pdf",originalFileName:"synthetic.pdf",fileSize:1000});
+  await before?.();
   render(h(AppDataProvider, null, h(MemoryRouter,{initialEntries:["/study/kit-material"]},h(Ready))));
   await waitFor(()=>expect((screen.getByRole("button",{name:"Make my study kit"}) as HTMLButtonElement).disabled).toBe(false));
 }
@@ -48,11 +49,52 @@ it("offers one main action with its short line and keeps all single actions",asy
   expect(screen.getByRole("button",{name:/Make new cards with Gemini/})).toBeTruthy();
   expect(screen.getByRole("button",{name:"Create practice test"})).toBeTruthy();
 });
+it("says plainly what to do in each notice: read it, then save or discard it",async()=>{
+  records=parts();await open();
+  expect((await screen.findAllByText(/Read it below, then save or discard it. Each part is saved separately./)).length).toBe(3);
+  expect(screen.queryByText(/Review this part before saving/)).toBeNull();
+});
+it("with no internet says so before the consent dialog and sends nothing",async()=>{
+  await open();
+  vi.spyOn(navigator,"onLine","get").mockReturnValue(false);
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  expect(await screen.findByText("No internet right now. Press Make my study kit again when you're back online.")).toBeTruthy();
+  expect(screen.queryByRole("dialog",{name:"Send this file to Google?"})).toBeNull();
+  expect(calls).not.toHaveBeenCalled();
+});
+it("while kit drafts wait, asks her to save or discard them before the consent dialog",async()=>{
+  records=parts();await open();
+  await screen.findByRole("button",{name:"Save the new study guide"});
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  expect(await screen.findByText("Save or discard your study kit drafts first.")).toBeTruthy();
+  expect(screen.queryByRole("dialog",{name:"Send this file to Google?"})).toBeNull();
+  expect(calls).not.toHaveBeenCalled();
+});
+it("a kit whose only remaining part failed does not block a new kit",async()=>{
+  records=[{...parts()[2]!,stage:"failed",result:undefined,error:"The practice question part could not be used."}];
+  await open();
+  expect(await screen.findByText(/The practice question part could not be used/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  const confirm=await screen.findByRole("dialog",{name:"Send this file to Google?"});
+  fireEvent.click(within(confirm).getByRole("button",{name:"Make my study kit"}));
+  await waitFor(()=>expect(calls).toHaveBeenCalledTimes(1));
+  await screen.findByRole("button",{name:"Save the new study guide"});
+});
+it("over 150 pages without the page chooser points to Create study guide",async()=>{
+  vi.mocked(pdf.canSplitPdfs).mockReturnValue(false);
+  vi.mocked(pdf.inspectPdf).mockResolvedValue({pages:151,maxPagesPerSplit:150});
+  await open();fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  expect(await screen.findByText("This PDF is over 150 pages. Use Create study guide, which makes the guide in parts.")).toBeTruthy();
+  expect(screen.queryByText(/Use Choose fewer pages to send/)).toBeNull();
+  expect(screen.queryByRole("dialog",{name:"Send this file to Google?"})).toBeNull();
+  expect(calls).not.toHaveBeenCalled();
+});
 it("over 150 pages opens the existing chooser without sending",async()=>{
   vi.mocked(pdf.inspectPdf).mockResolvedValue({pages:151,maxPagesPerSplit:150});
   await open();fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
-  expect(await screen.findByText(/Choose up to 150 pages first/)).toBeTruthy();
-  expect(await screen.findByRole("dialog",{name:/chapter/i})).toBeTruthy();
+  const chooser=await screen.findByRole("dialog",{name:/chapter/i});
+  // One plain line in the chooser says what happens next.
+  expect(within(chooser).getByText("The study kit reads up to 150 pages. Pick the pages you want — they become their own item in your library, then press Make my study kit there.")).toBeTruthy();
   expect(calls).not.toHaveBeenCalled();
 });
 it("one request produces three review drafts, saves none automatically, and each part can be saved independently",async()=>{
@@ -69,12 +111,13 @@ it("one request produces three review drafts, saves none automatically, and each
   fireEvent.click(screen.getByRole("button",{name:"Save the new flashcards"}));
   await waitFor(async()=>expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
   expect(records).toHaveLength(2);
-  // The sibling save changed the shared set. Guide review reads that exact set
-  // and preserves the cards, instead of failing stale or replacing them.
-  fireEvent.click(await screen.findByRole("button",{name:"Review the new study guide"}));
-  await waitFor(()=>expect((screen.getByRole("button",{name:"Save the reviewed study guide"}) as HTMLButtonElement).disabled).toBe(false));
-  fireEvent.click(screen.getByRole("button",{name:"Save the reviewed study guide"}));
+  // The sibling save changed the shared set, but she wrote nothing: the guide
+  // keeps its plain Save (no review claiming her edits) and keeps the cards.
+  expect(screen.queryByRole("button",{name:"Review the new study guide"})).toBeNull();
+  expect(screen.queryByText(/items you wrote, corrected or deleted/)).toBeNull();
+  fireEvent.click(await screen.findByRole("button",{name:"Save the new study guide"}));
   await waitFor(async()=>expect((await repos.documents.listAiStudySets())[0]?.sections).toHaveLength(1));
+  expect(screen.queryByRole("dialog",{name:/Review the new/})).toBeNull();
   expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1);
   fireEvent.click(screen.getByRole("button",{name:"Save the new practice test"}));
   await waitFor(async()=>expect(await repos.documents.listPracticeTests()).toHaveLength(1));
@@ -103,7 +146,7 @@ it("keeps the paid drafts in the window if the journal checkpoint could not be w
   expect(screen.getByRole("button",{name:"Save the new practice test"})).toBeTruthy();
 });
 it("shows a failed part beside the two kept drafts and leaves its single action available",async()=>{
-  records=parts(); records[1]={...records[1]!,stage:"failed",result:undefined,error:"The flashcard part could not be used. Redo this part with Make new cards."};
+  records=parts(); records[1]={...records[1]!,stage:"failed",result:undefined,error:"The flashcard part could not be used. Redo this part with Make new cards with Gemini."};
   await open();
   expect(await screen.findByText(/The flashcard part could not be used/)).toBeTruthy();
   expect(screen.getByRole("button",{name:"Save the new study guide"})).toBeTruthy();
@@ -140,4 +183,42 @@ it("keeps an interrupted kit stopped until she explicitly asks to try again",asy
   fireEvent.click(within(confirm).getByRole("button",{name:"Make my study kit"}));
   await screen.findByRole("button",{name:"Save the new flashcards"});
   expect(calls).toHaveBeenCalledTimes(1);
+});
+
+it("Save all three saves each part through its own save, in order",async()=>{
+  records=parts();await open();
+  fireEvent.click(await screen.findByRole("button",{name:"Save all three"}));
+  await waitFor(()=>expect(records).toHaveLength(0));
+  const set=(await repos.documents.listAiStudySets())[0];
+  expect(set?.sections).toHaveLength(1);
+  expect(set?.flashcards).toHaveLength(1);
+  expect(await repos.documents.listPracticeTests()).toHaveLength(1);
+  expect(screen.queryByRole("button",{name:"Save all three"})).toBeNull();
+});
+const savedTest=()=>repos.documents.savePracticeTest({provider:"gemini",sourceMaterialId:"kit-material",title:"Saved practice test",
+  questions:[{question:"Saved?",options:["No","Yes"],correctIndex:1,explanation:"Saved.",sourcePage:1}],model:"gemini-3.5-flash"});
+it("Save all three keeps the others saved when one part cannot be saved",async()=>{
+  // A practice test saved after the kit started: that part cannot replace it.
+  records=parts();await open(savedTest);
+  fireEvent.click(await screen.findByRole("button",{name:"Save all three"}));
+  await waitFor(async()=>expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1));
+  expect((await repos.documents.listAiStudySets())[0]?.sections).toHaveLength(1);
+  await waitFor(()=>expect(records.map(r=>r.id)).toEqual(["job-aaaaaaaaaaaaaaaaaaaaaaaa#questions"]));
+  expect(await screen.findByText(/Something newer was saved/)).toBeTruthy();
+  expect((await repos.documents.listPracticeTests())[0]?.title).toBe("Saved practice test");
+});
+it("Save all three is not offered while a part failed",async()=>{
+  records=parts(); records[2]={...records[2]!,stage:"failed",result:undefined,error:"The practice question part could not be used."};
+  await open();
+  await screen.findByRole("button",{name:"Save the new study guide"});
+  expect(screen.queryByRole("button",{name:"Save all three"})).toBeNull();
+});
+it("holds Start practice test while kit drafts wait, so it is never beside Save",async()=>{
+  records=parts();
+  await open(async()=>{ await savedTest(); records[2]={...records[2]!,baseRevision:(await repos.documents.listPracticeTests())[0]!.updatedAt}; });
+  expect(await screen.findByText("Save or discard your study kit drafts first, then start the practice test.")).toBeTruthy();
+  expect(screen.queryByRole("button",{name:"Start practice test"})).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:"Save all three"}));
+  await waitFor(()=>expect(records).toHaveLength(0));
+  expect(await screen.findByRole("button",{name:"Start practice test"})).toBeTruthy();
 });

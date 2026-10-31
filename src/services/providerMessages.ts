@@ -27,6 +27,8 @@ export const CLAUDE_MESSAGES: Readonly<Record<string, string>> = {
   "Gemini is reviewing this document": "Claude is reviewing this document",
   "Gemini is still checking earlier work. Try again in a moment.": "Claude is still checking earlier work. Try again in a moment.",
   "Gemini is writing practice questions": "Claude is writing practice questions",
+  "Gemini is writing your study guide…": "Claude is writing your study guide…",
+  "Gemini is writing your study kit…": "Claude is writing your study kit…",
   "Gemini isn't available for this PDF right now.": "Claude isn't available for this PDF right now.",
   "Gemini study assistant": "Claude study assistant",
   "Gemini will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.": "Claude will read only this file and create a source-based study guide. The finished draft waits for you to save it locally.",

@@ -29,6 +29,8 @@ import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export interface PracticeTestPanelProps {
   entrySummary?: boolean;
+  /** Shown instead of Start while study kit drafts wait above (no mis-tap beside Save). */
+  startHeld?: string;
   /** Lets adjacent authoring controls follow this panel's live attempt state. */
   onAttemptChange?: (active: boolean) => void;
   practiceTest: PracticeTest;
@@ -381,6 +383,7 @@ function pendingLabel(intent: SessionIntent | null): string {
 
 export function PracticeTestPanel({
   entrySummary = false,
+  startHeld,
   practiceTest,
   materialId: propMaterialId,
   materialTitle: _materialTitle,
@@ -1258,7 +1261,7 @@ export function PracticeTestPanel({
       {notices}
 
       {entrySummary ? <div className="row row--wrap">
-        {!state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
+        {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
           if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
         }}>Start practice test</Button> : null}
         <ShortSavedReviewLink materialId={materialId} />

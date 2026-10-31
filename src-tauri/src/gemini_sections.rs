@@ -824,8 +824,9 @@ fn validate_section(
     content.content_digest = digest(&content);
     Ok(content)
 }
-/// Study kits use the same section validator and additionally enforce their
-/// requested 8,000-character limit.
+/// Study kits use the same section validator, so a guide that runs over the
+/// requested 8,000 characters is kept up to what a study set can store
+/// (study_sets::MAX_BODY), exactly like a guide part.
 pub(super) fn validate_basic_kit_guide(
     value: &Value,
     pages: &[u32],
@@ -839,9 +840,6 @@ pub(super) fn validate_basic_kit_guide(
     };
     let result =
         validate_section(&section, &value.to_string(), pages, model).map_err(|e| e.message)?;
-    if result.body.chars().count() > REQUESTED_BODY_CHARS {
-        return Err("The guide was too long.".into());
-    }
     Ok((result.body, result.source_pages))
 }
 
@@ -1135,7 +1133,7 @@ pub(super) async fn activate(
                 );
                 // No earlier answer appears in this request body.
                 (ctx.say)(match identity.manifest.len() {
-                    1 => "Writing your study guide…".to_string(),
+                    1 => "Gemini is writing your study guide…".to_string(),
                     n => format!("Writing part {} of {n}: {}…", index + 1, section.heading),
                 });
                 let content = section_generate(
