@@ -75,6 +75,86 @@ describe("PracticeTestPanel", () => {
     return view;
   }
 
+  async function seedEarlierAttempt() {
+    const older = { ...sampleTest, questions: sampleTest.questions.map(q => ({ ...q, options: [...q.options, "Older fourth choice"] })) };
+    await repos.documents.savePracticeTest(older);
+    const active = (await repos.practiceSessions.getActiveVersion("mat-1"))!;
+    const started = await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "mat-1", versionId: active.version.id });
+    await repos.documents.savePracticeTest(sampleTest);
+    // Simulate a retained legacy unfinished attempt; normal regeneration closes it.
+    await db.execute("UPDATE practice_attempts SET status = 'in_progress', completed_at = NULL WHERE id = ?", [started.attemptId]);
+    return started;
+  }
+
+  it("offers fresh current questions first without changing the earlier attempt until clicked", async () => {
+    const older = await seedEarlierAttempt();
+    const save = vi.spyOn(repos.practiceSessions, "saveSessionAction");
+    const value = { repositories: repos, data: EMPTY_DATA, status: "ready", error: null } as ContextType<typeof AppDataContext>;
+    render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
+    const fresh = await screen.findByRole("button", { name: "Start a fresh test" });
+    expect(fresh.classList.contains("button--primary")).toBe(true);
+    expect(screen.getByText("Starting fresh marks the earlier attempt abandoned and keeps its saved answers.")).toBeTruthy();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(save).not.toHaveBeenCalled();
+    expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("in_progress");
+    fireEvent.click(fresh);
+    await screen.findByText("Question 1 of 2");
+    expect(screen.getAllByRole("radio")).toHaveLength(3); // The current three answer choices.
+    expect(screen.queryByText("Older fourth choice")).toBeNull();
+    expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("abandoned");
+    expect(save.mock.calls[0]?.[0].action).toBe("retake_attempt");
+  });
+
+  it("keeps the earlier frozen questions reachable and abandonment behind confirmation", async () => {
+    const older = await seedEarlierAttempt();
+    const value = { repositories: repos, data: EMPTY_DATA, status: "ready", error: null } as ContextType<typeof AppDataContext>;
+    render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
+    fireEvent.click(await screen.findByRole("button", { name: "Continue earlier attempt" }));
+    expect(await screen.findByText("Older fourth choice")).toBeTruthy();
+    const abandon = screen.getByRole("button", { name: "Abandon attempt" });
+    expect(abandon.classList.contains("button--ghost")).toBe(true);
+    fireEvent.click(abandon);
+    const confirm = await screen.findByRole("dialog", { name: "Abandon this practice attempt?" });
+    fireEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
+    expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("in_progress");
+    fireEvent.click(abandon);
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Abandon this practice attempt?" })).getByRole("button", { name: "Abandon attempt" }));
+    await waitFor(() => expect(screen.queryByText("Older fourth choice")).toBeNull());
+    expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("abandoned");
+  });
+
+  it("can finish the earlier frozen attempt and retake with current questions", async () => {
+    const older = await seedEarlierAttempt();
+    const value = { repositories: repos, data: EMPTY_DATA, status: "ready", error: null } as ContextType<typeof AppDataContext>;
+    render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
+    fireEvent.click(await screen.findByRole("button", { name: "Continue earlier attempt" }));
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    const complete = await screen.findByRole("button", { name: /Complete test now/ });
+    fireEvent.click(complete);
+    fireEvent.click(await screen.findByRole("button", { name: "Retake this test" }));
+    await screen.findByText("Question 1 of 2");
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    expect(screen.queryByText("Older fourth choice")).toBeNull();
+    expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("completed");
+  });
+
+  it("resumes matching questions and keeps primary Continue apart from quiet Abandon", async () => {
+    const active = (await repos.practiceSessions.getActiveVersion("mat-1"))!;
+    await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "mat-1", versionId: active.version.id });
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+    expect(screen.queryByRole("button", { name: "Start a fresh test" })).toBeNull();
+    fireEvent.click(screen.getAllByRole("radio")[0]!);
+    const next = await screen.findByRole("button", { name: "Continue" });
+    await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));
+    const abandon = screen.getByRole("button", { name: "Abandon attempt" });
+    expect(next.classList.contains("button--primary")).toBe(true);
+    expect(abandon.classList.contains("button--ghost")).toBe(true);
+    expect(next.parentElement).not.toBe(abandon.parentElement);
+    expect(abandon.parentElement?.style.borderTop).toContain("dashed");
+    fireEvent.click(next);
+    expect(await screen.findByText("Question 2 of 2")).toBeTruthy();
+  });
+
   it("shows the ACS chip below a tagged saved question", async () => {
     const tagged = { ...sampleTest, questions: sampleTest.questions.map((question, index) => index === 0 ? { ...question, acsTask: "PA.II.A" } : question) };
     await repos.documents.savePracticeTest(tagged);

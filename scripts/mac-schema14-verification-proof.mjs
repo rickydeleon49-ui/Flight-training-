@@ -106,7 +106,7 @@ const CARGO_TARGET_ENTRIES = new Set(['CACHEDIR.TAG', '.rustc_info.json', '.futu
 const CARGO_TARGET_TRIPLES = new Set(['aarch64-apple-darwin']);
 const CARGO_TRIPLE_PROFILES = new Set(['debug', 'release']);
 const CARGO_CACHEDIR_TAG = 'Signature: 8a477f597d28d172789f06886806bc55\n# This file is a cache directory tag created by cargo.\n';
-const TAURI_GEN_SCHEMA = /^(acl-manifests|capabilities|desktop-schema|(macOS|linux|windows|iOS|android)-schema)\.json$/;
+const TAURI_GEN_SCHEMA = /^(acl-manifests|capabilities|desktop-schema|mobile-schema|(macOS|linux|windows|iOS|android)-schema)\.json$/;
 const TAURI_GEN_MAX_BYTES = 16 * 1024 * 1024;
 /**
  * Current accepted baseline tree minus the exact submitted paths: 4306 of 4310 entries.

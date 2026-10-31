@@ -218,7 +218,7 @@ it("discard_kit_confirms_keeps_saved_content_and_frees_slot", async () => {
   repos.documents.readStoredStudySet.mockResolvedValue({ title: "Existing", summary: "Keep" });
   fireEvent.click(scope.getByRole("button", { name: "Discard this kit" }));
   const confirm = within(await screen.findByRole("dialog", { name: /Discard/ }));
-  expect(confirm.getByText("Your saved study set and questions stay. Only the unsaved kit is removed.")).toBeTruthy();
+  expect(confirm.getByText("Discard the unsaved kit and keep your saved study set and questions.")).toBeTruthy();
   fireEvent.click(confirm.getByRole("button", { name: "Discard kit" }));
   await waitFor(() => expect(acknowledge).toHaveBeenCalledWith("kit-job"));
   await waitFor(() => expect(localStorage.getItem(`hfd:pdf-kit-review:${fix.runId}`)).toBeNull());
@@ -358,7 +358,7 @@ it("other_pdf_discard_confirms_and_only_removes_that_kit", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "Discard that kit" }));
   const confirm = within(await screen.findByRole("dialog", { name: "Discard this study kit?" }));
   expect(acknowledge).not.toHaveBeenCalled();
-  expect(confirm.getByText("Your saved study set and questions stay. Only the unsaved kit is removed.")).toBeTruthy();
+  expect(confirm.getByText("Discard the unsaved kit and keep your saved study set and questions.")).toBeTruthy();
   fireEvent.click(confirm.getByRole("button", { name: "Discard kit" }));
   await waitFor(() => expect(acknowledge).toHaveBeenCalledWith(earlierKit.id));
   expect(gemini.cancelGeminiJob).toHaveBeenCalledWith({ jobId: earlierKit.id });

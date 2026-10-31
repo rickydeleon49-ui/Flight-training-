@@ -454,6 +454,10 @@ it("lets her choose and clear the ACS task in the existing editor", async () => 
   await open(`/study/${materialId}`);
   const edit = await editor();
   const picker = edit.getByRole("combobox", { name: "Question 1 ACS task (optional)" });
+  expect(picker.classList.contains("select")).toBe(true);
+  expect(document.getElementById(picker.getAttribute("aria-describedby")!)?.textContent).toBe("Choose the checkride task this question helps you study.");
+  expect(picker.previousElementSibling?.textContent).toBe("ACS task (optional)");
+  expect(picker.closest(".field")!.compareDocumentPosition(edit.getByLabelText("Question 1 wording")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(within(picker).getAllByRole("option")).toHaveLength(62);
   fireEvent.change(picker, { target: { value: "PA.II.A" } });
   await saveAndClose(edit);
