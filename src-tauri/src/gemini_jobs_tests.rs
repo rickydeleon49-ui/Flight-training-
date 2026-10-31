@@ -183,12 +183,114 @@ fn an_unreadable_journal_is_set_aside_not_trusted_or_deleted() {
         std::fs::write(dir.path().join(JOURNAL_FILE), &bytes).unwrap();
         let journal = Journal::open(dir.path());
         assert!(journal.list().is_empty(), "{label}");
+        let aside = set_aside_files(dir.path());
+        assert_eq!(aside.len(), 1, "{label}");
         assert_eq!(
-            std::fs::read(dir.path().join(JOURNAL_UNREADABLE)).unwrap(),
+            std::fs::read(&aside[0]).unwrap(),
             bytes,
             "{label}: kept as it was"
         );
     }
+}
+
+/// Set-aside unreadable journals (timestamped form), sorted.
+fn set_aside_files(root: &Path) -> Vec<PathBuf> {
+    let mut found: Vec<PathBuf> = std::fs::read_dir(root)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with(JOURNAL_UNREADABLE_PREFIX) && n.ends_with(".json"))
+        })
+        .collect();
+    found.sort();
+    found
+}
+
+/// JOBS-QUARANTINE: a set-aside journal is diagnostic only. The launch that
+/// set it aside, and every later one, accepts new work.
+#[test]
+fn an_unreadable_journal_set_aside_never_blocks_this_or_a_later_launch() {
+    let dir = TempDir::new("unreadable-not-sticky");
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+
+    let mut first = Journal::open(dir.path());
+    assert!(
+        first.list().is_empty(),
+        "nothing from the bad journal is offered"
+    );
+    assert_eq!(set_aside_files(dir.path()).len(), 1);
+    let fresh = read(dir.path());
+    assert!(
+        fresh.0.is_empty() && fresh.1 == ReadOutcome::Read,
+        "a fresh, empty journal replaces it"
+    );
+    let id = first
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .expect("the same launch accepts new work");
+    first.failed(&id, "synthetic").unwrap();
+    assert_eq!(first.acknowledge(&id), Ok(true));
+
+    // Next launch: the set-aside file is still there and changes nothing.
+    let mut second = Journal::open(dir.path());
+    assert!(second
+        .begin(JobKind::PracticeTest, "mat-b", "documents/b.pdf", SHA, None)
+        .is_ok());
+
+    // A second bad journal never overwrites the first set-aside copy.
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"also bad").unwrap();
+    let mut third = Journal::open(dir.path());
+    let aside = set_aside_files(dir.path());
+    assert_eq!(aside.len(), 2, "both copies kept");
+    assert_eq!(std::fs::read(&aside[0]).unwrap(), b"{not json");
+    assert_eq!(std::fs::read(&aside[1]).unwrap(), b"also bad");
+    assert!(third
+        .begin(JobKind::StudyAid, "mat-c", "documents/c.pdf", SHA, None)
+        .is_ok());
+}
+
+/// Older versions left `gemini-jobs.unreadable.json` behind, and its mere
+/// presence blocked every launch. It is now left in place and ignored.
+#[test]
+fn a_legacy_unreadable_marker_does_not_block() {
+    let dir = TempDir::new("legacy-unreadable");
+    let legacy = dir.path().join("gemini-jobs.unreadable.json");
+    std::fs::write(&legacy, b"{old}").unwrap();
+    let mut journal = Journal::open(dir.path());
+    assert!(journal
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
+    assert_eq!(std::fs::read(&legacy).unwrap(), b"{old}", "never deleted");
+}
+
+/// If the bad journal cannot be set aside, this launch has no clean journal:
+/// nothing is offered or started, and the refusal does not claim a restore.
+#[cfg(unix)]
+#[test]
+fn an_unreadable_journal_that_cannot_be_set_aside_blocks_only_that_launch() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = TempDir::new("unreadable-stuck");
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
+    let mut stuck = Journal::open(dir.path());
+    let refused = stuck.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None);
+    std::fs::set_permissions(dir.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(stuck.list().is_empty());
+    assert_eq!(refused, Err(UNREADABLE.to_string()));
+    assert!(!UNREADABLE.contains("restor"));
+    assert_eq!(
+        std::fs::read(dir.path().join(JOURNAL_FILE)).unwrap(),
+        b"{not json",
+        "left untouched, never trusted"
+    );
+
+    // Once the folder is writable again, the next launch recovers.
+    let mut next = Journal::open(dir.path());
+    assert_eq!(set_aside_files(dir.path()).len(), 1);
+    assert!(next
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
 }
 
 #[test]
@@ -508,7 +610,7 @@ fn r16_a_journal_too_large_to_read_back_is_never_written() {
         .map(|j| j.id)
         .collect();
     assert_eq!(ready, kept);
-    assert!(!dir.path().join(JOURNAL_UNREADABLE).exists());
+    assert!(set_aside_files(dir.path()).is_empty());
 }
 
 /* ------------------------------------------------------------------ */
@@ -800,4 +902,29 @@ fn pdf_kit_cancel_cleanup_failure_preserves_record() {
         Journal::open(dir.path()).list()[0].stage,
         JobStage::Cancelled
     );
+}
+
+/// Set aside, but the fresh journal cannot be written: no clean journal this
+/// launch, so nothing new starts; the next launch, once writable, recovers.
+#[test]
+fn an_unreadable_journal_whose_fresh_replacement_cannot_be_written_blocks_that_launch() {
+    let dir = TempDir::new("unreadable-no-fresh");
+    std::fs::write(dir.path().join(JOURNAL_FILE), b"{not json").unwrap();
+    // A directory where the writer's temporary file goes makes every write fail.
+    std::fs::create_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
+    let mut blocked = Journal::open(dir.path());
+    assert_eq!(
+        set_aside_files(dir.path()).len(),
+        1,
+        "set aside all the same"
+    );
+    assert_eq!(
+        blocked.begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None),
+        Err(UNREADABLE.to_string())
+    );
+    std::fs::remove_dir(dir.path().join(JOURNAL_WRITING)).unwrap();
+    let mut next = Journal::open(dir.path());
+    assert!(next
+        .begin(JobKind::StudyAid, "mat-a", "documents/a.pdf", SHA, None)
+        .is_ok());
 }

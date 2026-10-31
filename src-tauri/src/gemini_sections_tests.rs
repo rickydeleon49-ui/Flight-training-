@@ -845,13 +845,25 @@ fn concurrent_workers_cannot_duplicate_section() {
 }
 
 #[test]
-fn corrupt_journal_fails_closed_no_dispatch() {
+fn corrupt_journal_is_set_aside_never_trusted_and_never_blocks() {
+    // JOBS-QUARANTINE: the corrupt journal is kept aside, nothing in it is
+    // offered or resumed, and this launch (and later ones) start fresh.
     let r = Rig::new(5);
     std::fs::write(r.dir.path().join("gemini-jobs.json"), b"{broken").unwrap();
-    assert!(r.run(None).is_err());
-    r.reopen();
-    assert!(r.run(None).is_err());
-    assert!(r.fake.log().is_empty());
+    assert!(gemini_jobs::with(r.dir.path(), |j| j.list()).is_empty());
+    let aside: Vec<_> = std::fs::read_dir(r.dir.path())
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| {
+            p.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with("gemini-jobs.unreadable-"))
+        })
+        .collect();
+    assert_eq!(aside.len(), 1);
+    assert_eq!(std::fs::read(&aside[0]).unwrap(), b"{broken");
+    r.answer(1);
+    assert!(r.run(None).is_ok(), "a fresh journal accepts new work");
 }
 
 #[test]
