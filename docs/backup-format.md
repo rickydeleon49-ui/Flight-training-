@@ -24,11 +24,16 @@ documents/
   "formatVersion": 3,
   "appVersion": "0.5.3",
   "createdAt": 1799999999,
+  "schemaVersion": 28,
+  "deviceId": "6f1c0a52-0000-4000-8000-000000000000",
+  "platform": "macos",
   "missingAtExport": [
     "previously-missing-material.pdf"
   ]
 }
 ```
+
+`schemaVersion` is the newest database migration the writing app had applied; optional, absent in archives written before this version. An app that understands an older database refuses such an archive before extracting anything. `deviceId` identifies the device that wrote the archive; optional, absent in archives written before this version. `platform` is the operating system that wrote the archive; optional, absent in archives written before this version.
 
 Entries in `missingAtExport` are relative to `documents/` (matching the `file_path` values stored in `study_materials`). When no referenced documents were missing when the backup was made, `missingAtExport` is omitted. Writers enforce two-way reference completeness: all documents referenced in `study_materials` must either exist in `documents/` or have been absent both before and after the SQLite snapshot and declared in `missingAtExport`. Newly created archives omitting a referenced document without declaring it in `missingAtExport`, or containing an unreferenced document, fail verification.
 

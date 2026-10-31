@@ -104,6 +104,16 @@ struct CompleteBackupManifest {
     /// backed up as they are; only these skip the saved-details byte check.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     detached_at_export: Vec<String>,
+    /// Newest database migration the writing app had applied. Optional;
+    /// absent in archives written before this field existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    schema_version: Option<i64>,
+    /// Which device wrote the archive (optional, absent in older archives).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    device_id: Option<String>,
+    /// Operating system that wrote the archive (optional, absent in older archives).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    platform: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -142,6 +152,15 @@ pub struct CompleteBackupInfo {
     /// FAA reference copies whose PDF is gone or no longer matches.
     #[serde(default, skip_serializing_if = "is_zero")]
     pub unavailable_references: usize,
+    /// Database version the writing app had (absent in older backups).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub schema_version: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub platform: Option<String>,
+    /// The database version this app understands.
+    pub current_schema_version: i64,
 }
 
 fn is_zero(n: &usize) -> bool {
@@ -714,6 +733,38 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
             |row| row.get(0),
         )
         .map_err(|e| format!("Could not inspect the database version: {e}"))
+}
+
+/// The device id kept in `app_metadata`, if the table and row exist.
+fn read_device_id(connection: &Connection) -> Option<String> {
+    connection
+        .query_row(
+            "SELECT value FROM app_metadata WHERE key = 'device_id'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .ok()
+}
+
+/// Schema version and device id of a database file, for the backup manifest.
+/// Never fails the export: anything unreadable becomes `None`.
+fn snapshot_schema_and_device(database: &Path) -> (Option<i64>, Option<String>) {
+    match Connection::open_with_flags(database, OpenFlags::SQLITE_OPEN_READ_ONLY) {
+        Ok(connection) => {
+            let schema = match newest_migration_version(&connection) {
+                Ok(version) => Some(version),
+                Err(e) => {
+                    log::warn!("Backup manifest: could not read the schema version: {e}");
+                    None
+                }
+            };
+            (schema, read_device_id(&connection))
+        }
+        Err(e) => {
+            log::warn!("Backup manifest: could not open the snapshot: {e}");
+            (None, None)
+        }
+    }
 }
 
 /// Schema 20 homework contract; TS twin: `validateHomeworkState`.
@@ -5234,6 +5285,14 @@ pub(crate) fn inspect_archive(
     {
         return Err("That backup format is not supported by this version of the app.".to_string());
     }
+    if let Some(n) = manifest.schema_version {
+        let supported = crate::CURRENT_SCHEMA_VERSION;
+        if n > supported {
+            return Err(format!(
+                "That backup was made by a newer Her Flight Deck (database version {n}; this app understands {supported}). Update the app on this device first."
+            ));
+        }
+    }
 
     let mut expected_integrity = if manifest.format_version >= V2_ARCHIVE_VERSION {
         let mut entry = archive
@@ -5388,6 +5447,10 @@ pub(crate) fn inspect_archive(
         };
 
     Ok(CompleteBackupInfo {
+        schema_version: manifest.schema_version,
+        device_id: manifest.device_id,
+        platform: manifest.platform,
+        current_schema_version: crate::CURRENT_SCHEMA_VERSION,
         app_version: manifest.app_version,
         current_app_version: current_app_version.to_string(),
         created_at: manifest.created_at,
@@ -6468,7 +6531,11 @@ fn write_complete_backup_from_database_with_hook(
             BackupExportError::Permanent(format!("Could not create the backup file: {e}"))
         })?;
         let mut archive = ZipWriter::new(output);
+        let (schema_version, device_id) = snapshot_schema_and_device(database);
         let manifest = CompleteBackupManifest {
+            schema_version,
+            device_id,
+            platform: Some(std::env::consts::OS.to_string()),
             format: ARCHIVE_FORMAT.to_string(),
             format_version: ARCHIVE_VERSION,
             app_version: app_version.to_string(),
@@ -6673,6 +6740,10 @@ fn write_complete_backup_from_database_with_hook(
         }
 
         Ok(CompleteBackupInfo {
+            schema_version: manifest.schema_version,
+            device_id: manifest.device_id.clone(),
+            platform: manifest.platform.clone(),
+            current_schema_version: crate::CURRENT_SCHEMA_VERSION,
             current_app_version: manifest.app_version.clone(),
             app_version: manifest.app_version,
             created_at: manifest.created_at,
@@ -9006,6 +9077,9 @@ mod tests {
                     created_at: 0,
                     missing_at_export: Vec::new(),
                     detached_at_export: Vec::new(),
+                    schema_version: None,
+                    device_id: None,
+                    platform: None,
                 })
                 .unwrap()
                 .as_bytes(),
@@ -9310,6 +9384,9 @@ mod tests {
                     created_at: 0,
                     missing_at_export: Vec::new(),
                     detached_at_export: Vec::new(),
+                    schema_version: None,
+                    device_id: None,
+                    platform: None,
                 })
                 .unwrap()
                 .as_bytes(),
@@ -9950,6 +10027,9 @@ mod tests {
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
             detached_at_export: Vec::new(),
+            schema_version: None,
+            device_id: None,
+            platform: None,
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -10216,6 +10296,9 @@ mod tests {
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
             detached_at_export: Vec::new(),
+            schema_version: None,
+            device_id: None,
+            platform: None,
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -10300,6 +10383,9 @@ mod tests {
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(),
             detached_at_export: Vec::new(),
+            schema_version: None,
+            device_id: None,
+            platform: None,
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())
@@ -10449,6 +10535,9 @@ mod tests {
             created_at: unix_timestamp(),
             missing_at_export: Vec::new(), // unexpectedly undeclared omission!
             detached_at_export: Vec::new(),
+            schema_version: None,
+            device_id: None,
+            platform: None,
         };
         zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
         zip.write_all(serde_json::to_string(&new_manifest).unwrap().as_bytes())
@@ -11671,6 +11760,9 @@ mod tests {
                 created_at: 0,
                 missing_at_export: vec![],
                 detached_at_export: Vec::new(),
+                schema_version: None,
+                device_id: None,
+                platform: None,
             })
             .unwrap()
             .as_bytes(),
@@ -16673,5 +16765,87 @@ mod tests {
                 std::fs::remove_dir_all(p).unwrap();
             }
         }
+    }
+    fn legacy_archive_with_manifest(source: &Path, archive_path: &Path, extra: &str) {
+        let json = format!(
+            r#"{{"format":"{ARCHIVE_FORMAT}","formatVersion":{LEGACY_ARCHIVE_VERSION},"appVersion":"0.3.0","createdAt":0{extra}}}"#
+        );
+        let mut zip = ZipWriter::new(File::create(archive_path).unwrap());
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(json.as_bytes()).unwrap();
+        add_file_to_archive(&mut zip, &source.join(DB_FILES[0]), DB_FILES[0]).unwrap();
+        zip.finish().unwrap();
+    }
+
+    #[test]
+    fn manifest_without_new_fields_still_inspects_and_restores() {
+        let source = scratch("manifest-old-source");
+        let target = scratch("manifest-old-target");
+        write_database(&source.join(DB_FILES[0]), "old archive");
+        let archive = source.join("old.hfdbackup");
+        legacy_archive_with_manifest(&source, &archive, "");
+        let info = inspect_archive(&target, &archive, "0.6.6").unwrap();
+        assert_eq!(info.schema_version, None);
+        assert_eq!(info.device_id, None);
+        assert_eq!(info.platform, None);
+        stage_complete_restore_in(&target, &archive, "0.6.6").unwrap();
+        apply_pending_restore_in(&target).unwrap();
+        assert!(target.join(DB_FILES[0]).is_file());
+        std::fs::remove_dir_all(&source).unwrap();
+        std::fs::remove_dir_all(&target).unwrap();
+    }
+
+    #[test]
+    fn manifest_new_fields_round_trip() {
+        let root = scratch("manifest-fields-root");
+        let out = scratch("manifest-fields-out");
+        write_database(&root.join(DB_FILES[0]), "fields");
+        Connection::open(root.join(DB_FILES[0]))
+            .unwrap()
+            .execute_batch(
+                "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT);
+                 INSERT INTO app_metadata(key, value) VALUES ('device_id', 'dev-1');",
+            )
+            .unwrap();
+        let archive = out.join("fields.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.6").unwrap();
+        let info = inspect_archive(&root, &archive, "0.6.6").unwrap();
+        assert_eq!(info.schema_version, Some(9));
+        assert_eq!(info.device_id.as_deref(), Some("dev-1"));
+        assert_eq!(info.platform.as_deref(), Some(std::env::consts::OS));
+        assert_eq!(info.current_schema_version, crate::CURRENT_SCHEMA_VERSION);
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&out).unwrap();
+    }
+
+    #[test]
+    fn manifest_device_id_is_none_without_app_metadata() {
+        let root = scratch("manifest-nodevice-root");
+        let out = scratch("manifest-nodevice-out");
+        write_database(&root.join(DB_FILES[0]), "no metadata");
+        let archive = out.join("nodevice.hfdbackup");
+        create_consistent_complete_backup_with_retry(&root, &archive, "0.6.6").unwrap();
+        let info = inspect_archive(&root, &archive, "0.6.6").unwrap();
+        assert_eq!(info.device_id, None);
+        assert_eq!(info.schema_version, Some(9));
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&out).unwrap();
+    }
+
+    #[test]
+    fn newer_schema_version_in_manifest_is_refused_before_extraction() {
+        let source = scratch("manifest-newer-source");
+        let target = scratch("manifest-newer-target");
+        write_database(&source.join(DB_FILES[0]), "newer");
+        let archive = source.join("newer.hfdbackup");
+        let newer = crate::CURRENT_SCHEMA_VERSION + 1;
+        legacy_archive_with_manifest(&source, &archive, &format!(r#","schemaVersion":{newer}"#));
+        let err = inspect_archive(&target, &archive, "0.6.6").unwrap_err();
+        assert!(err.contains("Update the app"), "{err}");
+        assert!(err.contains(&newer.to_string()), "{err}");
+        assert!(stage_complete_restore_in(&target, &archive, "0.6.6").is_err());
+        assert_eq!(std::fs::read_dir(&target).unwrap().count(), 0);
+        std::fs::remove_dir_all(&source).unwrap();
+        std::fs::remove_dir_all(&target).unwrap();
     }
 }

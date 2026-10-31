@@ -39,6 +39,14 @@ export interface CompleteBackupInfo {
   unavailablePictures?: number;
   /** FAA reference copies whose PDF is gone or no longer matches. */
   unavailableReferences?: number;
+  /** Database version of the app that wrote the backup (absent in older backups). */
+  schemaVersion?: number;
+  /** Device that wrote the backup (absent in older backups). */
+  deviceId?: string;
+  /** Operating system that wrote the backup (absent in older backups). */
+  platform?: string;
+  /** The database version this app understands. */
+  currentSchemaVersion: number;
 }
 
 export const backupsAvailable = (): boolean => isTauri();
