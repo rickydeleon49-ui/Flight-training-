@@ -15,14 +15,16 @@ import { reviewedSaveOf, type ReviewedRegeneration } from "@/state/reviewedSaveC
 import { ChangedWords } from "./ChangedWords";
 
 /** A question in full; with `compare`, the words that differ from the other version are highlighted. */
-function QuestionContent({ question, compare }: { question: PracticeAuthoringQuestion; compare?: { question: PracticeAuthoringQuestion; show: "added" | "removed" } }) {
+function QuestionContent({ question, compare, showAnswers }: { question: PracticeAuthoringQuestion; compare?: { question: PracticeAuthoringQuestion; show: "added" | "removed" }; showAnswers: boolean }) {
   const show = compare?.show ?? "added";
   const other = compare?.question;
   return <div className="stack stack--1">
     <p className="small wrap-anywhere"><strong><ChangedWords text={question.question} other={other?.question} show={show} /></strong></p>
     <ol>{question.options.map((option, index) => <li className="tiny wrap-anywhere" key={index}><ChangedWords text={option} other={other?.options[index]} show={show} /></li>)}</ol>
-    <p className="tiny wrap-anywhere">Correct answer: <ChangedWords text={question.options[question.correctIndex] ?? ""} other={other ? other.options[other.correctIndex] : undefined} show={show} /></p>
-    <p className="tiny wrap-anywhere">Explanation: <ChangedWords text={question.explanation} other={other?.explanation} show={show} /></p>
+    {showAnswers ? <>
+      <p className="tiny wrap-anywhere">Correct answer: <ChangedWords text={question.options[question.correctIndex] ?? ""} other={other ? other.options[other.correctIndex] : undefined} show={show} /></p>
+      <p className="tiny wrap-anywhere">Explanation: <ChangedWords text={question.explanation} other={other?.explanation} show={show} /></p>
+    </> : null}
   </div>;
 }
 
@@ -40,6 +42,8 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
   const [choices, setChoices] = useState<Map<string, PreviewChoice>>(new Map());
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Reading the new questions should not spoil the test, so answers start hidden.
+  const [showAnswers, setShowAnswers] = useState(false);
   const [settling, setSettling] = useState(false);
   const busyRef = useRef(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -146,15 +150,18 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
           <p className="tiny muted">Either way, what you have now is kept in Previous versions.</p>
         </fieldset>
         <p className="tiny">Questions worded differently from something you deleted or corrected can't always be recognised. Check the new questions.</p>
+        <div className="row row--wrap">
+          <Button size="small" variant="secondary" onClick={() => setShowAnswers((shown) => !shown)}>{showAnswers ? "Hide answers" : "Show answers"}</Button>
+        </div>
         {(["near", "held", "new"] as const).map((status) => <section key={status} className="stack stack--2" aria-label={status === "near" ? "Needs your choice" : status === "held" ? "Left out" : "New"}>
           <p className="small"><strong>{status === "near" ? "Needs your choice" : status === "held" ? "Left out: matches something you deleted or corrected" : "New"}</strong></p>
           {preview.filter((entry) => entry.status === status).map((entry) => {
             const earlier = entry.match ? wording.get(`${entry.match.itemId}\u0000${entry.match.textKey}`) : null;
             return <div key={entry.item.identity} className="stack stack--2">
-              <QuestionContent question={entry.item} compare={earlier ? { question: earlier, show: "added" } : undefined} />
+              <QuestionContent question={entry.item} compare={earlier ? { question: earlier, show: "added" } : undefined} showAnswers={showAnswers} />
               {entry.match ? <div className="stack stack--1">
                 <p className="tiny muted">It looks like {entry.match.reason === "deleted" ? "something you deleted" : "something you corrected or rewrote"}:</p>
-                {earlier ? <QuestionContent question={earlier} compare={{ question: entry.item, show: "removed" }} /> : <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>}
+                {earlier ? <QuestionContent question={earlier} compare={{ question: entry.item, show: "removed" }} showAnswers={showAnswers} /> : <p className="tiny muted">That earlier wording is no longer in Previous versions.</p>}
               </div> : null}
               {status === "held" ? <Checkbox disabled={busy} checked={choices.get(entry.item.identity) === "keep"}
                 onChange={(checked) => choose(entry.item.identity, checked ? "keep" : undefined)} label={`Bring it back: ${entry.item.question}`} /> : null}

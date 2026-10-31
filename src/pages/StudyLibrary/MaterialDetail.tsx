@@ -101,6 +101,13 @@ import { MaterialActionsMenu } from "./MaterialActionsMenu";
 
 type MaterialTabChoice = { value: MaterialTab };
 const MATERIAL_TAB_CHOICES = MATERIAL_TABS.map((value) => ({ value }));
+/** The section where a waiting draft of this kind is reviewed. */
+function draftAnchor(job: GeminiJob): string {
+  if (job.kind === "flashcards") return "material-flashcards";
+  if (job.kind === "practice-test") return "material-practice-test";
+  return "material-study-guide";
+}
+
 const KIT_PAGES_NOTE = "The study kit reads up to 150 pages. Pick the pages you want — they become their own item in your library, then press Make my study kit there.";
 const materialTabLabel = (value: MaterialTab) => value === "study" ? "Study" : value === "notes" ? "Notes" : "More";
 
@@ -231,6 +238,8 @@ function MaterialDetailPage() {
   const [reviewingRegeneration, setReviewingRegeneration] = useState(false);
   const [confirmingKit, setConfirmingKit] = useState(false);
   const [kitMessage, setKitMessage] = useState<string | null>(null);
+  // Where the earlier draft that blocks a study kit waits, for "Show me".
+  const [kitDraftAnchor, setKitDraftAnchor] = useState<string | null>(null);
   const [splitNote, setSplitNote] = useState<string | undefined>(undefined);
   const [savingKit, setSavingKit] = useState(false);
   const [confirmingCards, setConfirmingCards] = useState(false);
@@ -751,6 +760,7 @@ function MaterialDetailPage() {
   const prepareStudyKit = async () => {
     if (!material?.filePath) return;
     setKitMessage(null);
+    setKitDraftAnchor(null);
     // Each refusal comes before the consent dialog, so she never confirms a
     // request that cannot be sent.
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
@@ -759,9 +769,12 @@ function MaterialDetailPage() {
     }
     const waiting = geminiJobs.jobs.filter((job) => job.materialId === material.id && (job.answer || job.sectionGuide));
     if (waiting.length > 0) {
-      setKitMessage(waiting.some((job) => job.studyKitPart && job.answer)
-        ? "Save or discard your study kit drafts first."
-        : "Save or discard the earlier drafts first, then make a study kit.");
+      if (waiting.some((job) => job.studyKitPart && job.answer)) {
+        setKitMessage("Save or discard your study kit drafts first.");
+      } else {
+        setKitMessage("Save or discard the earlier drafts first, then make a study kit.");
+        setKitDraftAnchor(draftAnchor(waiting[0]!));
+      }
       return;
     }
     try {
@@ -944,6 +957,11 @@ function MaterialDetailPage() {
               <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
               <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
               {kitMessage ? <p role="status">{kitMessage}</p> : null}
+              {kitMessage && kitDraftAnchor ? (
+                <div className="row row--wrap">
+                  <Button size="small" variant="secondary" onClick={() => jumpTo(kitDraftAnchor)}>Show me</Button>
+                </div>
+              ) : null}
               {canSaveWholeKit || savingKit ? (
                 <div className="row row--wrap">
                   <Button variant="primary" disabled={savingKit} onClick={() => void saveWholeKit()}>{savingKit ? "Saving…" : "Save all three"}</Button>

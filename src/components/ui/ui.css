@@ -411,8 +411,19 @@ dialog:not([open]) { display: none; }
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
+/* Cancel and a confirm dialog's real action share the last row. */
+.dialog__footer-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-left: auto;
+  max-width: 100%;
+}
+
 /* Every action stays reachable when labels or text size need more room. */
-.dialog__footer > .button {
+.dialog__footer > .button,
+.dialog__footer-main > .button {
   min-width: 0;
   max-width: 100%;
   white-space: normal;

@@ -222,3 +222,48 @@ it("holds Start practice test while kit drafts wait, so it is never beside Save"
   await waitFor(()=>expect(records).toHaveLength(0));
   expect(await screen.findByRole("button",{name:"Start practice test"})).toBeTruthy();
 });
+it("the consent dialog keeps Make my study kit as the primary action, last, beside Cancel",async()=>{
+  await open();fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  const confirm=await screen.findByRole("dialog",{name:"Send this file to Google?"});
+  const footer=confirm.querySelector(".dialog__footer")!;
+  const names=[...footer.querySelectorAll("button")].map(b=>b.textContent);
+  expect(names).toEqual(["Choose fewer pages to send","Cancel","Make my study kit"]);
+  const make=within(confirm).getByRole("button",{name:"Make my study kit"});
+  expect(make.className).toContain("button--primary");
+  expect(within(confirm).getByRole("button",{name:"Choose fewer pages to send"}).className).toContain("button--secondary");
+  expect(within(confirm).getByRole("button",{name:"Cancel"}).className).toContain("button--secondary");
+  // Cancel and the real action share one group, so they never wrap apart.
+  expect(make.parentElement).toBe(within(confirm).getByRole("button",{name:"Cancel"}).parentElement);
+});
+it("an earlier draft blocking the kit has a Show me button that focuses it",async()=>{
+  const single={...parts()[2]!,id:"job-bbbbbbbbbbbbbbbbbbbbbbbb",requestId:"practice:1",draft:undefined} as service.GeminiJobRecord;
+  records=[single];await open();
+  await screen.findByRole("button",{name:"Save the new practice test"});
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  expect(await screen.findByText("Save or discard the earlier drafts first, then make a study kit.")).toBeTruthy();
+  const scroll=vi.fn();
+  const target=document.getElementById("material-practice-test")!;
+  target.scrollIntoView=scroll;
+  fireEvent.click(screen.getByRole("button",{name:"Show me"}));
+  await waitFor(()=>expect(document.activeElement).toBe(target));
+  expect(scroll).toHaveBeenCalled();
+  expect(calls).not.toHaveBeenCalled();
+});
+it("kit drafts have no Show me button; their own notice says what to do",async()=>{
+  records=parts();await open();
+  await screen.findByRole("button",{name:"Save the new study guide"});
+  fireEvent.click(screen.getByRole("button",{name:"Make my study kit"}));
+  await screen.findByText("Save or discard your study kit drafts first.");
+  expect(screen.queryByRole("button",{name:"Show me"})).toBeNull();
+});
+it("the practice questions draft hides answers until Show answers",async()=>{
+  records=parts();await open();
+  await screen.findByRole("button",{name:"Save the new practice test"});
+  expect(screen.queryByText(/\(correct answer\)/)).toBeNull();
+  expect(screen.queryByText("Lift acts upwards.")).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:"Show answers"}));
+  expect(screen.getByText("Lift (correct answer)")).toBeTruthy();
+  expect(screen.getByText("Lift acts upwards.")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button",{name:"Hide answers"}));
+  expect(screen.queryByText(/\(correct answer\)/)).toBeNull();
+});

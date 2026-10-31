@@ -234,15 +234,20 @@ export function GeminiJobNotice({
  */
 /** Use the same guide renderer and plain card/question fields as saved study aids. */
 function StudyKitPartPreview({ job, what }: { job: GeminiJob; what: string }) {
+  // Reading the draft should not spoil the test, so answers start hidden.
+  const [showAnswers, setShowAnswers] = useState(false);
   const answer = job.answer;
   if (!answer) return null;
   return <details>
     <summary>Read the new {what}</summary>
     <div className="stack stack--3">
+      {"questions" in answer ? <div className="row row--wrap">
+        <Button size="small" variant="secondary" onClick={() => setShowAnswers((shown) => !shown)}>{showAnswers ? "Hide answers" : "Show answers"}</Button>
+      </div> : null}
       {"questions" in answer ? answer.questions.map((question, index) => <div key={index}>
         <p>{question.question}</p>
-        <ol>{question.options.map((option, n) => <li key={n}>{option}{n === question.correctIndex ? " (correct answer)" : ""}</li>)}</ol>
-        <p>{question.explanation}</p>
+        <ol>{question.options.map((option, n) => <li key={n}>{option}{showAnswers && n === question.correctIndex ? " (correct answer)" : ""}</li>)}</ol>
+        {showAnswers ? <p>{question.explanation}</p> : null}
         <p>Source page {question.sourcePage}</p>
       </div>) : job.kind === "flashcards" ? answer.flashcards.map((card, index) => <div key={index}>
         <p><strong>{card.front}</strong></p><p>{card.back}</p><p>Source page {card.sourcePage}</p>
