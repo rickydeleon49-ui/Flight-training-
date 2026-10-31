@@ -1607,6 +1607,8 @@ async fn study_aid_request(
     Ok(result)
 }
 
+pub(crate) const OUTPUT_LIMIT_MESSAGE: &str = "Gemini's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.";
+
 /// Pull the model's actual answer out of Gemini's response envelope.
 ///
 /// Shared by every kind of generation this application asks Gemini for, so a
@@ -1627,7 +1629,7 @@ pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     {
         match reason {
             "STOP" => {},
-            "MAX_TOKENS" => return Err("Gemini's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.".to_string()),
+            "MAX_TOKENS" => return Err(OUTPUT_LIMIT_MESSAGE.to_string()),
             "SAFETY" | "RECITATION" | "BLOCKLIST" | "PROHIBITED_CONTENT" | "SPII" => return Err("Gemini blocked this answer. Nothing was saved; check the selected source before trying again.".to_string()),
             _ => return Err("Gemini stopped before completing its answer. Nothing was saved; try a smaller selected source.".to_string()),
         }

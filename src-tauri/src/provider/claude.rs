@@ -204,12 +204,14 @@ pub(crate) fn refusal(status: u16, retry_after: Option<Duration>) -> RefusalKind
     }
 }
 
+pub(crate) const OUTPUT_LIMIT_MESSAGE: &str = "Claude's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.";
+
 pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
     let envelope: Value = serde_json::from_str(raw)
         .map_err(|_| "Claude returned an unreadable response.".to_string())?;
     match envelope["stop_reason"].as_str() {
         Some("end_turn") => {},
-        Some("max_tokens") => return Err("Claude's answer reached its output limit and is incomplete. Nothing was saved. Choose a chapter or fewer pages and try again.".into()),
+        Some("max_tokens") => return Err(OUTPUT_LIMIT_MESSAGE.into()),
         Some("refusal") => return Err("Claude declined to answer this one. Try a different section or question.".into()),
         _ => return Err("Claude stopped before completing its answer. Nothing was saved; try a smaller selected source.".into()),
     }
