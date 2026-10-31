@@ -8,7 +8,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-pub(super) const QUOTE_RULE: &str = "Every card and question must include a required quote of at most 300 characters, copied word-for-word from its cited sourcePage. sourcePage is the physical PDF page (1 = first page), never the printed page label.";
+pub(super) const QUOTE_RULE: &str = "Every card and question must include a required quote of at most 300 characters, copied word-for-word as one continuous passage (no ellipses) from its cited sourcePage. sourcePage is the physical PDF page (1 = first page), never the printed page label.";
 const UNVERIFIED: &str = "Couldn't check this against the page";
 pub(super) const FALLBACK: &str = "Couldn't check more than half of these items against the pages. All items were kept for you to review.";
 
@@ -54,6 +54,68 @@ impl PageText {
             })
             .clone()
     }
+}
+
+fn loose(t: &str) -> String {
+    t.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+fn words(t: &str) -> Vec<String> {
+    t.split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.chars().count() >= 3)
+        .map(str::to_lowercase)
+        .collect()
+}
+fn numbers(t: &str) -> Vec<String> {
+    t.split(|c: char| !(c.is_ascii_digit() || c == '.' || c == ','))
+        .map(|n| n.trim_matches(|c| c == '.' || c == ','))
+        .filter(|n| n.chars().any(|c| c.is_ascii_digit()))
+        .map(|n| n.replace(',', ""))
+        .collect()
+}
+
+/// Kit quote check, tolerant of what PDF text extraction does to real quotes
+/// (31 Oct live bench: every quote drop was a real sentence): punctuation and
+/// curly quotes, headings run into the sentence, two-column order, page breaks.
+/// Pass when the letters/digits match contiguously, or when a quote of 6+ words
+/// has ≥80% of its words on the page and every number it states.
+pub(crate) fn kit_quote_matches(page: &str, quote: &str) -> bool {
+    // Elided quotes ("A … B"): every part must match on its own.
+    let parts: Vec<&str> = quote
+        .split(['…'])
+        .flat_map(|p| p.split("..."))
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .collect();
+    if parts.len() > 1 {
+        return parts.iter().all(|p| one_quote_matches(page, p));
+    }
+    one_quote_matches(page, quote)
+}
+
+fn one_quote_matches(page: &str, quote: &str) -> bool {
+    // A tiny fragment ("engine power") proves nothing about a whole card.
+    let q = loose(quote);
+    if q.chars().count() < 12 {
+        return false;
+    }
+    // Numbers must match exactly on every path ("12-15" is not "1215").
+    let page_numbers = numbers(page);
+    if !numbers(quote).iter().all(|n| page_numbers.contains(n)) {
+        return false;
+    }
+    if crate::gemini_ask_evidence::quote_matches(page, quote) || loose(page).contains(&q) {
+        return true;
+    }
+    let qw = words(quote);
+    if qw.len() < 6 {
+        return false;
+    }
+    let pw: std::collections::HashSet<String> = words(page).into_iter().collect();
+    let hit = qw.iter().filter(|w| pw.contains(*w)).count();
+    hit * 10 >= qw.len() * 8
 }
 
 pub(super) fn check_source_items(
@@ -132,7 +194,7 @@ pub(super) fn check_items(
             let Some(page) = page.filter(|p| *p > 0 && *p <= page_count) else {
                 return 2;
             };
-            if quote.trim().is_empty() || quote.chars().count() > 300 {
+            if quote.trim().is_empty() || quote.chars().count() > 600 {
                 return 2;
             }
             let mut cited_available = false;
@@ -149,10 +211,23 @@ pub(super) fn check_items(
                 }
                 if text
                     .as_ref()
-                    .is_some_and(|text| crate::gemini_ask_evidence::quote_matches(text, &quote))
+                    .is_some_and(|text| kit_quote_matches(text, &quote))
                 {
                     item["sourcePage"] = json!(candidate);
                     return 0;
+                }
+            }
+            // A sentence that runs over a page break: cited page + the next one.
+            if page < page_count {
+                let next = cached
+                    .entry(page + 1)
+                    .or_insert_with(|| read(page + 1).filter(|t| !t.trim().is_empty()))
+                    .clone();
+                let here = cached.get(&page).cloned().flatten();
+                if let (Some(a), Some(b)) = (here, next) {
+                    if kit_quote_matches(&format!("{a}\n{b}"), &quote) {
+                        return 0;
+                    }
                 }
             }
             if cited_available {
@@ -207,13 +282,16 @@ mod tests {
     }
     #[test]
     fn verifies_page_and_neighbour_using_ask_normalization_and_corrects_page() {
-        let mut items = json!([card(1, "preflight checks"), card(2, "preflight checks")]);
+        let mut items = json!([
+            card(1, "preflight checks done"),
+            card(2, "preflight checks done")
+        ]);
         let mut reads = [0; 4];
         let c = run(&mut items, |p| {
             reads[p as usize] += 1;
             Some(
                 if p == 1 {
-                    "Pre-\nflight   checks"
+                    "Pre-\nflight   checks done"
                 } else {
                     "Other text"
                 }
@@ -229,15 +307,15 @@ mod tests {
     #[test]
     fn drops_failed_quote_but_keeps_unavailable_text() {
         let mut items = json!([
-            card(1, "Blue wing"),
-            card(1, "Invented"),
-            card(3, "Unknown")
+            card(1, "Blue wing tips glow"),
+            card(1, "Invented fact here"),
+            card(3, "Unknown words here")
         ]);
         let c = run(&mut items, |p| {
             if p == 3 {
                 None
             } else {
-                Some("Blue wing".into())
+                Some("Blue wing tips glow".into())
             }
         });
         assert_eq!((c.kept, c.dropped_by_quote, c.unverified), (2, 1, 1));
@@ -246,11 +324,11 @@ mod tests {
     #[test]
     fn majority_failures_keep_every_item_unverified_with_one_summary() {
         let mut items = json!([
-            card(1, "Invented"),
-            card(1, "Also invented"),
-            card(1, "Blue wing")
+            card(1, "Invented fact here"),
+            card(1, "Also an invented fact"),
+            card(1, "Blue wing tips glow")
         ]);
-        let c = run(&mut items, |_| Some("Blue wing".into()));
+        let c = run(&mut items, |_| Some("Blue wing tips glow".into()));
         assert_eq!((c.kept, c.dropped_by_quote, c.unverified), (3, 0, 3));
         assert_eq!(items[0]["verificationNote"], FALLBACK);
         assert_eq!(items[2]["verificationNote"], UNVERIFIED);
@@ -259,12 +337,12 @@ mod tests {
     fn choices_are_enforced_even_when_all_quotes_fail() {
         let mut items = json!((2..=5)
             .map(|n| {
-                let mut c = card(1, "Invented");
+                let mut c = card(1, "Invented fact here");
                 c["options"] = json!(vec!["x"; n]);
                 c
             })
             .collect::<Vec<_>>());
-        let c = check_items(&mut items, 1, true, |_| Some("Blue wing".into()));
+        let c = check_items(&mut items, 1, true, |_| Some("Blue wing tips glow".into()));
         assert_eq!((c.kept, c.dropped_by_choices, c.unverified), (1, 3, 1));
         assert_eq!(items[0]["options"].as_array().unwrap().len(), 3);
     }
@@ -280,10 +358,56 @@ mod tests {
         assert!(items[0].get("verificationNote").is_none());
     }
     #[test]
+    fn real_pdf_quirks_from_the_live_bench_pass() {
+        // punctuation / curly quotes / heading run-in
+        assert!(kit_quote_matches("risks of flight into four categories: Pilot-in-command (PIC),\nAircraft, enVironment, and External pressures (PAVE)", "four categories: Pilot-in-command (PIC), Aircraft, enVironment, and External pressures (PAVE)"));
+        assert!(kit_quote_matches(
+            "Get-there-itis\nThis disposition impairs pilot judgment",
+            "Get-there-itis This disposition impairs pilot judgment"
+        ));
+        // two-column order: all words present, not contiguous
+        assert!(kit_quote_matches("The purpose of an AOA indicator is to give\nOTHER COLUMN TEXT\nthe pilot better situation awareness pertaining to the aerodynamic health of the airfoil.", "The purpose of an AOA indicator is to give the pilot better situation awareness pertaining to the aerodynamic health of the airfoil."));
+    }
+    #[test]
+    fn elided_quotes_need_every_part() {
+        let page =
+            "Macho: “I can do it.” Pilots who try to prove... Antidote: Taking chances is foolish.";
+        assert!(kit_quote_matches(
+            page,
+            "Macho: “I can do it.” ... Taking chances is foolish."
+        ));
+        assert!(!kit_quote_matches(
+            page,
+            "Macho: “I can do it.” … Always take chances when flying."
+        ));
+    }
+    #[test]
+    fn page_break_quote_passes_on_cited_plus_next_page() {
+        let mut items = json!([card(1, "The motion about the aircraft’s longitudinal axis is “roll,” the motion about its lateral axis is “pitch,” and the motion about its vertical axis is “yaw.”")]);
+        let c = run(&mut items, |p| {
+            Some(if p == 1 { "Figure 5-18. Axes. The motion about the aircraft’s longitudinal axis is “roll,” the motion about its lateral axis is" } else if p == 2 { "Figure 5-19. A weight-shift aircraft. “pitch,” and the motion about its vertical axis is “yaw.” Yaw is" } else { "unrelated" }.into())
+        });
+        assert_eq!((c.kept, c.dropped_by_quote), (1, 0));
+    }
+    #[test]
+    fn wrong_page_wrong_numbers_and_short_fragments_still_fail() {
+        let page = "Density altitude increases as temperature rises. High density altitude reduces engine power, propeller thrust and wing lift.";
+        assert!(!kit_quote_matches(page, "Pilots should always complete a full preflight inspection before every flight in the aircraft."));
+        assert!(!kit_quote_matches(
+            page,
+            "High density altitude reduces engine power by 30 percent and wing lift."
+        ));
+        assert!(!kit_quote_matches(page, "engine power"));
+        assert!(kit_quote_matches(
+            page,
+            "High density altitude reduces engine power, propeller thrust, and wing lift."
+        ));
+    }
+    #[test]
     fn missing_oversized_and_punctuation_changing_quotes_fail() {
-        for quote in ["", "Limit 1215", &"x".repeat(301)] {
-            let mut items = json!([card(1, "Limit 12-15"), card(1, quote)]);
-            let c = run(&mut items, |_| Some("Limit 12-15".into()));
+        for quote in ["", "Speed limit 1215 knots", &"x".repeat(601)] {
+            let mut items = json!([card(1, "Speed limit 12-15 knots"), card(1, quote)]);
+            let c = run(&mut items, |_| Some("Speed limit 12-15 knots".into()));
             assert_eq!(c.dropped_by_quote, 1);
         }
     }

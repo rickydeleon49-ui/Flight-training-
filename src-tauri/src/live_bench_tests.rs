@@ -259,8 +259,10 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     row.guide_pages_bad = value["guide"]["sourcePages"].as_array().map_or(0, |a| {
         a.iter().filter(|p| page_bad(p.as_u64(), pages)).count()
     });
+    let raw_value = value.clone();
     let mut local = kit_evidence::PageText::new(source);
     let result = validate_checked(value, pages, model, None, |p| local.page(p));
+    dump_drops(&raw_value, &result, &mut local);
     for kind in ["cards", "questions"] {
         let c = &result["quoteCounts"][kind];
         row.dropped_by_quote += c["droppedByQuote"].as_u64().unwrap_or(0) as usize;
@@ -323,6 +325,62 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     }
     row.questions_dropped = raw_questions.saturating_sub(row.questions);
     row
+}
+
+/// Diagnostic: append every quote-dropped item, its quote and a lenient
+/// (letters/digits only) re-check on pages p-1..p+1, to HFD_LIVE_DROPS.
+fn dump_drops(raw: &Value, result: &Value, pages: &mut kit_evidence::PageText) {
+    let Ok(path) = std::env::var("HFD_LIVE_DROPS") else {
+        return;
+    };
+    let loose = |t: &str| {
+        t.chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>()
+            .to_lowercase()
+    };
+    let mut out = String::new();
+    for (kind, key, kept_ptr) in [
+        ("cards", "front", "/parts/cards/answer/flashcards"),
+        ("questions", "question", "/parts/questions/answer/questions"),
+    ] {
+        let kept: Vec<&str> = result
+            .pointer(kept_ptr)
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(|i| i[key].as_str()).collect())
+            .unwrap_or_default();
+        for item in raw[kind].as_array().into_iter().flatten() {
+            let text = item[key].as_str().unwrap_or_default();
+            if kept.contains(&text) {
+                continue;
+            }
+            let page = item["sourcePage"].as_u64().unwrap_or(0) as u32;
+            let quote = item["quote"].as_str().unwrap_or_default();
+            let q = loose(quote);
+            let mut verdict = "NOT FOUND (loose) on p-1..p+1".to_string();
+            for cand in [page, page.saturating_sub(1), page + 1] {
+                if let Some(t) = pages.page(cand) {
+                    if !q.is_empty() && loose(&t).contains(&q) {
+                        verdict = format!("loose match on page {cand} (strict matcher missed)");
+                        break;
+                    }
+                }
+            }
+            let _ = writeln!(
+                out,
+                "- **{kind}** p{page}: {text}\n  - quote: \"{quote}\"\n  - {verdict}"
+            );
+        }
+    }
+    if !out.is_empty() {
+        let mut f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .unwrap();
+        use std::io::Write as _;
+        let _ = f.write_all(out.as_bytes());
+    }
 }
 
 fn run_why(ctx: &GenContext<'_>, doc: &lopdf::Document, card: &(String, String, u32)) -> WhyRow {
