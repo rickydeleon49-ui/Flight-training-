@@ -1,3 +1,4 @@
+import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
 import { useTabListState, type TabListState } from "@react-stately/tabs";
@@ -333,6 +334,9 @@ export function StudyLibrary() {
 
       {tab === "library" ? (
       <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-library" aria-labelledby="library-tab-library">
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <CheckrideTopicPractice practiceTests={data.practiceTests} materials={data.materials} />
+      </div>
       {hasAny && cardLibrary ? (
         <BinderReviewStatus repository={cardLibrary} dataRevision={dataRevision} onStatus={setBinderStatus} />
       ) : null}

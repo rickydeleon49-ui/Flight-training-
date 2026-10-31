@@ -75,6 +75,18 @@ describe("PracticeTestPanel", () => {
     return view;
   }
 
+  it("shows the ACS chip below a tagged saved question", async () => {
+    const tagged = { ...sampleTest, questions: sampleTest.questions.map((question, index) => index === 0 ? { ...question, acsTask: "PA.II.A" } : question) };
+    await repos.documents.savePracticeTest(tagged);
+    await renderPanel(h(PracticeTestPanel, { practiceTest: tagged }));
+    expect(screen.getByText("PA.II.A · Preflight Assessment")).toBeTruthy();
+  });
+
+  it("leaves old untagged questions without an ACS chip", async () => {
+    await renderPanel(h(PracticeTestPanel, { practiceTest: sampleTest }));
+    expect(screen.queryByText(/PA\.II\.A/)).toBeNull();
+  });
+
   it("Why without a PDF keeps the original answer without evidence UI", async () => {
     vi.spyOn(geminiService, "watchAskGeminiProgress").mockResolvedValue(() => {});
     const ask = vi.spyOn(geminiService, "askGemini").mockResolvedValue({
