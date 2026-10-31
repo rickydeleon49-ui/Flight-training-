@@ -7,7 +7,7 @@
  * Ratings only schedule reviews: they are never scores, mastery, FAA results
  * or readiness, and practice tests are unaffected.
  */
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
 import type { AiStudySet, CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
@@ -413,6 +413,12 @@ function SessionView({
     review.rate(rating);
   };
 
+  // Native pointer-down focus may scroll a bottom-edge button before mouse-up,
+  // moving the click target. Keep focus in place until reveal deliberately moves it.
+  const keepRevealInPlace = (event: MouseEvent<HTMLButtonElement>) => {
+    if (event.button === 0) event.preventDefault();
+  };
+
   const reveal = () => {
     if (review.blocked || !visualReady) return;
     review.reveal();
@@ -481,7 +487,7 @@ function SessionView({
             {review.revealed ? (
               <p>{item.front}</p>
             ) : (
-              <Button disabled={busy} onClick={reveal}>
+              <Button disabled={busy} onMouseDown={keepRevealInPlace} onClick={reveal}>
                 Covered label 1. {item.front}{/[.?!]$/.test(item.front) ? "" : "."} Reveal label
               </Button>
             )}
@@ -541,7 +547,7 @@ function SessionView({
         </>
       ) : !item.visualRegionId ? (
         <div>
-          <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onClick={reveal}>
+          <Button size="small" variant="primary" disabled={busy} aria-keyshortcuts="Space Enter" onMouseDown={keepRevealInPlace} onClick={reveal}>
             Show answer
           </Button>
           <p className="tiny dim">Space or Enter shows the answer.</p>

@@ -518,7 +518,10 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
           </Button>
         </div>
         {readingText && (
-          <p className="tiny dim" role="status" style={{ margin: 0 }}>Reading this PDF on your Mac…</p>
+          <p className="small row" role="status" style={{ margin: 0 }}>
+            <span className="spinner" aria-hidden="true" />
+            Reading this PDF on your Mac…
+          </p>
         )}
         {isLoading && progress && (
           <p className="small dim" role="status" style={{ margin: 0 }}>{progress}</p>
