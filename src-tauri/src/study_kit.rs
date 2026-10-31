@@ -245,3 +245,7 @@ pub async fn generate_study_kit(
 #[cfg(test)]
 #[path = "study_kit_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "live_bench_tests.rs"]
+mod live_bench;

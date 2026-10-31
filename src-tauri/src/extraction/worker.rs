@@ -286,30 +286,7 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
     )?;
     let mut total = 0usize;
     for (number, page_id) in pages {
-        let inspection = inspect_page(&doc, page_id);
-        // An outsized or unreadable page is never handed to text extraction:
-        // lopdf would decode it again without the page budget.
-        let text: String = if inspection.content_too_large || inspection.unreadable_page {
-            String::new()
-        } else {
-            let chunks = doc.extract_text_chunks(&[number]);
-            let mut page_text: String = chunks.into_iter().filter_map(Result::ok).collect();
-            if !inspection.unmapped_text {
-                if let Some(form_text) = extract_page_form_text(&doc, page_id) {
-                    if !form_text.is_empty() {
-                        if page_text.is_empty() {
-                            page_text = form_text;
-                        } else {
-                            if !page_text.ends_with('\n') {
-                                page_text.push('\n');
-                            }
-                            page_text.push_str(&form_text);
-                        }
-                    }
-                }
-            }
-            page_text
-        };
+        let (inspection, text) = read_page(&doc, number, page_id);
         let mut result = outcome(&inspection, &text);
         let mut error = None;
         let mut text = if result == Outcome::Text {
@@ -344,6 +321,40 @@ fn extract(request: &Request, out: &mut impl Write) -> Result<(), Stop> {
         )?;
     }
     Ok(())
+}
+
+/// One page's inspection and raw text, exactly as the worker reads it. Also
+/// used in-process by the cfg(test) live bench (gemini live_bench_tests).
+pub(crate) fn read_page(
+    doc: &lopdf::Document,
+    number: u32,
+    page_id: lopdf::ObjectId,
+) -> (super::inspect::Inspection, String) {
+    let inspection = inspect_page(doc, page_id);
+    // An outsized or unreadable page is never handed to text extraction:
+    // lopdf would decode it again without the page budget.
+    let text: String = if inspection.content_too_large || inspection.unreadable_page {
+        String::new()
+    } else {
+        let chunks = doc.extract_text_chunks(&[number]);
+        let mut page_text: String = chunks.into_iter().filter_map(Result::ok).collect();
+        if !inspection.unmapped_text {
+            if let Some(form_text) = extract_page_form_text(doc, page_id) {
+                if !form_text.is_empty() {
+                    if page_text.is_empty() {
+                        page_text = form_text;
+                    } else {
+                        if !page_text.ends_with('\n') {
+                            page_text.push('\n');
+                        }
+                        page_text.push_str(&form_text);
+                    }
+                }
+            }
+        }
+        page_text
+    };
+    (inspection, text)
 }
 
 fn run_hook(hook: TestHook) -> Result<(), Stop> {
