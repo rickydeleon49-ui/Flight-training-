@@ -1,3 +1,4 @@
+import { withoutVerificationNotes } from "@/services/gemini";
 import {
   createContext,
   useCallback,
@@ -546,7 +547,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               title: aid.title,
               summary: aid.summary,
               sections: aid.sections,
-              flashcards: keptCards ?? aid.flashcards,
+              flashcards: keptCards ?? withoutVerificationNotes(aid.flashcards),
               sourceNotes: aid.sourceNotes,
               model: aid.model,
             }, job.sectionGuide ? job.jobId ?? undefined : undefined, "study-aid");
@@ -558,7 +559,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               title: currentSet?.title || aid.title,
               summary: currentSet ? currentSet.summary : "",
               sections: currentSet ? currentSet.sections : [],
-              flashcards: aid.flashcards,
+              flashcards: withoutVerificationNotes(aid.flashcards),
               sourceNotes: currentSet ? currentSet.sourceNotes : aid.sourceNotes,
               model: aid.model,
             }, undefined, "flashcards");
@@ -567,7 +568,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             await repos.documents.savePracticeTest({
               sourceMaterialId: job.materialId,
               title: test.title,
-              questions: test.questions,
+              questions: withoutVerificationNotes(test.questions),
               provider: "gemini",
               model: test.model,
             });

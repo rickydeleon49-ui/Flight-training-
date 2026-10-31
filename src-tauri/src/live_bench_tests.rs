@@ -60,6 +60,9 @@ struct KitRow {
     guide_pages_bad: usize,
     cards: usize,
     cards_dropped: usize,
+    dropped_by_quote: usize,
+    unverified: usize,
+    dropped_by_choices: usize,
     cards_pages_bad: usize,
     questions: usize,
     questions_dropped: usize,
@@ -256,7 +259,16 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     row.guide_pages_bad = value["guide"]["sourcePages"].as_array().map_or(0, |a| {
         a.iter().filter(|p| page_bad(p.as_u64(), pages)).count()
     });
-    let result = validate(value, pages, model, None);
+    let raw_value = value.clone();
+    let mut local = kit_evidence::PageText::new(source);
+    let result = validate_checked(value, pages, model, None, |p| local.page(p));
+    dump_drops(&raw_value, &result, &mut local);
+    for kind in ["cards", "questions"] {
+        let c = &result["quoteCounts"][kind];
+        row.dropped_by_quote += c["droppedByQuote"].as_u64().unwrap_or(0) as usize;
+        row.unverified += c["unverified"].as_u64().unwrap_or(0) as usize;
+        row.dropped_by_choices += c["droppedByChoices"].as_u64().unwrap_or(0) as usize;
+    }
     let parts = &result["parts"];
     for part in ["guide", "cards", "questions"] {
         if let Some(e) = parts[part]["error"].as_str() {
@@ -315,6 +327,62 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     row
 }
 
+/// Diagnostic: append every quote-dropped item, its quote and a lenient
+/// (letters/digits only) re-check on pages p-1..p+1, to HFD_LIVE_DROPS.
+fn dump_drops(raw: &Value, result: &Value, pages: &mut kit_evidence::PageText) {
+    let Ok(path) = std::env::var("HFD_LIVE_DROPS") else {
+        return;
+    };
+    let loose = |t: &str| {
+        t.chars()
+            .filter(|c| c.is_alphanumeric())
+            .collect::<String>()
+            .to_lowercase()
+    };
+    let mut out = String::new();
+    for (kind, key, kept_ptr) in [
+        ("cards", "front", "/parts/cards/answer/flashcards"),
+        ("questions", "question", "/parts/questions/answer/questions"),
+    ] {
+        let kept: Vec<&str> = result
+            .pointer(kept_ptr)
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(|i| i[key].as_str()).collect())
+            .unwrap_or_default();
+        for item in raw[kind].as_array().into_iter().flatten() {
+            let text = item[key].as_str().unwrap_or_default();
+            if kept.contains(&text) {
+                continue;
+            }
+            let page = item["sourcePage"].as_u64().unwrap_or(0) as u32;
+            let quote = item["quote"].as_str().unwrap_or_default();
+            let q = loose(quote);
+            let mut verdict = "NOT FOUND (loose) on p-1..p+1".to_string();
+            for cand in [page, page.saturating_sub(1), page + 1] {
+                if let Some(t) = pages.page(cand) {
+                    if !q.is_empty() && loose(&t).contains(&q) {
+                        verdict = format!("loose match on page {cand} (strict matcher missed)");
+                        break;
+                    }
+                }
+            }
+            let _ = writeln!(
+                out,
+                "- **{kind}** p{page}: {text}\n  - quote: \"{quote}\"\n  - {verdict}"
+            );
+        }
+    }
+    if !out.is_empty() {
+        let mut f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .unwrap();
+        use std::io::Write as _;
+        let _ = f.write_all(out.as_bytes());
+    }
+}
+
 fn run_why(ctx: &GenContext<'_>, doc: &lopdf::Document, card: &(String, String, u32)) -> WhyRow {
     let (front, back, cited) = card;
     let page_ids = doc.get_pages();
@@ -364,13 +432,13 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
         s,
         "# Live bench\n\nModel choice: {model}. Sends: {sends} of {max_sends}.\n"
     );
-    s.push_str("| PDF | pages | kit s | finish | guide w/h/b | cards (dropped) | qs (dropped) | correct A/B/C/D… | bad pages | Why? (s, sentences, refused) | flags |\n|---|---|---|---|---|---|---|---|---|---|---|\n");
+    s.push_str("| PDF | pages | kit s | finish | guide w/h/b | cards (dropped) | qs (dropped) | dropped by quote | unverified | dropped by choices | correct A/B/C | bad pages | Why? (s, sentences, refused) | flags |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n");
     for r in rows {
         let pages = r.pages.map_or("?".into(), |p| p.to_string());
         let Some(k) = &r.kit else {
             let _ = writeln!(
                 s,
-                "| {} ({:.1} MB) | {pages} | – | – | – | – | – | – | – | – | {} |",
+                "| {} ({:.1} MB) | {pages} | – | – | – | – | – | – | – | – | – | – | – | {} |",
                 r.name,
                 r.mb,
                 r.skipped.as_deref().unwrap_or("")
@@ -422,7 +490,7 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
         }
         let _ = writeln!(
             s,
-            "| {} ({:.1} MB) | {pages} | {:.0} | {} | {guide} | {} ({}) | {} ({}) | {} | {bad} | {} | {} |",
+            "| {} ({:.1} MB) | {pages} | {:.0} | {} | {guide} | {} ({}) | {} ({}) | {} | {} | {} | {} | {bad} | {} | {} |",
             r.name,
             r.mb,
             k.seconds,
@@ -431,6 +499,9 @@ fn report(rows: &[PdfRow], model: &str, max_sends: u32, sends: u32) -> String {
             k.cards_dropped,
             k.questions,
             k.questions_dropped,
+            k.dropped_by_quote,
+            k.unverified,
+            k.dropped_by_choices,
             if hist.is_empty() { "–".into() } else { hist },
             if whys.is_empty() { "–".into() } else { whys },
             if flags.is_empty() { "ok".into() } else { flags.join(", ") }

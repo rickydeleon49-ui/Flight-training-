@@ -23,11 +23,12 @@ fn study_aid_schema_identity() {
                 "type": "ARRAY",
                 "items": {
                     "type": "OBJECT",
-                    "required": ["front", "back", "sourcePage"],
+                    "required": ["front", "back", "sourcePage", "quote"],
                     "properties": {
                         "front": {"type": "STRING"},
                         "back": {"type": "STRING"},
-                        "sourcePage": {"type": "INTEGER", "nullable": true}
+                        "sourcePage": {"type": "INTEGER", "nullable": true},
+                        "quote": {"type": "STRING", "maxLength": 300}
                     }
                 }
             },
@@ -52,16 +53,17 @@ fn practice_test_schema_identity() {
                 "type": "ARRAY",
                 "items": {
                     "type": "OBJECT",
-                    "required": ["question", "options", "correctIndex", "explanation", "sourcePage"],
+                    "required": ["question", "options", "correctIndex", "explanation", "sourcePage", "quote"],
                     "properties": {
                         "question": {"type": "STRING"},
                         "options": {
-                            "type": "ARRAY",
+                            "type": "ARRAY", "minItems": 3, "maxItems": 3,
                             "items": {"type": "STRING"}
                         },
                         "correctIndex": {"type": "INTEGER"},
                         "explanation": {"type": "STRING"},
-                        "sourcePage": {"type": "INTEGER", "nullable": true}
+                        "sourcePage": {"type": "INTEGER", "nullable": true},
+                        "quote": {"type": "STRING", "maxLength": 300}
                     }
                 }
             }

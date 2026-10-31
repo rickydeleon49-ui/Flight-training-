@@ -47,18 +47,24 @@ export function geminiModelName(model: string): string {
   return model;
 }
 
+/** Transient review metadata, omitted from saved study content. */
+export interface DraftVerification { verificationNote?: string }
+export function withoutVerificationNotes<T extends DraftVerification>(items: T[]): Omit<T, "verificationNote">[] {
+  return items.map(({ verificationNote: _note, ...item }) => item);
+}
+
 export interface GeneratedStudyAid {
   title: string;
   summary: string;
   sections: StudyGuideSection[];
-  flashcards: StudyFlashcard[];
+  flashcards: (StudyFlashcard & DraftVerification)[];
   sourceNotes: string;
   model: string;
 }
 
 export interface GeneratedPracticeTest {
   title: string;
-  questions: PracticeQuestion[];
+  questions: (PracticeQuestion & DraftVerification)[];
   model: string;
 }
 

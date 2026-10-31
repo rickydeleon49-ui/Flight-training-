@@ -264,7 +264,7 @@ pub(super) async fn generate(
     } else {
         None
     };
-    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage).";
+    let safety = "Use only facts supported by the attached source. Never pad with duplicates, paraphrases or unsupported facts. Return fewer cards if no further distinct grounded facts are supported. Do not invent page references. For PDFs every card must cite its actual 1-based page within this selected file; otherwise sourcePage must be null. Keep clear student-pilot wording, ambiguity and outdated-source warnings. This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, flight-school and instructor guidance. Return JSON with title, summary, sections (heading/body), sourceNotes; card batches also include flashcards (front/back/sourcePage/quote).";
     while !draft.complete && draft.next <= (target / 10) as usize {
         unchanged(root, source)?;
         let unit = draft.next;
@@ -360,7 +360,7 @@ mod tests {
         json!({"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":value.to_string()}]}}]}).to_string()
     }
     fn aid(start: usize, count: usize) -> Value {
-        json!({"title":"Synthetic study aid","summary":"Only synthetic facts.","sections":[],"flashcards":(start..start+count).map(|n| json!({"front":format!("Question {n}"),"back":format!("Answer {n}"),"sourcePage":1})).collect::<Vec<_>>(),"sourceNotes":"Verify current FAA and instructor guidance."})
+        json!({"title":"Synthetic study aid","summary":"Only synthetic facts.","sections":[],"flashcards":(start..start+count).map(|n| json!({"front":format!("Question {n}"),"back":format!("Answer {n}"),"sourcePage":1,"quote":"Synthetic body."})).collect::<Vec<_>>(),"sourceNotes":"Verify current FAA and instructor guidance."})
     }
     struct TempDir(std::path::PathBuf);
     impl TempDir {

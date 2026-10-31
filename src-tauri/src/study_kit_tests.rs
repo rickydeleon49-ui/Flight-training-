@@ -2,8 +2,8 @@ use super::*;
 
 fn valid() -> Value {
     json!({"guide":{"body":"Overview.\n### Lift\n- Study lift.","sourcePages":[1]},
-        "cards":[{"front":"What supports flight?","back":"Lift.","sourcePage":1}],
-        "questions":[{"question":"What supports flight?","options":["Lift","Drag","Weight"],"correctIndex":0,"explanation":"Lift acts upwards.","sourcePage":1}]})
+        "cards":[{"front":"What supports flight?","back":"Lift.","sourcePage":1,"quote":"Lift acts upwards."}],
+        "questions":[{"question":"What supports flight?","options":["Lift","Drag","Weight"],"correctIndex":0,"explanation":"Lift acts upwards.","sourcePage":1,"quote":"Lift acts upwards."}]})
 }
 #[test]
 fn study_kit_three_valid_drafts_and_each_invalid_sibling_keeps_other_two() {
@@ -69,7 +69,7 @@ fn study_kit_guide_over_the_requested_length_is_kept() {
 /// none remain.
 #[test]
 fn study_kit_drops_only_invalid_cards_and_questions() {
-    let good_card = json!({"front":"What supports flight?","back":"Lift.","sourcePage":1});
+    let good_card = json!({"front":"What supports flight?","back":"Lift.","sourcePage":1,"quote":"Lift acts upwards."});
     let good_question = json!({"question":"What supports flight?","options":["Lift","Drag","Weight"],"correctIndex":0,"explanation":"Lift acts upwards.","sourcePage":2});
     let mut v = valid();
     v["cards"] = json!([
@@ -146,7 +146,7 @@ fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
     assert!(prompt.contains(r#"{"pdfPage":150,"sourcePage":150}"#));
     assert!(prompt.contains("never the number printed on the page"));
     assert!(prompt.contains("Never refer to option letters or positions in explanations."));
-    assert!(prompt.starts_with("study-kit-prompt-v2: "));
+    assert!(prompt.starts_with("study-kit-prompt-v3: "));
     assert!(prompt.contains(
         "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid)"
     ));
@@ -376,4 +376,90 @@ fn study_kit_with_only_failed_parts_left_does_not_block_a_new_kit() {
         .expect("a kit with only a failed part left blocks nothing");
     assert_ne!(next, id);
     assert!(j.list().iter().all(|r| r.id != id));
+}
+
+#[test]
+fn checked_kit_shares_page_reads_between_cards_and_questions_and_removes_quotes() {
+    let mut value = valid();
+    value["cards"][0]["quote"] = json!("Lift acts upwards.");
+    value["questions"][0]["quote"] = json!("Lift acts upwards.");
+    let mut reads = [0; 3];
+    let checked = validate_checked(value, 2, MODEL, None, |page| {
+        reads[page as usize] += 1;
+        Some(
+            if page == 2 {
+                "Lift acts upwards."
+            } else {
+                "Other text."
+            }
+            .into(),
+        )
+    });
+    for (part, items) in [("cards", "flashcards"), ("questions", "questions")] {
+        let item = &checked["parts"][part]["answer"][items][0];
+        assert_eq!(item["sourcePage"], 2);
+        assert!(item.get("quote").is_none());
+        assert!(item.get("verificationNote").is_none());
+        assert_eq!(checked["quoteCounts"][part]["kept"], 1);
+    }
+    assert_eq!(reads, [0, 1, 1]);
+}
+
+#[test]
+fn checked_kit_keeps_unavailable_pages_marked_and_drops_non_three_choices() {
+    let mut value = valid();
+    value["cards"][0]["quote"] = json!("Lift acts upwards.");
+    value["questions"][0]["quote"] = json!("Lift acts upwards.");
+    let good = value["questions"][0].clone();
+    let mut old = good.clone();
+    old["options"] = json!(["Lift", "Drag", "Weight", "Thrust"]);
+    value["questions"] = json!([good, old]);
+    let checked = validate_checked(value, 2, MODEL, None, |_| None);
+    assert_eq!(
+        checked["parts"]["questions"]["answer"]["questions"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(checked["quoteCounts"]["questions"]["droppedByChoices"], 1);
+    assert_eq!(checked["quoteCounts"]["cards"]["unverified"], 1);
+    assert_eq!(
+        checked["parts"]["cards"]["answer"]["flashcards"][0]["verificationNote"],
+        "Couldn't check this against the page"
+    );
+}
+
+#[test]
+fn majority_notice_survives_structural_removal_of_the_first_raw_item() {
+    let mut value = valid();
+    value["cards"] = json!([
+        {"front":"Invalid reference?","back":"x","sourcePage":0,"quote":"x"},
+        {"front":"Missing quote?","back":"x","sourcePage":1,"quote":"Invented"},
+        {"front":"Supported?","back":"x","sourcePage":1,"quote":"Blue wing"}
+    ]);
+    let checked = validate_checked(value, 2, MODEL, None, |_| Some("Blue wing".into()));
+    let cards = checked["parts"]["cards"]["answer"]["flashcards"]
+        .as_array()
+        .unwrap();
+    assert_eq!(cards.len(), 2);
+    assert_eq!(cards[0]["verificationNote"], kit_evidence::FALLBACK);
+    assert!(cards.iter().all(|c| c.get("verificationNote").is_some()));
+}
+
+#[test]
+fn malformed_checked_envelopes_stay_failed_without_inventing_answers() {
+    for value in [
+        json!(42),
+        json!([]),
+        json!(null),
+        json!({}),
+        json!({"cards":[42]}),
+    ] {
+        let checked = validate_checked(value, 2, MODEL, None, |_| None);
+        for part in ["guide", "cards", "questions"] {
+            assert!(checked["parts"][part].get("answer").is_none());
+            assert!(checked["parts"][part].get("error").is_some());
+        }
+    }
 }

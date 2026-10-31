@@ -92,7 +92,7 @@ fn reply(text: Value) -> (u16, String, Option<u64>) {
     (200, json!({"stop_reason":"end_turn", "content":[{"type":"thinking", "thinking":"synthetic private reasoning"},{"type":"text","text":text.to_string()}]}).to_string(), None)
 }
 fn aid() -> Value {
-    json!({"title":"Fictional guide","summary":"Study only","sections":[{"heading":"Wing","body":"The fictional wing is blue."}],"flashcards":[{"front":"Wing?","back":"Blue","sourcePage":1}],"sourceNotes":"Check with an instructor."})
+    json!({"title":"Fictional guide","summary":"Study only","sections":[{"heading":"Wing","body":"The fictional wing is blue."}],"flashcards":[{"front":"Wing?","back":"Blue","sourcePage":1,"quote":"The fictional wing is blue."}],"sourceNotes":"Check with an instructor."})
 }
 fn cache() -> PreparedSources {
     PreparedSources::new(
@@ -510,7 +510,7 @@ fn claude_flashcard_batches_and_practice_use_selected_provider() {
     assert_eq!(answer.answer.flashcards.len(), 1);
     assert_eq!(fake.log().len(), 2);
     let fake = FakeClaude::start(vec![reply(
-        json!({"title":"Fictional quiz","questions":[{"question":"Wing?","options":["Blue","Red"],"correctIndex":0,"explanation":"Fictional wing is blue.","sourcePage":null}]}),
+        json!({"title":"Fictional quiz","questions":[{"question":"Wing?","options":["Blue","Red","Green"],"correctIndex":0,"explanation":"Fictional wing is blue.","sourcePage":null,"quote":"The fictional wing is blue."}]}),
     )]);
     let budget = Budget::new(Duration::from_secs(30));
     let ctx = context(&fake, &http, &cache, &budget, &|_| {});
