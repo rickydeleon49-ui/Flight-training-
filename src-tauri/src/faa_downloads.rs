@@ -133,7 +133,7 @@ pub(crate) fn list_faa_downloads() -> Vec<EntryInfo> {
     manifest()
         .into_iter()
         .map(|e| EntryInfo {
-            offered_now: e.kind != Kind::PhakFull,
+            offered_now: true,
             id: e.id,
             title: e.title,
             edition: e.edition,

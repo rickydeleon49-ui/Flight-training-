@@ -225,8 +225,7 @@ fn faa_manifest_is_https_faa_only_unique_and_capped() {
     let info = list_faa_downloads();
     assert_eq!(info.len(), 23);
     assert!(
-        !info
-            .iter()
+        info.iter()
             .find(|i| i.id == "phak-25c-full")
             .unwrap()
             .offered_now

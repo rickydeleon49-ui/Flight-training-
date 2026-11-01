@@ -31,6 +31,8 @@ import {
 import { previewStudyPageSource } from "@/services/studyPageSources";
 import { useAppData } from "@/state/AppDataContext";
 
+import { SplitPdfDialog } from "./SplitPdfDialog";
+
 export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
   const { data, mutate } = useAppData();
   const [adding, setAdding] = useState<FaaReference | null>(null);
@@ -50,10 +52,11 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
         <p className="small wrap-anywhere">Official source: {reference.source}</p>
         <p className="small muted">Source list last checked: October 28, 2026. Newer editions may exist.</p>
       </details>
+      {reference.id === "phak" ? <HandbookDownload phak /> : null}
       {copies.map(({ material, note }) => (
         <SavedReference key={material.id} material={material} note={note} reference={reference} />
       ))}
-      {copies.length === 0 ? <p className="small muted">Optional · No saved PDF</p> : null}
+      {reference.id !== "phak" && copies.length === 0 ? <p className="small muted">Optional · No saved PDF</p> : null}
     </div>
     );
   };
@@ -61,12 +64,13 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
   return (
     <section className="faa-shelf" aria-labelledby="faa-shelf-title">
       <h2 id="faa-shelf-title" className="section-title">FAA references</h2>
-      <p className="small muted">Optional books for offline study. Add a PDF or get an AFH chapter from faa.gov.</p>
+      <p className="small muted">Optional books for offline study. Add a PDF or get a handbook from faa.gov.</p>
       {!canHandleFiles() ? <p className="small muted">Adding, checking and opening PDFs needs the desktop application. Your saved reference notes are still available here.</p> : null}
+      {canHandleFiles() ? <p className="small muted">Needs internet once; works offline afterwards.</p> : null}
       {entry(FAA_REFERENCES[0])}
       {entry(FAA_REFERENCES[1])}
       {entry(FAA_REFERENCES[2])}
-      <AfhShelf onAddPdf={onAddPdf} />
+      <HandbookDownload onAddPdf={onAddPdf} />
       <p className="small muted">Complete backups include these PDFs, notes and bookmarks. Large books make backups larger. Adding another copy keeps earlier editions.</p>
       {adding ? <AddReference reference={adding} onClose={() => setAdding(null)} onSave={async (draft) => {
         const saved = await mutate((repos) => repos.documents.create(draft));
@@ -79,9 +83,10 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
 const AFH_PAGE = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook";
 const DOWNLOAD_ERROR = "faa.gov didn't answer. Try again later, or add the PDF yourself.";
 
-function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
+function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; phak?: boolean }) {
   const { data, repositories, mutate } = useAppData();
   const desktop = canHandleFiles();
+  const [splitting, setSplitting] = useState<StudyMaterial | null>(null);
   const [entries, setEntries] = useState<FaaDownloadEntry[]>([]);
   const [selected, setSelected] = useState("");
   const [records, setRecords] = useState<FaaDownloadRecord[]>([]);
@@ -104,7 +109,7 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
     window.addEventListener("offline", connectivity);
     if (desktop) void listFaaDownloads().then((all) => {
       if (!live.current) return;
-      const offered = all.filter((entry) => entry.offeredNow && (entry.kind === "afhChapter" || entry.kind === "afhAddendum"));
+      const offered = all.filter((entry) => entry.offeredNow && (phak ? entry.id === "phak-25c-full" : entry.kind === "afhChapter" || entry.kind === "afhAddendum"));
       setEntries(offered);
       setSelected(offered.find((entry) => entry.id === "afh-3c-ch01")?.id ?? offered[0]?.id ?? "");
     }).catch(() => { if (live.current) setError(DOWNLOAD_ERROR); });
@@ -118,18 +123,18 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
         pending.current = null;
       }
     };
-  }, [desktop]);
+  }, [desktop, phak]);
 
   useEffect(() => {
     let active = true;
     if (repositories) void repositories.faaDownloads.list().then((rows) => {
       if (active) {
-        const next = rows.filter((row) => row.documentId.startsWith("afh-"));
+        const next = rows.filter((row) => phak ? row.documentId === "phak-25c-full" : row.documentId.startsWith("afh-"));
         setRecords((current) => JSON.stringify(current) === JSON.stringify(next) ? current : next);
       }
     }).catch(() => { if (active) setError("Your saved copy details couldn't be loaded. Please try again."); });
     return () => { active = false; };
-  }, [repositories, data.materials]);
+  }, [repositories, data.materials, phak]);
 
   useEffect(() => {
     if (!busy) return;
@@ -215,21 +220,23 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
   };
   const mb = (bytes: number) => Math.round(bytes / 1_000_000);
 
-  return <div className="faa-shelf__entry">
+  return <div className={phak ? undefined : "faa-shelf__entry"}>
+    {!phak ? <>
     <h3 className="small">Airplane Flying Handbook</h3>
     <p className="small muted">Choose a chapter or the MOSAIC addendum to keep for offline study.</p>
+    </> : null}
     {desktop ? <>
       <div className="row row--wrap">
-        <Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
+        {!phak ? <><Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
           onChange={(value) => { setSelected(value); setMessage(""); }} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
-        <Button onClick={onAddPdf} disabled={!onAddPdf}>Add PDF</Button>
-        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? "Downloading…" : alreadySaved ? "Already saved" : "Get from faa.gov"}</Button>
+        <Button onClick={onAddPdf} disabled={!onAddPdf}>Add PDF</Button></> : null}
+        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? "Downloading…" : alreadySaved ? "Already saved" : phak ? "Get full handbook from faa.gov (about 74 MB)" : "Get from faa.gov"}</Button>
         {busy && !pending.current ? <Button onClick={() => void cancel()} disabled={cancelling}>{cancelling ? "Cancelling…" : "Cancel"}</Button> : null}
         {pending.current ? <Button onClick={() => void retry()} disabled={busy}>Save downloaded PDF</Button> : null}
       </div>
-      {!online ? <p className="small muted">Needs internet once; works offline afterwards.</p> : null}
       {busy && !pending.current ? <p className="small" role="status">Getting {selectedLabel} from faa.gov…{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
     </> : null}
+    {phak && !selectedRecords.length && !faaShelfCopies(data.materials, FAA_REFERENCES[1]).length ? <p className="small muted">Optional · No saved PDF</p> : null}
     {message ? <p className="small" role="status">{message}</p> : null}
     {error ? <p className="small" role="alert">{error}</p> : null}
     {selectedRecords.map((record) => {
@@ -238,13 +245,17 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
       return <div key={record.materialId}>
         <h4 className="small">{material.title}</h4>
         <p className="small">Saved for offline study</p>
-        <p className="small wrap-anywhere">{record.edition} · {record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
-        <SavedReference material={material} reference={{ title: "Airplane Flying Handbook", edition: record.edition }}
+        <p className="small wrap-anywhere">{record.edition} · {phak ? "2023" : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
+        <SavedReference material={material} reference={{ title: phak ? "Pilot’s Handbook of Aeronautical Knowledge" : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
-        <CurrentAfhLink />
+        {phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
+          ? <Button disabled>Chapter PDFs made</Button>
+          : <Button onClick={() => setSplitting(material)}>Make chapter PDFs</Button> : null}
+        {!phak ? <CurrentAfhLink /> : null}
       </div>;
     })}
-    {!selectedRecords.length ? <CurrentAfhLink /> : null}
+    {!phak && !selectedRecords.length ? <CurrentAfhLink /> : null}
+    {splitting ? <SplitPdfDialog open material={splitting} onClose={() => setSplitting(null)} onCreated={() => setSplitting(null)} /> : null}
   </div>;
 }
 

@@ -28,6 +28,13 @@ describe("FAA download provenance", () => {
     expect(material?.notes ?? "").toBe("");
     expect(JSON.stringify(material)).not.toContain(SHA);
   });
+  it("round-trips the full PHAK 25C provenance without changing the schema", async () => {
+    const copy = downloaded({ manifestId: "phak-25c-full", edition: "FAA-H-8083-25C", bytes: 74_000_000,
+      sourceUrl: "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf" });
+    const record = await repos.faaDownloads.record({ materialId: "phak", title: "PHAK 25C", downloaded: copy });
+    expect(await repos.faaDownloads.get("phak")).toEqual(record);
+    expect(record).toMatchObject({ documentId: copy.manifestId, bytes: 74_000_000, edition: copy.edition });
+  });
   it("allows a missing Last-Modified", async () => {
     await repos.faaDownloads.record({ materialId: "m1", title: "AFH", downloaded: downloaded({ httpLastModified: null }) });
     expect((await repos.faaDownloads.get("m1"))?.httpLastModified).toBeNull();

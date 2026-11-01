@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, act } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { makeMaterial } from "@/testing/factories";
@@ -8,7 +8,7 @@ import { FAA_REFERENCES, faaReferenceDraft } from "@/logic/faaReferences";
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(), download: vi.fn(), progress: vi.fn(), cancel: vi.fn(), records: vi.fn(), record: vi.fn(), openUrl: vi.fn(),
-  desktop: true, materials: [] as unknown[], pick: vi.fn(), preview: vi.fn(), open: vi.fn(), cleanup: vi.fn(), mutate: vi.fn(), create: vi.fn(),
+  split: vi.fn(), desktop: true, materials: [] as unknown[], pick: vi.fn(), preview: vi.fn(), open: vi.fn(), cleanup: vi.fn(), mutate: vi.fn(), create: vi.fn(),
 }));
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({ data: { materials: mocks.materials }, mutate: mocks.mutate, repositories }),
@@ -25,6 +25,7 @@ vi.mock("@/services/faaDownloads", async (importOriginal) => ({
   faaDownloadProgress: mocks.progress, cancelFaaDownload: mocks.cancel,
 }));
 vi.mock("@/services/studyPageSources", () => ({ previewStudyPageSource: mocks.preview }));
+vi.mock("./SplitPdfDialog", () => ({ SplitPdfDialog: (props: unknown) => { mocks.split(props); return h("div", { role: "dialog", "aria-label": "Existing split dialog" }); } }));
 import { FaaReferences } from "./FaaReferences";
 
 const imported = {
@@ -185,7 +186,7 @@ const entries = [
   { id: "afh-3c-ch01", title: "Airplane Flying Handbook, chapter 1", edition: "FAA-H-8083-3C", published: "2021", maxBytes: 50_000_000, kind: "afhChapter", offeredNow: true },
   { id: "afh-3c-ch04", title: "Airplane Flying Handbook, chapter 4", edition: "FAA-H-8083-3C", published: "2021", maxBytes: 50_000_000, kind: "afhChapter", offeredNow: true },
   { id: "afh-addendum-mosaic", title: "Airplane Flying Handbook addendum (MOSAIC)", edition: "FAA-H-8083-3C addendum (MOSAIC)", published: "2025-10", maxBytes: 50_000_000, kind: "afhAddendum", offeredNow: true },
-  { id: "phak-25c-full", title: "PHAK full book", kind: "phakFull", offeredNow: false },
+  { id: "phak-25c-full", title: "PHAK full book", edition: "FAA-H-8083-25C", published: "2023", kind: "phakFull", offeredNow: true },
 ];
 const downloaded = { document: imported, manifestId: "afh-3c-ch04", sourceUrl: "https://www.faa.gov/synthetic.pdf", edition: "FAA-H-8083-3C", sha256: "a".repeat(64), bytes: 100, httpLastModified: null };
 const receipt = { materialId: "afh-copy", documentId: "afh-3c-ch04", sourceUrl: downloaded.sourceUrl, edition: downloaded.edition, contentSha256: downloaded.sha256, bytes: 100, httpLastModified: null, downloadedAt: "2026-10-31T12:00:00Z" };
@@ -345,7 +346,7 @@ it("shows no approximate size when the manifest only supplies a download cap", a
   mount();
   await screen.findByRole("option", { name: /chapter 4/ });
   fireEvent.change(screen.getByRole("combobox"), { target: { value: "afh-3c-ch04" } });
-  expect(screen.queryByText(/about .*MB/)).toBeNull();
+  expect(within(screen.getByRole("combobox").closest(".faa-shelf__entry") as HTMLElement).queryByText(/about .*MB/)).toBeNull();
   expect(screen.queryByText(/50 MB/)).toBeNull();
 });
 
@@ -378,4 +379,66 @@ it("shows only the selected chapter's saved info and prevents downloading it aga
   expect(screen.queryByRole("button", { name: /Open offline:/ })).toBeNull();
   expect(screen.queryByRole("link", { name: /Notes and bookmarks/ })).toBeNull();
   expect(screen.queryByText(/^Other edition ·/)).toBeNull();
+});
+
+const phakReceipt = { ...receipt, materialId: "phak-copy", documentId: "phak-25c-full", edition: "FAA-H-8083-25C" };
+const phakMaterial = () => makeMaterial({ id: phakReceipt.materialId, title: "PHAK 25C", filePath: imported.relativePath });
+
+it("offers full PHAK with size, shows progress and cancels safely", async () => {
+  let finish!: (value: typeof downloaded) => void;
+  mocks.download.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  mount();
+  const get = await screen.findByRole("button", { name: "Get full handbook from faa.gov (about 74 MB)" });
+  await waitFor(() => expect((get as HTMLButtonElement).disabled).toBe(false));
+  expect(screen.getAllByText("Needs internet once; works offline afterwards.")).toHaveLength(1);
+  fireEvent.click(get);
+  await screen.findByRole("button", { name: "Downloading…" });
+  await screen.findByText(/Getting PHAK full book from faa.gov… 12 of 42 MB/);
+  expect(mocks.download).toHaveBeenCalledWith("phak-25c-full", expect.any(String));
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await act(async () => finish(downloaded));
+  await screen.findByText("Download cancelled.");
+  expect(mocks.record).not.toHaveBeenCalled();
+  expect(mocks.cleanup).toHaveBeenCalledWith([imported.relativePath]);
+});
+
+it("saves PHAK provenance and retries saving without another download", async () => {
+  const phakDownload = { ...downloaded, manifestId: phakReceipt.documentId, edition: phakReceipt.edition };
+  mocks.download.mockResolvedValue(phakDownload);
+  mocks.record.mockResolvedValueOnce(null).mockResolvedValueOnce(phakReceipt);
+  mount();
+  const get = await screen.findByRole("button", { name: /Get full handbook/ });
+  await waitFor(() => expect((get as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(get);
+  await screen.findByText("Your PDF couldn't be saved. Try Save downloaded PDF again.");
+  fireEvent.click(screen.getByRole("button", { name: "Save downloaded PDF" }));
+  await screen.findByText("Saved for offline study.");
+  expect(mocks.download).toHaveBeenCalledTimes(1);
+  expect(mocks.record.mock.calls[1]![0]).toMatchObject({ title: "PHAK full book", downloaded: phakDownload });
+});
+
+it("shows saved PHAK and opens the existing split dialog with that material", async () => {
+  const saved = phakMaterial();
+  mocks.materials = [saved];
+  mocks.records.mockResolvedValue([phakReceipt]);
+  mount();
+  const already = await screen.findByRole("button", { name: "Already saved" });
+  expect((already as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByText(/^FAA-H-8083-25C · 2023/)).toBeTruthy();
+  expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "Make chapter PDFs" }));
+  await screen.findByRole("dialog", { name: "Existing split dialog" });
+  expect(mocks.split).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, material: saved }));
+});
+
+it("uses saved lineage for chapter completion, including after the materials refresh", async () => {
+  mocks.materials = [phakMaterial()];
+  mocks.records.mockResolvedValue([phakReceipt]);
+  const view = mount();
+  await screen.findByRole("button", { name: "Make chapter PDFs" });
+  mocks.materials = [...mocks.materials, makeMaterial({ id: "part", lineage: { rootMaterialId: phakReceipt.materialId } as NonNullable<ReturnType<typeof makeMaterial>["lineage"]> })];
+  view.rerender(h(MemoryRouter, null, h(FaaReferences)));
+  const made = await screen.findByRole("button", { name: "Chapter PDFs made" });
+  expect((made as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.queryByRole("button", { name: "Make chapter PDFs" })).toBeNull();
 });

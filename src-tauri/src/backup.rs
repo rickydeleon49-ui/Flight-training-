@@ -17667,8 +17667,8 @@ mod faa_downloads_schema_tests {
         connection.execute_batch("PRAGMA foreign_keys=ON").unwrap();
         connection
             .execute_batch(&format!(
-                "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','AFH','now','now');
-                 INSERT INTO faa_downloads VALUES ('m','afh-ch-01','https://www.faa.gov/x.pdf','2026','{}',10,NULL,'now');",
+                "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','PHAK','now','now');
+                 INSERT INTO faa_downloads VALUES ('m','phak-25c-full','https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/faa-h-8083-25c.pdf','FAA-H-8083-25C','{}',10,NULL,'now');",
                 "a".repeat(64)
             ))
             .unwrap();
