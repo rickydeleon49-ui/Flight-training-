@@ -24,7 +24,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
   save: mocks.save,
 }));
 
-import { chooseCompleteBackupDestination, dataDirectory, openDataFolder } from "./backups";
+import { chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
@@ -93,5 +93,43 @@ describe("data directory inside desktop shell", () => {
     await expect(openDataFolder()).rejects.toBe(
       "Could not open /Users/pilot/Library/Application Support/com.herflightdeck.app: denied",
     );
+  });
+});
+
+describe("phone import plumbing", () => {
+  it("imports the selected path and returns the inspected copy", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    const info = { path: "/app/.incoming/latest.hfdbackup" };
+    mocks.invoke.mockResolvedValueOnce(info);
+    expect(await importPickedBackup("/picked/copy.hfdbackup")).toBe(info);
+    expect(mocks.invoke).toHaveBeenCalledWith("import_picked_backup", { sourcePath: "/picked/copy.hfdbackup" });
+  });
+
+  it("discards the incoming copy without passing a path", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    await discardIncomingBackup();
+    expect(mocks.invoke).toHaveBeenCalledWith("discard_incoming_backup");
+  });
+
+  it("exits for restore without passing arguments", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    await exitForRestore();
+    expect(mocks.invoke).toHaveBeenCalledWith("exit_for_restore");
+  });
+
+  it("returns the native activity summary", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    const summary = { latestReviewAt: "2026-10-30T12:00:00Z", reviewsLast7Days: 2, attemptsLast7Days: 1 };
+    mocks.invoke.mockResolvedValueOnce(summary);
+    expect(await phoneActivitySummary()).toBe(summary);
+    expect(mocks.invoke).toHaveBeenCalledWith("phone_activity_summary");
+  });
+
+  it("never invokes phone commands outside Tauri, including exit", async () => {
+    await expect(importPickedBackup("/picked/copy.hfdbackup")).rejects.toThrow("Restore needs the application.");
+    await discardIncomingBackup();
+    await expect(exitForRestore()).rejects.toThrow("Restore needs the application.");
+    expect(await phoneActivitySummary()).toEqual({ latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 });
+    expect(mocks.invoke).not.toHaveBeenCalled();
   });
 });

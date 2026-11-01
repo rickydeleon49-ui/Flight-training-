@@ -23,6 +23,7 @@ mod card_reviews;
 mod debrief;
 mod documents;
 pub mod extraction;
+mod phone_activity;
 mod safety_notices;
 
 /// Counts requested allocation bytes; capped only in the extraction worker.
@@ -432,6 +433,10 @@ pub fn run() {
             faa_downloads::download_faa_handbook,
             faa_downloads::cancel_faa_download,
             faa_downloads::faa_download_progress,
+            backup::import_picked_backup,
+            backup::discard_incoming_backup,
+            backup::exit_for_restore,
+            phone_activity::phone_activity_summary,
             weather::weather_session,
             weather::get_airport_weather,
             extraction::service::offline_content_readiness,
