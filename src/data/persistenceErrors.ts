@@ -208,6 +208,8 @@ export class StudySetSaveError extends Error {
 /* Practice-question authoring (OFFLINE-03b round 1)                   */
 /* ------------------------------------------------------------------ */
 
+export const KIT_PRACTICE_ATTEMPT_MESSAGE = "Finish or abandon your current practice test before saving new practice questions. These questions stay here as a draft.";
+
 export type PracticeAuthoringErrorCode =
   | "INVALID_ARGUMENT"
   | "STALE_CONTENT"

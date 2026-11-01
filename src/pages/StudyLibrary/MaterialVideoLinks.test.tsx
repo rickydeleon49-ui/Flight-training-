@@ -38,7 +38,10 @@ describe("videos card", () => {
   });
   it("shows empty state, adds, focuses URL, confirms removal, and persists", async () => {
     show(); await screen.findByText(/Found a helpful video/);
+    const hint = screen.getByText(/Try it: paste a link like youtube.com\/watch\?v=dQw4w9WgXcQ/);
+    expect(hint.querySelector("a")).toBeNull();
     const link = await add();
+    expect(screen.queryByText(/Try it: paste a link like/)).toBeNull();
     expect(link.getAttribute("href")).toBe("https://youtube.com/watch?v=synthetic");
     expect(document.activeElement).toBe(screen.getByPlaceholderText("Paste a YouTube or video link"));
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));

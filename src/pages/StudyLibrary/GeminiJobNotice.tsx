@@ -1,3 +1,4 @@
+import { KIT_PRACTICE_ATTEMPT_MESSAGE } from "@/data/persistenceErrors";
 import { GuideBody } from "./GuideBody";
 import { providerCompany, providerWording } from "@/services/provider";
 import { useEffect, useRef, useState } from "react";
@@ -127,6 +128,7 @@ export function GeminiJobNotice({
               : job.kind === "study-aid" ? "Saving it replaces your saved guide; any saved flashcards stay as they are." : job.kind === "flashcards" ? "Saving it replaces your saved cards; your study guide stays as it is." : "Saving it replaces what is saved now; completed practice history is kept."}
           </p>
         </div>
+        {job.error === KIT_PRACTICE_ATTEMPT_MESSAGE ? <p className="small" role="status">{KIT_PRACTICE_ATTEMPT_MESSAGE}</p> : null}
         {onReview && reviewDisabled ? <p className="tiny muted">Finish or abandon your current practice attempt before reviewing these questions.</p> : null}
         {job.studyKitPart && !job.checkpointed ? <p className="tiny" role="alert">This draft could not be kept on this computer. Keep this window open until you save or discard it.</p> : null}
         {summary ? <p className="tiny">{summary}</p> : null}

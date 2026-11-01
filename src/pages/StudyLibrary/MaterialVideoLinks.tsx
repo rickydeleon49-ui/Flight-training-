@@ -47,7 +47,7 @@ export function MaterialVideoLinks({ materialId }: { materialId: string }) {
       <span className="small muted">{links.length ? `${links.length} saved` : "optional"}</span>
     </summary>
     <CardBody><div className="stack stack--3">
-      {loaded && !links.length ? <p className="small muted">Found a helpful video? Paste its link here so you can come back to it.</p> : null}
+      {loaded && !links.length ? <p className="small muted">Found a helpful video? Paste its link here so you can come back to it. Try it: paste a link like youtube.com/watch?v=dQw4w9WgXcQ</p> : null}
       {links.length ? <ul className="stack stack--3">{links.map((link) => <li key={link.id} className="row row--between row--wrap">
         <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ overflowWrap: "anywhere" }} onClick={(event) => { event.preventDefault(); void open(link); }}>{videoLinkLabel(link)}</a>
         <div className="row"><Button size="small" disabled={busy} onClick={() => { setRenaming(link); setName(link.title); }}>Rename</Button>

@@ -99,6 +99,18 @@ describe("PracticeTestPanel", () => {
     expect(await screen.findByText(/Resuming your attempt — 1 of 2 answered/)).toBeTruthy();
   });
 
+  it("uses calm progress when a newly started unanswered attempt is reopened after regeneration", async () => {
+    await repos.documents.savePracticeTest({ ...sampleTest, title: "Regenerated test" });
+    const active = (await repos.practiceSessions.getActiveVersion("mat-1"))!;
+    await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId: "mat-1", versionId: active.version.id });
+    await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    expect(screen.getByRole("status", {name:"Practice progress"}).textContent).toBe("Question 1 of 2");
+    expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
+  });
+
   it.each(["answer", "finish"])("offers skipped questions at the end and lets her %s", async action => {
     await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
     fireEvent.click(screen.getByRole("button", {name:"Skip for now →"}));

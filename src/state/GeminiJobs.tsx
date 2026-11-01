@@ -15,7 +15,7 @@ import type { Repositories } from "@/data/repositories";
 import type { AiStudySet, PracticeTest } from "@/domain/types";
 import { forgetReviewedSave, rememberReviewedSave, reviewedSaveOf, type ReviewedRegeneration } from "./reviewedSaveCheckpoint";
 import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
-import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/data/persistenceErrors";
+import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES, KIT_PRACTICE_ATTEMPT_MESSAGE } from "@/data/persistenceErrors";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import { inspectPdf } from "@/services/pdf";
 import {
@@ -489,7 +489,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // journal until then, and a restart must recognise this save, not redo it.
       if (reviewed) rememberReviewedSave(job.jobId, reviewed);
 
-      let outcome: "saved" | "already" | "superseded" | "newer" | "review" | null;
+      let outcome: "saved" | "already" | "superseded" | "newer" | "review" | "attempt" | null;
       let practiceError: string | null = null;
       const guideFailure: { error?: SectionGuideError } = {};
       try {
@@ -527,6 +527,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               throw failure;
             }
           }
+          // Kit consent does not end an attempt: keep these paid questions
+          // as a draft until she finishes or abandons it herself.
+          if (job.kind === "practice-test" && job.studyKitPart && await repos.practiceSessions.getCurrentAttempt(job.materialId)) return "attempt" as const;
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
           // Kit parts share one study set, so saving one part moves its
@@ -596,6 +599,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         forget(key);
         if (outcome === "saved") onSaved?.();
         return true;
+      } else if (outcome === "attempt") {
+        update(key, { phase: "recovered", error: KIT_PRACTICE_ATTEMPT_MESSAGE });
       } else if (outcome === "review") {
         update(key, { phase: "recovered", needsReview: true, error: null });
       } else if (outcome === "superseded" || outcome === "newer") {

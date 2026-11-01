@@ -541,7 +541,7 @@ export function PracticeTestPanel({
           freshVersionId: attempt && content(frozen.items) !== content(active.items) ? active.version.id : null,
           attempt,
         });
-        if (reason === "initial") resumedAttempt.current = attempt?.attemptId ?? null;
+        if (reason === "initial") resumedAttempt.current = attempt && attempt.responses.length > 0 ? attempt.attemptId : null;
         if (refreshedNotice) {
           // Only reachable once the authoritative read really succeeded.
           dispatch({ type: "notice", generation, text: refreshedNotice });
