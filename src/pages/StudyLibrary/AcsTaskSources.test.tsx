@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
@@ -19,7 +19,11 @@ it("starts closed and lists the task's plain source names and exact edition foot
   expect(screen.getByRole("link", { name: "Pilot’s Handbook of Aeronautical Knowledge" }).getAttribute("href"))
     .toBe("https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak");
   expect(screen.getByRole("link", { name: "Pilot certification" })).toBeTruthy();
-  expect(container.querySelector("details > p")!.textContent).toBe("Pilot certification, BasicMed medical requirements, General operating and flight rules, BasicMed, Risk Management Handbook, Airplane Flying Handbook, Pilot’s Handbook of Aeronautical Knowledge");
+  expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+    "Pilot certification", "BasicMed medical requirements", "General operating and flight rules", "BasicMed",
+    "Risk Management Handbook", "Airplane Flying Handbook", "Pilot’s Handbook of Aeronautical Knowledge",
+  ]);
+  for (const item of screen.getAllByRole("listitem")) expect(within(item).getAllByRole("link")).toHaveLength(1);
   expect(container.textContent).toContain("From FAA-S-ACS-6C (November 2023, effective May 31, 2024). Check the current FAA version.");
   expect(screen.getByRole("link", { name: "Check the current FAA version." }).getAttribute("href"))
     .toBe("https://www.faa.gov/training_testing/testing/acs");
@@ -34,7 +38,10 @@ it("keeps chips plain unless sources are requested and leaves unlinked reference
   const view = render(<AcsTaskChip code="PA.I.F" />);
   expect(screen.queryByText("Official sources")).toBeNull();
   view.rerender(<AcsTaskChip code="PA.I.F" showSources />); expand();
-  expect(screen.getByText(/Use your airplane’s operating handbook or flight manual\./)).toBeTruthy();
+  const plain = screen.getByText("Use your airplane’s operating handbook or flight manual.");
+  expect(plain.tagName).toBe("LI");
+  expect(plain.children).toHaveLength(0);
+  expect(within(plain).queryByRole("link")).toBeNull();
   expect(screen.queryByRole("link", { name: /operating handbook/ })).toBeNull();
 });
 it("preserves browser anchor navigation and opens desktop source and edition links with the opener", () => {
