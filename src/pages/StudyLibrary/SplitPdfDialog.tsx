@@ -131,6 +131,9 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
             : "Reading the document…"}
         </p>
         {outline ? (
+          <p className="small muted">Big books can take a few minutes.</p>
+        ) : null}
+        {outline ? (
           <p className="tiny dim">
             Each part is at most {describeFileSize(MAX_PDF_BYTES)} and{" "}
             {outline.maxPagesPerSplit.toLocaleString()} pages. Parts are labeled in order and

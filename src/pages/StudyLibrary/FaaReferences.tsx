@@ -24,6 +24,7 @@ import {
 import {
   canHandleFiles,
   cleanupDocuments,
+  documentExists,
   openDocument,
   pickAndImportDocument,
   type ImportedDocument,
@@ -218,7 +219,7 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
     try { await save(); }
     finally { locked.current = false; if (live.current) setBusy(false); }
   };
-  const mb = (bytes: number) => Math.round(bytes / 1_000_000);
+  const mb = (bytes: number) => Math.round(bytes / 1_048_576);
 
   return <div className={phak ? undefined : "faa-shelf__entry"}>
     {!phak ? <>
@@ -242,20 +243,20 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
     {selectedRecords.map((record) => {
       const material = data.materials.find((item) => item.id === record.materialId);
       if (!material) return null;
-      return <div key={record.materialId}>
+      return <div key={record.materialId} className="stack stack--4">
         <h4 className="small">{material.title}</h4>
         <p className="small">Saved for offline study</p>
         <p className="small wrap-anywhere">{record.edition} · {phak ? "2023" : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
-        <SavedReference material={material} reference={{ title: phak ? "Pilot’s Handbook of Aeronautical Knowledge" : "Airplane Flying Handbook", edition: record.edition }}
+        <SavedReference material={material} downloaded reference={{ title: phak ? "Pilot’s Handbook of Aeronautical Knowledge" : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
         {phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
-          ? <Button disabled>Chapter PDFs made</Button>
-          : <Button onClick={() => setSplitting(material)}>Make chapter PDFs</Button> : null}
+          ? <Button disabled>Study-size parts made</Button>
+          : <Button onClick={() => setSplitting(material)}>Make study-size parts</Button> : null}
         {!phak ? <CurrentAfhLink /> : null}
       </div>;
     })}
     {!phak && !selectedRecords.length ? <CurrentAfhLink /> : null}
-    {splitting ? <SplitPdfDialog open material={splitting} onClose={() => setSplitting(null)} onCreated={() => setSplitting(null)} /> : null}
+    {splitting ? <SplitPdfDialog open material={splitting} onClose={() => setSplitting(null)} onCreated={(ids) => { setMessage(`Made ${ids.length} parts. Find them in your Study Library.`); setSplitting(null); }} /> : null}
   </div>;
 }
 
@@ -281,7 +282,8 @@ const AVAILABILITY: Record<FaaAvailability, string> = {
   browser: "Availability needs the desktop application",
 };
 
-function SavedReference({ material, note, reference }: {
+function SavedReference({ material, note, reference, downloaded = false }: {
+  downloaded?: boolean;
   material: StudyMaterial;
   note: Pick<FaaReferenceNote, "edition" | "contentSha256"> & { totalPages?: number };
   reference: { title: string; edition: string };
@@ -289,7 +291,7 @@ function SavedReference({ material, note, reference }: {
   const [state, setState] = useState<{ key: string; availability: FaaAvailability } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const key = JSON.stringify([material.id, material.filePath, note]);
+  const key = JSON.stringify([material.id, material.filePath, note, downloaded]);
   const currentKey = useRef(key);
   currentKey.current = key;
   const action = useRef(false);
@@ -297,14 +299,24 @@ function SavedReference({ material, note, reference }: {
   const desktop = canHandleFiles();
   const availability = !desktop ? "browser" : state?.key === key ? state.availability : "checking";
 
+  // Download receipts already identify the stored bytes. Counting every page of
+  // a large book here (and again on Open) needlessly parses the whole PDF.
+  const check = async (): Promise<FaaAvailability> => {
+    if (!material.filePath) return "missing";
+    if (downloaded && /^[a-f0-9]{64}$/.test(note.contentSha256)) {
+      return await documentExists(material.filePath) ? "present" : "missing";
+    }
+    return faaAvailability(note, await previewStudyPageSource(material.id));
+  };
+
   useEffect(() => {
     live.current = true;
     let active = true;
     setMessage("");
     if (desktop) {
-      void (material.filePath ? previewStudyPageSource(material.id) : Promise.resolve(null))
-        .then((preview) => {
-          if (active) setState({ key, availability: faaAvailability(note, preview) });
+      void check()
+        .then((availability) => {
+          if (active) setState({ key, availability });
         })
         .catch(() => { if (active) setState({ key, availability: "unknown" }); });
     }
@@ -317,7 +329,7 @@ function SavedReference({ material, note, reference }: {
     setBusy(true);
     setMessage("");
     try {
-      const checked = faaAvailability(note, await previewStudyPageSource(material.id));
+      const checked = await check();
       if (!live.current || currentKey.current !== key) return;
       setState({ key, availability: checked });
       if (checked !== "present") return;

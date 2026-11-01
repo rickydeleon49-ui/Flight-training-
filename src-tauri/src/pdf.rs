@@ -755,6 +755,7 @@ fn split_automatically_with_limits(
     report: &dyn Fn(String),
     limits: (u32, u64),
 ) -> Result<SplitSourceReceipt, String> {
+    report("Big books can take a few minutes.".into());
     let documents_dir = root.join(documents::DOCUMENTS_DIR);
     let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
     let (bytes, document) = read_pdf_once(&source)?;
@@ -777,7 +778,7 @@ fn split_automatically_with_limits(
             batch_id,
             base,
             report,
-            limits,
+            (limits.0, limits.1, bytes.len() as u64),
         )?;
         lineage::issue_receipt_at(
             root,
@@ -794,6 +795,12 @@ fn split_automatically_with_limits(
     result
 }
 
+fn automatic_parts_estimate(pages: u32, bytes: u64, max_pages: u32, max_bytes: u64) -> u64 {
+    u64::from(pages.div_ceil(max_pages))
+        .max(bytes.div_ceil(max_bytes))
+        .max(1)
+}
+
 impl SplitFiles {
     fn write_automatic_parts(
         &mut self,
@@ -802,11 +809,12 @@ impl SplitFiles {
         batch_id: &str,
         base: &str,
         report: &dyn Fn(String),
-        limits: (u32, u64),
+        limits: (u32, u64, u64),
     ) -> Result<(Vec<WrittenPart>, Vec<u32>), String> {
-        let (max_pages, max_bytes) = limits;
+        let (max_pages, max_bytes, source_bytes) = limits;
         let total = document.get_pages().len() as u32;
-        let total_parts_estimate = total.div_ceil(max_pages).max(1);
+        let total_parts_estimate =
+            automatic_parts_estimate(total, source_bytes, max_pages, max_bytes);
         let mut parts = Vec::new();
         let mut skipped_pages = Vec::new();
         let mut first = 1;
@@ -824,8 +832,17 @@ impl SplitFiles {
 
             let part_name = format!("{base} - Part {number}.pdf");
             let part_id = format!("{batch_id}-part-{number}");
+            let mut step = 0;
+            let mut last_report: Option<std::time::Instant> = None;
             let fitting =
                 largest_fitting_last_page(first, window_high, max_pages, max_bytes, |candidate| {
+                    step += 1;
+                    if last_report
+                        .is_none_or(|last| last.elapsed() >= std::time::Duration::from_millis(500))
+                    {
+                        report(format!("Finding where part {number} ends… (step {step})"));
+                        last_report = Some(std::time::Instant::now());
+                    }
                     render_window_range(&window, 1, candidate - first + 1)
                 })?;
             let Some((last, part_bytes)) = fitting else {
@@ -898,6 +915,23 @@ mod tests {
     use super::*;
     use lopdf::{dictionary, Object, Stream};
     use std::path::PathBuf;
+
+    #[test]
+    fn automatic_parts_estimate_uses_both_pages_and_bytes() {
+        assert_eq!(
+            automatic_parts_estimate(522, 74 * 1024 * 1024, 1000, 50 * 1024 * 1024),
+            2
+        );
+        assert_eq!(
+            automatic_parts_estimate(2500, 74 * 1024 * 1024, 1000, 50 * 1024 * 1024),
+            3
+        );
+        assert_eq!(
+            automatic_parts_estimate(522, 50 * 1024 * 1024, 1000, 50 * 1024 * 1024),
+            1
+        );
+        assert_eq!(automatic_parts_estimate(0, 0, 1000, 50), 1);
+    }
 
     /// Tagged navigation graphs deliberately share each page's own image.
     /// After /Pg stripping alone those images still survive through /OBJR.
@@ -1664,15 +1698,28 @@ mod tests {
     #[test]
     fn an_automatic_split_records_every_part_against_the_same_source() {
         let root = split_library("automatic", 9);
+        let messages = std::cell::RefCell::new(Vec::new());
         let receipt = split_automatically_at(
             &root,
             "R",
             "R-handbook.pdf",
             "batch",
             "Handbook.pdf",
-            &|_| {},
+            &|message| messages.borrow_mut().push(message),
         )
         .unwrap();
+        let messages = messages.into_inner();
+        assert_eq!(messages[0], "Big books can take a few minutes.");
+        assert_eq!(
+            messages
+                .iter()
+                .filter(|m| m.as_str() == "Big books can take a few minutes.")
+                .count(),
+            1
+        );
+        assert!(messages
+            .iter()
+            .any(|m| m.contains("Finding where part 1 ends… (step 1)")));
         let plan = &receipt.core.plan;
         assert!(!plan.is_empty());
         assert_eq!(plan[0].selection.start, 1);
