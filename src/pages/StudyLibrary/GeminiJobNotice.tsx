@@ -141,7 +141,7 @@ export function GeminiJobNotice({
               Save the new {what}
             </Button>
           )}
-          {job.sectionGuide ? <SectionDraftDiscard job={job} jobs={jobs} label="Discard it" /> : (
+          {(job.sectionGuide || job.studyKitPart) ? <SectionDraftDiscard job={job} jobs={jobs} label="Discard it" /> : (
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard it
           </Button>
@@ -167,7 +167,7 @@ export function GeminiJobNotice({
               Save again
             </Button>
           )}
-          {job.sectionGuide ? <SectionDraftDiscard job={job} jobs={jobs} label={`Discard the new ${what}`} /> : (
+          {(job.sectionGuide || job.studyKitPart) ? <SectionDraftDiscard job={job} jobs={jobs} label={`Discard the new ${what}`} /> : (
           <Button size="small" variant="secondary" disabled={busy} onClick={() => void jobs.dismiss(job.key)}>
             Discard the new {what}
           </Button>
@@ -399,8 +399,8 @@ export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = f
   const intent = useRef(false);
   return <>
     <Button size="small" variant="secondary" disabled={jobs.busy || disabled || pending} onClick={() => setOpen(true)}>{label}</Button>
-    <ConfirmDialog open={open} title="Discard this guide draft?"
-      message="Discard this draft and keep your saved study guide."
+    <ConfirmDialog open={open} title="Discard this draft?"
+      message="Discard this draft? Your saved material stays."
       confirmLabel="Discard draft" pending={pending} pendingLabel="Discarding…"
       onCancel={() => setOpen(false)} onConfirm={() => {
         if (intent.current) return;
@@ -496,7 +496,7 @@ export function GeminiProgressView({
   }, []);
   const words = (text: string) => providerWording(text, job.answer?.model ?? job.sections?.model ?? model);
   const stage =
-    job.phase === "saving" ? "Saving" : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
+    job.phase === "saving" ? (job.kind === "study-aid" ? "Saving your guide…" : "Saving") : job.stage ? STAGE_WORDS[job.stage] : "Getting the document ready";
   const retrying = job.attempt !== undefined && job.attempt > 1;
   const elapsed = job.startedAt !== undefined ? elapsedWords(now - job.startedAt) : "";
   return (

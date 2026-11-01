@@ -178,6 +178,7 @@ export function Settings() {
   const [backupNote, setBackupNote] = useState<string | null>(null);
   const [backupProblem, setBackupProblem] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [completeBackupBusy, setCompleteBackupBusy] = useState(false);
   const [restoreCandidate, setRestoreCandidate] = useState<CompleteBackupInfo | null>(null);
   const [localRestoreCandidate, setLocalRestoreCandidate] = useState<BackupInfo | null>(null);
   const [version, setVersion] = useState("");
@@ -391,6 +392,7 @@ export function Settings() {
   };
 
   const backUpNow = async () => {
+    setCompleteBackupBusy(true);
     setBackupNote(null);
     setBackupProblem(false);
     setBackupBusy(true);
@@ -431,6 +433,7 @@ export function Settings() {
       setBackupProblem(true);
       setBackupNote(backupErrorMessage(error, "That backup could not be saved."));
     } finally {
+      setCompleteBackupBusy(false);
       setBackupBusy(false);
     }
   };
@@ -480,7 +483,7 @@ export function Settings() {
       setRestoreCandidate(candidate);
     } catch (error) {
       setBackupProblem(true);
-      setBackupNote(backupErrorMessage(error, "That backup could not be read."));
+      setBackupNote(backupErrorMessage(error, "That backup could not be read.", false));
     } finally {
       setBackupBusy(false);
     }
@@ -1043,7 +1046,7 @@ export function Settings() {
               backupsAvailable() ? (
                 <div className="row row--wrap">
                   <Button size="small" variant="primary" onClick={backUpNow} disabled={backupBusy}>
-                    {backupBusy ? "Working…" : "Save complete backup"}
+                    {completeBackupBusy ? "Saving your backup… This can take a minute when you have big PDFs." : backupBusy ? "Working…" : "Save complete backup"}
                   </Button>
                   <Button size="small" onClick={chooseRestore} disabled={backupBusy}>
                     Restore backup
@@ -1143,7 +1146,7 @@ export function Settings() {
                         setFolderOpenError(null);
                         openDataFolder().catch((error: unknown) => {
                           setFolderOpenError(
-                            backupErrorMessage(error, "That folder could not be opened."),
+                            backupErrorMessage(error, "That folder could not be opened.", false),
                           );
                         });
                       }}

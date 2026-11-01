@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import * as backups from "@/services/backups";
 import { Settings } from "./Settings";
 
 let db: TestDatabase;
@@ -27,7 +28,7 @@ beforeEach(async () => {
   status.failed = false;
   db = await createNodeSqliteDatabase();
 });
-afterEach(() => { cleanup(); db.close(); localStorage.clear(); });
+afterEach(() => { vi.restoreAllMocks(); cleanup(); db.close(); localStorage.clear(); });
 
 it("shows the failed safety-copy sentence exactly once in Settings Your data", async () => {
   status.failed = true;
@@ -44,4 +45,18 @@ it("omits the sentence when no copy failure remains", async () => {
   await screen.findByRole("heading", { name: "Your data" });
   await waitFor(() => expect(screen.getByText("/fictional/data")).toBeTruthy());
   expect(screen.queryByText(sentence)).toBeNull();
+});
+
+it("explains backup waiting and hides raw write errors", async () => {
+  vi.spyOn(backups, "chooseCompleteBackupDestination").mockResolvedValue("/fictional/backup.zip");
+  let reject!: (error: unknown) => void;
+  vi.spyOn(backups, "createCompleteBackup").mockImplementation(() => new Promise((_resolve, fail) => { reject = fail; }));
+  render(h(AppDataProvider, null, h(MemoryRouter, null, h(Ready))));
+  const button = await screen.findByRole("button", {name:"Save complete backup"});
+  fireEvent.click(button);
+  expect(await screen.findByRole("button", {name:"Saving your backup… This can take a minute when you have big PDFs."})).toBeTruthy();
+  await waitFor(() => expect(reject).toBeDefined());
+  await act(async () => reject("Could not create the backup file: Read-only file system (os error 30)"));
+  expect(await screen.findByText("That folder can't be saved to. Choose another folder, like Documents.")).toBeTruthy();
+  expect(screen.queryByText(/os error 30/)).toBeNull();
 });

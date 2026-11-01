@@ -13,6 +13,8 @@ import { offlineContentReadiness, offlineStudyEnabled, prepareOfflineContent, ty
 import { getGeminiStatus, askGemini, cancelAskGemini, geminiModelName, watchAskGeminiProgress, type AskGeminiHistoryTurn, type AskGeminiResult } from "@/services/gemini";
 
 export interface AskGeminiPanelProps {
+  initiallyOpen?: boolean;
+  onClose?: () => void;
   materialId: string;
   relativePath?: string | null;
   context: string;
@@ -104,7 +106,7 @@ export async function readPdfTextInBackground(
   }
 }
 
-export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
+export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
   const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
   const [providerReady, setProviderReady] = useState(!isTauri());
   // If the check fails she is told so (not just shown greyed-out buttons);
@@ -117,7 +119,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
   // Read the latest classification even if it changes while the listener starts.
   const dataRef = useRef(appData);
   dataRef.current = appData;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [question, setQuestion] = useState(initialQuestion);
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -178,6 +180,7 @@ export function AskGeminiPanel({ materialId, context, buttonLabel, initialQuesti
     resetConversation();
     returnFocus.current = true;
     setIsOpen(false);
+    onClose?.();
   };
 
   useEffect(() => {

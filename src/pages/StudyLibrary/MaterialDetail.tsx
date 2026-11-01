@@ -254,6 +254,9 @@ function MaterialDetailPage() {
   const [kitDraftAnchor, setKitDraftAnchor] = useState<string | null>(null);
   const [splitNote, setSplitNote] = useState<string | undefined>(undefined);
   const [savingKit, setSavingKit] = useState(false);
+  const [confirmingDiscardAll, setConfirmingDiscardAll] = useState(false);
+  const [discardingAll, setDiscardingAll] = useState(false);
+  const [unfinishedPractice, setUnfinishedPractice] = useState<{ answered: number; total: number } | null>(null);
   const [confirmingCards, setConfirmingCards] = useState(false);
   const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
@@ -261,6 +264,19 @@ function MaterialDetailPage() {
   // the lock is taken synchronously before anything awaits (src/state/GeminiJobs).
   const geminiJobs = useGeminiJobs();
   const waitingKitDrafts = geminiJobs.jobs.filter((job) => job.materialId === materialId && (job.answer || job.sectionGuide));
+  const discardableKitDrafts = waitingKitDrafts.filter(job => job.studyKitPart && (job.phase === "recovered" || job.phase === "save-failed"));
+  useEffect(() => {
+    let live = true;
+    setUnfinishedPractice(null);
+    if (confirmingPracticeTest && repositories && materialId) {
+      void repositories.practiceSessions.getCurrentAttempt(materialId).then(async attempt => {
+        if (!attempt) return;
+        const items = await repositories.practiceSessions.getItems(attempt.versionId);
+        if (live) setUnfinishedPractice({ answered: attempt.responses.length, total: items.length });
+      }).catch(() => {});
+    }
+    return () => { live = false; };
+  }, [confirmingPracticeTest, repositories, materialId]);
   const waitingKitDraftKey = JSON.stringify([materialId, waitingKitDrafts.map((job) => [job.key, Boolean(job.studyKitPart)])]);
   // A saved/discarded draft can invalidate both the refusal and its destination.
   // Only the draft refusals go stale this way; other kit messages stay.
@@ -991,6 +1007,7 @@ function MaterialDetailPage() {
                   <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
                 </div>
               ) : null}
+              {discardableKitDrafts.length >= 2 ? <Button disabled={geminiJobs.busy || savingKit || discardingAll} onClick={() => setConfirmingDiscardAll(true)}>Discard all drafts</Button> : null}
               {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
             </div>
           </CardBody></Card> : null}
@@ -1043,7 +1060,7 @@ function MaterialDetailPage() {
                           }}
                         >
                           {generating
-                            ? "Reading document…"
+                            ? studyJob?.phase === "saving" ? "Saving your guide…" : "Reading document…"
                             : studySet && (studySet.summary || guideSections.length > 0)
                               ? "Regenerate"
                               : isPdf
@@ -2110,19 +2127,32 @@ function MaterialDetailPage() {
                 ) : (
                   <>
                     <p className="small muted">{providerWording("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.", gemini?.model)}</p>
-                    <AskGeminiPanel
+                    {askingPdf ? <AskGeminiPanel
                       key={pdfAskConversationKey}
                       materialId={material.id}
                       relativePath={material.filePath ?? null}
                       context={pdfContext}
                       buttonLabel="Ask"
+                      initiallyOpen
+                      onClose={closeAskPdf}
                       evidenceMode
-                    />
+                    /> : null}
                   </>
                 )}
             </div></Dialog>
       ) : null}
 
+      <ConfirmDialog open={confirmingDiscardAll} title="Discard all drafts?"
+        message="Discard all drafts? Your saved material stays."
+        confirmLabel="Discard all drafts" pending={discardingAll} pendingLabel="Discarding…"
+        onCancel={() => setConfirmingDiscardAll(false)} onConfirm={() => {
+          if (discardingAll) return;
+          setDiscardingAll(true);
+          void (async () => {
+            try { for (const job of discardableKitDrafts) await geminiJobs.dismiss(job.key); }
+            finally { setDiscardingAll(false); setConfirmingDiscardAll(false); }
+          })();
+        }} />
       {canSplit ? (
         <SplitPdfDialog
           open={splitting}
@@ -2250,6 +2280,7 @@ function MaterialDetailPage() {
 
       <ConfirmDialog
         open={confirmingPracticeTest}
+        notice={unfinishedPractice ? `You have an unfinished practice test (${unfinishedPractice.answered} of ${unfinishedPractice.total} answered). Making new questions ends it.` : undefined}
         title={`Send this file to ${providerCompany(gemini?.model)}?`}
         message={
           practiceTest

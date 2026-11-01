@@ -170,7 +170,7 @@ describe("section guide progress and deliberate recovery", () => {
     await act(async () => { answer.resolve({ ...AID, jobId: "new-section-job", checkpointed: true }); });
     expect(jobs.jobs.map(j => j.jobId)).toEqual(["new-section-job", "section-job"]);
     fireEvent.click(screen.getByRole("button", { name: "Discard it" }));
-    expect(screen.getByRole("dialog", { name: "Discard this guide draft?" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Discard this draft?" })).toBeTruthy();
     expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled();
   });
   it("key change waits for Continue and plainly explains the possible new upload", async () => {
@@ -199,7 +199,7 @@ describe("section guide progress and deliberate recovery", () => {
     HTMLDialogElement.prototype.showModal = undefined as never;
     await fail("CANCELLED"); expect(screen.getAllByText("Stopped. Your finished sections are kept.").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Discard" }));
-    const dialog = screen.getByRole("dialog", { name: "Discard this guide draft?" });
+    const dialog = screen.getByRole("dialog", { name: "Discard this draft?" });
     expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled(); expect(dialog.contains(document.activeElement)).toBe(true);
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" })); expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Discard" })); fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Discard draft" }));
@@ -219,7 +219,7 @@ describe("section guide progress and deliberate recovery", () => {
     await act(async () => { await db.execute("DELETE FROM study_materials WHERE id = 'm'"); await app.refresh(); });
     expect(screen.getByText("This document was removed. Your finished sections are kept in a draft.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Discard" }));
-    expect(screen.getByRole("dialog", { name: "Discard this guide draft?" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Discard this draft?" })).toBeTruthy();
     expect(gemini.acknowledgeGeminiJob).not.toHaveBeenCalled();
   });
   it("checks the section job again at save time and surfaces changed-source consent without saving", async () => {

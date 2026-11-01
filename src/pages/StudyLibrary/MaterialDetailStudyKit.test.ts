@@ -196,6 +196,9 @@ it("Save all three saves each part through its own save, in order",async()=>{
   expect(set?.flashcards).toHaveLength(1);
   expect(await repos.documents.listPracticeTests()).toHaveLength(1);
   expect(screen.queryByRole("button",{name:"Save all three"})).toBeNull();
+  // Gemini kit results do not carry the local PDF kit's verified provenance.
+  expect(screen.queryByText("Pulled from your PDF on this Mac")).toBeNull();
+  expect(screen.queryByText(/quote-checked/i)).toBeNull();
 });
 const savedTest=()=>repos.documents.savePracticeTest({provider:"gemini",sourceMaterialId:"kit-material",title:"Saved practice test",
   questions:[{question:"Saved?",options:["No","Yes"],correctIndex:1,explanation:"Saved.",sourcePage:1}],model:"gemini-3.5-flash"});
@@ -289,6 +292,12 @@ it.each(["discard", "save"])("clears the kit refusal after the last draft is %s"
   fireEvent.click(screen.getByRole("button", {name:"Make my study kit"}));
   expect(await screen.findByText("Save or discard your study kit drafts first.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", {name: action === "discard" ? "Discard it" : "Save the new study guide"}));
+  if (action === "discard") {
+    expect(records).toHaveLength(1);
+    const confirm = screen.getByRole("dialog", {name:"Discard this draft?"});
+    expect(within(confirm).getByText("Discard this draft? Your saved material stays.")).toBeTruthy();
+    fireEvent.click(within(confirm).getByRole("button", {name:"Discard draft"}));
+  }
   await waitFor(() => expect(records).toHaveLength(0));
   await waitFor(() => expect(screen.queryByText("Save or discard your study kit drafts first.")).toBeNull());
 });
@@ -320,4 +329,44 @@ it("shows unverified notes only in the draft and omits them from saved cards and
   await waitFor(async () => expect(await repos.documents.listPracticeTests()).toHaveLength(1));
   expect((await repos.documents.listPracticeTests())[0]!.questions[0]).not.toHaveProperty("verificationNote");
   expect(screen.queryByText("Couldn't check this against the page")).toBeNull();
+});
+
+it("confirms each kit draft discard and lets her cancel", async () => {
+  records = parts(); await open();
+  const buttons = await screen.findAllByRole("button", {name:"Discard it"});
+  for (const button of buttons) {
+    fireEvent.click(button);
+    const confirm = screen.getByRole("dialog", {name:"Discard this draft?"});
+    expect(records).toHaveLength(3);
+    fireEvent.click(within(confirm).getByRole("button", {name:"Cancel"}));
+    expect(records).toHaveLength(3);
+  }
+});
+it("discards all waiting kit drafts only after one confirmation and keeps saved material", async () => {
+  records = parts(); await open(() => repos.documents.saveAiStudySet({sourceMaterialId:"kit-material", title:"Saved", summary:"My saved guide", sections:[],flashcards:[],sourceNotes:"",model:"test"}));
+  const button = await screen.findByRole("button", {name:"Discard all drafts"});
+  fireEvent.click(button);
+  let confirm = screen.getByRole("dialog", {name:"Discard all drafts?"});
+  fireEvent.click(within(confirm).getByRole("button", {name:"Cancel"}));
+  expect(records).toHaveLength(3);
+  fireEvent.click(button);
+  confirm = screen.getByRole("dialog", {name:"Discard all drafts?"});
+  fireEvent.click(within(confirm).getByRole("button", {name:"Discard all drafts"}));
+  await waitFor(() => expect(records).toHaveLength(0));
+  expect((await repos.documents.listAiStudySets())[0]?.summary).toBe("My saved guide");
+  expect(screen.queryByRole("button", {name:"Discard all drafts"})).toBeNull();
+});
+it("puts the unfinished attempt warning before the regeneration disclosure", async () => {
+  await open(async () => {
+    await repos.documents.savePracticeTest({sourceMaterialId:"kit-material", provider:"gemini", title:"Saved test", questions:[{question:"Q?",options:["A","B"],correctIndex:0,explanation:"A",sourcePage:1}],model:"test"});
+    const active = (await repos.practiceSessions.getActiveVersion("kit-material"))!;
+    await repos.practiceSessions.saveSessionAction({action:"start_or_resume",operationId:crypto.randomUUID(),materialId:"kit-material",versionId:active.version.id});
+  });
+  fireEvent.click(screen.getByRole("button", {name:"Regenerate"}));
+  const confirm = await screen.findByRole("dialog", {name:"Send this file to Google?"});
+  const notice = await within(confirm).findByText("You have an unfinished practice test (0 of 1 answered). Making new questions ends it.");
+  expect(notice.getAttribute("role")).toBe("status");
+  expect(notice.nextElementSibling?.textContent).toContain("replace your current practice test");
+  fireEvent.click(within(confirm).getByRole("button", {name:"Cancel"}));
+  expect(await repos.practiceSessions.getCurrentAttempt("kit-material")).toBeTruthy();
 });

@@ -100,6 +100,7 @@ export function Dialog({
 }
 
 interface ConfirmDialogProps {
+  notice?: string;
   children?: ReactNode;
   open: boolean;
   title: string;
@@ -126,6 +127,7 @@ interface ConfirmDialogProps {
 
 /** Every destructive action goes through this; nothing deletes on one click. */
 export function ConfirmDialog({
+  notice,
   children,
   open,
   title,
@@ -175,6 +177,7 @@ export function ConfirmDialog({
         </>
       }
     >
+      {notice ? <p className="small strong" role="status">{notice}</p> : null}
       <p className="muted">{message}</p>
       {details ? (
         <details className="tiny dim">
