@@ -404,6 +404,8 @@ export function PracticeTestPanel({
     undefined,
     () => initialPanelState(materialId, 1),
   );
+  const [offeringSkipped, setOfferingSkipped] = useState(false);
+  const resumedAttempt = useRef<string | null>(null);
   const [confirmingAbandon, setConfirmingAbandon] = useState(false);
   const [continuedOlderAttempt, setContinuedOlderAttempt] = useState<string | null>(null);
   useEffect(() => {
@@ -539,6 +541,7 @@ export function PracticeTestPanel({
           freshVersionId: attempt && content(frozen.items) !== content(active.items) ? active.version.id : null,
           attempt,
         });
+        if (reason === "initial") resumedAttempt.current = attempt?.attemptId ?? null;
         if (refreshedNotice) {
           // Only reachable once the authoritative read really succeeded.
           dispatch({ type: "notice", generation, text: refreshedNotice });
@@ -1009,7 +1012,9 @@ export function PracticeTestPanel({
       goToIndex(current.index + 1);
       return;
     }
-    handleComplete();
+    const unanswered = (current.items ?? []).filter(item => !current.attempt?.responses.some(response => response.itemId === item.id));
+    if (unanswered.length) setOfferingSkipped(true);
+    else handleComplete();
   }, [goToIndex, handleComplete, totalQuestions]);
 
   const handleRetake = useCallback(() => {
@@ -1310,15 +1315,11 @@ export function PracticeTestPanel({
         <ShortSavedReviewLink materialId={materialId} />
       </div> : null}
 
-      {/* Deliberate start/resume: an attempt is acknowledged before an answer sticks. */}
-      <div className="ai-disclaimer" role="status">
-        <AlertIcon size={16} />
-        <p className="tiny">
-          {state.attempt
-            ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Feedback appears after each answer is saved.`
-            : "New attempt — your first answer starts it, and saves only once it is confirmed."}
-        </p>
-      </div>
+      <p className="tiny muted" role="status" aria-label="Practice progress">
+        {state.attempt && resumedAttempt.current === state.attempt.attemptId
+          ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Feedback appears after each answer is saved.`
+          : <>Question <span>{state.index + 1}</span> of <span>{totalQuestions}</span></>}
+      </p>
 
       {totalQuestions > 1 && (
         <div className="practice-nav-pills" role="navigation" aria-label="Question selector">
@@ -1482,6 +1483,21 @@ export function PracticeTestPanel({
         </div>
       )}
 
+      <ConfirmDialog
+        open={offeringSkipped}
+        title="Answer skipped questions?"
+        message={`You skipped ${totalQuestions - answeredCount} ${totalQuestions - answeredCount === 1 ? "question" : "questions"}. Answer them now?`}
+        confirmLabel="Answer skipped"
+        destructive={false}
+        secondaryLabel="Finish test"
+        onSecondary={() => { setOfferingSkipped(false); handleComplete(); }}
+        onConfirm={() => {
+          setOfferingSkipped(false);
+          const next = questions.findIndex(item => !state.attempt?.responses.some(response => response.itemId === item.id));
+          if (next >= 0) goToIndex(next);
+        }}
+        onCancel={() => setOfferingSkipped(false)}
+      />
       <ConfirmDialog
         open={confirmingAbandon}
         title="Abandon this practice attempt?"

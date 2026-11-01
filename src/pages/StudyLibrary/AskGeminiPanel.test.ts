@@ -1093,10 +1093,8 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     expect(studyGuideSection.contains(askCard)).toBe(false);
     expect(within(studyGuideSection).queryByRole("button", { name: "Ask about this PDF" })).toBeNull();
     expect(await within(askCard).findByText("Ask Gemini a question about this PDF. It answers from the pages and shows which pages it used.")).toBeTruthy();
-    const askPdfBtn = within(askCard).getByRole("button", { name: "Ask" });
-    expect(askPdfBtn.classList.contains("button--secondary")).toBe(true);
-
-    fireEvent.click(askPdfBtn);
+    expect(within(askCard).getByLabelText("Ask a question")).toBeTruthy();
+    expect(mockAsk).not.toHaveBeenCalled();
     const input = within(askCard).getByLabelText("Ask a question");
     fireEvent.change(input, { target: { value: "What is a standard rate turn?" } });
     fireEvent.click(within(askCard).getByRole("button", { name: "Ask" }));
@@ -1124,7 +1122,7 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await openMaterial("mat-pdf");
     fireEvent.click(screen.getByRole("button", { name: "Ask about this PDF" }));
     const askCard = () => screen.getByRole("dialog", { name: "Ask about this PDF" });
-    fireEvent.click(await within(askCard()).findByRole("button", { name: "Ask" }));
+    expect(await within(askCard()).findByLabelText("Ask a question")).toBeTruthy();
 
     const ask = async (question: string) => {
       fireEvent.change(within(askCard()).getByLabelText("Ask a question"), { target: { value: question } });
@@ -1135,7 +1133,8 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await ask("One more question");
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(within(askCard()).getByRole("button", { name: "Close" }));
+    fireEvent.click(within(askCard()).getByRole("button", { name: "Close Ask Gemini" }));
+    expect(screen.queryByRole("dialog", { name: "Ask about this PDF" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
     fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));

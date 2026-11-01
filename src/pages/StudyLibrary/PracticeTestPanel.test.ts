@@ -71,7 +71,7 @@ describe("PracticeTestPanel", () => {
       error: null,
     } as ContextType<typeof AppDataContext>;
     const view = render(h(AppDataContext.Provider, { value }, ui));
-    await screen.findByText("Question 1 of 2");
+    await screen.findByRole("heading", {name:/Question \d+ of 2/});
     return view;
   }
 
@@ -85,6 +85,42 @@ describe("PracticeTestPanel", () => {
     await db.execute("UPDATE practice_attempts SET status = 'in_progress', completed_at = NULL WHERE id = ?", [started.attemptId]);
     return started;
   }
+
+  it("uses calm progress for a new attempt and resume wording only after reopening", async () => {
+    const view = await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
+    const progress = screen.getByRole("status", {name:"Practice progress"});
+    expect(progress.classList.contains("ai-disclaimer")).toBe(false);
+    await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(1));
+    view.unmount();
+    await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    expect(await screen.findByText(/Resuming your attempt — 1 of 2 answered/)).toBeTruthy();
+  });
+
+  it.each(["answer", "finish"])("offers skipped questions at the end and lets her %s", async action => {
+    await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    fireEvent.click(screen.getByRole("button", {name:"Skip for now →"}));
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    const score = screen.getByRole("button", {name:"See score"});
+    await waitFor(() => expect(score.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(score);
+    const confirm = screen.getByRole("dialog", {name:"Answer skipped questions?"});
+    expect(within(confirm).getByText("You skipped 1 question. Answer them now?")).toBeTruthy();
+    expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(1);
+    if (action === "answer") {
+      fireEvent.click(within(confirm).getByRole("button", {name:"Answer skipped"}));
+      expect(screen.getByRole("heading", {name:"Question 1 of 2"})).toBeTruthy();
+      fireEvent.click(screen.getAllByRole("radio")[1]!);
+      await screen.findByText("Correct");
+      await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(2));
+    } else {
+      fireEvent.click(within(confirm).getByRole("button", {name:"Finish test"}));
+      await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
+    }
+  });
 
   it("offers fresh current questions first without changing the earlier attempt until clicked", async () => {
     const older = await seedEarlierAttempt();

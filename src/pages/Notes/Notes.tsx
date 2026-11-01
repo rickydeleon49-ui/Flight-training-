@@ -340,13 +340,13 @@ function NoteRow({
         <Button size="small" variant="ghost" onClick={onEdit}>
           Edit
         </Button>
-        <IconButton
-          className="destructive-action" label={`Delete note: ${heading}`}
-          tone="danger"
+        <Button
+          size="small" variant="ghost"
+          className="destructive-action" aria-label={`Delete note: ${heading}`}
           onClick={onDelete}
         >
-          <TrashIcon size={16} />
-        </IconButton>
+          <TrashIcon size={16} /> Delete
+        </Button>
       </div>
     </article>
   );

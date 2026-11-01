@@ -166,7 +166,8 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   expect(start.classList.contains("button--primary")).toBe(true);
   expect(screen.getByRole("button", { name: "Short saved review" }).hasAttribute("disabled")).toBe(true);
   fireEvent.click(start);
-  await screen.findByText(/Resuming your attempt/);
+  await waitFor(() => expect(screen.getByRole("status", {name:"Practice progress"}).textContent).toBe("Question 1 of 1"));
+  expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
   const question = screen.getByRole("heading", { name: "Question 1 of 1" });
   pick("Notes"); pick("Study");
   expect(screen.getByRole("heading", { name: "Question 1 of 1" })).toBe(question);

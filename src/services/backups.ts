@@ -52,14 +52,15 @@ export interface CompleteBackupInfo {
 export const backupsAvailable = (): boolean => isTauri();
 
 /** Tauri command failures cross the boundary as strings, not Error objects. */
-export function backupErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim()) return error.message;
-  if (typeof error === "string" && error.trim()) return error;
-  if (error && typeof error === "object") {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.trim()) return message;
+export function backupErrorMessage(error: unknown, fallback: string, writing = true): string {
+  const message = error instanceof Error ? error.message
+    : typeof error === "string" ? error
+    : error && typeof error === "object" ? (error as { message?: unknown }).message : null;
+  if (typeof message !== "string" || !message.trim()) return fallback;
+  if (writing && /read[- ]only|permission denied|access (?:is )?denied|os error (?:13|30)\b|EACCES|EROFS|EPERM/i.test(message)) {
+    return "That folder can't be saved to. Choose another folder, like Documents.";
   }
-  return fallback;
+  return message;
 }
 
 export async function listBackups(): Promise<BackupInfo[]> {

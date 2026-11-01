@@ -74,7 +74,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
       setArchiveCandidate(candidate);
     } catch (failure) {
       setProblem(true);
-      setNote(backupErrorMessage(failure, "That backup could not be read."));
+      setNote(backupErrorMessage(failure, "That backup could not be read.", false));
     } finally {
       setBusy(false);
     }
@@ -191,7 +191,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                         setFolderOpenError(null);
                         openDataFolder().catch((error: unknown) => {
                           setFolderOpenError(
-                            backupErrorMessage(error, "That folder could not be opened."),
+                            backupErrorMessage(error, "That folder could not be opened.", false),
                           );
                         });
                       }}

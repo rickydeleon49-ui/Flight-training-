@@ -210,3 +210,11 @@ it("#1 coming back to an edit mid-save without typing closes it as saved", async
   expect(update).toHaveBeenCalledTimes(1);
   expect(readDraft("notes.n1")).toBeNull();
 });
+
+it("labels note deletion with visible text and an aria-label", () => {
+  notes = [makeNote({id:"polish-note", title:"Call the school", body:"Ask about lessons."})];
+  render(page());
+  const button = screen.getByRole("button", {name:"Delete note: Call the school"});
+  expect(button.textContent).toContain("Delete");
+  expect(button.getAttribute("aria-label")).toBe("Delete note: Call the school");
+});

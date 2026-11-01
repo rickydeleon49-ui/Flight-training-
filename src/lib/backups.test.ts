@@ -148,3 +148,15 @@ describe("backupLocalDay in UTC", () => {
     );
   });
 });
+
+it.each([
+  "Could not create the backup file: Read-only file system (os error 30)",
+  new Error("Permission denied (os error 13)"),
+  {message:"Access is denied. (os error 5)"},
+])("replaces OS write details with a folder suggestion: %s", error => {
+  expect(backupErrorMessage(error, "Fallback")).toBe("That folder can't be saved to. Choose another folder, like Documents.");
+});
+
+it("keeps folder-opening errors outside the backup write mapping", () => {
+  expect(backupErrorMessage("Could not open /tmp/hfd: permission denied", "Fallback", false)).toBe("Could not open /tmp/hfd: permission denied");
+});
