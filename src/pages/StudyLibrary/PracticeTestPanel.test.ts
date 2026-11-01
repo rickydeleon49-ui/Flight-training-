@@ -71,7 +71,7 @@ describe("PracticeTestPanel", () => {
       error: null,
     } as ContextType<typeof AppDataContext>;
     const view = render(h(AppDataContext.Provider, { value }, ui));
-    await screen.findByRole("heading", {name:/Question \d+ of 2/});
+    await screen.findByRole("heading", {name:/Question \d+ of \d+/});
     return view;
   }
 
@@ -128,10 +128,60 @@ describe("PracticeTestPanel", () => {
       fireEvent.click(screen.getAllByRole("radio")[1]!);
       await screen.findByText("Correct");
       await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("mat-1"))?.responses).toHaveLength(2));
+      fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+      await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
+      expect(screen.queryByRole("heading", {name:"Question 2 of 2"})).toBeNull();
     } else {
-      fireEvent.click(within(confirm).getByRole("button", {name:"Finish test"}));
+      fireEvent.click(within(confirm).getByRole("button", {name:"Finish anyway"}));
       await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
     }
+  });
+
+  it("answers only non-adjacent skipped questions, then finishes without revisiting answered ones", async () => {
+    const longer = { ...sampleTest, questions: Array.from({length: 5}, (_, i) => ({...sampleTest.questions[0]!, question: `Prompt ${i + 1}`})) };
+    await repos.documents.savePracticeTest(longer);
+    await renderPanel(h(PracticeTestPanel, {practiceTest: longer}));
+    for (let i = 1; i <= 5; i++) {
+      await screen.findByRole("heading", {name:`Question ${i} of 5`});
+      if (i === 1 || i === 3) fireEvent.click(screen.getByRole("button", {name:"Skip for now →"}));
+      else {
+        fireEvent.click(screen.getAllByRole("radio")[1]!);
+        await screen.findByText("Correct");
+        fireEvent.click(screen.getByRole("button", {name:i === 5 ? "See score" : "Continue"}));
+      }
+    }
+    fireEvent.click(within(screen.getByRole("dialog", {name:"Answer skipped questions?"})).getByRole("button", {name:"Answer skipped"}));
+    for (const i of [1, 3]) {
+      await screen.findByRole("heading", {name:`Question ${i} of 5`});
+      fireEvent.click(screen.getAllByRole("radio")[1]!);
+      await screen.findByText("Correct");
+      fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+    }
+    await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
+    expect(screen.queryByRole("radio")).toBeNull();
+  });
+
+  it("keeps number and Enter shortcuts after mouse navigation without consuming text-input keys", async () => {
+    await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+    const heading = screen.getByRole("heading", {name:"Question 2 of 2"});
+    expect(document.activeElement).toBe(heading);
+    const input = document.createElement("input");
+    heading.parentElement!.append(input);
+    input.focus();
+    expect(fireEvent.keyDown(input, {key:"2"})).toBe(true);
+    expect(fireEvent.keyDown(input, {key:"Enter"})).toBe(true);
+    expect(screen.queryByText("Correct")).toBeNull();
+    input.remove();
+    heading.focus();
+    fireEvent.keyDown(heading, {key:"2"});
+    await screen.findByText("Correct");
+    // A click can also leave focus on the body; Enter still advances.
+    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+    fireEvent.keyDown(document.body, {key:"Enter"});
+    await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
   });
 
   it("offers fresh current questions first without changing the earlier attempt until clicked", async () => {

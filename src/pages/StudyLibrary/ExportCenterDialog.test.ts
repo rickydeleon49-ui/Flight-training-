@@ -51,6 +51,14 @@ afterEach(cleanup);
 const open = (items = sources) => render(h(ExportCenterDialog, { open: true, sources: items, onClose: () => {} }));
 
 describe("Study Library export center", () => {
+  it("opens a material shortcut with CSV and its material selected", () => {
+    render(h(ExportCenterDialog, {open: true, sources: [sources[0]!], initialOutput: "csv", onClose: () => {}}));
+    expect((screen.getByLabelText("Flashcard CSV (.csv)") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("checkbox", {name:"Aviation Weather"}) as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByText("Crosswind")).toBeNull();
+    expect(screen.getByRole("button", {name:"Save CSV…"}).hasAttribute("disabled")).toBe(false);
+  });
+
   it("saves selected materials in order with the chosen parts", async () => {
     saveStudyExport.mockResolvedValue({ fileName: "Study handout.html", byteLength: 10 });
     open();

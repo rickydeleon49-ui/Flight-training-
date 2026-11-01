@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement as h } from "react";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -277,6 +277,34 @@ describe("saving a manual split", () => {
 });
 
 describe("saving an automatic split", () => {
+  it("updates elapsed split seconds once a second and resets on the next message", async () => {
+    vi.spyOn(pdfService, "inspectPdf").mockResolvedValue({pages:522,maxPagesPerSplit:1000});
+    let progress!: (message: string) => void;
+    const stop = vi.fn();
+    vi.spyOn(pdfService, "watchSplitProgress").mockImplementation(async callback => { progress = callback; return stop; });
+    let reject!: (error: Error) => void;
+    vi.spyOn(pdfService, "splitPdfAutomatically").mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
+    const material = {id:"R",title:"Synthetic",filePath:"R.pdf",fileSize:1} as StudyMaterial;
+    const view = render(h(AppDataProvider, null, h(SplitPdfDialog, {open:true,material,onClose:()=>{},onCreated:vi.fn()})));
+    const create = await screen.findByRole("button", {name:"Create study-size parts"});
+    await waitFor(() => expect(create.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(create);
+    await waitFor(() => expect(progress).toBeTypeOf("function"));
+    vi.useFakeTimers();
+    try {
+      act(() => progress("Reading pages 1–522 (part 1 of about 2)…"));
+      act(() => vi.advanceTimersByTime(999));
+      expect(screen.queryByText(/\(1 s\)/)).toBeNull();
+      act(() => vi.advanceTimersByTime(39001));
+      expect(screen.getByText("Reading pages 1–522 (part 1 of about 2)… (40 s)")).toBeTruthy();
+      act(() => progress("Saving parts…"));
+      expect(screen.getByText("Saving parts…")).toBeTruthy();
+      await act(async () => reject(new Error("Synthetic stop")));
+      expect(stop).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { view.unmount(); vi.useRealTimers(); }
+  });
+
   it("titles every planned part from the receipt and saves them together", async () => {
     const fixture = JSON.parse(
       readFileSync(join(process.cwd(), "src-tauri/fixtures/split-lineage/receipt.json"), "utf8"),

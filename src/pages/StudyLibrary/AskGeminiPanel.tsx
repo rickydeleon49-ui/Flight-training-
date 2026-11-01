@@ -434,6 +434,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, con
               <p className="small ai-copy" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
                 {turn.role === "model" && turn.evidence && turn.notAnswered ? notAnsweredMessage(range, topics) : turn.text}
               </p>
+              {turn.role === "model" && turn.notAnswered ? <p className="small">Try asking about something in this chapter, or open the material it's in.</p> : null}
               {turn.role === "model" && (
                 <p className="tiny dim" style={{ margin: "var(--space-1) 0 0" }}>
                   Answered by {geminiModelName(turn.model ?? "")}

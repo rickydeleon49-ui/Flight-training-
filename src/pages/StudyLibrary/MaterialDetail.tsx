@@ -71,6 +71,7 @@ import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
+import { ExportCenterDialog } from "./ExportCenterDialog";
 import { ExportStudyDialog } from "./ExportStudyDialog";
 import { GuideBody } from "./GuideBody";
 import { OfflineStudyPanel } from "./OfflineStudyPanel";
@@ -220,6 +221,7 @@ function MaterialDetailPage() {
   const [fileMissing, setFileMissing] = useState(false);
   const [splitting, setSplitting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
   const [splittingManually, setSplittingManually] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
@@ -504,6 +506,9 @@ function MaterialDetailPage() {
   const practiceTest = data.practiceTests.find(
     (candidate) => candidate.sourceMaterialId === materialId,
   );
+  const csvExportSources = useMemo(() => material
+    ? [{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }]
+    : [], [material, studySet, practiceTest]);
   // Saving replaces the progress view and mounts a compact loading panel before
   // its questions arrive. Anchor to the stable practice section after that
   // layout change, only for a generation requested during this visit.
@@ -2153,6 +2158,8 @@ function MaterialDetailPage() {
             finally { setDiscardingAll(false); setConfirmingDiscardAll(false); }
           })();
         }} />
+      {exportingCsv ? <ExportCenterDialog open initialOutput="csv" sources={csvExportSources} onClose={() => setExportingCsv(false)} /> : null}
+
       {canSplit ? (
         <SplitPdfDialog
           open={splitting}
@@ -2170,6 +2177,7 @@ function MaterialDetailPage() {
           open={exporting}
           source={{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }}
           onClose={() => setExporting(false)}
+          onFlashcardCsv={() => { setExporting(false); setExportingCsv(true); }}
         />
       ) : null}
 

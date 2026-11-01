@@ -37,11 +37,12 @@ interface Props {
   open: boolean;
   source: ExportSource;
   onClose: () => void;
+  onFlashcardCsv?: () => void;
 }
 
 export const EXPORT_DESKTOP_ONLY = "Saving a file needs the desktop application.";
 
-export function ExportStudyDialog({ open, source, onClose }: Props) {
+export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Props) {
   const ids = useId();
   // Off by default: her instructor's corrections are included only deliberately.
   const [selection, setSelection] = useState<ExportSelection>(() => ({ ...exportableParts(exportSourceFor(source, {})), instructorCorrections: false }));
@@ -134,6 +135,7 @@ export function ExportStudyDialog({ open, source, onClose }: Props) {
     >
       <div className="stack stack--4">
         <p className="small">Picture cards are omitted from study packets, CSV and handouts. Use a complete backup to keep pictures, covers and review history.</p>
+        {onFlashcardCsv ? <Button disabled={working} onClick={onFlashcardCsv}>Flashcards as a spreadsheet (CSV)…</Button> : null}
         <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Include</legend>
           {available.guide ? (

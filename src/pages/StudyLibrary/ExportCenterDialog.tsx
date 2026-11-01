@@ -18,6 +18,7 @@ interface Props {
   open: boolean;
   sources: ExportSource[];
   onClose: () => void;
+  initialOutput?: "handout" | "csv";
 }
 
 type SelectionState = { include: boolean; selection: ExportSelection };
@@ -29,9 +30,9 @@ function initialState(sources: ExportSource[]): SelectionState[] {
   }));
 }
 
-export function ExportCenterDialog({ open, sources, onClose }: Props) {
+export function ExportCenterDialog({ open, sources, onClose, initialOutput = "handout" }: Props) {
   const [rows, setRows] = useState<SelectionState[]>(() => initialState(sources));
-  const [output, setOutput] = useState<"handout" | "csv">("handout");
+  const [output, setOutput] = useState<"handout" | "csv">(initialOutput);
   const [answerKey, setAnswerKey] = useState(true);
   const [working, setWorking] = useState(false);
   const busy = useRef(false);
@@ -41,11 +42,11 @@ export function ExportCenterDialog({ open, sources, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     setRows(initialState(sources));
-    setOutput("handout");
+    setOutput(initialOutput);
     setAnswerKey(true);
     setError(null);
     setSaved(null);
-  }, [open, sources]);
+  }, [open, sources, initialOutput]);
 
   const selections = sources.map((source, index) => rows[index]?.selection ?? initialState([source])[0]!.selection);
   const chosenItems = sources.flatMap((source, index) => {
