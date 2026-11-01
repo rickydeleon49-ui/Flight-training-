@@ -92,6 +92,9 @@ import {
 import { useAppData } from "@/state/AppDataContext";
 import { isMacOS, isWindowsOS } from "@/lib/platform";
 
+import { SendToIphoneCard } from "./SendToIphoneCard";
+import { deviceCan } from "@/services/platform";
+
 import "./settings.css";
 
 /** The editable slice of the profile. */
@@ -1204,6 +1207,8 @@ export function Settings() {
             </div>
           </CardBody>
         </Card>
+
+        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
 
         <Card>
           <CardHeader title="About this application" eyebrow="Scope" />
