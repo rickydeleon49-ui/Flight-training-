@@ -41,6 +41,7 @@ import faaReferenceCopies from "../../src-tauri/migrations/0027_faa_reference_co
 import practiceItemAcsTasks from "../../src-tauri/migrations/0028_practice_item_acs_tasks.sql?raw";
 
 import materialVideoLinks from "../../src-tauri/migrations/0029_material_video_links.sql?raw";
+import studentPilotSteps from "../../src-tauri/migrations/0030_student_pilot_steps.sql?raw";
 
 export interface Migration {
   version: number;
@@ -78,6 +79,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 27, description: "faa_reference_copies", sql: faaReferenceCopies },
   { version: 28, description: "practice_item_acs_tasks", sql: practiceItemAcsTasks },
   { version: 29, description: "material_video_links", sql: materialVideoLinks },
+  { version: 30, description: "student_pilot_steps", sql: studentPilotSteps },
 ];
 
 /**

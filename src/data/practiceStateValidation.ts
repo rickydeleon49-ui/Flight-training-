@@ -253,6 +253,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 25) await validateOralScenarios(query, reference);
   if (newest >= 26) await validateVisualCards(query, reference);
   if (newest >= 29) await validateVideoLinks(query, reference);
+  if (newest >= 30) await validateStudentPilotSteps(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2130,4 +2131,11 @@ export async function validateVideoLinks(query: ValidationQuery, reference: Vali
       (await query("SELECT 1 FROM pragma_index_list('material_video_links') WHERE name='idx_material_video_links_material'", [])).length !== 1 ||
       !same(await indexColumns(query, "idx_material_video_links_material"), await indexColumns(reference, "idx_material_video_links_material")) ||
       (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged video link schema.");
+}
+
+export async function validateStudentPilotSteps(query: ValidationQuery, reference: ValidationQuery) {
+  const table = "student_pilot_steps";
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+      !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+      !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) refuse("Damaged student pilot steps schema.");
 }

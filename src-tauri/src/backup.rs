@@ -700,6 +700,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 29 {
         verify_schema_29_video_links(connection)?;
     }
+    if newest_migration >= 30 {
+        verify_schema_30_student_pilot_steps(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -849,6 +852,18 @@ pub(crate) fn verify_schema_29_video_links(connection: &Connection) -> Result<()
         )? != 0
     {
         return Err("Damaged video link schema.".into());
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_schema_30_student_pilot_steps(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "student_pilot_steps";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+    {
+        return Err("Damaged student pilot steps schema.".into());
     }
     Ok(())
 }
@@ -17157,6 +17172,50 @@ mod material_video_link_tests {
         assert_eq!(
             m3_count(&restored, "SELECT COUNT(*) FROM material_video_links", &[]).unwrap(),
             0
+        );
+    }
+}
+
+#[cfg(test)]
+mod student_pilot_steps_tests {
+    use super::*;
+
+    #[test]
+    fn schema_30_student_pilot_steps_require_the_table_shape() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_30_student_pilot_steps(&connection).unwrap();
+        connection
+            .execute_batch(
+                "ALTER TABLE student_pilot_steps RENAME TO original_steps;
+                 CREATE TABLE student_pilot_steps (step_id TEXT PRIMARY KEY, updated_at TEXT NOT NULL);
+                 DROP TABLE original_steps;",
+            )
+            .unwrap();
+        assert!(verify_schema_30_student_pilot_steps(&connection).is_err());
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch("DROP TABLE student_pilot_steps")
+            .unwrap();
+        assert!(verify_schema_30_student_pilot_steps(&connection).is_err());
+    }
+
+    #[test]
+    fn schema_30_ticks_survive_sqlite_backup() {
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO student_pilot_steps VALUES ('medical','2026-11-01T00:00:00Z','2026-11-01T00:00:00Z');",
+            )
+            .unwrap();
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+        verify_schema_30_student_pilot_steps(&restored).unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM student_pilot_steps", &[]).unwrap(),
+            1
         );
     }
 }
