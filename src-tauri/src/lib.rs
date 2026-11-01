@@ -76,11 +76,13 @@ mod study_page_sources;
 mod study_sets;
 mod visual_cards;
 mod weather;
+#[cfg(desktop)]
 mod window_placement;
 
 use logging::log;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
+#[cfg(desktop)]
 use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
@@ -343,6 +345,7 @@ pub fn run() {
             // Register data-writing plugins only after ownership is established.
             // Window-state writes on Exit even without a window; SQL may preload
             // databases from config during plugin setup.
+            #[cfg(desktop)]
             app.handle().plugin(
                 tauri_plugin_window_state::Builder::new()
                     .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
@@ -383,15 +386,20 @@ pub fn run() {
             }
             for window in &windows {
                 if window.create {
+                    #[cfg(not(desktop))]
+                    tauri::WebviewWindowBuilder::from_config(app, window)?.build()?;
+                    #[cfg(desktop)]
                     let built = tauri::WebviewWindowBuilder::from_config(app, window)?.build()?;
                     // Created after the restore gate, so the window-state plugin's
                     // own restore can lose to the config's `center`; put her saved
                     // size and place back explicitly (student run 30 Oct).
+                    #[cfg(desktop)]
                     let _ = built.restore_state(
                         StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED,
                     );
                 }
             }
+            #[cfg(desktop)]
             window_placement::keep_main_window_reachable(app.handle());
             if restored {
                 bring_main_window_forward(app.handle());

@@ -45,6 +45,7 @@ cargo test  --locked --manifest-path src-tauri/Cargo.toml
 cargo fmt   --manifest-path src-tauri/Cargo.toml --check
 cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 npm run test:cargo-lock       # Cargo.lock in sync
+scripts/check-ios.sh          # iOS compile check (local only)
 ```
 
 CI (`.github/workflows/checks.yml`) runs all of these on every PR. Changes that
