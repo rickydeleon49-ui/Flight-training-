@@ -1,3 +1,4 @@
+import { MaterialVideoLinks } from "./MaterialVideoLinks";
 import { inspectPdf } from "@/services/pdf";
 import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
@@ -1694,6 +1695,8 @@ function MaterialDetailPage() {
             </div>
 
           <OralScenariosCard material={material} />
+
+          <MaterialVideoLinks key={material.id} materialId={material.id} />
 
           </div>
         </MaterialTabPanel>

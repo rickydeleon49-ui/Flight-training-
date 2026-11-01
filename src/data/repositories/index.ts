@@ -25,7 +25,10 @@ import { navigationRepository } from "./navigationRepository";
 import { flightSchoolRepository } from "./flightSchoolRepository";
 import { oralScenarioRepository } from "./oralScenarioRepository";
 
+import { materialVideoLinkRepository } from "./materialVideoLinkRepository";
+
 export interface Repositories {
+  materialVideoLinks: ReturnType<typeof materialVideoLinkRepository>;
   homework: ReturnType<typeof homeworkRepository>;
   app: ReturnType<typeof appRepository>;
   profile: ReturnType<typeof profileRepository>;
@@ -50,6 +53,7 @@ export interface Repositories {
 
 export function createRepositories(db: SqlDatabase): Repositories {
   return {
+    materialVideoLinks: materialVideoLinkRepository(db),
     homework: homeworkRepository(db),
     app: appRepository(db),
     profile: profileRepository(db),

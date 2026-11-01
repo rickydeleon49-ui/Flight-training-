@@ -36,7 +36,7 @@ for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
     const before = db.query("SELECT * FROM study_materials");
     const tables = db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name);
     await applyMigrations((sql) => db.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 26).map((m) => m.version)));
-    expect(db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name).filter((t) => !tables.includes(t))).toEqual(["faa_reference_copies", "practice_item_acs_tasks"]);
+    expect(db.query("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name).filter((t) => !tables.includes(t))).toEqual(["faa_reference_copies", "practice_item_acs_tasks", "material_video_links"]);
     expect(db.query("SELECT * FROM faa_reference_copies")).toEqual([]);
     expect(db.query("SELECT * FROM study_materials")).toEqual(before);
     const reference = await engine(name);
@@ -105,7 +105,7 @@ for (const name of ENGINES) describe(`FAA shelf storage: ${name}`, () => {
 
   it("refuses a newer schema", async () => {
     const db = await engine(name), reference = await engine(name);
-    db.exec("INSERT INTO schema_migrations VALUES (29, 'future', 'x')");
+    db.exec(`INSERT INTO schema_migrations VALUES (${MIGRATIONS.at(-1)!.version + 1}, 'future', 'x')`);
     await expect(validateApplicationDatabase(query(db), query(reference))).rejects.toThrow(/newer/);
   });
 });
