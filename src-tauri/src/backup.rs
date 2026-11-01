@@ -7016,6 +7016,201 @@ fn verify_pending_contents_against_staged_manifest(
     Ok(true)
 }
 
+const INCOMING_DIR: &str = ".incoming";
+
+fn picked_backup_path(source: &str) -> Result<PathBuf, String> {
+    let Some(source) = source.strip_prefix("file://") else {
+        return Ok(PathBuf::from(source));
+    };
+    let mut decoded = Vec::new();
+    let mut bytes = source.as_bytes().iter().copied();
+    while let Some(byte) = bytes.next() {
+        if byte == b'%' {
+            let hi = bytes.next().and_then(|b| (b as char).to_digit(16));
+            let lo = bytes.next().and_then(|b| (b as char).to_digit(16));
+            match (hi, lo) {
+                (Some(hi), Some(lo)) => decoded.push((hi * 16 + lo) as u8),
+                _ => return Err("That backup path could not be read.".into()),
+            }
+        } else {
+            decoded.push(byte);
+        }
+    }
+    String::from_utf8(decoded)
+        .map(PathBuf::from)
+        .map_err(|_| "That backup path could not be read.".into())
+}
+
+pub(crate) fn copy_incoming_backup(root: &Path, source: &str) -> Result<PathBuf, String> {
+    let source = picked_backup_path(source)?;
+    let metadata = std::fs::symlink_metadata(&source).map_err(|e| e.to_string())?;
+    if !metadata.is_file() || is_symlink_or_reparse(&metadata) {
+        return Err("Choose a regular backup file.".into());
+    }
+    if metadata.len() > MAX_RESTORE_BYTES {
+        return Err("That backup is too large to restore.".into());
+    }
+    let dir = root.join(INCOMING_DIR);
+    match std::fs::symlink_metadata(&dir) {
+        Ok(meta) if !meta.is_dir() || is_symlink_or_reparse(&meta) => {
+            return Err("The incoming backup folder is unavailable.".into());
+        }
+        Ok(_) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            std::fs::create_dir(&dir).map_err(|e| e.to_string())?;
+        }
+        Err(e) => return Err(e.to_string()),
+    }
+    let temporary = dir.join("latest.hfdbackup.tmp");
+    let destination = dir.join("latest.hfdbackup");
+    match std::fs::remove_file(&temporary) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(e.to_string()),
+    }
+    let mut output = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary)
+        .map_err(|e| e.to_string())?;
+    let result = (|| {
+        let input = File::open(source).map_err(|e| e.to_string())?;
+        if std::io::copy(&mut input.take(MAX_RESTORE_BYTES + 1), &mut output)
+            .map_err(|e| e.to_string())?
+            > MAX_RESTORE_BYTES
+        {
+            return Err("That backup is too large to restore.".into());
+        }
+        output.sync_all().map_err(|e| e.to_string())?;
+        drop(output);
+        #[cfg(windows)]
+        if destination.exists() {
+            std::fs::remove_file(&destination).map_err(|e| e.to_string())?;
+        }
+        std::fs::rename(&temporary, &destination).map_err(|e| e.to_string())?;
+        Ok(destination)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(temporary);
+    }
+    result
+}
+
+pub(crate) fn required_restore_bytes(bytes: u64) -> u64 {
+    bytes.saturating_mul(3)
+}
+
+#[cfg(unix)]
+pub(crate) fn free_space_bytes(path: &Path) -> Result<Option<u64>, String> {
+    use std::os::unix::ffi::OsStrExt;
+    let path = std::ffi::CString::new(path.as_os_str().as_bytes()).map_err(|e| e.to_string())?;
+    let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+    // SAFETY: path is NUL-terminated and stats points to writable storage.
+    if unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } != 0 {
+        return Err(format!(
+            "Could not check free space: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    // SAFETY: statvfs returned success and initialized stats.
+    let stats = unsafe { stats.assume_init() };
+    // libc field widths differ between Unix targets.
+    #[allow(clippy::unnecessary_cast)]
+    let available = (stats.f_bavail as u64).saturating_mul(stats.f_frsize as u64);
+    Ok(Some(available))
+}
+
+#[cfg(not(unix))]
+pub(crate) fn free_space_bytes(_path: &Path) -> Result<Option<u64>, String> {
+    Ok(None)
+}
+
+fn restore_size(bytes: u64) -> String {
+    if bytes >= 1024 * 1024 * 1024 {
+        format!("{:.1} GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+    } else {
+        format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
+    }
+}
+
+fn import_picked_backup_in(
+    root: &Path,
+    source: &str,
+    version: &str,
+    available: fn(&Path) -> Result<Option<u64>, String>,
+) -> Result<CompleteBackupInfo, String> {
+    let copy = copy_incoming_backup(root, source)?;
+    let result = (|| {
+        let need =
+            required_restore_bytes(std::fs::metadata(&copy).map_err(|e| e.to_string())?.len());
+        if let Some(have) = available(root)? {
+            if have < need {
+                return Err(format!("This phone needs about {} free to restore this backup, but only {} is free. Free up some space and try again.", restore_size(need), restore_size(have)));
+            }
+        }
+        inspect_archive(root, &copy, version)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(copy);
+    }
+    result
+}
+
+#[tauri::command]
+pub async fn import_picked_backup(
+    app: AppHandle,
+    source_path: String,
+) -> Result<CompleteBackupInfo, String> {
+    let root = app_root(&app)?;
+    let version = app.package_info().version.to_string();
+    tauri::async_runtime::spawn_blocking(move || {
+        import_picked_backup_in(&root, &source_path, &version, free_space_bytes)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn discard_incoming_backup(app: AppHandle) -> Result<(), String> {
+    let dir = app_root(&app)?.join(INCOMING_DIR);
+    if inspect_storage_root(&dir, "Incoming backup folder")?.is_some() {
+        for name in ["latest.hfdbackup", "latest.hfdbackup.tmp"] {
+            match std::fs::remove_file(dir.join(name)) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e.to_string()),
+            }
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn exit_for_restore(app: AppHandle) {
+    app.exit(0);
+}
+
+fn clear_restored_device_id_best_effort(root: &Path) {
+    // Non-critical: the restore already succeeded; a failure only keeps the old id.
+    if let Err(e) = clear_restored_device_id(root) {
+        log::warn!("Restore: could not reset the device id: {e}");
+    }
+}
+
+fn clear_restored_device_id(root: &Path) -> Result<(), String> {
+    let connection =
+        Connection::open_with_flags(root.join(DB_FILES[0]), OpenFlags::SQLITE_OPEN_READ_WRITE)
+            .map_err(|e| e.to_string())?;
+    connection
+        .busy_timeout(BUSY_TIMEOUT)
+        .map_err(|e| e.to_string())?;
+    match connection.execute("DELETE FROM app_metadata WHERE key = 'device_id'", []) {
+        Ok(_) => Ok(()),
+        Err(e) if e.to_string().contains("no such table: app_metadata") => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 fn remove_pending_directory_safely(pending: &Path) -> Result<(), std::io::Error> {
     // Fallible no-follow inspection of the pending directory itself.
     let root_meta = match std::fs::symlink_metadata(pending) {
@@ -8470,7 +8665,8 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 return Ok(StartupRestoreDecision::ProceedNormally)
             }
             Ok(RestoreApplicationResult::Installed) => {
-                return Ok(StartupRestoreDecision::RestoreCompleted)
+                clear_restored_device_id_best_effort(root);
+                return Ok(StartupRestoreDecision::RestoreCompleted);
             }
             Ok(RestoreApplicationResult::RefusedUnchanged(reason)) => {
                 return Ok(StartupRestoreDecision::StagingRefusedUnchanged { reason });
@@ -8550,6 +8746,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 }
             }
             if cleanup_succeeded {
+                clear_restored_device_id_best_effort(root);
                 let _ = prune(root);
                 // A restore interrupted after it committed: finish forgetting
                 // the replaced library's Gemini jobs before the journal goes.
@@ -9081,6 +9278,212 @@ mod tests {
         connection
             .execute("INSERT INTO audit_payload(value) VALUES (?1)", [contents])
             .unwrap();
+    }
+
+    fn incoming_fixture() -> (PathBuf, PathBuf) {
+        let container = scratch("incoming");
+        let root = container.join("app");
+        std::fs::create_dir(&root).unwrap();
+        write_database(&root.join(DB_FILES[0]), "fictional import record");
+        let archive = container.join("picked.hfdbackup");
+        write_complete_backup(&root, &archive, "0.6.6").unwrap();
+        (root, archive)
+    }
+
+    #[test]
+    fn import_copies_into_incoming_and_inspects() {
+        let (root, archive) = incoming_fixture();
+        let info = import_picked_backup_in(&root, archive.to_str().unwrap(), "0.6.6", |_| {
+            Ok(Some(u64::MAX))
+        })
+        .unwrap();
+        let copy = root.join(INCOMING_DIR).join("latest.hfdbackup");
+        assert_eq!(info.path, copy.to_string_lossy());
+        assert_eq!(
+            std::fs::read(copy).unwrap(),
+            std::fs::read(archive).unwrap()
+        );
+        assert!(!root
+            .join(INCOMING_DIR)
+            .join("latest.hfdbackup.tmp")
+            .exists());
+        assert_eq!(info.app_version, "0.6.6");
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn import_replaces_previous_incoming_copy() {
+        let (root, archive) = incoming_fixture();
+        let copy = copy_incoming_backup(&root, archive.to_str().unwrap()).unwrap();
+        std::fs::write(&copy, "previous incoming copy").unwrap();
+        import_picked_backup_in(&root, archive.to_str().unwrap(), "0.6.6", |_| Ok(None)).unwrap();
+        assert_eq!(
+            std::fs::read(copy).unwrap(),
+            std::fs::read(archive).unwrap()
+        );
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn import_refuses_when_free_space_is_short() {
+        let (root, archive) = incoming_fixture();
+        let bytes = std::fs::metadata(&archive).unwrap().len();
+        let error = import_picked_backup_in(&root, archive.to_str().unwrap(), "0.6.6", |root| {
+            Ok(Some(
+                std::fs::metadata(root.join(INCOMING_DIR).join("latest.hfdbackup"))
+                    .unwrap()
+                    .len()
+                    * 2,
+            ))
+        })
+        .unwrap_err();
+        assert_eq!(error, format!("This phone needs about {} free to restore this backup, but only {} is free. Free up some space and try again.", restore_size(bytes * 3), restore_size(bytes * 2)));
+        assert_eq!(
+            std::fs::read_dir(root.join(INCOMING_DIR)).unwrap().count(),
+            0
+        );
+        assert_eq!(required_restore_bytes(u64::MAX), u64::MAX);
+        assert_eq!(restore_size(3 * 1024 * 1024 * 1024), "3.0 GB");
+        assert_eq!(restore_size(2 * 1024 * 1024), "2.0 MB");
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn import_skips_space_check_when_unknown() {
+        let (root, archive) = incoming_fixture();
+        assert!(
+            import_picked_backup_in(&root, archive.to_str().unwrap(), "0.6.6", |_| Ok(None))
+                .is_ok()
+        );
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn staged_restore_accepts_source_under_incoming() {
+        let (root, archive) = incoming_fixture();
+        let copy = copy_incoming_backup(&root, archive.to_str().unwrap()).unwrap();
+        stage_complete_restore_in(&root, &copy, "0.6.6").unwrap();
+        assert!(root.join(RESTORE_PENDING_DIR).join(DB_FILES[0]).is_file());
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn incoming_dir_is_never_an_allowed_archive_path() {
+        assert!(!allowed_archive_path(Path::new(INCOMING_DIR), true));
+        assert!(!allowed_archive_path(
+            Path::new(".incoming/latest.hfdbackup"),
+            false
+        ));
+    }
+
+    #[test]
+    fn restore_clears_device_id_so_a_new_one_is_made() {
+        let (root, archive) = incoming_fixture();
+        {
+            let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+            connection
+                .execute_batch(
+                    "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                INSERT INTO app_metadata VALUES ('device_id', 'mac-1'), ('other', 'keep');",
+                )
+                .unwrap();
+        }
+        write_complete_backup(&root, &archive, "0.6.6").unwrap();
+        stage_complete_restore_in(&root, &archive, "0.6.6").unwrap();
+        // Staging must not clear the current install's ID.
+        assert_eq!(
+            Connection::open(root.join(DB_FILES[0]))
+                .unwrap()
+                .query_row(
+                    "SELECT value FROM app_metadata WHERE key = 'device_id'",
+                    [],
+                    |r| r.get::<_, String>(0)
+                )
+                .unwrap(),
+            "mac-1"
+        );
+        assert!(matches!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        ));
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        let id: Option<String> = connection
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'device_id'",
+                [],
+                |r| r.get(0),
+            )
+            .optional()
+            .unwrap();
+        assert_eq!(id, None);
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT value FROM app_metadata WHERE key = 'other'",
+                    [],
+                    |r| r.get::<_, String>(0)
+                )
+                .unwrap(),
+            "keep"
+        );
+        // Same insert-if-absent contract used by ensureDeviceId at startup.
+        connection
+            .execute(
+                "INSERT OR IGNORE INTO app_metadata VALUES ('device_id', 'phone-new')",
+                [],
+            )
+            .unwrap();
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT value FROM app_metadata WHERE key = 'device_id'",
+                    [],
+                    |r| r.get::<_, String>(0)
+                )
+                .unwrap(),
+            "phone-new"
+        );
+        drop(connection);
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn incoming_picker_paths_and_regular_file_guards() {
+        let (root, archive) = incoming_fixture();
+        let spaced = root.join("picked copy.hfdbackup");
+        std::fs::rename(archive, &spaced).unwrap();
+        let url = format!("file://{}", spaced.to_string_lossy().replace(' ', "%20"));
+        let copy = copy_incoming_backup(&root, &url).unwrap();
+        assert_eq!(
+            std::fs::read(copy).unwrap(),
+            std::fs::read(&spaced).unwrap()
+        );
+        assert!(copy_incoming_backup(&root, root.to_str().unwrap()).is_err());
+        assert!(copy_incoming_backup(&root, "file://%zz").is_err());
+        // A plain path is used as-is, even with a literal '%'.
+        let percent = root.join("50%20notes.hfdbackup");
+        std::fs::copy(&spaced, &percent).unwrap();
+        assert!(copy_incoming_backup(&root, percent.to_str().unwrap()).is_ok());
+        // A stale temporary file from an interrupted copy does not block the next import.
+        std::fs::write(
+            root.join(INCOMING_DIR).join("latest.hfdbackup.tmp"),
+            "stale",
+        )
+        .unwrap();
+        assert!(copy_incoming_backup(&root, spaced.to_str().unwrap()).is_ok());
+        #[cfg(unix)]
+        {
+            let link = root.join("linked.hfdbackup");
+            std::os::unix::fs::symlink(&spaced, &link).unwrap();
+            assert!(copy_incoming_backup(&root, link.to_str().unwrap()).is_err());
+        }
+        let large = root.join("large.hfdbackup");
+        File::create(&large)
+            .unwrap()
+            .set_len(MAX_RESTORE_BYTES + 1)
+            .unwrap();
+        assert!(copy_incoming_backup(&root, large.to_str().unwrap()).is_err());
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
     }
 
     #[test]

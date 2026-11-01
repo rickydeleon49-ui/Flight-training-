@@ -191,3 +191,29 @@ export async function upgradeCopyFailed(): Promise<boolean> {
   if (!isTauri()) return false;
   return invoke<boolean>("upgrade_copy_failed");
 }
+
+export interface ActivitySummary {
+  latestReviewAt: string | null;
+  reviewsLast7Days: number;
+  attemptsLast7Days: number;
+}
+
+export async function importPickedBackup(sourcePath: string): Promise<CompleteBackupInfo> {
+  if (!isTauri()) throw new Error("Restore needs the application.");
+  return invoke<CompleteBackupInfo>("import_picked_backup", { sourcePath });
+}
+
+export async function discardIncomingBackup(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("discard_incoming_backup");
+}
+
+export async function exitForRestore(): Promise<void> {
+  if (!isTauri()) throw new Error("Restore needs the application.");
+  await invoke("exit_for_restore");
+}
+
+export async function phoneActivitySummary(): Promise<ActivitySummary> {
+  if (!isTauri()) return { latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 };
+  return invoke<ActivitySummary>("phone_activity_summary");
+}

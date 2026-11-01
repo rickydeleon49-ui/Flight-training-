@@ -1819,6 +1819,7 @@ dependencies = [
  "hex",
  "http-body",
  "keyring",
+ "libc",
  "lopdf",
  "proptest",
  "reqwest 0.12.28",
