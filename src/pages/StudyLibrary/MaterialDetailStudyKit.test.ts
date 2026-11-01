@@ -6,6 +6,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { createRepositories } from "@/data/repositories";
 import { MaterialDetail } from "./MaterialDetail";
+import { useGeminiJobs } from "@/state/GeminiJobs";
+import { KIT_PRACTICE_ATTEMPT_MESSAGE } from "@/data/persistenceErrors";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as service from "@/services/gemini";
 import * as pdf from "@/services/pdf";
@@ -15,7 +17,8 @@ vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () =
 let records: service.GeminiJobRecord[];
 let calls: ReturnType<typeof vi.spyOn>;
 let repos: ReturnType<typeof createRepositories>;
-function Ready() { return useAppData().status === "ready" ? h(Routes, null, h(Route, {path:"/study/:materialId",element:h(MaterialDetail)})) : null; }
+let jobs: ReturnType<typeof useGeminiJobs>;
+function Ready() { jobs = useGeminiJobs(); return useAppData().status === "ready" ? h(Routes, null, h(Route, {path:"/study/:materialId",element:h(MaterialDetail)})) : null; }
 async function open(before?: () => Promise<unknown>) {
   await repos.documents.create({id:"kit-material",title:"Synthetic PDF",filePath:"synthetic.pdf",originalFileName:"synthetic.pdf",fileSize:1000});
   await before?.();
@@ -369,4 +372,54 @@ it("puts the unfinished attempt warning before the regeneration disclosure", asy
   expect(notice.nextElementSibling?.textContent).toContain("replace your current practice test");
   fireEvent.click(within(confirm).getByRole("button", {name:"Cancel"}));
   expect(await repos.practiceSessions.getCurrentAttempt("kit-material")).toBeTruthy();
+});
+
+async function seedAnsweredAttempt() {
+  await repos.documents.savePracticeTest({sourceMaterialId:"kit-material",provider:"gemini",title:"Earlier test",model:"test",
+    questions: [1,2,3].map(n => ({question:`Earlier question ${n}?`,options:["A","B"],correctIndex:0,explanation:"A",sourcePage:1}))});
+  const active = (await repos.practiceSessions.getActiveVersion("kit-material"))!;
+  await repos.practiceSessions.saveSessionAction({action:"start_or_resume",operationId:crypto.randomUUID(),materialId:"kit-material",versionId:active.version.id});
+  for (const item of active.items.slice(0,2)) {
+    const attempt = (await repos.practiceSessions.getCurrentAttempt("kit-material"))!;
+    await repos.practiceSessions.saveSessionAction({action:"record_response",operationId:crypto.randomUUID(),attemptId:attempt.attemptId,itemId:item.id,expectedRevision:attempt.revision,selectedIndex:0,isDontKnow:false});
+  }
+}
+it("kit consent shows the unfinished practice count before sending", async () => {
+  await open(seedAnsweredAttempt);
+  fireEvent.click(screen.getByRole("button", {name:"Make my study kit"}));
+  const confirm = await screen.findByRole("dialog", {name:"Send this file to Google?"});
+  expect(await within(confirm).findByText("You have an unfinished practice test (2 of 3 answered). Finish or abandon it before the new questions can be saved; the guide and flashcards can be saved right away.")).toBeTruthy();
+  expect(calls).not.toHaveBeenCalled();
+});
+it("Save all three preserves an unfinished attempt and its answers, keeps a restartable questions draft, and saves it after abandonment", async () => {
+  records = parts();
+  await open(async () => {
+    await seedAnsweredAttempt();
+    records[2] = {...records[2]!,baseRevision:(await repos.documents.listPracticeTests())[0]!.updatedAt};
+  });
+  const attempt = await repos.practiceSessions.getCurrentAttempt("kit-material");
+  const responses = await db.select("SELECT * FROM practice_responses");
+  const versions = await db.select("SELECT * FROM practice_test_versions");
+  const history = await db.select("SELECT * FROM study_set_history WHERE kind = 'practice'");
+  fireEvent.click(await screen.findByRole("button", {name:"Save all three"}));
+  expect(await screen.findByText(KIT_PRACTICE_ATTEMPT_MESSAGE)).toBeTruthy();
+  expect((await repos.documents.listAiStudySets())[0]?.sections).toHaveLength(1);
+  expect((await repos.documents.listAiStudySets())[0]?.flashcards).toHaveLength(1);
+  expect(await repos.practiceSessions.getCurrentAttempt("kit-material")).toEqual(attempt);
+  expect(attempt?.responses).toHaveLength(2);
+  expect(await db.select("SELECT * FROM practice_responses")).toEqual(responses);
+  expect(await db.select("SELECT * FROM practice_test_versions")).toEqual(versions);
+  expect(await db.select("SELECT * FROM study_set_history WHERE kind = 'practice'")).toEqual(history);
+  expect(jobs.jobs.find(job => job.kind === "practice-test")?.phase).toBe("recovered");
+  expect(records.map(r=>r.id)).toEqual(["job-aaaaaaaaaaaaaaaaaaaaaaaa#questions"]);
+  cleanup();
+  render(h(AppDataProvider, null, h(MemoryRouter,{initialEntries:["/study/kit-material"]},h(Ready))));
+  fireEvent.click(await screen.findByRole("button", {name:"Save the new practice test"}));
+  expect(await screen.findByText(KIT_PRACTICE_ATTEMPT_MESSAGE)).toBeTruthy();
+  expect(await repos.practiceSessions.getCurrentAttempt("kit-material")).toEqual(attempt);
+  await act(async () => { await repos.practiceSessions.saveSessionAction({action:"abandon_attempt",operationId:crypto.randomUUID(),attemptId:attempt!.attemptId,expectedRevision:attempt!.revision}); });
+  fireEvent.click(screen.getByRole("button", {name:"Save the new practice test"}));
+  await waitFor(() => expect(records).toHaveLength(0));
+  expect((await repos.documents.listPracticeTests())[0]?.title).toBe("Practice questions");
+  expect(await repos.practiceSessions.getCurrentAttempt("kit-material")).toBeNull();
 });

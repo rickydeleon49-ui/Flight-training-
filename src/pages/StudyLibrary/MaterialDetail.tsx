@@ -268,7 +268,7 @@ function MaterialDetailPage() {
   useEffect(() => {
     let live = true;
     setUnfinishedPractice(null);
-    if (confirmingPracticeTest && repositories && materialId) {
+    if ((confirmingPracticeTest || confirmingKit) && repositories && materialId) {
       void repositories.practiceSessions.getCurrentAttempt(materialId).then(async attempt => {
         if (!attempt) return;
         const items = await repositories.practiceSessions.getItems(attempt.versionId);
@@ -276,7 +276,7 @@ function MaterialDetailPage() {
       }).catch(() => {});
     }
     return () => { live = false; };
-  }, [confirmingPracticeTest, repositories, materialId]);
+  }, [confirmingPracticeTest, confirmingKit, repositories, materialId]);
   const waitingKitDraftKey = JSON.stringify([materialId, waitingKitDrafts.map((job) => [job.key, Boolean(job.studyKitPart)])]);
   // A saved/discarded draft can invalidate both the refusal and its destination.
   // Only the draft refusals go stale this way; other kit messages stay.
@@ -2209,7 +2209,9 @@ function MaterialDetailPage() {
         }}
       />
 
-      <ConfirmDialog open={confirmingKit} title={`Send this file to ${providerCompany(gemini?.model)}?`}
+      <ConfirmDialog open={confirmingKit}
+        notice={unfinishedPractice ? `You have an unfinished practice test (${unfinishedPractice.answered} of ${unfinishedPractice.total} answered). Finish or abandon it before the new questions can be saved; the guide and flashcards can be saved right away.` : undefined}
+        title={`Send this file to ${providerCompany(gemini?.model)}?`}
         message={`${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)} You review and save each part separately.${kitReplacesSaved ? ` ${KIT_REPLACE_NOTE}` : ""}`}
         details={sendDisclosure.details} detailsSummary="What the provider keeps" confirmLabel="Make my study kit" destructive={false}
         {...chooseChapterFirst(() => setConfirmingKit(false))}

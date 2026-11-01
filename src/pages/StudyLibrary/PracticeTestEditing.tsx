@@ -234,8 +234,9 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   // Keep an uncertain first save open even when refreshing reveals its commit.
   if (!applicable && !open) return null;
   return <div className="stack stack--2">
-    {applicable ? <div><Button id={creating ? undefined : "practice-edit-questions"} size="small" variant="secondary" style={{ whiteSpace: "normal", maxWidth: "100%", overflowWrap: "anywhere" }} disabled={!creating && (blocked || attempt === null)} onClick={() => { setOpen(true); void load(); }}>{label}</Button></div> : null}
-    {!creating && blocked ? <p className="tiny muted">Finish your current attempt, or use Abandon attempt below, before editing questions.</p> : null}
+    {applicable ? <div><Button id={creating ? undefined : "practice-edit-questions"} size="small" variant="secondary" style={{ whiteSpace: "normal", maxWidth: "100%", overflowWrap: "anywhere" }} aria-describedby={!creating && blocked ? "practice-edit-blocked" : undefined} disabled={!creating && (blocked || attempt === null)} onClick={() => { setOpen(true); void load(); }}>{label}</Button>
+      {!creating && blocked ? <p id="practice-edit-blocked" className="small">Finish your current attempt, or use Abandon attempt below, before editing questions.</p> : null}
+    </div> : null}
     <Dialog open={open} onClose={close} title={label} dismissible={!busy} initialFocus={() => titleRef.current} footer={<>
       <Button onClick={close} disabled={busy}>Cancel</Button>
       {seed ? <Button disabled={busy} onClick={() => { onLeaveOut?.(); close(); }}>Leave questions out</Button> : null}
