@@ -254,6 +254,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 26) await validateVisualCards(query, reference);
   if (newest >= 29) await validateVideoLinks(query, reference);
   if (newest >= 30) await validateStudentPilotSteps(query, reference);
+  if (newest >= 31) await validateFaaDownloads(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2138,4 +2139,12 @@ export async function validateStudentPilotSteps(query: ValidationQuery, referenc
   if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
       !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
       !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) refuse("Damaged student pilot steps schema.");
+}
+
+export async function validateFaaDownloads(query: ValidationQuery, reference: ValidationQuery) {
+  const table = "faa_downloads";
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+      !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+      !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+      (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged FAA downloads schema.");
 }

@@ -56,18 +56,19 @@ export function faaReferenceDraft(reference: FaaReference, id: string, edition: 
   };
 }
 
-export function faaEditionMessage(reference: FaaReference, note: FaaReferenceNote): string {
+export function faaEditionMessage(reference: { edition: string }, note: Pick<FaaReferenceNote, "edition">): string {
   // The row already shows the listed edition; add hers only when she typed a different one.
   return note.edition && note.edition !== reference.edition ? `Your copy: ${note.edition}` : "";
 }
 
 export type FaaAvailability = "checking" | "present" | "missing" | "changed" | "unknown" | "browser";
 export function faaAvailability(
-  note: FaaReferenceNote,
+  note: { contentSha256: string; totalPages?: number },
   current: ImportedDocument["pdfIdentity"],
 ): FaaAvailability {
   if (!current) return "missing";
-  if (current.contentSha256 !== note.contentSha256 || current.totalPages !== note.totalPages) return "changed";
+  // Download provenance keeps the hash; local reference receipts also keep a page count.
+  if (current.contentSha256 !== note.contentSha256 || (note.totalPages !== undefined && current.totalPages !== note.totalPages)) return "changed";
   return "present";
 }
 

@@ -6,9 +6,9 @@ import { openNodeEngine } from "./testing/skillEvidenceEngines";
 
 describe("video links schema 29", () => {
   it("registers the same additive migration on desktop and browser", () => {
-    expect(MIGRATIONS.at(-1)).toMatchObject({ version: 30, description: "student_pilot_steps" });
+    expect(MIGRATIONS.at(-1)).toMatchObject({ version: 31, description: "faa_downloads" });
     const native = readFileSync("src-tauri/src/lib.rs", "utf8");
-    expect(native).toMatch(/CURRENT_SCHEMA_VERSION: i64 = 30/);
+    expect(native).toMatch(/CURRENT_SCHEMA_VERSION: i64 = 31/);
     expect(native).toMatch(/version: 29,\s+description: "material_video_links",\s+sql: include_str!\("\.\.\/migrations\/0029_material_video_links.sql"\)/);
   });
   it.each(["DROP TABLE material_video_links", "DROP INDEX idx_material_video_links_material"])("refuses schema damage: %s", async (damage) => {
@@ -27,7 +27,7 @@ describe("video links schema 29", () => {
   it("upgrades schema 28 without changing existing materials", async () => {
     const engine = await openNodeEngine();
     try {
-      await applyMigrations((sql) => engine.exec(sql), new Set([29, 30]));
+      await applyMigrations((sql) => engine.exec(sql), new Set([29, 30, 31]));
       engine.exec("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('section','Synthetic section','now','now')");
       const before = engine.query("SELECT * FROM study_materials");
       await applyMigrations((sql) => engine.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 28).map((m) => m.version)));

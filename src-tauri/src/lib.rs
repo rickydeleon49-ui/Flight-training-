@@ -60,6 +60,7 @@ mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
 // command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
 // comment for why.
+mod faa_downloads;
 mod platform;
 mod practice_authoring;
 #[cfg(test)]
@@ -87,7 +88,7 @@ use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 30;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 31;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -276,6 +277,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0030_student_pilot_steps.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 31,
+            description: "faa_downloads",
+            sql: include_str!("../migrations/0031_faa_downloads.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -396,6 +403,7 @@ pub fn run() {
             if documents::cleanup_staged_deletions(app.handle()).is_err() {
                 log::warn!("Could not clean up staged deletions; will try again next launch.");
             }
+            faa_downloads::clean_incoming(app.handle());
             for window in &windows {
                 if window.create {
                     #[cfg(not(desktop))]
@@ -420,6 +428,10 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            faa_downloads::list_faa_downloads,
+            faa_downloads::download_faa_handbook,
+            faa_downloads::cancel_faa_download,
+            faa_downloads::faa_download_progress,
             weather::weather_session,
             weather::get_airport_weather,
             extraction::service::offline_content_readiness,

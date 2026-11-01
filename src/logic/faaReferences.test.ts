@@ -49,3 +49,10 @@ describe("FAA document shelf intake", () => {
     expect(faaAvailability(note, { ...imported.pdfIdentity, totalPages: 0 })).toBe("changed");
   });
 });
+
+it("checks a download using its persisted hash without inventing a page count", () => {
+  const note = { contentSha256: imported.pdfIdentity.contentSha256 };
+  expect(faaAvailability(note, imported.pdfIdentity)).toBe("present");
+  expect(faaAvailability(note, null)).toBe("missing");
+  expect(faaAvailability(note, { ...imported.pdfIdentity, contentSha256: "b".repeat(64) })).toBe("changed");
+});
