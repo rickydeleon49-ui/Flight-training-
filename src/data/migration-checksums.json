@@ -27,5 +27,6 @@
   "0026_visual_card_regions.sql": "af88c90a9232f1765bd2da2ee8c0371952042cf071b976b6e5be69ff64b0129e",
   "0027_faa_reference_copies.sql": "766713eef234dbea958c2a0eacc94a89f0dabaa7d82f38012cfbd129fbbbc31a",
   "0028_practice_item_acs_tasks.sql": "d376906ff6d1d0d1f22c119d6d79791b38bbf7daef3e7a502fd2de5c8de5da45",
-  "0029_material_video_links.sql": "aa82e2d8ca820a771f4080ac2511f58a39cebab9f601f7fad030df27cfeb01ca"
+  "0029_material_video_links.sql": "aa82e2d8ca820a771f4080ac2511f58a39cebab9f601f7fad030df27cfeb01ca",
+  "0030_student_pilot_steps.sql": "33f5bf1120e5bd575c81b086b4cead5114c68703c876767e5e005f7de377e7de"
 }
