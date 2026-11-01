@@ -502,7 +502,7 @@ export function StudyLibrary() {
           <summary className="library__shelf-summary">References and ACS lookup</summary>
           <p className="tiny muted">Optional FAA books, and a finder for the ACS codes on a knowledge-test report.</p>
           <div className="library__shelf-body">
-            <FaaReferences />
+            <FaaReferences onAddPdf={() => setCreating(true)} />
             {topicPanels}
           </div>
         </details>
