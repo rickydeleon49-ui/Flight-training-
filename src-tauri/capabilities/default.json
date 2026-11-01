@@ -1,6 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
+  "platforms": ["macOS", "windows", "linux"],
   "description": "Permissions required by Her Flight Deck.",
   "windows": ["main"],
   "permissions": [
