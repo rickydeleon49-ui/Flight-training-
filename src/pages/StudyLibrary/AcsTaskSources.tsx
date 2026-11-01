@@ -19,9 +19,9 @@ export function AcsTaskSources({ code }: { code?: string | null }) {
     onClick={(event) => { void open(event, url); }}>{name}</a>;
   return <details className="small muted">
     <summary style={{ cursor: "pointer", minHeight: 44, alignContent: "center" }}>Official sources</summary>
-    <p>{sources.map((source, index) => <span key={source.id}>
-      {index ? ", " : ""}{source.url ? link(source.url, source.name) : source.name}
-    </span>)}</p>
+    <ul>{sources.map((source) => <li key={source.id}>
+      {source.url ? link(source.url, source.name) : source.name}
+    </li>)}</ul>
     <p className="tiny dim">From FAA-S-ACS-6C (November 2023, effective May 31, 2024).{" "}
       {link("https://www.faa.gov/training_testing/testing/acs", "Check the current FAA version.")}</p>
     {error ? <p role="alert">That link couldn't be opened. Please try again.</p> : null}

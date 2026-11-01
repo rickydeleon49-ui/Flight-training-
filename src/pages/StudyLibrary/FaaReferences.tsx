@@ -167,9 +167,16 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
     }
   };
 
+  const selectedEntry = entries.find((entry) => entry.id === selected);
+  const selectedRecords = records.filter((record) => record.documentId === selected
+    && data.materials.some((material) => material.id === record.materialId));
+  const alreadySaved = selectedRecords.length > 0;
+  const selectedLabel = selectedEntry?.title.replace(/^Airplane Flying Handbook, chapter /, "Chapter ")
+    ?? "chapter";
+
   const get = async () => {
     const entry = entries.find((item) => item.id === selected);
-    if (locked.current || !desktop || !online || !entry) return;
+    if (locked.current || !desktop || !online || !entry || alreadySaved) return;
     locked.current = true;
     cancelled.current = false;
     setBusy(true); setCancelling(false); setProgress(null); setError(""); setMessage("");
@@ -214,29 +221,30 @@ function AfhShelf({ onAddPdf }: { onAddPdf?: () => void }) {
     {desktop ? <>
       <div className="row row--wrap">
         <Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
-          onChange={setSelected} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
+          onChange={(value) => { setSelected(value); setMessage(""); }} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
         <Button onClick={onAddPdf} disabled={!onAddPdf}>Add PDF</Button>
-        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current}>Get from faa.gov</Button>
+        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? "Downloading…" : alreadySaved ? "Already saved" : "Get from faa.gov"}</Button>
         {busy && !pending.current ? <Button onClick={() => void cancel()} disabled={cancelling}>{cancelling ? "Cancelling…" : "Cancel"}</Button> : null}
         {pending.current ? <Button onClick={() => void retry()} disabled={busy}>Save downloaded PDF</Button> : null}
       </div>
       {!online ? <p className="small muted">Needs internet once; works offline afterwards.</p> : null}
-      {busy && !pending.current ? <p className="small" role="status">Downloading from faa.gov…{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
+      {busy && !pending.current ? <p className="small" role="status">Getting {selectedLabel} from faa.gov…{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
     </> : null}
     {message ? <p className="small" role="status">{message}</p> : null}
     {error ? <p className="small" role="alert">{error}</p> : null}
-    {records.map((record) => {
+    {selectedRecords.map((record) => {
       const material = data.materials.find((item) => item.id === record.materialId);
       if (!material) return null;
       return <div key={record.materialId}>
         <h4 className="small">{material.title}</h4>
+        <p className="small">Saved for offline study</p>
         <p className="small wrap-anywhere">{record.edition} · {record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
         <SavedReference material={material} reference={{ title: "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
         <CurrentAfhLink />
       </div>;
     })}
-    {!records.some((record) => data.materials.some((material) => material.id === record.materialId)) ? <CurrentAfhLink /> : null}
+    {!selectedRecords.length ? <CurrentAfhLink /> : null}
   </div>;
 }
 

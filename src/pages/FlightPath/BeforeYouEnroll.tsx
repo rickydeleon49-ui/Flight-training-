@@ -95,11 +95,10 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
         <ul className="enroll-checklist stack stack--3">
           {steps.map((step) => (
             <li key={step.id} className="row row--wrap">
-              <Checkbox label={step.label} checked={done.includes(step.id)} strikethrough={false}
+              <Checkbox label={<>{step.label}{"url" in step ? <>{" "}<a className="small" href={step.url} target="_blank" rel="noopener noreferrer"
+                aria-label={`FAA page: ${step.label}`} onClick={(event) => openSource(event, step.url)}>FAA page</a></> : null}</>} checked={done.includes(step.id)} strikethrough={false}
                 onChange={(checked) => tick(step.id, checked)} />
               {"to" in step ? <Link className="small" to={step.to}>{step.link}</Link> : null}
-              {"url" in step ? <a className="small" href={step.url} target="_blank" rel="noopener noreferrer"
-                aria-label={`FAA page: ${step.label}`} onClick={(event) => openSource(event, step.url)}>FAA</a> : null}
             </li>
           ))}
         </ul>
