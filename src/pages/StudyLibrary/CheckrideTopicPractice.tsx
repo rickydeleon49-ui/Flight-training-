@@ -38,7 +38,8 @@ export function CheckrideTopicPractice({ practiceTests, materials }: {
     <Button variant="secondary" onClick={() => setOpen(true)}>Practice by checkride topic</Button>
     {open ? <Dialog open title="Practice by checkride topic" onClose={close}>
       <div className="stack stack--3" onKeyDown={(event) => {
-        if (!question || event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+        if (!question || event.altKey || event.ctrlKey || event.metaKey || event.repeat ||
+          (event.target instanceof Element && event.target.closest("details"))) return;
         if (/^[1-3]$/.test(event.key) && answer === null) {
           const chosen = Number(event.key) - 1;
           if (chosen < question.options.length) { event.preventDefault(); setAnswer(chosen); }
@@ -52,8 +53,8 @@ export function CheckrideTopicPractice({ practiceTests, materials }: {
           <p>New practice tests made from a PDF will be grouped by checkride topic.</p> : null}
         {question && current ? <>
           <h3 ref={heading} tabIndex={-1} className="ai-guide__title">Question {index + 1} of {drill!.length}</h3>
+          <AcsTaskChip code={question.acsTask} showSources />
           <p className="small ai-copy">{question.question}</p>
-          <AcsTaskChip code={question.acsTask} />
           <p className="tiny dim">Use 1–3 to choose an answer, then Enter for the next question.</p>
           <div className="stack stack--2" role="group" aria-label="Answer choices">
             {question.options.map((option, optionIndex) => <button key={optionIndex} type="button"
