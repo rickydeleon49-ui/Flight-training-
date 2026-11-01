@@ -40,6 +40,8 @@ import faaReferenceCopies from "../../src-tauri/migrations/0027_faa_reference_co
 
 import practiceItemAcsTasks from "../../src-tauri/migrations/0028_practice_item_acs_tasks.sql?raw";
 
+import materialVideoLinks from "../../src-tauri/migrations/0029_material_video_links.sql?raw";
+
 export interface Migration {
   version: number;
   description: string;
@@ -75,6 +77,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 26, description: "visual_card_regions", sql: visualCardRegions },
   { version: 27, description: "faa_reference_copies", sql: faaReferenceCopies },
   { version: 28, description: "practice_item_acs_tasks", sql: practiceItemAcsTasks },
+  { version: 29, description: "material_video_links", sql: materialVideoLinks },
 ];
 
 /**

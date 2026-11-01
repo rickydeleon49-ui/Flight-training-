@@ -697,6 +697,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 25 {
         verify_schema_25_oral_scenarios(connection)?;
     }
+    if newest_migration >= 29 {
+        verify_schema_29_video_links(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -828,6 +831,25 @@ fn verify_practice_acs_tasks(connection: &Connection, required: bool) -> Result<
     // Tag values are NOT checked against today's catalog: a future ACS
     // edition must never make an older backup unrestorable. Unknown tags
     // simply read as untagged.
+    Ok(())
+}
+
+pub(crate) fn verify_schema_29_video_links(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "material_video_links";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+        || m3_index_shape(connection, table, "idx_material_video_links_material")?
+            != m3_index_shape(&reference, table, "idx_material_video_links_material")?
+        || m3_count(
+            connection,
+            "SELECT COUNT(*) FROM pragma_foreign_key_check('material_video_links')",
+            &[],
+        )? != 0
+    {
+        return Err("Damaged video link schema.".into());
+    }
     Ok(())
 }
 
@@ -16847,5 +16869,69 @@ mod tests {
         assert_eq!(std::fs::read_dir(&target).unwrap().count(), 0);
         std::fs::remove_dir_all(&source).unwrap();
         std::fs::remove_dir_all(&target).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod material_video_link_tests {
+    use super::*;
+
+    #[test]
+    fn schema_29_video_links_require_table_index_and_cascade() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_29_video_links(&connection).unwrap();
+        connection
+            .execute_batch("DROP INDEX idx_material_video_links_material")
+            .unwrap();
+        assert!(verify_schema_29_video_links(&connection).is_err());
+
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "ALTER TABLE material_video_links RENAME TO original_video_links;
+                 CREATE TABLE material_video_links (
+                   id TEXT PRIMARY KEY, material_id TEXT NOT NULL REFERENCES study_materials(id),
+                   url TEXT NOT NULL, title TEXT NOT NULL DEFAULT '',
+                   created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+                 );
+                 DROP TABLE original_video_links;
+                 CREATE INDEX idx_material_video_links_material ON material_video_links(material_id);",
+            )
+            .unwrap();
+        assert!(verify_schema_29_video_links(&connection).is_err());
+    }
+
+    #[test]
+    fn schema_29_links_survive_sqlite_backup_and_follow_material_deletion() {
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch(
+                "INSERT INTO study_materials (id,title,material_type,topic,created_at,updated_at)
+                 VALUES ('video-section','Synthetic section','study_guide','other','now','now');
+                 INSERT INTO material_video_links VALUES
+                 ('video','video-section','https://example.com/lesson','My lesson','now','now');",
+            )
+            .unwrap();
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+        verify_schema_29_video_links(&restored).unwrap();
+        let title: String = restored
+            .query_row("SELECT title FROM material_video_links", [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(title, "My lesson");
+        restored
+            .execute_batch(
+                "PRAGMA foreign_keys=ON; DELETE FROM study_materials WHERE id='video-section';",
+            )
+            .unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM material_video_links", &[]).unwrap(),
+            0
+        );
     }
 }

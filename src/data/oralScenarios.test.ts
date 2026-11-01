@@ -6,7 +6,7 @@ vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
 }));
 
 import type { SqlDatabase, SqlValue } from "./db";
-import { applyMigrations } from "./migrations";
+import { applyMigrations, MIGRATIONS } from "./migrations";
 import {
   decodeOralPoints,
   encodeOralPoints,
@@ -195,7 +195,7 @@ describe("verifier", () => {
     db.handle.exec(`UPDATE oral_scenario_versions SET points_json = '["Only one"]'`);
     await expect(validateApplicationDatabase(db.query, reference.query)).rejects.toBeInstanceOf(PracticeStateValidationError);
     const fresh = await raw();
-    fresh.db.handle.exec("INSERT INTO schema_migrations (version, description, applied_at) VALUES (29, 'future', 'x')");
+    fresh.db.handle.exec(`INSERT INTO schema_migrations (version, description, applied_at) VALUES (${MIGRATIONS.at(-1)!.version + 1}, 'future', 'x')`);
     await expect(validateApplicationDatabase(fresh.db.query, fresh.reference.query)).rejects.toThrow(/newer format/);
   });
 
