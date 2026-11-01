@@ -8,13 +8,13 @@ import { FAA_REFERENCES, faaReferenceDraft } from "@/logic/faaReferences";
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(), download: vi.fn(), progress: vi.fn(), cancel: vi.fn(), records: vi.fn(), record: vi.fn(), openUrl: vi.fn(),
-  split: vi.fn(), desktop: true, materials: [] as unknown[], pick: vi.fn(), preview: vi.fn(), open: vi.fn(), cleanup: vi.fn(), mutate: vi.fn(), create: vi.fn(),
+  exists: vi.fn(), split: vi.fn(), desktop: true, materials: [] as unknown[], pick: vi.fn(), preview: vi.fn(), open: vi.fn(), cleanup: vi.fn(), mutate: vi.fn(), create: vi.fn(),
 }));
 vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({ data: { materials: mocks.materials }, mutate: mocks.mutate, repositories }),
 }));
 vi.mock("@/services/documents", () => ({
-  canHandleFiles: () => mocks.desktop, pickAndImportDocument: mocks.pick,
+  canHandleFiles: () => mocks.desktop, documentExists: mocks.exists, pickAndImportDocument: mocks.pick,
   cleanupDocuments: mocks.cleanup, openDocument: mocks.open,
 }));
 vi.mock("@/data", () => ({ isTauri: () => mocks.desktop }));
@@ -47,6 +47,7 @@ beforeEach(() => {
   mocks.record.mockResolvedValue(receipt);
   mocks.openUrl.mockResolvedValue(undefined);
   mocks.desktop = true;
+  mocks.exists.mockResolvedValue(true);
   mocks.materials = [];
   mocks.pick.mockResolvedValue(imported);
   mocks.preview.mockResolvedValue(imported.pdfIdentity);
@@ -214,7 +215,7 @@ it("polls byte progress, locks a second request, and cancels without saving a ma
   mocks.download.mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
   mount();
   await startDownload();
-  await screen.findByText("Getting Chapter 4 from faa.gov… 12 of 42 MB");
+  await screen.findByText("Getting Chapter 4 from faa.gov… 11 of 40 MB");
   await waitFor(() => expect(mocks.progress.mock.calls.length).toBeGreaterThan(1));
   expect((screen.getByRole("button", { name: "Downloading…" }) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -313,7 +314,7 @@ it("shows received bytes when total size is unknown and discards completion afte
   mocks.progress.mockResolvedValue({ received: 12_000_000, total: 0 });
   mount();
   await startDownload();
-  await screen.findByText("Getting Chapter 4 from faa.gov… 12 MB");
+  await screen.findByText("Getting Chapter 4 from faa.gov… 11 MB");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   await act(async () => finish(downloaded));
   await screen.findByText("Download cancelled.");
@@ -385,6 +386,7 @@ const phakReceipt = { ...receipt, materialId: "phak-copy", documentId: "phak-25c
 const phakMaterial = () => makeMaterial({ id: phakReceipt.materialId, title: "PHAK 25C", filePath: imported.relativePath });
 
 it("offers full PHAK with size, shows progress and cancels safely", async () => {
+  mocks.progress.mockResolvedValue({ received: 12 * 1048576, total: 74 * 1048576 });
   let finish!: (value: typeof downloaded) => void;
   mocks.download.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
   mount();
@@ -393,7 +395,7 @@ it("offers full PHAK with size, shows progress and cancels safely", async () => 
   expect(screen.getAllByText("Needs internet once; works offline afterwards.")).toHaveLength(1);
   fireEvent.click(get);
   await screen.findByRole("button", { name: "Downloading…" });
-  await screen.findByText(/Getting PHAK full book from faa.gov… 12 of 42 MB/);
+  await screen.findByText(/Getting PHAK full book from faa.gov… 12 of 74 MB/);
   expect(mocks.download).toHaveBeenCalledWith("phak-25c-full", expect.any(String));
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   await act(async () => finish(downloaded));
@@ -426,7 +428,7 @@ it("shows saved PHAK and opens the existing split dialog with that material", as
   expect((already as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText(/^FAA-H-8083-25C · 2023/)).toBeTruthy();
   expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(2);
-  fireEvent.click(screen.getByRole("button", { name: "Make chapter PDFs" }));
+  fireEvent.click(screen.getByRole("button", { name: "Make study-size parts" }));
   await screen.findByRole("dialog", { name: "Existing split dialog" });
   expect(mocks.split).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, material: saved }));
 });
@@ -435,10 +437,47 @@ it("uses saved lineage for chapter completion, including after the materials ref
   mocks.materials = [phakMaterial()];
   mocks.records.mockResolvedValue([phakReceipt]);
   const view = mount();
-  await screen.findByRole("button", { name: "Make chapter PDFs" });
+  await screen.findByRole("button", { name: "Make study-size parts" });
   mocks.materials = [...mocks.materials, makeMaterial({ id: "part", lineage: { rootMaterialId: phakReceipt.materialId } as NonNullable<ReturnType<typeof makeMaterial>["lineage"]> })];
   view.rerender(h(MemoryRouter, null, h(FaaReferences)));
-  const made = await screen.findByRole("button", { name: "Chapter PDFs made" });
+  const made = await screen.findByRole("button", { name: "Study-size parts made" });
   expect((made as HTMLButtonElement).disabled).toBe(true);
-  expect(screen.queryByRole("button", { name: "Make chapter PDFs" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Make study-size parts" })).toBeNull();
+});
+
+it("opens a verified PHAK without parsing it, including after split refresh", async () => {
+  mocks.materials = [phakMaterial()];
+  mocks.records.mockResolvedValue([phakReceipt]);
+  // The old page-count preview can spend minutes parsing the full handbook.
+  mocks.preview.mockImplementation(() => new Promise(() => {}));
+  const view = mount();
+  await screen.findByText("Saved on this Mac");
+  mocks.materials = [...mocks.materials, makeMaterial({ id: "part" })];
+  view.rerender(h(MemoryRouter, null, h(FaaReferences)));
+  fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
+  await screen.findByText("Opened in your PDF reader.");
+  expect(mocks.open).toHaveBeenCalledWith(imported.relativePath);
+  expect(mocks.exists).toHaveBeenCalledTimes(2);
+  expect(mocks.preview).not.toHaveBeenCalled();
+});
+
+it("still checks for missing downloaded files before opening", async () => {
+  mocks.materials = [phakMaterial()];
+  mocks.records.mockResolvedValue([phakReceipt]);
+  mount();
+  await screen.findByText("Saved on this Mac");
+  mocks.exists.mockResolvedValue(false);
+  fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
+  await screen.findByText(/File missing/);
+  expect(mocks.open).not.toHaveBeenCalled();
+});
+
+it("reports how many study-size parts were made", async () => {
+  mocks.materials = [phakMaterial()];
+  mocks.records.mockResolvedValue([phakReceipt]);
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: "Make study-size parts" }));
+  const props = mocks.split.mock.lastCall![0] as { onCreated: (ids: string[]) => void };
+  act(() => props.onCreated(["part-1", "part-2"]));
+  expect(screen.getByText("Made 2 parts. Find them in your Study Library.")).toBeTruthy();
 });
