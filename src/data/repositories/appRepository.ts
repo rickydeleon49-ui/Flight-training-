@@ -6,6 +6,13 @@ import {
 } from "@/logic/dailyPlan";
 
 /** When the last complete backup was saved, and what wrote it. */
+export interface LastIphoneSend {
+  /** ISO timestamp. */
+  at: string;
+  bytes: number;
+  path: string;
+}
+
 export interface LastCompleteBackup {
   /** ISO timestamp. */
   at: string;
@@ -18,6 +25,9 @@ export interface LastCompleteBackup {
 const LAST_BACKUP_AT = "last_complete_backup_at";
 const LAST_BACKUP_VERSION = "last_complete_backup_version";
 const LAST_BACKUP_PATH = "last_complete_backup_path";
+const IPHONE_SEND_AT = "last_iphone_send_at";
+const IPHONE_SEND_BYTES = "last_iphone_send_bytes";
+const IPHONE_SEND_PATH = "last_iphone_send_path";
 const DAILY_PLAN_KEY = "daily_plan_session";
 const DEVICE_ID = "device_id";
 
@@ -75,6 +85,25 @@ export function appRepository(db: SqlDatabase) {
          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
         [LAST_BACKUP_AT, backup.at, LAST_BACKUP_VERSION, backup.version, LAST_BACKUP_PATH, backup.path],
       );
+    },
+
+    /** Remember the last copy she sent to her iPhone. */
+    async recordIphoneSend(send: LastIphoneSend): Promise<void> {
+      await db.execute(
+        `INSERT INTO app_metadata (key, value) VALUES (?, ?), (?, ?), (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [IPHONE_SEND_AT, send.at, IPHONE_SEND_BYTES, String(send.bytes), IPHONE_SEND_PATH, send.path],
+      );
+    },
+
+    async lastIphoneSend(): Promise<LastIphoneSend | null> {
+      const at = await this.get(IPHONE_SEND_AT);
+      if (!at) return null;
+      return {
+        at,
+        bytes: Number((await this.get(IPHONE_SEND_BYTES)) ?? 0) || 0,
+        path: (await this.get(IPHONE_SEND_PATH)) ?? "",
+      };
     },
 
     /** The last complete backup she saved, or null if there has never been one. */

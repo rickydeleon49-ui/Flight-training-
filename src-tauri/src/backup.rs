@@ -8855,6 +8855,152 @@ fn item_to_reveal_in(root: &Path) -> std::io::Result<PathBuf> {
     }
 }
 
+const IPHONE_FOLDER: &str = "Her Flight Deck";
+const IPHONE_BACKUPS_KEPT: usize = 3;
+
+/// The iCloud Drive folder her iPhone reads from, created on first use.
+/// `None` when iCloud Drive is off, missing or not writable here.
+pub(crate) fn iphone_backup_dir(home: &Path) -> Option<PathBuf> {
+    let icloud = home.join("Library/Mobile Documents/com~apple~CloudDocs");
+    if !icloud.is_dir() {
+        return None;
+    }
+    let dir = icloud.join(IPHONE_FOLDER);
+    std::fs::create_dir_all(&dir).ok()?;
+    dir.is_dir().then_some(dir)
+}
+
+fn iphone_stamp_is_valid(stamp: &str) -> bool {
+    // "YYYY-MM-DD HHmm"
+    let b = stamp.as_bytes();
+    b.len() == 15
+        && b.iter().enumerate().all(|(i, c)| match i {
+            4 | 7 => *c == b'-',
+            10 => *c == b' ',
+            _ => c.is_ascii_digit(),
+        })
+}
+
+/// `Her Flight Deck <YYYY-MM-DD HHmm>.hfdbackup`, from a UTC clock reading.
+pub(crate) fn iphone_backup_file_name(now: std::time::SystemTime) -> String {
+    let secs = now
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let days = (secs / 86_400) as i64;
+    let rem = secs % 86_400;
+    // Civil-from-days (Howard Hinnant).
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    format!(
+        "{IPHONE_FOLDER} {year:04}-{month:02}-{day:02} {:02}{:02}.hfdbackup",
+        rem / 3_600,
+        (rem % 3_600) / 60
+    )
+}
+
+fn is_iphone_backup_name(name: &str) -> bool {
+    name.strip_prefix(IPHONE_FOLDER)
+        .and_then(|rest| rest.strip_prefix(' '))
+        .and_then(|rest| rest.strip_suffix(".hfdbackup"))
+        .is_some_and(iphone_stamp_is_valid)
+}
+
+/// Keep the newest `keep` files that match the dated name; touch nothing else.
+pub(crate) fn prune_iphone_backups(dir: &Path, keep: usize) -> Result<(), String> {
+    let entries =
+        std::fs::read_dir(dir).map_err(|e| format!("Could not look in the iPhone folder: {e}"))?;
+    let mut matching: Vec<(std::time::SystemTime, String, PathBuf)> = Vec::new();
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if !is_iphone_backup_name(&name) {
+            continue;
+        }
+        let Ok(meta) = entry.metadata() else { continue };
+        if !meta.is_file() {
+            continue;
+        }
+        let modified = meta.modified().unwrap_or(std::time::UNIX_EPOCH);
+        matching.push((modified, name, entry.path()));
+    }
+    matching.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| b.1.cmp(&a.1)));
+    for (_, _, path) in matching.into_iter().skip(keep) {
+        if let Err(e) = std::fs::remove_file(&path) {
+            log::warn!("Could not remove an older iPhone copy: {e}");
+        }
+    }
+    Ok(())
+}
+
+/// Save a complete backup where her iPhone can open it from Files.
+/// `Ok(None)` means iCloud Drive is not available and the caller should ask
+/// where to save instead. `local_stamp` is her local "YYYY-MM-DD HHmm".
+#[tauri::command]
+pub async fn create_iphone_backup(
+    app: AppHandle,
+    local_stamp: Option<String>,
+) -> Result<Option<CompleteBackupInfo>, String> {
+    if !cfg!(target_os = "macos") {
+        return Ok(None);
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else {
+            return Ok(None);
+        };
+        let Some(dir) = iphone_backup_dir(&home) else {
+            return Ok(None);
+        };
+        let name = match local_stamp.as_deref().filter(|s| iphone_stamp_is_valid(s)) {
+            Some(stamp) => format!("{IPHONE_FOLDER} {stamp}.hfdbackup"),
+            None => iphone_backup_file_name(std::time::SystemTime::now()),
+        };
+        let root = app_root(&app)?;
+        let info = create_consistent_complete_backup_with_retry(
+            &root,
+            &dir.join(name),
+            &app.package_info().version.to_string(),
+        )?;
+        if let Err(e) = prune_iphone_backups(&dir, IPHONE_BACKUPS_KEPT) {
+            log::warn!("{e}");
+        }
+        Ok(Some(info))
+    })
+    .await
+    .map_err(|error| format!("Could not finish saving the backup: {error}"))?
+}
+
+fn reveal_iphone_backup_with<O: FolderOpener>(
+    dir: &Path,
+    path: &str,
+    opener: &O,
+) -> Result<(), String> {
+    let refuse = || "That file is not in your iPhone folder.".to_string();
+    let dir = dir.canonicalize().map_err(|_| refuse())?;
+    let target = Path::new(path).canonicalize().map_err(|_| refuse())?;
+    if !target.starts_with(&dir) {
+        return Err(refuse());
+    }
+    opener.reveal_item_in_dir(&target)
+}
+
+/// Show one saved iPhone copy in Finder (for AirDrop). Refuses other paths.
+#[tauri::command]
+pub fn reveal_iphone_backup(_app: AppHandle, path: String) -> Result<(), String> {
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or_else(|| "That file is not in your iPhone folder.".to_string())?;
+    let dir = iphone_backup_dir(&home)
+        .ok_or_else(|| "That file is not in your iPhone folder.".to_string())?;
+    reveal_iphone_backup_with(&dir, &path, &SystemFolderOpener)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -16869,6 +17015,85 @@ mod tests {
         assert_eq!(std::fs::read_dir(&target).unwrap().count(), 0);
         std::fs::remove_dir_all(&source).unwrap();
         std::fs::remove_dir_all(&target).unwrap();
+    }
+
+    #[test]
+    fn iphone_backup_dir_is_none_without_icloud_root() {
+        let home = scratch("iph-none");
+        assert!(iphone_backup_dir(&home).is_none());
+        assert!(!home.join("Library").exists());
+    }
+
+    #[test]
+    fn iphone_backup_dir_creates_subfolder_once() {
+        let home = scratch("iph-dir");
+        let icloud = home.join("Library/Mobile Documents/com~apple~CloudDocs");
+        std::fs::create_dir_all(&icloud).unwrap();
+        let first = iphone_backup_dir(&home).unwrap();
+        std::fs::write(first.join("keep.txt"), b"x").unwrap();
+        let second = iphone_backup_dir(&home).unwrap();
+        assert_eq!(first, second);
+        assert!(second.join("keep.txt").exists());
+        assert_eq!(first, icloud.join("Her Flight Deck"));
+    }
+
+    #[test]
+    fn iphone_backup_file_name_is_dated_and_has_extension() {
+        let t = std::time::UNIX_EPOCH + Duration::from_secs(1_793_449_800);
+        let name = iphone_backup_file_name(t);
+        assert_eq!(name, "Her Flight Deck 2026-10-31 1230.hfdbackup");
+        assert!(is_iphone_backup_name(&name));
+        assert!(!is_iphone_backup_name(
+            "her-flight-deck-2026-01-01.hfdbackup"
+        ));
+        assert!(!is_iphone_backup_name(
+            "Her Flight Deck 2026-01-01 0900.hfdbackup.bak"
+        ));
+    }
+
+    #[test]
+    fn prune_keeps_three_newest_matching_files_and_ignores_others() {
+        let dir = scratch("iph-prune");
+        let base = std::time::SystemTime::now() - Duration::from_secs(10_000);
+        let names = [
+            "Her Flight Deck 2026-10-01 0900.hfdbackup",
+            "Her Flight Deck 2026-10-02 0900.hfdbackup",
+            "Her Flight Deck 2026-10-03 0900.hfdbackup",
+            "Her Flight Deck 2026-10-04 0900.hfdbackup",
+            "Her Flight Deck 2026-10-05 0900.hfdbackup",
+        ];
+        for (i, n) in names.iter().enumerate() {
+            let f = File::create(dir.join(n)).unwrap();
+            f.set_modified(base + Duration::from_secs(i as u64 * 100))
+                .unwrap();
+        }
+        std::fs::write(dir.join("notes.txt"), b"n").unwrap();
+        std::fs::write(dir.join("her-flight-deck-2026-01-01.hfdbackup"), b"o").unwrap();
+        prune_iphone_backups(&dir, 3).unwrap();
+        assert!(!dir.join(names[0]).exists());
+        assert!(!dir.join(names[1]).exists());
+        for n in &names[2..] {
+            assert!(dir.join(n).exists());
+        }
+        assert!(dir.join("notes.txt").exists());
+        assert!(dir.join("her-flight-deck-2026-01-01.hfdbackup").exists());
+    }
+
+    #[test]
+    fn reveal_refuses_paths_outside_iphone_folder() {
+        let home = scratch("iph-reveal");
+        let dir = home.join("Her Flight Deck");
+        std::fs::create_dir_all(&dir).unwrap();
+        let inside = dir.join("Her Flight Deck 2026-10-31 1210.hfdbackup");
+        std::fs::write(&inside, b"x").unwrap();
+        let outside = home.join("other.hfdbackup");
+        std::fs::write(&outside, b"x").unwrap();
+        let opener = TestFolderOpener::default();
+        assert!(reveal_iphone_backup_with(&dir, inside.to_str().unwrap(), &opener).is_ok());
+        assert!(reveal_iphone_backup_with(&dir, outside.to_str().unwrap(), &opener).is_err());
+        let sneaky = format!("{}/../other.hfdbackup", dir.display());
+        assert!(reveal_iphone_backup_with(&dir, &sneaky, &opener).is_err());
+        assert_eq!(opener.calls.lock().unwrap().len(), 1);
     }
 }
 

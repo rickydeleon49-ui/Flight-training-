@@ -497,6 +497,8 @@ pub fn run() {
             safety_notices::upgrade_copy_failed,
             backup::data_directory,
             backup::open_data_folder,
+            backup::create_iphone_backup,
+            backup::reveal_iphone_backup,
             backup::app_version,
             quit_settlement::settled_before_quit,
         ])
