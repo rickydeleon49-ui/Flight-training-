@@ -27,10 +27,12 @@ import { oralScenarioRepository } from "./oralScenarioRepository";
 
 import { materialVideoLinkRepository } from "./materialVideoLinkRepository";
 import { studentPilotStepRepository } from "./studentPilotStepRepository";
+import { faaDownloadRepository } from "./faaDownloadRepository";
 
 export interface Repositories {
   materialVideoLinks: ReturnType<typeof materialVideoLinkRepository>;
   studentPilotSteps: ReturnType<typeof studentPilotStepRepository>;
+  faaDownloads: ReturnType<typeof faaDownloadRepository>;
   homework: ReturnType<typeof homeworkRepository>;
   app: ReturnType<typeof appRepository>;
   profile: ReturnType<typeof profileRepository>;
@@ -54,7 +56,9 @@ export interface Repositories {
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
+  const documents = documentRepository(db);
   return {
+    faaDownloads: faaDownloadRepository(db, documents),
     materialVideoLinks: materialVideoLinkRepository(db),
     studentPilotSteps: studentPilotStepRepository(db),
     homework: homeworkRepository(db),
@@ -63,7 +67,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     milestones: milestoneRepository(db),
     goals: goalRepository(db),
     actions: actionRepository(db),
-    documents: documentRepository(db),
+    documents,
     schedule: scheduleRepository(db),
     journal: journalRepository(db),
     questions: questionRepository(db),

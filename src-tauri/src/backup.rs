@@ -703,6 +703,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 30 {
         verify_schema_30_student_pilot_steps(connection)?;
     }
+    if newest_migration >= 31 {
+        verify_schema_31_faa_downloads(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -864,6 +867,18 @@ pub(crate) fn verify_schema_30_student_pilot_steps(connection: &Connection) -> R
         || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
     {
         return Err("Damaged student pilot steps schema.".into());
+    }
+    Ok(())
+}
+
+pub(crate) fn verify_schema_31_faa_downloads(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "faa_downloads";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+    {
+        return Err("Damaged FAA downloads schema.".into());
     }
     Ok(())
 }
@@ -17216,6 +17231,63 @@ mod student_pilot_steps_tests {
         assert_eq!(
             m3_count(&restored, "SELECT COUNT(*) FROM student_pilot_steps", &[]).unwrap(),
             1
+        );
+    }
+}
+
+#[cfg(test)]
+mod faa_downloads_schema_tests {
+    use super::*;
+
+    #[test]
+    fn schema_31_faa_downloads_require_the_table_shape() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_31_faa_downloads(&connection).unwrap();
+        connection
+            .execute_batch(
+                "ALTER TABLE faa_downloads RENAME TO original_downloads;
+                 CREATE TABLE faa_downloads (material_id TEXT PRIMARY KEY, document_id TEXT NOT NULL);
+                 DROP TABLE original_downloads;",
+            )
+            .unwrap();
+        assert!(verify_schema_31_faa_downloads(&connection).is_err());
+        let connection = get_reference_schema_connection().unwrap();
+        connection
+            .execute_batch("DROP TABLE faa_downloads")
+            .unwrap();
+        assert!(verify_schema_31_faa_downloads(&connection).is_err());
+    }
+
+    #[test]
+    fn schema_31_downloads_survive_sqlite_backup_and_cascade() {
+        let connection = get_reference_schema_connection().unwrap();
+        connection.execute_batch("PRAGMA foreign_keys=ON").unwrap();
+        connection
+            .execute_batch(&format!(
+                "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','AFH','now','now');
+                 INSERT INTO faa_downloads VALUES ('m','afh-ch-01','https://www.faa.gov/x.pdf','2026','{}',10,NULL,'now');",
+                "a".repeat(64)
+            ))
+            .unwrap();
+        assert!(connection
+            .execute_batch("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('n','x','now','now'); INSERT INTO faa_downloads VALUES ('n','a','u','e','short',1,NULL,'now');")
+            .is_err());
+        let mut restored = Connection::open_in_memory().unwrap();
+        {
+            let backup = rusqlite::backup::Backup::new(&connection, &mut restored).unwrap();
+            backup.step(-1).unwrap();
+        }
+        verify_schema_31_faa_downloads(&restored).unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM faa_downloads", &[]).unwrap(),
+            1
+        );
+        restored
+            .execute_batch("PRAGMA foreign_keys=ON; DELETE FROM study_materials WHERE id='m'")
+            .unwrap();
+        assert_eq!(
+            m3_count(&restored, "SELECT COUNT(*) FROM faa_downloads", &[]).unwrap(),
+            0
         );
     }
 }
