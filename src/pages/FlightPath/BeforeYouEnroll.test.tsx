@@ -91,7 +91,14 @@ it("gives every step an FAA link or an in-app link, only to faa.gov", () => {
   render(page());
   const faa = screen.getAllByRole("link", { name: /^FAA page:/ });
   expect(faa).toHaveLength(5);
-  for (const link of faa) expect(link.getAttribute("href")).toMatch(/^https:\/\/www\.faa\.gov\//);
+  for (const link of faa) {
+    expect(link.getAttribute("href")).toMatch(/^https:\/\/www\.faa\.gov\//);
+    expect(link.textContent).toBe("FAA page");
+    const text = link.closest(".checkbox__label")!;
+    expect(text).not.toBeNull();
+    expect(text.textContent).toBe(`${link.getAttribute("aria-label")!.replace("FAA page: ", "")} FAA page`);
+    expect(text.closest("li")!.querySelector('input[type="checkbox"]')).not.toBeNull();
+  }
   expect(screen.getByText(/FAA pages last checked/)).not.toBeNull();
 });
 

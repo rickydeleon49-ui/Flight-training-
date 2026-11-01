@@ -213,9 +213,9 @@ it("polls byte progress, locks a second request, and cancels without saving a ma
   mocks.download.mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
   mount();
   await startDownload();
-  await screen.findByText("Downloading from faa.gov… 12 of 42 MB");
+  await screen.findByText("Getting Chapter 4 from faa.gov… 12 of 42 MB");
   await waitFor(() => expect(mocks.progress.mock.calls.length).toBeGreaterThan(1));
-  expect((screen.getByRole("button", { name: "Get from faa.gov" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "Downloading…" }) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(mocks.cancel).toHaveBeenCalledTimes(1);
   await act(async () => reject({ kind: "cancelled", message: "cancelled" }));
@@ -273,6 +273,8 @@ it("reloads provenance, shows the edition/date/hash, opens the saved copy offlin
   mocks.materials = [makeMaterial({ id: receipt.materialId, title: "Airplane Flying Handbook, chapter 4", filePath: imported.relativePath })];
   Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
   mount();
+  await screen.findByRole("option", { name: /chapter 4/ });
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "afh-3c-ch04" } });
   await screen.findByText(`FAA-H-8083-3C · 2021 · from www.faa.gov on 2026-10-31 · SHA-256 ${downloaded.sha256}`);
   await screen.findByText("Saved on this Mac");
   fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
@@ -310,7 +312,7 @@ it("shows received bytes when total size is unknown and discards completion afte
   mocks.progress.mockResolvedValue({ received: 12_000_000, total: 0 });
   mount();
   await startDownload();
-  await screen.findByText("Downloading from faa.gov… 12 MB");
+  await screen.findByText("Getting Chapter 4 from faa.gov… 12 MB");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   await act(async () => finish(downloaded));
   await screen.findByText("Download cancelled.");
@@ -337,4 +339,43 @@ it("places the local PDF action beside Get from faa.gov", async () => {
   fireEvent.click(add);
   expect(addPdf).toHaveBeenCalledTimes(1);
   expect(mocks.download).not.toHaveBeenCalled();
+});
+
+it("shows no approximate size when the manifest only supplies a download cap", async () => {
+  mount();
+  await screen.findByRole("option", { name: /chapter 4/ });
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "afh-3c-ch04" } });
+  expect(screen.queryByText(/about .*MB/)).toBeNull();
+  expect(screen.queryByText(/50 MB/)).toBeNull();
+});
+
+it("shows only the selected chapter's saved info and prevents downloading it again", async () => {
+  const other = { ...receipt, materialId: "other-copy", documentId: "afh-addendum-mosaic", edition: "Other edition" };
+  mocks.records.mockResolvedValue([receipt, other]);
+  mocks.materials = [
+    makeMaterial({ id: receipt.materialId, title: "Saved chapter 4", filePath: imported.relativePath }),
+    makeMaterial({ id: other.materialId, title: "Saved addendum", filePath: imported.relativePath }),
+  ];
+  mount();
+  await screen.findByRole("option", { name: /chapter 4/ });
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: receipt.documentId } });
+  const saved = await screen.findByRole("button", { name: "Already saved" });
+  expect((saved as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByText("Saved for offline study")).toBeTruthy();
+  expect(screen.getByText(/^FAA-H-8083-3C · 2021/)).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Open offline: Saved chapter 4" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/afh-copy?tab=notes");
+  expect(screen.queryByText("Saved addendum")).toBeNull();
+  fireEvent.click(saved);
+  expect(mocks.download).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: other.documentId } });
+  await screen.findByText(/^Other edition ·/);
+  expect(screen.queryByText("Saved chapter 4")).toBeNull();
+  expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/other-copy?tab=notes");
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "afh-3c-ch01" } });
+  expect((screen.getByRole("button", { name: "Get from faa.gov" }) as HTMLButtonElement).disabled).toBe(false);
+  expect(screen.queryByText("Saved for offline study")).toBeNull();
+  expect(screen.queryByRole("button", { name: /Open offline:/ })).toBeNull();
+  expect(screen.queryByRole("link", { name: /Notes and bookmarks/ })).toBeNull();
+  expect(screen.queryByText(/^Other edition ·/)).toBeNull();
 });
