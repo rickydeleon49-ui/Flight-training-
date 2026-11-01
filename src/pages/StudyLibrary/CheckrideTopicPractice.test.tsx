@@ -39,6 +39,16 @@ it("explains the empty state and ignores missing materials", () => {
   render(h(CheckrideTopicPractice, { practiceTests: tests, materials: [] })); open();
   expect(screen.getByText("New practice tests made from a PDF will be grouped by checkride topic.")).toBeTruthy();
 });
+it("shows closed official sources only in the drill and lets source controls use Enter", () => {
+  render(h(CheckrideTopicPractice, { practiceTests: tests, materials })); open();
+  expect(screen.queryByText("Official sources")).toBeNull();
+  choose();
+  const summary = screen.getByText("Official sources");
+  expect(summary.closest("details")!.open).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "2. Second" }));
+  fireEvent.keyDown(summary, { key: "Enter" });
+  expect(screen.getByText("A tagged")).toBeTruthy();
+});
 it("drills only the chosen task across two PDFs, reveals sources, and writes nothing", async () => {
   const db = await createNodeSqliteDatabase();
   try {

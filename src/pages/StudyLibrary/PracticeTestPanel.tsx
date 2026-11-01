@@ -1355,7 +1355,7 @@ export function PracticeTestPanel({
 
       <PdfItemLabel sectionLabelled={practiceTest.questions.every((item) => item.pdfProvenance?.status === "valid")} provenance={question.pdfProvenance} origin={question.origin} />
       <p className="small ai-copy">{question.questionText}</p>
-      <AcsTaskChip code={question.acsTask} />
+      <AcsTaskChip code={question.acsTask} showSources />
 
       <div className="stack stack--2" role="radiogroup" aria-label="Answer choices">
         {question.options.map((option, optionIndex) => {
