@@ -174,7 +174,7 @@ describe('proof source walker', () => {
     const dir = path.join(scratch, 'walker');
     fs.mkdirSync(dir);
     const cases = walkerSensitivity(dir);
-    assert.equal(cases.length, 15);
+    assert.equal(cases.length, 17);
     for (const c of cases) assert.ok(c.pass, `${c.name}: changed ${JSON.stringify(c.changed)}, accepted ${JSON.stringify(c.accepted)}`);
     const byName = Object.fromEntries(cases.map(c => [c.name, c]));
     assert.deepEqual(byName['accepted: genuine Cargo target and Tauri gen schemas'].changed, []);
@@ -237,7 +237,7 @@ describe('proof source walker', () => {
   it('recognizes only the two exact build-output paths, and this checkout\'s real ones when present', () => {
     assert.equal(recognizeBuildOutput(REPO, 'src-tauri/src', new Set()).recognized, false);
     assert.equal(recognizeBuildOutput(REPO, 'target', new Set()).recognized, false);
-    for (const rel of ['src-tauri/target', 'src-tauri/gen']) {
+    for (const rel of ['src-tauri/target', 'src-tauri/gen/schemas']) {
       if (!fs.existsSync(path.join(REPO, rel))) continue;
       const found = recognizeBuildOutput(REPO, rel, new Set());
       assert.equal(found.recognized, true, `${rel}: ${found.reason}`);

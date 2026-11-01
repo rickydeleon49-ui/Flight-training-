@@ -1,0 +1,694 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		23902162CE0483CF9878078D /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5DAD09C4835244EA2F49675 /* Metal.framework */; };
+		2AA9B72FE027A7A8A65EAF44 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = A625868A179F6B7AFF47183D /* main.mm */; };
+		2C90099A2038EEF0B4B0AEC6 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0BDF53A6964E4823AE983ABD /* libapp.a */; };
+		3D8C6958C49BE52CB37B1116 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F9A764AC901FCC7CD07288D /* MetalKit.framework */; };
+		401C7C6B3875C317A270DE0E /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5FA15636E3D6C8D3F8D6009 /* WebKit.framework */; };
+		584FE7FF30306DB600A7E662 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3AC6E8B4212114C69EDD41B3 /* UIKit.framework */; };
+		606E318E029191EF1CC48517 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A70FAD33FFA3A8237543169E /* Assets.xcassets */; };
+		6EE9F543847B10A7179C5F93 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14D647C2AC6508A9ED84EC02 /* QuartzCore.framework */; };
+		A07445A111DE08B06618E6B1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 101CF07A2A56D196A26F024B /* Security.framework */; };
+		AA1FBDC1CC0FBAA851075634 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 4841472650CA076BDF0FBD66 /* assets */; };
+		BD03D00A1B80BEC72E43CC8E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6CEEC66896C01387199EEF92 /* LaunchScreen.storyboard */; };
+		FC6B34355D1688F0EA833AD2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 98298EED0AFD946F7FA34F16 /* CoreGraphics.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		025FAFA5F17DDE4D311204B7 /* homework_backup_tests.rs */ = {isa = PBXFileReference; path = homework_backup_tests.rs; sourceTree = "<group>"; };
+		0348D8E3BF27834A4F143225 /* gemini_ask_evidence.rs */ = {isa = PBXFileReference; path = gemini_ask_evidence.rs; sourceTree = "<group>"; };
+		0884142E3F2162525B8CD85D /* oral_scenarios_tests.rs */ = {isa = PBXFileReference; path = oral_scenarios_tests.rs; sourceTree = "<group>"; };
+		0A3D5BF65E5E6506F0701F5B /* provider.rs */ = {isa = PBXFileReference; path = provider.rs; sourceTree = "<group>"; };
+		0AC00C41008B0AD994CADF5E /* acs_tasks.rs */ = {isa = PBXFileReference; path = acs_tasks.rs; sourceTree = "<group>"; };
+		0B9D8FC60EA568463A47220E /* faa_backup_tests.rs */ = {isa = PBXFileReference; path = faa_backup_tests.rs; sourceTree = "<group>"; };
+		0BDF53A6964E4823AE983ABD /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		0C0E29A8EC08EBCB98D944BB /* visual_backup_tests.rs */ = {isa = PBXFileReference; path = visual_backup_tests.rs; sourceTree = "<group>"; };
+		0CCC53218369C7F09FAF8B17 /* navigation_tests.rs */ = {isa = PBXFileReference; path = navigation_tests.rs; sourceTree = "<group>"; };
+		101CF07A2A56D196A26F024B /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		14C8A33DA5B618B62D60D9EE /* pdf.rs */ = {isa = PBXFileReference; path = pdf.rs; sourceTree = "<group>"; };
+		14D647C2AC6508A9ED84EC02 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		1A7F2D24F9C07C400FE0AD7F /* debrief.rs */ = {isa = PBXFileReference; path = debrief.rs; sourceTree = "<group>"; };
+		1B1FB7B919D06B72C6B827A6 /* weather.rs */ = {isa = PBXFileReference; path = weather.rs; sourceTree = "<group>"; };
+		1ED137321D69582BE2834BA9 /* service.rs */ = {isa = PBXFileReference; path = service.rs; sourceTree = "<group>"; };
+		1F388791AA63E95EFA18CF13 /* oral_scenarios.rs */ = {isa = PBXFileReference; path = oral_scenarios.rs; sourceTree = "<group>"; };
+		1FA5AAFE8A5C3EB49034E11C /* gemini_jobs_tests.rs */ = {isa = PBXFileReference; path = gemini_jobs_tests.rs; sourceTree = "<group>"; };
+		20BD45E415C870C585E74EF2 /* study_packet_save_tests.rs */ = {isa = PBXFileReference; path = study_packet_save_tests.rs; sourceTree = "<group>"; };
+		21255F7BF9420CE1464F2012 /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
+		23F042081CF0D106D6D20844 /* study_kit_tests.rs */ = {isa = PBXFileReference; path = study_kit_tests.rs; sourceTree = "<group>"; };
+		260B51214275AC82F852C140 /* card_reviews.rs */ = {isa = PBXFileReference; path = card_reviews.rs; sourceTree = "<group>"; };
+		2A577D3AC1F7D341C9F70C56 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		2B50E420797CF526CB1EC3D2 /* schemas.rs */ = {isa = PBXFileReference; path = schemas.rs; sourceTree = "<group>"; };
+		31FE452520B04EF96C96E267 /* saved.rs */ = {isa = PBXFileReference; path = saved.rs; sourceTree = "<group>"; };
+		3271FDB6743A108CE2B71BDF /* schema_tests.rs */ = {isa = PBXFileReference; path = schema_tests.rs; sourceTree = "<group>"; };
+		36F075279268E20ED33925DD /* visual_cards_tests.rs */ = {isa = PBXFileReference; path = visual_cards_tests.rs; sourceTree = "<group>"; };
+		38D492D857B85AC5E5D3EF97 /* window_placement.rs */ = {isa = PBXFileReference; path = window_placement.rs; sourceTree = "<group>"; };
+		39CFD2354011EF4C02A4D818 /* pdf_study_kit_tests.rs */ = {isa = PBXFileReference; path = pdf_study_kit_tests.rs; sourceTree = "<group>"; };
+		3AC6E8B4212114C69EDD41B3 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		3B6089D9C501FE73AD8CE6BF /* storage.rs */ = {isa = PBXFileReference; path = storage.rs; sourceTree = "<group>"; };
+		461030882F4D55C6F65A8AAF /* navigation.rs */ = {isa = PBXFileReference; path = navigation.rs; sourceTree = "<group>"; };
+		46FA91CD171361677C0501F9 /* worker.rs */ = {isa = PBXFileReference; path = worker.rs; sourceTree = "<group>"; };
+		47EFEAC5609F1A5FFBC8E3B5 /* study_kit.rs */ = {isa = PBXFileReference; path = study_kit.rs; sourceTree = "<group>"; };
+		4841472650CA076BDF0FBD66 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		4BDB896D04342AD51A190390 /* card_library.rs */ = {isa = PBXFileReference; path = card_library.rs; sourceTree = "<group>"; };
+		4D5DDD913F101F8E91F70435 /* test_wait.rs */ = {isa = PBXFileReference; path = test_wait.rs; sourceTree = "<group>"; };
+		5018E52A999774F320FC2A60 /* study_sets.rs */ = {isa = PBXFileReference; path = study_sets.rs; sourceTree = "<group>"; };
+		53EA1657C571F04E20B7906D /* study_page_sources.rs */ = {isa = PBXFileReference; path = study_page_sources.rs; sourceTree = "<group>"; };
+		54CE94A1EA6D5C98C70A4C2C /* homework.rs */ = {isa = PBXFileReference; path = homework.rs; sourceTree = "<group>"; };
+		552F57D8C91F08585D8A0182 /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
+		56472C2F6A9AFEADE2909C0F /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
+		5700D65E333C67F7D722F028 /* secrets.rs */ = {isa = PBXFileReference; path = secrets.rs; sourceTree = "<group>"; };
+		59C08D02EA8891141E710485 /* gemini_files.rs */ = {isa = PBXFileReference; path = gemini_files.rs; sourceTree = "<group>"; };
+		5EB497A92B6FDB8C13A02A82 /* gemini_files_tests.rs */ = {isa = PBXFileReference; path = gemini_files_tests.rs; sourceTree = "<group>"; };
+		5F1319B59DF1F6A6DC35D96C /* card_library_tests.rs */ = {isa = PBXFileReference; path = card_library_tests.rs; sourceTree = "<group>"; };
+		61D880CEFDB0AF45A9E892C4 /* gemini_ask.rs */ = {isa = PBXFileReference; path = gemini_ask.rs; sourceTree = "<group>"; };
+		61FCA6F487096F0EF35C5D1D /* quit_settlement.rs */ = {isa = PBXFileReference; path = quit_settlement.rs; sourceTree = "<group>"; };
+		67A984F88CC6AAC2214D6D4B /* live_bench_tests.rs */ = {isa = PBXFileReference; path = live_bench_tests.rs; sourceTree = "<group>"; };
+		6CEEC66896C01387199EEF92 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		6D68D4CFA6922F628C2FE19B /* practice_session_tests.rs */ = {isa = PBXFileReference; path = practice_session_tests.rs; sourceTree = "<group>"; };
+		6DAC6D7A6143C95E6E9FB856 /* backup.rs */ = {isa = PBXFileReference; path = backup.rs; sourceTree = "<group>"; };
+		6E8608A8DC1A56E84DA76E46 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		750A79E8223BAEFEB38A5D51 /* lineage_tests.rs */ = {isa = PBXFileReference; path = lineage_tests.rs; sourceTree = "<group>"; };
+		75972F5EC3AA082AF8ED1256 /* gemini_file_descriptor.rs */ = {isa = PBXFileReference; path = gemini_file_descriptor.rs; sourceTree = "<group>"; };
+		7C3E9D9466632535E17F5EF4 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		7CA95B63638F7F8003F4BE3A /* inspect.rs */ = {isa = PBXFileReference; path = inspect.rs; sourceTree = "<group>"; };
+		846339FF131C7628FD85CA3C /* form_text.rs */ = {isa = PBXFileReference; path = form_text.rs; sourceTree = "<group>"; };
+		8E3DFE1041F7CB062F411158 /* gemini_generation_tests.rs */ = {isa = PBXFileReference; path = gemini_generation_tests.rs; sourceTree = "<group>"; };
+		8F9A764AC901FCC7CD07288D /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		91599FE6C6C1A2921BF83844 /* gemini_slowlink_tests.rs */ = {isa = PBXFileReference; path = gemini_slowlink_tests.rs; sourceTree = "<group>"; };
+		954B1F65233B3D429F737F9F /* weather_tests.rs */ = {isa = PBXFileReference; path = weather_tests.rs; sourceTree = "<group>"; };
+		98298EED0AFD946F7FA34F16 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		A0D43647F8859971128ADEE0 /* gemini_sections_tests.rs */ = {isa = PBXFileReference; path = gemini_sections_tests.rs; sourceTree = "<group>"; };
+		A1000115397912A6338B58C5 /* gemini_batches.rs */ = {isa = PBXFileReference; path = gemini_batches.rs; sourceTree = "<group>"; };
+		A2664AB7474066CA42227655 /* lineage.rs */ = {isa = PBXFileReference; path = lineage.rs; sourceTree = "<group>"; };
+		A4B3C6641C02D6A02D9677AF /* search.rs */ = {isa = PBXFileReference; path = search.rs; sourceTree = "<group>"; };
+		A51092FFFD24C9609DD484AC /* her-flight-deck_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "her-flight-deck_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5DAD09C4835244EA2F49675 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		A625868A179F6B7AFF47183D /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		A70FAD33FFA3A8237543169E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A7869085F24A3335BCACE3A6 /* practice_authoring_tests.rs */ = {isa = PBXFileReference; path = practice_authoring_tests.rs; sourceTree = "<group>"; };
+		A8CA70399E55163EDFD319D0 /* startup_guard.rs */ = {isa = PBXFileReference; path = startup_guard.rs; sourceTree = "<group>"; };
+		A90C2A69A3555D1C4F4DA148 /* cache.rs */ = {isa = PBXFileReference; path = cache.rs; sourceTree = "<group>"; };
+		AA0993795A34D3B716B97261 /* pdf_kit_sources.rs */ = {isa = PBXFileReference; path = pdf_kit_sources.rs; sourceTree = "<group>"; };
+		AA792090810478A991409EDC /* gemini.rs */ = {isa = PBXFileReference; path = gemini.rs; sourceTree = "<group>"; };
+		ABCE6593F8B2024834CD3218 /* safety_notices.rs */ = {isa = PBXFileReference; path = safety_notices.rs; sourceTree = "<group>"; };
+		ABE79F178D7B87E2F985794E /* supervisor.rs */ = {isa = PBXFileReference; path = supervisor.rs; sourceTree = "<group>"; };
+		ACB0F2792AEABACD18D23370 /* platform.rs */ = {isa = PBXFileReference; path = platform.rs; sourceTree = "<group>"; };
+		AE85BE135662B3D42044AB35 /* skill_evidence_tests.rs */ = {isa = PBXFileReference; path = skill_evidence_tests.rs; sourceTree = "<group>"; };
+		B0761C183C5B9CDF34D1C9DC /* skill_evidence.rs */ = {isa = PBXFileReference; path = skill_evidence.rs; sourceTree = "<group>"; };
+		B1B6C961F351B5EF39E1A6D3 /* documents.rs */ = {isa = PBXFileReference; path = documents.rs; sourceTree = "<group>"; };
+		B430C28473F35E69E2B43A65 /* gemini_rate_tests.rs */ = {isa = PBXFileReference; path = gemini_rate_tests.rs; sourceTree = "<group>"; };
+		B4841488D1C6563E3444B40E /* claude.rs */ = {isa = PBXFileReference; path = claude.rs; sourceTree = "<group>"; };
+		B489A28AD34FC171B8C3CE6B /* study_sets_tests.rs */ = {isa = PBXFileReference; path = study_sets_tests.rs; sourceTree = "<group>"; };
+		B4F6F26F47A07E7D2893141A /* pdf_study_kit.rs */ = {isa = PBXFileReference; path = pdf_study_kit.rs; sourceTree = "<group>"; };
+		B69873F463FB401BB57832D0 /* quit_settlement_tests.rs */ = {isa = PBXFileReference; path = quit_settlement_tests.rs; sourceTree = "<group>"; };
+		B748C3D1AB0082B328537276 /* pdf_kit.rs */ = {isa = PBXFileReference; path = pdf_kit.rs; sourceTree = "<group>"; };
+		B8CD2D2EFBE8F56720C65291 /* practice_sessions.rs */ = {isa = PBXFileReference; path = practice_sessions.rs; sourceTree = "<group>"; };
+		B9E7CAA7E578DBFB64D2B8E0 /* gemini_jobs.rs */ = {isa = PBXFileReference; path = gemini_jobs.rs; sourceTree = "<group>"; };
+		C052A9AC18F8B0E36EDCE9EB /* search_api.rs */ = {isa = PBXFileReference; path = search_api.rs; sourceTree = "<group>"; };
+		C0BEEBF73086FB6923B14855 /* study_export.rs */ = {isa = PBXFileReference; path = study_export.rs; sourceTree = "<group>"; };
+		C35261EA9E758533F337AE24 /* study_packet.rs */ = {isa = PBXFileReference; path = study_packet.rs; sourceTree = "<group>"; };
+		C50BDE30BA1A38706139D9E4 /* gemini_cancel.rs */ = {isa = PBXFileReference; path = gemini_cancel.rs; sourceTree = "<group>"; };
+		CA6FA709F7DCF9B36451EC2A /* claude_tests.rs */ = {isa = PBXFileReference; path = claude_tests.rs; sourceTree = "<group>"; };
+		CB6BE60BA8F29D14FC9BA851 /* her-flight-deck_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "her-flight-deck_iOS.entitlements"; sourceTree = "<group>"; };
+		CC13330A4200F8764C95B7AF /* fake_gemini.rs */ = {isa = PBXFileReference; path = fake_gemini.rs; sourceTree = "<group>"; };
+		CDBF6D5910EF997C32DFC30D /* card_reviews_tests.rs */ = {isa = PBXFileReference; path = card_reviews_tests.rs; sourceTree = "<group>"; };
+		D05178EFFCF54FD4CEF0B888 /* gemini_budget.rs */ = {isa = PBXFileReference; path = gemini_budget.rs; sourceTree = "<group>"; };
+		D1DF9AC9CA730D50A6C5E135 /* gemini_stage_tests.rs */ = {isa = PBXFileReference; path = gemini_stage_tests.rs; sourceTree = "<group>"; };
+		D2E957581D75FC6409ABA0A6 /* logging.rs */ = {isa = PBXFileReference; path = logging.rs; sourceTree = "<group>"; };
+		D918522430C3581793A1E881 /* practice_authoring.rs */ = {isa = PBXFileReference; path = practice_authoring.rs; sourceTree = "<group>"; };
+		DDDCBFAE486590550F870BB0 /* gemini_sections.rs */ = {isa = PBXFileReference; path = gemini_sections.rs; sourceTree = "<group>"; };
+		E01110C2FB0A9B62CB2D6FDB /* pdf_kit_tests.rs */ = {isa = PBXFileReference; path = pdf_kit_tests.rs; sourceTree = "<group>"; };
+		E34E4002F7DC1850F72BD2AF /* gemini.rs */ = {isa = PBXFileReference; path = gemini.rs; sourceTree = "<group>"; };
+		E489A026224DC8D2D15CD79F /* gemini_cancel_flow_tests.rs */ = {isa = PBXFileReference; path = gemini_cancel_flow_tests.rs; sourceTree = "<group>"; };
+		EA0C0F3C6384F6A04AA5CE1A /* visual_cards.rs */ = {isa = PBXFileReference; path = visual_cards.rs; sourceTree = "<group>"; };
+		ECF30B3DBB8D191C526A4268 /* kit_evidence.rs */ = {isa = PBXFileReference; path = kit_evidence.rs; sourceTree = "<group>"; };
+		F017644E786E1B3D6BD4663B /* gemini_recovery_tests.rs */ = {isa = PBXFileReference; path = gemini_recovery_tests.rs; sourceTree = "<group>"; };
+		F01EB399D8B568766C7F17E0 /* repository_writes.rs */ = {isa = PBXFileReference; path = repository_writes.rs; sourceTree = "<group>"; };
+		F5FA15636E3D6C8D3F8D6009 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		F8359BBE155E93874E5A6595 /* homework_cards.rs */ = {isa = PBXFileReference; path = homework_cards.rs; sourceTree = "<group>"; };
+		FA05839BC14753A9401E61D0 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		FAAE4873EAEAD1D9D9C2B8C0 /* alloc.rs */ = {isa = PBXFileReference; path = alloc.rs; sourceTree = "<group>"; };
+		FF19F2BBBBBDA2C9AE0CEE36 /* wording.rs */ = {isa = PBXFileReference; path = wording.rs; sourceTree = "<group>"; };
+		FFE3304DF01C308C4C76DCE3 /* documents_save_tests.rs */ = {isa = PBXFileReference; path = documents_save_tests.rs; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3034080408E690A887291BD1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2C90099A2038EEF0B4B0AEC6 /* libapp.a in Frameworks */,
+				FC6B34355D1688F0EA833AD2 /* CoreGraphics.framework in Frameworks */,
+				23902162CE0483CF9878078D /* Metal.framework in Frameworks */,
+				3D8C6958C49BE52CB37B1116 /* MetalKit.framework in Frameworks */,
+				6EE9F543847B10A7179C5F93 /* QuartzCore.framework in Frameworks */,
+				A07445A111DE08B06618E6B1 /* Security.framework in Frameworks */,
+				584FE7FF30306DB600A7E662 /* UIKit.framework in Frameworks */,
+				401C7C6B3875C317A270DE0E /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0BB17EC1DD850531BE22F5FF /* her-flight-deck */ = {
+			isa = PBXGroup;
+			children = (
+				A625868A179F6B7AFF47183D /* main.mm */,
+				311BB747C876EC32FA21A6B4 /* bindings */,
+			);
+			path = "her-flight-deck";
+			sourceTree = "<group>";
+		};
+		311BB747C876EC32FA21A6B4 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				7C3E9D9466632535E17F5EF4 /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		36BCB634C4BF0E61EBBD9657 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				98298EED0AFD946F7FA34F16 /* CoreGraphics.framework */,
+				0BDF53A6964E4823AE983ABD /* libapp.a */,
+				A5DAD09C4835244EA2F49675 /* Metal.framework */,
+				8F9A764AC901FCC7CD07288D /* MetalKit.framework */,
+				14D647C2AC6508A9ED84EC02 /* QuartzCore.framework */,
+				101CF07A2A56D196A26F024B /* Security.framework */,
+				3AC6E8B4212114C69EDD41B3 /* UIKit.framework */,
+				F5FA15636E3D6C8D3F8D6009 /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5AB937112F183D8819F1AF48 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				0BB17EC1DD850531BE22F5FF /* her-flight-deck */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5DBC11FF9907CD5B0CB3E107 = {
+			isa = PBXGroup;
+			children = (
+				4841472650CA076BDF0FBD66 /* assets */,
+				A70FAD33FFA3A8237543169E /* Assets.xcassets */,
+				6CEEC66896C01387199EEF92 /* LaunchScreen.storyboard */,
+				D0023162A09A7AFDE487FA79 /* Externals */,
+				F1EC7634B12BF69DC7C1B382 /* her-flight-deck_iOS */,
+				5AB937112F183D8819F1AF48 /* Sources */,
+				955F3EF3D70F84AB9F0AC0F1 /* src */,
+				36BCB634C4BF0E61EBBD9657 /* Frameworks */,
+				BF39279BD8C4D0D71AAF0FBB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		955F3EF3D70F84AB9F0AC0F1 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				0AC00C41008B0AD994CADF5E /* acs_tasks.rs */,
+				6DAC6D7A6143C95E6E9FB856 /* backup.rs */,
+				5F1319B59DF1F6A6DC35D96C /* card_library_tests.rs */,
+				4BDB896D04342AD51A190390 /* card_library.rs */,
+				CDBF6D5910EF997C32DFC30D /* card_reviews_tests.rs */,
+				260B51214275AC82F852C140 /* card_reviews.rs */,
+				1A7F2D24F9C07C400FE0AD7F /* debrief.rs */,
+				FFE3304DF01C308C4C76DCE3 /* documents_save_tests.rs */,
+				B1B6C961F351B5EF39E1A6D3 /* documents.rs */,
+				0B9D8FC60EA568463A47220E /* faa_backup_tests.rs */,
+				CC13330A4200F8764C95B7AF /* fake_gemini.rs */,
+				0348D8E3BF27834A4F143225 /* gemini_ask_evidence.rs */,
+				61D880CEFDB0AF45A9E892C4 /* gemini_ask.rs */,
+				A1000115397912A6338B58C5 /* gemini_batches.rs */,
+				D05178EFFCF54FD4CEF0B888 /* gemini_budget.rs */,
+				E489A026224DC8D2D15CD79F /* gemini_cancel_flow_tests.rs */,
+				C50BDE30BA1A38706139D9E4 /* gemini_cancel.rs */,
+				75972F5EC3AA082AF8ED1256 /* gemini_file_descriptor.rs */,
+				5EB497A92B6FDB8C13A02A82 /* gemini_files_tests.rs */,
+				59C08D02EA8891141E710485 /* gemini_files.rs */,
+				8E3DFE1041F7CB062F411158 /* gemini_generation_tests.rs */,
+				1FA5AAFE8A5C3EB49034E11C /* gemini_jobs_tests.rs */,
+				B9E7CAA7E578DBFB64D2B8E0 /* gemini_jobs.rs */,
+				B430C28473F35E69E2B43A65 /* gemini_rate_tests.rs */,
+				F017644E786E1B3D6BD4663B /* gemini_recovery_tests.rs */,
+				A0D43647F8859971128ADEE0 /* gemini_sections_tests.rs */,
+				DDDCBFAE486590550F870BB0 /* gemini_sections.rs */,
+				91599FE6C6C1A2921BF83844 /* gemini_slowlink_tests.rs */,
+				D1DF9AC9CA730D50A6C5E135 /* gemini_stage_tests.rs */,
+				AA792090810478A991409EDC /* gemini.rs */,
+				025FAFA5F17DDE4D311204B7 /* homework_backup_tests.rs */,
+				F8359BBE155E93874E5A6595 /* homework_cards.rs */,
+				54CE94A1EA6D5C98C70A4C2C /* homework.rs */,
+				ECF30B3DBB8D191C526A4268 /* kit_evidence.rs */,
+				FA05839BC14753A9401E61D0 /* lib.rs */,
+				750A79E8223BAEFEB38A5D51 /* lineage_tests.rs */,
+				A2664AB7474066CA42227655 /* lineage.rs */,
+				67A984F88CC6AAC2214D6D4B /* live_bench_tests.rs */,
+				D2E957581D75FC6409ABA0A6 /* logging.rs */,
+				2A577D3AC1F7D341C9F70C56 /* main.rs */,
+				0CCC53218369C7F09FAF8B17 /* navigation_tests.rs */,
+				461030882F4D55C6F65A8AAF /* navigation.rs */,
+				0884142E3F2162525B8CD85D /* oral_scenarios_tests.rs */,
+				1F388791AA63E95EFA18CF13 /* oral_scenarios.rs */,
+				AA0993795A34D3B716B97261 /* pdf_kit_sources.rs */,
+				E01110C2FB0A9B62CB2D6FDB /* pdf_kit_tests.rs */,
+				B748C3D1AB0082B328537276 /* pdf_kit.rs */,
+				39CFD2354011EF4C02A4D818 /* pdf_study_kit_tests.rs */,
+				B4F6F26F47A07E7D2893141A /* pdf_study_kit.rs */,
+				14C8A33DA5B618B62D60D9EE /* pdf.rs */,
+				ACB0F2792AEABACD18D23370 /* platform.rs */,
+				A7869085F24A3335BCACE3A6 /* practice_authoring_tests.rs */,
+				D918522430C3581793A1E881 /* practice_authoring.rs */,
+				6D68D4CFA6922F628C2FE19B /* practice_session_tests.rs */,
+				B8CD2D2EFBE8F56720C65291 /* practice_sessions.rs */,
+				0A3D5BF65E5E6506F0701F5B /* provider.rs */,
+				B69873F463FB401BB57832D0 /* quit_settlement_tests.rs */,
+				61FCA6F487096F0EF35C5D1D /* quit_settlement.rs */,
+				F01EB399D8B568766C7F17E0 /* repository_writes.rs */,
+				ABCE6593F8B2024834CD3218 /* safety_notices.rs */,
+				5700D65E333C67F7D722F028 /* secrets.rs */,
+				AE85BE135662B3D42044AB35 /* skill_evidence_tests.rs */,
+				B0761C183C5B9CDF34D1C9DC /* skill_evidence.rs */,
+				A8CA70399E55163EDFD319D0 /* startup_guard.rs */,
+				3B6089D9C501FE73AD8CE6BF /* storage.rs */,
+				C0BEEBF73086FB6923B14855 /* study_export.rs */,
+				23F042081CF0D106D6D20844 /* study_kit_tests.rs */,
+				47EFEAC5609F1A5FFBC8E3B5 /* study_kit.rs */,
+				20BD45E415C870C585E74EF2 /* study_packet_save_tests.rs */,
+				C35261EA9E758533F337AE24 /* study_packet.rs */,
+				53EA1657C571F04E20B7906D /* study_page_sources.rs */,
+				B489A28AD34FC171B8C3CE6B /* study_sets_tests.rs */,
+				5018E52A999774F320FC2A60 /* study_sets.rs */,
+				4D5DDD913F101F8E91F70435 /* test_wait.rs */,
+				0C0E29A8EC08EBCB98D944BB /* visual_backup_tests.rs */,
+				36F075279268E20ED33925DD /* visual_cards_tests.rs */,
+				EA0C0F3C6384F6A04AA5CE1A /* visual_cards.rs */,
+				954B1F65233B3D429F737F9F /* weather_tests.rs */,
+				1B1FB7B919D06B72C6B827A6 /* weather.rs */,
+				38D492D857B85AC5E5D3EF97 /* window_placement.rs */,
+				B164F903F229FF2DD31ECB4A /* extraction */,
+				A17B170EDB818C5EFB2C9637 /* provider */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		A17B170EDB818C5EFB2C9637 /* provider */ = {
+			isa = PBXGroup;
+			children = (
+				CA6FA709F7DCF9B36451EC2A /* claude_tests.rs */,
+				B4841488D1C6563E3444B40E /* claude.rs */,
+				E34E4002F7DC1850F72BD2AF /* gemini.rs */,
+				3271FDB6743A108CE2B71BDF /* schema_tests.rs */,
+				2B50E420797CF526CB1EC3D2 /* schemas.rs */,
+				FF19F2BBBBBDA2C9AE0CEE36 /* wording.rs */,
+			);
+			path = provider;
+			sourceTree = "<group>";
+		};
+		A5F788D3DC786886C68667E7 /* saved */ = {
+			isa = PBXGroup;
+			children = (
+				552F57D8C91F08585D8A0182 /* tests.rs */,
+			);
+			path = saved;
+			sourceTree = "<group>";
+		};
+		B164F903F229FF2DD31ECB4A /* extraction */ = {
+			isa = PBXGroup;
+			children = (
+				FAAE4873EAEAD1D9D9C2B8C0 /* alloc.rs */,
+				A90C2A69A3555D1C4F4DA148 /* cache.rs */,
+				846339FF131C7628FD85CA3C /* form_text.rs */,
+				7CA95B63638F7F8003F4BE3A /* inspect.rs */,
+				21255F7BF9420CE1464F2012 /* mod.rs */,
+				C052A9AC18F8B0E36EDCE9EB /* search_api.rs */,
+				A4B3C6641C02D6A02D9677AF /* search.rs */,
+				1ED137321D69582BE2834BA9 /* service.rs */,
+				ABE79F178D7B87E2F985794E /* supervisor.rs */,
+				46FA91CD171361677C0501F9 /* worker.rs */,
+				D9E2D261AC7A910271958F3B /* search */,
+				DEA8EC12B2B41FA5267BF864 /* search_api */,
+			);
+			path = extraction;
+			sourceTree = "<group>";
+		};
+		BF39279BD8C4D0D71AAF0FBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A51092FFFD24C9609DD484AC /* her-flight-deck_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D0023162A09A7AFDE487FA79 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		D9E2D261AC7A910271958F3B /* search */ = {
+			isa = PBXGroup;
+			children = (
+				31FE452520B04EF96C96E267 /* saved.rs */,
+				A5F788D3DC786886C68667E7 /* saved */,
+			);
+			path = search;
+			sourceTree = "<group>";
+		};
+		DEA8EC12B2B41FA5267BF864 /* search_api */ = {
+			isa = PBXGroup;
+			children = (
+				56472C2F6A9AFEADE2909C0F /* tests.rs */,
+			);
+			path = search_api;
+			sourceTree = "<group>";
+		};
+		F1EC7634B12BF69DC7C1B382 /* her-flight-deck_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				CB6BE60BA8F29D14FC9BA851 /* her-flight-deck_iOS.entitlements */,
+				6E8608A8DC1A56E84DA76E46 /* Info.plist */,
+			);
+			path = "her-flight-deck_iOS";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F66C2AADC34B85837B5B10EA /* her-flight-deck_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 544F3CB13BE7DCD5C0D1F6AF /* Build configuration list for PBXNativeTarget "her-flight-deck_iOS" */;
+			buildPhases = (
+				A790D93D0CE38F2F21E30838 /* Build Rust Code */,
+				BD416F951922D36AE3595593 /* Sources */,
+				5570ED9189CAFC1C9DB32694 /* Resources */,
+				3034080408E690A887291BD1 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "her-flight-deck_iOS";
+			packageProductDependencies = (
+			);
+			productName = "her-flight-deck_iOS";
+			productReference = A51092FFFD24C9609DD484AC /* her-flight-deck_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		261C58CD1BE9DCC1405E40A2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 2A0840646847F0285EB4FF13 /* Build configuration list for PBXProject "her-flight-deck" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 5DBC11FF9907CD5B0CB3E107;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = BF39279BD8C4D0D71AAF0FBB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F66C2AADC34B85837B5B10EA /* her-flight-deck_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5570ED9189CAFC1C9DB32694 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				606E318E029191EF1CC48517 /* Assets.xcassets in Resources */,
+				BD03D00A1B80BEC72E43CC8E /* LaunchScreen.storyboard in Resources */,
+				AA1FBDC1CC0FBAA851075634 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A790D93D0CE38F2F21E30838 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "npm run -- tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BD416F951922D36AE3595593 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AA9B72FE027A7A8A65EAF44 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		42A0644AF6591DE58D7754F5 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "her-flight-deck_iOS/her-flight-deck_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "her-flight-deck_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.herflightdeck.app;
+				PRODUCT_NAME = "Her Flight Deck";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+		633B2D87E2407ABD4642032E /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = release;
+		};
+		A9A6AB56E5711B0FF31D365C /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "her-flight-deck_iOS/her-flight-deck_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "her-flight-deck_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.herflightdeck.app;
+				PRODUCT_NAME = "Her Flight Deck";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+		BCC968AC52E5F99DC5AA5666 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2A0840646847F0285EB4FF13 /* Build configuration list for PBXProject "her-flight-deck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BCC968AC52E5F99DC5AA5666 /* debug */,
+				633B2D87E2407ABD4642032E /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		544F3CB13BE7DCD5C0D1F6AF /* Build configuration list for PBXNativeTarget "her-flight-deck_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				42A0644AF6591DE58D7754F5 /* debug */,
+				A9A6AB56E5711B0FF31D365C /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 261C58CD1BE9DCC1405E40A2 /* Project object */;
+}

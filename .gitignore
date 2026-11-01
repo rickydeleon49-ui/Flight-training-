@@ -59,7 +59,10 @@ lerna-debug.log*
 
 # --- Tauri / Rust ---
 src-tauri/target/
-src-tauri/gen/
+src-tauri/gen/schemas/
+src-tauri/gen/apple/build/
+src-tauri/gen/apple/**/xcuserdata/
+src-tauri/gen/apple/Externals/
 target/
 **/*.rs.bk
 *.pdb

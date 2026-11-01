@@ -20,7 +20,7 @@
  *  1. source identity without a git process: HEAD read from the repository's ref files equals the
  *     pinned commit, every tracked path outside the allowed list matches the pinned HEAD tree
  *     (index blob ids and worktree bytes), and no untracked path lies outside the allowed list.
- *     Gitignored Cargo/Tauri build output (src-tauri/target, src-tauri/gen) is set aside and
+ *     Gitignored Cargo/Tauri build output (src-tauri/target, src-tauri/gen/schemas) is set aside and
  *     listed only when its exact shape is recognized; otherwise every file in it is reported. A
  *     sensitivity stage proves that on disposable trees;
  *  2. historical schema-13 helper self-check: passing regressions, with its disclosed live-source
@@ -95,7 +95,9 @@ const INFRASTRUCTURE = new Set(['node_modules']);
  */
 const BUILD_OUTPUT = Object.freeze({
   'src-tauri/target': { kind: 'cargo-target', ignoreRule: 'src-tauri/target/' },
-  'src-tauri/gen': { kind: 'tauri-gen-schemas', ignoreRule: 'src-tauri/gen/' },
+  // Only gen/schemas is build output. gen/apple is committed source (the iOS Xcode project), so it is
+  // walked like any tracked tree: an untracked or changed file there is reported, not set aside.
+  'src-tauri/gen/schemas': { kind: 'tauri-gen-schemas', ignoreRule: 'src-tauri/gen/schemas/' },
 });
 const CARGO_TARGET_ENTRIES = new Set(['CACHEDIR.TAG', '.rustc_info.json', '.future-incompat-report.json', 'debug', 'release', 'tmp']);
 /**
@@ -263,8 +265,8 @@ function isCargoTag(tag) {
  * Recognizes one BUILD_OUTPUT directory, or says why it is not recognized. Cargo's target is not
  * descended (it holds gigabytes and Cargo's own hard links); it must be a real directory carrying
  * Cargo's cache-directory tag with only Cargo's top-level entries, plus at most the Apple Silicon
- * cross-target folder in the same tagged shape. Tauri's gen must hold only
- * schemas/ with generated schema JSON: regular, single-linked, bounded, parseable files.
+ * cross-target folder in the same tagged shape. Tauri's gen/schemas must hold only
+ * generated schema JSON: regular, single-linked, bounded, parseable files.
  */
 export function recognizeBuildOutput(root, rel, trackedPaths) {
   const spec = BUILD_OUTPUT[rel];
@@ -299,16 +301,15 @@ export function recognizeBuildOutput(root, rel, trackedPaths) {
     }
     return { recognized: true, kind: spec.kind, path: rel, ignoreRule: spec.ignoreRule, topLevel: names, targets, descended: false };
   }
-  if (names.length !== 1 || names[0] !== 'schemas' || !fs.lstatSync(path.join(abs, 'schemas')).isDirectory()) return no('must contain only a schemas directory');
   const files = [];
-  for (const n of fs.readdirSync(path.join(abs, 'schemas')).sort()) {
-    const f = path.join(abs, 'schemas', n);
+  for (const n of names) {
+    const f = path.join(abs, n);
     const s = fs.lstatSync(f);
-    if (!TAURI_GEN_SCHEMA.test(n)) return no(`unexpected file schemas/${n}`);
-    if (!s.isFile() || s.nlink !== 1 || s.size > TAURI_GEN_MAX_BYTES) return no(`schemas/${n} is not a regular, single-linked, bounded file`);
+    if (!TAURI_GEN_SCHEMA.test(n)) return no(`unexpected file ${n}`);
+    if (!s.isFile() || s.nlink !== 1 || s.size > TAURI_GEN_MAX_BYTES) return no(`${n} is not a regular, single-linked, bounded file`);
     const bytes = fs.readFileSync(f);
-    try { JSON.parse(bytes.toString('utf8')); } catch { return no(`schemas/${n} is not JSON`); }
-    files.push({ path: `${rel}/schemas/${n}`, bytes: bytes.length, sha256: sha256(bytes) });
+    try { JSON.parse(bytes.toString('utf8')); } catch { return no(`${n} is not JSON`); }
+    files.push({ path: `${rel}/${n}`, bytes: bytes.length, sha256: sha256(bytes) });
   }
   if (!files.length) return no('schemas is empty');
   return { recognized: true, kind: spec.kind, path: rel, ignoreRule: spec.ignoreRule, files };
@@ -402,8 +403,10 @@ export function walkerSensitivity(dir) {
     ['refused: unknown top-level entry in Cargo target', root => put(root, 'src-tauri/target/notes.md', 'x\n'), ['src-tauri/target/.rustc_info.json', 'src-tauri/target/CACHEDIR.TAG', 'src-tauri/target/debug/deps/libx.rlib', 'src-tauri/target/debug/libx.rlib', 'src-tauri/target/notes.md'], ['tauri-gen-schemas']],
     ['refused: Cargo target without its cache tag', root => fs.rmSync(path.join(root, 'src-tauri/target/CACHEDIR.TAG')), ['src-tauri/target/.rustc_info.json', 'src-tauri/target/debug/deps/libx.rlib', 'src-tauri/target/debug/libx.rlib'], ['tauri-gen-schemas']],
     ['refused: Cargo target is a symlink', root => { const real = path.join(dir, 'elsewhere-target'); fs.renameSync(path.join(root, 'src-tauri/target'), real); fs.symlinkSync(real, path.join(root, 'src-tauri/target')); }, ['src-tauri/target'], ['tauri-gen-schemas']],
+    ['accepted: tracked Xcode project under Tauri gen/apple', (root, entries) => { put(root, 'src-tauri/gen/apple/project.yml', 'name: app\n'); return [...entries, { mode: '100644', sha: blobId(Buffer.from('name: app\n')), path: 'src-tauri/gen/apple/project.yml', stage: 0 }]; }, [], ['cargo-target', 'tauri-gen-schemas']],
+    ['refused: untracked file under Tauri gen/apple', root => put(root, 'src-tauri/gen/apple/stray.swift', 'x\n'), ['src-tauri/gen/apple/stray.swift'], ['cargo-target', 'tauri-gen-schemas']],
     ['refused: hard-linked Tauri gen schema', root => fs.linkSync(path.join(root, GEN[0]), path.join(dir, 'outside-link.json')), GEN, ['cargo-target']],
-    ['refused: build output without its .gitignore rule', root => fs.writeFileSync(path.join(root, '.gitignore'), ignore.split('\n').filter(l => !/^src-tauri\/(target|gen)\/$/.test(l.trim())).join('\n')), ['.gitignore', ...GEN, 'src-tauri/target/.rustc_info.json', 'src-tauri/target/CACHEDIR.TAG', 'src-tauri/target/debug/deps/libx.rlib', 'src-tauri/target/debug/libx.rlib'], []],
+    ['refused: build output without its .gitignore rule', root => fs.writeFileSync(path.join(root, '.gitignore'), ignore.split('\n').filter(l => !/^src-tauri\/(target|gen\/schemas)\/$/.test(l.trim())).join('\n')), ['.gitignore', ...GEN, 'src-tauri/target/.rustc_info.json', 'src-tauri/target/CACHEDIR.TAG', 'src-tauri/target/debug/deps/libx.rlib', 'src-tauri/target/debug/libx.rlib'], []],
     ['refused: tracked path inside build output', (root, entries) => [...entries, { mode: '100644', sha: blobId(fs.readFileSync(path.join(root, GEN[0]))), path: GEN[0], stage: 0 }], [GEN[1]], ['cargo-target']],
     ['refused: changed protected migration beside accepted build output', root => fs.appendFileSync(path.join(root, MIGRATION), '-- edited\n'), [MIGRATION], ['cargo-target', 'tauri-gen-schemas']],
     ['refused: deleted protected migration beside accepted build output', root => fs.rmSync(path.join(root, MIGRATION)), [MIGRATION], ['cargo-target', 'tauri-gen-schemas']],
