@@ -232,6 +232,14 @@ it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards
   expect(screen.queryByRole("link", { name: /^Private Pilot Airplane ACS$/ })).toBeNull();
 });
 
+it.each(["/study", "/study?tab=howto"])("opens the FAA shelf from the top link over a remembered search from %s", async (path) => {
+  sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("Material 149"));
+  render(h(MemoryRouter, {initialEntries:[path]}, h(StudyLibrary)));
+  fireEvent.click(screen.getByRole("link", {name:"Free FAA handbooks"}));
+  expect((document.getElementById("references") as HTMLDetailsElement).open).toBe(true);
+  expect((screen.getByRole("textbox", {name:"Search your library"}) as HTMLInputElement).value).toBe("");
+});
+
 it("LIBRARY-CALM-01 shows her materials first and folds FAA references and the ACS lookup into one closed shelf below", () => {
   const view = render(h(MemoryRouter, null, h(StudyLibrary)));
   const shelf = screen.getByText("References and ACS lookup", { selector: "summary" }).parentElement as HTMLDetailsElement;

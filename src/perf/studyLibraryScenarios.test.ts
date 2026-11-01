@@ -216,17 +216,18 @@ describe("Study Library benchmark scenarios", () => {
     }, 30_000);
   }
 
+  // Correctness checks, not speed budgets: CI runners take 30–60 s here (9 s locally), so allow headroom.
   it("showMoreExpandTo1000: measures a stated expanded display of 1,000 cards", async () => {
     const expand = await runScenario("showMoreExpandTo1000", 1_000);
     expect(expand.steps.map((s) => s.shownCount)).toEqual([200, 300, 400, 500, 600, 700, 800, 900, 1_000]);
     completed.push("showMoreExpandTo1000");
-  }, 60_000);
+  }, 180_000);
 
   it("queryWhileExpanded: a query from an expanded display of 1,000 cards returns to 100", async () => {
     const query = await runScenario("queryWhileExpanded", 1_000);
     expect(query.final).toEqual({ resultCount: 100, shownCount: 100 });
     completed.push("queryWhileExpanded");
-  }, 60_000);
+  }, 180_000);
 
   it("finished every scenario exactly once, in assigned order", () => {
     expect(completionProblems(SCENARIOS.map((s) => s.name), completed)).toEqual([]);

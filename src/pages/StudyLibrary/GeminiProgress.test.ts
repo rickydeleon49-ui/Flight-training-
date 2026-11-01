@@ -69,6 +69,7 @@ it.each(["flashcards", "study-aid", "practice-test"] as const)("keeps %s retries
 });
 
 it("shows saving wording once the guide is saving", () => {
-  render(h(GeminiProgressView, {job:{...job(),phase:"saving"},title:"Creating your study guide",onCancel:vi.fn()}));
+  render(h(GeminiProgressView, {job:{...job(),phase:"saving",attempt:2,progress:"Reading document…"},title:"Creating your study guide",onCancel:vi.fn()}));
   expect(screen.getByRole("status").textContent).toBe("Saving your guide…");
+  expect(screen.queryByText("Reading document…")).toBeNull();
 });

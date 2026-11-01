@@ -405,6 +405,9 @@ export function PracticeTestPanel({
     () => initialPanelState(materialId, 1),
   );
   const [offeringSkipped, setOfferingSkipped] = useState(false);
+  const [answeringSkipped, setAnsweringSkipped] = useState(false);
+  const keyboardPanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { setAnsweringSkipped(false); }, [materialId, state.attempt?.attemptId]);
   const resumedAttempt = useRef<string | null>(null);
   const [confirmingAbandon, setConfirmingAbandon] = useState(false);
   const [continuedOlderAttempt, setContinuedOlderAttempt] = useState<string | null>(null);
@@ -1008,14 +1011,16 @@ export function PracticeTestPanel({
 
   const handleContinue = useCallback(() => {
     const current = renderedRef.current;
-    if (current.index + 1 < totalQuestions) {
-      goToIndex(current.index + 1);
+    const next = (current.items ?? []).findIndex((item, index) => index > current.index &&
+      (!answeringSkipped || !current.attempt?.responses.some(response => response.itemId === item.id)));
+    if (next >= 0) {
+      goToIndex(next);
       return;
     }
     const unanswered = (current.items ?? []).filter(item => !current.attempt?.responses.some(response => response.itemId === item.id));
     if (unanswered.length) setOfferingSkipped(true);
     else handleComplete();
-  }, [goToIndex, handleComplete, totalQuestions]);
+  }, [goToIndex, handleComplete, answeringSkipped]);
 
   const handleRetake = useCallback(() => {
     if (busyRef.current || intentRef.current) return;
@@ -1095,6 +1100,29 @@ export function PracticeTestPanel({
     },
     [canEdit, dispatch, handleSelectOption, question, revealed],
   );
+
+  // Shortcuts survive focus moving to the heading, a button, or the body.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || event.defaultPrevented || event.repeat ||
+          event.ctrlKey || event.metaKey || event.altKey ||
+          target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], dialog, [role="dialog"]') ||
+          (target !== document.body && !keyboardPanelRef.current?.contains(target)) ||
+          !keyboardPanelRef.current || !canEdit || busyRef.current || intentRef.current || offeringSkipped || confirmingAbandon) return;
+      const number = /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : -1;
+      if (!revealed && number >= 0 && number < (question?.options.length ?? 0)) {
+        event.preventDefault();
+        handleSelectOption(number);
+      } else if (event.key === "Enter" && !target.closest('button, a, [role="radio"]')) {
+        event.preventDefault();
+        if (revealed) handleContinue();
+        else handleSelectOption(state.focusIndex);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [canEdit, revealed, question, offeringSkipped, confirmingAbandon, handleSelectOption, handleContinue, state.focusIndex]);
 
   // Focus follows the authoritative phase, not a pending click. These are layout
   // effects on purpose: the choice that just became revealed is disabled in the
@@ -1305,7 +1333,7 @@ export function PracticeTestPanel({
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
 
   return (
-    <div className="stack stack--3" aria-labelledby="practice-test-title">
+    <div ref={keyboardPanelRef} className="stack stack--3" aria-labelledby="practice-test-title">
       {notices}
 
       {entrySummary ? <div className="row row--wrap">
@@ -1412,7 +1440,7 @@ export function PracticeTestPanel({
               size="small"
               variant="ghost"
               disabled={!canEdit}
-              onClick={() => goToIndex(state.index + 1)}
+              onClick={handleContinue}
             >
               Skip for now →
             </Button>
@@ -1489,10 +1517,11 @@ export function PracticeTestPanel({
         message={`You skipped ${totalQuestions - answeredCount} ${totalQuestions - answeredCount === 1 ? "question" : "questions"}. Answer them now?`}
         confirmLabel="Answer skipped"
         destructive={false}
-        secondaryLabel="Finish test"
+        secondaryLabel="Finish anyway"
         onSecondary={() => { setOfferingSkipped(false); handleComplete(); }}
         onConfirm={() => {
           setOfferingSkipped(false);
+          setAnsweringSkipped(true);
           const next = questions.findIndex(item => !state.attempt?.responses.some(response => response.itemId === item.id));
           if (next >= 0) goToIndex(next);
         }}

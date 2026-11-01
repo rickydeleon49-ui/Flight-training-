@@ -508,7 +508,7 @@ export function GeminiProgressView({
         <p className="small strong">{words(title)}</p>
         <p className="tiny">
           <span role="status" aria-live="polite">
-            {job.cancelRequested ? "Cancelling…" : retrying ? words("Gemini is busy — trying again") : words(stage)}
+            {job.cancelRequested ? "Cancelling…" : retrying && job.phase !== "saving" ? words("Gemini is busy — trying again") : words(stage)}
           </span>
           {elapsed ? <><span aria-hidden="true"> · </span><span className="dim">{elapsed}</span></> : null}
         </p>
@@ -519,7 +519,7 @@ export function GeminiProgressView({
           <p className="tiny" role="status">{job.sections.ready} of {job.sections.total} {job.sections.total === 1 ? "section" : "sections"} ready</p>
         ) : null}
         {job.sectionGuide && job.sections?.heading && !/files\/|https?:\/\//i.test(job.sections.heading) ? <p className="tiny dim">{job.sections.heading}</p> : null}
-        {job.progress && !job.cancelRequested ? <p className="tiny dim">{words(job.progress)}</p> : null}
+        {job.progress && job.phase !== "saving" && !job.cancelRequested ? <p className="tiny dim">{words(job.progress)}</p> : null}
         {job.sectionGuide && job.stage === "generating" && !job.cancelRequested && now - (job.stageSince ?? job.startedAt ?? now) >= 60_000 ? (
           <p className="tiny dim">{words("Taking longer than usual. Gemini can take a few minutes on a long PDF. Cancel keeps any finished part.")}</p>
         ) : null}

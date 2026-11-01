@@ -219,6 +219,7 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
     try { await save(); }
     finally { locked.current = false; if (live.current) setBusy(false); }
   };
+  const finishing = !!pending.current || !!(progress && progress.total > 0 && progress.received >= progress.total);
   const mb = (bytes: number) => Math.round(bytes / 1_048_576);
 
   return <div className={phak ? undefined : "faa-shelf__entry"}>
@@ -231,11 +232,11 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
         {!phak ? <><Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
           onChange={(value) => { setSelected(value); setMessage(""); }} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
         <Button onClick={onAddPdf} disabled={!onAddPdf}>Add PDF</Button></> : null}
-        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? "Downloading…" : alreadySaved ? "Already saved" : phak ? "Get full handbook from faa.gov (about 74 MB)" : "Get from faa.gov"}</Button>
+        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? finishing ? "Saving…" : "Downloading…" : alreadySaved ? "Already saved" : phak ? "Get full handbook from faa.gov (about 74 MB)" : "Get from faa.gov"}</Button>
         {busy && !pending.current ? <Button onClick={() => void cancel()} disabled={cancelling}>{cancelling ? "Cancelling…" : "Cancel"}</Button> : null}
         {pending.current ? <Button onClick={() => void retry()} disabled={busy}>Save downloaded PDF</Button> : null}
       </div>
-      {busy && !pending.current ? <p className="small" role="status">Getting {selectedLabel} from faa.gov…{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
+      {busy && !pending.current ? <p className="small" role="status">{finishing ? `Saving ${selectedLabel}…` : `Getting ${selectedLabel} from faa.gov…`}{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
     </> : null}
     {phak && !selectedRecords.length && !faaShelfCopies(data.materials, FAA_REFERENCES[1]).length ? <p className="small muted">Optional · No saved PDF</p> : null}
     {message ? <p className="small" role="status">{message}</p> : null}

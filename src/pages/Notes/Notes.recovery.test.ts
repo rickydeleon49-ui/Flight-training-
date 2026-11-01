@@ -216,5 +216,6 @@ it("labels note deletion with visible text and an aria-label", () => {
   render(page());
   const button = screen.getByRole("button", {name:"Delete note: Call the school"});
   expect(button.textContent).toContain("Delete");
+  expect(button.getAttribute("title")).toBe("Delete note");
   expect(button.getAttribute("aria-label")).toBe("Delete note: Call the school");
 });

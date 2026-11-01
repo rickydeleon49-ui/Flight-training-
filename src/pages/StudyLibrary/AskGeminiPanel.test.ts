@@ -387,6 +387,7 @@ describe("AskGeminiPanel and PracticeTestPanel integration", () => {
     fireEvent.change(screen.getByLabelText("Ask a question"), { target: { value: "A synthetic question?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     await screen.findByText(notAnswered ? "That isn't in these pages. Try another chapter, or ask your instructor." : "I couldn't check the supporting text.");
+    expect(screen.queryByText("Try asking about something in this chapter, or open the material it's in.") !== null).toBe(notAnswered);
     expect(screen.queryByText(/^Sources \(/)).toBeNull();
     expect(screen.queryByText(/^Page /)).toBeNull();
     expect(screen.queryByText("I couldn't check the supporting text.") !== null).toBe(!notAnswered);

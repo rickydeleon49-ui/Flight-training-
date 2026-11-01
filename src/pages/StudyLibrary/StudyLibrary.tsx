@@ -312,6 +312,8 @@ export function StudyLibrary() {
         }
       />
 
+      <Link to="/study#references">Free FAA handbooks</Link>
+
       <div {...tabListProps} ref={tabListRef} className="library-tabs">
         {TABS.map((choice) => <LibraryTabButton key={choice.value} choice={choice} state={tabState} />)}
       </div>

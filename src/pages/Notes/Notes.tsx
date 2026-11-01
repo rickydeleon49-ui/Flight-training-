@@ -342,7 +342,7 @@ function NoteRow({
         </Button>
         <Button
           size="small" variant="ghost"
-          className="destructive-action" aria-label={`Delete note: ${heading}`}
+          className="destructive-action" aria-label={`Delete note: ${heading}`} title="Delete note"
           onClick={onDelete}
         >
           <TrashIcon size={16} /> Delete

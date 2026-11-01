@@ -225,6 +225,18 @@ it("polls byte progress, locks a second request, and cancels without saving a ma
   expect(mocks.record).not.toHaveBeenCalled();
 });
 
+it("shows Saving after the full byte count while native checking is still pending", async () => {
+  let reject!: (reason: unknown) => void;
+  mocks.download.mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
+  mocks.progress.mockResolvedValue({received: 74 * 1048576, total: 74 * 1048576});
+  mount();
+  await startDownload();
+  await screen.findByRole("button", {name:"Saving…"});
+  expect(mocks.record).not.toHaveBeenCalled();
+  await act(async () => reject({kind:"cancelled", message:"cancelled"}));
+  await screen.findByText("Download cancelled.");
+});
+
 it("keeps the shelf usable after a failed download", async () => {
   mocks.download.mockRejectedValueOnce(new Error("synthetic failure"));
   mount();
