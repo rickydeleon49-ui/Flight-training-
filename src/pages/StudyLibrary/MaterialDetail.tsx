@@ -1772,6 +1772,11 @@ function MaterialDetailPage() {
             </CardBody>
           </Card>
 
+          {isPdf && material.filePath ? (
+            <DocumentPagesPanel material={material} fileMissing={fileMissing} restoring={restoringFile}
+              onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable} />
+          ) : null}
+
           </div><div className="detail__column">
           <Card>
             <CardHeader title="Questions for my instructor" />
@@ -1836,11 +1841,6 @@ function MaterialDetailPage() {
             </CardBody>
           </Card>
 
-          {isPdf && material.filePath ? (
-            <DocumentPagesPanel material={material} fileMissing={fileMissing} restoring={restoringFile}
-              onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable} />
-          ) : null}
-
           </div></div>
         </MaterialTabPanel>
         <MaterialTabPanel value="more" state={tabState}>
@@ -1848,6 +1848,93 @@ function MaterialDetailPage() {
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
           {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
+          <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
+          <Card>
+            <CardHeader title="Details and review status" />
+            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
+            <CardBody>
+              <div className="stack stack--4">
+                <Select
+                  aria-label="Review status"
+                  options={REVIEW_STATUS_OPTIONS}
+                  value={material.reviewStatus}
+                  onChange={(value) =>
+                    mutate((repos) => repos.documents.update(material.id, { reviewStatus: value }))
+                  }
+                />
+                {!tipsHidden ? <p className="tiny muted">Review again and Studying make this material eligible for suggestions in Today's Flight Plan.</p> : null}
+                <Button
+                  block
+                  onClick={() =>
+                    mutate((repos) =>
+                      repos.documents.update(material.id, { lastReviewedAt: nowIso() }),
+                    )
+                  }
+                >
+                  Mark as reviewed today
+                </Button>
+                {!tipsHidden ? <p className="tiny muted">Records today's date as your last review. Choose your review status separately.</p> : null}
+                {material.lastReviewedAt ? (
+                  <p className="tiny dim">
+                    {formatLocalDay(material.lastReviewedAt, today)
+                      ? `Last reviewed ${formatLocalDay(material.lastReviewedAt, today)}.`
+                      : "Reviewed before; the date can't be read."}
+                  </p>
+                ) : (
+                  <p className="tiny dim">Not reviewed yet.</p>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+          {material.filePath ? (
+            <div id="material-file-details" tabIndex={-1}><Card>
+              <CardHeader title="File details" />
+              <CardBody>
+                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
+                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
+                  <div className="file-row__details">
+                    <p className="small truncate">{material.originalFileName}</p>
+                    <p className="tiny">
+                      {fileMissing
+                        ? "This file is no longer in your library storage."
+                        : formatFileSize(material.fileSize)}
+                    </p>
+                  </div>
+                  <div className="file-row__actions">
+                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
+                  </div>
+                </div>
+                {deviceCan().importFiles && fileMissing ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="tiny muted">
+                      Everything you wrote is still here. Choose the original or a replacement
+                      copy; it will be copied back inside the desktop app.
+                    </p>
+                    <Button
+                      size="small"
+                      variant="primary"
+                      disabled={restoringFile}
+                      onClick={() => void restoreFile()}
+                    >
+                      {restoringFile ? "Restoring…" : "Find and restore file"}
+                    </Button>
+                  </div>
+                ) : null}
+                {openError ? (
+                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                    <p className="field__error">{openError}</p>
+                    {deviceCan().revealFiles && !fileMissing ? (
+                      <Button size="small" onClick={() => void revealStoredFile()}>
+                        Show in Finder or File Explorer
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <SplitLineageDetails material={material} materials={data.materials} />
+              </CardBody>
+            </Card></div>
+          ) : null}
+
           {/* Reading the PDF's text sits with the other tools, above the reference cards (QUICKFIX-01). */}
           {isPdf && (material.filePath || hasKitItems) ? (
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
@@ -1981,92 +2068,7 @@ function MaterialDetailPage() {
               </Card>
             </section>
           ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div> : null}
-          <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
-          {material.filePath ? (
-            <div id="material-file-details" tabIndex={-1}><Card>
-              <CardHeader title="File details" />
-              <CardBody>
-                <div className={`file-row file-row--actions${fileMissing ? " file-row--missing" : ""}`}>
-                  {fileMissing ? <AlertIcon /> : <DocumentIcon />}
-                  <div className="file-row__details">
-                    <p className="small truncate">{material.originalFileName}</p>
-                    <p className="tiny">
-                      {fileMissing
-                        ? "This file is no longer in your library storage."
-                        : formatFileSize(material.fileSize)}
-                    </p>
-                  </div>
-                  <div className="file-row__actions">
-                    {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
-                  </div>
-                </div>
-                {deviceCan().importFiles && fileMissing ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="tiny muted">
-                      Everything you wrote is still here. Choose the original or a replacement
-                      copy; it will be copied back inside the desktop app.
-                    </p>
-                    <Button
-                      size="small"
-                      variant="primary"
-                      disabled={restoringFile}
-                      onClick={() => void restoreFile()}
-                    >
-                      {restoringFile ? "Restoring…" : "Find and restore file"}
-                    </Button>
-                  </div>
-                ) : null}
-                {openError ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
-                    <p className="field__error">{openError}</p>
-                    {deviceCan().revealFiles && !fileMissing ? (
-                      <Button size="small" onClick={() => void revealStoredFile()}>
-                        Show in Finder or File Explorer
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-                <SplitLineageDetails material={material} materials={data.materials} />
-              </CardBody>
-            </Card></div>
-          ) : null}
-
           <Card>
-            <CardHeader title="Details and review status" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
-            <CardBody>
-              <div className="stack stack--4">
-                <Select
-                  aria-label="Review status"
-                  options={REVIEW_STATUS_OPTIONS}
-                  value={material.reviewStatus}
-                  onChange={(value) =>
-                    mutate((repos) => repos.documents.update(material.id, { reviewStatus: value }))
-                  }
-                />
-                {!tipsHidden ? <p className="tiny muted">Review again and Studying make this material eligible for suggestions in Today's Flight Plan.</p> : null}
-                <Button
-                  block
-                  onClick={() =>
-                    mutate((repos) =>
-                      repos.documents.update(material.id, { lastReviewedAt: nowIso() }),
-                    )
-                  }
-                >
-                  Mark as reviewed today
-                </Button>
-                {!tipsHidden ? <p className="tiny muted">Records today's date as your last review. Choose your review status separately.</p> : null}
-                {material.lastReviewedAt ? (
-                  <p className="tiny dim">
-                    {formatLocalDay(material.lastReviewedAt, today)
-                      ? `Last reviewed ${formatLocalDay(material.lastReviewedAt, today)}.`
-                      : "Reviewed before; the date can't be read."}
-                  </p>
-                ) : (
-                  <p className="tiny dim">Not reviewed yet.</p>
-                )}
-              </div>
-            </CardBody>
             <CardHeader title="Details" />
             {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit under File to change its details.</p> : null}
             <CardBody>

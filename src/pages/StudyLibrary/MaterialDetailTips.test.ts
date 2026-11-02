@@ -113,16 +113,16 @@ it("orders the PDF workflow inside its tab homes with both backup panels togethe
   expect(within(study).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Study", "Study guide", "Flashcards", "Practice test", "Practice an oral question", "Videos for this section"]);
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
   const notes = screen.getByRole("tabpanel", { name: "Notes" });
-  expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Questions for my instructor", "Next steps for this material", "Find your place"]);
+  expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Find your place", "Questions for my instructor", "Next steps for this material"]);
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   const more = screen.getByRole("tabpanel", { name: "More" });
   const file = document.getElementById("material-file-details")!;
   const backup = screen.getByRole("region", { name: "On this Mac (backup)" });
   expect(more.contains(file)).toBe(true);
-  // QUICKFIX-01: Read this PDF's text (in the backup card) comes before File details.
-  expect(backup.compareDocumentPosition(file) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  // UX-01b: File details comes before the Mac backup tools.
+  expect(file.compareDocumentPosition(backup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(await within(backup).findByRole("heading", { name: "Read this PDF's text" })).toBeTruthy();
-  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "File details", "Details and review status", "Details"]);
+  expect(within(more).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details"]);
   expect(backup.contains(document.getElementById("material-offline-study"))).toBe(true);
   expect(backup.contains(document.getElementById("material-pdf-kit"))).toBe(true);
   expect(within(backup).getByRole("button", { name: "Make a study kit from this PDF" })).toBeTruthy();

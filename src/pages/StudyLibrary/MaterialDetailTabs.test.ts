@@ -56,6 +56,37 @@ it("defaults to Study with three wired tabs and mounted hidden panels", async ()
   expect(document.querySelector('textarea[aria-label="Personal notes"]')).toBeTruthy();
   await expectNoA11yViolations(document.body);
 });
+it("Notes: Find your place is the second card for a PDF", async () => {
+  await open("?tab=notes");
+  const panel = screen.getByRole("tabpanel", { name: "Notes" });
+  expect(within(panel).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual([
+    "Notes", "Personal notes", "Find your place", "Questions for my instructor", "Next steps for this material",
+  ]);
+});
+
+it("More: Export, Related study and review status come before On this Mac", async () => {
+  await createRepositories(db).documents.saveAiStudySet({ sourceMaterialId: "tips", title: "Synthetic guide", summary: "Synthetic summary", sections: [],
+    flashcards: [], sourceNotes: "", model: "test" });
+  await open("?tab=more");
+  const panel = screen.getByRole("tabpanel", { name: "More" });
+  await within(panel).findByRole("heading", { name: "Read this PDF's text" });
+  expect(within(panel).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual([
+    "More", "Details and review status", "File details", "On this Mac (backup)", "Read this PDF's text", "A study kit from your PDF", "Details",
+  ]);
+  // Export and Related study retain their existing button and summary semantics.
+  const ordered = [
+    within(panel).getByRole("button", { name: "Export or print" }),
+    within(panel).getByText("Related study", { selector: "summary" }),
+    within(panel).getByRole("heading", { name: "Details and review status" }),
+    within(panel).getByRole("heading", { name: "File details" }),
+    within(panel).getByRole("heading", { name: "On this Mac (backup)" }),
+    within(panel).getByRole("heading", { name: "Details" }),
+  ];
+  ordered.slice(1).forEach((node, index) => {
+    expect(ordered[index]!.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
 it("replaces URL state, preserves parameters and omits Study", async () => {
   await open("?tab=notes&keep=yes");
   expect(screen.getByRole("textbox", { name: "Personal notes" })).toBeTruthy();
