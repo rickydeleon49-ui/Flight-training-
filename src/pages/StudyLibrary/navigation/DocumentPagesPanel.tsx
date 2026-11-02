@@ -1,3 +1,4 @@
+import { deviceCan } from "@/services/platform";
 /**
  * A material's pages (M4 Slice 1): the page count, a page check, and bookmarks.
  *
@@ -326,9 +327,9 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
           {missing ? (
             <div className="row row--between row--wrap">
               <p className="tiny muted">The file for this material isn&apos;t in your library storage, so no page can be opened. Your saved places are kept.</p>
-              <Button size="small" variant="primary" disabled={restoring} onClick={onRestore}>
+              {deviceCan().importFiles ? <Button size="small" variant="primary" disabled={restoring} onClick={onRestore}>
                 {restoring ? "Restoring…" : "Find and restore file"}
-              </Button>
+              </Button> : null}
             </div>
           ) : null}
 

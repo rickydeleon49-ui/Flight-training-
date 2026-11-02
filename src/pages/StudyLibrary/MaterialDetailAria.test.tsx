@@ -144,3 +144,39 @@ it.each(["Keep these", "Use the saved notes"])("asks before replacing restored n
   expect((screen.getByLabelText("Personal notes") as HTMLTextAreaElement).value).toBe(expected);
   expect(localStorage.getItem("her-flight-deck.draft.material.tips.notes")).toBeNull();
 });
+
+it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s)", async (phone) => {
+  const platform = await import("@/services/platform");
+  vi.spyOn(platform, "deviceCan").mockReturnValue({
+    importFiles: !phone, generate: !phone, revealFiles: !phone,
+    sendToIphone: false, getStudyMaterial: phone,
+  });
+  vi.spyOn(documents, "openDocument").mockRejectedValue(new Error("Synthetic open failure"));
+  await open("?tab=more");
+  fireEvent.click(screen.getByLabelText("File actions: edit, split, open, delete"));
+  expect(Boolean(screen.queryByRole("button", { name: "Split automatically" }))).toBe(!phone);
+  expect(Boolean(screen.queryByRole("button", { name: "Take out a chapter" }))).toBe(!phone);
+  fireEvent.click(screen.getByRole("button", { name: "Open" }));
+  await screen.findByText("Synthetic open failure");
+  expect(Boolean(screen.queryByRole("button", { name: "Show in Finder or File Explorer" }))).toBe(!phone);
+  expect(Boolean(screen.queryByRole("button", { name: "Ask about this PDF" }))).toBe(!phone);
+  fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+  expect(Boolean(screen.queryByRole("button", { name: "Make my study kit" }))).toBe(!phone);
+  fireEvent.click(screen.getByLabelText("File actions: edit, split, open, delete"));
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+  // Existing-file editor offers no picker; remove the file in a separate fixture below.
+  expect(screen.queryByRole("button", { name: "Choose a file" })).toBeNull();
+});
+
+it("hides all generation and missing-file import entries on the phone", async () => {
+  const platform = await import("@/services/platform");
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true });
+  vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
+  vi.mocked(documents.documentExists).mockResolvedValue(false);
+  await open();
+  await screen.findByText("This study file is missing. Everything you wrote is still here.");
+  for (const tab of ["Study", "Notes", "More"]) {
+    fireEvent.click(screen.getByRole("tab", { name: tab }));
+    expect(screen.queryAllByRole("button", { name: /Generate|Regenerate|Create study|Create practice|Make new cards|Find and restore file|Split file|Ask about this PDF/i })).toHaveLength(0);
+  }
+});

@@ -14,6 +14,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
 
 import { isTauri } from "@/data";
+import { isIOS } from "./platform";
+import { openInAppViewer } from "./pdfViewer";
 
 export interface ImportedDocument {
   relativePath: string;
@@ -89,9 +91,28 @@ export async function documentExists(relativePath: string): Promise<boolean> {
   return invoke<boolean>("document_exists", { relativePath });
 }
 
-/** Open a stored document in the system's default viewer. */
-export async function openDocument(relativePath: string): Promise<void> {
+// Keep only the most recent PDF's bytes (handbooks reach 100 MB; phone memory is
+// limited), but create/revoke a fresh URL for each dialog. Reopening the same
+// handbook does not repeat the IPC copy.
+const sessionPdfs = new Map<string, Blob>();
+
+/** Make a viewer-owned URL for a stored PDF. */
+export async function documentBlobUrl(relativePath: string): Promise<string> {
   if (!isTauri()) throw new DesktopOnlyError();
+  let blob = sessionPdfs.get(relativePath);
+  if (!blob) {
+    const bytes = await invoke<ArrayBuffer>("document_bytes", { relativePath });
+    blob = new Blob([bytes], { type: "application/pdf" });
+    sessionPdfs.clear();
+    sessionPdfs.set(relativePath, blob);
+  }
+  return URL.createObjectURL(blob);
+}
+
+/** Open in the phone viewer or the desktop system viewer. */
+export async function openDocument(relativePath: string, title = "PDF"): Promise<void> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  if (isIOS()) return openInAppViewer(title, () => documentBlobUrl(relativePath));
   const absolute = await invoke<string>("document_path", { relativePath });
   await openPath(absolute);
 }

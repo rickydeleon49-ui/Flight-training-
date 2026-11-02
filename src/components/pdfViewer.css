@@ -1,0 +1,15 @@
+.dialog.pdf-viewer-dialog {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pdf-viewer-dialog .dialog__header button { min-width: 44px; min-height: 44px; }
+.pdf-viewer-dialog[open] { display: flex; flex-direction: column; }
+.pdf-viewer-dialog .dialog__body { flex: 1; min-height: 0; max-height: none; display: flex; padding: 0; }
+.pdf-viewer-dialog iframe { width: 100%; height: 100%; flex: 1; border: 0; }

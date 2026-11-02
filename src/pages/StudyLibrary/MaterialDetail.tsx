@@ -11,6 +11,8 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
+import { deviceCan } from "@/services/platform";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   AlertIcon,
@@ -626,7 +628,7 @@ function MaterialDetailPage() {
       : {};
   // Whether Gemini can be offered this file at all; a missing file only disables
   // the button, so a file that reappears does not need a reload.
-  const canOfferGemini = Boolean(gemini?.configured) && aiCheck.allowed && fileForAi.ready;
+  const canOfferGemini = deviceCan().generate && Boolean(gemini?.configured) && aiCheck.allowed && fileForAi.ready;
   // Why a new or replacement study aid cannot be requested right now. This
   // never hides what is already saved: reading a saved guide, flipping cards
   // and taking a saved practice test need no connection and send nothing.
@@ -721,7 +723,8 @@ function MaterialDetailPage() {
     if (!material.filePath) return;
     setOpenError(null);
     try {
-      await openDocument(material.filePath);
+      if (deviceCan().revealFiles) await openDocument(material.filePath);
+      else await openDocument(material.filePath, material.title);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));
       jumpTo("material-file-details");
@@ -917,6 +920,7 @@ function MaterialDetailPage() {
   const jumpToFileSection = () => jumpTo("material-file-actions");
   return (
     <>
+      <PdfViewerDialog />
       {/* Opened from the library: go back, so the list returns to where she was. */}
       <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {
         if ((location.state as { fromLibrary?: boolean } | null)?.fromLibrary) { event.preventDefault(); navigate(-1); }
@@ -934,10 +938,10 @@ function MaterialDetailPage() {
         </span>}
         action={
           <div className="row row--wrap material-header-actions">
-            {isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
+            {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <Button onClick={() => setEditing(true)}>Edit</Button>
-              {canSplit ? <>
+              {deviceCan().importFiles && canSplit ? <>
                 <Button onClick={() => setSplitting(true)}>Split automatically</Button>
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
@@ -989,13 +993,13 @@ function MaterialDetailPage() {
           <div className="detail__column">
           {fileMissing ? <div className="card stack stack--3" role="status">
             <p>This study file is missing. Everything you wrote is still here.</p>
-            <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button>
+            {deviceCan().importFiles ? <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button> : null}
           </div> : null}
           {!material.filePath && !studySet ? <Card><CardBody>
             <p className="small muted">Write a study guide in your own words.</p>
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}
-          {isPdf ? <Card><CardBody>
+          {deviceCan().generate && isPdf ? <Card><CardBody>
             <div className="stack stack--3">
               <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
               <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
@@ -1048,7 +1052,7 @@ function MaterialDetailPage() {
                           Share or print
                         </Button>
                       ) : null}
-                      {isOverLimit ? (
+                      {deviceCan().importFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1071,7 +1075,7 @@ function MaterialDetailPage() {
                                 ? "Create study guide"
                                 : "Create study aid"}
                         </Button>
-                      ) : geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
+                      ) : deviceCan().generate && geminiStatusFailed && isPdf && fileForAi.ready && !studyJob?.sectionGuide ? (
                         <Button
                           size="small"
                           variant="secondary"
@@ -1098,10 +1102,10 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
-                  {isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
+                  {deviceCan().generate && isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
                     <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
                   </p> : null}
-                  {isOverLimit ? (
+                  {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
@@ -1284,7 +1288,7 @@ function MaterialDetailPage() {
                           Add a picture card
                         </Button>
                       ) : null}
-                      {isOverLimit ? (
+                      {deviceCan().importFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1329,7 +1333,7 @@ function MaterialDetailPage() {
                 ) : null}
                 <CardBody>
                   <GuideCardRecoveryNotice materialId={material.id} />
-                  {isOverLimit ? (
+                  {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
@@ -1530,7 +1534,7 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap">
-                      {isOverLimit ? (
+                      {deviceCan().importFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1561,7 +1565,7 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
-                  {isOverLimit ? (
+                  {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
@@ -1996,7 +2000,7 @@ function MaterialDetailPage() {
                     {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
                   </div>
                 </div>
-                {fileMissing ? (
+                {deviceCan().importFiles && fileMissing ? (
                   <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
                     <p className="tiny muted">
                       Everything you wrote is still here. Choose the original or a replacement
@@ -2015,7 +2019,7 @@ function MaterialDetailPage() {
                 {openError ? (
                   <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
                     <p className="field__error">{openError}</p>
-                    {!fileMissing ? (
+                    {deviceCan().revealFiles && !fileMissing ? (
                       <Button size="small" onClick={() => void revealStoredFile()}>
                         Show in Finder or File Explorer
                       </Button>

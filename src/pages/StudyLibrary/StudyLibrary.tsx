@@ -1,3 +1,4 @@
+import { deviceCan } from "@/services/platform";
 import { CheckrideTopicPractice } from "./CheckrideTopicPractice";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
@@ -297,17 +298,17 @@ export function StudyLibrary() {
             <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
-                <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
+                {deviceCan().importFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
-                </Button>
+                </Button> : null}
                 <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
                   Export handout…
                 </Button>
               </div>
             </details>
-            <Button variant="primary" onClick={() => setCreating(true)}>
+            {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
-            </Button>
+            </Button> : null}
           </div>
         }
       />
@@ -441,11 +442,11 @@ export function StudyLibrary() {
           <EmptyState
             icon={<BookIcon size={30} />}
             title="Your training library is ready."
-            body="Add your first study guide, lesson notes, or instructor handout. Give it a topic and a next action and it will find its way onto your Flight Deck."
+            body={deviceCan().importFiles ? "Add your first study guide, lesson notes, or instructor handout. Give it a topic and a next action and it will find its way onto your Flight Deck." : "Add PDFs on your Mac, then Send to my iPhone."}
             action={
-              <Button variant="primary" onClick={() => setCreating(true)}>
+              deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
                 Add material
-              </Button>
+              </Button> : null
             }
           />
         </Card>
