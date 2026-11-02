@@ -186,6 +186,8 @@
     gap: var(--space-3);
     border-right: 0;
     border-bottom: 1px solid var(--border-subtle);
+    /* Sit below the iPhone status bar; env() is 0 on the Mac. */
+    padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
   }
   .sidebar__menu { min-width: 44px; min-height: 44px; }
   .shell .section-jump-target {
