@@ -4,6 +4,7 @@ import { PdfItemLabel } from "./PdfItemLabel";
 import { practiceAskContext } from "@/logic/practiceAskContext";
 import { AskGeminiPanel } from "./AskGeminiPanel";
 import {
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -30,6 +31,7 @@ import { SourcePageBadge } from "./navigation/SourcePageBadge";
 
 export interface PracticeTestPanelProps {
   entrySummary?: boolean;
+  historyAction?: ReactNode;
   /** Shown instead of Start while study kit drafts wait above (no mis-tap beside Save). */
   startHeld?: string;
   /** Lets adjacent authoring controls follow this panel's live attempt state. */
@@ -388,6 +390,7 @@ function pendingLabel(intent: SessionIntent | null): string {
 
 export function PracticeTestPanel({
   entrySummary = false,
+  historyAction,
   startHeld,
   practiceTest,
   materialId: propMaterialId,
@@ -1292,7 +1295,7 @@ export function PracticeTestPanel({
               {entrySummary ? "Short saved review" : "Review missed or skipped questions"}
             </a>
           )}
-          {materialId && (
+          {entrySummary ? historyAction : materialId && (
             <a
               href={`#/study/history/${encodeURIComponent(materialId)}`}
               className="button button--secondary"
@@ -1309,7 +1312,7 @@ export function PracticeTestPanel({
     return <div className="stack stack--4">
       {notices}
       <p>The questions have changed since you started this attempt.</p>
-      <p className="small muted">Starting fresh marks the earlier attempt abandoned and keeps its saved answers.</p>
+      <p className="small muted">Starting a fresh test will close your unfinished test and keep its saved answers.</p>
       <div><Button variant="primary" disabled={!canEdit} onClick={() => {
         if (!state.attempt || !state.freshVersionId) return;
         void beginIntent({ payload: {
@@ -1318,6 +1321,7 @@ export function PracticeTestPanel({
         }, heldAnswer: null });
       }}>Start a fresh test</Button></div>
       <div><Button variant="secondary" disabled={!canEdit} onClick={() => setContinuedOlderAttempt(state.attempt!.attemptId)}>Continue earlier attempt</Button></div>
+      {historyAction}
     </div>;
   }
 
@@ -1341,6 +1345,7 @@ export function PracticeTestPanel({
           if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
         }}>Start practice test</Button> : null}
         <ShortSavedReviewLink materialId={materialId} />
+        {historyAction}
       </div> : null}
 
       <p className="tiny muted" role="status" aria-label="Practice progress">
@@ -1506,7 +1511,7 @@ export function PracticeTestPanel({
             disabled={!canEdit}
             onClick={() => setConfirmingAbandon(true)}
           >
-            Abandon attempt
+            Close unfinished test
           </Button>
         </div>
       )}
@@ -1529,9 +1534,9 @@ export function PracticeTestPanel({
       />
       <ConfirmDialog
         open={confirmingAbandon}
-        title="Abandon this practice attempt?"
-        message="This will mark the current in-progress attempt as abandoned. Completed attempts remain in your history."
-        confirmLabel="Abandon attempt"
+        title="Close your unfinished test?"
+        message="This will close your unfinished test and keep its saved answers. Your finished tests stay in your history."
+        confirmLabel="Close unfinished test"
         destructive={true}
         pending={state.phase === "write_in_flight" || state.phase === "write_unknown"}
         pendingLabel="Abandoning…"

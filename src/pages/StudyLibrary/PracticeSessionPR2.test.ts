@@ -331,16 +331,16 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
     fireEvent.click(screen.getAllByRole("radio")[0]!);
     await screen.findByText("Not quite");
 
-    // Click "Abandon attempt" once persisted
-    const abandonBtn = await screen.findByRole("button", { name: "Abandon attempt" });
+    // Click "Close unfinished test" once persisted
+    const abandonBtn = await screen.findByRole("button", { name: "Close unfinished test" });
     await waitFor(() => expect(abandonBtn.hasAttribute("disabled")).toBe(false));
     fireEvent.click(abandonBtn);
 
     // Confirmation dialog appears
-    await screen.findByText("Abandon this practice attempt?");
+    await screen.findByText("Close your unfinished test?");
     expect(
       screen.getByText(
-        "This will mark the current in-progress attempt as abandoned. Completed attempts remain in your history.",
+        "This will close your unfinished test and keep its saved answers. Your finished tests stay in your history.",
       ),
     ).toBeTruthy();
 
@@ -351,8 +351,8 @@ describe("M2 Practice-Session PR2 UI & Flow Verification", () => {
 
     // Confirm abandon
     fireEvent.click(abandonBtn);
-    await screen.findByText("Abandon this practice attempt?");
-    const confirmAbandonBtn = screen.getAllByRole("button", { name: "Abandon attempt" })[1]!;
+    await screen.findByText("Close your unfinished test?");
+    const confirmAbandonBtn = screen.getAllByRole("button", { name: "Close unfinished test" })[1]!;
     fireEvent.click(confirmAbandonBtn);
 
     // Resets panel

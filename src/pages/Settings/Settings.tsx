@@ -1059,11 +1059,6 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
-              <p className="tiny dim">
-                <strong>Open folder</strong> shows the app’s private files at the path below.
-                Complete backups include your imported documents; save them to Downloads, another drive or a cloud folder such as iCloud Drive.
-              </p>
-
               {upgradeFailed ? (
                 <p className="small" role="alert">
                   The safety copy before the last update couldn't be made. Make a complete backup now.
@@ -1098,24 +1093,18 @@ export function Settings() {
 
               <p className="small muted">
                 A <strong>.hfdbackup</strong> file holds all your records, settings, profile photo and uploaded documents. Saving it sends nothing online.
-                Keep it on another drive or in a cloud folder in case this computer is lost.
+                Keep it on another drive or in a cloud folder in case this computer is lost. Save a fresh backup before an update.
+                Restore checks the file and asks you first, keeps a copy of your current data, then restarts with the saved backup.
               </p>
 
               <p className="tiny dim">
-                Save a fresh backup <strong>before installing an update</strong>. If
-                anything looks wrong afterwards, <strong>Restore backup</strong> puts
-                that file back exactly as it was.
-              </p>
-
-              <p className="tiny dim">
-                Restore checks the file first and asks for confirmation. Before it
-                replaces anything, the app keeps a recoverable copy of the current data,
-                then restarts with the restored copy.
+                Before a new version runs, the app saves a copy of your records, lessons and settings on this computer.
+                The 10 newest copies are kept. These copies leave out uploaded files; those stay where they are.
               </p>
 
               {dataPath ? (
                 <div className="stack stack--2">
-                  <p className="tiny strong dim">Where it lives</p>
+                  <p className="tiny dim"><strong>Open folder</strong> shows the app’s private files at this path.</p>
                   <div className="row row--between" style={{ gap: "var(--space-3)" }}>
                     <code className="tiny wrap-anywhere">{dataPath}</code>
                     <Button
@@ -1143,15 +1132,6 @@ export function Settings() {
                   Backups and the data folder are part of the desktop application.
                 </p>
               )}
-
-              <p className="tiny dim">
-                Before a new version runs for the first time, the app saves a copy of your records, lessons and settings on this computer.
-                These copies leave out uploaded files; those stay where they are.
-              </p>
-              <p className="tiny dim">
-                The 10 newest copies are kept.
-                Use <strong>Save complete backup</strong> on another drive or in a cloud folder in case this computer is lost.
-              </p>
 
               {backupsAvailable() ? (
                 <div className="row">
