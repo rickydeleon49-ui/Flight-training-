@@ -11,6 +11,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { isTauri } from "@/data";
 import { formatLocalDay, todayIso } from "@/lib/dates";
 import { airportWeather } from "./weather";
+import { isIOS } from "./platform";
 
 export interface BackupInfo {
   name: string;
@@ -96,7 +97,7 @@ export async function chooseCompleteBackup(): Promise<string | null> {
     multiple: false,
     directory: false,
     title: "Choose a Her Flight Deck backup",
-    filters: [{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }],
+    ...(!isIOS() ? { filters: [{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }] } : {}),
   });
   return typeof selected === "string" ? selected : null;
 }

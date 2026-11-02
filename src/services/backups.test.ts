@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   invoke: vi.fn(),
   openPath: vi.fn(),
   save: vi.fn(),
+  open: vi.fn(),
+  isIOS: vi.fn(() => false),
 }));
 
 vi.mock("@/data", () => ({
@@ -20,17 +22,21 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
 }));
 
 vi.mock("@tauri-apps/plugin-dialog", () => ({
-  open: vi.fn(),
+  open: mocks.open,
   save: mocks.save,
 }));
 
-import { chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary } from "./backups";
+vi.mock("./platform", () => ({ isIOS: mocks.isIOS }));
+
+import { chooseCompleteBackup, chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
   mocks.invoke.mockReset();
   mocks.openPath.mockReset();
   mocks.save.mockReset();
+  mocks.open.mockReset();
+  mocks.isIOS.mockReturnValue(false);
 });
 
 describe("complete backup file name", () => {
@@ -131,5 +137,18 @@ describe("phone import plumbing", () => {
     await expect(exitForRestore()).rejects.toThrow("Restore needs the application.");
     expect(await phoneActivitySummary()).toEqual({ latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 });
     expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("backup picker filters", () => {
+  it.each([false, true])("only filters extensions outside iOS (iOS=%s)", async (ios) => {
+    mocks.isTauri.mockReturnValue(true);
+    mocks.isIOS.mockReturnValue(ios);
+    mocks.open.mockResolvedValue("/picked/material.hfdbackup");
+    expect(await chooseCompleteBackup()).toBe("/picked/material.hfdbackup");
+    const options = mocks.open.mock.calls[0]![0];
+    expect(options).toMatchObject({ multiple: false, directory: false });
+    if (ios) expect(options).not.toHaveProperty("filters");
+    else expect(options.filters).toEqual([{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }]);
   });
 });
