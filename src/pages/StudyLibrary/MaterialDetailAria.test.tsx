@@ -149,7 +149,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
   const platform = await import("@/services/platform");
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     importFiles: !phone, generate: !phone, revealFiles: !phone,
-    sendToIphone: false, getStudyMaterial: phone,
+    sendToIphone: false, getStudyMaterial: phone, renderPdfPage: !phone,
   });
   vi.spyOn(documents, "openDocument").mockRejectedValue(new Error("Synthetic open failure"));
   await open("?tab=more");
@@ -170,7 +170,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
 
 it("hides all generation and missing-file import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true });
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, renderPdfPage: false });
   vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.mocked(documents.documentExists).mockResolvedValue(false);
   await open();

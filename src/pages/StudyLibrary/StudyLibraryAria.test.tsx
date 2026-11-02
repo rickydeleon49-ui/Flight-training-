@@ -97,7 +97,7 @@ it("follows later URL navigation and browser back without local selection drift"
 
 it("hides library and FAA import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, renderPdfPage: false });
   try {
     open();
     expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();

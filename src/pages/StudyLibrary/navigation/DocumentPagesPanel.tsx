@@ -32,7 +32,6 @@ import { useOptionalAppData } from "@/state/AppDataContext";
 import { savedPlaceNote } from "@/logic/navigation";
 import type { NavigationStatus } from "@/state/navigation/controller";
 import { navigationMessage, useMaterialNavigation, useNavigationController } from "@/state/navigation/useDocumentNavigation";
-import { deviceCan } from "@/services/platform";
 import { renderPdfPage, type PageCapture } from "@/services/visualPdf";
 import { VisualCardEditor } from "../VisualCardEditor";
 import { StudySetEditor } from "../StudySetEditor";
