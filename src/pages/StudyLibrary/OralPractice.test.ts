@@ -11,6 +11,7 @@ import { UndoBar } from "@/components/undo/UndoBar";
 import { Notes } from "@/pages/Notes/Notes";
 import { OralScenariosCard } from "./OralScenariosCard";
 import { parseOralPoints, oralNoteDraft } from "@/logic/oralPractice";
+import { mockSpeechSynthesis } from "@/testing/mockSpeechSynthesis";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -40,13 +41,38 @@ beforeEach(async () => {
   db = await createNodeSqliteDatabase();
   await createRepositories(db).documents.create({ id: "m1", title: "Oral material" });
 });
-afterEach(() => { cleanup(); db.close(); vi.useRealTimers(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); db.close(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 async function practise(title: string, answer?: string) {
   fireEvent.click(await screen.findByRole("button", { name: `Practise: ${title}` }));
   const box = await screen.findByLabelText(/Your answer \(optional\)/);
   if (answer !== undefined) fireEvent.change(box, { target: { value: answer } });
 }
+
+it("reads only the current examiner question, offers dictation, and stops on next or close", async () => {
+  const { speak, cancel } = mockSpeechSynthesis();
+  await seed("Scenario Alpha");
+  await seed("Scenario Bravo");
+  const view = mount();
+  await practise("Scenario Alpha", "Private fictional answer");
+  expect(screen.getAllByText("Tip: you can speak your answer with your keyboard's microphone.")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  cancel.mockClear();
+  fireEvent.click(screen.getByRole("button", { name: "Next scenario" }));
+  expect(cancel).toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe("Scenario Bravo");
+  cancel.mockClear();
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  expect(cancel).toHaveBeenCalled();
+  await practise("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+  cancel.mockClear();
+  view.unmount();
+  expect(cancel).toHaveBeenCalled();
+});
 
 it("adds a scenario with her instructor as the origin and lists its first line", async () => {
   mount();
