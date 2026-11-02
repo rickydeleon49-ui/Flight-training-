@@ -251,12 +251,12 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     expect(screen.getByRole("button", { name: "Edit study guide" })).toBeTruthy();
   });
 
-  it("QUICKFIX-01: Read this PDF's text sits near the top of More, before the reference cards", async () => {
+  it("UX-01b: Related study and File details come before the Mac backup tools in More", async () => {
     await openMaterial("mat-pdf");
     fireEvent.click(screen.getByRole("tab", { name: "More" }));
     const panel = document.getElementById("material-panel-more")!;
     const ids = [...panel.querySelectorAll("#material-mac-backup, #related-study, #material-file-details")].map(e => e.id);
-    expect(ids).toEqual(["material-mac-backup", "related-study", "material-file-details"]);
+    expect(ids).toEqual(["related-study", "material-file-details", "material-mac-backup"]);
   });
 
   it("CARDS-FIX-01: a cards-only set is warned without a restore promise it can't keep", async () => {
@@ -802,8 +802,8 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
 
     const askCard = document.getElementById("material-ask-gemini")!;
     expect(askCard).toBeTruthy();
-    // QUICKFIX-01: the backup card (Read this PDF's text) now comes before File details in More.
-    const order = [startHere, studyGuide, flashcards, practiceTest, backup, document.getElementById("material-file-details")!];
+    // UX-01b: File details comes before the Mac backup tools in More.
+    const order = [startHere, studyGuide, flashcards, practiceTest, document.getElementById("material-file-details")!, backup];
     for (let i = 0; i < order.length - 1; i++) {
       expect(
         Boolean(order[i]!.compareDocumentPosition(order[i + 1]!) & Node.DOCUMENT_POSITION_FOLLOWING),
