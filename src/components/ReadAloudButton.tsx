@@ -39,5 +39,5 @@ export function ReadAloudButton({ text }: { text: string }) {
     }
   };
 
-  return <Button size="small" variant="ghost" onClick={toggle}>{speaking ? "Stop" : "Read aloud"}</Button>;
+  return <Button size="small" variant="secondary" onClick={toggle}>{speaking ? "Stop" : "Read aloud"}</Button>;
 }

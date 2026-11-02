@@ -129,7 +129,7 @@ export function OralPracticeDialog({
 
         {step === "answer" ? (
           <div className="stack stack--1">
-            <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points. Your answer is not saved.">
+            <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points.">
               <TextArea
                 rows={6}
                 maxLength={ORAL_MAX_ANSWER}
@@ -137,6 +137,7 @@ export function OralPracticeDialog({
                 onChange={(event) => setAnswer(event.target.value)}
               />
             </Field>
+            <p className="small muted">Your answer isn't saved after you close this.</p>
             <p className="tiny muted">Tip: you can speak your answer with your keyboard's microphone.</p>
           </div>
         ) : (

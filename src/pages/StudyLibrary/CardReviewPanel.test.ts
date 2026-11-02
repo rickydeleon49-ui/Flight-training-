@@ -156,6 +156,8 @@ it("reads only card fronts, preserves reveal and rating keys, and stops on navig
   await reviewHeading();
   await openSession();
   const read = sessionRegion().getByRole("button", { name: "Read aloud" });
+  expect(read.classList.contains("button--secondary")).toBe(true);
+  expect(read.classList.contains("button--small")).toBe(true);
   read.focus();
   for (const key of [" ", "Enter"]) expect(fireEvent.keyDown(read, { key })).toBe(true);
   fireEvent.click(read, { detail: 0 });

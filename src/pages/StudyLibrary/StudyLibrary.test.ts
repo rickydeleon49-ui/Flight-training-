@@ -235,8 +235,8 @@ it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards
 it.each([
   ["/study", "FAA handbooks", "references"],
   ["/study?tab=howto", "FAA handbooks", "references"],
-  ["/study", "ACS lookup", "acs-lookup"],
-  ["/study?tab=howto", "ACS lookup", "acs-lookup"],
+  ["/study", "Missed-topic codes", "acs-lookup"],
+  ["/study?tab=howto", "Missed-topic codes", "acs-lookup"],
 ])("opens and scrolls from %s via %s over a remembered search", async (path, name, targetId) => {
   sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("Material 149"));
   const scroll = vi.fn();
@@ -245,7 +245,9 @@ it.each([
   try {
     render(h(MemoryRouter, {initialEntries:[path]}, h(StudyLibrary)));
     const tools = screen.getByRole("navigation", { name: "Tools" });
-    expect(within(tools).getAllByRole("link").map(link => link.textContent)).toEqual(["FAA handbooks", "ACS lookup"]);
+    expect(within(tools).getAllByRole("link").map(link => link.textContent)).toEqual(["FAA handbooks", "Missed-topic codes"]);
+    expect(tools.classList.contains("small")).toBe(false);
+    expect(tools.classList.contains("tiny")).toBe(false);
     const link = within(tools).getByRole("link", { name });
     fireEvent.click(link);
     const shelf = document.getElementById("references") as HTMLDetailsElement;

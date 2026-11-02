@@ -1,4 +1,3 @@
-import { deviceCan } from "@/services/platform";
 /**
  * A material's pages (M4 Slice 1): the page count, a page check, and bookmarks.
  *
@@ -27,6 +26,7 @@ import type { AiStudySet, NavigationBookmark, StudyMaterial } from "@/domain/typ
 import { NAVIGATION_LIMITS } from "@/data/navigationTransaction";
 import type { BookmarkCardSource } from "@/data/studyPageSources";
 import { newId } from "@/lib/id";
+import { deviceCan } from "@/services/platform";
 import { previewStudyPageSource } from "@/services/studyPageSources";
 import { useOptionalAppData } from "@/state/AppDataContext";
 import { savedPlaceNote } from "@/logic/navigation";
@@ -116,6 +116,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const [questionDraft, setQuestionDraft] = useState<NoteQuestionSeed | null>(null);
   const [questionAdded, setQuestionAdded] = useState(false);
   const [pictureDraft, setPictureDraft] = useState<{ capture: PageCapture; bookmark: NavigationBookmark } | null>(null);
+  const [pictureSaved, setPictureSaved] = useState(false);
   const [pictureSeconds, setPictureSeconds] = useState<number | null>(null);
   const picturePending = useRef(false);
   const pictureOwner = useRef<object | null>(null);
@@ -124,6 +125,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
     pictureOwner.current = owner;
     picturePending.current = false;
     setPictureDraft(null);
+    setPictureSaved(false);
     setPictureSeconds(null);
     return () => { pictureOwner.current = null; };
   }, [material.id, app?.repositories]);
@@ -136,6 +138,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
     if (picturePending.current || !app?.repositories) return;
     const owner = pictureOwner.current;
     picturePending.current = true;
+    setPictureSaved(false);
     setActionError(null);
     setPictureSeconds(0);
     try {
@@ -332,11 +335,11 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             <p className="tiny muted">Checking pages and opening bookmarks need the desktop app. Your bookmarks are still listed here.</p>
           ) : (
             <>
-              <div className="row row--between row--wrap">
+              <div className="row row--wrap">
                 <p className="tiny muted">
                   {identity
                     ? `This PDF has ${identity.totalPages} ${identity.totalPages === 1 ? "page" : "pages"}.`
-                    : "This file's pages haven't been checked yet. Use Check pages to count them."}
+                    : "Check this file's pages first:"}
                 </p>
                 <Button size="small" onClick={() => void checkPages()} disabled={busy || missing}>
                   Check pages
@@ -390,9 +393,9 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                 </Button>
               ) : null}
             </div>
+            {pictureSaved ? <p className="tiny" role="status" aria-live="polite">Picture card saved — find it under Your picture cards.</p> : null}
             {questionAdded ? <p className="tiny" role="status">Question added to your practice test.</p> : null}
             {showTips ? <p className="tiny muted">Save a named place so you can return to it later without remembering the page number.</p> : null}
-            {desktop && !identity ? <p className="tiny muted">Check this file&apos;s pages before adding a bookmark.</p> : null}
             {bookmarks.length === 0 ? (
               <p className="tiny muted">No bookmarks yet.</p>
             ) : (
@@ -447,7 +450,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             }}
           />
         ) : null}
-        {pictureDraft ? <VisualCardEditor key={pictureDraft.capture.materialId} material={material} capture={pictureDraft.capture} bookmark={pictureDraft.bookmark} onClose={() => setPictureDraft(null)} /> : null}
+        {pictureDraft ? <VisualCardEditor key={pictureDraft.capture.materialId} material={material} capture={pictureDraft.capture} bookmark={pictureDraft.bookmark} onSaved={() => setPictureSaved(true)} onClose={() => setPictureDraft(null)} /> : null}
         {cardDraft ? (
           <StudySetEditor
             key={cardDraft.seed.source.id}
