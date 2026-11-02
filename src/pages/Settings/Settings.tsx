@@ -612,7 +612,7 @@ export function Settings() {
     <>
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
 
-      <div className="stack stack--5">
+      <div className="settings-layout stack stack--5">
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>

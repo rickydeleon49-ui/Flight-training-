@@ -148,11 +148,13 @@ it.each(["Keep these", "Use the saved notes"])("asks before replacing restored n
 it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s)", async (phone) => {
   const platform = await import("@/services/platform");
   vi.spyOn(platform, "deviceCan").mockReturnValue({
-    importFiles: !phone, generate: !phone, revealFiles: !phone,
+    editStudyMaterial: !phone, sharePrint: !phone, importFiles: !phone, generate: !phone, revealFiles: !phone,
     sendToIphone: false, getStudyMaterial: phone, renderPdfPage: !phone,
   });
   vi.spyOn(documents, "openDocument").mockRejectedValue(new Error("Synthetic open failure"));
   await open("?tab=more");
+  expect(screen.getByText(`Ask Gemini for a study guide from this file, then review and save the draft on this ${phone ? "phone" : "computer"}.`)).toBeTruthy();
+  expect(screen.queryByText(/save the draft on this Mac/)).toBeNull();
   fireEvent.click(screen.getByLabelText("File actions: edit, split, open, delete"));
   expect(Boolean(screen.queryByRole("button", { name: "Split automatically" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("button", { name: "Take out a chapter" }))).toBe(!phone);
@@ -170,7 +172,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
 
 it("hides all generation and missing-file import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, renderPdfPage: false });
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, renderPdfPage: false });
   vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.mocked(documents.documentExists).mockResolvedValue(false);
   await open();
@@ -179,4 +181,26 @@ it("hides all generation and missing-file import entries on the phone", async ()
     fireEvent.click(screen.getByRole("tab", { name: tab }));
     expect(screen.queryAllByRole("button", { name: /Generate|Regenerate|Create study|Create practice|Make new cards|Find and restore file|Split file|Ask about this PDF/i })).toHaveLength(0);
   }
+});
+
+it.each([true, false])("saved guide wording and editing/sharing follow device capabilities (phone=%s)", async (phone) => {
+  const platform = await import("@/services/platform");
+  vi.spyOn(platform, "deviceCan").mockReturnValue({
+    importFiles: !phone, generate: !phone, revealFiles: !phone,
+    editStudyMaterial: !phone, sharePrint: !phone, renderPdfPage: !phone,
+    sendToIphone: false, getStudyMaterial: phone,
+  });
+  await createRepositories(db).documents.saveAiStudySet({
+    sourceMaterialId: "tips", title: "Synthetic guide", summary: "Saved synthetic summary",
+    sections: [], flashcards: [{ front: "Synthetic question", back: "Synthetic answer", sourcePage: 1 }],
+    sourceNotes: "", model: "test",
+  });
+  await open();
+  await screen.findByText("Saved synthetic summary");
+  expect(Boolean(screen.queryByRole("button", { name: "Edit study guide" }))).toBe(!phone);
+  expect(Boolean(screen.queryByRole("button", { name: "Share or print" }))).toBe(!phone);
+  expect(screen.getAllByText(phone ? "Saved on this phone" : "Saved on this computer").length).toBeGreaterThan(0);
+  expect(screen.queryAllByText(phone ? "Saved on this computer" : "Saved on this phone")).toHaveLength(0);
+  fireEvent.click(screen.getByRole("tab", { name: "More" }));
+  expect(Boolean(screen.queryByRole("button", { name: "Export or print" }))).toBe(!phone);
 });

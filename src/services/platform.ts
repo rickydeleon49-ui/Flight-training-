@@ -29,5 +29,7 @@ export function deviceCan() {
     importFiles: !isIOS(),
     generate: !isIOS(),
     revealFiles: !isIOS(),
+    editStudyMaterial: !isIOS(),
+    sharePrint: !isIOS(),
   };
 }

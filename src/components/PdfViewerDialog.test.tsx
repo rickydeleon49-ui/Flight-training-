@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import * as platform from "@/services/platform";
 import { PdfViewerDialog } from "./PdfViewerDialog";
 import { closePdfViewer, openInAppViewer } from "@/services/pdfViewer";
-afterEach(() => { cleanup(); closePdfViewer(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); closePdfViewer(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 function setup() {
   const revoke = vi.fn();
   vi.stubGlobal("URL", { revokeObjectURL: revoke });
@@ -43,4 +44,12 @@ it("shows a calm error when the read fails", async () => {
   setup(); render(<PdfViewerDialog />);
   await act(() => openInAppViewer("Failed", async () => { throw new Error("private path"); }));
   expect(screen.getByRole("alert").textContent).toBe("That PDF could not be opened. Please try again.");
+});
+
+it("opens the phone PDF without the unsupported FitH fragment", async () => {
+  setup();
+  vi.spyOn(platform, "isIOS").mockReturnValue(true);
+  render(<PdfViewerDialog />);
+  await act(() => openInAppViewer("Phone handbook", async () => "blob:phone"));
+  expect(screen.getByTitle("Phone handbook").getAttribute("src")).toBe("blob:phone");
 });
