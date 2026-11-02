@@ -110,7 +110,9 @@ it("orders the PDF workflow inside its tab homes with both backup panels togethe
   expect(common.children).toHaveLength(1);
   expect(screen.getByRole("button", { name: "Ask about this PDF" }).closest("header")).toBeTruthy();
   const study = screen.getByRole("tabpanel", { name: "Study" });
-  expect(within(study).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Study", "Study guide", "Flashcards", "Practice test", "Practice an oral question", "Videos for this section"]);
+  expect(within(study).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Study", "Study guide", "Flashcards", "Practice test", "Videos for this section"]);
+  // UX-01a: with no saved scenarios the oral card is one closed line, not a full card.
+  expect((within(study).getByText("Practice an oral question", { selector: "summary" }).closest("details") as HTMLDetailsElement).open).toBe(false);
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
   const notes = screen.getByRole("tabpanel", { name: "Notes" });
   expect(within(notes).getAllByRole("heading", { level: 2 }).map(node => node.textContent)).toEqual(["Notes", "Personal notes", "Questions for my instructor", "Next steps for this material", "Find your place"]);

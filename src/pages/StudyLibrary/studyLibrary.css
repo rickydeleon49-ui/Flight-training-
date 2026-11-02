@@ -953,3 +953,10 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 }
 .search-field__clear:hover,
 .search-field__clear:focus-visible { color: var(--text-primary); background: var(--surface-muted, rgba(0, 0, 0, 0.06)); }
+
+.material-fold > summary {
+  min-height: 44px;
+  padding: var(--space-3);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}

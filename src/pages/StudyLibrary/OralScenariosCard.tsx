@@ -57,16 +57,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
   };
   const canMove = visible.length > 1;
 
-  return (
-    <Card>
-      <CardHeader
-        title="Practice an oral question"
-        action={
-          <Button size="small" variant="secondary" onClick={() => setEditing({ scenario: null })}>
-            Add a scenario
-          </Button>
-        }
-      />
+  const body = (
       <CardBody>
         <div className="stack stack--3">
           <p className="small muted">
@@ -116,6 +107,33 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
           ) : null}
         </div>
       </CardBody>
+  );
+
+  return (
+    <Card>
+      {visible.length === 0 && !editing && !loadFailed ? (
+        <details className="material-fold">
+          <summary className="card__header">Practice an oral question</summary>
+          <CardBody>
+            <Button size="small" variant="secondary" onClick={() => setEditing({ scenario: null })}>
+              Add a scenario
+            </Button>
+          </CardBody>
+          {body}
+        </details>
+      ) : (
+        <>
+          <CardHeader
+            title="Practice an oral question"
+            action={
+              <Button size="small" variant="secondary" onClick={() => setEditing({ scenario: null })}>
+                Add a scenario
+              </Button>
+            }
+          />
+          {body}
+        </>
+      )}
       <OralScenarioEditor
         material={material}
         scenario={editing?.scenario ?? null}

@@ -249,3 +249,53 @@ it.each([
   fireEvent.click(screen.getByRole("link", { name: "‹ Study Library" }));
   await waitFor(() => expect(screen.getByTestId("where").textContent).toBe(expected));
 });
+
+async function saveFullKit() {
+  const repos = createRepositories(db);
+  await repos.documents.saveAiStudySet({sourceMaterialId: "tips", title: "Synthetic kit", summary: "Guide", sections: [],
+    flashcards: [{front: "Synthetic front", back: "Synthetic back", sourcePage: null}], sourceNotes: "", model: "test"});
+  await repos.documents.savePracticeTest({sourceMaterialId: "tips", title: "Synthetic test", provider: "manual", model: "",
+    questions: [{question: "Synthetic question", options: ["A", "B"], correctIndex: 0, explanation: "A", sourcePage: null}]});
+}
+it("folds Make a study kit once guide, cards and test are saved and reopens while a kit job runs", async () => {
+  await saveFullKit();
+  vi.mocked(gemini.getGeminiStatus).mockResolvedValue({configured: true, model: "gemini-3.5-flash", choice: "standard"});
+  vi.spyOn(pdf, "inspectPdf").mockResolvedValue({pages: 2, maxPagesPerSplit: 150});
+  vi.spyOn(gemini, "generateStudyKit").mockImplementation(() => new Promise(() => {}));
+  await open();
+  const summary = await screen.findByText("Make a new study kit");
+  const fold = summary.closest("details")!;
+  expect(fold.open).toBe(false);
+  const practice = document.getElementById("material-practice-test")!;
+  expect(practice.compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(fold.compareDocumentPosition(screen.getByText("Practice an oral question", {selector: "summary"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(summary);
+  const make = await screen.findByRole("button", {name: "Make my study kit"});
+  await waitFor(() => expect(make.hasAttribute("disabled")).toBe(false));
+  fireEvent.click(make);
+  const consent = await screen.findByRole("dialog", {name: "Send this file to Google?"});
+  fireEvent.click(within(consent).getByRole("button", {name: "Make my study kit"}));
+  await screen.findAllByText("Making your study kit…");
+  expect(screen.queryByText("Make a new study kit")).toBeNull();
+  const active = screen.getByRole("button", {name: "Make my study kit"});
+  expect(active.closest("details")).toBeNull();
+  expect(active.compareDocumentPosition(document.getElementById("material-study-guide")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+it("opens a folded kit destination for a jump link", async () => {
+  await saveFullKit();
+  await open("#material-study-kit");
+  await waitFor(() => expect(document.getElementById("material-study-kit")?.closest("details")?.open).toBe(true));
+  await waitFor(() => expect(document.activeElement?.id).toBe("material-study-kit"));
+});
+it("keeps the fresh PDF kit maker open at the top and omits it on iOS", async () => {
+  await open();
+  const make = screen.getByRole("button", {name: "Make my study kit"});
+  expect(make.closest("details")).toBeNull();
+  expect(make.compareDocumentPosition(document.getElementById("material-study-guide")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  cleanup();
+  await saveFullKit();
+  vi.spyOn(navigator, "userAgent", "get").mockReturnValue("iPhone");
+  await open();
+  expect(screen.queryByText("Make a new study kit")).toBeNull();
+  expect(screen.queryByRole("button", {name: "Make my study kit"})).toBeNull();
+});
