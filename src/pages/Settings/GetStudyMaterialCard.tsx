@@ -114,7 +114,7 @@ export function GetStudyMaterialCard() {
         </>}
       >
         {preview ? <>
-          <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.bytes)} · {preview.info.files} files</p>
+          <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {preview.info.files} files</p>
           <p>{activitySentence(preview.activity)}</p>
         </> : null}
         {progress === "copying" ? <p role="status">Copying your study material… this can take a minute. ({elapsed} s)</p> : null}

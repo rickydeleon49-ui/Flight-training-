@@ -14,7 +14,7 @@ vi.mock("@/services/platform", () => platform);
 import { formatBackupDate } from "@/services/backups";
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 
-const info = { path: "/app/.incoming/latest.hfdbackup", createdAt: 1793361600, bytes: 2048, files: 4 };
+const info = { path: "/app/.incoming/latest.hfdbackup", createdAt: 1793361600, bytes: 8192, fileBytes: 2048, files: 4 };
 const activity = { latestReviewAt: "2026-10-30T12:00:00Z", reviewsLast7Days: 2, attemptsLast7Days: 3 };
 
 beforeEach(() => {

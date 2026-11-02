@@ -1355,7 +1355,7 @@ export function Settings() {
         title="Restore this complete backup?"
         message={
           restoreCandidate
-            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.bytes)}). ${formatRestorePreviewNotice(restoreCandidate) ? `${formatRestorePreviewNotice(restoreCandidate)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.fileBytes)}). ${formatRestorePreviewNotice(restoreCandidate) ? `${formatRestorePreviewNotice(restoreCandidate)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"

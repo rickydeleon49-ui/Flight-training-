@@ -141,6 +141,8 @@ pub struct CompleteBackupInfo {
     pub created_at: u64,
     pub files: usize,
     pub bytes: u64,
+    /// Size of the backup archive on disk, separate from its unpacked contents.
+    pub file_bytes: u64,
     pub path: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub missing_documents: Vec<String>,
@@ -5508,6 +5510,9 @@ pub(crate) fn inspect_archive(
         created_at: manifest.created_at,
         files,
         bytes,
+        file_bytes: std::fs::metadata(source)
+            .map_err(|e| format!("Could not read that backup’s size: {e}"))?
+            .len(),
         path: source.to_string_lossy().to_string(),
         missing_documents,
         unreferenced_documents,
@@ -6801,6 +6806,13 @@ fn write_complete_backup_from_database_with_hook(
             created_at: manifest.created_at,
             files,
             bytes,
+            file_bytes: std::fs::metadata(&destination)
+                .map_err(|e| {
+                    BackupExportError::Permanent(format!(
+                        "Could not read the saved backup’s size: {e}"
+                    ))
+                })?
+                .len(),
             path: destination.to_string_lossy().to_string(),
             missing_documents: missing_at_export,
             unreferenced_documents: orphans_at_export,
@@ -10579,6 +10591,14 @@ mod tests {
         // Proves format-v2 database and document completeness verification passes
         let inspected = inspect_archive(&root, &archive, "0.5.2").unwrap();
         assert_eq!(inspected.files, 3);
+        let file_bytes = std::fs::metadata(&archive).unwrap().len();
+        assert_eq!(info.file_bytes, file_bytes);
+        assert_eq!(inspected.file_bytes, file_bytes);
+        assert_eq!(inspected.bytes, info.bytes);
+        assert_ne!(inspected.bytes, file_bytes);
+        let json = serde_json::to_value(&inspected).unwrap();
+        assert_eq!(json["fileBytes"], file_bytes);
+        assert_eq!(json["bytes"], info.bytes);
 
         // Proves restore extracts cleanly
         let staged = stage_complete_restore_in(&restore_target, &archive, "0.5.2").unwrap();

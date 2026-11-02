@@ -235,7 +235,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         title="Restore this complete backup?"
         message={
           archiveCandidate
-            ? `This backup was created ${formatBackupDate(archiveCandidate.createdAt)} with app version ${archiveCandidate.appVersion}. It contains ${archiveCandidate.files} files (${formatBytes(archiveCandidate.bytes)}). ${formatRestorePreviewNotice(archiveCandidate) ? `${formatRestorePreviewNotice(archiveCandidate)} ` : ""}The app will keep a recoverable copy of what is here now, install this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(archiveCandidate.createdAt)} with app version ${archiveCandidate.appVersion}. It contains ${archiveCandidate.files} files (${formatBytes(archiveCandidate.fileBytes)}). ${formatRestorePreviewNotice(archiveCandidate) ? `${formatRestorePreviewNotice(archiveCandidate)} ` : ""}The app will keep a recoverable copy of what is here now, install this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"
