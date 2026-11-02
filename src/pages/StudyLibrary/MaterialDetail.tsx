@@ -942,7 +942,6 @@ function MaterialDetailPage() {
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
               {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
-              <Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button>
               <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
             </MaterialActionsMenu>
           </div>
@@ -977,11 +976,11 @@ function MaterialDetailPage() {
 
       <div className="material-detail stack stack--4">
         <div className="detail__column">
-
           {isPdf && !tipsHidden ? (
             <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
           ) : null}
         </div>
+        <div className="row"><Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button></div>
         <div {...tabListProps} ref={tabListRef} className="library-tabs material-tabs">
           {MATERIAL_TABS.map((value) => <MaterialTabButton key={value} value={value} state={tabState} />)}
         </div>

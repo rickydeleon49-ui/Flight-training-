@@ -143,6 +143,7 @@ it("shows a short muted tip under every section header and Hide section tips hid
     expect(tip.textContent?.length).toBeGreaterThan(20);
     return tip.textContent!;
   });
+  expect(screen.getByRole("button", { name: "Hide section tips" }).closest("#material-file-actions")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Hide section tips" }));
   for (const text of tips) expect(screen.queryByText(text, { exact: true })).toBeNull();
   expect(screen.queryByRole("link", { name: "How to in Study Library" })).toBeNull();

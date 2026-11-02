@@ -303,6 +303,19 @@ describe("POLISH-04 new pages open at the top", () => {
   });
 });
 
+it("a fresh Study Library menu click starts at the top, even on the same page", () => {
+  const scrollTo = vi.fn();
+  vi.stubGlobal("scrollTo", scrollTo);
+  mount(1320);
+  act(() => navTo("/study#references"));
+  expect(scrollTo).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("link", { name: "Study Library" }));
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+  scrollTo.mockClear();
+  fireEvent.click(screen.getByRole("link", { name: "Study Library" }));
+  expect(scrollTo).toHaveBeenCalledExactlyOnceWith(0, 0);
+});
+
 it("restores each history entry after rendering, including Forward and delayed page height", () => {
   const frames: FrameRequestCallback[] = [];
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
@@ -321,7 +334,7 @@ it("restores each history entry after rendering, including Forward and delayed p
   try {
     mount(1320);
     vi.stubGlobal("scrollY", 740); fireEvent.scroll(window);
-    act(() => navTo("/study")); frame();
+    fireEvent.click(screen.getByRole("link", { name: "Study Library" })); frame();
     expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
     vi.stubGlobal("scrollY", 250); fireEvent.scroll(window);
     height = 100;

@@ -207,6 +207,8 @@ export function AppShell() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    state={item.to === "/study" ? { scrollToTop: true } : undefined}
+                    replace={item.to === "/study" ? false : undefined}
                     onClick={closeMenu}
                     end={item.to === "/"}
                     className={({ isActive }) => `nav__link${isActive ? " is-active" : ""}`}

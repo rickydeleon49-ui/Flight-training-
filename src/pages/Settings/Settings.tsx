@@ -1057,32 +1057,10 @@ export function Settings() {
           />
           <CardBody>
             <div className="stack stack--4">
-              <PlatformGuidance
-                mac={
-                  <>
-                    App data lives under the displayed Application Support path, and{" "}
-                    <strong>Open folder</strong> opens that exact folder in Finder. Complete
-                    backups can be saved to Downloads or iCloud Drive, and imported documents
-                    live in app-owned storage and move through complete backups.
-                  </>
-                }
-                windows={
-                  <>
-                    App data lives under the displayed AppData path, and{" "}
-                    <strong>Open folder</strong> opens that exact folder in File Explorer.
-                    Complete backups can be saved to your preferred drive or cloud folder, and
-                    imported documents live in app-owned storage and move through complete
-                    backups.
-                  </>
-                }
-                neutral={
-                  <>
-                    App data lives under the displayed path, and <strong>Open folder</strong> opens
-                    that folder in your file manager. Imported documents live in app-owned storage
-                    and move through complete backups.
-                  </>
-                }
-              />
+              <p className="tiny dim">
+                <strong>Open folder</strong> shows the app’s private files at the path below.
+                Complete backups include your imported documents; save them to Downloads, another drive or a cloud folder such as iCloud Drive.
+              </p>
 
               {upgradeFailed ? (
                 <p className="small" role="alert">
@@ -1117,10 +1095,8 @@ export function Settings() {
               ) : null}
 
               <p className="small muted">
-                Save one portable <strong>.hfdbackup</strong> file containing the
-                complete database, profile photo, flight log, and every uploaded study
-                document. Nothing is uploaded anywhere. Keep the file on another drive
-                or in a cloud folder so it is safe if this computer is lost.
+                A <strong>.hfdbackup</strong> file holds all your records, settings, profile photo and uploaded documents. Saving it sends nothing online.
+                Keep it on another drive or in a cloud folder in case this computer is lost.
               </p>
 
               <p className="tiny dim">
@@ -1167,12 +1143,12 @@ export function Settings() {
               )}
 
               <p className="tiny dim">
-                The database copies below are made automatically before an update runs
-                for the first time. They stay on this computer and hold your records,
-                lessons and settings — not the uploaded files themselves, which are
-                never moved. The 10 newest copies are kept. Use{" "}
-                <strong>Save complete backup</strong> for protection
-                against losing this computer.
+                Before a new version runs for the first time, the app saves a copy of your records, lessons and settings on this computer.
+                These copies leave out uploaded files; those stay where they are.
+              </p>
+              <p className="tiny dim">
+                The 10 newest copies are kept.
+                Use <strong>Save complete backup</strong> on another drive or in a cloud folder in case this computer is lost.
               </p>
 
               {backupsAvailable() ? (
@@ -1219,8 +1195,8 @@ export function Settings() {
             <PlatformGuidance
               mac={
                 <>
-                  Her Flight Deck supports macOS 12 or newer. Use only an official candidate installer.
-                  Do not attempt to disable Gatekeeper or bypass platform security protections.
+                  Her Flight Deck supports macOS 12 or newer.
+                  Use only an official installer; never turn off Gatekeeper or bypass its warnings.
                 </>
               }
               windows={

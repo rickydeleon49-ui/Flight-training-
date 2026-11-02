@@ -1,16 +1,9 @@
 //! The window reopens where she left it (WINSTATE-01).
 //!
-//! `tauri-plugin-window-state` saves the main window's size, position and
-//! maximized state in the app config folder and puts them back when the
-//! window is created. It only moves the window to the saved position when
-//! one of the window's corners still lands on a connected screen, otherwise
-//! it leaves the window where `tauri.conf.json` puts it (centered). A single
-//! corner can still mean a window almost entirely off-screen, and a saved
-//! size could be below the configured minimum, so after the plugin has run
-//! `keep_main_window_reachable` makes sure the title bar can be grabbed on
-//! some screen and the minimum size holds; a reachable window larger than
-//! its screen is shrunk to fit that screen. It never changes anything when
-//! the window is already fine.
+//! The window-state plugin restores the saved position at startup. A visible
+//! title bar alone does not mean the whole window fits: clamp its size and
+//! position to a connected monitor’s work area once, immediately after restore.
+//! This is never called from focus, move or file-dialog events.
 
 use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize};
 
@@ -49,17 +42,10 @@ fn is_reachable(window: Rect, screen: Rect) -> bool {
     width >= i64::from(MIN_REACHABLE_WIDTH.min(window.width)) && height > 0
 }
 
-/// A reachable window larger than its screen (say a big external monitor was
-/// unplugged) shrinks to that screen's work area, never below `min`, and
-/// moves just enough to fit; when the screen is smaller than `min`, its
-/// top-left corner goes to the screen's top-left. Axes that already fit are
-/// left alone.
+/// Clamp both axes to the connected screen’s work area.
 fn fit_on(window: Rect, screen: Rect, min: (u32, u32)) -> Rect {
     let axis = |origin: i32, size: u32, screen_origin: i32, space: u32, min: u32| {
-        if size <= space {
-            return (origin, size);
-        }
-        let size = space.max(min);
+        let size = size.max(min).min(space);
         let last = i64::from(screen_origin) + i64::from(space) - i64::from(size);
         let origin =
             i64::from(origin).clamp(i64::from(screen_origin), last.max(i64::from(screen_origin)));
@@ -86,13 +72,21 @@ pub(crate) fn corrected_placement(window: Rect, screens: &[Rect], min: (u32, u32
         height,
         ..window
     };
-    if let Some(screen) = screens.iter().find(|screen| is_reachable(sized, **screen)) {
+    // Prefer the screen holding most of the title bar when displays meet.
+    if let Some(screen) = screens
+        .iter()
+        .filter(|screen| is_reachable(sized, **screen))
+        .max_by_key(|screen| {
+            let (width, height) = title_strip_overlap(sized, **screen);
+            width * height
+        })
+    {
         let fitted = fit_on(sized, *screen, min);
         return (fitted != window).then_some(fitted);
     }
     let screen = *screens.first()?;
-    let width = width.min(screen.width).max(min.0);
-    let height = height.min(screen.height).max(min.1);
+    let width = width.min(screen.width);
+    let height = height.min(screen.height);
     let centered = |origin: i32, space: u32, size: u32| {
         let offset = i64::from(space.saturating_sub(size) / 2);
         i32::try_from(i64::from(origin) + offset).unwrap_or(origin)
@@ -106,7 +100,7 @@ pub(crate) fn corrected_placement(window: Rect, screens: &[Rect], min: (u32, u32
 }
 
 /// Bring the main window back on-screen if the restored state left it
-/// unreachable (for example, its monitor was unplugged).
+/// partly off-screen (for example, its monitor was unplugged).
 pub fn keep_main_window_reachable(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
         return;
@@ -161,6 +155,13 @@ pub fn keep_main_window_reachable(app: &AppHandle) {
         let inner = window.inner_size().unwrap_or(size);
         let extra_w = size.width.saturating_sub(inner.width);
         let extra_h = size.height.saturating_sub(inner.height);
+        // A smaller connected screen takes priority over the usual minimum.
+        if let Err(error) = window.set_min_size(Some(PhysicalSize::new(
+            min.0.min(fixed.width.saturating_sub(extra_w)).max(1),
+            min.1.min(fixed.height.saturating_sub(extra_h)).max(1),
+        ))) {
+            crate::logging::log::warn!("Could not adjust the minimum window size: {error}");
+        }
         if let Err(error) = window.set_size(PhysicalSize::new(
             fixed.width.saturating_sub(extra_w).max(1),
             fixed.height.saturating_sub(extra_h).max(1),
@@ -214,9 +215,33 @@ mod tests {
     }
 
     #[test]
-    fn a_window_partly_off_the_edge_but_grabbable_is_left_alone() {
+    fn a_window_partly_off_the_edge_is_clamped() {
         // Most of it hangs off the right edge, but 400 px of title bar show.
-        assert_eq!(corrected_placement(window(2480, 200), &[LAPTOP], MIN), None);
+        assert_eq!(
+            corrected_placement(window(2480, 200), &[LAPTOP], MIN),
+            Some(window(240, 200))
+        );
+    }
+
+    #[test]
+    fn each_edge_fits_inside_the_visible_work_area() {
+        for saved in [window(-100, 100), window(100, 1000), window(100, 30)] {
+            let fixed = corrected_placement(saved, &[LAPTOP], MIN).unwrap();
+            assert!(fixed.x >= LAPTOP.x && fixed.y >= LAPTOP.y);
+            assert!(fixed.right() <= LAPTOP.right() && fixed.bottom() <= LAPTOP.bottom());
+        }
+    }
+
+    #[test]
+    fn a_connected_screen_left_of_primary_keeps_the_window_there() {
+        let left = Rect {
+            x: -3000,
+            y: -100,
+            width: 3000,
+            height: 2000,
+        };
+        let fixed = corrected_placement(window(-2000, 100), &[LAPTOP, left], MIN).unwrap();
+        assert_eq!(fixed, window(-2640, 100));
     }
 
     #[test]
@@ -294,7 +319,7 @@ mod tests {
     }
 
     #[test]
-    fn a_screen_smaller_than_the_minimum_keeps_the_minimum_with_its_corner_on_screen() {
+    fn a_screen_smaller_than_the_minimum_still_fits_the_whole_window() {
         let small_screen = Rect {
             x: 0,
             y: 25,
@@ -313,8 +338,8 @@ mod tests {
             Rect {
                 x: 0,
                 y: 25,
-                width: 1200,
-                height: 1400,
+                width: 1000,
+                height: 1200,
             }
         );
         assert!(is_reachable(fixed, small_screen));
