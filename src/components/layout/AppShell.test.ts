@@ -359,3 +359,28 @@ it("restores each history entry after rendering, including Forward and delayed p
     else delete (document.documentElement as unknown as Record<string, unknown>).scrollHeight;
   }
 });
+
+it.each([644, 1320])("Study Library menu resets at width %i while material Back restores its entry", (width) => {
+  const frames: FrameRequestCallback[] = [];
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => { frames.push(callback); return frames.length; });
+  vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  vi.stubGlobal("scrollX", 0);
+  vi.stubGlobal("scrollY", 0);
+  const scrollTo = vi.fn((_x: number, y: number) => vi.stubGlobal("scrollY", y));
+  vi.stubGlobal("scrollTo", scrollTo);
+  const frame = () => act(() => { frames.splice(0).forEach(callback => callback(0)); });
+  const enterFromMenu = () => {
+    if (width < 1000) fireEvent.click(menu());
+    fireEvent.click(screen.getByRole("link", { name: "Study Library" }));
+    frame();
+  };
+  mount(width);
+  enterFromMenu();
+  vi.stubGlobal("scrollY", 740); fireEvent.scroll(window);
+  act(() => navTo("/study/synthetic-material"));
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+  act(() => navTo(-1)); frame();
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 740);
+  enterFromMenu();
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+});

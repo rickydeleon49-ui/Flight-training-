@@ -183,7 +183,7 @@ describe("practice history completion dates in America/Los_Angeles", () => {
   });
 });
 
-it("history row shows separate counts that add to all ten questions", async () => {
+it.each([false, true])("history counts include unanswered questions after replacing the test: %s", async (replaceTest) => {
   await repos.documents.create({ id: "counts", title: "Synthetic ten-question test" });
   await repos.documents.savePracticeTest({
     provider: "gemini", sourceMaterialId: "counts", title: "Synthetic ten-question test", model: "synthetic",
@@ -201,10 +201,18 @@ it("history row shows separate counts that add to all ten questions", async () =
   }
   await repos.practiceSessions.saveSessionAction({ action: "complete_attempt", operationId: crypto.randomUUID(),
     attemptId: start.attemptId, expectedRevision: 8 });
+  if (replaceTest) {
+    await repos.documents.savePracticeTest({
+      provider: "gemini", sourceMaterialId: "counts", title: "Replacement", model: "synthetic",
+      questions: [{ question: "A new question", options: ["Yes", "No"], correctIndex: 0,
+        explanation: "Synthetic.", sourcePage: null }],
+    });
+  }
   const historyKey = active.version.historyKey;
   const [attempt] = await repos.practiceSessions.getCompletedHistory(historyKey);
   expect(attempt!.correctCount + attempt!.incorrectCount + attempt!.dontKnowCount + attempt!.unansweredCount).toBe(10);
   show(`/study/history/${encodeURIComponent(historyKey)}`);
   expect(await screen.findByText(/3 correct • 4 wrong • 1 don’t know • 2 unanswered/)).toBeTruthy();
   expect(screen.queryByText(/8 answered/)).toBeNull();
+  expect(screen.getByText("3 of 10 correct")).toBeTruthy();
 });

@@ -106,6 +106,10 @@ const SORT_VALUES = MATERIAL_SORT_OPTIONS.map((option) => option.value);
 const MATERIAL_PAGE_SIZE = 100;
 /** Links that name the reference shelf (`/study#references`) open it. */
 export const REFERENCE_SHELF_ID = "references";
+const LIBRARY_TOOLS = [
+  { id: REFERENCE_SHELF_ID, label: "FAA handbooks" },
+  { id: "acs-lookup", label: "ACS lookup" },
+];
 const SHELF_STATES = ["open", "closed"] as const;
 
 export function StudyLibrary() {
@@ -167,19 +171,24 @@ export function StudyLibrary() {
     "library.referenceShelf", "closed", isOneOf(SHELF_STATES),
   );
   const location = useLocation();
+  const shelfTarget = LIBRARY_TOOLS.find(tool => location.hash === `#${tool.id}`)?.id;
+  const openShelf = () => {
+    setShelf("open");
+    setSearch("");
+  };
   // Once per arriving link, so typing afterwards is left alone.
   const shelfLinkFor = useRef<string | null>(null);
   useEffect(() => {
-    if (location.hash !== `#${REFERENCE_SHELF_ID}` || shelfLinkFor.current === location.key) return;
+    if (!shelfTarget || shelfLinkFor.current === location.key) return;
     shelfLinkFor.current = location.key;
     setShelf("open");
     setSearch("");
-  }, [location.hash, location.key, setShelf, setSearch]);
+  }, [shelfTarget, location.key, setShelf, setSearch]);
   useEffect(() => {
-    if (location.hash === `#${REFERENCE_SHELF_ID}` && shelf === "open") {
-      document.getElementById(REFERENCE_SHELF_ID)?.scrollIntoView?.({ block: "start" });
+    if (shelfTarget && shelf === "open" && tab === "library" && !search.trim()) {
+      document.getElementById(shelfTarget)?.scrollIntoView?.({ block: "start" });
     }
-  }, [location.hash, location.key, shelf]);
+  }, [shelfTarget, location.key, shelf, tab, search]);
   const searchBox = useRef<HTMLInputElement>(null);
   const searchJustFocused = useRef(false);
   const moreMenu = useRef<HTMLDetailsElement>(null);
@@ -313,11 +322,12 @@ export function StudyLibrary() {
         }
       />
 
-      <Link to="/study#references" onClick={() => {
-        setShelf("open");
-        setSearch("");
-        document.getElementById(REFERENCE_SHELF_ID)?.scrollIntoView?.({ block: "start" });
-      }}>FAA handbooks and ACS lookup ↓</Link>
+      <nav aria-label="Tools" className="row row--wrap small">
+        <span className="muted">Tools:</span>
+        {LIBRARY_TOOLS.map(tool => (
+          <Link key={tool.id} to={`/study#${tool.id}`} onClick={openShelf}>{tool.label}</Link>
+        ))}
+      </nav>
 
       <div {...tabListProps} ref={tabListRef} className="library-tabs">
         {TABS.map((choice) => <LibraryTabButton key={choice.value} choice={choice} state={tabState} />)}
@@ -341,9 +351,6 @@ export function StudyLibrary() {
 
       {tab === "library" ? (
       <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-library" aria-labelledby="library-tab-library">
-      <div style={{ marginBottom: "var(--space-4)" }}>
-        <CheckrideTopicPractice practiceTests={data.practiceTests} materials={data.materials} />
-      </div>
       {hasAny && cardLibrary ? (
         <BinderReviewStatus repository={cardLibrary} dataRevision={dataRevision} onStatus={setBinderStatus} />
       ) : null}
@@ -496,6 +503,10 @@ export function StudyLibrary() {
         </>
       )}
 
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <CheckrideTopicPractice practiceTests={data.practiceTests} materials={data.materials} />
+      </div>
+
       {!search.trim() ? (
         <details
           id={REFERENCE_SHELF_ID}
@@ -510,7 +521,7 @@ export function StudyLibrary() {
           <p className="tiny muted">Optional FAA books, and a finder for the ACS codes on a knowledge-test report.</p>
           <div className="library__shelf-body">
             <FaaReferences onAddPdf={() => setCreating(true)} />
-            {topicPanels}
+            <div id="acs-lookup">{topicPanels}</div>
           </div>
         </details>
       ) : null}
