@@ -182,3 +182,29 @@ describe("practice history completion dates in America/Los_Angeles", () => {
     await expectDateOnEveryView("not a timestamp", "Completed");
   });
 });
+
+it("history row shows separate counts that add to all ten questions", async () => {
+  await repos.documents.create({ id: "counts", title: "Synthetic ten-question test" });
+  await repos.documents.savePracticeTest({
+    provider: "gemini", sourceMaterialId: "counts", title: "Synthetic ten-question test", model: "synthetic",
+    questions: Array.from({ length: 10 }, (_, index) => ({ question: `Question ${index + 1}`,
+      options: ["Yes", "No"], correctIndex: 0, explanation: "Synthetic.", sourcePage: null })),
+  });
+  const active = (await repos.practiceSessions.getActiveVersion("counts"))!;
+  const start = await repos.practiceSessions.saveSessionAction({ action: "start_or_resume",
+    operationId: crypto.randomUUID(), materialId: "counts", versionId: active.version.id });
+  if (!("attemptId" in start) || !("revision" in start)) throw Error("Unexpected start state");
+  for (let index = 0; index < 8; index++) {
+    await repos.practiceSessions.saveSessionAction({ action: "record_response", operationId: crypto.randomUUID(),
+      attemptId: start.attemptId, itemId: active.items[index]!.id, expectedRevision: index,
+      selectedIndex: index === 7 ? null : index < 3 ? 0 : 1, isDontKnow: index === 7 });
+  }
+  await repos.practiceSessions.saveSessionAction({ action: "complete_attempt", operationId: crypto.randomUUID(),
+    attemptId: start.attemptId, expectedRevision: 8 });
+  const historyKey = active.version.historyKey;
+  const [attempt] = await repos.practiceSessions.getCompletedHistory(historyKey);
+  expect(attempt!.correctCount + attempt!.incorrectCount + attempt!.dontKnowCount + attempt!.unansweredCount).toBe(10);
+  show(`/study/history/${encodeURIComponent(historyKey)}`);
+  expect(await screen.findByText(/3 correct • 4 wrong • 1 don’t know • 2 unanswered/)).toBeTruthy();
+  expect(screen.queryByText(/8 answered/)).toBeNull();
+});

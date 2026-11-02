@@ -427,9 +427,8 @@ function HistoryGroupDetailPage({ historyKey }: { historyKey: string }) {
                       <Badge tone="neutral">Version {attempt.versionNumber}</Badge>
                     </div>
                     <p className="tiny dim">
-                      {completedText(attempt.completedAt)} • {attempt.answeredCount} answered
-                      {attempt.dontKnowCount > 0 ? ` • ${attempt.dontKnowCount} don’t know` : ""}
-                      {attempt.unansweredCount > 0 ? ` • ${attempt.unansweredCount} unanswered` : ""}
+                      {completedText(attempt.completedAt)} • {attempt.correctCount} correct
+                      {` • ${attempt.incorrectCount} wrong • ${attempt.dontKnowCount} don’t know • ${attempt.unansweredCount} unanswered`}
                     </p>
                   </div>
                   <div>

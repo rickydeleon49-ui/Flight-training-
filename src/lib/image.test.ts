@@ -70,5 +70,7 @@ describe("loadImage", () => {
     const csp: string = conf.app.security.csp;
     const imgSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("img-src"));
     expect(imgSrc).toBe("img-src 'self' data:");
+    const scriptSrc = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).toBe("script-src 'self'");
   });
 });

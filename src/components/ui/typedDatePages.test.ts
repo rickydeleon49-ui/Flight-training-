@@ -73,7 +73,7 @@ describe("DATES-01 pages save a typed date as typed", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Save flight record" }));
     });
-    expect(screen.getByText(NOT_A_DATE)).toBeTruthy();
+    expect(await screen.findByText(NOT_A_DATE)).toBeTruthy();
     expect(await createRepositories(db).journal.list()).toEqual([]);
     typeDate("Date", "11052026");
     expect(screen.getByText("That's Thursday, November 5, 2026.")).toBeTruthy();
@@ -106,7 +106,7 @@ describe("DATES-01 pages save a typed date as typed", () => {
     expect((screen.getByLabelText("Training started") as HTMLInputElement).value).toBe("01/01/2026");
     typeDate("Training started", "13292026");
     fireEvent.click(screen.getAllByRole("button", { name: "Save profile" })[0]!);
-    expect(screen.getByText(NOT_A_DATE)).toBeTruthy();
+    expect(await screen.findByText(NOT_A_DATE)).toBeTruthy();
     await act(async () => app.mutate(async () => true));
     // Never saved as "no date": the stored day stays until she types a real one.
     expect((await createRepositories(db).profile.get()).trainingStartedOn).toBe("2026-01-01");
@@ -131,7 +131,7 @@ describe("DATES-01 pages save a typed date as typed", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Add record" }));
     });
-    expect(screen.getByText(NOT_A_DATE)).toBeTruthy();
+    expect(await screen.findByText(NOT_A_DATE)).toBeTruthy();
     expect((await createRepositories(db).toolkit.get()).credentials).toEqual([]);
     typeDate("Expires", "");
     await act(async () => {

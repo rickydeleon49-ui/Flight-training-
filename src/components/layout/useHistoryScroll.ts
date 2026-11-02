@@ -33,7 +33,7 @@ export function useHistoryScroll() {
         observer.observe(document.body);
       }
       restore();
-    } else if (navigationType === "PUSH" && old.pathname !== location.pathname && !location.hash) {
+    } else if (navigationType === "PUSH" && (old.pathname !== location.pathname || (location.state as { scrollToTop?: boolean } | null)?.scrollToTop) && !location.hash) {
       window.scrollTo?.(0, 0);
     }
     const save = () => {
