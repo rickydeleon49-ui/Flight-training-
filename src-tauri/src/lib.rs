@@ -77,6 +77,7 @@ mod study_packet;
 mod study_page_sources;
 mod study_sets;
 mod visual_cards;
+mod visual_pdf;
 mod weather;
 #[cfg(desktop)]
 mod window_placement;
@@ -484,6 +485,7 @@ pub fn run() {
             navigation::inspect_navigation_identity,
             study_page_sources::preview_study_page_source,
             visual_cards::read_visual_image,
+            visual_pdf::render_pdf_page,
             navigation::open_navigation_document,
             documents::save_material_operation,
             debrief::save_debrief_operation,
