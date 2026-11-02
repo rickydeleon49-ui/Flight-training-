@@ -445,6 +445,7 @@ pub fn run() {
             extraction::search_api::verify_offline_destination,
             documents::import_document,
             documents::document_path,
+            documents::document_bytes,
             documents::document_exists,
             documents::delete_document,
             documents::stage_delete_document,

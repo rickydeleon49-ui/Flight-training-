@@ -94,3 +94,14 @@ it("follows later URL navigation and browser back without local selection drift"
   await act(async () => { await navigate("/study?tab=unknown"); });
   selected(0);
 });
+
+it("hides library and FAA import entries on the phone", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true });
+  try {
+    open();
+    expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
+    expect(screen.queryAllByRole("button", { name: /Add PDF|Get from faa.gov|Get full handbook/ })).toHaveLength(0);
+  } finally { spy.mockRestore(); }
+});

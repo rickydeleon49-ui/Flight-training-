@@ -511,6 +511,53 @@ pub fn document_path(app: AppHandle, relative_path: String) -> Result<String, St
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Read a bounded PDF through raw IPC, using the same relative-path guard as document_path.
+#[tauri::command]
+pub fn document_bytes(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<tauri::ipc::Response, String> {
+    let root = documents_root(&app)?;
+    read_document_bytes(&root, &relative_path).map(tauri::ipc::Response::new)
+}
+
+/// Largest PDF the phone viewer reads; matches the full-PHAK download cap (100 MiB),
+/// so every handbook the FAA shelf can save also opens on the phone.
+const VIEW_MAX_BYTES: u64 = 100 * 1024 * 1024;
+
+fn read_document_bytes(root: &Path, relative_path: &str) -> Result<Vec<u8>, String> {
+    use std::io::Read;
+    let safe = safe_relative_path(relative_path)?;
+    let root = root
+        .canonicalize()
+        .map_err(|_| "Your study files could not be opened.")?;
+    let path = root
+        .join(safe)
+        .canonicalize()
+        .map_err(|_| "That PDF could not be opened.")?;
+    if !path.starts_with(&root) {
+        return Err("Invalid document path.".into());
+    }
+    let file = std::fs::File::open(path).map_err(|_| "That PDF could not be opened.")?;
+    let limit = VIEW_MAX_BYTES;
+    if file
+        .metadata()
+        .map_err(|_| "That PDF could not be read.")?
+        .len()
+        > limit
+    {
+        return Err("That PDF is too large to open on this device (100 MB maximum).".into());
+    }
+    let mut bytes = Vec::new();
+    file.take(limit + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| "That PDF could not be read.")?;
+    if bytes.len() as u64 > limit {
+        return Err("That PDF is too large to open on this device (100 MB maximum).".into());
+    }
+    Ok(bytes)
+}
+
 /// Whether a stored document is still present on disk.
 ///
 /// The library shows a clear "file missing" state rather than failing when a
@@ -2121,6 +2168,46 @@ mod save_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn document_bytes_refuses_paths_outside_documents() {
+        let root = split_test_root();
+        let documents = root.join(DOCUMENTS_DIR);
+        std::fs::write(root.join("outside.pdf"), b"synthetic").unwrap();
+        for path in [
+            "../outside.pdf",
+            "/outside.pdf",
+            "nested/../../outside.pdf",
+            "C:\\outside.pdf",
+        ] {
+            assert!(read_document_bytes(&documents, path).is_err());
+        }
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(root.join("outside.pdf"), documents.join("link.pdf"))
+                .unwrap();
+            assert!(read_document_bytes(&documents, "link.pdf").is_err());
+        }
+        std::fs::write(documents.join("valid.pdf"), b"synthetic PDF").unwrap();
+        assert_eq!(
+            read_document_bytes(&documents, "valid.pdf").unwrap(),
+            b"synthetic PDF"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn document_bytes_caps_size() {
+        let root = split_test_root();
+        let documents = root.join(DOCUMENTS_DIR);
+        let file = std::fs::File::create(documents.join("large.pdf")).unwrap();
+        file.set_len(VIEW_MAX_BYTES + 1).unwrap();
+        assert!(read_document_bytes(&documents, "large.pdf")
+            .unwrap_err()
+            .contains("100 MB"));
+        drop(file);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn split_test_root() -> PathBuf {
         static SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);

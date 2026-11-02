@@ -1,3 +1,5 @@
+import { deviceCan } from "@/services/platform";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -44,8 +46,8 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
     <div key={reference.id} className="faa-shelf__entry">
       <div className="row row--wrap">
         <h3 className="small">{reference.title}</h3>
-        <Button onClick={() => setAdding(reference)} disabled={!canHandleFiles()}
-          aria-label={`Add PDF: ${reference.title}`}>Add PDF</Button>
+        {deviceCan().importFiles ? <Button onClick={() => setAdding(reference)} disabled={!canHandleFiles()}
+          aria-label={`Add PDF: ${reference.title}`}>Add PDF</Button> : null}
       </div>
       <details>
         <summary>Listed edition: {reference.edition}</summary>
@@ -66,6 +68,7 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
     <section className="faa-shelf" aria-labelledby="faa-shelf-title">
       <h2 id="faa-shelf-title" className="section-title">FAA references</h2>
       <p className="small muted">Optional books for offline study. Add a PDF or get a handbook from faa.gov.</p>
+      <PdfViewerDialog />
       {!canHandleFiles() ? <p className="small muted">Adding, checking and opening PDFs needs the desktop application. Your saved reference notes are still available here.</p> : null}
       {canHandleFiles() ? <p className="small muted">Needs internet once; works offline afterwards.</p> : null}
       {entry(FAA_REFERENCES[0])}
@@ -227,7 +230,7 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
     <h3 className="small">Airplane Flying Handbook</h3>
     <p className="small muted">Choose a chapter or the MOSAIC addendum to keep for offline study.</p>
     </> : null}
-    {desktop ? <>
+    {deviceCan().importFiles && desktop ? <>
       <div className="row row--wrap">
         {!phak ? <><Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
           onChange={(value) => { setSelected(value); setMessage(""); }} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
@@ -250,7 +253,7 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
         <p className="small wrap-anywhere">{record.edition} · {phak ? "2023" : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
         <SavedReference material={material} downloaded reference={{ title: phak ? "Pilot’s Handbook of Aeronautical Knowledge" : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
-        {phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
+        {deviceCan().importFiles && phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
           ? <Button disabled>Study-size parts made</Button>
           : <Button onClick={() => setSplitting(material)}>Make study-size parts</Button> : null}
         {!phak ? <CurrentAfhLink /> : null}
@@ -334,8 +337,9 @@ function SavedReference({ material, note, reference, downloaded = false }: {
       if (!live.current || currentKey.current !== key) return;
       setState({ key, availability: checked });
       if (checked !== "present") return;
-      await openDocument(material.filePath);
-      if (live.current && currentKey.current === key) setMessage("Opened in your PDF reader.");
+      if (deviceCan().revealFiles) await openDocument(material.filePath);
+      else await openDocument(material.filePath, material.title);
+      if (live.current && currentKey.current === key) setMessage(deviceCan().revealFiles ? "Opened in your PDF reader." : "Opened in Her Flight Deck.");
     } catch {
       if (live.current && currentKey.current === key) setMessage("That PDF could not be opened. Check your saved file and PDF reader, then try again.");
     } finally {

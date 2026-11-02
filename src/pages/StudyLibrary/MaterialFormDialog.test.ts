@@ -325,3 +325,13 @@ it("keeps the file of an FAA copy or picture-card picture fixed while metadata s
     cleanup();
   }
 });
+
+it("keeps material editing available without a file picker on the phone", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true });
+  try {
+    render(h(MaterialFormDialog, { open: true, goals: [], events: [], newMaterialId: "phone", onClose: vi.fn(), onSave: vi.fn() }));
+    expect(screen.queryByRole("button", { name: "Choose a file" })).toBeNull();
+    expect(files.pick).not.toHaveBeenCalled();
+  } finally { spy.mockRestore(); }
+});

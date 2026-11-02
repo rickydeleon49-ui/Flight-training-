@@ -26,6 +26,7 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   expect(Boolean(screen.queryByRole("heading", { name: "AI provider" }))).toBe(!phone);
   expect(screen.queryByRole("heading", { name: "Send to my iPhone" })).toBeNull();
   if (phone) {
+    expect(document.body.textContent).not.toMatch(/Gemini|API key/);
     for (const name of ["Save complete backup", "Restore backup", "Open folder"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }

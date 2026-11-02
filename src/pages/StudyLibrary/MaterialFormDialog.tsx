@@ -1,3 +1,4 @@
+import { deviceCan } from "@/services/platform";
 import { useEffect, useRef, useState } from "react";
 
 import { Button, Dialog, DocumentIcon, Field, Select, TextArea, TextInput } from "@/components/ui";
@@ -282,12 +283,12 @@ export function MaterialFormDialog({
                 Remove
               </Button>
             </div>
-          ) : (
+          ) : deviceCan().importFiles ? (
             <Button onClick={chooseFile} disabled={importing || !canHandleFiles() || fileLock !== null}>
               <DocumentIcon size={16} />
               {importing ? "Adding…" : "Choose a file"}
             </Button>
-          )}
+          ) : null}
           {fileLock ? (
             <p className="tiny dim">{fileLock}</p>
           ) : !canHandleFiles() ? (

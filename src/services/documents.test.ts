@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   isTauri: vi.fn(() => false),
+  isIOS: vi.fn(() => false),
   invoke: vi.fn(),
   openPath: vi.fn(),
   revealItemInDir: vi.fn(),
   pick: vi.fn(),
 }));
+
+vi.mock("./platform", () => ({ isIOS: mocks.isIOS }));
 
 vi.mock("@/data", () => ({
   isTauri: mocks.isTauri,
@@ -335,4 +338,30 @@ describe("generated document cleanup", () => {
     expect(attempted).toEqual(["one.pdf", "two.pdf", "three.pdf"]);
     expect(failed).toEqual(["one.pdf", "three.pdf"]);
   });
+});
+
+
+it("opens an iOS PDF through raw bytes without the system opener", async () => {
+  mocks.isTauri.mockReturnValue(true);
+  mocks.isIOS.mockReturnValue(true);
+  const create = vi.fn((_blob: Blob) => "blob:synthetic");
+  const revoke = vi.fn();
+  vi.stubGlobal("URL", { createObjectURL: create, revokeObjectURL: revoke });
+  mocks.invoke.mockResolvedValueOnce(new ArrayBuffer(3));
+  try {
+    await openDocument("phone.pdf", "Synthetic PDF");
+    expect(mocks.invoke).toHaveBeenCalledWith("document_bytes", { relativePath: "phone.pdf" });
+    expect(mocks.openPath).not.toHaveBeenCalled();
+    expect(create.mock.calls[0]?.[0]).toMatchObject({ type: "application/pdf" });
+    const { closePdfViewer } = await import("./pdfViewer");
+    closePdfViewer();
+    expect(revoke).toHaveBeenCalledWith("blob:synthetic");
+    await openDocument("phone.pdf", "Synthetic PDF");
+    expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledTimes(2);
+    closePdfViewer();
+  } finally {
+    mocks.isIOS.mockReturnValue(false);
+    vi.unstubAllGlobals();
+  }
 });
