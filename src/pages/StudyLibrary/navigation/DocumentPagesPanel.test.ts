@@ -12,6 +12,12 @@
  * a bookmark's own open, which still hands the file to the reader with its
  * page shown next to it — keep working.
  */
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import * as platform from "@/services/platform";
+import * as visualPdf from "@/services/visualPdf";
+import * as visualCards from "@/services/visualCards";
+import * as pageSources from "@/services/studyPageSources";
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -148,6 +154,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   db?.close();
 });
 
@@ -598,4 +606,132 @@ it("offers the Study shortcut only with a saved page note and opens its existing
   expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Fictional note question");
   fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
   expect(await db.select("SELECT * FROM study_set_save_operations")).toEqual(before);
+});
+
+const pictureAction = "Make a picture card from this page";
+async function pictureNote() {
+  await seed();
+  await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000001',?,3,'iv',?,'Fictional panel','Fictional notes','verified','x','x')", [M,A]);
+}
+function mockPicture() {
+  const bytes = readFileSync("src/testing/fixtures/visual/practice-panel.png");
+  const picture = { imageSha256: createHash("sha256").update(bytes).digest("hex"), imageWidth: bytes.readUInt32BE(16), imageHeight: bytes.readUInt32BE(20), url: `data:image/png;base64,${bytes.toString("base64")}` };
+  vi.spyOn(visualCards, "readVisualPicture").mockResolvedValue(picture);
+  const capture = { ...picture, materialId: "5e700000-0000-4000-8000-000000000002", source: { id: "5e700000-0000-4000-8000-000000000002", materialId: M, materialTitle: "Synthetic handbook", contentSha256: A, physicalPage: 3, printedLabel: "iv" } };
+  const render = vi.spyOn(visualPdf, "renderPdfPage").mockImplementation(async () => {
+    await createRepositories(db).documents.create({ id: capture.materialId, title: "Synthetic handbook p. iv (picture)", filePath: "page.png", originalFileName: "page.png" });
+    await db.execute("INSERT INTO study_page_sources VALUES (?,?,?,?,?,?,?,?)", [capture.source.id,M,capture.source.materialTitle,A,3,"iv",null,"x"]);
+    return capture;
+  });
+  return { capture, render };
+}
+function allowPicture(allowed = true) {
+  const flags = platform.deviceCan();
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ ...flags, renderPdfPage: allowed });
+}
+it.each([false,true])("page-picture button follows deviceCan: %s", async allowed => {
+  await pictureNote(); allowPicture(allowed);
+  renderDetail(); const scope = await panel();
+  await within(scope).findByText("Fictional panel");
+  expect(Boolean(within(scope).queryByRole("button", { name: pictureAction }))).toBe(allowed);
+});
+it("shows elapsed capture status, rejects double clicks, reports native errors and allows retry", async () => {
+  await pictureNote(); allowPicture();
+  const { render: capture } = mockPicture();
+  const held = gate();
+  capture.mockImplementationOnce(async () => { await held.promise; throw "The Mac picture tool is unavailable."; });
+  renderDetail(); const scope = await panel();
+  const button = await within(scope).findByRole("button", { name: pictureAction });
+  vi.useFakeTimers();
+  fireEvent.click(button); fireEvent.click(button);
+  expect(screen.getByText("Making the picture… (0 s)")).toBeTruthy();
+  await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+  expect(screen.getByText("Making the picture… (2 s)")).toBeTruthy();
+  expect(capture).toHaveBeenCalledTimes(1);
+  await act(async () => held.resolve());
+  vi.useRealTimers();
+  expect(await screen.findByText("The Mac picture tool is unavailable.")).toBeTruthy();
+  expect(screen.queryByText(/Making the picture…/)).toBeNull();
+  fireEvent.click(button);
+  await screen.findByRole("dialog", { name: "Cover a label" });
+  await screen.findByRole("textbox", { name: "Question" });
+  expect(capture).toHaveBeenLastCalledWith(M,3);
+});
+it("opens the captured PNG, keeps it on Cancel, and saves a PDF-owned card with page binding on retry", async () => {
+  await pictureNote(); allowPicture();
+  await db.execute("DELETE FROM ai_study_sets");
+  const { capture, render: make } = mockPicture();
+  renderDetail(); const scope = await panel();
+  const button = await within(scope).findByRole("button", { name: pictureAction });
+  fireEvent.click(button);
+  let dialog = await screen.findByRole("dialog", { name: "Cover a label" });
+  await within(dialog).findByRole("textbox", { name: "Question" });
+  expect(visualCards.readVisualPicture).toHaveBeenCalledWith(capture.materialId, undefined);
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(await db.select("SELECT id FROM study_materials WHERE id=?", [capture.materialId])).toHaveLength(1);
+  expect(await db.select("SELECT * FROM visual_card_regions")).toHaveLength(0);
+  expect(await db.select("SELECT * FROM study_page_source_bindings")).toHaveLength(0);
+  // Reopening is a fresh capture; the earlier visible picture stays.
+  make.mockResolvedValueOnce(capture);
+  fireEvent.click(button);
+  dialog = await screen.findByRole("dialog", { name: "Cover a label" });
+  await within(dialog).findByRole("textbox", { name: "Question" });
+  fireEvent.change(within(dialog).getByLabelText("Question"), { target: { value: "Which fictional label?" } });
+  fireEvent.change(within(dialog).getByLabelText("Answer"), { target: { value: "Bravo" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save picture card" }));
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "Cover a label" })).toBeNull());
+  expect(await db.select("SELECT owner_material_id,image_material_id FROM visual_card_regions")).toEqual([{ owner_material_id:M,image_material_id:capture.materialId }]);
+  const saved = await createRepositories(db).documents.readStudySetForEdit(M);
+  expect(saved!.set.flashcards[0]).toMatchObject({ sourcePage:3, pageSource: { materialId:M, contentSha256:A, printedLabel:"iv" } });
+  expect(await db.select("SELECT owner_key FROM study_page_source_bindings WHERE binding_kind='authored_card'")).toEqual([{ owner_key:M }]);
+  expect(await db.select("SELECT * FROM ai_study_sets WHERE source_material_id=?", [capture.materialId])).toHaveLength(0);
+});
+it("refuses a capture whose PDF changed before the editor opens", async () => {
+  await pictureNote(); allowPicture(); mockPicture();
+  vi.spyOn(pageSources, "previewStudyPageSource").mockResolvedValue({ contentSha256:B,totalPages:50 });
+  renderDetail(); const scope = await panel();
+  fireEvent.click(await within(scope).findByRole("button", { name: pictureAction }));
+  expect(await screen.findByText("This PDF has changed. Open it and check the page again.")).toBeTruthy();
+  expect((screen.getByRole("button", { name: "Save picture card" }) as HTMLButtonElement).disabled).toBe(true);
+});
+it("explains that PDF page pictures stay in the library on PDF deletion", async () => {
+  await seed(); renderDetail(); await panel();
+  fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+  const dialog = await screen.findByRole("dialog", { name: "Delete this material?" });
+  expect(dialog.textContent).toContain("Page pictures stay in your library until you delete them.");
+});
+
+it("does not open a late capture after leaving the page", async () => {
+  await pictureNote(); allowPicture();
+  const { capture, render: make } = mockPicture();
+  const held = gate();
+  make.mockImplementationOnce(async () => { await held.promise; return capture; });
+  const view = renderDetail(); const scope = await panel();
+  fireEvent.click(await within(scope).findByRole("button", { name: pictureAction }));
+  view.unmount();
+  await act(async () => held.resolve());
+  expect(screen.queryByRole("dialog", { name: "Cover a label" })).toBeNull();
+});
+it("refuses changed picture bytes before opening the cover form", async () => {
+  await pictureNote(); allowPicture(); mockPicture();
+  vi.mocked(visualCards.readVisualPicture).mockImplementationOnce(async () => ({ imageSha256:B,imageWidth:10,imageHeight:10,url:"data:image/png;base64," }));
+  renderDetail(); const scope = await panel();
+  fireEvent.click(await within(scope).findByRole("button", { name: pictureAction }));
+  expect(await screen.findByText("This page picture has changed. Close this and try again.")).toBeTruthy();
+  expect((screen.getByRole("button", { name: "Save picture card" }) as HTMLButtonElement).disabled).toBe(true);
+});
+it("keeps the capture but refuses a page note changed before Save", async () => {
+  await pictureNote(); allowPicture(); const { capture } = mockPicture();
+  renderDetail(); const scope = await panel();
+  fireEvent.click(await within(scope).findByRole("button", { name: pictureAction }));
+  const dialog = await screen.findByRole("dialog", { name: "Cover a label" });
+  await within(dialog).findByRole("textbox", { name: "Question" });
+  await db.execute("UPDATE material_bookmarks SET notes='Changed while editing'");
+  fireEvent.change(within(dialog).getByLabelText("Question"), { target: { value: "Which label?" } });
+  fireEvent.change(within(dialog).getByLabelText("Answer"), { target: { value: "Bravo" } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save picture card" }));
+  expect(await within(dialog).findByText("This PDF, page note or picture changed. Nothing was saved. Close this and check the page first.")).toBeTruthy();
+  expect(await db.select("SELECT * FROM visual_card_regions")).toHaveLength(0);
+  expect(await db.select("SELECT * FROM study_page_source_bindings")).toHaveLength(0);
+  expect(await db.select("SELECT id FROM study_materials WHERE id=?", [capture.materialId])).toHaveLength(1);
 });

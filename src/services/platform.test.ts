@@ -23,6 +23,7 @@ describe("platform", () => {
     expect(isMacOS()).toBe(true);
     expect(isIOS()).toBe(false);
     expect(deviceCan().importFiles).toBe(true);
+    expect(deviceCan().renderPdfPage).toBe(true);
     expect(deviceCan().getStudyMaterial).toBe(false);
   });
 
@@ -30,6 +31,7 @@ describe("platform", () => {
     stub("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", 5);
     expect(isIOS()).toBe(true);
     expect(isMacOS()).toBe(false);
+    expect(deviceCan().renderPdfPage).toBe(false);
     expect(deviceCan().getStudyMaterial).toBe(true);
     expect(deviceCan().importFiles).toBe(false);
     expect(deviceCan().generate).toBe(false);
@@ -39,6 +41,7 @@ describe("platform", () => {
     stub("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 5);
     expect(isIOS()).toBe(true);
     expect(isMacOS()).toBe(false);
+    expect(deviceCan().renderPdfPage).toBe(false);
   });
 
   it("does not offer phone import in an iOS browser", () => {
@@ -52,6 +55,13 @@ describe("platform", () => {
     stub("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     expect(isIOS()).toBe(false);
     expect(isMacOS()).toBe(false);
+    expect(deviceCan().renderPdfPage).toBe(false);
     expect(deviceCan().sendToIphone).toBe(false);
   });
+});
+
+it("hides PDF page capture in a Mac browser", () => {
+  stub("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
+  mocks.isTauri.mockReturnValue(false);
+  expect(deviceCan().renderPdfPage).toBe(false);
 });

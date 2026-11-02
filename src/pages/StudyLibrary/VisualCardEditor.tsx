@@ -6,6 +6,9 @@ import { defaultCover, adjustCover, clampCover, type Cover, type Turn } from "@/
 import { visualRegionHash, type VisualRegion } from "@/data/visualCards";
 import { validateNextSet, type StoredSetRow, type StudySetSaveOperation } from "@/data/studySetTransaction";
 import { readVisualPicture, type VisualPicture as Picture } from "@/services/visualCards";
+import type { PageCapture } from "@/services/visualPdf";
+import type { BookmarkCardSource } from "@/data/studyPageSources";
+import { previewStudyPageSource } from "@/services/studyPageSources";
 import { newId } from "@/lib/id";
 import { StudySetSaveError } from "@/data/persistenceErrors";
 import { appendRetirements, retireItem } from "@/logic/studyAuthoring";
@@ -18,11 +21,15 @@ const BOUND_LABELS = { x: "Left", y: "Top", w: "Width", h: "Height" } as const;
 export function VisualCardEditor({
   material,
   cardIndex,
+  capture,
+  bookmark,
   onClose,
   onSaved,
 }: {
   material: StudyMaterial;
   cardIndex?: number;
+  capture?: PageCapture;
+  bookmark?: BookmarkCardSource["bookmark"];
   onClose: () => void;
   /** Called once the card is saved, just before the editor closes, so the page can say so. */
   onSaved?: () => void;
@@ -33,6 +40,7 @@ export function VisualCardEditor({
     stored: StoredSetRow | null;
     region?: VisualRegion;
     picture: Picture;
+    pageSource?: Omit<BookmarkCardSource, "itemId">;
   } | null>(null);
   const [cover, setCover] = useState<Cover>({ x: 0, y: 0, w: 1, h: 1 });
   const [turn, setTurn] = useState<Turn>(0);
@@ -62,9 +70,26 @@ export function VisualCardEditor({
       const region = c?.visualRegionId
         ? await repositories.documents.readVisualRegion(c.visualRegionId, material.id)
         : undefined;
-      const picture = await readVisualPicture(region?.imageMaterialId ?? material.id, region);
+      const picture = await readVisualPicture(region?.imageMaterialId ?? capture?.materialId ?? material.id, region);
+      let pageSource: Omit<BookmarkCardSource, "itemId"> | undefined;
+      if (capture) {
+        if (!bookmark || capture.source.materialId !== material.id ||
+            picture.imageSha256 !== capture.imageSha256 || picture.imageWidth !== capture.imageWidth ||
+            picture.imageHeight !== capture.imageHeight) throw Error("This page picture has changed. Close this and try again.");
+        if (bookmark.originatingContentSha256 !== capture.source.contentSha256 ||
+            bookmark.physicalPage !== capture.source.physicalPage || bookmark.pageLabel !== capture.source.printedLabel) {
+          throw Error("Check this PDF's pages and page note before making a picture card.");
+        }
+        const preview = await previewStudyPageSource(material.id);
+        if (preview && preview.contentSha256 !== capture.source.contentSha256) {
+          throw Error("This PDF has changed. Open it and check the page again.");
+        }
+        // The capture keeps its own source row. The existing 01c save creates
+        // a card snapshot, checking this bookmark and PDF again atomically.
+        pageSource = { source: { ...capture.source, id: newId() }, bookmark: { ...bookmark }, preview };
+      }
       if (live) {
-        setOpened({ stored: read?.stored ?? null, region, picture });
+        setOpened({ stored: read?.stored ?? null, region, picture, pageSource });
         setCover(region ?? defaultCover({ width: picture.imageWidth, height: picture.imageHeight }));
         setTurn(region?.rotation ?? 0);
         setQuestion(c?.front ?? "");
@@ -76,7 +101,7 @@ export function VisualCardEditor({
     return () => {
       live = false;
     };
-  }, [material.id, cardIndex, repositories, lease.active]);
+  }, [material.id, cardIndex, repositories, lease.active, capture, bookmark]);
 
   const save = async () => {
     if (!opened || !lease.active || saving.current || !repositories) return;
@@ -88,7 +113,7 @@ export function VisualCardEditor({
         const p = opened.picture;
         const descriptor = {
           ownerMaterialId: material.id,
-          imageMaterialId: opened.region?.imageMaterialId ?? material.id,
+          imageMaterialId: opened.region?.imageMaterialId ?? capture?.materialId ?? material.id,
           imageSha256: p.imageSha256,
           imageWidth: p.imageWidth,
           imageHeight: p.imageHeight,
@@ -140,10 +165,11 @@ export function VisualCardEditor({
           next.retired = appendRetirements(next.retired, [retired]).map((r) => ({ ...r, terms: [...r.terms] }));
         }
         const card = {
-          ...(cardIndex === undefined ? { itemId: newId(), origin: "user" as const } : next.flashcards[cardIndex]),
+          ...(cardIndex === undefined ? { origin: "user" as const } : next.flashcards[cardIndex]),
+          itemId: prior?.itemId ?? newId(),
           front: question,
           back: answer,
-          sourcePage: null,
+          sourcePage: opened.pageSource?.source.physicalPage ?? prior?.sourcePage ?? null,
           visualRegionId: region.id,
         };
         if (cardIndex === undefined) next.flashcards.push(card);
@@ -155,6 +181,7 @@ export function VisualCardEditor({
           expected: old,
           next,
           visualRegions: [region],
+          ...(opened.pageSource ? { pageSource: { ...opened.pageSource, itemId: card.itemId } } : {}),
         };
       }
       const operation = pending.current;
@@ -178,7 +205,9 @@ export function VisualCardEditor({
         unknown
           ? "The save could not be confirmed. Try save again to check the same request."
           : e instanceof StudySetSaveError && e.code === "SOURCE_CHANGED"
-            ? "This picture changed or is missing. Nothing was saved. Close this and check the picture first."
+            ? capture
+              ? "This PDF, page note or picture changed. Nothing was saved. Close this and check the page first."
+              : "This picture changed or is missing. Nothing was saved. Close this and check the picture first."
             : e instanceof Error
               ? e.message
               : "This card could not be saved. Your draft is still here.",
