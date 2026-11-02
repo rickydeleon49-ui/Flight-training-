@@ -74,9 +74,13 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   expect(cancel).toHaveBeenCalled();
 });
 
-it("adds a scenario with her instructor as the origin and lists its first line", async () => {
+it("is one closed line until she adds a scenario, then a full card", async () => {
   mount();
+  const summary = await screen.findByText("Practice an oral question", { selector: "summary" });
+  expect(summary.closest("details")!.open).toBe(false);
+  fireEvent.click(summary);
   fireEvent.click(await screen.findByRole("button", { name: "Add a scenario" }));
+  expect(document.querySelector("details.material-fold")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Save scenario" }));
   expect(await screen.findByText("Write the scenario first.")).toBeTruthy();
   fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "Engine roughness at 3,000 feet\nSecond line" } });
@@ -90,6 +94,8 @@ it("adds a scenario with her instructor as the origin and lists its first line",
   fireEvent.click(screen.getByRole("button", { name: "Save scenario" }));
   expect(await screen.findByRole("button", { name: "Practise: Engine roughness at 3,000 feet" })).toBeTruthy();
   expect(screen.getByText(/From my instructor/)).toBeTruthy();
+  expect(document.querySelector("details.material-fold")).toBeNull();
+  expect(screen.getByRole("heading", { name: "Practice an oral question" })).toBeTruthy();
   expect(await db.select("SELECT origin, points_json FROM oral_scenario_versions")).toEqual([
     { origin: "instructor", points_json: JSON.stringify(POINTS) },
   ]);

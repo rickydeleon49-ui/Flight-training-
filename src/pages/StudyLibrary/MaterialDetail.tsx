@@ -344,9 +344,10 @@ function MaterialDetailPage() {
     const destination = tabForAnchor(pendingJump);
     if (destination && tab !== destination) return;
     if (!document.getElementById(pendingJump)) return;
-    if (pendingJump === "material-file-actions") {
-      const menu = document.getElementById(pendingJump)?.closest("details");
-      if (menu) menu.open = true;
+    let disclosure = document.getElementById(pendingJump)?.closest("details");
+    while (disclosure) {
+      disclosure.open = true;
+      disclosure = disclosure.parentElement?.closest("details") ?? null;
     }
     const frame = requestAnimationFrame(() => {
       // The reading panel focuses its ready control after its async status arrives.
@@ -918,6 +919,30 @@ function MaterialDetailPage() {
   };
 
   const jumpToFileSection = () => jumpTo("material-file-actions");
+  const kitMakerAtTop = !studySet || !practiceTest || kitJob?.phase === "running" ||
+    Boolean(kitMessage) || canSaveWholeKit || discardableKitDrafts.length > 0;
+  const kitMaker = deviceCan().generate && isPdf ? (
+    <CardBody>
+      <div className="stack stack--3">
+        <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
+        <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
+        {kitMessage ? <p role="status">{kitMessage}</p> : null}
+        {kitMessage && kitDraftAnchor ? (
+          <div className="row row--wrap">
+            <Button size="small" variant="secondary" onClick={() => jumpTo(kitDraftAnchor)}>Show me</Button>
+          </div>
+        ) : null}
+        {canSaveWholeKit || savingKit ? (
+          <div className="row row--wrap">
+            <Button variant="primary" disabled={savingKit} onClick={() => void saveWholeKit()}>{savingKit ? "Saving…" : "Save all three"}</Button>
+            <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
+          </div>
+        ) : null}
+        {discardableKitDrafts.length >= 2 ? <Button disabled={geminiJobs.busy || savingKit || discardingAll} onClick={() => setConfirmingDiscardAll(true)}>Discard all drafts</Button> : null}
+        {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
+      </div>
+    </CardBody>
+  ) : null;
   return (
     <>
       <PdfViewerDialog />
@@ -999,26 +1024,7 @@ function MaterialDetailPage() {
             <p className="small muted">Write a study guide in your own words.</p>
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}
-          {deviceCan().generate && isPdf ? <Card><CardBody>
-            <div className="stack stack--3">
-              <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
-              <p className="small muted">Makes a basic study guide, flashcards and practice questions in one go. You review everything before it's saved.</p>
-              {kitMessage ? <p role="status">{kitMessage}</p> : null}
-              {kitMessage && kitDraftAnchor ? (
-                <div className="row row--wrap">
-                  <Button size="small" variant="secondary" onClick={() => jumpTo(kitDraftAnchor)}>Show me</Button>
-                </div>
-              ) : null}
-              {canSaveWholeKit || savingKit ? (
-                <div className="row row--wrap">
-                  <Button variant="primary" disabled={savingKit} onClick={() => void saveWholeKit()}>{savingKit ? "Saving…" : "Save all three"}</Button>
-                  <p className="tiny muted">Saves the study guide, flashcards and practice questions below. You can still save or discard each one on its own.</p>
-                </div>
-              ) : null}
-              {discardableKitDrafts.length >= 2 ? <Button disabled={geminiJobs.busy || savingKit || discardingAll} onClick={() => setConfirmingDiscardAll(true)}>Discard all drafts</Button> : null}
-              {kitJob?.phase === "running" ? <GeminiProgressView job={kitJob} title="Making your study kit…" onCancel={() => void geminiJobs.cancel(kitJob.key)} model={gemini?.model} /> : kitJob ? <GeminiJobNotice job={kitJob} jobs={geminiJobs} model={gemini?.model} onRetry={() => void prepareStudyKit()} /> : null}
-            </div>
-          </CardBody></Card> : null}
+          {kitMakerAtTop && kitMaker ? <Card>{kitMaker}</Card> : null}
           {showStudyGuide ? (
             <div id="material-study-guide" tabIndex={-1}>
               <Card>
@@ -1412,23 +1418,6 @@ function MaterialDetailPage() {
                         }
                       />
                       <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
-                      {visualFlashcards.length > 0 ? (
-                        <section aria-labelledby="visual-cards-title" className="stack stack--3">
-                          <h3 id="visual-cards-title" className="ai-guide__title">
-                            Your picture cards
-                          </h3>
-                          <ul className="visual-card-list">
-                            {visualFlashcards.map(({ card, originalIndex }) => (
-                              <li key={originalIndex}>
-                                <span title={card.front}>{card.front}</span>
-                                <Button size="small" onClick={() => setEditingVisualIndex(originalIndex)}>
-                                  Edit
-                                </Button>
-                              </li>
-                            ))}
-                          </ul>
-                        </section>
-                      ) : null}
                       {guideFlashcards.length > 0 ? (
                         <section
                           id="search-target-cards"
@@ -1504,6 +1493,21 @@ function MaterialDetailPage() {
                         <p className="small muted">
                           {helper} will read this file and create key flashcards with source page references. Choose 20, 40, or 60 cards.
                         </p>
+                      ) : null}
+                      {visualFlashcards.length > 0 ? (
+                        <details className="material-fold">
+                          <summary>Edit picture cards ({visualFlashcards.length})</summary>
+                          <ul className="visual-card-list">
+                            {visualFlashcards.map(({ card, originalIndex }) => (
+                              <li key={originalIndex}>
+                                <span title={card.front}>{card.front}</span>
+                                <Button size="small" onClick={() => setEditingVisualIndex(originalIndex)}>
+                                  Edit
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
                       ) : null}
 
 
@@ -1716,6 +1720,12 @@ function MaterialDetailPage() {
               </Card>
             </div>
 
+          {!kitMakerAtTop && kitMaker ? <Card>
+            <details className="material-fold">
+              <summary id="material-study-kit" className="card__header">Make a new study kit</summary>
+              {kitMaker}
+            </details>
+          </Card> : null}
           <OralScenariosCard material={material} />
 
           <MaterialVideoLinks key={material.id} materialId={material.id} />

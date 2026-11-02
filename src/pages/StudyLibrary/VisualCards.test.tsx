@@ -134,7 +134,7 @@ it("reads only the picture card question, including after revealing the label", 
   expect(cancel).toHaveBeenCalled();
 });
 
-it("lists saved picture cards beside their creation path and edits the original index in a mixed set", async () => {
+it("lists picture cards in a closed Edit section below the card viewer and edits the original index", async () => {
   await seedManualSet([
     { front: "Text card", back: "Text answer" },
     { front: "First picture?", back: "Alpha", picture: true },
@@ -142,7 +142,15 @@ it("lists saved picture cards beside their creation path and edits the original 
     { front: "Second picture?", back: "Bravo", picture: true },
   ]);
   mount();
-  const list = await screen.findByRole("region", { name: "Your picture cards" });
+  const summary = await screen.findByText(/^Edit picture cards \(\d+\)$/);
+  const list = summary.closest("details")!;
+  expect(list.open).toBe(false);
+  fireEvent.click(summary);
+  const viewer = screen.getByRole("button", { name: "Reveal flashcard answer" });
+  expect(viewer.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(viewer);
+  const ask = screen.getByRole("button", { name: "Explain this" });
+  expect(ask.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const rows = within(list).getAllByRole("listitem");
   expect(rows).toHaveLength(2);
   expect(rows[0]!.textContent).toBe("First picture?Edit");
@@ -259,7 +267,10 @@ it.each([
 ])("uses one sentence ending for %s in the editor, card review and homework", async (question, punctuated) => {
   const repositories = await seedManualSet([{ front: question, back: "Synthetic answer", picture: true }]);
   const mounted = mount();
-  const list = await screen.findByRole("region", { name: "Your picture cards" });
+  const summary = await screen.findByText(/^Edit picture cards \(\d+\)$/);
+  const list = summary.closest("details")!;
+  expect(list.open).toBe(false);
+  fireEvent.click(summary);
   fireEvent.click(within(list).getByRole("button", { name: "Edit" }));
   await screen.findByRole("textbox", { name: "Question" });
   fireEvent.click(screen.getByRole("button", { name: "Try to remember" }));
