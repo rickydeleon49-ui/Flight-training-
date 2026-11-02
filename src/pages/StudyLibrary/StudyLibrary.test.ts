@@ -232,12 +232,26 @@ it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards
   expect(screen.queryByRole("link", { name: /^Private Pilot Airplane ACS$/ })).toBeNull();
 });
 
-it.each(["/study", "/study?tab=howto"])("opens the FAA shelf from the top link over a remembered search from %s", async (path) => {
+it.each(["/study", "/study?tab=howto"])("opens and scrolls to the FAA shelf from the top link over a remembered search from %s", async (path) => {
   sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("Material 149"));
-  render(h(MemoryRouter, {initialEntries:[path]}, h(StudyLibrary)));
-  fireEvent.click(screen.getByRole("link", {name:"Free FAA handbooks"}));
-  expect((document.getElementById("references") as HTMLDetailsElement).open).toBe(true);
-  expect((screen.getByRole("textbox", {name:"Search your library"}) as HTMLInputElement).value).toBe("");
+  const scroll = vi.fn();
+  const original = HTMLElement.prototype.scrollIntoView;
+  HTMLElement.prototype.scrollIntoView = scroll;
+  try {
+    render(h(MemoryRouter, {initialEntries:[path]}, h(StudyLibrary)));
+    const link = screen.getByRole("link", {name:"FAA handbooks and ACS lookup ↓"});
+    fireEvent.click(link);
+    const shelf = document.getElementById("references") as HTMLDetailsElement;
+    expect(shelf.open).toBe(true);
+    expect((screen.getByRole("textbox", {name:"Search your library"}) as HTMLInputElement).value).toBe("");
+    expect(scroll.mock.instances).toContain(shelf);
+    shelf.open = false;
+    fireEvent(shelf, new Event("toggle"));
+    scroll.mockClear();
+    fireEvent.click(link);
+    expect(shelf.open).toBe(true);
+    expect(scroll.mock.instances).toContain(shelf);
+  } finally { HTMLElement.prototype.scrollIntoView = original; }
 });
 
 it("LIBRARY-CALM-01 shows her materials first and folds FAA references and the ACS lookup into one closed shelf below", () => {

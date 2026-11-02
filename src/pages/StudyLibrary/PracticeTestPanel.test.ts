@@ -184,6 +184,30 @@ describe("PracticeTestPanel", () => {
     await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
   });
 
+  it("accepts numbers outside the panel after a click, and Enter on another panel button after reveal", async () => {
+    await renderPanel(h(PracticeTestPanel, {practiceTest: sampleTest}));
+    fireEvent.click(screen.getAllByRole("radio")[1]!);
+    await screen.findByText("Correct");
+    fireEvent.click(screen.getByRole("button", {name:"Continue"}));
+    await screen.findByRole("heading", {name:"Question 2 of 2"});
+    const outside = document.createElement("button");
+    document.body.append(outside);
+    try {
+      fireEvent.click(outside);
+      outside.focus();
+      fireEvent.keyDown(outside, {key:"2"});
+      await screen.findByText("Correct");
+      const close = screen.getByRole("button", {name:"Close unfinished test"});
+      close.focus();
+      expect(fireEvent.keyDown(close, {key:"Enter"})).toBe(true);
+      const other = screen.getByRole("button", {name:"Question 2, correct"});
+      fireEvent.click(other);
+      other.focus();
+      expect(fireEvent.keyDown(other, {key:"Enter"})).toBe(false);
+      await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
+    } finally { outside.remove(); }
+  });
+
   it("offers fresh current questions first without changing the earlier attempt until clicked", async () => {
     const older = await seedEarlierAttempt();
     const save = vi.spyOn(repos.practiceSessions, "saveSessionAction");

@@ -1111,13 +1111,19 @@ export function PracticeTestPanel({
       if (!(target instanceof HTMLElement) || event.defaultPrevented || event.repeat ||
           event.ctrlKey || event.metaKey || event.altKey ||
           target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], dialog, [role="dialog"]') ||
-          (target !== document.body && !keyboardPanelRef.current?.contains(target)) ||
           !keyboardPanelRef.current || !canEdit || busyRef.current || intentRef.current || offeringSkipped || confirmingAbandon) return;
       const number = /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : -1;
       if (!revealed && number >= 0 && number < (question?.options.length ?? 0)) {
         event.preventDefault();
         handleSelectOption(number);
-      } else if (event.key === "Enter" && !target.closest('button, a, [role="radio"]')) {
+      } else if (event.key === "Enter" &&
+          (target === document.body || keyboardPanelRef.current.contains(target)) &&
+          // After reveal, Enter continues from the body, the panel or the current
+          // question pill; any other button (Change answer, Close unfinished test,
+          // another pill) keeps its own Enter.
+          (revealed
+            ? !target.closest('a') && (!target.closest('button') || target.closest('.practice-pill--current'))
+            : !target.closest('button, a, [role="radio"]'))) {
         event.preventDefault();
         if (revealed) handleContinue();
         else handleSelectOption(state.focusIndex);

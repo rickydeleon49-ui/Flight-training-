@@ -31,6 +31,8 @@ export interface CompleteBackupInfo {
   /** Seconds since the Unix epoch. */
   createdAt: number;
   files: number;
+  /** Size of the backup file on disk. */
+  fileBytes: number;
   /** Uncompressed bytes represented by the archive. */
   bytes: number;
   path: string;

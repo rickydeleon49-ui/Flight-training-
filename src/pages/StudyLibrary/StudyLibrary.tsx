@@ -312,7 +312,11 @@ export function StudyLibrary() {
         }
       />
 
-      <Link to="/study#references">Free FAA handbooks</Link>
+      <Link to="/study#references" onClick={() => {
+        setShelf("open");
+        setSearch("");
+        document.getElementById(REFERENCE_SHELF_ID)?.scrollIntoView?.({ block: "start" });
+      }}>FAA handbooks and ACS lookup ↓</Link>
 
       <div {...tabListProps} ref={tabListRef} className="library-tabs">
         {TABS.map((choice) => <LibraryTabButton key={choice.value} choice={choice} state={tabState} />)}
