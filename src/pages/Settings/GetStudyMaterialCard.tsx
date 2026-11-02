@@ -7,6 +7,8 @@ import {
   type ActivitySummary, type CompleteBackupInfo,
 } from "@/services/backups";
 
+import { isIOS } from "@/services/platform";
+
 function activitySentence(activity: ActivitySummary): string {
   const { latestReviewAt, reviewsLast7Days, attemptsLast7Days } = activity;
   if (!latestReviewAt && reviewsLast7Days === 0 && attemptsLast7Days === 0) {
@@ -22,14 +24,19 @@ function activitySentence(activity: ActivitySummary): string {
 export function GetStudyMaterialCard() {
   const [preview, setPreview] = useState<{ info: CompleteBackupInfo; activity: ActivitySummary } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<"opening" | "copying" | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const locked = useRef(false);
+  const ios = isIOS();
   const [staged, setStaged] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
-  const run = async (action: () => Promise<void>) => {
+  const run = async (action: () => Promise<void>, phase: "opening" | "copying" | null = null) => {
     if (locked.current) return;
     locked.current = true;
     setBusy(true);
+    setElapsed(0);
+    setProgress(phase);
     setProblem(null);
     try {
       await action();
@@ -38,18 +45,26 @@ export function GetStudyMaterialCard() {
     } finally {
       locked.current = false;
       setBusy(false);
+      setProgress(null);
     }
   };
 
   useEffect(() => {
-    if (!staged) return;
+    if (!progress) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [progress]);
+
+  useEffect(() => {
+    if (!staged || ios) return;
     const timer = window.setTimeout(() => {
       void exitForRestore().catch((error: unknown) => {
         setProblem(backupErrorMessage(error, "Please close Her Flight Deck and open it again.", false));
       });
     }, 1500);
     return () => window.clearTimeout(timer);
-  }, [staged]);
+  }, [staged, ios]);
 
   const pick = () => run(async () => {
     const path = await chooseCompleteBackup();
@@ -57,7 +72,7 @@ export function GetStudyMaterialCard() {
     const info = await importPickedBackup(path);
     const activity = await phoneActivitySummary();
     setPreview({ info, activity });
-  });
+  }, "opening");
   const cancel = () => run(async () => {
     await discardIncomingBackup();
     setPreview(null);
@@ -67,20 +82,23 @@ export function GetStudyMaterialCard() {
     await stageCompleteRestore(preview.info.path);
     setPreview(null);
     setStaged(true);
-  });
+  }, "copying");
 
   return (
     <>
       <Card>
-        <CardHeader title="Get my study material" eyebrow="Study on the go" />
+        <CardHeader title={staged ? "All set" : "Get my study material"} eyebrow="Study on the go" />
         <CardBody>
           {staged ? (
-            <p role="status">All set. Her Flight Deck will close now; open it again and your study material is there.</p>
+            <p role="status">{ios
+              ? "Close Her Flight Deck (swipe it away) and open it again to see your study material."
+              : "All set. Her Flight Deck will close now; open it again and your study material is there."}</p>
           ) : (
             <Button variant="primary" disabled={busy || preview !== null} onClick={pick}>
               {busy ? "Opening…" : "Get my study material"}
             </Button>
           )}
+          {progress === "opening" ? <p role="status">Opening your file… ({elapsed} s)</p> : null}
           {!preview && problem ? <p role="alert">{problem}</p> : null}
         </CardBody>
       </Card>
@@ -99,6 +117,7 @@ export function GetStudyMaterialCard() {
           <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.bytes)} · {preview.info.files} files</p>
           <p>{activitySentence(preview.activity)}</p>
         </> : null}
+        {progress === "copying" ? <p role="status">Copying your study material… this can take a minute. ({elapsed} s)</p> : null}
         {problem ? <p role="alert">{problem}</p> : null}
       </Dialog>
     </>

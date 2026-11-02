@@ -7186,8 +7186,13 @@ pub fn discard_incoming_backup(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn exit_for_restore(app: AppHandle) {
+pub fn exit_for_restore(app: AppHandle) -> Result<(), String> {
+    // iOS cannot exit tao's event loop; the user closes the app after staging.
+    #[cfg(not(target_os = "ios"))]
     app.exit(0);
+    #[cfg(target_os = "ios")]
+    let _ = app;
+    Ok(())
 }
 
 fn clear_restored_device_id_best_effort(root: &Path) {
