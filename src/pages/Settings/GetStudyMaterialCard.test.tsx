@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/services/backups", async (original) => ({
   ...await original<typeof import("@/services/backups")>(), ...mocks,
 }));
+const platform = vi.hoisted(() => ({ isIOS: vi.fn() }));
+vi.mock("@/services/platform", () => platform);
 import { formatBackupDate } from "@/services/backups";
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 
@@ -17,6 +19,7 @@ const activity = { latestReviewAt: "2026-10-30T12:00:00Z", reviewsLast7Days: 2, 
 
 beforeEach(() => {
   vi.resetAllMocks();
+  platform.isIOS.mockReturnValue(true);
   mocks.chooseCompleteBackup.mockResolvedValue("/picked/material.hfdbackup");
   mocks.importPickedBackup.mockResolvedValue(info);
   mocks.phoneActivitySummary.mockResolvedValue(activity);
@@ -60,7 +63,8 @@ describe("GetStudyMaterialCard", () => {
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
   });
 
-  it("stages only the copy and waits for Ok before the final sentence and delayed exit", async () => {
+  it("on Mac stages only the copy and waits for Ok before the final sentence and delayed exit", async () => {
+    platform.isIOS.mockReturnValue(false);
     let resolve!: (value: typeof info) => void;
     mocks.stageCompleteRestore.mockReturnValue(new Promise((done) => { resolve = done; }));
     await pick();
@@ -76,6 +80,47 @@ describe("GetStudyMaterialCard", () => {
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
     expect(mocks.exitForRestore).toHaveBeenCalledOnce();
+  });
+
+
+  it("shows elapsed seconds while opening the picked file and stops when ready", async () => {
+    let resolve!: (value: typeof info) => void;
+    mocks.importPickedBackup.mockReturnValue(new Promise((done) => { resolve = done; }));
+    vi.useFakeTimers();
+    render(<GetStudyMaterialCard />);
+    fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+    await act(async () => {});
+    expect(mocks.importPickedBackup).toHaveBeenCalledOnce();
+    expect(screen.getByRole("status").textContent).toBe("Opening your file… (0 s)");
+    expect(screen.getByRole("button", { name: "Opening…" }).hasAttribute("disabled")).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+    expect(screen.getByRole("status").textContent).toBe("Opening your file… (25 s)");
+    await act(async () => { resolve(info); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("on iOS shows copying seconds until Ok, then All set with no buttons or exit", async () => {
+    let resolve!: (value: typeof info) => void;
+    mocks.stageCompleteRestore.mockReturnValue(new Promise((done) => { resolve = done; }));
+    await pick();
+    vi.useFakeTimers();
+    confirm();
+    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. (0 s)");
+    expect(screen.getByRole("button", { name: "Not now" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: "Replace what's on this phone" }).hasAttribute("disabled")).toBe(true);
+    confirm();
+    expect(mocks.stageCompleteRestore).toHaveBeenCalledExactlyOnceWith(info.path);
+    await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. (25 s)");
+    expect(screen.queryByRole("heading", { name: "All set" })).toBeNull();
+    await act(async () => { resolve(info); });
+    expect(screen.getByRole("heading", { name: "All set" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Close Her Flight Deck (swipe it away) and open it again to see your study material.");
+    expect(screen.queryByRole("button")).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+    expect(mocks.exitForRestore).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("shows an inspection error without staging or exiting", async () => {
@@ -95,6 +140,11 @@ describe("GetStudyMaterialCard", () => {
     expect(screen.getByText(/From your Mac/)).toBeTruthy();
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     expect(screen.queryByText(/All set/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Not now" }).hasAttribute("disabled")).toBe(false);
+    expect(screen.queryByRole("status")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    await waitFor(() => expect(screen.queryByText(/From your Mac/)).toBeNull());
+    expect(mocks.discardIncomingBackup).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -112,7 +162,7 @@ describe("GetStudyMaterialCard", () => {
     expect(screen.getByText("Nothing on this phone will be lost yet.")).toBeTruthy();
     const previewText = document.body.textContent;
     confirm();
-    await screen.findByText(/All set/);
+    await screen.findByRole("heading", { name: "All set" });
     const copy = `${previewText} ${document.body.textContent}`.toLowerCase();
     for (const word of ["sync", "manifest", "archive", "restart"]) expect(copy).not.toContain(word);
   });
