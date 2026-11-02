@@ -12,7 +12,7 @@ import { isIOS } from "@/services/platform";
 function activitySentence(activity: ActivitySummary): string {
   const { latestReviewAt, reviewsLast7Days, attemptsLast7Days } = activity;
   if (!latestReviewAt && reviewsLast7Days === 0 && attemptsLast7Days === 0) {
-    return "Nothing on this phone will be lost yet.";
+    return "Nothing changes on this phone until you tap Replace.";
   }
   const date = latestReviewAt ? new Date(latestReviewAt) : null;
   const last = date && !Number.isNaN(date.getTime())

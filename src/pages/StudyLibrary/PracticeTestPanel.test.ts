@@ -167,7 +167,7 @@ describe("PracticeTestPanel", () => {
     await screen.findByText("Correct");
     fireEvent.click(screen.getByRole("button", {name:"Continue"}));
     const heading = screen.getByRole("heading", {name:"Question 2 of 2"});
-    expect(document.activeElement).toBe(heading);
+    await waitFor(() => expect(document.activeElement).toBe(heading));
     const input = document.createElement("input");
     heading.parentElement!.append(input);
     input.focus();

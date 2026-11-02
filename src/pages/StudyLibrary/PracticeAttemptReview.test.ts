@@ -1486,7 +1486,7 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
     // Dialog closes and unmounts on success
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Add a card" })).toBeNull());
     expect(committedOperationId).toBeTruthy();
-    expect(document.activeElement).toBe(makeCardBtn);
+    await waitFor(() => expect(document.activeElement).toBe(makeCardBtn));
 
     // Ordinary data refresh does not steal focus
     makeCardBtn.blur();

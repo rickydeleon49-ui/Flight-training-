@@ -50,7 +50,7 @@ describe("GetStudyMaterialCard", () => {
     await pick();
     expect(screen.getByText(/From your Mac/).textContent).toBe(`From your Mac · ${formatBackupDate(info.createdAt)} · 2 KB · 4 files`);
     expect(screen.getByText(/Your last card review/).textContent).toContain("2 reviews and 3 tests this week will be replaced.");
-    expect(screen.queryByText(/Nothing on this phone/)).toBeNull();
+    expect(screen.queryByText(/Nothing changes on this phone/)).toBeNull();
     expect(mocks.importPickedBackup).toHaveBeenCalledWith("/picked/material.hfdbackup");
   });
 
@@ -152,14 +152,14 @@ describe("GetStudyMaterialCard", () => {
   ])("never promises no loss for existing activity (%s, %s, %s)", async (latestReviewAt, reviewsLast7Days, attemptsLast7Days) => {
     mocks.phoneActivitySummary.mockResolvedValue({ latestReviewAt, reviewsLast7Days, attemptsLast7Days });
     await pick();
-    expect(screen.queryByText(/Nothing on this phone/)).toBeNull();
+    expect(screen.queryByText(/Nothing changes on this phone/)).toBeNull();
     expect(screen.getByText(/will be replaced/)).toBeTruthy();
   });
 
   it("uses plain words throughout the preview and final sentence", async () => {
     mocks.phoneActivitySummary.mockResolvedValue({ latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 });
     await pick();
-    expect(screen.getByText("Nothing on this phone will be lost yet.")).toBeTruthy();
+    expect(screen.getByText("Nothing changes on this phone until you tap Replace.")).toBeTruthy();
     const previewText = document.body.textContent;
     confirm();
     await screen.findByRole("heading", { name: "All set" });
