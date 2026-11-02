@@ -10,6 +10,7 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
+import { ReadAloudButton } from "@/components/ReadAloudButton";
 import type { AiStudySet, CardFlagReason, CardRating, CardReviewItemState, CardReviewSnapshotItem } from "@/domain/types";
 import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { nextLocalMidnightUtc, shortLocalDay } from "@/logic/localDay";
@@ -514,6 +515,7 @@ function SessionView({
           {review.revealed ? <span className="card-review__answer">{item.back}</span> : null}
         </div>
       )}
+      <div><ReadAloudButton key={item.itemId} text={item.front} /></div>
       {review.revealed && visualReady ? (
         <>
           <p className="tiny dim">{RATING_NOT_A_SCORE}</p>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button, Checkbox, Dialog, Field, TextArea } from "@/components/ui";
+import { ReadAloudButton } from "@/components/ReadAloudButton";
 import type { OralScenario } from "@/data/oralScenarios";
 import type { StudyMaterial } from "@/domain/types";
 import { ORAL_MAX_ANSWER, oralNoteDraft, oralQuestionText, type OralText } from "@/logic/oralPractice";
@@ -119,6 +120,7 @@ export function OralPracticeDialog({
         <p className="wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
           {scenario.prompt}
         </p>
+        {open ? <div><ReadAloudButton text={scenario.prompt} /></div> : null}
         {scenario.assumptions.trim() ? (
           <p className="small muted wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
             {scenario.assumptions}
@@ -126,14 +128,17 @@ export function OralPracticeDialog({
         ) : null}
 
         {step === "answer" ? (
-          <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points. Your answer is not saved.">
-            <TextArea
-              rows={6}
-              maxLength={ORAL_MAX_ANSWER}
-              value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
-            />
-          </Field>
+          <div className="stack stack--1">
+            <Field label="Your answer (optional)" hint="Or answer out loud to yourself, then show the points. Your answer is not saved.">
+              <TextArea
+                rows={6}
+                maxLength={ORAL_MAX_ANSWER}
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+              />
+            </Field>
+            <p className="tiny muted">Tip: you can speak your answer with your keyboard's microphone.</p>
+          </div>
         ) : (
           <div className="oral-practice__reveal" aria-live="polite">
             {answer.trim() ? (

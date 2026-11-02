@@ -17,6 +17,7 @@ import * as documents from "@/services/documents";
 import { MaterialDetail } from "./MaterialDetail";
 import { CardReviewPanel } from "./CardReviewPanel";
 import { HomeworkCardRun } from "./HomeworkCardRun";
+import { mockSpeechSynthesis } from "@/testing/mockSpeechSynthesis";
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 const bytes = readFileSync("src/testing/fixtures/visual/practice-panel.png");
@@ -40,6 +41,7 @@ afterEach(async () => {
   cleanup();
   await new Promise((r) => setTimeout(r, 0));
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   db.close();
 });
 const mount = () =>
@@ -112,6 +114,25 @@ async function seedManualSet(
   });
   return repositories;
 }
+
+it("reads only the picture card question, including after revealing the label", async () => {
+  const { speak, cancel } = mockSpeechSynthesis();
+  await seedManualSet([{ front: "Which fictional label?", back: "Secret synthetic answer", picture: true }]);
+  const view = mount();
+  fireEvent.click(await screen.findByRole("button", { name: /^(Review \d+ cards?|Start \d+ new cards?)$/ }));
+  const reveal = await screen.findByRole("button", { name: /Covered label 1.*Reveal label/ });
+  fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe("Which fictional label?");
+  expect(screen.queryByText("Secret synthetic answer")).toBeNull();
+  fireEvent.click(reveal);
+  expect(await screen.findByText("Secret synthetic answer")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+  fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe("Which fictional label?");
+  cancel.mockClear();
+  view.unmount();
+  expect(cancel).toHaveBeenCalled();
+});
 
 it("lists saved picture cards beside their creation path and edits the original index in a mixed set", async () => {
   await seedManualSet([

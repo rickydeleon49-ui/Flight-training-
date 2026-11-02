@@ -19,6 +19,7 @@ import * as localDay from "@/logic/localDay";
 import * as documentService from "@/services/documents";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider } from "@/state/AppDataContext";
+import { mockSpeechSynthesis } from "@/testing/mockSpeechSynthesis";
 
 import { MaterialDetail } from "./MaterialDetail";
 import { CardReviewPanel } from "./CardReviewPanel";
@@ -146,6 +147,36 @@ afterEach(async () => {
   vi.restoreAllMocks();
   db.close();
   expect(unhandled).toEqual([]);
+});
+
+it("reads only card fronts, preserves reveal and rating keys, and stops on navigation and unmount", async () => {
+  const { speak, cancel } = mockSpeechSynthesis();
+  await seed();
+  const view = renderDetail();
+  await reviewHeading();
+  await openSession();
+  const read = sessionRegion().getByRole("button", { name: "Read aloud" });
+  read.focus();
+  for (const key of [" ", "Enter"]) expect(fireEvent.keyDown(read, { key })).toBe(true);
+  fireEvent.click(read, { detail: 0 });
+  expect(speak.mock.lastCall![0].text).toBe(CARDS[0]!.front);
+  expect(sessionRegion().queryByText(CARDS[0]!.back)).toBeNull();
+  fireEvent.keyDown(screen.getByRole("heading", { name: "Card 1 of 3 · new" }), { key: " " });
+  expect(sessionRegion().getByText(CARDS[0]!.back)).toBeTruthy();
+  fireEvent.click(sessionRegion().getByRole("button", { name: "Stop" }));
+  fireEvent.click(sessionRegion().getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe(CARDS[0]!.front);
+  cancel.mockClear();
+  fireEvent.keyDown(sessionRegion().getByRole("button", { name: "Stop" }), { key: "3" });
+  await screen.findByRole("heading", { name: "Card 2 of 3 · new" });
+  expect(cancel).toHaveBeenCalled();
+  fireEvent.click(sessionRegion().getByRole("button", { name: "Read aloud" }));
+  expect(speak.mock.lastCall![0].text).toBe(CARDS[1]!.front);
+  fireEvent.keyDown(screen.getByRole("heading", { name: "Card 2 of 3 · new" }), { key: "Enter" });
+  expect(sessionRegion().getByText(CARDS[1]!.back)).toBeTruthy();
+  cancel.mockClear();
+  view.unmount();
+  expect(cancel).toHaveBeenCalled();
 });
 
 describe("card reviews in MaterialDetail", () => {
