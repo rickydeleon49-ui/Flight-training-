@@ -169,6 +169,8 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   fireEvent.click(start);
   await waitFor(() => expect(screen.getByRole("status", {name:"Practice progress"}).textContent).toBe("Question 1 of 1"));
   expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
+  await waitFor(async () => expect((await repos.practiceSessions.getCurrentAttempt("tips"))?.responses).toHaveLength(0));
+  expect(screen.getByRole("status", { name: "Practice progress" }).textContent).toBe("Question 1 of 1");
   const question = await screen.findByRole("heading", { name: "Question 1 of 1" });
   pick("Notes"); pick("Study");
   expect(await screen.findByRole("heading", { name: "Question 1 of 1" })).toBe(question);
@@ -190,6 +192,13 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   const history = await screen.findByRole("link", { name: "View practice history (1)" });
   const reopenedStart = await screen.findByRole("button", { name: "Start practice test" });
   expect(history.parentElement).toBe(reopenedStart.parentElement);
+  expect(history.parentElement!.contains(link)).toBe(true);
+  fireEvent.click(reopenedStart);
+  await screen.findByRole("heading", { name: "Question 1 of 1" });
+  expect(screen.getByRole("link", { name: "View practice history (1)" }).parentElement!.contains(
+    screen.getByRole("link", { name: "Short saved review" }),
+  )).toBe(true);
+  expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
   expect(screen.getAllByRole("link", { name: /View practice history/ })).toHaveLength(1);
   expect(history.getAttribute("href")).toBe("/study/history/tips");
 }, 40_000);

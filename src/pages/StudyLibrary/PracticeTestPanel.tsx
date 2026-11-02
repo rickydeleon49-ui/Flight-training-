@@ -24,6 +24,7 @@ import type {
   PracticeTestItem,
   PracticeTestVersion,
 } from "@/domain/types";
+import { formatLongDate, localDayOf } from "@/lib/dates";
 import { attemptReviewPath } from "@/logic/practiceAttemptReview";
 import { AppDataContext } from "@/state/AppDataContext";
 import "./studyLibrary.css";
@@ -547,6 +548,10 @@ export function PracticeTestPanel({
           freshVersionId: attempt && content(frozen.items) !== content(active.items) ? active.version.id : null,
           attempt,
         });
+        // Only the opening snapshot marks a resume. Starting or answering in this
+        // panel must not turn a fresh attempt into a resumed one.
+        // An attempt with no saved answers reads as a fresh start, even if the
+        // panel re-opened (e.g. after a refresh right after Start).
         if (reason === "initial") resumedAttempt.current = attempt && attempt.responses.length > 0 ? attempt.attemptId : null;
         if (refreshedNotice) {
           // Only reachable once the authoritative read really succeeded.
@@ -1315,10 +1320,11 @@ export function PracticeTestPanel({
   }
 
   if (state.attempt && state.freshVersionId && state.attempt.versionId !== state.freshVersionId && continuedOlderAttempt !== state.attempt.attemptId) {
+    const startedDay = localDayOf(state.attempt.startedAt);
     return <div className="stack stack--4">
       {notices}
-      <p>The questions have changed since you started this attempt.</p>
-      <p className="small muted">Starting a fresh test will close your unfinished test and keep its saved answers.</p>
+      <p>You have an unfinished attempt{startedDay ? ` from ${formatLongDate(startedDay)}` : ""}. The questions have changed since you started it.</p>
+      <p className="small muted">Press Continue earlier attempt to keep going, or Start a fresh test to end it and start fresh. Ending keeps your earlier answers in history.</p>
       <div><Button variant="primary" disabled={!canEdit} onClick={() => {
         if (!state.attempt || !state.freshVersionId) return;
         void beginIntent({ payload: {
