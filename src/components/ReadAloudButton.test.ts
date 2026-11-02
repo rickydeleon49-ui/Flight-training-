@@ -17,8 +17,13 @@ it("shows Stop while reading, resets on completion or error, and stops on click"
   const { cancel, speak } = mockSpeechSynthesis();
   render(h(ReadAloudButton, { text: "Question" }));
   for (const event of ["end", "error"] as const) {
-    fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
-    expect(screen.getByRole("button", { name: "Stop" })).toBeTruthy();
+    const read = screen.getByRole("button", { name: "Read aloud" });
+    expect(read.classList.contains("button--secondary")).toBe(true);
+    expect(read.classList.contains("button--small")).toBe(true);
+    fireEvent.click(read);
+    const stop = screen.getByRole("button", { name: "Stop" });
+    expect(stop.classList.contains("button--secondary")).toBe(true);
+    expect(stop.classList.contains("button--small")).toBe(true);
     const utterance = speak.mock.lastCall![0];
     // The lightweight mock exposes the native callback properties.
     act(() => utterance[event === "end" ? "onend" : "onerror"]?.call(utterance, {} as SpeechSynthesisEvent & SpeechSynthesisErrorEvent));

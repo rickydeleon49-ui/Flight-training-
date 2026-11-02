@@ -55,6 +55,11 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   await seed("Scenario Bravo");
   const view = mount();
   await practise("Scenario Alpha", "Private fictional answer");
+  const answerBox = screen.getByLabelText(/Your answer \(optional\)/);
+  expect(screen.getAllByText("Your answer isn't saved after you close this.")).toHaveLength(1);
+  expect(answerBox.closest(".stack")?.parentElement?.textContent).toContain("Your answer isn't saved after you close this.");
+  expect(screen.getByRole("button", { name: "Read aloud" }).classList.contains("button--secondary")).toBe(true);
+  expect(screen.getByRole("button", { name: "Read aloud" }).classList.contains("button--small")).toBe(true);
   expect(screen.getAllByText("Tip: you can speak your answer with your keyboard's microphone.")).toHaveLength(1);
   fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
   expect(speak.mock.lastCall![0].text).toBe("Scenario Alpha");

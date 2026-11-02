@@ -108,7 +108,7 @@ const MATERIAL_PAGE_SIZE = 100;
 export const REFERENCE_SHELF_ID = "references";
 const LIBRARY_TOOLS = [
   { id: REFERENCE_SHELF_ID, label: "FAA handbooks" },
-  { id: "acs-lookup", label: "ACS lookup" },
+  { id: "acs-lookup", label: "Missed-topic codes" },
 ];
 const SHELF_STATES = ["open", "closed"] as const;
 
@@ -322,7 +322,7 @@ export function StudyLibrary() {
         }
       />
 
-      <nav aria-label="Tools" className="row row--wrap small">
+      <nav aria-label="Tools" className="row row--wrap">
         <span className="muted">Tools:</span>
         {LIBRARY_TOOLS.map(tool => (
           <Link key={tool.id} to={`/study#${tool.id}`} onClick={openShelf}>{tool.label}</Link>

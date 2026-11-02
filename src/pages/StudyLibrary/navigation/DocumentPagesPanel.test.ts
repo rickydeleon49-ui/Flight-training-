@@ -172,7 +172,8 @@ describe("the pages panel", () => {
     expect(within(scope).queryByRole("checkbox", { name: /I've read this page/ })).toBeNull();
 
     // Kept: the page count line and Check pages with its tip.
-    await within(scope).findByText("This file's pages haven't been checked yet. Use Check pages to count them.");
+    const prerequisite = await within(scope).findByText("Check this file's pages first:");
+    expect(within(prerequisite.parentElement!).getByRole("button", { name: "Check pages" })).toBeTruthy();
     fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
     await within(scope).findByText("This PDF has 50 pages.");
     expect(within(scope).getByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
@@ -671,6 +672,7 @@ it("opens the captured PNG, keeps it on Cancel, and saves a PDF-owned card with 
   expect(await db.select("SELECT id FROM study_materials WHERE id=?", [capture.materialId])).toHaveLength(1);
   expect(await db.select("SELECT * FROM visual_card_regions")).toHaveLength(0);
   expect(await db.select("SELECT * FROM study_page_source_bindings")).toHaveLength(0);
+  expect(within(scope).queryByText("Picture card saved — find it under Your picture cards.")).toBeNull();
   // Reopening is a fresh capture; the earlier visible picture stays.
   make.mockResolvedValueOnce(capture);
   fireEvent.click(button);
@@ -680,6 +682,9 @@ it("opens the captured PNG, keeps it on Cancel, and saves a PDF-owned card with 
   fireEvent.change(within(dialog).getByLabelText("Answer"), { target: { value: "Bravo" } });
   fireEvent.click(within(dialog).getByRole("button", { name: "Save picture card" }));
   await waitFor(() => expect(screen.queryByRole("dialog", { name: "Cover a label" })).toBeNull());
+  const confirmation = await within(scope).findByText("Picture card saved — find it under Your picture cards.");
+  expect(confirmation.getAttribute("role")).toBe("status");
+  expect(confirmation.getAttribute("aria-live")).toBe("polite");
   expect(await db.select("SELECT owner_material_id,image_material_id FROM visual_card_regions")).toEqual([{ owner_material_id:M,image_material_id:capture.materialId }]);
   const saved = await createRepositories(db).documents.readStudySetForEdit(M);
   expect(saved!.set.flashcards[0]).toMatchObject({ sourcePage:3, pageSource: { materialId:M, contentSha256:A, printedLabel:"iv" } });
@@ -731,6 +736,7 @@ it("keeps the capture but refuses a page note changed before Save", async () => 
   fireEvent.change(within(dialog).getByLabelText("Answer"), { target: { value: "Bravo" } });
   fireEvent.click(within(dialog).getByRole("button", { name: "Save picture card" }));
   expect(await within(dialog).findByText("This PDF, page note or picture changed. Nothing was saved. Close this and check the page first.")).toBeTruthy();
+  expect(within(scope).queryByText("Picture card saved — find it under Your picture cards.")).toBeNull();
   expect(await db.select("SELECT * FROM visual_card_regions")).toHaveLength(0);
   expect(await db.select("SELECT * FROM study_page_source_bindings")).toHaveLength(0);
   expect(await db.select("SELECT id FROM study_materials WHERE id=?", [capture.materialId])).toHaveLength(1);
