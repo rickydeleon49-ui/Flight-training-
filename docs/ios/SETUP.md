@@ -154,25 +154,17 @@ ability to compile or run it. Two plugin surfaces needed:
 
 ## Step 8 — receiving files from Files/AirDrop/share
 
-Configure `CFBundleDocumentTypes` and a `UTExportedTypeDeclarations` entry
-for the `.hfdbackup` extension in the generated Xcode project's
-`Info.plist` (via Tauri's iOS config once `gen/apple/` exists — do not
-hand-edit a generated `Info.plist` directly if Tauri provides a
-config-driven way to set this, to avoid it being overwritten on the next
-`tauri ios init`/build). Wire the resulting open-URL entry point to copy
-the received file into app-owned temporary storage immediately (per
-`docs/ios/ARCHITECTURE.md` §5.1) before handing it to the existing
-`inspect_complete_backup` / `stage_complete_restore` commands, which need
-no changes themselves to accept it.
+Phase 1 uses the in-app picker: in Settings, tap **Get my study material**
+and choose the `.hfdbackup` file saved from the Mac. The Files “Open in”
+entry is deferred because it needs a deep-link plugin. The selected file is
+copied into app-owned `.incoming` storage before it is checked and previewed.
 
-## Step 9 — restore-on-launch instead of restart-on-demand
+## Step 9 — restore on next launch
 
-Implement the change described in `docs/ios/ARCHITECTURE.md` §7: check for
-`.restore-pending/` unconditionally in `setup()`, on every cold launch,
-the same way `backup_if_upgraded` already checks `last-run-version.txt`
-every cold launch. Update the frontend restore-confirmation copy for iOS
-to say "close and reopen the app" rather than offering a restart button
-that has nothing to call.
+The restore applies on the next cold launch via `handle_startup_restore`.
+After confirmation, the phone UI stages the checked copy, explains that
+Her Flight Deck will close, and exits the app. Open it again to use the
+material. Simulator and device verification of this flow is still required.
 
 ## Step 10 — device testing, signing, TestFlight
 

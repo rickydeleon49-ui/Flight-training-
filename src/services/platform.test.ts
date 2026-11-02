@@ -9,7 +9,7 @@ function stub(userAgent: string, maxTouchPoints = 0) {
   vi.stubGlobal("navigator", { userAgent, maxTouchPoints });
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); mocks.isTauri.mockReturnValue(true); });
 
 describe("platform", () => {
   it("the send card is off until the iPhone app is ready", () => {
@@ -39,6 +39,13 @@ describe("platform", () => {
     stub("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 5);
     expect(isIOS()).toBe(true);
     expect(isMacOS()).toBe(false);
+  });
+
+  it("does not offer phone import in an iOS browser", () => {
+    stub("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", 5);
+    mocks.isTauri.mockReturnValue(false);
+    expect(deviceCan().getStudyMaterial).toBe(false);
+    expect(deviceCan().sendToIphone).toBe(false);
   });
 
   it("recognises Windows as neither", () => {

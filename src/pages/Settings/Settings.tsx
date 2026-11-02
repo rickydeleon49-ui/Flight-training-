@@ -92,6 +92,7 @@ import {
 import { useAppData } from "@/state/AppDataContext";
 import { isMacOS, isWindowsOS } from "@/lib/platform";
 
+import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
 import { deviceCan } from "@/services/platform";
 
@@ -1038,6 +1039,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
+        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : (
         <Card>
           <CardHeader
             title="Your data"
@@ -1187,6 +1189,8 @@ export function Settings() {
           </CardBody>
         </Card>
 
+        )}
+
         {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
 
         <Card>
@@ -1223,6 +1227,7 @@ export function Settings() {
           </CardBody>
         </Card>
 
+        {deviceCan().generate ? (
         <Card>
           <CardHeader
             title="AI provider"
@@ -1352,6 +1357,7 @@ export function Settings() {
             </ProviderControls>
           </CardBody>
         </Card>
+        ) : null}
       </div>
 
       <ConfirmDialog
