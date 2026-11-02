@@ -232,25 +232,32 @@ it("keeps a table-backed FAA copy on the shelf and out of ordinary library cards
   expect(screen.queryByRole("link", { name: /^Private Pilot Airplane ACS$/ })).toBeNull();
 });
 
-it.each(["/study", "/study?tab=howto"])("opens and scrolls to the FAA shelf from the top link over a remembered search from %s", async (path) => {
+it.each([
+  ["/study", "FAA handbooks", "references"],
+  ["/study?tab=howto", "FAA handbooks", "references"],
+  ["/study", "ACS lookup", "acs-lookup"],
+  ["/study?tab=howto", "ACS lookup", "acs-lookup"],
+])("opens and scrolls from %s via %s over a remembered search", async (path, name, targetId) => {
   sessionStorage.setItem("her-flight-deck.view.library.search", JSON.stringify("Material 149"));
   const scroll = vi.fn();
   const original = HTMLElement.prototype.scrollIntoView;
   HTMLElement.prototype.scrollIntoView = scroll;
   try {
     render(h(MemoryRouter, {initialEntries:[path]}, h(StudyLibrary)));
-    const link = screen.getByRole("link", {name:"FAA handbooks and ACS lookup ↓"});
+    const tools = screen.getByRole("navigation", { name: "Tools" });
+    expect(within(tools).getAllByRole("link").map(link => link.textContent)).toEqual(["FAA handbooks", "ACS lookup"]);
+    const link = within(tools).getByRole("link", { name });
     fireEvent.click(link);
     const shelf = document.getElementById("references") as HTMLDetailsElement;
     expect(shelf.open).toBe(true);
     expect((screen.getByRole("textbox", {name:"Search your library"}) as HTMLInputElement).value).toBe("");
-    expect(scroll.mock.instances).toContain(shelf);
+    expect(scroll.mock.instances).toContain(document.getElementById(targetId));
     shelf.open = false;
     fireEvent(shelf, new Event("toggle"));
     scroll.mockClear();
     fireEvent.click(link);
     expect(shelf.open).toBe(true);
-    expect(scroll.mock.instances).toContain(shelf);
+    expect(scroll.mock.instances).toContain(document.getElementById(targetId));
   } finally { HTMLElement.prototype.scrollIntoView = original; }
 });
 
@@ -260,6 +267,7 @@ it("LIBRARY-CALM-01 shows her materials first and folds FAA references and the A
   expect(shelf.tagName).toBe("DETAILS");
   expect(shelf.open).toBe(false);
   const grid = screen.getByText("Material 0").closest(".material-grid")!;
+  expect(grid.compareDocumentPosition(screen.getByRole("button", { name: "Practice by checkride topic" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(grid.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(shelf.contains(screen.getByRole("heading", { name: "FAA references" }))).toBe(true);
   expect(shelf.contains(screen.getByText("Find study materials for missed topics"))).toBe(true);
