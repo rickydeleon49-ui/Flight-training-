@@ -215,12 +215,14 @@ describe("PracticeTestPanel", () => {
     render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
     const fresh = await screen.findByRole("button", { name: "Start a fresh test" });
     expect(fresh.classList.contains("button--primary")).toBe(true);
-    expect(screen.getByText("Starting a fresh test will close your unfinished test and keep its saved answers.")).toBeTruthy();
+    expect(screen.getByText("Press Continue earlier attempt to keep going, or Start a fresh test to end it and start fresh. Ending keeps your earlier answers in history.")).toBeTruthy();
+    expect(screen.getByText(/You have an unfinished attempt from .* The questions have changed since you started it\./)).toBeTruthy();
     expect(screen.queryByRole("radio")).toBeNull();
     expect(save).not.toHaveBeenCalled();
     expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("in_progress");
     fireEvent.click(fresh);
     await screen.findByText("Question 1 of 2");
+    expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
     expect(screen.getAllByRole("radio")).toHaveLength(3); // The current three answer choices.
     expect(screen.queryByText("Older fourth choice")).toBeNull();
     expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("abandoned");
