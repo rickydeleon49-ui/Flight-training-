@@ -112,7 +112,7 @@ fn check_requested_range(first: u32, last: u32) -> Result<(), String> {
     Ok(())
 }
 
-fn write_page_range_from_document(
+pub(crate) fn write_page_range_from_document(
     source: &Document,
     destination: &Path,
     first: u32,

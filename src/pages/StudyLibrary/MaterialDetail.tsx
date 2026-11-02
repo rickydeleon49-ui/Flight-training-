@@ -2316,7 +2316,7 @@ function MaterialDetailPage() {
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this material?"
-        message={`Its notes, tags and links are removed. The file is deleted from this application's private storage. This also removes its card review history.${
+        message={`Its notes, tags and links are removed. The file is deleted from this application's private storage. This also removes its card review history.${isPdf ? " Page pictures stay in your library until you delete them." : ""}${
           visualFlashcards.length
             ? ` Its ${visualFlashcards.length} picture card${visualFlashcards.length === 1 ? " is" : "s are"} removed too.`
             : ""

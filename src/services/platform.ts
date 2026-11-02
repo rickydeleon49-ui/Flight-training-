@@ -23,6 +23,7 @@ export function isMacOS(): boolean {
 
 export function deviceCan() {
   return {
+    renderPdfPage: isTauri() && isMacOS(),
     sendToIphone: isTauri() && isMacOS() && IPHONE_SEND_ENABLED,
     getStudyMaterial: isTauri() && isIOS(),
     importFiles: !isIOS(),

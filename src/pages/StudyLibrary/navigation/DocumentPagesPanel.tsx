@@ -32,6 +32,9 @@ import { useOptionalAppData } from "@/state/AppDataContext";
 import { savedPlaceNote } from "@/logic/navigation";
 import type { NavigationStatus } from "@/state/navigation/controller";
 import { navigationMessage, useMaterialNavigation, useNavigationController } from "@/state/navigation/useDocumentNavigation";
+import { deviceCan } from "@/services/platform";
+import { renderPdfPage, type PageCapture } from "@/services/visualPdf";
+import { VisualCardEditor } from "../VisualCardEditor";
 import { StudySetEditor } from "../StudySetEditor";
 import { PracticeNoteQuestion } from "../PracticeTestEditing";
 import type { NoteQuestionSeed } from "@/data/practiceAuthoringDraft";
@@ -113,6 +116,44 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   // "Make a question" opens the practice editor with one question from the note.
   const [questionDraft, setQuestionDraft] = useState<NoteQuestionSeed | null>(null);
   const [questionAdded, setQuestionAdded] = useState(false);
+  const [pictureDraft, setPictureDraft] = useState<{ capture: PageCapture; bookmark: NavigationBookmark } | null>(null);
+  const [pictureSeconds, setPictureSeconds] = useState<number | null>(null);
+  const picturePending = useRef(false);
+  const pictureOwner = useRef<object | null>(null);
+  useLayoutEffect(() => {
+    const owner = {};
+    pictureOwner.current = owner;
+    picturePending.current = false;
+    setPictureDraft(null);
+    setPictureSeconds(null);
+    return () => { pictureOwner.current = null; };
+  }, [material.id, app?.repositories]);
+  useEffect(() => {
+    if (pictureSeconds === null) return;
+    const timer = window.setInterval(() => setPictureSeconds(n => n === null ? null : n + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [pictureSeconds === null]);
+  const makePicture = async (bookmark: NavigationBookmark) => {
+    if (picturePending.current || !app?.repositories) return;
+    const owner = pictureOwner.current;
+    picturePending.current = true;
+    setActionError(null);
+    setPictureSeconds(0);
+    try {
+      // Refresh the library even when the editor is cancelled: the PNG is a
+      // normal visible material, already saved by the native command.
+      const capture = await renderPdfPage(material.id, bookmark.physicalPage);
+      await app.refresh();
+      if (pictureOwner.current === owner && capture) setPictureDraft({ capture, bookmark: { ...bookmark } });
+    } catch (error) {
+      if (pictureOwner.current === owner) setActionError(typeof error === "string" ? error : error instanceof Error ? error.message : "This page picture couldn't be made. Try again.");
+    } finally {
+      if (pictureOwner.current === owner) {
+        picturePending.current = false;
+        setPictureSeconds(null);
+      }
+    }
+  };
   const cardEpoch = useRef(0);
   useEffect(() => {
     cardEpoch.current++;
@@ -333,6 +374,8 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             </div>
           ) : null}
 
+          {pictureSeconds !== null ? <p className="tiny" role="status">Making the picture… ({pictureSeconds} s)</p> : null}
+
           {actionError || nav.error ? (
             <p className="field__error" role="alert">
               {actionError ?? nav.error}
@@ -377,6 +420,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                         </Button>
                       ) : null}
                       <Button size="small" data-material-make-card onClick={() => void makeCard(bookmark)}>Make a card</Button>
+                      {deviceCan().renderPdfPage ? <Button size="small" disabled={missing || pictureSeconds !== null || pictureDraft !== null} onClick={() => void makePicture(bookmark)}>Make a picture card from this page</Button> : null}
                       <Button size="small" onClick={() => void makeQuestion(bookmark)}>Make a question</Button>
                       <Button size="small" variant="danger" className="destructive-action" onClick={() => setRemoving(bookmark)} aria-label={`Remove bookmark ${bookmark.title}`}>
                         Remove
@@ -404,6 +448,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             }}
           />
         ) : null}
+        {pictureDraft ? <VisualCardEditor key={pictureDraft.capture.materialId} material={material} capture={pictureDraft.capture} bookmark={pictureDraft.bookmark} onClose={() => setPictureDraft(null)} /> : null}
         {cardDraft ? (
           <StudySetEditor
             key={cardDraft.seed.source.id}
