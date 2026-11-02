@@ -191,7 +191,7 @@ describe("PracticeTestPanel", () => {
     render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
     const fresh = await screen.findByRole("button", { name: "Start a fresh test" });
     expect(fresh.classList.contains("button--primary")).toBe(true);
-    expect(screen.getByText("Starting fresh marks the earlier attempt abandoned and keeps its saved answers.")).toBeTruthy();
+    expect(screen.getByText("Starting a fresh test will close your unfinished test and keep its saved answers.")).toBeTruthy();
     expect(screen.queryByRole("radio")).toBeNull();
     expect(save).not.toHaveBeenCalled();
     expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("in_progress");
@@ -209,14 +209,14 @@ describe("PracticeTestPanel", () => {
     render(h(AppDataContext.Provider, { value }, h(PracticeTestPanel, { practiceTest: sampleTest })));
     fireEvent.click(await screen.findByRole("button", { name: "Continue earlier attempt" }));
     expect(await screen.findByText("Older fourth choice")).toBeTruthy();
-    const abandon = screen.getByRole("button", { name: "Abandon attempt" });
+    const abandon = screen.getByRole("button", { name: "Close unfinished test" });
     expect(abandon.classList.contains("button--ghost")).toBe(true);
     fireEvent.click(abandon);
-    const confirm = await screen.findByRole("dialog", { name: "Abandon this practice attempt?" });
+    const confirm = await screen.findByRole("dialog", { name: "Close your unfinished test?" });
     fireEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
     expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("in_progress");
     fireEvent.click(abandon);
-    fireEvent.click(within(screen.getByRole("dialog", { name: "Abandon this practice attempt?" })).getByRole("button", { name: "Abandon attempt" }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Close your unfinished test?" })).getByRole("button", { name: "Close unfinished test" }));
     await waitFor(() => expect(screen.queryByText("Older fourth choice")).toBeNull());
     expect((await repos.practiceSessions.getAttempt(older.attemptId))?.status).toBe("abandoned");
   });
@@ -244,7 +244,7 @@ describe("PracticeTestPanel", () => {
     fireEvent.click(screen.getAllByRole("radio")[0]!);
     const next = await screen.findByRole("button", { name: "Continue" });
     await waitFor(() => expect(next.hasAttribute("disabled")).toBe(false));
-    const abandon = screen.getByRole("button", { name: "Abandon attempt" });
+    const abandon = screen.getByRole("button", { name: "Close unfinished test" });
     expect(next.classList.contains("button--primary")).toBe(true);
     expect(abandon.classList.contains("button--ghost")).toBe(true);
     expect(next.parentElement).not.toBe(abandon.parentElement);

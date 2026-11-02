@@ -1664,15 +1664,6 @@ function MaterialDetailPage() {
                                   : `AI-generated practice test${practiceTest.model ? ` (made with ${geminiModelName(practiceTest.model)})` : ""}. Verify every answer against the source, current FAA material, aircraft documents, and your instructor before relying on it.`}
                           </p>
                         </div>
-                        {completedCount > 0 ? (
-                          <Link
-                            to={`/study/history/${encodeURIComponent(material.id)}`}
-                            className="button button--secondary button--small"
-                            style={{ flexShrink: 0 }}
-                          >
-                            View practice history ({completedCount})
-                          </Link>
-                        ) : null}
                       </div>
 
                       <StudyContentProvenance
@@ -1683,6 +1674,12 @@ function MaterialDetailPage() {
                       />
 
                       <PracticeTestPanel entrySummary
+                        onComplete={retryPracticeMetadata}
+                        historyAction={completedCount > 0 ? (
+                          <Link to={`/study/history/${encodeURIComponent(material.id)}`} className="button button--secondary button--small">
+                            View practice history ({completedCount})
+                          </Link>
+                        ) : null}
                         startHeld={kitDraftsWaiting ? "Save or discard your study kit drafts first, then start the practice test." : undefined}
                         practiceTest={practiceTest}
                         materialId={material.id}

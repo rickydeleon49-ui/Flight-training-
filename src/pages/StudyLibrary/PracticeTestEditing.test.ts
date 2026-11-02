@@ -264,13 +264,13 @@ describe("practice question authoring on the material page", () => {
     const active = (await repos.practiceSessions.getActiveVersion(materialId))!;
     await repos.practiceSessions.saveSessionAction({ action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: active.version.id });
     await open(`/study/${materialId}`);
-    const reason = await screen.findByText(/use Abandon attempt below/);
+    const reason = await screen.findByText(/use Close unfinished test below/);
     const button = screen.getByRole("button", { name: "Edit questions" });
     expect(button.nextElementSibling).toBe(reason);
     expect(button.getAttribute("aria-describedby")).toBe(reason.id);
     expect(reason.className).toBe("small");
     expect(screen.getByRole("button", { name: "Edit questions" })).toHaveProperty("disabled", true);
-    expect(await screen.findByRole("button", { name: "Abandon attempt" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Close unfinished test" })).toBeTruthy();
   });
 
   it("brings an earlier version back without revealing answers in history", async () => {

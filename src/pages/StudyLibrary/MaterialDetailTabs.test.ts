@@ -164,18 +164,22 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   await open();
   const start = await screen.findByRole("button", { name: "Start practice test" });
   expect(start.classList.contains("button--primary")).toBe(true);
-  expect(screen.getByRole("button", { name: "Short saved review" }).hasAttribute("disabled")).toBe(true);
+  expect((await screen.findByRole("button", { name: "Short saved review" })).hasAttribute("disabled")).toBe(true);
+  expect(screen.queryByRole("link", { name: /View practice history/ })).toBeNull();
   fireEvent.click(start);
   await waitFor(() => expect(screen.getByRole("status", {name:"Practice progress"}).textContent).toBe("Question 1 of 1"));
   expect(screen.queryByText(/Resuming your attempt/)).toBeNull();
-  const question = screen.getByRole("heading", { name: "Question 1 of 1" });
+  const question = await screen.findByRole("heading", { name: "Question 1 of 1" });
   pick("Notes"); pick("Study");
-  expect(screen.getByRole("heading", { name: "Question 1 of 1" })).toBe(question);
-  fireEvent.click(screen.getAllByRole("radio")[1]!);
+  expect(await screen.findByRole("heading", { name: "Question 1 of 1" })).toBe(question);
+  fireEvent.click((await screen.findAllByRole("radio"))[1]!);
   const score = await screen.findByRole("button", { name: "See score" });
   await waitFor(() => expect(score.hasAttribute("disabled")).toBe(false));
   fireEvent.click(score);
   const completedLink = await screen.findByRole("link", { name: "Short saved review" });
+  const scoreHistory = await screen.findByRole("link", { name: "View practice history (1)" });
+  expect(scoreHistory.parentElement).toBe((await screen.findByRole("button", { name: "Retake this test" })).parentElement);
+  expect(screen.getAllByRole("link", { name: /View practice history/ })).toHaveLength(1);
   const [attempt] = await repos.practiceSessions.getCompletedHistory("tips", 1);
   const path = `/study/history/tips/${attempt!.attemptId}?review=missed`;
   expect(completedLink.getAttribute("href")).toBe(`#${path}`);
@@ -183,7 +187,13 @@ it("starts an acknowledged practice attempt, keeps it through tabs and links its
   await open();
   const link = await screen.findByRole("link", { name: "Short saved review" });
   expect(link.getAttribute("href")).toBe(path);
-});
+  const history = await screen.findByRole("link", { name: "View practice history (1)" });
+  const reopenedStart = await screen.findByRole("button", { name: "Start practice test" });
+  expect(history.parentElement).toBe(reopenedStart.parentElement);
+  expect(screen.getAllByRole("link", { name: /View practice history/ })).toHaveLength(1);
+  expect(history.getAttribute("href")).toBe("/study/history/tips");
+}, 40_000);
+
 it("offers the existing manual guide editor for an empty material and keeps an empty new guide editable", async () => {
   await createRepositories(db).documents.update("tips", { filePath: null, originalFileName: null });
   await open();

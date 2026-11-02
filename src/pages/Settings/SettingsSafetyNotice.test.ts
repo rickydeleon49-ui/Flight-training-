@@ -60,3 +60,21 @@ it("explains backup waiting and hides raw write errors", async () => {
   expect(await screen.findByText("That folder can't be saved to. Choose another folder, like Documents.")).toBeTruthy();
   expect(screen.queryByText(/os error 30/)).toBeNull();
 });
+
+it("keeps the backup advice in three paragraphs with the folder explanation beside its path and button", async () => {
+  render(h(AppDataProvider, null, h(MemoryRouter, null, h(Ready))));
+  const path = await screen.findByText("/fictional/data");
+  const card = screen.getByRole("heading", { name: "Your data" }).closest("section")!;
+  const folder = path.parentElement!.parentElement!;
+  expect(folder.textContent).toContain("Open folder shows the app’s private files at this path.");
+  expect(folder.querySelector("button")?.textContent).toBe("Open folder");
+  const advice = Array.from(card.querySelectorAll(".card__body p:not([role])"));
+  expect(advice).toHaveLength(3);
+  const text = card.textContent!;
+  expect(text.match(/another drive or in a cloud folder/g)).toHaveLength(1);
+  expect(text).toContain("uploaded documents. Saving it sends nothing online.");
+  expect(text).toContain("Restore checks the file and asks you first, keeps a copy of your current data, then restarts with the saved backup.");
+  expect(text).toContain("Before a new version runs");
+  expect(text).toContain("The 10 newest copies are kept.");
+  expect(text).toContain("These copies leave out uploaded files");
+});

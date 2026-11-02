@@ -618,7 +618,7 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
     });
     expect({
       staleFeedback: !!screen.queryByRole("region", { name: "Question result" }),
-      staleAbandon: !!screen.queryByRole("button", { name: "Abandon attempt" }),
+      staleAbandon: !!screen.queryByRole("button", { name: "Close unfinished test" }),
     }).toEqual({ staleFeedback: false, staleAbandon: false });
   });
 
@@ -658,13 +658,13 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Retry refresh" }));
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Abandon attempt" })).toBeNull(),
+      expect(screen.queryByRole("button", { name: "Close unfinished test" })).toBeNull(),
     );
 
     expect({
       refreshError: !!screen.queryByText(/refreshing status failed/),
       staleFeedback: !!screen.queryByRole("region", { name: "Question result" }),
-      staleAbandon: !!screen.queryByRole("button", { name: "Abandon attempt" }),
+      staleAbandon: !!screen.queryByRole("button", { name: "Close unfinished test" }),
     }).toEqual({ refreshError: false, staleFeedback: false, staleAbandon: false });
     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
   });
@@ -682,12 +682,12 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
     await screen.findByText(/choose the action again/);
     // The reconcile read that follows the refusal is what clears the stale attempt.
     await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Abandon attempt" })).toBeNull(),
+      expect(screen.queryByRole("button", { name: "Close unfinished test" })).toBeNull(),
     );
 
     expect({
       staleFeedback: !!screen.queryByRole("region", { name: "Question result" }),
-      staleAbandon: !!screen.queryByRole("button", { name: "Abandon attempt" }),
+      staleAbandon: !!screen.queryByRole("button", { name: "Close unfinished test" }),
       storedAttempt: await repos.practiceSessions.getCurrentAttempt("conflict-null"),
     }).toEqual({ staleFeedback: false, staleAbandon: false, storedAttempt: null });
     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
@@ -696,14 +696,14 @@ describe("M2UI-R8: null and replaced state reconcile in one place", () => {
   it("[R8] Abandon never keeps pointing at the attempt it closed", async () => {
     await panel(await seed("abandon-null"));
     await answerConfirmed();
-    fireEvent.click(await screen.findByRole("button", { name: "Abandon attempt" }));
-    fireEvent.click(screen.getAllByRole("button", { name: "Abandon attempt" })[1]!);
+    fireEvent.click(await screen.findByRole("button", { name: "Close unfinished test" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Close unfinished test" })[1]!);
 
     // The confirmation dialog is dismissed on click, so settle on the real
     // outcome instead of on text that was already on screen.
     await waitFor(async () => {
       expect(await repos.practiceSessions.getCurrentAttempt("abandon-null")).toBeNull();
-      expect(screen.queryByRole("button", { name: "Abandon attempt" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Close unfinished test" })).toBeNull();
     });
     expect(screen.queryByRole("region", { name: "Question result" })).toBeNull();
     expect(screen.getByText("Question 1 of 2")).toBeTruthy();
