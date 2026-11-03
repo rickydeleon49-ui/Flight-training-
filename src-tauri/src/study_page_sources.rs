@@ -146,10 +146,10 @@ pub fn preview_on(conn: &Connection, root: &Path, material: &str) -> Check<Optio
         return Err(Code::NotFound);
     };
     let Some(path) = path else { return Ok(None) };
-    let Ok(safe) = crate::documents::safe_relative_path(&path) else {
+    let Ok(file) = crate::documents::contained_document_path(&root.join("documents"), &path) else {
         return Ok(None);
     };
-    let bytes = match std::fs::read(root.join("documents").join(safe)) {
+    let bytes = match std::fs::read(file) {
         Ok(bytes) => bytes,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(_) => return Err(Code::StorageError),

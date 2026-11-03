@@ -77,6 +77,13 @@ jobs:
 
       - if: steps.filter.outputs.run_heavy != 'false'
         run: npm ci
+
+      # Public users install this app, so a known high or critical advisory in
+      # a package that ships in the bundle stops the change (PUB-R7).
+      - name: npm dependency advisories (shipped packages)
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: npm audit --omit=dev --audit-level=high
+
       - if: steps.filter.outputs.run_heavy != 'false'
         run: npm test
 
@@ -152,3 +159,12 @@ jobs:
       - name: Third-party notices are complete and current
         if: steps.filter.outputs.run_heavy != 'false'
         run: node scripts/third-party-notices.mjs --check
+
+      # RustSec advisories for every crate in Cargo.lock (PUB-R7). The tool is
+      # built from crates.io with its own lockfile; rust-cache keeps the binary
+      # in ~/.cargo/bin, so warm runs skip the install.
+      - name: Rust dependency advisories
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: |
+          cargo audit --version || cargo install cargo-audit --locked
+          cargo audit --file src-tauri/Cargo.lock

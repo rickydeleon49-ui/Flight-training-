@@ -6402,6 +6402,7 @@ pub async fn create_complete_backup(
     app: AppHandle,
     destination_path: String,
 ) -> Result<CompleteBackupInfo, String> {
+    crate::picked_paths::require_picked(&app, &destination_path)?;
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
         create_consistent_complete_backup_with_retry(
@@ -6863,6 +6864,7 @@ pub async fn inspect_complete_backup(
 ) -> Result<CompleteBackupInfo, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
+        crate::picked_paths::require_picked_or_inside(&app, &root, &source_path)?;
         inspect_archive(
             &root,
             Path::new(&source_path),
@@ -7059,7 +7061,7 @@ fn verify_pending_contents_against_staged_manifest(
 
 const INCOMING_DIR: &str = ".incoming";
 
-fn picked_backup_path(source: &str) -> Result<PathBuf, String> {
+pub(crate) fn picked_backup_path(source: &str) -> Result<PathBuf, String> {
     let Some(source) = source.strip_prefix("file://") else {
         return Ok(PathBuf::from(source));
     };
@@ -7203,6 +7205,7 @@ pub async fn import_picked_backup(
     source_path: String,
 ) -> Result<CompleteBackupInfo, String> {
     let root = app_root(&app)?;
+    crate::picked_paths::require_picked(&app, &source_path)?;
     let version = app.package_info().version.to_string();
     tauri::async_runtime::spawn_blocking(move || {
         import_picked_backup_in(&root, &source_path, &version, free_space_bytes)
@@ -7380,8 +7383,10 @@ pub async fn stage_complete_restore(
     source_path: String,
 ) -> Result<CompleteBackupInfo, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        crate::picked_paths::require_picked_or_inside(&app, &root, &source_path)?;
         stage_complete_restore_in(
-            &app_root(&app)?,
+            &root,
             Path::new(&source_path),
             &app.package_info().version.to_string(),
         )
@@ -7548,6 +7553,11 @@ pub async fn stage_local_restore(app: AppHandle, name: String) -> Result<BackupI
 fn stage_local_restore_in(root: &Path, name: &str) -> Result<BackupInfo, String> {
     let name = safe_backup_name(name)?;
     let folder = backup_dir(root)?.join(name);
+    // A safety copy is a real folder this app made; a link planted in its
+    // place could point anywhere on disk.
+    if std::fs::symlink_metadata(&folder).is_ok_and(|meta| meta.file_type().is_symlink()) {
+        return Err("That is not a safety copy this app made.".to_string());
+    }
     if !folder.is_dir() {
         return Err("That safety copy is no longer there.".to_string());
     }
@@ -9291,6 +9301,28 @@ mod tests {
     }
 
     /// A private directory to play the part of her application data folder.
+    #[cfg(unix)]
+    #[test]
+    fn local_restore_refuses_names_and_links_outside_the_safety_copies() {
+        let root = scratch("local-restore-links");
+        let outside = scratch("local-restore-links-outside");
+        let backups = backup_dir(&root).unwrap();
+        write_database(&outside.join(DB_FILES[0]), "someone else's library");
+        std::os::unix::fs::symlink(&outside, backups.join("planted")).unwrap();
+        assert_eq!(
+            stage_local_restore_in(&root, "planted").unwrap_err(),
+            "That is not a safety copy this app made."
+        );
+        for name in ["planted", "..", "../outside", "/etc", "a/b", "a\\b", ""] {
+            assert!(
+                stage_local_restore_in(&root, name).is_err(),
+                "{name:?} must be refused"
+            );
+        }
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(&outside).unwrap();
+    }
+
     fn scratch(label: &str) -> PathBuf {
         let unique = COUNTER.fetch_add(1, Ordering::SeqCst);
         let dir = std::env::temp_dir().join(format!(

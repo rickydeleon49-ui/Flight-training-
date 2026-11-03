@@ -674,7 +674,7 @@ pub fn split_range_at(
 ) -> Result<SplitSourceReceipt, String> {
     check_requested_range(first_page, last_page)?;
     let documents_dir = root.join(documents::DOCUMENTS_DIR);
-    let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
+    let source = documents::contained_document_path(&documents_dir, relative_path)?;
     let (bytes, document) = read_pdf_once(&source)?;
     let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
     if total == 0 {
@@ -798,7 +798,7 @@ fn split_automatically_with_limits(
 ) -> Result<SplitSourceReceipt, String> {
     report("Big books can take a few minutes.".into());
     let documents_dir = root.join(documents::DOCUMENTS_DIR);
-    let source = documents_dir.join(documents::safe_relative_path(relative_path)?);
+    let source = documents::contained_document_path(&documents_dir, relative_path)?;
     let (bytes, document) = read_pdf_once(&source)?;
     let total = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
     if total == 0 {

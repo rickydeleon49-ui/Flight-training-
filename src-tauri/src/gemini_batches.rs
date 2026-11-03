@@ -168,8 +168,9 @@ fn unchanged(root: &Path, source: &LoadedSource) -> Result<(), String> {
     // LoadedSource keeps the SQLite file_path, relative to documents/ just
     // like ImportedDocument and stored_document_path. The journal's root is
     // the app-data directory, not the documents directory.
-    let safe = documents::safe_relative_path(&source.scope)?;
-    let bytes = std::fs::read(root.join(documents::DOCUMENTS_DIR).join(safe)).map_err(|_| {
+    let file =
+        documents::contained_document_path(&root.join(documents::DOCUMENTS_DIR), &source.scope)?;
+    let bytes = std::fs::read(file).map_err(|_| {
         "The selected source is no longer available. The draft was not published.".to_string()
     })?;
     if calculate_sha256(&bytes) != source.content_sha256 {

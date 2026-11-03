@@ -18,4 +18,10 @@ describe("content security policy", () => {
     expect(imgSrc).toBe("img-src 'self' data:");
     expect(csp).not.toMatch(/asset/);
   });
+
+  it("lets the page talk only to itself and Tauri IPC; network calls live in Rust", () => {
+    const csp = config.app.security.csp;
+    const connectSrc = csp.split(";").map((part) => part.trim()).find((part) => part.startsWith("connect-src"));
+    expect(connectSrc).toBe("connect-src 'self' ipc: http://ipc.localhost");
+  });
 });
