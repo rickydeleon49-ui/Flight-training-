@@ -24,6 +24,8 @@ describe("platform", () => {
     expect(isIOS()).toBe(false);
     expect(deviceCan().importFiles).toBe(true);
     expect(deviceCan().renderPdfPage).toBe(true);
+    expect(deviceCan().editStudyMaterial).toBe(true);
+    expect(deviceCan().sharePrint).toBe(true);
     expect(deviceCan().getStudyMaterial).toBe(false);
   });
 
@@ -35,6 +37,8 @@ describe("platform", () => {
     expect(deviceCan().getStudyMaterial).toBe(true);
     expect(deviceCan().importFiles).toBe(false);
     expect(deviceCan().generate).toBe(false);
+    expect(deviceCan().editStudyMaterial).toBe(false);
+    expect(deviceCan().sharePrint).toBe(false);
   });
 
   it("recognises an iPad that reports itself as a Mac", () => {

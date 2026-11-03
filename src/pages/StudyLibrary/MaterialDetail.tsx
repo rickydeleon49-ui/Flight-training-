@@ -1035,14 +1035,14 @@ function MaterialDetailPage() {
                     importedSet
                       ? "Imported from a file you selected"
                       : manualSet
-                        ? "Written by you, saved on this computer"
+                        ? (deviceCan().revealFiles ? "Written by you, saved on this computer" : "Written by you, saved on this phone")
                         : studySet?.summary || guideSections.length
-                          ? "Saved on this computer"
+                          ? (deviceCan().revealFiles ? "Saved on this computer" : "Saved on this phone")
                           : undefined
                   }
                   action={
                     <div className="row row--wrap">
-                      {studySet && (studySet.summary || studySet.sections.length > 0) ? (
+                      {deviceCan().editStudyMaterial && studySet && (studySet.summary || studySet.sections.length > 0) ? (
                         <Button
                           size="small"
                           variant="secondary"
@@ -1053,7 +1053,7 @@ function MaterialDetailPage() {
                           {editingSet ? "Done editing" : "Edit study guide"}
                         </Button>
                       ) : null}
-                      {studySet || practiceTest ? (
+                      {deviceCan().sharePrint && (studySet || practiceTest) ? (
                         <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
                           Share or print
                         </Button>
@@ -1102,9 +1102,7 @@ function MaterialDetailPage() {
                         ? "Review the guide from your imported packet; you can edit it here."
                         : manualSet
                           ? "A study guide you wrote. Use Edit study guide to change sections."
-                          : isPdf
-                            ? providerWording("Ask Gemini for a study guide from this file, then review and save the draft on this Mac.", gemini?.model)
-                            : providerWording("Ask Gemini for a study guide from this file, then review and save the draft on this Mac.", gemini?.model)}
+                          : providerWording(`Ask Gemini for a study guide from this file, then review and save the draft on this ${deviceCan().revealFiles ? "computer" : "phone"}.`, gemini?.model)}
                   </p>
                 ) : null}
                 <CardBody>
@@ -1278,7 +1276,7 @@ function MaterialDetailPage() {
                   headingId="material-cards-heading"
                   eyebrow={
                     studySet && guideFlashcards.length > 0
-                      ? "Saved on this computer"
+                      ? (deviceCan().revealFiles ? "Saved on this computer" : "Saved on this phone")
                       : material.filePath
                         ? "From this document"
                         : "Optional"
@@ -1531,7 +1529,7 @@ function MaterialDetailPage() {
                     importedTest
                       ? "Imported study packet"
                       : practiceTest
-                        ? "Saved on this computer"
+                        ? (deviceCan().revealFiles ? "Saved on this computer" : "Saved on this phone")
                         : material.filePath
                           ? "Optional, from this document"
                           : "Optional"
@@ -1857,7 +1855,7 @@ function MaterialDetailPage() {
           <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden material-panel-heading">More</h2>
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
-          {studySet || practiceTest ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
+          {deviceCan().sharePrint && (studySet || practiceTest) ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
           <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
           <Card>
             <CardHeader title="Details and review status" />
@@ -2184,7 +2182,7 @@ function MaterialDetailPage() {
         />
       ) : null}
 
-      {studySet || practiceTest ? (
+      {deviceCan().sharePrint && (studySet || practiceTest) ? (
         <ExportStudyDialog
           open={exporting}
           source={{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }}

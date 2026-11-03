@@ -960,3 +960,29 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   cursor: pointer;
   overflow-wrap: anywhere;
 }
+/* I-3b: phone study controls wrap with larger text, instead of clipping. */
+@media (max-width: 700px) {
+  .library-tabs { flex-wrap: wrap; overflow-x: visible; }
+  .library-tab { white-space: normal; min-height: 44px; }
+  .library__toolbar, .library-review__filters { flex-wrap: wrap; }
+  .search-field { min-width: 0; flex-basis: 100%; }
+  .material-detail .row, .card-review .row { flex-wrap: wrap; }
+  .material-detail, .library-review__item, .card-review { overflow-wrap: anywhere; }
+  .material-detail .button, .card-review .button,
+  .library-review__item .button, .filter-chip, .practice-pill,
+  .practice-option, .search-field__clear, .library__shelf-summary,
+  .library__actions-more > summary {
+    min-height: 44px;
+    min-width: 44px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .material-detail .select, .library__toolbar .select { max-width: 100%; }
+  .material-detail .input, .material-detail .select, .material-detail textarea,
+  .library__toolbar input, .library__toolbar select { font-size: 16px; }
+  .card-review__ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card-review__session, .material-detail .card__body { padding: var(--space-3); }
+  .material-detail .card__header { padding: var(--space-3); }
+  .material-detail .checklist-row__tools { opacity: 1; }
+}

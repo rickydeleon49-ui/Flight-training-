@@ -1,3 +1,4 @@
+import { deviceCan } from "@/services/platform";
 import type { StudyContentProvenanceInput } from "@/logic/studyContentProvenance";
 import { formatStudyContentProvenance } from "@/logic/studyContentProvenance";
 
@@ -64,7 +65,7 @@ export function StudyContentProvenance({
           ·
         </span>
         <span className="study-provenance__item">
-          <span className="study-provenance__value">{provenance.dateText}</span>
+          <span className="study-provenance__value">{!deviceCan().revealFiles && provenance.dateText === "Saved on this computer" ? "Saved on this phone" : provenance.dateText}</span>
         </span>
         {provenance.pdfNote ? (
           <>

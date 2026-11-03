@@ -96,3 +96,16 @@
 
 .gemini-key-input { flex: 1; min-width: 15rem; }
 .setup-steps { display: grid; gap: var(--space-2); }
+
+@media (max-width: 700px) {
+  .settings-layout { min-width: 0; overflow-wrap: anywhere; }
+  .settings-layout .row { flex-wrap: wrap; }
+  .settings-layout .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .settings-layout .button, .settings-layout .select, .settings-layout .input {
+    min-height: 44px;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .settings-layout .input, .settings-layout .select { font-size: 16px; }
+}

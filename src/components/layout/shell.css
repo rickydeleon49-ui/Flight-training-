@@ -239,3 +239,22 @@
   font-family: inherit;
   font-size: var(--text-xs);
 }
+
+/* Phone: keep the complete menu target below the status bar and in front. */
+@media (max-width: 700px) {
+  .sidebar {
+    /* Top padding stays as in the narrow rule above, so the whole menu
+       button sits clear of the status bar's tap zone. */
+    padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
+    padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+    max-height: 100dvh;
+  }
+  .sidebar__menu { position: relative; z-index: 1; touch-action: manipulation; }
+  .nav__link, .nav__search { min-height: 44px; }
+  .sidebar__navigation { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .content {
+    padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
+    padding-bottom: calc(var(--space-7) + env(safe-area-inset-bottom, 0px));
+  }
+}

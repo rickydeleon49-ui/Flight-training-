@@ -1,6 +1,9 @@
 .dialog.pdf-viewer-dialog {
   width: 100vw;
   max-width: 100vw;
+  width: 100dvw;
+  max-width: 100dvw;
+  min-width: 0;
   height: 100dvh;
   max-height: 100dvh;
   margin: 0;
@@ -8,8 +11,36 @@
   border-radius: 0;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
 }
+.dialog.pdf-viewer-dialog.modal-fallback[open] { inset: 0; transform: none; }
 .pdf-viewer-dialog .dialog__header button { min-width: 44px; min-height: 44px; }
 .pdf-viewer-dialog[open] { display: flex; flex-direction: column; }
-.pdf-viewer-dialog .dialog__body { flex: 1; min-height: 0; max-height: none; display: flex; padding: 0; }
-.pdf-viewer-dialog iframe { width: 100%; height: 100%; flex: 1; border: 0; }
+.pdf-viewer-dialog .dialog__body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  display: flex;
+  padding: 0;
+  overflow: auto;
+  /* Prevent embedded content from contributing its intrinsic width to the dialog. */
+  contain: inline-size;
+}
+.pdf-viewer-dialog iframe {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  flex: 1 1 0;
+  border: 0;
+}
+
+@media (max-width: 700px) {
+  .pdf-viewer-dialog .dialog__header { flex-shrink: 0; padding-inline: var(--space-3); }
+  .pdf-viewer-dialog .dialog__header > div { min-width: 0; overflow-wrap: anywhere; }
+}
