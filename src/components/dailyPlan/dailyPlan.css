@@ -216,7 +216,7 @@
 }
 
 .daily-plan-defer-note {
-  font-size: var(--text-2xs, 10px);
+  font-size: var(--text-2xs, 0.625rem);
   color: var(--text-muted);
   display: block;
 }

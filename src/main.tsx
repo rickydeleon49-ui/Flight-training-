@@ -17,10 +17,12 @@ import "./styles/layout.css";
 import "./components/ui/ui.css";
 import "./styles/glass.css";
 
+import { initIOSText } from "./lib/iosText";
 import { initAppearance } from "./lib/appearance";
 
 // Apply appearance before initial render so restored theme appears without flash.
 initAppearance();
+initIOSText();
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Root element is missing from index.html");

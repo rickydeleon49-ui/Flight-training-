@@ -250,6 +250,8 @@
     max-height: 100dvh;
   }
   .sidebar__menu { position: relative; z-index: 1; touch-action: manipulation; }
+  html.is-ios .brand,
+  html.is-ios .brand__name { min-width: 0; overflow-wrap: anywhere; }
   .nav__link, .nav__search { min-height: 44px; }
   .sidebar__navigation { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .content {

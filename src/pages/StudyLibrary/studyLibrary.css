@@ -964,6 +964,13 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 @media (max-width: 700px) {
   .library-tabs { flex-wrap: wrap; overflow-x: visible; }
   .library-tab { white-space: normal; min-height: 44px; }
+  html.is-ios .material-tabs { flex-wrap: wrap; }
+  html.is-ios .material-tabs .tab {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .library__toolbar, .library-review__filters { flex-wrap: wrap; }
   .search-field { min-width: 0; flex-basis: 100%; }
   .material-detail .row, .card-review .row { flex-wrap: wrap; }
@@ -980,7 +987,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
   }
   .material-detail .select, .library__toolbar .select { max-width: 100%; }
   .material-detail .input, .material-detail .select, .material-detail textarea,
-  .library__toolbar input, .library__toolbar select { font-size: 16px; }
+  .library__toolbar input, .library__toolbar select { font-size: max(16px, 1rem); }
   .card-review__ratings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card-review__session, .material-detail .card__body { padding: var(--space-3); }
   .material-detail .card__header { padding: var(--space-3); }
