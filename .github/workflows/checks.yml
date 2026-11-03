@@ -91,6 +91,10 @@ jobs:
         if: steps.filter.outputs.run_heavy != 'false'
         run: node --test scripts/build-signed-mac.test.mjs
 
+      - name: Third-party notices generator regressions
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: node --test scripts/third-party-notices.test.mjs
+
       # `npm run build` typechecks first, then produces the real frontend
       # bundle — which is also what the Rust side compiles against.
       - if: steps.filter.outputs.run_heavy != 'false'
@@ -141,3 +145,10 @@ jobs:
       - name: Cargo lockfile synchronization check
         if: steps.filter.outputs.run_heavy != 'false'
         run: npm run test:cargo-lock
+
+      # Regenerates public/THIRD_PARTY_NOTICES.txt from package-lock.json and
+      # `cargo metadata` and fails if the committed file differs, so a new or
+      # upgraded dependency cannot ship without its license notice.
+      - name: Third-party notices are complete and current
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: node scripts/third-party-notices.mjs --check
