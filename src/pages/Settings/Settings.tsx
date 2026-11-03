@@ -162,7 +162,7 @@ function MacNote({ children }: { children: ReactNode }) {
 
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
-  const { hash } = useLocation();
+  const { hash, key } = useLocation();
   const backupsFold = useRef<HTMLDetailsElement>(null);
   const advancedFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
@@ -203,13 +203,24 @@ export function Settings() {
   const [libraryVisible, setLibraryVisible] = useState(50);
 
   const showBackupResult = Boolean(backupNote || upgradeFailed || folderOpenError || libraryNote || libraryReport || restoreCandidate || localRestoreCandidate);
+  const forceOpen = useRef({ backups: false, advanced: false });
+  forceOpen.current = { backups: showBackupResult, advanced: geminiProblem };
   useEffect(() => {
-    if ((showBackupResult || hash === "#settings-backups") && backupsFold.current) backupsFold.current.open = true;
-  }, [showBackupResult, backupNote, folderOpenError, libraryNote, hash]);
+    // A result or problem inside a fold must never be hidden by a navigation (force-open rule).
+    if (backupsFold.current) backupsFold.current.open = hash === "#settings-backups" || forceOpen.current.backups;
+    if (advancedFold.current) advancedFold.current.open = hash === "#ai-provider" || forceOpen.current.advanced;
+    if (["#settings-backups", "#send-to-iphone", "#ai-provider"].includes(hash)) {
+      document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
+    }
+  }, [hash, key]);
 
   useEffect(() => {
-    if ((hash === "#ai-provider" || geminiProblem) && advancedFold.current) advancedFold.current.open = true;
-  }, [hash, geminiProblem]);
+    if (showBackupResult && backupsFold.current) backupsFold.current.open = true;
+  }, [showBackupResult, backupNote, folderOpenError, libraryNote]);
+
+  useEffect(() => {
+    if (geminiProblem && advancedFold.current) advancedFold.current.open = true;
+  }, [geminiProblem]);
 
   // Cards inside both folds also report errors asynchronously (some in their own disclosure):
   // an alert must never stay hidden behind a closed fold.

@@ -59,6 +59,7 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
     <Card>
       <CardHeader
         title="Send to my iPhone"
+        headingId="send-to-iphone"
         eyebrow="Study on the go"
         action={
           <Button size="small" variant="primary" onClick={send} disabled={busy}>

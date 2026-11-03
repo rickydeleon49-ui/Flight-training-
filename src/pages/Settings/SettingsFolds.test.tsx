@@ -11,7 +11,17 @@ import * as appData from "@/data";
 import { Settings } from "./Settings";
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
-function Ready() { return useAppData().status === "ready" ? <><Link to="/settings#ai-provider">Provider settings</Link><Settings /></> : null; }
+vi.mock("@/services/platform", async (original) => ({
+  ...await original<typeof import("@/services/platform")>(),
+  deviceCan: () => ({ generate: true, sendToIphone: true, getStudyMaterial: false }),
+}));
+function Ready() { return useAppData().status === "ready" ? <>
+  <Link to="/settings">Settings menu</Link>
+  <Link to="/settings#settings-backups">Backup settings</Link>
+  <Link to="/settings#send-to-iphone">iPhone settings</Link>
+  <Link to="/settings#ai-provider">Provider settings</Link>
+  <Settings />
+</> : null; }
 async function open(hash = "") {
   render(<AppDataProvider><MemoryRouter initialEntries={[`/settings${hash}`]}><Ready /></MemoryRouter></AppDataProvider>);
   await screen.findByRole("heading", { name: "About you" });
@@ -45,9 +55,38 @@ it.each(["backup", "restore"])("a %s result opens Backups and data; she can clos
   await act(async () => {});
   expect(fold("backups").open).toBe(false);
 });
-it.each(["#settings-backups", "#ai-provider"])("opens the group addressed by %s", async (hash) => {
-  await open(hash);
-  await waitFor(() => expect(fold(hash === "#ai-provider" ? "advanced" : "backups").open).toBe(true));
+it.each(["#settings-backups", "#send-to-iphone", "#ai-provider"])("opens only the group addressed by %s and scrolls to it", async (hash) => {
+  const scrolled: string[] = [];
+  const scroll = vi.fn(function (this: HTMLElement) {
+    // The fold must be open before scrolling, so its heading is visible.
+    expect(fold("backups").open).toBe(hash === "#settings-backups");
+    expect(fold("advanced").open).toBe(hash === "#ai-provider");
+    scrolled.push(this.id);
+  });
+  const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+  Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scroll });
+  try {
+    await open(hash);
+    await waitFor(() => expect(scrolled).toEqual([hash.slice(1)]));
+    expect(scroll).toHaveBeenCalledWith({ block: "start" });
+  } finally {
+    if (original) Object.defineProperty(Element.prototype, "scrollIntoView", original);
+    else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+  }
+});
+it("hash navigation switches folds and a menu visit closes both", async () => {
+  await open("#ai-provider");
+  fireEvent.click(screen.getByRole("link", { name: "Backup settings" }));
+  await waitFor(() => expect(fold("backups").open).toBe(true));
+  expect(fold("advanced").open).toBe(false);
+  fireEvent.click(screen.getByRole("link", { name: "iPhone settings" }));
+  await waitFor(() => expect(fold("backups").open).toBe(false));
+  expect(fold("advanced").open).toBe(false);
+  fireEvent.click(screen.getByRole("link", { name: "Provider settings" }));
+  await waitFor(() => expect(fold("advanced").open).toBe(true));
+  fireEvent.click(screen.getByRole("link", { name: "Settings menu" }));
+  await waitFor(() => expect(fold("advanced").open).toBe(false));
+  expect(fold("backups").open).toBe(false);
 });
 it("#ai-provider opens Advanced after navigation and the material page links there", async () => {
   await open();
