@@ -75,6 +75,13 @@ jobs:
       - if: steps.filter.outputs.run_heavy != 'false'
         run: npm test
 
+      # The 1,000-card Study Library tier (src/perf) runs alone, after the unit
+      # suite, so its long renders never compete with it for the runner's cores.
+      - name: Study Library perf tier
+        if: steps.filter.outputs.run_heavy != 'false'
+        run: npm run test:perf
+        timeout-minutes: 10
+
       - name: Schema verification helper regressions
         if: steps.filter.outputs.run_heavy != 'false'
         run: node --test scripts/mac-schema14-profile-snapshot.test.mjs

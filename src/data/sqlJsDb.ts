@@ -59,12 +59,17 @@ function loadSaved(): Uint8Array | null {
   }
 }
 
+/**
+ * Base64 of the whole database. It runs after every write, so it converts in
+ * 32 KiB chunks: one `fromCharCode` call per byte made each write cost
+ * hundreds of milliseconds on a ~1 MB database. Same output either way.
+ */
 function encodeBytes(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i] as number);
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 0x8000)));
   }
-  return btoa(binary);
+  return btoa(chunks.join(""));
 }
 
 /** Write the bytes to localStorage; throws if storage refuses them. */

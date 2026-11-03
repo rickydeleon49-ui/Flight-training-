@@ -1,11 +1,11 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 
 // Tauri expects a fixed port and does not want vite obscuring Rust errors.
 const host = process.env.TAURI_DEV_HOST;
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   // Share the native release opt-in without exposing arbitrary process env.
   // Preserve the existing explicit VITE flag for development/browser testing.
   define: command === "build" ? {
@@ -33,9 +33,14 @@ export default defineConfig(({ command }) => ({
     minify: "esbuild",
     sourcemap: false,
   },
+  // Two tiers. `npm test` runs everything except src/perf; `npm run
+  // test:perf` (`--mode perf`) runs only the 1,000-card Study Library tier, one
+  // file at a time, so its long renders never compete with the unit suite.
   test: {
     environment: "node",
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: mode === "perf" ? ["src/perf/**/*.test.{ts,tsx}"] : ["src/**/*.test.{ts,tsx}"],
+    exclude: mode === "perf" ? configDefaults.exclude : [...configDefaults.exclude, "src/perf/**"],
+    fileParallelism: mode !== "perf",
     testTimeout: 20_000,
     hookTimeout: 20_000,
     setupFiles: ["./src/testing/vitestSetup.ts"],
