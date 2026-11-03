@@ -58,6 +58,9 @@ tauri-plugin-single-instance = "=2.4.0"
 # on the locked Tauri 2.11 (2.5.0 needs Tauri 2.12).
 tauri-plugin-window-state = "2"
 
+[target.'cfg(target_os = "ios")'.dependencies]
+tauri-plugin-hfd-pdf = { path = "plugins/ios-pdf-viewer" }
+
 [dev-dependencies]
 # Tests only: a test-only SQL function holds a running statement for the
 # OFFLINE-02 deadline tests. `functions` adds no crate; release builds keep
@@ -82,3 +85,7 @@ opt-level = 3
 opt-level = 3
 [profile.dev.package.flate2]
 opt-level = 3
+# First-party plugin is workspace code, not a third-party notice entry.
+[workspace]
+members = ["plugins/ios-pdf-viewer"]
+default-members = ["."]

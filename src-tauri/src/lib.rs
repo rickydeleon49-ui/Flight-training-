@@ -24,6 +24,7 @@ mod debrief;
 mod documents;
 pub mod extraction;
 mod library_lock;
+mod ios_pdf;
 mod phone_activity;
 mod phone_work;
 mod safety_notices;
@@ -367,6 +368,8 @@ pub fn run() {
             let _ = window.set_focus();
         }
     }));
+    #[cfg(target_os = "ios")]
+    let builder = builder.plugin(tauri_plugin_hfd_pdf::init());
     let builder = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -523,6 +526,7 @@ pub fn run() {
             documents::save_pasted_text,
             documents::document_path,
             documents::document_bytes,
+            ios_pdf::open_ios_pdf,
             documents::document_exists,
             documents::delete_document,
             documents::stage_delete_document,

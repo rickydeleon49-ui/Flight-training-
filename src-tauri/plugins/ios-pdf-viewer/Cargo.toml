@@ -1,0 +1,13 @@
+[package]
+name = "tauri-plugin-hfd-pdf"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+links = "tauri-plugin-hfd-pdf"
+
+[build-dependencies]
+tauri-plugin = { version = "=2.6.3", features = ["build"] }
+
+[dependencies]
+tauri = { version = "=2.11.5", features = [] }
+serde = { version = "=1.0.229", features = ["derive"] }

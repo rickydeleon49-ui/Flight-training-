@@ -1803,6 +1803,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-fs",
+ "tauri-plugin-hfd-pdf",
  "tauri-plugin-log",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
@@ -4850,6 +4851,15 @@ dependencies = [
  "thiserror 2.0.20",
  "toml 1.1.5+spec-1.1.0",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-hfd-pdf"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]
