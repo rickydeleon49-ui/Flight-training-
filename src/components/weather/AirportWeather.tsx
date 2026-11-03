@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { isTauri } from "@/data";
 import { Button, Checkbox, Field, TextInput } from "@/components/ui";
 import { airportWeather, type ProductView, type WeatherView } from "@/services/weather";
+import { WEATHER_BRIEFING_NOTE } from "@/logic/legal";
 import { conditionsSummary, localTimeText, normalizeIcao, periodLabel, timeText, weatherAges, WEATHER_NOTE, WEATHER_SOURCE, WEATHER_SOURCE_URL, type WeatherProduct } from "@/logic/weather";
 
 export function WeatherPreference() {
@@ -52,6 +53,7 @@ export function AirportWeather() {
   const desktop = isTauri();
   return <section tabIndex={-1} id="airport-weather" aria-labelledby="airport-weather-title" className="stack stack--4" style={{ scrollMarginTop: "2rem", minWidth: 0 }}>
     <h3 id="airport-weather-title">Airport weather</h3>
+    <p className="small strong">{WEATHER_BRIEFING_NOTE}</p>
     <p className="small muted">{WEATHER_NOTE}</p>
     <p className="small">{WEATHER_SOURCE}</p>
     <p className="tiny muted wrap-anywhere">Official source: {WEATHER_SOURCE_URL}</p>

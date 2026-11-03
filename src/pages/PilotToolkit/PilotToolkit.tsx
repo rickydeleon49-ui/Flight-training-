@@ -225,7 +225,7 @@ function ReadinessTool({ state, save }: ToolProps) {
     <div className="stack stack--5 toolkit-print-area">
       <Card variant="accent">
         <CardHeader
-          title="Private pilot checkride readiness"
+          title="Private pilot checkride prep"
           eyebrow="Planning checklist"
         />
         <CardBody>
@@ -244,7 +244,7 @@ function ReadinessTool({ state, save }: ToolProps) {
           <div
             className="toolkit-progress"
             role="progressbar"
-            aria-label="Readiness checklist"
+            aria-label="Checkride prep checklist"
             aria-valuemin={0}
             aria-valuemax={summary.total}
             aria-valuenow={summary.ready}
@@ -252,9 +252,9 @@ function ReadinessTool({ state, save }: ToolProps) {
             <span style={{ width: `${summary.percent}%` }} />
           </div>
           <p className="small muted toolkit-note">
-            This organizes conversations with your instructor. Only the
-            instructor, current regulations, required endorsements, and examiner
-            process determine eligibility.
+            Your own checklist for talks with your instructor. It doesn't
+            certify you or show you are eligible: only your instructor's
+            endorsements and the examiner decide that.
           </p>
         </CardBody>
       </Card>
