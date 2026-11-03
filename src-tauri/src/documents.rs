@@ -222,7 +222,8 @@ fn active_managed_file(
 ///
 /// On Linux, we use `renameat2` with `RENAME_NOREPLACE` (with fallback to `hard_link`).
 ///
-/// On Windows, `std::fs::rename` maps to `MoveFileExW` without `MOVEFILE_REPLACE_EXISTING`,
+/// On Windows, `std::fs::rename` would replace an existing destination, so we
+/// call `MoveFileExW` directly with no flags (no `MOVEFILE_REPLACE_EXISTING`),
 /// which atomically fails with `ERROR_ALREADY_EXISTS` (183) if `to` exists.
 #[cfg(target_os = "macos")]
 pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {

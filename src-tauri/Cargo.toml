@@ -56,6 +56,18 @@ tauri-plugin-single-instance = "=2.4.0"
 # on the locked Tauri 2.11 (2.5.0 needs Tauri 2.12).
 tauri-plugin-window-state = "2"
 
+# Owner-approved 2 November 2026 (WINDOWS-01 W-R1): an owner-only ACL on the
+# saved key file and the restore free-space check on Windows. No new crate:
+# already locked at 0.61.2 through Tauri; only these API features are enabled.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Security_Authorization",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Threading",
+] }
+
 [dev-dependencies]
 # Tests only: a test-only SQL function holds a running statement for the
 # OFFLINE-02 deadline tests. `functions` adds no crate; release builds keep
