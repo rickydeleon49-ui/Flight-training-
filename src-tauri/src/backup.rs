@@ -708,6 +708,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 31 {
         verify_schema_31_faa_downloads(connection)?;
     }
+    if newest_migration >= 32 {
+        verify_schema_32_oral_answers(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -883,6 +886,27 @@ pub(crate) fn verify_schema_31_faa_downloads(connection: &Connection) -> Result<
         return Err("Damaged FAA downloads schema.".into());
     }
     Ok(())
+}
+
+/// ORAL-01d: her finished oral answers, exactly as migrated, then the
+/// version, ticks and timestamps checks in `oral_scenarios::validate_answers`.
+pub(crate) fn verify_schema_32_oral_answers(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "oral_answers";
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+        || check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+        || m3_count(
+            connection,
+            &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+            &[],
+        )? != 0
+    {
+        return Err("Damaged oral answers schema.".into());
+    }
+    crate::oral_scenarios::validate_answers(connection)
 }
 
 pub(crate) fn verify_schema_27_faa_references(connection: &Connection) -> Result<(), String> {
@@ -17257,6 +17281,7 @@ mod tests {
     include!("homework_backup_tests.rs");
     include!("visual_backup_tests.rs");
     include!("faa_backup_tests.rs");
+    include!("oral_answers_backup_tests.rs");
     #[test]
     fn oral_scenarios_backup_round_trip_old_backup_and_newer_schema() {
         for old in [false, true] {

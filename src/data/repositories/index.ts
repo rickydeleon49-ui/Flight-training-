@@ -24,6 +24,7 @@ import { skillEvidenceRepository } from "./skillEvidenceRepository";
 import { navigationRepository } from "./navigationRepository";
 import { flightSchoolRepository } from "./flightSchoolRepository";
 import { oralScenarioRepository } from "./oralScenarioRepository";
+import { oralAnswerRepository } from "./oralAnswerRepository";
 
 import { materialVideoLinkRepository } from "./materialVideoLinkRepository";
 import { studentPilotStepRepository } from "./studentPilotStepRepository";
@@ -53,6 +54,7 @@ export interface Repositories {
   navigation: ReturnType<typeof navigationRepository>;
   flightSchools: ReturnType<typeof flightSchoolRepository>;
   oralScenarios: ReturnType<typeof oralScenarioRepository>;
+  oralAnswers: ReturnType<typeof oralAnswerRepository>;
 }
 
 export function createRepositories(db: SqlDatabase): Repositories {
@@ -81,6 +83,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     navigation: navigationRepository(db),
     flightSchools: flightSchoolRepository(db),
     oralScenarios: oralScenarioRepository(db),
+    oralAnswers: oralAnswerRepository(db),
   };
 }
 

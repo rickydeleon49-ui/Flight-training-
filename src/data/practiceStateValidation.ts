@@ -255,6 +255,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 29) await validateVideoLinks(query, reference);
   if (newest >= 30) await validateStudentPilotSteps(query, reference);
   if (newest >= 31) await validateFaaDownloads(query, reference);
+  if (newest >= 32) await validateOralAnswers(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2086,6 +2087,29 @@ export async function validateOralScenarios(query: ValidationQuery, reference: V
       }
     } catch {
       refuse("An oral scenario save receipt is damaged.");
+    }
+  }
+}
+
+/**
+ * ORAL-01d (native `verify_schema_32_oral_answers`): the table exactly as
+ * migrated; each answer names a frozen version of its own scenario, its ticks
+ * fit that version, and a finished answer was revealed first.
+ */
+export async function validateOralAnswers(query: ValidationQuery, reference: ValidationQuery) {
+  const table = "oral_answers";
+  if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) || !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) || !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) || !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) || (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged oral answers schema.");
+  const { decodeOralPoints, isOralId } = await import("./oralScenarios");
+  const { decodeOralCovered, validOralAnswerText } = await import("./oralAnswers");
+  const filled = (v: unknown) => typeof v === "string" && v.length > 0;
+  for (const a of await query("SELECT a.*, v.scenario_id AS owner, v.points_json FROM oral_answers a LEFT JOIN oral_scenario_versions v ON v.id = a.version_id", [])) {
+    try {
+      decodeOralCovered(a.covered_json, decodeOralPoints(a.points_json).length);
+      if (!isOralId(a.id) || typeof a.scenario_id !== "string" || a.scenario_id !== a.owner || !validOralAnswerText(a.answer)) throw new Error();
+      if ((a.revealed_at != null && !filled(a.revealed_at)) || (a.finished_at != null && (!filled(a.finished_at) || a.revealed_at == null))) throw new Error();
+      if (!filled(a.created_at) || !filled(a.updated_at)) throw new Error();
+    } catch {
+      refuse("Damaged oral answer.");
     }
   }
 }

@@ -150,7 +150,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
       <ConfirmDialog
         open={removing !== null}
         title="Remove this scenario?"
-        message={removing ? `"${oralScenarioTitle(removing.prompt)}" leaves your list. Your notes and questions are kept.` : ""}
+        message={removing ? `"${oralScenarioTitle(removing.prompt)}" leaves your list and its earlier answers are deleted. Your notes and questions are kept.` : ""}
         confirmLabel="Remove"
         onConfirm={() => {
           const scenario = removing!;
@@ -158,7 +158,11 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
           deleteWithUndo({
             ids: [scenario.id],
             label: oralScenarioTitle(scenario.prompt),
-            run: (repos) => repos.oralScenarios.remove(material.id, scenario.id),
+            // Her kept answers go with the scenario; nothing hidden is left behind.
+            run: async (repos) => {
+              await repos.oralScenarios.remove(material.id, scenario.id);
+              await repos.oralAnswers.removeAll(scenario.id);
+            },
           });
         }}
         onCancel={() => setRemoving(null)}

@@ -1,7 +1,8 @@
 //! ORAL-01c: her saved oral-question scenarios. The native twin of
 //! `src/data/oralScenarios.ts`: one bounded codec, one owned transaction and
 //! the semantic half of the backup verifier. Every edit adds a frozen version;
-//! receipts keep a hash of the request, never her text. Answers are never stored.
+//! receipts keep a hash of the request, never her text. Her finished answers
+//! (ORAL-01d, schema 32) are checked by `validate_answers`.
 use crate::card_reviews::js_trim;
 use crate::practice_sessions::{canonical_json, compute_canonical_hash};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
@@ -13,6 +14,7 @@ const PROMPT_MAX_CHARS: usize = 4000;
 const ASSUMPTIONS_MAX_CHARS: usize = 2000;
 const SOURCE_PAGE_MAX: i64 = 100_000;
 const SCENARIOS_MAX: usize = 200;
+const ANSWER_MAX_CHARS: usize = 20_000;
 const MATERIAL_ID_MAX: usize = 200;
 const AT_MAX: usize = 64;
 const ACTIONS: &[&str] = &["create", "edit", "reorder", "remove"];
@@ -546,6 +548,79 @@ pub(crate) fn validate_database(conn: &Connection) -> Result<(), String> {
                         && (action != "create" || n == 1) => {}
                 _ => return Err(RECEIPT.into()),
             }
+        }
+    }
+    Ok(())
+}
+
+/// ORAL-01d: the ticked points she kept, exactly as `encodeOralCovered` writes
+/// them: sorted, unique point indexes that exist in the frozen version.
+pub(crate) fn decode_covered(raw: &str, point_count: usize) -> Option<Vec<usize>> {
+    let parsed: Value = serde_json::from_str(raw).ok()?;
+    let list = parsed.as_array()?;
+    let mut out = Vec::with_capacity(list.len());
+    for item in list {
+        let n = usize::try_from(item.as_u64()?).ok()?;
+        if n >= point_count || out.last().is_some_and(|last| *last >= n) {
+            return None;
+        }
+        out.push(n);
+    }
+    (serde_json::to_string(&parsed).ok()? == raw).then_some(out)
+}
+
+/// The semantic half of `verify_schema_32_oral_answers`: each answer names a
+/// real frozen version of its own scenario, its ticks fit that version, and a
+/// finished answer was revealed first.
+pub(crate) fn validate_answers(conn: &Connection) -> Result<(), String> {
+    const DAMAGED: &str = "Damaged oral answer.";
+    let mut stmt = conn
+        .prepare(
+            "SELECT a.id, a.scenario_id, v.scenario_id, v.points_json, a.answer, a.covered_json, a.revealed_at, a.finished_at, a.created_at, a.updated_at
+               FROM oral_answers a LEFT JOIN oral_scenario_versions v ON v.id = a.version_id",
+        )
+        .map_err(|_| DAMAGED.to_string())?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, Option<String>>(0)?,
+                r.get::<_, Option<String>>(1)?,
+                r.get::<_, Option<String>>(2)?,
+                r.get::<_, Option<String>>(3)?,
+                r.get::<_, Option<String>>(4)?,
+                r.get::<_, Option<String>>(5)?,
+                r.get::<_, Option<String>>(6)?,
+                r.get::<_, Option<String>>(7)?,
+                r.get::<_, Option<String>>(8)?,
+                r.get::<_, Option<String>>(9)?,
+            ))
+        })
+        .map_err(|_| DAMAGED.to_string())?;
+    let nonempty = |v: &Option<String>| v.as_deref().is_some_and(|t| !t.is_empty());
+    for row in rows {
+        let (id, scenario, owner, points, answer, covered, revealed, finished, created, updated) =
+            row.map_err(|_| DAMAGED.to_string())?;
+        let point_count = points
+            .as_deref()
+            .and_then(decode_points)
+            .and_then(|p| p.as_array().map(Vec::len))
+            .ok_or(DAMAGED)?;
+        let ok = is_id(&id.map(Value::String).unwrap_or(Value::Null))
+            && scenario.is_some()
+            && scenario == owner
+            && answer
+                .as_deref()
+                .is_some_and(|a| a.chars().count() <= ANSWER_MAX_CHARS)
+            && covered
+                .as_deref()
+                .and_then(|c| decode_covered(c, point_count))
+                .is_some()
+            && (revealed.is_none() || nonempty(&revealed))
+            && (finished.is_none() || (nonempty(&finished) && revealed.is_some()))
+            && nonempty(&created)
+            && nonempty(&updated);
+        if !ok {
+            return Err(DAMAGED.into());
         }
     }
     Ok(())

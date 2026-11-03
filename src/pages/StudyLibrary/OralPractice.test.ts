@@ -56,8 +56,8 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   const view = mount();
   await practise("Scenario Alpha", "Private fictional answer");
   const answerBox = screen.getByLabelText(/Your answer \(optional\)/);
-  expect(screen.getAllByText("Your answer isn't saved after you close this.")).toHaveLength(1);
-  expect(answerBox.closest(".stack")?.parentElement?.textContent).toContain("Your answer isn't saved after you close this.");
+  expect(screen.getAllByText("Your answer is kept when you finish, under Earlier answers. You can delete it any time.")).toHaveLength(1);
+  expect(answerBox.closest(".stack")?.parentElement?.textContent).toContain("Your answer is kept when you finish, under Earlier answers. You can delete it any time.");
   expect(screen.getByRole("button", { name: "Read aloud" }).classList.contains("button--secondary")).toBe(true);
   expect(screen.getByRole("button", { name: "Read aloud" }).classList.contains("button--small")).toBe(true);
   expect(screen.getAllByText("Tip: you can speak your answer with your keyboard's microphone.")).toHaveLength(1);
@@ -142,7 +142,7 @@ it("works with the keyboard alone (native buttons and fields, no pointer handler
   expect(first.checked).toBe(true);
 });
 
-it("accepts a 20,000-character answer and never stores answers or ticks", async () => {
+it("accepts a 20,000-character answer and keeps it with her ticks when she finishes", async () => {
   await seed("Scenario Alpha");
   mount();
   const long = "x".repeat(20000);
@@ -153,8 +153,12 @@ it("accepts a 20,000-character answer and never stores answers or ticks", async 
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click((await screen.findAllByRole("checkbox"))[0]!);
   fireEvent.click(screen.getByRole("button", { name: "Done" }));
-  const tables = await db.select<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'oral%' ORDER BY name");
-  expect(tables.map((t) => t.name)).toEqual(["oral_save_operations", "oral_scenario_versions", "oral_scenarios"]);
+  await waitFor(async () => expect(await count("oral_answers")).toBe(1));
+  const [kept] = await db.select<{ answer: string; covered_json: string; finished_at: string | null; revealed_at: string | null }>("SELECT * FROM oral_answers");
+  expect(kept!.answer).toBe(long);
+  expect(kept!.covered_json).toBe("[0]");
+  expect(kept!.finished_at && kept!.revealed_at).toBeTruthy();
+  // Receipts and versions never hold her text.
   const dump = JSON.stringify(await db.select("SELECT * FROM oral_scenario_versions")) + JSON.stringify(await db.select("SELECT * FROM oral_save_operations"));
   expect(dump).not.toContain("xxxxxxxxxx");
   expect(await count("oral_save_operations")).toBe(1);
@@ -162,13 +166,11 @@ it("accepts a 20,000-character answer and never stores answers or ticks", async 
   expect(await count("questions")).toBe(0);
 });
 
-it("writes nothing when she cancels", async () => {
+it("writes nothing when she cancels before showing the points", async () => {
   await seed("Scenario Alpha");
   mount();
   await practise("Scenario Alpha", "my answer");
-  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
-  await screen.findByText(POINTS[0]!);
-  fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]!);
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   fireEvent.click(await screen.findByRole("button", { name: "Add a scenario" }));
   fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "Unsaved" } });
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -176,6 +178,74 @@ it("writes nothing when she cancels", async () => {
   expect(await count("notes")).toBe(0);
   expect(await count("oral_scenarios")).toBe(1);
   expect(await count("oral_save_operations")).toBe(1);
+  expect(await count("oral_answers")).toBe(0);
+});
+
+it("closing after the points keeps the answer; an empty, unticked practice is not kept", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  await practise("Scenario Alpha");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Done" }));
+  await practise("Scenario Alpha", "my answer");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  await screen.findByText(POINTS[0]!);
+  fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]!);
+  await waitFor(async () => expect(await count("oral_answers")).toBe(1));
+  expect(await db.select("SELECT answer, covered_json FROM oral_answers")).toEqual([{ answer: "my answer", covered_json: "[]" }]);
+});
+
+it("lists earlier answers by date and first line, deletes one or all after asking, and Next keeps the answer", async () => {
+  await seed("Scenario Alpha");
+  await seed("Scenario Bravo");
+  mount();
+  await practise("Scenario Alpha");
+  expect(screen.queryByText(/^Earlier answers \(/)).toBeNull();
+  fireEvent.change(screen.getByLabelText(/Your answer \(optional\)/), { target: { value: "\nFirst kept line\nsecond line" } });
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  fireEvent.click((await screen.findAllByRole("checkbox"))[2]!);
+  fireEvent.click(screen.getByRole("button", { name: "Next scenario" }));
+  await waitFor(async () => expect(await count("oral_answers")).toBe(1));
+  expect(screen.queryByText(/^Earlier answers \(/)).toBeNull(); // Bravo has none
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await practise("Scenario Alpha", "Another answer");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Done" }));
+  await waitFor(async () => expect(await count("oral_answers")).toBe(2));
+  await practise("Scenario Alpha");
+  expect(await screen.findByText("Earlier answers (2)")).toBeTruthy();
+  expect(screen.getByText("First kept line")).toBeTruthy();
+  expect(screen.queryByText(/second line/)).toBeNull();
+  // Delete one: asks first; Keep it changes nothing.
+  const deletes = screen.getAllByRole("button", { name: /^Delete answer from / });
+  fireEvent.click(deletes[1]!);
+  fireEvent.click(screen.getByRole("button", { name: "Keep it" }));
+  expect(await count("oral_answers")).toBe(2);
+  fireEvent.click(screen.getAllByRole("button", { name: /^Delete answer from / })[1]!);
+  fireEvent.click(screen.getByRole("button", { name: "Delete this answer" }));
+  expect(await screen.findByText("Earlier answers (1)")).toBeTruthy();
+  expect(screen.queryByText("First kept line")).toBeNull();
+  // Delete all: asks first.
+  fireEvent.click(screen.getByRole("button", { name: "Delete my answers for this scenario" }));
+  expect(screen.getByText(/Delete your earlier answer for this scenario\?/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Delete all" }));
+  await waitFor(() => expect(screen.queryByText(/^Earlier answers \(/)).toBeNull());
+  expect(await count("oral_answers")).toBe(0);
+});
+
+it("removing a scenario deletes its kept answers when the Undo window closes", async () => {
+  await seed("Scenario Alpha");
+  mount();
+  await practise("Scenario Alpha", "kept");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Done" }));
+  await waitFor(async () => expect(await count("oral_answers")).toBe(1));
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  fireEvent.click(screen.getByRole("button", { name: "Remove: Scenario Alpha" }));
+  expect(screen.getByText(/its earlier answers are deleted/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  await act(async () => { vi.advanceTimersByTime(UNDO_WINDOW_MS + 10); });
+  await waitFor(async () => expect(await count("oral_answers")).toBe(0));
 });
 
 it("Ask my instructor adds exactly one question linked to the material, once", async () => {

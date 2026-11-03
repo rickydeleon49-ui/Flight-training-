@@ -47,6 +47,7 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
         expect.objectContaining({ version: 29, description: "material_video_links" }),
         expect.objectContaining({ version: 30, description: "student_pilot_steps" }),
         expect.objectContaining({ version: 31, description: "faa_downloads" }),
+        expect.objectContaining({ version: 32, description: "oral_answers" }),
       ]);
     } else if (table === "journal_entries") {
       expect(after[table], table).toEqual(
@@ -54,7 +55,7 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
       );
     } else expect(after[table], table).toEqual(rows);
   }
-  const added = [...HOMEWORK_TABLES, "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "visual_card_regions", "card_item_visual_regions", "faa_reference_copies", "practice_item_acs_tasks", "material_video_links", "student_pilot_steps", "faa_downloads"].sort();
+  const added = [...HOMEWORK_TABLES, "flight_schools", "study_page_sources", "study_page_source_bindings", "oral_save_operations", "oral_scenario_versions", "oral_scenarios", "visual_card_regions", "card_item_visual_regions", "faa_reference_copies", "practice_item_acs_tasks", "material_video_links", "student_pilot_steps", "faa_downloads", "oral_answers"].sort();
   expect(Object.keys(after).filter((t) => !(t in before)).sort()).toEqual(added);
   for (const table of added) expect(after[table]).toEqual([]);
 }

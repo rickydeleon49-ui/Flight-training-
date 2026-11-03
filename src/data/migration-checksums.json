@@ -29,5 +29,6 @@
   "0028_practice_item_acs_tasks.sql": "d376906ff6d1d0d1f22c119d6d79791b38bbf7daef3e7a502fd2de5c8de5da45",
   "0029_material_video_links.sql": "aa82e2d8ca820a771f4080ac2511f58a39cebab9f601f7fad030df27cfeb01ca",
   "0030_student_pilot_steps.sql": "33f5bf1120e5bd575c81b086b4cead5114c68703c876767e5e005f7de377e7de",
-  "0031_faa_downloads.sql": "76f000a9cd2c2318cef9ecc9ae145ddc39dc8f334c608e24033adb337b014ed3"
+  "0031_faa_downloads.sql": "76f000a9cd2c2318cef9ecc9ae145ddc39dc8f334c608e24033adb337b014ed3",
+  "0032_oral_answers.sql": "36d5ab261487ac05a71d68d31ff4c22d8e1571e859c62922a8578416d4c3c215"
 }
