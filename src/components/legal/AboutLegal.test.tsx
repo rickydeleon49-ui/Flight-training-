@@ -31,6 +31,11 @@ describe("About & legal", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("shows one affiliation and FAA public-domain note", () => {
+    render(<AboutLegal version="" />);
+    expect(screen.getAllByText("This app is not affiliated with or endorsed by the FAA, Google or Anthropic. ACS and FAA handbook text shown here is FAA public-domain material.")).toHaveLength(1);
+  });
+
   it("renders the bundled notices file when you open Licenses", async () => {
     vi.stubGlobal("fetch", respond("Third-party notices\ndiff 9.0.0 BSD-3-Clause"));
     render(<AboutLegal version="" />);
