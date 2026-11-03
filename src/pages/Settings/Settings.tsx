@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { WeatherPreference } from "@/components/weather/AirportWeather";
+import { AboutLegal } from "@/components/legal/AboutLegal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Button,
@@ -1381,8 +1382,10 @@ export function Settings() {
         </Card>
         ) : null}
 
-        <Card>
-          <CardHeader title="About this application" eyebrow="Scope" />
+        </details>
+
+        <details id="settings-about" className="card material-fold">
+          <summary>About &amp; legal</summary>
           <CardBody>
             <PlatformGuidance
               mac={
@@ -1406,15 +1409,11 @@ export function Settings() {
               }
             />
             <p className="small muted">
-              Her Flight Deck organizes the training information you put into it. It does not
-              replace your flight instructor, your flight school, official aviation
-              regulations, aircraft documentation, or required training. Where this
-              application and an official or instructor-provided source disagree, the
+              Where this app and an official or instructor source disagree, the
               official source is correct.
             </p>
+            <AboutLegal version={version} />
           </CardBody>
-        </Card>
-
         </details>
       </div>
 

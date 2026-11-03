@@ -32,6 +32,7 @@ describe("optional lesson weather UI", () => {
     expect(screen.queryByLabelText("Airport ICAO code")).toBeNull();
     expect(screen.getByText("Gets reports from NOAA/NWS for the airport you enter.")).toBeTruthy();
     enable(); enter(); await act(async () => {});
+    expect(screen.getByText("Not an official weather briefing.")).toBeTruthy();
     expect(gets()).toEqual([]); expect(screen.getByText("Enter the airport's four-letter ICAO code to look at its reports.")).toBeTruthy();
     expect(localStorage.getItem(WEATHER_PREFERENCE)).toBe("true");
     // Nothing requested yet: no empty report headings.

@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { DataRecovery } from "@/components/recovery/DataRecovery";
+import { LegalAcknowledgement } from "@/components/legal/AboutLegal";
 import { Card, EmptyState, ErrorNote, Loading } from "@/components/ui";
 import { FlightDeck } from "@/pages/FlightDeck/FlightDeck";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
@@ -82,6 +83,7 @@ function Gate() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+      <LegalAcknowledgement />
     </>
   );
 }
