@@ -1011,7 +1011,6 @@ function MaterialDetailPage() {
             <p id="material-start-here" className="small muted">New to this? See <Link to="/study?tab=howto">How to in Study Library</Link>.</p>
           ) : null}
         </div>
-        <div className="row"><Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button></div>
         <div {...tabListProps} ref={tabListRef} className="library-tabs material-tabs">
           {MATERIAL_TABS.map((value) => <MaterialTabButton key={value} value={value} state={tabState} />)}
         </div>
@@ -2124,6 +2123,7 @@ function MaterialDetailPage() {
           </Card>
           </div>
         </MaterialTabPanel>
+        <div className="row"><Button aria-pressed={tipsHidden} onClick={() => setTipsHidden(!tipsHidden)}>{tipsHidden ? "Show section tips" : "Hide section tips"}</Button></div>
       </div>
 
       {isPdf && material.filePath ? (

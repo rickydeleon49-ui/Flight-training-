@@ -40,6 +40,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
   const [dataPath, setDataPath] = useState("");
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [noteDetails, setNoteDetails] = useState<string | null>(null);
   const [problem, setProblem] = useState(false);
   const [busy, setBusy] = useState(false);
   const [archiveCandidate, setArchiveCandidate] = useState<CompleteBackupInfo | null>(null);
@@ -54,6 +55,7 @@ export function DataRecovery({ error }: DataRecoveryProps) {
 
   const chooseArchive = async () => {
     setNote(null);
+    setNoteDetails(null);
     setProblem(false);
     setBusy(true);
     try {
@@ -74,7 +76,8 @@ export function DataRecovery({ error }: DataRecoveryProps) {
       setArchiveCandidate(candidate);
     } catch (failure) {
       setProblem(true);
-      setNote(backupErrorMessage(failure, "That backup could not be read.", false));
+      setNote("This backup file has a problem and can't be used as is.");
+      setNoteDetails(backupErrorMessage(failure, "That backup could not be read.", false));
     } finally {
       setBusy(false);
     }
@@ -85,13 +88,15 @@ export function DataRecovery({ error }: DataRecoveryProps) {
     setBusy(true);
     setProblem(false);
     setNote(working);
+    setNoteDetails(null);
     try {
       await stage();
       setNote("Restarting with your restored training record…");
       await restartForRestore();
     } catch (failure) {
       setProblem(true);
-      setNote(backupErrorMessage(failure, "That could not be put back."));
+      setNote("That saved copy could not be put back.");
+      setNoteDetails(backupErrorMessage(failure, "That could not be put back.", false));
       setBusy(false);
     }
   };
@@ -104,7 +109,12 @@ export function DataRecovery({ error }: DataRecoveryProps) {
         <ErrorNote>
           <div className="stack stack--2">
             <p className="strong">Your training data could not be opened.</p>
-            {error ? <p>{error}</p> : null}
+            {error ? (
+              <details>
+                <summary>Details</summary>
+                <p>{error}</p>
+              </details>
+            ) : null}
             <p>
               Nothing has been deleted. Your files are still in the folder below, and
               this app can put a saved copy back for you.
@@ -134,6 +144,13 @@ export function DataRecovery({ error }: DataRecoveryProps) {
                     >
                       {note}
                     </p>
+                  ) : null}
+
+                  {noteDetails ? (
+                    <details className="small">
+                      <summary>Details</summary>
+                      <p>{noteDetails}</p>
+                    </details>
                   ) : null}
 
                   <p className="small muted">

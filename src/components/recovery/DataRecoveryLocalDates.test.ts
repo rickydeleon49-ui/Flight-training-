@@ -27,6 +27,7 @@ const BACKUPS: BackupInfo[] = [
 ];
 
 const openDataFolderMock = vi.fn<() => Promise<void>>();
+const inspectCompleteBackupMock = vi.fn();
 
 vi.mock("@/services/backups", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/backups")>();
@@ -36,6 +37,8 @@ vi.mock("@/services/backups", async (importOriginal) => {
     dataDirectory: () => Promise.resolve("/tmp/hfd"),
     listBackups: () => Promise.resolve(BACKUPS),
     openDataFolder: () => openDataFolderMock(),
+    chooseCompleteBackup: async () => "/tmp/fictional.hfdbackup",
+    inspectCompleteBackup: inspectCompleteBackupMock,
   };
 });
 
@@ -56,6 +59,34 @@ afterAll(() => {
   else delete process.env.TZ;
 });
 afterEach(cleanup);
+
+it("keeps the database reason in closed Details after the plain opening sentence", async () => {
+  const reason = "Semantic validation failed: invalid practice session";
+  render(h(DataRecovery, { error: reason }));
+  await screen.findByText("Taken by you · Thursday, October 15");
+  const plain = screen.getByText("Your training data could not be opened.");
+  const details = screen.getByText(reason).closest("details")!;
+  expect(details.open).toBe(false);
+  expect(details.querySelector("summary")?.textContent).toBe("Details");
+  expect(plain.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it.each([
+  "Semantic validation failed: invalid practice session",
+  "Restore journal validation failed: invalid entry",
+])("shows a plain backup problem with closed technical Details: %s", async (reason) => {
+  inspectCompleteBackupMock.mockRejectedValueOnce(reason);
+  render(h(DataRecovery, { error: null }));
+  await screen.findByText("Taken by you · Thursday, October 15");
+  fireEvent.click(screen.getByRole("button", { name: "Choose a backup file…" }));
+  const plain = await screen.findByText("This backup file has a problem and can't be used as is.");
+  expect(plain.getAttribute("role")).toBe("alert");
+  expect(plain.textContent).toBe("This backup file has a problem and can't be used as is.");
+  const details = screen.getByText(reason).closest("details")!;
+  expect(details.open).toBe(false);
+  expect(details.querySelector("summary")?.textContent).toBe("Details");
+  expect(plain.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
 
 it("lists a copy made on a California evening under that evening's day", async () => {
   render(h(DataRecovery, { error: null }));
