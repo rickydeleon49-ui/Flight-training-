@@ -13,6 +13,7 @@ import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionF
 import { ActionRow } from "@/components/actions/ActionRow";
 import { deviceCan } from "@/services/platform";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
+import { BackToTop } from "@/components/ui/BackToTop";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   AlertIcon,
@@ -945,6 +946,7 @@ function MaterialDetailPage() {
   ) : null;
   return (
     <>
+      <BackToTop />
       <PdfViewerDialog />
       {/* Opened from the library: go back, so the list returns to where she was. */}
       <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {

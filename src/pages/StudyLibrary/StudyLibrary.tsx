@@ -7,6 +7,7 @@ import { useTabListState, type TabListState } from "@react-stately/tabs";
 import { Item } from "react-stately/Item";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
+import { BackToTop } from "@/components/ui/BackToTop";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Badge,
@@ -298,6 +299,7 @@ export function StudyLibrary() {
 
   return (
     <>
+      <BackToTop />
       <PageHeader
         title="Study Library"
         subtitle="Your training binder — notes, handouts, worksheets and what to do with them."
