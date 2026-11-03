@@ -3,7 +3,7 @@ import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Button, Dialog, Field, Select, TextInput } from "@/components/ui";
+import { Button, Dialog, Field, Select, TextInput, WorkStatus, useElapsed } from "@/components/ui";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
 import type { FaaDownloadRecord } from "@/data/repositories/faaDownloadRepository";
@@ -106,6 +106,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
   const [online, setOnline] = useState(navigator.onLine);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [bytesDone, setBytesDone] = useState(false);
   const [progress, setProgress] = useState<FaaDownloadProgress | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -197,7 +198,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
     if (locked.current || !desktop || !online || !entry || alreadySaved) return;
     locked.current = true;
     cancelled.current = false;
-    setBusy(true); setCancelling(false); setProgress(null); setError(""); setMessage("");
+    setBusy(true); setCancelling(false); setBytesDone(false); setProgress(null); setError(""); setMessage("");
     try {
       const id = newId();
       const downloaded = await downloadFaaHandbook(entry.id, id);
@@ -207,6 +208,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
         return;
       }
       pending.current = { id, title: entry.title, downloaded };
+      setBytesDone(true);
       await save();
     } catch (failure) {
       if (live.current) {
@@ -231,7 +233,8 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
     try { await save(); }
     finally { locked.current = false; if (live.current) setBusy(false); }
   };
-  const finishing = !!pending.current || !!(progress && progress.total > 0 && progress.received >= progress.total);
+  const finishing = bytesDone || !!pending.current || !!(progress && progress.total > 0 && progress.received >= progress.total);
+  const elapsed = useElapsed(busy);
   const mb = (bytes: number) => Math.round(bytes / 1_048_576);
 
   return <div className={phak ? undefined : "faa-shelf__entry"}>
@@ -252,7 +255,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
         {busy && !pending.current ? <Button onClick={() => void cancel()} disabled={cancelling}>{cancelling ? "Cancelling…" : "Cancel"}</Button> : null}
         {pending.current ? <Button onClick={() => void retry()} disabled={busy}>Save downloaded PDF</Button> : null}
       </div>
-      {busy && !pending.current ? <p className="small" role="status">{finishing ? `Saving ${selectedLabel}…` : `Getting ${selectedLabel} from faa.gov…`}{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
+      {busy ? <WorkStatus elapsed={elapsed} phase={`${finishing ? `Saving ${selectedLabel}…` : `Getting ${selectedLabel} from faa.gov…`}${progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}`} /> : null}
     </> : null}
     {one && !selectedRecords.length && (!phak || !faaShelfCopies(data.materials, FAA_REFERENCES[1]).length) ? <p className="small muted">Optional · No saved PDF</p> : null}
     {message ? <p className="small" role="status">{message}</p> : null}

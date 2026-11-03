@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, Dialog } from "@/components/ui";
+import { Button, Dialog, WorkStatus, useElapsed } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { MAX_PDF_BYTES, describeFileSize } from "@/logic/aiLimits";
@@ -31,14 +31,7 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
   const [working, setWorking] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    setElapsed(0);
-    if (!open || !working || !progress) return;
-    const started = Date.now();
-    const timer = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
-    return () => window.clearInterval(timer);
-  }, [open, working, progress]);
+  const elapsed = useElapsed(open && working);
 
   useEffect(() => {
     if (!open || !material.filePath) return;
@@ -156,11 +149,13 @@ export function SplitPdfDialog({ open, material, onClose, onCreated }: Props) {
           </div>
         ) : null}
         {working ? (
-          <div className="ai-working" role="status">
+          <div className="ai-working">
             <span className="ai-working__dot" aria-hidden="true" />
-            <p className="tiny dim">
-              {progress ?? "A large or illustrated PDF can take a little longer per part."}{progress && elapsed > 0 ? ` (${elapsed} s)` : ""}
-            </p>
+            <WorkStatus
+              className="tiny dim"
+              phase={progress ?? "A large or illustrated PDF can take a little longer per part."}
+              elapsed={elapsed}
+            />
           </div>
         ) : null}
         {error ? (

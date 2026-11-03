@@ -277,7 +277,7 @@ describe("saving a manual split", () => {
 });
 
 describe("saving an automatic split", () => {
-  it("updates elapsed split seconds once a second and resets on the next message", async () => {
+  it("shows elapsed split seconds after 5 s and keeps them across step changes", async () => {
     vi.spyOn(pdfService, "inspectPdf").mockResolvedValue({pages:522,maxPagesPerSplit:1000});
     let progress!: (message: string) => void;
     const stop = vi.fn();
@@ -288,17 +288,18 @@ describe("saving an automatic split", () => {
     const view = render(h(AppDataProvider, null, h(SplitPdfDialog, {open:true,material,onClose:()=>{},onCreated:vi.fn()})));
     const create = await screen.findByRole("button", {name:"Create study-size parts"});
     await waitFor(() => expect(create.hasAttribute("disabled")).toBe(false));
-    fireEvent.click(create);
-    await waitFor(() => expect(progress).toBeTypeOf("function"));
     vi.useFakeTimers();
     try {
+      fireEvent.click(create);
+      await act(async () => {});
+      expect(progress).toBeTypeOf("function");
       act(() => progress("Reading pages 1–522 (part 1 of about 2)…"));
-      act(() => vi.advanceTimersByTime(999));
-      expect(screen.queryByText(/\(1 s\)/)).toBeNull();
-      act(() => vi.advanceTimersByTime(39001));
-      expect(screen.getByText("Reading pages 1–522 (part 1 of about 2)… (40 s)")).toBeTruthy();
+      act(() => vi.advanceTimersByTime(4000));
+      expect(screen.getByRole("status").textContent).toBe("Reading pages 1–522 (part 1 of about 2)…");
+      act(() => vi.advanceTimersByTime(36000));
+      expect(screen.getByText("Reading pages 1–522 (part 1 of about 2)… · 40 s")).toBeTruthy();
       act(() => progress("Saving parts…"));
-      expect(screen.getByText("Saving parts…")).toBeTruthy();
+      expect(screen.getByText("Saving parts… · 40 s")).toBeTruthy();
       await act(async () => reject(new Error("Synthetic stop")));
       expect(stop).toHaveBeenCalledOnce();
       expect(vi.getTimerCount()).toBe(0);

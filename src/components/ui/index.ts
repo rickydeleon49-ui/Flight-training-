@@ -12,3 +12,4 @@ export {
   typedDateProblem,
   type TypedDateFieldHandle,
 } from "./TypedDateField";
+export { WorkStatus, useElapsed } from "./WorkStatus";

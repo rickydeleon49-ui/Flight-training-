@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Button, Card, CardBody, CardHeader, Dialog } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Dialog, WorkStatus, useElapsed } from "@/components/ui";
 import {
   backupErrorMessage, chooseCompleteBackup, discardIncomingBackup, exitForRestore,
   formatBackupDate, formatBytes, importPickedBackup, phoneActivitySummary, stageCompleteRestore,
@@ -25,7 +25,7 @@ export function GetStudyMaterialCard() {
   const [preview, setPreview] = useState<{ info: CompleteBackupInfo; activity: ActivitySummary } | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<"opening" | "copying" | null>(null);
-  const [elapsed, setElapsed] = useState(0);
+  const elapsed = useElapsed(progress !== null);
   const locked = useRef(false);
   const ios = isIOS();
   const [staged, setStaged] = useState(false);
@@ -35,7 +35,6 @@ export function GetStudyMaterialCard() {
     if (locked.current) return;
     locked.current = true;
     setBusy(true);
-    setElapsed(0);
     setProgress(phase);
     setProblem(null);
     try {
@@ -48,13 +47,6 @@ export function GetStudyMaterialCard() {
       setProgress(null);
     }
   };
-
-  useEffect(() => {
-    if (!progress) return;
-    const started = Date.now();
-    const timer = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
-    return () => window.clearInterval(timer);
-  }, [progress]);
 
   useEffect(() => {
     if (!staged || ios) return;
@@ -98,7 +90,7 @@ export function GetStudyMaterialCard() {
               {busy ? "Opening…" : "Get my study material"}
             </Button>
           )}
-          {progress === "opening" ? <p role="status">Opening your file… ({elapsed} s)</p> : null}
+          {progress === "opening" ? <WorkStatus className="" phase="Opening your file…" elapsed={elapsed} /> : null}
           {!preview && problem ? <p role="alert">{problem}</p> : null}
         </CardBody>
       </Card>
@@ -117,7 +109,7 @@ export function GetStudyMaterialCard() {
           <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {preview.info.files} files</p>
           <p>{activitySentence(preview.activity)}</p>
         </> : null}
-        {progress === "copying" ? <p role="status">Copying your study material… this can take a minute. ({elapsed} s)</p> : null}
+        {progress === "copying" ? <WorkStatus className="" phase="Copying your study material… this can take a minute." elapsed={elapsed} /> : null}
         {problem ? <p role="alert">{problem}</p> : null}
       </Dialog>
     </>
