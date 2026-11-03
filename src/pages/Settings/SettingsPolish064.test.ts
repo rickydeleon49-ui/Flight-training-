@@ -34,6 +34,8 @@ async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
   await waitFor(() => expect(context.status).toBe("ready"));
   await screen.findByRole("heading", { name: "About you" });
+  (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
+  (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;
 }
 
 beforeEach(async () => {

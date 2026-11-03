@@ -2424,7 +2424,7 @@ function GenerationNoticeView({
       ) : null}
       {notice.settings ? (
         <div>
-          <Link className="button button--secondary" to="/settings">Open Settings</Link>
+          <Link className="button button--secondary" to="/settings#ai-provider">Open Settings</Link>
         </div>
       ) : null}
     </div>

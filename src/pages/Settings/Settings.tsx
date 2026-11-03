@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import type { ProviderStatus } from "@/services/provider";
 import { ProviderControls } from "./ProviderControls";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -161,6 +162,9 @@ function MacNote({ children }: { children: ReactNode }) {
 
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
+  const { hash } = useLocation();
+  const backupsFold = useRef<HTMLDetailsElement>(null);
+  const advancedFold = useRef<HTMLDetailsElement>(null);
   const medicalConflict = medicalDateConflict(data.profile, data.toolkit.credentials);
   const [draft, setDraft] = useState<ProfileDraft>(() => draftFrom(data.profile));
   // Already applied at startup (main.tsx); this only reflects the saved choice.
@@ -197,6 +201,37 @@ export function Settings() {
   const [libraryTrashCandidate, setLibraryTrashCandidate] = useState<UnlinkedFileInfo | null>(null);
   const [libraryTrashUndo, setLibraryTrashUndo] = useState<Array<{ stagedId: string; name: string }>>([]);
   const [libraryVisible, setLibraryVisible] = useState(50);
+
+  const showBackupResult = Boolean(backupNote || upgradeFailed || folderOpenError || libraryNote || libraryReport || restoreCandidate || localRestoreCandidate);
+  useEffect(() => {
+    if ((showBackupResult || hash === "#settings-backups") && backupsFold.current) backupsFold.current.open = true;
+  }, [showBackupResult, backupNote, folderOpenError, libraryNote, hash]);
+
+  useEffect(() => {
+    if ((hash === "#ai-provider" || geminiProblem) && advancedFold.current) advancedFold.current.open = true;
+  }, [hash, geminiProblem]);
+
+  // Cards inside both folds also report errors asynchronously (some in their own disclosure):
+  // an alert must never stay hidden behind a closed fold.
+  useEffect(() => {
+    const folds = [backupsFold.current, advancedFold.current].filter((f): f is HTMLDetailsElement => Boolean(f));
+    const observers = folds.map((fold) => {
+      const revealAlerts = () => {
+        fold.querySelectorAll('[role="alert"]').forEach((alert) => {
+          let parent = alert.parentElement;
+          while (parent && fold.contains(parent)) {
+            if (parent instanceof HTMLDetailsElement && !parent.open) parent.open = true;
+            parent = parent.parentElement;
+          }
+        });
+      };
+      const observer = new MutationObserver(revealAlerts);
+      observer.observe(fold, { childList: true, subtree: true, attributes: true, attributeFilter: ["role"] });
+      revealAlerts();
+      return observer;
+    });
+    return () => observers.forEach((observer) => observer.disconnect());
+  }, []);
 
   const reloadLibrary = async () => {
     setLibraryReport(await checkLibrary());
@@ -613,6 +648,9 @@ export function Settings() {
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
 
       <div className="settings-layout stack stack--5">
+        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
+        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
+
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />
           <CardBody>
@@ -968,78 +1006,9 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader title="Check library" eyebrow="Study Library files" />
-          <CardBody>
-            <div className="stack stack--4">
-              <p className="small muted">
-                Find study materials whose files are missing and stored files that are not linked to a material. Nothing changes until you choose an action.
-              </p>
-              <div>
-                <Button onClick={() => void runLibraryCheck()} disabled={libraryBusy || !canHandleFiles()}>
-                  {libraryBusy ? "Checking library…" : "Check library"}
-                </Button>
-              </div>
-              {!canHandleFiles() ? <p className="tiny dim">Library file checks need the desktop app.</p> : null}
-              {libraryNote ? (
-                <p className="small" role={libraryProblem ? "alert" : "status"}>
-                  {libraryNote}
-                </p>
-              ) : null}
-              {libraryReport ? (
-                <div className="stack stack--4" aria-label="Library check results">
-                  <p className="small" role="status">
-                    Checked {libraryReport.totalMaterials} materials and {libraryReport.totalFiles} stored files. {libraryReport.missingMaterials.length} missing files; {libraryReport.unlinkedFiles.length} unlinked files.
-                  </p>
-                  {libraryReport.missingMaterials.length > 0 ? (
-                    <div className="stack stack--2">
-                      <h3>Materials with missing files</h3>
-                      <ul className="stack stack--2">
-                        {libraryReport.missingMaterials.slice(0, libraryVisible).map((item) => (
-                          <li key={item.id} className="row row--between row--wrap">
-                            <span className="small wrap-anywhere"><strong>{item.title}</strong> — {item.originalFileName || item.filePath}</span>
-                            <Button size="small" disabled={libraryBusy} onClick={() => void reattachLibraryMaterial(item.id)}>Re-attach file</Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {libraryReport.unlinkedFiles.length > 0 ? (
-                    <div className="stack stack--2">
-                      <h3>Stored files without a material</h3>
-                      <ul className="stack stack--2">
-                        {libraryReport.unlinkedFiles.slice(0, libraryVisible).map((file) => (
-                          <li key={file.relativePath} className="row row--between row--wrap">
-                            <span className="small wrap-anywhere"><strong>{file.fileName}</strong> ({formatFileSize(file.fileSize)})</span>
-                            <span className="row row--wrap">
-                              <Button size="small" disabled={libraryBusy} onClick={() => void importLibraryFile(file.relativePath)}>Add to library</Button>
-                              <Button size="small" variant="danger" disabled={libraryBusy} onClick={() => setLibraryTrashCandidate(file)}>Move to trash</Button>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {(libraryReport.missingMaterials.length > libraryVisible || libraryReport.unlinkedFiles.length > libraryVisible) ? (
-                    <Button size="small" disabled={libraryBusy} onClick={() => setLibraryVisible((count) => count + 50)}>Show more results</Button>
-                  ) : null}
-                </div>
-              ) : null}
-              {libraryTrashUndo.length > 0 ? (
-                <div className="stack stack--2" aria-label="Files recently moved to trash">
-                  {libraryTrashUndo.map((item) => (
-                    <div key={item.stagedId} className="row row--wrap">
-                      <span className="small">{item.name} is in private trash.</span>
-                      <Button size="small" disabled={libraryBusy} onClick={() => void undoLibraryTrash(item.stagedId)}>Undo move</Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </CardBody>
-        </Card>
-
-        {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : (
+        <details id="settings-backups" className="card material-fold" ref={backupsFold}>
+          <summary>Backups and data</summary>
+        {!deviceCan().getStudyMaterial ? (
         <Card>
           <CardHeader
             title="Your data"
@@ -1169,48 +1138,88 @@ export function Settings() {
           </CardBody>
         </Card>
 
-        )}
-
-        {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
+        ) : null}
 
         <Card>
-          <CardHeader title="About this application" eyebrow="Scope" />
+          <CardHeader title="Check library" eyebrow="Study Library files" />
           <CardBody>
-            <PlatformGuidance
-              mac={
-                <>
-                  Her Flight Deck supports macOS 12 or newer.
-                  Use only an official installer; never turn off Gatekeeper or bypass its warnings.
-                </>
-              }
-              windows={
-                <>
-                  Use only a release obtained from the official release location.
-                  If Defender or SmartScreen blocks or flags the installer, stop.
-                  The build must remain private until Microsoft clears it or it receives trusted signing.
-                  Do not add exclusions, disable protection, or click through the warning.
-                </>
-              }
-              neutral={
-                <>
-                  Use only an official release obtained from the official release location.
-                </>
-              }
-            />
-            <p className="small muted">
-              Her Flight Deck organizes the training information you put into it. It does not
-              replace your flight instructor, your flight school, official aviation
-              regulations, aircraft documentation, or required training. Where this
-              application and an official or instructor-provided source disagree, the
-              official source is correct.
-            </p>
+            <div className="stack stack--4">
+              <p className="small muted">
+                Find study materials whose files are missing and stored files that are not linked to a material. Nothing changes until you choose an action.
+              </p>
+              <div>
+                <Button onClick={() => void runLibraryCheck()} disabled={libraryBusy || !canHandleFiles()}>
+                  {libraryBusy ? "Checking library…" : "Check library"}
+                </Button>
+              </div>
+              {!canHandleFiles() ? <p className="tiny dim">Library file checks need the desktop app.</p> : null}
+              {libraryNote ? (
+                <p className="small" role={libraryProblem ? "alert" : "status"}>
+                  {libraryNote}
+                </p>
+              ) : null}
+              {libraryReport ? (
+                <div className="stack stack--4" aria-label="Library check results">
+                  <p className="small" role="status">
+                    Checked {libraryReport.totalMaterials} materials and {libraryReport.totalFiles} stored files. {libraryReport.missingMaterials.length} missing files; {libraryReport.unlinkedFiles.length} unlinked files.
+                  </p>
+                  {libraryReport.missingMaterials.length > 0 ? (
+                    <div className="stack stack--2">
+                      <h3>Materials with missing files</h3>
+                      <ul className="stack stack--2">
+                        {libraryReport.missingMaterials.slice(0, libraryVisible).map((item) => (
+                          <li key={item.id} className="row row--between row--wrap">
+                            <span className="small wrap-anywhere"><strong>{item.title}</strong> — {item.originalFileName || item.filePath}</span>
+                            <Button size="small" disabled={libraryBusy} onClick={() => void reattachLibraryMaterial(item.id)}>Re-attach file</Button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {libraryReport.unlinkedFiles.length > 0 ? (
+                    <div className="stack stack--2">
+                      <h3>Stored files without a material</h3>
+                      <ul className="stack stack--2">
+                        {libraryReport.unlinkedFiles.slice(0, libraryVisible).map((file) => (
+                          <li key={file.relativePath} className="row row--between row--wrap">
+                            <span className="small wrap-anywhere"><strong>{file.fileName}</strong> ({formatFileSize(file.fileSize)})</span>
+                            <span className="row row--wrap">
+                              <Button size="small" disabled={libraryBusy} onClick={() => void importLibraryFile(file.relativePath)}>Add to library</Button>
+                              <Button size="small" variant="danger" disabled={libraryBusy} onClick={() => setLibraryTrashCandidate(file)}>Move to trash</Button>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {(libraryReport.missingMaterials.length > libraryVisible || libraryReport.unlinkedFiles.length > libraryVisible) ? (
+                    <Button size="small" disabled={libraryBusy} onClick={() => setLibraryVisible((count) => count + 50)}>Show more results</Button>
+                  ) : null}
+                </div>
+              ) : null}
+              {libraryTrashUndo.length > 0 ? (
+                <div className="stack stack--2" aria-label="Files recently moved to trash">
+                  {libraryTrashUndo.map((item) => (
+                    <div key={item.stagedId} className="row row--wrap">
+                      <span className="small">{item.name} is in private trash.</span>
+                      <Button size="small" disabled={libraryBusy} onClick={() => void undoLibraryTrash(item.stagedId)}>Undo move</Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </CardBody>
         </Card>
 
+        </details>
+
+        <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
+          <summary>Advanced{!gemini?.configured ? " · AI provider not set up" : ""}</summary>
         {deviceCan().generate ? (
         <Card>
           <CardHeader
             title="AI provider"
+            headingId="ai-provider"
             eyebrow={(providerConnection?.selected === "claude" ? providerConnection.providers.some((p) => p.id === "claude" && p.connected) : gemini?.configured) ? "Connected" : "Optional online AI"}
           />
           <CardBody>
@@ -1338,6 +1347,42 @@ export function Settings() {
           </CardBody>
         </Card>
         ) : null}
+
+        <Card>
+          <CardHeader title="About this application" eyebrow="Scope" />
+          <CardBody>
+            <PlatformGuidance
+              mac={
+                <>
+                  Her Flight Deck supports macOS 12 or newer.
+                  Use only an official installer; never turn off Gatekeeper or bypass its warnings.
+                </>
+              }
+              windows={
+                <>
+                  Use only a release obtained from the official release location.
+                  If Defender or SmartScreen blocks or flags the installer, stop.
+                  The build must remain private until Microsoft clears it or it receives trusted signing.
+                  Do not add exclusions, disable protection, or click through the warning.
+                </>
+              }
+              neutral={
+                <>
+                  Use only an official release obtained from the official release location.
+                </>
+              }
+            />
+            <p className="small muted">
+              Her Flight Deck organizes the training information you put into it. It does not
+              replace your flight instructor, your flight school, official aviation
+              regulations, aircraft documentation, or required training. Where this
+              application and an official or instructor-provided source disagree, the
+              official source is correct.
+            </p>
+          </CardBody>
+        </Card>
+
+        </details>
       </div>
 
       <ConfirmDialog
