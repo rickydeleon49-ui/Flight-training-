@@ -17,6 +17,7 @@ vi.mock("@/state/AppDataContext", () => ({
     dataRevision: 0,
     repositories: createRepositories(db),
     mutate: vi.fn(),
+    refresh: vi.fn(),
   }),
 }));
 
@@ -97,12 +98,27 @@ it("follows later URL navigation and browser back without local selection drift"
 
 it("hides library and FAA import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     open();
     expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
     expect(screen.queryAllByRole("button", { name: /Add PDF|Get from faa.gov|Get full handbook/ })).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Picture card from a photo" })).toBeTruthy();
+    const input = screen.getByTestId("photo-picture-input") as HTMLInputElement;
+    expect(input.type).toBe("file");
+    expect(input.accept).toBe("image/*");
+  } finally { spy.mockRestore(); }
+});
+
+it("does not offer a picture card from a photo on the Mac", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, generate: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, pictureFromPhoto: false, renderPdfPage: true });
+  try {
+    open();
+    expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Picture card from a photo" })).toBeNull();
+    expect(screen.queryByTestId("photo-picture-input")).toBeNull();
   } finally { spy.mockRestore(); }
 });
