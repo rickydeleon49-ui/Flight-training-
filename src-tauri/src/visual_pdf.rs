@@ -93,7 +93,7 @@ fn bounded(path: &Path, limit: usize) -> Result<Vec<u8>, String> {
     Ok(bytes)
 }
 #[cfg(any(target_os = "macos", test))]
-fn run(binary: &Path, args: &[&std::ffi::OsStr], deadline: Instant) -> Result<bool, String> {
+fn run(binary: &Path, args: &[std::ffi::OsString], deadline: Instant) -> Result<bool, String> {
     use std::process::{Command, Stdio};
     if Instant::now() >= deadline {
         return Err("Making the picture timed out. Please try again.".into());
@@ -105,6 +105,10 @@ fn run(binary: &Path, args: &[&std::ffi::OsStr], deadline: Instant) -> Result<bo
         .stderr(Stdio::null())
         .spawn()
         .map_err(|_| "The Mac picture tool is unavailable.".to_string())?;
+    wait_for_tool(&mut child, deadline)
+}
+#[cfg(any(target_os = "macos", test))]
+fn wait_for_tool(child: &mut std::process::Child, deadline: Instant) -> Result<bool, String> {
     loop {
         match child.try_wait() {
             Ok(Some(status)) => return Ok(status.success()),
@@ -130,21 +134,9 @@ fn raster(
     timeout: Duration,
 ) -> Result<PathBuf, String> {
     let deadline = Instant::now() + timeout.min(Duration::from_secs(30));
-    let input = dir.join("page.pdf");
     let output = dir.join("page.pdf.png");
-    let size = px.to_string();
-    let quick = run(
-        quicklook,
-        &[
-            "-t".as_ref(),
-            "-s".as_ref(),
-            size.as_ref(),
-            "-o".as_ref(),
-            dir.as_os_str(),
-            input.as_os_str(),
-        ],
-        deadline,
-    );
+    let (quick_args, fallback_args) = raster_args(dir, px);
+    let quick = run(quicklook, &quick_args, deadline);
     // A timeout is final: fallback shares the same overall deadline.
     if Instant::now() >= deadline {
         return Err("Making the picture timed out. Please try again.".into());
@@ -153,24 +145,36 @@ fn raster(
         return Ok(output);
     }
     let fallback = dir.join("page.png");
-    if run(
-        sips,
-        &[
-            "-s".as_ref(),
-            "format".as_ref(),
-            "png".as_ref(),
-            "-Z".as_ref(),
-            size.as_ref(),
-            input.as_os_str(),
-            "--out".as_ref(),
-            fallback.as_os_str(),
-        ],
-        deadline,
-    )? && fallback.is_file()
-    {
+    if run(sips, &fallback_args, deadline)? && fallback.is_file() {
         return Ok(fallback);
     }
     Err("The Mac couldn't turn this page into a picture.".into())
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn raster_args(dir: &Path, px: u32) -> (Vec<std::ffi::OsString>, Vec<std::ffi::OsString>) {
+    let input = dir.join("page.pdf");
+    let size = px.to_string();
+    (
+        vec![
+            "-t".into(),
+            "-s".into(),
+            size.clone().into(),
+            "-o".into(),
+            dir.into(),
+            input.clone().into(),
+        ],
+        vec![
+            "-s".into(),
+            "format".into(),
+            "png".into(),
+            "-Z".into(),
+            size.into(),
+            input.into(),
+            "--out".into(),
+            dir.join("page.png").into(),
+        ],
+    )
 }
 
 #[cfg(any(target_os = "macos", test))]

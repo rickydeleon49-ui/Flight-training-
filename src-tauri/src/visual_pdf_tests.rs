@@ -196,21 +196,24 @@ fn invalid_page_size_png_and_failed_save_leave_no_copies() {
 fn missing_tools_and_injected_timeout_clean_temp() {
     let mut f = fixture();
     let mut temporary = PathBuf::new();
-    assert!(
-        capture_on(&mut f.conn, &f.root, "owner", 1, 100, |dir, px| {
-            temporary = dir.into();
-            raster(
-                dir,
-                px,
-                Path::new("/missing/qlmanage"),
-                Path::new("/missing/sips"),
-                Duration::from_secs(1),
-            )
-        })
-        .unwrap_err()
-        .contains("unavailable")
-    );
+    let missing_quick = f.root.join("missing-qlmanage");
+    let missing_sips = f.root.join("missing-sips");
+    let missing = capture_on(&mut f.conn, &f.root, "owner", 1, 100, |dir, px| {
+        temporary = dir.into();
+        raster(
+            dir,
+            px,
+            &missing_quick,
+            &missing_sips,
+            Duration::from_secs(1),
+        )
+    });
+    assert_eq!(missing.unwrap_err(), "The Mac picture tool is unavailable.");
     assert!(!temporary.exists());
+    assert_eq!(
+        std::fs::read_dir(f.root.join("documents")).unwrap().count(),
+        2
+    );
     // /usr/bin/yes is a harmless long-running fake: output is discarded, killed and reaped.
     let result = capture_on(&mut f.conn, &f.root, "owner", 1, 100, |dir, _| {
         temporary = dir.into();
@@ -283,4 +286,121 @@ fn real_mac_raster() {
         ))
         .is_ok()
     );
+}
+
+#[test]
+#[cfg(unix)]
+fn deadline_kills_and_reaps_child_and_capture_removes_scratch() {
+    use std::os::unix::process::ExitStatusExt;
+    let mut f = fixture();
+    let mut temporary = PathBuf::new();
+    let result = capture_on(&mut f.conn, &f.root, "owner", 1, 100, |dir, _| {
+        temporary = dir.into();
+        // Shell builtins only: no grandchildren can outlive this fake tool.
+        let mut child = std::process::Command::new("/bin/sh")
+            .args(["-c", "while :; do :; done"])
+            .spawn()
+            .unwrap();
+        let result = wait_for_tool(&mut child, Instant::now() + Duration::from_millis(40));
+        let status = child.try_wait().unwrap();
+        // Clean up even if a regression stops killing/reaping the fake tool.
+        let _ = child.kill();
+        let _ = child.wait();
+        assert_eq!(
+            status.expect("tool must have been reaped").signal(),
+            Some(9)
+        );
+        result?;
+        unreachable!("a killed tool must return an error")
+    });
+    assert_eq!(
+        result.unwrap_err(),
+        "Making the picture timed out. Please try again."
+    );
+    assert!(!temporary.exists());
+    assert_eq!(count(&f), 2);
+    assert_eq!(
+        std::fs::read_dir(f.root.join("documents")).unwrap().count(),
+        2
+    );
+}
+
+#[test]
+fn bounded_accepts_cap_and_refuses_one_more_byte() {
+    let f = fixture();
+    let path = f.root.join("output.png");
+    let file = std::fs::File::create(&path).unwrap();
+    file.set_len(crate::visual_cards::MAX_BYTES as u64).unwrap();
+    assert_eq!(
+        bounded(&path, crate::visual_cards::MAX_BYTES)
+            .unwrap()
+            .len(),
+        crate::visual_cards::MAX_BYTES
+    );
+    file.set_len(crate::visual_cards::MAX_BYTES as u64 + 1)
+        .unwrap();
+    assert_eq!(
+        bounded(&path, crate::visual_cards::MAX_BYTES).unwrap_err(),
+        "This file is too large to make a page picture."
+    );
+}
+
+#[test]
+fn validated_size_builds_literal_args_and_page_never_reaches_tools() {
+    let mut f = fixture();
+    for (page, px) in [(0, 100), (u32::MAX, 100), (1, 0), (1, 2049), (1, u32::MAX)] {
+        assert!(capture_on(&mut f.conn, &f.root, "owner", page, px, |_, _| {
+            panic!("invalid page or size must not reach a tool")
+        })
+        .is_err());
+    }
+    for px in [1, 2048] {
+        capture_on(&mut f.conn, &f.root, "owner", 2, px, |dir, size| {
+            assert_eq!(size, px);
+            assert_eq!(
+                Document::load(dir.join("page.pdf"))
+                    .unwrap()
+                    .get_pages()
+                    .len(),
+                1
+            );
+            // Spaces and shell punctuation stay in individual path arguments.
+            let path = dir.join("space ; $(tool)");
+            let (quick, fallback) = raster_args(&path, size);
+            let expected = |args: &[&str]| {
+                args.iter()
+                    .map(std::ffi::OsString::from)
+                    .collect::<Vec<_>>()
+            };
+            let path_str = path.to_str().unwrap();
+            let input = path.join("page.pdf");
+            let output = path.join("page.png");
+            assert_eq!(
+                quick,
+                expected(&[
+                    "-t",
+                    "-s",
+                    &px.to_string(),
+                    "-o",
+                    path_str,
+                    input.to_str().unwrap()
+                ])
+            );
+            assert_eq!(
+                fallback,
+                expected(&[
+                    "-s",
+                    "format",
+                    "png",
+                    "-Z",
+                    &px.to_string(),
+                    input.to_str().unwrap(),
+                    "--out",
+                    output.to_str().unwrap()
+                ])
+            );
+            fake(dir, size)
+        })
+        .unwrap();
+    }
 }
