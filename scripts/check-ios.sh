@@ -14,6 +14,8 @@ if [ ! -d dist ]; then
   echo "check-ios: dist/ is missing; run npm run build first" >&2
   exit 1
 fi
+echo "== plutil -lint privacy manifest"
+plutil -lint src-tauri/gen/apple/her-flight-deck_iOS/PrivacyInfo.xcprivacy
 for t in aarch64-apple-ios aarch64-apple-ios-sim; do
   echo "== cargo check --target $t"
   cargo check --locked --manifest-path src-tauri/Cargo.toml --target "$t"
