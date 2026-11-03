@@ -243,6 +243,8 @@ it("shows Saving after the full byte count while native checking is still pendin
   mount();
   await startDownload();
   await screen.findByRole("button", {name:"Saving…"});
+  expect(screen.queryByRole("button", {name:"Downloading…"})).toBeNull();
+  expect(screen.getByRole("status").textContent).toContain("Saving");
   expect(mocks.record).not.toHaveBeenCalled();
   await act(async () => reject({kind:"cancelled", message:"cancelled"}));
   await screen.findByText("Download cancelled.");

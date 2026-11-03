@@ -95,10 +95,10 @@ describe("GetStudyMaterialCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
     await act(async () => {});
     expect(mocks.importPickedBackup).toHaveBeenCalledOnce();
-    expect(screen.getByRole("status").textContent).toBe("Opening your file… (0 s)");
+    expect(screen.getByRole("status").textContent).toBe("Opening your file…");
     expect(screen.getByRole("button", { name: "Opening…" }).hasAttribute("disabled")).toBe(true);
     await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
-    expect(screen.getByRole("status").textContent).toBe("Opening your file… (25 s)");
+    expect(screen.getByRole("status").textContent).toBe("Opening your file… · 25 s");
     await act(async () => { resolve(info); });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     expect(screen.queryByRole("status")).toBeNull();
@@ -110,13 +110,13 @@ describe("GetStudyMaterialCard", () => {
     await pick();
     vi.useFakeTimers();
     confirm();
-    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. (0 s)");
+    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute.");
     expect(screen.getByRole("button", { name: "Not now" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("button", { name: "Replace what's on this phone" }).hasAttribute("disabled")).toBe(true);
     confirm();
     expect(mocks.stageCompleteRestore).toHaveBeenCalledExactlyOnceWith(info.path);
     await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
-    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. (25 s)");
+    expect(screen.getByRole("status").textContent).toBe("Copying your study material… this can take a minute. · 25 s");
     expect(screen.queryByRole("heading", { name: "All set" })).toBeNull();
     await act(async () => { resolve(info); });
     expect(screen.getByRole("heading", { name: "All set" })).toBeTruthy();
