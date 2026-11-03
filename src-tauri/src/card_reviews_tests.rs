@@ -278,11 +278,11 @@ fn shift_review(conn: &Connection, item_id: &str, last_reviewed_at: &str) {
 #[test]
 fn golden_identity_vectors_are_reproduced() {
     let golden: Value = serde_json::from_str(include_str!(
-        "../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/identity-golden.json"
+        "../fixtures/card-identity/identity-golden.json"
     ))
     .unwrap();
     let material: Value = serde_json::from_str(include_str!(
-        "../../docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/synthetic-material.json"
+        "../fixtures/card-identity/synthetic-material.json"
     ))
     .unwrap();
     let SavedCards::Ok(cards) = parse_saved_cards(Some(&material["flashcards"].to_string())) else {

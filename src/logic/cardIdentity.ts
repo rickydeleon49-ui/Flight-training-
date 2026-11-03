@@ -12,7 +12,7 @@
  * trusted from storage. Changed text is a new version that starts fresh;
  * identical text maps back to the same version and its retained history.
  * The native twin in `src-tauri/src/card_reviews.rs` reproduces the same
- * golden vectors (`docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/identity-golden.json`).
+ * golden vectors (`src-tauri/fixtures/card-identity/identity-golden.json`).
  * A card without `origin` hashes exactly as before, so every legacy snapshot
  * keeps its hash, version id and history.
  */

@@ -1,6 +1,6 @@
 /**
  * Plain wording and safe snippet handling for searching inside prepared
- * documents (OFFLINE-02b; design docs/OFFLINE_02_SEARCH_DESIGN_2026-10-19.md).
+ * documents (OFFLINE-02b).
  *
  * A snippet is document text and is only ever rendered as text: it is split
  * here into plain and highlighted pieces, never treated as HTML.

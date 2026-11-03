@@ -60,6 +60,7 @@ function setup({ tag = 'v1.2.3', dirty = false, laterCommit = false } = {}) {
 function run(ctx, args, env = {}) {
   const base = { ...process.env };
   delete base.APPLE_SIGNING_IDENTITY;
+  delete base.HFD_NOTARY_PROFILE;
   const r = spawnSync('bash', [path.join(ctx.repo, 'scripts', 'build-signed-mac.sh'), ...args], {
     cwd: ctx.repo, encoding: 'utf8',
     env: { ...base, PATH: `${ctx.bin}:${process.env.PATH}`, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', ...env },
@@ -103,7 +104,7 @@ describe('build-signed-mac.sh refusals', () => {
     const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: NONE });
     assert.equal(r.status, 1);
     assert.match(r.output, /No valid "Developer ID Application" signing identity/);
-    assert.match(r.output, /MAC_SIGNING_LOCAL_2026-10-28\.md/);
+    assert.match(r.output, /README\.md, Signed Mac builds, step 1/);
     assert.deepEqual(r.tools, ['security']);
   });
 
@@ -134,6 +135,13 @@ describe('build-signed-mac.sh refusals', () => {
     assert.match(r.output, /notarytool store-credentials hfd-notary --key <AuthKey_KEYID.p8> --key-id <KEYID> --issuer <issuer ID>[\s\S]*--apple-id <your Apple ID> --team-id ABCDE12345/);
     assert.deepEqual(r.tools, ['security', 'xcrun']);
     assert.deepEqual(r.calls.find((c) => c[0] === 'xcrun'), ['xcrun', 'notarytool', 'history', '--keychain-profile', 'hfd-notary']);
+  });
+
+  it('uses the notary profile named by HFD_NOTARY_PROFILE', () => {
+    const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: ONE, FAKE_XCRUN_EXIT: '1', HFD_NOTARY_PROFILE: 'my-notary' });
+    assert.equal(r.status, 1);
+    assert.match(r.output, /keychain profile "my-notary" is missing/);
+    assert.deepEqual(r.calls.find((c) => c[0] === 'xcrun'), ['xcrun', 'notarytool', 'history', '--keychain-profile', 'my-notary']);
   });
 });
 

@@ -1,5 +1,0 @@
-ProductName:		macOS
-ProductVersion:		27.0.1
-BuildVersion:		26A434
-Apple M5
-34359738368

@@ -4832,8 +4832,7 @@ fn validate_compression_ratio(uncompressed: u64, compressed: u64) -> Result<(), 
 ///
 /// Hashing while writing replaces reopening each new file to hash it
 /// afterwards. That reopen is what made staging slow on Windows (about 19 ms
-/// per just-written file, most of a large restore; see
-/// docs/PERFORMANCE_POLISH_2026-09-27.md). The check is the same: the bytes
+/// per just-written file, most of a large restore). The check is the same: the bytes
 /// that went to the file must match the archive's integrity record before the
 /// restore is staged, and the file is still flushed with `sync_all` first.
 fn copy_and_hash(reader: &mut impl Read, output: &mut File) -> Result<(u64, String), String> {

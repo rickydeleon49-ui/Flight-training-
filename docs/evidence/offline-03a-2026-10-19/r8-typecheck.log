@@ -1,3 +1,0 @@
-command: ["/opt/homebrew/opt/node@22/bin/node", "node_modules/typescript/bin/tsc", "--noEmit"]
-
-exit 0

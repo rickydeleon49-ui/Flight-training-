@@ -1,11 +1,8 @@
 /**
  * Codex's two independent diagnostic sets from the contract reviews, run
  * against the production validator. Inputs, expectations and pass rules match
- * the published sources:
- * - docs/evidence/structured-study-import-review-2026-10-03/codex-diagnostics.mjs.txt
- *   (the two R2 retention checks read the documented `preview.data`, as in the
- *   accepted adaptation prototype-corrected/run-codex-diagnostics-adapted.mjs.txt);
- * - docs/evidence/structured-study-import-rereview-2026-10-03/codex-source-notes-diagnostics.mjs.txt.
+ * the original review diagnostics (the two R2 retention checks read the
+ * documented `preview.data`, as in the accepted adaptation).
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";

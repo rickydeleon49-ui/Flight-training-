@@ -1,7 +1,6 @@
 /**
  * The 41 permanent regressions from the accepted contract's R1/R2/R3/R5 reviews,
- * ported from docs/evidence/structured-study-import-contract-2026-10-03/
- * prototype-r5/run-regressions.mjs.txt with the same test names. Each check
+ * ported from the accepted contract's reference runner with the same test names. Each check
  * returns its list of problems; a passing test has none.
  *
  * Sentinel and credential-shaped values are assembled at run time; failures

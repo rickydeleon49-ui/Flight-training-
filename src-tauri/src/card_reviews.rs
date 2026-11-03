@@ -1,7 +1,6 @@
 //! Material-level flashcard reviews (M2-3 source slice C1).
 //!
-//! The native half of the card-review contract in
-//! `docs/M2_CARD_REVIEW_SCOPE_2026-10-06.md`:
+//! The native half of the card-review contract:
 //!
 //! - content-addressed card identity (the twin of `src/logic/cardIdentity.ts`)
 //! - the deterministic `simple-v1` scheduler (the twin of `src/logic/cardScheduler.ts`)

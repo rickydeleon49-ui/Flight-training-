@@ -1,2 +1,0 @@
-git diff --exit-code src-tauri/Cargo.lock
-Exit code: 0

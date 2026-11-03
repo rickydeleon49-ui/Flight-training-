@@ -1,6 +1,5 @@
 /**
- * Saved study content in offline search (OFFLINE-02c; addendum
- * docs/OFFLINE_02C_SAVED_CONTENT_SEARCH_ADDENDUM_2026-10-19.md).
+ * Saved study content in offline search (OFFLINE-02c).
  *
  * Results open the actual item. A guide section or card is identified by its
  * index plus a digest of its own text, so a link from a search made before

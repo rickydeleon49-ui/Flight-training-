@@ -1,6 +1,5 @@
 /**
- * `simple-v1`, ported with unchanged meaning from the accepted proof
- * (`docs/evidence/m2-card-review-scope-2026-10-06/proof/proof.test.mjs`, [pure]).
+ * `simple-v1`, ported with unchanged meaning from the accepted proof.
  */
 import { describe, expect, it } from "vitest";
 

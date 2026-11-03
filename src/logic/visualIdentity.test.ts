@@ -7,7 +7,7 @@ import { buildExportPacket } from "./studyExport";
 import { buildHandoutHtml } from "./studyHandout";
 import type { ExportSource } from "./studyExport";
 it("keeps existing legacy text golden hashes, item identities and source fingerprints byte-identical", async () => {
-  const base = "docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures/";
+  const base = "src-tauri/fixtures/card-identity/";
   const material = JSON.parse(readFileSync(`${base}synthetic-material.json`, "utf8"));
   const golden = JSON.parse(readFileSync(`${base}identity-golden.json`, "utf8"));
   const v = await cardVersion(material.materialId, material.flashcards);

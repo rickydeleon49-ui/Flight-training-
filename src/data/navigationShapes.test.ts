@@ -2,8 +2,7 @@
  * Strict desktop navigation adapters (M4S1-R2): a successful acknowledgement
  * must match the request it answers field by field; refusals stay readable
  * even when they carry newer state; anything else is STORAGE_FAILURE and
- * never a published success. Includes the two frozen review diagnostics
- * (docs/evidence/m4-slice1-partial-review-2026-10-16/diagnostics.mjs),
+ * never a published success. Includes the two frozen review diagnostics,
  * promoted to permanent tests with the request shapes updated for M4S1-R1.
  */
 import { DatabaseSync } from "node:sqlite";

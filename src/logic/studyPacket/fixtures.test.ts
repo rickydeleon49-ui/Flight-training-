@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
@@ -5,18 +6,18 @@ import { boundaryCases, compareOutcome, type ExpectedOutcome } from "@/testing/s
 import { validatePacketBytes, validatePacketText } from "./index";
 
 const FIXTURES = new URL("../../testing/fixtures/study-packets/", import.meta.url);
-const ACCEPTED = new URL("../../../docs/evidence/structured-study-import-contract-2026-10-03/", import.meta.url);
+const ACCEPTED = JSON.parse(readFileSync(new URL("../../testing/fixtures/study-packets-accepted.sha256.json", import.meta.url), "utf8")).files as Record<string, string>;
+const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const expected = JSON.parse(readFileSync(new URL("expected-outcomes.json", FIXTURES), "utf8")).fixtures as Record<string, ExpectedOutcome>;
 const fixtureNames = readdirSync(FIXTURES).filter((name) => name.endsWith(".json") && name !== "expected-outcomes.json").sort();
 
 describe("study-packet fixtures (accepted contract)", () => {
-  it("keeps the test copies byte-identical to the accepted contract evidence", () => {
-    const accepted = readdirSync(new URL("fixtures/", ACCEPTED)).filter((name) => name.endsWith(".json")).sort();
+  it("keeps the test copies byte-identical to the accepted contract fixtures", () => {
+    const accepted = Object.keys(ACCEPTED).filter((name) => name !== "expected-outcomes.json").sort();
     expect(fixtureNames).toEqual(accepted);
-    for (const name of accepted) {
-      expect(readFileSync(new URL(name, FIXTURES)).equals(readFileSync(new URL(`fixtures/${name}`, ACCEPTED))), name).toBe(true);
+    for (const name of [...accepted, "expected-outcomes.json"]) {
+      expect(sha256(readFileSync(new URL(name, FIXTURES))), name).toBe(ACCEPTED[name]);
     }
-    expect(readFileSync(new URL("expected-outcomes.json", FIXTURES)).equals(readFileSync(new URL("expected-outcomes.json", ACCEPTED)))).toBe(true);
   });
 
   it("has an expectation for every fixture and a fixture for every expectation", () => {

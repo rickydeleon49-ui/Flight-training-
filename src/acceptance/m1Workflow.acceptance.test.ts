@@ -9,8 +9,7 @@
  * stand in for an app restart. It does not run the Tauri shell. The Rust tests
  * cover document storage, naming and path validation, the Open/Reveal scope,
  * and the native debrief command, but no test here or there exercises an OS
- * file picker, opening a PDF viewer, or Explorer/Finder behaviour (see
- * docs/M1_D7_ACCEPTANCE_2026-09-27.md).
+ * file picker, opening a PDF viewer, or Explorer/Finder behaviour.
  *
  * Offline (frontend only): `fetch` and `XMLHttpRequest` are replaced with
  * recorders, and the workflow must make zero calls to either. Nothing here

@@ -1,4 +1,0 @@
-$ node --version
-v22.23.3
-
-EXIT 0

@@ -1,9 +1,7 @@
 /**
  * Page references and destinations (M4 Slice 1).
  *
- * The production port of the accepted prototype's contract model
- * (`docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/proof/contractModel.mjs`),
- * under the owner-approved scope (docs/M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md):
+ * The production port of the accepted prototype's contract model:
  *
  * - OD-4: a physical page is a safe whole number from 1 to a trusted page count.
  * - OD-5: printed labels ("iv", "3-12") stay separate from physical pages and

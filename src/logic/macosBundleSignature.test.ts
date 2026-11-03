@@ -69,7 +69,7 @@ describe("macOS release bundle signing", () => {
     expect(macOnly).toContain("after the checksum matches, I'll help you open it through System Settings → Privacy & Security → Open Anyway.");
   });
 
-  it.each([".github/workflows/release.yml", ".github/workflows/build-desktop.yml", "docs/RELEASE_NOTES_0.5.9.md", script])("%s contains no prohibited platform-protection commands", (path) => {
+  it.each([".github/workflows/release.yml", ".github/workflows/build-desktop.yml", script])("%s contains no prohibited platform-protection commands", (path) => {
     expect(read(path)).not.toMatch(/xattr|com\.apple\.quarantine|spctl/i);
   });
 });

@@ -1,2 +1,0 @@
-*.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol
-submitted/**/*.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol

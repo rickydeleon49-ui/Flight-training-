@@ -2,7 +2,7 @@
  * Slice B browser and test persistence for structured study import, against
  * the real engines: sql.js (WebAssembly, plain-browser development) and
  * node:sqlite (tests). Test names carry the accepted acceptance-row IDs
- * (docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §5).
+ * (Slice B contract §5).
  */
 import { readFileSync } from "node:fs";
 import initSqlJs, { type BindParams } from "sql.js";

@@ -6,8 +6,7 @@
 //! never copies a document, creates a directory, touches the database or uses
 //! the network. The webview cannot name a path: the user picks it here.
 //!
-//! Slice B (`save_structured_study_material_atomically`, owner-approved in
-//! docs/STRUCTURED_STUDY_IMPORT_SLICE_B_OWNER_APPROVAL_2026-10-04.md) stores a
+//! Slice B (`save_structured_study_material_atomically`) stores a
 //! previewed packet as one new material with its imported study set and
 //! practice test, in a single transaction. It is offline and create-new only.
 
@@ -214,8 +213,7 @@ fn hex(bytes: &[u8]) -> String {
 // of inside Tauri's argument decoding, whose messages echo unknown key names.
 // Nothing below ever returns a key name, payload text or database error.
 //
-// Validation mirrors the normative table in
-// docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §4.3 and the
+// Validation mirrors the Slice B contract (§4.3) and the
 // browser transaction in src/data/structuredImportTransaction.ts. Strings are
 // normalized with the validator's line and block rules (CR/CRLF to LF,
 // whitespace as JavaScript's `\s` defines it) before code points are counted.

@@ -6,7 +6,7 @@
  * AppDataContext: the list is read on demand and re-read when `dataRevision`
  * advances (a debrief deleted elsewhere, an action completed).
  *
- * The rules are docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md §8, carried over
+ * The rules are the M3 skills-evidence scope §8, carried over
  * from the accepted prototype (M3-R1–R10):
  *
  * Reads

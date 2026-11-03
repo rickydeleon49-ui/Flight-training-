@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // Disclosure behavior lives here; real keyboard activation and geometry are
-// checked by .claude/tests/narrow-layout.browser.mjs, since jsdom has no layout.
+// need a real browser check, since jsdom has no layout.
 import { createElement as h } from "react";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";

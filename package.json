@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:cargo-lock": "node scripts/test-cargo-lock-sync.mjs",
     "tauri": "tauri",
-    "lint:unused": "knip"
+    "lint:unused": "knip",
+    "hygiene": "bash scripts/public-hygiene.sh"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

@@ -1,9 +1,7 @@
 //! Document navigation (M4 Slice 1, schema 15).
 //!
-//! The native half of the owner-approved navigation scope
-//! (`docs/M4_PRODUCTION_SCOPE_OWNER_APPROVAL_2026-10-16.md`), ported from the
-//! accepted prototype in
-//! `docs/evidence/m4-document-navigation-integration-corrections-r2-2026-10-11/`:
+//! The native half of the navigation scope, ported from the accepted
+//! prototype:
 //!
 //! - `inspect_navigation_identity`: the trusted identity of a managed PDF. The
 //!   hash and page count come from one read of the file's own bytes, never

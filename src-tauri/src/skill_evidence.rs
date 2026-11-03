@@ -1,6 +1,6 @@
 //! Skills and feedback evidence (M3, schema 14).
 //!
-//! The native half of `docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md` §6–§7:
+//! The native half of the skills-evidence contract (§6–§7):
 //!
 //! - `save_skill_evidence_action`: a request decoded strictly by serde
 //!   (`deny_unknown_fields`, exact keys, then the same bounds as the

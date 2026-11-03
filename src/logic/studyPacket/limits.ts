@@ -1,8 +1,7 @@
 /**
  * Limits and fixed name lists for the `hfd-study-packet` version 1 format.
  *
- * The numbers come from the accepted contract
- * (docs/STRUCTURED_STUDY_IMPORT_CONTRACT_2026-10-03.md, §2.2, §2.3 and §2.11).
+ * The numbers come from the accepted contract (§2.2, §2.3 and §2.11).
  * Three are reused from existing app limits; the rest were proposed by the
  * contract to keep one displayed card, choice or section predictable.
  */

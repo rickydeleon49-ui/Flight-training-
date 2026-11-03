@@ -196,9 +196,10 @@ fn edit(n: u32, observation: u32, expected: i64, wording: &str, date: &str) -> V
 
 #[test]
 fn migration_14_is_the_reviewed_candidate_byte_for_byte() {
-    let candidate = std::fs::read_to_string(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(
-        "../docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql",
-    ))
+    let candidate = std::fs::read_to_string(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/skill-evidence/candidate-0014_skills_evidence.sql"),
+    )
     .unwrap();
     assert_eq!(migration_14(), candidate);
     // Schema 15 (M4 navigation) follows 14; migration 14 itself stays byte-identical.

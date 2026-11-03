@@ -1,3 +1,0 @@
-$ docs/evidence/m2-split-lineage-implementation-2026-10-08/check_hygiene.sh
-new files checked: 22; problems: none
-exit 0
