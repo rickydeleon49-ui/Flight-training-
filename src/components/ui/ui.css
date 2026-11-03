@@ -610,3 +610,21 @@ dialog:not([open]) { display: none; }
   .card__header { flex-wrap: wrap; }
   .card__header > * { min-width: 0; max-width: 100%; }
 }
+
+/* Dynamic Type: let long labels and titles use the available phone width. */
+@media (max-width: 700px) {
+  html.is-ios .button,
+  html.is-ios .badge {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  html.is-ios .card,
+  html.is-ios .dialog__header > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  html.is-ios .dialog__header > .icon-button { flex-shrink: 0; }
+  html.is-ios .row { flex-wrap: wrap; }
+}
