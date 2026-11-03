@@ -48,6 +48,39 @@ pub struct PdfOutline {
     pub pages: u32,
     /// The most pages one split may take, so the interface can say so.
     pub max_pages_per_split: u32,
+    /// True when most pages are pictures with (almost) no text, such as a scan.
+    /// Worked out when the PDF is inspected, from the file itself, so nothing
+    /// is stored and no migration is needed.
+    #[serde(default)]
+    pub mostly_pictures: bool,
+}
+
+/// A page with fewer extracted characters than this counts as a picture. A
+/// text page of a handbook has hundreds; a page number or running header alone
+/// is well under 40.
+const PICTURE_PAGE_MAX_CHARS: usize = 40;
+/// Pages checked at most, spread evenly, so a 1,000-page book stays quick.
+const PICTURE_SAMPLE_PAGES: usize = 40;
+
+/// True when more than half of the (sampled) pages hold almost no text.
+pub(crate) fn mostly_pictures(document: &Document) -> bool {
+    let numbers: Vec<u32> = document.get_pages().keys().copied().collect();
+    if numbers.is_empty() {
+        return false;
+    }
+    let step = numbers.len().div_ceil(PICTURE_SAMPLE_PAGES).max(1);
+    let sample: Vec<u32> = numbers.iter().copied().step_by(step).collect();
+    let thin = sample
+        .iter()
+        .filter(|n| {
+            document
+                .extract_text(&[**n])
+                .map(|t| t.chars().filter(|c| !c.is_whitespace()).count())
+                .unwrap_or(0)
+                < PICTURE_PAGE_MAX_CHARS
+        })
+        .count();
+    thin * 2 > sample.len()
 }
 
 fn open_pdf(path: &Path) -> Result<Document, String> {
@@ -538,11 +571,19 @@ pub(crate) async fn count_pages(path: PathBuf) -> Result<u32, String> {
 #[tauri::command]
 pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOutline, String> {
     let path = documents::stored_document_path(&app, &relative_path)?;
-    let pages = count_pages(path).await?;
-    Ok(PdfOutline {
-        pages,
-        max_pages_per_split: MAX_PAGES,
+    run_off_thread(move || {
+        let document = open_pdf(&path)?;
+        let pages = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+        if pages == 0 {
+            return Err("That PDF has no pages this application can read.".to_string());
+        }
+        Ok(PdfOutline {
+            pages,
+            max_pages_per_split: MAX_PAGES,
+            mostly_pictures: mostly_pictures(&document),
+        })
     })
+    .await
 }
 
 /// Save a page range from a stored PDF as a study document of its own, and
@@ -1382,6 +1423,48 @@ mod tests {
     }
 
     /// A minimal, real PDF with `pages` numbered pages.
+    fn text_pdf(pages: u32) -> Document {
+        let mut document = Document::with_version("1.5");
+        let pages_id = document.new_object_id();
+        let font = document.add_object(dictionary! {
+            "Type" => "Font", "Subtype" => "Type1", "BaseFont" => "Helvetica",
+        });
+        let kids: Vec<Object> = (0..pages)
+            .map(|_| {
+                let contents = document.add_object(Stream::new(
+                    dictionary! {},
+                    b"BT /F1 12 Tf 50 700 Td (Aeronautical decision making is a systematic approach to risk.) Tj ET"
+                        .to_vec(),
+                ));
+                document
+                    .add_object(dictionary! {
+                        "Type" => "Page", "Parent" => pages_id,
+                        "MediaBox" => vec![0.into(), 0.into(), 595.into(), 842.into()],
+                        "Resources" => dictionary! { "Font" => dictionary! { "F1" => font } },
+                        "Contents" => contents,
+                    })
+                    .into()
+            })
+            .collect();
+        document.objects.insert(
+            pages_id,
+            Object::Dictionary(dictionary! {
+                "Type" => "Pages", "Count" => i64::from(pages), "Kids" => kids,
+            }),
+        );
+        let catalog_id =
+            document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
+        document.trailer.set("Root", catalog_id);
+        document
+    }
+
+    #[test]
+    fn a_pdf_of_pictures_is_flagged_and_a_text_pdf_is_not() {
+        assert!(mostly_pictures(&illustrated_pdf_with_pages(5)));
+        assert!(mostly_pictures(&pdf_with_pages(3)));
+        assert!(!mostly_pictures(&text_pdf(5)));
+    }
+
     fn pdf_with_pages(pages: u32) -> Document {
         let mut document = Document::with_version("1.5");
         let pages_id = document.new_object_id();

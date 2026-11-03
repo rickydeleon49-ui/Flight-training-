@@ -1,5 +1,6 @@
 import { MaterialVideoLinks } from "./MaterialVideoLinks";
 import { inspectPdf } from "@/services/pdf";
+import { ScannedPdfNote } from "./ScannedPdfNote";
 import { providerCompany, providerWording } from "@/services/provider";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -1017,6 +1018,7 @@ function MaterialDetailPage() {
         <MaterialTabPanel value="study" state={tabState}>
           <h2 id="material-panel-heading-study" tabIndex={-1} className="visually-hidden material-panel-heading">Study</h2>
           <div className="detail__column">
+          {isPdf && material.filePath && !fileMissing ? <ScannedPdfNote filePath={material.filePath} /> : null}
           {fileMissing ? <div className="card stack stack--3" role="status">
             <p>This study file is missing. Everything you wrote is still here.</p>
             {deviceCan().importFiles ? <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button> : null}

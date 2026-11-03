@@ -663,7 +663,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
             <div className="stack stack--4">
               <p className="tiny muted">{PDF_KIT_REMINDER}</p>
               {!hasStudyItems && !hasQuestions ? <p>{noUsableText
-                ? "This PDF didn’t have text the kit could use."
+                ? "This PDF didn’t have text the kit could use. If it is pictures of pages, a text version from the FAA site works."
                 : "The kit couldn’t find definitions or key terms on these pages yet."}</p> : null}
               {items.map((item, index) => {
                 const at = items.slice(0, index + 1).filter(i => i.kind === item.kind).length;
