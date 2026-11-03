@@ -63,11 +63,12 @@ it.each(["backup", "restore"])("a %s result opens Backups and data; she can clos
   await act(async () => {});
   expect(fold("backups").open).toBe(false);
 });
-it.each(["#settings-backups", "#send-to-iphone", "#ai-provider"])("opens only the group addressed by %s and scrolls to it", async (hash) => {
+it.each(["#settings-backups", "#send-to-iphone", "#ai-provider", "#settings-about"])("opens only the group addressed by %s and scrolls to it", async (hash) => {
   const scrolled: string[] = [];
   const scroll = vi.fn(function (this: HTMLElement) {
     // The fold must be open before scrolling, so its heading is visible.
     expect(fold("backups").open).toBe(hash === "#settings-backups");
+    expect(fold("about").open).toBe(hash === "#settings-about");
     scrolled.push(this.id);
   });
   const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
