@@ -1061,14 +1061,24 @@ export function Settings() {
               ) : null}
 
               <p className="small muted">
-                A <strong>.hfdbackup</strong> file holds all your records, settings, profile photo and uploaded documents. Saving it sends nothing online.
-                Keep it on another drive or in a cloud folder in case this computer is lost. Save a fresh backup before an update.
-                Restore checks the file and asks you first, keeps a copy of your current data, then restarts with the saved backup.
+                A <strong>.hfdbackup</strong> file holds all your records, settings, profile photo and uploaded documents.
+                Choose where to save it; saving sends nothing online.
+              </p>
+              <p className="small muted">
+                Keep a copy on another drive or in a cloud folder in case this computer is lost.
+                Save a fresh backup before an update.
+              </p>
+              <p className="small muted">
+                Restore checks the file and asks you first.
+                It keeps a copy of your current data, then restarts with the saved backup.
               </p>
 
               <p className="tiny dim">
                 Before a new version runs, the app saves a copy of your records, lessons and settings on this computer.
-                The 10 newest copies are kept. These copies leave out uploaded files; those stay where they are.
+                The 10 newest copies are kept.
+              </p>
+              <p className="tiny dim">
+                These copies leave out uploaded files; those stay where they are.
               </p>
 
               {dataPath ? (

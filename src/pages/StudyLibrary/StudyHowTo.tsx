@@ -111,7 +111,6 @@ export const PDF_PAGE_TOUR: HowToGroup[] = [
       { label: "File", control: "disclosure", text: "a small menu for the file itself (see below)." },
       { label: "Study", control: "tab", text: "your study kit, study guide, flashcards and practice test." },
       { label: "Notes", control: "tab", text: "your own notes, questions and next steps." },
-      { label: "Hide section tips", control: "button", text: "hide the small help lines on this page. Choose Show section tips to bring them back." },
       { label: "More", control: "tab", text: "less-used tools, like studying without internet." },
     ],
   },
@@ -162,6 +161,12 @@ export const PDF_PAGE_TOUR: HowToGroup[] = [
       { label: "Details and review status", control: "heading", text: "where you are with this material." },
       { label: "Review status", control: "field", text: "choose Studying, Review again, Confident and so on." },
       { label: "Mark as reviewed today", control: "button", text: "records today as your last review." },
+    ],
+  },
+  {
+    title: "Bottom of the page",
+    items: [
+      { label: "Hide section tips", control: "button", text: "hide the small help lines on this page. Choose Show section tips to bring them back." },
     ],
   },
 ];
