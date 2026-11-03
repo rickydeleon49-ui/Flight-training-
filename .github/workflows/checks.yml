@@ -1,6 +1,6 @@
 # Every change gets checked before it reaches main.
 #
-# Linux only, and deliberately one job: the packaging workflows already build
+# The main job is Linux only: the packaging workflows already build
 # the real installers on macOS and Windows, and those runners bill at ten and
 # two times the Linux rate. This is the cheap gate that catches a broken test,
 # a type error, or a backup and restore guard that no longer holds.
@@ -152,3 +152,88 @@ jobs:
       - name: Third-party notices are complete and current
         if: steps.filter.outputs.run_heavy != 'false'
         run: node scripts/third-party-notices.mjs --check
+
+  # Windows gate (WINDOWS-01). The job above never compiles a
+  # `#[cfg(windows)]` line, so a Windows-only typo or a broken Windows restore
+  # guard would otherwise surface only when the release workflow builds the
+  # installer. Windows minutes bill at twice the Linux rate, so it runs only
+  # when Rust or platform files change, and only after the Linux job passed.
+  windows-scope:
+    name: Does this change need the Windows check?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.scope.outputs.run }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect Rust or platform changes
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git fetch origin "$BASE_REF" --depth=1
+            CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            CHANGED=$(git diff --name-only "$BEFORE" HEAD)
+          else
+            echo "No usable base commit; running the Windows check."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if grep -q -E '^(src-tauri/|\.github/workflows/|scripts/release-policy\.json$|package-lock\.json$)' <<< "$CHANGED"; then
+            echo "Rust or platform files changed; running the Windows check."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Rust or platform files changed; skipping the Windows check."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    name: Windows build, lint and tests
+    needs: [checks, windows-scope]
+    if: needs.windows-scope.outputs.run == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      # Byte-exact checkout: migration checksums and fixtures must not gain
+      # CRLF line endings, and deep test paths must not hit MAX_PATH in git.
+      - name: Git line endings and long paths
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.longpaths true
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck and bundle; the Rust side compiles against `dist`.
+      - run: npm run build
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          components: clippy
+      # Bounded and allowed to lose, as in the Linux job.
+      - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+        with:
+          workspaces: src-tauri
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - name: Rust lint (Windows branches)
+        run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+
+      - name: Rust tests (Windows-only restore and key-file guards included)
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      - run: npm test

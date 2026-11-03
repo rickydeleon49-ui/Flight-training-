@@ -7124,10 +7124,9 @@ pub(crate) fn copy_incoming_backup(root: &Path, source: &str) -> Result<PathBuf,
         }
         output.sync_all().map_err(|e| e.to_string())?;
         drop(output);
-        #[cfg(windows)]
-        if destination.exists() {
-            std::fs::remove_file(&destination).map_err(|e| e.to_string())?;
-        }
+        // `std::fs::rename` replaces an existing file on every platform,
+        // Windows included (MOVEFILE_REPLACE_EXISTING), so the previous copy
+        // is never removed first.
         std::fs::rename(&temporary, &destination).map_err(|e| e.to_string())?;
         Ok(destination)
     })();
@@ -7161,7 +7160,36 @@ pub(crate) fn free_space_bytes(path: &Path) -> Result<Option<u64>, String> {
     Ok(Some(available))
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+pub(crate) fn free_space_bytes(path: &Path) -> Result<Option<u64>, String> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+
+    let mut wide: Vec<u16> = path.as_os_str().encode_wide().collect();
+    if wide.contains(&0) {
+        return Err("Could not check free space: the folder name is not valid.".into());
+    }
+    wide.push(0);
+    let mut available = 0u64;
+    // SAFETY: wide is NUL-terminated; the unused totals may be null.
+    if unsafe {
+        GetDiskFreeSpaceExW(
+            wide.as_ptr(),
+            &mut available,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
+    } == 0
+    {
+        return Err(format!(
+            "Could not check free space: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    Ok(Some(available))
+}
+
+#[cfg(not(any(unix, windows)))]
 pub(crate) fn free_space_bytes(_path: &Path) -> Result<Option<u64>, String> {
     Ok(None)
 }
@@ -9395,6 +9423,15 @@ mod tests {
         assert_eq!(restore_size(3 * 1024 * 1024 * 1024), "3.0 GB");
         assert_eq!(restore_size(2 * 1024 * 1024), "2.0 MB");
         std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    /// The real probe answers on every desktop platform, Windows included,
+    /// so the restore guard above is not silently skipped there.
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn free_space_probe_reports_space_for_the_temp_folder() {
+        let available = free_space_bytes(&std::env::temp_dir()).unwrap();
+        assert!(matches!(available, Some(n) if n > 0), "{available:?}");
     }
 
     #[test]
