@@ -1,4 +1,11 @@
-import type { PracticeQuestion, PracticeTest, StudyMaterial } from "@/domain/types";
+import type {
+  PracticeQuestion,
+  PracticeResponse,
+  PracticeTest,
+  PracticeTestItem,
+  StudyMaterial,
+} from "@/domain/types";
+import { buildAttemptReview } from "./practiceAttemptReview";
 
 export const MIXED_MIN_MATERIALS = 2;
 export const MIXED_MAX_QUESTIONS = 20;
@@ -58,4 +65,34 @@ export function buildMixedTest(
     if (!any) break;
   }
   return shuffle(picked, random);
+}
+
+/**
+ * MISSED-AGAIN-01: the questions of one finished attempt that she answered
+ * wrong or marked "don't know", in the test's own order, ready for a quick
+ * unsaved retry. Correct and unanswered questions are left out, and so is any
+ * frozen item whose correct answer is not one of its own options.
+ */
+export function missedAgainQuestions(
+  attemptId: string,
+  items: readonly PracticeTestItem[],
+  responses: readonly PracticeResponse[],
+  materialId: string,
+  materialTitle: string,
+): MixedQuestion[] {
+  return buildAttemptReview(attemptId, items, responses)
+    .filter((entry) => entry.outcome === "incorrect" || entry.outcome === "dont_know")
+    .filter(({ item }) => item.options.length >= 2
+      && Number.isInteger(item.correctIndex) && item.correctIndex >= 0 && item.correctIndex < item.options.length)
+    .map(({ item }) => ({
+      question: {
+        question: item.questionText,
+        options: [...item.options],
+        correctIndex: item.correctIndex,
+        explanation: item.explanation,
+        sourcePage: item.sourcePage,
+      },
+      materialId,
+      materialTitle,
+    }));
 }
