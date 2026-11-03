@@ -15,13 +15,13 @@ describe("third-party notice for the zod dependency", () => {
     );
   });
 
-  it("ships the package's own copyright and permission text unchanged", () => {
+  it("ships the package's copyright line with the standard MIT text", () => {
     const notice = read("public/THIRD_PARTY_NOTICES.txt");
     const license = read("node_modules/zod/LICENSE");
     expect(license).toContain("Copyright (c) 2025 Colin McDonnell");
-    expect(notice).toContain("zod 4.6.7");
-    expect(notice).toContain(`zod 4.6.7\n`);
-    expect(notice).toContain(`-\n\n${license}`);
+    expect(notice).toContain(`zod 4.6.7\nFrom: npm\nLicense: MIT\n`);
+    expect(notice).toContain("Copyright (c) 2025 Colin McDonnell\n");
+    expect(notice).toContain("Package license files: LICENSE (standard MIT)");
   });
 });
 
@@ -37,13 +37,14 @@ describe("third-party notice for the suncalc dependency", () => {
     );
   });
 
-  it("ships the package's own BSD-2-Clause copyright and conditions unchanged", () => {
+  it("ships the package's BSD-2-Clause copyright line and the standard conditions", () => {
     const notice = read("public/THIRD_PARTY_NOTICES.txt");
     const license = read("node_modules/suncalc/LICENSE");
     expect(license).toContain("Copyright (c) 2026, Volodymyr Agafonkin");
-    expect(notice).toContain("suncalc 2.1.1");
-    expect(notice).toContain("License: BSD-2-Clause");
-    expect(notice).toContain(`-\n\n${license}`);
+    // suncalc's package.json has no license field; the generator's override names it.
+    expect(notice).toContain(`suncalc 2.1.1\nFrom: npm\nLicense: BSD-2-Clause\n`);
+    expect(notice).toContain("Copyright (c) 2026, Volodymyr Agafonkin\n");
+    expect(notice).toContain("Package license files: LICENSE (standard BSD-2-Clause)");
   });
 });
 
@@ -77,12 +78,13 @@ describe("third-party notice for the diff (jsdiff) dependency", () => {
     );
   });
 
-  it("ships the package's own copyright and permission text unchanged", () => {
+  it("ships the package's copyright line with the standard BSD-3-Clause text", () => {
     const notice = read("public/THIRD_PARTY_NOTICES.txt");
     const license = read("node_modules/diff/LICENSE");
     expect(license).toContain("Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>");
-    expect(notice).toContain("diff 9.0.0 (jsdiff)");
-    expect(notice).toContain(license);
+    expect(notice).toContain(`diff 9.0.0\nFrom: npm\nLicense: BSD-3-Clause\n`);
+    expect(notice).toContain("Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>\n");
+    expect(notice).toContain("Package license files: LICENSE (standard BSD-3-Clause)");
   });
 });
 
@@ -116,8 +118,8 @@ describe("third-party notice for the React Aria tabs dependencies", () => {
     const notice = read("public/THIRD_PARTY_NOTICES.txt");
     const license = read("node_modules/@react-aria/tabs/LICENSE");
     expect(license).toContain("Copyright 2019 Adobe");
-    expect(notice).toContain("License: Apache-2.0");
-    expect(notice).toContain(`-\n\n${license}`);
+    expect(notice).toContain(`@react-aria/tabs 3.12.1\nFrom: npm\nLicense: Apache-2.0\n`);
+    expect(notice).toContain("Copyright 2019 Adobe\n");
     const lock = JSON.parse(read("package-lock.json"));
     for (const [path, entry] of Object.entries(lock.packages)) {
       if (!/^node_modules\/(?:@react-aria\/|@react-stately\/|@react-types\/|@internationalized\/|react-aria$|react-stately$)/.test(path)) continue;
