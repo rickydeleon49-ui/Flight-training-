@@ -51,7 +51,7 @@ it("places the How to link line first, keeps its destinations, and explains file
   expect(screen.queryByText("Choose a page range, like 12–40, to make a smaller copy.")).toBeNull();
   expect(screen.queryByText("Opens the PDF in your Mac's PDF app. In Preview, press ⌥⌘G to go to a page.")).toBeNull();
   fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
-  expect(await screen.findByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
+  expect(await screen.findByText("Check again counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
   // "Open at page" was removed (owner, 22 October): no trace of it or its tip.
   expect(screen.queryByText(/Open at page/)).toBeNull();
   expect(screen.getByText("Save a named place so you can return to it later without remembering the page number.")).toBeTruthy();
