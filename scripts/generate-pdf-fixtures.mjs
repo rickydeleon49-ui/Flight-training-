@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function buildPdf(numPages, imgW = 0, imgH = 0, docLabel = "document") {
+export function buildPdf(numPages, imgW = 0, imgH = 0, docLabel = "document", pageLines = [], pageGraphics = []) {
   const rasterBytesPerPage = imgW > 0 && imgH > 0 ? imgW * imgH * 3 : 0;
   const chunks = [];
   const offsets = [];
@@ -58,10 +58,14 @@ export function buildPdf(numPages, imgW = 0, imgH = 0, docLabel = "document") {
     offsets[contentObjIds[i]] = pos;
     const pageNum = i + 1;
     const pageIdText = `Synthetic ${docLabel} - Page ${pageNum} of ${numPages} (ID: P${String(pageNum).padStart(4, "0")})`;
-    const textStream =
+    const escapeText = (text) => text.replace(/([\\()])/g, "\\$1");
+    const extraText = (pageLines[i] ?? []).map((line, index) =>
+      `BT /F1 12 Tf 50 ${710 - index * 22} Td (${escapeText(line)}) Tj ET\n`
+    ).join("");
+    const textStream = (pageGraphics[i] ?? "") + extraText + (
       rasterBytesPerPage > 0
         ? `q 300 0 0 250 50 450 cm /Im0 Do Q\nBT /F1 12 Tf 50 400 Td (${pageIdText}) Tj ET\n`
-        : `BT /F1 12 Tf 50 750 Td (${pageIdText}) Tj ET\n`;
+        : `BT /F1 12 Tf 50 750 Td (${pageIdText}) Tj ET\n`);
     write(contentObjIds[i] + " 0 obj\n<< /Length " + textStream.length + " >>\nstream\n" + textStream + "endstream\nendobj\n");
   }
 
