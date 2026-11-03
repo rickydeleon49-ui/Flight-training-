@@ -1290,3 +1290,56 @@ describe("Codex independent C1 navigation and paging diagnostics", () => {
     expect(hook.result.current.recent.rows).toHaveLength(1);
   });
 });
+
+describe("REVIEW-ANYWAY-01 panel", () => {
+  async function rateAll() {
+    await seed();
+    const repo = createRepositories(db).cardReviews;
+    for (let i = 0; i < CARDS.length; i += 1) {
+      const snapshot = await repo.getCardReviewSnapshot(M);
+      if (snapshot.current.status !== "ok") throw new Error("no cards");
+      await repo.saveAction({
+        operationId: crypto.randomUUID(),
+        materialId: M,
+        versionContentHash: snapshot.current.contentHash,
+        itemId: snapshot.current.items[i]!.itemId,
+        expectedGeneration: snapshot.generation,
+        expectedRevision: 0,
+        action: "rate",
+        rating: "easy",
+      } as CardReviewAction);
+    }
+  }
+
+  it("shows no Review anyway button while cards are new", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    expect(screen.queryByRole("button", { name: /anyway/ })).toBeNull();
+  });
+
+  it("offers it only when caught up; an extra session says so, rates normally and returns to caught up", async () => {
+    await rateAll();
+    renderDetail();
+    expect((await reviewHeading()).textContent).toMatch(/^All caught up/);
+    const before = await counts();
+    // Three rated cards: the button names what it will really show.
+    fireEvent.click(await screen.findByRole("button", { name: "Review 3 anyway" }));
+    expect(await screen.findByText(/^Extra review · Card 1 of 3/)).toBeTruthy();
+    await revealAndRate("Good");
+    // The session moves on only after the write is acknowledged and re-read.
+    expect(await screen.findByText(/^Extra review · Card 2 of 3/)).toBeTruthy();
+    const after = await counts();
+    expect(after.events).toBe(before.events! + 1);
+    expect(after.receipts).toBe(before.receipts! + 1);
+    expect(after.states).toBe(before.states);
+    expect(screen.queryByRole("button", { name: /anyway/ })).toBeNull();
+    await revealAndRate("Easy");
+    expect(await screen.findByText(/^Extra review · Card 3 of 3/)).toBeTruthy();
+    await revealAndRate("Easy");
+    fireEvent.click(await screen.findByRole("button", { name: "Close review" }));
+    expect((await reviewHeading()).textContent).toMatch(/^All caught up/);
+    expect(await screen.findByRole("button", { name: "Review 3 anyway" })).toBeTruthy();
+    expect((await counts()).events).toBe(before.events! + 3);
+  });
+});

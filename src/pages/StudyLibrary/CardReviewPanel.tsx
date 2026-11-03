@@ -26,6 +26,7 @@ import {
   useCardReview,
   type CardReviewController,
   type ItemActionKind,
+  EXTRA_REVIEW_LIMIT,
 } from "./useCardReview";
 import { SourcePageBadge } from "./navigation/SourcePageBadge";
 import { useSavedVisual } from "./useSavedVisual";
@@ -139,6 +140,14 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
     browseCard && items[browseCard.index]?.front === browseCard.front && items[browseCard.index]?.back === browseCard.back
       ? items[browseCard.index]!
       : null;
+  // Rated, unpaused cards are what "Review N anyway" can offer (at most 10).
+  const extraCount = Math.min(
+    EXTRA_REVIEW_LIMIT,
+    items.filter((item) => {
+      const state = snapshot.states[item.itemId];
+      return state && state.dueAt !== null && !state.suspended && !state.flag;
+    }).length,
+  );
   const paused = items.filter((item) => {
     const state = snapshot.states[item.itemId];
     return state?.suspended || state?.flag;
@@ -181,6 +190,14 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
           </Button>
         )}
       </div>
+
+      {!review.session && !reviewable && extraCount > 0 ? (
+        <div>
+          <Button size="small" disabled={review.blocked || review.starting} onClick={() => void review.startSession({ extra: true })}>
+            {extraCount === 1 ? "Review 1 card anyway" : `Review ${extraCount} anyway`}
+          </Button>
+        </div>
+      ) : null}
 
       <Notices review={review} />
 
@@ -284,7 +301,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
   );
 }
 
-function Notices({ review }: { review: CardReviewController }) {
+export function Notices({ review }: { review: CardReviewController }) {
   const { notice, pending, locked } = review;
   return (
     <>
@@ -354,7 +371,7 @@ function Notices({ review }: { review: CardReviewController }) {
   );
 }
 
-function SessionView({
+export function SessionView({
   review,
   items,
   states,
@@ -362,6 +379,8 @@ function SessionView({
   materialFilePath,
   focusEntry,
   onEntryShown,
+  progress,
+  onDone,
 }: {
   review: CardReviewController;
   items: CardReviewSnapshotItem[];
@@ -370,6 +389,10 @@ function SessionView({
   materialFilePath?: string | null;
   focusEntry: boolean;
   onEntryShown: () => void;
+  /** Library extra review: this card's place in the whole cross-book session. */
+  progress?: { offset: number; total: number; from: string };
+  /** Replaces "Done for now" closing only this material's session. */
+  onDone?: () => void;
 }) {
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
@@ -430,6 +453,8 @@ function SessionView({
     return <DoneForNow review={review} />;
   }
   const state = states[item.itemId];
+  const number = (progress?.offset ?? 0) + session.position + 1;
+  const total = progress?.total ?? session.cards.length;
   const now = review.clock.now();
   const waits = ratingWaits(state, now);
   const busy = review.blocked || !visualReady;
@@ -464,17 +489,18 @@ function SessionView({
       className="card-review__session stack stack--3"
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      aria-label={`Card review session. Card ${session.position + 1} of ${session.cards.length}.`}
+      aria-label={`Card review session. Card ${number} of ${total}.`}
     >
       <div className="row row--between">
         <h4 ref={heading} tabIndex={-1} className="small strong">
-          Card {session.position + 1} of {session.cards.length}
+          {session.extra ? "Extra review · " : ""}Card {number} of {total}
           {shown.kind === "new" ? " · new" : ""}
         </h4>
         {!item.visualRegionId || item.pageSource ? (
           <SourcePageBadge source={item.pageSource} page={item.sourcePage} materialId={materialId} />
         ) : null}
       </div>
+      {progress ? <p className="tiny dim">From {progress.from}</p> : null}
       {item.visualRegionId ? (
         visual.loaded ? (
           <div className="stack stack--3">
@@ -562,7 +588,7 @@ function SessionView({
           disabled={review.blocked}
           onAction={(kind) => { navigationFrom.current = item.itemId; review.itemAction(item.itemId, kind); }}
         />
-        <Button size="small" variant="ghost" onClick={review.endSession}>
+        <Button size="small" variant="ghost" onClick={onDone ?? review.endSession}>
           Done for now
         </Button>
       </div>
