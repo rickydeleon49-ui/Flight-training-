@@ -17,6 +17,7 @@
 		6EE9F543847B10A7179C5F93 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14D647C2AC6508A9ED84EC02 /* QuartzCore.framework */; };
 		A07445A111DE08B06618E6B1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 101CF07A2A56D196A26F024B /* Security.framework */; };
 		AA1FBDC1CC0FBAA851075634 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 4841472650CA076BDF0FBD66 /* assets */; };
+		B7E1A0C2D3F4A5B6C7D8E9F1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B7E1A0C2D3F4A5B6C7D8E9F0 /* PrivacyInfo.xcprivacy */; };
 		BD03D00A1B80BEC72E43CC8E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6CEEC66896C01387199EEF92 /* LaunchScreen.storyboard */; };
 		FC6B34355D1688F0EA833AD2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 98298EED0AFD946F7FA34F16 /* CoreGraphics.framework */; };
 /* End PBXBuildFile section */
@@ -73,6 +74,7 @@
 		6CEEC66896C01387199EEF92 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6D68D4CFA6922F628C2FE19B /* practice_session_tests.rs */ = {isa = PBXFileReference; path = practice_session_tests.rs; sourceTree = "<group>"; };
 		6DAC6D7A6143C95E6E9FB856 /* backup.rs */ = {isa = PBXFileReference; path = backup.rs; sourceTree = "<group>"; };
+		B7E1A0C2D3F4A5B6C7D8E9F0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6E8608A8DC1A56E84DA76E46 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		750A79E8223BAEFEB38A5D51 /* lineage_tests.rs */ = {isa = PBXFileReference; path = lineage_tests.rs; sourceTree = "<group>"; };
 		75972F5EC3AA082AF8ED1256 /* gemini_file_descriptor.rs */ = {isa = PBXFileReference; path = gemini_file_descriptor.rs; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 			children = (
 				CB6BE60BA8F29D14FC9BA851 /* her-flight-deck_iOS.entitlements */,
 				6E8608A8DC1A56E84DA76E46 /* Info.plist */,
+				B7E1A0C2D3F4A5B6C7D8E9F0 /* PrivacyInfo.xcprivacy */,
 			);
 			path = "her-flight-deck_iOS";
 			sourceTree = "<group>";
@@ -445,6 +448,7 @@
 				606E318E029191EF1CC48517 /* Assets.xcassets in Resources */,
 				BD03D00A1B80BEC72E43CC8E /* LaunchScreen.storyboard in Resources */,
 				AA1FBDC1CC0FBAA851075634 /* assets in Resources */,
+				B7E1A0C2D3F4A5B6C7D8E9F1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

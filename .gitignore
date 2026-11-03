@@ -137,3 +137,6 @@ __pycache__/
 *.cer
 *.certSigningRequest
 *.mobileprovision
+
+# Privacy policy page built by scripts/build-privacy-page.mjs
+/_site/
