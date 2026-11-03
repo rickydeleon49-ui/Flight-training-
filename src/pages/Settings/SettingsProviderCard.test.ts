@@ -97,3 +97,17 @@ it("BUGFIX-064: Claude chosen but its key is missing shows the key box and keeps
   container.querySelector("details")!.open = true;
   expect(screen.getByRole("button", { name: "Use Gemini" })).toBeTruthy();
 });
+
+it("shows the adult and own-key requirement beside AI setup", () => {
+  open();
+  expect(screen.getByText("You need to be 18 or older and use your own API key. Your use of the AI service follows that company's terms.")).toBeTruthy();
+});
+it("dates Claude's privacy summary and opens its official terms with Tauri", async () => {
+  const { container } = open();
+  container.querySelector("details")!.open = true;
+  const link = screen.getByRole("link", { name: "Anthropic's terms" });
+  expect(link.getAttribute("href")).toBe("https://www.anthropic.com/legal/commercial-terms");
+  expect(link.closest("p")!.textContent).toContain("(as of Nov 2026; see Anthropic's terms)");
+  fireEvent.click(link);
+  await waitFor(() => expect(mocks.openUrl).toHaveBeenCalledWith("https://www.anthropic.com/legal/commercial-terms"));
+});

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { providerTermsNote } from "./providerTerms";
 import { makeMaterial } from "@/testing/factories";
 import type { CredentialRecord } from "@/domain/types";
 import { checkAiSubmission, geminiSendDisclosure, geminiSendDisclosureParts } from "./aiSafety";
@@ -28,7 +29,7 @@ describe("geminiSendDisclosureParts (POLISH-064)", () => {
     expect(geminiSendDisclosure(withFile())).toBe(
       "Only “notes.pdf” leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and " +
         "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
-        "the file changes or you disconnect Gemini; otherwise Google removes it when it expires. Your copy on this Mac is not changed.",
+        `the file changes or you disconnect Gemini; otherwise Google removes it when it expires. ${providerTermsNote("gemini")} Your copy on this Mac is not changed.`,
     );
     expect(geminiSendDisclosureParts(withFile(), "Anthropic").details).toBeUndefined();
     expect(geminiSendDisclosureParts(withFile({ filePath: "a.txt", originalFileName: "a.txt" })).details).toBeUndefined();
@@ -82,4 +83,11 @@ describe("checkAiSubmission", () => {
   it("refuses on type even when the record link is absent", () => {
     expect(checkAiSubmission(withFile({ materialType: "admin_document" }), []).allowed).toBe(false);
   });
+});
+
+it("dates and references both providers' retention disclosures", () => {
+  for (const [id, company] of [["gemini", "Google"], ["claude", "Anthropic"]] as const) {
+    expect(geminiSendDisclosure(withFile(), company)).toContain(providerTermsNote(id));
+  }
+  expect(checkAiSubmission(withFile(), []).reason).toContain(providerTermsNote("gemini"));
 });

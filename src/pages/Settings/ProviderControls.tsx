@@ -1,8 +1,9 @@
+import { PROVIDER_TERMS } from "@/logic/providerTerms";
 import { useEffect, useState, type ReactNode } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
 import { Button, TextInput } from "@/components/ui";
-import { CLAUDE_KEY_URL, CLAUDE_PRIVACY, configureProvider, disconnectProvider, providerStatus, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
+import { CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
 
 export function ProviderControls({ children, onStatus }: { children: ReactNode; onStatus?: (status: ProviderStatus) => void }) {
   const [status, setStatus] = useState<ProviderStatus>({ selected: "gemini", providers: [] });
@@ -33,10 +34,14 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
     <TextInput type="password" autoComplete="off" aria-label="Claude API key" placeholder="Paste Claude API key" value={key} onChange={(event) => setKey(event.target.value)} disabled={busy || !isTauri()} />
     <Button disabled={busy || !isTauri() || key.trim().length < 20} onClick={() => { const submitted = key; setKey(""); void run(async () => { setStatus(await configureProvider("claude", submitted)); setNote("Claude is connected and will be used for your study tools. Your saved study material is kept."); }); }}>{busy ? "Connecting…" : "Connect Claude"}</Button>
   </div>;
+  const terms = PROVIDER_TERMS.claude;
+  const privacy = <>{terms.privacy} (as of {terms.asOf}; see <a href={terms.termsUrl} target="_blank" rel="noopener noreferrer" onClick={(event) => {
+    if (isTauri()) { event.preventDefault(); void run(async () => { await openUrl(terms.termsUrl); }); }
+  }}>{terms.company}'s terms</a>)</>;
   const claude = (
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <p className="small strong">Claude (Anthropic)</p>
-        <p className="tiny dim">{CLAUDE_PRIVACY}</p>
+        <p className="tiny dim">{privacy}</p>
         <p className="tiny dim">Your key stays on this computer and is not included in backups.</p>
         {getKey}
         {connected ? <div className="row row--wrap">
@@ -46,9 +51,10 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
       </div>
   );
   return <div className="stack stack--4">
+    <p className="tiny dim">You need to be 18 or older and use your own API key. Your use of the AI service follows that company's terms.</p>
     {status.selected === "gemini" ? children : <div className="stack stack--2">
       <p className="small strong">Claude Haiku 5.5 · {connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
-      <p className="tiny dim">{CLAUDE_PRIVACY}</p>
+      <p className="tiny dim">{privacy}</p>
       {connected
         ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
         // Claude chosen but its key is missing: let her put a key back in.
