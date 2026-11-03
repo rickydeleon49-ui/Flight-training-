@@ -37,7 +37,8 @@ the desktop database. `isTauri()` in `src/data` tells the two apart.
 ## Commands
 
 ```bash
-npm test                      # vitest (src/**/*.test.ts)
+npm test                      # vitest (src/**/*.test.ts, except src/perf)
+npm run test:perf             # the 1,000-card Study Library tier, one file at a time
 npx vitest run src/logic/dailyPlan.test.ts   # one file
 npm run typecheck
 npm run build                 # typecheck + bundle; cargo needs dist/ to exist

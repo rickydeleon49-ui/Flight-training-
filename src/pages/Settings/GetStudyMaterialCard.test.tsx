@@ -32,6 +32,10 @@ async function pick() {
   render(<GetStudyMaterialCard />);
   fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
   await screen.findByText(/From your Mac/);
+  // The text commits before the dialog's showModal effect and before `run` releases its
+  // lock; on a busy machine a click in that gap found no button or was ignored. Wait for
+  // the real ready state, still on real timers, before any test switches to fake ones.
+  await waitFor(() => expect(screen.getByRole("button", { name: "Replace what's on this phone" }).hasAttribute("disabled")).toBe(false));
 }
 function confirm() { fireEvent.click(screen.getByRole("button", { name: "Replace what's on this phone" })); }
 

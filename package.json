@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:perf": "vitest run --mode perf",
     "test:watch": "vitest",
     "test:cargo-lock": "node scripts/test-cargo-lock-sync.mjs",
     "tauri": "tauri",

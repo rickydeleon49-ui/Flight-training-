@@ -307,7 +307,12 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       const repo = cardReviewRepository(db);
       const old = many("Old", 200);
       await seedMaterial(db, M, old);
-      for (let i = 0; i < 200; i++) await rateAt(repo, M, i, "good", "2026-01-01T00:00:00.000Z");
+      // One snapshot for all 200 first ratings: each is a different item at revision 0,
+      // so the snapshot stays authoritative, and 200 fresh 200-card snapshots made this
+      // setup alone outlast the timeout on a busy machine.
+      vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+      const oldSnapshot = await repo.getCardReviewSnapshot(M);
+      for (let i = 0; i < 200; i++) await repo.saveAction(itemAction(oldSnapshot, i, { action: "rate", rating: "good" }));
       const currentCards = many("Current", 30);
       await setCards(db, M, currentCards);
       const current = await cardVersion(M, currentCards);
