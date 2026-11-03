@@ -52,6 +52,7 @@ import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
+import { PhotoPictureButton } from "./PhotoPictureButton";
 import { StudyLibraryHistory } from "./StudyLibraryHistory";
 import { StudyHowTo } from "./StudyHowTo";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
@@ -321,6 +322,7 @@ export function StudyLibrary() {
             {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}
+            {deviceCan().pictureFromPhoto ? <PhotoPictureButton /> : null}
           </div>
         }
       />

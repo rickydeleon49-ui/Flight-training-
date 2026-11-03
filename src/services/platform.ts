@@ -26,6 +26,7 @@ export function deviceCan() {
     renderPdfPage: isTauri() && isMacOS(),
     sendToIphone: isTauri() && isMacOS() && IPHONE_SEND_ENABLED,
     getStudyMaterial: isTauri() && isIOS(),
+    pictureFromPhoto: isTauri() && isIOS(),
     importFiles: !isIOS(),
     generate: !isIOS(),
     revealFiles: !isIOS(),

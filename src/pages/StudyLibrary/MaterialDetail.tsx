@@ -207,8 +207,12 @@ function MaterialDetailPage() {
   const [startCardReview] = useState(
     () => (location.state as { startCardReview?: unknown } | null)?.startCardReview === true,
   );
+  // Just saved from an iPhone photo: open the cover editor once, then clear the request.
+  const [addPictureCard] = useState(
+    () => (location.state as { addPictureCard?: unknown } | null)?.addPictureCard === true,
+  );
   useEffect(() => {
-    if (startCardReview) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    if (startCardReview || addPictureCard) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, []);
   const { data, mutate, deleteWithUndo, repositories, dataRevision, refresh } = useAppData();
   const operations = useActionOperations();
@@ -232,7 +236,7 @@ function MaterialDetailPage() {
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
   // Only decides whether a new study aid can be requested; saved ones show regardless.
   const [geminiStatusFailed, setGeminiStatusFailed] = useState(false);
-  const [coveringLabel, setCoveringLabel] = useState(false);
+  const [coveringLabel, setCoveringLabel] = useState(addPictureCard);
   const [pictureSaved, setPictureSaved] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);

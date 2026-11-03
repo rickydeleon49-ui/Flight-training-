@@ -27,6 +27,7 @@ describe("platform", () => {
     expect(deviceCan().editStudyMaterial).toBe(true);
     expect(deviceCan().sharePrint).toBe(true);
     expect(deviceCan().getStudyMaterial).toBe(false);
+    expect(deviceCan().pictureFromPhoto).toBe(false);
   });
 
   it("recognises an iPhone", () => {
@@ -35,6 +36,7 @@ describe("platform", () => {
     expect(isMacOS()).toBe(false);
     expect(deviceCan().renderPdfPage).toBe(false);
     expect(deviceCan().getStudyMaterial).toBe(true);
+    expect(deviceCan().pictureFromPhoto).toBe(true);
     expect(deviceCan().importFiles).toBe(false);
     expect(deviceCan().generate).toBe(false);
     expect(deviceCan().editStudyMaterial).toBe(false);
@@ -52,6 +54,7 @@ describe("platform", () => {
     stub("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)", 5);
     mocks.isTauri.mockReturnValue(false);
     expect(deviceCan().getStudyMaterial).toBe(false);
+    expect(deviceCan().pictureFromPhoto).toBe(false);
     expect(deviceCan().sendToIphone).toBe(false);
   });
 
