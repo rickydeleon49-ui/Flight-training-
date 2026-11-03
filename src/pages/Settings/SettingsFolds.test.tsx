@@ -7,6 +7,7 @@ import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/node
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as backups from "@/services/backups";
 import * as provider from "@/services/provider";
+import * as gemini from "@/services/gemini";
 import * as appData from "@/data";
 import { Settings } from "./Settings";
 let db: TestDatabase;
@@ -20,6 +21,7 @@ function Ready() { return useAppData().status === "ready" ? <>
   <Link to="/settings#settings-backups">Backup settings</Link>
   <Link to="/settings#send-to-iphone">iPhone settings</Link>
   <Link to="/settings#ai-provider">Provider settings</Link>
+  <Link to="/settings#settings-about">About settings</Link>
   <Settings />
 </> : null; }
 async function open(hash = "") {
@@ -55,12 +57,13 @@ it.each(["backup", "restore"])("a %s result opens Backups and data; she can clos
   await act(async () => {});
   expect(fold("backups").open).toBe(false);
 });
-it.each(["#settings-backups", "#send-to-iphone", "#ai-provider"])("opens only the group addressed by %s and scrolls to it", async (hash) => {
+it.each(["#settings-backups", "#send-to-iphone", "#ai-provider", "#settings-about"])("opens only the group addressed by %s and scrolls to it", async (hash) => {
   const scrolled: string[] = [];
   const scroll = vi.fn(function (this: HTMLElement) {
     // The fold must be open before scrolling, so its heading is visible.
     expect(fold("backups").open).toBe(hash === "#settings-backups");
     expect(fold("advanced").open).toBe(hash === "#ai-provider");
+    expect(fold("about").open).toBe(hash === "#settings-about");
     scrolled.push(this.id);
   });
   const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
@@ -74,7 +77,7 @@ it.each(["#settings-backups", "#send-to-iphone", "#ai-provider"])("opens only th
     else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
   }
 });
-it("hash navigation switches folds and a menu visit closes both", async () => {
+it("hash navigation switches folds and a menu visit closes all", async () => {
   await open("#ai-provider");
   fireEvent.click(screen.getByRole("link", { name: "Backup settings" }));
   await waitFor(() => expect(fold("backups").open).toBe(true));
@@ -84,7 +87,12 @@ it("hash navigation switches folds and a menu visit closes both", async () => {
   expect(fold("advanced").open).toBe(false);
   fireEvent.click(screen.getByRole("link", { name: "Provider settings" }));
   await waitFor(() => expect(fold("advanced").open).toBe(true));
+  fireEvent.click(screen.getByRole("link", { name: "About settings" }));
+  await waitFor(() => expect(fold("about").open).toBe(true));
+  expect(fold("advanced").open).toBe(false);
+  expect(fold("backups").open).toBe(false);
   fireEvent.click(screen.getByRole("link", { name: "Settings menu" }));
+  await waitFor(() => expect(fold("about").open).toBe(false));
   await waitFor(() => expect(fold("advanced").open).toBe(false));
   expect(fold("backups").open).toBe(false);
 });
@@ -103,4 +111,26 @@ it("an asynchronous provider error opens Advanced", async () => {
   await open();
   await screen.findByRole("alert");
   await waitFor(() => expect(fold("advanced").open).toBe(true));
+});
+
+it.each([
+  { selected: "gemini", geminiConnected: false, claudeConnected: false },
+  { selected: "gemini", geminiConnected: true, claudeConnected: false },
+  { selected: "claude", geminiConnected: false, claudeConnected: true },
+  { selected: "gemini", geminiConnected: false, claudeConnected: true },
+  { selected: "claude", geminiConnected: true, claudeConnected: false },
+] as const)("Advanced suffix reflects connections: %j", async ({ selected, geminiConnected, claudeConnected }) => {
+  vi.spyOn(backups, "backupsAvailable").mockReturnValue(false);
+  vi.spyOn(appData, "isTauri").mockReturnValue(true);
+  vi.spyOn(provider, "providerStatus").mockResolvedValue({ selected, providers: [
+    { id: "gemini", connected: geminiConnected },
+    { id: "claude", connected: claudeConnected },
+  ] });
+  const status = vi.spyOn(gemini, "getGeminiStatus").mockResolvedValue({
+    configured: geminiConnected, model: "gemini-3.5-flash", choice: "standard",
+  });
+  await open();
+  await waitFor(() => expect(status).toHaveResolved());
+  const expected = geminiConnected || claudeConnected ? "Advanced" : "Advanced · AI provider not set up";
+  await waitFor(() => expect(fold("advanced").querySelector("summary")?.textContent).toBe(expected));
 });
