@@ -1,5 +1,6 @@
 import { PdfItemLabel } from "./PdfItemLabel";
 import { PracticeMistakeFollowupPanel } from "./PracticeMistakeFollowupPanel";
+import { TryMissedAgain } from "./TryMissedAgain";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -637,6 +638,13 @@ function AttemptReviewPage({
           </div>
         </CardBody>
       </Card>
+
+      <TryMissedAgain
+        attempt={attempt}
+        items={items}
+        responses={current.responses}
+        materialTitle={attempt.sourceMaterialTitle?.trim() || version.sourceMaterialTitle}
+      />
 
       <PracticeMistakeFollowupPanel
         historyKey={historyKey}

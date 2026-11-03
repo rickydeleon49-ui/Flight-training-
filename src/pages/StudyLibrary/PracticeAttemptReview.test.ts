@@ -781,6 +781,54 @@ describe("Opt-in short saved-attempt mistake review panel (MISTAKES-01b)", () =>
     expect(await storedState()).toEqual(before);
   });
 
+  it("Try the N you missed again retries only wrong and don't-know questions and saves nothing (MISSED-AGAIN-01)", async () => {
+    await seed("m-again", "Again");
+    const { historyKey, attemptId } = await completeAttempt("m-again", [
+      "incorrect",
+      "correct",
+      "dont_know",
+      "skip",
+    ]);
+    const before = await storedState();
+
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: Again material");
+
+    const sessions = appCtx.repositories!.practiceSessions;
+    const sessionSpies = (Object.keys(sessions) as (keyof typeof sessions)[])
+      .filter((key) => typeof sessions[key] === "function")
+      .map((key) => vi.spyOn(sessions, key as never));
+    expect(sessionSpies.length).toBeGreaterThan(5);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    fireEvent.click(screen.getByRole("button", { name: "Try the 2 you missed again" }));
+    const dialog = screen.getByRole("dialog", { name: "Try them again" });
+    expect(within(dialog).getByText("Again question 1?")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "1. Again 1 right" }));
+    expect(within(dialog).getByText("Again why 1")).toBeTruthy();
+    expect(within(dialog).getByText("Source: Again material · Page 11")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Continue" }));
+    expect(within(dialog).getByText("Again question 3?")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "1. Again 3 right" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "See score" }));
+    expect(within(dialog).getByText("2 of 2 correct")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Done" }));
+
+    for (const spy of sessionSpies) expect(spy).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(await storedState()).toEqual(before);
+    // The saved attempt still shows its own result.
+    expect(screen.getByText("1 incorrect")).toBeTruthy();
+  });
+
+  it("shows no Try again button for an all-correct attempt", async () => {
+    await seed("m-again-ok", "AllRight");
+    const { historyKey, attemptId } = await completeAttempt("m-again-ok", ["correct", "correct", "correct", "correct"]);
+    await renderHistory(reviewPath(historyKey, attemptId));
+    await screen.findByText("Review: AllRight material");
+    expect(screen.queryByRole("button", { name: /you missed again/ })).toBeNull();
+  });
+
   it("hides the panel cleanly for an all-correct attempt", async () => {
     await seed("m-perf", "PerfectTest");
     const { historyKey, attemptId } = await completeAttempt("m-perf", [
