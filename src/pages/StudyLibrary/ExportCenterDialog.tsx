@@ -10,7 +10,7 @@ import {
   type ExportSource,
 } from "@/logic/studyExport";
 import { buildMultiMaterialHandoutHtml } from "@/logic/studyHandout";
-import { buildFlashcardCsv } from "@/logic/flashcardCsv";
+import { buildFlashcardCsv, EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv";
 import { DesktopOnlyError } from "@/services/documents";
 import { saveStudyExport, StudyExportError } from "@/services/studyExport";
 
@@ -134,7 +134,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
         <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Save as</legend>
           <label className="small"><input type="radio" name="export-center-output" checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout</label>
-          <label className="small"><input type="radio" name="export-center-output" checked={output === "csv"} onChange={() => setOutput("csv")} /> Flashcard CSV (.csv)</label>
+          <label className="small"><input type="radio" name="export-center-output" checked={output === "csv"} onChange={() => setOutput("csv")} /> {EXPORT_CARDS_CSV_LABEL}</label>
           {output === "csv" ? <p className="tiny dim">Spreadsheet formula cells get a leading apostrophe for safety. Some flashcard importers may show it.</p> : null}
         </fieldset>
         {sources.length === 0 ? <p className="small">No study materials are ready to export yet.</p> : null}

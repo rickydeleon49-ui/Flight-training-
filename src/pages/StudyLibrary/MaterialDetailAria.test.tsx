@@ -204,3 +204,32 @@ it.each([true, false])("saved guide wording and editing/sharing follow device ca
   fireEvent.click(screen.getByRole("tab", { name: "More" }));
   expect(Boolean(screen.queryByRole("button", { name: "Export or print" }))).toBe(!phone);
 });
+
+it.each(["Study", "More"])("%s sharing exports only this material's cards through the existing CSV exporter", async (tab) => {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
+  const exports = await import("@/services/studyExport");
+  const save = vi.spyOn(exports, "saveStudyExport").mockResolvedValue({ fileName: "Flashcards.csv", byteLength: 100 });
+  const repo = createRepositories(db);
+  await repo.documents.create({ id: "other", title: "Other material" });
+  for (const id of ["tips", "other"]) {
+    await repo.documents.saveAiStudySet({
+      sourceMaterialId: id, title: `${id} guide`, summary: `${id} summary`, sections: [],
+      flashcards: [{ front: `${id} question`, back: `${id} answer`, sourcePage: 1 }],
+      sourceNotes: "", model: "test",
+    });
+  }
+  await open();
+  fireEvent.click(screen.getByRole("tab", { name: tab }));
+  fireEvent.click(screen.getByRole("button", { name: tab === "Study" ? "Share or print" : "Export or print" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Export cards (CSV)" }));
+  expect((screen.getByLabelText("Export cards (CSV)") as HTMLInputElement).checked).toBe(true);
+  expect(screen.queryByText("Other material")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Save CSV…" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  const [kind, , contents] = save.mock.calls[0]!;
+  expect(kind).toBe("csv");
+  expect(contents).toContain('"Synthetic PDF"');
+  expect(contents).toContain('"tips question"');
+  expect(contents).not.toContain("other question");
+});

@@ -67,9 +67,9 @@ export const STUDY_LIBRARY_TOUR: HowToGroup[] = [
     items: [
       { label: "Homework", control: "link", text: "your homework activities, at your pace." },
       { label: "Add material", control: "button", text: "add a PDF, note or handout to your library." },
-      { label: "More", control: "disclosure", text: "opens two less-used choices: Import study packet… and Export handout…." },
+      { label: "More", control: "disclosure", text: "opens two less-used choices: Import study packet… and Export handout or cards…." },
       { label: "Import study packet…", control: "button", text: "in More: bring in a study packet file someone made for you." },
-      { label: "Export handout…", control: "button", text: "in More: save study material as a handout to print or share." },
+      { label: "Export handout or cards…", control: "button", text: "in More: save study material as a handout to print or share, or export cards as a spreadsheet (CSV)." },
     ],
   },
   {

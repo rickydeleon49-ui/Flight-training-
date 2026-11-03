@@ -2170,7 +2170,7 @@ function MaterialDetailPage() {
             finally { setDiscardingAll(false); setConfirmingDiscardAll(false); }
           })();
         }} />
-      {exportingCsv ? <ExportCenterDialog open initialOutput="csv" sources={csvExportSources} onClose={() => setExportingCsv(false)} /> : null}
+      {deviceCan().sharePrint && exportingCsv ? <ExportCenterDialog open initialOutput="csv" sources={csvExportSources} onClose={() => setExportingCsv(false)} /> : null}
 
       {canSplit ? (
         <SplitPdfDialog

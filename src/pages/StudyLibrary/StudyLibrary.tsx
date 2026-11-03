@@ -313,9 +313,9 @@ export function StudyLibrary() {
                 {deviceCan().importFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
-                <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
-                  Export handout…
-                </Button>
+                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
+                  Export handout or cards…
+                </Button> : null}
               </div>
             </details>
             {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
@@ -557,11 +557,11 @@ export function StudyLibrary() {
         }}
       />
 
-      <ExportCenterDialog
+      {deviceCan().sharePrint ? <ExportCenterDialog
         open={exportingHandouts}
         sources={exportSources}
         onClose={() => setExportingHandouts(false)}
-      />
+      /> : null}
     </>
   );
 }

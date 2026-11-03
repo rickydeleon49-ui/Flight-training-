@@ -252,3 +252,19 @@ it("export_dialog_counts_and_fidelity_note", () => {
   expect(screen.getByText("Page links and per-item ‘edited by’ details don't travel in a study packet.")).toBeTruthy();
   expect(saveStudyExport).not.toHaveBeenCalled();
 });
+
+it("offers the shared CSV action and calls the existing material shortcut", () => {
+  const onFlashcardCsv = vi.fn();
+  render(h(ExportStudyDialog, { open: true, source, onClose: () => {}, onFlashcardCsv }));
+  fireEvent.click(screen.getByRole("button", { name: "Export cards (CSV)" }));
+  expect(onFlashcardCsv).toHaveBeenCalledTimes(1);
+});
+
+it("hides the CSV shortcut when this device cannot share files", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ ...platform.deviceCan(), sharePrint: false });
+  try {
+    render(h(ExportStudyDialog, { open: true, source, onClose: () => {}, onFlashcardCsv: vi.fn() }));
+    expect(screen.queryByRole("button", { name: "Export cards (CSV)" })).toBeNull();
+  } finally { spy.mockRestore(); }
+});

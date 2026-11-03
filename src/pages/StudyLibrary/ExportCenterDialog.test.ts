@@ -53,7 +53,7 @@ const open = (items = sources) => render(h(ExportCenterDialog, { open: true, sou
 describe("Study Library export center", () => {
   it("opens a material shortcut with CSV and its material selected", () => {
     render(h(ExportCenterDialog, {open: true, sources: [sources[0]!], initialOutput: "csv", onClose: () => {}}));
-    expect((screen.getByLabelText("Flashcard CSV (.csv)") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Export cards (CSV)") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByRole("checkbox", {name:"Aviation Weather"}) as HTMLInputElement).checked).toBe(true);
     expect(screen.queryByText("Crosswind")).toBeNull();
     expect(screen.getByRole("button", {name:"Save CSV…"}).hasAttribute("disabled")).toBe(false);
@@ -89,7 +89,7 @@ describe("Study Library export center", () => {
       studySet: { ...set, sourceMaterialId: "two", title: "Crosswind", flashcards: [{ front: "Crosswind card", back: "Second material", sourcePage: 9 }] },
     };
     open([first, second]);
-    fireEvent.click(screen.getByLabelText("Flashcard CSV (.csv)"));
+    fireEvent.click(screen.getByLabelText("Export cards (CSV)"));
     expect(screen.getByText(/leading apostrophe for safety/).textContent).toContain("Some flashcard importers may show it.");
     fireEvent.click(screen.getByRole("button", { name: "Save CSV…" }));
 

@@ -51,7 +51,7 @@ it("shows a bounded first page, loads more, and searches all materials", async (
   render(h(MemoryRouter, null, h(StudyLibrary)));
   await expectNoA11yViolations(document.body);
 
-  expect((screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "Export handout or cards…" }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText("Material 0")).toBeTruthy();
   expect(screen.queryByText("Material 149")).toBeNull();
   expect(screen.getByText("Showing 100 of 150 materials")).toBeTruthy();
@@ -87,7 +87,7 @@ it("opens the export center when study content is available", () => {
     updatedAt: "2026-10-01T10:00:00Z",
   }];
   render(h(MemoryRouter, null, h(StudyLibrary)));
-  const button = screen.getByRole("button", { name: "Export handout…" }) as HTMLButtonElement;
+  const button = screen.getByRole("button", { name: "Export handout or cards…" }) as HTMLButtonElement;
   expect(button.disabled).toBe(false);
   fireEvent.click(button);
   expect(screen.getByRole("dialog", { name: "Export study materials" })).toBeTruthy();
@@ -299,7 +299,7 @@ it("LIBRARY-CALM-01 keeps one primary header action; import and export live in M
   const more = screen.getByText("More", { selector: "summary" }).parentElement as HTMLDetailsElement;
   expect(more.open).toBe(false);
   expect(more.contains(screen.getByRole("button", { name: /Import study packet/ }))).toBe(true);
-  expect(more.contains(screen.getByRole("button", { name: "Export handout…" }))).toBe(true);
+  expect(more.contains(screen.getByRole("button", { name: "Export handout or cards…" }))).toBe(true);
   expect(screen.queryByRole("link", { name: "Practice history" })).toBeNull();
   // Choosing an item closes the menu.
   more.open = true;
