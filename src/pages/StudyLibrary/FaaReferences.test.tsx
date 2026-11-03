@@ -63,9 +63,19 @@ afterEach(cleanup);
 it("shows optional ACS and PHAK with its addendum, with AFH as one additional entry", () => {
   mount();
   expect(screen.getByRole("region", { name: "FAA references" })).toBeTruthy();
-  expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(3);
+  expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(4);
   expect(screen.getByRole("heading", { name: "PHAK addendum" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Check the current FAA version" })).toBeTruthy();
+});
+
+it("lists the three downloadable references in order: PHAK, Supplement, AFH", async () => {
+  mount();
+  const names = screen.getAllByRole("heading").map((heading) => heading.textContent);
+  const order = ["Pilot’s Handbook of Aeronautical Knowledge (PHAK)", "Knowledge Test Supplement (figures)", "Airplane Flying Handbook"].map((name) => names.indexOf(name));
+  expect(order.every((index) => index >= 0)).toBe(true);
+  expect([...order].sort((a, b) => a - b)).toEqual(order);
+  expect(screen.getByText("The figures used on the knowledge test. Make picture cards from its pages.")).toBeTruthy();
+  await screen.findByRole("button", { name: "Get from faa.gov (about 168 MB)" });
 });
 
 it("imports with the existing PDF-only path, saves a separate unverified material and retries a failed save", async () => {
@@ -160,7 +170,7 @@ it("retires a pending open check when the shelf unmounts", async () => {
   await screen.findByText("Saved on this Mac");
   expect(screen.getAllByText(/FAA-S-ACS-6C/)).toHaveLength(1);
   expect(screen.queryByText(/Your copy:/)).toBeNull();
-  expect(document.querySelectorAll(".faa-shelf > .faa-shelf__entry")).toHaveLength(4);
+  expect(document.querySelectorAll(".faa-shelf > .faa-shelf__entry")).toHaveLength(5);
 });
 
 it("keeps the earlier PDF when another pick is cancelled, then cleans unused picks before saving", async () => {
@@ -188,6 +198,7 @@ const entries = [
   { id: "afh-3c-ch04", title: "Airplane Flying Handbook, chapter 4", edition: "FAA-H-8083-3C", published: "2021", maxBytes: 50_000_000, kind: "afhChapter", offeredNow: true },
   { id: "afh-addendum-mosaic", title: "Airplane Flying Handbook addendum (MOSAIC)", edition: "FAA-H-8083-3C addendum (MOSAIC)", published: "2025-10", maxBytes: 50_000_000, kind: "afhAddendum", offeredNow: true },
   { id: "phak-25c-full", title: "PHAK full book", edition: "FAA-H-8083-25C", published: "2023", kind: "phakFull", offeredNow: true },
+  { id: "kt-supplement-8080-2h", title: "Knowledge Test Supplement (figures)", edition: "FAA-CT-8080-2H", published: "2018", maxBytes: 209_715_200, kind: "ktSupplement", offeredNow: true },
 ];
 const downloaded = { document: imported, manifestId: "afh-3c-ch04", sourceUrl: "https://www.faa.gov/synthetic.pdf", edition: "FAA-H-8083-3C", sha256: "a".repeat(64), bytes: 100, httpLastModified: null };
 const receipt = { materialId: "afh-copy", documentId: "afh-3c-ch04", sourceUrl: downloaded.sourceUrl, edition: downloaded.edition, contentSha256: downloaded.sha256, bytes: 100, httpLastModified: null, downloadedAt: "2026-10-31T12:00:00Z" };
@@ -397,18 +408,23 @@ it("shows only the selected chapter's saved info and prevents downloading it aga
 const phakReceipt = { ...receipt, materialId: "phak-copy", documentId: "phak-25c-full", edition: "FAA-H-8083-25C" };
 const phakMaterial = () => makeMaterial({ id: phakReceipt.materialId, title: "PHAK 25C", filePath: imported.relativePath });
 
-it("offers full PHAK with size, shows progress and cancels safely", async () => {
-  mocks.progress.mockResolvedValue({ received: 12 * 1048576, total: 74 * 1048576 });
+const oneFile = [
+  { name: "full PHAK", id: "phak-25c-full", title: "PHAK full book", button: "Get full handbook from faa.gov (about 74 MB)", mib: 74 },
+  { name: "the knowledge test supplement", id: "kt-supplement-8080-2h", title: "Knowledge Test Supplement (figures)", button: "Get from faa.gov (about 168 MB)", mib: 168 },
+];
+
+it.each(oneFile)("offers $name with size, shows progress and cancels safely", async ({ id, title, button, mib }) => {
+  mocks.progress.mockResolvedValue({ received: 12 * 1048576, total: mib * 1048576 });
   let finish!: (value: typeof downloaded) => void;
   mocks.download.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
   mount();
-  const get = await screen.findByRole("button", { name: "Get full handbook from faa.gov (about 74 MB)" });
+  const get = await screen.findByRole("button", { name: button });
   await waitFor(() => expect((get as HTMLButtonElement).disabled).toBe(false));
   expect(screen.getAllByText("Needs internet once; works offline afterwards.")).toHaveLength(1);
   fireEvent.click(get);
   await screen.findByRole("button", { name: "Downloading…" });
-  await screen.findByText(/Getting PHAK full book from faa.gov… 12 of 74 MB/);
-  expect(mocks.download).toHaveBeenCalledWith("phak-25c-full", expect.any(String));
+  await screen.findByText(`Getting ${title} from faa.gov… 12 of ${mib} MB`);
+  expect(mocks.download).toHaveBeenCalledExactlyOnceWith(id, expect.any(String));
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   await act(async () => finish(downloaded));
   await screen.findByText("Download cancelled.");
@@ -416,19 +432,33 @@ it("offers full PHAK with size, shows progress and cancels safely", async () => 
   expect(mocks.cleanup).toHaveBeenCalledWith([imported.relativePath]);
 });
 
-it("saves PHAK provenance and retries saving without another download", async () => {
-  const phakDownload = { ...downloaded, manifestId: phakReceipt.documentId, edition: phakReceipt.edition };
-  mocks.download.mockResolvedValue(phakDownload);
-  mocks.record.mockResolvedValueOnce(null).mockResolvedValueOnce(phakReceipt);
+it.each(oneFile)("saves $name provenance and retries saving without another download", async ({ id, title, button }) => {
+  const oneDownload = { ...downloaded, manifestId: id, edition: id === "phak-25c-full" ? "FAA-H-8083-25C" : "FAA-CT-8080-2H" };
+  mocks.download.mockResolvedValue(oneDownload);
+  mocks.record.mockResolvedValueOnce(null).mockResolvedValueOnce({ ...phakReceipt, documentId: id, edition: oneDownload.edition });
   mount();
-  const get = await screen.findByRole("button", { name: /Get full handbook/ });
+  const get = await screen.findByRole("button", { name: button });
   await waitFor(() => expect((get as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(get);
   await screen.findByText("Your PDF couldn't be saved. Try Save downloaded PDF again.");
   fireEvent.click(screen.getByRole("button", { name: "Save downloaded PDF" }));
   await screen.findByText("Saved for offline study.");
   expect(mocks.download).toHaveBeenCalledTimes(1);
-  expect(mocks.record.mock.calls[1]![0]).toMatchObject({ title: "PHAK full book", downloaded: phakDownload });
+  expect(mocks.record.mock.calls[1]![0]).toMatchObject({ title, downloaded: oneDownload });
+});
+
+it("shows a saved supplement with its edition and year, verified from the download receipt", async () => {
+  const supplementReceipt = { ...receipt, materialId: "supplement-copy", documentId: "kt-supplement-8080-2h", edition: "FAA-CT-8080-2H" };
+  mocks.materials = [makeMaterial({ id: supplementReceipt.materialId, title: "Knowledge Test Supplement (figures)", filePath: imported.relativePath })];
+  mocks.records.mockResolvedValue([supplementReceipt]);
+  mount();
+  const already = await screen.findByRole("button", { name: "Already saved" });
+  expect((already as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByText(`FAA-CT-8080-2H · 2018 · from www.faa.gov on 2026-10-31 · SHA-256 ${receipt.contentSha256}`)).toBeTruthy();
+  await screen.findByText("Saved on this Mac");
+  expect(mocks.preview).not.toHaveBeenCalled();
+  expect(screen.getByRole("link", { name: /Notes and bookmarks/ }).getAttribute("href")).toBe("/study/supplement-copy?tab=notes");
+  expect(screen.queryByRole("button", { name: "Make study-size parts" })).toBeNull();
 });
 
 it("shows saved PHAK and opens the existing split dialog with that material", async () => {
@@ -439,7 +469,7 @@ it("shows saved PHAK and opens the existing split dialog with that material", as
   const already = await screen.findByRole("button", { name: "Already saved" });
   expect((already as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText(/^FAA-H-8083-25C · 2023/)).toBeTruthy();
-  expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(2);
+  expect(screen.getAllByText("Optional · No saved PDF")).toHaveLength(3);
   fireEvent.click(screen.getByRole("button", { name: "Make study-size parts" }));
   await screen.findByRole("dialog", { name: "Existing split dialog" });
   expect(mocks.split).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, material: saved }));

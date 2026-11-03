@@ -23,11 +23,15 @@ const MIB: u64 = 1024 * 1024;
 const DEFAULT_CAP: u64 = 50 * MIB;
 /// The one exception: the full Pilot's Handbook (about 74 MB).
 const PHAK_FULL_CAP: u64 = 100 * MIB;
+/// The knowledge test figures supplement (176,480,343 bytes on 2 Nov 2026).
+const KT_SUPPLEMENT_CAP: u64 = 200 * MIB;
 const TOTAL_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const INCOMING_DIR: &str = ".incoming";
 const HOST: &str = "www.faa.gov";
 const AVIATION: &str = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation";
 const AFH_BASE: &str = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook";
+const SUPPLEMENTS: &str =
+    "https://www.faa.gov/sites/faa.gov/files/training_testing/testing/supplements";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,6 +40,8 @@ pub(crate) enum Kind {
     AfhAddendum,
     /// The full 25C handbook. Not offered by the shelf until slice 3d.
     PhakFull,
+    /// FAA-CT-8080-2H, the figures used on the knowledge test (one file).
+    KtSupplement,
 }
 
 #[derive(Clone, Debug)]
@@ -124,6 +130,16 @@ pub(crate) fn manifest() -> Vec<Entry> {
         file_name: "FAA-H-8083-25C.pdf".into(),
         max_bytes: PHAK_FULL_CAP,
         kind: Kind::PhakFull,
+    });
+    out.push(Entry {
+        id: "kt-supplement-8080-2h".into(),
+        title: "Knowledge Test Supplement (figures)".into(),
+        edition: "FAA-CT-8080-2H",
+        published: "2018",
+        url: format!("{SUPPLEMENTS}/sport_rec_private_akts.pdf"),
+        file_name: "FAA-CT-8080-2H.pdf".into(),
+        max_bytes: KT_SUPPLEMENT_CAP,
+        kind: Kind::KtSupplement,
     });
     out
 }
