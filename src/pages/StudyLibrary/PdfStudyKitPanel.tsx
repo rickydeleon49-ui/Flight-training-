@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTauri } from "@/data";
@@ -193,7 +194,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
       setError(SOURCE_CHANGED);
     } else if (code === "CACHE_MISSING") {
       setCacheMissing(true);
-      setError("Your PDF’s text needs reading first. Read it on this Mac, then try again.");
+      setError(`Your PDF’s text needs reading first. Read it on this ${deviceWord()}, then try again.`);
     } else if (code === "KIT_EXISTS_SAME" || code === "KIT_IN_PROGRESS_OTHER") {
       const blocker = failure as { jobId?: string; materialId?: string };
       if (blocker.jobId && blocker.materialId) {
@@ -546,7 +547,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
 
   return (
     <Card>
-      <CardHeader title="A study kit from your PDF" eyebrow="On this Mac" />
+      <CardHeader title="A study kit from your PDF" eyebrow={`On this ${deviceWord()}`} />
       <CardBody>
         <div className="stack stack--3">
           {!extractionUnavailable ? <Button

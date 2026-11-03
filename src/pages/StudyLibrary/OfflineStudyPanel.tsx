@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui";
@@ -108,7 +109,7 @@ export function OfflineStudyPanel({ material, focusRequested = false }: { materi
       <Card>
         <CardHeader
           title="Read this PDF's text"
-          eyebrow="On this Mac"
+          eyebrow={`On this ${deviceWord()}`}
           action={<Badge tone={wording.tone}>{wording.label}</Badge>}
         />
         <CardBody>
@@ -119,7 +120,7 @@ export function OfflineStudyPanel({ material, focusRequested = false }: { materi
             {problem ? <p className="small muted">{problem}</p> : null}
             {tooLarge ? (
               <p className="small">
-                This PDF is too large to read in one piece on this Mac. Split it into parts at the top of this page, then use a part.
+                {`This PDF is too large to read in one piece on this ${deviceWord()}. Split it into parts at the top of this page, then use a part.`}
               </p>
             ) : wording.canPrepare ? (
               <div className="row row--wrap">

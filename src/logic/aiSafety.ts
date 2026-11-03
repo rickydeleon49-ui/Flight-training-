@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 /**
  * What may be sent to Gemini, and what may not.
  *
@@ -105,17 +106,17 @@ export function geminiSendDisclosureParts(
   company: "Google" | "Anthropic" = "Google",
 ): { message: string; details?: string } {
   const name = material.originalFileName ?? material.title;
-  if (company === "Anthropic") return { message: `Only “${name}” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed.` };
+  if (company === "Anthropic") return { message: `Only “${name}” leaves this ${deviceWord()}, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this ${deviceWord()} is not changed.` };
   const isPdf = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
   const lineage = material.lineage;
   const pages = lineage ? `, pages ${lineage.sourcePageStart}–${lineage.sourcePageEnd} of “${lineage.sourceTitle}”,` : "";
   if (!isPdf) {
-    return { message: `Only “${name}” leaves this Mac. It is sent with this request only; it is not stored for reuse. Your copy on this Mac is not changed.` };
+    return { message: `Only “${name}” leaves this ${deviceWord()}. It is sent with this request only; it is not stored for reuse. Your copy on this ${deviceWord()} is not changed.` };
   }
   return {
-    message: "Your copy on this Mac is not changed.",
+    message: `Your copy on this ${deviceWord()} is not changed.`,
     details:
-      `Only “${name}”${pages} leaves this Mac. ` +
+      `Only “${name}”${pages} leaves this ${deviceWord()}. ` +
       "Google keeps a temporary copy for up to 48 hours so a study guide and " +
       "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
       "the file changes or you disconnect Gemini; otherwise Google removes it when it expires.",

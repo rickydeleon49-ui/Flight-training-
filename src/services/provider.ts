@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { CLAUDE_MESSAGES } from "./providerMessages";
 import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "@/data";
@@ -35,5 +36,6 @@ export const providerCompany = (model?: string): "Anthropic" | "Google" => model
 
 /** Only complete, fixed app messages have provider variants. Never edit arbitrary text. */
 export function providerWording(text: string, model?: string): string {
-  return providerCompany(model) === "Anthropic" ? CLAUDE_MESSAGES[text] ?? text : text;
+  const message = providerCompany(model) === "Anthropic" ? CLAUDE_MESSAGES[text] ?? text : text;
+  return Object.hasOwn(CLAUDE_MESSAGES, text) ? message.replaceAll("this Mac", `this ${deviceWord()}`) : message;
 }

@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { useEffect, useState, type ReactNode } from "react";
 import { getGeminiStatus } from "@/services/gemini";
 import { Card, CardBody, CardHeader } from "@/components/ui";
@@ -137,7 +138,7 @@ export const PDF_PAGE_TOUR: HowToGroup[] = [
       { label: "Target cards", control: "field", text: "how many flashcards to ask for." },
       { label: "Make new cards with {ai}", control: "button", text: "make only the flashcards." },
       { label: "Create practice test", control: "button", text: "make only the multiple-choice questions." },
-      { label: "or make a kit on this Mac", control: "button", text: "jumps to a study kit made on your Mac, without internet." },
+      { label: `or make a kit on this ${deviceWord()}`, control: "button", text: `jumps to a study kit made on your ${deviceWord()}, without internet.` },
     ],
   },
   {
@@ -154,9 +155,9 @@ export const PDF_PAGE_TOUR: HowToGroup[] = [
     tab: "More",
     items: [
       { label: "Export or print", control: "situational", text: "after something is saved: the same printing and sharing as Share or print." },
-      { label: "On this Mac (backup)", control: "heading", text: "tools that work without internet. Nothing is sent anywhere." },
+      { label: `On this ${deviceWord()} (backup)`, control: "heading", text: "tools that work without internet. Nothing is sent anywhere." },
       { label: "Read this PDF's text", control: "heading", text: "choose Read it now once. Then you can search this PDF without internet." },
-      { label: "A study kit from your PDF", control: "heading", text: "choose Make a study kit from this PDF to pull key terms and an outline from the PDF's text on your Mac." },
+      { label: "A study kit from your PDF", control: "heading", text: `choose Make a study kit from this PDF to pull key terms and an outline from the PDF's text on your ${deviceWord()}.` },
       { label: "Related study", control: "disclosure", text: "other study items linked to this material." },
       { label: "File details", control: "heading", text: "the file's name and size, and where a part came from." },
       { label: "Details and review status", control: "heading", text: "where you are with this material." },
@@ -233,14 +234,14 @@ export const TROUBLE_HELP: Array<{ title: string; notes: HowToNote[] }> = [
     title: "No internet",
     notes: [
       { lead: "Saved work still opens", text: "saved guides, flashcards and practice tests work without internet." },
-      { lead: "On this Mac (backup)", text: "on the More tab: Read this PDF's text once to search it, or make a study kit on your Mac. Nothing is sent anywhere." },
+      { lead: `On this ${deviceWord()} (backup)`, text: `on the More tab: Read this PDF's text once to search it, or make a study kit on your ${deviceWord()}. Nothing is sent anywhere.` },
       { lead: "Ask", text: "your question stays. Press Ask again when you're back online." },
     ],
   },
   {
     title: "The app won't open",
     notes: [
-      { lead: "Already open on this Mac", text: "Her Flight Deck is already running. Use the window that's open." },
+      { lead: `Already open on this ${deviceWord()}`, text: "Her Flight Deck is already running. Use the window that's open." },
       { lead: "Used by a newer version", text: "your study library was last opened by a newer Her Flight Deck. Install that version or newer." },
     ],
   },
@@ -250,7 +251,7 @@ export const PRIVACY_HELP: Array<{ title: string; notes: HowToNote[] }> = [
   {
     title: "What is sent, and when",
     notes: [
-      { lead: "Only after you confirm", text: "nothing leaves this Mac until you confirm in the box that asks. Then only that PDF is sent to {company}. To send fewer pages, take out a chapter first." },
+      { lead: "Only after you confirm", text: `nothing leaves this ${deviceWord()} until you confirm in the box that asks. Then only that PDF is sent to {company}. To send fewer pages, take out a chapter first.` },
       { lead: "Ask", text: "when you press Ask, your question, the PDF and the recent conversation are sent." },
       { lead: "Never sent", text: "your personal notes, flight logs, profile and other library files." },
       {
@@ -264,7 +265,7 @@ export const PRIVACY_HELP: Array<{ title: string; notes: HowToNote[] }> = [
     title: "Nothing is saved until you save",
     notes: [
       { lead: "Drafts wait for you", text: "a new guide, cards or questions wait until you save or discard them." },
-      { lead: "Your PDF stays the same", text: "your copy on this Mac is never changed." },
+      { lead: "Your PDF stays the same", text: `your copy on this ${deviceWord()} is never changed.` },
     ],
   },
   {
@@ -357,7 +358,7 @@ export function StudyHowTo() {
             ))}
           </ol>
           <p className="tiny muted">Everything AI makes is a study aid. Check it against FAA material and your instructor.</p>
-          <p className="tiny muted">No internet? Every PDF's page has an on-Mac study kit on its More tab, under On this Mac (backup).</p>
+          <p className="tiny muted">{`No internet? Every PDF's page has an on-${deviceWord()} study kit on its More tab, under On this ${deviceWord()} (backup).`}</p>
           <p className="tiny muted">Want to search a PDF without internet? On its More tab, choose Read it now under Read this PDF's text, once. Nothing is sent anywhere.</p>
         </div></CardBody>
       </Card>

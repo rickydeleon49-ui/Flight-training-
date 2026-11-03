@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 /**
  * Plain wording for offline study readiness (OFFLINE-01 proposal §4.4).
  *
@@ -45,13 +46,13 @@ export function fewTextSentence(few: number | undefined, total: number): string 
 }
 
 /** Friendly reasons for a whole-file refusal. Unknown codes stay generic. */
-const REFUSALS: Record<string, string> = {
+const refusals = (): Record<string, string> => ({
   encrypted: "It's password-protected, so its text can't be read.",
   malformed: "It doesn't look like a complete PDF.",
   input_too_large: "It's too large to read in one piece. Try splitting it into chapters first.",
-  memory_limit: "It needs more memory than reading on this Mac allows. Try splitting it into chapters first.",
+  memory_limit: `It needs more memory than reading on this ${deviceWord()} allows. Try splitting it into chapters first.`,
   total_text_limit: "It has more text than offline search can hold in one document. Try splitting it into chapters first.",
-};
+});
 
 export function describeReadiness(r: OfflineReadiness): ReadinessWording {
   switch (r.state) {
@@ -66,7 +67,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "missing":
       return {
         label: "File missing",
-        detail: "This file isn't on this Mac right now, so it can't be read.",
+        detail: `This file isn't on this ${deviceWord()} right now, so it can't be read.`,
         tone: "due",
         canPrepare: false,
         settling: false,
@@ -74,7 +75,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "checking":
       return {
         label: "Checking…",
-        detail: "Checking this file on your Mac…",
+        detail: `Checking this file on your ${deviceWord()}…`,
         tone: "neutral",
         canPrepare: false,
         settling: true,
@@ -83,7 +84,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
       return {
         label: "Not read yet",
         detail:
-          "This PDF isn't ready to search on your Mac yet. Choose “Read it now” below once, then you can search its text without internet. Nothing is sent anywhere.",
+          `This PDF isn't ready to search on your ${deviceWord()} yet. Choose “Read it now” below once, then you can search its text without internet. Nothing is sent anywhere.`,
         tone: "neutral",
         canPrepare: true,
         settling: false,
@@ -91,7 +92,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "preparing":
       return {
         label: "Reading text…",
-        detail: "Reading this file's text on your Mac…",
+        detail: `Reading this file's text on your ${deviceWord()}…`,
         tone: "neutral",
         canPrepare: false,
         settling: true,
@@ -99,7 +100,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "searchable":
       return {
         label: "Text read",
-        detail: `Text read on this Mac: all ${pages(r.pages)}.` + fewTextSentence(r.fewTextPages, r.pages),
+        detail: `Text read on this ${deviceWord()}: all ${pages(r.pages)}.` + fewTextSentence(r.fewTextPages, r.pages),
         tone: "complete",
         canPrepare: false,
         settling: false,
@@ -121,7 +122,7 @@ export function describeReadiness(r: OfflineReadiness): ReadinessWording {
     case "couldNotProcess":
       return {
         label: "Could not read",
-        detail: `This file couldn't be read on this Mac. ${REFUSALS[r.code] ?? "Something in it couldn't be read."}`,
+        detail: `This file couldn't be read on this ${deviceWord()}. ${refusals()[r.code] ?? "Something in it couldn't be read."}`,
         tone: "due",
         canPrepare: false,
         settling: false,

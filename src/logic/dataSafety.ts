@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 /**
  * Knowing whether her training record is actually protected.
  *
@@ -82,7 +83,7 @@ export function backupHealth({
     return {
       state: "never",
       message:
-        "No complete backup yet. Safety copies stay on this Mac — save one complete backup somewhere else too.",
+        `No complete backup yet. Safety copies stay on this ${deviceWord()} — save one complete backup somewhere else too.`,
       needsAttention: true,
     };
   }

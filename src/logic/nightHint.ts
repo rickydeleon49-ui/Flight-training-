@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 /**
  * A quiet study aid for the flight log: when a flight's date and airport are
  * known, when did the sun set there, when did night begin (end of evening
@@ -118,6 +119,6 @@ export function nightHintText(hint: NightHint, date: string, timeZone?: string):
   const t = (value: Date) => formatHintTime(value, timeZone);
   return (
     `${hint.code}, ${label}: sunset ${t(hint.sunset)}. ` +
-    `Night from ${t(hint.nightBegins)}; night landings count from ${t(hint.currencyLandingsFrom)} (your Mac's time).`
+    `Night from ${t(hint.nightBegins)}; night landings count from ${t(hint.currencyLandingsFrom)} (your ${deviceWord()}'s time).`
   );
 }

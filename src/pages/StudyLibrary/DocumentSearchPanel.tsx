@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import type { HomeworkSnapshot } from "@/domain/homework";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -376,7 +377,7 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
         <div className="stack stack--3">
           <p className="small muted" role="status">
             {phase.kind === "searching"
-              ? "Searching your documents on this Mac…"
+              ? `Searching your documents on this ${deviceWord()}…`
               : phase.kind === "preparing"
                 ? "Getting offline search ready…"
                 : phase.kind === "problem"

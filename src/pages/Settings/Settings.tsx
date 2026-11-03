@@ -91,7 +91,7 @@ import {
   type GeminiStatus,
 } from "@/services/gemini";
 import { useAppData } from "@/state/AppDataContext";
-import { isMacOS, isWindowsOS } from "@/lib/platform";
+import { deviceWord, isMacOS, isWindowsOS } from "@/lib/platform";
 
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
@@ -982,7 +982,7 @@ export function Settings() {
           <CardBody>
             <PlatformGuidance
               mac="Restoring starter items changes only this Mac’s local library."
-              windows="Restoring starter items changes only this computer’s local library."
+              windows={`Restoring starter items changes only this ${deviceWord()}’s local library.`}
               neutral="Restoring starter items changes only your local library."
             />
             <div className="stack stack--4">

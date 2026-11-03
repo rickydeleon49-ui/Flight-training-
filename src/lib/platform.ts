@@ -29,3 +29,11 @@ export function isWindowsOS(platformString?: string): boolean {
 
   return /win32|win64|windows|wince/i.test(target);
 }
+
+/** Short device name for live guidance; never use in saved provenance. */
+export function deviceWord(): "Mac" | "PC" | "computer" {
+  if (isWindowsOS()) return "PC";
+  const touch = typeof navigator === "undefined" ? 0 : navigator.maxTouchPoints || 0;
+  const darwin = typeof navigator !== "undefined" && /\bdarwin\b/i.test(navigator.userAgent || "");
+  return (isMacOS() || darwin) && touch < 2 ? "Mac" : "computer";
+}

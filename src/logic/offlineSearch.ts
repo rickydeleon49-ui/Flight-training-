@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 /**
  * Plain wording and safe snippet handling for searching inside prepared
  * documents (OFFLINE-02b; design docs/OFFLINE_02_SEARCH_DESIGN_2026-10-19.md).
@@ -78,7 +79,7 @@ export function coverageSentence(c: SearchCoverage, found: number, savedSearched
   if (c.notChecked > 0) parts.push(`${count(c.notChecked, "document is", "documents are")} still being checked.`);
   if (c.preparing > 0) parts.push(`${count(c.preparing, "document is", "documents are")} being prepared.`);
   if (c.couldNotPrepare > 0) parts.push(`${count(c.couldNotPrepare, "document", "documents")} couldn't be prepared.`);
-  if (c.missing > 0) parts.push(`${count(c.missing, "file is", "files are")} missing from this Mac.`);
+  if (c.missing > 0) parts.push(`${count(c.missing, "file is", "files are")} missing from this ${deviceWord()}.`);
   if (c.imagePages > 0) parts.push(`${count(c.imagePages, "page is an image", "pages are images")}, so text recognition would be needed to search ${c.imagePages === 1 ? "it" : "them"}.`);
   if (c.otherUnsearchablePages > 0) parts.push(`${count(c.otherUnsearchablePages, "page", "pages")} couldn't be read.`);
   return parts.join(" ");
@@ -113,7 +114,7 @@ export function searchProblem(code: string): string | null {
 export function destinationProblem(check: "changed" | "missing"): string {
   return check === "changed"
     ? "This document changed since you searched. Search again to see its current pages."
-    : "This document's file isn't on this Mac any more.";
+    : `This document's file isn't on this ${deviceWord()} any more.`;
 }
 
 /** "PDF page 3", plus the original's page for a split part when it is known. */

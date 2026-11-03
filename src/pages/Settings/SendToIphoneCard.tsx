@@ -1,3 +1,4 @@
+import { isWindowsOS } from "@/lib/platform";
 import { useEffect, useState } from "react";
 
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
@@ -51,7 +52,7 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
     try {
       await revealIphoneBackup(last.path);
     } catch (error) {
-      setProblem(backupErrorMessage(error, "Finder could not show that file."));
+      setProblem(backupErrorMessage(error, isWindowsOS() ? "File Explorer could not show that file." : "Finder could not show that file."));
     }
   };
 
@@ -82,14 +83,16 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
           ) : null}
           {last && !viaICloud ? (
             <p className="small">
-              iCloud Drive isn't on for this Mac, so the file was saved where you chose. AirDrop it
-              to your iPhone from Finder.
+              {isWindowsOS() ? "The file was saved where you chose. Copy it to your iPhone." : <>
+                iCloud Drive isn't on for this Mac, so the file was saved where you chose. AirDrop it
+                to your iPhone from Finder.
+              </>}
             </p>
           ) : null}
           {last && viaICloud ? (
             <p className="small">
               <Button size="small" onClick={showInFinder}>
-                Show in Finder
+                {isWindowsOS() ? "Show in File Explorer" : "Show in Finder"}
               </Button>
             </p>
           ) : null}

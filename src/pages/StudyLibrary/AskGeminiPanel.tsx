@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { providerCompany } from "@/services/provider";
 import { isTauri } from "@/data";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -409,7 +410,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, con
 
       <p className="tiny dim" role="note" style={{ margin: 0, overflowWrap: "anywhere" }}>
         {cardText
-          ? `Your question, this ${contextNoun}, the text of the pages around its source page (if read on this Mac) and recent conversation are sent to ${company}. The PDF itself is not sent.`
+          ? `Your question, this ${contextNoun}, the text of the pages around its source page (if read on this ${deviceWord()}) and recent conversation are sent to ${company}. The PDF itself is not sent.`
           : evidenceMode && material?.filePath
           ? `Your question, full PDF “${material.originalFileName || material.title}”, study context and recent conversation are sent to ${company}.`
           : `Your question, study context and recent conversation are sent to ${company}.`}
@@ -524,7 +525,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, con
         {readingText && (
           <p className="small row" role="status" style={{ margin: 0 }}>
             <span className="spinner" aria-hidden="true" />
-            Reading this PDF on your Mac…
+            {`Reading this PDF on your ${deviceWord()}…`}
           </p>
         )}
         {isLoading && progress && (

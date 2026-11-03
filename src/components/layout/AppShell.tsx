@@ -251,12 +251,12 @@ export function AppShell() {
       <main className="content">
         <div className="content__inner">
           <GeminiOrphanNotices />
+          <ReminderNotifications />
           <Suspense fallback={<Loading label="Opening this section" />}>
             <Outlet />
           </Suspense>
         </div>
       </main>
-      <ReminderNotifications />
       <QuickFind onBeforeOpen={beforeQuickFindOpen} />
       <UndoBar />
     </div>

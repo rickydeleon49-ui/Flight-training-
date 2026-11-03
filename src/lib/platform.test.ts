@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { isMacOS, isWindowsOS } from "./platform";
+import { deviceWord, isMacOS, isWindowsOS } from "./platform";
 
 describe("platform detection", () => {
   it("identifies macOS platforms while rejecting iOS, Windows, Linux, and unknown strings", () => {
@@ -32,4 +32,19 @@ describe("platform detection", () => {
     expect(isWindowsOS("")).toBe(false);
     expect(isWindowsOS("unknown platform string")).toBe(false);
   });
+});
+
+
+afterEach(() => vi.unstubAllGlobals());
+it.each([
+  ["MacIntel", "Macintosh", 0, "Mac"],
+  ["Win32", "Windows NT 10.0", 0, "PC"],
+  ["Win32", "Macintosh", 0, "PC"],
+  ["Linux", "Linux", 0, "computer"],
+  ["", "", 0, "computer"],
+  ["iPhone", "iPhone", 1, "computer"],
+  ["MacIntel", "Macintosh", 5, "computer"],
+])("uses a short device word for %s / %s (%s touch points)", (platform, userAgent, maxTouchPoints, expected) => {
+  vi.stubGlobal("navigator", { platform, userAgent, maxTouchPoints });
+  expect(deviceWord()).toBe(expected);
 });

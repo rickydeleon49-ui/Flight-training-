@@ -69,3 +69,14 @@ describe("SendToIphoneCard", () => {
     }
   });
 });
+
+it("says Show in File Explorer on Windows", async () => {
+  const platform = vi.spyOn(navigator, "platform", "get").mockReturnValue("Win32");
+  try {
+    mocks.sendToIphone.mockResolvedValue({ info: { bytes: 10, path: "/fictional/com~apple~CloudDocs/a.hfdbackup" }, viaICloud: true });
+    render(<SendToIphoneCard repositories={repositories} />);
+    fireEvent.click(screen.getByRole("button", { name: "Send to my iPhone" }));
+    expect(await screen.findByRole("button", { name: "Show in File Explorer" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Show in Finder" })).toBeNull();
+  } finally { platform.mockRestore(); }
+});

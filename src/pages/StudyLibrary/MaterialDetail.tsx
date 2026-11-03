@@ -1,3 +1,4 @@
+import { deviceWord } from "@/lib/platform";
 import { MaterialVideoLinks } from "./MaterialVideoLinks";
 import { inspectPdf } from "@/services/pdf";
 import { providerCompany, providerWording } from "@/services/provider";
@@ -1107,7 +1108,7 @@ function MaterialDetailPage() {
                 ) : null}
                 <CardBody>
                   {deviceCan().generate && isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
-                    <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
+                    <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>{`or make a kit on this ${deviceWord()}`}</Button>
                   </p> : null}
                   {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
@@ -1945,10 +1946,10 @@ function MaterialDetailPage() {
 
           {/* Reading the PDF's text sits with the other tools, above the reference cards (QUICKFIX-01). */}
           {isPdf && (material.filePath || hasKitItems) ? (
-            <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
+            <section id="material-mac-backup" tabIndex={-1} aria-label={`On this ${deviceWord()} (backup)`}>
               <Card>
-                <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
-                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                <CardHeader title={`On this ${deviceWord()} (backup)`} headingId="material-backup-heading" />
+                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your {deviceWord()}.</p> : null}
                 <CardBody><div className="stack stack--4">
                   {material.filePath ? <>
                     <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
