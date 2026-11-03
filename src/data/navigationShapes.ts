@@ -211,19 +211,20 @@ export function invokeNavigationOperation<K extends NavigationOperation["kind"]>
   return callChecked(call, "navigation_operation", { operation: op }, (v): v is NavigationResultByKind[K] => isNavigationResultFor(op, v));
 }
 
-/** The verified handover to the default reader (`open_navigation_document`). */
+/** Verified native open: iOS selects the physical page; desktop keeps reader guidance. */
 export interface OpenedNavigationDocument {
   materialId: string;
   contentSha256: string;
+  physicalPage?: number;
 }
 
-export function invokeOpenNavigationDocument(materialId: string, expectedContentSha256: string, call: Call): Promise<OpenedNavigationDocument> {
+export function invokeOpenNavigationDocument(materialId: string, expectedContentSha256: string, call: Call, physicalPage?: number): Promise<OpenedNavigationDocument> {
   return callChecked(
     call,
     "open_navigation_document",
-    { input: { materialId, expectedContentSha256 } },
+    { input: { materialId, expectedContentSha256, ...(physicalPage !== undefined ? { physicalPage } : {}) } },
     (v): v is OpenedNavigationDocument =>
-      isRecord(v) && hasExactly(v, ["materialId", "contentSha256"]) && v.materialId === materialId && v.contentSha256 === expectedContentSha256,
+      isRecord(v) && hasExactly(v, ["materialId", "contentSha256", ...(physicalPage !== undefined ? ["physicalPage"] : [])]) && v.materialId === materialId && v.contentSha256 === expectedContentSha256 && (physicalPage === undefined || (isPositive(v.physicalPage) && v.physicalPage === physicalPage)),
   );
 }
 

@@ -393,6 +393,22 @@ describe("saved places open only on their own content (M4S1-R5)", () => {
     expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
   });
 
+  it("iOS opens the bookmark at its physical page and reports only a successful jump", async () => {
+    vi.spyOn(platform, "isIOS").mockReturnValue(true);
+    await seed();
+    const nativeOpen = vi.spyOn(db, "openNavigationDocument");
+    renderDetail();
+    const scope = await panel();
+    const open = await savedBookmark(scope);
+    fireEvent.click(open);
+    await waitFor(() => expect(opened).toEqual([{ materialId: M, hash: A }]));
+    await waitFor(async () => expect(await tuple()).toEqual([9, 0, A, "active", 1]));
+    expect(nativeOpen).toHaveBeenCalledWith(M, A, 9);
+    expect(await within(scope).findByText("Opened at PDF page 9.")).toBeTruthy();
+    expect(within(scope).getByText(/PDF page 9 \(printed page A-label\)/)).toBeTruthy();
+    expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
+  });
+
   it("a file replaced while the bookmark's inspection is held is refused", async () => {
     await seed();
     renderDetail();

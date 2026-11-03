@@ -1,31 +1,17 @@
-/** One active viewer; closing also invalidates an IPC read still in flight. */
-export interface PdfViewerState { title: string; url?: string; error?: string }
-let state: PdfViewerState | null = null;
-let generation = 0;
-const listeners = new Set<() => void>();
-export const pdfViewerSnapshot = () => state;
-export const subscribePdfViewer = (listener: () => void) => {
-  listeners.add(listener);
-  return () => { listeners.delete(listener); };
-};
-function publish(next: PdfViewerState | null) {
-  state = next;
-  listeners.forEach(listener => listener());
-}
-export function closePdfViewer() {
-  generation++;
-  if (state?.url) URL.revokeObjectURL(state.url);
-  publish(null);
-}
-export async function openInAppViewer(title: string, load: () => Promise<string>): Promise<void> {
-  closePdfViewer();
-  const current = generation;
-  publish({ title });
+import { isIOS } from "./platform";
+import { invoke } from "@tauri-apps/api/core";
+
+/** Native owns the PDF and its private snapshot until Done. Errors reach the caller's notice. */
+export async function openNativePdf(materialId?: string): Promise<void> {
+  if (!materialId) throw new Error("That PDF could not be opened. Please reopen it from your library.");
   try {
-    const url = await load();
-    if (generation !== current) URL.revokeObjectURL(url);
-    else publish({ title, url });
+    await invoke("open_ios_pdf", { materialId });
   } catch {
-    if (generation === current) publish({ title, error: "That PDF could not be opened. Please try again." });
+    throw new Error("That PDF could not be opened. Please try again or import another copy.");
   }
+}
+
+/** Only a completed verified iOS jump gets page-success wording. */
+export function openedPageMessage(page: number, desktopGuidance: string): string {
+  return isIOS() ? `Opened at PDF page ${page}.` : desktopGuidance;
 }

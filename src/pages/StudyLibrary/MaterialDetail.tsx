@@ -14,7 +14,6 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 import { ActionFormDialog, type ActionDraft } from "@/components/actions/ActionFormDialog";
 import { ActionRow } from "@/components/actions/ActionRow";
 import { deviceCan } from "@/services/platform";
-import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { BackToTop } from "@/components/ui/BackToTop";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -799,7 +798,7 @@ function MaterialDetailPage() {
     setOpenError(null);
     try {
       if (deviceCan().revealFiles) await openDocument(material.filePath);
-      else await openDocument(material.filePath, material.title);
+      else await openDocument(material.filePath, material.title, material.id);
     } catch (error) {
       setOpenError(documentErrorMessage(error, "That file could not be opened."));
       jumpTo("material-file-details");
@@ -1038,7 +1037,6 @@ function MaterialDetailPage() {
   return (
     <>
       <BackToTop />
-      <PdfViewerDialog />
       {/* Opened from the library: go back, so the list returns to where the student was. */}
       <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {
         if ((location.state as { fromLibrary?: boolean } | null)?.fromLibrary) { event.preventDefault(); navigate(-1); }

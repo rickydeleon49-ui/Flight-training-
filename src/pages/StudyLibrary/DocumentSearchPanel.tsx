@@ -1,3 +1,4 @@
+import { openedPageMessage } from "@/services/pdfViewer";
 import type { HomeworkSnapshot } from "@/domain/homework";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -336,9 +337,9 @@ function DocumentSearch({ query, materials, materialFiltersActive = false, onMat
       if (!status || !current()) return;
       const text =
         status.kind === "saved"
-          ? `Opened in your PDF reader. Go to PDF page ${page} there; your reader may not jump to it by itself.`
+          ? openedPageMessage(page, `Opened in your PDF reader. Go to PDF page ${page} there; your reader may not jump to it by itself.`)
           : status.kind === "opened_unsaved"
-            ? `${status.message} Go to PDF page ${page} in your reader.`
+            ? `${status.message} ${openedPageMessage(page, `Go to PDF page ${page} in your reader.`)}`
             : "message" in status
               ? status.message
               : "";

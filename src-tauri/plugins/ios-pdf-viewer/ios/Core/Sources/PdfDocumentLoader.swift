@@ -43,3 +43,10 @@ public final class PdfPresentationState {
     }
     public func finish() { state = .idle }
 }
+
+/// Continuous layout can show a short last page without making it currentPage.
+public enum PdfPageSelection {
+    public static func isDisplayed(_ page: PDFPage, current: PDFPage?, visible: [PDFPage]) -> Bool {
+        current === page || visible.contains { $0 === page }
+    }
+}

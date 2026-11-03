@@ -39,6 +39,7 @@
  * one starts, guidance included (M4S1-R8). An open the operating system has
  * already been handed cannot be taken back; an obsolete one is never started.
  */
+import { openedPageMessage } from "@/services/pdfViewer";
 import type { InspectedNavigationIdentity, NavigationOperation, NavigationReadingState, NavigationResultByKind } from "@/domain/types";
 import { NAVIGATION_ERROR_MESSAGES, NavigationError } from "@/data/navigationTransaction";
 import { resolveDestination, type Destination, type LabelMap, type PageProvenance } from "@/logic/navigation";
@@ -47,8 +48,8 @@ export interface NavigationPorts {
   /** Native: hash and count the managed file and record that identity. */
   inspect(materialId: string): Promise<InspectedNavigationIdentity>;
   operation<K extends NavigationOperation["kind"]>(op: Extract<NavigationOperation, { kind: K }>): Promise<NavigationResultByKind[K]>;
-  /** Native: hand the file to the default reader only if it is still this content. */
-  open(materialId: string, expectedContentSha256: string): Promise<void>;
+  /** Native: open only this content; iOS selects the physical page, desktop offers guidance. */
+  open(materialId: string, expectedContentSha256: string, physicalPage?: number): Promise<void>;
 }
 
 export interface OpenIntent {
@@ -193,7 +194,7 @@ export class NavigationController {
 
     this.publish(ticket, { kind: "working", materialId, step: "opening" });
     try {
-      await this.ports.open(materialId, destination.contentSha256);
+      await this.ports.open(materialId, destination.contentSha256, destination.physicalPage);
     } catch (error) {
       this.cancelQuietly(ticket);
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
@@ -215,8 +216,8 @@ export class NavigationController {
   }
 
   /**
-   * Open a document whose page reference has no trustworthy numbering. It is
-   * opened as it is, with guidance, and no position is saved.
+   * Open with guidance and save nothing. A verified saved source may supply
+   * a physical page for iOS; citations with unknown numbering never do.
    */
   async openForGuidance(materialId: string, guidance: string, saved?: SavedDestination): Promise<NavigationStatus | null> {
     const ticket = this.enter(materialId);
@@ -233,11 +234,11 @@ export class NavigationController {
     if (!this.isCurrent(ticket)) return null;
     this.publish(ticket, { kind: "working", materialId, step: "opening" });
     try {
-      await this.ports.open(materialId, identity.contentSha256);
+      await this.ports.open(materialId, identity.contentSha256, saved?.physicalPage);
     } catch (error) {
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
     }
-    return this.finish(ticket, { kind: "guidance", materialId, message: guidance });
+    return this.finish(ticket, { kind: "guidance", materialId, message: saved ? openedPageMessage(saved.physicalPage, guidance) : guidance });
   }
 
   /** Retire the current request (navigating away, closing the panel). */

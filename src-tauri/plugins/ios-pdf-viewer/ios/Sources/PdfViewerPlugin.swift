@@ -39,14 +39,20 @@ final class PdfViewerPlugin: Plugin {
                 let navigation = UINavigationController(rootViewController: viewer)
                 // Done is the only dismissal path, so cleanup cannot race an interactive swipe.
                 navigation.isModalInPresentation = true
+                var pageSelected = false
                 viewer.finished = { [weak self] in
                     guard self?.state.beginClosing() == true else { return }
+                    pageSelected = pageSelected || viewer.initialPageIsVisible()
                     navigation.dismiss(animated: true) {
                         viewer.pdfView.document = nil
                         viewer.finished = nil
                         self?.active = nil
                         self?.state.finish()
-                        invoke.resolve()
+                        if pageSelected {
+                            invoke.resolve()
+                        } else {
+                            invoke.reject("That physical page could not be displayed. Please try again.")
+                        }
                     }
                 }
                 active = navigation
@@ -60,16 +66,9 @@ final class PdfViewerPlugin: Plugin {
                     }
                     // PDFView needs its final viewport before selecting the physical page.
                     viewer.view.layoutIfNeeded()
-                    guard viewer.selectInitialPage() else {
-                        navigation.dismiss(animated: false) {
-                            viewer.pdfView.document = nil
-                            viewer.finished = nil
-                            self.active = nil
-                            self.state.finish()
-                            invoke.reject("That physical page could not be displayed. Please try again.")
-                        }
-                        return
-                    }
+                    pageSelected = viewer.selectInitialPage()
+                    // Keep a readable viewer open even if PDFKit has not settled its viewport.
+                    // Done checks again; a failed jump never acknowledges a page save.
                 }
             } catch let error as PdfOpenError {
                 state.finish()
@@ -115,7 +114,11 @@ private final class PdfController: UIViewController {
     func selectInitialPage() -> Bool {
         pdfView.layoutDocumentView()
         pdfView.go(to: initialPage)
-        return pdfView.currentPage === initialPage
+        return initialPageIsVisible()
+    }
+
+    func initialPageIsVisible() -> Bool {
+        PdfPageSelection.isDisplayed(initialPage, current: pdfView.currentPage, visible: pdfView.visiblePages)
     }
 
     @objc private func done() {

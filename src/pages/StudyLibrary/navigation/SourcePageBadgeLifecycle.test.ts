@@ -2,6 +2,7 @@
 import { createElement as h, Fragment, useSyncExternalStore } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import * as platform from "@/services/platform";
 import type { InspectedNavigationIdentity } from "@/domain/types";
 import { NavigationController } from "@/state/navigation/controller";
 import { SourcePageBadge } from "./SourcePageBadge";
@@ -40,7 +41,7 @@ function makeController(delivery?: ReturnType<typeof gate<void>>) {
   return owner;
 }
 beforeEach(() => { materials = [{ id: "m", filePath: "synthetic.pdf", title: "Current handbook" }]; inspections = []; requests = []; opened = []; controller = makeController(); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 async function release(index: number, reject = false) {
   await act(async () => { if (reject) inspections[index]!.reject(new Error("retired inspection")); else inspections[index]!.resolve(identity); await requests[index]; });
 }
@@ -210,4 +211,15 @@ it("a restored matching file becomes verified after its original hash and page a
   await release(0);
   expect(opened).toEqual(["m"]);
   expect(screen.getByRole("button",{name:"Open source: Source page 5 (printed page iv)"})).toBeTruthy();
+});
+
+it("iOS verified source badges pass the physical page and replace guidance after success", async () => {
+  vi.spyOn(platform, "isIOS").mockReturnValue(true);
+  const open = vi.fn(async () => undefined);
+  controller = new NavigationController({ inspect: async () => identity, open, operation: async () => { throw Error("must not save guidance"); } });
+  render(h(SourcePageBadge, { materialId: "m", page: 5, source: savedPageSource }));
+  fireEvent.click(screen.getByRole("button", { name: /Open source:/ }));
+  expect(screen.queryByText("Opened at PDF page 5.")).toBeNull();
+  expect(await screen.findByText("Opened at PDF page 5.")).toBeTruthy();
+  expect(open).toHaveBeenCalledWith("m", identity.contentSha256, 5);
 });

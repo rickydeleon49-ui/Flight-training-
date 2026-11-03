@@ -22,6 +22,15 @@ final class PdfDocumentLoaderTests: XCTestCase {
         context.closePDF()
     }
 
+    func testVisibleInitialPageNeedNotBeCurrentPage() {
+        let first = PDFPage()
+        let shortLast = PDFPage()
+        XCTAssertTrue(PdfPageSelection.isDisplayed(shortLast, current: first, visible: [first, shortLast]))
+        XCTAssertTrue(PdfPageSelection.isDisplayed(first, current: nil, visible: [first]))
+        XCTAssertTrue(PdfPageSelection.isDisplayed(first, current: first, visible: []))
+        XCTAssertFalse(PdfPageSelection.isDisplayed(shortLast, current: first, visible: [first]))
+    }
+
     func testPresentationSerializesOpenDismissAndReopen() {
         let state = PdfPresentationState()
         XCTAssertFalse(state.beginClosing())

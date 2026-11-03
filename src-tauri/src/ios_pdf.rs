@@ -1,4 +1,4 @@
-//! Round-one native proof; product routing and bookmark identity stay separate.
+//! Native PDF presentation with an owned private snapshot.
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -59,8 +59,8 @@ pub async fn open_ios_pdf(
 }
 
 #[cfg(any(target_os = "ios", all(test, unix)))]
-struct Snapshot {
-    path: std::path::PathBuf,
+pub(crate) struct Snapshot {
+    pub(crate) path: std::path::PathBuf,
 }
 
 #[cfg(any(target_os = "ios", all(test, unix)))]
@@ -80,10 +80,6 @@ fn prepare(
     material_id: &str,
 ) -> Result<(String, Snapshot), String> {
     use rusqlite::OptionalExtension;
-    use std::io::Write;
-    use std::os::unix::fs::DirBuilderExt;
-    use std::sync::atomic::{AtomicU64, Ordering};
-    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     let material: Option<(String, Option<String>)> = connection
         .query_row(
             "SELECT title, file_path FROM study_materials WHERE id = ?1",
@@ -97,6 +93,15 @@ fn prepare(
         .filter(|p| !p.is_empty())
         .ok_or("That study material has no PDF.")?;
     let bytes = crate::documents::read_document_bytes(documents, &relative)?;
+    Ok((title, snapshot_bytes(&bytes)?))
+}
+
+#[cfg(any(target_os = "ios", all(test, unix)))]
+pub(crate) fn snapshot_bytes(bytes: &[u8]) -> Result<Snapshot, String> {
+    use std::io::Write;
+    use std::os::unix::fs::DirBuilderExt;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     let nonce = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|_| "That PDF could not be prepared.")?
@@ -118,9 +123,9 @@ fn prepare(
         .create_new(true)
         .open(&snapshot.path)
         .map_err(|_| "That PDF could not be prepared.")?;
-    file.write_all(&bytes)
+    file.write_all(bytes)
         .map_err(|_| "That PDF could not be prepared.")?;
-    Ok((title, snapshot))
+    Ok(snapshot)
 }
 
 // iOS has one application process. On its first open, remove only this viewer's

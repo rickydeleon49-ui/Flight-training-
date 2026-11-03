@@ -570,8 +570,8 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     readObservationHistory: (input) => invokeReadObservationHistory(input, callNative),
     navigationOperation: (operation) => invokeNavigationOperation(operation, callNative),
     inspectNavigationIdentity: (materialId) => invokeInspectNavigationIdentity(materialId, callNative),
-    openNavigationDocument: async (materialId, expectedContentSha256) => {
-      await invokeOpenNavigationDocument(materialId, expectedContentSha256, callNative);
+    openNavigationDocument: async (materialId, expectedContentSha256, physicalPage) => {
+      await invokeOpenNavigationDocument(materialId, expectedContentSha256, callNative, physicalPage);
     },
     async select<T>(sql: string, params: SqlValue[] = []): Promise<T[]> {
       return db.select<T[]>(toNumberedPlaceholders(sql), params);

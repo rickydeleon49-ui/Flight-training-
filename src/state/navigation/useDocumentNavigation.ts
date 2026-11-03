@@ -30,7 +30,7 @@ export function navigationControllerFor(repo: NavigationRepository): NavigationC
     controller = new NavigationController({
       inspect: (materialId) => repo.inspect(materialId),
       operation: (op) => repo.operation(op),
-      open: (materialId, hash) => repo.open(materialId, hash),
+      open: (materialId, hash, physicalPage) => repo.open(materialId, hash, physicalPage),
     });
     controllers.set(repo, controller);
   }
@@ -61,7 +61,7 @@ export interface MaterialNavigation {
   loading: boolean;
   error: string | null;
   reload(): Promise<void>;
-  /** Check the file's pages now (desktop). Resolves with whether the file had changed. */
+  /** Check the file's pages now (native app). Resolves with whether the file had changed. */
   checkPages(): Promise<boolean>;
   setRead(reading: NavigationReadingState, confirmed: boolean): Promise<void>;
   addBookmark(input: { contentSha256: string; physicalPage: number; pageLabel: string | null; title: string; notes: string }): Promise<NavigationBookmark>;

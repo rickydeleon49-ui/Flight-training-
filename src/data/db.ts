@@ -130,16 +130,16 @@ export interface SqlDatabase {
     operation: Extract<import("@/domain/types").NavigationOperation, { kind: K }>,
   ): Promise<import("@/domain/types").NavigationResultByKind[K]>;
   /**
-   * Desktop only: hash and page-count a material's managed PDF from its own
+   * Native app: hash and page-count a material's managed PDF from its own
    * bytes and record that identity (M4). Browser mode has no managed files.
    */
   inspectNavigationIdentity?(materialId: string): Promise<import("@/domain/types").InspectedNavigationIdentity>;
   /**
-   * Desktop only: hand the material's managed PDF to the default reader after
+   * Native app: open the material's managed PDF after
    * checking that its bytes, read now, are the expected content (M4S1-R3).
-   * It cannot jump to a page or control the reader afterwards.
+   * iOS selects physicalPage in PDFKit; desktop offers system-reader guidance.
    */
-  openNavigationDocument?(materialId: string, expectedContentSha256: string): Promise<void>;
+  openNavigationDocument?(materialId: string, expectedContentSha256: string, physicalPage?: number): Promise<void>;
 }
 
 /**

@@ -3,7 +3,7 @@
  * reservations, commits, read confirmation and bookmarks run as single
  * immediate transactions (`navigation.rs` natively, `navigationTransaction.ts`
  * in the browser). Checking a file's pages and handing it to the reader need
- * the desktop application; in browser mode they refuse with DESKTOP_ONLY.
+ * the native application; in browser mode they refuse with DESKTOP_ONLY.
  *
  * Not loaded through AppDataContext: the material view and the source badges
  * use it on demand through `useDocumentNavigation`.
@@ -31,9 +31,9 @@ export function navigationRepository(db: SqlDatabase) {
       if (typeof db.inspectNavigationIdentity !== "function") return refuse("DESKTOP_ONLY");
       return db.inspectNavigationIdentity(materialId);
     },
-    async open(materialId: string, expectedContentSha256: string): Promise<void> {
+    async open(materialId: string, expectedContentSha256: string, physicalPage?: number): Promise<void> {
       if (typeof db.openNavigationDocument !== "function") return refuse("DESKTOP_ONLY");
-      return db.openNavigationDocument(materialId, expectedContentSha256);
+      return db.openNavigationDocument(materialId, expectedContentSha256, physicalPage);
     },
   };
 }
