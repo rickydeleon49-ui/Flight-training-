@@ -198,8 +198,8 @@ impl Fixture {
 #[test]
 fn faa_manifest_is_https_faa_only_unique_and_capped() {
     let all = manifest();
-    // Front, 18 chapters, glossary, index, addendum, PHAK 25C.
-    assert_eq!(all.len(), 23);
+    // Front, 18 chapters, glossary, index, addendum, PHAK 25C, test supplement.
+    assert_eq!(all.len(), 24);
     let mut ids: Vec<_> = all.iter().map(|e| e.id.clone()).collect();
     ids.sort();
     ids.dedup();
@@ -215,15 +215,28 @@ fn faa_manifest_is_https_faa_only_unique_and_capped() {
         if e.kind == Kind::PhakFull {
             assert_eq!(e.max_bytes, 100 * 1024 * 1024);
             assert_eq!(e.edition, "FAA-H-8083-25C");
+        } else if e.kind == Kind::KtSupplement {
+            assert_eq!(e.max_bytes, 200 * 1024 * 1024);
+            assert_eq!(e.edition, "FAA-CT-8080-2H");
         } else {
             assert_eq!(e.max_bytes, 50 * 1024 * 1024);
         }
     }
     assert_eq!(all.iter().filter(|e| e.kind == Kind::PhakFull).count(), 1);
+    let supplement = all.iter().find(|e| e.kind == Kind::KtSupplement).unwrap();
+    assert_eq!(supplement.id, "kt-supplement-8080-2h");
+    assert_eq!(
+        supplement.url,
+        "https://www.faa.gov/sites/faa.gov/files/training_testing/testing/supplements/sport_rec_private_akts.pdf"
+    );
+    assert_eq!(
+        all.iter().filter(|e| e.kind == Kind::KtSupplement).count(),
+        1
+    );
     let ch4 = all.iter().find(|e| e.id == "afh-3c-ch04").unwrap();
     assert!(ch4.url.ends_with("/airplane_handbook/05_afh_ch4.pdf"));
     let info = list_faa_downloads();
-    assert_eq!(info.len(), 23);
+    assert_eq!(info.len(), 24);
     assert!(
         info.iter()
             .find(|i| i.id == "phak-25c-full")

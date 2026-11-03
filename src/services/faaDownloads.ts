@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "@/data";
 import type { ImportedDocument } from "./documents";
 
-export type FaaDownloadKind = "afhChapter" | "afhAddendum" | "phakFull";
+export type FaaDownloadKind = "afhChapter" | "afhAddendum" | "phakFull" | "ktSupplement";
 
 /** Mirrors `faa_downloads::EntryInfo` in Rust. */
 export interface FaaDownloadEntry {

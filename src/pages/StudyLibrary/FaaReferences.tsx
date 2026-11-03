@@ -55,7 +55,7 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
         <p className="small wrap-anywhere">Official source: {reference.source}</p>
         <p className="small muted">Source list last checked: October 28, 2026. Newer editions may exist.</p>
       </details>
-      {reference.id === "phak" ? <HandbookDownload phak /> : null}
+      {reference.id === "phak" ? <HandbookDownload book="phak" /> : null}
       {copies.map(({ material, note }) => (
         <SavedReference key={material.id} material={material} note={note} reference={reference} />
       ))}
@@ -74,6 +74,7 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
       {entry(FAA_REFERENCES[0])}
       {entry(FAA_REFERENCES[1])}
       {entry(FAA_REFERENCES[2])}
+      <HandbookDownload book="supplement" />
       <HandbookDownload onAddPdf={onAddPdf} />
       <p className="small muted">Complete backups include these PDFs, notes and bookmarks. Large books make backups larger. Adding another copy keeps earlier editions.</p>
       {adding ? <AddReference reference={adding} onClose={() => setAdding(null)} onSave={async (draft) => {
@@ -87,7 +88,15 @@ export function FaaReferences({ onAddPdf }: { onAddPdf?: () => void }) {
 const AFH_PAGE = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook";
 const DOWNLOAD_ERROR = "faa.gov didn't answer. Try again later, or add the PDF yourself.";
 
-function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; phak?: boolean }) {
+/** One-file downloads. Without `book` the block offers AFH chapters. */
+const ONE_FILE = {
+  phak: { id: "phak-25c-full", title: "Pilot’s Handbook of Aeronautical Knowledge", published: "2023", get: "Get full handbook from faa.gov (about 74 MB)" },
+  supplement: { id: "kt-supplement-8080-2h", title: "Knowledge Test Supplement (figures)", published: "2018", get: "Get from faa.gov (about 168 MB)" },
+} as const;
+
+function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: keyof typeof ONE_FILE }) {
+  const phak = book === "phak";
+  const one = book ? ONE_FILE[book] : null;
   const { data, repositories, mutate } = useAppData();
   const desktop = canHandleFiles();
   const [splitting, setSplitting] = useState<StudyMaterial | null>(null);
@@ -113,7 +122,7 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
     window.addEventListener("offline", connectivity);
     if (desktop) void listFaaDownloads().then((all) => {
       if (!live.current) return;
-      const offered = all.filter((entry) => entry.offeredNow && (phak ? entry.id === "phak-25c-full" : entry.kind === "afhChapter" || entry.kind === "afhAddendum"));
+      const offered = all.filter((entry) => entry.offeredNow && (one ? entry.id === one.id : entry.kind === "afhChapter" || entry.kind === "afhAddendum"));
       setEntries(offered);
       setSelected(offered.find((entry) => entry.id === "afh-3c-ch01")?.id ?? offered[0]?.id ?? "");
     }).catch(() => { if (live.current) setError(DOWNLOAD_ERROR); });
@@ -127,18 +136,18 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
         pending.current = null;
       }
     };
-  }, [desktop, phak]);
+  }, [desktop, one]);
 
   useEffect(() => {
     let active = true;
     if (repositories) void repositories.faaDownloads.list().then((rows) => {
       if (active) {
-        const next = rows.filter((row) => phak ? row.documentId === "phak-25c-full" : row.documentId.startsWith("afh-"));
+        const next = rows.filter((row) => one ? row.documentId === one.id : row.documentId.startsWith("afh-"));
         setRecords((current) => JSON.stringify(current) === JSON.stringify(next) ? current : next);
       }
     }).catch(() => { if (active) setError("Your saved copy details couldn't be loaded. Please try again."); });
     return () => { active = false; };
-  }, [repositories, data.materials, phak]);
+  }, [repositories, data.materials, one]);
 
   useEffect(() => {
     if (!busy) return;
@@ -226,22 +235,26 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
   const mb = (bytes: number) => Math.round(bytes / 1_048_576);
 
   return <div className={phak ? undefined : "faa-shelf__entry"}>
-    {!phak ? <>
+    {!one ? <>
     <h3 className="small">Airplane Flying Handbook</h3>
     <p className="small muted">Choose a chapter or the MOSAIC addendum to keep for offline study.</p>
     </> : null}
+    {book === "supplement" ? <>
+    <h3 className="small">{ONE_FILE.supplement.title}</h3>
+    <p className="small muted">The figures used on the knowledge test. Make picture cards from its pages.</p>
+    </> : null}
     {deviceCan().importFiles && desktop ? <>
       <div className="row row--wrap">
-        {!phak ? <><Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
+        {!one ? <><Field label="Chapter or addendum">{({ id }) => <Select id={id} value={selected} disabled={busy || !!pending.current}
           onChange={(value) => { setSelected(value); setMessage(""); }} options={entries.map((entry) => ({ value: entry.id, label: entry.title }))} />}</Field>
         <Button onClick={onAddPdf} disabled={!onAddPdf}>Add PDF</Button></> : null}
-        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? finishing ? "Saving…" : "Downloading…" : alreadySaved ? "Already saved" : phak ? "Get full handbook from faa.gov (about 74 MB)" : "Get from faa.gov"}</Button>
+        <Button onClick={() => void get()} disabled={busy || !online || !selected || !!pending.current || alreadySaved}>{busy ? finishing ? "Saving…" : "Downloading…" : alreadySaved ? "Already saved" : one ? one.get : "Get from faa.gov"}</Button>
         {busy && !pending.current ? <Button onClick={() => void cancel()} disabled={cancelling}>{cancelling ? "Cancelling…" : "Cancel"}</Button> : null}
         {pending.current ? <Button onClick={() => void retry()} disabled={busy}>Save downloaded PDF</Button> : null}
       </div>
       {busy && !pending.current ? <p className="small" role="status">{finishing ? `Saving ${selectedLabel}…` : `Getting ${selectedLabel} from faa.gov…`}{progress ? ` ${mb(progress.received)}${progress.total ? ` of ${mb(progress.total)}` : ""} MB` : ""}</p> : null}
     </> : null}
-    {phak && !selectedRecords.length && !faaShelfCopies(data.materials, FAA_REFERENCES[1]).length ? <p className="small muted">Optional · No saved PDF</p> : null}
+    {one && !selectedRecords.length && (!phak || !faaShelfCopies(data.materials, FAA_REFERENCES[1]).length) ? <p className="small muted">Optional · No saved PDF</p> : null}
     {message ? <p className="small" role="status">{message}</p> : null}
     {error ? <p className="small" role="alert">{error}</p> : null}
     {selectedRecords.map((record) => {
@@ -250,16 +263,16 @@ function HandbookDownload({ onAddPdf, phak = false }: { onAddPdf?: () => void; p
       return <div key={record.materialId} className="stack stack--4">
         <h4 className="small">{material.title}</h4>
         <p className="small">Saved for offline study</p>
-        <p className="small wrap-anywhere">{record.edition} · {phak ? "2023" : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
-        <SavedReference material={material} downloaded reference={{ title: phak ? "Pilot’s Handbook of Aeronautical Knowledge" : "Airplane Flying Handbook", edition: record.edition }}
+        <p className="small wrap-anywhere">{record.edition} · {one ? one.published : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
+        <SavedReference material={material} downloaded reference={{ title: one ? one.title : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
         {deviceCan().importFiles && phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
           ? <Button disabled>Study-size parts made</Button>
           : <Button onClick={() => setSplitting(material)}>Make study-size parts</Button> : null}
-        {!phak ? <CurrentAfhLink /> : null}
+        {!one ? <CurrentAfhLink /> : null}
       </div>;
     })}
-    {!phak && !selectedRecords.length ? <CurrentAfhLink /> : null}
+    {!one && !selectedRecords.length ? <CurrentAfhLink /> : null}
     {splitting ? <SplitPdfDialog open material={splitting} onClose={() => setSplitting(null)} onCreated={(ids) => { setMessage(`Made ${ids.length} parts. Find them in your Study Library.`); setSplitting(null); }} /> : null}
   </div>;
 }
