@@ -175,5 +175,7 @@ it.each([STANDARD, { ...STANDARD, configured: false }])("keeps the Gemini-defaul
     await screen.findByText(status.configured ? /Gemini 3.5 Flash · key saved/ : "Gemini setup is available in the desktop application.");
     const card = screen.getByRole("heading", { name: "AI provider" }).closest(".card")!;
     expect(visibleCardText(card)).toMatchSnapshot();
+    expect(screen.getByRole("link", { name: "Google's terms" }).getAttribute("href"))
+      .toBe("https://ai.google.dev/gemini-api/terms");
   } finally { cleanup(); db.close(); vi.restoreAllMocks(); }
 });

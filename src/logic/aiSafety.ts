@@ -15,6 +15,7 @@
  * Everything else is allowed, but only after a confirmation that names the
  * file, so sending is always a deliberate act.
  */
+import { PROVIDER_TERMS, providerTermsNote } from "./providerTerms";
 import { MATERIAL_TYPE_LABELS, type CredentialRecord, type StudyMaterial } from "@/domain/types";
 
 export interface AiSubmissionCheck {
@@ -71,14 +72,13 @@ export function checkAiSubmission(
   const name = material.originalFileName ?? material.title;
   // Only PDFs are kept at Google for reuse; other files go with the request.
   const reuse = name.toLowerCase().endsWith(".pdf")
-    ? " (if Google already has a copy from the last 48 hours, that copy is used instead)"
+    ? ` (${PROVIDER_TERMS.gemini.reuse})`
     : "";
   return {
     allowed: true,
     reason:
       `"${name}" will be sent to Google to generate the study aid${reuse}. ` +
-      "On the free tier Google may use it to improve its " +
-      "products, so send study material only — never anything personal or identifying.",
+      `${PROVIDER_TERMS.gemini.freeTier} ${providerTermsNote("gemini")}`,
   };
 }
 
@@ -105,7 +105,7 @@ export function geminiSendDisclosureParts(
   company: "Google" | "Anthropic" = "Google",
 ): { message: string; details?: string } {
   const name = material.originalFileName ?? material.title;
-  if (company === "Anthropic") return { message: `Only “${name}” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed.` };
+  if (company === "Anthropic") return { message: `Only “${name}” leaves this Mac, with each request. ${PROVIDER_TERMS.claude.privacy} ${providerTermsNote("claude")} Your copy on this Mac is not changed.` };
   const isPdf = (material.originalFileName ?? material.filePath ?? "").toLowerCase().endsWith(".pdf");
   const lineage = material.lineage;
   const pages = lineage ? `, pages ${lineage.sourcePageStart}–${lineage.sourcePageEnd} of “${lineage.sourceTitle}”,` : "";
@@ -116,8 +116,7 @@ export function geminiSendDisclosureParts(
     message: "Your copy on this Mac is not changed.",
     details:
       `Only “${name}”${pages} leaves this Mac. ` +
-      "Google keeps a temporary copy for up to 48 hours so a study guide and " +
-      "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
-      "the file changes or you disconnect Gemini; otherwise Google removes it when it expires.",
+      `${PROVIDER_TERMS.gemini.fileCopy} Her Flight Deck asks Google to delete it sooner when ` +
+      `the file changes or you disconnect Gemini; otherwise Google removes it when it expires. ${providerTermsNote("gemini")}`,
   };
 }

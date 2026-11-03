@@ -1,3 +1,4 @@
+import { PROVIDER_TERMS, providerTermsNote } from "@/logic/providerTerms";
 import { CLAUDE_MESSAGES } from "./providerMessages";
 import { invoke } from "@tauri-apps/api/core";
 import { isTauri } from "@/data";
@@ -30,7 +31,7 @@ export async function disconnectProvider(id: ProviderId): Promise<ProviderStatus
   return invoke<ProviderStatus>("disconnect_provider", { id });
 }
 export const CLAUDE_KEY_URL = "https://platform.claude.com/settings/keys";
-export const CLAUDE_PRIVACY = "Anthropic: your files are not used for training and are deleted within 30 days.";
+export const CLAUDE_PRIVACY = `${PROVIDER_TERMS.claude.privacy} ${providerTermsNote("claude")}`;
 export const providerCompany = (model?: string): "Anthropic" | "Google" => model?.startsWith("claude-") ? "Anthropic" : "Google";
 
 /** Only complete, fixed app messages have provider variants. Never edit arbitrary text. */

@@ -1,3 +1,4 @@
+import { PROVIDER_TERMS, providerTermsNote } from "@/logic/providerTerms";
 import { useEffect, useState, type ReactNode } from "react";
 import { getGeminiStatus } from "@/services/gemini";
 import { Card, CardBody, CardHeader } from "@/components/ui";
@@ -260,8 +261,8 @@ export const PRIVACY_HELP: Array<{ title: string; notes: HowToNote[] }> = [
       { lead: "Never sent", text: "your personal notes, flight logs, profile and other library files." },
       {
         lead: "What {company} keeps",
-        text: "Google keeps a copy of the PDF for up to 48 hours, so it doesn't have to be sent again. On the free tier Google may use it to improve its products, so send study material only.",
-        claude: "Anthropic says your files are not used for training and are deleted within 30 days. Send study material only.",
+        text: `${PROVIDER_TERMS.gemini.help} ${providerTermsNote("gemini")}`,
+        claude: `${PROVIDER_TERMS.claude.help} ${providerTermsNote("claude")}`,
       },
     ],
   },

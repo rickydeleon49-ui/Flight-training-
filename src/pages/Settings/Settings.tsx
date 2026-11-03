@@ -1,3 +1,6 @@
+import { isTauri } from "@/data";
+import { PROVIDER_TERMS } from "@/logic/providerTerms";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useLocation } from "react-router-dom";
 import type { ProviderStatus } from "@/services/provider";
 import { ProviderControls } from "./ProviderControls";
@@ -1342,8 +1345,17 @@ export function Settings() {
               ) : null}
 
               <p className="tiny dim">
-                Google states that free-tier content may be used to improve its products. Do
-                not analyze medical records, certificates, addresses, or documents containing
+                {PROVIDER_TERMS.gemini.setupFreeTier} (as of {PROVIDER_TERMS.gemini.asOf}; see <a
+                  href={PROVIDER_TERMS.gemini.termsUrl} target="_blank" rel="noopener noreferrer"
+                  onClick={(event) => {
+                    if (isTauri()) {
+                      event.preventDefault();
+                      void openUrl(PROVIDER_TERMS.gemini.termsUrl).catch(() => {
+                        setGeminiProblem(true); setGeminiNote("Could not open Google's terms. Try again.");
+                      });
+                    }
+                  }}
+                >Google's terms</a>) Do not analyze medical records, certificates, addresses, or documents containing
                 sensitive personal information. AI study material must be checked against the
                 current source, FAA publications, aircraft documents, and your instructor.
               </p>

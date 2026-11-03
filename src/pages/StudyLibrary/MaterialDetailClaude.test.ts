@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { providerTermsNote } from "@/logic/providerTerms";
 // Text-source fixtures retain coverage of the legacy generation path.
 // PDF section-guide behavior is covered in SectionGuideProgress.test.ts.
 /**
@@ -140,7 +141,7 @@ describe("Claude confirmations and model labels", () => {
     const claudeDialog = await screen.findByRole("dialog", { name: "Send this file to Anthropic?" });
     const claudeMessage = claudeDialog.querySelector("p.muted")?.textContent ?? "";
     expect(claudeMessage).toBe(
-      "“handbook.txt” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying. Only “handbook.txt” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. Your copy on this Mac is not changed. It will be read by Claude Haiku 5.5.",
+      `“handbook.txt” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying. Only “handbook.txt” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. ${providerTermsNote("claude")} Your copy on this Mac is not changed. It will be read by Claude Haiku 5.5.`,
     );
     expect(claudeDialog.querySelector("details")).toBeNull();
   });
