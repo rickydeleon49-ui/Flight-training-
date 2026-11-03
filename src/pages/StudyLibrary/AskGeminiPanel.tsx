@@ -15,6 +15,8 @@ import { getGeminiStatus, askGemini, cancelAskGemini, geminiModelName, watchAskG
 export interface AskGeminiPanelProps {
   initiallyOpen?: boolean;
   onClose?: () => void;
+  /** The panel sits in a dialog that already has its own Close. */
+  hideClose?: boolean;
   materialId: string;
   relativePath?: string | null;
   context: string;
@@ -106,7 +108,7 @@ export async function readPdfTextInBackground(
   }
 }
 
-export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
+export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = false, materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
   const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
   const [providerReady, setProviderReady] = useState(!isTauri());
   // If the check fails she is told so (not just shown greyed-out buttons);
@@ -395,7 +397,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, con
               Ask another
             </Button>
           )}
-          <Button
+          {hideClose ? null : <Button
             type="button"
             size="small"
             variant="ghost"
@@ -403,7 +405,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, materialId, con
             aria-label={`Close Ask ${helper}`}
           >
             Close
-          </Button>
+          </Button>}
         </div>
       </div>
 

@@ -1134,7 +1134,10 @@ describe("Flashcards and PDF Ask Gemini integration in MaterialDetail", () => {
     await ask("One more question");
     await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(within(askCard()).getByRole("button", { name: "Close Ask Gemini" }));
+    // One dialog, one Close: the panel's own Close is hidden inside it.
+    expect(within(askCard()).queryByRole("button", { name: "Close Ask Gemini" })).toBeNull();
+    expect(within(askCard()).getAllByRole("button", { name: /^Close/ })).toHaveLength(1);
+    fireEvent.click(within(askCard()).getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog", { name: "Ask about this PDF" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));

@@ -2152,6 +2152,7 @@ function MaterialDetailPage() {
                       buttonLabel="Ask"
                       initiallyOpen
                       onClose={closeAskPdf}
+                      hideClose
                       evidenceMode
                     /> : null}
                   </>
