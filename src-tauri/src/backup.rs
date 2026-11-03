@@ -9615,6 +9615,8 @@ mod tests {
 
         // Schema 10 must pass without requiring practice_test_versions or other migration 11 tables
         assert!(verify_application_database(&database).is_ok());
+        // Windows cannot remove a database while SQLite still has it open.
+        drop(conn);
         std::fs::remove_dir_all(root).unwrap();
     }
 

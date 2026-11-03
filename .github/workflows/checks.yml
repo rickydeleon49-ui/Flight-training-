@@ -220,6 +220,16 @@ jobs:
       # Typecheck and bundle; the Rust side compiles against `dist`.
       - run: npm run build
 
+      # Limit scanning exclusions to this ephemeral CI runner's build/test paths.
+      - name: Exclude Rust build and SQLite test files from Defender scanning
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:GITHUB_WORKSPACE 'src-tauri/target'
+          if ($env:CARGO_TARGET_DIR) { $target = $env:CARGO_TARGET_DIR }
+          $paths = @($env:GITHUB_WORKSPACE, $target, $env:TEMP, $env:RUNNER_TEMP) |
+            Where-Object { $_ } | Sort-Object -Unique
+          Add-MpPreference -ExclusionPath $paths -ErrorAction Stop
+
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           components: clippy
@@ -234,6 +244,8 @@ jobs:
         run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - name: Rust tests (Windows-only restore and key-file guards included)
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+        timeout-minutes: 40
+        # nocapture prints panic details immediately, even if the step times out.
+        run: cargo test --locked --no-fail-fast --manifest-path src-tauri/Cargo.toml -- --nocapture
 
       - run: npm test

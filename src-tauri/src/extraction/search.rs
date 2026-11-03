@@ -1799,17 +1799,46 @@ mod tests {
         let host = Host::start(root.join(CACHE_FILE));
         let targets = [target("a", "A", &sha)];
         assert_eq!(search(&host, &targets, "old", 0).unwrap().groups.len(), 1);
-        // Replace the complete database inode as cache disposal/rebuild would.
+        // Replace the complete database as cache disposal/rebuild would.
         let other = temp();
         publish(&other, &sha, &[(Outcome::Text, "new")]);
         let conn = Connection::open(other.join(CACHE_FILE)).unwrap();
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")
             .unwrap();
         drop(conn);
-        for suffix in ["-wal", "-shm"] {
-            let _ = std::fs::remove_file(root.join(format!("{CACHE_FILE}{suffix}")));
+        #[cfg(windows)]
+        {
+            // SQLite's Windows handles do not share delete access. A live
+            // database cannot be replaced there, unlike an unlinked Unix inode.
+            assert!(std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).is_err());
+            // Host shutdown is asynchronous; wait for the worker to release
+            // its connection before replacing the disposable cache.
+            drop(host);
+            crate::test_wait::wait_for(
+                "Windows cache connection released and file replaced",
+                || std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).is_ok(),
+            );
+            // A read-only last connection can leave SQLite sidecars behind.
+            // Remove them only after the worker has released all handles.
+            for suffix in ["-wal", "-shm"] {
+                let path = root.join(format!("{CACHE_FILE}{suffix}"));
+                if let Err(error) = std::fs::remove_file(path) {
+                    assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
+                }
+            }
         }
-        std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).unwrap();
+        #[cfg(not(windows))]
+        {
+            for suffix in ["-wal", "-shm"] {
+                let _ = std::fs::remove_file(root.join(format!("{CACHE_FILE}{suffix}")));
+            }
+            std::fs::rename(other.join(CACHE_FILE), root.join(CACHE_FILE)).unwrap();
+        }
+        // Windows requires a new host after closing the old database. Unix
+        // keeps exercising replacement underneath the existing connection.
+        #[cfg(windows)]
+        let host = Host::start(root.join(CACHE_FILE));
+        #[cfg(not(windows))]
         assert_eq!(host.initialization(), Initialization::Preparing);
         crate::test_wait::wait_for("replacement cache initialization ready", || {
             host.initialization() == Initialization::Ready
