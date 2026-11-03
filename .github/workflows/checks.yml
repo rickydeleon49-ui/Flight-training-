@@ -195,11 +195,29 @@ jobs:
           fi
 
   windows:
-    name: Windows build, lint and tests
+    name: Windows build, lint and tests (${{ matrix.shard.name }})
     needs: [checks, windows-scope]
     if: needs.windows-scope.outputs.run == 'true'
     runs-on: windows-latest
     timeout-minutes: 60
+    # Windows file and SQLite I/O makes the full Rust suite take well over an
+    # hour on one runner, so it is split into three shards that run in
+    # parallel. Every test lands in exactly one shard: "backup::" tests go to
+    # the first; the second takes the other database-heavy modules; the third
+    # skips both. Keep the lists in shards 2 and 3 identical.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: backup
+            args: "backup::"
+            lint: true
+          - name: data
+            args: "card_ debrief documents practice_ study_packet navigation oral_ --skip backup::"
+            lint: false
+          - name: rest
+            args: "--skip backup:: --skip card_ --skip debrief --skip documents --skip practice_ --skip study_packet --skip navigation --skip oral_"
+            lint: false
     steps:
       # Byte-exact checkout: migration checksums and fixtures must not gain
       # CRLF line endings, and deep test paths must not hit MAX_PATH in git.
@@ -241,11 +259,20 @@ jobs:
         continue-on-error: true
 
       - name: Rust lint (Windows branches)
+        if: matrix.shard.lint
         run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - name: Rust tests (Windows-only restore and key-file guards included)
-        timeout-minutes: 40
+        timeout-minutes: 45
         # nocapture prints panic details immediately, even if the step times out.
-        run: cargo test --locked --no-fail-fast --manifest-path src-tauri/Cargo.toml -- --nocapture
+        # The tests wait on disk more than on the CPU, so run more at once.
+        shell: pwsh
+        env:
+          SHARD_ARGS: ${{ matrix.shard.args }}
+        run: |
+          $shard = $env:SHARD_ARGS -split ' '
+          cargo test --locked --no-fail-fast --manifest-path src-tauri/Cargo.toml -- --nocapture --test-threads=8 @shard
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - run: npm test
+      - if: matrix.shard.lint
+        run: npm test
