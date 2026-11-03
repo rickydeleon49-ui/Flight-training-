@@ -1057,7 +1057,7 @@ fn rewrite_archive_database(source: &Path, target: &Path, database: &[u8]) {
     let mut writer = zip::ZipWriter::new(std::fs::File::create(target).unwrap());
     for i in 0..archive.len() {
         let mut entry = archive.by_index(i).unwrap();
-        let name = entry.name().to_string();
+        let name = entry.name().unwrap().into_owned();
         let mut bytes = Vec::new();
         entry.read_to_end(&mut bytes).unwrap();
         if name == "her-flight-deck.db" {

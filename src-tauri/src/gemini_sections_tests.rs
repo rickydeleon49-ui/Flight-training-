@@ -1479,7 +1479,7 @@ fn descriptor_never_in_ipc_logs_exports_backups() {
     let mut backup = vec![];
     for i in 0..zip.len() {
         let mut entry = zip.by_index(i).unwrap();
-        assert!(!entry.name().contains("gemini-jobs"));
+        assert!(!entry.name().unwrap().contains("gemini-jobs"));
         entry.read_to_end(&mut backup).unwrap();
     }
     let backup = String::from_utf8_lossy(&backup);
