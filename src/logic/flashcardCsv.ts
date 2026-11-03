@@ -46,6 +46,9 @@ import {
 } from "./studyExport";
 import { PDF_KIT_LABEL } from "./pdfKitLabels";
 
+/** Shared name for the existing card export action. */
+export const EXPORT_CARDS_CSV_LABEL = "Export cards (CSV)";
+
 export interface FlashcardCsvItem {
   source: ExportSource;
   selection: ExportSelection;

@@ -25,6 +25,8 @@ import {
   type ExportSelection,
   type ExportSource,
 } from "@/logic/studyExport";
+import { EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv";
+import { deviceCan } from "@/services/platform";
 import { buildHandoutHtml } from "@/logic/studyHandout";
 import { buildMarkdownBundle } from "@/logic/studyMarkdown";
 import { hasCredentialLikeText } from "@/logic/studyPacket/semantic";
@@ -135,7 +137,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
     >
       <div className="stack stack--4">
         <p className="small">Picture cards are omitted from study packets, CSV and handouts. Use a complete backup to keep pictures, covers and review history.</p>
-        {onFlashcardCsv ? <Button disabled={working} onClick={onFlashcardCsv}>Flashcards as a spreadsheet (CSV)…</Button> : null}
+        {deviceCan().sharePrint && onFlashcardCsv ? <Button disabled={working} onClick={onFlashcardCsv}>{EXPORT_CARDS_CSV_LABEL}</Button> : null}
         <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Include</legend>
           {available.guide ? (

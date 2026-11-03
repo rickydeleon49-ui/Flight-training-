@@ -101,6 +101,7 @@ it("hides library and FAA import entries on the phone", async () => {
   try {
     open();
     expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
     expect(screen.queryAllByRole("button", { name: /Add PDF|Get from faa.gov|Get full handbook/ })).toHaveLength(0);
   } finally { spy.mockRestore(); }
