@@ -7,15 +7,20 @@
  * library, and "All caught up" appears only when every material has been
  * checked, nothing is actionable and nothing was blocked.
  */
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Badge, Button, Card, EmptyState, Select } from "@/components/ui";
 import type { LibraryReviewMaterialEntry } from "@/domain/types";
 import { TOPIC_LABELS, TOPIC_OPTIONS, type Topic } from "@/domain/types";
-import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
+import type { CardLibraryRepository, ExtraReviewCard } from "@/data/repositories/cardLibraryRepository";
+import type { CardReviewRepository } from "@/data/repositories/cardReviewRepository";
 import { CardLibraryReadError } from "@/logic/cardLibrary";
+import { currentTimeZone, nextLocalMidnightUtc } from "@/logic/localDay";
 import { isOneOf, useRememberedState } from "@/state/useRememberedState";
 
+import { LibraryExtraReview } from "./LibraryExtraReview";
+import { EXTRA_REVIEW_LIMIT } from "./useCardReview";
 import { useLibraryDueStream } from "./useLibraryReviews";
 
 export const CARD_RATINGS_ARE_NOT_SCORES =
@@ -42,7 +47,16 @@ export function describeCounts(entry: Pick<LibraryReviewMaterialEntry, "againCou
 const needsStartOver = (error: unknown) =>
   error instanceof CardLibraryReadError && (error.code === "STALE_CURSOR" || error.code === "INVALID_CURSOR");
 
-export function StudyLibraryReviewDue({ repository, dataRevision }: { repository: CardLibraryRepository; dataRevision: number }) {
+export function StudyLibraryReviewDue({
+  repository,
+  reviews,
+  dataRevision,
+}: {
+  repository: CardLibraryRepository;
+  /** Card reviews, for "Review 10 anyway from any book". */
+  reviews?: CardReviewRepository;
+  dataRevision: number;
+}) {
   const navigate = useNavigate();
   const [status, setStatus] = useRememberedState<StatusChoice>(
     "library.due.status",
@@ -56,6 +70,32 @@ export function StudyLibraryReviewDue({ repository, dataRevision }: { repository
   );
   const { stream, state, refresh } = useLibraryDueStream(repository, { statusFilter: status, topic: topic || null }, dataRevision);
   const summary = state.lastPageSummary;
+  const [extraBusy, setExtraBusy] = useState(false);
+  const [extraNote, setExtraNote] = useState<string | null>(null);
+  const [extraPlan, setExtraPlan] = useState<ExtraReviewCard[] | null>(null);
+  const reviewAnyway = async () => {
+    if (!reviews || extraBusy) return;
+    setExtraBusy(true);
+    setExtraNote(null);
+    try {
+      const now = new Date().toISOString();
+      const plan = await repository.getExtraAcrossBooks({
+        nowUtc: now,
+        nextLocalMidnightUtc: nextLocalMidnightUtc(now, currentTimeZone()),
+        limit: EXTRA_REVIEW_LIMIT,
+      });
+      if (plan.length > 0) setExtraPlan(plan);
+      else setExtraNote("No reviewed cards to go over yet.");
+    } catch {
+      setExtraNote("Cards couldn\u2019t be opened just now. Please try again.");
+    } finally {
+      setExtraBusy(false);
+    }
+  };
+  const closeExtra = () => {
+    setExtraPlan(null);
+    void refresh();
+  };
   const loadingFirst = state.loading === "page" && state.pagesLoaded === 0;
 
   return (
@@ -164,9 +204,19 @@ export function StudyLibraryReviewDue({ repository, dataRevision }: { repository
         </div>
       ) : null}
 
-      {stream.isCaughtUp ? (
+      {extraPlan && reviews ? (
+        <LibraryExtraReview plan={extraPlan} repository={reviews} onClose={closeExtra} />
+      ) : stream.isCaughtUp ? (
         <Card>
           <EmptyState title="All caught up!" body="No cards are due for review right now. New and returning cards will show up here." />
+          {reviews ? (
+            <div style={{ marginTop: "var(--space-3)" }}>
+              <Button size="small" disabled={extraBusy} onClick={() => void reviewAnyway()}>
+                {extraBusy ? "Opening…" : "Review 10 anyway from any book"}
+              </Button>
+            </div>
+          ) : null}
+          {extraNote ? <p className="small muted" role="status">{extraNote}</p> : null}
         </Card>
       ) : null}
 

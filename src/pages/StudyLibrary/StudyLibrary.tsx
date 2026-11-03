@@ -340,7 +340,7 @@ export function StudyLibrary() {
 
       {tab === "due" && cardLibrary ? (
         <div {...tabPanelProps} ref={tabPanelRef} id="library-panel-due" aria-labelledby="library-tab-due">
-          <StudyLibraryReviewDue repository={cardLibrary} dataRevision={dataRevision} />
+          <StudyLibraryReviewDue repository={cardLibrary} reviews={repositories?.cardReviews} dataRevision={dataRevision} />
         </div>
       ) : null}
       {tab === "history" && cardLibrary ? (

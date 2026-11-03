@@ -26,6 +26,7 @@ import { nextLocalMidnightUtc } from "@/logic/localDay";
 
 import type { SqlDatabase } from "./db";
 import { CardReviewError, DatabaseDisabledError, StorageDurabilityError } from "./persistenceErrors";
+import { cardLibraryRepository } from "./repositories/cardLibraryRepository";
 import { cardReviewRepository, type CardReviewRepository } from "./repositories/cardReviewRepository";
 import { practiceSessionRepository } from "./repositories/practiceSessionRepository";
 import { createSqlJsDatabase } from "./sqlJsDb";
@@ -792,5 +793,140 @@ describe("schema upgrade and ceiling (node:sqlite)", () => {
     ]);
     first.close();
     await expect(createNodeSqliteDatabase(path)).rejects.toThrow(/newer format/);
+  });
+});
+
+describe("REVIEW-ANYWAY-01 extra queue", () => {
+  const ZONE = "America/Chicago";
+  const extra = { extra: { limit: 10 } };
+  async function extraQueue(repo: CardReviewRepository, nowUtc: string, more: { maxNew?: number } = {}) {
+    const snapshot = await repo.getCardReviewSnapshot(M);
+    if (snapshot.current.status !== "ok") throw new Error("no current cards");
+    return repo.getDueQueue({
+      materialId: M,
+      currentVersionId: snapshot.current.versionId,
+      currentItemIds: snapshot.current.items.map((item) => item.itemId),
+      nowUtc,
+      nextLocalMidnightUtc: nextLocalMidnightUtc(nowUtc, ZONE),
+      ...extra,
+      ...more,
+    });
+  }
+
+  it("returns [] when no card has a schedule, and new cards still come first", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, cardsA);
+    const repo = cardReviewRepository(db);
+    expect((await extraQueue(repo, T0)).map((entry) => entry.kind)).toEqual(["new", "new", "new"]);
+    for (let i = 0; i < 3; i += 1) await itemActionNow(repo, M, i, { action: "suspend" });
+    expect(await extraQueue(repo, T0)).toEqual([]);
+  });
+
+  it("offers at most 10 not-due cards, oldest next review first, only when nothing is due", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, many("Card", 12));
+    const repo = cardReviewRepository(db);
+    // Rate all 12 Easy at staggered times: later ratings come back later.
+    for (let i = 0; i < 12; i += 1) await rateAt(repo, M, i, "easy", at(T0, i * MINUTE));
+    const now = at(T0, 13 * MINUTE);
+    const q = await extraQueue(repo, now);
+    expect(q).toHaveLength(10);
+    expect(q.every((entry) => entry.kind === "extra")).toBe(true);
+    expect(q.map((entry) => entry.ordinal)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const dueAts = q.map((entry) => entry.dueAt!);
+    expect(dueAts.every((dueAt, i) => i === 0 || dueAts[i - 1]! < dueAt)).toBe(true);
+    // Without the option the queue is empty, exactly as before.
+    const snapshot = await repo.getCardReviewSnapshot(M);
+    if (snapshot.current.status !== "ok") throw new Error("no cards");
+    const plain = await repo.getDueQueue({
+      materialId: M,
+      currentVersionId: snapshot.current.versionId,
+      currentItemIds: snapshot.current.items.map((item) => item.itemId),
+      nowUtc: now,
+      nextLocalMidnightUtc: nextLocalMidnightUtc(now, ZONE),
+    });
+    expect(plain).toEqual([]);
+  });
+
+  it("due cards still come first and no extra cards are added when something is due", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, cardsA);
+    const repo = cardReviewRepository(db);
+    await rateAt(repo, M, 0, "again", T0);
+    await rateAt(repo, M, 1, "easy", T0);
+    await rateAt(repo, M, 2, "easy", T0);
+    const q = await extraQueue(repo, at(T0, 11 * MINUTE));
+    expect(q.map((entry) => [entry.ordinal, entry.kind])).toEqual([[0, "again"]]);
+  });
+
+  it("an extra rating writes the usual review event and state", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, cardsA);
+    const repo = cardReviewRepository(db);
+    for (let i = 0; i < 3; i += 1) await rateAt(repo, M, i, "easy", T0);
+    const before = await counts(db);
+    const q = await extraQueue(repo, at(T0, MINUTE));
+    expect(q).toHaveLength(3);
+    await rateAt(repo, M, q[0]!.ordinal, "good", at(T0, MINUTE));
+    const after = await counts(db);
+    expect(after.events).toBe(before.events! + 1);
+    expect(after.receipts).toBe(before.receipts! + 1);
+  });
+});
+
+describe("REVIEW-ANYWAY-01 library extra plan", () => {
+  const ZONE = "America/Chicago";
+  const plan = (db: SqlDatabase, nowUtc: string, limit = 10) =>
+    cardLibraryRepository(db).getExtraAcrossBooks({ nowUtc, nextLocalMidnightUtc: nextLocalMidnightUtc(nowUtc, ZONE), limit });
+
+  it("is empty when nothing is rated", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, cardsA);
+    expect(await plan(db, T0)).toEqual([]);
+  });
+
+  it("takes up to 10 not-due current cards across books, oldest next review first; skips due, paused and old-version cards", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, many("Mine", 8));
+    await seedMaterial(db, OTHER, many("Other", 8));
+    const repo = cardReviewRepository(db);
+    // Interleave the books: M card i at T0 + 2i minutes, OTHER card i at T0 + 2i + 1.
+    for (let i = 0; i < 8; i += 1) {
+      await rateAt(repo, M, i, "easy", at(T0, 2 * i * MINUTE));
+      await rateAt(repo, OTHER, i, "easy", at(T0, (2 * i + 1) * MINUTE));
+    }
+    await rateAt(repo, M, 0, "again", at(T0, 20 * MINUTE)); // due in 10 minutes: not due yet at +21
+    await itemActionNow(repo, OTHER, 0, { action: "suspend" });
+    const now = at(T0, 21 * MINUTE);
+    const picked = await plan(db, now);
+    const mine = await repo.getCardReviewSnapshot(M);
+    const other = await repo.getCardReviewSnapshot(OTHER);
+    if (mine.current.status !== "ok" || other.current.status !== "ok") throw new Error("no cards");
+    const id = (snapshot: typeof mine, i: number) => (snapshot.current.status === "ok" ? snapshot.current.items[i]!.itemId : "");
+    expect(picked.map((card) => card.itemId)).toEqual([
+      id(mine, 0), // Again card, back at +30 minutes
+      id(mine, 1), id(other, 1), id(mine, 2), id(other, 2), id(mine, 3), id(other, 3), id(mine, 4), id(other, 4), id(mine, 5),
+    ]);
+    expect(picked[1]!.materialTitle).toBe("Synthetic airspace letters");
+    // Once the Again card is due it is due work, not extra.
+    expect((await plan(db, at(T0, 31 * MINUTE))).map((card) => card.itemId)).not.toContain(id(mine, 0));
+    // Regenerated cards are a new version: the old ratings are not offered.
+    await setCards(db, M, many("Changed", 8));
+    expect((await plan(db, now)).every((card) => card.materialId === OTHER)).toBe(true);
+    expect(await plan(db, now, 3)).toHaveLength(3);
+  });
+
+  it("a rating from the plan is the usual review of that card's own book", async () => {
+    const { db } = await open("node");
+    await seedMaterial(db, M, cardsA);
+    await seedMaterial(db, OTHER, cardsA);
+    const repo = cardReviewRepository(db);
+    await rateAt(repo, OTHER, 0, "easy", T0);
+    const [card] = await plan(db, at(T0, MINUTE));
+    expect(card!.materialId).toBe(OTHER);
+    const before = { mine: await counts(db, M), other: await counts(db, OTHER) };
+    await rateAt(repo, OTHER, 0, "good", at(T0, MINUTE));
+    expect((await counts(db, OTHER)).events).toBe(before.other.events! + 1);
+    expect(await counts(db, M)).toEqual(before.mine);
   });
 });

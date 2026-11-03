@@ -40,6 +40,11 @@ export interface DueQueueInput {
   nextLocalMidnightUtc: string;
   maxNew?: number;
   maxTotal?: number;
+  /**
+   * When nothing is due or new, also offer up to `limit` rated cards that are
+   * not due yet, oldest next-review first. Ratings are the usual reviews.
+   */
+  extra?: { limit: number };
 }
 
 /** What an authoritative receipt read says about one operation ID. */
@@ -164,6 +169,20 @@ export function cardReviewRepository(db: SqlDatabase) {
         })
         .slice(0, Math.max(0, Math.min(maxNew, maxTotal - due.length)))
         .map(({ itemId, ordinal }) => ({ itemId, kind: "new", dueAt: null, ordinal }));
+      if (due.length + fresh.length === 0 && input.extra && input.extra.limit > 0) {
+        const extra: CardQueueEntry[] = input.currentItemIds
+          .map((itemId, ordinal) => ({ itemId, ordinal, state: states.get(itemId) }))
+          .filter(({ state }) => state && state.due_at !== null && int(state.suspended) === 0 && state.flag === null)
+          // Plain code-unit order, like SQLite's ORDER BY due_at; ties by ordinal.
+          .sort((a, b) => {
+            const left = String(a.state!.due_at);
+            const right = String(b.state!.due_at);
+            return left < right ? -1 : left > right ? 1 : a.ordinal - b.ordinal;
+          })
+          .slice(0, input.extra.limit)
+          .map(({ itemId, ordinal, state }) => ({ itemId, kind: "extra" as const, dueAt: String(state!.due_at), ordinal }));
+        return extra;
+      }
       return [...due, ...fresh];
     },
 

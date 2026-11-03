@@ -851,7 +851,7 @@ export interface CardReviewSnapshot {
 
 export interface CardQueueEntry {
   itemId: string;
-  kind: "again" | "due" | "new";
+  kind: "again" | "due" | "new" | "extra";
   dueAt: string | null;
   ordinal: number;
 }

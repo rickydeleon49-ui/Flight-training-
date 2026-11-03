@@ -38,6 +38,9 @@ import { currentTimeZone, localDate, nextLocalMidnightUtc, shortLocalDay } from 
 
 import { useCardReviewClock } from "./useCardReviewClock";
 
+/** How many not-due cards "Review 10 anyway" offers. */
+export const EXTRA_REVIEW_LIMIT = 10;
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers                                                        */
 /* ------------------------------------------------------------------ */
@@ -97,11 +100,13 @@ export interface ReviewSession {
   cards: CardQueueEntry[];
   position: number;
   completed: ReadonlySet<string>;
+  /** An extra session: these cards were not due. */
+  extra?: boolean;
 }
 
 /** Session membership is fixed when it starts: at most 20 unique cards, at most 10 new. */
-export function createReviewSession(cards: CardQueueEntry[]): ReviewSession {
-  return { cards, position: 0, completed: new Set() };
+export function createReviewSession(cards: CardQueueEntry[], extra = false): ReviewSession {
+  return { cards, position: 0, completed: new Set(), ...(extra ? { extra: true } : {}) };
 }
 
 /**
@@ -111,7 +116,7 @@ export function createReviewSession(cards: CardQueueEntry[]): ReviewSession {
 export function acknowledgeInSession(session: ReviewSession, itemId: string): ReviewSession {
   const shown = session.cards[session.position];
   if (!shown || shown.itemId !== itemId || session.completed.has(itemId)) return session;
-  return { cards: session.cards, position: session.position + 1, completed: new Set([...session.completed, itemId]) };
+  return { ...session, position: session.position + 1, completed: new Set([...session.completed, itemId]) };
 }
 
 function priorSchedule(state: CardReviewItemState | undefined): CardSchedule | null {
@@ -489,8 +494,13 @@ export function useCardReview(
     if (session && session.cards[session.position]) setRevealed(true);
   }, [session]);
 
-  /** Fix the session's cards from a fresh read: due cards first, then new ones. */
-  const startSession = useCallback(async () => {
+  /**
+   * Fix the session's cards from a fresh read: due cards first, then new ones.
+   * `extra` asks for up to 10 not-due cards when nothing is due or new;
+   * `itemIds` (library "Review 10 anyway from any book") fixes an extra
+   * session to exactly those current, unpaused cards of this material.
+   */
+  const startSession = useCallback(async (options?: { extra?: boolean; itemIds?: readonly string[] }) => {
     if (!materialId || !repository || blocked || startingLock.current) return;
     startingLock.current = true;
     const owner = scope.current;
@@ -503,7 +513,32 @@ export function useCardReview(
       if (scope.current !== owner || currentStart.current !== request) return;
       latest.current = snapshot;
       setRead({ phase: "ready", snapshot, materialId });
-      if (snapshot.current.status !== "ok") return;
+      const fixed = options?.itemIds;
+      if (snapshot.current.status !== "ok") {
+        // A fixed list whose cards are gone yields an empty session, so its runner moves on.
+        if (fixed && !(sessionRef.current && (sessionRef.current.position > 0 || sessionRef.current.completed.size > 0))) {
+          const empty = createReviewSession([], true);
+          sessionRef.current = empty;
+          setSession(empty);
+        }
+        return;
+      }
+      if (fixed) {
+        const ordinals = new Map(snapshot.current.items.map((item) => [item.itemId, item.ordinal]));
+        const cards: CardQueueEntry[] = [];
+        for (const itemId of fixed) {
+          const state = snapshot.states[itemId];
+          const ordinal = ordinals.get(itemId);
+          if (ordinal === undefined || !state || state.dueAt === null || state.suspended || state.flag) continue;
+          cards.push({ itemId, kind: "extra", dueAt: state.dueAt, ordinal });
+        }
+        if (sessionRef.current && (sessionRef.current.position > 0 || sessionRef.current.completed.size > 0)) return;
+        const fixedSession = createReviewSession(cards, true);
+        sessionRef.current = fixedSession;
+        setSession(fixedSession);
+        setRevealed(false);
+        return;
+      }
       const now = clock.now();
       const cards = await repository.getDueQueue({
         materialId,
@@ -511,12 +546,13 @@ export function useCardReview(
         currentItemIds: snapshot.current.items.map((item) => item.itemId),
         nowUtc: now,
         nextLocalMidnightUtc: nextLocalMidnightUtc(now, clock.timeZone()),
+        ...(options?.extra ? { extra: { limit: EXTRA_REVIEW_LIMIT } } : {}),
       });
       if (scope.current !== owner || currentStart.current !== request) return;
       if (sessionRef.current && (sessionRef.current.position > 0 || sessionRef.current.completed.size > 0)) {
         return;
       }
-      const newSession = createReviewSession(cards);
+      const newSession = createReviewSession(cards, options?.extra === true && cards.length > 0 && cards.every((card) => card.kind === "extra"));
       sessionRef.current = newSession;
       setSession(newSession);
       setRevealed(false);

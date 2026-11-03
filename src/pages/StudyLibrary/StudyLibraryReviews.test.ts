@@ -519,3 +519,70 @@ describe("selected history record (C2SRC-R2)", () => {
     expect(screen.queryByRole("dialog", { name: "Card as you reviewed it" })).toBeNull();
   });
 });
+
+describe("REVIEW-ANYWAY-01 library extra review", () => {
+  const ratingEvents = async (id: string) => {
+    const [row] = await db.select<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM card_review_events e JOIN card_items i ON i.id = e.item_id
+       JOIN card_versions v ON v.id = i.version_id WHERE v.source_material_id = ?`,
+      [id],
+    );
+    return Number(row!.n);
+  };
+  const sessionHeading = () => screen.findByText(/^Extra review · Card \d+ of \d+/);
+
+  it("runs one session of not-due cards across books, oldest first, rating each in its own book, then returns to caught up", async () => {
+    await material("wx", "Weather basics", cards("Weather", 2));
+    await material("nav", "Navigation", cards("Nav", 1));
+    await rate("wx", 0, "easy", at(T0, -3 * 60_000));
+    await rate("nav", 0, "easy", at(T0, -2 * 60_000));
+    await rate("wx", 1, "easy", at(T0, -60_000));
+    renderApp("/study?tab=due");
+    expect(await screen.findByText("All caught up!")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Review 10 anyway from any book" }));
+
+    expect((await sessionHeading()).textContent).toMatch(/^Extra review · Card 1 of 3/);
+    expect(screen.getByText("From Weather basics")).toBeTruthy();
+    expect(screen.getByText("Weather question 0")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Good: again in/ }));
+
+    // The next card is the other book's: the session moved books, not pages.
+    expect(await screen.findByText(/^Extra review · Card 2 of 3/)).toBeTruthy();
+    expect(screen.getByText("From Navigation")).toBeTruthy();
+    expect(screen.getByText("Nav question 0")).toBeTruthy();
+    expect(await ratingEvents("wx")).toBe(3);
+    expect(await ratingEvents("nav")).toBe(1);
+    expect(location.pathname).toBe("/study");
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Easy: again in/ }));
+
+    expect(await screen.findByText(/^Extra review · Card 3 of 3/)).toBeTruthy();
+    expect(screen.getByText("Weather question 1")).toBeTruthy();
+    expect(await ratingEvents("nav")).toBe(2);
+    fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Hard: again in/ }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Close review" }));
+    expect(await screen.findByText("All caught up!")).toBeTruthy();
+    expect(await ratingEvents("wx")).toBe(4);
+    expect(await ratingEvents("nav")).toBe(2);
+  });
+
+  it("Done for now leaves the extra session at once; with nothing rated it says so", async () => {
+    await material("wx", "Weather basics", cards("Weather", 1));
+    await rate("wx", 0, "easy", at(T0, -60_000));
+    renderApp("/study?tab=due");
+    fireEvent.click(await screen.findByRole("button", { name: "Review 10 anyway from any book" }));
+    await sessionHeading();
+    fireEvent.click(screen.getByRole("button", { name: "Done for now" }));
+    expect(await screen.findByText("All caught up!")).toBeTruthy();
+    expect(await ratingEvents("wx")).toBe(1);
+
+    await db.execute("DELETE FROM card_review_state");
+    await db.execute("DELETE FROM card_review_events");
+    // A clear library with no schedule: there is nothing to go over yet.
+    fireEvent.click(screen.getByRole("button", { name: "Review 10 anyway from any book" }));
+    expect(await screen.findByText("No reviewed cards to go over yet.")).toBeTruthy();
+  });
+});
