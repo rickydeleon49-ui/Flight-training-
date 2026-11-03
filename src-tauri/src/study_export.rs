@@ -248,9 +248,8 @@ fn build_markdown_archive(json: &str) -> Result<Vec<u8>, ExportError> {
     let mut archive_names = std::collections::HashSet::new();
     for i in 0..archive.len() {
         let file = archive.by_index(i).map_err(|_| ExportError::WriteFailed)?;
-        if !valid_markdown_entry_name(file.name())
-            || !archive_names.insert(file.name().to_lowercase())
-        {
+        let name = file.name().map_err(|_| ExportError::WriteFailed)?;
+        if !valid_markdown_entry_name(&name) || !archive_names.insert(name.to_lowercase()) {
             return Err(ExportError::WriteFailed);
         }
     }
@@ -663,7 +662,7 @@ mod tests {
         let mut names = vec![];
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).unwrap();
-            names.push(file.name().to_string());
+            names.push(file.name().unwrap().into_owned());
             let mut text = String::new();
             std::io::Read::read_to_string(&mut file, &mut text).unwrap();
             assert!(text.starts_with('#'));
