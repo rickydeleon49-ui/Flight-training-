@@ -1782,7 +1782,7 @@ function MaterialDetailPage() {
           </Card>
 
           {isPdf && material.filePath ? (
-            <DocumentPagesPanel material={material} fileMissing={fileMissing} restoring={restoringFile}
+            <DocumentPagesPanel active={tab === "notes"} material={material} fileMissing={fileMissing} restoring={restoringFile}
               onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable} />
           ) : null}
 

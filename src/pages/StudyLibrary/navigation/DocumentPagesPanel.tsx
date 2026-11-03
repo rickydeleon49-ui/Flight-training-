@@ -26,6 +26,7 @@ import type { AiStudySet, NavigationBookmark, StudyMaterial } from "@/domain/typ
 import { NAVIGATION_LIMITS } from "@/data/navigationTransaction";
 import type { BookmarkCardSource } from "@/data/studyPageSources";
 import { newId } from "@/lib/id";
+import type { NavigationRepository } from "@/data/repositories/navigationRepository";
 import { deviceCan } from "@/services/platform";
 import { previewStudyPageSource } from "@/services/studyPageSources";
 import { useOptionalAppData } from "@/state/AppDataContext";
@@ -55,8 +56,13 @@ interface DocumentPagesPanelProps {
   restoring: boolean;
   onRestore: () => void;
   showTips?: boolean;
+  active?: boolean;
   onPageNotesAvailable?: (available: boolean) => void;
 }
+
+// Remember attempts across closing and reopening Pages, including failed checks.
+const autoChecked = new WeakMap<NavigationRepository, Set<string>>();
+const AUTO_CHECK_MAX_BYTES = 200 * 1024 * 1024;
 
 const WORKING: Record<string, string> = {
   checking: "Checking the file…",
@@ -107,7 +113,7 @@ function emptyCardSet(material: StudyMaterial): AiStudySet {
   };
 }
 
-export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true, onPageNotesAvailable }: DocumentPagesPanelProps) {
+export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true, active = true, onPageNotesAvailable }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
   const app = useOptionalAppData();
   // "Make a card" opens the card editor prefilled from one page note.
@@ -223,6 +229,8 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   const [draft, setDraft] = useState<BookmarkDraft | null>(null);
   const [removing, setRemoving] = useState<NavigationBookmark | null>(null);
   const [removePending, setRemovePending] = useState(false);
+  const [checkSeconds, setCheckSeconds] = useState<number | null>(null);
+  const checkPending = useRef(false);
   const headingId = useId();
   const notices = useRef<object | null>(null);
 
@@ -244,6 +252,8 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   useLayoutEffect(() => {
     const owner = {};
     notices.current = owner;
+    checkPending.current = false;
+    setCheckSeconds(null);
     return () => {
       if (notices.current === owner) notices.current = null;
       setCheckNote(null);
@@ -264,6 +274,42 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
 
   const pageNotesAvailable = Boolean(nav.state?.bookmarks.length);
   useEffect(() => { onPageNotesAvailable?.(pageNotesAvailable); }, [pageNotesAvailable, onPageNotesAvailable]);
+
+  const checkPages = async () => {
+    if (checkPending.current) return;
+    checkPending.current = true;
+    const current = noticeOwner();
+    setCheckSeconds(0);
+    setActionError(null);
+    setCheckNote(null);
+    try {
+      const changed = await nav.checkPages();
+      if (current()) setCheckNote(changed ? "This file changed since it was last checked. Places saved for the earlier version are marked." : null);
+    } catch (error) {
+      if (current()) setActionError(navigationMessage(error));
+    } finally {
+      if (current()) {
+        checkPending.current = false;
+        setCheckSeconds(null);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (checkSeconds === null) return;
+    const timer = window.setInterval(() => setCheckSeconds(n => n === null ? null : n + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [checkSeconds === null]);
+
+  useEffect(() => {
+    if (!active || !repo?.supported() || !repo.canCheckFiles() || !controller || nav.loading || nav.error || nav.state?.identity ||
+      fileMissing || !material.filePath || (material.fileSize ?? 0) > AUTO_CHECK_MAX_BYTES) return;
+    let attempted = autoChecked.get(repo);
+    if (!attempted) autoChecked.set(repo, attempted = new Set());
+    if (attempted.has(material.id)) return;
+    attempted.add(material.id);
+    void checkPages();
+  });
 
   if (!repo?.supported() || !controller) return null;
   const desktop = repo.canCheckFiles();
@@ -295,17 +341,6 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
     });
   };
 
-  const checkPages = async () => {
-    const current = noticeOwner();
-    setActionError(null);
-    setCheckNote(null);
-    try {
-      const changed = await nav.checkPages();
-      if (current()) setCheckNote(changed ? "This file changed since it was last checked. Places saved for the earlier version are marked." : null);
-    } catch (error) {
-      if (current()) setActionError(navigationMessage(error));
-    }
-  };
 
   const remove = async () => {
     if (!removing) return;
@@ -339,13 +374,15 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
                 <p className="tiny muted">
                   {identity
                     ? `This PDF has ${identity.totalPages} ${identity.totalPages === 1 ? "page" : "pages"}.`
-                    : "Check this file's pages first:"}
+                    : (material.fileSize ?? 0) > AUTO_CHECK_MAX_BYTES
+                      ? "This PDF is over 200 MiB. Choose Check again to read its pages."
+                      : null}
                 </p>
-                <Button size="small" onClick={() => void checkPages()} disabled={busy || missing}>
-                  Check pages
+                <Button size="small" onClick={() => void checkPages()} disabled={busy || missing || checkSeconds !== null}>
+                  Check again
                 </Button>
               </div>
-              {showTips ? <p className="tiny muted">Check pages counts this PDF's pages and checks whether the file has changed.</p> : null}
+              {showTips ? <p className="tiny muted">Check again counts this PDF's pages and checks whether the file has changed.</p> : null}
               {checkNote ? (
                 <p className="tiny" role="status">
                   {checkNote}
@@ -353,6 +390,8 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
               ) : null}
             </>
           )}
+
+          {checkSeconds !== null ? <p className="tiny" role="status">Reading pages… ({checkSeconds} s)</p> : null}
 
           {said ? (
             <div className="stack stack--2" role="status" aria-live="polite">

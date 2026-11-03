@@ -132,7 +132,7 @@ async function tuple() {
 
 /** Checks the pages, adds one bookmark and returns the rendered list. */
 async function addBookmark(scope: HTMLElement, page: string, title: string, label?: string) {
-  fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+  fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
   await within(scope).findByText("This PDF has 50 pages.");
   fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
   const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
@@ -171,12 +171,11 @@ describe("the pages panel", () => {
     expect(within(scope).queryByText(/Last page you asked to open/)).toBeNull();
     expect(within(scope).queryByRole("checkbox", { name: /I've read this page/ })).toBeNull();
 
-    // Kept: the page count line and Check pages with its tip.
-    const prerequisite = await within(scope).findByText("Check this file's pages first:");
-    expect(within(prerequisite.parentElement!).getByRole("button", { name: "Check pages" })).toBeTruthy();
-    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    // Pages are read automatically; the explicit action remains available.
     await within(scope).findByText("This PDF has 50 pages.");
-    expect(within(scope).getByText("Check pages counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
+    expect(within(scope).queryByText("Check this file's pages first:")).toBeNull();
+    expect(within(scope).getByRole("button", { name: "Check again" })).toBeTruthy();
+    expect(within(scope).getByText("Check again counts this PDF's pages and checks whether the file has changed.")).toBeTruthy();
 
     // Kept: bookmarks. addBookmark drives the dialog's own "PDF page" field
     // (the only page input left, and the only one under this card while the
@@ -189,6 +188,40 @@ describe("the pages panel", () => {
     fireEvent.click(within(list).getByRole("button", { name: "Open Charts at PDF page 9" }));
     await waitFor(() => expect(opened).toEqual([{ materialId: M, hash: A }]));
     expect(within(scope).queryByText(/Opened in your PDF reader/)).toBeNull();
+  });
+
+  it("auto-inspects once, enables bookmarks, and does not inspect on reopening Notes", async () => {
+    await seed();
+    const inspect = vi.spyOn(db, "inspectNavigationIdentity");
+    const held = gate();
+    inspectHeld = held.promise;
+    renderDetail();
+    const scope = await panel();
+    await within(scope).findByText("Reading pages… (0 s)");
+    expect((within(scope).getByRole("button", { name: "Add bookmark" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(inspect).toHaveBeenCalledTimes(1);
+    await act(async () => held.resolve());
+    await within(scope).findByText("This PDF has 50 pages.");
+    expect((within(scope).getByRole("button", { name: "Add bookmark" }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("tab", { name: "Study" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Notes" }));
+    await within(scope).findByText("This PDF has 50 pages.");
+    expect(inspect).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
+    await waitFor(() => expect(inspect).toHaveBeenCalledTimes(2));
+  });
+
+  it("leaves PDFs over 200 MiB for an explicit check", async () => {
+    await seed();
+    await db.execute("UPDATE study_materials SET file_size = ? WHERE id = ?", [200 * 1024 * 1024 + 1, M]);
+    const inspect = vi.spyOn(db, "inspectNavigationIdentity");
+    renderDetail();
+    const scope = await panel();
+    await within(scope).findByText("This PDF is over 200 MiB. Choose Check again to read its pages.");
+    expect(inspect).not.toHaveBeenCalled();
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
+    await within(scope).findByText("This PDF has 50 pages.");
+    expect(inspect).toHaveBeenCalledTimes(1);
   });
 
   it("a bookmark that opened but could not be saved offers a save-only retry that does not reopen the file", async () => {
@@ -226,7 +259,7 @@ describe("the pages panel", () => {
     await seed();
     renderDetail();
     const scope = await panel();
-    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
     await within(scope).findByText("This PDF has 50 pages.");
     fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
     const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
@@ -259,7 +292,7 @@ describe("the pages panel", () => {
     await seed();
     renderDetail();
     const scope = await panel();
-    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
     await within(scope).findByText("This PDF has 50 pages.");
     fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
     const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
@@ -312,7 +345,7 @@ describe("source badges", () => {
 
 describe("saved places open only on their own content (M4S1-R5)", () => {
   async function savedBookmark(scope: HTMLElement) {
-    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
     await within(scope).findByText("This PDF has 50 pages.");
     fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
     const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });
@@ -392,7 +425,7 @@ describe("saved places open only on their own content (M4S1-R5)", () => {
 
 describe("a bookmark draft keeps the content it was started on (M4S1-R6)", () => {
   async function startDraft(scope: HTMLElement) {
-    fireEvent.click(within(scope).getByRole("button", { name: "Check pages" }));
+    fireEvent.click(within(scope).getByRole("button", { name: "Check again" }));
     await within(scope).findByText("This PDF has 50 pages.");
     fireEvent.click(within(scope).getByRole("button", { name: "Add bookmark" }));
     const dialog = await screen.findByRole("dialog", { name: "Add a bookmark" });

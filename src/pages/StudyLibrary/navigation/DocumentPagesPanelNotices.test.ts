@@ -81,7 +81,7 @@ describe("NAV-UI-01: a retired action announces nothing over the current reposit
     current = repo(50, { inspect: held.promise });
     const view = render(h(DocumentPagesPanel, props));
     await screen.findByText("This PDF has 50 pages.");
-    fireEvent.click(screen.getByRole("button", { name: "Check pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
 
     await switchToB(view);
     await act(async () => {
@@ -114,7 +114,7 @@ describe("NAV-UI-01: a retired action announces nothing over the current reposit
     current = repo(50, { inspect: Promise.resolve({ ...state(50).identity!, changed: true }) });
     const view = render(h(DocumentPagesPanel, props));
     await screen.findByText("This PDF has 50 pages.");
-    fireEvent.click(screen.getByRole("button", { name: "Check pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
     await screen.findByText(CHANGED);
 
     await switchToB(view);
@@ -127,7 +127,7 @@ describe("NAV-UI-01: a retired action announces nothing over the current reposit
     current = repo(50, { inspect: held.promise });
     const view = render(h(DocumentPagesPanel, props));
     await screen.findByText("This PDF has 50 pages.");
-    fireEvent.click(screen.getByRole("button", { name: "Check pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
 
     view.unmount();
     await act(async () => held.resolve({ ...state(50).identity!, changed: true }));
@@ -146,7 +146,7 @@ describe("NAV-UI-01 controls: the current repository still reports", () => {
     view.rerender(h(DocumentPagesPanel, props));
     await screen.findByText("This PDF has 70 pages.");
 
-    fireEvent.click(screen.getByRole("button", { name: "Check pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
     await act(async () => held.resolve({ ...state(70).identity!, changed: true }));
 
     await screen.findByText(CHANGED);
@@ -158,9 +158,47 @@ describe("NAV-UI-01 controls: the current repository still reports", () => {
     render(h(DocumentPagesPanel, props));
     await screen.findByText("This PDF has 50 pages.");
 
-    fireEvent.click(screen.getByRole("button", { name: "Check pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
     await act(async () => held.reject(new NavigationError("FILE_MISSING", "Synthetic current failure")));
 
     await waitFor(() => expect(screen.getByText("Synthetic current failure")).toBeTruthy());
+  });
+});
+
+
+describe("automatic page checks", () => {
+  function unknownPages() {
+    const inspect = vi.fn(async () => { throw new NavigationError("FILE_MISSING", OLD_FAILURE); });
+    current = {
+      ...repo(50),
+      inspect,
+      operation: async () => ({ ...state(50), identity: null }),
+    } as unknown as NavigationRepository;
+    return inspect;
+  }
+
+  it("waits until Pages is visible and does not repeat a failed check on remount", async () => {
+    const inspect = unknownPages();
+    const view = render(h(DocumentPagesPanel, { ...props, active: false }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Check again" })).toBeTruthy());
+    expect(inspect).not.toHaveBeenCalled();
+    view.rerender(h(DocumentPagesPanel, props));
+    await screen.findByText(OLD_FAILURE);
+    expect(inspect).toHaveBeenCalledTimes(1);
+    view.unmount();
+    render(h(DocumentPagesPanel, props));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Check again" })).toBeTruthy());
+    expect(inspect).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    await screen.findByText(OLD_FAILURE);
+    expect(inspect).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not inspect a file missing from the phone", async () => {
+    const inspect = unknownPages();
+    render(h(DocumentPagesPanel, { ...props, fileMissing: true }));
+    await screen.findByText(/isn't in your library storage/);
+    expect(inspect).not.toHaveBeenCalled();
+    expect((screen.getByRole("button", { name: "Check again" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
