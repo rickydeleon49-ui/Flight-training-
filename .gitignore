@@ -32,8 +32,7 @@
 *.xlsx
 *.csv
 
-# Exceptions: project documentation and design assets that ARE source.
-!docs/**/*.pdf
+# Exceptions: design assets that ARE source.
 !design/**/*.pdf
 
 # --- Node / frontend ---
@@ -125,7 +124,7 @@ tmp/
 temp/
 .cache/
 
-# Browser-mode screenshots from .claude/skills/run
+# Browser-mode screenshots
 screenshots/
 
 # Python bytecode caches

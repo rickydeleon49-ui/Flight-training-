@@ -1,6 +1,5 @@
-//! Saved study content in the same search (OFFLINE-02c). The contract is
-//! docs/OFFLINE_02C_SAVED_CONTENT_SEARCH_ADDENDUM_2026-10-19.md (rev 4);
-//! section numbers below refer to it.
+//! Saved study content in the same search (OFFLINE-02c). Section numbers
+//! below refer to its design notes.
 //!
 //! Her database is attached read-only to the search connection, so every
 //! statement here runs under the same interrupt handle and request control

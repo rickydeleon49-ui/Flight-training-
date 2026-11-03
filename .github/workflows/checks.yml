@@ -9,7 +9,7 @@
 # minute, before the slower Rust toolchain is set up at all.
 #
 # The Rust side is also formatted and linted here. There is no equivalent gate
-# on the TypeScript yet — see the note in STATUS.md.
+# on the TypeScript yet.
 name: Checks
 
 on:
@@ -38,6 +38,11 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+
+      # Runs on every change, Markdown included: no local paths, account
+      # names or personal email addresses may enter the public tree.
+      - name: Public repository hygiene
+        run: bash scripts/public-hygiene.sh
 
       - name: Detect change scope
         id: filter
@@ -81,14 +86,6 @@ jobs:
         if: steps.filter.outputs.run_heavy != 'false'
         run: npm run test:perf
         timeout-minutes: 10
-
-      - name: Schema verification helper regressions
-        if: steps.filter.outputs.run_heavy != 'false'
-        run: node --test scripts/mac-schema14-profile-snapshot.test.mjs
-
-      - name: P54-06 phase B2 scheduler experiment (frozen oracle comparison)
-        if: steps.filter.outputs.run_heavy != 'false'
-        run: node --test docs/evidence/p54-06-phase-b2-2026-10-28/proof/runner.test.mjs
 
       - name: Signed Mac build script refusals
         if: steps.filter.outputs.run_heavy != 'false'

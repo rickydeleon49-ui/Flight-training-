@@ -1,2 +1,0 @@
-# Preserve raw submitted and observed receipts. Source/diagnostic whitespace remains checked normally.
-*.txt whitespace=-blank-at-eof,-blank-at-eol,cr-at-eol

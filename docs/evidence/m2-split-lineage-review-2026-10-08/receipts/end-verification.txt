@@ -1,2 +1,0 @@
-6/6 owner hashes unchanged after review.
-No application source, dependencies, migrations, backup or release configuration changed.

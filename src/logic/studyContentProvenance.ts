@@ -1,7 +1,7 @@
 /**
  * Pure helper for study content provenance formatting.
  *
- * Implements ROADMAP.md §7.C: expose the provenance already stored for saved
+ * Exposes the provenance already stored for saved
  * study guides/flashcards and practice tests in Material Detail.
  * Shows source material, origin, stored model when applicable, and locally
  * formatted creation date without modifying shared date helpers or persistence.

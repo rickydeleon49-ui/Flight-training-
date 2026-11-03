@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { canonicalJson, cardVersion, deriveCurrentCards, parseSavedCards, type CanonicalCard } from "./cardIdentity";
 
-const PROOF = `${process.cwd()}/docs/evidence/m2-card-review-scope-2026-10-06/proof/fixtures`;
+const PROOF = `${process.cwd()}/src-tauri/fixtures/card-identity`;
 const material = JSON.parse(readFileSync(`${PROOF}/synthetic-material.json`, "utf8")) as {
   materialId: string;
   flashcards: CanonicalCard[];

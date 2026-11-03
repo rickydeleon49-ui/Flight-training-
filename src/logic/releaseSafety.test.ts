@@ -1,5 +1,5 @@
 import { inflateSync } from "node:zlib";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,8 +15,8 @@ import { bumpVersions } from "../../scripts/bump-version.mjs";
 import { checkCargoLockSync } from "../../scripts/test-cargo-lock-sync.mjs";
 // @ts-expect-error -- scripts/normalize-installer-filenames.mjs is an untyped ESM script
 import { generateChecksumManifest, normalizeInstallerFilename, prepareReleaseInstallers } from "../../scripts/normalize-installer-filenames.mjs";
-// @ts-expect-error -- scripts/inspect-backup-credentials.mjs is an untyped ESM script
-import { inspectBackupArchive, readZipEntries } from "../../scripts/inspect-backup-credentials.mjs";
+// @ts-expect-error -- scripts/inspect-backup-archive.mjs is an untyped ESM script
+import { inspectBackupArchive, readZipEntries } from "../../scripts/inspect-backup-archive.mjs";
 // @ts-expect-error -- scripts/generate-pdf-fixtures.mjs is an untyped ESM script
 import { buildPdf, buildXrefPadPdf, deflateZeros, generateFixtures, FIXTURE_SPECS } from "../../scripts/generate-pdf-fixtures.mjs";
 
@@ -26,8 +26,7 @@ const CHECKS_WORKFLOW_PATH = resolve(process.cwd(), ".github/workflows/checks.ym
 const RELEASE_SH_PATH = resolve(process.cwd(), "scripts/release.sh");
 const POLICY_PATH = resolve(process.cwd(), "scripts/release-policy.json");
 const NORMALIZE_SCRIPT_PATH = resolve(process.cwd(), "scripts/normalize-installer-filenames.mjs");
-const INSPECT_SCRIPT_PATH = resolve(process.cwd(), "scripts/inspect-backup-credentials.mjs");
-const MAC_CHECKLIST_PATH = resolve(process.cwd(), "docs/MAC_PARITY_CHECKLIST.md");
+const INSPECT_SCRIPT_PATH = resolve(process.cwd(), "scripts/inspect-backup-archive.mjs");
 const GENERATE_FIXTURES_SCRIPT_PATH = resolve(process.cwd(), "scripts/generate-pdf-fixtures.mjs");
 
 function runValidator(arg: string): { status: number; stdout: string; stderr: string } {
@@ -997,169 +996,6 @@ describe("release version policy and validation", () => {
 
         expect(inspectBackupArchive(tamperedVarPath).status).toBe(2);
         expect(runInspectorCli(tamperedVarPath).status).toBe(2);
-      } finally {
-        rmSync(tempDir, { recursive: true, force: true });
-      }
-    });
-  });
-
-  describe("Mac parity checklist documentation integrity", () => {
-    it("ensures fail-closed credential inspection routine is documented with trap and quiet listing", () => {
-      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
-      expect(checklist).toContain("trap 'rm -f \"$TMP_LIST\"' EXIT INT TERM");
-      expect(checklist).toContain("unzip -q -l \"$BACKUP_PATH\"");
-      expect(checklist).toContain("INSPECTION ERROR: archive missing, unreadable, or corrupted");
-      expect(checklist).toContain("FAIL: credential entry found in archive");
-      expect(checklist).toContain("PASS: no credential entry names in archive");
-      expect(checklist).toContain("node scripts/inspect-backup-credentials.mjs");
-    });
-
-    it("references actual Rust backup allowlist regression tests and eliminates non-existent names", () => {
-      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
-      expect(checklist).toContain("an_archive_may_only_contain_her_database_and_documents");
-      expect(checklist).toContain("secrets.rs");
-      expect(checklist).toContain("complete_backup_keeps_the_pdf_plan_progress_provenance_and_ledger_and_retries_safely_after_restore");
-      expect(checklist).not.toContain("allowed_archive_path_only_permits_our_files");
-    });
-
-    it("links full repository audit note and preserves frozen candidate status without claiming bounded RSS", () => {
-      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
-      expect(checklist).toContain("FULL_REPOSITORY_AUDIT_2026-09-29.md");
-      expect(checklist).toContain("v0.5.3 is a recorded frozen private candidate with known source defects");
-      expect(checklist).toContain("v0.5.3 is not currently approvable merely by passing the Mac checklist");
-      expect(checklist).toContain("Do not claim that windowing guarantees a source-independent or strictly bounded total memory footprint");
-      expect(checklist).not.toContain("memory-bounded windowing keeps peak RSS stable");
-    });
-
-    function findBashExecutable(candidates: string[] = [
-      "C:\\Program Files\\Git\\bin\\bash.exe",
-      "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
-      "bash",
-    ]): string | null {
-      return (
-        candidates.find((candidate) => {
-          try {
-            const res = spawnSync(candidate, ["-c", "echo ok"], { encoding: "utf8" });
-            return res.status === 0 && res.stdout.trim() === "ok";
-          } catch {
-            return false;
-          }
-        }) ?? null
-      );
-    }
-
-    it("visibly marks shell execution as skipped when no bash executable is available", (ctx) => {
-      const unavailableBash = findBashExecutable(["nonexistent-bash-executable-404.exe"]);
-      expect(unavailableBash).toBeNull();
-      ctx.skip("Deterministic availability seam: missing bash candidate correctly produces an explicit test skip");
-    });
-
-    it("executes the documented shell routine in a Windows-hosted Git Bash environment verifying status codes, non-disclosure, and cleanup", (ctx) => {
-      const bashPath = findBashExecutable();
-      if (!bashPath) {
-        ctx.skip("Git Bash not found in environment; Windows-hosted shell verification is unavailable");
-        return;
-      }
-
-      const checklist = readFileSync(MAC_CHECKLIST_PATH, "utf8");
-      const routineMatch = checklist.match(/`(\(TMP_LIST=.*?exit 0\))`<br>/);
-      expect(routineMatch).toBeTruthy();
-      const routine = routineMatch![1]!.replace(/\\\|/g, "|");
-
-      const tempDir = mkdtempSync(join(tmpdir(), "hfd-shell-test-"));
-      const isolatedTmpDir = join(tempDir, "isolated-tmp");
-      mkdirSync(isolatedTmpDir, { recursive: true });
-      const observeFile = join(tempDir, "observe-mktemp.txt");
-
-      try {
-        const cleanZip = createTestZip({
-          "manifest.json": "{}",
-          "her-flight-deck.db": "synthetic database",
-        });
-        const cleanPath = join(tempDir, "clean.hfdbackup");
-        writeFileSync(cleanPath, cleanZip);
-
-        const secretZip = createTestZip({
-          "manifest.json": "{}",
-          "secrets/gemini-key": "secret",
-        });
-        const secretPath = join(tempDir, "secret.hfdbackup");
-        writeFileSync(secretPath, secretZip);
-
-        const spaceZipPath = join(tempDir, "backup with spaces.hfdbackup");
-        writeFileSync(spaceZipPath, cleanZip);
-
-        function execRoutine(archivePath: string, prefix = "", extraEnv: Record<string, string> = {}) {
-          if (existsSync(observeFile)) {
-            rmSync(observeFile, { force: true });
-          }
-          const hookPrefix = `TMPDIR="$(cd "$ISOLATED_TMP_DIR" && pwd)"; export TMPDIR; orig_mktemp() { command mktemp "$@"; }; mktemp() { f=$(orig_mktemp "$@") || return 1; echo "$f" > "$OBSERVE_FILE"; echo "$f"; }; ${prefix}`;
-          return spawnSync(bashPath!, ["-c", `${hookPrefix}BACKUP_PATH="$AUDIT_ARCHIVE"; ${routine}`], {
-            encoding: "utf8",
-            env: {
-              ...process.env,
-              AUDIT_ARCHIVE: archivePath,
-              ISOLATED_TMP_DIR: isolatedTmpDir,
-              OBSERVE_FILE: observeFile,
-              ...extraEnv,
-            },
-          });
-        }
-
-        // 1. Valid clean archive => status 0, generic PASS, no sensitive text, listing cleaned up
-        const resClean = execRoutine(cleanPath);
-        expect(resClean.status).toBe(0);
-        expect(resClean.stdout.trim()).toBe("PASS: no credential entry names in archive");
-        expect(resClean.stderr.trim()).toBe("");
-        const createdClean = readFileSync(observeFile, "utf8").trim();
-        expect(createdClean).toBeTruthy();
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 2. Valid credential entry => status 1, generic FAIL, listing cleaned up
-        const resSecret = execRoutine(secretPath);
-        expect(resSecret.status).toBe(1);
-        expect(resSecret.stdout.trim()).toBe("");
-        expect(resSecret.stderr.trim()).toBe("FAIL: credential entry found in archive");
-        const createdSecret = readFileSync(observeFile, "utf8").trim();
-        expect(createdSecret).toBeTruthy();
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 3. Search command error (grep returning 2) => status 2, INSPECTION ERROR, listing cleaned up
-        const resGrepError = execRoutine(cleanPath, "grep() { return 2; }; ");
-        expect(resGrepError.status).toBe(2);
-        expect(resGrepError.stdout.trim()).toBe("");
-        expect(resGrepError.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
-        const createdGrepError = readFileSync(observeFile, "utf8").trim();
-        expect(createdGrepError).toBeTruthy();
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 4. Missing search command (command not found -> 127) => status 2, listing cleaned up
-        const resGrepMissing = execRoutine(cleanPath, "unset -f grep; grep() { return 127; }; ");
-        expect(resGrepMissing.status).toBe(2);
-        expect(resGrepMissing.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
-        const createdGrepMissing = readFileSync(observeFile, "utf8").trim();
-        expect(createdGrepMissing).toBeTruthy();
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 5. Missing / corrupt archive (unzip / listing failure) => status 2, listing cleaned up
-        const resMissing = execRoutine(join(tempDir, "nonexistent.hfdbackup"));
-        expect(resMissing.status).toBe(2);
-        expect(resMissing.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
-        const createdMissing = readFileSync(observeFile, "utf8").trim();
-        expect(createdMissing).toBeTruthy();
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 6. Archive paths containing spaces => status 0, PASS, listing cleaned up
-        const resSpace = execRoutine(spaceZipPath);
-        expect(resSpace.status).toBe(0);
-        expect(resSpace.stdout.trim()).toBe("PASS: no credential entry names in archive");
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
-
-        // 7. Failing mktemp => status 2, INSPECTION ERROR, no orphaned files
-        const resMktempFail = execRoutine(cleanPath, "mktemp() { return 1; }; ");
-        expect(resMktempFail.status).toBe(2);
-        expect(resMktempFail.stderr.trim()).toBe("INSPECTION ERROR: archive missing, unreadable, or corrupted");
-        expect(readdirSync(isolatedTmpDir)).toEqual([]);
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }

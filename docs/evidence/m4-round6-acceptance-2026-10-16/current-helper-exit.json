@@ -1,8 +1,0 @@
-{
-  "command": [
-    "node22",
-    "--test",
-    "scripts/mac-schema14-profile-snapshot.test.mjs"
-  ],
-  "exit": 0
-}

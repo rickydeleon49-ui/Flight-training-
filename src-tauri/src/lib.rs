@@ -59,8 +59,7 @@ mod quit_settlement_tests;
 #[cfg(test)]
 mod test_wait;
 // Platform abstraction scaffolding for the iOS port. Not yet wired into any
-// command — see `docs/ios/ARCHITECTURE.md` §3 and `platform.rs`'s own doc
-// comment for why.
+// command — see `platform.rs`'s own doc comment for why.
 mod faa_downloads;
 mod platform;
 mod practice_authoring;

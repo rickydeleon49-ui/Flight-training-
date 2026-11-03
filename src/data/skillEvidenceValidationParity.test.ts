@@ -25,7 +25,7 @@ const WRITER_LIBRARY = readFileSync(`${FIXTURES}/writer-populated-schema14.sql`,
 
 describe("migration 14 is the accepted candidate", () => {
   it("is byte-identical to the reviewed candidate in the evidence pack", () => {
-    const candidate = readFileSync(`${process.cwd()}/docs/evidence/m3-skills-evidence-scope-2026-10-10/candidate/0014_skills_evidence.sql`, "utf8");
+    const candidate = readFileSync(`${FIXTURES}/candidate-0014_skills_evidence.sql`, "utf8");
     expect(SKILL_EVIDENCE_MIGRATION.sql).toBe(candidate);
     expect(SKILL_EVIDENCE_MIGRATION.description).toBe("skills_evidence");
   });

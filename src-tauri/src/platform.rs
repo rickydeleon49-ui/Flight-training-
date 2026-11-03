@@ -1,10 +1,10 @@
 //! Platform abstraction boundary for the iOS port.
 //!
 //! Everything in `documents.rs`, `pdf.rs`, and `backup.rs` is already
-//! platform-neutral — see `docs/ios/ARCHITECTURE.md` §1: it operates on
+//! platform-neutral: it operates on
 //! paths handed to it by `storage::app_root`, which itself resolves through
 //! Tauri's own cross-platform `app_config_dir()`. The two things that
-//! genuinely differ by platform are credential storage (§4 of that document)
+//! genuinely differ by platform are credential storage
 //! and platform identification for UI copy.
 //!
 //! Only the desktop implementations below are present, and active credential
@@ -13,12 +13,12 @@
 //! needs Apple's Keychain Protected Store (via the `keyring` crate's iOS backend —
 //! already a dependency, see `gemini.rs`'s legacy-migration use of it) and
 //! cannot be written with confidence until it can be built and exercised on a
-//! Mac with the iOS SDK. See `docs/ios/SETUP.md` Step 6. `CredentialStore` and
+//! Mac with the iOS SDK. `CredentialStore` and
 //! `FileCredentialStore` remain isolated scaffolding with no production behavior
 //! change.
 
-// Not yet called from any Tauri command — see the module doc comment and
-// `docs/ios/ARCHITECTURE.md` §3. `#[cfg(test)]` code doesn't count as usage
+// Not yet called from any Tauri command — see the module doc comment.
+// `#[cfg(test)]` code doesn't count as usage
 // for this lint, so without this the crate's normal (non-test) build would
 // refuse to compile scaffolding that is deliberately not wired in yet.
 #![allow(dead_code)]
@@ -35,7 +35,7 @@ use crate::secrets;
 /// desktop build makes that the wrong choice there. That reasoning does not
 /// apply to iOS, where every build (development, TestFlight, or App Store)
 /// carries a stable signing identity and Keychain items persist correctly
-/// across updates. See `docs/ios/ARCHITECTURE.md` §4.
+/// across updates.
 pub trait CredentialStore {
     /// The stored key, or `None` if nothing has been saved yet. Distinct
     /// from an error: a store that cannot say whether a key exists is not
@@ -80,9 +80,8 @@ impl CredentialStore for FileCredentialStore {
 }
 
 /// What platform the app is running on, for UI copy and capability gating —
-/// e.g. hiding "reveal in Finder" (no iOS equivalent, see
-/// `docs/ios/ARCHITECTURE.md` §5.4) or showing iOS-specific Settings
-/// guidance (`docs/ios/SETUP.md`, `docs/ios/TESTFLIGHT.md`).
+/// e.g. hiding "reveal in Finder" (no iOS equivalent) or showing
+/// iOS-specific Settings guidance.
 pub trait PlatformInfo {
     /// One of `"macos"`, `"windows"`, `"linux"`, or `"ios"`.
     fn name(&self) -> &'static str;

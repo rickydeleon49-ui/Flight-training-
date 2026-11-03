@@ -454,7 +454,7 @@ export function computeDailyPlan(
     return true;
   });
 
-  // Session stability policy (see docs/M1_D3_D4_DAILY_PLAN_2026-09-26.md):
+  // Session stability policy:
   // - A saved selection keeps its items in their saved order. A newly arrived
   //   higher-priority candidate never displaces a healthy selected item; it
   //   waits in "remaining" until an explicit refresh, a budget change, or the

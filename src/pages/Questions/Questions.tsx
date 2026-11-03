@@ -52,8 +52,7 @@ const FILTER_VALUES = FILTERS.map((filter) => filter.value);
 /**
  * Rows mounted at once. Every question stays reachable through "Show more";
  * the status filters and counts always cover the whole list. Rendering all
- * rows was the slowest measured screen with a long question history
- * (docs/PERFORMANCE_POLISH_2026-09-27.md).
+ * rows was the slowest measured screen with a long question history.
  */
 export const QUESTION_PAGE_SIZE = 100;
 
@@ -188,8 +187,7 @@ export function Questions() {
 
   // Rows look up their linked material, lesson and debrief by id. Building
   // these maps once per data change replaces a scan of every material,
-  // lesson and journal entry for each row (measured in
-  // docs/PERFORMANCE_POLISH_2026-09-27.md).
+  // lesson and journal entry for each row.
   const links = useMemo<QuestionLinks>(
     () => ({
       materials: new Map(data.materials.map((material) => [material.id, material])),

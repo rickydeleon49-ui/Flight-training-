@@ -1413,7 +1413,7 @@ export interface ToolkitState {
 /* M3: skills and feedback evidence (schema 14)                        */
 /* ------------------------------------------------------------------ */
 /*
- * The write and read contract of docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md
+ * The write and read contract of the M3 skills-evidence scope
  * (§6, §7), carried over from the accepted prototype. The native twin is
  * `src-tauri/src/skill_evidence.rs`; the browser/test twin is
  * `src/data/skillEvidenceTransaction.ts` and `skillEvidenceReader.ts`.

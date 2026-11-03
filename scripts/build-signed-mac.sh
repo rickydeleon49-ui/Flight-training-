@@ -4,13 +4,14 @@
 #
 #   scripts/build-signed-mac.sh 0.6.1
 #
-# Local-first Developer ID path (owner approved 28 October 2026). See
-# docs/MAC_SIGNING_LOCAL_2026-10-28.md for the one-time owner steps.
+# Local-first Developer ID path. The one-time setup steps are in README.md
+# ("Signed Mac builds").
 #
 # Needs, already set up by the owner and never stored in this repository:
 #   - one "Developer ID Application: <name> (TEAMID)" identity in the login
 #     keychain (or APPLE_SIGNING_IDENTITY naming exactly one of them);
-#   - a notarytool keychain profile named hfd-notary.
+#   - a notarytool keychain profile, named by HFD_NOTARY_PROFILE
+#     (default hfd-notary).
 #
 # This script never reads or prints a secret, never removes quarantine and
 # never weakens Gatekeeper. The committed tauri.conf.json keeps its ad-hoc
@@ -22,7 +23,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-NOTARY_PROFILE="hfd-notary"
+NOTARY_PROFILE="${HFD_NOTARY_PROFILE:-hfd-notary}"
 BUNDLE_ID="com.herflightdeck.app"
 DMG_DIR="src-tauri/target/release/bundle/dmg"
 
@@ -62,8 +63,8 @@ done < <(security find-identity -v -p codesigning 2>/dev/null \
   | sed -n 's/^ *[0-9][0-9]*) [0-9A-F]\{40\} "\(Developer ID Application: .*\)"$/\1/p' | sort -u)
 
 NO_IDENTITY_HELP="No valid \"Developer ID Application\" signing identity is in the login keychain.
-Owner step: create a Developer ID Application certificate in your Apple Developer account
-and install it in the login keychain (docs/MAC_SIGNING_LOCAL_2026-10-28.md, step 1)."
+One-time step: create a Developer ID Application certificate in your Apple Developer account
+and install it in the login keychain (README.md, Signed Mac builds, step 1)."
 
 if [[ -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
   [[ "$APPLE_SIGNING_IDENTITY" == "Developer ID Application: "* ]] \
@@ -93,10 +94,10 @@ echo "Signing identity: $IDENTITY"
 # --- Notary profile ------------------------------------------------------------
 if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
   fail "the notarytool keychain profile \"$NOTARY_PROFILE\" is missing or not working.
-Owner step (once, in Terminal; it is stored in the keychain, never in this repository):
+One-time step (in Terminal; it is stored in the keychain, never in this repository):
   xcrun notarytool store-credentials $NOTARY_PROFILE --key <AuthKey_KEYID.p8> --key-id <KEYID> --issuer <issuer ID>
   (or: --apple-id <your Apple ID> --team-id $TEAM_ID with an app-specific password)
-See docs/MAC_SIGNING_LOCAL_2026-10-28.md, step 2."
+See README.md, Signed Mac builds, step 2."
 fi
 echo "Notary profile $NOTARY_PROFILE works."
 

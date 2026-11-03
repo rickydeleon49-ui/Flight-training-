@@ -1,8 +1,14 @@
 {
   "$schema": "https://unpkg.com/knip@6.44.0/schema.json",
-  "entry": ["scripts/*.{mjs,js}", ".claude/**/*.mjs"],
-  "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{mjs,js}", ".claude/**/*.mjs"],
-  "ignore": ["docs/**"],
-  "ignoreDependencies": ["playwright"],
+  "entry": [
+    "scripts/*.{mjs,js}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "scripts/**/*.{mjs,js}"
+  ],
+  "ignoreDependencies": [
+    "playwright"
+  ],
   "ignoreExportsUsedInFile": true
 }

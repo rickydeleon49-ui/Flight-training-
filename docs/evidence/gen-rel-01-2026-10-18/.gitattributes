@@ -1,3 +1,0 @@
-# Raw tool receipts are preserved byte-for-byte (tool output pads with spaces).
-failed/*.log -whitespace
-final/*.log -whitespace

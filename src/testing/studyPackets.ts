@@ -1,9 +1,7 @@
 /**
  * Test support for the structured study-packet validator. Synthetic data only.
  *
- * Ported from the accepted reference runners in
- * docs/evidence/structured-study-import-contract-2026-10-03/
- * (prototype/boundary-cases.mjs.txt and prototype-r5/run-fixtures.mjs.txt).
+ * Ported from the accepted contract's reference runners.
  * Multi-megabyte and credential-shaped inputs are built at run time so that
  * they are never committed.
  */

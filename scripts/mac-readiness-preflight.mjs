@@ -16,10 +16,9 @@
  *
  * A generated report is not a readiness verdict: account isolation, signing
  * decisions and every installed smoke check remain USER_ACTION or UNVERIFIED
- * until they are recorded through docs/MAC_INSTALLED_READINESS_PREPARATION_2026-10-03.md.
+ * until they are recorded by a person on the installed app.
  *
  * Usage: node scripts/mac-readiness-preflight.mjs [options]   (see --help)
- * Reference: docs/MAC_READINESS_PREFLIGHT.md
  */
 
 import { spawnSync } from "node:child_process";

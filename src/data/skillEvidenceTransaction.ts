@@ -7,7 +7,7 @@
  * transaction control, `run` for data statements, `query` for reads, all on
  * one owned connection.
  *
- * Contract (docs/M3_SKILLS_EVIDENCE_SCOPE_2026-10-10.md §6):
+ * Contract (M3 skills-evidence scope §6):
  * - The request is decoded strictly (exact keys, typed, bounded) BEFORE the
  *   transaction; its canonical JSON (<= 16 KiB) is hashed.
  * - A known operation id with the same hash replays the stored result and

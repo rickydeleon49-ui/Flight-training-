@@ -1,6 +1,6 @@
 //! Slice B native save: temporary rusqlite databases built from the app's own
 //! migrations. Test names carry the accepted acceptance-row IDs
-//! (docs/STRUCTURED_STUDY_IMPORT_SLICE_B_PREPARATION_2026-10-03.md §5).
+//! (Slice B contract §5).
 
 use super::*;
 use serde_json::json;

@@ -11,7 +11,7 @@ export interface StudyContentProvenanceProps {
 
 /**
  * Exposes the persisted provenance already stored for a saved study aid (guide/flashcards)
- * or saved practice test in Material Detail (ROADMAP.md §7.C).
+ * or saved practice test in Material Detail.
  *
  * Shows:
  * 1. Source material title (omitted on the material's own page)

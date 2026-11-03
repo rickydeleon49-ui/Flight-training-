@@ -1,6 +1,5 @@
-//! Offline search over prepared documents (OFFLINE-02a). The contract is
-//! docs/OFFLINE_02_SEARCH_DESIGN_2026-10-19.md; section numbers below refer
-//! to it.
+//! Offline search over prepared documents (OFFLINE-02a). Section numbers
+//! below refer to its design notes.
 //!
 //! What she types is parsed into words and phrases and quoted as FTS5
 //! string literals, so nothing she types is query syntax (§3). A search runs

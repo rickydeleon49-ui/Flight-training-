@@ -426,10 +426,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "local only: needs the real Preview-edited sample outside the repository"]
+    #[ignore = "local only: place a Preview-edited PHAK page at tests/fixtures/phak4_page1_removed.pdf (PDFs are not committed)"]
     fn inspect_sample_phak4_page1() {
-        let sample_path =
-            "/Users/rickymac/code/.gen-rel-loop/offline/extract-form-a1/samples/phak4_page1_removed.pdf";
+        let sample_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/phak4_page1_removed.pdf"
+        );
         let doc = Document::load(sample_path).expect("load sample pdf");
         let page_1_id = first_page(&doc);
         let form_text = extract_page_form_text(&doc, page_1_id);
