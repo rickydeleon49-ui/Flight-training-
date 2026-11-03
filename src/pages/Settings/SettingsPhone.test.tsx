@@ -11,7 +11,7 @@ let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 vi.mock("@/services/platform", async (original) => ({
   ...await original<typeof import("@/services/platform")>(),
-  deviceCan: () => ({ getStudyMaterial: mocks.phone, generate: !mocks.phone, sendToIphone: false }),
+  deviceCan: () => ({ getStudyMaterial: mocks.phone, generate: !mocks.phone, sendToIphone: !mocks.phone }),
 }));
 function Ready() { return useAppData().status === "ready" ? <Settings /> : null; }
 beforeEach(async () => { localStorage.clear(); db = await createNodeSqliteDatabase(); });
@@ -22,9 +22,12 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   render(<AppDataProvider><MemoryRouter><Ready /></MemoryRouter></AppDataProvider>);
   await waitFor(() => expect(screen.getByRole("heading", { name: "About you" })).toBeTruthy());
   expect(Boolean(screen.queryByRole("heading", { name: "Get my study material" }))).toBe(phone);
+  (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;
+  (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
   expect(Boolean(screen.queryByRole("heading", { name: "Your data" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("heading", { name: "AI provider" }))).toBe(!phone);
-  expect(screen.queryByRole("heading", { name: "Send to my iPhone" })).toBeNull();
+  expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
+  expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe(phone ? "Get my study material" : "Send to my iPhone");
   if (phone) {
     expect(document.body.textContent).not.toMatch(/Gemini|API key/);
     for (const name of ["Save complete backup", "Restore backup", "Open folder"]) {

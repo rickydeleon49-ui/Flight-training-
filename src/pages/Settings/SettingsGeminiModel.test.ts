@@ -32,6 +32,7 @@ function Ready() {
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
   await waitFor(() => expect(context.status).toBe("ready"));
+  (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
 }
 
 const STANDARD: geminiService.GeminiStatus = { configured: true, model: "gemini-3.5-flash", choice: "standard" };
@@ -66,7 +67,7 @@ describe("Gemini model choice in Settings", () => {
     const card = header.closest(".card")!;
     const disclosure = card.querySelector("details")!;
     expect(disclosure.open).toBe(false);
-    expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")).toBeNull();
+    expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")?.id).toBe("settings-advanced");
     expect(disclosure.textContent).toContain("Gemini can turn a selected Study Library document");
     if (configured) expect(screen.getByRole("radio", { name: /Standard —/ }).closest("details")).toBe(disclosure);
     else expect(screen.getByLabelText("Gemini API key").closest("details")).toBe(disclosure);

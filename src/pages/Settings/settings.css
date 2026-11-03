@@ -109,3 +109,10 @@
   }
   .settings-layout .input, .settings-layout .select { font-size: 16px; }
 }
+/* Native disclosures keep Settings groups quiet until needed. */
+details.material-fold > summary {
+  min-height: 44px;
+  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  cursor: pointer;
+}
