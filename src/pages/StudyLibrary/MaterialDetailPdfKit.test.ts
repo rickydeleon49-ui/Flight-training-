@@ -81,7 +81,7 @@ it("source_changed_asks_before_rebuild_at_open_and_save", async () => {
   get.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByRole("button", { name: "Rebuild study kit" }); expect(prepare).toHaveBeenCalledTimes(1); fireEvent.click(screen.getByRole("button", { name: "Rebuild study kit" })); await screen.findByRole("dialog", { name: "Review your PDF study kit" }); save.mockRejectedValueOnce({ code: "SOURCE_CHANGED" }); await saveKit(); await screen.findByText("The PDF or page choice changed since this kit was made. Rebuild it when you’re ready."); expect(save).toHaveBeenCalledTimes(1); expect(prepare).toHaveBeenCalledTimes(2);
 });
 it("no_text_pdf_shows_plain_message_no_items", async () => {
-  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], pagesUsed: [], pagesSkippedAmbiguous: 0 } }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("This PDF didn’t have text the kit could use."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
+  get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], pagesUsed: [], pagesSkippedAmbiguous: 0 } }); open(); fireEvent.click(screen.getByRole("button", { name: "Make a study kit from this PDF" })); await screen.findByText("This PDF didn’t have text the kit could use. If it is pictures of pages, a text version from the FAA site works."); expect(screen.queryByRole("button", { name: "Save to study set" })).toBeNull(); expect(save).not.toHaveBeenCalled();
 });
 it.each([
   { pagesUsed: [2], pagesSkippedAmbiguous: 0 },
@@ -91,7 +91,7 @@ it.each([
   get.mockResolvedValue({ ...fixture(), candidates: { glossary: [], cloze: [], outline: [], questions: [], ...counts } });
   const scope = await preview();
   expect(scope.getByText("The kit couldn’t find definitions or key terms on these pages yet.")).toBeTruthy();
-  expect(scope.queryByText("This PDF didn’t have text the kit could use.")).toBeNull();
+  expect(scope.queryByText(/This PDF didn’t have text the kit could use\./)).toBeNull();
   expect(scope.queryByRole("button", { name: "Save to study set" })).toBeNull();
   expect(save).not.toHaveBeenCalled();
 });

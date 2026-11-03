@@ -18,6 +18,8 @@ export interface PdfOutline {
   pages: number;
   /** The most pages one split may take, so the form can say so. */
   maxPagesPerSplit: number;
+  /** Most pages are pictures with almost no text (a scan). Absent in old data. */
+  mostlyPictures?: boolean;
 }
 
 export const canSplitPdfs = (): boolean => isTauri();
