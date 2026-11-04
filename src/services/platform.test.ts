@@ -39,6 +39,7 @@ describe("platform", () => {
     expect(deviceCan().pictureFromPhoto).toBe(true);
     expect(deviceCan().importFiles).toBe(false);
     expect(deviceCan().generate).toBe(false);
+    expect(deviceCan().geminiKey).toBe(true);
     expect(deviceCan().editStudyMaterial).toBe(false);
     expect(deviceCan().sharePrint).toBe(false);
   });
@@ -56,6 +57,7 @@ describe("platform", () => {
     expect(deviceCan().getStudyMaterial).toBe(false);
     expect(deviceCan().pictureFromPhoto).toBe(false);
     expect(deviceCan().sendToIphone).toBe(false);
+    expect(deviceCan().geminiKey).toBe(false);
   });
 
   it("recognises Windows as neither", () => {

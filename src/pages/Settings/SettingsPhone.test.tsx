@@ -9,27 +9,42 @@ import { Settings } from "./Settings";
 const mocks = vi.hoisted(() => ({ phone: false }));
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
+vi.mock("@/services/gemini", async (original) => ({
+  ...await original<typeof import("@/services/gemini")>(),
+  geminiAvailable: () => true,
+}));
 vi.mock("@/services/platform", async (original) => ({
   ...await original<typeof import("@/services/platform")>(),
-  deviceCan: () => ({ getStudyMaterial: mocks.phone, generate: !mocks.phone, sendToIphone: !mocks.phone }),
+  isIOS: () => mocks.phone,
+  isMacOS: () => !mocks.phone,
+  deviceCan: () => ({ geminiKey: true, getStudyMaterial: mocks.phone, generate: !mocks.phone, sendToIphone: !mocks.phone }),
 }));
 function Ready() { return useAppData().status === "ready" ? <Settings /> : null; }
 beforeEach(async () => { localStorage.clear(); db = await createNodeSqliteDatabase(); });
-afterEach(() => { cleanup(); db.close(); localStorage.clear(); });
+afterEach(() => { vi.restoreAllMocks(); cleanup(); db.close(); localStorage.clear(); });
 
 it.each([true, false])("renders only the appropriate Settings cards (phone=%s)", async (phone) => {
   mocks.phone = phone;
+  vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
   render(<AppDataProvider><MemoryRouter><Ready /></MemoryRouter></AppDataProvider>);
   await waitFor(() => expect(screen.getByRole("heading", { name: "About you" })).toBeTruthy());
   expect(Boolean(screen.queryByRole("heading", { name: "Get my study material" }))).toBe(phone);
   (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;
   (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
   expect(Boolean(screen.queryByRole("heading", { name: "Your data" }))).toBe(!phone);
-  expect(Boolean(screen.queryByRole("heading", { name: "AI provider" }))).toBe(!phone);
+  expect(screen.queryByRole("heading", { name: "AI provider" })).toBeTruthy();
+  const card = document.getElementById("ai-provider")?.closest(".card")?.textContent ?? "";
+  if (phone) {
+    expect(card).toMatch(/Keychain/);
+    expect(card).toMatch(/this iPhone/);
+    expect(card).not.toMatch(/this computer|Application Support|desktop application/);
+  } else {
+    expect(card).toMatch(/Application Support/);
+  }
   expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
   expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe(phone ? "Get my study material" : "Send to my iPhone");
   if (phone) {
-    expect(document.body.textContent).not.toMatch(/Gemini|API key/);
+    expect(document.body.textContent).not.toMatch(/sync|manifest|archive/i);
     for (const name of ["Save complete backup", "Restore backup", "Open folder"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
