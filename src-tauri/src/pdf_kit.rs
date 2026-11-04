@@ -32,7 +32,7 @@ fn error(code: &'static str) -> KitError {
         "KIT_EXISTS_SAME" => "Your earlier study kit for this PDF is ready to return to.",
         "KIT_IN_PROGRESS_OTHER" => "A study kit for another PDF is still finishing.",
         "JOURNAL_FULL" => "Your draft space is full. Save or discard a waiting study aid or practice test, then try again.",
-        "JOURNAL_RECOVERY" => "Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again.",
+        "JOURNAL_RECOVERY" => "Your drafts need recovery before a new kit can begin. Quit and reopen Your Flight Deck, then try again.",
         _ => "Your PDF kit could not be prepared. Your saved work is still here.",
     }}
 }

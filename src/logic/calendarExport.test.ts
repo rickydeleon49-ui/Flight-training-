@@ -202,7 +202,7 @@ describe("calendarExport - Formatter & Conformance", () => {
 
     // VCALENDAR level properties
     expect(parsed.properties["VERSION"]).toEqual(["2.0"]);
-    expect(parsed.properties["PRODID"]).toEqual(["-//Her Flight Deck//Calendar Export//EN"]);
+    expect(parsed.properties["PRODID"]).toEqual(["-//Your Flight Deck//Calendar Export//EN"]);
     expect(parsed.properties["CALSCALE"]).toEqual(["GREGORIAN"]);
 
     // VEVENT
@@ -221,7 +221,7 @@ describe("calendarExport - Formatter & Conformance", () => {
     const desc = vevent.properties["DESCRIPTION"]?.[0] ?? "";
     expect(desc).toContain("Flight Lesson");
     expect(desc).toContain("Instructor: Sarah Walker\\, CFI");
-    expect(desc).toContain("Prepared with Her Flight Deck — open the lesson in the app for your checklist");
+    expect(desc).toContain("Prepared with Your Flight Deck — open the lesson in the app for your checklist");
   });
 
   it("exports start-only event with approved 1-hour duration", () => {

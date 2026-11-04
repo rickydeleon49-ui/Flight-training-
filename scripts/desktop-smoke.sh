@@ -108,7 +108,7 @@ mkdir -p "$(dirname "$DB")"
 launch
 
 step "The window opens"
-if DISPLAY="$DISPLAY_NUM" xdotool search --name "Her Flight Deck" >/dev/null 2>&1; then
+if DISPLAY="$DISPLAY_NUM" xdotool search --name "Your Flight Deck" >/dev/null 2>&1; then
   pass "desktop window is present"
 else
   fail "desktop window never appeared"; shot "00-no-window"; exit 1
@@ -175,7 +175,7 @@ fi
 step "Closing and reopening keeps everything"
 quit_app
 launch
-if DISPLAY="$DISPLAY_NUM" xdotool search --name "Her Flight Deck" >/dev/null 2>&1; then
+if DISPLAY="$DISPLAY_NUM" xdotool search --name "Your Flight Deck" >/dev/null 2>&1; then
   pass "the window opens again"
 else
   fail "the application did not reopen"

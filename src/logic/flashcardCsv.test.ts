@@ -130,7 +130,7 @@ describe("flashcardCsv", () => {
       const expectedBack = '"Answer includes ""quotes"", commas, and \n• Bullet points \u2728"';
       const expectedMaterial = '"Aerodynamics: ""Principles"" & Practice"';
       const expectedPages = '"5"';
-      const expectedProv = '"Written by hand in Her Flight Deck"';
+      const expectedProv = '"Written by hand in Your Flight Deck"';
 
       const expectedRow = `${expectedFront},${expectedBack},${expectedMaterial},${expectedPages},${expectedProv}`;
       expect(csv).toContain(expectedRow);
@@ -206,14 +206,14 @@ describe("flashcardCsv", () => {
         studySet: dummySet({ provider: "manual", model: "" }),
         practiceTest: null,
       };
-      expect(cardProvenanceLabel(dummyCard(), manualSource)).toBe("Written by hand in Her Flight Deck");
+      expect(cardProvenanceLabel(dummyCard(), manualSource)).toBe("Written by hand in Your Flight Deck");
 
       const importSource: ExportSource = {
         material: { title: "M" },
         studySet: dummySet({ provider: "import", model: "" }),
         practiceTest: null,
       };
-      expect(cardProvenanceLabel(dummyCard(), importSource)).toBe("Imported into Her Flight Deck");
+      expect(cardProvenanceLabel(dummyCard(), importSource)).toBe("Imported into Your Flight Deck");
 
       const aiSourceWithoutModel: ExportSource = {
         material: { title: "M" },
@@ -238,10 +238,10 @@ describe("flashcardCsv", () => {
       };
 
       const userCard = dummyCard({ origin: "user" });
-      expect(cardProvenanceLabel(userCard, source)).toBe("Written by hand in Her Flight Deck (Edited by you)");
+      expect(cardProvenanceLabel(userCard, source)).toBe("Written by hand in Your Flight Deck (Edited by you)");
 
       const instructorCard = dummyCard({ origin: "instructor" });
-      expect(cardProvenanceLabel(instructorCard, source)).toBe("Written by hand in Her Flight Deck (Corrected by your instructor)");
+      expect(cardProvenanceLabel(instructorCard, source)).toBe("Written by hand in Your Flight Deck (Corrected by your instructor)");
 
       const validProv: PdfItemProvenance = {
         status: "valid",

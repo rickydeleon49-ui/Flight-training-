@@ -1,8 +1,8 @@
-# Her Flight Deck privacy policy
+# Your Flight Deck privacy policy
 
 Last updated: 2 November 2026
 
-Her Flight Deck is a study companion for student pilots. This policy explains
+Your Flight Deck is a study companion for student pilots. This policy explains
 what the app keeps on your device, what it sends over the internet, and when.
 The short version: your records stay on your device, the app has no account
 and no analytics, and nothing is sent to an AI provider unless you connect your

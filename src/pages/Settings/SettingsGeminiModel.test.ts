@@ -79,7 +79,7 @@ describe("Gemini model choice in Settings", () => {
     await open();
     const paragraph = (await screen.findByText("If Gemini keeps saying it is busy:")).closest("p")!.textContent!.replace(/\s+/g, " ");
     expect(paragraph).toContain("A “busy” message means Google is overloaded, not that your key is wrong.");
-    expect(paragraph).toContain("Her Flight Deck already waits and retries; if it keeps happening, try again later or switch to Standard.");
+    expect(paragraph).toContain("Your Flight Deck already waits and retries; if it keeps happening, try again later or switch to Standard.");
     expect(paragraph).not.toMatch(/billing|Tier 1|503|Google Cloud/i);
     expect(paragraph.match(/\./g)).toHaveLength(2);
   });
@@ -145,7 +145,7 @@ describe("Gemini model choice in Settings", () => {
     expect(screen.getByText(/Gemini 3.8 Flash · key saved on this computer/)).toBeTruthy();
     expect(
       screen.getByText(
-        /If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key, Her Flight Deck tries Gemini 3.5 Flash instead and shows which model made each study aid/,
+        /If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key, Your Flight Deck tries Gemini 3.5 Flash instead and shows which model made each study aid/,
       ),
     ).toBeTruthy();
     expect(screen.getByText(/check this key's access in Google AI Studio/)).toBeTruthy();

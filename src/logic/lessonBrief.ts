@@ -194,7 +194,7 @@ export function buildBriefHtml(brief: LessonBrief, chosen: ReadonlySet<string>, 
 <body>
 <header>
 <h1>${text(brief.title)}</h1>
-<p class="meta">Lesson brief from Her Flight Deck · ${escapeHtml(date)}</p>
+<p class="meta">Lesson brief from Your Flight Deck · ${escapeHtml(date)}</p>
 <table class="facts"><tbody>${facts}</tbody></table>
 </header>
 <section><h2>Get ready</h2>${ready}</section>

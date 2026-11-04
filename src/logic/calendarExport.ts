@@ -259,7 +259,7 @@ export function exportCalendarEvent(
   // Description contains only:
   // - Event type
   // - Instructor (when present)
-  // - Fixed note: "Prepared with Her Flight Deck — open the lesson in the app for your checklist"
+  // - Fixed note: "Prepared with Your Flight Deck — open the lesson in the app for your checklist"
   // - Preparation checklist titles (only when explicitly selected)
   const descLines: string[] = [];
   const typeLabel = EVENT_TYPE_LABELS[event.eventType] ?? event.eventType;
@@ -269,7 +269,7 @@ export function exportCalendarEvent(
     descLines.push(`Instructor: ${event.instructor.trim()}`);
   }
 
-  descLines.push("Prepared with Her Flight Deck — open the lesson in the app for your checklist");
+  descLines.push("Prepared with Your Flight Deck — open the lesson in the app for your checklist");
 
   if (options.includeChecklist && options.prepItemTitles && options.prepItemTitles.length > 0) {
     const cleanTitles = options.prepItemTitles
@@ -289,7 +289,7 @@ export function exportCalendarEvent(
   const logicalLines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Her Flight Deck//Calendar Export//EN",
+    "PRODID:-//Your Flight Deck//Calendar Export//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     uid,

@@ -6,9 +6,9 @@ use std::path::Path;
 
 const LOCK_FILE: &str = "study-library.lock";
 const VERSION_FILE: &str = "last-run-version.txt";
-const ALREADY_OPEN: &str = "Her Flight Deck is already open on this Mac. Use the open window.";
+const ALREADY_OPEN: &str = "Your Flight Deck is already open on this Mac. Use the open window.";
 const UNAVAILABLE: &str =
-    "Her Flight Deck couldn't safely open your study library. Please close the app and try again.";
+    "Your Flight Deck couldn't safely open your study library. Please close the app and try again.";
 
 #[derive(Debug)]
 pub(crate) struct LibraryLock {
@@ -42,7 +42,7 @@ fn check_version(root: &Path, current: &tauri::PackageInfo) -> Result<(), String
     };
     if current.version.cmp_precedence(&previous).is_lt() {
         return Err(format!(
-            "This study library was last used by a newer version of Her Flight Deck ({previous}). Please install that version or newer."
+            "This study library was last used by a newer version of Your Flight Deck ({previous}). Please install that version or newer."
         ));
     }
     Ok(())
@@ -157,7 +157,7 @@ mod tests {
         std::fs::write(root.0.join(VERSION_FILE), "9.0.0").unwrap();
         std::fs::write(root.0.join("her-flight-deck.db"), "synthetic untouched DB").unwrap();
         let before = root.snapshot();
-        assert_eq!(acquire(&root.0, &package("0.6.5")).unwrap_err(), "This study library was last used by a newer version of Her Flight Deck (9.0.0). Please install that version or newer.");
+        assert_eq!(acquire(&root.0, &package("0.6.5")).unwrap_err(), "This study library was last used by a newer version of Your Flight Deck (9.0.0). Please install that version or newer.");
         assert_eq!(root.snapshot(), before);
     }
 

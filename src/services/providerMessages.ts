@@ -45,7 +45,7 @@ export const CLAUDE_MESSAGES: Readonly<Record<string, string>> = {
   "This document changed or was removed while Gemini was working, so the new answer was not saved. Anything already saved is unchanged.": "This document changed or was removed while Claude was working, so the new answer was not saved. Anything already saved is unchanged.",
   "Waiting for Gemini's answer": "Waiting for Claude's answer",
   "Gemini is already working on another study aid. Wait for it to finish, then try again.": "Claude is already working on another study aid. Wait for it to finish, then try again.",
-  "Her Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.": "Her Flight Deck is still finishing restoring a backup, so Claude cannot be asked for anything new yet. Quit and reopen the app to finish.",
+  "Your Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.": "Your Flight Deck is still finishing restoring a backup, so Claude cannot be asked for anything new yet. Quit and reopen the app to finish.",
   "Gemini's answer was too large to keep, so it was not saved. Try a smaller chapter.": "Claude's answer was too large to keep, so it was not saved. Try a smaller chapter.",
   "Creating this was cancelled, and nothing was saved. If the request had already reached Google, Google may still have processed it.": "Creating this was cancelled, and nothing was saved. If the request had already reached Anthropic, Anthropic may still have processed it.",
 };

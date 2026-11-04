@@ -4,7 +4,7 @@
  * The student chooses which parts of one material's guide, flashcards and practice
  * test to share. They are written in the same `hfd-study-packet` version 1
  * format the import reads, and the text is run through that import validator
- * before it can be saved. What another copy of Her Flight Deck would import is
+ * before it can be saved. What another copy of Your Flight Deck would import is
  * checked against what the student chose, so an export never silently drops or alters
  * content beyond the format's own whitespace tidying.
  *
@@ -167,7 +167,7 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection,
   const handwrittenSet = set && !pdfLabelState(set) && set.provider !== "manual" && (selection.guide || selection.flashcards) && hasHandwrittenItems(set);
   const handwrittenTest = test && !pdfLabelState(test) && test.provider !== "manual" && selection.questions && test.questions.some((question) => question.origin !== undefined);
   if (handwrittenSet || handwrittenTest) {
-    parts.push("Some items were written or corrected by hand in Her Flight Deck, not generated.");
+    parts.push("Some items were written or corrected by hand in Your Flight Deck, not generated.");
   }
   const pdfItems = [...(selection.guide ? [{ pdfProvenance: set?.summaryPdfProvenance, origin: set?.summaryOrigin }, ...(set?.sections ?? [])] : []), ...(selection.flashcards ? set?.flashcards ?? [] : []), ...(selection.questions ? test?.questions ?? [] : [])];
   if (portable) {
@@ -184,8 +184,8 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection,
 }
 
 function origin(provider: string, model: string): string {
-  if (provider === "import") return "imported into Her Flight Deck from a study packet; not checked by the app";
-  if (provider === "manual") return "written by hand in Her Flight Deck; not checked by the app";
+  if (provider === "import") return "imported into Your Flight Deck from a study packet; not checked by the app";
+  if (provider === "manual") return "written by hand in Your Flight Deck; not checked by the app";
   return `AI-generated study aid${model ? ` (${model})` : ""}`;
 }
 
@@ -222,7 +222,7 @@ export function buildExportPacket(source: ExportSource, selection: ExportSelecti
     formatVersion: FORMAT_VERSION,
     title,
     source: {
-      generator: "Her Flight Deck",
+      generator: "Your Flight Deck",
       createdAt: createdAt.toISOString().slice(0, 10),
       note: provenanceNote(source, selection, true).slice(0, LIMITS.sourceNote),
     },

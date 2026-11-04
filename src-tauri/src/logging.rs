@@ -47,7 +47,7 @@ pub fn attach(app: &AppHandle) {
     if let Ok((_unregistered_plugin, max_level, logger)) = builder.split(app) {
         if tauri_plugin_log::attach_logger(max_level, logger).is_ok() {
             // One line per launch, so a bug report shows which version ran.
-            log::info!("Her Flight Deck {} started.", env!("CARGO_PKG_VERSION"));
+            log::info!("Your Flight Deck {} started.", env!("CARGO_PKG_VERSION"));
         }
     }
 }

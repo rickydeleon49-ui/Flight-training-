@@ -1,6 +1,6 @@
 # Notes for coding agents
 
-Her Flight Deck is a study companion for student pilots: a Tauri 2 desktop app
+Your Flight Deck is a study companion for student pilots: a Tauri 2 desktop app
 (React 19 + TypeScript + Vite in `src/`, Rust in `src-tauri/src/`, SQLite via
 `tauri-plugin-sql`). `README.md` covers running, building and offline search.
 School, instructor and start date stay optional everywhere.

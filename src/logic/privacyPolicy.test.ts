@@ -56,7 +56,7 @@ describe("privacy policy", () => {
   it("renders to a standalone HTML page with every section", () => {
     const html: string = renderPrivacyHtml(policy);
     expect(html).toMatch(/^<!doctype html>/);
-    expect(html).toContain("<title>Her Flight Deck privacy policy</title>");
+    expect(html).toContain("<title>Your Flight Deck privacy policy</title>");
     for (const [, heading] of policy.matchAll(/^#{2,3} (.+)$/gm)) {
       expect(html).toContain(`>${heading!.replace(/&/g, "&amp;")}</h`);
     }

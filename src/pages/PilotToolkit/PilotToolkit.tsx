@@ -393,7 +393,7 @@ function InstructorReport() {
         </CardBody>
       </Card>
       <p className="tiny dim">
-        Personal summary generated from Her Flight Deck. Confirm all flight time
+        Personal summary generated from Your Flight Deck. Confirm all flight time
         against the authoritative logbook.
       </p>
     </div>

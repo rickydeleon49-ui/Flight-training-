@@ -5,7 +5,7 @@
  * GitHub Releases replaces spaces with periods in uploaded asset names.
  * If checksums are generated from files with spaces, the manifest and release
  * notes will reference a filename that does not match what users download
- * (e.g. 'Her Flight Deck_...' vs 'Her.Flight.Deck_...').
+ * (e.g. 'Your Flight Deck_...' vs 'Your.Flight.Deck_...').
  *
  * Normalizing filenames on disk prior to hashing ensures SHA256SUMS.txt
  * and release notes match the exact downloadable assets.

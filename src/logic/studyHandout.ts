@@ -204,7 +204,7 @@ function documentHtml(title: string, date: Date, notice: string, sections: strin
 <body>
 <header>
 <h1>${escapeHtml(title)}</h1>
-<p class="meta">Study handout from Her Flight Deck · ${escapeHtml(formattedDate)}</p>
+<p class="meta">Study handout from Your Flight Deck · ${escapeHtml(formattedDate)}</p>
 <p class="notice">${escapeHtml(notice)}</p>
 <p class="print-help">To make a PDF, open this file in a browser, choose Print, then Save as PDF.</p>
 </header>

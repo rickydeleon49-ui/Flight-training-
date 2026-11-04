@@ -149,6 +149,6 @@ describe("backup picker filters", () => {
     const options = mocks.open.mock.calls[0]![0];
     expect(options).toMatchObject({ multiple: false, directory: false });
     if (ios) expect(options).not.toHaveProperty("filters");
-    else expect(options.filters).toEqual([{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }]);
+    else expect(options.filters).toEqual([{ name: "Your Flight Deck backup", extensions: ["hfdbackup"] }]);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "$comment": "Release policy and permanently retired versions for Her Flight Deck",
+  "$comment": "Release policy and permanently retired versions for Your Flight Deck",
   "retiredVersions": [
     {
       "version": "0.5.2",

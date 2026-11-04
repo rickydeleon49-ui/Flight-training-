@@ -1,5 +1,5 @@
 /**
- * Domain vocabulary for Her Flight Deck.
+ * Domain vocabulary for Your Flight Deck.
  *
  * These types describe the product, not the database. Repositories map rows
  * to these shapes so the UI never sees SQL concerns, and so local storage

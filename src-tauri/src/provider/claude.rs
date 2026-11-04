@@ -201,7 +201,7 @@ pub(crate) fn error_message(status: u16) -> String {
         403 => "Claude did not allow this request. Check this key's access in Anthropic's console.",
         404 => "Claude could not find this model. Check for an app update.",
         413 => "That file is too large to send to Anthropic. Take out the chapter you are studying and try again.",
-        429 | 500..=599 => "Claude is busy or rate-limited. Her Flight Deck retried briefly. Wait a little and try again.",
+        429 | 500..=599 => "Claude is busy or rate-limited. Your Flight Deck retried briefly. Wait a little and try again.",
         _ => "Claude could not accept this request. Try a different section or question.",
     }.to_string()
 }

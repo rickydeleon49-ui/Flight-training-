@@ -71,7 +71,7 @@ function Licenses() {
 export function AboutLegal({ version }: { version: string }) {
   return (
     <div className="stack stack--4">
-      <p className="small">Her Flight Deck{version ? ` · Version ${version}` : ""}</p>
+      <p className="small">Your Flight Deck{version ? ` · Version ${version}` : ""}</p>
       <ul className="stack stack--2 small" aria-label="Safety and legal">
         {LEGAL_POINTS.map((point) => <li key={point}>{point}</li>)}
       </ul>

@@ -113,7 +113,7 @@ pub(crate) fn show_restore_outcome(app: &AppHandle) {
 
 fn blocked_startup_message(folder: &Path) -> String {
     format!(
-        "Her Flight Deck stopped before opening so nothing would be lost. Your data is safe in {}. Please send this message to whoever helps you with the app.",
+        "Your Flight Deck stopped before opening so nothing would be lost. Your data is safe in {}. Please send this message to whoever helps you with the app.",
         folder.display()
     )
 }
@@ -125,7 +125,7 @@ pub(crate) fn startup_gate(
 ) -> Result<bool, String> {
     outcome.map_err(|_| match folder {
         Some(folder) => blocked_startup_message(folder),
-        None => "Her Flight Deck stopped before opening so nothing would be lost. Please send this message to whoever helps you with the app.".into(),
+        None => "Your Flight Deck stopped before opening so nothing would be lost. Please send this message to whoever helps you with the app.".into(),
     })
 }
 
@@ -133,7 +133,7 @@ pub(crate) fn show_blocked_startup(app: &AppHandle, message: String) {
     // The root contains both active data and any protected recovery folders.
     // Keep paths and internal restore diagnostics out of the log.
     log::error!(
-        "Her Flight Deck stopped before opening to protect data after an unresolved restore."
+        "Your Flight Deck stopped before opening to protect data after an unresolved restore."
     );
     let handle = app.clone();
     // An asynchronous native dialog keeps the main event loop available. No
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn blocked_message_names_the_protected_folder_without_internal_instructions() {
         let message = blocked_startup_message(Path::new("/fictional/data"));
-        assert_eq!(message, "Her Flight Deck stopped before opening so nothing would be lost. Your data is safe in /fictional/data. Please send this message to whoever helps you with the app.");
+        assert_eq!(message, "Your Flight Deck stopped before opening so nothing would be lost. Your data is safe in /fictional/data. Please send this message to whoever helps you with the app.");
         assert_eq!(
             restore_sentence(&StartupRestoreDecision::BlockedUnresolved {
                 reason: "obstruction".into(),

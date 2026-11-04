@@ -1,5 +1,5 @@
 /**
- * The useful, non-personal content that ships with Her Flight Deck.
+ * The useful, non-personal content that ships with Your Flight Deck.
  *
  * It is installed once on a fresh database. Records become ordinary editable
  * data after that: deleting one does not make it reappear on the next launch.

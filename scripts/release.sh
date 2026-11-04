@@ -94,7 +94,7 @@ if [ "$BUMP" = true ]; then
   git add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
   git commit -q -m "release: $VERSION"
 fi
-git tag -a "v$VERSION" -m "Her Flight Deck $VERSION"
+git tag -a "v$VERSION" -m "Your Flight Deck $VERSION"
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 echo "Committed and tagged v$VERSION."

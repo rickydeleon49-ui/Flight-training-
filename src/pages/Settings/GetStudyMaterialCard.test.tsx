@@ -79,7 +79,7 @@ describe("GetStudyMaterialCard", () => {
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     expect(screen.queryByText(/All set/)).toBeNull();
     await act(async () => { resolve(info); });
-    expect(screen.getByRole("status").textContent).toContain("All set. Her Flight Deck will close now; open it again and your study material is there.");
+    expect(screen.getByRole("status").textContent).toContain("All set. Your Flight Deck will close now; open it again and your study material is there.");
     await act(async () => { await vi.advanceTimersByTimeAsync(1499); });
     expect(mocks.exitForRestore).not.toHaveBeenCalled();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
@@ -120,7 +120,7 @@ describe("GetStudyMaterialCard", () => {
     expect(screen.queryByRole("heading", { name: "All set" })).toBeNull();
     await act(async () => { resolve(info); });
     expect(screen.getByRole("heading", { name: "All set" })).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toBe("Close Her Flight Deck (swipe it away) and open it again to see your study material.");
+    expect(screen.getByRole("status").textContent).toBe("Close Your Flight Deck (swipe it away) and open it again to see your study material.");
     expect(screen.queryByRole("button")).toBeNull();
     await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
     expect(mocks.exitForRestore).not.toHaveBeenCalled();

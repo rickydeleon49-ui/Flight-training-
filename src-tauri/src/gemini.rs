@@ -2202,7 +2202,7 @@ fn retry_after_message_for(asked: Duration, budget: &Budget, provider: AnyProvid
         return retry_after_message(asked, budget);
     }
     let wait = gemini_budget::describe(asked);
-    format!("Claude asked Her Flight Deck to wait {wait} before trying again. Nothing was saved; try again after that.")
+    format!("Claude asked Your Flight Deck to wait {wait} before trying again. Nothing was saved; try again after that.")
 }
 fn lost_message_for(lost: Lost, budget: &Budget, provider: AnyProvider) -> String {
     if provider.id() == crate::provider::ProviderId::Gemini {
@@ -2248,7 +2248,7 @@ fn busy_message(tried: u32, used_backup: bool) -> String {
         ""
     };
     format!(
-        "Google's servers are busy. Her Flight Deck asked {tried} times{backup} pausing between \
+        "Google's servers are busy. Your Flight Deck asked {tried} times{backup} pausing between \
          attempts, and Google was still at capacity. This is Google's side, not your key or your \
          document — the same file usually works a few minutes later."
     )
@@ -2264,7 +2264,7 @@ fn quota_message() -> String {
 fn retry_after_message(asked: Duration, budget: &Budget) -> String {
     let wait = gemini_budget::describe(asked);
     format!(
-        "Google asked Her Flight Deck to wait {wait} before trying again, which is longer than the time left of the {} it allows for one study aid. Nothing was saved; try again after that.",
+        "Google asked Your Flight Deck to wait {wait} before trying again, which is longer than the time left of the {} it allows for one study aid. Nothing was saved; try again after that.",
         gemini_budget::describe(budget.total())
     )
 }
@@ -2285,10 +2285,10 @@ fn lost_message(lost: Lost, budget: &Budget) -> String {
     match lost {
         Lost::Unreachable => "Could not reach Google, even after trying again. Check the internet connection. No complete answer was received; an earlier attempt may still have reached Google.".to_string(),
         Lost::NoAnswerInTime => format!(
-            "Gemini did not answer within the {limit} Her Flight Deck allows for one study aid. Google may still have been working on it. Repeating the request may incur additional charges. Nothing was saved. Large documents take longest: choosing a chapter or fewer pages first usually helps. If short documents also stop like this, check the connection."
+            "Gemini did not answer within the {limit} Your Flight Deck allows for one study aid. Google may still have been working on it. Repeating the request may incur additional charges. Nothing was saved. Large documents take longest: choosing a chapter or fewer pages first usually helps. If short documents also stop like this, check the connection."
         ),
         Lost::AnswerCutShort => format!(
-            "Gemini started answering, but the rest did not arrive within the {limit} Her Flight Deck allows for one study aid. Nothing was saved. Google may have processed this request; repeating it may incur additional charges. Try a chapter or fewer pages to reduce the wait."
+            "Gemini started answering, but the rest did not arrive within the {limit} Your Flight Deck allows for one study aid. Nothing was saved. Google may have processed this request; repeating it may incur additional charges. Try a chapter or fewer pages to reduce the wait."
         ),
         Lost::Dropped => "The connection to Google was interrupted after the request was sent, even after trying again. Google may or may not have finished it. Repeated requests may incur additional provider charges. Nothing was saved. Try again in a few minutes.".to_string(),
     }
@@ -2296,7 +2296,7 @@ fn lost_message(lost: Lost, budget: &Budget) -> String {
 
 /// Said after generation's retries and backup model ended on a rate limit.
 fn rate_limit_message() -> String {
-    "Gemini's rate or spending limit was reached for this project. Her Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string()
+    "Gemini's rate or spending limit was reached for this project. Your Flight Deck retried briefly and tried its backup model. Check the project's limits and billing in Google AI Studio, or wait and try again.".to_string()
 }
 
 /// A rate limit seen without generation's retry history (the connection check,

@@ -1,4 +1,4 @@
-# Her Flight Deck
+# Your Flight Deck
 
 A study companion for student pilots. It keeps flight-training study, lessons,
 goals, notes and costs in one private workspace on your own computer.

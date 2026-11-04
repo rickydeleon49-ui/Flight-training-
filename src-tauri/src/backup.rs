@@ -315,7 +315,7 @@ fn verify_sqlite_file(path: &Path) -> Result<(), String> {
     file.read_exact(&mut header)
         .map_err(|_| "The database in that backup is damaged or incomplete.".to_string())?;
     if !is_sqlite_header(&header) {
-        return Err("That file is not a Her Flight Deck database.".to_string());
+        return Err("That file is not a Flight Deck database.".to_string());
     }
     Ok(())
 }
@@ -654,7 +654,7 @@ fn verify_application_connection_with_ceiling(
             .map_err(|e| format!("Could not inspect the database schema: {e}"))?;
         if present != 1 {
             return Err(format!(
-                "That backup does not contain a Her Flight Deck database (missing {table})."
+                "That backup does not contain a Flight Deck database (missing {table})."
             ));
         }
     }
@@ -737,9 +737,7 @@ fn newest_migration_version(connection: &Connection) -> Result<i64, String> {
                 .unwrap_or(0)
                 == 1
         })
-        .ok_or_else(|| {
-            "That backup does not contain Her Flight Deck migration history.".to_string()
-        })?;
+        .ok_or_else(|| "That backup does not contain Flight Deck migration history.".to_string())?;
     connection
         .query_row(
             &format!("SELECT COALESCE(MAX(version), 0) FROM {migration_table}"),
@@ -5153,7 +5151,7 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
 ) -> Result<(Vec<String>, Vec<String>, usize, usize), String> {
     let mut db_entry = archive
         .by_name(DB_FILES[0])
-        .map_err(|_| "That backup does not contain a Her Flight Deck database.".to_string())?;
+        .map_err(|_| "That backup does not contain a Flight Deck database.".to_string())?;
 
     static INSPECT_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let count = INSPECT_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -5341,7 +5339,7 @@ pub(crate) fn inspect_archive(
 ) -> Result<CompleteBackupInfo, String> {
     let file = File::open(source).map_err(|e| format!("Could not open that backup: {e}"))?;
     let mut archive = ZipArchive::new(file)
-        .map_err(|e| zip_error("That is not a readable Her Flight Deck backup", e))?;
+        .map_err(|e| zip_error("That is not a readable Flight Deck backup", e))?;
 
     let manifest: CompleteBackupManifest = {
         let mut entry = archive
@@ -5369,7 +5367,7 @@ pub(crate) fn inspect_archive(
         let supported = crate::CURRENT_SCHEMA_VERSION;
         if n > supported {
             return Err(format!(
-                "That backup was made by a newer Her Flight Deck (database version {n}; this app understands {supported}). Update the app on this device first."
+                "That backup was made by a newer version of Flight Deck (database version {n}; this app understands {supported}). Update the app on this device first."
             ));
         }
     }
@@ -5457,7 +5455,7 @@ pub(crate) fn inspect_archive(
             let mut header = [0u8; SQLITE_MAGIC.len()];
             if entry.read_exact(&mut header).is_err() || !is_sqlite_header(&header) {
                 return Err(
-                    "The database in that backup is damaged, or that file is not a Her Flight Deck backup."
+                    "The database in that backup is damaged, or that file is not a Flight Deck backup."
                         .to_string(),
                 );
             }
@@ -5496,7 +5494,7 @@ pub(crate) fn inspect_archive(
                 }
                 if path == Path::new(DB_FILES[0]) && !is_sqlite_header(&prefix) {
                     return Err(
-                        "The database in that backup is damaged, or that file is not a Her Flight Deck backup."
+                        "The database in that backup is damaged, or that file is not a Flight Deck backup."
                             .to_string(),
                     );
                 }
@@ -5514,7 +5512,7 @@ pub(crate) fn inspect_archive(
     }
 
     if !has_database {
-        return Err("That backup does not contain a Her Flight Deck database.".to_string());
+        return Err("That backup does not contain a Flight Deck database.".to_string());
     }
 
     let (missing_documents, unreferenced_documents, unavailable_pictures, unavailable_references) =

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Read-only Mac readiness preflight for Her Flight Deck.
+ * Read-only Mac readiness preflight for Your Flight Deck.
  *
  * Reports what this checkout configures, what this Mac provides and, only for
  * an artifact path you pass explicitly, what that artifact is. It never builds,
@@ -547,7 +547,7 @@ export function runPreflight(options = {}, deps = defaultDeps()) {
     const isDmg = !isApp && /\.dmg$/i.test(name);
     artifact = {
       kind: isApp ? "app" : isDmg ? "disk-image" : "file",
-      name: KNOWN_ARTIFACTS.some((k) => k.fileName === name) || name === "Her Flight Deck.app" ? name : "not recorded",
+      name: KNOWN_ARTIFACTS.some((k) => k.fileName === name) || name === "Your Flight Deck.app" || name === "Her Flight Deck.app" ? name : "not recorded",
       pathRecorded: "never",
     };
     let st = null;
@@ -696,7 +696,7 @@ export function runPreflight(options = {}, deps = defaultDeps()) {
 }
 
 export function formatHuman(receipt) {
-  const lines = [`Her Flight Deck Mac readiness preflight (${receipt.schema})`, `generated ${receipt.generatedAt}`, ""];
+  const lines = [`Your Flight Deck Mac readiness preflight (${receipt.schema})`, `generated ${receipt.generatedAt}`, ""];
   for (const c of receipt.checks) lines.push(`[${c.status.padEnd(11)}] ${c.id.padEnd(21)} ${c.summary}`);
   const { counts } = receipt.summary;
   lines.push("", `PASS ${counts.PASS} · FAIL ${counts.FAIL} · UNVERIFIED ${counts.UNVERIFIED} · USER_ACTION ${counts.USER_ACTION}`);

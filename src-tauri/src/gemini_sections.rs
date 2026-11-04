@@ -43,7 +43,7 @@ impl SectionError {
         Self::new("GUIDE_FAILED", message)
     }
     fn plan_changed() -> Self {
-        Self::new("PLAN_CHANGED", "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")
+        Self::new("PLAN_CHANGED", "Your Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")
     }
 }
 fn identity_mismatch_error(old: &Identity, current: &Identity) -> SectionError {
@@ -1190,7 +1190,7 @@ pub(super) async fn activate(
             ctx.budget.categorize("time limit reached");
             Err(SectionError::new(
                     "GUIDE_PAUSED",
-                    "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.",
+                    "This took longer than 15 minutes, so Your Flight Deck paused. Your finished sections are kept — Try again to continue.",
                 ))
         }
     };

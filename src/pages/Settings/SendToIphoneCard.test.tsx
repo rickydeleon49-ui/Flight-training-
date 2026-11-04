@@ -26,7 +26,7 @@ beforeEach(() => {
 describe("SendToIphoneCard", () => {
   it("shows size, date and the Files sentence after a send", async () => {
     mocks.sendToIphone.mockResolvedValue({
-      info: { bytes: 2048, path: "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/Her Flight Deck/a.hfdbackup" },
+      info: { bytes: 2048, path: "/Users/x/Library/Mobile Documents/com~apple~CloudDocs/Your Flight Deck/a.hfdbackup" },
       viaICloud: true,
     });
     render(<SendToIphoneCard repositories={repositories} />);

@@ -212,7 +212,7 @@ fn retry_after_outside_remaining_budget_stops_without_another_call() {
         });
         let error = r.run().unwrap_err();
         assert_eq!(r.count(), 1);
-        assert!(error.contains("asked Her Flight Deck to wait"), "{error}");
+        assert!(error.contains("asked Your Flight Deck to wait"), "{error}");
         assert!(r.time.pauses.lock().unwrap().is_empty());
     }
 }

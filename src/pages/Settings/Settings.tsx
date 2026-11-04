@@ -1348,7 +1348,7 @@ export function Settings() {
                   {gemini.choice === "most-capable" ? (
                     <p className="tiny dim">
                       If Gemini 3.8 Flash is busy, temporarily rate-limited or unavailable to this key,
-                      Her Flight Deck tries Gemini 3.5 Flash instead and shows which model made each
+                      Your Flight Deck tries Gemini 3.5 Flash instead and shows which model made each
                       study aid. If the request is still refused, check this key's access in Google AI Studio.
                     </p>
                   ) : null}
@@ -1384,7 +1384,7 @@ export function Settings() {
               {gemini?.configured ? (
                 <p className="tiny dim">
                   <span className="strong">If Gemini keeps saying it is busy:</span> A “busy”
-                  message means Google is overloaded, not that your key is wrong. Her Flight Deck
+                  message means Google is overloaded, not that your key is wrong. Your Flight Deck
                   already waits and retries; if it keeps happening, try again later or switch to Standard.
                 </p>
               ) : null}
@@ -1410,7 +1410,7 @@ export function Settings() {
             <PlatformGuidance
               mac={
                 <>
-                  Her Flight Deck supports macOS 12 or newer.
+                  Your Flight Deck supports macOS 12 or newer.
                   Use only an official installer; never turn off Gatekeeper or bypass its warnings.
                 </>
               }

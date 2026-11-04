@@ -355,7 +355,7 @@ function SavedReference({ material, note, reference, downloaded = false }: {
       if (checked !== "present") return;
       if (deviceCan().revealFiles) await openDocument(material.filePath);
       else await openDocument(material.filePath, material.title);
-      if (live.current && currentKey.current === key) setMessage(deviceCan().revealFiles ? "Opened in your PDF reader." : "Opened in Her Flight Deck.");
+      if (live.current && currentKey.current === key) setMessage(deviceCan().revealFiles ? "Opened in your PDF reader." : "Opened in Your Flight Deck.");
     } catch {
       if (live.current && currentKey.current === key) setMessage("That PDF could not be opened. Check your saved file and PDF reader, then try again.");
     } finally {

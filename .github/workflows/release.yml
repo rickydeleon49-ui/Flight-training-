@@ -318,7 +318,7 @@ jobs:
 
           {
             if [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = false ]; then
-              echo "## Her Flight Deck $VERSION (macOS)"
+              echo "## Your Flight Deck $VERSION (macOS)"
               echo
               echo "Download the file for your Mac with Apple silicon and open it."
               echo "On first launch, macOS may say it can't verify the developer; after the checksum matches, I'll help you open it through System Settings → Privacy & Security → Open Anyway."
@@ -334,7 +334,7 @@ jobs:
               echo "Download and test the exact draft installer on an Apple Silicon Mac before publishing."
               echo "Confirm the Mac file installs and opens normally on an Apple silicon Mac."
             elif [ "$HAS_MAC" = true ] && [ "$HAS_WIN" = true ]; then
-              echo "## Her Flight Deck $VERSION"
+              echo "## Your Flight Deck $VERSION"
               echo
               echo "Download the file for your computer and open it."
               echo
@@ -349,7 +349,7 @@ jobs:
               echo "Confirm the Windows file is not detected by Microsoft Defender and"
               echo "confirm the Mac file installs and opens normally on an Apple silicon Mac."
             else
-              echo "## Her Flight Deck $VERSION"
+              echo "## Your Flight Deck $VERSION"
               echo
               echo "Download the installer for your system."
             fi
@@ -383,9 +383,9 @@ jobs:
           TAG: ${{ needs.check.outputs.tag }}
           VERSION: ${{ needs.check.outputs.version }}
         run: |
-          TITLE="Her Flight Deck $VERSION"
+          TITLE="Your Flight Deck $VERSION"
           if ls installers/*.dmg >/dev/null 2>&1 && ! ls installers/*.exe >/dev/null 2>&1; then
-            TITLE="Her Flight Deck $VERSION (macOS)"
+            TITLE="Your Flight Deck $VERSION (macOS)"
           fi
           gh release create "$TAG" \
             --draft \

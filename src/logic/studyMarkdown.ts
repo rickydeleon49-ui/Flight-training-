@@ -62,7 +62,7 @@ export function buildMarkdownBundle(all: ExportSource, selection: ExportSelectio
     out.push({ name, text: `# ${plainLabel(heading)}\n\n${body.trim()}\n` });
     links.push(`- [${plainLabel(heading)}](./${name})`);
   };
-  out.push({ name: names[0]!, text: `# ${plainLabel(title)}\n\nObsidian-friendly study notes exported from Her Flight Deck.\n\n${links.join("\n")}` });
+  out.push({ name: names[0]!, text: `# ${plainLabel(title)}\n\nObsidian-friendly study notes exported from Your Flight Deck.\n\n${links.join("\n")}` });
   if (set && selection.guide && available.guide) {
     if (set.summary.trim()) add(`${title} — Summary`, `${safeGuideBody(set.summary)}\n\n${meta({ pdfProvenance: set.summaryPdfProvenance, origin: set.summaryOrigin ?? undefined })}`);
     for (const section of set.sections) add(`${title} — ${section.heading || "Study guide"}`, `${safeGuideBody(section.body)}\n\n${meta(section)}`);
@@ -77,6 +77,6 @@ export function buildMarkdownBundle(all: ExportSource, selection: ExportSelectio
     add(`${title} — Practice questions and answers`, `Answers are included in this note.\n\n${body}`);
   }
   // Rebuild the index after links have been collected.
-  out[0]!.text = `# ${plainLabel(title)}\n\nObsidian-friendly study notes exported from Her Flight Deck.\n\n${provenanceNote(source, selection, true)}\n\n${links.join("\n")}\n`;
+  out[0]!.text = `# ${plainLabel(title)}\n\nObsidian-friendly study notes exported from Your Flight Deck.\n\n${provenanceNote(source, selection, true)}\n\n${links.join("\n")}\n`;
   return out;
 }
