@@ -9,5 +9,5 @@ links = "tauri-plugin-hfd-pdf"
 tauri-plugin = { version = "=2.6.3", features = ["build"] }
 
 [dependencies]
-tauri = { version = "=2.11.5", features = [] }
+tauri = { version = "=2.12.3", features = [] }
 serde = { version = "=1.0.229", features = ["derive"] }
