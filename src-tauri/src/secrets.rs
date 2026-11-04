@@ -216,7 +216,80 @@ pub fn load_key(root: &Path) -> Result<Option<String>, String> {
 pub(crate) fn load_key_for(root: &Path, provider: ProviderId) -> Result<Option<String>, String> {
     let store = system_store();
     let may_move = store.is_some() && first_move_attempt(root, provider);
-    load_key_with(root, provider, store, may_move)
+    read_tracked(root, provider, store, may_move, &DENIED, false)
+}
+
+/// Accounts whose secure-store read failed (locked, denied) this session.
+/// Automatic status reads stop at once, so ordinary navigation never asks the
+/// keychain again. Only process memory: nothing stored or on disk changes.
+static DENIED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
+
+/// One secure-store read at a time. Settings checks Gemini and the provider
+/// list in parallel; without this, both could reach the store before either
+/// failure is remembered and the system would ask twice.
+static READ_GATE: Mutex<()> = Mutex::new(());
+
+fn denied_lock(
+    denied: &Mutex<Option<HashSet<String>>>,
+) -> std::sync::MutexGuard<'_, Option<HashSet<String>>> {
+    denied.lock().unwrap_or_else(|p| p.into_inner())
+}
+
+/// Status reads: like `load_key_for`, but after a store failure the store is
+/// not touched again until `retry_key_access`. A key in the file still reads.
+pub(crate) fn status_key_for(root: &Path, provider: ProviderId) -> Result<Option<String>, String> {
+    let store = system_store();
+    let may_move = store.is_some() && first_move_attempt(root, provider);
+    read_tracked(root, provider, store, may_move, &DENIED, true)
+}
+
+/// Forget every remembered failure so the next read asks the store once.
+pub(crate) fn retry_key_access() {
+    *denied_lock(&DENIED) = None;
+}
+
+/// `load_key_with` plus the session failure memory. With `honor`, a remembered
+/// failure answers without a store read (file keys are still read). A store
+/// failure is remembered; a store success forgets it. Never writes or deletes
+/// a key (the only file change is the existing verified move).
+pub(crate) fn read_tracked(
+    root: &Path,
+    provider: ProviderId,
+    store: Option<&dyn SecureStore>,
+    may_move: bool,
+    denied: &Mutex<Option<HashSet<String>>>,
+    honor: bool,
+) -> Result<Option<String>, String> {
+    let Some(real) = store else {
+        return load_key_with(root, provider, None, false);
+    };
+    let _one_at_a_time = READ_GATE.lock().unwrap_or_else(|p| p.into_inner());
+    let account = store_account(root, provider);
+    let known = denied_lock(denied)
+        .as_ref()
+        .is_some_and(|set| set.contains(&account));
+    if known && honor {
+        return match load_file(root, provider)? {
+            Some(key) => Ok(Some(key)),
+            None => Err(format!(
+                "Could not read the saved {} key: the secure store is not asked again until you try again",
+                provider.name()
+            )),
+        };
+    }
+    let result = load_key_with(root, provider, Some(real), may_move && !known);
+    let mut set = denied_lock(denied);
+    match &result {
+        Err(_) => {
+            set.get_or_insert_with(HashSet::new).insert(account);
+        }
+        Ok(_) => {
+            if let Some(set) = set.as_mut() {
+                set.remove(&account);
+            }
+        }
+    }
+    result
 }
 
 /// `load_key_for` against an explicit store. With `may_move`, a key found in
@@ -834,6 +907,93 @@ mod store_tests {
                 (true, false)
             );
         }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_failed_status_read_is_not_repeated_until_try_again() {
+        use std::cell::Cell;
+        struct Counting<'a> {
+            inner: &'a FakeStore,
+            gets: Cell<u32>,
+        }
+        impl SecureStore for Counting<'_> {
+            fn get(&self, a: &str) -> Result<Option<String>, String> {
+                self.gets.set(self.gets.get() + 1);
+                self.inner.get(a)
+            }
+            fn set(&self, a: &str, s: &str) -> Result<(), String> {
+                self.inner.set(a, s)
+            }
+            fn delete(&self, a: &str) -> Result<(), String> {
+                self.inner.delete(a)
+            }
+        }
+        let root = scratch("denied");
+        let denied = Mutex::new(None);
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            let fake = FakeStore::default();
+            save_key_with(&root, id, Some(&fake), KEY).unwrap();
+            let store = Counting {
+                inner: &fake,
+                gets: Cell::new(0),
+            };
+            fake.fail_get.set(true);
+            let read = |honor| read_tracked(&root, id, Some(&store), true, &denied, honor);
+            assert_eq!(key_read_status(read(true)), (false, true));
+            assert_eq!(store.gets.get(), 1);
+            for _ in 0..3 {
+                assert_eq!(key_read_status(read(true)), (false, true));
+            }
+            assert_eq!(store.gets.get(), 1, "later status reads skip the store");
+            // Try again: one read, and when it works the flag is gone.
+            *denied.lock().unwrap() = None;
+            fake.fail_get.set(false);
+            assert_eq!(key_read_status(read(true)), (true, false));
+            assert_eq!(key_read_status(read(true)), (true, false));
+            assert_eq!(store.gets.get(), 3);
+            assert_eq!(fake.only_secret().as_deref(), Some(KEY));
+            // Real use (honor off) still asks, and a failure is remembered.
+            fake.fail_get.set(true);
+            assert!(read(false).is_err());
+            assert_eq!(store.gets.get(), 4);
+            assert!(read(true).is_err());
+            assert_eq!(store.gets.get(), 4);
+            // A failed try again reads exactly once, then stays quiet.
+            *denied.lock().unwrap() = None;
+            assert!(read(true).is_err());
+            assert!(read(true).is_err());
+            assert_eq!(store.gets.get(), 5);
+            // The stored key survived every failure.
+            fake.fail_get.set(false);
+            *denied.lock().unwrap() = None;
+            assert_eq!(read(true).unwrap().as_deref(), Some(KEY));
+            assert_eq!(fake.only_secret().as_deref(), Some(KEY));
+            assert!(!key_path(&root, id).exists());
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_remembered_failure_never_hides_or_removes_a_file_key() {
+        let root = scratch("denied-file");
+        let denied = Mutex::new(None);
+        let fake = FakeStore::default();
+        let id = ProviderId::Gemini;
+        existing_file_key(&root, id, KEY);
+        fake.fail_set.set(true);
+        denied
+            .lock()
+            .unwrap()
+            .get_or_insert_with(HashSet::new)
+            .insert(store_account(&root, id));
+        assert_eq!(
+            read_tracked(&root, id, Some(&fake), true, &denied, true)
+                .unwrap()
+                .as_deref(),
+            Some(KEY)
+        );
+        assert!(key_path(&root, id).is_file());
         std::fs::remove_dir_all(root).unwrap();
     }
 

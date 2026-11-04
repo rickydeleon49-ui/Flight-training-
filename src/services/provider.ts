@@ -16,6 +16,12 @@ export async function providerStatus(): Promise<ProviderStatus> {
   return invoke<ProviderStatus>("provider_status");
 }
 
+/** Settings "Try again": forgets a remembered keychain failure and reads once. */
+export async function retryKeyAccess(): Promise<ProviderStatus> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<ProviderStatus>("retry_key_access");
+}
+
 /** Switching leaves saved keys and study material in place. */
 export async function selectProvider(id: ProviderId): Promise<void> {
   if (!isTauri()) throw new DesktopOnlyError();

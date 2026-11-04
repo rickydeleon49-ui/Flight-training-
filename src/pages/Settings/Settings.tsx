@@ -2,9 +2,9 @@ import { isTauri } from "@/data";
 import { PROVIDER_TERMS } from "@/logic/providerTerms";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useLocation } from "react-router-dom";
-import { SAVED_KEY_UNREADABLE, type ProviderStatus } from "@/services/provider";
+import { SAVED_KEY_UNREADABLE, retryKeyAccess, type ProviderStatus } from "@/services/provider";
 import { ProviderControls } from "./ProviderControls";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { WeatherPreference } from "@/components/weather/AirportWeather";
@@ -389,6 +389,18 @@ export function Settings() {
       }),
     [lastBackup, version],
   );
+
+  const [providerReload, setProviderReload] = useState(0);
+  // The Gemini status read after a Try again is a plain file/flag read; the
+  // single keychain read already happened inside retryKeyAccess.
+  const refreshGemini = useCallback(() => {
+    void getGeminiStatus(true).then(setGemini).catch(() => undefined);
+  }, []);
+  const retryKeyRead = useCallback(() => {
+    void retryKeyAccess()
+      .catch(() => undefined)
+      .then(() => { refreshGemini(); setProviderReload((n) => n + 1); });
+  }, [refreshGemini]);
 
   useEffect(() => {
     void getGeminiStatus(true).then(setGemini).catch(() => setGemini(null));
@@ -1251,7 +1263,7 @@ export function Settings() {
             eyebrow={(providerConnection?.selected === "claude" ? providerConnection.providers.some((p) => p.id === "claude" && p.connected) : gemini?.configured) ? "Connected" : "Optional online AI"}
           />
           <CardBody>
-            <ProviderControls onStatus={setProviderConnection}>
+            <ProviderControls onStatus={setProviderConnection} reloadToken={providerReload} onRetried={refreshGemini}>
             <div className="stack stack--4">
               <PlatformGuidance
                 mac="Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite."
@@ -1265,7 +1277,10 @@ export function Settings() {
               </p>
 
               {gemini?.keyUnreadable ? (
-                <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>
+                <>
+                  <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>
+                  <div><Button onClick={retryKeyRead}>Try again</Button></div>
+                </>
               ) : gemini?.configured ? (
                 <div className="gemini-connected">
                   <span className="gemini-connected__mark" aria-hidden="true">

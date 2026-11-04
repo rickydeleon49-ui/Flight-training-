@@ -3,9 +3,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
 import { Button, TextInput } from "@/components/ui";
-import { SAVED_KEY_UNREADABLE, CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
+import { SAVED_KEY_UNREADABLE, CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, retryKeyAccess, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
 
-export function ProviderControls({ children, onStatus }: { children: ReactNode; onStatus?: (status: ProviderStatus) => void }) {
+export function ProviderControls({ children, onStatus, reloadToken = 0, onRetried }: { children: ReactNode; onStatus?: (status: ProviderStatus) => void; reloadToken?: number; onRetried?: () => void }) {
   const [status, setStatus] = useState<ProviderStatus>({ selected: "gemini", providers: [] });
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -13,7 +13,7 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
   const [problem, setProblem] = useState(false);
   useEffect(() => {
     if (isTauri()) void providerStatus().then(setStatus).catch(() => { setProblem(true); setNote("Could not check your AI connections. Reopen Settings to try again."); });
-  }, []);
+  }, [reloadToken]);
   useEffect(() => { onStatus?.(status); }, [status, onStatus]);
   const unreadable = status.providers.some((p) => p.id === "claude" && p.keyUnreadable);
   const connected = status.providers.some((p) => p.id === "claude" && p.connected);
@@ -23,6 +23,7 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
     catch (error) { setProblem(true); setNote(typeof error === "string" ? error : "Could not save this change. Try again."); }
     finally { setBusy(false); }
   }
+  const tryAgain = <div><Button disabled={busy} onClick={() => void run(async () => { setStatus(await retryKeyAccess()); onRetried?.(); })}>Try again</Button></div>;
   async function choose(id: ProviderId) {
     await selectProvider(id);
     setStatus(await providerStatus());
@@ -44,7 +45,7 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
         <p className="small strong">Claude (Anthropic)</p>
         <p className="tiny dim">{privacy}</p>
         <p className="tiny dim">Your key stays on this computer and is not included in backups.</p>
-        {unreadable ? <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p> : getKey}
+        {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : getKey}
         {unreadable ? null : connected ? <div className="row row--wrap">
           {status.selected !== "claude" && <Button disabled={busy} onClick={() => void run(() => choose("claude"))}>Use Claude</Button>}
           <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
@@ -56,7 +57,7 @@ export function ProviderControls({ children, onStatus }: { children: ReactNode; 
     {status.selected === "gemini" ? children : <div className="stack stack--2">
       <p className="small strong">Claude Haiku 5.5 · {unreadable ? "Saved key unavailable" : connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
       <p className="tiny dim">{privacy}</p>
-      {unreadable ? <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p> : connected
+      {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : connected
         ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
         // Claude chosen but its key is missing: let her put a key back in.
         : <>{getKey}{keyBox}</>}
