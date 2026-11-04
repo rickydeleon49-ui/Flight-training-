@@ -9,7 +9,7 @@ vi.mock("@/data", () => ({ isTauri: mocks.isTauri }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: mocks.invoke }));
 
 import { DesktopOnlyError } from "./documents";
-import { saveStudyExport, StudyExportError } from "./studyExport";
+import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "./studyExport";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(true);
@@ -44,5 +44,23 @@ describe("saveStudyExport (simulated invoke; no native dialog opens in tests)", 
     expect((error as Error).message).not.toContain("/Users");
     mocks.invoke.mockResolvedValueOnce({ unexpected: true });
     await expect(saveStudyExport("packet", "a.json", "{}")).rejects.toMatchObject({ code: "write_failed" });
+  });
+});
+
+describe("savedStudyExportSentence", () => {
+  it("keeps the Mac sentence when the file went where she chose", () => {
+    expect(savedStudyExportSentence({ fileName: "a.html", byteLength: 1 })).toBe("Saved “a.html”.");
+    expect(savedStudyExportSentence({ fileName: "a.html", byteLength: 1, inFiles: false })).toBe("Saved “a.html”.");
+  });
+
+  it("says where the file is on the phone", () => {
+    expect(savedStudyExportSentence({ fileName: "a.html", byteLength: 1, inFiles: true })).toBe(
+      "Saved in Files → Your Flight Deck → Exports → a.html.",
+    );
+  });
+
+  it("accepts a phone result from the command", async () => {
+    mocks.invoke.mockResolvedValue({ fileName: "a.html", byteLength: 1, inFiles: true });
+    await expect(saveStudyExport("handout", "a", "x")).resolves.toEqual({ fileName: "a.html", byteLength: 1, inFiles: true });
   });
 });

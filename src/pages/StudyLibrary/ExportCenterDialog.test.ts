@@ -140,3 +140,15 @@ describe("Study Library export center", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Nothing was changed");
   });
 });
+
+it("on the phone saves cards CSV into Files with no ellipsis", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ ...platform.deviceCan(), sharePrint: true, editStudyMaterial: true, revealFiles: false, splitFiles: false });
+  try {
+    saveStudyExport.mockResolvedValue({ fileName: "Flashcards.csv", byteLength: 120, inFiles: true });
+    render(h(ExportCenterDialog, { open: true, sources: [sources[0]!], initialOutput: "csv", onClose: () => {} }));
+    expect(screen.queryByRole("button", { name: "Save CSV…" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Save CSV" }));
+    expect(await screen.findByText("Saved in Files → Your Flight Deck → Exports → Flashcards.csv.")).toBeTruthy();
+  } finally { spy.mockRestore(); }
+});

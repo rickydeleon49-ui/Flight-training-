@@ -233,3 +233,26 @@ it.each(["Study", "More"])("%s sharing exports only this material's cards throug
   expect(contents).toContain('"tips question"');
   expect(contents).not.toContain("other question");
 });
+
+it("on the iPhone app a saved guide can be edited and saved to Files", async () => {
+  const platform = await import("@/services/platform");
+  vi.spyOn(platform, "deviceCan").mockReturnValue({
+    importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false,
+    editStudyMaterial: true, sharePrint: true, renderPdfPage: false,
+    sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true,
+  });
+  await createRepositories(db).documents.saveAiStudySet({
+    sourceMaterialId: "tips", title: "Synthetic guide", summary: "Saved synthetic summary",
+    sections: [], flashcards: [{ front: "Synthetic question", back: "Synthetic answer", sourcePage: 1 }],
+    sourceNotes: "", model: "test",
+  });
+  await open();
+  await screen.findByText("Saved synthetic summary");
+  fireEvent.click(screen.getByRole("button", { name: "Edit study guide" }));
+  expect(screen.getByRole("button", { name: "Done editing" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Save to Files" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "More" }));
+  expect(screen.getByRole("button", { name: "Save to Files" })).toBeTruthy();
+  expect(screen.queryByText("Share or print")).toBeNull();
+  expect(screen.queryByText("Export or print")).toBeNull();
+});

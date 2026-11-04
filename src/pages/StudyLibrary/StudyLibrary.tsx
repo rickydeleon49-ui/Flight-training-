@@ -315,7 +315,7 @@ export function StudyLibrary() {
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
                 {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
-                  Export handout or cards…
+                  {deviceCan().revealFiles ? "Export handout or cards…" : "Save handout or cards"}
                 </Button> : null}
               </div>
             </details> : null}

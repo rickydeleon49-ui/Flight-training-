@@ -1065,7 +1065,7 @@ function MaterialDetailPage() {
                       ) : null}
                       {deviceCan().sharePrint && (studySet || practiceTest) ? (
                         <Button size="small" variant="secondary" disabled={isGeneratingAny} onClick={() => setExporting(true)}>
-                          Share or print
+                          {deviceCan().revealFiles ? "Share or print" : "Save to Files"}
                         </Button>
                       ) : null}
                       {deviceCan().splitFiles && isOverLimit ? (
@@ -1867,7 +1867,7 @@ function MaterialDetailPage() {
           <h2 id="material-panel-heading-more" tabIndex={-1} className="visually-hidden material-panel-heading">More</h2>
           <div className="detail__column">
           <p className="small muted">Less-used tools for this file.</p>
-          {deviceCan().sharePrint && (studySet || practiceTest) ? <Card><CardBody><Button onClick={() => setExporting(true)}>Export or print</Button></CardBody></Card> : null}
+          {deviceCan().sharePrint && (studySet || practiceTest) ? <Card><CardBody><Button onClick={() => setExporting(true)}>{deviceCan().revealFiles ? "Export or print" : "Save to Files"}</Button></CardBody></Card> : null}
           <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
           <Card>
             <CardHeader title="Details and review status" />

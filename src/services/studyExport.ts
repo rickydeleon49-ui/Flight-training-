@@ -16,6 +16,8 @@ export type StudyExportKind = "packet" | "handout" | "markdown" | "brief" | "cal
 export interface SavedStudyExport {
   fileName: string;
   byteLength: number;
+  /** True when the file went straight into the phone's Files folder. */
+  inFiles?: boolean;
 }
 
 export type StudyExportCode = "too_large" | "not_regular_file" | "write_failed";
@@ -37,6 +39,13 @@ export class StudyExportError extends Error {
 function exportCode(error: unknown): StudyExportCode {
   const code = typeof error === "object" && error !== null ? (error as { code?: unknown }).code : undefined;
   return typeof code === "string" && Object.prototype.hasOwnProperty.call(MESSAGES, code) ? (code as StudyExportCode) : "write_failed";
+}
+
+/** The status line after a save; the phone names where the file went. */
+export function savedStudyExportSentence(saved: SavedStudyExport): string {
+  return saved.inFiles
+    ? `Saved in Files → Your Flight Deck → Exports → ${saved.fileName}.`
+    : `Saved “${saved.fileName}”.`;
 }
 
 function isSaved(value: unknown): value is SavedStudyExport {

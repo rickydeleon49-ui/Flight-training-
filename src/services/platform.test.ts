@@ -46,8 +46,8 @@ describe("platform", () => {
     expect(deviceCan().generate).toBe(true);
     expect(deviceCan().pdfKit).toBe(false);
     expect(deviceCan().geminiKey).toBe(true);
-    expect(deviceCan().editStudyMaterial).toBe(false);
-    expect(deviceCan().sharePrint).toBe(false);
+    expect(deviceCan().editStudyMaterial).toBe(true);
+    expect(deviceCan().sharePrint).toBe(true);
   });
 
   it("recognises an iPad that reports itself as a Mac", () => {
@@ -65,6 +65,8 @@ describe("platform", () => {
     expect(deviceCan().sendToIphone).toBe(false);
     expect(deviceCan().geminiKey).toBe(false);
     expect(deviceCan().generate).toBe(false);
+    expect(deviceCan().editStudyMaterial).toBe(false);
+    expect(deviceCan().sharePrint).toBe(false);
   });
 
   it("recognises Windows as neither", () => {

@@ -19,6 +19,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
+#[cfg(target_os = "ios")]
+use tauri::Manager;
+#[cfg(not(target_os = "ios"))]
 use tauri_plugin_dialog::DialogExt;
 
 use crate::study_packet::MAX_PACKET_BYTES;
@@ -64,6 +67,7 @@ impl ExportKind {
         }
     }
 
+    #[cfg_attr(target_os = "ios", allow(dead_code))]
     fn filter_name(self) -> &'static str {
         match self {
             Self::Packet => "Study packet",
@@ -74,6 +78,7 @@ impl ExportKind {
         }
     }
 
+    #[cfg_attr(target_os = "ios", allow(dead_code))]
     fn title(self) -> &'static str {
         match self {
             Self::Packet => "Save study packet",
@@ -103,6 +108,8 @@ impl ExportKind {
 pub struct SavedExport {
     pub file_name: String,
     pub byte_length: u64,
+    /// True when the file went into the phone's Files folder without a dialog.
+    pub in_files: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -163,18 +170,35 @@ pub async fn save_study_export(
         contents.into_bytes()
     };
     tauri::async_runtime::spawn_blocking(move || {
-        let Some(choice) = app
-            .dialog()
-            .file()
-            .set_title(kind.title())
-            .set_file_name(suggested_file_name(&suggested_name, kind))
-            .add_filter(kind.filter_name(), &[kind.extension()])
-            .blocking_save_file()
-        else {
-            return Ok(None);
-        };
-        let path = choice.into_path().map_err(|_| ExportError::WriteFailed)?;
-        write_export(&path, &bytes, kind.limit()).map(Some)
+        #[cfg(target_os = "ios")]
+        {
+            let documents = app
+                .path()
+                .document_dir()
+                .map_err(|_| ExportError::WriteFailed)?;
+            save_phone_export_in(
+                &documents,
+                &suggested_file_name(&suggested_name, kind),
+                &bytes,
+                kind.limit(),
+            )
+            .map(Some)
+        }
+        #[cfg(not(target_os = "ios"))]
+        {
+            let Some(choice) = app
+                .dialog()
+                .file()
+                .set_title(kind.title())
+                .set_file_name(suggested_file_name(&suggested_name, kind))
+                .add_filter(kind.filter_name(), &[kind.extension()])
+                .blocking_save_file()
+            else {
+                return Ok(None);
+            };
+            let path = choice.into_path().map_err(|_| ExportError::WriteFailed)?;
+            write_export(&path, &bytes, kind.limit()).map(Some)
+        }
     })
     .await
     .map_err(|_| ExportFailure::from(ExportError::WriteFailed))?
@@ -359,7 +383,46 @@ fn write_export_with(
     Ok(SavedExport {
         file_name: name.to_string(),
         byte_length: bytes.len() as u64,
+        in_files: false,
     })
+}
+
+/// Save into `<documents_dir>/Exports` on the phone with no dialog. A name
+/// that is already taken (file, folder or link) is never replaced: the next
+/// free "<stem> 2.<ext>" ... "<stem> 99.<ext>" is used instead.
+#[cfg_attr(not(target_os = "ios"), allow(dead_code))]
+pub(crate) fn save_phone_export_in(
+    documents_dir: &Path,
+    file_name: &str,
+    bytes: &[u8],
+    limit: u64,
+) -> Result<SavedExport, ExportError> {
+    if bytes.len() as u64 > limit {
+        return Err(ExportError::TooLarge);
+    }
+    let directory = documents_dir.join("Exports");
+    std::fs::create_dir_all(&directory).map_err(|_| ExportError::WriteFailed)?;
+    let (stem, extension) = match file_name.rsplit_once('.') {
+        Some((stem, extension)) if !stem.is_empty() => (stem, format!(".{extension}")),
+        _ => (file_name, String::new()),
+    };
+    for n in 1..=99u32 {
+        let name = if n == 1 {
+            file_name.to_string()
+        } else {
+            format!("{stem} {n}{extension}")
+        };
+        let path = directory.join(&name);
+        if path.symlink_metadata().is_ok() {
+            continue;
+        }
+        let saved = write_export(&path, bytes, limit)?;
+        return Ok(SavedExport {
+            in_files: true,
+            ..saved
+        });
+    }
+    Err(ExportError::WriteFailed)
 }
 
 fn temporary_path(directory: &Path, name: &str) -> PathBuf {
@@ -408,7 +471,8 @@ mod tests {
             saved,
             SavedExport {
                 file_name: "Weather.json".into(),
-                byte_length: 8
+                byte_length: 8,
+                in_files: false
             }
         );
         assert_eq!(std::fs::read(&path).unwrap(), b"{\"a\":1}\n");
@@ -746,5 +810,90 @@ mod tests {
             let failure = ExportFailure::from(error);
             assert!(!failure.message.contains('/'));
         }
+        let dir = scratch("phone-fail");
+        std::fs::write(dir.join("Exports"), "a file in the way").unwrap();
+        for result in [
+            save_phone_export_in(&dir, "A.html", b"x", 10),
+            save_phone_export_in(&dir, "A.html", b"too long for ten", 10),
+        ] {
+            let failure = ExportFailure::from(result.unwrap_err());
+            assert!(!failure.message.contains('/'));
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn phone_export_creates_exports_and_writes_exact_bytes() {
+        let dir = scratch("phone-write");
+        assert!(!dir.join("Exports").exists());
+        let saved =
+            save_phone_export_in(&dir, "Weather.html", b"<p>hi</p>", MAX_HANDOUT_BYTES).unwrap();
+        assert_eq!(saved.file_name, "Weather.html");
+        assert_eq!(saved.byte_length, 9);
+        assert!(saved.in_files);
+        assert_eq!(
+            std::fs::read(dir.join("Exports").join("Weather.html")).unwrap(),
+            b"<p>hi</p>"
+        );
+        assert_eq!(
+            entries(&dir.join("Exports")),
+            vec!["Weather.html".to_string()]
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn phone_export_never_replaces_a_same_named_file() {
+        let dir = scratch("phone-names");
+        let names: Vec<String> = [b"one".as_slice(), b"two", b"three"]
+            .iter()
+            .map(|b| {
+                save_phone_export_in(&dir, "Weather.html", b, MAX_HANDOUT_BYTES)
+                    .unwrap()
+                    .file_name
+            })
+            .collect();
+        assert_eq!(
+            names,
+            vec!["Weather.html", "Weather 2.html", "Weather 3.html"]
+        );
+        let exports = dir.join("Exports");
+        assert_eq!(std::fs::read(exports.join("Weather.html")).unwrap(), b"one");
+        assert_eq!(
+            std::fs::read(exports.join("Weather 3.html")).unwrap(),
+            b"three"
+        );
+        assert_eq!(entries(&exports).len(), 3);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn phone_export_skips_a_symlink_or_folder_at_the_name() {
+        let dir = scratch("phone-skip");
+        let exports = dir.join("Exports");
+        std::fs::create_dir_all(exports.join("Weather.html")).unwrap();
+        let saved = save_phone_export_in(&dir, "Weather.html", b"x", MAX_HANDOUT_BYTES).unwrap();
+        assert_eq!(saved.file_name, "Weather 2.html");
+        assert!(exports.join("Weather.html").is_dir());
+        assert!(entries(&exports.join("Weather.html")).is_empty());
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(dir.join("nowhere"), exports.join("Notes.html")).unwrap();
+            let saved = save_phone_export_in(&dir, "Notes.html", b"y", MAX_HANDOUT_BYTES).unwrap();
+            assert_eq!(saved.file_name, "Notes 2.html");
+            assert!(!dir.join("nowhere").exists());
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn phone_export_refuses_more_than_the_limit_before_writing() {
+        let dir = scratch("phone-limit");
+        assert_eq!(
+            save_phone_export_in(&dir, "Big.html", b"0123456789!", 10),
+            Err(ExportError::TooLarge)
+        );
+        assert!(entries(&dir).is_empty());
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

@@ -30,7 +30,7 @@ import {
   exportCalendarEvent,
 } from "@/logic/calendarExport";
 import { DesktopOnlyError } from "@/services/documents";
-import { saveStudyExport, StudyExportError } from "@/services/studyExport";
+import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
 import { useAppData } from "@/state/AppDataContext";
 
 interface Props {
@@ -107,7 +107,7 @@ export function CalendarExportDialog({ open, event, onClose }: Props) {
       const fileName = calendarFileName(event);
       const result = await saveStudyExport("calendar", fileName, ics);
       if (result) {
-        outcome = { saved: `Saved “${result.fileName}”.` };
+        outcome = { saved: savedStudyExportSentence(result) };
       }
     } catch (caught) {
       if (caught instanceof DesktopOnlyError) {
