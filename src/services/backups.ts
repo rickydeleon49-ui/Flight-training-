@@ -220,3 +220,38 @@ export async function phoneActivitySummary(): Promise<ActivitySummary> {
   if (!isTauri()) return { latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 };
   return invoke<ActivitySummary>("phone_activity_summary");
 }
+
+export interface UnsavedPhoneWork {
+  reviews: number;
+  tests: number;
+  bookmarks: number;
+  readingPositions: number;
+  since: string | null;
+}
+
+export async function unsavedPhoneWork(): Promise<UnsavedPhoneWork> {
+  if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, since: null };
+  return invoke<UnsavedPhoneWork>("unsaved_phone_work");
+}
+
+export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">): number {
+  return work.reviews + work.tests + work.bookmarks + work.readingPositions;
+}
+
+/** Mirrors the sentence the app itself refuses with (src-tauri/src/phone_work.rs). */
+export function unsavedPhoneWorkSentence(
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">,
+): string | null {
+  const part = (n: number, one: string, many: string) => (n === 0 ? null : n === 1 ? `1 ${one}` : `${n} ${many}`);
+  const parts = [
+    part(work.reviews, "card review", "card reviews"),
+    part(work.tests, "practice test", "practice tests"),
+    part(work.bookmarks, "bookmark", "bookmarks"),
+    part(work.readingPositions, "reading position", "reading positions"),
+  ].filter((p): p is string => p !== null);
+  if (parts.length === 0) return null;
+  const list = parts.length === 1 ? parts[0]!
+    : parts.length === 2 ? `${parts[0]} and ${parts[1]}`
+    : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+  return `This phone has ${list} that aren't saved anywhere else yet. Save my phone work first, then get your study material.`;
+}
