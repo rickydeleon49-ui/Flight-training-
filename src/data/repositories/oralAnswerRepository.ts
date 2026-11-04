@@ -21,6 +21,7 @@ export function oralAnswerRepository(db: SqlDatabase) {
         scenarioId: String(r.scenario_id),
         versionId: String(r.version_id),
         versionNumber: Number(r.version_number),
+        points: decodeOralPoints(r.points_json),
         answer: String(r.answer),
         covered: decodeOralCovered(r.covered_json, decodeOralPoints(r.points_json).length),
         finishedAt: String(r.finished_at),
@@ -40,6 +41,13 @@ export function oralAnswerRepository(db: SqlDatabase) {
          SELECT ?, v.scenario_id, v.id, ?, ?, ?, ?, ?, ? FROM oral_scenario_versions v WHERE v.id = ? AND v.scenario_id = ?`,
         [id, input.answer, covered, input.revealedAt, at, at, at, input.versionId, input.scenarioId],
       );
+      // execute returns no affected-row count. Read back this unique insert's
+      // receipt rather than connection-wide changes(), which can race a write.
+      const inserted = await db.select<{ id: string }>(
+        "SELECT id FROM oral_answers WHERE id = ? AND scenario_id = ? AND version_id = ?",
+        [id, input.scenarioId, input.versionId],
+      );
+      if (inserted.length !== 1) throw new Error("Couldn't save your answer. Please try again.");
       return id;
     },
     remove: (answerId: string) => db.execute("DELETE FROM oral_answers WHERE id = ?", [answerId]),

@@ -73,6 +73,7 @@ describe("oral answers repository", () => {
     // Editing the scenario adds a version; the kept answer still points at the one she answered.
     await repos.oralScenarios.edit(M, scenario.id, 1, content("Scenario Alpha, reworded", 2));
     expect((await repos.oralAnswers.list(scenario.id)).every((a) => a.versionNumber === 1)).toBe(true);
+    expect((await repos.oralAnswers.list(scenario.id))[0]!.points).toEqual(content("Scenario Alpha").points);
     await repos.oralAnswers.remove(first);
     expect(await repos.oralAnswers.list(scenario.id)).toHaveLength(1);
     await repos.oralAnswers.removeAll(scenario.id);
@@ -85,7 +86,8 @@ describe("oral answers repository", () => {
     await expect(repos.oralAnswers.finish({ ...base, answer: "a", covered: [3] })).rejects.toThrow();
     await expect(repos.oralAnswers.finish({ ...base, answer: "x".repeat(20001) })).rejects.toThrow();
     await repos.oralAnswers.finish({ ...base, answer: "x".repeat(20000) });
-    await repos.oralAnswers.finish({ ...base, scenarioId: uid(99), answer: "orphan" });
+    await expect(repos.oralAnswers.finish({ ...base, scenarioId: uid(99), answer: "orphan" })).rejects.toThrow();
+    await expect(repos.oralAnswers.finish({ ...base, versionId: uid(99), answer: "missing version" })).rejects.toThrow();
     expect(await db.select("SELECT COUNT(*) AS n FROM oral_answers")).toEqual([{ n: 1 }]);
   });
 

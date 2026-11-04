@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { readFileSync } from "node:fs";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
@@ -66,17 +66,17 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   cancel.mockClear();
   fireEvent.click(screen.getByRole("button", { name: "Next scenario" }));
-  expect(cancel).toHaveBeenCalled();
+  await waitFor(() => expect(cancel).toHaveBeenCalled());
   fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
   expect(speak.mock.lastCall![0].text).toBe("Scenario Bravo");
   cancel.mockClear();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  expect(cancel).toHaveBeenCalled();
+  await waitFor(() => expect(cancel).toHaveBeenCalled());
   await practise("Scenario Alpha");
   fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
   cancel.mockClear();
   view.unmount();
-  expect(cancel).toHaveBeenCalled();
+  await waitFor(() => expect(cancel).toHaveBeenCalled());
 });
 
 it("is one closed line until she adds a scenario, then a full card", async () => {
@@ -391,4 +391,98 @@ it("separates the oral reveal sections and keeps comfortable checkbox targets", 
   const css = readFileSync("src/pages/StudyLibrary/studyLibrary.css", "utf8");
   expect(css).toMatch(/\.oral-practice__reveal\s*\{[^}]*gap:\s*var\(--space-4\)/);
   expect(css).toMatch(/\.oral-practice__reveal \.checkbox\s*\{[^}]*min-height:\s*44px/);
+});
+
+
+it.each(["Done", "Next scenario", "Write a note", "Close"])(
+  "%s keeps the answer and ticks after a failed write, and Retry completes the intended action",
+  async (action) => {
+    await seed("Scenario Alpha");
+    await seed("Scenario Bravo");
+    mount();
+    await practise("Scenario Alpha", "My draft\n\nSecond paragraph");
+    fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+    fireEvent.click(screen.getByLabelText(POINTS[1]!));
+    db.beforeStatement = (sql) => {
+      if (sql.includes("INSERT INTO oral_answers")) throw new Error("Synthetic write failure");
+    };
+    fireEvent.click(screen.getByRole("button", { name: action }));
+    expect(await screen.findByRole("alert")).toHaveProperty("textContent", expect.stringContaining("Couldn't save your answer"));
+    expect(screen.getByText("My draft Second paragraph").textContent).toBe("My draft\n\nSecond paragraph");
+    expect((screen.getByLabelText(POINTS[1]!) as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByLabelText("Note")).toBeNull();
+    expect(screen.queryByLabelText(/Your answer \(optional\)/)).toBeNull();
+    expect(await count("oral_answers")).toBe(0);
+    db.beforeStatement = undefined;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    if (action === "Next scenario") {
+      await screen.findByLabelText(/Your answer \(optional\)/);
+      expect(within(screen.getByRole("dialog")).getByText("Scenario Bravo")).toBeTruthy();
+    } else if (action === "Write a note") {
+      expect((await screen.findByLabelText("Note") as HTMLTextAreaElement).value).toContain("Second paragraph");
+    } else {
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    }
+    expect(await db.select("SELECT answer, covered_json FROM oral_answers")).toEqual([
+      { answer: "My draft\n\nSecond paragraph", covered_json: "[1]" },
+    ]);
+  },
+);
+
+it("waits for the insert and prevents two completion clicks or dismissal while saving", async () => {
+  await seed("Scenario Alpha");
+  await seed("Scenario Bravo");
+  mount();
+  await practise("Scenario Alpha", "Kept once");
+  fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  let inserts = 0;
+  db.beforeStatement = async (sql) => {
+    if (sql.includes("INSERT INTO oral_answers")) {
+      inserts++;
+      await pending;
+    }
+  };
+  const done = screen.getByRole("button", { name: "Done" });
+  act(() => { fireEvent.click(done); fireEvent.click(done); });
+  await waitFor(() => expect(inserts).toBe(1));
+  for (const name of ["Done", "Next scenario", "Write a note", "Close"]) {
+    expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
+  }
+  expect((screen.getByLabelText(POINTS[0]!) as HTMLInputElement).disabled).toBe(true);
+  fireEvent.keyDown(document, { key: "Escape" });
+  fireEvent(screen.getByRole("dialog"), new Event("cancel", { bubbles: false, cancelable: true }));
+  fireEvent.click(document.querySelector("[data-modal-backdrop]")!);
+  expect(screen.getByText("Kept once")).toBeTruthy();
+  expect(screen.queryByLabelText(/Your answer \(optional\)/)).toBeNull();
+  await act(async () => { release(); });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(await count("oral_answers")).toBe(1);
+  expect(inserts).toBe(1);
+});
+
+it("expands a multi-paragraph earlier answer and shows ticks from its frozen version", async () => {
+  await seed("Scenario Alpha");
+  const [scenario] = await repos().list("m1");
+  const answer = "Opening line\n\nSecond paragraph with a checklist.\nFinal line.";
+  await createRepositories(db).oralAnswers.finish({
+    scenarioId: scenario!.id, versionId: scenario!.versionId, pointCount: POINTS.length,
+    answer, covered: [0, 2], revealedAt: "2026-11-02T10:00:00.000Z",
+  });
+  await repos().edit("m1", scenario!.id, 1, {
+    prompt: "Scenario Alpha revised", assumptions: "", points: ["Replacement point"], sourcePage: null, origin: "user",
+  });
+  mount();
+  await practise("Scenario Alpha revised");
+  fireEvent.click(await screen.findByText("Earlier answers (1)"));
+  const summary = screen.getByText("Opening line", { selector: "summary" });
+  expect(screen.queryByText(/Second paragraph/)).toBeNull();
+  fireEvent.click(summary);
+  const full = await screen.findByText((_, element) => element?.tagName === "P" && element.textContent === answer);
+  expect(full.style.whiteSpace).toBe("pre-wrap");
+  const disclosure = within(summary.closest("details")!);
+  expect(disclosure.getAllByRole("listitem").map((item) => item.textContent)).toEqual([POINTS[0], POINTS[2]]);
+  expect(disclosure.queryByText(POINTS[1]!)).toBeNull();
+  expect(disclosure.queryByText("Replacement point")).toBeNull();
 });
