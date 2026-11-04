@@ -43,8 +43,8 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); db.close(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-async function practise(title: string, answer?: string) {
-  fireEvent.click(await screen.findByRole("button", { name: `Practise: ${title}` }));
+async function practice(title: string, answer?: string) {
+  fireEvent.click(await screen.findByRole("button", { name: `Practice: ${title}` }));
   const box = await screen.findByLabelText(/Your answer \(optional\)/);
   if (answer !== undefined) fireEvent.change(box, { target: { value: answer } });
 }
@@ -54,7 +54,7 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   await seed("Scenario Alpha");
   await seed("Scenario Bravo");
   const view = mount();
-  await practise("Scenario Alpha", "Private fictional answer");
+  await practice("Scenario Alpha", "Private fictional answer");
   const answerBox = screen.getByLabelText(/Your answer \(optional\)/);
   expect(screen.getAllByText("Your answer is kept when you finish, under Earlier answers. You can delete it any time.")).toHaveLength(1);
   expect(answerBox.closest(".stack")?.parentElement?.textContent).toContain("Your answer is kept when you finish, under Earlier answers. You can delete it any time.");
@@ -72,7 +72,7 @@ it("reads only the current examiner question, offers dictation, and stops on nex
   cancel.mockClear();
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   await waitFor(() => expect(cancel).toHaveBeenCalled());
-  await practise("Scenario Alpha");
+  await practice("Scenario Alpha");
   fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
   cancel.mockClear();
   view.unmount();
@@ -97,7 +97,7 @@ it("is one closed line until she adds a scenario, then a full card", async () =>
   fireEvent.change(screen.getByLabelText("Discussion points"), { target: { value: POINTS.join("\n") } });
   fireEvent.click(screen.getByLabelText("My instructor gave me this"));
   fireEvent.click(screen.getByRole("button", { name: "Save scenario" }));
-  expect(await screen.findByRole("button", { name: "Practise: Engine roughness at 3,000 feet" })).toBeTruthy();
+  expect(await screen.findByRole("button", { name: "Practice: Engine roughness at 3,000 feet" })).toBeTruthy();
   expect(screen.getByText(/From my instructor/)).toBeTruthy();
   expect(document.querySelector("details.material-fold")).toBeNull();
   expect(screen.getByRole("heading", { name: "Practice an oral question" })).toBeTruthy();
@@ -110,7 +110,7 @@ it("keeps the discussion points out of the page until she shows them, then offer
   await seed("Scenario Alpha");
   await seed("Scenario Bravo", ["Bravo only point"]);
   mount();
-  await practise("Scenario Alpha", "carb heat first");
+  await practice("Scenario Alpha", "carb heat first");
   for (const point of POINTS) expect(document.body.innerHTML).not.toContain(point);
   expect(document.body.innerHTML).not.toContain("Bravo only point");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
@@ -128,7 +128,7 @@ it("keeps the discussion points out of the page until she shows them, then offer
 it("works with the keyboard alone (native buttons and fields, no pointer handlers)", async () => {
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha");
+  await practice("Scenario Alpha");
   const show = screen.getByRole("button", { name: "Show discussion points" });
   expect(show.tagName).toBe("BUTTON");
   show.focus();
@@ -146,7 +146,7 @@ it("accepts a 20,000-character answer and keeps it with her ticks when she finis
   await seed("Scenario Alpha");
   mount();
   const long = "x".repeat(20000);
-  await practise("Scenario Alpha", long);
+  await practice("Scenario Alpha", long);
   const box = screen.getByLabelText(/Your answer \(optional\)/) as HTMLTextAreaElement;
   expect(box.value.length).toBe(20000);
   expect(box.maxLength).toBe(20000);
@@ -169,7 +169,7 @@ it("accepts a 20,000-character answer and keeps it with her ticks when she finis
 it("writes nothing when she cancels before showing the points", async () => {
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha", "my answer");
+  await practice("Scenario Alpha", "my answer");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   fireEvent.click(await screen.findByRole("button", { name: "Add a scenario" }));
   fireEvent.change(screen.getByLabelText("Scenario"), { target: { value: "Unsaved" } });
@@ -184,10 +184,10 @@ it("writes nothing when she cancels before showing the points", async () => {
 it("closing after the points keeps the answer; an empty, unticked practice is not kept", async () => {
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha");
+  await practice("Scenario Alpha");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click(await screen.findByRole("button", { name: "Done" }));
-  await practise("Scenario Alpha", "my answer");
+  await practice("Scenario Alpha", "my answer");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   await screen.findByText(POINTS[0]!);
   fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]!);
@@ -199,7 +199,7 @@ it("lists earlier answers by date and first line, deletes one or all after askin
   await seed("Scenario Alpha");
   await seed("Scenario Bravo");
   mount();
-  await practise("Scenario Alpha");
+  await practice("Scenario Alpha");
   expect(screen.queryByText(/^Earlier answers \(/)).toBeNull();
   fireEvent.change(screen.getByLabelText(/Your answer \(optional\)/), { target: { value: "\nFirst kept line\nsecond line" } });
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
@@ -208,11 +208,11 @@ it("lists earlier answers by date and first line, deletes one or all after askin
   await waitFor(async () => expect(await count("oral_answers")).toBe(1));
   expect(screen.queryByText(/^Earlier answers \(/)).toBeNull(); // Bravo has none
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await practise("Scenario Alpha", "Another answer");
+  await practice("Scenario Alpha", "Another answer");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click(await screen.findByRole("button", { name: "Done" }));
   await waitFor(async () => expect(await count("oral_answers")).toBe(2));
-  await practise("Scenario Alpha");
+  await practice("Scenario Alpha");
   expect(await screen.findByText("Earlier answers (2)")).toBeTruthy();
   expect(screen.getByText("First kept line")).toBeTruthy();
   expect(screen.queryByText(/second line/)).toBeNull();
@@ -236,7 +236,7 @@ it("lists earlier answers by date and first line, deletes one or all after askin
 it("removing a scenario deletes its kept answers when the Undo window closes", async () => {
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha", "kept");
+  await practice("Scenario Alpha", "kept");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click(await screen.findByRole("button", { name: "Done" }));
   await waitFor(async () => expect(await count("oral_answers")).toBe(1));
@@ -251,7 +251,7 @@ it("removing a scenario deletes its kept answers when the Undo window closes", a
 it("Ask my instructor adds exactly one question linked to the material, once", async () => {
   await seed("Engine roughness at 3,000 feet");
   mount();
-  await practise("Engine roughness at 3,000 feet", "carb heat first");
+  await practice("Engine roughness at 3,000 feet", "carb heat first");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click((await screen.findAllByRole("checkbox"))[0]!);
   const ask = screen.getByRole("button", { name: "Ask my instructor" });
@@ -270,7 +270,7 @@ it("Ask my instructor adds exactly one question linked to the material, once", a
 it("Write a note opens the Notes editor prefilled and saves only on Save note", async () => {
   await seed("Engine roughness at 3,000 feet");
   mount();
-  await practise("Engine roughness at 3,000 feet", "carb heat first");
+  await practice("Engine roughness at 3,000 feet", "carb heat first");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click((await screen.findAllByRole("checkbox"))[1]!);
   fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
@@ -297,7 +297,7 @@ it("an edit adds a new version and keeps the earlier one", async () => {
   expect((screen.getByLabelText("Discussion points") as HTMLTextAreaElement).value).toBe(POINTS.join("\n"));
   fireEvent.change(prompt, { target: { value: "Scenario Alpha, reworded" } });
   fireEvent.click(screen.getByRole("button", { name: "Save scenario" }));
-  expect(await screen.findByRole("button", { name: "Practise: Scenario Alpha, reworded" })).toBeTruthy();
+  expect(await screen.findByRole("button", { name: "Practice: Scenario Alpha, reworded" })).toBeTruthy();
   expect(await db.select("SELECT version_number, prompt FROM oral_scenario_versions ORDER BY version_number")).toEqual([
     { version_number: 1, prompt: "Scenario Alpha" },
     { version_number: 2, prompt: "Scenario Alpha, reworded" },
@@ -311,9 +311,9 @@ it("moves a scenario up and down", async () => {
   expect((await screen.findByRole("button", { name: "Move up: Scenario Alpha" }) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole("button", { name: "Move down: Scenario Alpha" }));
   await waitFor(async () => expect((await repos().list("m1")).map((s) => s.prompt)).toEqual(["Scenario Bravo", "Scenario Alpha"]));
-  await waitFor(() => expect(screen.getAllByRole("button", { name: /^Practise:/ }).map((b) => b.getAttribute("aria-label"))).toEqual([
-    "Practise: Scenario Bravo",
-    "Practise: Scenario Alpha",
+  await waitFor(() => expect(screen.getAllByRole("button", { name: /^Practice:/ }).map((b) => b.getAttribute("aria-label"))).toEqual([
+    "Practice: Scenario Bravo",
+    "Practice: Scenario Alpha",
   ]));
   fireEvent.click(screen.getByRole("button", { name: "Move up: Scenario Alpha" }));
   await waitFor(async () => expect((await repos().list("m1")).map((s) => s.prompt)).toEqual(["Scenario Alpha", "Scenario Bravo"]));
@@ -326,7 +326,7 @@ it("moving another scenario while a removal waits on Undo still saves", async ()
   mount();
   fireEvent.click(await screen.findByRole("button", { name: "Remove: Scenario Alpha" }));
   fireEvent.click(screen.getByRole("button", { name: "Remove" }));
-  await waitFor(() => expect(screen.queryByRole("button", { name: "Practise: Scenario Alpha" })).toBeNull());
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Practice: Scenario Alpha" })).toBeNull());
   fireEvent.click(screen.getByRole("button", { name: "Move down: Scenario Bravo" }));
   await waitFor(async () => expect((await repos().list("m1")).map((s) => s.prompt)).toEqual(["Scenario Charlie", "Scenario Bravo", "Scenario Alpha"]));
   expect(screen.queryByText(/changed in the meantime/)).toBeNull();
@@ -335,7 +335,7 @@ it("moving another scenario while a removal waits on Undo still saves", async ()
 it("shows no move buttons for a single scenario", async () => {
   await seed("Scenario Alpha");
   mount();
-  await screen.findByRole("button", { name: "Practise: Scenario Alpha" });
+  await screen.findByRole("button", { name: "Practice: Scenario Alpha" });
   expect(screen.queryByRole("button", { name: /^Move / })).toBeNull();
 });
 
@@ -345,9 +345,9 @@ it("Remove asks first, hides the scenario at once, Undo brings it back, and it g
   fireEvent.click(await screen.findByRole("button", { name: "Remove: Scenario Alpha" }));
   expect(screen.getByText("Remove this scenario?")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Remove" }));
-  await waitFor(() => expect(screen.queryByRole("button", { name: "Practise: Scenario Alpha" })).toBeNull());
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Practice: Scenario Alpha" })).toBeNull());
   fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-  expect(await screen.findByRole("button", { name: "Practise: Scenario Alpha" })).toBeTruthy();
+  expect(await screen.findByRole("button", { name: "Practice: Scenario Alpha" })).toBeTruthy();
   expect(await count("oral_save_operations")).toBe(1);
 
   vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -372,7 +372,7 @@ it.each([false, true])("only reports an actual earlier note draft (nonempty=%s)"
   localStorage.setItem("her-flight-deck.draft.notes.new", JSON.stringify({ title: "", body: nonempty ? "Earlier thought" : "" }));
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha", "New answer");
+  await practice("Scenario Alpha", "New answer");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   fireEvent.click(screen.getByRole("button", { name: "Write a note" }));
   const body = await screen.findByLabelText("Note") as HTMLTextAreaElement;
@@ -384,7 +384,7 @@ it.each([false, true])("only reports an actual earlier note draft (nonempty=%s)"
 it("separates the oral reveal sections and keeps comfortable checkbox targets", async () => {
   await seed("Scenario Alpha");
   mount();
-  await practise("Scenario Alpha", "My answer");
+  await practice("Scenario Alpha", "My answer");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   const heading = await screen.findByRole("heading", { name: "Your discussion points" });
   expect(heading.parentElement?.classList.contains("oral-practice__reveal")).toBe(true);
@@ -400,7 +400,7 @@ it.each(["Done", "Next scenario", "Write a note", "Close"])(
     await seed("Scenario Alpha");
     await seed("Scenario Bravo");
     mount();
-    await practise("Scenario Alpha", "My draft\n\nSecond paragraph");
+    await practice("Scenario Alpha", "My draft\n\nSecond paragraph");
     fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
     fireEvent.click(screen.getByLabelText(POINTS[1]!));
     db.beforeStatement = (sql) => {
@@ -433,7 +433,7 @@ it("waits for the insert and prevents two completion clicks or dismissal while s
   await seed("Scenario Alpha");
   await seed("Scenario Bravo");
   mount();
-  await practise("Scenario Alpha", "Kept once");
+  await practice("Scenario Alpha", "Kept once");
   fireEvent.click(screen.getByRole("button", { name: "Show discussion points" }));
   let release!: () => void;
   const pending = new Promise<void>((resolve) => { release = resolve; });
@@ -474,7 +474,7 @@ it("expands a multi-paragraph earlier answer and shows ticks from its frozen ver
     prompt: "Scenario Alpha revised", assumptions: "", points: ["Replacement point"], sourcePage: null, origin: "user",
   });
   mount();
-  await practise("Scenario Alpha revised");
+  await practice("Scenario Alpha revised");
   fireEvent.click(await screen.findByText("Earlier answers (1)"));
   const summary = screen.getByText("Opening line", { selector: "summary" });
   expect(screen.queryByText(/Second paragraph/)).toBeNull();

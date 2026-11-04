@@ -1256,7 +1256,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                 )}
               </Field>
 
-              <Field label="What did you practise?" full>
+              <Field label="What did you practice?" full>
                 {({ id }) => (
                   <TextArea
                     id={id}

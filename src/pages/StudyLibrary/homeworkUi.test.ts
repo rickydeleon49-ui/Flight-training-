@@ -130,7 +130,7 @@ it("saving_answer_on_unstarted_activity_does_not_reopen", () => {
     done.activities[0]!.record.state = "completed";
     const completed = validateHomeworkTransition(saved, homeworkOperation(saved, done, "complete"));
     const again = structuredClone(completed);
-    again.activities[0]!.record.answer = "Also practised go-arounds.";
+    again.activities[0]!.record.answer = "Also practiced go-arounds.";
     const changed = validateHomeworkTransition(completed, homeworkOperation(completed, again, "edit"));
     const fullHistory = [...history, ...[completed, changed].map((s, i) => ({ change_kind: i ? "edit" : "complete", revision: s.assignment.revision, snapshot_json: JSON.stringify(s) }))];
     expect(activityStateLabel(changed.activities[0]!.record.state, id, fullHistory)).toBe("Reopened");

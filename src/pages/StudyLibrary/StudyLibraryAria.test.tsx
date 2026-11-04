@@ -106,6 +106,8 @@ it("hides library and FAA import entries on the phone", async () => {
     expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
     expect(screen.queryAllByRole("button", { name: /Add PDF|Get from faa.gov|Get full handbook/ })).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Picture card from a photo" })).toBeTruthy();
+    // No empty "More" menu (it showed as a blank bar over the photo button).
+    expect(screen.queryByText("More")).toBeNull();
     const input = screen.getByTestId("photo-picture-input") as HTMLInputElement;
     expect(input.type).toBe("file");
     expect(input.accept).toBe("image/*");
@@ -118,6 +120,7 @@ it("does not offer a picture card from a photo on the Mac", async () => {
   try {
     open();
     expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();
+    expect(screen.getByText("More")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Picture card from a photo" })).toBeNull();
     expect(screen.queryByTestId("photo-picture-input")).toBeNull();
   } finally { spy.mockRestore(); }

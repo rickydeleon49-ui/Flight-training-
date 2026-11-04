@@ -15,7 +15,7 @@ export function oralScenarioTitle(prompt: string): string {
 
 /**
  * "Practice an oral question": the student's saved scenarios for this material, each
- * with Practise, and one Add a scenario. No grid, no totals.
+ * with Practice, and one Add a scenario. No grid, no totals.
  */
 export function OralScenariosCard({ material }: { material: StudyMaterial }) {
   const { repositories, dataRevision, mutate, deleteWithUndo, pendingDelete } = useAppData();
@@ -75,8 +75,8 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
                       {scenario.origin === "instructor" ? <span className="tiny muted"> · From my instructor</span> : null}
                     </p>
                     <div className="row row--wrap row--gap-2">
-                      <Button size="small" variant="primary" onClick={() => setPractising(at)} aria-label={`Practise: ${title}`}>
-                        Practise
+                      <Button size="small" variant="primary" onClick={() => setPractising(at)} aria-label={`Practice: ${title}`}>
+                        Practice
                       </Button>
                       <Button size="small" onClick={() => setEditing({ scenario })} aria-label={`Edit: ${title}`}>
                         Edit

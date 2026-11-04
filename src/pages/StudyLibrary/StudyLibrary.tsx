@@ -308,7 +308,7 @@ export function StudyLibrary() {
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
-            <details ref={moreMenu} className="library__actions-more">
+            {deviceCan().importFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
                 {deviceCan().importFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
@@ -318,7 +318,7 @@ export function StudyLibrary() {
                   Export handout or cards…
                 </Button> : null}
               </div>
-            </details>
+            </details> : null}
             {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}

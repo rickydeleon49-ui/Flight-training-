@@ -14,7 +14,7 @@ type Step = "answer" | "reveal";
 type FinishAction = "close" | "next" | "note";
 
 /**
- * Practise the student's saved scenarios one at a time. Once the student has shown the points,
+ * Practice the student's saved scenarios one at a time. Once the student has shown the points,
  * finishing (Done, Next scenario, Write a note or closing) keeps the student's answer and
  * ticks as one finished practice (ORAL-01d). "Earlier answers" lists them with
  * Delete one and Delete all. Questions and notes are still written only when
