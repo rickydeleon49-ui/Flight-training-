@@ -317,7 +317,7 @@ fn bad_device_id_is_refused() {
 
 #[test]
 fn error_messages_name_no_path_and_no_row() {
-    let secret_row = "synthetic-row-text";
+    let row_text = "synthetic-row-text";
     let all = [
         ChangeFileError::BadDeviceId,
         ChangeFileError::DuplicateSeq,
@@ -332,8 +332,11 @@ fn error_messages_name_no_path_and_no_row() {
     ];
     for e in all {
         let text = e.to_string();
-        for bad in ["/", "\\", ".json.gz", secret_row] {
-            assert!(!text.contains(bad), "{text:?} contains {bad:?}");
+        for bad in ["/", "\\", ".json.gz", row_text] {
+            assert!(
+                !text.contains(bad),
+                "an error message leaks a path or row text"
+            );
         }
     }
 }
