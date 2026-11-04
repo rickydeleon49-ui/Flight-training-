@@ -111,3 +111,14 @@ it("dates Claude's privacy summary and opens its official terms with Tauri", asy
   fireEvent.click(link);
   await waitFor(() => expect(mocks.openUrl).toHaveBeenCalledWith("https://www.anthropic.com/legal/commercial-terms"));
 });
+
+it.each(["gemini", "claude"] as const)("shows an unreadable Claude key without offering replacement (selected: %s)", async (selected) => {
+  vi.mocked(provider.providerStatus).mockResolvedValue({selected,providers:[
+    {id:"gemini",connected:false}, {id:"claude",connected:false,keyUnreadable:true}
+  ]});
+  open();
+  await screen.findByText(provider.SAVED_KEY_UNREADABLE);
+  expect(screen.queryByLabelText("Claude API key")).toBeNull();
+  expect(screen.queryByRole("button", {name:"Connect Claude"})).toBeNull();
+  expect(screen.queryByText(/Connect Claude to use study tools/)).toBeNull();
+});

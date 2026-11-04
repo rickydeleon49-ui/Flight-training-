@@ -8,6 +8,7 @@ use crate::provider::{
 use std::collections::VecDeque;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::atomic::AtomicBool;
 
 struct FakeClaude {
     base: String,

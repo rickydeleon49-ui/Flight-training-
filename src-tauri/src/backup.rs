@@ -9801,6 +9801,46 @@ mod tests {
         assert!(!allowed_archive_path(Path::new(DB_FILES[0]), true));
     }
 
+    /// PUB-R6: with keys in the secure store (and with a store failure that
+    /// falls back to the private files) no backup carries either key.
+    #[test]
+    fn no_backup_contains_a_provider_key_on_either_storage_path() {
+        use crate::provider::ProviderId;
+        use crate::secrets::fake::FakeStore;
+        const GEMINI: &str = "AIzaSySyntheticBackupProbeKey000";
+        const CLAUDE: &str = "sk-ant-synthetic-backup-probe-key";
+        for store_fails in [false, true] {
+            let root = scratch("backup-no-key");
+            let elsewhere = scratch("backup-no-key-out");
+            write_database(&root.join(DB_FILES[0]), "her real training record");
+            write_document(&root, "handbook.pdf", "chapter one");
+            let store = FakeStore::default();
+            store.fail_set.set(store_fails);
+            crate::secrets::save_key_with(&root, ProviderId::Gemini, Some(&store), GEMINI).unwrap();
+            crate::secrets::save_key_with(&root, ProviderId::Claude, Some(&store), CLAUDE).unwrap();
+            assert_eq!(root.join("gemini-key").is_file(), store_fails);
+
+            let archive = elsewhere.join("keys.hfdbackup");
+            write_complete_backup(&root, &archive, "0.6.7").unwrap();
+            let mut zip = ZipArchive::new(File::open(&archive).unwrap()).unwrap();
+            for index in 0..zip.len() {
+                let mut entry = zip.by_index(index).unwrap();
+                let name = entry.name().unwrap().into_owned();
+                assert!(!name.contains("-key"), "{name} looks like a key file");
+                let mut bytes = Vec::new();
+                entry.read_to_end(&mut bytes).unwrap();
+                for key in [GEMINI, CLAUDE] {
+                    assert!(
+                        !bytes.windows(key.len()).any(|w| w == key.as_bytes()),
+                        "{name} carries a provider key"
+                    );
+                }
+            }
+            std::fs::remove_dir_all(&root).unwrap();
+            std::fs::remove_dir_all(&elsewhere).unwrap();
+        }
+    }
+
     #[test]
     fn a_database_is_recognized_by_its_header() {
         assert!(is_sqlite_header(SQLITE_MAGIC));

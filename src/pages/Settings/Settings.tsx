@@ -2,7 +2,7 @@ import { isTauri } from "@/data";
 import { PROVIDER_TERMS } from "@/logic/providerTerms";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useLocation } from "react-router-dom";
-import type { ProviderStatus } from "@/services/provider";
+import { SAVED_KEY_UNREADABLE, type ProviderStatus } from "@/services/provider";
 import { ProviderControls } from "./ProviderControls";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -194,6 +194,9 @@ export function Settings() {
   const [lastBackup, setLastBackup] = useState<LastCompleteBackup | null>(null);
   const [providerConnection, setProviderConnection] = useState<ProviderStatus | null>(null);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
+  const selectedKeyUnreadable = providerConnection?.selected === "claude"
+    ? providerConnection.providers.some((p) => p.id === "claude" && p.keyUnreadable)
+    : gemini?.keyUnreadable;
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiBusy, setGeminiBusy] = useState(false);
   const [geminiNote, setGeminiNote] = useState<string | null>(null);
@@ -1239,7 +1242,7 @@ export function Settings() {
         </details>
 
         <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
-          <summary>Advanced{!gemini?.configured ? " · AI provider not set up" : ""}</summary>
+          <summary>Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !gemini?.configured ? " · AI provider not set up" : ""}</summary>
         {deviceCan().generate ? (
         <Card>
           <CardHeader
@@ -1261,7 +1264,9 @@ export function Settings() {
                 notes, flight logs, profile details, and other library files are never sent.
               </p>
 
-              {gemini?.configured ? (
+              {gemini?.keyUnreadable ? (
+                <p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>
+              ) : gemini?.configured ? (
                 <div className="gemini-connected">
                   <span className="gemini-connected__mark" aria-hidden="true">
                     <CheckIcon size={16} />

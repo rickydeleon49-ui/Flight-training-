@@ -1,15 +1,14 @@
 //! Gemini connection and document analysis.
 //!
-//! The user supplies her own Google AI Studio key. It is kept in a file beside
-//! her other data — see `secrets` for why it is not in the operating system's
-//! credential manager any more — and never returned to JavaScript.
+//! The user supplies her own Google AI Studio key. `secrets` keeps it in the
+//! operating system's secure store (or a private file where there is none) and
+//! it is never returned to JavaScript.
 
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
-use keyring::Entry;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -29,11 +28,6 @@ use crate::secrets;
 use crate::storage::app_root;
 use provider_impl::{describe_refusal, has_invalid_key_reason, is_lasting_quota};
 
-/// Where the key used to be kept. Retained only long enough to move an
-/// existing key across; once no one is upgrading from 0.3.0 or earlier this
-/// and the `keyring` dependency can go.
-const LEGACY_SERVICE: &str = "com.herflightdeck.app";
-const LEGACY_ACCOUNT: &str = "gemini-api-key";
 /// The model her key is checked against and her documents are sent to.
 ///
 /// Pinned deliberately rather than using a `-latest` alias: those are
@@ -501,13 +495,11 @@ impl Lost {
     }
 }
 
-/// Whether this run has already looked in the old credential manager.
-static LEGACY_CHECKED: AtomicBool = AtomicBool::new(false);
-
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeminiStatus {
     configured: bool,
+    key_unreadable: bool,
     /// The model her documents are sent to first, given her choice.
     model: &'static str,
     /// "standard" or "most-capable".
@@ -515,9 +507,18 @@ pub struct GeminiStatus {
 }
 
 impl GeminiStatus {
+    fn from_key_read(key: Result<Option<String>, String>, choice: ModelChoice) -> Self {
+        let (configured, key_unreadable) = secrets::key_read_status(key);
+        Self {
+            key_unreadable,
+            ..Self::new(configured, choice)
+        }
+    }
+
     fn new(configured: bool, choice: ModelChoice) -> Self {
         GeminiStatus {
             configured,
+            key_unreadable: false,
             model: choice.primary(),
             choice: choice.as_str(),
         }
@@ -554,41 +555,13 @@ pub struct GeneratedStudyAid {
     model: String,
 }
 
-/// Move a key out of the operating system's credential manager, once.
-///
-/// On macOS this usually fails after an update — an unsigned application is a
-/// different application to the keychain every time it is rebuilt, which is
-/// the whole reason the key moved. When the keychain does still release it,
-/// she is spared pasting the key one last time.
-fn migrate_legacy_key(root: &Path) -> Option<String> {
-    // Ask the credential manager at most once per run. On macOS an item it
-    // refuses can raise a system prompt, and reaching for it on every status
-    // check would pester her about a key she may have disconnected on purpose.
-    if LEGACY_CHECKED.swap(true, Ordering::SeqCst) {
-        return None;
-    }
-    let entry = Entry::new(LEGACY_SERVICE, LEGACY_ACCOUNT).ok()?;
-    let found = entry.get_password().ok()?;
-    let key = found.trim();
-    if key.is_empty() {
-        return None;
-    }
-    secrets::save_key(root, key).ok()?;
-    // Best effort: the same signature check that blocks reading blocks this.
-    let _ = entry.delete_credential();
-    Some(key.to_string())
-}
-
 /// The key she has connected, if there is one.
 ///
 /// `Ok(None)` means none is stored. That is deliberately distinct from an
 /// error, so a folder we cannot read never again looks like a key she never
 /// entered.
 pub(crate) fn current_key(root: &Path) -> Result<Option<String>, String> {
-    if let Some(key) = secrets::load_key(root)? {
-        return Ok(Some(key));
-    }
-    Ok(migrate_legacy_key(root))
+    secrets::load_key(root)
 }
 
 pub(crate) fn stored_key_for(root: &Path, provider: AnyProvider) -> Result<String, String> {
@@ -611,27 +584,25 @@ pub fn gemini_status(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus 
         if let Ok(root) = app_root(&app) {
             let provider = AnyProvider::selected(&root);
             if provider.id() == crate::provider::ProviderId::Claude {
-                return GeminiStatus {
-                    configured: secrets::load_key_for(&root, provider.id())
-                        .ok()
-                        .flatten()
-                        .is_some(),
-                    model: crate::provider::claude::MODEL,
-                    choice: "standard",
-                };
+                let mut status = GeminiStatus::from_key_read(
+                    secrets::load_key_for(&root, provider.id()),
+                    ModelChoice::Standard,
+                );
+                status.model = crate::provider::claude::MODEL;
+                return status;
             }
         }
     }
     let root = app_root(&app).ok();
-    let configured = root
+    let key = root
         .as_deref()
-        .map(|root| current_key(root).ok().flatten().is_some())
-        .unwrap_or(false);
+        .map(current_key)
+        .unwrap_or_else(|| Err("Application data unavailable".to_string()));
     let choice = root
         .as_deref()
         .map(load_choice)
         .unwrap_or(ModelChoice::MostCapable);
-    GeminiStatus::new(configured, choice)
+    GeminiStatus::from_key_read(key, choice)
 }
 
 /// Choose which model her documents go to. The key is untouched.
@@ -641,8 +612,7 @@ pub fn set_gemini_model(app: AppHandle, choice: String) -> Result<GeminiStatus, 
         .ok_or_else(|| "That is not one of the Gemini models this version offers.".to_string())?;
     let root = app_root(&app)?;
     save_choice(&root, choice)?;
-    let configured = current_key(&root).ok().flatten().is_some();
-    Ok(GeminiStatus::new(configured, choice))
+    Ok(GeminiStatus::from_key_read(current_key(&root), choice))
 }
 
 #[tauri::command]
@@ -667,12 +637,6 @@ pub async fn disconnect_gemini(app: AppHandle) -> Result<GeminiStatus, String> {
     let previous = current_key(&root).ok().flatten();
     secrets::forget_key(&root)?;
     end_prepared_context(previous).await;
-    // Clear anything still sitting in the old credential manager as well, so
-    // disconnecting really does leave no key behind. Best effort: on macOS an
-    // updated build is usually refused access to its predecessor's item.
-    if let Ok(entry) = Entry::new(LEGACY_SERVICE, LEGACY_ACCOUNT) {
-        let _ = entry.delete_credential();
-    }
     Ok(GeminiStatus::new(false, load_choice(&root)))
 }
 
@@ -2346,6 +2310,31 @@ enum RefusalContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn status_distinguishes_an_unreadable_store_from_an_absent_key() {
+        let root =
+            std::env::temp_dir().join(format!("hfd-gemini-status-r6b-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let store = crate::secrets::fake::FakeStore::default();
+        let id = crate::provider::ProviderId::Gemini;
+        crate::secrets::save_key_with(&root, id, Some(&store), "synthetic-secret").unwrap();
+        store.fail_get.set(true);
+        let status = GeminiStatus::from_key_read(
+            crate::secrets::load_key_with(&root, id, Some(&store), true),
+            ModelChoice::Standard,
+        );
+        assert!(!status.configured);
+        assert!(status.key_unreadable);
+        let json = serde_json::to_value(status).unwrap();
+        assert_eq!(json["keyUnreadable"], true);
+        assert!(!json.to_string().contains("synthetic-secret"));
+        assert_eq!(store.only_secret().as_deref(), Some("synthetic-secret"));
+        let absent = GeminiStatus::from_key_read(Ok(None), ModelChoice::Standard);
+        assert!(!absent.configured);
+        assert!(!absent.key_unreadable);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn only_googles_own_capacity_is_worth_waiting_out() {
