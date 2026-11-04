@@ -242,6 +242,7 @@ export interface SavedPhoneWork {
   fileName: string;
   savedAt: string;
   fileBytes: number;
+  keptFileName?: string | null;
 }
 
 export async function savePhoneWork(): Promise<SavedPhoneWork> {
@@ -249,8 +250,9 @@ export async function savePhoneWork(): Promise<SavedPhoneWork> {
   return invoke<SavedPhoneWork>("save_phone_work");
 }
 
-export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName">): string {
-  return `Saved in Files \u2192 Your Flight Deck \u2192 ${saved.fileName}.`;
+export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName" | "keptFileName">): string {
+  const base = `Saved in Files \u2192 Your Flight Deck \u2192 ${saved.fileName}.`;
+  return saved.keptFileName ? `${base} Your earlier copy is kept as ${saved.keptFileName}.` : base;
 }
 
 /** "12 card reviews and 1 practice test", or null when nothing is unsaved. */

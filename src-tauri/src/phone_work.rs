@@ -35,12 +35,23 @@ pub struct UnsavedPhoneWork {
 #[serde(rename_all = "camelCase")]
 struct BaselineFile {
     baseline_at: String,
+    /// When a Mac restore was last applied on this phone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    restored_at: Option<String>,
+    /// The `now` of the last successful phone save.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    copy_saved_at: Option<String>,
+}
+
+/// Missing, unreadable or malformed file means nothing is known.
+fn read_file(root: &Path) -> Option<BaselineFile> {
+    let text = std::fs::read_to_string(root.join(PHONE_WORK_FILE)).ok()?;
+    serde_json::from_str(&text).ok()
 }
 
 /// Missing, unreadable or malformed file means no baseline.
 fn read_baseline(root: &Path) -> Option<String> {
-    let text = std::fs::read_to_string(root.join(PHONE_WORK_FILE)).ok()?;
-    let file: BaselineFile = serde_json::from_str(&text).ok()?;
+    let file = read_file(root)?;
     if file.baseline_at.trim().is_empty() {
         None
     } else {
@@ -113,13 +124,20 @@ pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
             }
         }
     }
-    write_baseline(root, best)
+    let copy_saved_at = read_file(root).and_then(|f| f.copy_saved_at);
+    write_baseline(
+        root,
+        &BaselineFile {
+            baseline_at: best,
+            restored_at: Some(now.to_string()),
+            copy_saved_at,
+        },
+    )
 }
 
 /// Write the baseline file atomically (temp file, then rename).
-fn write_baseline(root: &Path, at: String) -> Result<(), String> {
-    let json =
-        serde_json::to_string(&BaselineFile { baseline_at: at }).map_err(|e| e.to_string())?;
+fn write_baseline(root: &Path, file: &BaselineFile) -> Result<(), String> {
+    let json = serde_json::to_string(file).map_err(|e| e.to_string())?;
     let writing = root.join(format!("{PHONE_WORK_FILE}.writing"));
     if let Err(e) = std::fs::write(&writing, json) {
         let _ = std::fs::remove_file(&writing);
@@ -149,7 +167,15 @@ pub(crate) fn record_saved_through_in(root: &Path, now: &str) -> Result<(), Stri
             best = current;
         }
     }
-    write_baseline(root, best)
+    let restored_at = read_file(root).and_then(|f| f.restored_at);
+    write_baseline(
+        root,
+        &BaselineFile {
+            baseline_at: best,
+            restored_at,
+            copy_saved_at: Some(now.to_string()),
+        },
+    )
 }
 
 fn count_newer(
@@ -272,6 +298,76 @@ pub struct SavedPhoneWork {
     pub file_name: String,
     pub saved_at: String,
     pub file_bytes: u64,
+    /// Set when an earlier copy was kept under a dated name.
+    pub kept_file_name: Option<String>,
+}
+
+const KEPT_NOT_REPLACED: &str =
+    "Your earlier phone copy couldn't be kept, so nothing was replaced. Try again.";
+
+const MONTHS: [&str; 12] = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/// "4 Nov 2026" from an RFC3339 UTC timestamp.
+fn day_label(at: &str) -> Result<String, String> {
+    let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
+    let (y, m, d): (Option<String>, Option<String>, Option<String>) = connection
+        .query_row(
+            "SELECT strftime('%Y', ?1), strftime('%m', ?1), strftime('%d', ?1)",
+            [at],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .map_err(|e| e.to_string())?;
+    let (y, m, d) = (y.ok_or("date")?, m.ok_or("date")?, d.ok_or("date")?);
+    let month: usize = m.parse().map_err(|_| "date".to_string())?;
+    let day: u32 = d.parse().map_err(|_| "date".to_string())?;
+    let name = MONTHS.get(month.wrapping_sub(1)).ok_or("date")?;
+    Ok(format!("{day} {name} {y}"))
+}
+
+/// True when the phone copy on disk predates the last Mac restore.
+fn copy_predates_restore(file: &BaselineFile) -> Result<bool, String> {
+    let Some(restored) = file.restored_at.as_deref() else {
+        return Ok(false);
+    };
+    let Some(saved) = file.copy_saved_at.as_deref() else {
+        return Ok(true);
+    };
+    let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
+    let older: Option<i64> = connection
+        .query_row(
+            "SELECT julianday(?1) < julianday(?2)",
+            [saved, restored],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    // An unreadable saved time cannot prove the copy is current: keep it.
+    Ok(older.unwrap_or(1) == 1)
+}
+
+/// Rename the existing copy to a dated name; nothing else is touched.
+fn keep_earlier_copy(
+    documents_dir: &Path,
+    destination: &Path,
+    restored_at: &str,
+) -> Result<String, String> {
+    let label = day_label(restored_at).map_err(|_| KEPT_NOT_REPLACED.to_string())?;
+    for n in 1..=99u32 {
+        let name = if n == 1 {
+            format!("My phone work (before {label}).hfdbackup")
+        } else {
+            format!("My phone work (before {label}) {n}.hfdbackup")
+        };
+        let target = documents_dir.join(&name);
+        if target.symlink_metadata().is_ok() {
+            continue;
+        }
+        return std::fs::rename(destination, &target)
+            .map(|_| name)
+            .map_err(|_| KEPT_NOT_REPLACED.to_string());
+    }
+    Err(KEPT_NOT_REPLACED.to_string())
 }
 
 /// Copy everything on the phone into `documents_dir`, then (only then) note it
@@ -285,6 +381,23 @@ pub(crate) fn save_phone_work_in(
     std::fs::create_dir_all(documents_dir)
         .map_err(|e| format!("Could not open this phone's Files folder: {e}"))?;
     let destination = documents_dir.join(PHONE_WORK_ARCHIVE);
+    let mut kept_file_name = None;
+    if destination.symlink_metadata().is_ok() {
+        match read_file(root) {
+            Some(file) => {
+                if copy_predates_restore(&file).map_err(|_| KEPT_NOT_REPLACED.to_string())? {
+                    if let Some(restored) = file.restored_at.as_deref() {
+                        kept_file_name =
+                            Some(keep_earlier_copy(documents_dir, &destination, restored)?);
+                    }
+                }
+            }
+            // Nothing known about the copy on disk: it may hold work found nowhere else, so keep it.
+            None => {
+                kept_file_name = Some(keep_earlier_copy(documents_dir, &destination, now)?);
+            }
+        }
+    }
     let info = crate::backup::create_consistent_complete_backup_with_retry(
         root,
         &destination,
@@ -298,6 +411,7 @@ pub(crate) fn save_phone_work_in(
         file_name: PHONE_WORK_ARCHIVE.to_string(),
         saved_at: now.to_string(),
         file_bytes: info.file_bytes,
+        kept_file_name,
     })
 }
 
