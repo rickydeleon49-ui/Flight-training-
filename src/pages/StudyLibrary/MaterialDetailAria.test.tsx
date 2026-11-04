@@ -149,7 +149,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
   const platform = await import("@/services/platform");
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     editStudyMaterial: !phone, sharePrint: !phone, importFiles: !phone, geminiKey: true, generate: !phone, revealFiles: !phone,
-    sendToIphone: false, getStudyMaterial: phone, pictureFromPhoto: phone, renderPdfPage: !phone,
+    sendToIphone: false, getStudyMaterial: phone, savePhoneWork: phone, pictureFromPhoto: phone, renderPdfPage: !phone,
   });
   vi.spyOn(documents, "openDocument").mockRejectedValue(new Error("Synthetic open failure"));
   await open("?tab=more");
@@ -172,7 +172,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
 
 it("hides all generation and missing-file import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, pictureFromPhoto: true, renderPdfPage: false });
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
   vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.mocked(documents.documentExists).mockResolvedValue(false);
   await open();
@@ -188,7 +188,7 @@ it.each([true, false])("saved guide wording and editing/sharing follow device ca
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     importFiles: !phone, geminiKey: true, generate: !phone, revealFiles: !phone,
     editStudyMaterial: !phone, sharePrint: !phone, renderPdfPage: !phone,
-    sendToIphone: false, getStudyMaterial: phone, pictureFromPhoto: phone,
+    sendToIphone: false, getStudyMaterial: phone, savePhoneWork: phone, pictureFromPhoto: phone,
   });
   await createRepositories(db).documents.saveAiStudySet({
     sourceMaterialId: "tips", title: "Synthetic guide", summary: "Saved synthetic summary",

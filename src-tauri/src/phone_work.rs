@@ -8,7 +8,7 @@ use std::path::Path;
 
 use rusqlite::{Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 pub(crate) const PHONE_WORK_FILE: &str = "phone-work.json";
 const DB_FILE: &str = "her-flight-deck.db";
@@ -113,8 +113,13 @@ pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
             }
         }
     }
+    write_baseline(root, best)
+}
+
+/// Write the baseline file atomically (temp file, then rename).
+fn write_baseline(root: &Path, at: String) -> Result<(), String> {
     let json =
-        serde_json::to_string(&BaselineFile { baseline_at: best }).map_err(|e| e.to_string())?;
+        serde_json::to_string(&BaselineFile { baseline_at: at }).map_err(|e| e.to_string())?;
     let writing = root.join(format!("{PHONE_WORK_FILE}.writing"));
     if let Err(e) = std::fs::write(&writing, json) {
         let _ = std::fs::remove_file(&writing);
@@ -124,6 +129,27 @@ pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
         let _ = std::fs::remove_file(&writing);
         format!("Could not record the phone baseline: {e}")
     })
+}
+
+/// After a phone save: the baseline becomes `now` (taken before the snapshot
+/// started) unless the current baseline is already later. Never looks at the
+/// rows, so work written during the snapshot stays counted as unsaved.
+pub(crate) fn record_saved_through_in(root: &Path, now: &str) -> Result<(), String> {
+    let mut best = now.to_string();
+    if let Some(current) = read_baseline(root) {
+        let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
+        let later: i64 = connection
+            .query_row(
+                "SELECT julianday(?1) > julianday(?2)",
+                [&current, &best],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+        if later == 1 {
+            best = current;
+        }
+    }
+    write_baseline(root, best)
 }
 
 fn count_newer(
@@ -222,6 +248,85 @@ pub async fn unsaved_phone_work(app: AppHandle) -> Result<UnsavedPhoneWork, Stri
     tauri::async_runtime::spawn_blocking(move || unsaved_phone_work_in(&root))
         .await
         .map_err(|e| e.to_string())?
+}
+
+/// The current time as RFC3339 UTC, from SQLite so it compares through `julianday`.
+pub(crate) fn now_utc() -> Result<String, String> {
+    Connection::open_in_memory()
+        .and_then(|c| {
+            c.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |r| {
+                r.get::<_, String>(0)
+            })
+        })
+        .map_err(|e| e.to_string())
+}
+
+pub(crate) const PHONE_WORK_ARCHIVE: &str = "My phone work.hfdbackup";
+
+const REFUSE_PHONE_COPY: &str =
+    "This is your iPhone's copy \u{2014} it can't replace what's on the Mac.";
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedPhoneWork {
+    pub file_name: String,
+    pub saved_at: String,
+    pub file_bytes: u64,
+}
+
+/// Copy everything on the phone into `documents_dir`, then (only then) note it
+/// as saved. `now` must be taken before this is called.
+pub(crate) fn save_phone_work_in(
+    root: &Path,
+    documents_dir: &Path,
+    app_version: &str,
+    now: &str,
+) -> Result<SavedPhoneWork, String> {
+    std::fs::create_dir_all(documents_dir)
+        .map_err(|e| format!("Could not open this phone's Files folder: {e}"))?;
+    let destination = documents_dir.join(PHONE_WORK_ARCHIVE);
+    let info = crate::backup::create_consistent_complete_backup_with_retry(
+        root,
+        &destination,
+        app_version,
+    )?;
+    record_saved_through_in(root, now).map_err(|_| {
+        "Your phone work was copied, but this phone couldn't note it as saved. Try again."
+            .to_string()
+    })?;
+    Ok(SavedPhoneWork {
+        file_name: PHONE_WORK_ARCHIVE.to_string(),
+        saved_at: now.to_string(),
+        file_bytes: info.file_bytes,
+    })
+}
+
+/// The Mac never takes the iPhone's copy as its own.
+pub(crate) fn refuse_phone_copy(platform: Option<&str>, phone: bool) -> Result<(), String> {
+    if !phone && platform == Some("ios") {
+        Err(REFUSE_PHONE_COPY.to_string())
+    } else {
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn save_phone_work(app: AppHandle) -> Result<SavedPhoneWork, String> {
+    if !cfg!(target_os = "ios") {
+        return Err("Only the phone saves its work this way.".into());
+    }
+    let root = crate::storage::app_root(&app)?;
+    let documents = app
+        .path()
+        .document_dir()
+        .map_err(|e| format!("Could not find this phone's Files folder: {e}"))?;
+    let version = app.package_info().version.to_string();
+    let now = now_utc()?;
+    tauri::async_runtime::spawn_blocking(move || {
+        save_phone_work_in(&root, &documents, &version, &now)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[cfg(test)]

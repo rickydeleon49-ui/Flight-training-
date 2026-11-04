@@ -98,6 +98,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { isMacOS, isWindowsOS } from "@/lib/platform";
 
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
+import { SavePhoneWorkCard } from "./SavePhoneWorkCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
 import { deviceCan, isIOS } from "@/services/platform";
 
@@ -689,6 +690,7 @@ export function Settings() {
       <div className="settings-layout stack stack--5">
         {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
         {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
+        {deviceCan().savePhoneWork ? <SavePhoneWorkCard /> : null}
 
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />

@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  chooseCompleteBackup: vi.fn(), importPickedBackup: vi.fn(), phoneActivitySummary: vi.fn(), unsavedPhoneWork: vi.fn(),
+  chooseCompleteBackup: vi.fn(), importPickedBackup: vi.fn(), phoneActivitySummary: vi.fn(), unsavedPhoneWork: vi.fn(), savePhoneWork: vi.fn(),
   discardIncomingBackup: vi.fn(), stageCompleteRestore: vi.fn(), exitForRestore: vi.fn(),
 }));
 vi.mock("@/services/backups", async (original) => ({
@@ -188,13 +188,44 @@ describe("GetStudyMaterialCard", () => {
       fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
       await screen.findByText(/From your Mac/);
       expect(screen.getByText(BLOCKED)).toBeTruthy();
-      expect(screen.getByText("Save my phone work is coming in the next update.")).toBeTruthy();
+      expect(screen.queryByText(/coming in the next update/)).toBeNull();
+      expect(screen.getByRole("button", { name: "Save my phone work first" })).toBeTruthy();
       expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
       expect(screen.queryByText(/will be replaced/)).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Not now" }));
       await waitFor(() => expect(screen.queryByText(/From your Mac/)).toBeNull());
       expect(mocks.discardIncomingBackup).toHaveBeenCalledOnce();
       expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
+    });
+
+    const savedFile = { fileName: "My phone work.hfdbackup", savedAt: "2026-11-04T10:00:00.000Z", fileBytes: 10 };
+    async function openBlocked() {
+      mocks.unsavedPhoneWork.mockResolvedValueOnce(unsaved);
+      render(<GetStudyMaterialCard />);
+      fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+      await screen.findByText(/From your Mac/);
+    }
+
+    it("saving first unblocks Replace but does not restore", async () => {
+      await openBlocked();
+      mocks.savePhoneWork.mockResolvedValue(savedFile);
+      mocks.unsavedPhoneWork.mockResolvedValue(none);
+      fireEvent.click(screen.getByRole("button", { name: "Save my phone work first" }));
+      await screen.findByRole("button", { name: "Replace what's on this phone" });
+      expect(mocks.savePhoneWork).toHaveBeenCalledOnce();
+      expect(screen.getByRole("status").textContent).toBe("Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup.");
+      expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
+    });
+
+    it("a failed save stays blocked and Not now still discards", async () => {
+      await openBlocked();
+      mocks.savePhoneWork.mockRejectedValue("Your phone work could not be saved.");
+      fireEvent.click(screen.getByRole("button", { name: "Save my phone work first" }));
+      expect((await screen.findByRole("alert")).textContent).toContain("could not be saved");
+      expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+      await waitFor(() => expect(screen.queryByText(/From your Mac/)).toBeNull());
+      expect(mocks.discardIncomingBackup).toHaveBeenCalledOnce();
     });
 
     it("on iOS with nothing unsaved keeps Replace", async () => {

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Card, CardBody, CardHeader, Dialog, WorkStatus, useElapsed } from "@/components/ui";
 import {
   backupErrorMessage, chooseCompleteBackup, discardIncomingBackup, exitForRestore,
-  formatBackupDate, formatBytes, importPickedBackup, phoneActivitySummary, stageCompleteRestore,
+  formatBackupDate, formatBytes, importPickedBackup, phoneActivitySummary, savedPhoneWorkSentence, savePhoneWork, stageCompleteRestore,
   unsavedPhoneWork, unsavedPhoneWorkSentence, unsavedPhoneWorkTotal,
   type ActivitySummary, type CompleteBackupInfo, type UnsavedPhoneWork,
 } from "@/services/backups";
@@ -31,6 +31,7 @@ export function GetStudyMaterialCard() {
   const ios = isIOS();
   const [staged, setStaged] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [savedLine, setSavedLine] = useState<string | null>(null);
 
   const run = async (action: () => Promise<void>, phase: "opening" | "copying" | null = null) => {
     if (locked.current) return;
@@ -80,6 +81,13 @@ export function GetStudyMaterialCard() {
   const cancel = () => run(async () => {
     await discardIncomingBackup();
     setPreview(null);
+    setSavedLine(null);
+  });
+  const saveFirst = () => run(async () => {
+    const saved = await savePhoneWork();
+    const unsaved = await unsavedPhoneWork();
+    setPreview((p) => p && { ...p, unsaved });
+    setSavedLine(savedPhoneWorkSentence(saved));
   });
   const blockedSentence = ios && preview
     ? (preview.unsaved ? unsavedPhoneWorkSentence(preview.unsaved) : null)
@@ -118,15 +126,16 @@ export function GetStudyMaterialCard() {
         narrow
         footer={<>
           <Button disabled={busy} onClick={cancel}>Not now</Button>
+          {blocked ? <Button variant="primary" disabled={busy} onClick={saveFirst}>Save my phone work first</Button> : null}
           {blocked ? null : <Button variant="danger" disabled={busy} onClick={confirm}>Replace what's on this phone</Button>}
         </>}
       >
         {preview ? <>
           <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {preview.info.files} files</p>
-          {blocked ? <>
-            {blockedSentence ? <p>{blockedSentence}</p> : null}
-            <p className="muted">Save my phone work is coming in the next update.</p>
-          </> : <p>{activitySentence(preview.activity)}</p>}
+          {savedLine ? <p role="status">{savedLine}</p> : null}
+          {blocked
+            ? (blockedSentence ? <p>{blockedSentence}</p> : null)
+            : <p>{activitySentence(preview.activity)}</p>}
         </> : null}
         {progress === "copying" ? <WorkStatus className="" phase="Copying your study material… this can take a minute." elapsed={elapsed} /> : null}
         {problem ? <p role="alert">{problem}</p> : null}

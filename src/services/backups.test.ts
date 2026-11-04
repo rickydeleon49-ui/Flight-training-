@@ -28,7 +28,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 
 vi.mock("./platform", () => ({ isIOS: mocks.isIOS }));
 
-import { chooseCompleteBackup, chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary, unsavedPhoneWork } from "./backups";
+import { chooseCompleteBackup, chooseCompleteBackupDestination, dataDirectory, openDataFolder, importPickedBackup, discardIncomingBackup, exitForRestore, phoneActivitySummary, unsavedPhoneWork, savePhoneWork } from "./backups";
 
 beforeEach(() => {
   mocks.isTauri.mockReturnValue(false);
@@ -139,7 +139,16 @@ describe("phone import plumbing", () => {
     expect(mocks.invoke).toHaveBeenCalledWith("unsaved_phone_work");
   });
 
+  it("saves phone work through the app", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    const saved = { fileName: "My phone work.hfdbackup", savedAt: "2026-11-04T10:00:00.000Z", fileBytes: 10 };
+    mocks.invoke.mockResolvedValueOnce(saved);
+    expect(await savePhoneWork()).toBe(saved);
+    expect(mocks.invoke).toHaveBeenCalledWith("save_phone_work");
+  });
+
   it("never invokes phone commands outside Tauri, including exit", async () => {
+    await expect(savePhoneWork()).rejects.toThrow();
     await expect(importPickedBackup("/picked/copy.hfdbackup")).rejects.toThrow("Restore needs the application.");
     await discardIncomingBackup();
     await expect(exitForRestore()).rejects.toThrow("Restore needs the application.");
