@@ -87,7 +87,7 @@ export function questionRepository(db: SqlDatabase) {
       if (changes.status && changes.status !== previous.status) {
         next.answeredAt = changes.status === "answered" ? nowIso() : null;
       }
-      // A deliberate relink replaces the old provenance: once she chooses a
+      // A deliberate relink replaces the old provenance: once the student chooses a
       // different (or no) record, "the previous source was deleted" no longer applies.
       const relinked = (key: "eventId" | "materialId" | "journalId") =>
         changes[key] !== undefined && changes[key] !== previous[key] ? 1 : 0;

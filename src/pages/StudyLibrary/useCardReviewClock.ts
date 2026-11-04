@@ -4,7 +4,7 @@
  * An Again card becomes due at an exact instant while the material can stay
  * open. The panel recomputes its summary from the injected clock on every
  * render, so all this hook does is cause one render when that instant
- * arrives, and another when she comes back to the window:
+ * arrives, and another when the student comes back to the window:
  *
  * - One owned timer, aimed at the earliest future Again instant among the
  *   current, reviewable cards of the latest authoritative snapshot. Paused,

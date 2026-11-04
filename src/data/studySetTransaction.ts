@@ -1,12 +1,12 @@
 import { guideCardRecovery, type RecoveryHistoryRow } from "./guideCardRecovery";
 /**
- * Study sets she makes or edits herself (OFFLINE-03a): one atomic save that
+ * Study sets the student makes or edits themselves (OFFLINE-03a): one atomic save that
  * keeps the whole previous set in `study_set_history` before anything
  * overwrites it. Native twin: `src-tauri/src/study_sets.rs`; the two accept
  * and refuse the same operations, with the same codes and messages.
  *
  * The operation names the set it expects to replace, column for column, so
- * a change made elsewhere since she opened it is refused rather than lost.
+ * a change made elsewhere since the student opened it is refused rather than lost.
  * Its id becomes the history row's id, so a retry after an uncertain answer
  * is recognised instead of applied twice.
  */
@@ -100,7 +100,7 @@ export interface StudySetSaveOperation {
   operationId: string;
   materialId: string;
   reason: StudySetSaveReason;
-  /** The set she has open, exactly as stored; null when there is none. */
+  /** The set the student has open, exactly as stored; null when there is none. */
   expected: StoredSetRow | null;
   /** The set to store; null removes it. */
   next: NextStudySet | null;
@@ -303,7 +303,7 @@ export function decodeStudySetOperation(value: Json): StudySetSaveOperation {
   const expected = value.expected === null ? null : decodeStoredRow(value.expected);
   const next = value.next === null ? null : validateNextSet(value.next);
   // Creating replaces nothing; removing leaves nothing; everything else
-  // replaces a set she has open with another.
+  // replaces a set the student has open with another.
   const consistent =
     reason === "create" ? expected === null && next !== null : reason === "remove" ? expected !== null && next === null : expected !== null && next !== null;
   if (!consistent) invalid();

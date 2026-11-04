@@ -57,7 +57,7 @@ export function faaReferenceDraft(reference: FaaReference, id: string, edition: 
 }
 
 export function faaEditionMessage(reference: { edition: string }, note: Pick<FaaReferenceNote, "edition">): string {
-  // The row already shows the listed edition; add hers only when she typed a different one.
+  // The row already shows the listed edition; add theirs only when the student typed a different one.
   return note.edition && note.edition !== reference.edition ? `Your copy: ${note.edition}` : "";
 }
 

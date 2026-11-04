@@ -164,7 +164,7 @@ export class CardReviewError extends Error {
 }
 
 /* ------------------------------------------------------------------ */
-/* Study sets she makes or edits (OFFLINE-03a)                         */
+/* Study sets the student makes or edits (OFFLINE-03a)                         */
 /* ------------------------------------------------------------------ */
 
 export type StudySetErrorCode =

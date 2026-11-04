@@ -170,7 +170,7 @@ export type CardReadState =
   | { phase: "failed" }
   | { phase: "ready"; snapshot: CardReviewSnapshot };
 
-/** What the last write or refusal means for her, in plain terms. */
+/** What the last write or refusal means for the student, in plain terms. */
 export type CardReviewNotice =
   | { kind: "saved"; text: string }
   | { kind: "reset-done" }
@@ -708,7 +708,7 @@ export function useCardReview(
 
   const readState: CardReadState = read.materialId === materialId ? read : { phase: "loading" };
   // Display only: render again when a shown Again card becomes due, or when
-  // she returns to the window, so the summary follows the clock.
+  // the student returns to the window, so the summary follows the clock.
   useCardReviewClock(readState.phase === "ready" ? readState.snapshot : null, clock, JSON.stringify([materialId ?? null, options.contentKey ?? null]));
   return {
     read: readState,

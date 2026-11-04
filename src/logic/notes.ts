@@ -2,7 +2,7 @@
  * Reading a free-form note back.
  *
  * A note is written without deciding anything first, so the title is often
- * blank and the text is often one line. These turn whatever she typed into
+ * blank and the text is often one line. These turn whatever the student typed into
  * something a list, a search result, and an undo bar can all show.
  */
 import type { IsoDate, Note } from "@/domain/types";
@@ -17,7 +17,7 @@ const firstLine = (body: string): string =>
 /**
  * What to call this note in a list.
  *
- * Her title if she wrote one, otherwise the first line she typed, which is
+ * The student's title if the student wrote one, otherwise the first line the student typed, which is
  * how a note usually starts anyway.
  */
 export function noteHeading(note: Note): string {
@@ -41,8 +41,8 @@ export function notePreview(note: Note): string {
 /**
  * Notes matching `query`, in the order they were given.
  *
- * Title and text both match, because she will look for a note by whatever
- * she happens to remember of it.
+ * Title and text both match, because the student will look for a note by whatever
+ * the student happens to remember of it.
  */
 export function searchNotes(notes: Note[], query: string): Note[] {
   const trimmed = query.trim().toLowerCase();

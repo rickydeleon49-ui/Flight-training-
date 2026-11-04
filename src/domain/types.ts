@@ -376,11 +376,11 @@ export interface StoredDocumentFingerprint {
   sha256: string | null;
 }
 
-/** Who wrote an item she made or edited herself (OFFLINE-03). */
+/** Who wrote an item the student made or edited themselves (OFFLINE-03). */
 export type StudyItemOrigin = "user" | "instructor";
 
 /**
- * Identity carried by a section or card once she has edited its set: a
+ * Identity carried by a section or card once the student has edited its set: a
  * stable id, who wrote it, and the item a correction replaces. Generated and
  * imported items have no origin; legacy items have no id until first edited.
  */
@@ -405,7 +405,7 @@ export interface StudyFlashcard extends StudyItemIdentity {
 }
 
 /**
- * Something she deleted, corrected or rewrote, kept as a fingerprint so a
+ * Something the student deleted, corrected or rewrote, kept as a fingerprint so a
  * regenerated set can't quietly bring it back. The text itself is in history.
  */
 export interface RetiredStudyItem {
@@ -423,22 +423,22 @@ export interface RetiredStudyItem {
  */
 export type StudyAidProvider = "gemini" | "import";
 
-/** A study set's base origin: generated, imported, or written entirely by her. */
+/** A study set's base origin: generated, imported, or written entirely by the student's. */
 export type StudySetProvider = StudyAidProvider | "manual";
 
-/** AI output, an imported packet or her own set, saved locally and tied to its material. */
+/** AI output, an imported packet or the student's own set, saved locally and tied to its material. */
 export interface AiStudySet {
   summaryPdfProvenance?: import("@/data/pdfKitSources").PdfItemProvenance;
   sourceMaterialId: Id;
   title: string;
   summary: string;
-  /** Who wrote the summary, when she wrote or corrected it. */
+  /** Who wrote the summary, when the student wrote or corrected it. */
   summaryOrigin?: StudyItemOrigin | null;
   sections: StudyGuideSection[];
   flashcards: StudyFlashcard[];
   sourceNotes: string;
   provider: StudySetProvider;
-  /** What she deleted, corrected or rewrote (OFFLINE-03). */
+  /** What the student deleted, corrected or rewrote (OFFLINE-03). */
   retired?: RetiredStudyItem[];
   /** The Gemini model name; "" for imported content. */
   model: string;
@@ -534,7 +534,7 @@ export interface PracticeSaveOperation {
   operationId: string;
   sourceMaterialId: string;
   reason: PracticeSaveReason;
-  /** The test she has open, exactly as stored; null when there is none. */
+  /** The test the student has open, exactly as stored; null when there is none. */
   expected: PracticeSnapshot | null;
   /** The state to store; null removes it. */
   next: PracticeNext | null;
@@ -832,7 +832,7 @@ export interface CardReviewSnapshotItem {
   front: string;
   back: string;
   sourcePage: number | null;
-  /** Who wrote this card when she wrote or corrected it (OFFLINE-03). */
+  /** Who wrote this card when the student wrote or corrected it (OFFLINE-03). */
   origin?: StudyItemOrigin;
 }
 
@@ -1162,10 +1162,10 @@ export interface JournalEntry {
 /* ------------------------------------------------------------------ */
 
 /**
- * A note she wrote for no reason but wanting to keep it.
+ * A note the student wrote for no reason but wanting to keep it.
  *
  * Everywhere else a thought can be typed is attached to something — a lesson,
- * a material, a goal. This is the one that is not: a title she can leave
+ * a material, a goal. This is the one that is not: a title the student can leave
  * blank, the text, and a pin for the handful worth keeping at the top.
  */
 export interface Note {
@@ -1297,19 +1297,19 @@ export interface Profile {
   currentFocus: string;
   currentMilestoneId: Id | null;
 
-  /* Where and with whom she trains. These pre-fill new lessons. */
+  /* Where and with whom the student trains. These pre-fill new lessons. */
   flightSchool: string;
   instructorName: string;
   homeAirport: string;
   aircraftType: string;
   trainingStartedOn: IsoDate | null;
 
-  /** Her own reminder. The certificate itself remains the authority. */
+  /** The student's own reminder. The certificate itself remains the authority. */
   medicalExpiry: IsoDate | null;
 
-  /** Why she started. Hers to write, shown back to her, never analysed. */
+  /** Why the student started. Theirs to write, shown back to the student, never analysed. */
   whyNote: string;
-  /** A downscaled data URL, or null. Lives only in her private database. */
+  /** A downscaled data URL, or null. Lives only in the student's private database. */
   photo: string | null;
 
   accentColor: AccentColor;
@@ -1423,7 +1423,7 @@ export interface ToolkitState {
 export type SkillAttribution = "self_report" | "instructor_transcribed";
 /** The debrief field an observation was noted from, fingerprinted and never copied (M3-D4). */
 export type SkillSourceField = "instructor_feedback" | "went_well" | "was_difficult" | "practiced" | "none";
-/** Her own label. Evidence never sets it, and there is no "proficient" or "ready" (M3-D2). */
+/** The student's own label. Evidence never sets it, and there is no "proficient" or "ready" (M3-D2). */
 export type SkillStatusLabel = "learning" | "practicing" | "needs_review";
 export type SkillOrigin = "builtin" | "custom";
 
@@ -1557,10 +1557,10 @@ export interface SkillSummary {
   origin: SkillOrigin;
   retired: boolean;
   revision: number;
-  /** Her own label, or null when never set or cleared. Evidence never sets it. */
+  /** The student's own label, or null when never set or cleared. Evidence never sets it. */
   status: SkillStatusLabel | null;
   statusSequence: number;
-  /** Her own 1-5 rating, separate from status. */
+  /** The student's own 1-5 rating, separate from status. */
   confidence: number | null;
   confidenceSequence: number;
   observationCount: number;
@@ -1646,7 +1646,7 @@ export interface InspectedNavigationIdentity extends NavigationIdentity {
 export type ReadingStateStatus = "active" | "unverified" | "drifted";
 export type BookmarkStatus = "verified" | "unverified" | "drifted";
 
-/** The last page she asked to open, kept apart from an explicit read confirmation. */
+/** The last page the student asked to open, kept apart from an explicit read confirmation. */
 export interface NavigationReadingState {
   materialId: Id;
   lastRequestedPage: number;

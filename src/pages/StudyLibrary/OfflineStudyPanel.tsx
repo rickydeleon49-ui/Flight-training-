@@ -77,7 +77,7 @@ export function OfflineStudyPanel({ material, focusRequested = false }: { materi
   }, [enabled, wording?.settling, readiness, refresh]);
 
   // Wait for the async status before moving to the actual reading control.
-  // Polling and rerenders must not keep taking focus from her.
+  // Polling and rerenders must not keep taking focus from the student.
   useEffect(() => {
     if (!focusRequested) focused.current = false;
     if (!focusRequested || focused.current || readiness?.state === "checking" || !panel.current) return;

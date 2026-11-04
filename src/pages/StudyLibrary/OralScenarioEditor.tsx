@@ -80,7 +80,7 @@ export function OralScenarioEditor({
           : repos.oralScenarios.create(material.id, content),
       );
     } finally {
-      // Released either way: on a failed save the dialog stays open so she can retry.
+      // Released either way: on a failed save the dialog stays open so the student can retry.
       savingRef.current = false;
       setSaving(false);
     }

@@ -337,8 +337,8 @@ function sameTerms(a: readonly string[], b: readonly string[]): boolean {
 /**
  * The provenance transitions one save may express. An instructor correction
  * is sticky: once recorded it can never be relabelled or dropped. Generated
- * or imported content may become hers (`user`) or an instructor correction,
- * and her own question may later become an instructor correction — promotion
+ * or imported content may become theirs (`user`) or an instructor correction,
+ * and the student's own question may later become an instructor correction — promotion
  * only, never a downgrade or a silent drop.
  */
 export function allowsOriginTransition(
@@ -357,7 +357,7 @@ export function allowsOriginTransition(
  *   records only ever grow;
  * - a question an edit/correct removes retires its exact earlier wording
  *   (`corrected` when a replacement lineage names it, `deleted` otherwise);
- *   a regeneration may only drop her own questions (origin-bearing) when
+ *   a regeneration may only drop the student's own questions (origin-bearing) when
  *   their exact wording is retired the same way;
  * - an identity whose wording an edit/correct changes must carry the exact
  *   computed `corrected` record for the earlier wording — an older record
@@ -411,7 +411,7 @@ export async function validateProtection(
         practiceRetirementRecord(after, "corrected"),
       ]);
       if (oldRecord.textKey !== newRecord.textKey || !sameTerms(oldRecord.terms, newRecord.terms)) {
-        // Her wording changed, so the exact earlier wording must be retired.
+        // The student's wording changed, so the exact earlier wording must be retired.
         if (!(await hasExactRecord(before, "corrected"))) refuse("INVALID_ARGUMENT");
       }
     }
@@ -942,7 +942,7 @@ async function applyOperation(
       throw error;
     }
   }
-  // Only her own edits carry a source forward; a regenerated question never inherits one.
+  // Only the student's own edits carry a source forward; a regenerated question never inherits one.
   const carry = operation.reason === "edit" || operation.reason === "correct";
   await carryQuestionSources(run, query, operation.sourceMaterialId, carry, current?.questions ?? [], next.questions, itemIds);
   const [mirrorRow] = await query("SELECT generated_at FROM practice_tests WHERE source_material_id = ?", [operation.sourceMaterialId]);

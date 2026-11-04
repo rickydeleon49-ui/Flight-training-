@@ -3,9 +3,9 @@
  * tick any follow-ups to add, then save it (desktop) or print it (browser).
  *
  * The preview is the exact page that is saved or printed: both come from the
- * same text, built once per choice from what she sees.
+ * same text, built once per choice from what the student sees.
  *
- * Everything she does here belongs to one session: this lesson, opened once.
+ * Everything the student does here belongs to one session: this lesson, opened once.
  * Opening it again, or the dialog moving to another lesson, starts a new
  * session in that same render, with no choices, notices or old date
  * (BRIEF-R1). A save reports back, and releases its lock, only within the

@@ -1,7 +1,7 @@
 import { nowIso } from "@/lib/dates";
 import type { SqlDatabase } from "../db";
 
-/** Saved ticks for the "Before you enroll" steps; one row per step she has touched. */
+/** Saved ticks for the "Before you enroll" steps; one row per step the student has touched. */
 export function studentPilotStepRepository(db: SqlDatabase) {
   return {
     /** Ids of the steps currently ticked. */

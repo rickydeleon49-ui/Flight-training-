@@ -118,7 +118,7 @@ export function PilotToolkit() {
   const { tabPanelProps } = useTabPanel({}, tabState, tabPanelRef);
 
   // Owned here, not by the medical card, so a choice still saving keeps both
-  // buttons locked when she switches tabs and comes back.
+  // buttons locked when the student switches tabs and comes back.
   const medicalChoosingRef = useRef(false);
   const [medicalChoosing, setMedicalChoosing] = useState(false);
   const medicalChoice = useMemo<PendingChoice>(
@@ -410,8 +410,8 @@ function ReportMetric({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Settings and her saved medical record disagree about when the medical
- * expires. She says which matches her certificate; only then is the other
+ * Settings and the student's saved medical record disagree about when the medical
+ * expires. The student says which matches the student's certificate; only then is the other
  * one updated to match.
  *
  * The first choice owns the outcome. A synchronous guard, held by the Toolkit
@@ -450,7 +450,7 @@ function MedicalDateConflictCard({
         return plan.write;
       });
       // null: the write failed and the app's error message says so; both
-      // dates stay as they were and she can choose again.
+      // dates stay as they were and the student can choose again.
       if (outcome === "none") setStaleNotice(true);
     } finally {
       guard.release();

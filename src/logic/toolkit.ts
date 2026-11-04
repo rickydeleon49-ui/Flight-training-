@@ -79,7 +79,7 @@ function nonNegativeOr(value: unknown, fallback: number): number {
 
 /**
  * The reminder window as whole days from 0 to 90. Used for what is saved and
- * for the preview, so the list she sees is the one she will get.
+ * for the preview, so the list the student sees is the one the student will get.
  */
 export function reminderLeadDays(value: unknown, fallback = 7): number {
   const number = Number(value === "" || value == null ? fallback : value);
@@ -136,7 +136,7 @@ const TRAINING_CATEGORIES = new Set([
  * have both a recorded cost and logged time (see `trainingCostSummary`). It
  * never divides one-off costs such as a headset, medical or books by flight
  * hours, because those would then be multiplied across every remaining hour;
- * they stay in tracked spending and in her own "additional remaining costs".
+ * they stay in tracked spending and in the student's own "additional remaining costs".
  */
 export function trainingCostForecast(
   totals: FlightLogTotals,
@@ -155,7 +155,7 @@ export function trainingCostForecast(
   return {
     spent,
     observedHourly,
-    /** How many lessons the observed rate comes from, or null when her estimate is used. */
+    /** How many lessons the observed rate comes from, or null when the student's estimate is used. */
     observedLessons: observed?.lessonsCounted ?? null,
     hourly,
     remainingHours,
@@ -165,18 +165,18 @@ export function trainingCostForecast(
 }
 
 export interface MedicalDateConflict {
-  /** The medical expiry she entered in Settings. */
+  /** The medical expiry the student entered in Settings. */
   settingsDate: IsoDate;
-  /** Her latest-expiring saved medical record, whose date differs. */
+  /** The student's latest-expiring saved medical record, whose date differs. */
   record: CredentialRecord & { expiresOn: IsoDate };
 }
 
 /**
- * Settings and her saved medical record giving different expiry dates.
+ * Settings and the student's saved medical record giving different expiry dates.
  *
- * Only the latest-expiring medical record is compared: an earlier medical she
+ * Only the latest-expiring medical record is compared: an earlier medical the student
  * kept as a record is history, not a conflict. Nothing is reconciled here;
- * she is asked which date matches her certificate.
+ * the student is asked which date matches the student's certificate.
  */
 export function medicalDateConflict(
   profile: Profile,
@@ -190,10 +190,10 @@ export function medicalDateConflict(
   return { settingsDate: profile.medicalExpiry, record: latest };
 }
 
-/** Which of her two medical dates she says matches her certificate. */
+/** Which of the student two medical dates the student says matches the student's certificate. */
 export interface MedicalDateChoice {
   authority: "record" | "settings";
-  /** The two dates and the record exactly as they were shown to her. */
+  /** The two dates and the record exactly as they were shown to the student. */
   settingsDate: IsoDate;
   recordId: string;
   recordDate: IsoDate;
@@ -205,11 +205,11 @@ export type MedicalReconciliation =
   | { write: "record"; credentials: CredentialRecord[] };
 
 /**
- * What her choice changes, decided against the dates as they are saved now.
+ * What the student's choice changes, decided against the dates as they are saved now.
  *
- * She chose between two dates on screen. If either date, or which record is
- * her latest medical, has changed since then (an earlier choice, an edit
- * elsewhere, a removed record), the choice no longer answers the question she
+ * The student chose between two dates on screen. If either date, or which record is
+ * the student's latest medical, has changed since then (an earlier choice, an edit
+ * elsewhere, a removed record), the choice no longer answers the question the student
  * saw: nothing is written and the current dates are shown again.
  */
 export function reconcileMedicalDates(

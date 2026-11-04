@@ -40,7 +40,7 @@ export function decodeBookmarkSource(value: unknown, materialId: string, hasItem
     typeof s.itemId !== "string" || !hasItem(s.itemId)) throw Error("INVALID_ARGUMENT");
   return s;
 }
-/** Refuses unless the page note and its material are exactly as she saw them. */
+/** Refuses unless the page note and its material are exactly as the student saw them. */
 async function checkBookmark(query: Query, s: BookmarkCardSource) {
   const p = s.source, b = s.bookmark;
   const [row] = await query("SELECT * FROM material_bookmarks WHERE id = ? AND material_id = ?", [b.id, p.materialId]);

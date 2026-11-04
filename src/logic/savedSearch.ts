@@ -3,7 +3,7 @@
  *
  * Results open the actual item. A guide section or card is identified by its
  * index plus a digest of its own text, so a link from a search made before
- * she regenerated the guide never opens different text.
+ * the student regenerated the guide never opens different text.
  */
 import type { HomeworkSnapshot } from "@/domain/homework";
 import type { AppData } from "@/state/AppDataContext";

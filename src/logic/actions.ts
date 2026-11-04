@@ -41,7 +41,7 @@ export const planActions = (actions: NextAction[], today: IsoDate = todayIso()):
  * Work finished today.
  *
  * These stay on Today's Plan rather than vanishing the moment they are
- * ticked, so what she has already done today is visible to her.
+ * ticked, so what the student has already done today is visible to the student.
  */
 export const completedToday = (
   actions: NextAction[],

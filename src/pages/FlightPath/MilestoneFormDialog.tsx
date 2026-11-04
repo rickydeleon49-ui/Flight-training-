@@ -77,7 +77,7 @@ export function MilestoneFormDialog({ open, milestone, onClose, onSave }: Props)
     try {
       await onSave({ ...draft, title: draft.title.trim() });
     } finally {
-      // Released either way: on a failed save the dialog stays open so she can retry.
+      // Released either way: on a failed save the dialog stays open so the student can retry.
       saving.current = false;
       setBusy(false);
     }

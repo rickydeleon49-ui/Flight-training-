@@ -26,7 +26,7 @@ interface Props {
  *
  * Alongside automatic splitting, for the times a specific chapter or section
  * is wanted rather than whatever fits. A safety copy of the database is
- * taken before anything about her library changes, so a failure partway
+ * taken before anything about the student library changes, so a failure partway
  * through never costs more than this one attempt.
  */
 export function ManualSplitDialog({ open, material, onClose, onCreated, note }: Props) {
@@ -72,7 +72,7 @@ export function ManualSplitDialog({ open, material, onClose, onCreated, note }: 
     setError(null);
     setWorking(true);
 
-    // A safety copy first: nothing about her library changes — not a file
+    // A safety copy first: nothing about the student library changes — not a file
     // written, not a record saved — until one exists to fall back on.
     try {
       await createBackup();

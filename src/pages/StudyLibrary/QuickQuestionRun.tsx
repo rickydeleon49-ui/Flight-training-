@@ -3,10 +3,10 @@ import { Badge, Button } from "@/components/ui";
 import type { MixedQuestion } from "@/logic/mixedPractice";
 
 /**
- * An untimed run through a fixed list of her own saved questions. Each answer
+ * An untimed run through a fixed list of the student's own saved questions. Each answer
  * shows the correct one, the explanation and the source page; the result is
  * for today only. Nothing here reads or writes the database: the caller owns
- * the questions and gets `onDone` when she closes the result.
+ * the questions and gets `onDone` when the student closes the result.
  */
 export function QuickQuestionRun({ questions, resultLabel, onDone }: {
   questions: readonly MixedQuestion[];

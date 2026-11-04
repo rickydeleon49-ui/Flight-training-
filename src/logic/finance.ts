@@ -153,7 +153,7 @@ export interface TrainingCostSummary {
  * entries linked to that same lesson; lessons missing either side are left
  * out and the count of lessons used is reported. Nothing is hidden: a lesson
  * carrying both a recorded lesson total and separate lesson expenses is
- * reported, not dropped, because only she knows whether they overlap.
+ * reported, not dropped, because only the student knows whether they overlap.
  */
 export function trainingCostSummary(
   transactions: Transaction[],

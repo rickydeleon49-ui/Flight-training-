@@ -113,7 +113,7 @@ describe("migrations", () => {
          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       "Ava", "Lakeside Aviation", "Dana", "KRHV", "C172S", "2026-01-12",
-      "2028-03-31", "So my daughter sees it was possible.",
+      "2028-03-31", "Keep a record of the first solo.",
       "data:image/webp;base64,UklGRhIAAABXRUJQ", "sky",
     );
 
@@ -130,7 +130,7 @@ describe("migrations", () => {
     expect(profile.aircraft_type).toBe("C172S");
     expect(profile.training_started_on).toBe("2026-01-12");
     expect(profile.medical_expiry).toBe("2028-03-31");
-    expect(profile.why_note).toBe("So my daughter sees it was possible.");
+    expect(profile.why_note).toBe("Keep a record of the first solo.");
     expect(profile.photo).toBe("data:image/webp;base64,UklGRhIAAABXRUJQ");
     expect(profile.accent_color).toBe("sky");
     db.close();

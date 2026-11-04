@@ -22,7 +22,7 @@ export type NewNote = Partial<Omit<Note, "id" | "createdAt" | "updatedAt">> &
 
 export function noteRepository(db: SqlDatabase) {
   return {
-    /** Pinned first, then whatever she touched most recently. */
+    /** Pinned first, then whatever the student touched most recently. */
     async list(): Promise<Note[]> {
       const rows = await db.select<Row>(
         "SELECT * FROM notes ORDER BY pinned DESC, updated_at DESC",

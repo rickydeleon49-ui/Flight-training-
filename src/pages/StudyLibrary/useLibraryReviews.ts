@@ -2,7 +2,7 @@
  * React ownership for the library-wide card review streams (M2-4 / C2).
  *
  * Each view owns one stream for its lifetime. Mounting activates it and
- * loads the first page; unmounting disposes it, so no read from a view she
+ * loads the first page; unmounting disposes it, so no read from a view the student
  * has left can publish (React StrictMode's extra unmount/mount is covered by
  * the same rule). A change of filters, the local day or the published app
  * data revision is an authoritative invalidation with a freshly captured

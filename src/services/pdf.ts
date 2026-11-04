@@ -1,8 +1,8 @@
 /**
- * Splitting a study PDF into the part she is studying.
+ * Splitting a study PDF into the part the student is studying.
  *
  * Google reads a PDF up to 50 MB or 1,000 pages, whichever comes first, and a
- * handbook is past both — see logic/aiLimits. The work happens in Rust on her
+ * handbook is past both — see logic/aiLimits. The work happens in Rust on the student's
  * own machine; nothing here leaves the computer.
  */
 import { invoke } from "@tauri-apps/api/core";

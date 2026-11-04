@@ -18,7 +18,7 @@ export interface LastCompleteBackup {
   at: string;
   /** The app version that wrote it. */
   version: string;
-  /** Where it was saved, so the interface can show her the file. */
+  /** Where it was saved, so the interface can show the student's the file. */
   path: string;
 }
 
@@ -31,7 +31,7 @@ const IPHONE_SEND_PATH = "last_iphone_send_path";
 const DAILY_PLAN_KEY = "daily_plan_session";
 const DEVICE_ID = "device_id";
 
-/** Product-level metadata that is not part of her personal training record. */
+/** Product-level metadata that is not part of the student personal training record. */
 export function appRepository(db: SqlDatabase) {
   return {
     async get(key: string): Promise<string | null> {
@@ -63,9 +63,9 @@ export function appRepository(db: SqlDatabase) {
      * Fold committed WAL pages into the main file before a portable backup.
      *
      * SQLite writes into a separate log first, so the database file on its own
-     * can be missing everything she did today. A blocked checkpoint is reported
-     * rather than swallowed: a backup that quietly omits her latest lesson is
-     * worse than one she is told to retry.
+     * can be missing everything the student did today. A blocked checkpoint is reported
+     * rather than swallowed: a backup that quietly omits the student's latest lesson is
+     * worse than one the student is told to retry.
      */
     async checkpoint(): Promise<void> {
       const rows = await db.select<{ busy?: number }>("PRAGMA wal_checkpoint(TRUNCATE)");
@@ -87,7 +87,7 @@ export function appRepository(db: SqlDatabase) {
       );
     },
 
-    /** Remember the last copy she sent to her iPhone. */
+    /** Remember the last copy the student sent to the student iPhone. */
     async recordIphoneSend(send: LastIphoneSend): Promise<void> {
       await db.execute(
         `INSERT INTO app_metadata (key, value) VALUES (?, ?), (?, ?), (?, ?)
@@ -106,7 +106,7 @@ export function appRepository(db: SqlDatabase) {
       };
     },
 
-    /** The last complete backup she saved, or null if there has never been one. */
+    /** The last complete backup the student saved, or null if there has never been one. */
     async lastCompleteBackup(): Promise<LastCompleteBackup | null> {
       const at = await this.get(LAST_BACKUP_AT);
       if (!at) return null;

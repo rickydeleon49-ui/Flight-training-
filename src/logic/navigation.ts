@@ -45,7 +45,7 @@ export type UnresolvedDestination = {
   destination: null;
   /** Why it did not resolve, for logs and tests. */
   reason: string;
-  /** What to tell her, in plain words. */
+  /** What to tell the student's, in plain words. */
   guidance: string;
   code?: "ROOT_DELETED" | "PARENT_DELETED" | "DESTINATION_COUNT_UNKNOWN" | "DESTINATION_IDENTITY_MISSING";
 };
@@ -436,7 +436,7 @@ export function translateSplitCoordinates(
   return fail(`Unknown translation direction: ${String(direction)}`, "That translation isn't supported.");
 }
 
-/** How a saved page relates to the current verified file, in her words. */
+/** How a saved page relates to the current verified file, in the student's words. */
 export function savedPlaceNote(status: "active" | "verified" | "unverified" | "drifted"): string | null {
   if (status === "drifted") return "Saved for an earlier version of this file, so the page may have moved.";
   if (status === "unverified") return "Saved before this file's pages were checked.";

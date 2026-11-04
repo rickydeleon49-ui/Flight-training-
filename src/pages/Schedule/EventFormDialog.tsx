@@ -39,7 +39,7 @@ export interface EventDraft {
 }
 
 /**
- * A new event starts from where she actually trains, so the instructor and
+ * A new event starts from where the student actually trains, so the instructor and
  * airport are not retyped for every lesson. Both stay editable.
  */
 const emptyDraft = (profile?: Profile): EventDraft => ({
@@ -141,7 +141,7 @@ export function EventFormDialog({ open, event = null, goals, profile, onClose, o
     try {
       await onSave({ ...draft, title: draft.title.trim(), estimatedCost, actualCost });
     } finally {
-      // Released either way: on a failed save the dialog stays open so she can retry.
+      // Released either way: on a failed save the dialog stays open so the student can retry.
       saving.current = false;
       setBusy(false);
     }

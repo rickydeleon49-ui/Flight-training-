@@ -4,7 +4,7 @@ import type { FaaDownloaded } from "@/services/faaDownloads";
 import type { SqlDatabase } from "../db";
 import type { documentRepository } from "./documentRepository";
 
-/** Where a handbook copy came from. Never written into her notes. */
+/** Where a handbook copy came from. Never written into the student's notes. */
 export interface FaaDownloadRecord {
   materialId: string;
   documentId: string;
@@ -37,7 +37,7 @@ export function faaDownloadRepository(db: SqlDatabase, documents: ReturnType<typ
      * Save a finished download as a study material plus its provenance row.
      * The two writes are separate (the material save owns its own atomic
      * transaction), so if the provenance row fails the new material is removed
-     * again and the error is passed on: no half-saved copy is left on her shelf.
+     * again and the error is passed on: no half-saved copy is left on the student's shelf.
      * The caller still owns the downloaded file.
      */
     async record(input: { materialId: string; title: string; topic?: Topic; downloaded: FaaDownloaded }): Promise<FaaDownloadRecord> {

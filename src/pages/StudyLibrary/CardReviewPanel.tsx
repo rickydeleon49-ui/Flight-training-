@@ -153,7 +153,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
     return state?.suspended || state?.flag;
   });
 
-  // Her own cards and PDF-kit cards share one review queue; say so when both exist.
+  // The student's own cards and PDF-kit cards share one review queue; say so when both exist.
   const setFlashcards = studySet?.flashcards ?? [];
   const pdfCount = setFlashcards.filter((card) => Boolean(card.pdfProvenance)).length;
   const userCount = setFlashcards.filter((card) => !card.pdfProvenance).length;

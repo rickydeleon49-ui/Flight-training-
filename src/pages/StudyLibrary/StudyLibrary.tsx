@@ -146,7 +146,7 @@ export function StudyLibrary() {
   const [importing, setImporting] = useState(false);
   const [exportingHandouts, setExportingHandouts] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
-  // throw away the filtering she just set up.
+  // throw away the filtering the student just set up.
   const [status, setStatus] = useRememberedState<StatusFilter>(
     "library.status", "all", isOneOf(STATUS_VALUES),
   );
@@ -157,9 +157,9 @@ export function StudyLibrary() {
     "library.type", "", isOneOf(["", ...MATERIAL_TYPE_OPTIONS.map((option) => option.value)]),
   );
   const [search, setSearch] = useRememberedState<string>("library.search", "", isText);
-  // Quick Find (⌘K) hands her words over as `/study?q=…`: they go in the search
+  // Quick Find (⌘K) hands the student words over as `/study?q=…`: they go in the search
   // box, which is what searching inside the PDFs reads, then the address is
-  // left alone so typing from here changes what she sees.
+  // left alone so typing from here changes what the student sees.
   const handedOver = params.get("q");
   useEffect(() => {
     if (handedOver === null) return;
@@ -168,8 +168,8 @@ export function StudyLibrary() {
     next.delete("q");
     setParams(next, { replace: true });
   }, [handedOver, params, setParams, setSearch]);
-  // Her own materials come first; the FAA books and the ACS lookup wait in one
-  // shelf below them, closed until she opens it (kept while the app is open).
+  // The student's own materials come first; the FAA books and the ACS lookup wait in one
+  // shelf below them, closed until the student opens it (kept while the app is open).
   const [shelf, setShelf] = useRememberedState<(typeof SHELF_STATES)[number]>(
     "library.referenceShelf", "closed", isOneOf(SHELF_STATES),
   );

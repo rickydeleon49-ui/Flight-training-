@@ -117,7 +117,7 @@ export function FlightDeck() {
             }
           />
         </Card>
-        {/* Her why belongs here most of all: a deck with nothing in it yet is
+        {/* The student's why belongs here most of all: a deck with nothing in it yet is
             exactly when the reason for starting is worth seeing. */}
         <div style={{ marginTop: "var(--space-5)", maxWidth: "34rem" }}>
           <WhyCard model={model} />
@@ -368,8 +368,8 @@ export function FlightDeck() {
 type Model = ReturnType<typeof buildDashboard>;
 
 /**
- * One quiet line about her recent practice-test scores, or a gentle nudge to
- * take one. It reads her saved attempts only and never predicts a result.
+ * One quiet line about the student recent practice-test scores, or a gentle nudge to
+ * take one. It reads the student's saved attempts only and never predicts a result.
  */
 function PracticeReadinessLine({ data, today }: { data: AppData; today: IsoDate }) {
   const { repositories, dataRevision } = useAppData();
@@ -671,10 +671,10 @@ function MilestoneCard({ model }: { model: Model }) {
 }
 
 /**
- * Why she started, in her own words.
+ * Why the student started, in the student's own words.
  *
  * Deliberately the quietest thing on the page and the only card that asks
- * nothing of her — it sits at the end of the column, below the work.
+ * nothing of the student — it sits at the end of the column, below the work.
  */
 function WhyCard({ model }: { model: Model }) {
   if (!model.personal) return null;

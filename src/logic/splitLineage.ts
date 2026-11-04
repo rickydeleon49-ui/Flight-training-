@@ -167,7 +167,7 @@ export function describePages(target: Pick<SourceTarget, "firstPage" | "lastPage
   return target.totalPages ? `${range} of ${target.totalPages}` : range;
 }
 
-/** What she reads about a tier's current copy. `null` when all is well. */
+/** What the student reads about a tier's current copy. `null` when all is well. */
 export function describeVerdict(verdict: SplitSourceVerdict, removedWording: string): string | null {
   switch (verdict) {
     case "matching":

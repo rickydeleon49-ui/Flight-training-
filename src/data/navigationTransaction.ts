@@ -43,7 +43,7 @@ export const NAVIGATION_LIMITS = {
 
 const MAX_SAFE = Number.MAX_SAFE_INTEGER;
 
-/** A refusal with one of the contract's codes. The message is written for her. */
+/** A refusal with one of the contract's codes. The message is written for the student. */
 export class NavigationError extends Error {
   constructor(
     readonly code: NavigationErrorCode,

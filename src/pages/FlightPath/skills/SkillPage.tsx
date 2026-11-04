@@ -1,5 +1,5 @@
 /**
- * One skill's page (scope §4.2): her status and confidence (hers alone;
+ * One skill's page (scope §4.2): the student's status and confidence (theirs alone;
  * nothing derives them), the evidence sentence in words, the fixed
  * disclaimer, and the paged evidence history with its item menu.
  */

@@ -4,7 +4,7 @@ const PREFIX = "her-flight-deck.view.";
 
 /**
  * "session" lasts while the app is open; "device" is a small preference kept
- * on this computer, such as how many flashcards she likes to ask for.
+ * on this computer, such as how many flashcards the student likes to ask for.
  */
 export type RememberFor = "session" | "device";
 
@@ -22,7 +22,7 @@ function storage(scope: RememberFor = "session"): Storage | null {
  *
  * Filters reset to "Everything" on every visit is a small tax paid over and
  * over. This keeps them for as long as the app is open, and starts each
- * launch clean so a forgotten filter never hides her library the next day.
+ * launch clean so a forgotten filter never hides the student's library the next day.
  */
 export function useRememberedState<T>(
   key: string,

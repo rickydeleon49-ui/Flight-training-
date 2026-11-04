@@ -109,7 +109,7 @@ export function TransactionFormDialog({
         eventId: eventId || null,
       });
     } finally {
-      // Released either way: on a failed save the dialog stays open so she can retry.
+      // Released either way: on a failed save the dialog stays open so the student can retry.
       saving.current = false;
       setBusy(false);
     }

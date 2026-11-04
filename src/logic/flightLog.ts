@@ -120,8 +120,8 @@ export interface FlightTimeCheck {
  * Saved entries whose times can't all be true of one flight, newest first.
  *
  * Entries saved before the form checked times can still hold, say, more dual
- * than total time. They are only pointed out: the times stay exactly as she
- * logged them, and still count in every total, until she corrects them.
+ * than total time. They are only pointed out: the times stay exactly as the student
+ * logged them, and still count in every total, until the student corrects them.
  */
 export function flightTimeChecks(entries: JournalEntry[]): FlightTimeCheck[] {
   return entries

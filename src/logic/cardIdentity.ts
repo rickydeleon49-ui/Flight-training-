@@ -22,7 +22,7 @@ export const MAX_FRONT_CHARS = 1_000;
 export const MAX_BACK_CHARS = 2_000;
 export const MAX_SOURCE_PAGE = 1_000;
 
-/** Who wrote a card she made or edited; absent for generated or imported cards. */
+/** Who wrote a card the student made or edited; absent for generated or imported cards. */
 export type CardOrigin = "user" | "instructor";
 
 export interface CanonicalCard {
@@ -176,8 +176,8 @@ export async function cardVersion(materialId: string, cards: readonly CanonicalC
 }
 
 /**
- * A snapshot's own origin (native `version_origin`): `manual` when she wrote
- * every card, `mixed` when she wrote some, `null` when none.
+ * A snapshot's own origin (native `version_origin`): `manual` when the student wrote
+ * every card, `mixed` when the student wrote some, `null` when none.
  */
 export function versionOrigin(cards: readonly CanonicalCard[]): "manual" | "mixed" | null {
   const mine = cards.filter((card) => card.origin !== undefined).length;

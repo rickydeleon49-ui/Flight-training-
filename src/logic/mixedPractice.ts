@@ -68,7 +68,7 @@ export function buildMixedTest(
 }
 
 /**
- * MISSED-AGAIN-01: the questions of one finished attempt that she answered
+ * MISSED-AGAIN-01: the questions of one finished attempt that the student answered
  * wrong or marked "don't know", in the test's own order, ready for a quick
  * unsaved retry. Correct and unanswered questions are left out, and so is any
  * frozen item whose correct answer is not one of its own options.

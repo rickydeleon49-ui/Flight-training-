@@ -67,7 +67,7 @@ export function formatStudyContentProvenance(
     };
   }
   const isImported = content.provider === "import";
-  // A set she wrote herself never borrows Gemini's or an import's wording.
+  // A set the student wrote themselves never borrows Gemini's or an import's wording.
   const isManual = content.provider === "manual";
   const originLabel = isManual ? "Written by you" : isImported ? "Imported study packet" : content.model?.trim().startsWith("claude-") ? "Claude" : "Gemini";
 

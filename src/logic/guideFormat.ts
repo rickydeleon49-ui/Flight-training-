@@ -3,7 +3,7 @@
  *
  * Guide bodies are stored exactly as written, often with Markdown-style marks:
  * "- " lists, **bold**, *italic*, "> " quotes and pipe tables. This turns that
- * text into a small set of blocks the guide view can show, so she reads a list
+ * text into a small set of blocks the guide view can show, so the student reads a list
  * rather than a column of dashes and asterisks.
  *
  * Deliberately narrow:

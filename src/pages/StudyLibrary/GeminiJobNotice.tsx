@@ -27,8 +27,8 @@ export function GeminiJobNotice({
   /** Start again, through the usual confirmation. Absent when that is not possible now. */
   onRetry?: () => void;
   /**
-   * Her study set holds items she wrote, corrected or deleted: the new one is
-   * saved only after she reviews it (OFFLINE-03a), never as is.
+   * The student's study set holds items the student wrote, corrected or deleted: the new one is
+   * saved only after the student reviews it (OFFLINE-03a), never as is.
    */
   onReview?: () => void;
   reviewDisabled?: boolean;
@@ -232,7 +232,7 @@ export function GeminiJobNotice({
 }
 
 /**
- * How much Gemini actually made, in her words. The answer's own provenance
+ * How much Gemini actually made, in the student's words. The answer's own provenance
  * note is hashes and JSON for a section guide, which pushed the buttons off
  * the screen; it stays stored and is shown under the saved study aid.
  */
@@ -415,7 +415,7 @@ export function SectionDraftDiscard({ job, jobs, label = "Discard", disabled = f
 
 /**
  * One Gemini failure: the plain sentence, with any technical trace folded
- * away under "Details" so it never competes with what she should do next.
+ * away under "Details" so it never competes with what the student should do next.
  */
 export function GeminiErrorText({ message, calm = false, model }: { message: string; calm?: boolean; model?: string }) {
   const { text: original, details } = splitGeminiError(message);
@@ -456,7 +456,7 @@ export function GeminiRecoveryNotice({ onRetry, model }: { onRetry: () => void; 
   );
 }
 
-/** Her words for each stage a generation actually reaches. */
+/** The student's words for each stage a generation actually reaches. */
 export const STAGE_WORDS: Record<GeminiWorkStage, string> = {
   preparing: "Getting the document ready",
   uploading: "Sending the PDF to Google",

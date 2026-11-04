@@ -78,7 +78,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   const busyRef = useRef(false);
   const readRef = useRef(0);
   const pending = useRef<{ key: string; operation: PracticeSaveOperation } | null>(null);
-  // Every editor keeps its typing as she types, so quitting never loses it.
+  // Every editor keeps its typing as the student types, so quitting never loses it.
   const mirrorKey = practiceMirrorKey(material.id, seed, noteSeed);
   const remember = () => {
     if (expected === undefined) return;
@@ -91,7 +91,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     if (open && expected !== undefined && !noteSeed) titleRef.current?.focus();
   }, [open, expected]);
   // From a page note the new question is at the bottom: bring it into view and
-  // start in its first answer option, the empty field she must fill.
+  // start in its first answer option, the empty field the student must fill.
   const noteOptionsRef = useRef<HTMLDivElement | null>(null);
   const noteFocused = useRef(false);
   useEffect(() => {
@@ -119,7 +119,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
     setReloading(false);
     setConflict(false);
     setReopened(false);
-    // A PDF kit's drafts wait for her; anywhere else Cancel means she let them go.
+    // A PDF kit's drafts wait for the student; anywhere else Cancel means the student let them go.
     if (seed) remember();
     else dropMirror(mirrorKey);
     if (!seed) pending.current = null;
@@ -144,7 +144,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
           restoredPending = null;
         }
         setExpected(mirror.expected); setTitle(mirror.title); setDraft(restored); pending.current = restoredPending; setValidate(false); setStale(false);
-        // The saves still expect what her typing began from, so nothing newer is overwritten.
+        // The saves still expect what the student's typing began from, so nothing newer is overwritten.
         if (!seed) setConflict(JSON.stringify(mirror.expected ?? null) !== JSON.stringify(current ?? null));
         return;
       }
@@ -213,7 +213,7 @@ function PracticeEditing({ material, creating, activeAttempt, seed, noteSeed, on
   const label = noteSeed ? "Make a question" : seed ? "Review draft questions" : creating ? "Write your own practice questions" : "Edit questions";
   const hasTest = data.practiceTests.some((test) => test.sourceMaterialId === material.id);
   const applicable = !seed && !noteSeed && (creating ? !hasTest : hasTest);
-  // Typing kept from before she quit opens again by itself, once, when editing is allowed.
+  // Typing kept from before the student quit opens again by itself, once, when editing is allowed.
   const autoChecked = useRef(false);
   useEffect(() => {
     if (seed || noteSeed || autoChecked.current || !repositories || attempt === null) return;

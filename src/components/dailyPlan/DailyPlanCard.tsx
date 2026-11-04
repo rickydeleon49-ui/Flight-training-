@@ -127,7 +127,7 @@ export function DailyPlanCard({ customToday, onStartAction }: DailyPlanCardProps
   const [openWhyId, setOpenWhyId] = useState<string | null>(null);
   const [showRemaining, setShowRemaining] = useState<boolean>(false);
   const [startNote, setStartNote] = useState<string | null>(null);
-  /** The budget she just chose, shown as selected while it saves. */
+  /** The budget the student just chose, shown as selected while it saves. */
   const [pendingBudget, setPendingBudget] = useState<{ value: number | null } | null>(null);
   const budgetRefs = useRef<(HTMLButtonElement | null)[]>([]);
 

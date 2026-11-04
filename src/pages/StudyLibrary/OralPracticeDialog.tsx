@@ -14,11 +14,11 @@ type Step = "answer" | "reveal";
 type FinishAction = "close" | "next" | "note";
 
 /**
- * Practise her saved scenarios one at a time. Once she has shown the points,
- * finishing (Done, Next scenario, Write a note or closing) keeps her answer and
+ * Practise the student's saved scenarios one at a time. Once the student has shown the points,
+ * finishing (Done, Next scenario, Write a note or closing) keeps the student's answer and
  * ticks as one finished practice (ORAL-01d). "Earlier answers" lists them with
  * Delete one and Delete all. Questions and notes are still written only when
- * she presses Ask my instructor or Write a note.
+ * the student presses Ask my instructor or Write a note.
  */
 export function OralPracticeDialog({
   material,
@@ -82,7 +82,7 @@ export function OralPracticeDialog({
     };
   }, [open, scenarioId, repositories, dataRevision]);
 
-  /** Keep this practice once she has shown the points and written or ticked something. */
+  /** Keep this practice once the student has shown the points and written or ticked something. */
   const keepAnswer = async (): Promise<boolean> => {
     if (!scenario || step !== "reveal" || !revealedAt) return true;
     const ticked = coveredIndexes(covered);
@@ -322,7 +322,7 @@ export function OralPracticeDialog({
   );
 }
 
-/** Only load the full reading into the page when she opens this answer. */
+/** Only load the full reading into the page when the student opens this answer. */
 function EarlierAnswer({ kept, date, line }: { kept: OralAnswer; date: string; line: string }) {
   const [expanded, setExpanded] = useState(false);
   return (

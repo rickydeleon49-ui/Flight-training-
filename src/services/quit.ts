@@ -1,7 +1,7 @@
 /**
- * Settling her work before the app quits (QUIT-01).
+ * Settling the student's work before the app quits (QUIT-01).
  *
- * When she quits or closes the window, the Rust side asks once for pending
+ * When the student quits or closes the window, the Rust side asks once for pending
  * work to finish and waits at most two seconds for the answer. Browser mode
  * has no native quit, so both calls do nothing there.
  */

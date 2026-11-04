@@ -269,10 +269,10 @@ export async function prepareStudyEdit(current: AuthoringState, edit: StudyEdit,
       if (edit.origin !== "user" && edit.origin !== "instructor") invalid();
       const replacing = action === "correct";
       const unchanged = JSON.stringify(original.fields) === JSON.stringify(edit.fields);
-      // Rewording her instructor's correction must not make it exportable by default;
-      // only a deliberate correction can replace it with her own item.
+      // Rewording the instructor's correction must not make it exportable by default;
+      // only a deliberate correction can replace it with the student's own item.
       if (!replacing && original.origin === "instructor" && edit.origin !== "instructor") invalid();
-      // Saving generated wording unchanged does not make it hers.
+      // Saving generated wording unchanged does not make it theirs.
       if (!replacing && unchanged) return Object.freeze({ previous, next: previous, reason: action });
       const nextId = replacing && original.kind !== "summary" ? makeId() : original.itemId;
       if (replacing && original.kind !== "summary" && nextId === original.itemId) invalid();
@@ -280,7 +280,7 @@ export async function prepareStudyEdit(current: AuthoringState, edit: StudyEdit,
         ...(replacing ? { itemId: nextId, replaces: original.itemId } : {}) });
       validateItems(items);
       // An ordinary rewrite also retires the prior wording; regeneration
-      // must not quietly bring it back next to her edited version.
+      // must not quietly bring it back next to the version the student edited.
       if (!unchanged || replacing) retirement = await retireItem(original, "corrected");
     }
   } else invalid();

@@ -59,7 +59,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
       <p className="tiny dim">{privacy}</p>
       {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : connected
         ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
-        // Claude chosen but its key is missing: let her put a key back in.
+        // Claude chosen but its key is missing: let the student put a key back in.
         : <>{getKey}{keyBox}</>}
     </div>}
     <details key={status.selected}>

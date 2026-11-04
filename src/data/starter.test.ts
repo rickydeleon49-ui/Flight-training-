@@ -4,7 +4,7 @@ import { createRepositories, type Repositories } from "./repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "./testing/nodeSqliteDb";
 import { initializeAirlineStarterPack, restoreAirlineStarterPack } from "./starter";
 
-describe("airline pilot starter pack", () => {
+describe("career starter pack", () => {
   let db: TestDatabase;
   let repositories: Repositories;
 
@@ -29,11 +29,11 @@ describe("airline pilot starter pack", () => {
         repositories.finance.list(),
       ]);
 
-    expect(profile.certificateGoal).toBe("Airline Pilot");
+    expect(profile.certificateGoal).toBe("Explore your flying goals");
     expect(milestones).toHaveLength(9);
     expect(goals).toHaveLength(9);
     expect(materials).toHaveLength(7);
-    expect(materials.every((item) => item.tags.includes("Airline Starter Pack"))).toBe(true);
+    expect(materials.every((item) => item.tags.includes("Career Starter Pack"))).toBe(true);
     expect(events).toHaveLength(0);
     expect(journal).toHaveLength(0);
     expect(transactions).toHaveLength(0);

@@ -26,7 +26,7 @@ export function VisualPicture({
 
   const draw = (e: PointerEvent<SVGSVGElement>) => {
     if (!start.current || !onDraw) return;
-    // A click or a small slip keeps the cover she already has.
+    // A click or a small slip keeps the cover the student already has.
     if (Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) < MIN_DRAG_PX) return;
     const r = e.currentTarget.getBoundingClientRect();
     onDraw(

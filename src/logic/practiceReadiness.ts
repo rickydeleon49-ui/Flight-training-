@@ -1,8 +1,8 @@
 /**
  * One quiet "how are my practice tests going" line for Today's Flight Plan.
  *
- * Built only from her own completed practice attempts. It is an average of
- * her recent practice scores, never a pass/fail prediction or an official
+ * Built only from the student's own completed practice attempts. It is an average of
+ * the student's recent practice scores, never a pass/fail prediction or an official
  * score. Inputs are read only.
  */
 import type { IsoDate, PracticeAttempt } from "@/domain/types";
@@ -34,15 +34,15 @@ export type PracticeReadiness =
 
 export interface PracticeReadinessInput {
   attempts: readonly PracticeAttempt[];
-  /** Ids of the study materials she still has. */
+  /** Ids of the study materials the student still has. */
   materialIds: ReadonlySet<string>;
-  /** She has at least one practice test she can take. */
+  /** The student has at least one practice test the student can take. */
   hasPracticeTest: boolean;
   today: IsoDate;
 }
 
 /**
- * A finished attempt on a material she still has. Skipped questions already
+ * A finished attempt on a material the student still has. Skipped questions already
  * count as wrong in its score (correct / all questions), so finished attempts
  * with skips are counted as they are. In-progress and abandoned attempts, and
  * attempts whose material was deleted, are left out.
@@ -104,7 +104,7 @@ export function buildPracticeReadiness(input: PracticeReadinessInput): PracticeR
   };
 }
 
-/** The words she reads, or null when nothing should be shown. */
+/** The words the student reads, or null when nothing should be shown. */
 export function practiceReadinessText(readiness: PracticeReadiness): string | null {
   if (readiness.kind === "none") return null;
   if (readiness.kind === "nudge") return "Take a practice test this month to see how you're doing.";

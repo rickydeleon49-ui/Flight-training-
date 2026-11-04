@@ -460,7 +460,7 @@ export function computeDailyPlan(
   //   waits in "remaining" until an explicit refresh, a budget change, or the
   //   next local day.
   // - A selected item leaves the session only when its source is no longer an
-  //   open candidate (completed, deleted, answered) or when she skips or
+  //   open candidate (completed, deleted, answered) or when the student skips or
   //   defers it. Only that vacated slot is refilled, from the remaining
   //   candidates in selector order, within the unallocated budget. A session
   //   never grows to absorb newly arrived work.

@@ -2,14 +2,14 @@ import { pdfLabelState, PDF_KIT_REMINDER } from "@/logic/pdfKitLabels";
 /**
  * Share or print one material's study aid (P54-04).
  *
- * She picks which parts to include (guide, flashcards, practice questions)
+ * The student picks which parts to include (guide, flashcards, practice questions)
  * and one of two outputs:
  * - a study packet (.json) that any copy of Her Flight Deck can import as a
  *   new material, checked by the import's own validator before it is saved;
  * - a printable handout (.html) to open in a browser and print, with an
  *   optional answer key on its own page.
  *
- * Nothing in her library changes. Only this material's chosen study content
+ * Nothing in the student's library changes. Only this material's chosen study content
  * is written; practice history, other materials and settings never are.
  */
 import { useEffect, useId, useRef, useState } from "react";
@@ -46,7 +46,7 @@ export const EXPORT_DESKTOP_ONLY = "Saving a file needs the desktop application.
 
 export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Props) {
   const ids = useId();
-  // Off by default: her instructor's corrections are included only deliberately.
+  // Off by default: the instructor's corrections are included only deliberately.
   const [selection, setSelection] = useState<ExportSelection>(() => ({ ...exportableParts(exportSourceFor(source, {})), instructorCorrections: false }));
   const effective = exportSourceFor(source, selection);
   const available = exportableParts(effective);

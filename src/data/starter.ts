@@ -3,14 +3,14 @@
  *
  * It is installed once on a fresh database. Records become ordinary editable
  * data after that: deleting one does not make it reappear on the next launch.
- * Settings offers an explicit restore action for anything she wants back.
+ * Settings offers an explicit restore action for anything the student wants back.
  */
 import type { MaterialType, Priority, ReviewStatus, Topic } from "@/domain/types";
 import type { Repositories } from "./repositories";
 
 const STARTER_STATE_KEY = "airline_starter_pack";
 const STARTER_VERSION = "1";
-const STARTER_TAG = "Airline Starter Pack";
+const STARTER_TAG = "Career Starter Pack";
 
 interface StarterMilestone {
   title: string;
@@ -28,7 +28,7 @@ const MILESTONES: StarterMilestone[] = [
     title: "Build Your Training Foundation",
     description: "Choose a training route, protect your long-term options, and make a sustainable plan.",
     goal: {
-      title: "Create an airline-career training plan",
+      title: "Create your flight-training plan",
       description: "Turn the long journey into a route that fits your school, budget, schedule, and life.",
       priority: "next_up",
       checklist: [
@@ -86,13 +86,13 @@ const MILESTONES: StarterMilestone[] = [
   },
   {
     title: "Multi-Engine Training",
-    description: "Add multiengine knowledge and privileges appropriate to the planned career route.",
+    description: "Add multiengine knowledge and privileges appropriate to your planned flying route.",
     goal: {
       title: "Complete the planned Multi-Engine training",
       description: "Choose timing and course structure with a qualified instructor and career mentor.",
       priority: "important",
       checklist: [
-        "Choose when multiengine training fits the overall plan",
+        "Choose when multiengine training fits your overall plan",
         "Review aircraft systems and performance with an instructor",
         "Track multiengine experience carefully",
         "Complete the applicable practical-test preparation",
@@ -115,47 +115,47 @@ const MILESTONES: StarterMilestone[] = [
     },
   },
   {
-    title: "Build Airline-Qualifying Experience",
+    title: "Build Experience for Your Goals",
     description: "Build quality experience while keeping accurate records and strong professional habits.",
     goal: {
-      title: "Track progress toward ATP eligibility",
-      description: "Use current regulations and trusted mentors to verify which experience applies to the intended ATP route.",
+      title: "Track progress toward your experience goals",
+      description: "Use current regulations and trusted mentors to verify which experience applies to your goals.",
       priority: "important",
       checklist: [
         "Keep a complete and accurate pilot logbook",
-        "Review ATP eligibility progress at regular intervals",
+        "Review progress toward your experience goals at regular intervals",
         "Maintain medical, certificate, and endorsement records",
         "Keep a clean record of employment, training, and checkride history",
       ],
     },
   },
   {
-    title: "ATP-CTP and ATP Certificate",
-    description: "Prepare for the certification stage used for airline transport operations.",
+    title: "Explore Advanced Certificates and Ratings",
+    description: "Explore additional qualifications that fit your goals, including ATP if relevant.",
     goal: {
-      title: "Complete the applicable ATP pathway",
-      description: "Confirm eligibility, ATP-CTP applicability, testing, and practical-test steps from current FAA sources.",
+      title: "Plan your next qualification",
+      description: "Confirm eligibility, required training, testing, and practical-test steps from current FAA sources.",
       priority: "important",
       checklist: [
-        "Confirm standard or restricted-privileges ATP eligibility",
-        "Verify current ATP-CTP and knowledge-test requirements",
+        "Confirm eligibility for your chosen certificate or rating",
+        "Verify current training and knowledge-test requirements",
         "Organize logbooks and qualification records for review",
-        "Complete the applicable ATP or airline training event",
+        "Complete the applicable training and practical test",
       ],
     },
   },
   {
-    title: "Airline Applications and Type Rating",
-    description: "Prepare a professional application, interview record, and airline-training mindset.",
+    title: "Explore Your Flying Career Options",
+    description: "Explore flying roles that fit your interests and prepare for your next opportunity.",
     goal: {
-      title: "Become ready for an airline hiring process",
-      description: "Research each employer's current qualifications; airline hiring minimums are not all the same.",
+      title: "Prepare for your chosen flying role",
+      description: "Research the current qualifications for roles that interest you; requirements vary.",
       priority: "later",
       checklist: [
         "Build a master résumé and complete application history",
         "Audit logbooks, certificates, medical records, and training records",
         "Prepare technical, human-resources, and scenario interview practice",
-        "Research each airline's current published qualifications",
+        "Research current published qualifications for roles that interest you",
       ],
     },
   },
@@ -173,13 +173,13 @@ interface StarterMaterial {
 
 const MATERIALS: StarterMaterial[] = [
   {
-    title: "Airline Pilot Pathway Overview",
+    title: "Flying Career Pathway Overview",
     materialType: "study_guide",
     topic: "general",
     reviewStatus: "reference_only",
     priority: "next_up",
     notes:
-      "A common U.S. pathway is: training foundation → Private Pilot → Instrument Rating → Commercial Pilot → multiengine training → a lawful time-building route → ATP eligibility and ATP-CTP when applicable → airline selection and type-specific training. This is a planning map, not a promise that every pilot follows the same route. Review it with instructors and mentors, and verify current FAA and employer requirements before making decisions.",
+      "Start with a training foundation and Private Pilot certificate. Depending on your goals, you may add an Instrument Rating, Commercial Pilot certificate, multiengine training, or instructor certificates. ATP and type-specific training may apply to some careers. Choose the route that fits your interests with instructors and mentors, and verify current FAA and employer requirements before making decisions.",
     tags: [STARTER_TAG, "career roadmap"],
   },
   {
@@ -189,7 +189,7 @@ const MATERIALS: StarterMaterial[] = [
     reviewStatus: "reference_only",
     priority: "next_up",
     notes:
-      "Use official sources for requirements and current editions:\n\nBecome a Pilot — https://www.faa.gov/pilots/become\nAirman Certification Standards — https://www.faa.gov/training_testing/testing/acs\nATP training and certification resources — https://www.faa.gov/pilots/training/atp\nCurrent 14 CFR Part 61 — https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61\nFAA handbooks and manuals — https://www.faa.gov/regulations_policies/handbooks_manuals/aviation\n\nRequirements and publications change. Her instructor, examiner, school, FAA sources, and aircraft documents take priority over this app.",
+      "Use official sources for requirements and current editions:\n\nBecome a Pilot — https://www.faa.gov/pilots/become\nAirman Certification Standards — https://www.faa.gov/training_testing/testing/acs\nATP training and certification resources — https://www.faa.gov/pilots/training/atp\nCurrent 14 CFR Part 61 — https://www.ecfr.gov/current/title-14/chapter-I/subchapter-D/part-61\nFAA handbooks and manuals — https://www.faa.gov/regulations_policies/handbooks_manuals/aviation\n\nRequirements and publications change. Your instructor, examiner, school, FAA sources, and aircraft documents take priority over this app.",
     tags: [STARTER_TAG, "FAA", "official sources"],
   },
   {
@@ -229,7 +229,7 @@ const MATERIALS: StarterMaterial[] = [
     reviewStatus: "needs_review",
     priority: "next_up",
     notes:
-      "Useful interview prompts:\n• Who will be the primary instructor, and how consistent is scheduling?\n• What is included in the quoted price, and what commonly costs extra?\n• How are weather cancellations, maintenance, and instructor changes handled?\n• What aircraft availability and maintenance history should a student understand?\n• How does the school track syllabus progress and stage checks?\n• Which training route fits an airline-career goal, and why?\n• Can current students and recent graduates describe their experience?\n\nRecord answers and compare schools on the same criteria.",
+      "Useful interview prompts:\n• Who will be the primary instructor, and how consistent is scheduling?\n• What is included in the quoted price, and what commonly costs extra?\n• How are weather cancellations, maintenance, and instructor changes handled?\n• What aircraft availability and maintenance history should a student understand?\n• How does the school track syllabus progress and stage checks?\n• Which training route fits your flying goals, and why?\n• Can current students and recent graduates describe their experience?\n\nRecord answers and compare schools on the same criteria.",
     tags: [STARTER_TAG, "school selection"],
   },
   {
@@ -259,7 +259,7 @@ async function hasTrainingData(repositories: Repositories): Promise<boolean> {
   return groups.some((items) => items.length > 0);
 }
 
-/** Add every missing starter record without overwriting records she changed. */
+/** Add every missing starter record without overwriting records the student changed. */
 export async function restoreAirlineStarterPack(
   repositories: Repositories,
   personalizeEmptyProfile = false,
@@ -319,7 +319,7 @@ export async function restoreAirlineStarterPack(
   if (personalizeEmptyProfile) {
     const first = milestones.find((item) => item.title === MILESTONES[0]?.title);
     await repositories.profile.update({
-      certificateGoal: "Airline Pilot",
+      certificateGoal: "Explore your flying goals",
       currentFocus: "Build a strong training foundation",
       currentMilestoneId: first?.id ?? null,
     });

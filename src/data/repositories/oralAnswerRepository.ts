@@ -4,10 +4,10 @@ import { decodeOralCovered, encodeOralCovered, validOralAnswerText, type OralAns
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 
-/** ORAL-01d: her finished oral answers. Saved only when she finishes; she can delete one or all. */
+/** ORAL-01d: the student's finished oral answers. Saved only when the student finishes; the student can delete one or all. */
 export function oralAnswerRepository(db: SqlDatabase) {
   return {
-    /** Her finished answers for one scenario, newest first. */
+    /** The student's finished answers for one scenario, newest first. */
     async list(scenarioId: string): Promise<OralAnswer[]> {
       const rows = await db.select<Record<string, unknown>>(
         `SELECT a.id, a.scenario_id, a.version_id, v.version_number, v.points_json, a.answer, a.covered_json, a.finished_at
@@ -28,7 +28,7 @@ export function oralAnswerRepository(db: SqlDatabase) {
       }));
     },
     /**
-     * Keep one finished practice, frozen to the version she answered. The row
+     * Keep one finished practice, frozen to the version the student answered. The row
      * is written only if that version still belongs to the scenario.
      */
     async finish(input: { scenarioId: string; versionId: string; pointCount: number; answer: string; covered: number[]; revealedAt: string }): Promise<string> {

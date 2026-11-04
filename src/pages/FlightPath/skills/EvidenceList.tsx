@@ -20,7 +20,7 @@ import type { ActionOutcome, EvidenceController, EvidenceViewState } from "@/sta
 interface EvidenceListProps {
   state: EvidenceViewState;
   controller: EvidenceController;
-  /** Her follow-up actions, for linking. */
+  /** The student's follow-up actions, for linking. */
   actions: NextAction[];
   /** Show each observation's skill (the debrief card lists several skills). */
   showSkill?: boolean;

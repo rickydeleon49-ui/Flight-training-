@@ -9,18 +9,18 @@ import { DesktopOnlyError } from "./documents";
 
 export const GOOGLE_AI_STUDIO_KEY_URL = "https://aistudio.google.com/app/apikey";
 
-/** Which model her documents go to. Kept in step with `ModelChoice` in src-tauri/src/gemini.rs. */
+/** Which model the student's documents go to. Kept in step with `ModelChoice` in src-tauri/src/gemini.rs. */
 export type GeminiModelChoice = "standard" | "most-capable";
 
 export interface GeminiStatus {
   configured: boolean;
   keyUnreadable?: boolean;
-  /** The model documents are sent to first, given her choice. */
+  /** The model documents are sent to first, given the student's choice. */
   model: string;
   choice: GeminiModelChoice;
 }
 
-/** What each choice is called where she reads it. */
+/** What each choice is called where the student reads it. */
 export const GEMINI_MODEL_CHOICES: Record<
   GeminiModelChoice,
   { label: string; detail: string }
@@ -36,7 +36,7 @@ export const GEMINI_MODEL_CHOICES: Record<
   },
 };
 
-/** A model ID as she would read it. Historical models keep their original labels. */
+/** A model ID as the student would read it. Historical models keep their original labels. */
 export function geminiModelName(model: string): string {
   if (typeof model !== "string" || !model) return "Gemini";
   if (model === "claude-haiku-5-5") return "Claude Haiku 5.5";
@@ -102,7 +102,7 @@ export async function disconnectGemini(): Promise<GeminiStatus> {
   return invoke<GeminiStatus>("disconnect_gemini");
 }
 
-/** Choose which model her documents go to. The key is untouched. */
+/** Choose which model the student's documents go to. The key is untouched. */
 export async function setGeminiModel(choice: GeminiModelChoice): Promise<GeminiStatus> {
   if (!isTauri()) throw new Error("Gemini setup needs the desktop application.");
   return invoke<GeminiStatus>("set_gemini_model", { choice });
@@ -173,7 +173,7 @@ export interface GeminiJobRecord {
   materialId: string;
   relativePath: string;
   contentSha256: string;
-  /** The saved content's `updatedAt` when she asked, or null if none. */
+  /** The saved content's `updatedAt` when the student asked, or null if none. */
   baseRevision?: string | null;
   stage: GeminiJobStage;
   createdAt: number;

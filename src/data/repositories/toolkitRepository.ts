@@ -3,7 +3,7 @@ import { nowIso } from "@/lib/dates";
 import { defaultToolkitState, normalizeToolkitState } from "@/logic/toolkit";
 import type { SqlDatabase } from "../db";
 
-/** Shown when the saved toolkit cannot be read; her saved row is left alone. */
+/** Shown when the saved toolkit cannot be read; the student's saved row is left alone. */
 export const TOOLKIT_UNREADABLE_MESSAGE =
   "Your Pilot Toolkit could not be read, so nothing was changed. Your saved toolkit is kept as it was.";
 
@@ -42,7 +42,7 @@ export function toolkitRepository(db: SqlDatabase) {
 
     /**
      * Save the whole toolkit. Refuses — and changes nothing — when the saved
-     * row cannot be read, so defaults shown in its place never overwrite her
+     * row cannot be read, so defaults shown in its place never overwrite the student's
      * goals and credentials.
      */
     async save(state: ToolkitState): Promise<void> {
