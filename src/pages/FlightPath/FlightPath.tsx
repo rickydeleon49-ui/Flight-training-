@@ -503,7 +503,7 @@ function GoalCard({
               ) : null}
               {evidence.lastPracticed ? (
                 <span className="evidence__item">
-                  Last practised
+                  Last practiced
                   <span className="evidence__value">{formatShortDate(evidence.lastPracticed)}</span>
                 </span>
               ) : null}

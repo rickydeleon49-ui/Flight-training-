@@ -120,7 +120,7 @@ export function OralScenarioEditor({
         </Field>
         <Field
           label="Discussion points"
-          hint={`One point per line, up to ${ORAL_MAX_POINTS}. They stay hidden while you practise until you choose to show them.`}
+          hint={`One point per line, up to ${ORAL_MAX_POINTS}. They stay hidden while you practice until you choose to show them.`}
           error={problem?.field === "points" ? problem.message : null}
         >
           <TextArea rows={4} value={pointsText} onChange={(event) => setPointsText(event.target.value)} />

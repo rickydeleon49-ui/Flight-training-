@@ -1705,6 +1705,8 @@ function MaterialDetailPage() {
                       {helper} will read only this file and create a multiple-choice practice test with
                       explanations. The result will be saved locally with your other data.
                     </p>
+                  ) : !generatingPractice && !hasImported && !practiceJob && !practiceGenerationError && practiceMetadata.phase !== "failed" && conversionStatus?.legacyError !== "MALFORMED_QUESTION" ? (
+                    <p className="small muted">No practice questions yet.</p>
                   ) : null}
 
                   {reviewingPracticeRegeneration &&
@@ -2144,7 +2146,7 @@ function MaterialDetailPage() {
                     {fileMissing
                       ? providerWording("This PDF's file is missing, so Gemini can't read it.", gemini?.model)
                       : !gemini?.configured
-                        ? `Connect ${helper} in Settings to ask questions about this PDF.`
+                        ? (deviceCan().generate ? `Connect ${helper} in Settings to ask questions about this PDF.` : "Asking questions about this PDF is not available on this phone.")
                         : providerWording(generationNotice?.text ?? "Gemini isn't available for this PDF right now.", gemini?.model)}
                   </p>
                 ) : (
@@ -2411,6 +2413,8 @@ function GenerationNoticeView({
   onSplit: () => void;
   onQueueLater?: () => void;
 }) {
+  // The phone has no AI settings, so "Connect ... in Settings" would be a dead end.
+  if (notice.settings && !deviceCan().generate) return null;
   return (
     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
       <div className="ai-disclaimer" role="note">

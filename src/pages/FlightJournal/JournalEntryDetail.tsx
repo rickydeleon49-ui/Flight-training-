@@ -73,7 +73,7 @@ export function JournalEntryDetail() {
 
   const sections: Array<[string, string]> = [
     ["Today's mission", entry.mission],
-    ["What you practised", entry.practiced],
+    ["What you practiced", entry.practiced],
     ["What went well", entry.wentWell],
     ["What was difficult", entry.wasDifficult],
     ["Instructor feedback", entry.instructorFeedback],

@@ -313,4 +313,22 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     });
     expect(network).not.toHaveBeenCalled();
   });
+
+  it("shows a short empty line, not a blank card, when there is no practice test", async () => {
+    geminiStatus("disconnected");
+    await repos.documents.create({ id: "mat-bare", title: "VOR navigation handout", filePath: "documents/vor.txt", originalFileName: "vor.txt", fileSize: 4096 });
+    await open("mat-bare");
+    const card = screen.getByRole("heading", { name: "Practice test" }).closest(".card") as HTMLElement;
+    expect(within(card).getByText("No practice questions yet.")).toBeTruthy();
+  });
+
+  it("does not send an iPhone student to Settings for a Gemini connection that is not there", async () => {
+    geminiStatus("disconnected");
+    await seed();
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
+    await open();
+    await studySavedContent();
+    expect(screen.queryByText(/Connect the free Gemini API in Settings/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Open Settings" })).toBeNull();
+  });
 });

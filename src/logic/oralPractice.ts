@@ -57,5 +57,5 @@ export function oralNoteDraft(text: OralText): { title: string; body: string } {
 }
 
 export function oralQuestionText(text: OralText): string {
-  return `Oral question I practised. Could we talk it through?\n\n${oralPlainText(text)}`;
+  return `Oral question I practiced. Could we talk it through?\n\n${oralPlainText(text)}`;
 }

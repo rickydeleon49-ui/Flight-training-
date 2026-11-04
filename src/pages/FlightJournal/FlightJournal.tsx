@@ -421,7 +421,7 @@ export function FlightJournal() {
                 <EmptyState
                   icon={<JournalIcon size={28} />}
                   title="Your journal is ready."
-                  body="After your next lesson, write down what you practised, what your instructor said, and the one thing to work on. Over time this becomes the clearest record of how far you have come."
+                  body="After your next lesson, write down what you practiced, what your instructor said, and the one thing to work on. Over time this becomes the clearest record of how far you have come."
                   action={
                     <div className="row" style={{ gap: "var(--space-3)", flexWrap: "wrap", justifyContent: "center" }}>
                       <Link className="button button--secondary" to="/journal/new?mode=discovery">

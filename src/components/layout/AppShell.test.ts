@@ -384,3 +384,17 @@ it.each([644, 1320])("Study Library menu resets at width %i while material Back 
   enterFromMenu();
   expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
 });
+
+describe("AppShell search hint", () => {
+  it("shows the keyboard shortcut hint on desktop but not on an iPhone", () => {
+    mount(1200);
+    expect(document.querySelector(".nav__shortcut")).toBeTruthy();
+    cleanup();
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
+    mount(644);
+    fireEvent.click(menu());
+    expect(screen.getByRole("button", { name: /^Search/ })).toBeTruthy();
+    expect(document.querySelector(".nav__shortcut")).toBeNull();
+    vi.restoreAllMocks();
+  });
+});

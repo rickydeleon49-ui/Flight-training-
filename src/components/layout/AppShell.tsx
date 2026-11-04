@@ -1,3 +1,4 @@
+import { isIOS } from "@/services/platform";
 import { useHistoryScroll } from "./useHistoryScroll";
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
@@ -196,7 +197,7 @@ export function AppShell() {
               <SearchIcon size={17} />
             </span>
             <span>Search</span>
-            <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>
+            {isIOS() ? null : <kbd className="nav__shortcut">{quickFindShortcutLabel()}</kbd>}
           </button>
 
           <div className="nav-wrapper">
