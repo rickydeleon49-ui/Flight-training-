@@ -4,7 +4,7 @@
  * "Open at page" was removed (owner, 22 October): macOS gives no reliable way
  * to hand the reader a specific page, so the panel no longer offers it or the
  * reading marks tied to it. A bookmark's own page number stays shown next to
- * it so she knows where to go once the file opens. The controller, repository
+ * it so the student knows where to go once the file opens. The controller, repository
  * and any saved reading data remain in place, unused by this panel.
  *
  * - Opening a bookmark hands the file to the default system reader; the
@@ -95,7 +95,7 @@ function statusText(status: NavigationStatus): { text: string; error: boolean } 
   }
 }
 
-/** A first, card-only manual set, saved only when she presses Save. */
+/** A first, card-only manual set, saved only when the student presses Save. */
 function emptyCardSet(material: StudyMaterial): AiStudySet {
   return {
     sourceMaterialId: material.id,
@@ -526,7 +526,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
 }
 
 interface AddBookmarkDialogProps {
-  /** The content she was looking at when she chose to add it. */
+  /** The content the student was looking at when the student chose to add it. */
   contentSha256: string;
   totalPages: number;
   suggestedPage: number | null;

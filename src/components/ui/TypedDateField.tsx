@@ -40,7 +40,7 @@ export function typedDateProblem(text: string, { required = false, min, max }: T
 }
 
 export interface TypedDateFieldHandle {
-  /** Shows any problem with what she typed; true when it can be saved. */
+  /** Shows any problem with what the student typed; true when it can be saved. */
   check: () => boolean;
 }
 
@@ -74,7 +74,7 @@ export function TypedDateField({
   const id = useId();
   const rules = { required, min, max };
   const [text, setText] = useState(() => formatTypedDate(value));
-  // A problem shows once she leaves the box or tries to save, never mid-typing.
+  // A problem shows once the student leaves the box or tries to save, never mid-typing.
   const [revealed, setRevealed] = useState(false);
   const emitted = useRef(value);
   const box = useRef<HTMLDivElement>(null);
@@ -96,7 +96,7 @@ export function TypedDateField({
     check: () => {
       setRevealed(true);
       // A tall form can leave the field off-screen when Save is pressed:
-      // take her to it so the plain message is seen.
+      // take the student to it so the plain message is seen.
       if (problem) {
         input.current?.focus();
         input.current?.scrollIntoView?.({ block: "center" });

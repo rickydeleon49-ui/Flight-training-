@@ -3,7 +3,7 @@ import { OralScenarioError, readOralScenarios, type OralOperation, type OralScen
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 
-/** ORAL-01c: her saved scenarios. Answers and ticks are never stored. */
+/** ORAL-01c: the student's saved scenarios. Answers and ticks are never stored. */
 export function oralScenarioRepository(db: SqlDatabase) {
   const save = (operation: OralOperation) => {
     if (!db.saveOralScenarioAtomically) throw new OralScenarioError("STORAGE");

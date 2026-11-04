@@ -39,7 +39,7 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
   const [linkError, setLinkError] = useState(false);
   const { repositories } = useAppData();
   const store = repositories?.studentPilotSteps;
-  // Ticks live in her saved data. Until they load (or if saving is unavailable) they stay on screen only.
+  // Ticks live in the student's saved data. Until they load (or if saving is unavailable) they stay on screen only.
   const [done, setDone] = useState<string[]>([]);
   const [saveError, setSaveError] = useState(false);
   const older = useRef(progress);
@@ -47,7 +47,7 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
     if (!store) return;
     let active = true;
     void (async () => {
-      // One time: ticks an older version kept on this computer move into her data.
+      // One time: ticks an older version kept on this computer move into the student's data.
       const legacy = older.current.done;
       if (legacy.length) {
         await store.importDone(legacy);
@@ -68,7 +68,7 @@ export function BeforeYouEnroll({ profile }: { profile: Pick<Profile, "flightSch
   }
 
   if (profile.flightSchool.trim() || profile.trainingStartedOn) return null;
-  // Hide is not a dead end: until she has a school, one quiet link brings the card back.
+  // Hide is not a dead end: until the student has a school, one quiet link brings the card back.
   if (progress.hidden) {
     return (
       <p className="enroll-show">

@@ -7,7 +7,7 @@
  * part of an undo feature that quietly loses attachments and child rows.
  *
  * The trade is that quitting inside the undo window leaves the record in
- * place. That errs toward keeping her data, which is the right direction.
+ * place. That errs toward keeping the student's data, which is the right direction.
  */
 import type { AppData } from "@/state/AppDataContext";
 import type { Id } from "@/domain/types";

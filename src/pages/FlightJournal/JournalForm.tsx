@@ -220,7 +220,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
   const createdActionIdRef = useRef<string | null>(null);
   const createdQuestionIdRef = useRef<string | null>(null);
 
-  /** What the form starts from: the saved entry, a lesson, or her defaults. */
+  /** What the form starts from: the saved entry, a lesson, or the student's defaults. */
   const startingDraft = useCallback((): DebriefDraft => {
     if (existing) {
       return {
@@ -534,7 +534,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
       setError("Landing counts must be whole numbers.");
       return;
     }
-    // Times saved before this check existed are left alone unless she changes
+    // Times saved before this check existed are left alone unless the student changes
     // one, so a quick debrief never stops on fields that mode doesn't show.
     const timeProblem = flightTimeProblem(draft);
     if (timeProblem && (!existing || flightTimesChanged(existing, draft))) {
@@ -1032,7 +1032,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.departureAirport}
-                    placeholder="e.g. KSQL"
+                    placeholder="e.g. KABC"
                     onChange={(e) => update("departureAirport", e.target.value)}
                   />
                 )}
@@ -1044,7 +1044,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                     id={id}
                     disabled={isSaving}
                     value={draft.arrivalAirport}
-                    placeholder="e.g. KSQL"
+                    placeholder="e.g. KABC"
                     onChange={(e) => update("arrivalAirport", e.target.value)}
                   />
                 )}
@@ -1071,7 +1071,7 @@ function JournalFormPage({ initialMode }: { initialMode: "quick" | "full" }) {
                       list="school-suggestions"
                       disabled={isSaving}
                       value={draft.schoolName !== undefined ? draft.schoolName : (existing?.schoolName ?? "")}
-                      placeholder="e.g. San Carlos Flight Center"
+                      placeholder="Your flight school"
                       onChange={(e) => update("schoolName", e.target.value)}
                     />
                     {schoolSuggestions.length > 0 ? (

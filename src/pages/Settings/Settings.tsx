@@ -373,7 +373,7 @@ export function Settings() {
     void refreshBackups();
   }, []);
 
-  // How well protected she is right now, which is worth saying out loud.
+  // How well protected the student is right now, which is worth saying out loud.
   useEffect(() => {
     if (!repositories) return;
     void repositories.app.lastCompleteBackup().then(setLastBackup).catch(() => setLastBackup(null));
@@ -469,8 +469,8 @@ export function Settings() {
       // Rust takes a consistent SQLite online snapshot before archiving it.
       const backup = await createCompleteBackup(destination);
 
-      // Remembering this is what lets the app tell her later that the backup
-      // she has predates an update.
+      // Remembering this is what lets the app tell the student's later that the backup
+      // the student has predates an update.
       const record = {
         at: new Date().toISOString(),
         version: backup.appVersion,
@@ -490,7 +490,7 @@ export function Settings() {
         setBackupNote(message);
       } catch {
         // The archive is already finalized and verified. A failed reminder
-        // write must not tell her that the actual backup failed, but must
+        // write must not tell the student's that the actual backup failed, but must
         // still retain any missing-document or unreferenced-file warnings.
         setBackupProblem(true);
         setBackupNote(formatCompleteBackupReminderFailureNote(backup, materials));
@@ -534,7 +534,7 @@ export function Settings() {
       const candidate = await inspectCompleteBackup(source);
 
       // An older app cannot read a record a newer one wrote. Saying so is far
-      // kinder than installing it and leaving her with an app that won't open.
+      // kinder than installing it and leaving the student's with an app that won't open.
       const warning = restoreWarning(candidate.appVersion, candidate.currentAppVersion);
       if (warning) {
         setBackupProblem(true);
@@ -617,7 +617,7 @@ export function Settings() {
     window.setTimeout(() => setSaved(false), 2500);
   };
 
-  /** The accent applies the moment it is chosen, so she can see it. */
+  /** The accent applies the moment it is chosen, so the student can see it. */
   const chooseAccent = async (accentColor: AccentColor) => {
     const previous = draft.accentColor;
     update("accentColor", accentColor);
@@ -665,7 +665,7 @@ export function Settings() {
       setStarterNote(
         added > 0
           ? `Starter pack restored — ${added} roadmap and library items added.`
-          : "The airline starter pack is already complete.",
+          : "The career starter pack is already complete.",
       );
     }
     setBusy(false);
@@ -1008,7 +1008,7 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Airline pilot starter pack" eyebrow="Built-in guidance" />
+          <CardHeader title="Career starter pack" eyebrow="Built-in guidance" />
           <CardBody>
             <PlatformGuidance
               mac="Restoring starter items changes only this Mac’s local library."
@@ -1017,8 +1017,8 @@ export function Settings() {
             />
             <div className="stack stack--4">
               <p className="small muted">
-                Includes a complete career roadmap from training foundations through ATP and
-                airline applications, along with lesson checklists, debrief prompts, record
+                Includes a career roadmap from training foundations through optional advanced training and
+                career planning, along with lesson checklists, debrief prompts, record
                 organizers, and official FAA starting points. It never replaces your instructor,
                 logbook, aircraft documents, or current regulations.
               </p>

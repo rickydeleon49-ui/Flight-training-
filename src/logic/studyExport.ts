@@ -1,11 +1,11 @@
 /**
  * Exporting a material's study aid as a study packet (P54-04).
  *
- * She chooses which parts of one material's guide, flashcards and practice
+ * The student chooses which parts of one material's guide, flashcards and practice
  * test to share. They are written in the same `hfd-study-packet` version 1
  * format the import reads, and the text is run through that import validator
  * before it can be saved. What another copy of Her Flight Deck would import is
- * checked against what she chose, so an export never silently drops or alters
+ * checked against what the student chose, so an export never silently drops or alters
  * content beyond the format's own whitespace tidying.
  *
  * Only the chosen material's study content travels: no other records, no file
@@ -24,7 +24,7 @@ export interface ExportSelection {
   flashcards: boolean;
   questions: boolean;
   /**
-   * Her instructor's corrections stay private unless she includes them
+   * The instructor's corrections stay private unless the student includes them
    * (OFFLINE-03 §2.6); applied before anything is written.
    */
   instructorCorrections?: boolean;
@@ -42,7 +42,7 @@ export type ExportPacketResult =
 
 const CHOICE_IDS = ["a", "b", "c", "d", "e", "f"] as const;
 
-/** Messages for a packet this export could not write, in her words. */
+/** Messages for a packet this export could not write, in the student's words. */
 export const EXPORT_MESSAGES = {
   nothingChosen: "Choose at least one part to export.",
   credential:
@@ -52,7 +52,7 @@ export const EXPORT_MESSAGES = {
   mismatch: "The exported packet would not import exactly as chosen, so it wasn't saved. Nothing was written.",
 } as const;
 
-/** Whether either study aid holds any of her instructor's corrections. */
+/** Whether either study aid holds any of the instructor's corrections. */
 export function hasInstructorCorrections(set: AiStudySet | null, test?: PracticeTest | null): boolean {
   return Boolean(
     (set &&
@@ -76,7 +76,7 @@ export function hasHandwrittenItems(set: AiStudySet | null, test?: PracticeTest 
 }
 
 /**
- * What may be exported: her instructor's corrections are removed unless she
+ * What may be exported: the instructor's corrections are removed unless the student
  * chose to include them. Every export path starts here, before serializing.
  */
 export function exportSourceFor(source: ExportSource, selection: Pick<ExportSelection, "instructorCorrections">): ExportSource {
@@ -132,7 +132,7 @@ export function provenanceNote(source: ExportSource, selection: ExportSelection,
   const origins: { what: string; origin: string }[] = [];
   const set = source.studySet;
   const test = source.practiceTest;
-  // Only the parts she chose travel in the packet, so only they can be claimed.
+  // Only the parts the student chose travel in the packet, so only they can be claimed.
   const chosenSetItems = (): PdfProvenanceItem[] => {
     if (!set) return [];
     const items: PdfProvenanceItem[] = [];

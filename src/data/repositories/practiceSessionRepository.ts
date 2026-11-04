@@ -33,7 +33,7 @@ export interface PracticeSessionRepository {
   eraseHistory(action: EraseHistoryAction): Promise<EraseHistoryResult>;
   getCurrentAttempt(materialId: string): Promise<PracticeSessionState | null>;
   getAttempt(attemptId: string): Promise<PracticeAttempt | null>;
-  /** Her newest completed attempts across every test, newest first (read only). */
+  /** The student's newest completed attempts across every test, newest first (read only). */
   getRecentCompletedAttempts(limit: number): Promise<PracticeAttempt[]>;
   getCompletedHistory(historyKey: string, limit?: number): Promise<CompletedHistoryItem[]>;
   getCompletedHistoryGroups(): Promise<PracticeHistoryGroup[]>;

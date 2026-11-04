@@ -82,7 +82,7 @@ export function milestoneRepository(db: SqlDatabase) {
 
     /**
      * Move several milestones at once. One statement, so SQLite applies every
-     * position or none: a failure leaves the order she had.
+     * position or none: a failure leaves the order the student had.
      */
     async reorder(positions: Array<{ id: Id; position: number }>): Promise<void> {
       if (positions.length === 0) return;

@@ -1,9 +1,9 @@
 /**
  * Preparing a profile photo for storage.
  *
- * Whatever she picks is downscaled and re-encoded before it is saved, so a
+ * Whatever the student picks is downscaled and re-encoded before it is saved, so a
  * 6 MB phone photo becomes a few tens of kilobytes. That is what makes it
- * reasonable to keep in her database next to everything else about her,
+ * reasonable to keep in the student's database next to everything else about the student,
  * rather than managing a separate file on disk.
  */
 

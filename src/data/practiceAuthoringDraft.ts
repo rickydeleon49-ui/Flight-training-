@@ -94,9 +94,9 @@ export async function bindPdfQuestions(operation: PracticeSaveOperation, draft: 
 export type NoteQuestionSeed = Omit<import("./studyPageSources").BookmarkQuestionSource, "itemId"> & { identity: string };
 
 /**
- * Her saved questions, then one new question from the page note: title →
+ * The student's saved questions, then one new question from the page note: title →
  * question, notes → explanation, page → source page, two blank options and
- * no correct answer chosen. Nothing is saved until she presses Save.
+ * no correct answer chosen. Nothing is saved until the student presses Save.
  */
 export function draftWithNoteQuestion(snapshot: PracticeSnapshot | null, seed: NoteQuestionSeed): PracticeDraftQuestion[] {
   return [

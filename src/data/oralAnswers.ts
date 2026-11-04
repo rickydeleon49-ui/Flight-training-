@@ -1,7 +1,7 @@
 /**
- * ORAL-01d: her finished oral answers, each frozen to the scenario version she
+ * ORAL-01d: the student's finished oral answers, each frozen to the scenario version the student
  * answered (schema 32). Native twin of the codec: `decode_covered` in
- * `src-tauri/src/oral_scenarios.rs`. Answers live only in her database and
+ * `src-tauri/src/oral_scenarios.rs`. Answers live only in the student's database and
  * complete backups; no export, packet or handout reads this table.
  */
 import { ORAL_MAX_ANSWER } from "@/logic/oralPractice";
@@ -14,7 +14,7 @@ export interface OralAnswer {
   /** Discussion points from this answer's frozen scenario version. */
   points: string[];
   answer: string;
-  /** Indexes of the points she ticked in that frozen version. */
+  /** Indexes of the points the student ticked in that frozen version. */
   covered: number[];
   finishedAt: string;
 }

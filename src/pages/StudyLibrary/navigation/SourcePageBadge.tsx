@@ -5,7 +5,7 @@
  * may cite the printed page ("p. 3-12") rather than the PDF's own page count.
  * Under the approved OD-6 default such a number never resolves to a saved
  * position. The badge opens the material's file in the default reader, after
- * the desktop app has checked it, and tells her where to look; nothing is
+ * the desktop app has checked it, and tells the student where to look; nothing is
  * saved. Without a file or outside the desktop app it stays a plain label.
  *
  * Leaving the view (unmount or a route change) retires a request this badge

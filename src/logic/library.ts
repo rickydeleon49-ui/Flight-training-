@@ -2,8 +2,8 @@
  * Ordering the Study Library.
  *
  * Recently added first is the right default for a growing binder, but when
- * she is working a backlog she wants what matters most at the top, and when
- * she is looking for one specific handout she wants it alphabetical.
+ * the student is working a backlog the student wants what matters most at the top, and when
+ * the student is looking for one specific handout the student wants it alphabetical.
  */
 import { type Priority, type StudyMaterial } from "@/domain/types";
 
@@ -25,7 +25,7 @@ export function sortMaterials(materials: StudyMaterial[], order: MaterialSort): 
     case "title":
       return sorted.sort((a, b) => a.title.localeCompare(b.title));
     case "priority":
-      // Within a priority, the newest is the one she is most likely to want.
+      // Within a priority, the newest is the one the student is most likely to want.
       return sorted.sort(
         (a, b) =>
           PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] ||

@@ -1,9 +1,9 @@
 /**
- * Her data: where it lives, and copies of it.
+ * The student's data: where it lives, and copies of it.
  *
  * The desktop shell keeps everything in one application data directory and
  * copies the database aside before the first run of any new version. These
- * wrap the commands that expose that to her.
+ * wrap the commands that expose that to the student.
  */
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
@@ -118,7 +118,7 @@ export async function stageCompleteRestore(sourcePath: string): Promise<Complete
 /**
  * Stage one of the automatic safety copies, without touching uploaded files.
  *
- * These copies are the database as it stood before an update. Her documents
+ * These copies are the database as it stood before an update. The student's documents
  * never moved, so a restore from one deliberately leaves them alone.
  */
 export async function stageLocalRestore(name: string): Promise<BackupInfo> {
@@ -144,7 +144,7 @@ export async function dataDirectory(): Promise<string> {
 }
 
 /**
- * Open her data folder in Finder or File Explorer.
+ * Open the student's data folder in Finder or File Explorer.
  *
  * The desktop shell resolves the folder itself (`open_data_folder`), so the
  * page never passes a path and needs no file-system scope for it.

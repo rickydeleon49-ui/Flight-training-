@@ -187,7 +187,7 @@ function jsonArray<T>(value: unknown): T[] {
 }
 
 /**
- * Practice provenance: "manual" (a test she wrote herself) and "import" read
+ * Practice provenance: "manual" (a test the student wrote themselves) and "import" read
  * back faithfully and are never turned into "gemini"; legacy rows default to
  * it because only Gemini could write them before OFFLINE-03b.
  */
@@ -195,7 +195,7 @@ const toPracticeProvider = (value: unknown): StudySetProvider =>
   value === "import" || value === "manual" ? value : "gemini";
 
 /**
- * A study set's provenance: "manual" (her own set) and "import" read back
+ * A study set's provenance: "manual" (the student's own set) and "import" read back
  * faithfully and are never turned into "gemini"; legacy rows default to it.
  */
 const toSetProvider = (value: unknown): StudySetProvider =>
@@ -228,7 +228,7 @@ const mapAiStudySet = (row: AiRow): AiStudySet => ({
   updatedAt: toText(row.updated_at),
 });
 
-/** Said if anything tries to replace her own items without the regeneration review. */
+/** Said if anything tries to replace the student's own items without the regeneration review. */
 export const REVIEW_FIRST_MESSAGE =
   "This study guide has items you wrote, corrected or deleted, so a new one is saved only after you review it. Nothing has been saved.";
 
@@ -459,8 +459,8 @@ export function documentRepository(db: SqlDatabase) {
      * Save a Gemini study set. Replacing an imported set also replaces its
      * provenance, so regenerated content is never labelled as imported. The
      * set it replaces goes to history first, in the same transaction; what
-     * she retired is carried over. A set holding her own items is never
-     * replaced here: regeneration reviews it with her first.
+     * the student retired is carried over. A set holding the student's own items is never
+     * replaced here: regeneration reviews it with the student first.
      */
     async saveAiStudySet(input: Omit<AiStudySet, "provider" | "generatedAt" | "updatedAt">, guideJobId?: string, kind?: "study-aid" | "flashcards"): Promise<void> {
       const current = await readStoredSet(input.sourceMaterialId);
@@ -499,7 +499,7 @@ export function documentRepository(db: SqlDatabase) {
     /** The set exactly as stored, to name it as the one a save replaces. */
     readStoredStudySet: readStoredSet,
 
-    /** The set she is about to edit: as stored (for the save) and as shown. */
+    /** The set the student is about to edit: as stored (for the save) and as shown. */
     async readStudySetForEdit(materialId: Id): Promise<{ stored: StoredSetRow; set: AiStudySet } | null> {
       const stored = await readStoredSet(materialId);
       return stored ? { stored, set: await withPdfSources(storedStudySet(materialId, stored)) } : null;
@@ -617,7 +617,7 @@ export function documentRepository(db: SqlDatabase) {
      * Save a generated, imported or hand-written practice test through the
      * authoring contract (OFFLINE-03b): the provider is explicit, the exact
      * stored state is the expected snapshot, incoming questions receive fresh
-     * logical identities, and any question of hers that this replacement
+     * logical identities, and any question of theirs that this replacement
      * drops is retired with its exact earlier wording first. Requires atomic
      * writer support; there is no fallback.
      */
@@ -798,13 +798,13 @@ export function documentRepository(db: SqlDatabase) {
 
     async remove(id: Id): Promise<void> {
       await db.execute("DELETE FROM study_materials WHERE id = ?", [id]);
-      // Her own question drafts go with the material; saved attempts keep
+      // The student's own question drafts go with the material; saved attempts keep
       // their frozen sources. A failure here leaves only unreachable rows,
       // which the next practice save collects.
       try {
         await collectQuestionSources((sql, params) => db.execute(sql, params), (sql, params) => db.select(sql, params));
       } catch {
-        // The material is already removed; nothing she can see depends on this.
+        // The material is already removed; nothing the student can see depends on this.
       }
     },
 

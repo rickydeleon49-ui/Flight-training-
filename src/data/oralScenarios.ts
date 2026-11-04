@@ -1,11 +1,11 @@
 /**
- * ORAL-01c: her saved oral-question scenarios.
+ * ORAL-01c: the student's saved oral-question scenarios.
  *
  * One bounded codec (the native twin is `src-tauri/src/oral_scenarios.rs`),
  * one owned transaction for the browser and test drivers, and a reader.
  * Every edit adds a frozen version; a save is idempotent through
- * `oral_save_operations`, which keeps only a hash of the request, never her
- * text. Her answers and ticks are never stored here.
+ * `oral_save_operations`, which keeps only a hash of the request, never the student's
+ * text. The student's answers and ticks are never stored here.
  */
 import { canonicalJson, sha256Hex } from "@/logic/cardIdentity";
 import type { SqlValue } from "./db";
@@ -130,7 +130,7 @@ function validSourcePage(value: unknown): value is number | null {
   return value === null || (Number.isSafeInteger(value) && (value as number) >= 1 && (value as number) <= ORAL_SOURCE_PAGE_MAX);
 }
 
-/** Content she can write (origin `user` or `instructor`); stored rows may also be `study_aid`. */
+/** Content the student can write (origin `user` or `instructor`); stored rows may also be `study_aid`. */
 export function validOralContent(value: unknown, stored = false): value is OralScenarioContent {
   if (!exactKeys(value, ["prompt", "assumptions", "points", "sourcePage", "origin"])) return false;
   const origins = stored ? ["user", "instructor", "study_aid"] : ["user", "instructor"];
@@ -309,7 +309,7 @@ async function insertVersion(run: Run, scenarioId: string, versionId: string, ve
   );
 }
 
-/** Her current scenarios for one material, in her order, each at its latest version. */
+/** The student's current scenarios for one material, in the student's order, each at its latest version. */
 export async function readOralScenarios(query: Query, materialId: string): Promise<OralScenario[]> {
   const rows = await query(
     `SELECT s.id, s.position, v.id AS version_id, v.version_number, v.prompt, v.assumptions, v.points_json, v.source_page, v.origin

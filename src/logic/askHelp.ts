@@ -1,5 +1,5 @@
 /**
- * Plain local wording for Ask: refusals that point her somewhere useful, and
+ * Plain local wording for Ask: refusals that point the student's somewhere useful, and
  * a nudge when a question has no topic yet. Nothing here is sent anywhere.
  */
 
@@ -46,14 +46,14 @@ function listTopics(topics: readonly string[]): string {
   return `${topics.slice(0, -1).join(", ")} and ${topics[topics.length - 1]}`;
 }
 
-/** What she sees when an answer is not in this PDF (provider-neutral). */
+/** What the student sees when an answer is not in this PDF (provider-neutral). */
 export function notAnsweredMessage(range: string | null, topics: readonly string[]): string {
   const where = range ? `That isn't in these pages (${range}).` : "That isn't in these pages.";
   const covers = topics.length > 0 ? ` This PDF covers: ${topics.slice(0, 5).join("; ")}.` : "";
   return `${where}${covers} Try another chapter, or ask your instructor.`;
 }
 
-/** Words that, alone, don't say which part of the PDF she means. */
+/** Words that, alone, don't say which part of the PDF the student means. */
 const VAGUE = new Set([
   "",
   "why",

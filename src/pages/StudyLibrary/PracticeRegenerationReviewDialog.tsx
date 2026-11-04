@@ -30,7 +30,7 @@ function QuestionContent({ question, compare, showAnswers }: { question: Practic
   </div>;
 }
 
-/** Her reviewed choices stay local until Save; the provider owns the acknowledgement. */
+/** The student's reviewed choices stay local until Save; the provider owns the acknowledgement. */
 export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onSave }: {
   job: GeminiJob; materialId: string; onClose: () => void;
   onSave: (reviewed: ReviewedRegeneration) => Promise<boolean>;
@@ -88,7 +88,7 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
             if (!earlier.has(key)) earlier.set(key, question);
           }
         } catch {
-          // The fingerprints still protect her questions when earlier wording is unavailable.
+          // The fingerprints still protect the student's questions when earlier wording is unavailable.
         }
         if (!live) return;
         setCurrent(read);
@@ -99,7 +99,7 @@ export function PracticeRegenerationReviewDialog({ job, materialId, onClose, onS
       }
     })();
     return () => { live = false; };
-    // A failed save updates job.error/reviewed; it must not reset her choices.
+    // A failed save updates job.error/reviewed; it must not reset the student's choices.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repositories, materialId, answer]);
 

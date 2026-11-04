@@ -1,9 +1,9 @@
 /**
- * What Gemini will accept, decided before she waits for it.
+ * What Gemini will accept, decided before the student waits for it.
  *
  * The Rust side enforces these limits and holds the reasoning behind each
  * number — see `src-tauri/src/gemini.rs`. They are repeated here so an
- * oversized or unreadable file is answered while she is looking at the
+ * oversized or unreadable file is answered while the student is looking at the
  * material, rather than after a click, an upload, and a wait.
  *
  * They are Google's limits, not this application's. A PDF is read up to 50 MB
@@ -52,7 +52,7 @@ export function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Bytes as she would say them: "62 MB", not "65,011,712 bytes". */
+/** Bytes as the student would say them: "62 MB", not "65,011,712 bytes". */
 export function describeFileSize(bytes: number): string {
   const mb = 1024 * 1024;
   if (bytes >= mb) return `${Math.ceil(bytes / mb)} MB`;
@@ -63,7 +63,7 @@ export function describeFileSize(bytes: number): string {
  * Whether this file can be sent at all.
  *
  * A size of null means the record predates file sizes being stored; that is
- * not a reason to stop her trying, so only the type is judged.
+ * not a reason to stop the student's trying, so only the type is judged.
  */
 export function checkFileForGemini(
   fileName: string,
@@ -107,7 +107,7 @@ export type SplitRangeVerdict =
  *
  * The Rust side refuses a range past `maxPagesPerSplit` after doing the work
  * — see `src-tauri/src/pdf.rs`. Deciding the same thing here means an
- * impossible range is answered while she is choosing it, instead of being
+ * impossible range is answered while the student is choosing it, instead of being
  * called "well inside the limits" and then rejected.
  */
 export function checkSplitRange(

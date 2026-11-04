@@ -1206,7 +1206,7 @@ export async function validateSkillEvidenceState(query: ValidationQuery, referen
   //    every step is a change the write path can make:
   //    - built-in wording (label, description, topic) and catalog version are
   //      pinned in every revision and the head; only retire/restore changes them;
-  //    - custom revisions carry no catalog version and are all hers;
+  //    - custom revisions carry no catalog version and are all theirs;
   //    - active -> active changes wording (an edit); active <-> retired keeps it.
   //    Active names are unique under the write path's labelKey (NFC, trimmed,
   //    whitespace collapsed, lower-cased). Retired names may repeat.
@@ -1487,7 +1487,7 @@ export async function validateNavigationState(query: ValidationQuery, reference:
 }
 
 /* ------------------------------------------------------------------ */
-/* Schema 16: study material she makes herself                         */
+/* Schema 16: study material the student makes themselves                         */
 /* (native twin: `verify_schema_16_manual_study_semantics`)            */
 /* ------------------------------------------------------------------ */
 
@@ -1537,7 +1537,7 @@ export async function validateManualStudyState(query: ValidationQuery, reference
 }
 
 /* ------------------------------------------------------------------ */
-/* Schema 17: the practice questions she writes herself                */
+/* Schema 17: the practice questions the student writes themselves                */
 /* (native twin: `verify_schema_17_practice_authoring_semantics`)      */
 /* ------------------------------------------------------------------ */
 

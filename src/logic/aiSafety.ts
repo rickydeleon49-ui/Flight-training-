@@ -20,7 +20,7 @@ import { MATERIAL_TYPE_LABELS, type CredentialRecord, type StudyMaterial } from 
 
 export interface AiSubmissionCheck {
   allowed: boolean;
-  /** Shown to her: why it is refused, or what she is agreeing to. */
+  /** Shown to the student: why it is refused, or what the student is agreeing to. */
   reason: string;
 }
 
@@ -83,7 +83,7 @@ export function checkAiSubmission(
 }
 
 /**
- * Exactly what leaves this Mac when she confirms, and what Google keeps
+ * Exactly what leaves this Mac when the student confirms, and what Google keeps
  * (GEN-REL-01). A PDF is uploaded once to Google's temporary file storage so a
  * study guide and a practice test can both use it; anything else is sent with
  * the one request. A split part names the pages of the original it holds, so

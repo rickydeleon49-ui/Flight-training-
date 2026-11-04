@@ -101,7 +101,7 @@ export async function photoToPng(file: Blob, deps: PhotoDeps = browserDeps): Pro
   }
 }
 
-/** Save a checked PNG as a new picture in her library (iPhone only). */
+/** Save a checked PNG as a new picture in the student's library (iPhone only). */
 export async function savePhotoPicture(png: Uint8Array): Promise<SavedPhoto> {
   if (!deviceCan().pictureFromPhoto) throw new Error("Only on the iPhone");
   inspectPng(png);

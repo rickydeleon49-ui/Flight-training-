@@ -1,4 +1,4 @@
-/** Save a complete copy where her iPhone can open it. */
+/** Save a complete copy where the student's iPhone can open it. */
 import { invoke } from "@tauri-apps/api/core";
 
 import {
@@ -9,14 +9,14 @@ import {
 
 const pad = (n: number): string => String(n).padStart(2, "0");
 
-/** Her local "YYYY-MM-DD HHmm", used in the file name. */
+/** The student's local "YYYY-MM-DD HHmm", used in the file name. */
 export function localStamp(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}${pad(now.getMinutes())}`;
 }
 
 /**
  * Saves into iCloud Drive when it is on; otherwise asks where to save.
- * Returns null if she cancels the dialog.
+ * Returns null if the student cancels the dialog.
  */
 export async function sendToIphone(): Promise<{ info: CompleteBackupInfo; viaICloud: boolean } | null> {
   const info = await invoke<CompleteBackupInfo | null>("create_iphone_backup", {

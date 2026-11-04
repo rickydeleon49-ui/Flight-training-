@@ -2,11 +2,11 @@
  * Unsaved typing, kept until it is saved for real.
  *
  * A debrief takes a while to write, and until now clicking away lost it. The
- * draft is mirrored into localStorage as she types and read back when the
+ * draft is mirrored into localStorage as the student types and read back when the
  * form opens again, so leaving a page is never destructive.
  *
  * localStorage rather than the database on purpose: this is scratch text, it
- * should not enter her training record, appear in backups, or survive being
+ * should not enter the student's training record, appear in backups, or survive being
  * deliberately discarded.
  */
 const PREFIX = "her-flight-deck.draft.";

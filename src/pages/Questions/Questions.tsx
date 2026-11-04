@@ -108,7 +108,7 @@ export function Questions() {
 
   // Unsaved answers, by question id. They live here rather than in each row,
   // so a row leaving the visible page (a new question, a filter change,
-  // paging) does not lose what she typed. Nothing here is saved on its own:
+  // paging) does not lose what the student typed. Nothing here is saved on its own:
   // only "Save answer" writes, and only for that question. A draft whose
   // question no longer exists has no row, so it cannot write anywhere.
   // Each draft carries a monotonically increasing revision counter so that
@@ -168,7 +168,7 @@ export function Questions() {
         }),
       );
 
-      // A failed save keeps the draft so she can try again.
+      // A failed save keeps the draft so the student can try again.
       // A successful save clears only the revision that was submitted.
       // If newer edits were made while the save was in-flight, they survive.
       if (result !== null && submittedRevision !== undefined) {
@@ -234,7 +234,7 @@ export function Questions() {
           <Card>
             <CardHeader title="Add a question" />
             <CardBody>
-              {/* Locked while it saves, so nothing she types then is cleared with it. */}
+              {/* Locked while it saves, so nothing the student types then is cleared with it. */}
               <fieldset
                 disabled={addBusy}
                 className="stack stack--3"

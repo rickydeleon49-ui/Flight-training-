@@ -38,7 +38,7 @@ export function describeInterval(label: string | null): string | null {
   return null;
 }
 
-/** What she can know about the card text this rating was given on. */
+/** What the student can know about the card text this rating was given on. */
 export function describeProvenance(row: LibraryRecentReviewEntry): string | null {
   switch (row.contentStatus) {
     case "current":
@@ -232,10 +232,10 @@ export function StudyLibraryHistory({
   );
 }
 
-/** "5 Oct 2026, 09:12": unambiguous whichever way round she reads dates. */
+/** "5 Oct 2026, 09:12": unambiguous whichever way round the student reads dates. */
 const REVIEWED_AT_FORMAT = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
-/** A past card exactly as it was reviewed. Nothing here can change her cards. */
+/** A past card exactly as it was reviewed. Nothing here can change the student's cards. */
 export function HistoricalCardDialog({ row, onClose }: { row: LibraryRecentReviewEntry | null; onClose: () => void }) {
   const provenance = row ? describeProvenance(row) : null;
   const interval = row ? describeInterval(row.intervalLabel) : null;

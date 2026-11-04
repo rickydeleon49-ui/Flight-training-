@@ -78,7 +78,7 @@ function focusableIn(container: HTMLElement): HTMLElement[] {
 /**
  * Fallback only: a dialog that locks its controls while saving would leave
  * focus on a control that can no longer hold it. Focus moves to the dialog
- * itself while locked, and back to the control she was on (or the first one
+ * itself while locked, and back to the control the student was on (or the first one
  * usable) once the dialog unlocks.
  */
 function watchLocking(entry: OpenModal): () => void {

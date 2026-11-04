@@ -7,7 +7,7 @@ interface DraftRecovery {
   /** True when what is on screen came back from an interrupted session. */
   recovered: boolean;
   /**
-   * Stop keeping this draft — when she chooses to throw it away, or when the
+   * Stop keeping this draft — when the student chooses to throw it away, or when the
    * form is saved and nothing newer can exist.
    */
   forget: () => void;
@@ -49,7 +49,7 @@ export function useDraftRecovery<T>(
   /** Wait until the form has finished setting itself up. */
   ready = true,
   /**
-   * A save started by an earlier copy of this form (she left and came back
+   * A save started by an earlier copy of this form (the student left and came back
    * while it ran) finished exactly what is on screen now: it is saved, and
    * the draft is already forgotten. Saving it again would duplicate it.
    */
@@ -70,7 +70,7 @@ export function useDraftRecovery<T>(
 
   useEffect(() => {
     const listener: SavedListener = (revision, from) => {
-      // Only when she has not typed since: then the screen holds exactly what was saved.
+      // Only when the student has not typed since: then the screen holds exactly what was saved.
       if (from === instance || checkedRef.current !== key || ownRevision.current !== revision) return;
       skipMirror.current = true;
       setRecovered(false);

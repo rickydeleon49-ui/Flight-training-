@@ -71,7 +71,7 @@ function readPages(readiness: OfflineReadiness | null | undefined): number | nul
 }
 
 /**
- * Reads this PDF's text on her Mac (the same local read as "Read it now"), so
+ * Reads this PDF's text on the student's Mac (the same local read as "Read it now"), so
  * Ask can check its sources. Nothing is sent anywhere. Resolves with the page
  * count once read, or null when it isn't needed, isn't possible or fails;
  * then Ask behaves as it did before.
@@ -111,7 +111,7 @@ export async function readPdfTextInBackground(
 export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = false, materialId, context, buttonLabel, initialQuestion = "", evidenceMode = false, sourcePage = null, contextNoun = "card" }: AskGeminiPanelProps) {
   const [company, setCompany] = useState<"Google" | "Anthropic">("Google");
   const [providerReady, setProviderReady] = useState(!isTauri());
-  // If the check fails she is told so (not just shown greyed-out buttons);
+  // If the check fails the student is told so (not just shown greyed-out buttons);
   // reopening the panel checks again.
   const [statusFailed, setStatusFailed] = useState(false);
   const [statusAttempt, setStatusAttempt] = useState(0);
@@ -193,7 +193,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
     }
   }, [isOpen]);
 
-  // Opening Ask on a PDF whose text hasn't been read reads it on her Mac in
+  // Opening Ask on a PDF whose text hasn't been read reads it on the student's Mac in
   // the background, so answers can show checked Sources.
   const readFile = isOpen && (hasPdf || cardText) && offlineStudyEnabled() && (material?.fileSize ?? 0) <= MAX_OFFLINE_INPUT_BYTES
     ? material?.filePath ?? null
@@ -230,7 +230,7 @@ export function AskGeminiPanel({ initiallyOpen = false, onClose, hideClose = fal
     setStopped(false);
     setHint(null);
 
-    // On Ask about this PDF a bare "why?" names no part yet; ask her which,
+    // On Ask about this PDF a bare "why?" names no part yet; ask the student which,
     // without sending. A follow-up in a conversation, or a card's Why?, has context.
     if (hasPdf && history.length === 0 && isVagueQuestion(trimmed)) {
       setHint(vagueQuestionReply(topics));

@@ -4,7 +4,7 @@
  * and D9 are tested in one place.
  *
  * Evidence is described in words, never as a score. Nothing here derives a
- * status: status is only ever what she set (M3-D2).
+ * status: status is only ever what the student set (M3-D2).
  */
 import type {
   EvidenceItem,

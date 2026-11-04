@@ -28,7 +28,7 @@ const describe = (entry: PreviewItem) =>
   entry.item.kind === "summary" ? "Summary" : entry.item.kind === "section" ? `Section: ${entry.item.fields[0]}` : `Card: ${entry.item.fields[0]}`;
 
 /**
- * An item's full text, so she can judge it before keeping or leaving it out.
+ * An item's full text, so the student can judge it before keeping or leaving it out.
  * With `compare`, the words that differ from the other version are highlighted.
  */
 /** Exported for its rendering test. */
@@ -73,10 +73,10 @@ const resembles = (entry: PreviewItem) =>
   entry.match?.reason === "deleted" ? "something you deleted" : "something you corrected or rewrote";
 
 /**
- * Before a regenerated study guide replaces one holding her own items
- * (OFFLINE-03a §2.4): new items that repeat what she deleted or corrected are
- * left out unless she brings them back; near-repeats wait for her choice;
- * her own items are kept by default. Cancel writes nothing.
+ * Before a regenerated study guide replaces one holding the student's own items
+ * (OFFLINE-03a §2.4): new items that repeat what the student deleted or corrected are
+ * left out unless the student brings them back; near-repeats wait for the student choice;
+ * the student's own items are kept by default. Cancel writes nothing.
  */
 export function RegenerationReviewDialog({
   job,
@@ -87,7 +87,7 @@ export function RegenerationReviewDialog({
   job: GeminiJob;
   materialId: string;
   onClose: () => void;
-  /** True once saved; on false the dialog stays open with her choices. */
+  /** True once saved; on false the dialog stays open with the student choices. */
   onSave: (reviewed: ReviewedRegeneration) => Promise<boolean>;
 }) {
   const { repositories } = useAppData();
@@ -115,7 +115,7 @@ export function RegenerationReviewDialog({
       try {
         const read = await repositories?.documents.readStudySetForEdit(materialId);
         if (!read) throw new Error("missing");
-        // Her last reviewed save has not been acknowledged by the journal, in
+        // The student's last reviewed save has not been acknowledged by the journal, in
         // this session or before a restart. If its content is what is stored
         // now, it did commit: resend exactly that operation, which is
         // recognised as already saved, instead of reviewing (and saving) again.
@@ -130,7 +130,7 @@ export function RegenerationReviewDialog({
           return;
         }
         const state = authoringStateOf(read.set);
-        // A guide review only adds generated cards when she has no saved cards.
+        // A guide review only adds generated cards when the student has no saved cards.
         const guideCards = state.items.some((item) => item.kind === "card") ? [] : answer.flashcards;
         const classified = await regenerationPreview(state, job.kind === "flashcards" ? { ...answer, summary: "", sections: [] } : { ...answer, flashcards: guideCards });
         let earlier: ReadonlyMap<string, ItemText> = new Map();

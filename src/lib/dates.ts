@@ -70,7 +70,7 @@ function isRealCalendarDay(day: string): boolean {
 }
 
 /**
- * A date she typed, as 'YYYY-MM-DD', or null when it isn't a real day.
+ * A date the student typed, as 'YYYY-MM-DD', or null when it isn't a real day.
  * Month first, as on US forms: "11/05/2026", "11-5-2026" and "11052026" are
  * all November 5, 2026; the stored form "2026-11-05" is accepted too.
  * Nothing is guessed or moved: a day that doesn't exist is refused, so a
@@ -86,7 +86,7 @@ export function parseTypedDate(text: string): IsoDate | null {
   return isRealCalendarDay(date) ? date : null;
 }
 
-/** A stored day the way she types it: "11/05/2026". */
+/** A stored day the way the student types it: "11/05/2026". */
 export function formatTypedDate(date: IsoDate): string {
   const match = CALENDAR_DAY.exec(date);
   return match ? `${match[2]}/${match[3]}/${match[1]}` : "";

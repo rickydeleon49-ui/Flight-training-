@@ -1,7 +1,7 @@
 /**
  * The Skills list inside Flight Path (scope §4.3): active skills grouped by
- * the broad topic, each with her status and the evidence sentence; retired
- * skills on request; her own skills can be added, renamed, retired and
+ * the broad topic, each with the student status and the evidence sentence; retired
+ * skills on request; the student's own skills can be added, renamed, retired and
  * restored. Built-in names come from the app and stay as they are.
  */
 import { useState } from "react";

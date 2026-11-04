@@ -100,16 +100,16 @@ function recoveredSectionError(record: GeminiJobRecord): SectionGuideErrorCode |
  *
  * A study aid or practice test used to belong to its material page: leaving the
  * page threw a finished answer away. Now a generation belongs to the app. It
- * keeps running while she reads something else, and its answer is saved to the
+ * keeps running while the student reads something else, and its answer is saved to the
  * material it was made from, only if, at the moment of saving and inside the
  * write queue:
  *
  * - the material still exists with the same file;
  * - the stored bytes are still the bytes Gemini read (SHA-256);
- * - nothing else has been saved over the content she asked to replace (the
- *   saved `updatedAt` is still the one recorded when she asked).
+ * - nothing else has been saved over the content the student asked to replace (the
+ *   saved `updatedAt` is still the one recorded when the student asked).
  *
- * Otherwise it is not saved, and she is told. An answer that is already the
+ * Otherwise it is not saved, and the student is told. An answer that is already the
  * saved content (a save that committed before the app closed, but whose job
  * was not yet forgotten) is recognized and never saved twice.
  *
@@ -117,8 +117,8 @@ function recoveredSectionError(record: GeminiJobRecord): SectionGuideErrorCode |
  * synchronously before anything awaits. A finished answer is a checkpoint:
  * "Save again" uses it without asking Gemini again. After a reload or restart,
  * the native journal is read back before anything new may start. A finished
- * answer waits for her to save or discard it. A generation cut off by the app
- * closing is shown as interrupted and never resent by itself. A save she
+ * answer waits for the student to save or discard it. A generation cut off by the app
+ * closing is shown as interrupted and never resent by itself. A save the student
  * reviewed keeps its exact operation on this computer until the journal
  * acknowledges the answer, so a restart recognises that save instead of
  * making it again under new item ids.
@@ -159,7 +159,7 @@ export interface GeminiJob {
   answer: Answer | null;
   /** SHA-256 of exactly the bytes that were sent, when Gemini reported it. */
   contentSha256: string | null;
-  /** The saved content's `updatedAt` when she asked, or null if none. */
+  /** The saved content's `updatedAt` when the student asked, or null if none. */
   baseRevision: string | null;
   /** False when the answer could not be written down natively. */
   checkpointed: boolean;
@@ -176,16 +176,16 @@ export interface GeminiJob {
   createdAt?: number;
   /** A cancel is on its way to (or held by) the native side. */
   cancelRequested?: boolean;
-  /** She pressed Cancel at some point: an answer that still arrives is never saved by itself. */
+  /** The student pressed Cancel at some point: an answer that still arrives is never saved by itself. */
   cancelAttempted?: boolean;
-  /** Why her cancel did not go through, if it did not; Cancel works again. */
+  /** Why the student's cancel did not go through, if it did not; Cancel works again. */
   cancelError?: string | null;
   /** This window's own id for the request, which cancel goes by (GEN-REL-04). */
   requestId?: string;
   /** Whether the generation request has been sent to the native side. */
   invoked?: boolean;
   /**
-   * Her study set holds items she wrote, corrected or deleted, so this answer
+   * The student's study set holds items the student wrote, corrected or deleted, so this answer
    * is saved only through the regeneration review (OFFLINE-03a), never as is.
    */
   needsReview?: boolean;
@@ -227,7 +227,7 @@ export interface StartOptions {
 }
 
 /**
- * A regenerated study set as she reviewed it, and the checkpoint that keeps it
+ * A regenerated study set as the student reviewed it, and the checkpoint that keeps it
  * until the journal acknowledges its answer. Shared with the review dialog.
  */
 export type { ReviewedRegeneration } from "./reviewedSaveCheckpoint";
@@ -248,8 +248,8 @@ interface GeminiJobsValue {
   queueGuide(target: GeminiJobTarget): Promise<string | null>;
   continueGuide(key: string, restart?: boolean): Promise<void>;
   saveAgain(key: string): Promise<void>;
-  /** Save a regenerated study set as she reviewed it, keeping what she chose (OFFLINE-03a). */
-  /** True once saved; false leaves the answer, and her review, in place. */
+  /** Save a regenerated study set as the student reviewed it, keeping what the student chose (OFFLINE-03a). */
+  /** True once saved; false leaves the answer, and the student's review, in place. */
   saveReviewed(key: string, reviewed: ReviewedRegeneration): Promise<boolean>;
   dismiss(key: string): Promise<void>;
   /** Ask to cancel a running generation (GEN-REL-04). */
@@ -271,7 +271,7 @@ const REVIEWED_SAVE_FAILED_MESSAGE =
 const SAVE_FAILED_NOT_KEPT_MESSAGE =
   "Gemini finished, but saving the answer did not work, and it could not be kept on this Mac either. Anything already saved is unchanged. Save again uses the same answer while the app stays open.";
 
-/** Said when her cancel could not be recorded. */
+/** Said when the student's cancel could not be recorded. */
 export const CANCEL_FAILED_MESSAGE =
   "Cancelling did not go through, so Gemini is still working on it. Try Cancel again.";
 
@@ -283,7 +283,7 @@ function newRequestId(): string {
   return `req-${random}`;
 }
 
-/** Said when she cancelled before anything was sent. */
+/** Said when the student cancelled before anything was sent. */
 export const CANCELLED_BEFORE_SENDING = "Cancelled before anything was sent to Google. Nothing was saved.";
 
 /** Whether a progress event is about this job: by id once known, otherwise by its material and output. */
@@ -444,7 +444,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
    * Retry acknowledgements that could not be written yet. They follow saves
    * whose content is already in the library: a restart before they succeed is
    * still safe, because an answer that is already the saved content is
-   * recognized and never saved twice, and a save she reviewed keeps its exact
+   * recognized and never saved twice, and a save the student reviewed keeps its exact
    * operation here until the acknowledgement lands.
    */
   const flushAcks = useCallback(async () => {
@@ -482,7 +482,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       }
       update(key, { phase: "saving", error: null });
       const answer = job.answer;
-      // A reviewed save is the one write the journal cannot re-check for her:
+      // A reviewed save is the one write the journal cannot re-check for the student:
       // record the exact operation before sending it, and let the
       // acknowledgement (acknowledgeNow) be the only thing that removes it.
       // Whether the study set stored is not the test — the answer stays in the
@@ -507,7 +507,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               }
             }
             if (reviewed?.kind === "study-set" && (job.kind === "study-aid" || job.kind === "flashcards")) {
-              // The set she reviewed is named column for column, so a change made
+              // The set the student reviewed is named column for column, so a change made
               // since refuses as stale; the same id makes a retry safe.
               await repos.documents.saveStudySet({
                 operationId: reviewed.operationId,
@@ -528,17 +528,17 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             }
           }
           // Kit consent does not end an attempt: keep these paid questions
-          // as a draft until she finishes or abandons it herself.
+          // as a draft until the student finishes or abandons it themselves.
           if (job.kind === "practice-test" && job.studyKitPart && await repos.practiceSessions.getCurrentAttempt(job.materialId)) return "attempt" as const;
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
           // Kit parts share one study set, so saving one part moves its
-          // revision past the others' base: that alone is not "newer". Her
+          // revision past the others' base: that alone is not "newer". The student's
           // own edits still go to review just below.
           const siblingSave = job.studyKitPart && (job.kind === "study-aid" || job.kind === "flashcards");
           if (!siblingSave && (saved?.updatedAt ?? null) !== job.baseRevision) return "newer" as const;
-          // Her own items, corrections and deletions are never replaced
-          // without her review (OFFLINE-03a).
+          // The student's own items, corrections and deletions are never replaced
+          // without the student's review (OFFLINE-03a).
           if ((job.kind === "study-aid" || job.kind === "flashcards") && needsRegenerationReview(saved as AiStudySet | undefined)) return "review" as const;
           if (job.kind === "practice-test" && needsPracticeRegenerationReview(await repos.documents.readPracticeSnapshot(job.materialId))) return "review" as const;
           if (job.kind === "study-aid") {
@@ -646,7 +646,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // alone. A job recovered after a reload is cancelled by its job id.
       if (job.local && !job.invoked) return;
       const notAccepted = () => {
-        // Not recorded and not held: say so, and let her try again while it
+        // Not recorded and not held: say so, and let the student try again while it
         // still runs.
         const now = jobsRef.current.find((candidate) => candidate.key === key);
         if (now?.phase === "running" || now?.phase === "waiting-for-her") update(key, { cancelRequested: false, cancelError: CANCEL_FAILED_MESSAGE });
@@ -696,7 +696,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       for (const old of jobsRef.current) {
         if (old.materialId === target.materialId && old.kind === kind) forget(old.key);
       }
-      // What she is asking to replace, so nothing newer is ever overwritten.
+      // What the student is asking to replace, so nothing newer is ever overwritten.
       const saved =
         kind === "study-aid" || kind === "flashcards"
           ? dataRef.current.aiStudySets.find((set) => set.sourceMaterialId === target.materialId)
@@ -824,7 +824,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             syncPendingCount();
             await flushAcks();
           } catch {
-            // Bounded: a failed record is replaced by her next request anyway.
+            // Bounded: a failed record is replaced by the student's next request anyway.
           }
           return;
         }
@@ -959,7 +959,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   );
 
   /**
-   * Her decision to discard or dismiss: shown as done only once the journal
+   * The student's decision to discard or dismiss: shown as done only once the journal
    * has recorded it, so a discarded answer cannot quietly come back.
    */
   const dismiss = useCallback(

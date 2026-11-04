@@ -2,27 +2,27 @@
  * The reviewed regeneration save in flight, kept on this computer under its
  * Gemini journal job id (OFFLINE-03a).
  *
- * Saving a guide she reviewed is two writes: the study set, and the journal
+ * Saving a guide the student reviewed is two writes: the study set, and the journal
  * acknowledgement that says Gemini's finished answer is no longer needed. The
  * study set can commit while the acknowledgement fails, and until the
  * acknowledgement succeeds the journal hands the same answer back after a
- * restart. Reviewing it again then merges her items a second time, under new
+ * restart. Reviewing it again then merges the student's items a second time, under new
  * item ids, and records a second regeneration in Previous versions.
  *
  * So the exact operation is kept until the answer is acknowledged, not until
  * the study set is saved. The provider owns that lifecycle; a page only reads
  * the checkpoint to recognise a save that already happened.
  *
- * localStorage rather than the database on purpose: her set is already stored
+ * localStorage rather than the database on purpose: the student's set is already stored
  * safely in the database, so this only names the retry that is safe to send
  * again. A lost checkpoint can cost one extra history row; it can never lose
- * her wording.
+ * the student's wording.
  */
 import type { PracticeSaveOperation } from "@/domain/types";
 import type { NextStudySet, StoredSetRow } from "@/data/studySetTransaction";
 
 /**
- * Her study set as she reviewed it: the set she had open and the merged set to
+ * The student's study set as the student reviewed it: the set the student had open and the merged set to
  * store. Its operation id makes a retry safe.
  */
 export type ReviewedRegeneration =

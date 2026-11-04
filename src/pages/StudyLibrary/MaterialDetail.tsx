@@ -178,7 +178,7 @@ function MaterialDetailPage() {
   const selectTab = (next: MaterialTab) => {
     const nextParams = materialTabParams(params, next);
     // React Router's search-only setter drops the hash. Retain preparation anchors.
-    // Keep how she arrived, so "‹ Study Library" can still go back to her place.
+    // Keep how the student arrived, so "‹ Study Library" can still go back to the student place.
     if (location.hash) navigate({ search: nextParams.toString(), hash: location.hash }, { replace: true, state: location.state });
     else setSearchParams(nextParams, { replace: true, state: location.state });
   };
@@ -240,7 +240,7 @@ function MaterialDetailPage() {
   const [pictureSaved, setPictureSaved] = useState(false);
   const [editingVisualIndex, setEditingVisualIndex] = useState<number | null>(null);
   const [affectedVisual, setAffectedVisual] = useState<string[]>([]);
-  // Her usual card count stays chosen on this Mac; 40 until she picks another.
+  // The student's usual card count stays chosen on this Mac; 40 until the student picks another.
   const [targetCards, setTargetCards] = useRememberedState<TargetCardCount>(
     "material.targetCards",
     40,
@@ -423,7 +423,7 @@ function MaterialDetailPage() {
   const [linkTarget, setLinkTarget] = useState<MaterialLinkTarget | null>(null);
   const [linkFailed, setLinkFailed] = useState(false);
   const [linkRetry, setLinkRetry] = useState(0);
-  // Switching tabs must not re-resolve the same search hit and pull her back.
+  // Switching tabs must not re-resolve the same search hit and pull the student's back.
   const linkParams = new URLSearchParams(location.search);
   linkParams.delete("tab");
   const linkKey = linkParams.toString();
@@ -528,7 +528,7 @@ function MaterialDetailPage() {
   }, [practiceJustSaved, generatingPractice, practiceTest, tab]);
   // Imported study packets are labelled as imported, never as Gemini output.
   const importedSet = studySet?.provider === "import";
-  // A set she wrote herself is labelled as hers, never as Gemini output.
+  // A set the student wrote themselves is labelled as theirs, never as Gemini output.
   const manualSet = studySet?.provider === "manual";
   const showStudyGuide =
     Boolean(material?.filePath || studySet) && !(manualSet && !studySet.summary && studySet.sections.length === 0 && studySet.flashcards.length > 0);
@@ -593,7 +593,7 @@ function MaterialDetailPage() {
     );
   }
 
-  // Nothing reaches Google without passing this, and without her saying yes.
+  // Nothing reaches Google without passing this, and without the student's saying yes.
   const helper = providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini";
   const aiCheck = checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model));
   const sendDisclosure = geminiSendDisclosureParts(material, providerCompany(gemini?.model));
@@ -674,7 +674,7 @@ function MaterialDetailPage() {
     : "";
   const emptyFailedGuide = Boolean(studyJob?.sectionGuide && studyJob.sections?.ready === 0 &&
     (studyJob.phase === "failed" || studyJob.phase === "cancelled" || studyJob.phase === "interrupted"));
-  // Why Regenerate / Create is unavailable, in her words (CARDS-FIX-01).
+  // Why Regenerate / Create is unavailable, in the student's words (CARDS-FIX-01).
   const guideBlockedReason = (() => {
     if (isOverLimit || !canOfferGemini || isGeneratingAny || !studyJob) return null;
     if (draftWaiting(studyJob.phase)) return "A new guide is waiting above — save or discard it first.";
@@ -794,7 +794,7 @@ function MaterialDetailPage() {
     return null;
   };
 
-  // All three kit parts ready, none replacing anything she edited: one Save
+  // All three kit parts ready, none replacing anything the student edited: one Save
   // runs each part's own safe save in turn. A part that cannot be saved stays
   // as a draft with its own message; the others stay saved.
   const kitParts = [studyJob, cardJob, practiceJob];
@@ -815,7 +815,7 @@ function MaterialDetailPage() {
     if (!material?.filePath) return;
     setKitMessage(null);
     setKitDraftAnchor(null);
-    // Each refusal comes before the consent dialog, so she never confirms a
+    // Each refusal comes before the consent dialog, so the student never confirms a
     // request that cannot be sent.
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       setKitMessage("No internet right now. Press Make my study kit again when you're back online.");
@@ -953,7 +953,7 @@ function MaterialDetailPage() {
     <>
       <BackToTop />
       <PdfViewerDialog />
-      {/* Opened from the library: go back, so the list returns to where she was. */}
+      {/* Opened from the library: go back, so the list returns to where the student was. */}
       <Link className="button button--ghost material-breadcrumb" to="/study" onClick={(event) => {
         if ((location.state as { fromLibrary?: boolean } | null)?.fromLibrary) { event.preventDefault(); navigate(-1); }
       }}>‹ Study Library</Link>

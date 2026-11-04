@@ -6,7 +6,7 @@ import { useGeminiJobs, type GeminiJob } from "@/state/GeminiJobs";
 /**
  * Gemini answers whose document has since been deleted (GEN-REL-02). Such an
  * answer can never be saved, and its material page no longer exists, so it is
- * shown here, on every screen, until she dismisses it. Dismissing it frees
+ * shown here, on every screen, until the student dismisses it. Dismissing it frees
  * its place in the journal.
  */
 export function GeminiOrphanNotices() {

@@ -4,10 +4,10 @@
  * One page to read before a lesson, built only from what the lesson already
  * shows: its details, the preparation checklist and questions to ask (with
  * the same done/outstanding state as the lesson screen), the titles of the
- * reading attached to it, and any follow-ups she ticks.
+ * reading attached to it, and any follow-ups the student ticks.
  *
  * Follow-ups are never included automatically. The candidates are, in order:
- * - the lines of "questions for next time" from her most recent journal
+ * - the lines of "questions for next time" from the student most recent journal
  *   entry dated before this lesson (latest date, then latest written);
  * - open questions (to ask or revisit) saved with another lesson or a
  *   material that belongs to this lesson's goal, oldest first.
@@ -48,7 +48,7 @@ export interface BriefSources {
 export interface FollowUpCandidate {
   /** Stable within one brief: the source record and, for journal lines, the line. */
   id: string;
-  /** Her own wording, unchanged apart from surrounding whitespace. */
+  /** The student's own wording, unchanged apart from surrounding whitespace. */
   text: string;
   /** Where it came from, shown beside the choice and in the brief. */
   from: string;

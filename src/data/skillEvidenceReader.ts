@@ -359,7 +359,7 @@ export async function readSkillSummary(query: Query, skillId: string): Promise<S
   };
 }
 
-/** Skills for pickers and the list: built-in first, then hers, by name. */
+/** Skills for pickers and the list: built-in first, then theirs, by name. */
 export async function listSkills(query: Query, options: { includeRetired?: boolean } = {}): Promise<SkillListEntry[]> {
   const rows = await query(
     `SELECT id, label, description, origin, topic, status, revision FROM skill_catalog_entries

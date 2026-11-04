@@ -36,7 +36,7 @@ interface NoteDraft {
 const EMPTY_DRAFT: NoteDraft = { title: "", body: "" };
 
 /**
- * Notes — the one screen that asks nothing before she writes.
+ * Notes — the one screen that asks nothing before the student writes.
  *
  * Every other place a thought can go wants to know what it belongs to first.
  * Here the whole page is a box and a list: type, save, find it later.
@@ -50,13 +50,13 @@ export function Notes() {
   latestDraft.current = draft;
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
-  // "Saved." beside the button until she starts the next note.
+  // "Saved." beside the button until the student starts the next note.
   const [justSaved, setJustSaved] = useState(false);
   const [editing, setEditing] = useState<Note | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<Note | null>(null);
   const [search, setSearch] = useRememberedState("notes.search", "", isText);
 
-  // A note half-written when she closes the page is still worth keeping.
+  // A note half-written when the student closes the page is still worth keeping.
   const [recoveredContent, setRecoveredContent] = useState(false);
   const { recovered, forget, revision, forgetRevision } = useDraftRecovery(
     "notes.new",
@@ -67,8 +67,8 @@ export function Notes() {
       setDraft(saved);
     },
     true,
-    // She came back while this note was saving and has not typed: it is
-    // saved now, so the box empties as after her own Save.
+    // The student came back while this note was saving and has not typed: it is
+    // saved now, so the box empties as after the student's own Save.
     () => {
       setRecoveredContent(false);
       setDraft(EMPTY_DRAFT);
@@ -77,8 +77,8 @@ export function Notes() {
   );
   const mounted = useMounted();
 
-  // "Write a note" from oral practice hands over text she can edit. It is
-  // added under anything she had half-written, and saved only on Save note.
+  // "Write a note" from oral practice hands over text the student can edit. It is
+  // added under anything the student had half-written, and saved only on Save note.
   const location = useLocation();
   const navigate = useNavigate();
   // One hand-over per navigation, even when effects run twice.
@@ -126,8 +126,8 @@ export function Notes() {
     saving.current = false;
     setBusy(false);
     if (result === null) return;
-    // Only the stored copy this save submitted is dropped. If she left and
-    // came back while it ran, the page she is on now owns any newer typing.
+    // Only the stored copy this save submitted is dropped. If the student left and
+    // came back while it ran, the page the student is on now owns any newer typing.
     forgetRevision(submitted);
     if (!mounted.current || latestDraft.current !== draft) return;
     setDraft(EMPTY_DRAFT);
@@ -356,7 +356,7 @@ interface EditDraft extends NoteDraft {
   /**
    * The saved note this draft started from. A draft from an earlier session
    * is only applied when the note has not changed since (for example by a
-   * restore); otherwise she chooses. Drafts kept before this had none.
+   * restore); otherwise the student chooses. Drafts kept before this had none.
    */
   baseline?: NoteDraft | null;
 }
@@ -404,7 +404,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
   );
 
   // The saved note changed since this draft began (a restore, or an older
-  // draft): nothing is written until she picks one.
+  // draft): nothing is written until the student picks one.
   const conflict = !sameNote(draft.baseline, saved) && !sameNote(submitted, saved);
 
   const keepDraft = () =>
@@ -420,7 +420,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
     if (!body) return;
     const base = draft.baseline!;
     const next: NoteDraft = { title: draft.title.trim(), body };
-    // Only what she changed is written, so an unchanged body is never sent.
+    // Only what the student changed is written, so an unchanged body is never sent.
     const changes: Partial<NoteDraft> = {};
     if (next.title !== base.title) changes.title = next.title;
     if (next.body !== base.body) changes.body = next.body;
@@ -446,7 +446,7 @@ function NoteEditor({ note, onClose }: { note: Note; onClose: () => void }) {
     // An editor closed while saving must not close one opened since.
     if (!mounted.current) return;
     if (latestDraft.current !== draft) {
-      // She kept typing: this save is now what that typing builds on.
+      // The student kept typing: this save is now what that typing builds on.
       setDraft((current) => ({ ...current, baseline: next }));
       return;
     }

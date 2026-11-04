@@ -104,7 +104,7 @@ type Phase =
   | { kind: "done" };
 
 /**
- * Search inside the text of prepared PDFs (OFFLINE-02b) and her saved study
+ * Search inside the text of prepared PDFs (OFFLINE-02b) and the student's saved study
  * content (OFFLINE-02c). Shows grouped matches with highlighted snippets in
  * two separate sections, says exactly what was and wasn't searched, and
  * opens a match only after re-checking it. Renders nothing unless this

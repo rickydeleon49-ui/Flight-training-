@@ -5,7 +5,7 @@ import { UNDO_WINDOW_MS, useAppData } from "@/state/AppDataContext";
 import "./undoBar.css";
 
 /**
- * The few seconds after a deletion in which she can change her mind.
+ * The few seconds after a deletion in which the student can change the student's mind.
  *
  * The bar also carries a progress line, so the window is visible rather than
  * something to guess at.

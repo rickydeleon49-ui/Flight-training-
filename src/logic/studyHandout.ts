@@ -3,9 +3,9 @@ import type { PdfItemProvenance } from "@/data/pdfKitSources";
 /**
  * A printable study handout (P54-04).
  *
- * One self-contained HTML page for the parts she chose: the guide with its
+ * One self-contained HTML page for the parts the student chose: the guide with its
  * formatting, flashcards as a two-column sheet, and practice questions with
- * an optional answer key at the end on its own page. She opens it in any
+ * an optional answer key at the end on its own page. The student opens it in any
  * browser and prints it or saves it as a PDF.
  *
  * The page cannot run or load anything: every piece of text is escaped, its
@@ -130,7 +130,7 @@ h1, h2, h3, p { orphans: 3; widows: 3; }
 
 /** The handout page for the chosen parts. */
 function handoutSections(allContent: ExportSource, selection: ExportSelection, options: HandoutOptions, includeAnswerKey = true): string[] {
-  // Her instructor's corrections are left out unless she included them.
+  // The instructor's corrections are left out unless the student included them.
   const source = exportSourceFor(allContent, selection);
   const available = exportableParts(source);
   const set = source.studySet;

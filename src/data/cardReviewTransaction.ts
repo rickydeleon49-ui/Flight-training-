@@ -209,7 +209,7 @@ async function materialize(
       }
     });
   } else {
-    // The legacy CHECK allows only these two; a set she made herself records
+    // The legacy CHECK allows only these two; a set the student made themselves records
     // 'import' as its placeholder, and its true origin in the side tables.
     if (provider === "manual") provider = "import";
     if (provider !== "gemini" && provider !== "import") refuse("INVALID_STATE");

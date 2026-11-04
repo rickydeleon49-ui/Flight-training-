@@ -63,7 +63,7 @@ export const SKILL_EVIDENCE_LIMITS = {
   observationsPerDebrief: 50,
 } as const;
 
-/** A refusal with one of the contract's codes. The message is written for her. */
+/** A refusal with one of the contract's codes. The message is written for the student. */
 export class SkillEvidenceError extends Error {
   constructor(
     readonly code: SkillEvidenceErrorCode,

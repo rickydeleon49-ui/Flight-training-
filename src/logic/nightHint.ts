@@ -6,7 +6,7 @@
  *
  * Pure apart from `loadAirportIndex`, which fetches the airport table with a
  * dynamic import so it stays out of the main bundle. Nothing here reads or
- * writes her data.
+ * writes the student's data.
  */
 import { getTimes } from "suncalc";
 
@@ -19,7 +19,7 @@ export interface Airport {
 export type AirportIndex = ReadonlyMap<string, Airport>;
 
 export interface NightHint {
-  /** The code as she typed it, trimmed and uppercased. */
+  /** The code as the student typed it, trimmed and uppercased. */
   code: string;
   sunset: Date;
   /** End of evening civil twilight: night begins (14 CFR 1.1). */

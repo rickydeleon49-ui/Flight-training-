@@ -6,7 +6,7 @@ import { QuickQuestionRun } from "./QuickQuestionRun";
 
 /**
  * MISSED-AGAIN-01: after a finished test, a quick untimed retry of just the
- * questions she got wrong or marked "don't know". Nothing is saved: the
+ * questions the student got wrong or marked "don't know". Nothing is saved: the
  * attempt, its history and its score stay exactly as they were.
  */
 export function TryMissedAgain({ attempt, items, responses, materialTitle }: {

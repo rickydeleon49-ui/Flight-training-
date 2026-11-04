@@ -14,13 +14,13 @@ import "./quickFind.css";
 /** Lets the sidebar button open Quick Find without threading state through. */
 export const QUICK_FIND_EVENT = "quickfind:open";
 
-/** Least typing that is worth searching the pages of her PDFs for. */
+/** Least typing that is worth searching the pages of the student's PDFs for. */
 const PDF_SEARCH_MIN_LENGTH = 2;
 /** Marks the hand-off row, which is a way to search, not a match. */
 const PDF_ROW_KEY = "search:pdf-text";
 
 /**
- * Quick Find matches titles and her own records, never the words inside a PDF.
+ * Quick Find matches titles and the student's own records, never the words inside a PDF.
  * Those live in the Study Library's document search, so hand the words over
  * instead of saying nothing matches (READY-NOTICE + SEARCH round).
  */
@@ -117,7 +117,7 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
     return () => element.removeEventListener("close", handleClose);
   }, []);
 
-  // Keep the highlight on a row that still exists as she types.
+  // Keep the highlight on a row that still exists as the student types.
   useEffect(() => {
     setHighlighted((current) => (current < rows.length ? current : 0));
   }, [rows.length]);

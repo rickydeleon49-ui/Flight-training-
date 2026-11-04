@@ -12,7 +12,7 @@ const formatSentDate = (iso: string): string => {
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 };
 
-/** One button that saves a copy her iPhone can open from the Files app. */
+/** One button that saves a copy the student's iPhone can open from the Files app. */
 export function SendToIphoneCard({ repositories }: { repositories: Repositories | null }) {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<LastIphoneSend | null>(null);

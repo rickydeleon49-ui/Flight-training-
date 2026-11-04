@@ -1,9 +1,9 @@
 /**
  * One search box over the whole training record.
  *
- * Ten sections is a lot of clicking when she only wants the handout from
+ * Ten sections is a lot of clicking when the student only wants the handout from
  * Tuesday. Quick Find matches across every record that has somewhere to go,
- * plus the sections themselves, and ranks so that what she typed the start
+ * plus the sections themselves, and ranks so that what the student typed at the start
  * of comes first.
  */
 import {
@@ -31,7 +31,7 @@ export type QuickFindSection =
 
 export interface QuickFindResult {
   key: string;
-  /** What she is looking for. */
+  /** What the student is looking for. */
   label: string;
   /** Enough context to tell two similar titles apart. */
   detail: string;

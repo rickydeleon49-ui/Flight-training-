@@ -1,10 +1,10 @@
 /**
- * Knowing whether her training record is actually protected.
+ * Knowing whether the student's training record is actually protected.
  *
  * Two questions have to be answerable without opening a file manager:
  *
- *   1. When did she last save a complete backup, and is it still current?
- *   2. Is the backup she is about to restore older or newer than this app?
+ *   1. When did the student last save a complete backup, and is it still current?
+ *   2. Is the backup the student is about to restore older or newer than this app?
  *
  * Both are pure decisions about strings and dates, so they are decided here
  * and tested, rather than being worked out inside a screen.
@@ -48,9 +48,9 @@ export type BackupState = "never" | "after-update" | "stale" | "protected";
 
 export interface BackupHealth {
   state: BackupState;
-  /** What to tell her, in one sentence. */
+  /** What to tell the student's, in one sentence. */
   message: string;
-  /** True when she should be nudged to save one now. */
+  /** True when the student should be nudged to save one now. */
   needsAttention: boolean;
 }
 

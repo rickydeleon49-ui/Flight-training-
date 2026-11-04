@@ -1,5 +1,5 @@
 /**
- * The screen she sees if her training record cannot be opened.
+ * The screen the student sees if the student's training record cannot be opened.
  *
  * This is the moment everything else in the application is designed to avoid,
  * so it must not be a dead end. Nothing here needs the database: the desktop

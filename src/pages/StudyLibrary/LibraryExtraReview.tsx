@@ -1,7 +1,7 @@
 /**
  * REVIEW-ANYWAY-01: the library's "Review 10 anyway from any book" session.
  *
- * The cards were fixed when she pressed the button (oldest next review
+ * The cards were fixed when the student pressed the button (oldest next review
  * first, across books). Consecutive cards of one book form a run that the
  * usual per-material review hook rates, so every rating is the normal
  * review write with that material's own checks; no new table or rule.

@@ -111,7 +111,7 @@ export interface SavedPassage {
   snippet: string;
 }
 
-/** Mirrors `SavedGroup`: one material, or her notes, or instructor questions. */
+/** Mirrors `SavedGroup`: one material, or the student's notes, or instructor questions. */
 export interface SavedGroup {
   kind: "material" | "notes" | "questions" | "homework";
   materialId: string | null;

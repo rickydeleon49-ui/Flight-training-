@@ -1,5 +1,5 @@
 /** Editable projections of the native journal. Evidence always comes from the journal,
- * while hashes are made only after she has chosen and edited the final content. */
+ * while hashes are made only after the student has chosen and edited the final content. */
 import type { PdfStudyKitDraft } from "@/services/documents";
 import { pdfKitContentHash, type PdfKitSource, type PdfKitSources } from "./pdfKitSources";
 import type { PracticeDraftQuestion } from "./practiceAuthoringDraft";

@@ -1,7 +1,7 @@
 /**
  * OFFLINE-03a: between a saved study set and the authoring core. Reads a set
  * into stable items, turns an edited state back into the set to store, and
- * merges a regenerated set with her own items. Nothing here writes.
+ * merges a regenerated set with the student's own items. Nothing here writes.
  */
 import type { AiStudySet, StudySetProvider } from "@/domain/types";
 import type { NextStudySet } from "@/data/studySetTransaction";
@@ -88,7 +88,7 @@ export function nextSetOf(frame: SetFrame, state: AuthoringState): NextStudySet 
   };
 }
 
-/** A new, empty set she will write herself. */
+/** A new, empty set the student will write themselves. */
 export function emptyManualSet(title: string): { frame: SetFrame; state: AuthoringState } {
   return {
     frame: { title, sourceNotes: "", provider: "manual", model: "" },
@@ -97,8 +97,8 @@ export function emptyManualSet(title: string): { frame: SetFrame; state: Authori
 }
 
 /**
- * Whether regenerating this set needs her review first: it holds her own
- * items, records something she retired, or is entirely hers.
+ * Whether regenerating this set needs the student's review first: it holds the student's own
+ * items, records something the student retired, or is entirely theirs.
  */
 export function needsRegenerationReview(set: Pick<AiStudySet, "provider" | "summaryOrigin" | "sections" | "flashcards" | "retired"> | undefined): boolean {
   if (!set) return false;
@@ -127,7 +127,7 @@ export interface GeneratedContent {
   flashcards: readonly { front: string; back: string; sourcePage: number | null }[];
 }
 
-/** The candidates of a regenerated set, classified against what she retired. */
+/** The candidates of a regenerated set, classified against what the student retired. */
 export async function regenerationPreview(current: AuthoringState, generated: GeneratedContent): Promise<readonly PreviewItem[]> {
   const candidates = assignItemIds([
     ...(generated.summary.trim() ? [{ kind: "summary" as const, itemId: "summary", fields: [generated.summary] }] : []),
@@ -141,9 +141,9 @@ export type RegenerationMode = "keep" | "replace";
 
 /**
  * Merge resolved candidates into a set. "keep" (the default) keeps every
- * item she wrote or corrected after the new ones of its kind, and keeps her
+ * item the student wrote or corrected after the new ones of its kind, and keeps the student's
  * summary when `keepMySummary`; "replace" keeps only the new items. Either
- * way her earlier set is in history, and her retirement list carries over.
+ * way the student's earlier set is in history, and the student's retirement list carries over.
  */
 export function mergeRegeneration(
   current: AuthoringState,
@@ -175,7 +175,7 @@ export function mergeRegeneration(
   return Object.freeze({ items: assignItemIds(drafts), retired: current.retired });
 }
 
-/** Who wrote an item, in her words; null for generated or imported items. */
+/** Who wrote an item, in the student's words; null for generated or imported items. */
 export function itemAuthorLabel(origin: unknown): string | null {
   if (origin === undefined || origin === null) return null;
   if (origin === "user") return "Written by you";
@@ -218,8 +218,8 @@ export function retiredWording(index: ReadonlyMap<string, ItemText>, entry: Reti
 }
 
 /**
- * Generation only replaces the part she requested, including on reviewed saves.
- * A guide save never touches saved cards; when she has none yet, the cards
+ * Generation only replaces the part the student requested, including on reviewed saves.
+ * A guide save never touches saved cards; when the student has none yet, the cards
  * generated with the guide (non-PDF guides) are kept instead of dropped.
  */
 export function preserveOtherStudyContent(next: NextStudySet, current: NextStudySet | null, kind: "study-aid" | "flashcards"): NextStudySet {

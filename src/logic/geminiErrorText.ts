@@ -1,5 +1,5 @@
 /**
- * A Gemini failure in her words, with any technical trace kept apart.
+ * A Gemini failure in the student's words, with any technical trace kept apart.
  *
  * The native side appends a sanitized "Details: stage …; attempts …" line to
  * some failures. That line helps when reporting a problem but reads as jargon

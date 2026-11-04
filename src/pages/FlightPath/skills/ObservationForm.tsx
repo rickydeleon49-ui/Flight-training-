@@ -1,6 +1,6 @@
 /**
  * The add-observation form (scope §4, M3-R8). It records one deliberate
- * observation against the debrief she picked.
+ * observation against the debrief the student picked.
  *
  * Form ownership, on every submission path (save, replace, save as new):
  * - each submission captures the canonical fingerprint of the complete draft
@@ -26,7 +26,7 @@ export interface DebriefSource {
   journalId: string;
   date: string;
   title: string;
-  /** Which debrief fields have text she could say an observation came from. */
+  /** Which debrief fields have text the student could say an observation came from. */
   fields: Exclude<SkillSourceField, "none">[];
 }
 

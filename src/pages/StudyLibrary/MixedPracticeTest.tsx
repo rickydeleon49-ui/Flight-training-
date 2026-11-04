@@ -10,7 +10,7 @@ import {
 import { QuickQuestionRun } from "./QuickQuestionRun";
 
 /**
- * One untimed practice test mixed from several of her own materials. It reuses
+ * One untimed practice test mixed from several of the student's own materials. It reuses
  * the saved questions as they are, and nothing is stored: the result is for today only.
  */
 export function MixedPracticeTest({ practiceTests, materials }: {

@@ -1,6 +1,6 @@
 /**
  * Oral-question practice (ORAL-01b/01c). Pure helpers: nothing here stores anything.
- * Her answer and the ticked points live only in the open practice dialog.
+ * The student's answer and the ticked points live only in the open practice dialog.
  */
 export const ORAL_MAX_POINTS = 12;
 export const ORAL_MAX_SCENARIO = 4000;
@@ -36,11 +36,11 @@ export interface OralText {
   scenario: string;
   assumptions: string;
   answer: string;
-  /** The points she ticked "I covered this" for. */
+  /** The points the student ticked "I covered this" for. */
   coveredPoints: string[];
 }
 
-/** Plain text she can edit, for a note or a question to her instructor. */
+/** Plain text the student can edit, for a note or a question to the student instructor. */
 export function oralPlainText({ scenario, assumptions, answer, coveredPoints }: OralText): string {
   const parts = [`Scenario:\n${scenario.trim()}`];
   if (assumptions.trim()) parts.push(`Assumptions:\n${assumptions.trim()}`);

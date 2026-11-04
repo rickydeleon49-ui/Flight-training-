@@ -14,7 +14,7 @@ export function oralScenarioTitle(prompt: string): string {
 }
 
 /**
- * "Practice an oral question": her saved scenarios for this material, each
+ * "Practice an oral question": the student's saved scenarios for this material, each
  * with Practise, and one Add a scenario. No grid, no totals.
  */
 export function OralScenariosCard({ material }: { material: StudyMaterial }) {
@@ -43,7 +43,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
     };
   }, [repositories, material.id, dataRevision]);
 
-  // A scenario waiting to be removed is already gone as far as she can see.
+  // A scenario waiting to be removed is already gone as far as the student can see.
   const hidden = new Set(pendingDelete?.ids ?? []);
   const visible = scenarios.filter((s) => !hidden.has(s.id));
 
@@ -158,7 +158,7 @@ export function OralScenariosCard({ material }: { material: StudyMaterial }) {
           deleteWithUndo({
             ids: [scenario.id],
             label: oralScenarioTitle(scenario.prompt),
-            // Her kept answers go with the scenario; nothing hidden is left behind.
+            // The student's kept answers go with the scenario; nothing hidden is left behind.
             run: async (repos) => {
               await repos.oralScenarios.remove(material.id, scenario.id);
               await repos.oralAnswers.removeAll(scenario.id);

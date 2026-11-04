@@ -1,13 +1,13 @@
 /**
  * Dates worth keeping an eye on.
  *
- * Two sources only, so nothing is duplicated: her medical expiry, which is a
- * fact about a document she holds, and the target dates already on
+ * Two sources only, so nothing is duplicated: the student's medical expiry, which is a
+ * fact about a document the student holds, and the target dates already on
  * milestones. Dated events live in the Schedule and are not repeated here.
  *
  * A missed milestone target is deliberately dropped rather than lingering as
  * a reproach — the product does not nag about goals that slipped. An expired
- * medical is kept, because that is a fact she needs to see.
+ * medical is kept, because that is a fact the student needs to see.
  */
 import { daysBetween, parseIsoDate, todayIso } from "@/lib/dates";
 import type { IsoDate, Milestone, Profile } from "@/domain/types";
@@ -62,7 +62,7 @@ export function upcomingKeyDates(
   return dates.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** How long she has been at this, e.g. "7 months". Null before a start date. */
+/** How long the student has been at this, e.g. "7 months". Null before a start date. */
 export function trainingDuration(
   startedOn: IsoDate | null,
   today: IsoDate = todayIso(),

@@ -31,15 +31,15 @@ const StudyLibrary = lazy(() => import("@/pages/StudyLibrary/StudyLibrary").then
 function Gate() {
   const { status, error, lastError, clearError, data } = useAppData();
 
-  // Her chosen accent themes the whole interface.
+  // The student's chosen accent themes the whole interface.
   useEffect(() => {
     document.documentElement.dataset.accent = data.profile.accentColor;
   }, [data.profile.accentColor]);
 
   if (status === "loading") return <Loading label="Opening your flight deck" />;
 
-  // A database that will not open is the one failure she cannot work around
-  // herself, so this screen offers the way back rather than only the bad news.
+  // A database that will not open is the one failure the student cannot work around
+  // themselves, so this screen offers the way back rather than only the bad news.
   if (status === "error") return <DataRecovery error={error} />;
 
   return (

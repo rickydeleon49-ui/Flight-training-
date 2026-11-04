@@ -23,21 +23,21 @@ import { authoringStateOf, emptyManualSet, frameOf, itemAuthorLabel, nextSetOf }
 import { useAppData } from "@/state/AppDataContext";
 import { useDraftRecovery } from "@/state/useDraftRecovery";
 
-/** Which item an action is about, as she sees it on the page. */
+/** Which item an action is about, as the student sees it on the page. */
 export type ItemTarget = { kind: "summary" } | { kind: "section" | "card"; index: number };
 
 type Action =
   | { mode: "add"; kind: "section" | "card" }
   | { mode: "edit" | "correct" | "delete"; target: ItemTarget };
 
-/** What she sees for an item's author; nothing for generated or imported items. */
+/** What the student sees for an item's author; nothing for generated or imported items. */
 export function AuthorBadge({ origin }: { origin: unknown }) {
   const label = itemAuthorLabel(origin);
   if (!label) return null;
   return <Badge tone={origin === "instructor" ? "flight" : "berry"}>{label}</Badge>;
 }
 
-/** Her words for a failure; the draft stays where it is. */
+/** The student's words for a failure; the draft stays where it is. */
 function problemText(error: unknown): string {
   if (error instanceof StudyAuthoringError || error instanceof StudySetSaveError) return error.message;
   return "This change couldn't be saved. Nothing has been saved; your text is still here.";
@@ -54,7 +54,7 @@ export function seedNote({ source, preview }: Omit<BookmarkCardSource, "itemId">
   return checked ? page : `${page} Position unverified: the PDF is missing or has changed.`;
 }
 
-/** The set she opened, read once when an editing dialog opens. */
+/** The set the student opened, read once when an editing dialog opens. */
 interface Opened {
   stored: StoredSetRow | null;
   set: AiStudySet;
@@ -66,7 +66,7 @@ function locate(state: AuthoringState, target: ItemTarget): StudyItem | undefine
   return state.items.filter((item) => item.kind === target.kind)[target.index];
 }
 
-/** The same text she was shown: otherwise the page is out of date. */
+/** The same text the student was shown: otherwise the page is out of date. */
 function sameContent(a: AiStudySet, b: AiStudySet): boolean {
   const text = (set: AiStudySet) =>
     JSON.stringify([
@@ -77,13 +77,13 @@ function sameContent(a: AiStudySet, b: AiStudySet): boolean {
   return text(a) === text(b);
 }
 
-/** Why a dialog opened by itself after she quit with it open. */
+/** Why a dialog opened by itself after the student quit with it open. */
 export const KEPT_DRAFT_NOTE = "We kept your unsaved changes from last time. Save them, or Cancel to drop them.";
 
 const NOUN = { summary: "summary", section: "section", card: "card" } as const;
 
 /**
- * Unsaved typing in an open editing dialog, kept as she types (QUIT-01), so
+ * Unsaved typing in an open editing dialog, kept as the student types (QUIT-01), so
  * quitting or closing the window never loses it. `baseline` is the stored set
  * the dialog opened from; `pending` keeps an uncertain save's operation, so a
  * retry after relaunch is still the same save.
@@ -123,10 +123,10 @@ export interface StudySetEditorProps {
 }
 
 /**
- * Editing her study set (OFFLINE-03a): add, edit, correct and delete the
+ * Editing the student's study set (OFFLINE-03a): add, edit, correct and delete the
  * summary, sections and cards; see and restore previous versions. Every save
  * keeps the whole previous set in history first, and a change made elsewhere
- * since she opened a dialog is refused rather than overwritten.
+ * since the student opened a dialog is refused rather than overwritten.
  */
 export function StudySetEditor({
   material,
@@ -223,7 +223,7 @@ export function StudySetEditor({
       }
       const state = authoringStateOf(read.set);
       if (draft) {
-        // Her text stays on screen. The save still expects the set her draft
+        // The student's text stays on screen. The save still expects the set the student's draft
         // began from, so if it moved on the save is refused, never overwrites.
         if (next.mode !== "add" && !locate(state, next.target)) {
           setOpenError("That item is no longer in this study set.");
@@ -277,7 +277,7 @@ export function StudySetEditor({
     const item = locate(opened.state, action.target);
     if (!item) return null;
     if (action.mode === "delete") return { kind: "delete", itemId: item.itemId };
-    // An instructor's correction stays hers to keep private; editing it never
+    // An instructor's correction stays theirs to keep private; editing it never
     // relabels it.
     const origin: StudyItemOrigin = action.mode === "correct" || item.origin === "instructor" ? "instructor" : "user";
     return { kind: action.mode, itemId: item.itemId, fields: [...fields], origin };
@@ -321,7 +321,7 @@ export function StudySetEditor({
     else setError(outcome?.message ?? "This change couldn't be saved. Nothing has been saved; your text is still here.");
   };
 
-  /** The same calm choice as her notes: keep the earlier typing, or the saved one. */
+  /** The same calm choice as the student's notes: keep the earlier typing, or the saved one. */
   const conflictChoice = (what: string) =>
     reopened && !conflict && action ? (
       <p className="tiny muted" role="status">{KEPT_DRAFT_NOTE}</p>
@@ -587,13 +587,13 @@ function timeOf(timestamp: string): string {
   return Number.isNaN(date.getTime()) ? day : `${day}, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
 }
 
-/** Earlier versions of her study set, newest first, each restorable. */
+/** Earlier versions of the student study set, newest first, each restorable. */
 export function StudySetHistory({ material }: { material: StudyMaterial }) {
   const { mutate, repositories, dataRevision } = useAppData();
   const [entries, setEntries] = useState<StudySetHistoryEntry[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [restoring, setRestoring] = useState<StudySetHistoryEntry | null>(null);
-  // The set as it was when she opened the confirmation: a change made since
+  // The set as it was when the student opened the confirmation: a change made since
   // is refused as stale rather than overwritten unseen. Undefined while read.
   const [restoreExpected, setRestoreExpected] = useState<StoredSetRow | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -631,7 +631,7 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
           const current = expected;
           const previous = entry.previous!;
           const restoredRetired = JSON.parse(previous.retired_json);
-          // What she retired since stays retired: the lists are joined.
+          // What the student retired since stays retired: the lists are joined.
           const retired = current
             ? appendRetirements(JSON.parse(current.retired_json), restoredRetired)
             : restoredRetired;
@@ -732,8 +732,8 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
 }
 
 /**
- * Start a study guide she writes herself, for a material with none. Nothing
- * from Gemini is involved, and it's labelled as hers.
+ * Start a study guide the student writes themselves, for a material with none. Nothing
+ * from Gemini is involved, and it's labelled as theirs.
  */
 export function StartManualStudySet({ material }: { material: StudyMaterial }) {
   const { mutate } = useAppData();
