@@ -15,7 +15,9 @@ describe("content security policy", () => {
   it("allows no asset-protocol images; pictures arrive as bytes, not asset URLs", () => {
     const csp = config.app.security.csp;
     const imgSrc = csp.split(";").map((part) => part.trim()).find((part) => part.startsWith("img-src"));
-    expect(imgSrc).toBe("img-src 'self' data:");
+    expect(imgSrc).toBe("img-src 'self' data: blob:");
+    // blob: is for decoding a picked photo via an object URL; it must stay images-only.
+    expect(csp.split(";").filter((part) => part.includes("blob:")).map((part) => part.trim().split(" ")[0]).sort()).toEqual(["frame-src", "img-src"]);
     expect(csp).not.toMatch(/asset/);
   });
 

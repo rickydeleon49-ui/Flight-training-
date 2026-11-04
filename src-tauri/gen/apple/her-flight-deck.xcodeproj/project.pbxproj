@@ -516,7 +516,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.herflightdeck.app;
 				PRODUCT_NAME = "Your Flight Deck";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				VALID_ARCHS = arm64;
 			};
 			name = debug;
@@ -603,7 +603,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.herflightdeck.app;
 				PRODUCT_NAME = "Your Flight Deck";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				VALID_ARCHS = arm64;
 			};
 			name = release;

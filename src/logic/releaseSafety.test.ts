@@ -220,6 +220,41 @@ describe("release version policy and validation", () => {
     }
   });
 
+  it("bumpVersions also moves the iOS marketing version (plist + project.yml) but not the build number", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "hfd-bump-ios-"));
+    try {
+      copyFileSync("package.json", join(tempDir, "package.json"));
+      copyFileSync("package-lock.json", join(tempDir, "package-lock.json"));
+      mkdirSync(join(tempDir, "src-tauri/gen/apple/her-flight-deck_iOS"), { recursive: true });
+      for (const f of ["tauri.conf.json", "Cargo.toml", "Cargo.lock", "gen/apple/project.yml", "gen/apple/her-flight-deck_iOS/Info.plist"]) {
+        copyFileSync(join("src-tauri", f), join(tempDir, "src-tauri", f));
+      }
+      const before = readFileSync(join(tempDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist"), "utf8");
+      const build = before.match(/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/)?.[1];
+
+      const bumped = bumpVersions("0.5.99", tempDir, { syncCargoLockDirectly: true });
+      expect(bumped.iosShortVersion).toBe("0.5.99");
+      const plist = readFileSync(join(tempDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist"), "utf8");
+      expect(plist).toMatch(/<key>CFBundleShortVersionString<\/key>\s*<string>0\.5\.99<\/string>/);
+      expect(plist).toContain(`<key>CFBundleVersion</key>\n\t<string>${build}</string>`);
+      expect(readFileSync(join(tempDir, "src-tauri/gen/apple/project.yml"), "utf8")).toMatch(/CFBundleShortVersionString: 0\.5\.99/);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("iOS project is TestFlight-ready: iPhone-only, export-compliance key, TestFlight export options", () => {
+    const yml = readFileSync("src-tauri/gen/apple/project.yml", "utf8");
+    const plist = readFileSync("src-tauri/gen/apple/her-flight-deck_iOS/Info.plist", "utf8");
+    expect(yml).toMatch(/ITSAppUsesNonExemptEncryption: false/);
+    expect(yml).toMatch(/TARGETED_DEVICE_FAMILY: "1"/);
+    expect(plist).toMatch(/<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/);
+    expect(readFileSync("src-tauri/gen/apple/her-flight-deck.xcodeproj/project.pbxproj", "utf8")).not.toContain('TARGETED_DEVICE_FAMILY = "1,2"');
+    const opts = readFileSync("src-tauri/gen/apple/ExportOptions-testflight.plist", "utf8");
+    expect(opts).toContain("<string>app-store-connect</string>");
+    expect(opts).not.toMatch(/<key>teamID<\/key>/);
+  });
+
   it("ensures a failed Cargo.lock update fails visibly and throws an error", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "hfd-fail-test-"));
     try {

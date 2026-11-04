@@ -48,8 +48,8 @@ function readAsDataUrl(file: File): Promise<string> {
  * Load a File into an HTMLImageElement.
  *
  * Goes through a data URL rather than a blob: object URL because the app's
- * CSP allows `img-src 'self' data:` only; a blob: URL is refused in the
- * installed app and the photo never loads.
+ * CSP originally allowed `img-src 'self' data:` only (blob: was refused and the photo
+ * never loaded). blob: is now allowed for images; this path stays on data URLs.
  */
 export async function loadImage(file: File): Promise<HTMLImageElement> {
   const url = await readAsDataUrl(file);

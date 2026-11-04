@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { exit } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -66,6 +66,22 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
     }
   }
 
+  // 4b. iOS project (tracked, generated once by `tauri ios init`): keep the marketing
+  // version in step. CFBundleVersion (build number) is left alone; it is bumped per upload.
+  const iosYml = join(rootDir, "src-tauri/gen/apple/project.yml");
+  if (existsSync(iosYml)) {
+    const yml = readFileSync(iosYml, "utf8");
+    writeFileSync(iosYml, yml.replace(/^(\s*CFBundleShortVersionString:\s*)\S+/m, `$1${version}`));
+  }
+  const iosPlist = join(rootDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
+  if (existsSync(iosPlist)) {
+    const plist = readFileSync(iosPlist, "utf8");
+    writeFileSync(
+      iosPlist,
+      plist.replace(/(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]*(<\/string>)/, `$1${version}$2`),
+    );
+  }
+
   // 5. Verification: check all 5 sources strictly match
   const verifiedPkg = JSON.parse(readFileSync(pkgPath, "utf8")).version;
   const verifiedTauri = JSON.parse(readFileSync(tauriPath, "utf8")).version;
@@ -94,8 +110,19 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
     );
   }
 
+  let iosShortVersion;
+  if (existsSync(iosPlist)) {
+    iosShortVersion = readFileSync(iosPlist, "utf8").match(
+      /<key>CFBundleShortVersionString<\/key>\s*<string>([^<]*)<\/string>/,
+    )?.[1];
+    if (iosShortVersion !== version) {
+      throw new Error(`iOS Info.plist CFBundleShortVersionString=${iosShortVersion} expected=${version}`);
+    }
+  }
+
   return {
     version,
+    iosShortVersion,
     packageJson: verifiedPkg,
     packageLock: verifiedLockVer,
     tauriConf: verifiedTauri,
