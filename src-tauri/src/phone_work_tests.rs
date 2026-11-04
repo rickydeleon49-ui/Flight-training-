@@ -29,7 +29,9 @@ fn root_in(container: &Path) -> PathBuf {
              CREATE TABLE card_review_events (reviewed_at TEXT);
              CREATE TABLE practice_attempts (started_at TEXT, status TEXT);
              CREATE TABLE material_bookmarks (updated_at TEXT);
-             CREATE TABLE material_reading_state (updated_at TEXT);",
+             CREATE TABLE material_reading_state (updated_at TEXT);
+             CREATE TABLE ai_study_sets (source_material_id TEXT PRIMARY KEY, generated_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+             CREATE TABLE practice_tests (source_material_id TEXT PRIMARY KEY, generated_at TEXT NOT NULL, updated_at TEXT NOT NULL);",
         )
         .unwrap();
     root
@@ -50,13 +52,15 @@ fn write_baseline(root: &Path, at: &str) {
     .unwrap();
 }
 
-fn totals(w: &UnsavedPhoneWork) -> [i64; 5] {
+fn totals(w: &UnsavedPhoneWork) -> [i64; 7] {
     [
         w.reviews,
         w.tests,
         w.bookmarks,
         w.reading_positions,
         w.materials,
+        w.guides,
+        w.generated_tests,
     ]
 }
 
@@ -68,7 +72,9 @@ fn one_of_each(root: &Path, at: &str) {
              INSERT INTO practice_attempts VALUES ('{at}', 'abandoned');
              INSERT INTO material_bookmarks VALUES ('{at}');
              INSERT INTO material_reading_state VALUES ('{at}');
-             INSERT INTO study_materials VALUES (lower(hex(randomblob(6))), 'Fictional book', 'f.pdf', '{at}', '{at}');"
+             INSERT INTO study_materials VALUES (lower(hex(randomblob(6))), 'Fictional book', 'f.pdf', '{at}', '{at}');
+             INSERT INTO ai_study_sets VALUES ('g1', '{at}', '{at}');
+             INSERT INTO practice_tests VALUES ('g1', '{at}', '{at}');"
         ),
     );
 }
@@ -79,7 +85,7 @@ fn no_baseline_counts_every_row() {
     let root = root_in(&c);
     one_of_each(&root, "2026-01-01T00:00:00.000Z");
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [1, 1, 1, 1, 1]);
+    assert_eq!(totals(&work), [1, 1, 1, 1, 1, 1, 1]);
     assert!(work.since.is_none());
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -89,7 +95,7 @@ fn empty_tables_are_nothing_unsaved() {
     let c = scratch();
     let root = root_in(&c);
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [0, 0, 0, 0, 0]);
+    assert_eq!(totals(&work), [0, 0, 0, 0, 0, 0, 0]);
     assert!(work.since.is_none());
     assert!(sentence(&work).is_none());
     std::fs::remove_dir_all(c).unwrap();
@@ -103,7 +109,7 @@ fn rows_older_than_the_baseline_are_saved() {
     write_baseline(&root, "2026-02-01T00:00:00Z");
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0]
     );
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -120,7 +126,7 @@ fn rows_newer_than_the_baseline_are_unsaved_per_kind() {
     );
     write_baseline(&root, "2026-02-01T00:00:00Z");
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [2, 1, 1, 1, 1]);
+    assert_eq!(totals(&work), [2, 1, 1, 1, 1, 1, 1]);
     assert_eq!(work.since.as_deref(), Some("2026-02-01T00:00:00Z"));
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -159,7 +165,7 @@ fn baseline_is_never_older_than_the_newest_restored_row() {
     record_baseline_in(&root, &now).unwrap();
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0]
     );
     // A genuinely later phone review is still caught.
     exec(
@@ -179,7 +185,7 @@ fn missing_or_corrupt_file_means_no_baseline() {
     for garbage in ["not json", "{}", "{\"baselineAt\":5}", ""] {
         std::fs::write(root.join(PHONE_WORK_FILE), garbage).unwrap();
         let work = unsaved_phone_work_in(&root).unwrap();
-        assert_eq!(totals(&work), [1, 1, 1, 1, 1]);
+        assert_eq!(totals(&work), [1, 1, 1, 1, 1, 1, 1]);
         assert!(work.since.is_none());
     }
     std::fs::remove_dir_all(c).unwrap();
@@ -191,7 +197,7 @@ fn no_database_or_missing_tables_is_nothing_unsaved() {
     let root = c.join("app");
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0]
     );
     record_baseline_in(&root, "2026-01-01T00:00:00Z").unwrap();
     assert_eq!(
@@ -280,12 +286,34 @@ fn work(
     reading_positions: i64,
     materials: i64,
 ) -> UnsavedPhoneWork {
+    work_with(
+        reviews,
+        tests,
+        bookmarks,
+        reading_positions,
+        materials,
+        0,
+        0,
+    )
+}
+
+fn work_with(
+    reviews: i64,
+    tests: i64,
+    bookmarks: i64,
+    reading_positions: i64,
+    materials: i64,
+    guides: i64,
+    generated_tests: i64,
+) -> UnsavedPhoneWork {
     UnsavedPhoneWork {
         reviews,
         tests,
         bookmarks,
         reading_positions,
         materials,
+        guides,
+        generated_tests,
         since: None,
     }
 }
@@ -296,6 +324,10 @@ fn sentence_matches_the_typescript_wording() {
     assert_eq!(
         sentence(&work(12, 1, 0, 0, 1)).as_deref(),
         Some("This phone has 12 card reviews, 1 practice test, and 1 study material that aren't saved anywhere else yet. Save my phone work first, then get your study material.")
+    );
+    assert_eq!(
+        sentence(&work_with(12, 1, 0, 0, 1, 1, 1)).as_deref(),
+        Some("This phone has 12 card reviews, 2 practice tests, 1 study guide, and 1 study material that aren't saved anywhere else yet. Save my phone work first, then get your study material.")
     );
 }
 
@@ -314,7 +346,10 @@ fn sentence_handles_each_kind_and_plurals() {
 
 #[test]
 fn sentence_uses_plain_words() {
-    let s = sentence(&work(12, 1, 3, 2, 1)).unwrap().to_lowercase();
+    let s = sentence(&work_with(12, 1, 3, 2, 1, 2, 1))
+        .unwrap()
+        .to_lowercase();
+    assert!(s.contains("study guide"));
     for word in [
         "baseline", "ledger", "sync", "restore", "database", "row", "table",
     ] {
@@ -374,7 +409,7 @@ fn saving_writes_the_phone_copy_and_marks_everything_saved() {
     assert!(crate::backup::inspect_archive(&root, &file, "0.6.7").is_ok());
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0]
     );
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -397,7 +432,7 @@ fn baseline_moves_only_after_a_successful_save() {
         assert_eq!(before.is_some(), existing);
         assert_eq!(
             totals(&unsaved_phone_work_in(&root).unwrap()),
-            [1, 1, 1, 1, 1]
+            [1, 1, 1, 1, 1, 1, 1]
         );
         assert!(leftovers(&c).is_empty(), "{:?}", leftovers(&c));
         std::fs::remove_dir_all(c).unwrap();
@@ -474,7 +509,7 @@ fn work_done_after_a_save_is_unsaved_again() {
     );
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [1, 0, 0, 0, 0]
+        [1, 0, 0, 0, 0, 0, 0]
     );
     assert!(refuse_unsaved(&root, true).is_err());
     // A later "now" than the new row, as a real second save would have.
@@ -821,7 +856,7 @@ fn fresh_install_baseline_makes_seeded_rows_not_unsaved() {
     record_baseline_if_missing_in(&root, "2026-01-02T00:00:00.000Z").unwrap();
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [0, 0, 0, 0, 0]
+        [0, 0, 0, 0, 0, 0, 0]
     );
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -837,8 +872,96 @@ fn existing_baseline_is_left_unchanged_by_the_fresh_install_call() {
     assert_eq!(std::fs::read(root.join(PHONE_WORK_FILE)).unwrap(), before);
     assert_eq!(
         totals(&unsaved_phone_work_in(&root).unwrap()),
-        [1, 1, 1, 1, 1]
+        [1, 1, 1, 1, 1, 1, 1]
     );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+// ---- G-2: generated guides and tests ----
+
+#[test]
+fn a_generated_guide_is_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    exec(
+        &root,
+        "INSERT INTO ai_study_sets VALUES ('m1', '2026-03-01T00:00:00.000Z', '2026-03-01T00:00:00.000Z');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!(work.guides, 1);
+    assert!(sentence(&work).unwrap().contains("1 study guide"));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn a_generated_practice_test_counts_as_a_practice_test() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    exec(
+        &root,
+        "INSERT INTO practice_attempts VALUES ('2026-03-01T00:00:00.000Z', 'abandoned');
+         INSERT INTO practice_tests VALUES ('m1', '2026-03-01T00:00:00.000Z', '2026-03-01T00:00:00.000Z');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!((work.tests, work.generated_tests), (1, 1));
+    assert!(sentence(&work).unwrap().contains("2 practice tests"));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn a_regenerated_guide_after_a_restore_is_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(
+        &root,
+        "INSERT INTO ai_study_sets VALUES ('m1', '2025-03-01T00:00:00.000Z', '2025-03-01T00:00:00.000Z');",
+    );
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().guides, 0);
+    exec(
+        &root,
+        "UPDATE ai_study_sets SET updated_at = '2026-03-01T00:00:00.000Z';",
+    );
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().guides, 1);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn restored_generated_rows_are_saved() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    exec(
+        &root,
+        "INSERT INTO ai_study_sets VALUES ('m1', '2025-03-01T00:00:00.000Z', '2025-03-01T00:00:00.000Z');
+         INSERT INTO practice_tests VALUES ('m1', '2025-03-01T00:00:00.000Z', '2025-03-01T00:00:00.000Z');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!((work.guides, work.generated_tests), (0, 0));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn baseline_is_never_older_than_the_newest_generated_row() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(
+        &root,
+        "INSERT INTO ai_study_sets VALUES ('m1', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'));
+         INSERT INTO practice_tests VALUES ('m1', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'));",
+    );
+    record_baseline_in(&root, &now_utc().unwrap()).unwrap();
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!((work.guides, work.generated_tests), (0, 0));
+    exec(
+        &root,
+        "UPDATE ai_study_sets SET updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+2 hours');
+         UPDATE practice_tests SET updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+2 hours');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!((work.guides, work.generated_tests), (1, 1));
     std::fs::remove_dir_all(c).unwrap();
 }
 
@@ -850,6 +973,8 @@ fn single_unsaved_item_uses_the_singular_verb() {
         bookmarks: 0,
         reading_positions: 0,
         materials: 0,
+        guides: 0,
+        generated_tests: 0,
         since: None,
     };
     assert_eq!(

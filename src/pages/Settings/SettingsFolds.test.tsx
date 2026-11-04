@@ -13,7 +13,7 @@ let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 vi.mock("@/services/platform", async (original) => ({
   ...await original<typeof import("@/services/platform")>(),
-  deviceCan: () => ({ geminiKey: true, generate: true, sendToIphone: true, getStudyMaterial: false }),
+  deviceCan: () => ({ geminiKey: true, generate: true, pdfKit: true, sendToIphone: true, getStudyMaterial: false }),
 }));
 function Ready() { return useAppData().status === "ready" ? <>
   <Link to="/settings">Settings menu</Link>

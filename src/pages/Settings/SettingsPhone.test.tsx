@@ -17,7 +17,7 @@ vi.mock("@/services/platform", async (original) => ({
   ...await original<typeof import("@/services/platform")>(),
   isIOS: () => mocks.phone,
   isMacOS: () => !mocks.phone,
-  deviceCan: () => ({ geminiKey: true, getStudyMaterial: mocks.phone, savePhoneWork: mocks.phone, generate: !mocks.phone, sendToIphone: !mocks.phone }),
+  deviceCan: () => ({ geminiKey: true, getStudyMaterial: mocks.phone, savePhoneWork: mocks.phone, generate: !mocks.phone, pdfKit: !mocks.phone, sendToIphone: !mocks.phone }),
 }));
 function Ready() { return useAppData().status === "ready" ? <Settings /> : null; }
 beforeEach(async () => { localStorage.clear(); db = await createNodeSqliteDatabase(); });

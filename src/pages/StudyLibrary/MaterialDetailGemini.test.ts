@@ -740,4 +740,94 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     });
     expect(generateStudyAidSpy).not.toHaveBeenCalled();
   });
+
+  describe("on the phone", () => {
+    async function asPhone() {
+      const platform = await import("@/services/platform");
+      vi.spyOn(platform, "deviceCan").mockReturnValue({
+        editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false,
+        sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false,
+      });
+    }
+    async function pdf(fileSize = 2000) {
+      return createRepositories(db).documents.create({
+        id: "phone-pdf", title: "Phone Handbook", filePath: "documents/phone.pdf", originalFileName: "phone.pdf", fileSize,
+      });
+    }
+    const notThere = ["Make my study kit", "or make a kit on this Mac", "Create study-size parts", "Split file", "Split automatically", "Take out a chapter"];
+
+    it("offers Gemini generation with consent dialogs that never offer to split", async () => {
+      await asPhone();
+      const repos = createRepositories(db);
+      const material = await pdf();
+      await open(`/study/${material.id}`);
+      for (const name of ["Create study guide", "Create practice test"]) {
+        fireEvent.click(await screen.findByRole("button", { name }));
+        await screen.findByRole("button", { name: "Send to Gemini" });
+        expect(screen.queryByRole("button", { name: "Choose fewer pages to send" })).toBeNull();
+        fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      }
+      await repos.documents.saveAiStudySet({
+        sourceMaterialId: material.id, title: "Synthetic guide", summary: "Saved synthetic summary",
+        sections: [], flashcards: [{ front: "Q", back: "A", sourcePage: 1 }], sourceNotes: "", model: "test",
+      });
+      cleanup();
+      await open(`/study/${material.id}`);
+      fireEvent.click(await screen.findByRole("button", { name: "Make new cards with Gemini" }));
+      await screen.findByRole("button", { name: "Send to Gemini" });
+      expect(screen.queryByRole("button", { name: "Choose fewer pages to send" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      fireEvent.click(await screen.findByRole("tab", { name: "More" }));
+      expect(await screen.findByRole("button", { name: "Ask about this PDF" })).toBeTruthy();
+    });
+
+    it("shows the sending state while a generation runs", async () => {
+      await asPhone();
+      const material = await pdf();
+      const deferred = createDeferred<geminiService.GeneratedStudyAid>();
+      vi.spyOn(geminiService, "generateStudyAid").mockImplementation(() => deferred.promise);
+      await open(`/study/${material.id}`);
+      fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+      const working = await screen.findByRole("button", { name: "Reading document…" });
+      expect(working.hasAttribute("disabled")).toBe(true);
+      await act(async () => {
+        deferred.resolve({ title: "T", summary: "S", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash" });
+      });
+    });
+
+    it("tells her to split a too-big PDF on the Mac and offers no split controls", async () => {
+      await asPhone();
+      const { MAX_PDF_BYTES } = await import("@/logic/aiLimits");
+      const material = await pdf(MAX_PDF_BYTES + 1);
+      await open(`/study/${material.id}`);
+      expect((await screen.findAllByText("This PDF is too big for Gemini. Split it on your Mac first.")).length).toBeGreaterThan(0);
+      for (const tab of ["Study", "More"]) {
+        fireEvent.click(screen.getByRole("tab", { name: tab }));
+        for (const name of notThere) expect(screen.queryByRole("button", { name })).toBeNull();
+      }
+      expect(document.body.textContent).not.toMatch(/split it first/i);
+    });
+
+    it("hides the study kit and the on-device text reader", async () => {
+      await asPhone();
+      const material = await pdf();
+      await open(`/study/${material.id}`);
+      await screen.findByRole("button", { name: "Create study guide" });
+      for (const name of notThere) expect(screen.queryByRole("button", { name })).toBeNull();
+      fireEvent.click(screen.getByRole("tab", { name: "More" }));
+      expect(screen.queryByText(/Read this PDF's text/)).toBeNull();
+      expect(document.getElementById("material-offline-study")).toBeNull();
+      expect(document.getElementById("material-pdf-kit")).toBeNull();
+    });
+
+    it("points to Settings when no key is saved", async () => {
+      await asPhone();
+      vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ configured: false, model: "gemini-3.5-flash", choice: "standard" });
+      const material = await pdf();
+      await open(`/study/${material.id}`);
+      expect(await screen.findByText(/Connect the free Gemini API in Settings/)).toBeTruthy();
+      expect(screen.getAllByRole("link", { name: "Open Settings" }).length).toBeGreaterThan(0);
+    });
+  });
 });
