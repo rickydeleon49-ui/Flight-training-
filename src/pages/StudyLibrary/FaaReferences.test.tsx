@@ -537,7 +537,7 @@ it.each([false, true])("iOS saved references pass their material ID and explain 
     mount();
     await screen.findByText("Saved on this Mac");
     fireEvent.click(screen.getByRole("button", { name: /Open offline:/ }));
-    await screen.findByText(failure ? "That PDF could not be opened. Check your saved file and PDF reader, then try again." : "Opened in Her Flight Deck.");
+    await screen.findByText(failure ? "That PDF could not be opened. Check your saved file and PDF reader, then try again." : "Opened in Your Flight Deck.");
     expect(mocks.open).toHaveBeenCalledWith("synthetic.pdf", copy.title, copy.id);
   } finally {
     device.mockRestore();
