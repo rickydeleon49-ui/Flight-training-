@@ -22,7 +22,7 @@
     "@fontsource/inter": "^5.3.0",
     "@react-aria/tabs": "3.12.1",
     "@react-stately/tabs": "3.9.1",
-    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/api": "^2.12.3",
     "@tauri-apps/plugin-dialog": "^2.4.0",
     "@tauri-apps/plugin-opener": "^2.5.0",
     "@tauri-apps/plugin-sql": "^2.3.0",
@@ -37,7 +37,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.9.0",
+    "@tauri-apps/cli": "^2.12.3",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.4.1",
     "@types/react": "^19.2.2",

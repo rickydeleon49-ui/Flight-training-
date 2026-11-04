@@ -9,7 +9,7 @@ packages) and Cargo.lock (via `cargo metadata`). Do not edit it by hand: run
 `node scripts/third-party-notices.mjs` after changing dependencies. CI runs it with --check.
 Vite copies public/ into dist/, and Tauri embeds dist/, so this file ships inside every build.
 
-Contents: 30 npm packages, 623 Rust crates (4 of them test-only), bundled fonts and data.
+Contents: 30 npm packages, 619 Rust crates (4 of them test-only), bundled fonts and data.
 The Rust list covers every target platform (macOS, Windows, Linux, iOS, Android); a given
 build contains only the crates for its platform. Where a package offers a choice of licenses,
 the entry says which one this app uses.
@@ -162,14 +162,14 @@ License text: Apache-2.0 standard text in Part 6.
 Package license files: LICENSE (standard Apache-2.0)
 
 -------------------------------------------------------------------------------
-@tauri-apps/api 2.11.1
+@tauri-apps/api 2.12.3
 From: npm
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://registry.npmjs.org/@tauri-apps/api/-/api-2.11.1.tgz
+Source: https://registry.npmjs.org/@tauri-apps/api/-/api-2.12.3.tgz
 Repository: https://github.com/tauri-apps/tauri
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 @tauri-apps/plugin-dialog 2.7.3
@@ -436,10 +436,10 @@ License text: MIT standard text in Part 6.
 Package license files: COPYING (verbatim in Part 5 as [T3]), LICENSE-MIT (standard MIT), UNLICENSE (standard Unlicense)
 
 -------------------------------------------------------------------------------
-alloc-no-stdlib 2.0.4
+alloc-no-stdlib 3.0.0
 From: crates.io
 License: BSD-3-Clause
-Source: https://crates.io/crates/alloc-no-stdlib/2.0.4
+Source: https://crates.io/crates/alloc-no-stdlib/3.0.0
 Repository: https://github.com/dropbox/rust-alloc-no-stdlib
 Authors: Daniel Reiter Horn <danielrh@dropbox.com>
 Copyright (c) 2016 Dropbox, Inc.
@@ -447,10 +447,10 @@ License text: BSD-3-Clause standard text in Part 6.
 Package license files: LICENSE (standard BSD-3-Clause)
 
 -------------------------------------------------------------------------------
-alloc-stdlib 0.2.4
+alloc-stdlib 0.3.0
 From: crates.io
 License: BSD-3-Clause
-Source: https://crates.io/crates/alloc-stdlib/0.2.4
+Source: https://crates.io/crates/alloc-stdlib/0.3.0
 Repository: https://github.com/dropbox/rust-alloc-no-stdlib
 Authors: Daniel Reiter Horn <danielrh@dropbox.com>
 Copyright: no copyright line in the package's license files (see Authors and Repository).
@@ -716,6 +716,17 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
+base64 0.23.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/base64/0.23.1
+Repository: https://github.com/marshallpierce/rust-base64
+Authors: Marshall Pierce <marshall@mpierce.org>
+Copyright (c) 2025 Alice Maz, Marshall Pierce
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+
+-------------------------------------------------------------------------------
 base64ct 1.8.3
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
@@ -837,10 +848,10 @@ License text: Apache-2.0 standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (verbatim in Part 5 as [T7])
 
 -------------------------------------------------------------------------------
-brotli 8.0.4
+brotli 9.1.1
 From: crates.io
 License: BSD-3-Clause AND MIT
-Source: https://crates.io/crates/brotli/8.0.4
+Source: https://crates.io/crates/brotli/9.1.1
 Repository: https://github.com/dropbox/rust-brotli
 Authors: Daniel Reiter Horn <danielrh@dropbox.com>, The Brotli Authors
 Copyright (c) 2016 Dropbox, Inc.
@@ -849,10 +860,10 @@ License text: BSD-3-Clause and MIT standard text in Part 6.
 Package license files: LICENSE.BSD-3-Clause (standard BSD-3-Clause), LICENSE.MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-brotli-decompressor 5.0.3
+brotli-decompressor 6.2.0
 From: crates.io
 License: BSD-3-Clause/MIT (used under MIT)
-Source: https://crates.io/crates/brotli-decompressor/5.0.3
+Source: https://crates.io/crates/brotli-decompressor/6.2.0
 Repository: https://github.com/dropbox/rust-brotli-decompressor
 Authors: Daniel Reiter Horn <danielrh@dropbox.com>, The Brotli Authors
 Copyright (c) 2016 Dropbox, Inc.
@@ -968,10 +979,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-cargo_toml 0.22.3
+cargo_toml 1.0.1
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/cargo_toml/0.22.3
+Source: https://crates.io/crates/cargo_toml/1.0.1
 Repository: https://gitlab.com/lib.rs/cargo_toml
 Authors: Kornel <kornel@geekhood.net>
 Copyright: see the package's license files reproduced in Part 5.
@@ -1022,10 +1033,10 @@ License text: MIT standard text in Part 6.
 Package license files: COPYRIGHT-RUST.txt (verbatim in Part 5 as [T10])
 
 -------------------------------------------------------------------------------
-cfb 0.7.3
+cfb 0.14.0
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/cfb/0.7.3
+Source: https://crates.io/crates/cfb/0.14.0
 Repository: https://github.com/mdsteele/rust-cfb
 Authors: Matthew D. Steele <mdsteele@alum.mit.edu>
 Copyright (c) 2017 Matthew D. Steele
@@ -1308,10 +1319,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-cssparser 0.36.0
+cssparser 0.37.0
 From: crates.io
 License: MPL-2.0
-Source: https://crates.io/crates/cssparser/0.36.0
+Source: https://crates.io/crates/cssparser/0.37.0
 Repository: https://github.com/servo/rust-cssparser
 Authors: Simon Sapin <simon.sapin@exyr.org>
 Copyright: no copyright line in the package's license files (see Authors and Repository).
@@ -1319,10 +1330,10 @@ License text: MPL-2.0 standard text in Part 6.
 Package license files: LICENSE (standard MPL-2.0)
 
 -------------------------------------------------------------------------------
-cssparser-macros 0.6.1
+cssparser-macros 0.7.1
 From: crates.io
 License: MPL-2.0
-Source: https://crates.io/crates/cssparser-macros/0.6.1
+Source: https://crates.io/crates/cssparser-macros/0.7.1
 Repository: https://github.com/servo/rust-cssparser
 Authors: Simon Sapin <simon.sapin@exyr.org>
 Copyright: no copyright line in the package's license files (see Authors and Repository).
@@ -1330,22 +1341,11 @@ License text: MPL-2.0 standard text in Part 6.
 Package license files: LICENSE (standard MPL-2.0)
 
 -------------------------------------------------------------------------------
-ctor 0.8.0
+ctor 1.0.13
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/ctor/0.8.0
-Repository: https://github.com/mmastrac/rust-ctor
-Authors: Matt Mastracci <matthew@mastracci.com>
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
-
--------------------------------------------------------------------------------
-ctor-proc-macro 0.0.7
-From: crates.io
-License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/ctor-proc-macro/0.0.7
-Repository: https://github.com/mmastrac/rust-ctor
+Source: https://crates.io/crates/ctor/1.0.13
+Repository: https://github.com/mmastrac/linktime
 Authors: Matt Mastracci <matthew@mastracci.com>
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MIT standard text in Part 6.
@@ -1486,11 +1486,11 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-dirs 6.0.0
+dirs 7.0.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/dirs/6.0.0
-Repository: https://github.com/soc/dirs-rs
+Source: https://crates.io/crates/dirs/7.0.0
+Repository: https://codeberg.org/dirs/dirs-rs
 Authors: Simon Ochsenreither <simon@ochsenreither.de>
 Copyright (c) 2018-2019 dirs-rs contributors
 License text: MIT standard text in Part 6.
@@ -1552,10 +1552,10 @@ License text: MIT standard text in Part 6.
 Package license files: none in the published package.
 
 -------------------------------------------------------------------------------
-dom_query 0.27.0
+dom_query 0.28.0
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/dom_query/0.27.0
+Source: https://crates.io/crates/dom_query/0.28.0
 Repository: https://github.com/niklak/dom_query
 Authors: niklak <morgenpurple@gmail.com>, importcjj <importcjj@gmail.com>
 Copyright (c) 2023 Mykola Humanov
@@ -1611,28 +1611,6 @@ Authors: Xidorn Quan <me@upsuper.org>
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MPL-2.0 standard text in Part 6.
 Package license files: LICENSE (standard MPL-2.0)
-
--------------------------------------------------------------------------------
-dtor 0.3.0
-From: crates.io
-License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/dtor/0.3.0
-Repository: https://github.com/mmastrac/rust-ctor
-Authors: Matt Mastracci <matthew@mastracci.com>
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
-
--------------------------------------------------------------------------------
-dtor-proc-macro 0.0.6
-From: crates.io
-License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/dtor-proc-macro/0.0.6
-Repository: https://github.com/mmastrac/rust-ctor
-Authors: Matt Mastracci <matthew@mastracci.com>
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 dunce 1.0.5
@@ -2482,10 +2460,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-html5ever 0.38.0
+html5ever 0.39.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/html5ever/0.38.0
+Source: https://crates.io/crates/html5ever/0.39.0
 Repository: https://github.com/servo/html5ever
 Authors: The html5ever Project Developers
 Copyright (c) 2014 The html5ever Project Developers
@@ -2595,10 +2573,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-ico 0.5.0
+ico 0.6.0
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/ico/0.5.0
+Source: https://crates.io/crates/ico/0.6.0
 Repository: https://github.com/mdsteele/rust-ico
 Authors: Matthew D. Steele <mdsteele@alum.mit.edu>
 Copyright (c) 2018 Matthew D. Steele
@@ -2736,10 +2714,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-infer 0.19.0
+infer 0.22.0
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/infer/0.19.0
+Source: https://crates.io/crates/infer/0.22.0
 Repository: https://github.com/bojand/infer
 Authors: Bojan <dbojan@gmail.com>
 Copyright (c) 2019 Bojan
@@ -2935,10 +2913,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-json-patch 3.0.1
+json-patch 4.2.0
 From: crates.io
 License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/json-patch/3.0.1
+Source: https://crates.io/crates/json-patch/4.2.0
 Repository: https://github.com/idubrov/json-patch
 Authors: Ivan Dubrov <dubrov.ivan@gmail.com>
 Copyright (c) 2017 Ivan Dubrov
@@ -2946,23 +2924,23 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-jsonptr 0.6.3
+jsonptr 0.7.1
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/jsonptr/0.6.3
+Source: https://crates.io/crates/jsonptr/0.7.1
 Repository: https://github.com/chanced/jsonptr
-Authors: chance dinkins, André Sá de Mello <codasm@pm.me>
+Authors: chance dinkins, André Sá de Mello <codasm@pm.me>, Oliver Wangler <oliver@wngr.de>
 Copyright 2024 Chance Dinkins
 Copyright (c) 2022 Chance Dinkins
 License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-keyboard-types 0.7.0
+keyboard-types 0.8.3
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/keyboard-types/0.7.0
-Repository: https://github.com/pyfisch/keyboard-types
+Source: https://crates.io/crates/keyboard-types/0.8.3
+Repository: https://github.com/rust-windowing/keyboard-types
 Authors: Pyfisch <pyfisch@posteo.org>
 Copyright (c) 2017 Pyfisch
 License text: MIT standard text in Part 6.
@@ -3150,10 +3128,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT), LICENSE-ZLIB (standard Zlib)
 
 -------------------------------------------------------------------------------
-markup5ever 0.38.0
+markup5ever 0.39.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/markup5ever/0.38.0
+Source: https://crates.io/crates/markup5ever/0.39.0
 Repository: https://github.com/servo/html5ever
 Authors: The html5ever Project Developers
 Copyright (c) 2014 The html5ever Project Developers
@@ -3248,10 +3226,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE (standard MIT)
 
 -------------------------------------------------------------------------------
-muda 0.19.3
+muda 0.20.0
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/muda/0.19.3
+Source: https://crates.io/crates/muda/0.20.0
 Repository: https://github.com/tauri-apps/muda
 Copyright (c) 2022-2022 Tauri Programme within The Commons Conservancy
 License text: MIT standard text in Part 6.
@@ -3264,6 +3242,17 @@ License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/ndk/0.9.0
 Repository: https://github.com/rust-mobile/ndk
 Authors: The Rust Mobile contributors
+Copyright: no copyright line in the package's license files (see Authors and Repository).
+License text: MIT standard text in Part 6.
+Package license files: none in the published package.
+
+-------------------------------------------------------------------------------
+ndk-context 0.1.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/ndk-context/0.1.1
+Repository: https://github.com/rust-windowing/android-ndk-rs
+Authors: The Rust Windowing contributors
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MIT standard text in Part 6.
 Package license files: none in the published package.
@@ -3824,17 +3813,6 @@ Authors: Ed Barnard <eabarnard@gmail.com>
 Copyright (c) 2015 Edward Barnard
 License text: MIT standard text in Part 6.
 Package license files: LICENCE (standard MIT)
-
--------------------------------------------------------------------------------
-png 0.17.16
-From: crates.io
-License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/png/0.17.16
-Repository: https://github.com/image-rs/image-png
-Authors: The image-rs Developers
-Copyright (c) 2015 nwin
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 png 0.18.1
@@ -4575,10 +4553,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-selectors 0.36.1
+selectors 0.38.0
 From: crates.io
 License: MPL-2.0
-Source: https://crates.io/crates/selectors/0.36.1
+Source: https://crates.io/crates/selectors/0.38.0
 Repository: https://github.com/servo/stylo
 Authors: The Servo Project Developers
 Copyright: no copyright line in the package's license files (see Authors and Repository).
@@ -5024,6 +5002,16 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
+static_vcruntime 3.0.0
+From: crates.io
+License: MIT OR Apache-2.0 OR Zlib (used under MIT)
+Source: https://crates.io/crates/static_vcruntime/3.0.0
+Repository: https://github.com/ChrisDenton/static_vcruntime
+Copyright (c) 2021 Chris Denton.
+License text: MIT standard text in Part 6.
+Package license files: LICENSE (verbatim in Part 5 as [T37]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (verbatim in Part 5 as [T38]), LICENSE-ZLIB (standard Zlib)
+
+-------------------------------------------------------------------------------
 string_cache 0.9.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
@@ -5082,10 +5070,10 @@ License text: BSD-3-Clause standard text in Part 6.
 Package license files: LICENSE (standard BSD-3-Clause)
 
 -------------------------------------------------------------------------------
-swift-rs 1.0.8
+swift-rs 1.0.9
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/swift-rs/1.0.8
+Source: https://crates.io/crates/swift-rs/1.0.9
 Repository: https://github.com/Brendonovich/swift-rs
 Authors: The swift-rs contributors
 Copyright 2023 The swift-rs developers
@@ -5160,10 +5148,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tao 0.35.3
+tao 0.37.2
 From: crates.io
 License: Apache-2.0
-Source: https://crates.io/crates/tao/0.35.3
+Source: https://crates.io/crates/tao/0.37.2
 Repository: https://github.com/tauri-apps/tao
 Authors: Tauri Programme within The Commons Conservancy, The winit contributors
 Copyright: no copyright line in the package's license files (see Authors and Repository).
@@ -5193,48 +5181,48 @@ License text: Apache-2.0 WITH LLVM-exception standard text in Part 6.
 Package license files: LICENSE (standard Apache-2.0 WITH LLVM-exception)
 
 -------------------------------------------------------------------------------
-tauri 2.11.5
+tauri 2.12.3
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri/2.11.5
+Source: https://crates.io/crates/tauri/2.12.3
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-build 2.6.3
+tauri-build 2.7.4
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-build/2.6.3
+Source: https://crates.io/crates/tauri-build/2.7.4
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-codegen 2.6.3
+tauri-codegen 2.7.4
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-codegen/2.6.3
+Source: https://crates.io/crates/tauri-codegen/2.7.4
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-macros 2.6.3
+tauri-macros 2.7.4
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-macros/2.6.3
+Source: https://crates.io/crates/tauri-macros/2.7.4
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 tauri-plugin 2.6.3
@@ -5325,37 +5313,37 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-runtime 2.11.3
+tauri-runtime 2.12.2
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-runtime/2.11.3
+Source: https://crates.io/crates/tauri-runtime/2.12.2
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-runtime-wry 2.11.4
+tauri-runtime-wry 2.12.3
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-runtime-wry/2.11.4
+Source: https://crates.io/crates/tauri-runtime-wry/2.12.3
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-tauri-utils 2.9.3
+tauri-utils 2.10.2
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/tauri-utils/2.9.3
+Source: https://crates.io/crates/tauri-utils/2.10.2
 Repository: https://github.com/tauri-apps/tauri
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2017 - Present Tauri Apps Contributors
 License text: MIT standard text in Part 6.
-Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 tauri-winres 0.3.6
@@ -5559,16 +5547,6 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-toml 0.9.12+spec-1.1.0
-From: crates.io
-License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/toml/0.9.12+spec-1.1.0
-Repository: https://github.com/toml-rs/toml
-Copyright (c) Individual contributors
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
-
--------------------------------------------------------------------------------
 toml 1.1.5+spec-1.1.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
@@ -5586,16 +5564,6 @@ Source: https://crates.io/crates/toml_datetime/0.6.3
 Repository: https://github.com/toml-rs/toml
 Authors: Alex Crichton <alex@alexcrichton.com>
 Copyright (c) 2014 Alex Crichton
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
-
--------------------------------------------------------------------------------
-toml_datetime 0.7.5+spec-1.1.0
-From: crates.io
-License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/toml_datetime/0.7.5+spec-1.1.0
-Repository: https://github.com/toml-rs/toml
-Copyright (c) Individual contributors
 License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
@@ -5739,10 +5707,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE (standard MIT)
 
 -------------------------------------------------------------------------------
-tray-icon 0.24.2
+tray-icon 0.25.1
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/tray-icon/0.24.2
+Source: https://crates.io/crates/tray-icon/0.25.1
 Repository: https://github.com/tauri-apps/tray-icon
 Copyright (c) 2022-2022 Tauri Programme within The Commons Conservancy
 License text: MIT standard text in Part 6.
@@ -5802,7 +5770,7 @@ Repository: https://github.com/paholg/typenum
 Copyright 2014 Paho Lurie-Gregg
 Copyright (c) 2014 Paho Lurie-Gregg
 License text: MIT standard text in Part 6.
-Package license files: LICENSE (verbatim in Part 5 as [T37]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: LICENSE (verbatim in Part 5 as [T39]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 uds_windows 1.2.1
@@ -5826,61 +5794,6 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-unic-char-property 0.9.0
-From: crates.io
-License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/unic-char-property/0.9.0
-Repository: https://github.com/open-i18n/rust-unic/
-Authors: The UNIC Project Developers
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: none in the published package.
-
--------------------------------------------------------------------------------
-unic-char-range 0.9.0
-From: crates.io
-License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/unic-char-range/0.9.0
-Repository: https://github.com/open-i18n/rust-unic/
-Authors: The UNIC Project Developers
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: none in the published package.
-
--------------------------------------------------------------------------------
-unic-common 0.9.0
-From: crates.io
-License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/unic-common/0.9.0
-Repository: https://github.com/open-i18n/rust-unic/
-Authors: The UNIC Project Developers
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: none in the published package.
-
--------------------------------------------------------------------------------
-unic-ucd-ident 0.9.0
-From: crates.io
-License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/unic-ucd-ident/0.9.0
-Repository: https://github.com/open-i18n/rust-unic/
-Authors: The UNIC Project Developers
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: none in the published package.
-
--------------------------------------------------------------------------------
-unic-ucd-version 0.9.0
-From: crates.io
-License: MIT/Apache-2.0 (used under MIT)
-Source: https://crates.io/crates/unic-ucd-version/0.9.0
-Repository: https://github.com/open-i18n/rust-unic/
-Authors: The UNIC Project Developers
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: none in the published package.
-
--------------------------------------------------------------------------------
 unicode-bidi 0.3.18
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
@@ -5889,7 +5802,7 @@ Repository: https://github.com/servo/unicode-bidi
 Authors: The Servo Project Developers
 Copyright (c) 2015 The Rust Project Developers
 License text: MIT standard text in Part 6.
-Package license files: AUTHORS (verbatim in Part 5 as [T38]), COPYRIGHT (verbatim in Part 5 as [T39]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: AUTHORS (verbatim in Part 5 as [T40]), COPYRIGHT (verbatim in Part 5 as [T41]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 unicode-ident 1.0.24
@@ -5911,7 +5824,7 @@ Repository: https://github.com/unicode-rs/unicode-normalization
 Authors: kwantam <kwantam@gmail.com>, Manish Goregaokar <manishsmail@gmail.com>
 Copyright (c) 2015 The Rust Project Developers
 License text: MIT standard text in Part 6.
-Package license files: COPYRIGHT (verbatim in Part 5 as [T40]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: COPYRIGHT (verbatim in Part 5 as [T42]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 unicode-properties 0.1.4
@@ -5922,7 +5835,7 @@ Repository: https://github.com/unicode-rs/unicode-properties
 Authors: Charles Lew <crlf0710@gmail.com>, Manish Goregaokar <manishsmail@gmail.com>
 Copyright (c) 2015 The Rust Project Developers
 License text: MIT standard text in Part 6.
-Package license files: COPYRIGHT (verbatim in Part 5 as [T40]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: COPYRIGHT (verbatim in Part 5 as [T42]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 unicode-segmentation 1.13.3
@@ -5933,7 +5846,7 @@ Repository: https://github.com/unicode-rs/unicode-segmentation
 Authors: kwantam <kwantam@gmail.com>, Manish Goregaokar <manishsmail@gmail.com>
 Copyright (c) 2015 The Rust Project Developers
 License text: MIT standard text in Part 6.
-Package license files: COPYRIGHT (verbatim in Part 5 as [T40]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: COPYRIGHT (verbatim in Part 5 as [T42]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 untrusted 0.9.0
@@ -5944,7 +5857,7 @@ Repository: https://github.com/briansmith/untrusted
 Authors: Brian Smith <brian@briansmith.org>
 Copyright: see the package's license files reproduced in Part 5.
 License text: ISC standard text in Part 6.
-Package license files: LICENSE.txt (verbatim in Part 5 as [T41])
+Package license files: LICENSE.txt (verbatim in Part 5 as [T43])
 
 -------------------------------------------------------------------------------
 url 2.5.8
@@ -5958,10 +5871,10 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-urlpattern 0.3.0
+urlpattern 0.6.0
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/urlpattern/0.3.0
+Source: https://crates.io/crates/urlpattern/0.6.0
 Repository: https://github.com/denoland/rust-urlpattern
 Authors: the Deno authors, crowlKats <crowlkats@toaxl.com>
 Copyright (c) 2021 the Deno authors
@@ -5977,7 +5890,7 @@ Repository: https://github.com/hsivonen/utf8_iter
 Authors: Henri Sivonen <hsivonen@hsivonen.fi>
 Copyright Mozilla Foundation
 License text: MIT standard text in Part 6.
-Package license files: COPYRIGHT (verbatim in Part 5 as [T42]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+Package license files: COPYRIGHT (verbatim in Part 5 as [T44]), LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 uuid 1.26.0
@@ -6231,10 +6144,10 @@ License text: CDLA-Permissive-2.0 standard text in Part 6.
 Package license files: LICENSE (standard CDLA-Permissive-2.0)
 
 -------------------------------------------------------------------------------
-webview2-com 0.38.2
+webview2-com 0.39.1
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/webview2-com/0.38.2
+Source: https://crates.io/crates/webview2-com/0.39.1
 Repository: https://github.com/wravery/webview2-rs
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MIT standard text in Part 6.
@@ -6251,10 +6164,10 @@ License text: MIT standard text in Part 6.
 Package license files: none in the published package.
 
 -------------------------------------------------------------------------------
-webview2-com-sys 0.38.2
+webview2-com-sys 0.39.1
 From: crates.io
 License: MIT
-Source: https://crates.io/crates/webview2-com-sys/0.38.2
+Source: https://crates.io/crates/webview2-com-sys/0.39.1
 Repository: https://github.com/wravery/webview2-rs
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MIT standard text in Part 6.
@@ -6326,10 +6239,10 @@ License text: MIT standard text in Part 6.
 Package license files: none in the published package.
 
 -------------------------------------------------------------------------------
-window-vibrancy 0.6.0
+window-vibrancy 0.8.1
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/window-vibrancy/0.6.0
+Source: https://crates.io/crates/window-vibrancy/0.8.1
 Repository: https://github.com/tauri-apps/tauri-plugin-vibrancy
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2020-2022 Tauri Programme within The Commons Conservancy
@@ -6348,10 +6261,30 @@ License text: MIT standard text in Part 6.
 Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
 
 -------------------------------------------------------------------------------
+windows 0.62.2
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/windows/0.62.2
+Repository: https://github.com/microsoft/windows-rs
+Copyright (c) Microsoft Corporation.
+License text: MIT standard text in Part 6.
+Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
+
+-------------------------------------------------------------------------------
 windows-collections 0.2.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/windows-collections/0.2.0
+Repository: https://github.com/microsoft/windows-rs
+Copyright (c) Microsoft Corporation.
+License text: MIT standard text in Part 6.
+Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
+
+-------------------------------------------------------------------------------
+windows-collections 0.3.2
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/windows-collections/0.3.2
 Repository: https://github.com/microsoft/windows-rs
 Copyright (c) Microsoft Corporation.
 License text: MIT standard text in Part 6.
@@ -6383,6 +6316,16 @@ windows-future 0.2.1
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/windows-future/0.2.1
+Repository: https://github.com/microsoft/windows-rs
+Copyright (c) Microsoft Corporation.
+License text: MIT standard text in Part 6.
+Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
+
+-------------------------------------------------------------------------------
+windows-future 0.3.2
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/windows-future/0.3.2
 Repository: https://github.com/microsoft/windows-rs
 Copyright (c) Microsoft Corporation.
 License text: MIT standard text in Part 6.
@@ -6434,6 +6377,16 @@ windows-numerics 0.2.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/windows-numerics/0.2.0
+Repository: https://github.com/microsoft/windows-rs
+Copyright (c) Microsoft Corporation.
+License text: MIT standard text in Part 6.
+Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
+
+-------------------------------------------------------------------------------
+windows-numerics 0.3.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/windows-numerics/0.3.1
 Repository: https://github.com/microsoft/windows-rs
 Copyright (c) Microsoft Corporation.
 License text: MIT standard text in Part 6.
@@ -6596,6 +6549,16 @@ License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/windows-threading/0.1.0
 Repository: https://github.com/microsoft/windows-rs
 Authors: Microsoft
+Copyright (c) Microsoft Corporation.
+License text: MIT standard text in Part 6.
+Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
+
+-------------------------------------------------------------------------------
+windows-threading 0.2.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/windows-threading/0.2.1
+Repository: https://github.com/microsoft/windows-rs
 Copyright (c) Microsoft Corporation.
 License text: MIT standard text in Part 6.
 Package license files: license-apache-2.0 (standard Apache-2.0), license-mit (standard MIT)
@@ -6943,16 +6906,6 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
-winnow 0.7.15
-From: crates.io
-License: MIT
-Source: https://crates.io/crates/winnow/0.7.15
-Repository: https://github.com/winnow-rs/winnow
-Copyright: no copyright line in the package's license files (see Authors and Repository).
-License text: MIT standard text in Part 6.
-Package license files: LICENSE-MIT (standard MIT)
-
--------------------------------------------------------------------------------
 winnow 1.0.4
 From: crates.io
 License: MIT
@@ -6996,10 +6949,10 @@ License text: Unicode-3.0 standard text in Part 6.
 Package license files: LICENSE (verbatim in Part 5 as [T22])
 
 -------------------------------------------------------------------------------
-wry 0.55.1
+wry 0.57.1
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
-Source: https://crates.io/crates/wry/0.55.1
+Source: https://crates.io/crates/wry/0.57.1
 Repository: https://github.com/tauri-apps/wry
 Authors: Tauri Programme within The Commons Conservancy
 Copyright (c) 2020-2023 Ngo Iok Ui & Tauri Programme within The Commons Conservancy
@@ -7103,7 +7056,7 @@ Repository: https://github.com/google/zerocopy
 Copyright 2023 The Fuchsia Authors
 Copyright 2019 The Fuchsia Authors.
 License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-BSD (verbatim in Part 5 as [T43]), LICENSE-MIT (standard MIT)
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-BSD (verbatim in Part 5 as [T45]), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 zerocopy-derive 0.8.56
@@ -7114,7 +7067,7 @@ Repository: https://github.com/google/zerocopy
 Copyright 2023 The Fuchsia Authors
 Copyright 2019 The Fuchsia Authors.
 License text: MIT standard text in Part 6.
-Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-BSD (verbatim in Part 5 as [T43]), LICENSE-MIT (standard MIT)
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-BSD (verbatim in Part 5 as [T45]), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 zerofrom 0.1.8
@@ -7264,11 +7217,11 @@ PART 4  MPL-2.0 COMPONENTS: SOURCE CODE
 These crates are covered by the Mozilla Public License 2.0 and are used unmodified. Their
 Source Code Form is available from the locations below; the license text is in Part 6.
 
-cssparser 0.36.0
-  Source archive: https://static.crates.io/crates/cssparser/cssparser-0.36.0.crate
+cssparser 0.37.0
+  Source archive: https://static.crates.io/crates/cssparser/cssparser-0.37.0.crate
   Repository: https://github.com/servo/rust-cssparser
-cssparser-macros 0.6.1
-  Source archive: https://static.crates.io/crates/cssparser-macros/cssparser-macros-0.6.1.crate
+cssparser-macros 0.7.1
+  Source archive: https://static.crates.io/crates/cssparser-macros/cssparser-macros-0.7.1.crate
   Repository: https://github.com/servo/rust-cssparser
 dtoa-short 0.3.5
   Source archive: https://static.crates.io/crates/dtoa-short/dtoa-short-0.3.5.crate
@@ -7276,8 +7229,8 @@ dtoa-short 0.3.5
 option-ext 0.2.0
   Source archive: https://static.crates.io/crates/option-ext/option-ext-0.2.0.crate
   Repository: https://github.com/soc/option-ext.git
-selectors 0.36.1
-  Source archive: https://static.crates.io/crates/selectors/selectors-0.36.1.crate
+selectors 0.38.0
+  Source archive: https://static.crates.io/crates/selectors/selectors-0.38.0.crate
   Repository: https://github.com/servo/stylo
 
 
@@ -7485,7 +7438,7 @@ The above copyright notice and this permission notice (including the next paragr
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -------------------------------------------------------------------------------
-[T9] used by: cargo_toml 0.22.3 (LICENSE)
+[T9] used by: cargo_toml 1.0.1 (LICENSE)
 -------------------------------------------------------------------------------
 
 © Kornel Lesiński
@@ -9002,7 +8955,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 -------------------------------------------------------------------------------
-[T15] used by: dirs 6.0.0 (LICENSE-APACHE), dirs-sys 0.5.0 (LICENSE-APACHE)
+[T15] used by: dirs 7.0.0 (LICENSE-APACHE), dirs-sys 0.5.0 (LICENSE-APACHE)
 -------------------------------------------------------------------------------
 
                               Apache License
@@ -9181,7 +9134,7 @@ TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
    of your accepting any such warranty or additional liability.
 
 -------------------------------------------------------------------------------
-[T16] used by: dom_query 0.27.0 (LICENSE)
+[T16] used by: dom_query 0.28.0 (LICENSE)
 -------------------------------------------------------------------------------
 
 MIT License
@@ -10430,13 +10383,33 @@ http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
 option.
 
 -------------------------------------------------------------------------------
-[T37] used by: typenum 1.20.1 (LICENSE)
+[T37] used by: static_vcruntime 3.0.0 (LICENSE)
+-------------------------------------------------------------------------------
+
+MIT OR Apache-2.0 OR Zlib
+
+-------------------------------------------------------------------------------
+[T38] used by: static_vcruntime 3.0.0 (LICENSE-MIT)
+-------------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2021 Chris Denton.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice (including the next paragraph) shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+[T39] used by: typenum 1.20.1 (LICENSE)
 -------------------------------------------------------------------------------
 
 MIT OR Apache-2.0
 
 -------------------------------------------------------------------------------
-[T38] used by: unicode-bidi 0.3.18 (AUTHORS)
+[T40] used by: unicode-bidi 0.3.18 (AUTHORS)
 -------------------------------------------------------------------------------
 
 This software was written by the following people:
@@ -10445,7 +10418,7 @@ Matt Brubeck <mbrubeck@limpet.net>
 Behnam Esfahbod <behnam@zwnj.org>
 
 -------------------------------------------------------------------------------
-[T39] used by: unicode-bidi 0.3.18 (COPYRIGHT)
+[T41] used by: unicode-bidi 0.3.18 (COPYRIGHT)
 -------------------------------------------------------------------------------
 
 This project is copyright 2015, The Servo Project Developers (given in the
@@ -10458,7 +10431,7 @@ carrying such notice may not be copied, modified, or distributed except
 according to those terms.
 
 -------------------------------------------------------------------------------
-[T40] used by: unicode-normalization 0.1.25 (COPYRIGHT), unicode-properties 0.1.4 (COPYRIGHT), unicode-segmentation 1.13.3 (COPYRIGHT)
+[T42] used by: unicode-normalization 0.1.25 (COPYRIGHT), unicode-properties 0.1.4 (COPYRIGHT), unicode-segmentation 1.13.3 (COPYRIGHT)
 -------------------------------------------------------------------------------
 
 Licensed under the Apache License, Version 2.0
@@ -10470,7 +10443,7 @@ notice may not be copied, modified, or distributed except
 according to those terms.
 
 -------------------------------------------------------------------------------
-[T41] used by: untrusted 0.9.0 (LICENSE.txt)
+[T43] used by: untrusted 0.9.0 (LICENSE.txt)
 -------------------------------------------------------------------------------
 
 // Copyright 2015-2016 Brian Smith.
@@ -10488,7 +10461,7 @@ according to those terms.
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 -------------------------------------------------------------------------------
-[T42] used by: utf8_iter 1.0.4 (COPYRIGHT)
+[T44] used by: utf8_iter 1.0.4 (COPYRIGHT)
 -------------------------------------------------------------------------------
 
 Copyright Mozilla Foundation
@@ -10535,7 +10508,7 @@ licensed under the Apache License, Version 2.0 <LICENSE-APACHE> or
 <LICENSE-MIT> or <http://opensource.org/licenses/MIT>, at your option.
 
 -------------------------------------------------------------------------------
-[T43] used by: zerocopy 0.8.56 (LICENSE-BSD), zerocopy-derive 0.8.56 (LICENSE-BSD)
+[T45] used by: zerocopy 0.8.56 (LICENSE-BSD), zerocopy-derive 0.8.56 (LICENSE-BSD)
 -------------------------------------------------------------------------------
 
 Copyright 2019 The Fuchsia Authors.
