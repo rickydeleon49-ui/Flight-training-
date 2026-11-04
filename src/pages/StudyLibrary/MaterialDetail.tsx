@@ -973,7 +973,7 @@ function MaterialDetailPage() {
             {deviceCan().generate && isPdf && material.filePath ? <Button ref={askPdfButton} variant="primary" onClick={() => setAskingPdf(true)}>Ask about this PDF</Button> : null}
             <MaterialActionsMenu>
               <Button onClick={() => setEditing(true)}>Edit</Button>
-              {deviceCan().importFiles && canSplit ? <>
+              {deviceCan().splitFiles && canSplit ? <>
                 <Button onClick={() => setSplitting(true)}>Split automatically</Button>
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
@@ -1025,7 +1025,7 @@ function MaterialDetailPage() {
           {isPdf && material.filePath && !fileMissing ? <ScannedPdfNote filePath={material.filePath} /> : null}
           {fileMissing ? <div className="card stack stack--3" role="status">
             <p>This study file is missing. Everything you wrote is still here.</p>
-            {deviceCan().importFiles ? <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button> : null}
+            {deviceCan().splitFiles ? <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button> : null}
           </div> : null}
           {!material.filePath && !studySet ? <Card><CardBody>
             <p className="small muted">Write a study guide in your own words.</p>
@@ -1065,7 +1065,7 @@ function MaterialDetailPage() {
                           Share or print
                         </Button>
                       ) : null}
-                      {deviceCan().importFiles && isOverLimit ? (
+                      {deviceCan().splitFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1299,7 +1299,7 @@ function MaterialDetailPage() {
                           Add a picture card
                         </Button>
                       ) : null}
-                      {deviceCan().importFiles && isOverLimit ? (
+                      {deviceCan().splitFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1543,7 +1543,7 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap">
-                      {deviceCan().importFiles && isOverLimit ? (
+                      {deviceCan().splitFiles && isOverLimit ? (
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
@@ -1921,7 +1921,7 @@ function MaterialDetailPage() {
                     {!canHandleFiles() ? <p className="tiny muted">Split and open options: Works in the desktop app.</p> : null}
                   </div>
                 </div>
-                {deviceCan().importFiles && fileMissing ? (
+                {deviceCan().splitFiles && fileMissing ? (
                   <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
                     <p className="tiny muted">
                       Everything you wrote is still here. Choose the original or a replacement

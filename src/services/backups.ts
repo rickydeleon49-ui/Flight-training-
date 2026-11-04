@@ -226,16 +226,17 @@ export interface UnsavedPhoneWork {
   tests: number;
   bookmarks: number;
   readingPositions: number;
+  materials: number;
   since: string | null;
 }
 
 export async function unsavedPhoneWork(): Promise<UnsavedPhoneWork> {
-  if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, since: null };
+  if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, since: null };
   return invoke<UnsavedPhoneWork>("unsaved_phone_work");
 }
 
-export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">): number {
-  return work.reviews + work.tests + work.bookmarks + work.readingPositions;
+export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials">): number {
+  return work.reviews + work.tests + work.bookmarks + work.readingPositions + work.materials;
 }
 
 export interface SavedPhoneWork {
@@ -257,7 +258,7 @@ export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName" | 
 
 /** "12 card reviews and 1 practice test", or null when nothing is unsaved. */
 export function unsavedPhoneWorkCounts(
-  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">,
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials">,
 ): string | null {
   const part = (n: number, one: string, many: string) => (n === 0 ? null : n === 1 ? `1 ${one}` : `${n} ${many}`);
   const parts = [
@@ -265,6 +266,7 @@ export function unsavedPhoneWorkCounts(
     part(work.tests, "practice test", "practice tests"),
     part(work.bookmarks, "bookmark", "bookmarks"),
     part(work.readingPositions, "reading position", "reading positions"),
+    part(work.materials, "study material", "study materials"),
   ].filter((p): p is string => p !== null);
   if (parts.length === 0) return null;
   return parts.length === 1 ? parts[0]!
@@ -274,7 +276,7 @@ export function unsavedPhoneWorkCounts(
 
 /** Mirrors the sentence the app itself refuses with (src-tauri/src/phone_work.rs). */
 export function unsavedPhoneWorkSentence(
-  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">,
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions" | "materials">,
 ): string | null {
   const list = unsavedPhoneWorkCounts(work);
   if (list === null) return null;

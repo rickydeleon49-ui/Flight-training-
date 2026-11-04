@@ -412,20 +412,7 @@ fn sanitize_file_name(name: &str) -> String {
     }
 }
 
-/// Where a new stored document goes, and the name it will be kept under.
-///
-/// `material_id` namespaces the stored file so two documents with the same
-/// name cannot collide. Anything that writes into the library goes through
-/// here, so the naming rules live in one place.
-pub(crate) fn stored_destination(
-    app: &AppHandle,
-    material_id: &str,
-    file_name: &str,
-) -> Result<(PathBuf, String), String> {
-    stored_destination_in(&documents_root(app)?, material_id, file_name)
-}
-
-/// `stored_destination` against an explicit documents directory.
+/// Reserve a stored name inside an explicit documents directory.
 pub(crate) fn stored_destination_in(
     documents_dir: &Path,
     material_id: &str,
@@ -478,12 +465,48 @@ pub async fn import_document(
     .map_err(|error| format!("Could not finish importing that file: {error}"))?
 }
 
+/// Phone limits: a PDF the phone cannot yet split must be refused before it is copied.
+#[derive(Clone, Copy)]
+pub(crate) struct PhoneLimits {
+    pub max_bytes: u64,
+    pub max_pages: u32,
+}
+
+const PHONE_LIMITS: PhoneLimits = PhoneLimits {
+    max_bytes: crate::pdf::MAX_PDF_BYTES,
+    max_pages: crate::pdf::MAX_PAGES,
+};
+
+const INCOMING_DIR: &str = ".incoming";
+
 fn import_document_from_path(
     app: &AppHandle,
     source_path: &str,
     material_id: &str,
     pdf_only: bool,
 ) -> Result<ImportedDocument, String> {
+    let phone = cfg!(target_os = "ios");
+    import_document_in(
+        &documents_root(app)?,
+        source_path,
+        material_id,
+        pdf_only || phone,
+        phone,
+        PHONE_LIMITS,
+    )
+}
+
+pub(crate) fn import_document_in(
+    documents_dir: &Path,
+    source_path: &str,
+    material_id: &str,
+    pdf_only: bool,
+    phone: bool,
+    limits: PhoneLimits,
+) -> Result<ImportedDocument, String> {
+    if phone {
+        return import_on_phone(documents_dir, source_path, material_id, limits);
+    }
     let source = PathBuf::from(&source_path);
 
     let metadata =
@@ -498,7 +521,8 @@ fn import_document_from_path(
         .unwrap_or("document")
         .to_string();
 
-    let (destination, stored_name) = stored_destination(app, material_id, &original_file_name)?;
+    let (destination, stored_name) =
+        stored_destination_in(documents_dir, material_id, &original_file_name)?;
 
     let copied = match std::fs::copy(&source, &destination) {
         Ok(bytes) => bytes,
@@ -527,6 +551,90 @@ fn import_document_from_path(
         original_file_name,
         file_size: copied,
         pdf_identity,
+    })
+}
+
+fn import_on_phone(
+    documents_dir: &Path,
+    source_path: &str,
+    material_id: &str,
+    limits: PhoneLimits,
+) -> Result<ImportedDocument, String> {
+    let source = crate::backup::picked_backup_path(source_path)?;
+    let metadata = std::fs::symlink_metadata(&source).map_err(|_| "Choose a file.".to_string())?;
+    if !metadata.is_file() || crate::backup::is_symlink_or_reparse(&metadata) {
+        return Err("Choose a file.".to_string());
+    }
+    let original_file_name = source
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("document")
+        .to_string();
+    let is_pdf = source
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| e.eq_ignore_ascii_case("pdf"));
+    if !is_pdf {
+        return Err(
+            "On the phone you can add PDFs. Other files can be added on your Mac.".to_string(),
+        );
+    }
+    if metadata.len() == 0 {
+        return Err("That file is empty or hasn't finished downloading to this phone. Open it in Files once, then try again.".to_string());
+    }
+    if metadata.len() > limits.max_bytes {
+        return Err(
+            "That PDF is bigger than 50 MB. Add it on your Mac, which can split it into parts."
+                .to_string(),
+        );
+    }
+    std::fs::create_dir_all(documents_dir)
+        .map_err(|e| format!("Could not create the documents folder: {e}"))?;
+    let incoming = documents_dir.join(INCOMING_DIR);
+    std::fs::create_dir_all(&incoming)
+        .map_err(|e| format!("Could not prepare the library: {e}"))?;
+
+    let (destination, stored_name) =
+        stored_destination_in(documents_dir, material_id, &original_file_name)?;
+    let temp = incoming.join(format!("{stored_name}.tmp"));
+    let cleanup = |temp: &Path, destination: &Path| {
+        let _ = std::fs::remove_file(temp);
+        let _ = std::fs::remove_file(destination);
+    };
+
+    let copied = match std::fs::copy(&source, &temp) {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            cleanup(&temp, &destination);
+            return Err(format!(
+                "Could not copy that file into the library: {error}"
+            ));
+        }
+    };
+    let identity = match imported_pdf_identity(&temp) {
+        Ok(identity) => identity,
+        Err(error) => {
+            cleanup(&temp, &destination);
+            return Err(error);
+        }
+    };
+    if identity.total_pages > i64::from(limits.max_pages) {
+        cleanup(&temp, &destination);
+        return Err("That PDF has more than 1 000 pages. Add it on your Mac, which can split it into parts.".to_string());
+    }
+    // The destination is only a reserved empty placeholder; the rename swaps
+    // the finished file in so it never exists half-written.
+    if let Err(error) = std::fs::rename(&temp, &destination) {
+        cleanup(&temp, &destination);
+        return Err(format!(
+            "Could not copy that file into the library: {error}"
+        ));
+    }
+    Ok(ImportedDocument {
+        relative_path: stored_name,
+        original_file_name,
+        file_size: copied,
+        pdf_identity: Some(identity),
     })
 }
 
@@ -2202,6 +2310,16 @@ fn handle_update_material(
 #[cfg(test)]
 #[path = "documents_save_tests.rs"]
 mod save_tests;
+
+#[cfg(test)]
+#[path = "documents_import_tests.rs"]
+mod import_tests;
+
+/// Test helper for other modules: write a small blank-page PDF.
+#[cfg(test)]
+pub(crate) fn import_tests_write_pdf(path: &Path, pages: u32) {
+    import_tests::write_pdf(path, pages);
+}
 
 #[cfg(test)]
 mod tests {

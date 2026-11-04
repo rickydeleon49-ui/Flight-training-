@@ -326,12 +326,12 @@ it("keeps the file of an FAA copy or picture-card picture fixed while metadata s
   }
 });
 
-it("keeps material editing available without a file picker on the phone", async () => {
+it("offers the PDF picker on the phone, with no desktop-application wording", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     render(h(MaterialFormDialog, { open: true, goals: [], events: [], newMaterialId: "phone", onClose: vi.fn(), onSave: vi.fn() }));
-    expect(screen.queryByRole("button", { name: "Choose a file" })).toBeNull();
-    expect(files.pick).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Choose a file" })).toBeTruthy();
+    expect(screen.queryByText(/desktop application/)).toBeNull();
   } finally { spy.mockRestore(); }
 });

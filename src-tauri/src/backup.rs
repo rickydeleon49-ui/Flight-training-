@@ -5561,14 +5561,14 @@ pub(crate) enum RestorePhase {
 }
 
 #[cfg(windows)]
-fn is_symlink_or_reparse(meta: &std::fs::Metadata) -> bool {
+pub(crate) fn is_symlink_or_reparse(meta: &std::fs::Metadata) -> bool {
     use std::os::windows::fs::MetadataExt;
     const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
     meta.file_type().is_symlink() || (meta.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT) != 0
 }
 
 #[cfg(not(windows))]
-fn is_symlink_or_reparse(meta: &std::fs::Metadata) -> bool {
+pub(crate) fn is_symlink_or_reparse(meta: &std::fs::Metadata) -> bool {
     meta.file_type().is_symlink()
 }
 
@@ -9375,7 +9375,7 @@ mod tests {
         connection
             .execute_batch(
                 "CREATE TABLE settings (id TEXT PRIMARY KEY);
-                 CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT);
+                 CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT, created_at TEXT);
                  CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
                  CREATE TABLE audit_payload (value TEXT NOT NULL);
                  INSERT INTO _sqlx_migrations(version) VALUES (9);",

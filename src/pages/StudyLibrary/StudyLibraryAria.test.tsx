@@ -96,15 +96,15 @@ it("follows later URL navigation and browser back without local selection drift"
   selected(0);
 });
 
-it("hides library and FAA import entries on the phone", async () => {
+it("on the phone offers Add material but no packet import or splitting", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     open();
-    expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Import study packet/ })).toBeNull();
-    expect(screen.queryAllByRole("button", { name: /Add PDF|Get from faa.gov|Get full handbook/ })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Make study-size parts|Split/ })).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Picture card from a photo" })).toBeTruthy();
     // No empty "More" menu (it showed as a blank bar over the photo button).
     expect(screen.queryByText("More")).toBeNull();
@@ -116,7 +116,7 @@ it("hides library and FAA import entries on the phone", async () => {
 
 it("does not offer a picture card from a photo on the Mac", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, geminiKey: true, generate: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, savePhoneWork: false, pictureFromPhoto: false, renderPdfPage: true });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: true, geminiKey: true, generate: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, savePhoneWork: false, pictureFromPhoto: false, renderPdfPage: true });
   try {
     open();
     expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();

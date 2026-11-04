@@ -269,7 +269,7 @@ function HandbookDownload({ onAddPdf, book }: { onAddPdf?: () => void; book?: ke
         <p className="small wrap-anywhere">{record.edition} · {one ? one.published : record.documentId === "afh-addendum-mosaic" ? "October 2025" : "2021"} · from www.faa.gov on {record.downloadedAt.slice(0, 10)} · SHA-256 {record.contentSha256}</p>
         <SavedReference material={material} downloaded reference={{ title: one ? one.title : "Airplane Flying Handbook", edition: record.edition }}
           note={{ edition: record.edition, contentSha256: record.contentSha256 }} />
-        {deviceCan().importFiles && phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
+        {deviceCan().splitFiles && phak && desktop ? data.materials.some((part) => part.lineage?.rootMaterialId === material.id || part.lineage?.parentMaterialId === material.id)
           ? <Button disabled>Study-size parts made</Button>
           : <Button onClick={() => setSplitting(material)}>Make study-size parts</Button> : null}
         {!one ? <CurrentAfhLink /> : null}

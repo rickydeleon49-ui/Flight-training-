@@ -308,10 +308,10 @@ export function StudyLibrary() {
         action={
           <div className="row row--wrap">
             <Link to="/study/homework" className="button button--secondary">Homework</Link>
-            {deviceCan().importFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
+            {deviceCan().splitFiles || deviceCan().sharePrint ? <details ref={moreMenu} className="library__actions-more">
               <summary className="button button--secondary">More</summary>
               <div className="library__actions-menu">
-                {deviceCan().importFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
+                {deviceCan().splitFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
                 {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
