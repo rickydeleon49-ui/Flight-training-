@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,6 +75,10 @@ test('bumpIosBuildNumber raises only the build number, skipping past a recorded 
   cpSync(path.join(root, apple, 'project.yml'), path.join(dir, apple, 'project.yml'));
   cpSync(path.join(root, apple, 'her-flight-deck_iOS/Info.plist'), path.join(dir, apple, 'her-flight-deck_iOS/Info.plist'));
   const read = (f) => readFileSync(path.join(dir, apple, f), 'utf8');
+  // Start from build 1 so the test does not depend on the repo's current build number.
+  const pin = (f, re, to) => writeFileSync(path.join(dir, apple, f), read(f).replace(re, to));
+  pin('her-flight-deck_iOS/Info.plist', /(CFBundleVersion<\/key>\s*<string>)[^<]*/, '$11');
+  pin('project.yml', /CFBundleVersion: "[^"]*"/, 'CFBundleVersion: "1"');
   const short = read('her-flight-deck_iOS/Info.plist').match(/CFBundleShortVersionString<\/key>\s*<string>([^<]*)/)[1];
   const first = bumpIosBuildNumber(dir);
   assert.equal(bumpIosBuildNumber(dir, 10), 11);

@@ -1,6 +1,6 @@
 // Pre-upload checks for a TestFlight .ipa. Pure helpers are exported for tests;
 // the CLI unpacks the ipa with system tools: node scripts/testflight-checks.mjs <ipa> <lastBuildFile> [--record]
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -63,12 +63,9 @@ function run(command, args) {
 }
 
 function runWithStderr(command, args) {
-  try {
-    const out = execFileSync(command, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-    return out;
-  } catch (err) {
-    return `${err.stdout || ""}${err.stderr || ""}`;
-  }
+  // codesign -d prints to stderr even on success, so keep both streams.
+  const r = spawnSync(command, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  return `${r.stdout || ""}${r.stderr || ""}`;
 }
 
 export function checkIpa(ipa, lastBuildFile) {

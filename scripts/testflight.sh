@@ -32,12 +32,19 @@ fi
 
 [ "$#" -eq 0 ] || { echo "Usage: $0 [--check-only [ipa] [--record]]" >&2; exit 2; }
 
+# The iOS build needs rustup's cargo (it has the aarch64-apple-ios std); a plain
+# Homebrew rust earlier on PATH has no iOS target. Tauri's Xcode step reuses this PATH.
+for d in "$HOME/.cargo/bin" /opt/homebrew/opt/rustup/bin; do
+  if [ -x "$d/cargo" ] && [ -d "$HOME/.rustup" ]; then export PATH="$d:$PATH"; break; fi
+done
+
 LAST=0
 [ -f "$LAST_FILE" ] && LAST="$(tr -dc '0-9' < "$LAST_FILE")"
 BUILD="$(node scripts/bump-version.mjs --build "${LAST:-0}")"
 echo "Build number is now $BUILD"
 
-npm run tauri ios build -- --export-method app-store-connect
+# Tauri rewrites CFBundleVersion from tauri.conf (the app version) unless bundle.iOS.bundleVersion is set.
+npm run tauri ios build -- --export-method app-store-connect --config "{\"bundle\":{\"iOS\":{\"bundleVersion\":\"$BUILD\"}}}"
 
 IPA="$(latest_ipa)"
 [ -n "$IPA" ] || { echo "Build finished but no .ipa was found under $APPLE_DIR/build" >&2; exit 1; }

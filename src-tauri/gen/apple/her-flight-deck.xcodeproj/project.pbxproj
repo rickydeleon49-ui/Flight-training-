@@ -501,7 +501,7 @@
 				CODE_SIGN_ENTITLEMENTS = "her-flight-deck_iOS/her-flight-deck_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U7B45SUWS2;
+				DEVELOPMENT_TEAM = "U7B45SUWS2";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -590,7 +590,7 @@
 				CODE_SIGN_ENTITLEMENTS = "her-flight-deck_iOS/her-flight-deck_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U7B45SUWS2;
+				DEVELOPMENT_TEAM = "U7B45SUWS2";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
