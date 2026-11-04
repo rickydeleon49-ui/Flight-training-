@@ -90,7 +90,8 @@ test('fresh profile, semantic validation, unchanged second run, running refusal 
     assert.equal(JSON.parse(picture.flashcards_json).at(-1).sourcePage, 2);
     const pdf = readFileSync(path.join(target, 'documents/qa-sample-weather.pdf'), 'latin1');
     assert.match(pdf, /\/Count 3/); assert.match(pdf, /Fictional weather exercise/); assert.match(pdf, /300 60 re f/);
-    assert.equal(db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name='oral_answers'").get().n, 0);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='oral_answers'").get().n, 1);
+    assert.equal(db.prepare('SELECT count(*) AS n FROM oral_answers').get().n, 0);
     const before = contents(target);
     for (const reset of [false, true]) {
       const busy = cli(home, 'student', ...(reset ? ['--reset'] : []));
