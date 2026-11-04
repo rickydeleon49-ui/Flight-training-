@@ -170,3 +170,17 @@ describe("backup picker filters", () => {
     else expect(options.filters).toEqual([{ name: "Your Flight Deck backup", extensions: ["hfdbackup"] }]);
   });
 });
+
+describe("saved phone work sentence", () => {
+  it("is unchanged without a kept file and names the kept copy otherwise", async () => {
+    const { savedPhoneWorkSentence } = await import("./backups");
+    const base = "Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup.";
+    expect(savedPhoneWorkSentence({ fileName: "My phone work.hfdbackup" })).toBe(base);
+    expect(savedPhoneWorkSentence({ fileName: "My phone work.hfdbackup", keptFileName: null })).toBe(base);
+    const kept = savedPhoneWorkSentence({ fileName: "My phone work.hfdbackup", keptFileName: "My phone work (before 4 Nov 2026).hfdbackup" });
+    expect(kept).toBe(`${base} Your earlier copy is kept as My phone work (before 4 Nov 2026).hfdbackup.`);
+    for (const word of ["sync", "ledger", "baseline", "database", "archive", "manifest", "restore"]) {
+      expect(kept.toLowerCase()).not.toContain(word);
+    }
+  });
+});

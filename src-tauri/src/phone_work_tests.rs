@@ -481,3 +481,201 @@ fn plain_words() {
         assert!(!text.contains(word), "{word}");
     }
 }
+
+// ---- W-1b: keep a copy made before the last Mac restore ----
+
+fn docs_names(docs: &Path) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(docs)
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    names.sort();
+    names
+}
+
+fn restore_day() -> (String, String) {
+    let at = "2026-11-04T10:00:00.000Z".to_string();
+    (
+        at,
+        "My phone work (before 4 Nov 2026).hfdbackup".to_string(),
+    )
+}
+
+/// Save once, restore at `restored`, add a review, return (root, docs, copy A bytes).
+fn saved_then_restored(c: &Path, restored: &str) -> (PathBuf, PathBuf, Vec<u8>) {
+    let root = root_in(c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(c);
+    save_phone_work_in(&root, &docs, "0.6.7", "2026-11-03T10:00:00.000Z").unwrap();
+    let a = std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap();
+    record_baseline_in(&root, restored).unwrap();
+    exec(
+        &root,
+        "INSERT INTO card_review_events VALUES ('2026-11-05T00:00:00.000Z');",
+    );
+    (root, docs, a)
+}
+
+#[test]
+fn old_baseline_file_without_new_fields_still_reads() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-01-01T00:00:00.000Z");
+    let file = read_file(&root).unwrap();
+    assert_eq!(file.baseline_at, "2026-01-01T00:00:00.000Z");
+    assert!(file.restored_at.is_none() && file.copy_saved_at.is_none());
+    assert_eq!(
+        read_baseline(&root).as_deref(),
+        Some("2026-01-01T00:00:00.000Z")
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn restore_then_save_keeps_the_earlier_copy() {
+    let c = scratch();
+    let (at, kept) = restore_day();
+    let (root, docs, a) = saved_then_restored(&c, &at);
+    let saved = save_phone_work_in(&root, &docs, "0.6.7", "2026-11-05T01:00:00.000Z").unwrap();
+    assert_eq!(saved.kept_file_name.as_deref(), Some(kept.as_str()));
+    assert_eq!(
+        docs_names(&docs),
+        vec![kept.clone(), PHONE_WORK_ARCHIVE.to_string()]
+    );
+    assert_eq!(std::fs::read(docs.join(&kept)).unwrap(), a);
+    assert_ne!(std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap(), a);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn saving_twice_without_a_restore_replaces_in_place() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(&c);
+    save_phone_work_in(&root, &docs, "0.6.7", &sql_now("-2 minutes")).unwrap();
+    let second = save_phone_work_in(&root, &docs, "0.6.7", &sql_now("-1 minutes")).unwrap();
+    assert_eq!(docs_names(&docs), vec![PHONE_WORK_ARCHIVE.to_string()]);
+    assert!(second.kept_file_name.is_none());
+    // A save after a restore, then another save: the second keeps nothing new.
+    record_baseline_in(&root, &sql_now("+1 hour")).unwrap();
+    save_phone_work_in(&root, &docs, "0.6.7", &sql_now("+2 hours")).unwrap();
+    let again = save_phone_work_in(&root, &docs, "0.6.7", &sql_now("+3 hours")).unwrap();
+    assert!(again.kept_file_name.is_none());
+    assert_eq!(docs_names(&docs).len(), 2);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn two_restores_on_the_same_day_keep_both_copies() {
+    let c = scratch();
+    let (at, kept) = restore_day();
+    let (root, docs, a) = saved_then_restored(&c, &at);
+    save_phone_work_in(&root, &docs, "0.6.7", "2026-11-04T11:00:00.000Z").unwrap();
+    let b = std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap();
+    record_baseline_in(&root, "2026-11-04T12:00:00.000Z").unwrap();
+    let saved = save_phone_work_in(&root, &docs, "0.6.7", "2026-11-04T13:00:00.000Z").unwrap();
+    let second = "My phone work (before 4 Nov 2026) 2.hfdbackup".to_string();
+    assert_eq!(saved.kept_file_name.as_deref(), Some(second.as_str()));
+    assert_eq!(std::fs::read(docs.join(&kept)).unwrap(), a);
+    assert_eq!(std::fs::read(docs.join(&second)).unwrap(), b);
+    assert_eq!(docs_names(&docs).len(), 3);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn failed_rename_overwrites_nothing() {
+    use std::os::unix::fs::PermissionsExt;
+    let c = scratch();
+    let (at, _) = restore_day();
+    let (root, docs, a) = saved_then_restored(&c, &at);
+    let baseline_before = std::fs::read(root.join(PHONE_WORK_FILE)).unwrap();
+    std::fs::set_permissions(&docs, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let result = save_phone_work_in(&root, &docs, "0.6.7", "2026-11-05T01:00:00.000Z");
+    std::fs::set_permissions(&docs, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert_eq!(
+        result.unwrap_err(),
+        "Your earlier phone copy couldn't be kept, so nothing was replaced. Try again."
+    );
+    assert_eq!(std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap(), a);
+    assert_eq!(docs_names(&docs), vec![PHONE_WORK_ARCHIVE.to_string()]);
+    assert_eq!(
+        std::fs::read(root.join(PHONE_WORK_FILE)).unwrap(),
+        baseline_before
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn restore_keeps_copy_saved_at() {
+    let c = scratch();
+    let root = root_in(&c);
+    save_phone_work_in(&root, &docs_in(&c), "0.6.7", "2026-11-03T10:00:00.000Z").unwrap();
+    record_baseline_in(&root, "2026-11-04T10:00:00.000Z").unwrap();
+    let file = read_file(&root).unwrap();
+    assert_eq!(
+        file.copy_saved_at.as_deref(),
+        Some("2026-11-03T10:00:00.000Z")
+    );
+    assert_eq!(
+        file.restored_at.as_deref(),
+        Some("2026-11-04T10:00:00.000Z")
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn save_keeps_restored_at() {
+    let c = scratch();
+    let root = root_in(&c);
+    record_baseline_in(&root, "2026-11-04T10:00:00.000Z").unwrap();
+    save_phone_work_in(&root, &docs_in(&c), "0.6.7", "2026-11-05T10:00:00.000Z").unwrap();
+    let file = read_file(&root).unwrap();
+    assert_eq!(
+        file.restored_at.as_deref(),
+        Some("2026-11-04T10:00:00.000Z")
+    );
+    assert_eq!(
+        file.copy_saved_at.as_deref(),
+        Some("2026-11-05T10:00:00.000Z")
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn copy_without_copy_saved_at_after_a_restore_is_kept() {
+    let c = scratch();
+    let root = root_in(&c);
+    let docs = docs_in(&c);
+    save_phone_work_in(&root, &docs, "0.6.7", "2026-11-03T10:00:00.000Z").unwrap();
+    let a = std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap();
+    // A W-1-era file: baseline and a restore time, but no copySavedAt.
+    std::fs::write(
+        root.join(PHONE_WORK_FILE),
+        "{\"baselineAt\":\"2026-11-04T10:00:00.000Z\",\"restoredAt\":\"2026-11-04T10:00:00.000Z\"}",
+    )
+    .unwrap();
+    let saved = save_phone_work_in(&root, &docs, "0.6.7", "2026-11-05T10:00:00.000Z").unwrap();
+    let (_, kept) = restore_day();
+    assert_eq!(saved.kept_file_name.as_deref(), Some(kept.as_str()));
+    assert_eq!(std::fs::read(docs.join(&kept)).unwrap(), a);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn unknown_state_keeps_an_existing_copy() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(&c);
+    save_phone_work_in(&root, &docs, "0.6.7", &sql_now("-2 minutes")).unwrap();
+    let a = std::fs::read(docs.join(PHONE_WORK_ARCHIVE)).unwrap();
+    std::fs::remove_file(root.join(PHONE_WORK_FILE)).unwrap();
+    let saved = save_phone_work_in(&root, &docs, "0.6.7", &sql_now("-1 minutes")).unwrap();
+    let kept = saved.kept_file_name.expect("the earlier copy is kept");
+    assert_eq!(std::fs::read(docs.join(&kept)).unwrap(), a);
+    assert_eq!(docs_names(&docs).len(), 2);
+    std::fs::remove_dir_all(c).unwrap();
+}
