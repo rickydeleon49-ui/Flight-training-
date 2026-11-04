@@ -1464,3 +1464,1469 @@ mod bootstrap {
         assert_eq!(stamp, NOW);
     }
 }
+
+/* ------------------------------- apply ------------------------------ */
+
+mod apply {
+    use super::*;
+    use crate::sync::apply::{apply_change_file, ApplyError, ApplyOutcome};
+    use crate::sync::changeset::EncodedChangeFile;
+    use crate::sync::export::export_changes_in;
+    use rusqlite::types::Value as Sql;
+    use rusqlite::OptionalExtension;
+    use std::sync::{Arc, Mutex};
+
+    pub(super) const MAC: &str = "aaaa-mac";
+    pub(super) const PHONE: &str = "bbbb-phone";
+    const T1: &str = "2026-11-01T10:00:00.000Z";
+    const T2: &str = "2026-11-02T10:00:00.000Z";
+    const T3: &str = "2026-11-03T10:00:00.000Z";
+
+    pub(super) fn device(id: &str) -> Connection {
+        let conn = migrated();
+        set_device(&conn, id);
+        conn
+    }
+
+    fn set_device(conn: &Connection, id: &str) {
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [id],
+        )
+        .unwrap();
+    }
+
+    pub(super) fn ship(conn: &mut Connection, dev: &str, since: i64) -> EncodedChangeFile {
+        export_changes_in(conn, dev, since, "0.0.0-test", NOW)
+            .unwrap()
+            .unwrap()
+            .file
+    }
+
+    pub(super) fn take(conn: &mut Connection, file: &EncodedChangeFile) -> ApplyOutcome {
+        try_take(conn, file).unwrap()
+    }
+
+    fn try_take(
+        conn: &mut Connection,
+        file: &EncodedChangeFile,
+    ) -> Result<ApplyOutcome, ApplyError> {
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        apply_change_file(conn, &file.file_name, &parsed, NOW)
+    }
+
+    fn ch(seq: i64, table: &str, id: &str, op: Op, at: &str, row: Option<Value>) -> Change {
+        Change {
+            seq,
+            table: table.to_string(),
+            row_id: id.to_string(),
+            op,
+            changed_at: at.to_string(),
+            row: row.map(|v| v.as_object().unwrap().clone()),
+        }
+    }
+
+    /// A change file from a literal set (seq range = the changes' seqs).
+    fn file_of(dev: &str, created_at: &str, changes: Vec<Change>) -> EncodedChangeFile {
+        let from = changes.iter().map(|c| c.seq).min().unwrap();
+        let to = changes.iter().map(|c| c.seq).max().unwrap();
+        encode(&ChangeSet {
+            format_version: CHANGE_FORMAT_VERSION,
+            schema_version: SCHEMA,
+            device_id: dev.to_string(),
+            app_version: "0.0.0-test".to_string(),
+            created_at: created_at.to_string(),
+            from_seq: from,
+            to_seq: to,
+            changes,
+        })
+        .unwrap()
+    }
+
+    fn material_row(id: &str, title: &str) -> Value {
+        json!({"id": id, "title": title, "created_at": T1, "updated_at": T1})
+    }
+
+    fn bookmark_row(id: &str, title: &str) -> Value {
+        json!({"id": id, "material_id": "m1", "page_index": 1, "title": title,
+               "created_at": T1, "updated_at": T1})
+    }
+
+    fn material_file(dev: &str) -> EncodedChangeFile {
+        file_of(
+            dev,
+            T1,
+            vec![ch(
+                1,
+                "study_materials",
+                "m1",
+                Op::Insert,
+                T1,
+                Some(material_row("m1", "Mat")),
+            )],
+        )
+    }
+
+    fn bookmark_file(dev: &str, seq: i64, op: Op, at: &str, title: &str) -> EncodedChangeFile {
+        let row = (op != Op::Delete).then(|| bookmark_row("b1", title));
+        file_of(
+            dev,
+            at,
+            vec![ch(seq, "material_bookmarks", "b1", op, at, row)],
+        )
+    }
+
+    fn title(conn: &Connection, sql: &str) -> Option<String> {
+        conn.query_row(sql, [], |r| r.get(0)).optional().unwrap()
+    }
+
+    fn meta_pair(conn: &Connection, table: &str, id: &str) -> (String, String, i64) {
+        conn.query_row(
+            "SELECT changed_at, device_id, deleted FROM sync_row_meta WHERE table_name = ?1 AND row_id = ?2",
+            [table, id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .unwrap()
+    }
+
+    fn guard_rows(conn: &Connection) -> i64 {
+        count(
+            conn,
+            "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'",
+        )
+    }
+
+    /// Every registry table plus the ledger, receipts and app_metadata.
+    fn dump(conn: &Connection) -> Vec<String> {
+        let mut names: Vec<&str> = SYNC_TABLES.iter().map(|t| t.name).collect();
+        names.extend([
+            "local_changes",
+            "sync_row_meta",
+            "sync_applied",
+            "app_metadata",
+        ]);
+        let mut out = Vec::new();
+        for name in names {
+            let mut stmt = conn
+                .prepare(&format!("SELECT * FROM {name} ORDER BY 1, 2"))
+                .unwrap();
+            let n = stmt.column_count();
+            let rows: Vec<String> = stmt
+                .query_map([], |r| {
+                    let mut cells = Vec::new();
+                    for i in 0..n {
+                        cells.push(format!("{:?}", r.get::<_, Sql>(i)?));
+                    }
+                    Ok(format!("{name}: {}", cells.join("|")))
+                })
+                .unwrap()
+                .map(Result::unwrap)
+                .collect();
+            out.extend(rows);
+        }
+        out
+    }
+
+    /// A peer whose ledger holds one row of every registry table (events
+    /// at generation 1, real scheduler version) plus its change file.
+    pub(super) fn every_rule_peer(dev: &str) -> (Connection, EncodedChangeFile) {
+        let mut peer = device(dev);
+        insert_graph(&peer, "", T1);
+        peer.execute(
+            "UPDATE card_review_events SET generation = 1, scheduler_version = ?1",
+            [crate::card_reviews::SCHEDULER_VERSION],
+        )
+        .unwrap();
+        let file = ship(&mut peer, dev, 0);
+        (peer, file)
+    }
+
+    /* --------------------------- card helpers --------------------------- */
+
+    pub(super) struct Card {
+        material: String,
+        hash: String,
+        item: String,
+    }
+
+    fn card(conn: &Connection, material: &str) -> Card {
+        use crate::card_reviews::{card_version, CanonicalCard};
+        conn.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?1, 'Synthetic', ?2, ?2)",
+            params![material, T1],
+        )
+        .unwrap();
+        let cards_json =
+            json!([{"front": "Synthetic front", "back": "Synthetic back", "sourcePage": 1}])
+                .to_string();
+        conn.execute(
+            "INSERT INTO ai_study_sets (source_material_id, title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at)
+             VALUES (?1, 'Synthetic', '', '[]', ?2, '', 'import', '', ?3, ?3)",
+            params![material, cards_json, T1],
+        )
+        .unwrap();
+        let version = card_version(
+            material,
+            &[CanonicalCard {
+                visual_region_id: None,
+                front: "Synthetic front".into(),
+                back: "Synthetic back".into(),
+                source_page: Some(1),
+                origin: None,
+            }],
+        );
+        Card {
+            material: material.to_string(),
+            hash: version.content_hash.clone(),
+            item: version.items[0].item_id.clone(),
+        }
+    }
+
+    /// Runs one card action through the live path; `extra` adds e.g. the
+    /// rating or flag reason.
+    fn act(conn: &mut Connection, c: &Card, action: &str, extra: Value, op: u64) {
+        use crate::card_reviews::{decode_card_action, execute_card_review_transaction};
+        let generation: i64 = conn
+            .query_row(
+                "SELECT COALESCE(MAX(generation), 0) FROM card_review_generations WHERE source_material_id = ?1",
+                [&c.material],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let revision: i64 = conn
+            .query_row(
+                "SELECT COALESCE(MAX(revision), 0) FROM card_review_state WHERE item_id = ?1",
+                [&c.item],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let mut value = json!({
+            "action": action,
+            "operationId": format!("e1000000-0000-4000-8000-{op:012x}"),
+            "materialId": c.material,
+            "expectedGeneration": generation,
+        });
+        if action != "reset" {
+            value["versionContentHash"] = json!(c.hash);
+            value["itemId"] = json!(c.item);
+            value["expectedRevision"] = json!(revision);
+        }
+        if let Value::Object(more) = extra {
+            for (k, v) in more {
+                value[k] = v;
+            }
+        }
+        let decoded = decode_card_action(&value).unwrap();
+        let tx = conn
+            .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
+            .unwrap();
+        execute_card_review_transaction(&tx, &decoded, &value).unwrap();
+        tx.commit().unwrap();
+        // Distinct millisecond times for every action.
+        std::thread::sleep(std::time::Duration::from_millis(3));
+    }
+
+    fn rate(conn: &mut Connection, c: &Card, rating: &str, op: u64) {
+        act(conn, c, "rate", json!({ "rating": rating }), op);
+    }
+
+    type StateTuple = (
+        i64,
+        i64,
+        i64,
+        Option<String>,
+        Option<String>,
+        i64,
+        Option<String>,
+        i64,
+    );
+
+    fn state(conn: &Connection, item: &str) -> Option<StateTuple> {
+        conn.query_row(
+            "SELECT step, reps, lapses, last_reviewed_at, due_at, suspended, flag, revision
+             FROM card_review_state WHERE item_id = ?1",
+            [item],
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                ))
+            },
+        )
+        .optional()
+        .unwrap()
+    }
+
+    /// Every event of the item, with its origin device from the meta.
+    fn events_of(conn: &Connection, item: &str) -> Vec<ReviewEvent> {
+        let t = table("card_review_events").unwrap();
+        let ids: Vec<(String, String)> = conn
+            .prepare(
+                "SELECT e.id, m.device_id FROM card_review_events e
+                 JOIN sync_row_meta m ON m.table_name = 'card_review_events' AND m.row_id = e.id
+                 WHERE e.item_id = ?1",
+            )
+            .unwrap()
+            .query_map([item], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect();
+        ids.iter()
+            .map(|(id, dev)| {
+                event_from_row(&read_row_json(conn, t, id).unwrap().unwrap(), dev).unwrap()
+            })
+            .collect()
+    }
+
+    /* ------------------------------ tests ------------------------------ */
+
+    #[test]
+    fn re_import_of_an_applied_file_is_a_no_op() {
+        let (_peer, file) = every_rule_peer(PHONE);
+        let mut mac = device(MAC);
+        let first = take(&mut mac, &file);
+        assert!(first.applied);
+        assert!(first.written > 0);
+        let before = dump(&mac);
+        let again = take(&mut mac, &file);
+        assert_eq!(again, ApplyOutcome::default());
+        assert_eq!(dump(&mac), before);
+    }
+
+    #[test]
+    fn a_mid_import_failure_leaves_the_database_byte_identical() {
+        let (_peer, file) = every_rule_peer(PHONE);
+        let mut mac = device(MAC);
+        insert_graph(&mac, "x", T1);
+        mac.execute_batch(
+            "CREATE TEMP TRIGGER boom BEFORE INSERT ON material_bookmarks WHEN NEW.id = 'b1'
+             BEGIN SELECT RAISE(ABORT, 'boom'); END;",
+        )
+        .unwrap();
+        let before = dump(&mac);
+        assert!(matches!(try_take(&mut mac, &file), Err(ApplyError::Db(_))));
+        assert_eq!(dump(&mac), before);
+        assert_eq!(guard_rows(&mac), 0);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM sync_applied"), 0);
+    }
+
+    #[test]
+    fn a_stale_guard_row_is_removed_before_apply() {
+        let mut mac = device(MAC);
+        mac.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'stale')",
+            [],
+        )
+        .unwrap();
+        take(&mut mac, &material_file(PHONE));
+        assert_eq!(guard_rows(&mac), 0);
+        // The triggers record again once the guard is gone.
+        mac.execute("UPDATE study_materials SET title = 'Edited'", [])
+            .unwrap();
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), 1);
+    }
+
+    #[test]
+    fn success_clears_the_guard_and_writes_the_receipt() {
+        let mut mac = device(MAC);
+        let file = material_file(PHONE);
+        let out = take(&mut mac, &file);
+        assert!(out.applied);
+        assert_eq!(out.written, 1);
+        assert_eq!(guard_rows(&mac), 0);
+        let receipt: (String, String, String) = mac
+            .query_row(
+                "SELECT peer_device, file_name, applied_at FROM sync_applied",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            receipt,
+            (PHONE.to_string(), file.file_name.clone(), NOW.to_string())
+        );
+        assert_eq!(
+            meta_pair(&mac, "study_materials", "m1"),
+            (T1.to_string(), PHONE.to_string(), 0)
+        );
+    }
+
+    /// A file DB in WAL mode with a `probe()` SQL function that a temp
+    /// trigger calls while the apply transaction is open.
+    fn probed_file_db(
+        label: &str,
+        probe: impl Fn(&std::path::Path) -> String + Send + 'static,
+    ) -> (TempDir, Connection, Arc<Mutex<Vec<String>>>) {
+        let dir = TempDir::new(label);
+        let path = dir.0.join("db.sqlite");
+        let conn = Connection::open(&path).unwrap();
+        conn.pragma_update(None, "journal_mode", "WAL").unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        set_device(&conn, MAC);
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let sink = Arc::clone(&seen);
+        let probe_path = path.clone();
+        conn.create_scalar_function(
+            "probe",
+            0,
+            rusqlite::functions::FunctionFlags::SQLITE_UTF8,
+            move |_| {
+                let note = probe(&probe_path);
+                sink.lock().unwrap().push(note);
+                Ok(0)
+            },
+        )
+        .unwrap();
+        conn.execute_batch(
+            "CREATE TEMP TRIGGER probe_apply AFTER INSERT ON study_materials BEGIN SELECT probe(); END;",
+        )
+        .unwrap();
+        (dir, conn, seen)
+    }
+
+    #[test]
+    fn a_concurrent_writer_is_blocked_during_apply_and_logged_after() {
+        let (dir, mut a, seen) = probed_file_db("apply-busy", |path| {
+            let b = Connection::open(path).unwrap();
+            b.busy_timeout(std::time::Duration::from_millis(50))
+                .unwrap();
+            match b.execute(
+                "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m-b','b','T','T')",
+                [],
+            ) {
+                Err(rusqlite::Error::SqliteFailure(e, _)) if e.code == rusqlite::ErrorCode::DatabaseBusy => "busy".into(),
+                other => format!("not busy: {other:?}"),
+            }
+        });
+        take(&mut a, &material_file(PHONE));
+        assert_eq!(*seen.lock().unwrap(), ["busy"]);
+        let b = Connection::open(dir.0.join("db.sqlite")).unwrap();
+        b.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m-b','b','T','T')",
+            [],
+        )
+        .unwrap();
+        let logged: Vec<(String, String)> = b
+            .prepare("SELECT row_id, changed_at FROM local_changes")
+            .unwrap()
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect();
+        assert_eq!(logged.len(), 1);
+        assert_eq!(logged[0].0, "m-b");
+        assert_ne!(logged[0].1, T1);
+        assert_eq!(meta_pair(&b, "study_materials", "m-b").1, MAC);
+    }
+
+    #[test]
+    fn a_snapshot_taken_during_apply_never_carries_the_guard() {
+        let (dir, mut a, seen) = probed_file_db("apply-snap", |path| {
+            let c = Connection::open(path).unwrap();
+            let live = count(
+                &c,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'",
+            );
+            let copy = path.with_file_name("snapshot.db");
+            c.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+                .unwrap();
+            let snap = Connection::open(&copy).unwrap();
+            let copied = count(
+                &snap,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'",
+            );
+            format!("{live}/{copied}")
+        });
+        take(&mut a, &material_file(PHONE));
+        assert_eq!(*seen.lock().unwrap(), ["0/0"]);
+        drop(dir);
+    }
+
+    #[test]
+    fn applied_rows_never_appear_in_local_changes() {
+        let (_peer, file) = every_rule_peer(PHONE);
+        let mut mac = device(MAC);
+        insert_graph(&mac, "x", T1);
+        let before = count(&mac, "SELECT COUNT(*) FROM local_changes");
+        let out = take(&mut mac, &file);
+        assert!(out.written >= SYNC_TABLES.len() - 1, "{out:?}");
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), before);
+        for t in SYNC_TABLES {
+            let n = count(&mac, &format!("SELECT COUNT(*) FROM {}", t.name));
+            assert!(n >= 1, "{} is empty", t.name);
+        }
+    }
+
+    #[test]
+    fn reversed_file_arrival_never_lets_the_older_file_overwrite() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        let f1 = bookmark_file(PHONE, 2, Op::Insert, T1, "old");
+        let f2 = bookmark_file(PHONE, 3, Op::Update, T2, "new");
+        take(&mut mac, &f2);
+        let late = take(&mut mac, &f1);
+        assert_eq!((late.written, late.ignored), (0, 1));
+        assert_eq!(
+            title(&mac, "SELECT title FROM material_bookmarks WHERE id = 'b1'"),
+            Some("new".into())
+        );
+        assert_eq!(
+            meta_pair(&mac, "material_bookmarks", "b1"),
+            (T2.to_string(), PHONE.to_string(), 0)
+        );
+    }
+
+    #[test]
+    fn lww_tie_breaks_to_the_lower_device_id() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(&mut mac, &bookmark_file("bbbb", 2, Op::Insert, T2, "b"));
+        take(&mut mac, &bookmark_file("aaaa", 2, Op::Insert, T2, "a"));
+        take(&mut mac, &bookmark_file("cccc", 2, Op::Insert, T2, "c"));
+        assert_eq!(
+            title(&mac, "SELECT title FROM material_bookmarks WHERE id = 'b1'"),
+            Some("a".into())
+        );
+        assert_eq!(meta_pair(&mac, "material_bookmarks", "b1").1, "aaaa");
+    }
+
+    #[test]
+    fn equal_rows_are_not_rewritten() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(&mut mac, &bookmark_file(PHONE, 2, Op::Insert, T2, "same"));
+        let before = dump(&mac);
+        // Same changes under a new file name (another createdAt).
+        let again = file_of(
+            PHONE,
+            T3,
+            vec![
+                ch(
+                    1,
+                    "study_materials",
+                    "m1",
+                    Op::Insert,
+                    T1,
+                    Some(material_row("m1", "Mat")),
+                ),
+                ch(
+                    2,
+                    "material_bookmarks",
+                    "b1",
+                    Op::Insert,
+                    T2,
+                    Some(bookmark_row("b1", "same")),
+                ),
+            ],
+        );
+        let out = take(&mut mac, &again);
+        assert_eq!((out.applied, out.written, out.ignored), (true, 0, 2));
+        let after: Vec<String> = dump(&mac)
+            .into_iter()
+            .filter(|r| !r.starts_with("sync_applied"))
+            .collect();
+        let before: Vec<String> = before
+            .into_iter()
+            .filter(|r| !r.starts_with("sync_applied"))
+            .collect();
+        assert_eq!(after, before);
+    }
+
+    #[test]
+    fn union_never_overwrites_an_existing_row() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        let history = |provider: &str| {
+            json!({"id": "h1", "material_id": "m1", "kind": "study_set", "reason": "edit",
+                   "previous_json": "{}", "provider": provider, "created_at": T1})
+        };
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    2,
+                    "study_set_history",
+                    "h1",
+                    Op::Insert,
+                    T1,
+                    Some(history("gemini")),
+                )],
+            ),
+        );
+        let out = take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T3,
+                vec![ch(
+                    3,
+                    "study_set_history",
+                    "h1",
+                    Op::Update,
+                    T3,
+                    Some(history("import")),
+                )],
+            ),
+        );
+        assert_eq!((out.written, out.ignored), (0, 1));
+        assert_eq!(
+            title(
+                &mac,
+                "SELECT provider FROM study_set_history WHERE id = 'h1'"
+            ),
+            Some("gemini".into())
+        );
+        assert_eq!(meta_pair(&mac, "study_set_history", "h1").0, T1);
+    }
+
+    #[test]
+    fn a_tombstone_beats_an_older_incoming_update_and_stays_forever() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(&mut mac, &bookmark_file(PHONE, 2, Op::Insert, T1, "kept"));
+        take(&mut mac, &bookmark_file(PHONE, 3, Op::Delete, T3, ""));
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM material_bookmarks"), 0);
+        let out = take(
+            &mut mac,
+            &bookmark_file("cccc", 1, Op::Update, T2, "late edit"),
+        );
+        assert_eq!(out.ignored, 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM material_bookmarks"), 0);
+        assert_eq!(
+            meta_pair(&mac, "material_bookmarks", "b1"),
+            (T3.to_string(), PHONE.to_string(), 1)
+        );
+        // A tombstone for a row never seen here is kept too.
+        let gone = file_of(
+            PHONE,
+            T3,
+            vec![ch(4, "material_bookmarks", "b9", Op::Delete, T3, None)],
+        );
+        take(&mut mac, &gone);
+        assert_eq!(meta_pair(&mac, "material_bookmarks", "b9").2, 1);
+    }
+
+    #[test]
+    fn a_newer_local_edit_beats_an_older_incoming_delete() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(&mut mac, &bookmark_file(PHONE, 2, Op::Insert, T3, "edited"));
+        let out = take(&mut mac, &bookmark_file("cccc", 1, Op::Delete, T2, ""));
+        assert_eq!(out.ignored, 1);
+        assert_eq!(
+            title(&mac, "SELECT title FROM material_bookmarks WHERE id = 'b1'"),
+            Some("edited".into())
+        );
+    }
+
+    #[test]
+    fn two_devices_rating_the_same_card_equals_sequential() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        let c = card(&mac, "mat-two");
+        card(&phone, "mat-two");
+        rate(&mut mac, &c, "good", 1);
+        rate(&mut phone, &c, "easy", 2);
+        rate(&mut mac, &c, "hard", 3);
+        rate(&mut phone, &c, "again", 4);
+        let from_mac = ship(&mut mac, MAC, 0);
+        let from_phone = ship(&mut phone, PHONE, 0);
+        let mac_rev = state(&mac, &c.item).unwrap().7;
+        let phone_rev = state(&phone, &c.item).unwrap().7;
+        let out = take(&mut mac, &from_phone);
+        assert_eq!(out.replayed_items, 1);
+        take(&mut phone, &from_mac);
+
+        let mut union = events_of(&mac, &c.item);
+        assert_eq!(union.len(), 4);
+        union.sort_by(|a, b| order_key(a).cmp(&order_key(b)));
+        let want = fold(&union).unwrap();
+        for (conn, rev) in [(&mac, mac_rev), (&phone, phone_rev)] {
+            let got = state(conn, &c.item).unwrap();
+            assert_eq!(
+                (got.0, got.1, got.2, got.3.clone(), got.4.clone()),
+                (
+                    want.step,
+                    want.reps,
+                    want.lapses,
+                    Some(want.last_reviewed_at.clone()),
+                    Some(want.due_at.clone())
+                )
+            );
+            assert_eq!(got.7, rev + 1);
+        }
+        assert_eq!(
+            state(&mac, &c.item),
+            state(&phone, &c.item).map(|mut s| {
+                s.7 = state(&mac, &c.item).unwrap().7;
+                s
+            })
+        );
+    }
+
+    #[test]
+    fn a_suspend_on_the_mac_survives_a_rating_on_the_phone() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        let c = card(&mac, "mat-susp");
+        card(&phone, "mat-susp");
+        rate(&mut phone, &c, "good", 1);
+        act(&mut mac, &c, "suspend", json!({}), 2);
+        act(&mut mac, &c, "flag", json!({"reason": "unclear"}), 3);
+        let out = take(&mut mac, &ship(&mut phone, PHONE, 0));
+        assert_eq!(out.replayed_items, 1);
+        let got = state(&mac, &c.item).unwrap();
+        let want = fold(&events_of(&mac, &c.item)).unwrap();
+        assert_eq!((got.1, got.4.clone()), (want.reps, Some(want.due_at)));
+        assert_eq!((got.5, got.6.as_deref()), (1, Some("unclear")));
+    }
+
+    #[test]
+    fn delayed_pre_reset_events_are_ignored_after_a_local_reset() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        let c = card(&mac, "mat-reset");
+        card(&phone, "mat-reset");
+        rate(&mut phone, &c, "good", 1);
+        act(&mut mac, &c, "reset", json!({}), 2);
+        let out = take(&mut mac, &ship(&mut phone, PHONE, 0));
+        assert!(out.ignored >= 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 0);
+        assert_eq!(state(&mac, &c.item), None);
+        assert_eq!(
+            count(&mac, "SELECT generation FROM card_review_generations"),
+            1
+        );
+    }
+
+    #[test]
+    fn a_peer_reset_raises_the_local_generation() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        let c = card(&mac, "mat-raise");
+        card(&phone, "mat-raise");
+        rate(&mut mac, &c, "easy", 1);
+        rate(&mut phone, &c, "good", 2);
+        act(&mut phone, &c, "reset", json!({}), 3);
+        act(&mut phone, &c, "reset", json!({}), 4);
+        rate(&mut phone, &c, "hard", 5);
+        let out = take(&mut mac, &ship(&mut phone, PHONE, 0));
+        assert_eq!(out.replayed_items, 1);
+        assert_eq!(
+            count(&mac, "SELECT generation FROM card_review_generations"),
+            2
+        );
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM card_review_events WHERE generation < 2"
+            ),
+            0
+        );
+        let events = events_of(&mac, &c.item);
+        assert_eq!(events.len(), 1);
+        let got = state(&mac, &c.item).unwrap();
+        let want = fold(&events).unwrap();
+        assert_eq!((got.1, got.3), (want.reps, Some(want.last_reviewed_at)));
+        assert_eq!(got.7, 1);
+    }
+
+    #[test]
+    fn first_reviewed_at_after_a_peer_reset_is_null() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        let c = card(&mac, "mat-first");
+        card(&phone, "mat-first");
+        rate(&mut mac, &c, "good", 1);
+        act(&mut phone, &c, "reset", json!({}), 2);
+        take(&mut mac, &ship(&mut phone, PHONE, 0));
+        let first: Option<String> = mac
+            .query_row("SELECT first_reviewed_at FROM card_versions", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(first, None);
+    }
+
+    fn attempt_row(id: &str, started: &str) -> Value {
+        json!({"id": id, "version_id": "pv1", "source_material_id": "m1",
+               "source_material_title": "Mat", "started_at": started, "status": "in_progress",
+               "revision": 0, "total_questions": 1})
+    }
+
+    fn practice_base() -> Vec<Change> {
+        vec![
+            ch(
+                1,
+                "study_materials",
+                "m1",
+                Op::Insert,
+                T1,
+                Some(material_row("m1", "Mat")),
+            ),
+            ch(
+                2,
+                "practice_test_versions",
+                "pv1",
+                Op::Insert,
+                T1,
+                Some(json!({
+                "id": "pv1", "source_material_id": "m1", "history_key": "hk",
+                "source_material_title": "Mat", "content_hash": "h1", "created_at": T1, "is_active": 1})),
+            ),
+        ]
+    }
+
+    #[test]
+    fn a_second_in_progress_attempt_abandons_the_older() {
+        let mut mac = device(MAC);
+        take(&mut mac, &file_of(PHONE, T1, practice_base()));
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    3,
+                    "practice_attempts",
+                    "a-old",
+                    Op::Insert,
+                    T1,
+                    Some(attempt_row("a-old", T1)),
+                )],
+            ),
+        );
+        take(
+            &mut mac,
+            &file_of(
+                "cccc",
+                T2,
+                vec![ch(
+                    1,
+                    "practice_attempts",
+                    "a-new",
+                    Op::Insert,
+                    T2,
+                    Some(attempt_row("a-new", T2)),
+                )],
+            ),
+        );
+        let status = |id: &str| {
+            title(
+                &mac,
+                &format!("SELECT status FROM practice_attempts WHERE id = '{id}'"),
+            )
+        };
+        assert_eq!(status("a-old"), Some("abandoned".into()));
+        assert_eq!(status("a-new"), Some("in_progress".into()));
+        // The other order: an older incoming attempt lands abandoned.
+        let mut other = device(MAC);
+        take(&mut other, &file_of(PHONE, T1, practice_base()));
+        take(
+            &mut other,
+            &file_of(
+                "cccc",
+                T2,
+                vec![ch(
+                    1,
+                    "practice_attempts",
+                    "a-new",
+                    Op::Insert,
+                    T2,
+                    Some(attempt_row("a-new", T2)),
+                )],
+            ),
+        );
+        take(
+            &mut other,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    3,
+                    "practice_attempts",
+                    "a-old",
+                    Op::Insert,
+                    T1,
+                    Some(attempt_row("a-old", T1)),
+                )],
+            ),
+        );
+        let status = |id: &str| {
+            title(
+                &other,
+                &format!("SELECT status FROM practice_attempts WHERE id = '{id}'"),
+            )
+        };
+        assert_eq!(status("a-old"), Some("abandoned".into()));
+        assert_eq!(status("a-new"), Some("in_progress".into()));
+    }
+
+    fn version_change(
+        seq: i64,
+        id: &str,
+        hash: &str,
+        active: i64,
+        at: &str,
+        first: Option<&str>,
+    ) -> Change {
+        ch(
+            seq,
+            "card_versions",
+            id,
+            Op::Update,
+            at,
+            Some(json!({
+            "id": id, "source_material_id": "m1", "content_hash": hash, "card_count": 1,
+            "provider": "import", "created_at": T1, "first_reviewed_at": first, "is_active": active})),
+        )
+    }
+
+    fn active_card_version(conn: &Connection) -> Vec<String> {
+        conn.prepare("SELECT id FROM card_versions WHERE is_active = 1")
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    }
+
+    #[test]
+    fn a_card_version_collision_keeps_the_newest_active() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![version_change(2, "v1", "h1", 1, T1, Some(T2))],
+            ),
+        );
+        take(
+            &mut mac,
+            &file_of(
+                "cccc",
+                T2,
+                vec![version_change(
+                    1,
+                    "v2",
+                    "h2",
+                    1,
+                    T2,
+                    Some("2026-11-01T12:00:00.000Z"),
+                )],
+            ),
+        );
+        assert_eq!(active_card_version(&mac), ["v2"]);
+        // v1 arrives again from a device that reviewed it earlier.
+        take(
+            &mut mac,
+            &file_of(
+                "dddd",
+                T1,
+                vec![version_change(
+                    1,
+                    "v1",
+                    "h1",
+                    1,
+                    T1,
+                    Some("2026-11-01T11:00:00.000Z"),
+                )],
+            ),
+        );
+        assert_eq!(active_card_version(&mac), ["v2"]);
+        assert_eq!(
+            title(
+                &mac,
+                "SELECT first_reviewed_at FROM card_versions WHERE id = 'v1'"
+            ),
+            Some("2026-11-01T11:00:00.000Z".into())
+        );
+        // Same material + content under another id maps onto the local row.
+        let out = take(
+            &mut mac,
+            &file_of(
+                "eeee",
+                T3,
+                vec![version_change(1, "v1-legacy", "h1", 1, T3, None)],
+            ),
+        );
+        assert_eq!(out.written, 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_versions"), 2);
+        assert_eq!(active_card_version(&mac), ["v1"]);
+    }
+
+    #[test]
+    fn reactivating_an_older_card_version_stays_active_both_ways() {
+        let mut mac = device(MAC);
+        let mut phone = device(PHONE);
+        for conn in [&mac, &phone] {
+            conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','Mat','T','T')", []).unwrap();
+            for (id, hash, created, active) in [("v1", "h1", T1, 0), ("v2", "h2", T2, 1)] {
+                conn.execute(
+                    "INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES (?1,'m1',?2,1,'import',?3,?4)",
+                    params![id, hash, created, active],
+                )
+                .unwrap();
+            }
+        }
+        let mac_seq = count(&mac, "SELECT MAX(seq) FROM local_changes");
+        let phone_seq = count(&phone, "SELECT MAX(seq) FROM local_changes");
+        take(&mut mac, &ship(&mut phone, PHONE, 0));
+        take(&mut phone, &ship(&mut mac, MAC, 0));
+        std::thread::sleep(std::time::Duration::from_millis(3));
+        // The phone switches back to the older set, as the live path does.
+        phone
+            .execute("UPDATE card_versions SET is_active = 0 WHERE id = 'v2'", [])
+            .unwrap();
+        phone
+            .execute("UPDATE card_versions SET is_active = 1 WHERE id = 'v1'", [])
+            .unwrap();
+        take(&mut mac, &ship(&mut phone, PHONE, phone_seq));
+        assert_eq!(active_card_version(&mac), ["v1"]);
+        assert_eq!(active_card_version(&phone), ["v1"]);
+        assert!(export_changes_in(&mut mac, MAC, mac_seq, "0.0.0-test", NOW)
+            .unwrap()
+            .is_none());
+        let back = ship(&mut mac, MAC, 0);
+        take(&mut phone, &back);
+        assert_eq!(active_card_version(&phone), ["v1"]);
+    }
+
+    #[test]
+    fn a_practice_version_collision_keeps_the_newest_active() {
+        let mut mac = device(MAC);
+        take(&mut mac, &file_of(PHONE, T1, practice_base()));
+        let pv2 = ch(
+            1,
+            "practice_test_versions",
+            "pv2",
+            Op::Insert,
+            T2,
+            Some(json!({
+            "id": "pv2", "source_material_id": "m1", "history_key": "hk",
+            "source_material_title": "Mat", "content_hash": "h2", "created_at": T2, "is_active": 1})),
+        );
+        take(&mut mac, &file_of("cccc", T2, vec![pv2]));
+        let active: Vec<String> = mac
+            .prepare("SELECT id FROM practice_test_versions WHERE is_active = 1")
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect();
+        assert_eq!(active, ["pv2"]);
+    }
+
+    #[test]
+    fn a_version_delete_with_a_local_attempt_is_ignored() {
+        let mut mac = device(MAC);
+        take(&mut mac, &file_of(PHONE, T1, practice_base()));
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    3,
+                    "practice_attempts",
+                    "a1",
+                    Op::Insert,
+                    T1,
+                    Some(attempt_row("a1", T1)),
+                )],
+            ),
+        );
+        let out = take(
+            &mut mac,
+            &file_of(
+                "cccc",
+                T3,
+                vec![ch(1, "practice_test_versions", "pv1", Op::Delete, T3, None)],
+            ),
+        );
+        assert_eq!((out.written, out.ignored), (0, 1));
+        assert_eq!(
+            count(&mac, "SELECT COUNT(*) FROM practice_test_versions"),
+            1
+        );
+    }
+
+    #[test]
+    fn a_newer_schema_file_is_refused_before_apply() {
+        let (bytes, name) = pack_set(&ChangeSet {
+            schema_version: SCHEMA + 1,
+            ..sample_set()
+        });
+        assert_eq!(
+            decode(&bytes, &name, SCHEMA, NOW).unwrap_err(),
+            ChangeFileError::SchemaTooNew
+        );
+        let mac = device(MAC);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM sync_applied"), 0);
+    }
+
+    #[test]
+    fn a_future_created_at_is_reported_not_refused() {
+        let mut mac = device(MAC);
+        let file = file_of(
+            PHONE,
+            "2026-11-05T12:00:00.000Z",
+            vec![ch(
+                1,
+                "study_materials",
+                "m1",
+                Op::Insert,
+                T1,
+                Some(material_row("m1", "Mat")),
+            )],
+        );
+        let out = take(&mut mac, &file);
+        assert!(out.applied && out.created_in_future);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 1);
+    }
+
+    #[test]
+    fn an_orphan_of_a_tombstoned_parent_is_skipped_and_a_truly_missing_parent_aborts() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T3,
+                vec![ch(2, "study_materials", "m1", Op::Delete, T3, None)],
+            ),
+        );
+        let out = take(
+            &mut mac,
+            &bookmark_file("cccc", 1, Op::Insert, T2, "orphan"),
+        );
+        assert_eq!((out.written, out.ignored), (0, 1));
+        let lost = file_of(
+            "cccc",
+            T2,
+            vec![ch(
+                2,
+                "material_bookmarks",
+                "b2",
+                Op::Insert,
+                T2,
+                Some(json!({
+                "id": "b2", "material_id": "m-none", "page_index": 1, "title": "t",
+                "created_at": T1, "updated_at": T1})),
+            )],
+        );
+        assert!(matches!(
+            try_take(&mut mac, &lost),
+            Err(ApplyError::MissingParent("material_bookmarks"))
+        ));
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM sync_applied WHERE peer_device = 'cccc'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn a_delete_on_a_union_table_is_ignored() {
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        let history = json!({"id": "h1", "material_id": "m1", "kind": "study_set", "reason": "edit",
+                             "previous_json": "{}", "provider": "gemini", "created_at": T1});
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    2,
+                    "study_set_history",
+                    "h1",
+                    Op::Insert,
+                    T1,
+                    Some(history),
+                )],
+            ),
+        );
+        let out = take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T3,
+                vec![ch(3, "study_set_history", "h1", Op::Delete, T3, None)],
+            ),
+        );
+        assert_eq!((out.written, out.ignored), (0, 1));
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_set_history"), 1);
+    }
+
+    #[test]
+    fn a_material_linked_to_a_goal_applies_with_the_link_cleared() {
+        let mut mac = device(MAC);
+        let mut row = material_row("m1", "Mat");
+        row["goal_id"] = json!("goal-on-the-phone");
+        let out = take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(1, "study_materials", "m1", Op::Insert, T1, Some(row))],
+            ),
+        );
+        assert_eq!(out.written, 1);
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM study_materials WHERE goal_id IS NULL"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn edited_in_place_tables_merge_by_lww() {
+        assert_eq!(
+            table("material_content_identities").unwrap().rule,
+            MergeRule::Lww
+        );
+        assert_eq!(table("practice_responses").unwrap().rule, MergeRule::Lww);
+        let mut mac = device(MAC);
+        take(&mut mac, &material_file(PHONE));
+        let identity = |pages: i64| json!({"material_id": "m1", "content_sha256": "a".repeat(64), "total_pages": pages, "verified_at": T1});
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T1,
+                vec![ch(
+                    2,
+                    "material_content_identities",
+                    "m1",
+                    Op::Insert,
+                    T1,
+                    Some(identity(3)),
+                )],
+            ),
+        );
+        take(
+            &mut mac,
+            &file_of(
+                PHONE,
+                T2,
+                vec![ch(
+                    3,
+                    "material_content_identities",
+                    "m1",
+                    Op::Update,
+                    T2,
+                    Some(identity(5)),
+                )],
+            ),
+        );
+        assert_eq!(
+            count(&mac, "SELECT total_pages FROM material_content_identities"),
+            5
+        );
+    }
+
+    #[test]
+    fn an_unknown_column_is_refused() {
+        let mut mac = device(MAC);
+        let mut row = material_row("m1", "Mat");
+        row["no_such_column"] = json!(1);
+        let file = file_of(
+            PHONE,
+            T1,
+            vec![ch(1, "study_materials", "m1", Op::Insert, T1, Some(row))],
+        );
+        assert!(matches!(
+            try_take(&mut mac, &file),
+            Err(ApplyError::UnknownColumn("study_materials"))
+        ));
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 0);
+    }
+}
+
+/* ------------------------------- ingest ----------------------------- */
+
+mod ingest {
+    use super::apply::{device, every_rule_peer, take, MAC, PHONE};
+    use super::*;
+    use crate::sync::export::export_changes_in;
+    use crate::sync::ingest::{export_changes_from_archive, IngestError};
+
+    /// A zip with `manifest.json` and a `VACUUM INTO` copy of `conn`.
+    fn archive(dir: &TempDir, conn: &Connection, manifest: Value) -> std::path::PathBuf {
+        let db = dir.0.join("source.db");
+        let _ = std::fs::remove_file(&db);
+        conn.execute("VACUUM INTO ?1", [db.to_str().unwrap()])
+            .unwrap();
+        let path = dir.0.join("phone-backup.zip");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let opts = zip::write::SimpleFileOptions::default();
+        zip.start_file("manifest.json", opts).unwrap();
+        zip.write_all(manifest.to_string().as_bytes()).unwrap();
+        zip.start_file("her-flight-deck.db", opts).unwrap();
+        zip.write_all(&std::fs::read(&db).unwrap()).unwrap();
+        zip.finish().unwrap();
+        path
+    }
+
+    fn phone_manifest() -> Value {
+        json!({"format": "her-flight-deck-complete-backup", "formatVersion": 3,
+               "appVersion": "0.0.0-test", "createdAt": 1, "schemaVersion": SCHEMA, "platform": "ios"})
+    }
+
+    fn ingest(
+        path: &std::path::Path,
+    ) -> Result<Option<crate::sync::export::ExportedChanges>, IngestError> {
+        ingest_at(path, NOW)
+    }
+
+    /// Ingests run one at a time so `ingest_removes_its_temp_dir` never sees
+    /// another test's working folder.
+    static INGESTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    fn ingest_at(
+        path: &std::path::Path,
+        created_at: &str,
+    ) -> Result<Option<crate::sync::export::ExportedChanges>, IngestError> {
+        let _one = INGESTS.lock().unwrap_or_else(|e| e.into_inner());
+        export_changes_from_archive(path, Some(MAC), "0.0.0-test", created_at)
+    }
+
+    fn leftover_dirs() -> usize {
+        let prefix = format!("hfd-sync-ingest-{}-", std::process::id());
+        std::fs::read_dir(std::env::temp_dir())
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|e| e.file_name().to_string_lossy().starts_with(&prefix))
+            .count()
+    }
+
+    #[test]
+    fn a_phone_backup_ingests_as_a_change_file() {
+        let dir = TempDir::new("ingest");
+        let (mut phone, direct) = every_rule_peer(PHONE);
+        let path = archive(&dir, &phone, phone_manifest());
+        let out = ingest(&path).unwrap().unwrap();
+        assert_eq!(out.file.bytes, direct.bytes);
+        let same = export_changes_in(&mut phone, PHONE, 0, "0.0.0-test", NOW)
+            .unwrap()
+            .unwrap();
+        assert_eq!(out.file.file_name, same.file.file_name);
+        let mut mac = device(MAC);
+        let applied = take(&mut mac, &out.file);
+        assert!(applied.applied && applied.written > 0);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), 0);
+    }
+
+    #[test]
+    fn re_ingesting_the_same_backup_is_a_no_op() {
+        let dir = TempDir::new("ingest-again");
+        let (_phone, _) = every_rule_peer(PHONE);
+        let path = archive(&dir, &_phone, phone_manifest());
+        let mut mac = device(MAC);
+        take(&mut mac, &ingest(&path).unwrap().unwrap().file);
+        let again = take(&mut mac, &ingest(&path).unwrap().unwrap().file);
+        assert!(!again.applied);
+        // A newer createdAt (new file name) still writes nothing.
+        let later = ingest_at(&path, "2026-11-04T13:00:00.000Z")
+            .unwrap()
+            .unwrap();
+        let out = take(&mut mac, &later.file);
+        assert!(out.applied);
+        assert_eq!(out.written, 0);
+    }
+
+    #[test]
+    fn a_mac_backup_is_refused_for_ingest() {
+        let dir = TempDir::new("ingest-mac");
+        let (phone, _) = every_rule_peer(PHONE);
+        let mut manifest = phone_manifest();
+        manifest["platform"] = json!("macos");
+        let path = archive(&dir, &phone, manifest);
+        assert!(matches!(ingest(&path), Err(IngestError::NotAPhoneBackup)));
+        manifest = phone_manifest();
+        manifest.as_object_mut().unwrap().remove("platform");
+        let path = archive(&dir, &phone, manifest);
+        assert!(matches!(ingest(&path), Err(IngestError::NotAPhoneBackup)));
+    }
+
+    #[test]
+    fn a_pre_ledger_backup_is_too_old() {
+        let dir = TempDir::new("ingest-old");
+        let old = Connection::open_in_memory().unwrap();
+        for m in crate::migrations().iter().filter(|m| m.version < 33) {
+            old.execute_batch(m.sql).unwrap();
+        }
+        old.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [PHONE],
+        )
+        .unwrap();
+        let path = archive(&dir, &old, phone_manifest());
+        let Err(err) = ingest(&path) else {
+            panic!("a pre-ledger archive was accepted")
+        };
+        assert!(matches!(err, IngestError::ArchiveTooOld));
+        assert!(err.to_string().contains("Update the app on your phone"));
+    }
+
+    #[test]
+    fn an_archive_without_a_device_id_is_refused() {
+        let dir = TempDir::new("ingest-noid");
+        let conn = migrated();
+        conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a','T','T')", [])
+            .unwrap();
+        let path = archive(&dir, &conn, phone_manifest());
+        assert!(matches!(ingest(&path), Err(IngestError::NoDeviceId)));
+    }
+
+    #[test]
+    fn a_newer_schema_phone_archive_is_refused() {
+        let dir = TempDir::new("ingest-new");
+        let (phone, _) = every_rule_peer(PHONE);
+        let mut manifest = phone_manifest();
+        manifest["schemaVersion"] = json!(SCHEMA + 1);
+        let path = archive(&dir, &phone, manifest);
+        assert!(matches!(ingest(&path), Err(IngestError::SchemaTooNew)));
+    }
+
+    #[test]
+    fn an_archive_from_this_device_is_refused() {
+        let dir = TempDir::new("ingest-self");
+        let (phone, _) = every_rule_peer(MAC);
+        let path = archive(&dir, &phone, phone_manifest());
+        assert!(matches!(ingest(&path), Err(IngestError::SameDevice)));
+    }
+
+    #[test]
+    fn ingest_removes_its_temp_dir() {
+        let dir = TempDir::new("ingest-clean");
+        let (phone, _) = every_rule_peer(PHONE);
+        let good = archive(&dir, &phone, phone_manifest());
+        ingest(&good).unwrap();
+        let bare = migrated();
+        let bad = archive(&dir, &bare, phone_manifest());
+        assert!(ingest(&bad).is_err());
+        let _one = INGESTS.lock().unwrap_or_else(|e| e.into_inner());
+        assert_eq!(leftover_dirs(), 0);
+    }
+}
