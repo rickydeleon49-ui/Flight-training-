@@ -90,7 +90,7 @@ pub(crate) struct ProviderStatus {
 fn status_at(root: &Path) -> Result<ProviderStatus, String> {
     let providers = [ProviderId::Gemini, ProviderId::Claude]
         .into_iter()
-        .map(|id| connection_from_read(id, crate::secrets::load_key_for(root, id)))
+        .map(|id| connection_from_read(id, crate::secrets::status_key_for(root, id)))
         .collect();
     Ok(ProviderStatus {
         selected: load_choice(root),
@@ -115,8 +115,19 @@ fn select_at(root: &Path, id: ProviderId) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub(crate) fn provider_status(app: tauri::AppHandle) -> Result<ProviderStatus, String> {
-    status_at(&crate::storage::app_root(&app)?)
+pub(crate) async fn provider_status(app: tauri::AppHandle) -> Result<ProviderStatus, String> {
+    let root = crate::storage::app_root(&app)?;
+    // The secure store can block on a system prompt: never on the UI thread.
+    tauri::async_runtime::spawn_blocking(move || status_at(&root))
+        .await
+        .map_err(|e| format!("Could not check your AI connections: {e}"))?
+}
+
+/// Settings' "Try again": forget the remembered keychain failure and read once.
+#[tauri::command]
+pub(crate) async fn retry_key_access(app: tauri::AppHandle) -> Result<ProviderStatus, String> {
+    crate::secrets::retry_key_access();
+    provider_status(app).await
 }
 
 #[tauri::command]

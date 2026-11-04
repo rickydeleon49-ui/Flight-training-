@@ -579,13 +579,25 @@ pub(crate) fn stored_key_for(root: &Path, provider: AnyProvider) -> Result<Strin
 }
 
 #[tauri::command]
-pub fn gemini_status(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus {
+pub async fn gemini_status(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus {
+    // The secure store can block on a system prompt: never on the UI thread.
+    tauri::async_runtime::spawn_blocking(move || gemini_status_blocking(app, gemini_only))
+        .await
+        .unwrap_or_else(|_| {
+            GeminiStatus::from_key_read(
+                Err("status check failed".to_string()),
+                ModelChoice::MostCapable,
+            )
+        })
+}
+
+fn gemini_status_blocking(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus {
     if !gemini_only.unwrap_or(false) {
         if let Ok(root) = app_root(&app) {
             let provider = AnyProvider::selected(&root);
             if provider.id() == crate::provider::ProviderId::Claude {
                 let mut status = GeminiStatus::from_key_read(
-                    secrets::load_key_for(&root, provider.id()),
+                    secrets::status_key_for(&root, provider.id()),
                     ModelChoice::Standard,
                 );
                 status.model = crate::provider::claude::MODEL;
@@ -596,7 +608,7 @@ pub fn gemini_status(app: AppHandle, gemini_only: Option<bool>) -> GeminiStatus 
     let root = app_root(&app).ok();
     let key = root
         .as_deref()
-        .map(current_key)
+        .map(|r| secrets::status_key_for(r, crate::provider::ProviderId::Gemini))
         .unwrap_or_else(|| Err("Application data unavailable".to_string()));
     let choice = root
         .as_deref()
@@ -612,7 +624,10 @@ pub fn set_gemini_model(app: AppHandle, choice: String) -> Result<GeminiStatus, 
         .ok_or_else(|| "That is not one of the Gemini models this version offers.".to_string())?;
     let root = app_root(&app)?;
     save_choice(&root, choice)?;
-    Ok(GeminiStatus::from_key_read(current_key(&root), choice))
+    Ok(GeminiStatus::from_key_read(
+        secrets::status_key_for(&root, crate::provider::ProviderId::Gemini),
+        choice,
+    ))
 }
 
 #[tauri::command]

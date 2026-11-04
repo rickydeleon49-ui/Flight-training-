@@ -504,6 +504,7 @@ pub fn run() {
             pdf::split_pdf,
             pdf::split_pdf_automatically,
             provider::provider_status,
+            provider::retry_key_access,
             provider::select_provider,
             provider::configure_provider,
             provider::disconnect_provider,

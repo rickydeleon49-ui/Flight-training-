@@ -122,3 +122,17 @@ it.each(["gemini", "claude"] as const)("shows an unreadable Claude key without o
   expect(screen.queryByRole("button", {name:"Connect Claude"})).toBeNull();
   expect(screen.queryByText(/Connect Claude to use study tools/)).toBeNull();
 });
+it("offers one plain Try again when the saved key can't be read, and keeps the key", async () => {
+  const bad: provider.ProviderStatus = { selected: "claude", providers: [{ id: "gemini", connected: false }, { id: "claude", connected: false, keyUnreadable: true }] };
+  vi.mocked(provider.providerStatus).mockResolvedValue(bad);
+  const retry = vi.spyOn(provider, "retryKeyAccess").mockResolvedValue(status("claude", true));
+  const disconnect = vi.spyOn(provider, "disconnectProvider");
+  open();
+  const again = await screen.findByRole("button", { name: "Try again" });
+  expect(screen.getByText(provider.SAVED_KEY_UNREADABLE)).toBeTruthy();
+  fireEvent.click(again);
+  await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
+  await screen.findByText(/Ready to use/);
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  expect(disconnect).not.toHaveBeenCalled();
+});
