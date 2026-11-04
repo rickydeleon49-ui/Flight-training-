@@ -25,6 +25,12 @@ describe("SavePhoneWorkCard", () => {
     expect(await screen.findByText("This phone has 12 card reviews and 1 practice test that aren't saved anywhere else yet.")).toBeTruthy();
   });
 
+  it("uses the singular verb for one unsaved item", async () => {
+    mocks.unsavedPhoneWork.mockResolvedValue({ ...none, reviews: 1 });
+    render(<SavePhoneWorkCard />);
+    expect(await screen.findByText("This phone has 1 card review that isn't saved anywhere else yet.")).toBeTruthy();
+  });
+
   it("says everything is saved when nothing is new", async () => {
     mocks.unsavedPhoneWork.mockResolvedValue(none);
     render(<SavePhoneWorkCard />);

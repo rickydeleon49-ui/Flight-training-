@@ -230,6 +230,16 @@ export interface UnsavedPhoneWork {
   since: string | null;
 }
 
+/** A genuinely empty first run on the phone has nothing to protect. Never blocks startup. */
+export async function recordFreshPhoneBaseline(): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invoke<void>("record_fresh_phone_baseline");
+  } catch (error) {
+    console.warn("Could not record the fresh phone baseline", error);
+  }
+}
+
 export async function unsavedPhoneWork(): Promise<UnsavedPhoneWork> {
   if (!isTauri()) return { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, since: null };
   return invoke<UnsavedPhoneWork>("unsaved_phone_work");
@@ -280,5 +290,5 @@ export function unsavedPhoneWorkSentence(
 ): string | null {
   const list = unsavedPhoneWorkCounts(work);
   if (list === null) return null;
-  return `This phone has ${list} that aren't saved anywhere else yet. Save my phone work first, then get your study material.`;
+  return `This phone has ${list} that ${unsavedPhoneWorkTotal(work) === 1 ? "isn't" : "aren't"} saved anywhere else yet. Save my phone work first, then get your study material.`;
 }

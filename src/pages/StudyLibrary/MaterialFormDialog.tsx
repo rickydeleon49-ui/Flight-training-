@@ -1,4 +1,5 @@
-import { deviceCan } from "@/services/platform";
+import { deviceCan, isIOS } from "@/services/platform";
+import { materialFileNote } from "@/services/phoneCopy";
 import { useEffect, useRef, useState } from "react";
 
 import { Button, Dialog, DocumentIcon, Field, Select, TextArea, TextInput } from "@/components/ui";
@@ -298,9 +299,7 @@ export function MaterialFormDialog({
             </p>
           ) : (
             <p className="tiny dim">
-              The file is copied into the desktop app&rsquo;s private storage on this computer,
-              so moving or deleting the original will not break this copy. Include it in a
-              complete backup before moving to another computer.
+              {materialFileNote(isIOS())}
             </p>
           )}
           {fileError ? <p className="field__error">{fileError}</p> : null}
