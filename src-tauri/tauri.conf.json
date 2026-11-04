@@ -50,6 +50,9 @@
       "nsis": {
         "installMode": "currentUser"
       }
+    },
+    "iOS": {
+      "developmentTeam": "U7B45SUWS2"
     }
   }
 }

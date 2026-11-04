@@ -51,8 +51,8 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.6.6
-        CFBundleVersion: "0.6.6"
+        CFBundleShortVersionString: 0.6.7
+        CFBundleVersion: "1"
     entitlements:
       path: her-flight-deck_iOS/her-flight-deck_iOS.entitlements
     scheme:
@@ -69,6 +69,8 @@ targets:
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
         TARGETED_DEVICE_FAMILY: "1"
+        DEVELOPMENT_TEAM: U7B45SUWS2
+        CODE_SIGN_STYLE: Automatic
       groups: [app]
     dependencies:
       - framework: libapp.a

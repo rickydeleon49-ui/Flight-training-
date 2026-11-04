@@ -9,6 +9,25 @@ import { validateReleaseVersion } from "./check-release-version.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
+// Increase the integer iOS build number (CFBundleVersion) in project.yml and Info.plist.
+// Never touches the marketing version. `atLeast` lets the caller skip past a recorded upload.
+export function bumpIosBuildNumber(rootDir = ROOT, atLeast = 0) {
+  const iosYml = join(rootDir, "src-tauri/gen/apple/project.yml");
+  const iosPlist = join(rootDir, "src-tauri/gen/apple/her-flight-deck_iOS/Info.plist");
+  const plist = readFileSync(iosPlist, "utf8");
+  const match = plist.match(/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/);
+  if (!match || !/^\d+$/.test(match[1])) {
+    throw new Error(`iOS CFBundleVersion must be an integer, found ${match ? match[1] : "none"}`);
+  }
+  const next = Math.max(Number(match[1]), Number(atLeast) || 0) + 1;
+  writeFileSync(iosPlist, plist.replace(match[0], match[0].replace(`<string>${match[1]}</string>`, `<string>${next}</string>`)));
+  if (existsSync(iosYml)) {
+    const yml = readFileSync(iosYml, "utf8");
+    writeFileSync(iosYml, yml.replace(/^(\s*CFBundleVersion:\s*)"?\d+"?/m, `$1"${next}"`));
+  }
+  return next;
+}
+
 export function bumpVersions(version, rootDir = ROOT, options = {}) {
   const validation = validateReleaseVersion(version);
   if (!validation.valid) {
@@ -133,8 +152,17 @@ export function bumpVersions(version, rootDir = ROOT, options = {}) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const version = process.argv[2];
+  if (version === "--build") {
+    try {
+      console.log(bumpIosBuildNumber(ROOT, process.argv[3]));
+    } catch (err) {
+      console.error(`::error::${err.message}`);
+      exit(1);
+    }
+    exit(0);
+  }
   if (!version) {
-    console.error("Usage: node scripts/bump-version.mjs <version>");
+    console.error("Usage: node scripts/bump-version.mjs <version> | --build [atLeast]");
     exit(1);
   }
   try {
