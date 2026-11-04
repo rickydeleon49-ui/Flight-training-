@@ -26,6 +26,7 @@ pub mod extraction;
 mod phone_activity;
 mod phone_work;
 mod safety_notices;
+mod sync;
 
 /// Counts requested allocation bytes; capped only in the extraction worker.
 #[global_allocator]
@@ -77,6 +78,8 @@ mod study_export;
 mod study_packet;
 mod study_page_sources;
 mod study_sets;
+#[cfg(test)]
+mod sync_tests;
 mod visual_cards;
 mod visual_pdf;
 mod visual_photo;
