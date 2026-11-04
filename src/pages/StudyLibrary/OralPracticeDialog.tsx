@@ -11,6 +11,7 @@ import { ORAL_MAX_ANSWER, oralNoteDraft, oralQuestionText, type OralText } from 
 import { useAppData } from "@/state/AppDataContext";
 
 type Step = "answer" | "reveal";
+type FinishAction = "close" | "next" | "note";
 
 /**
  * Practise her saved scenarios one at a time. Once she has shown the points,
@@ -43,6 +44,9 @@ export function OralPracticeDialog({
   const [revealedAt, setRevealedAt] = useState<string | null>(null);
   const [earlier, setEarlier] = useState<OralAnswer[]>([]);
   const [confirming, setConfirming] = useState<string | "all" | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [retryAction, setRetryAction] = useState<FinishAction | null>(null);
+  const savingRef = useRef(false);
   const revealRef = useRef<HTMLHeadingElement>(null);
 
   const startAt = (at: number) => {
@@ -54,6 +58,7 @@ export function OralPracticeDialog({
     setAsking(false);
     setRevealedAt(null);
     setConfirming(null);
+    setRetryAction(null);
   };
   useEffect(() => {
     if (open) startAt(startIndex);
@@ -78,10 +83,10 @@ export function OralPracticeDialog({
   }, [open, scenarioId, repositories, dataRevision]);
 
   /** Keep this practice once she has shown the points and written or ticked something. */
-  const keepAnswer = () => {
-    if (!scenario || step !== "reveal" || !revealedAt) return;
+  const keepAnswer = async (): Promise<boolean> => {
+    if (!scenario || step !== "reveal" || !revealedAt) return true;
     const ticked = coveredIndexes(covered);
-    if (!answer.trim() && ticked.length === 0) return;
+    if (!answer.trim() && ticked.length === 0) return true;
     const input = {
       scenarioId: scenario.id,
       versionId: scenario.versionId,
@@ -90,13 +95,10 @@ export function OralPracticeDialog({
       covered: ticked,
       revealedAt,
     };
+    const result = await mutate((repos) => repos.oralAnswers.finish(input));
+    if (result === null) return false;
     setRevealedAt(null);
-    void mutate((repos) => repos.oralAnswers.finish(input));
-  };
-  const close = () => {
-    keepAnswer();
-    startAt(startIndex);
-    onClose();
+    return true;
   };
   if (!scenario) return null;
   const points = scenario.points;
@@ -130,33 +132,47 @@ export function OralPracticeDialog({
     if (result !== null) setAsked(true);
   };
 
-  const writeNote = () => {
-    const draft = oralNoteDraft(text());
-    close();
-    navigate("/notes", { state: { noteDraft: draft } });
+  const finish = async (action: FinishAction) => {
+    // React state alone does not lock two clicks in the same event batch.
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setRetryAction(null);
+    try {
+      if (!(await keepAnswer())) {
+        setRetryAction(action);
+        return;
+      }
+      const draft = action === "note" ? oralNoteDraft(text()) : null;
+      startAt(action === "next" ? index + 1 : startIndex);
+      if (action !== "next") onClose();
+      if (draft) navigate("/notes", { state: { noteDraft: draft } });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
+  const close = () => { void finish("close"); };
 
   const hasNext = index < scenarios.length - 1;
   const footer =
     step === "answer" ? (
       <>
-        <Button onClick={close}>Cancel</Button>
+        <Button onClick={close} disabled={saving}>Cancel</Button>
         <Button variant="primary" onClick={reveal}>
           Show discussion points
         </Button>
       </>
     ) : (
       <>
-        <Button variant={hasNext ? "secondary" : "primary"} onClick={close}>
+        <Button variant={hasNext ? "secondary" : "primary"} onClick={close} disabled={saving}>
           Done
         </Button>
         {hasNext ? (
           <Button
             variant="primary"
-            onClick={() => {
-              keepAnswer();
-              startAt(index + 1);
-            }}
+            disabled={saving}
+            onClick={() => void finish("next")}
           >
             Next scenario
           </Button>
@@ -165,8 +181,14 @@ export function OralPracticeDialog({
     );
 
   return (
-    <Dialog open={open} onClose={close} title="Practice an oral question" footer={footer}>
+    <Dialog open={open} onClose={close} title="Practice an oral question" footer={footer} dismissible={!saving}>
       <div className="stack stack--3">
+        {retryAction ? (
+          <div role="alert">
+            <p>Couldn't save your answer. Your answer and ticks are still here.</p>
+            <Button onClick={() => void finish(retryAction)} disabled={saving}>Retry</Button>
+          </div>
+        ) : null}
         <p className="wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>
           {scenario.prompt}
         </p>
@@ -201,10 +223,7 @@ export function OralPracticeDialog({
                     const line = oralAnswerFirstLine(kept.answer) || "(answered out loud)";
                     return (
                       <li key={kept.id} className="stack stack--1">
-                        <p className="small wrap-anywhere">
-                          <span className="muted">{date} · </span>
-                          {line}
-                        </p>
+                        <EarlierAnswer kept={kept} date={date} line={line} />
                         {confirming === kept.id ? (
                           <div className="row row--wrap row--gap-2" role="group" aria-label="Delete this answer?">
                             <Button size="small" variant="danger" onClick={() => {
@@ -273,6 +292,7 @@ export function OralPracticeDialog({
                 <Checkbox
                   key={at}
                   checked={Boolean(covered[at])}
+                  disabled={saving}
                   strikethrough={false}
                   onChange={(checked) =>
                     setCovered((current) => current.map((value, i) => (i === at ? checked : value)))
@@ -283,10 +303,10 @@ export function OralPracticeDialog({
             </div>
             <p className="tiny muted">Your own outline. Check it with your instructor and current FAA material.</p>
             <div className="row row--wrap row--gap-2">
-              <Button variant="secondary" onClick={() => void ask()} disabled={asking || asked}>
+              <Button variant="secondary" onClick={() => void ask()} disabled={saving || asking || asked}>
                 Ask my instructor
               </Button>
-              <Button variant="secondary" onClick={writeNote}>
+              <Button variant="secondary" onClick={() => void finish("note")} disabled={saving}>
                 Write a note
               </Button>
             </div>
@@ -299,5 +319,28 @@ export function OralPracticeDialog({
         )}
       </div>
     </Dialog>
+  );
+}
+
+/** Only load the full reading into the page when she opens this answer. */
+function EarlierAnswer({ kept, date, line }: { kept: OralAnswer; date: string; line: string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
+      <summary className="small wrap-anywhere">
+        <span className="muted">{date} · </span>{line}
+      </summary>
+      {expanded ? (
+        <>
+          <p className="small wrap-anywhere" style={{ whiteSpace: "pre-wrap" }}>{kept.answer || "(answered out loud)"}</p>
+          <p className="tiny muted">Points you covered</p>
+          {kept.covered.length ? (
+            <ul className="small wrap-anywhere">
+              {kept.covered.map((at) => <li key={at} style={{ whiteSpace: "pre-wrap" }}>{kept.points[at]}</li>)}
+            </ul>
+          ) : <p className="small muted">No points ticked.</p>}
+        </>
+      ) : null}
+    </details>
   );
 }

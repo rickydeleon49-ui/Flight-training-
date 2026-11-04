@@ -11,6 +11,8 @@ export interface OralAnswer {
   scenarioId: string;
   versionId: string;
   versionNumber: number;
+  /** Discussion points from this answer's frozen scenario version. */
+  points: string[];
   answer: string;
   /** Indexes of the points she ticked in that frozen version. */
   covered: number[];
