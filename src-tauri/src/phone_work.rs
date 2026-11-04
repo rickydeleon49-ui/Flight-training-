@@ -14,7 +14,7 @@ pub(crate) const PHONE_WORK_FILE: &str = "phone-work.json";
 const DB_FILE: &str = "her-flight-deck.db";
 
 /// (table, timestamp column) for the kinds of phone-made work.
-const KINDS: [(&str, &str); 7] = [
+pub(crate) const KINDS: [(&str, &str); 7] = [
     ("card_review_events", "reviewed_at"),
     ("practice_attempts", "started_at"),
     ("material_bookmarks", "updated_at"),

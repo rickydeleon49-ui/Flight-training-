@@ -44,6 +44,7 @@ import materialVideoLinks from "../../src-tauri/migrations/0029_material_video_l
 import studentPilotSteps from "../../src-tauri/migrations/0030_student_pilot_steps.sql?raw";
 import faaDownloads from "../../src-tauri/migrations/0031_faa_downloads.sql?raw";
 import oralAnswers from "../../src-tauri/migrations/0032_oral_answers.sql?raw";
+import syncLedger from "../../src-tauri/migrations/0033_sync_ledger.sql?raw";
 
 export interface Migration {
   version: number;
@@ -84,6 +85,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 30, description: "student_pilot_steps", sql: studentPilotSteps },
   { version: 31, description: "faa_downloads", sql: faaDownloads },
   { version: 32, description: "oral_answers", sql: oralAnswers },
+  { version: 33, description: "sync_ledger", sql: syncLedger },
 ];
 
 /**

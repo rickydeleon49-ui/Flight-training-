@@ -15,7 +15,7 @@ use crate::sync::replay::{event_from_row, order_key, replay_item, ReplayError, R
 use crate::sync::tables::{read_row_json, table, MergeRule, SYNC_TABLES};
 
 const NOW: &str = "2026-11-04T12:00:00.000Z";
-const SCHEMA: i64 = 32;
+const SCHEMA: i64 = crate::CURRENT_SCHEMA_VERSION;
 
 fn migrated() -> Connection {
     let conn = Connection::open_in_memory().unwrap();
@@ -843,5 +843,624 @@ mod replay_properties {
             let got = replay_item(&events, 0);
             prop_assert!(matches!(got, Ok(Some(_))), "{:?}", got);
         }
+    }
+}
+
+/// One minimal plain-SQL row per synced table, parents first: (table, id, insert, update).
+/// `T` is the timestamp; ids end in a digit so a suffix can make a second copy.
+const ROWS: &[(&str, &str, &str, &str)] = &[
+    ("study_materials", "m1", "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','Mat','T','T')", "UPDATE study_materials SET title = 'Mat2'"),
+    ("material_content_identities", "m1", "INSERT INTO material_content_identities (material_id,content_sha256,total_pages,verified_at) VALUES ('m1','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',3,'T')", "UPDATE material_content_identities SET total_pages = 4"),
+    ("card_review_generations", "m1", "INSERT INTO card_review_generations (source_material_id,generation) VALUES ('m1',1)", "UPDATE card_review_generations SET generation = 2"),
+    ("card_versions", "v1", "INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES ('v1','m1','h',1,'import','T',1)", "UPDATE card_versions SET card_count = 2"),
+    ("card_version_origins", "v1", "INSERT INTO card_version_origins (version_id,origin) VALUES ('v1','manual')", "UPDATE card_version_origins SET origin = 'mixed'"),
+    ("card_items", "i1", "INSERT INTO card_items (id,version_id,ordinal,front,back) VALUES ('i1','v1',0,'f','b')", "UPDATE card_items SET back = 'b2'"),
+    ("card_item_origins", "i1", "INSERT INTO card_item_origins (item_id,origin) VALUES ('i1','user')", "UPDATE card_item_origins SET origin = 'instructor'"),
+    ("card_review_events", "e1", "INSERT INTO card_review_events (id,item_id,generation,rating,reviewed_at,scheduler_version,prior_state_json,next_state_json) VALUES ('e1','i1',0,'good','T','s','{}','{}')", "UPDATE card_review_events SET rating = 'easy'"),
+    ("card_review_state", "i1", "INSERT INTO card_review_state (item_id,source_material_id,scheduler_version,step,revision) VALUES ('i1','m1','s',-1,1)", "UPDATE card_review_state SET revision = 2"),
+    ("practice_tests", "m1", "INSERT INTO practice_tests (source_material_id,generated_at,updated_at) VALUES ('m1','T','T')", "UPDATE practice_tests SET title = 't'"),
+    ("practice_test_versions", "pv1", "INSERT INTO practice_test_versions (id,source_material_id,history_key,source_material_title,content_hash,created_at) VALUES ('pv1','m1','hk','Mat','h','T')", "UPDATE practice_test_versions SET title = 't'"),
+    ("practice_test_items", "pi1", "INSERT INTO practice_test_items (id,version_id,ordinal,question_text,options_json,correct_index) VALUES ('pi1','pv1',0,'q','[\"a\",\"b\"]',0)", "UPDATE practice_test_items SET explanation = 'x'"),
+    ("practice_item_origins", "pi1", "INSERT INTO practice_item_origins (item_id,origin) VALUES ('pi1','user')", "UPDATE practice_item_origins SET origin = 'instructor'"),
+    ("practice_attempts", "a1", "INSERT INTO practice_attempts (id,version_id,source_material_id,source_material_title,started_at,status,total_questions,answered_count,correct_count) VALUES ('a1','pv1','m1','Mat','T','in_progress',1,1,1)", "UPDATE practice_attempts SET answered_count = 1"),
+    ("practice_responses", "r1", "INSERT INTO practice_responses (id,attempt_id,item_id,selected_index,is_correct,answered_at) VALUES ('r1','a1','pi1',0,1,'T')", "UPDATE practice_responses SET selected_index = 1"),
+    ("ai_study_sets", "m1", "INSERT INTO ai_study_sets (source_material_id,generated_at,updated_at) VALUES ('m1','T','T')", "UPDATE ai_study_sets SET title = 't'"),
+    ("study_set_history", "h1", "INSERT INTO study_set_history (id,material_id,kind,reason,previous_json,provider,created_at) VALUES ('h1','m1','study_set','edit','{}','gemini','T')", "UPDATE study_set_history SET provider = 'import'"),
+    ("material_reading_state", "m1", "INSERT INTO material_reading_state (material_id,last_requested_page,updated_at) VALUES ('m1',1,'T')", "UPDATE material_reading_state SET last_requested_page = 2"),
+    ("material_bookmarks", "b1", "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b1','m1',1,'t','T','T')", "UPDATE material_bookmarks SET title = 'u'"),
+];
+
+const OLD: &str = "2026-10-01T10:00:00.000Z";
+const NEW: &str = "2026-11-02T10:00:00.000Z";
+const BASELINE: &str = "2026-10-15T10:00:00.000Z";
+
+/// Rewrites the ids of `ROWS` SQL for a second copy with `suffix`, at time `ts`.
+fn graph_sql(sql: &str, suffix: &str, ts: &str) -> String {
+    let mut out = sql.replace("'T'", &format!("'{ts}'"));
+    for (_, id, _, _) in ROWS {
+        out = out.replace(&format!("'{id}'"), &format!("'{id}{suffix}'"));
+    }
+    out
+}
+
+fn insert_graph(conn: &Connection, suffix: &str, ts: &str) {
+    for (name, _, insert, _) in ROWS {
+        conn.execute(&graph_sql(insert, suffix, ts), [])
+            .unwrap_or_else(|e| panic!("insert into {name}: {e}"));
+    }
+}
+
+/// Writes without the triggers logging, as data that predates the ledger.
+fn insert_graph_unlogged(conn: &Connection, suffix: &str, ts: &str) {
+    conn.execute(
+        "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+        [],
+    )
+    .unwrap();
+    insert_graph(conn, suffix, ts);
+    conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+        .unwrap();
+}
+
+fn unlogged(conn: &Connection, sql: &str) {
+    conn.execute(
+        "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+        [],
+    )
+    .unwrap();
+    conn.execute(sql, []).unwrap();
+    conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+        .unwrap();
+}
+
+fn count(conn: &Connection, sql: &str) -> i64 {
+    conn.query_row(sql, [], |r| r.get(0)).unwrap()
+}
+
+struct TempDir(std::path::PathBuf);
+
+impl TempDir {
+    fn new(label: &str) -> Self {
+        let dir = std::env::temp_dir().join(format!(
+            "hfd-sync-test-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        Self(dir)
+    }
+}
+
+impl Drop for TempDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+mod ledger {
+    use super::*;
+
+    fn ops(conn: &Connection, table: &str, id: &str) -> Vec<String> {
+        let mut stmt = conn
+            .prepare(
+                "SELECT op FROM local_changes WHERE table_name = ?1 AND row_id = ?2 ORDER BY seq",
+            )
+            .unwrap();
+        stmt.query_map([table, id], |r| r.get(0))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect()
+    }
+
+    fn deleted(conn: &Connection, table: &str, id: &str) -> Option<i64> {
+        conn.query_row(
+            "SELECT deleted FROM sync_row_meta WHERE table_name = ?1 AND row_id = ?2",
+            [table, id],
+            |r| r.get(0),
+        )
+        .ok()
+    }
+
+    #[test]
+    fn rows_cover_the_registry_in_order() {
+        let names: Vec<&str> = ROWS.iter().map(|r| r.0).collect();
+        let registry: Vec<&str> = SYNC_TABLES.iter().map(|t| t.name).collect();
+        assert_eq!(names, registry);
+    }
+
+    #[test]
+    fn every_registry_table_has_insert_update_delete_triggers() {
+        let conn = migrated();
+        for t in SYNC_TABLES {
+            for op in ["insert", "update", "delete"] {
+                let n = count(
+                    &conn,
+                    &format!(
+                        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = 'trg_sync_{}_{op}' AND tbl_name = '{}'",
+                        t.name, t.name
+                    ),
+                );
+                assert_eq!(n, 1, "{} {op}", t.name);
+            }
+        }
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 57);
+    }
+
+    #[test]
+    fn no_sync_trigger_targets_an_unlisted_table() {
+        let conn = migrated();
+        let mut stmt = conn
+            .prepare("SELECT tbl_name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'")
+            .unwrap();
+        let targets: Vec<String> = stmt
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect();
+        for target in targets {
+            assert!(table(&target).is_some(), "{target}");
+        }
+    }
+
+    #[test]
+    fn ledger_records_insert_update_delete_for_every_registry_table() {
+        let conn = migrated();
+        insert_graph(&conn, "", NOW);
+        for (name, id, _, update) in ROWS {
+            conn.execute(update, [])
+                .unwrap_or_else(|e| panic!("update {name}: {e}"));
+            assert_eq!(ops(&conn, name, id), ["insert", "update"], "{name}");
+            assert_eq!(deleted(&conn, name, id), Some(0), "{name}");
+        }
+        for (name, id, _, _) in ROWS.iter().rev() {
+            let pk = table(name).unwrap().primary_key;
+            conn.execute(&format!("DELETE FROM {name} WHERE {pk} = '{id}'"), [])
+                .unwrap_or_else(|e| panic!("delete {name}: {e}"));
+            assert_eq!(
+                ops(&conn, name, id),
+                ["insert", "update", "delete"],
+                "{name}"
+            );
+            assert_eq!(deleted(&conn, name, id), Some(1), "{name}");
+        }
+        insert_graph(&conn, "", NOW);
+        for (name, id, _, _) in ROWS {
+            assert_eq!(deleted(&conn, name, id), Some(0), "{name} re-insert");
+        }
+    }
+
+    #[test]
+    fn the_guard_row_silences_every_trigger() {
+        let conn = migrated();
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+        insert_graph(&conn, "", NOW);
+        for (_, _, _, update) in ROWS {
+            conn.execute(update, []).unwrap();
+        }
+        conn.execute("DELETE FROM study_materials", []).unwrap();
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), 0);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sync_row_meta"), 0);
+        conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        insert_graph(&conn, "", NOW);
+        assert!(count(&conn, "SELECT COUNT(*) FROM local_changes") > 0);
+    }
+
+    #[test]
+    fn device_id_comes_from_app_metadata() {
+        let conn = migrated();
+        conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a','T','T')", []).unwrap();
+        let first: Option<String> = conn
+            .query_row(
+                "SELECT device_id FROM sync_row_meta WHERE row_id = 'm1'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(first, None);
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', 'dev-1')",
+            [],
+        )
+        .unwrap();
+        conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m2','b','T','T')", []).unwrap();
+        let second: Option<String> = conn
+            .query_row(
+                "SELECT device_id FROM sync_row_meta WHERE row_id = 'm2'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(second.as_deref(), Some("dev-1"));
+    }
+
+    #[test]
+    fn upgrading_a_populated_schema_32_database_records_nothing() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        let all = crate::migrations();
+        for m in all.iter().filter(|m| m.version <= 32) {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        insert_graph(&conn, "", NOW);
+        for m in all.iter().filter(|m| m.version == 33) {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), 0);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sync_row_meta"), 0);
+        conn.execute("UPDATE study_materials SET title = 'later'", [])
+            .unwrap();
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), 1);
+    }
+
+    #[test]
+    fn a_backup_of_schema_33_passes_restore_verification_with_all_triggers() {
+        let conn = migrated();
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);",
+        )
+        .unwrap();
+        for m in crate::migrations() {
+            conn.execute(
+                "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+                [m.version],
+            )
+            .unwrap();
+        }
+        crate::backup::verify_application_connection(&conn).unwrap();
+        let dir = TempDir::new("backup");
+        let path = dir.0.join("copy.db");
+        conn.execute("VACUUM INTO ?1", [path.to_str().unwrap()])
+            .unwrap();
+        crate::backup::verify_application_database(&path).unwrap();
+        let copy = Connection::open(&path).unwrap();
+        assert_eq!(count(&copy, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 57);
+        for table in ["local_changes", "sync_row_meta", "sync_applied"] {
+            assert_eq!(
+                count(
+                    &copy,
+                    &format!("SELECT COUNT(*) FROM sqlite_master WHERE name = '{table}'")
+                ),
+                1
+            );
+        }
+    }
+}
+
+mod export {
+    use super::*;
+    use crate::sync::export::{export_changes_in, exported_through_seq, set_exported_through_seq};
+
+    const DEV: &str = "11111111-2222-4333-8444-555555555555";
+
+    fn exp(conn: &mut Connection, since: i64) -> Option<crate::sync::export::ExportedChanges> {
+        export_changes_in(conn, DEV, since, "0.0.0-test", NOW).unwrap()
+    }
+
+    fn decoded(file: &crate::sync::changeset::EncodedChangeFile) -> ChangeSet {
+        decode(&file.bytes, &file.file_name, SCHEMA, NOW)
+            .unwrap()
+            .set
+    }
+
+    /// seq 1 material insert, 2 b1 insert, 3 b1 update, 4 b2 insert, 5 b2 delete.
+    fn ledger() -> Connection {
+        let conn = migrated();
+        conn.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a','T','T')", []).unwrap();
+        for id in ["b1", "b2"] {
+            conn.execute(&format!("INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('{id}','m1',1,'t','T','T')"), []).unwrap();
+            if id == "b1" {
+                conn.execute(
+                    "UPDATE material_bookmarks SET title = 'u' WHERE id = 'b1'",
+                    [],
+                )
+                .unwrap();
+            }
+        }
+        conn.execute("DELETE FROM material_bookmarks WHERE id = 'b2'", [])
+            .unwrap();
+        conn
+    }
+
+    #[test]
+    fn export_coalesces_to_the_last_op_per_row() {
+        let mut conn = ledger();
+        let out = exp(&mut conn, 0).unwrap();
+        assert_eq!((out.from_seq, out.to_seq, out.change_count), (1, 5, 3));
+        let set = decoded(&out.file);
+        let got: Vec<(String, Op)> = set
+            .changes
+            .iter()
+            .map(|c| (c.row_id.clone(), c.op))
+            .collect();
+        assert_eq!(
+            got,
+            [
+                ("m1".to_string(), Op::Insert),
+                ("b1".to_string(), Op::Update),
+                ("b2".to_string(), Op::Delete)
+            ]
+        );
+        assert_eq!(set.schema_version, SCHEMA);
+    }
+
+    #[test]
+    fn export_uses_meta_changed_at_and_the_last_seq() {
+        let mut conn = ledger();
+        conn.execute(
+            "UPDATE sync_row_meta SET changed_at = '2026-11-03T01:02:03.004Z' WHERE row_id = 'b1'",
+            [],
+        )
+        .unwrap();
+        let set = decoded(&exp(&mut conn, 0).unwrap().file);
+        let b1 = set.changes.iter().find(|c| c.row_id == "b1").unwrap();
+        assert_eq!(b1.seq, 3);
+        assert_eq!(b1.changed_at, "2026-11-03T01:02:03.004Z");
+        assert_eq!(b1.row.as_ref().unwrap()["title"], json!("u"));
+    }
+
+    #[test]
+    fn export_of_a_delete_carries_no_row() {
+        let mut conn = ledger();
+        let set = decoded(&exp(&mut conn, 0).unwrap().file);
+        let b2 = set.changes.iter().find(|c| c.row_id == "b2").unwrap();
+        assert_eq!(b2.op, Op::Delete);
+        assert!(b2.row.is_none());
+    }
+
+    #[test]
+    fn export_returns_none_when_nothing_is_new() {
+        let mut conn = migrated();
+        assert!(exp(&mut conn, 0).is_none());
+        let mut conn = ledger();
+        assert!(exp(&mut conn, 5).is_none());
+        assert!(exp(&mut conn, 9).is_none());
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), 5);
+    }
+
+    #[test]
+    fn re_export_from_an_earlier_watermark_is_byte_identical() {
+        let mut conn = ledger();
+        let first = exp(&mut conn, 0).unwrap();
+        let again = exp(&mut conn, 0).unwrap();
+        assert_eq!(first.file.bytes, again.file.bytes);
+        assert_eq!(first.file.file_name, again.file.file_name);
+        let partial = exp(&mut conn, 2).unwrap();
+        assert_ne!(partial.file.bytes, first.file.bytes);
+        let after = exp(&mut conn, 0).unwrap();
+        assert_eq!(first.file.bytes, after.file.bytes);
+    }
+
+    #[test]
+    fn a_write_during_export_lands_in_the_next_file() {
+        let dir = TempDir::new("export");
+        let path = dir.0.join("db.sqlite");
+        let mut a = Connection::open(&path).unwrap();
+        for m in crate::migrations() {
+            a.execute_batch(m.sql).unwrap();
+        }
+        a.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a','T','T')", []).unwrap();
+        let first = export_changes_in(&mut a, DEV, 0, "0.0.0-test", NOW)
+            .unwrap()
+            .unwrap();
+        let first_bytes = first.file.bytes.clone();
+        let b = Connection::open(&path).unwrap();
+        b.execute("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m2','b','T','T')", []).unwrap();
+        let second = export_changes_in(&mut a, DEV, first.to_seq, "0.0.0-test", NOW)
+            .unwrap()
+            .unwrap();
+        let set = decoded(&second.file);
+        assert_eq!(set.changes.len(), 1);
+        assert_eq!(set.changes[0].row_id, "m2");
+        assert_eq!(set.from_seq, first.to_seq + 1);
+        assert_eq!(first.file.bytes, first_bytes);
+        assert_eq!(decoded(&first.file).changes.len(), 1);
+    }
+
+    #[test]
+    fn exported_through_seq_round_trips() {
+        let conn = migrated();
+        assert_eq!(exported_through_seq(&conn).unwrap(), 0);
+        set_exported_through_seq(&conn, 7).unwrap();
+        set_exported_through_seq(&conn, 9).unwrap();
+        assert_eq!(exported_through_seq(&conn).unwrap(), 9);
+    }
+}
+
+mod bootstrap {
+    use super::*;
+    use crate::sync::bootstrap::bootstrap_in;
+    use std::collections::HashSet;
+
+    fn root_with_baseline(baseline: Option<&str>) -> TempDir {
+        let dir = TempDir::new("boot");
+        if let Some(b) = baseline {
+            std::fs::write(
+                dir.0.join("phone-work.json"),
+                format!("{{\"baselineAt\":\"{b}\"}}"),
+            )
+            .unwrap();
+        }
+        dir
+    }
+
+    fn ledger_ids(conn: &Connection) -> HashSet<(String, String)> {
+        let mut stmt = conn
+            .prepare("SELECT table_name, row_id FROM sync_row_meta")
+            .unwrap();
+        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect()
+    }
+
+    fn has(set: &HashSet<(String, String)>, table: &str, id: &str) -> bool {
+        set.contains(&(table.to_string(), id.to_string()))
+    }
+
+    fn id_of(table: &str, suffix: &str) -> String {
+        format!("{}{suffix}", ROWS.iter().find(|r| r.0 == table).unwrap().1)
+    }
+
+    fn two_generations() -> Connection {
+        let conn = migrated();
+        insert_graph_unlogged(&conn, "o", OLD);
+        insert_graph_unlogged(&conn, "n", NEW);
+        conn
+    }
+
+    #[test]
+    fn bootstrap_seeds_only_rows_newer_than_the_baseline() {
+        let mut conn = two_generations();
+        let dir = root_with_baseline(Some(BASELINE));
+        let out = bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        assert!(!out.skipped);
+        let ids = ledger_ids(&conn);
+        assert_eq!(out.seeded, ids.len());
+        for (table, _) in crate::phone_work::KINDS {
+            assert!(has(&ids, table, &id_of(table, "n")), "{table} new");
+            assert!(!has(&ids, table, &id_of(table, "o")), "{table} old");
+        }
+        assert!(has(&ids, "card_review_state", "i1n"));
+        assert!(!has(&ids, "card_review_state", "i1o"));
+        let stamp: String = conn
+            .query_row("SELECT changed_at FROM sync_row_meta WHERE table_name = 'material_bookmarks' AND row_id = 'b1n'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(stamp, NEW);
+    }
+
+    #[test]
+    fn bootstrap_without_a_baseline_seeds_every_row() {
+        let mut conn = two_generations();
+        let dir = root_with_baseline(None);
+        bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        let ids = ledger_ids(&conn);
+        for (name, id, _, _) in ROWS {
+            for suffix in ["o", "n"] {
+                assert!(has(&ids, name, &format!("{id}{suffix}")), "{name}{suffix}");
+            }
+        }
+    }
+
+    #[test]
+    fn bootstrap_runs_once() {
+        let mut conn = two_generations();
+        let dir = root_with_baseline(Some(BASELINE));
+        let first = bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        assert!(first.seeded > 0);
+        unlogged(&conn, &graph_sql(ROWS[0].2, "z", NEW));
+        let second = bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        assert!(second.skipped);
+        assert_eq!(second.seeded, 0);
+        assert!(!has(&ledger_ids(&conn), "study_materials", "m1z"));
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_bootstrapped'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn bootstrap_skips_rows_already_in_the_ledger() {
+        let mut conn = migrated();
+        insert_graph(&conn, "n", NEW);
+        let before = count(&conn, "SELECT COUNT(*) FROM local_changes");
+        let dir = root_with_baseline(None);
+        let out = bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        assert_eq!(out.seeded, 0);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), before);
+    }
+
+    #[test]
+    fn bootstrap_is_a_no_op_off_the_phone() {
+        let mut conn = two_generations();
+        let dir = root_with_baseline(None);
+        let out = bootstrap_in(&dir.0, &mut conn, false, NOW).unwrap();
+        assert!(out.skipped);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM local_changes"), 0);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_bootstrapped'"
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn an_attempt_started_before_the_baseline_but_completed_after_is_seeded() {
+        let mut conn = two_generations();
+        unlogged(&conn, &format!("UPDATE practice_attempts SET status = 'completed', completed_at = '{NEW}' WHERE id = 'a1o'"));
+        let dir = root_with_baseline(Some(BASELINE));
+        bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        let ids = ledger_ids(&conn);
+        assert!(has(&ids, "practice_attempts", "a1o"));
+        assert!(!has(&ids, "practice_responses", "r1o"));
+    }
+
+    #[test]
+    fn a_response_answered_after_the_baseline_is_seeded_by_its_own_time() {
+        let mut conn = two_generations();
+        unlogged(
+            &conn,
+            &format!("UPDATE practice_responses SET answered_at = '{NEW}' WHERE id = 'r1o'"),
+        );
+        let dir = root_with_baseline(Some(BASELINE));
+        bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        let ids = ledger_ids(&conn);
+        assert!(has(&ids, "practice_responses", "r1o"));
+        assert!(!has(&ids, "practice_attempts", "a1o"));
+    }
+
+    #[test]
+    fn foreign_key_parents_and_children_of_new_versions_are_seeded() {
+        let mut conn = two_generations();
+        let dir = root_with_baseline(Some(BASELINE));
+        bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        let ids = ledger_ids(&conn);
+        for (table, id) in [
+            ("card_versions", "v1n"),
+            ("card_version_origins", "v1n"),
+            ("card_items", "i1n"),
+            ("card_item_origins", "i1n"),
+            ("practice_test_versions", "pv1n"),
+            ("practice_test_items", "pi1n"),
+            ("practice_item_origins", "pi1n"),
+        ] {
+            assert!(has(&ids, table, id), "{table}");
+        }
+        assert!(!has(&ids, "card_items", "i1o"));
+        assert!(!has(&ids, "practice_test_items", "pi1o"));
+    }
+
+    #[test]
+    fn a_reset_counter_above_zero_is_always_seeded_at_now() {
+        let mut conn = two_generations();
+        unlogged(
+            &conn,
+            "UPDATE card_review_generations SET generation = 0 WHERE source_material_id = 'm1n'",
+        );
+        let dir = root_with_baseline(Some(BASELINE));
+        bootstrap_in(&dir.0, &mut conn, true, NOW).unwrap();
+        let ids = ledger_ids(&conn);
+        assert!(has(&ids, "card_review_generations", "m1o"));
+        assert!(!has(&ids, "card_review_generations", "m1n"));
+        let stamp: String = conn
+            .query_row(
+                "SELECT changed_at FROM sync_row_meta WHERE table_name = 'card_review_generations'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(stamp, NOW);
     }
 }

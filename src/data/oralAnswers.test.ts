@@ -150,13 +150,13 @@ describe("oral answers verifier (schema 32)", () => {
   });
 
   it("is registered as add-only migration 32 on desktop and browser; a schema-31 library upgrades empty", async () => {
-    expect(MIGRATIONS.at(-1)).toMatchObject({ version: 32, description: "oral_answers" });
+    expect(MIGRATIONS.find((m) => m.version === 32)).toMatchObject({ version: 32, description: "oral_answers" });
     const native = readFileSync("src-tauri/src/lib.rs", "utf8");
-    expect(native).toMatch(/CURRENT_SCHEMA_VERSION: i64 = 32/);
+    expect(native).toMatch(new RegExp(`CURRENT_SCHEMA_VERSION: i64 = ${MIGRATIONS.length}`));
     expect(native).toMatch(/version: 32,\s+description: "oral_answers",\s+sql: include_str!\("\.\.\/migrations\/0032_oral_answers.sql"\)/);
     const { DatabaseSync } = await import(/* @vite-ignore */ nativeSqlite);
     const handle = new DatabaseSync(":memory:");
-    await applyMigrations((sql) => handle.exec(sql), new Set([32]));
+    await applyMigrations((sql) => handle.exec(sql), new Set([32, 33]));
     expect(handle.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'oral_answers'").get()).toEqual({ n: 0 });
     await applyMigrations((sql) => handle.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 31).map((m) => m.version)));
     expect(handle.prepare("SELECT COUNT(*) AS n FROM oral_answers").get()).toEqual({ n: 0 });
