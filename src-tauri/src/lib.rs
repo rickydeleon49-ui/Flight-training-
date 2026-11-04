@@ -450,6 +450,7 @@ pub fn run() {
             backup::exit_for_restore,
             phone_activity::phone_activity_summary,
             phone_work::unsaved_phone_work,
+            phone_work::save_phone_work,
             weather::weather_session,
             weather::get_airport_weather,
             extraction::service::offline_content_readiness,

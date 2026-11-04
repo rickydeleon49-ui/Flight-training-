@@ -238,8 +238,23 @@ export function unsavedPhoneWorkTotal(work: Pick<UnsavedPhoneWork, "reviews" | "
   return work.reviews + work.tests + work.bookmarks + work.readingPositions;
 }
 
-/** Mirrors the sentence the app itself refuses with (src-tauri/src/phone_work.rs). */
-export function unsavedPhoneWorkSentence(
+export interface SavedPhoneWork {
+  fileName: string;
+  savedAt: string;
+  fileBytes: number;
+}
+
+export async function savePhoneWork(): Promise<SavedPhoneWork> {
+  if (!isTauri()) throw new Error("Only the phone saves its work this way.");
+  return invoke<SavedPhoneWork>("save_phone_work");
+}
+
+export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName">): string {
+  return `Saved in Files \u2192 Your Flight Deck \u2192 ${saved.fileName}.`;
+}
+
+/** "12 card reviews and 1 practice test", or null when nothing is unsaved. */
+export function unsavedPhoneWorkCounts(
   work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">,
 ): string | null {
   const part = (n: number, one: string, many: string) => (n === 0 ? null : n === 1 ? `1 ${one}` : `${n} ${many}`);
@@ -250,8 +265,16 @@ export function unsavedPhoneWorkSentence(
     part(work.readingPositions, "reading position", "reading positions"),
   ].filter((p): p is string => p !== null);
   if (parts.length === 0) return null;
-  const list = parts.length === 1 ? parts[0]!
+  return parts.length === 1 ? parts[0]!
     : parts.length === 2 ? `${parts[0]} and ${parts[1]}`
     : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+}
+
+/** Mirrors the sentence the app itself refuses with (src-tauri/src/phone_work.rs). */
+export function unsavedPhoneWorkSentence(
+  work: Pick<UnsavedPhoneWork, "reviews" | "tests" | "bookmarks" | "readingPositions">,
+): string | null {
+  const list = unsavedPhoneWorkCounts(work);
+  if (list === null) return null;
   return `This phone has ${list} that aren't saved anywhere else yet. Save my phone work first, then get your study material.`;
 }

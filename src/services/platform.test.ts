@@ -27,6 +27,7 @@ describe("platform", () => {
     expect(deviceCan().editStudyMaterial).toBe(true);
     expect(deviceCan().sharePrint).toBe(true);
     expect(deviceCan().getStudyMaterial).toBe(false);
+    expect(deviceCan().savePhoneWork).toBe(false);
     expect(deviceCan().pictureFromPhoto).toBe(false);
   });
 
@@ -36,6 +37,7 @@ describe("platform", () => {
     expect(isMacOS()).toBe(false);
     expect(deviceCan().renderPdfPage).toBe(false);
     expect(deviceCan().getStudyMaterial).toBe(true);
+    expect(deviceCan().savePhoneWork).toBe(true);
     expect(deviceCan().pictureFromPhoto).toBe(true);
     expect(deviceCan().importFiles).toBe(false);
     expect(deviceCan().generate).toBe(false);

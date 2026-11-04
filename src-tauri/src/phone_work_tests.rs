@@ -292,3 +292,192 @@ fn sentence_uses_plain_words() {
         assert!(!s.contains(word), "{word}");
     }
 }
+
+// ---- W-1: save my phone work ----
+
+fn sql_now(offset: &str) -> String {
+    Connection::open_in_memory()
+        .unwrap()
+        .query_row(
+            &format!("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '{offset}')"),
+            [],
+            |r| r.get::<_, String>(0),
+        )
+        .unwrap()
+}
+
+fn docs_in(container: &Path) -> PathBuf {
+    container.join("docs")
+}
+
+fn leftovers(dir: &Path) -> Vec<String> {
+    let mut found = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = entry.file_name().to_string_lossy().to_string();
+            if path.is_dir() {
+                found.extend(leftovers(&path));
+            } else if name.ends_with(".hfdbackup")
+                || name.ends_with(".tmp")
+                || name.ends_with(".replaced")
+                || name.ends_with(".writing")
+            {
+                found.push(name);
+            }
+        }
+    }
+    found
+}
+
+#[test]
+fn saving_writes_the_phone_copy_and_marks_everything_saved() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(&c);
+    let now = now_utc().unwrap();
+    let saved = save_phone_work_in(&root, &docs, "0.6.7", &now).unwrap();
+    let file = docs.join(PHONE_WORK_ARCHIVE);
+    assert!(file.is_file());
+    assert!(saved.file_bytes > 0);
+    assert_eq!(saved.file_name, PHONE_WORK_ARCHIVE);
+    assert!(crate::backup::inspect_archive(&root, &file, "0.6.7").is_ok());
+    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [0, 0, 0, 0]);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn baseline_moves_only_after_a_successful_save() {
+    for existing in [false, true] {
+        let c = scratch();
+        let root = root_in(&c);
+        one_of_each(&root, &sql_now("-1 hour"));
+        if existing {
+            write_baseline(&root, "2020-01-01T00:00:00.000Z");
+        }
+        let before = std::fs::read(root.join(PHONE_WORK_FILE)).ok();
+        let not_a_folder = c.join("docs-is-a-file");
+        std::fs::write(&not_a_folder, b"x").unwrap();
+        let now = now_utc().unwrap();
+        assert!(save_phone_work_in(&root, &not_a_folder, "0.6.7", &now).is_err());
+        assert_eq!(std::fs::read(root.join(PHONE_WORK_FILE)).ok(), before);
+        assert_eq!(before.is_some(), existing);
+        assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [1, 1, 1, 1]);
+        assert!(leftovers(&c).is_empty(), "{:?}", leftovers(&c));
+        std::fs::remove_dir_all(c).unwrap();
+    }
+}
+
+#[test]
+fn saving_again_replaces_the_previous_copy() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(&c);
+    save_phone_work_in(&root, &docs, "0.6.7", &now_utc().unwrap()).unwrap();
+    save_phone_work_in(&root, &docs, "0.6.7", &now_utc().unwrap()).unwrap();
+    let names: Vec<_> = std::fs::read_dir(&docs)
+        .unwrap()
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    assert_eq!(names, vec![PHONE_WORK_ARCHIVE.to_string()]);
+    assert!(crate::backup::inspect_archive(&root, &docs.join(PHONE_WORK_ARCHIVE), "0.6.7").is_ok());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn save_never_moves_the_baseline_backwards() {
+    let c = scratch();
+    let root = root_in(&c);
+    let ahead = sql_now("+1 hour");
+    record_baseline_in(&root, &ahead).unwrap();
+    save_phone_work_in(&root, &docs_in(&c), "0.6.7", &now_utc().unwrap()).unwrap();
+    let text = std::fs::read_to_string(root.join(PHONE_WORK_FILE)).unwrap();
+    assert!(text.contains(&ahead), "{text}");
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn a_row_written_during_the_snapshot_stays_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(
+        &root,
+        &format!(
+            "INSERT INTO card_review_events VALUES ('{}');",
+            sql_now("-1 hour")
+        ),
+    );
+    let now = now_utc().unwrap();
+    exec(
+        &root,
+        &format!(
+            "INSERT INTO card_review_events VALUES ('{}');",
+            sql_now("+1 second")
+        ),
+    );
+    save_phone_work_in(&root, &docs_in(&c), "0.6.7", &now).unwrap();
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().reviews, 1);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn work_done_after_a_save_is_unsaved_again() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, &sql_now("-1 hour"));
+    let docs = docs_in(&c);
+    save_phone_work_in(&root, &docs, "0.6.7", &now_utc().unwrap()).unwrap();
+    exec(
+        &root,
+        &format!(
+            "INSERT INTO card_review_events VALUES ('{}');",
+            sql_now("+1 minute")
+        ),
+    );
+    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [1, 0, 0, 0]);
+    assert!(refuse_unsaved(&root, true).is_err());
+    // A later "now" than the new row, as a real second save would have.
+    save_phone_work_in(&root, &docs, "0.6.7", &sql_now("+2 minutes")).unwrap();
+    assert!(refuse_unsaved(&root, true).is_ok());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn now_utc_is_rfc3339_utc() {
+    let now = now_utc().unwrap();
+    assert!(now.ends_with('Z'));
+    let parsed: Option<f64> = Connection::open_in_memory()
+        .unwrap()
+        .query_row("SELECT julianday(?1)", [&now], |r| r.get(0))
+        .unwrap();
+    assert!(parsed.is_some());
+}
+
+#[test]
+fn mac_refuses_the_phones_copy() {
+    assert_eq!(
+        refuse_phone_copy(Some("ios"), false).unwrap_err(),
+        "This is your iPhone's copy \u{2014} it can't replace what's on the Mac."
+    );
+    assert!(refuse_phone_copy(Some("ios"), true).is_ok());
+    assert!(refuse_phone_copy(Some("macos"), false).is_ok());
+    assert!(refuse_phone_copy(None, false).is_ok());
+}
+
+#[test]
+fn plain_words() {
+    let text = format!(
+        "{} {}",
+        refuse_phone_copy(Some("ios"), false).unwrap_err(),
+        PHONE_WORK_ARCHIVE
+    )
+    .to_lowercase();
+    for word in [
+        "sync", "ledger", "baseline", "database", "archive", "manifest", "restore",
+    ] {
+        assert!(!text.contains(word), "{word}");
+    }
+}

@@ -5355,6 +5355,7 @@ pub(crate) fn inspect_archive(
         serde_json::from_str(&json).map_err(|e| format!("The backup manifest is invalid: {e}"))?
     };
 
+    crate::phone_work::refuse_phone_copy(manifest.platform.as_deref(), cfg!(target_os = "ios"))?;
     if manifest.format != ARCHIVE_FORMAT
         || !matches!(
             manifest.format_version,
@@ -7247,13 +7248,7 @@ fn clear_restored_device_id_best_effort(root: &Path) {
 /// Everything now on the phone came from the Mac, so note that moment. A failure
 /// here must never make a restore that succeeded report failure.
 fn record_phone_baseline_best_effort(root: &Path) {
-    let now = Connection::open_in_memory()
-        .and_then(|c| {
-            c.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |r| {
-                r.get::<_, String>(0)
-            })
-        })
-        .map_err(|e| e.to_string());
+    let now = crate::phone_work::now_utc();
     if let Err(e) = now.and_then(|now| crate::phone_work::record_baseline_in(root, &now)) {
         log::warn!("Restore: could not record the phone baseline: {e}");
     }
@@ -17656,6 +17651,22 @@ mod tests {
         stage_complete_restore_in(&target, &archive, "0.6.6").unwrap();
         apply_pending_restore_in(&target).unwrap();
         assert!(target.join(DB_FILES[0]).is_file());
+        std::fs::remove_dir_all(&source).unwrap();
+        std::fs::remove_dir_all(&target).unwrap();
+    }
+
+    #[test]
+    fn mac_will_not_restore_an_iphone_copy() {
+        let source = scratch("ios-copy-source");
+        let target = scratch("ios-copy-target");
+        write_database(&source.join(DB_FILES[0]), "phone copy");
+        let archive = source.join("phone.hfdbackup");
+        legacy_archive_with_manifest(&source, &archive, r#","platform":"ios""#);
+        let err = inspect_archive(&target, &archive, "0.6.7").unwrap_err();
+        assert!(err.contains("iPhone's copy"), "{err}");
+        assert!(stage_complete_restore_in(&target, &archive, "0.6.7").is_err());
+        assert!(!target.join(".restore-staging").exists());
+        assert!(!target.join(".restore-pending").exists());
         std::fs::remove_dir_all(&source).unwrap();
         std::fs::remove_dir_all(&target).unwrap();
     }
