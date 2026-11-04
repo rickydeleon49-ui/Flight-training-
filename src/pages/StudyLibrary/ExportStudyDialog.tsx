@@ -31,7 +31,7 @@ import { buildHandoutHtml } from "@/logic/studyHandout";
 import { buildMarkdownBundle } from "@/logic/studyMarkdown";
 import { hasCredentialLikeText } from "@/logic/studyPacket/semantic";
 import { DesktopOnlyError } from "@/services/documents";
-import { saveStudyExport, StudyExportError } from "@/services/studyExport";
+import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
 
 type Output = "packet" | "handout" | "markdown";
 
@@ -56,6 +56,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
   const busy = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const mac = deviceCan().revealFiles;
 
   useEffect(() => {
     if (!open) return;
@@ -104,7 +105,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
         suggested = exportFileName(source.material.title, "html");
       }
       const result = await saveStudyExport(output, suggested, contents);
-      if (result) setSaved(`Saved “${result.fileName}”.`);
+      if (result) setSaved(savedStudyExportSentence(result));
     } catch (caught) {
       if (caught instanceof DesktopOnlyError) setError(EXPORT_DESKTOP_ONLY);
       else if (caught instanceof StudyExportError) setError(caught.message);
@@ -122,7 +123,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
       open={open}
       onClose={onClose}
       dismissible={!working}
-      title="Share or print"
+      title={mac ? "Share or print" : "Save to Files"}
       description="Save this study aid as a file. Nothing in your library changes."
       footer={
         <>
@@ -130,7 +131,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
             {saved ? "Done" : "Cancel"}
           </Button>
           <Button variant="primary" onClick={() => void save()} disabled={working || !chosen}>
-            {working ? "Saving…" : "Save…"}
+            {working ? "Saving…" : mac ? "Save…" : "Save"}
           </Button>
         </>
       }
@@ -170,11 +171,11 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
           <legend className="field__label">Save as</legend>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout
-            (.html): open it in a browser to print or save as PDF
+            (.html): {mac ? "open it in a browser to print or save as PDF" : "open it from Files to read or print"}
           </label>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "packet"} onChange={() => setOutput("packet")} /> Study packet (.json):
-            to import into Your Flight Deck on another computer
+            {mac ? "to import into Your Flight Deck on another computer" : "to bring into Your Flight Deck on your Mac"}
           </label>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "markdown"} onChange={() => setOutput("markdown")} /> Markdown bundle (.zip):

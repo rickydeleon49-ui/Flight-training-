@@ -19,7 +19,7 @@ import { isTauri } from "@/data";
 import type { ScheduleEvent } from "@/domain/types";
 import { briefFileName, buildBriefHtml, lessonBrief } from "@/logic/lessonBrief";
 import { DesktopOnlyError } from "@/services/documents";
-import { saveStudyExport, StudyExportError } from "@/services/studyExport";
+import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
 import { useAppData } from "@/state/AppDataContext";
 
 interface Props {
@@ -90,7 +90,7 @@ export function LessonBriefDialog({ open, event, onClose }: Props) {
     try {
       // The page shown in the preview is the page that is saved.
       const result = await saveStudyExport("brief", briefFileName(event), html);
-      if (result) outcome = { saved: `Saved “${result.fileName}”.` };
+      if (result) outcome = { saved: savedStudyExportSentence(result) };
     } catch (caught) {
       if (caught instanceof DesktopOnlyError) outcome = { error: BRIEF_DESKTOP_ONLY };
       else if (caught instanceof StudyExportError) outcome = { error: caught.message };

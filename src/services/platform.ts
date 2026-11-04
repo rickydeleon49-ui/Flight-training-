@@ -39,7 +39,8 @@ export function deviceCan() {
     /** Reading a PDF's text on this device (study kit, offline text) needs the Mac until P-2. */
     pdfKit: !isIOS(),
     revealFiles: !isIOS(),
-    editStudyMaterial: !isIOS(),
-    sharePrint: !isIOS(),
+    editStudyMaterial: !isIOS() || isTauri(),
+    /** May save a handout, packet, cards CSV or notes bundle as a file. On the phone the file goes into Files → Your Flight Deck → Exports; there is no share sheet yet. */
+    sharePrint: !isIOS() || isTauri(),
   };
 }

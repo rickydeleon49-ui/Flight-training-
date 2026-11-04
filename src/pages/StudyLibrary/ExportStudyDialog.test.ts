@@ -268,3 +268,34 @@ it("hides the CSV shortcut when this device cannot share files", async () => {
     expect(screen.queryByRole("button", { name: "Export cards (CSV)" })).toBeNull();
   } finally { spy.mockRestore(); }
 });
+
+describe("on the phone", () => {
+  const phone = async () => {
+    const platform = await import("@/services/platform");
+    return vi.spyOn(platform, "deviceCan").mockReturnValue({ ...platform.deviceCan(), sharePrint: true, editStudyMaterial: true, revealFiles: false, splitFiles: false });
+  };
+
+  it("says Save to Files, drops the ellipsis and uses phone wording", async () => {
+    const spy = await phone();
+    try {
+      render(h(ExportStudyDialog, { open: true, source, onClose: () => {}, onFlashcardCsv: vi.fn() }));
+      expect(screen.getByText("Save to Files")).toBeTruthy();
+      expect(screen.queryByText("Share or print")).toBeNull();
+      expect(screen.getByRole("button", { name: "Save" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Save…" })).toBeNull();
+      expect(screen.getByText(/open it from Files to read or print/)).toBeTruthy();
+      expect(screen.getByText(/to bring into Your Flight Deck on your Mac/)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Export cards (CSV)" })).toBeTruthy();
+    } finally { spy.mockRestore(); }
+  });
+
+  it("names the Files folder when the file is saved", async () => {
+    const spy = await phone();
+    try {
+      saveStudyExport.mockResolvedValue({ fileName: "Weather.html", byteLength: 3, inFiles: true });
+      render(h(ExportStudyDialog, { open: true, source, onClose: () => {} }));
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      expect(await screen.findByText("Saved in Files → Your Flight Deck → Exports → Weather.html.")).toBeTruthy();
+    } finally { spy.mockRestore(); }
+  });
+});

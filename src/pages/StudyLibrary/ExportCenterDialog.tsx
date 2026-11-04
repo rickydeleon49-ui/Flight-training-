@@ -11,8 +11,9 @@ import {
 } from "@/logic/studyExport";
 import { buildMultiMaterialHandoutHtml } from "@/logic/studyHandout";
 import { buildFlashcardCsv, EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv";
+import { deviceCan } from "@/services/platform";
 import { DesktopOnlyError } from "@/services/documents";
-import { saveStudyExport, StudyExportError } from "@/services/studyExport";
+import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
 
 interface Props {
   open: boolean;
@@ -38,6 +39,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
   const busy = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const mac = deviceCan().revealFiles;
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +79,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
       const result = output === "csv"
         ? await saveStudyExport("csv", exportFileName("Flashcards", "csv"), contents)
         : await saveStudyExport("handout", exportFileName("Study handout", "html"), contents);
-      if (result) setSaved(`Saved “${result.fileName}”.`);
+      if (result) setSaved(savedStudyExportSentence(result));
     } catch (caught) {
       if (caught instanceof DesktopOnlyError) setError("Saving a file needs the desktop application.");
       else if (caught instanceof StudyExportError) setError(caught.message);
@@ -124,7 +126,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
         <>
           <Button variant="ghost" onClick={onClose} disabled={working}>{saved ? "Done" : "Cancel"}</Button>
           <Button variant="primary" onClick={() => void save()} disabled={working || (output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
-            {working ? "Saving…" : output === "csv" ? "Save CSV…" : "Save handout…"}
+            {working ? "Saving…" : output === "csv" ? (mac ? "Save CSV…" : "Save CSV") : (mac ? "Save handout…" : "Save handout")}
           </Button>
         </>
       )}

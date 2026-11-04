@@ -125,3 +125,14 @@ it("does not offer a picture card from a photo on the Mac", async () => {
     expect(screen.queryByTestId("photo-picture-input")).toBeNull();
   } finally { spy.mockRestore(); }
 });
+
+it("on the phone the More menu saves a handout or cards without an ellipsis", async () => {
+  const platform = await import("@/services/platform");
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  try {
+    open();
+    expect(screen.getByText("More")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Save handout or cards" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Export handout or cards…" })).toBeNull();
+  } finally { spy.mockRestore(); }
+});

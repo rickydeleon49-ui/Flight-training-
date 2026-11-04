@@ -982,3 +982,86 @@ fn single_unsaved_item_uses_the_singular_verb() {
         "This phone has 1 card review that isn't saved anywhere else yet. Save my phone work first, then get your study material."
     );
 }
+
+/// Swap the shared test tables for the real migration columns (0007, 0009).
+fn real_authoring_tables(root: &Path) {
+    exec(
+        root,
+        "DROP TABLE ai_study_sets;
+         DROP TABLE practice_tests;
+         CREATE TABLE ai_study_sets (
+           source_material_id TEXT PRIMARY KEY,
+           title TEXT NOT NULL DEFAULT '',
+           summary TEXT NOT NULL DEFAULT '',
+           sections_json TEXT NOT NULL DEFAULT '[]',
+           flashcards_json TEXT NOT NULL DEFAULT '[]',
+           source_notes TEXT NOT NULL DEFAULT '',
+           provider TEXT NOT NULL DEFAULT 'gemini',
+           model TEXT NOT NULL DEFAULT '',
+           generated_at TEXT NOT NULL,
+           updated_at TEXT NOT NULL
+         );
+         CREATE TABLE practice_tests (
+           source_material_id TEXT PRIMARY KEY,
+           title TEXT NOT NULL DEFAULT '',
+           questions_json TEXT NOT NULL DEFAULT '[]',
+           provider TEXT NOT NULL DEFAULT 'gemini',
+           model TEXT NOT NULL DEFAULT '',
+           generated_at TEXT NOT NULL,
+           updated_at TEXT NOT NULL
+         );",
+    );
+}
+
+#[test]
+fn an_edited_guide_is_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    real_authoring_tables(&root);
+    exec(
+        &root,
+        "INSERT INTO ai_study_sets (source_material_id, summary, generated_at, updated_at)
+         VALUES ('g1', 'original', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');",
+    );
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    assert_eq!(
+        unsaved_phone_work_in(&root).unwrap().guides,
+        0,
+        "saved before the edit"
+    );
+    // The same UPDATE the editor's upsert performs (study_sets.rs:846-870).
+    exec(
+        &root,
+        "UPDATE ai_study_sets SET summary = 'edited', updated_at = '2026-03-01T00:00:00Z'
+         WHERE source_material_id = 'g1';",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!(work.guides, 1);
+    assert!(sentence(&work).unwrap().contains("1 study guide"));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn an_edited_practice_test_is_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    real_authoring_tables(&root);
+    exec(
+        &root,
+        "INSERT INTO practice_tests (source_material_id, title, generated_at, updated_at)
+         VALUES ('g1', 'original', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');",
+    );
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().generated_tests, 0);
+    // The same UPDATE the practice editor's upsert performs
+    // (practice_authoring.rs:1534-1542).
+    exec(
+        &root,
+        "UPDATE practice_tests SET title = 'edited', updated_at = '2026-03-01T00:00:00Z'
+         WHERE source_material_id = 'g1';",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!(work.generated_tests, 1);
+    assert!(sentence(&work).unwrap().contains("1 practice test"));
+    std::fs::remove_dir_all(c).unwrap();
+}
