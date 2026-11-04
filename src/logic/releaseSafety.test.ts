@@ -418,7 +418,7 @@ describe("release version policy and validation", () => {
 
     // Dynamic release notes
     expect(workflow).toContain("Windows distribution is held on v0.5.1 pending separate Microsoft Defender");
-    expect(workflow).toContain('TITLE="Her Flight Deck $VERSION (macOS)"');
+    expect(workflow).toContain('TITLE="Your Flight Deck $VERSION (macOS)"');
   });
 
   it("ensures Cargo lockfile check fails on stale committed state in disposable fixture without rewriting lockfile", () => {
@@ -489,36 +489,36 @@ describe("release version policy and validation", () => {
   it("reproduces asset filename vs manifest mismatch when filenames have spaces, and verifies normalization fix", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "hfd-manifest-norm-"));
     try {
-      // 1. Reproduce the bug: build produces DMG with spaces in name (e.g. 'Her Flight Deck_0.5.3_aarch64.dmg')
-      const buildName = "Her Flight Deck_0.5.3_aarch64.dmg";
+      // 1. Reproduce the bug: build produces DMG with spaces in name (e.g. 'Your Flight Deck_0.5.3_aarch64.dmg')
+      const buildName = "Your Flight Deck_0.5.3_aarch64.dmg";
       const sampleBytes = Buffer.from("%PDF-1.4 sample dmg bytes for checksum testing");
       writeFileSync(join(tempDir, buildName), sampleBytes);
 
       // In the buggy behavior, sha256sum ran directly on the unnormalized file with spaces:
       const rawManifestLine = generateChecksumManifest(tempDir).trim();
-      expect(rawManifestLine).toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+      expect(rawManifestLine).toContain("Your Flight Deck_0.5.3_aarch64.dmg");
 
       // But when uploaded to GitHub Releases, GitHub normalizes asset names by replacing spaces with periods:
       const downloadedName = normalizeInstallerFilename(buildName);
-      expect(downloadedName).toBe("Her.Flight.Deck_0.5.3_aarch64.dmg");
+      expect(downloadedName).toBe("Your.Flight.Deck_0.5.3_aarch64.dmg");
 
-      // A user downloading the GitHub asset receives 'Her.Flight.Deck_0.5.3_aarch64.dmg'.
+      // A user downloading the GitHub asset receives 'Your.Flight.Deck_0.5.3_aarch64.dmg'.
       // If they verify against the old raw manifest, it fails because the filenames don't match:
       expect(rawManifestLine.endsWith(downloadedName)).toBe(false);
 
       // 2. Now verify the fix: prepareReleaseInstallers normalizes filenames before hashing
       const { renames, manifest } = prepareReleaseInstallers(tempDir);
       expect(renames).toEqual([
-        { from: "Her Flight Deck_0.5.3_aarch64.dmg", to: "Her.Flight.Deck_0.5.3_aarch64.dmg" },
+        { from: "Your Flight Deck_0.5.3_aarch64.dmg", to: "Your.Flight.Deck_0.5.3_aarch64.dmg" },
       ]);
 
       // The file on disk was renamed to the exact downloadable name:
-      expect(readdirSync(tempDir)).toContain("Her.Flight.Deck_0.5.3_aarch64.dmg");
-      expect(readdirSync(tempDir)).not.toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).toContain("Your.Flight.Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).not.toContain("Your Flight Deck_0.5.3_aarch64.dmg");
 
       // The manifest references the exact downloadable name:
       expect(manifest.trim()).toBe(
-        `${createHash("sha256").update(sampleBytes).digest("hex")}  Her.Flight.Deck_0.5.3_aarch64.dmg`,
+        `${createHash("sha256").update(sampleBytes).digest("hex")}  Your.Flight.Deck_0.5.3_aarch64.dmg`,
       );
 
       // The manifest written to disk matches the generated manifest:
@@ -536,11 +536,11 @@ describe("release version policy and validation", () => {
   });
 
   it("normalizes Windows installer filenames when spaces are present and preserves normalized names", () => {
-    expect(normalizeInstallerFilename("Her Flight Deck_0.5.3_x64-setup.exe")).toBe(
-      "Her.Flight.Deck_0.5.3_x64-setup.exe",
+    expect(normalizeInstallerFilename("Your Flight Deck_0.5.3_x64-setup.exe")).toBe(
+      "Your.Flight.Deck_0.5.3_x64-setup.exe",
     );
-    expect(normalizeInstallerFilename("Her.Flight.Deck_0.5.3_aarch64.dmg")).toBe(
-      "Her.Flight.Deck_0.5.3_aarch64.dmg",
+    expect(normalizeInstallerFilename("Your.Flight.Deck_0.5.3_aarch64.dmg")).toBe(
+      "Your.Flight.Deck_0.5.3_aarch64.dmg",
     );
     expect(normalizeInstallerFilename("her-flight-deck_0.5.3_aarch64.dmg")).toBe(
       "her-flight-deck_0.5.3_aarch64.dmg",
@@ -550,11 +550,11 @@ describe("release version policy and validation", () => {
   it("rejects colliding installer names before changing either file", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-collision-"));
     try {
-      writeFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "first");
-      writeFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "second");
+      writeFileSync(join(tempDir, "Your Flight Deck_0.5.3_aarch64.dmg"), "first");
+      writeFileSync(join(tempDir, "Your.Flight.Deck_0.5.3_aarch64.dmg"), "second");
       expect(() => prepareReleaseInstallers(tempDir)).toThrow(/collision/);
-      expect(readFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("first");
-      expect(readFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("second");
+      expect(readFileSync(join(tempDir, "Your Flight Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("first");
+      expect(readFileSync(join(tempDir, "Your.Flight.Deck_0.5.3_aarch64.dmg"), "utf8")).toBe("second");
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }
@@ -580,7 +580,7 @@ describe("release version policy and validation", () => {
   it("executes CLI invocation of normalize-installer-filenames.mjs to normalize files and generate manifest", () => {
     const tempDir = mkdtempSync(join(tmpdir(), "hfd-installer-cli-"));
     try {
-      const sampleFile = "Her Flight Deck_0.5.3_aarch64.dmg";
+      const sampleFile = "Your Flight Deck_0.5.3_aarch64.dmg";
       const sampleBytes = Buffer.from("%PDF-1.4 sample dmg bytes for CLI invocation testing");
       writeFileSync(join(tempDir, sampleFile), sampleBytes);
 
@@ -590,20 +590,20 @@ describe("release version policy and validation", () => {
       });
 
       expect(stdout).toContain(
-        "Normalized installer filename: 'Her Flight Deck_0.5.3_aarch64.dmg' -> 'Her.Flight.Deck_0.5.3_aarch64.dmg'",
+        "Normalized installer filename: 'Your Flight Deck_0.5.3_aarch64.dmg' -> 'Your.Flight.Deck_0.5.3_aarch64.dmg'",
       );
       expect(stdout).toContain("Generated");
       expect(stdout).toContain("SHA256SUMS.txt");
 
       // Verify file was renamed on disk to downloadable name
-      expect(readdirSync(tempDir)).toContain("Her.Flight.Deck_0.5.3_aarch64.dmg");
-      expect(readdirSync(tempDir)).not.toContain("Her Flight Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).toContain("Your.Flight.Deck_0.5.3_aarch64.dmg");
+      expect(readdirSync(tempDir)).not.toContain("Your Flight Deck_0.5.3_aarch64.dmg");
       expect(readdirSync(tempDir)).toContain("SHA256SUMS.txt");
 
       // Verify manifest content on disk
       const manifest = readFileSync(join(tempDir, "SHA256SUMS.txt"), "utf8");
       const expectedHash = createHash("sha256").update(sampleBytes).digest("hex");
-      expect(manifest.trim()).toBe(`${expectedHash}  Her.Flight.Deck_0.5.3_aarch64.dmg`);
+      expect(manifest.trim()).toBe(`${expectedHash}  Your.Flight.Deck_0.5.3_aarch64.dmg`);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }
@@ -621,8 +621,8 @@ describe("release version policy and validation", () => {
       }).toThrow();
 
       // Colliding directory fails closed
-      writeFileSync(join(tempDir, "Her Flight Deck_0.5.3_aarch64.dmg"), "a");
-      writeFileSync(join(tempDir, "Her.Flight.Deck_0.5.3_aarch64.dmg"), "b");
+      writeFileSync(join(tempDir, "Your Flight Deck_0.5.3_aarch64.dmg"), "a");
+      writeFileSync(join(tempDir, "Your.Flight.Deck_0.5.3_aarch64.dmg"), "b");
       expect(() => {
         execFileSync(process.execPath, [NORMALIZE_SCRIPT_PATH, tempDir], {
           encoding: "utf8",

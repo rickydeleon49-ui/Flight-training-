@@ -443,7 +443,7 @@ export function GeminiRecoveryNotice({ onRetry, model }: { onRetry: () => void; 
       <div className="ai-disclaimer" role="alert">
         <AlertIcon size={16} />
         <p className="tiny">
-          Her Flight Deck could not check for study aids {helper} was already working on, so a new one cannot be
+          Your Flight Deck could not check for study aids {helper} was already working on, so a new one cannot be
           started yet, in case one is waiting to be saved. Saved content is unchanged.
         </p>
       </div>

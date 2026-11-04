@@ -28,7 +28,7 @@ describe("geminiSendDisclosureParts (POLISH-064)", () => {
     expect(parts.details).toMatch(/^Only “notes\.pdf” leaves this Mac\. Google keeps/);
     expect(geminiSendDisclosure(withFile())).toBe(
       "Only “notes.pdf” leaves this Mac. Google keeps a temporary copy for up to 48 hours so a study guide and " +
-        "a practice test can use it without uploading it again. Her Flight Deck asks Google to delete it sooner when " +
+        "a practice test can use it without uploading it again. Your Flight Deck asks Google to delete it sooner when " +
         `the file changes or you disconnect Gemini; otherwise Google removes it when it expires. ${providerTermsNote("gemini")} Your copy on this Mac is not changed.`,
     );
     expect(geminiSendDisclosureParts(withFile(), "Anthropic").details).toBeUndefined();

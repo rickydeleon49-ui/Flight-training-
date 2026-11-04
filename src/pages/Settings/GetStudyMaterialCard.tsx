@@ -52,7 +52,7 @@ export function GetStudyMaterialCard() {
     if (!staged || ios) return;
     const timer = window.setTimeout(() => {
       void exitForRestore().catch((error: unknown) => {
-        setProblem(backupErrorMessage(error, "Please close Her Flight Deck and open it again.", false));
+        setProblem(backupErrorMessage(error, "Please close Your Flight Deck and open it again.", false));
       });
     }, 1500);
     return () => window.clearTimeout(timer);
@@ -83,8 +83,8 @@ export function GetStudyMaterialCard() {
         <CardBody>
           {staged ? (
             <p role="status">{ios
-              ? "Close Her Flight Deck (swipe it away) and open it again to see your study material."
-              : "All set. Her Flight Deck will close now; open it again and your study material is there."}</p>
+              ? "Close Your Flight Deck (swipe it away) and open it again to see your study material."
+              : "All set. Your Flight Deck will close now; open it again and your study material is there."}</p>
           ) : (
             <Button variant="primary" disabled={busy || preview !== null} onClick={pick}>
               {busy ? "Opening…" : "Get my study material"}

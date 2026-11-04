@@ -28,7 +28,7 @@ export function ReminderNotifications() {
     // Only the explicit Toolkit switch requests permission.
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     try {
-      new Notification("Her Flight Deck", {
+      new Notification("Your Flight Deck", {
         body: `${reminders.length} training reminder${reminders.length === 1 ? "" : "s"} need a look.`,
       });
       sessionStorage.setItem(sessionKey, "seen");

@@ -66,11 +66,11 @@ pub(crate) const BUSY: &str =
 pub(crate) const FULL: &str =
     "Several finished answers are waiting to be saved or discarded. Save or discard one of them first, so none is lost.";
 pub(crate) const RESTORING: &str =
-    "Her Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.";
+    "Your Flight Deck is still finishing restoring a backup, so Gemini cannot be asked for anything new yet. Quit and reopen the app to finish.";
 /// This launch could not set an unreadable jobs list aside and start a fresh
 /// one. Reopening retries that. Provider-neutral, so it needs no variant.
 pub(crate) const UNREADABLE: &str =
-    "Her Flight Deck couldn't read its list of AI jobs and couldn't start a fresh one, so nothing new can be asked yet. Quit and reopen the app, then try again.";
+    "Your Flight Deck couldn't read its list of AI jobs and couldn't start a fresh one, so nothing new can be asked yet. Quit and reopen the app, then try again.";
 pub(crate) const WAITING: &str =
     "A finished answer for this document is waiting to be saved or discarded. Save or discard it first, so it is not lost.";
 

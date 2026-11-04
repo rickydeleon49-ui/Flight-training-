@@ -214,7 +214,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
     } else if (code === "JOURNAL_FULL") {
       setError("Your draft space is full. Save or discard a waiting study aid or practice test, then try again.");
     } else if (code === "JOURNAL_RECOVERY") {
-      setError("Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again.");
+      setError("Your drafts need recovery before a new kit can begin. Quit and reopen Your Flight Deck, then try again.");
     } else {
       setError("Your PDF kit couldn’t be opened. Your saved work is still here; try again.");
     }

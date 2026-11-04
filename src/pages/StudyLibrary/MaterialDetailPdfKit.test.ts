@@ -254,7 +254,7 @@ it("rebuild_does_not_prepare_when_discard_unconfirmed", async () => {
 
 it.each([
   ["JOURNAL_FULL", "Your draft space is full. Save or discard a waiting study aid or practice test, then try again."],
-  ["JOURNAL_RECOVERY", "Your drafts need recovery before a new kit can begin. Quit and reopen Her Flight Deck, then try again."],
+  ["JOURNAL_RECOVERY", "Your drafts need recovery before a new kit can begin. Quit and reopen Your Flight Deck, then try again."],
 ])("journal_refusal_has_its_own_message (%s)", async (code, message) => {
   prepare.mockRejectedValueOnce({ code });
   open();

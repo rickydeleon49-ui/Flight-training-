@@ -27,7 +27,7 @@ export const PDF_STEPS: Array<{ title: string; text: string; claude?: string }> 
   },
   {
     title: "Make my study kit",
-    text: "On the PDF's Study tab, choose Make my study kit. One request makes a basic study guide, about 20 flashcards and about 10 practice questions. Her Flight Deck sends the PDF to {company} only after you confirm.",
+    text: "On the PDF's Study tab, choose Make my study kit. One request makes a basic study guide, about 20 flashcards and about 10 practice questions. Your Flight Deck sends the PDF to {company} only after you confirm.",
   },
   {
     title: "Wait a few minutes",
@@ -218,7 +218,7 @@ export const TROUBLE_HELP: Array<{ title: string; notes: HowToNote[] }> = [
       {
         lead: "It tries again by itself",
         text: "you'll see Gemini is busy — trying again. If it still can't, wait a few minutes and try again, or choose Cancel and come back later. With Most capable, it tries Gemini 3.5 Flash instead.",
-        claude: "Her Flight Deck tries again briefly. If Claude is still busy, wait a little and try again, or choose Cancel and come back later.",
+        claude: "Your Flight Deck tries again briefly. If Claude is still busy, wait a little and try again, or choose Cancel and come back later.",
       },
     ],
   },
@@ -246,8 +246,8 @@ export const TROUBLE_HELP: Array<{ title: string; notes: HowToNote[] }> = [
   {
     title: "The app won't open",
     notes: [
-      { lead: "Already open on this Mac", text: "Her Flight Deck is already running. Use the window that's open." },
-      { lead: "Used by a newer version", text: "your study library was last opened by a newer Her Flight Deck. Install that version or newer." },
+      { lead: "Already open on this Mac", text: "Your Flight Deck is already running. Use the window that's open." },
+      { lead: "Used by a newer version", text: "your study library was last opened by a newer version of the app. Install that version or newer." },
     ],
   },
 ];

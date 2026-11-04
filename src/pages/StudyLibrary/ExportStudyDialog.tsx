@@ -4,7 +4,7 @@ import { pdfLabelState, PDF_KIT_REMINDER } from "@/logic/pdfKitLabels";
  *
  * The student picks which parts to include (guide, flashcards, practice questions)
  * and one of two outputs:
- * - a study packet (.json) that any copy of Her Flight Deck can import as a
+ * - a study packet (.json) that any copy of Your Flight Deck can import as a
  *   new material, checked by the import's own validator before it is saved;
  * - a printable handout (.html) to open in a browser and print, with an
  *   optional answer key on its own page.
@@ -174,7 +174,7 @@ export function ExportStudyDialog({ open, source, onClose, onFlashcardCsv }: Pro
           </label>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "packet"} onChange={() => setOutput("packet")} /> Study packet (.json):
-            to import into Her Flight Deck on another computer
+            to import into Your Flight Deck on another computer
           </label>
           <label className="small">
             <input type="radio" name={`${ids}-output`} checked={output === "markdown"} onChange={() => setOutput("markdown")} /> Markdown bundle (.zip):

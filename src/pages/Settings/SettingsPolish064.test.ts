@@ -57,7 +57,7 @@ it("shows Mac notes without an \"On macOS:\" label, and drops the stale, repeate
   expect(text).not.toMatch(/changes immediately/);
   expect(text).toContain("Takes effect straight away.");
   expect(text).not.toMatch(/record the exact message for investigation/);
-  expect(text).toContain("Her Flight Deck supports macOS 12 or newer.");
+  expect(text).toContain("Your Flight Deck supports macOS 12 or newer.");
 });
 
 it("both profile buttons are called Save profile, and either one saves the name and why note", async () => {

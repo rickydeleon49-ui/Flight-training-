@@ -132,13 +132,13 @@ describe("section guide progress and deliberate recovery", () => {
   });
   it("PLAN_CHANGED shows app update message and the same choices as SOURCE_CHANGED", async () => {
     await fail("PLAN_CHANGED");
-    expect(screen.getByText("Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")).toBeTruthy();
+    expect(screen.getByText("Your Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Keep my earlier work" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start a new guide" })).toBeTruthy();
     noProviderText();
   });
   it("time limit native message maps to STAGE_TIMEOUT and notice says finished sections are kept", async () => {
-    const timeLimitMsg = "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.";
+    const timeLimitMsg = "This took longer than 15 minutes, so Your Flight Deck paused. Your finished sections are kept — Try again to continue.";
     const err = gemini.sectionGuideError({ code: "GUIDE_PAUSED", message: timeLimitMsg });
     expect(err.code).toBe("STAGE_TIMEOUT");
     await fail(err.code);

@@ -1,4 +1,4 @@
-//! Her Flight Deck — Tauri application entry point.
+//! Your Flight Deck — Tauri application entry point.
 //!
 //! The Rust side stays deliberately thin: it owns private file storage and
 //! database setup, while product logic lives in the TypeScript layer behind
@@ -361,7 +361,7 @@ pub fn run() {
             // Refuse before logging, restore, backups, cleanup, or a webview
             // can write anything in the library. QA uses its configured root.
             let ownership = app.path().app_config_dir()
-                .map_err(|_| "Her Flight Deck couldn't find your study library. Please close the app and try again.".to_owned())
+                .map_err(|_| "Your Flight Deck couldn't find your study library. Please close the app and try again.".to_owned())
                 .and_then(|root| startup_guard::acquire(&root, app.package_info()));
             let unlocked = match ownership {
                 Ok(lock) => { let unlocked = !lock.locked; app.manage(lock); unlocked }
@@ -542,6 +542,6 @@ pub fn run() {
         ])
         .run(context);
     if result.is_err() {
-        log::error!("Her Flight Deck could not open.");
+        log::error!("Your Flight Deck could not open.");
     }
 }

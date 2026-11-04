@@ -10,7 +10,7 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: Her Flight Deck
+      PRODUCT_NAME: Your Flight Deck
       PRODUCT_BUNDLE_IDENTIFIER: com.herflightdeck.app
 targetTemplates:
   app:

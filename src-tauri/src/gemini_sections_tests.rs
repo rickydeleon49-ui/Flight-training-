@@ -783,7 +783,7 @@ fn updated_app_plan_version_returns_plan_changed() {
     assert_eq!(err.code, "PLAN_CHANGED");
     assert_eq!(
         err.message,
-        "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?"
+        "Your Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?"
     );
 
     // If PDF hash changes as well, it returns SOURCE_CHANGED
@@ -824,7 +824,7 @@ fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
     assert_eq!(err.code, "GUIDE_PAUSED");
     assert_eq!(
         err.message,
-        "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue."
+        "This took longer than 15 minutes, so Your Flight Deck paused. Your finished sections are kept — Try again to continue."
     );
     assert!(!err.message.contains("Nothing was saved"));
 
@@ -833,7 +833,7 @@ fn section_guide_time_limit_pauses_and_keeps_finished_sections_wording() {
     assert_eq!(job.stage, JobStage::Failed);
     assert_eq!(
         job.error.as_deref(),
-        Some("This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.")
+        Some("This took longer than 15 minutes, so Your Flight Deck paused. Your finished sections are kept — Try again to continue.")
     );
 }
 

@@ -69,7 +69,7 @@ function sdkFs(path: string, entries: Record<string, SdkEntry>) {
   return Object.fromEntries(Object.entries(entries).map(([k, v]) => [k.replace("__SDK__", path), v]));
 }
 
-const DEVELOPER_ID_DISPLAY = "Executable=/Applications/Her Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+7 location=embedded\nAuthority=Developer ID Application: Synthetic Team (ABCDE12345)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=3 Oct 2026 at 10:00:00\nInfo.plist entries=20\nTeamIdentifier=ABCDE12345\nSealed Resources version=2 rules=13 files=3\n";
+const DEVELOPER_ID_DISPLAY = "Executable=/Applications/Your Flight Deck.app/Contents/MacOS/her-flight-deck\nIdentifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+7 location=embedded\nAuthority=Developer ID Application: Synthetic Team (ABCDE12345)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=3 Oct 2026 at 10:00:00\nInfo.plist entries=20\nTeamIdentifier=ABCDE12345\nSealed Resources version=2 rules=13 files=3\n";
 const ADHOC_DISPLAY = "Identifier=com.herflightdeck.app\nFormat=app bundle with Mach-O thin (arm64)\nCodeDirectory v=20400 size=1 flags=0x20002(adhoc,linker-signed) hashes=1+0 location=embedded\nSignature=adhoc\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\n";
 const DMG_DISPLAY = "Executable=/tmp/x.dmg\nIdentifier=com.example.synthetic-image\nFormat=disk image\nCodeDirectory v=20100 size=1 flags=0x0(none) hashes=1+6 location=embedded\nAuthority=Developer ID Application: Synthetic Team (ABCDE12345)\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTimestamp=3 Oct 2026 at 10:00:00\nTeamIdentifier=ABCDE12345\n";
 const ok = (stdout = "", stderr = "", code = 0): Result => ({ state: "ok", code, stdout, stderr });
@@ -162,7 +162,7 @@ const byId = (r: Receipt, id: string) => {
   if (!c) throw new Error(`no check ${id}`);
   return c;
 };
-function syntheticApp(name = "Her Flight Deck.app") {
+function syntheticApp(name = "Your Flight Deck.app") {
   const app = join(tempDir("app"), name);
   mkdirSync(join(app, "Contents/MacOS"), { recursive: true });
   writeFileSync(join(app, "Contents/Info.plist"), "<plist/>");
@@ -438,7 +438,7 @@ describe("Mac readiness preflight: privacy and read-only behavior (READINESS-R3)
       return undefined;
     }, { display: ok("", leakyDisplay, 0) });
     const { d } = deps({ responder });
-    const r: Receipt = runPreflight({ repo: writeRepo({ windowsStatus: "Private Sentinel held" }), app: syntheticApp("private-sentinel Her Flight Deck.app"), assess: true }, d);
+    const r: Receipt = runPreflight({ repo: writeRepo({ windowsStatus: "Private Sentinel held" }), app: syntheticApp("private-sentinel Your Flight Deck.app"), assess: true }, d);
     expectClean(JSON.stringify(r));
     expectClean(formatHuman(r));
     expect(byId(r, "A-APP-SIGNATURE").observed.display).toMatchObject({ authorityKinds: ["developer-id-application", "unknown", "unknown", "apple-root-ca"], flags: ["runtime", "other"], teamIdentifier: "present" });

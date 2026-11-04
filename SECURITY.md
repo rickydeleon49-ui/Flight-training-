@@ -16,7 +16,7 @@ Only the latest release receives security fixes.
 
 ## Scope
 
-Her Flight Deck stores its data locally and has no server. Of most interest:
+Your Flight Deck stores its data locally and has no server. Of most interest:
 anything that could expose the stored Gemini API key, read or change files
 outside the app's own data folder, corrupt a backup or restore, or run content
 from an imported PDF or study packet as code.

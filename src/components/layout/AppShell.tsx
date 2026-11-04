@@ -165,7 +165,7 @@ export function AppShell() {
             <PlaneIcon size={17} />
           </span>
           <div>
-            <p className="brand__name">Her Flight Deck</p>
+            <p className="brand__name">Your Flight Deck</p>
             <p className="brand__tagline">Training companion</p>
           </div>
         </div>

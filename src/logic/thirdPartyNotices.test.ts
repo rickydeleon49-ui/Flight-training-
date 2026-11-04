@@ -101,10 +101,10 @@ describe("notices for licenses with extra obligations", () => {
 describe("the app's own license", () => {
   it("is MIT, and the bundle copyright names the same holder", () => {
     const license = read("LICENSE");
-    expect(license.startsWith("MIT License\n\nCopyright (c) 2026 the Her Flight Deck authors\n")).toBe(true);
+    expect(license.startsWith("MIT License\n\nCopyright (c) 2026 the Flight Deck authors\n")).toBe(true);
     expect(license).toContain('THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND');
     const conf = JSON.parse(read("src-tauri/tauri.conf.json"));
-    expect(conf.bundle.copyright).toBe("Copyright © 2026 the Her Flight Deck authors. MIT License.");
-    expect(notice).toContain("Her Flight Deck is licensed under the MIT License");
+    expect(conf.bundle.copyright).toBe("Copyright © 2026 the Flight Deck authors. MIT License.");
+    expect(notice).toContain("Your Flight Deck is licensed under the MIT License");
   });
 });

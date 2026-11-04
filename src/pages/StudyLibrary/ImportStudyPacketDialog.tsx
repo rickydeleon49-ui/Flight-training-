@@ -46,7 +46,7 @@ function saveFailureMessage(error: unknown): string {
       return "The study packet could not be saved just now. Nothing was changed. Close any other window and try again.";
     }
     if (error.code === "IPC_TRANSPORT_ERROR") {
-      return "Her Flight Deck could not finish the save. Try again; nothing is saved twice.";
+      return "Your Flight Deck could not finish the save. Try again; nothing is saved twice.";
     }
     if (error.code === "IDEMPOTENCY_CONFLICT") {
       return "A material with this packet's identity already exists with different content, so nothing was changed. Close this and import the file again.";
@@ -199,7 +199,7 @@ export function ImportStudyPacketDialog({ open, onClose, onImported }: ImportStu
       {phase.kind === "invalid" ? (
         <div className="stack stack--3">
           <p className="small">
-            <strong>{phase.fileName}</strong> isn't a study packet Her Flight Deck can read yet. Nothing was saved.
+            <strong>{phase.fileName}</strong> isn't a study packet Your Flight Deck can read yet. Nothing was saved.
           </p>
           <ul className="import-packet__errors" role="alert">
             {phase.errors.map((error, index) => (
@@ -288,7 +288,7 @@ function PreviewView({ preview }: { preview: Preview }) {
         <div className="stack stack--1">
           <p className="tiny">{IMPORTED_CONTENT_DISCLAIMER}</p>
           <p className="tiny">
-            Nothing is uploaded. Questions, answers, and explanations come from the packet, rather than Her Flight Deck or an AI provider.
+            Nothing is uploaded. Questions, answers, and explanations come from the packet, rather than Your Flight Deck or an AI provider.
           </p>
         </div>
       </div>

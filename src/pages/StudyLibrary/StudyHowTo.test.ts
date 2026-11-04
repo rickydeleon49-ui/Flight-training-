@@ -170,7 +170,7 @@ it("names the selected Claude provider and its request limits in How to", async 
   // The whole page speaks of Claude only, including the folded help.
   const panel = screen.getByRole("tabpanel");
   expect(panel.textContent).not.toMatch(/Gemini|Google/);
-  expect(within(panel).getByRole("list", { name: "Claude is busy" }).textContent).toContain("Her Flight Deck tries again briefly");
+  expect(within(panel).getByRole("list", { name: "Claude is busy" }).textContent).toContain("Your Flight Deck tries again briefly");
   expect(within(panel).getByRole("list", { name: "Standard or Most capable" }).textContent).toContain("Claude Haiku 5.5");
   expect(within(panel).getByRole("list", { name: "What is sent, and when" }).textContent).toContain("deleted within 30 days");
 });

@@ -108,10 +108,10 @@ const args = process.argv.slice(2);
 fs.appendFileSync(process.env.AUDIT_LOG, JSON.stringify(['hdiutil', ...args]) + '\\n');
 if (args[0] === 'attach') {
   if (process.env.ATTACH_EXIT !== '0') process.exit(Number(process.env.ATTACH_EXIT));
-  if (process.env.NO_APP !== 'true') fs.mkdirSync(path.join(args[args.indexOf('-mountpoint') + 1], 'Her Flight Deck.app'));
+  if (process.env.NO_APP !== 'true') fs.mkdirSync(path.join(args[args.indexOf('-mountpoint') + 1], 'Your Flight Deck.app'));
 } else if (args[0] === 'detach') {
   if (process.env.DETACH_EXIT !== '0') process.exit(Number(process.env.DETACH_EXIT));
-  fs.rmSync(path.join(args[1], 'Her Flight Deck.app'), { recursive: true, force: true });
+  fs.rmSync(path.join(args[1], 'Your Flight Deck.app'), { recursive: true, force: true });
 } else process.exit(7);
 `);
   // For multiple DMGs the codesign double chooses metadata using the attach log.
@@ -150,7 +150,7 @@ describe("signature gate execution", () => {
     const verifies = result.calls.filter((args) => args[1] === "--verify");
     expect(verifies).toHaveLength(2);
     expect(verifies[0]?.at(-1)).toContain("/bundle/macos/Staged.app");
-    expect(verifies[1]?.at(-1)).toContain("/Her Flight Deck.app");
+    expect(verifies[1]?.at(-1)).toContain("/Your Flight Deck.app");
     expect(result.calls.filter((args) => args[0] === "hdiutil").map((args) => args[1])).toEqual(["attach", "detach"]);
   });
 
@@ -186,7 +186,7 @@ describe("signature gate execution", () => {
     expect(result.output).not.toContain("::error::");
     const verifies = result.calls.filter((args) => args[1] === "--verify");
     expect(verifies).toHaveLength(1);
-    expect(verifies[0]).toEqual(["codesign", "--verify", "--deep", "--strict", "--verbose=2", expect.stringContaining("/Her Flight Deck.app")]);
+    expect(verifies[0]).toEqual(["codesign", "--verify", "--deep", "--strict", "--verbose=2", expect.stringContaining("/Your Flight Deck.app")]);
     expect(result.calls.filter((args) => args[1] === "-dvvv")).toHaveLength(1);
     expect(result.calls.filter((args) => args[0] === "hdiutil").map((args) => args[1])).toEqual(["attach", "detach"]);
   });

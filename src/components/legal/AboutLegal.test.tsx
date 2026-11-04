@@ -21,7 +21,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); db.clo
 describe("About & legal", () => {
   it("shows version, every safety point, age note, MIT license link and no a11y violations", async () => {
     const { container } = render(<AboutLegal version="0.6.7" />);
-    expect(screen.getByText("Her Flight Deck · Version 0.6.7")).toBeTruthy();
+    expect(screen.getByText("Your Flight Deck · Version 0.6.7")).toBeTruthy();
     for (const point of LEGAL_POINTS) expect(screen.getByText(point)).toBeTruthy();
     expect(screen.getByText(AGE_NOTE)).toBeTruthy();
     expect(screen.getByRole("link", { name: "MIT License" }).getAttribute("href")).toMatch(/\/LICENSE$/);

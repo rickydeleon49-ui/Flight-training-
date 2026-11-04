@@ -173,7 +173,7 @@ describe("GeminiJobNotice frontend tests", () => {
 
       expect(
         screen.getByText(
-          "Her Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?",
+          "Your Flight Deck was updated since this guide started. Keep your earlier sections, or start a new guide?",
         ),
       ).toBeTruthy();
       const keepBtn = screen.getByRole("button", { name: "Keep my earlier work" });
@@ -225,7 +225,7 @@ describe("GeminiJobNotice frontend tests", () => {
 
   describe("3. Time limit mapping and notice", () => {
     const timeLimitMsg =
-      "This took longer than 15 minutes, so Her Flight Deck paused. Your finished sections are kept — Try again to continue.";
+      "This took longer than 15 minutes, so Your Flight Deck paused. Your finished sections are kept — Try again to continue.";
 
     it("the native 15-minute message maps to STAGE_TIMEOUT (sectionGuideError)", () => {
       const err = sectionGuideError({ code: "GUIDE_PAUSED", message: timeLimitMsg });

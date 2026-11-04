@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Her Flight Deck",
+  "productName": "Your Flight Deck",
   "version": "0.6.7",
   "identifier": "com.herflightdeck.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Her Flight Deck",
+        "title": "Your Flight Deck",
         "width": 1320,
         "height": 880,
         "minWidth": 600,
@@ -35,10 +35,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "copyright": "Copyright © 2026 the Her Flight Deck authors. MIT License.",
+    "copyright": "Copyright © 2026 the Flight Deck authors. MIT License.",
     "category": "Education",
     "shortDescription": "A personal flight-training companion",
-    "longDescription": "Her Flight Deck keeps study materials, lessons, goals, notes, finances, and next steps organized in one private workspace.",
+    "longDescription": "Your Flight Deck keeps study materials, lessons, goals, notes, finances, and next steps organized in one private workspace.",
     "macOS": {
       "minimumSystemVersion": "12.0",
       "signingIdentity": "-"

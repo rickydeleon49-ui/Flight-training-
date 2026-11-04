@@ -85,9 +85,9 @@ export const LANDING_HTML = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="0; url=privacy/">
-<title>Her Flight Deck</title>
+<title>Your Flight Deck</title>
 </head>
-<body><p><a href="privacy/">Her Flight Deck privacy policy</a></p></body>
+<body><p><a href="privacy/">Your Flight Deck privacy policy</a></p></body>
 </html>
 `;
 

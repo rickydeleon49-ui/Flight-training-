@@ -59,7 +59,7 @@ jobs:
           mkdir -p "$audit_mount"
           hdiutil attach -quiet -readonly -nobrowse -mountpoint "$audit_mount" "$dmg"
           trap 'hdiutil detach -quiet "$audit_mount"' EXIT
-          app="$audit_mount/Her Flight Deck.app"
+          app="$audit_mount/Your Flight Deck.app"
           test -d "$app"
           identifier=$(plutil -extract CFBundleIdentifier raw -o - "$app/Contents/Info.plist")
           minimum=$(plutil -extract LSMinimumSystemVersion raw -o - "$app/Contents/Info.plist")

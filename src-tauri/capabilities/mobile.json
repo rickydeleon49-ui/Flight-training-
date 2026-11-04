@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
-  "description": "Permissions required by Her Flight Deck on the phone.",
+  "description": "Permissions required by Your Flight Deck on the phone.",
   "platforms": ["iOS"],
   "windows": ["main"],
   "permissions": [

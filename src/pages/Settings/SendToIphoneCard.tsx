@@ -77,7 +77,7 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
           {last && viaICloud ? (
             <p className="small">
               On your iPhone, open Files → iCloud Drive → Her Flight Deck and tap the newest file.
-              Her Flight Deck opens it and asks before replacing anything. It should be there within
+              Your Flight Deck opens it and asks before replacing anything. It should be there within
               a minute or two on Wi-Fi.
             </p>
           ) : null}

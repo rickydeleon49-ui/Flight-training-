@@ -81,9 +81,9 @@ export async function chooseCompleteBackupDestination(): Promise<string | null> 
   if (!isTauri()) throw new Error("Backups need the desktop application.");
   const date = todayIso();
   return save({
-    title: "Save a complete Her Flight Deck backup",
+    title: "Save a complete Your Flight Deck backup",
     defaultPath: `her-flight-deck-${date}.hfdbackup`,
-    filters: [{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }],
+    filters: [{ name: "Your Flight Deck backup", extensions: ["hfdbackup"] }],
   });
 }
 
@@ -98,8 +98,8 @@ export async function chooseCompleteBackup(): Promise<string | null> {
   const selected = await open({
     multiple: false,
     directory: false,
-    title: "Choose a Her Flight Deck backup",
-    ...(!isIOS() ? { filters: [{ name: "Her Flight Deck backup", extensions: ["hfdbackup"] }] } : {}),
+    title: "Choose a Flight Deck backup",
+    ...(!isIOS() ? { filters: [{ name: "Your Flight Deck backup", extensions: ["hfdbackup"] }] } : {}),
   });
   return typeof selected === "string" ? selected : null;
 }

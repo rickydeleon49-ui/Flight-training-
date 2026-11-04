@@ -157,7 +157,7 @@ describe("a study packet export", () => {
 
   it("says where the content came from", () => {
     const packet = JSON.parse(exported().text) as { source: { generator: string; createdAt: string; note: string } };
-    expect(packet.source.generator).toBe("Her Flight Deck");
+    expect(packet.source.generator).toBe("Your Flight Deck");
     expect(packet.source.createdAt).toBe("2026-10-16");
     expect(packet.source.note).toBe(
       "AI-generated study aid (gemini-3.5-flash). Verify everything against current FAA material, aircraft documents and an instructor.",
@@ -165,12 +165,12 @@ describe("a study packet export", () => {
     expect(packet.source.note).toContain("Verify everything");
 
     const imported = exported(source({ studySet: studySet({ provider: "import", model: "" }), practiceTest: null }));
-    expect((JSON.parse(imported.text) as { source: { note: string } }).source.note).toContain("Imported into Her Flight Deck from a study packet; not checked by the app.");
+    expect((JSON.parse(imported.text) as { source: { note: string } }).source.note).toContain("Imported into Your Flight Deck from a study packet; not checked by the app.");
 
     const mixed = exported(source({ practiceTest: practiceTest({ provider: "import", model: "" }) }));
     const note = (JSON.parse(mixed.text) as { source: { note: string } }).source.note;
     expect(note).toContain("Study guide and flashcards: AI-generated study aid (gemini-3.5-flash).");
-    expect(note).toContain("Practice test: imported into Her Flight Deck");
+    expect(note).toContain("Practice test: imported into Your Flight Deck");
   });
 
   it("carries known pages as unverified references, which an import discards", () => {
@@ -263,13 +263,13 @@ describe("her own items and her instructor's corrections (OFFLINE-03a)", () => {
     if (!result.ok) throw new Error(result.message);
     for (const key of ["itemId", "origin", "replaces", "summaryOrigin"]) expect(result.text).not.toContain(`"${key}"`);
     expect(validatePacketText(result.text).ok).toBe(true);
-    expect(result.text).toContain("Some items were written or corrected by hand in Her Flight Deck, not generated.");
+    expect(result.text).toContain("Some items were written or corrected by hand in Your Flight Deck, not generated.");
   });
 
   it("never calls a set she wrote AI-generated", () => {
     const result = exportStudyPacket(source(studySet({ provider: "manual", model: "", summaryOrigin: "user" })), ALL, NOW);
     if (!result.ok) throw new Error(result.message);
-    expect(result.text).toContain("Written by hand in Her Flight Deck; not checked by the app.");
+    expect(result.text).toContain("Written by hand in Your Flight Deck; not checked by the app.");
     expect(result.text).not.toContain("AI-generated");
   });
 
@@ -392,7 +392,7 @@ describe("practice authorship export privacy (OFFLINE-03b)", () => {
 
   it.each(["gemini", "import"] as const)("adds the handwritten supplement exactly once for a %s test", (provider) => {
     const input = source({ practiceTest: { ...mixed(), provider } });
-    const supplement = "Some items were written or corrected by hand in Her Flight Deck, not generated.";
+    const supplement = "Some items were written or corrected by hand in Your Flight Deck, not generated.";
     for (const handwrittenSet of [null, studySet({ summaryOrigin: "user" })]) {
       const result = exportStudyPacket({ ...input, studySet: handwrittenSet }, ALL, NOW);
       if (!result.ok) throw new Error(result.message);
@@ -406,7 +406,7 @@ describe("practice authorship export privacy (OFFLINE-03b)", () => {
   it("describes a manual test as handwritten without calling it AI-generated", () => {
     const result = exportStudyPacket(source({ studySet: null, practiceTest: practiceTest({ provider: "manual", model: "" }) }), ALL, NOW);
     if (!result.ok) throw new Error(result.message);
-    expect(result.text).toContain("Written by hand in Her Flight Deck; not checked by the app.");
+    expect(result.text).toContain("Written by hand in Your Flight Deck; not checked by the app.");
     expect(result.text).not.toContain("AI-generated");
   });
 

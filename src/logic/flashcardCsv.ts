@@ -24,8 +24,8 @@
  * - Provenance:
  *   Uses valid PDF label ("Pulled from your PDF on this Mac") or unavailable label
  *   ("PDF source details unavailable") when PDF provenance exists;
- *   otherwise identifies handwritten ("Written by hand in Her Flight Deck"),
- *   imported ("Imported into Her Flight Deck"), or AI-generated ("AI-generated study aid" /
+ *   otherwise identifies handwritten ("Written by hand in Your Flight Deck"),
+ *   imported ("Imported into Your Flight Deck"), or AI-generated ("AI-generated study aid" /
  *   "AI-generated study aid (<model>)") origin.
  *   Labels instructor or user edits when present:
  *   - "Corrected by your instructor" for instructor edit/origin.
@@ -155,9 +155,9 @@ export function cardProvenanceLabel(
     const model = set?.model ?? "";
 
     if (provider === "manual") {
-      baseProvenance = "Written by hand in Her Flight Deck";
+      baseProvenance = "Written by hand in Your Flight Deck";
     } else if (provider === "import") {
-      baseProvenance = "Imported into Her Flight Deck";
+      baseProvenance = "Imported into Your Flight Deck";
     } else {
       baseProvenance = model ? `AI-generated study aid (${model})` : "AI-generated study aid";
     }

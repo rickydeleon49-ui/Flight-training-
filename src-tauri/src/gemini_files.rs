@@ -343,7 +343,7 @@ fn transport(error: reqwest::Error, doing: &str, budget: &Budget) -> String {
     } else if error.is_timeout() {
         budget.categorize("timed out");
         format!(
-            "Google did not finish {doing} within the {} Her Flight Deck allows for one study aid, so no complete study aid was saved. On a slow connection, choosing a chapter or fewer pages first sends less; otherwise try again later.",
+            "Google did not finish {doing} within the {} Your Flight Deck allows for one study aid, so no complete study aid was saved. On a slow connection, choosing a chapter or fewer pages first sends less; otherwise try again later.",
             crate::gemini_budget::describe(budget.total())
         )
     } else {
@@ -358,7 +358,7 @@ fn transport(error: reqwest::Error, doing: &str, budget: &Budget) -> String {
 pub(crate) fn out_of_time(budget: &Budget, doing: &str) -> String {
     budget.categorize("time limit reached");
     format!(
-        "Her Flight Deck stopped before {doing}: the {} it allows for one study aid had run out. Nothing was saved. Choosing a chapter or fewer pages first usually helps.",
+        "Your Flight Deck stopped before {doing}: the {} it allows for one study aid had run out. Nothing was saved. Choosing a chapter or fewer pages first usually helps.",
         crate::gemini_budget::describe(budget.total())
     )
 }
@@ -1464,7 +1464,7 @@ impl PreparedSources {
                     return Err(NotReady::Other("Google was still preparing this PDF after waiting, so no study aid was made. Try again in a few minutes.".into()));
                 }
                 return Err(NotReady::Other(format!(
-                    "Google was still preparing this PDF when the {} Her Flight Deck allows for one study aid ran out, so no study aid was made. Choosing a chapter or fewer pages first usually helps.",
+                    "Google was still preparing this PDF when the {} Your Flight Deck allows for one study aid ran out, so no study aid was made. Choosing a chapter or fewer pages first usually helps.",
                     crate::gemini_budget::describe(budget.total())
                 )));
             }

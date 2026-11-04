@@ -227,7 +227,7 @@ describe("honest progress, Cancel and recovery (GEN-REL-04)", () => {
   it("after a failure, Try again goes through the usual confirmation and asks again", async () => {
     const generate = vi
       .spyOn(geminiService, "generateStudyAid")
-      .mockRejectedValueOnce("Gemini did not answer within the 5 minutes Her Flight Deck allows for one study aid.\nDetails: no answer in time.")
+      .mockRejectedValueOnce("Gemini did not answer within the 5 minutes Your Flight Deck allows for one study aid.\nDetails: no answer in time.")
       .mockResolvedValueOnce(AID);
     await open("/study/mat-a");
     await startStudyAid();

@@ -31,11 +31,11 @@ describe("Calendar export boundary regressions", () => {
       location: "", instructor: "", status: "scheduled",
     });
     const expected = [
-      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Her Flight Deck//Calendar Export//EN", "CALSCALE:GREGORIAN",
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Your Flight Deck//Calendar Export//EN", "CALSCALE:GREGORIAN",
       "BEGIN:VEVENT", "UID:event-A@herflightdeck.invalid", "DTSTAMP:20261017T183000Z", "STATUS:CONFIRMED",
       "SUMMARY:Circuit practice", "DTSTART:20261024T100000", "DTEND:20261024T110000",
-      "DESCRIPTION:Flight Lesson\\nPrepared with Her Flight Deck — open the lesso",
-      " n in the app for your checklist", "END:VEVENT", "END:VCALENDAR", "",
+      "DESCRIPTION:Flight Lesson\\nPrepared with Your Flight Deck — open the less",
+      " on in the app for your checklist", "END:VEVENT", "END:VCALENDAR", "",
     ].join("\r\n");
     expect(exportCalendarEvent(event, { now: new Date("2026-10-17T18:30:00Z") })).toBe(expected);
   });

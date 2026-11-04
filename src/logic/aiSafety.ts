@@ -116,7 +116,7 @@ export function geminiSendDisclosureParts(
     message: "Your copy on this Mac is not changed.",
     details:
       `Only “${name}”${pages} leaves this Mac. ` +
-      `${PROVIDER_TERMS.gemini.fileCopy} Her Flight Deck asks Google to delete it sooner when ` +
+      `${PROVIDER_TERMS.gemini.fileCopy} Your Flight Deck asks Google to delete it sooner when ` +
       `the file changes or you disconnect Gemini; otherwise Google removes it when it expires. ${providerTermsNote("gemini")}`,
   };
 }
