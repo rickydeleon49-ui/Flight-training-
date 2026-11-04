@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build a TestFlight .ipa, or check one before upload.
-#   scripts/testflight.sh                      bump build number, build, print ipa path
+#   scripts/testflight.sh                      bump build number, build, check, upload to TestFlight, record
+#   scripts/testflight.sh --build-only         same but stop before the upload (prints the ipa path)
 #   scripts/testflight.sh --check-only [ipa] [--record]
 #                                              pre-upload checks on an existing ipa
 # --record writes the build number to .last-testflight-build (do it after the upload).
@@ -30,7 +31,9 @@ if [ "${1:-}" = "--check-only" ]; then
   exec node scripts/testflight-checks.mjs "$IPA" "$LAST_FILE" $RECORD
 fi
 
-[ "$#" -eq 0 ] || { echo "Usage: $0 [--check-only [ipa] [--record]]" >&2; exit 2; }
+UPLOAD=1
+[ "${1:-}" = "--build-only" ] && { UPLOAD=0; shift; }
+[ "$#" -eq 0 ] || { echo "Usage: $0 [--build-only | --check-only [ipa] [--record]]" >&2; exit 2; }
 
 # The iOS build needs rustup's cargo (it has the aarch64-apple-ios std); a plain
 # Homebrew rust earlier on PATH has no iOS target. Tauri's Xcode step reuses this PATH.
@@ -49,4 +52,21 @@ npm run tauri ios build -- --export-method app-store-connect --config "{\"bundle
 IPA="$(latest_ipa)"
 [ -n "$IPA" ] || { echo "Build finished but no .ipa was found under $APPLE_DIR/build" >&2; exit 1; }
 echo "IPA: $ROOT/$IPA"
-echo "Next: scripts/testflight.sh --check-only \"$IPA\""
+if [ "$UPLOAD" = 0 ]; then
+  echo "Next: scripts/testflight.sh --check-only \"$IPA\""
+  exit 0
+fi
+
+# Pre-upload checks must pass before anything is sent to Apple.
+node scripts/testflight-checks.mjs "$IPA" "$LAST_FILE"
+
+# Upload the same archive with Xcode's signed-in account (no API key needed).
+ARCHIVE="$APPLE_DIR/build/her-flight-deck_iOS.xcarchive"
+[ -d "$ARCHIVE" ] || { echo "No archive at $ARCHIVE" >&2; exit 1; }
+UPDIR="$(mktemp -d)"
+cp "$APPLE_DIR/build/ExportOptions.plist" "$UPDIR/ExportOptions.plist"
+plutil -replace destination -string upload "$UPDIR/ExportOptions.plist"
+xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist "$UPDIR/ExportOptions.plist" \
+  -exportPath "$UPDIR" -allowProvisioningUpdates
+node scripts/testflight-checks.mjs "$IPA" "$LAST_FILE" --record
+echo "Uploaded build $BUILD. Apple emails when processing is done (about 10-30 min); testers get it in the TestFlight app."
