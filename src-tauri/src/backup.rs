@@ -6475,7 +6475,7 @@ pub fn create_consistent_complete_backup_with_retry(
 /// through this exact path to prove the *import* side refuses it, and that
 /// stops being possible if writing one already refuses to produce it.
 #[cfg(test)]
-fn write_complete_backup(
+pub(crate) fn write_complete_backup(
     root: &Path,
     destination_path: &Path,
     app_version: &str,
@@ -7244,6 +7244,21 @@ fn clear_restored_device_id_best_effort(root: &Path) {
     }
 }
 
+/// Everything now on the phone came from the Mac, so note that moment. A failure
+/// here must never make a restore that succeeded report failure.
+fn record_phone_baseline_best_effort(root: &Path) {
+    let now = Connection::open_in_memory()
+        .and_then(|c| {
+            c.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |r| {
+                r.get::<_, String>(0)
+            })
+        })
+        .map_err(|e| e.to_string());
+    if let Err(e) = now.and_then(|now| crate::phone_work::record_baseline_in(root, &now)) {
+        log::warn!("Restore: could not record the phone baseline: {e}");
+    }
+}
+
 fn clear_restored_device_id(root: &Path) -> Result<(), String> {
     let connection =
         Connection::open_with_flags(root.join(DB_FILES[0]), OpenFlags::SQLITE_OPEN_READ_WRITE)
@@ -7383,14 +7398,26 @@ pub async fn stage_complete_restore(
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
         crate::picked_paths::require_picked_or_inside(&app, &root, &source_path)?;
-        stage_complete_restore_in(
+        stage_complete_restore_guarded_in(
             &root,
             Path::new(&source_path),
             &app.package_info().version.to_string(),
+            cfg!(target_os = "ios"),
         )
     })
     .await
     .map_err(|error| format!("Could not finish restoring that backup: {error}"))?
+}
+
+/// Refuse on a phone that holds unsaved phone-made work, before anything is extracted.
+pub(crate) fn stage_complete_restore_guarded_in(
+    root: &Path,
+    source: &Path,
+    current_app_version: &str,
+    phone: bool,
+) -> Result<CompleteBackupInfo, String> {
+    crate::phone_work::refuse_unsaved(root, phone)?;
+    stage_complete_restore_in(root, source, current_app_version)
 }
 
 /// Unpack and check an archive into staging, against a plain directory.
@@ -8680,7 +8707,10 @@ where
 {
     match apply_pending_restore_in_internal(root, before_install) {
         Ok(RestoreApplicationResult::NoPending) => Ok(()),
-        Ok(RestoreApplicationResult::Installed) => Ok(()),
+        Ok(RestoreApplicationResult::Installed) => {
+            record_phone_baseline_best_effort(root);
+            Ok(())
+        }
         Ok(RestoreApplicationResult::RefusedUnchanged(msg)) => Err(msg),
         Ok(RestoreApplicationResult::Recovered(msg)) => Err(msg),
         Ok(RestoreApplicationResult::Unresolved { reason, .. }) => Err(reason),
@@ -8723,6 +8753,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
             }
             Ok(RestoreApplicationResult::Installed) => {
                 clear_restored_device_id_best_effort(root);
+                record_phone_baseline_best_effort(root);
                 return Ok(StartupRestoreDecision::RestoreCompleted);
             }
             Ok(RestoreApplicationResult::RefusedUnchanged(reason)) => {
@@ -8804,6 +8835,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
             }
             if cleanup_succeeded {
                 clear_restored_device_id_best_effort(root);
+                record_phone_baseline_best_effort(root);
                 let _ = prune(root);
                 // A restore interrupted after it committed: finish forgetting
                 // the replaced library's Gemini jobs before the journal goes.
@@ -9453,6 +9485,34 @@ mod tests {
             Path::new(".incoming/latest.hfdbackup"),
             false
         ));
+    }
+
+    #[test]
+    fn phone_work_file_is_never_an_allowed_archive_path() {
+        assert!(!allowed_archive_path(
+            Path::new(crate::phone_work::PHONE_WORK_FILE),
+            false
+        ));
+    }
+
+    #[test]
+    fn applying_a_restore_records_the_baseline() {
+        let (root, archive) = incoming_fixture();
+        stage_complete_restore_in(&root, &archive, "0.6.6").unwrap();
+        assert!(!root.join(crate::phone_work::PHONE_WORK_FILE).exists());
+        apply_pending_restore_in(&root).unwrap();
+        assert!(root.join(crate::phone_work::PHONE_WORK_FILE).is_file());
+        let work = crate::phone_work::unsaved_phone_work_in(&root).unwrap();
+        assert_eq!(
+            (
+                work.reviews,
+                work.tests,
+                work.bookmarks,
+                work.reading_positions
+            ),
+            (0, 0, 0, 0)
+        );
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
     }
 
     #[test]

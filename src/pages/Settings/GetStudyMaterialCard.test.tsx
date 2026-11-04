@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  chooseCompleteBackup: vi.fn(), importPickedBackup: vi.fn(), phoneActivitySummary: vi.fn(),
+  chooseCompleteBackup: vi.fn(), importPickedBackup: vi.fn(), phoneActivitySummary: vi.fn(), unsavedPhoneWork: vi.fn(),
   discardIncomingBackup: vi.fn(), stageCompleteRestore: vi.fn(), exitForRestore: vi.fn(),
 }));
 vi.mock("@/services/backups", async (original) => ({
@@ -11,10 +11,11 @@ vi.mock("@/services/backups", async (original) => ({
 }));
 const platform = vi.hoisted(() => ({ isIOS: vi.fn() }));
 vi.mock("@/services/platform", () => platform);
-import { formatBackupDate } from "@/services/backups";
+import { formatBackupDate, unsavedPhoneWorkSentence } from "@/services/backups";
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 
 const info = { path: "/app/.incoming/latest.hfdbackup", createdAt: 1793361600, bytes: 8192, fileBytes: 2048, files: 4 };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, since: null };
 const activity = { latestReviewAt: "2026-10-30T12:00:00Z", reviewsLast7Days: 2, attemptsLast7Days: 3 };
 
 beforeEach(() => {
@@ -23,6 +24,7 @@ beforeEach(() => {
   mocks.chooseCompleteBackup.mockResolvedValue("/picked/material.hfdbackup");
   mocks.importPickedBackup.mockResolvedValue(info);
   mocks.phoneActivitySummary.mockResolvedValue(activity);
+  mocks.unsavedPhoneWork.mockResolvedValue(none);
   mocks.discardIncomingBackup.mockResolvedValue(undefined);
   mocks.stageCompleteRestore.mockResolvedValue(info);
   mocks.exitForRestore.mockResolvedValue(undefined);
@@ -45,7 +47,7 @@ describe("GetStudyMaterialCard", () => {
     render(<GetStudyMaterialCard />);
     fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Get my study material" }).hasAttribute("disabled")).toBe(false));
-    for (const name of ["importPickedBackup", "phoneActivitySummary", "stageCompleteRestore", "exitForRestore", "discardIncomingBackup"] as const) {
+    for (const name of ["importPickedBackup", "phoneActivitySummary", "unsavedPhoneWork", "stageCompleteRestore", "exitForRestore", "discardIncomingBackup"] as const) {
       expect(mocks[name]).not.toHaveBeenCalled();
     }
   });
@@ -169,5 +171,65 @@ describe("GetStudyMaterialCard", () => {
     await screen.findByRole("heading", { name: "All set" });
     const copy = `${previewText} ${document.body.textContent}`.toLowerCase();
     for (const word of ["sync", "manifest", "archive", "restart"]) expect(copy).not.toContain(word);
+  });
+
+  describe("unsaved phone work", () => {
+    const BLOCKED = "This phone has 12 card reviews and 1 practice test that aren't saved anywhere else yet. Save my phone work first, then get your study material.";
+    const unsaved = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, since: null };
+
+    it("matches the sentence the app itself refuses with", () => {
+      expect(unsavedPhoneWorkSentence(unsaved)).toBe(BLOCKED);
+      expect(unsavedPhoneWorkSentence(none)).toBeNull();
+    });
+
+    it("on iOS blocks Replace and only offers Not now", async () => {
+      mocks.unsavedPhoneWork.mockResolvedValue(unsaved);
+      render(<GetStudyMaterialCard />);
+      fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+      await screen.findByText(/From your Mac/);
+      expect(screen.getByText(BLOCKED)).toBeTruthy();
+      expect(screen.getByText("Save my phone work is coming in the next update.")).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
+      expect(screen.queryByText(/will be replaced/)).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+      await waitFor(() => expect(screen.queryByText(/From your Mac/)).toBeNull());
+      expect(mocks.discardIncomingBackup).toHaveBeenCalledOnce();
+      expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
+    });
+
+    it("on iOS with nothing unsaved keeps Replace", async () => {
+      await pick();
+      expect(screen.getByRole("button", { name: "Replace what's on this phone" })).toBeTruthy();
+      expect(screen.getByText(/Your last card review/)).toBeTruthy();
+    });
+
+    it("on the Mac keeps Replace even with unsaved phone work", async () => {
+      platform.isIOS.mockReturnValue(false);
+      mocks.unsavedPhoneWork.mockResolvedValue(unsaved);
+      await pick();
+      expect(mocks.unsavedPhoneWork).not.toHaveBeenCalled();
+      expect(screen.queryByText(BLOCKED)).toBeNull();
+    });
+
+    it("on iOS fails closed when the check fails", async () => {
+      mocks.unsavedPhoneWork.mockRejectedValue("The phone work check broke.");
+      render(<GetStudyMaterialCard />);
+      fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+      await screen.findByText(/From your Mac/);
+      expect((await screen.findByRole("alert")).textContent).toContain("The phone work check broke.");
+      expect(screen.queryByRole("button", { name: "Replace what's on this phone" })).toBeNull();
+      expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
+    });
+
+    it("uses plain words in the blocked sentence", async () => {
+      mocks.unsavedPhoneWork.mockResolvedValue({ ...unsaved, bookmarks: 2, readingPositions: 1 });
+      render(<GetStudyMaterialCard />);
+      fireEvent.click(screen.getByRole("button", { name: "Get my study material" }));
+      await screen.findByText(/From your Mac/);
+      const copy = document.body.textContent!.toLowerCase();
+      for (const word of ["sync", "manifest", "archive", "restart", "baseline", "ledger", "database", "restore"]) {
+        expect(copy).not.toContain(word);
+      }
+    });
   });
 });

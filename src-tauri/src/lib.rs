@@ -24,6 +24,7 @@ mod debrief;
 mod documents;
 pub mod extraction;
 mod phone_activity;
+mod phone_work;
 mod safety_notices;
 
 /// Counts requested allocation bytes; capped only in the extraction worker.
@@ -448,6 +449,7 @@ pub fn run() {
             backup::discard_incoming_backup,
             backup::exit_for_restore,
             phone_activity::phone_activity_summary,
+            phone_work::unsaved_phone_work,
             weather::weather_session,
             weather::get_airport_weather,
             extraction::service::offline_content_readiness,

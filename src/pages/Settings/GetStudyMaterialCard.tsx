@@ -4,7 +4,8 @@ import { Button, Card, CardBody, CardHeader, Dialog, WorkStatus, useElapsed } fr
 import {
   backupErrorMessage, chooseCompleteBackup, discardIncomingBackup, exitForRestore,
   formatBackupDate, formatBytes, importPickedBackup, phoneActivitySummary, stageCompleteRestore,
-  type ActivitySummary, type CompleteBackupInfo,
+  unsavedPhoneWork, unsavedPhoneWorkSentence, unsavedPhoneWorkTotal,
+  type ActivitySummary, type CompleteBackupInfo, type UnsavedPhoneWork,
 } from "@/services/backups";
 
 import { isIOS } from "@/services/platform";
@@ -22,7 +23,7 @@ function activitySentence(activity: ActivitySummary): string {
 }
 
 export function GetStudyMaterialCard() {
-  const [preview, setPreview] = useState<{ info: CompleteBackupInfo; activity: ActivitySummary } | null>(null);
+  const [preview, setPreview] = useState<{ info: CompleteBackupInfo; activity: ActivitySummary; unsaved: UnsavedPhoneWork | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<"opening" | "copying" | null>(null);
   const elapsed = useElapsed(progress !== null);
@@ -63,14 +64,29 @@ export function GetStudyMaterialCard() {
     if (!path) return;
     const info = await importPickedBackup(path);
     const activity = await phoneActivitySummary();
-    setPreview({ info, activity });
+    // On a phone, a failed check counts as blocked: never offer Replace without an answer.
+    let unsaved: UnsavedPhoneWork | null = null;
+    if (ios) {
+      try {
+        unsaved = await unsavedPhoneWork();
+      } catch (error) {
+        setProblem(backupErrorMessage(error, "We couldn't check what's saved on this phone. Please try again.", false));
+        setPreview({ info, activity, unsaved: null });
+        return;
+      }
+    }
+    setPreview({ info, activity, unsaved });
   }, "opening");
   const cancel = () => run(async () => {
     await discardIncomingBackup();
     setPreview(null);
   });
+  const blockedSentence = ios && preview
+    ? (preview.unsaved ? unsavedPhoneWorkSentence(preview.unsaved) : null)
+    : null;
+  const blocked = ios && preview !== null && (preview.unsaved === null || unsavedPhoneWorkTotal(preview.unsaved) > 0);
   const confirm = () => run(async () => {
-    if (!preview) return;
+    if (!preview || blocked) return;
     await stageCompleteRestore(preview.info.path);
     setPreview(null);
     setStaged(true);
@@ -102,12 +118,15 @@ export function GetStudyMaterialCard() {
         narrow
         footer={<>
           <Button disabled={busy} onClick={cancel}>Not now</Button>
-          <Button variant="danger" disabled={busy} onClick={confirm}>Replace what's on this phone</Button>
+          {blocked ? null : <Button variant="danger" disabled={busy} onClick={confirm}>Replace what's on this phone</Button>}
         </>}
       >
         {preview ? <>
           <p>From your Mac · {formatBackupDate(preview.info.createdAt)} · {formatBytes(preview.info.fileBytes)} · {preview.info.files} files</p>
-          <p>{activitySentence(preview.activity)}</p>
+          {blocked ? <>
+            {blockedSentence ? <p>{blockedSentence}</p> : null}
+            <p className="muted">Save my phone work is coming in the next update.</p>
+          </> : <p>{activitySentence(preview.activity)}</p>}
         </> : null}
         {progress === "copying" ? <WorkStatus className="" phase="Copying your study material… this can take a minute." elapsed={elapsed} /> : null}
         {problem ? <p role="alert">{problem}</p> : null}
