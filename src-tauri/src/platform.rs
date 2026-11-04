@@ -7,15 +7,11 @@
 //! genuinely differ by platform are credential storage
 //! and platform identification for UI copy.
 //!
-//! Only the desktop implementations below are present, and active credential
-//! operations continue calling `secrets` directly. Keychain implementation is
-//! deferred until real Mac/Xcode/device validation; an iOS `CredentialStore`
-//! needs Apple's Keychain Protected Store (via the `keyring` crate's iOS backend —
-//! already a dependency, see `gemini.rs`'s legacy-migration use of it) and
-//! cannot be written with confidence until it can be built and exercised on a
-//! Mac with the iOS SDK. `CredentialStore` and
-//! `FileCredentialStore` remain isolated scaffolding with no production behavior
-//! change.
+//! Active credential operations call `secrets` directly; `secrets` itself
+//! picks the OS secure store (macOS Keychain on Developer ID signed builds
+//! or the iOS keychain) or the private file. The iOS keychain path still
+//! needs real device validation. `CredentialStore` and `FileCredentialStore`
+//! remain isolated scaffolding with no production behavior change.
 
 // Not yet called from any Tauri command — see the module doc comment.
 // `#[cfg(test)]` code doesn't count as usage
@@ -30,12 +26,8 @@ use crate::secrets;
 /// Where the Gemini API key is stored, kept behind a trait so a future iOS
 /// implementation can back onto Keychain without changing any call site.
 ///
-/// Desktop deliberately does **not** use the OS keychain — see the module
-/// doc comment in `secrets.rs` for why an unsigned, frequently-updated
-/// desktop build makes that the wrong choice there. That reasoning does not
-/// apply to iOS, where every build (development, TestFlight, or App Store)
-/// carries a stable signing identity and Keychain items persist correctly
-/// across updates.
+/// See the module doc comment in `secrets.rs` for which builds use the OS
+/// secure store and which keep the private file.
 pub trait CredentialStore {
     /// The stored key, or `None` if nothing has been saved yet. Distinct
     /// from an error: a store that cannot say whether a key exists is not
@@ -47,13 +39,9 @@ pub trait CredentialStore {
     fn forget(&self) -> Result<(), String>;
 }
 
-/// Desktop's existing credential store: a plain file beside the database.
-///
-/// This delegates to `secrets::{load_key, save_key, forget_key}` unchanged —
-/// it is an adapter onto already-shipped, already-tested behavior, not a
-/// reimplementation. Keychain implementation is deferred until real
-/// Mac/Xcode/device validation, so active operations in `gemini.rs` continue
-/// to call `secrets` directly. This store and trait remain isolated
+/// An adapter onto `secrets::{load_key, save_key, forget_key}` (secure store
+/// with private-file fallback), not a reimplementation. Active operations in
+/// `gemini.rs` call `secrets` directly. This store and trait remain isolated
 /// scaffolding with no production behavior change.
 pub struct FileCredentialStore {
     root: PathBuf,
@@ -118,8 +106,7 @@ impl PlatformInfo for CompiledPlatformInfo {
 
 /// Convenience constructor mirroring `storage::app_root`'s signature shape,
 /// for the day `gemini.rs` is wired through the trait instead of calling
-/// `secrets` directly. Keychain implementation is deferred until real
-/// Mac/Xcode/device validation.
+/// `secrets` directly.
 pub fn file_credential_store(root: &Path) -> FileCredentialStore {
     FileCredentialStore::new(root.to_path_buf())
 }

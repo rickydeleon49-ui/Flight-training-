@@ -9,7 +9,7 @@ packages) and Cargo.lock (via `cargo metadata`). Do not edit it by hand: run
 `node scripts/third-party-notices.mjs` after changing dependencies. CI runs it with --check.
 Vite copies public/ into dist/, and Tauri embeds dist/, so this file ships inside every build.
 
-Contents: 30 npm packages, 619 Rust crates (4 of them test-only), bundled fonts and data.
+Contents: 30 npm packages, 623 Rust crates (4 of them test-only), bundled fonts and data.
 The Rust list covers every target platform (macOS, Windows, Linux, iOS, Android); a given
 build contains only the crates for its platform. Where a package offers a choice of licenses,
 the entry says which one this app uses.
@@ -1149,6 +1149,17 @@ core-foundation 0.10.1
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
 Source: https://crates.io/crates/core-foundation/0.10.1
+Repository: https://github.com/servo/core-foundation-rs
+Authors: The Servo Project Developers
+Copyright (c) 2012-2013 Mozilla Foundation
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+
+-------------------------------------------------------------------------------
+core-foundation 0.9.4
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/core-foundation/0.9.4
 Repository: https://github.com/servo/core-foundation-rs
 Authors: The Servo Project Developers
 Copyright (c) 2012-2013 Mozilla Foundation
@@ -4527,6 +4538,39 @@ Source: https://crates.io/crates/scopeguard/1.2.0
 Repository: https://github.com/bluss/scopeguard
 Authors: bluss
 Copyright (c) 2016-2019 Ulrik Sverdrup "bluss" and scopeguard developers
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+
+-------------------------------------------------------------------------------
+security-framework 2.11.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/security-framework/2.11.1
+Repository: https://github.com/kornelski/rust-security-framework
+Authors: Steven Fackler <sfackler@gmail.com>, Kornel <kornel@geekhood.net>
+Copyright (c) 2015 Steven Fackler
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+
+-------------------------------------------------------------------------------
+security-framework 3.7.0
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/security-framework/3.7.0
+Repository: https://github.com/kornelski/rust-security-framework
+Authors: Steven Fackler <sfackler@gmail.com>, Kornel <kornel@geekhood.net>
+Copyright (c) 2015 Steven Fackler
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
+
+-------------------------------------------------------------------------------
+security-framework-sys 2.17.0
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/security-framework-sys/2.17.0
+Repository: https://github.com/kornelski/rust-security-framework
+Authors: Steven Fackler <sfackler@gmail.com>, Kornel <kornel@geekhood.net>
+Copyright (c) 2015 Steven Fackler
 License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT)
 

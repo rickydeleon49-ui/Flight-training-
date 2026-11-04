@@ -14,6 +14,7 @@ export type GeminiModelChoice = "standard" | "most-capable";
 
 export interface GeminiStatus {
   configured: boolean;
+  keyUnreadable?: boolean;
   /** The model documents are sent to first, given her choice. */
   model: string;
   choice: GeminiModelChoice;

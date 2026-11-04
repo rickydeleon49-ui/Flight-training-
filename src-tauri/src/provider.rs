@@ -73,9 +73,11 @@ pub(crate) fn save_choice(root: &Path, provider: ProviderId) -> Result<(), Strin
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct ProviderConnection {
     id: ProviderId,
     connected: bool,
+    key_unreadable: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -84,21 +86,25 @@ pub(crate) struct ProviderStatus {
     providers: Vec<ProviderConnection>,
 }
 
-// Status reads files only: it never verifies a key or contacts a provider.
+// Status never verifies a key or contacts a provider.
 fn status_at(root: &Path) -> Result<ProviderStatus, String> {
     let providers = [ProviderId::Gemini, ProviderId::Claude]
         .into_iter()
-        .map(|id| {
-            crate::secrets::load_key_for(root, id).map(|key| ProviderConnection {
-                id,
-                connected: key.is_some(),
-            })
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+        .map(|id| connection_from_read(id, crate::secrets::load_key_for(root, id)))
+        .collect();
     Ok(ProviderStatus {
         selected: load_choice(root),
         providers,
     })
+}
+
+fn connection_from_read(id: ProviderId, key: Result<Option<String>, String>) -> ProviderConnection {
+    let (connected, key_unreadable) = crate::secrets::key_read_status(key);
+    ProviderConnection {
+        id,
+        connected,
+        key_unreadable,
+    }
 }
 
 fn select_at(root: &Path, id: ProviderId) -> Result<(), String> {
@@ -533,6 +539,28 @@ mod tests {
         }
     }
     #[test]
+    fn status_reports_unreadable_store_without_removing_either_key() {
+        let root = TempRoot::new();
+        let store = crate::secrets::fake::FakeStore::default();
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            crate::secrets::save_key_with(root.path(), id, Some(&store), "synthetic-secret")
+                .unwrap();
+        }
+        let before = store.items.borrow().clone();
+        store.fail_get.set(true);
+        for id in [ProviderId::Gemini, ProviderId::Claude] {
+            let read = crate::secrets::load_key_with(root.path(), id, Some(&store), true);
+            let status = connection_from_read(id, read);
+            assert!(!status.connected);
+            assert!(status.key_unreadable);
+            let json = serde_json::to_value(status).unwrap();
+            assert_eq!(json["keyUnreadable"], true);
+            assert!(!json.to_string().contains("synthetic-secret"));
+        }
+        assert_eq!(*store.items.borrow(), before);
+    }
+
+    #[test]
     fn choices_round_trip_and_replace_without_touching_keys() {
         let parent = TempRoot::new();
         let root = parent.path().join("new-root");
@@ -569,7 +597,7 @@ mod tests {
         assert_eq!(
             empty,
             json!({"selected":"gemini", "providers":[
-                {"id":"gemini", "connected":false}, {"id":"claude", "connected":false}
+                {"id":"gemini", "connected":false, "keyUnreadable":false}, {"id":"claude", "connected":false, "keyUnreadable":false}
             ]})
         );
         for id in [ProviderId::Gemini, ProviderId::Claude] {
@@ -585,7 +613,7 @@ mod tests {
         assert_eq!(
             value,
             json!({"selected":"claude", "providers":[
-                {"id":"gemini", "connected":true}, {"id":"claude", "connected":true}
+                {"id":"gemini", "connected":true, "keyUnreadable":false}, {"id":"claude", "connected":true, "keyUnreadable":false}
             ]})
         );
         assert!(!value.to_string().contains("synthetic-secret"));
@@ -595,8 +623,16 @@ mod tests {
     fn status_read_failure_never_contains_key_material() {
         let root = TempRoot::new();
         std::fs::write(root.path().join("gemini-key"), b"synthetic-secret-\xff").unwrap();
-        let error = status_at(root.path()).unwrap_err();
-        assert!(!error.contains("synthetic-secret"));
+        let status = status_at(root.path()).unwrap();
+        assert!(status.providers[0].key_unreadable);
+        assert!(!status.providers[0].connected);
+        assert!(!serde_json::to_string(&status)
+            .unwrap()
+            .contains("synthetic-secret"));
+        assert_eq!(
+            std::fs::read(root.path().join("gemini-key")).unwrap(),
+            b"synthetic-secret-\xff"
+        );
     }
 
     #[test]

@@ -11,6 +11,7 @@
 
 use super::*;
 use crate::fake_gemini::{Behaviour, FakeGemini};
+use std::sync::atomic::AtomicBool;
 use std::time::Instant;
 
 const KEY: &str = "synthetic-slowlink-key-never-a-real-credential";

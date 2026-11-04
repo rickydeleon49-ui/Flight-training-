@@ -15,6 +15,11 @@ goals, notes and costs in one private workspace on your own computer.
 Your data stays in a local SQLite database. There is no account and no server.
 See [PRIVACY.md](PRIVACY.md) for what leaves your computer and when.
 
+Provider API keys use the OS secure store: macOS Keychain on Developer ID signed
+builds and the iOS keychain. When the secure store is unavailable, keys fall back
+to a private file in the application data folder. An older key file is moved
+into the secure store and deleted only after it reads back unchanged.
+
 > **Study aid, not flight instruction.** Always check material against official
 > FAA guidance and your flight instructor.
 

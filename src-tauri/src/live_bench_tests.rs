@@ -606,8 +606,8 @@ fn live_bench() {
     let root = env.profile.as_path();
     let provider = AnyProvider::selected(root);
     let choice = load_choice(root);
-    // The key file, read as the app reads it. The old keychain move is not
-    // tried: a QA profile without a key file is refused instead.
+    // The key file, read as the app reads it (a test build never uses the
+    // secure store): a QA profile without a key file is refused instead.
     let key = match crate::secrets::load_key_for(root, provider.id()) {
         Ok(Some(key)) => key,
         _ => panic!("live bench refused: no readable key file in the QA profile"),

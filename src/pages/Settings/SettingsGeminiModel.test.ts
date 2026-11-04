@@ -84,6 +84,27 @@ describe("Gemini model choice in Settings", () => {
     expect(paragraph.match(/\./g)).toHaveLength(2);
   });
 
+  it("does not label an unreadable selected Claude key as not set up", async () => {
+    vi.spyOn(appDataApi, "isTauri").mockReturnValue(true);
+    vi.spyOn(backupService, "backupsAvailable").mockReturnValue(false);
+    vi.spyOn(providerService, "providerStatus").mockResolvedValue({ selected: "claude", providers: [
+      { id: "gemini", connected: false }, { id: "claude", connected: false, keyUnreadable: true }
+    ] });
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
+    await open();
+    await screen.findByText(providerService.SAVED_KEY_UNREADABLE);
+    await waitFor(() => expect(document.getElementById("settings-advanced")!.querySelector("summary")!.textContent).toContain("Saved AI key unavailable"));
+  });
+
+  it("shows the unreadable saved Gemini key message instead of setup", async () => {
+    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false, keyUnreadable: true });
+    await open();
+    await screen.findByText(providerService.SAVED_KEY_UNREADABLE);
+    expect(screen.queryByLabelText("Gemini API key")).toBeNull();
+    expect(screen.queryByText(/Open Google AI Studio and sign in/)).toBeNull();
+    await waitFor(() => expect(document.getElementById("settings-advanced")!.querySelector("summary")!.textContent).toContain("Saved AI key unavailable"));
+  });
+
   it("shows the choice only once Gemini is connected", async () => {
     vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({ ...STANDARD, configured: false });
     await open();
