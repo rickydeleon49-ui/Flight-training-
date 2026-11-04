@@ -256,7 +256,10 @@ describe.each(ENGINES)("homework test runs and actions: %s", (name) => {
       await expect(sess({ action: "complete_attempt", operationId: id(211), attemptId: id(31), expectedRevision: 0, homework: context })).rejects.toMatchObject({ code: "INVALID_STATE" });
       expect(dumpTables(e)).toEqual(withOtherAttempt);
       e.run("DELETE FROM practice_attempts WHERE id=?", [id(31)]);
-      expect(dumpTables(e)).toEqual(before);
+      // the sync ledger legitimately remembers the insert and delete
+      const { local_changes: _c, sync_row_meta: _m, ...restored } = dumpTables(e);
+      const { local_changes: _c0, sync_row_meta: _m0, ...expected } = before;
+      expect(restored).toEqual(expected);
     } finally { e.close(); }
   });
 

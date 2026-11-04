@@ -30,5 +30,6 @@
   "0029_material_video_links.sql": "aa82e2d8ca820a771f4080ac2511f58a39cebab9f601f7fad030df27cfeb01ca",
   "0030_student_pilot_steps.sql": "33f5bf1120e5bd575c81b086b4cead5114c68703c876767e5e005f7de377e7de",
   "0031_faa_downloads.sql": "76f000a9cd2c2318cef9ecc9ae145ddc39dc8f334c608e24033adb337b014ed3",
-  "0032_oral_answers.sql": "36d5ab261487ac05a71d68d31ff4c22d8e1571e859c62922a8578416d4c3c215"
+  "0032_oral_answers.sql": "36d5ab261487ac05a71d68d31ff4c22d8e1571e859c62922a8578416d4c3c215",
+  "0033_sync_ledger.sql": "a6a6a94ac1c4e6f3b2850cc5dd5bbe5c01ef595b36de2babfaef35d6cf0048a9"
 }
