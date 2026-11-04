@@ -11,9 +11,10 @@ pub(crate) enum MergeRule {
     Replay,
     Lww,
     LwwTombstone,
-    /// Rows union by id; per `source_material_id` exactly one `is_active = 1`:
-    /// the version with the newest `created_at`, tie -> lower `id`;
-    /// `first_reviewed_at` = earliest non-null.
+    /// Rows union by id; per `source_material_id` at most one `is_active = 1`:
+    /// the active claim with the newest `sync_row_meta` (changed_at, device_id)
+    /// pair (tie -> lower device id, then lower `id`); `first_reviewed_at` =
+    /// earliest non-null within the current review generation.
     VersionActivation,
     /// One integer counter per key; the higher value wins and the receiver
     /// drops its lower-generation events/state (applied in S-2c).
@@ -40,11 +41,8 @@ const fn t(name: &'static str, primary_key: &'static str, rule: MergeRule) -> Sy
 /// they stay local.
 pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("study_materials", "id", MergeRule::Lww),
-    t(
-        "material_content_identities",
-        "material_id",
-        MergeRule::Union,
-    ),
+    // Re-verified in place (navigation.rs upsert), so LWW, not Union.
+    t("material_content_identities", "material_id", MergeRule::Lww),
     t(
         "card_review_generations",
         "source_material_id",
@@ -61,7 +59,8 @@ pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("practice_test_items", "id", MergeRule::Union),
     t("practice_item_origins", "item_id", MergeRule::Union),
     t("practice_attempts", "id", MergeRule::Lww),
-    t("practice_responses", "id", MergeRule::Union),
+    // A changed answer updates the row in place (practice_sessions.rs).
+    t("practice_responses", "id", MergeRule::Lww),
     t("ai_study_sets", "source_material_id", MergeRule::Lww),
     t("study_set_history", "id", MergeRule::Union),
     t("material_reading_state", "material_id", MergeRule::Lww),
