@@ -82,8 +82,45 @@ pub(crate) fn stored_document_path(
     app: &AppHandle,
     relative_path: &str,
 ) -> Result<PathBuf, String> {
+    contained_document_path(&documents_root(app)?, relative_path)
+}
+
+/// `documents_dir/relative_path`, refused unless it really stays inside
+/// `documents_dir` once symlinks are resolved.
+///
+/// The text check (`safe_relative_path`) refuses `..`, absolute paths and
+/// drive prefixes. A symlink planted inside the library (the file itself or a
+/// folder on the way) could still point anywhere, so the deepest part of the
+/// path that exists is canonicalized and must stay under the canonical
+/// library folder. A path that does not exist yet keeps its literal spelling,
+/// so callers still report "missing" in their own words; a dangling symlink
+/// is refused.
+pub(crate) fn contained_document_path(
+    documents_dir: &Path,
+    relative_path: &str,
+) -> Result<PathBuf, String> {
     let safe = safe_relative_path(relative_path)?;
-    Ok(documents_root(app)?.join(safe))
+    let target = documents_dir.join(safe);
+    let refuse = || "Invalid document path.".to_string();
+    let Ok(base) = documents_dir.canonicalize() else {
+        // No library folder yet: nothing inside it can lead anywhere else.
+        return Ok(target);
+    };
+    let mut existing = target.as_path();
+    loop {
+        match std::fs::symlink_metadata(existing) {
+            Ok(_) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                existing = existing.parent().ok_or_else(refuse)?;
+            }
+            Err(_) => return Err(refuse()),
+        }
+    }
+    let resolved = existing.canonicalize().map_err(|_| refuse())?;
+    if !resolved.starts_with(&base) {
+        return Err(refuse());
+    }
+    Ok(target)
 }
 
 /// Reject anything that would escape the documents directory.
@@ -433,6 +470,7 @@ pub async fn import_document(
     material_id: String,
     pdf_only: Option<bool>,
 ) -> Result<ImportedDocument, String> {
+    crate::picked_paths::require_picked(&app, &source_path)?;
     tauri::async_runtime::spawn_blocking(move || {
         import_document_from_path(&app, &source_path, &material_id, pdf_only.unwrap_or(false))
     })
@@ -506,8 +544,7 @@ fn imported_pdf_identity(path: &Path) -> Result<crate::study_page_sources::Previ
 /// Absolute path for a stored document, for opening it in the system viewer.
 #[tauri::command]
 pub fn document_path(app: AppHandle, relative_path: String) -> Result<String, String> {
-    let safe = safe_relative_path(&relative_path)?;
-    let path = documents_root(&app)?.join(safe);
+    let path = contained_document_path(&documents_root(&app)?, &relative_path)?;
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -564,8 +601,7 @@ fn read_document_bytes(root: &Path, relative_path: &str) -> Result<Vec<u8>, Stri
 /// document has been removed outside the application.
 #[tauri::command]
 pub fn document_exists(app: AppHandle, relative_path: String) -> Result<bool, String> {
-    let safe = safe_relative_path(&relative_path)?;
-    Ok(documents_root(&app)?.join(safe).is_file())
+    Ok(contained_document_path(&documents_root(&app)?, &relative_path)?.is_file())
 }
 
 fn trash_root(root: &Path) -> Result<PathBuf, String> {
@@ -598,6 +634,8 @@ pub fn stage_delete_document_in(
             return Err("A symbolic link cannot be staged for deletion.".to_string());
         }
     }
+    // A linked folder on the way could still lead outside the library.
+    contained_document_path(&root.join(DOCUMENTS_DIR), safe)?;
 
     let trash = trash_root(root)?;
     let now = std::time::SystemTime::now()
@@ -2601,6 +2639,74 @@ mod tests {
 
         locker.execute("ROLLBACK", []).unwrap();
         drop(locker);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn contained_document_path_refuses_climbing_and_absolute_paths() {
+        let root = scratch_doc_root("contained-text");
+        let docs = root.join(DOCUMENTS_DIR);
+        std::fs::write(docs.join("ok.pdf"), b"pdf").unwrap();
+        assert_eq!(
+            contained_document_path(&docs, "ok.pdf").unwrap(),
+            docs.join("ok.pdf")
+        );
+        // Missing files keep their spelling so callers can say "missing".
+        assert_eq!(
+            contained_document_path(&docs, "gone.pdf").unwrap(),
+            docs.join("gone.pdf")
+        );
+        for attempt in [
+            "../her-flight-deck.db",
+            "nested/../../escape.pdf",
+            "/etc/hosts",
+            "C:\\Windows\\win.ini",
+            "..\\escape.pdf",
+            "",
+        ] {
+            assert!(
+                contained_document_path(&docs, attempt).is_err(),
+                "{attempt:?} must be refused"
+            );
+        }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn contained_document_path_refuses_symlink_escapes() {
+        let root = scratch_doc_root("contained-links");
+        let docs = root.join(DOCUMENTS_DIR);
+        let outside = root.join("outside");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(outside.join("secret.pdf"), b"secret").unwrap();
+        std::os::unix::fs::symlink(outside.join("secret.pdf"), docs.join("file-link.pdf")).unwrap();
+        std::os::unix::fs::symlink(&outside, docs.join("dir-link")).unwrap();
+        std::os::unix::fs::symlink(root.join("nowhere.pdf"), docs.join("dangling.pdf")).unwrap();
+        std::fs::create_dir_all(docs.join("inside")).unwrap();
+        std::fs::write(docs.join("inside/real.pdf"), b"pdf").unwrap();
+        std::os::unix::fs::symlink(docs.join("inside/real.pdf"), docs.join("inner-link.pdf"))
+            .unwrap();
+        for attempt in [
+            "file-link.pdf",
+            "dir-link/secret.pdf",
+            "dir-link/not-yet.pdf",
+            "dangling.pdf",
+        ] {
+            assert!(
+                contained_document_path(&docs, attempt).is_err(),
+                "{attempt:?} must be refused"
+            );
+        }
+        // Deleting through a linked folder must not move a file from outside.
+        assert!(stage_delete_document_in(&root, "dir-link/secret.pdf").is_err());
+        assert!(outside.join("secret.pdf").is_file());
+        // A link that stays inside the library is still the library's file.
+        assert!(contained_document_path(&docs, "inner-link.pdf").is_ok());
+        assert!(contained_document_path(&docs, "inside/real.pdf").is_ok());
+        // The readers built on it refuse too.
+        assert!(read_document_bytes(&docs, "file-link.pdf").is_err());
+        assert!(read_document_bytes(&docs, "../outside/secret.pdf").is_err());
         std::fs::remove_dir_all(root).unwrap();
     }
 

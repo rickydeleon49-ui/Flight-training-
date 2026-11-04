@@ -52,6 +52,7 @@ mod pdf_kit_sources;
 pub mod pdf_study_kit;
 #[cfg(test)]
 mod pdf_study_kit_tests;
+mod picked_paths;
 mod provider;
 mod quit_settlement;
 #[cfg(test)]
@@ -353,6 +354,9 @@ pub fn run() {
         });
     let result = builder
         .setup(move |app| {
+            // Before any window exists: remember which files she picks in a
+            // dialog, so path-taking commands can refuse anything else.
+            picked_paths::install(app.handle());
             // Resolve without app_root(): that helper creates the folder.
             // Refuse before logging, restore, backups, cleanup, or a webview
             // can write anything in the library. QA uses its configured root.

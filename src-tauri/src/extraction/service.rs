@@ -221,8 +221,11 @@ impl Service {
 
     /// Resolve a material's stored relative path inside `documents/`.
     pub fn document_path(&self, relative: &str) -> Option<PathBuf> {
-        let safe = crate::documents::safe_relative_path(relative).ok()?;
-        Some(self.root.join(crate::documents::DOCUMENTS_DIR).join(safe))
+        crate::documents::contained_document_path(
+            &self.root.join(crate::documents::DOCUMENTS_DIR),
+            relative,
+        )
+        .ok()
     }
 
     fn remember(&self, path: &Path) -> Option<String> {

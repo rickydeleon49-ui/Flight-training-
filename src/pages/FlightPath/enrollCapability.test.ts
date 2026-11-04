@@ -8,5 +8,8 @@ it("allows the FAA URLs and saved video links through the approved web-only scop
   const capability = JSON.parse(readFileSync("src-tauri/capabilities/default.json", "utf8"));
   const permission = capability.permissions.find((p: { identifier?: string }) => p.identifier === "opener:allow-open-url");
   expect(permission.allow).toEqual([{ url: "https://*" }]);
+  // Owner decision 2 Nov (PUB-R7): any https link may open in the browser, on the phone too; never http or file.
+  const mobile = JSON.parse(readFileSync("src-tauri/capabilities/mobile.json", "utf8"));
+  expect(mobile.permissions.find((p: { identifier?: string }) => p.identifier === "opener:allow-open-url").allow).toEqual([{ url: "https://*" }]);
   expect(urls.every((url) => new URL(url!).protocol === "https:")).toBe(true);
 });

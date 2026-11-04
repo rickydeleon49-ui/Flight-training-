@@ -219,8 +219,7 @@ pub(crate) fn open_library(root: &Path) -> Result<Connection, String> {
 }
 
 fn stored_path(root: &Path, relative_path: &str) -> Result<PathBuf, String> {
-    let safe = safe_relative_path(relative_path)?;
-    Ok(root.join(DOCUMENTS_DIR).join(safe))
+    crate::documents::contained_document_path(&root.join(DOCUMENTS_DIR), relative_path)
 }
 
 fn require_operation_log(connection: &Connection) -> Result<(), String> {

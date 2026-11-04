@@ -42,7 +42,7 @@ use serde_json::{json, Map, Value};
 use tauri::AppHandle;
 
 use crate::card_reviews::{is_lower_hex_64, js_trim};
-use crate::documents::{safe_relative_path, DOCUMENTS_DIR};
+use crate::documents::DOCUMENTS_DIR;
 use crate::lineage::calculate_sha256;
 use crate::practice_sessions::{db_now_iso, is_root_ready};
 use crate::storage::app_root;
@@ -931,8 +931,8 @@ fn material_file(tx: &Connection, material_id: &str) -> Check<String> {
 }
 
 fn read_managed(root: &Path, relative: &str) -> Check<Vec<u8>> {
-    let safe = safe_relative_path(relative).map_err(|_| Code::FileMissing)?;
-    let path = root.join(DOCUMENTS_DIR).join(safe);
+    let path = crate::documents::contained_document_path(&root.join(DOCUMENTS_DIR), relative)
+        .map_err(|_| Code::FileMissing)?;
     match std::fs::read(path) {
         Ok(bytes) => Ok(bytes),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(Code::FileMissing),
@@ -1145,10 +1145,9 @@ pub fn open_verified_on<O: DocumentOpener>(
     if recorded.total_pages != total {
         return Err(Code::FileChanged);
     }
-    let safe = safe_relative_path(&relative).map_err(|_| Code::FileMissing)?;
-    opener
-        .open_path(&root.join(DOCUMENTS_DIR).join(safe))
-        .map_err(|_| Code::OpenFailed)?;
+    let path = crate::documents::contained_document_path(&root.join(DOCUMENTS_DIR), &relative)
+        .map_err(|_| Code::FileMissing)?;
+    opener.open_path(&path).map_err(|_| Code::OpenFailed)?;
     Ok(json!({ "materialId": material_id, "contentSha256": expected_hash }))
 }
 
