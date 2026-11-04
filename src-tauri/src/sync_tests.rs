@@ -2930,3 +2930,450 @@ mod ingest {
         assert_eq!(leftover_dirs(), 0);
     }
 }
+
+mod blobs {
+    use super::*;
+    use crate::sync::blobs::*;
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+
+    const CAP: u64 = MAX_BLOB_BYTES;
+
+    fn sha_of(bytes: &[u8]) -> String {
+        hex::encode(Sha256::digest(bytes))
+    }
+
+    fn names(dir: &std::path::Path) -> Vec<String> {
+        match std::fs::read_dir(dir) {
+            Ok(rd) => rd
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    fn material(conn: &Connection, id: &str, path: Option<&str>, sha: Option<&str>) {
+        conn.execute(
+            "INSERT INTO study_materials (id, title, file_path, created_at, updated_at) VALUES (?1, 'T', ?2, ?3, ?3)",
+            params![id, path, NOW],
+        )
+        .unwrap();
+        if let Some(sha) = sha {
+            conn.execute(
+                "INSERT INTO material_content_identities (material_id, content_sha256, total_pages, verified_at) VALUES (?1, ?2, 1, ?3)",
+                params![id, sha, NOW],
+            )
+            .unwrap();
+        }
+    }
+
+    /// (db, app root, sync root) with `m-1` -> documents/m-1.pdf holding `bytes`.
+    fn setup(bytes: &[u8]) -> (Connection, TempDir, TempDir) {
+        let conn = migrated();
+        let app = TempDir::new("blob-app");
+        let sync = TempDir::new("blob-sync");
+        std::fs::create_dir_all(app.0.join("documents")).unwrap();
+        std::fs::write(app.0.join("documents/m-1.pdf"), bytes).unwrap();
+        material(&conn, "m-1", Some("m-1.pdf"), Some(&sha_of(bytes)));
+        (conn, app, sync)
+    }
+
+    #[test]
+    fn blob_names_must_be_64_lowercase_hex() {
+        let conn = migrated();
+        let dir = TempDir::new("blob-names");
+        let good = "a".repeat(64);
+        for bad in [
+            "A".repeat(64),
+            "a".repeat(63),
+            "a".repeat(65),
+            "../x".to_string(),
+            "a/b".to_string(),
+            String::new(),
+        ] {
+            assert!(blob_relative_path(&bad).is_none());
+            assert!(matches!(blob_exists(&dir.0, &bad), Err(BlobError::BadName)));
+            assert!(matches!(read_blob(&dir.0, &bad), Err(BlobError::BadName)));
+            assert!(matches!(
+                materials_with_sha(&conn, &bad),
+                Err(BlobError::BadName)
+            ));
+        }
+        assert_eq!(blob_relative_path(&good).unwrap(), format!("blobs/{good}"));
+    }
+
+    #[test]
+    fn put_then_read_round_trips() {
+        let dir = TempDir::new("blob-rt");
+        let data = b"%PDF-1.7 synthetic".to_vec();
+        let sha = sha_of(&data);
+        let out = put_blob(&dir.0, &data[..], Some(&sha)).unwrap();
+        assert_eq!(
+            out,
+            PutOutcome::Written {
+                sha256: sha.clone(),
+                bytes: data.len() as u64
+            }
+        );
+        assert!(blob_exists(&dir.0, &sha).unwrap());
+        assert_eq!(read_blob(&dir.0, &sha).unwrap(), data);
+        assert!(matches!(
+            put_blob(&dir.0, &data[..], None).unwrap(),
+            PutOutcome::AlreadyPresent { .. }
+        ));
+        assert!(!blob_exists(&dir.0, &"0".repeat(64)).unwrap());
+        assert!(matches!(
+            read_blob(&dir.0, &"0".repeat(64)),
+            Err(BlobError::Missing)
+        ));
+    }
+
+    #[test]
+    fn over_cap_is_refused_before_writing() {
+        let dir = TempDir::new("blob-cap");
+        let src = dir.0.join("big.bin");
+        let f = std::fs::File::create(&src).unwrap();
+        f.set_len(CAP + 1).unwrap();
+        drop(f);
+        let sync = dir.0.join("sync");
+        assert!(matches!(
+            put_blob_from_file(&sync, &src, None),
+            Err(BlobError::TooLarge)
+        ));
+        assert!(names(&sync.join("blobs")).is_empty());
+        assert!(matches!(
+            put_blob(&sync, std::io::repeat(0).take(CAP + 1), None),
+            Err(BlobError::TooLarge)
+        ));
+        assert!(names(&sync.join("blobs")).is_empty());
+        let out = put_blob(&sync, std::io::repeat(0).take(CAP), None).unwrap();
+        assert!(matches!(out, PutOutcome::Written { bytes, .. } if bytes == CAP));
+    }
+
+    #[test]
+    fn existing_blob_is_never_rewritten() {
+        let dir = TempDir::new("blob-once");
+        let data = b"same bytes".to_vec();
+        let sha = sha_of(&data);
+        put_blob(&dir.0, &data[..], None).unwrap();
+        let path = dir.0.join("blobs").join(&sha);
+        let before = std::fs::metadata(&path).unwrap();
+        #[cfg(unix)]
+        let inode = std::os::unix::fs::MetadataExt::ino(&before);
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        let out = put_blob(&dir.0, &data[..], Some(&sha)).unwrap();
+        assert!(matches!(out, PutOutcome::AlreadyPresent { .. }));
+        let after = std::fs::metadata(&path).unwrap();
+        assert_eq!(before.modified().unwrap(), after.modified().unwrap());
+        #[cfg(unix)]
+        assert_eq!(inode, std::os::unix::fs::MetadataExt::ino(&after));
+        assert_eq!(names(&dir.0.join("blobs")), vec![sha]);
+    }
+
+    #[test]
+    fn corrupt_existing_blob_is_repaired() {
+        let dir = TempDir::new("blob-repair");
+        let data = b"good bytes".to_vec();
+        let sha = sha_of(&data);
+        std::fs::create_dir_all(dir.0.join("blobs")).unwrap();
+        std::fs::write(dir.0.join("blobs").join(&sha), b"rotten").unwrap();
+        let out = put_blob(&dir.0, &data[..], Some(&sha)).unwrap();
+        assert!(matches!(out, PutOutcome::Written { .. }));
+        assert_eq!(read_blob(&dir.0, &sha).unwrap(), data);
+        assert_eq!(names(&dir.0.join("blobs")), vec![sha]);
+    }
+
+    #[test]
+    fn sha_mismatch_on_read_is_refused() {
+        let dir = TempDir::new("blob-read-bad");
+        let data = b"some bytes".to_vec();
+        let sha = sha_of(&data);
+        put_blob(&dir.0, &data[..], None).unwrap();
+        let path = dir.0.join("blobs").join(&sha);
+        let mut flipped = data.clone();
+        flipped[0] ^= 1;
+        std::fs::write(&path, &flipped).unwrap();
+        let mut sink = Vec::new();
+        assert!(matches!(
+            read_blob_into(&dir.0, &sha, &mut sink),
+            Err(BlobError::ShaMismatch)
+        ));
+        assert_eq!(sink, flipped);
+        std::fs::write(&path, &data).unwrap();
+        let other = "b".repeat(64);
+        std::fs::rename(&path, dir.0.join("blobs").join(&other)).unwrap();
+        assert!(matches!(
+            read_blob(&dir.0, &other),
+            Err(BlobError::ShaMismatch)
+        ));
+    }
+
+    #[test]
+    fn expected_sha_mismatch_on_put_is_refused() {
+        let dir = TempDir::new("blob-put-bad");
+        let data = b"abc".to_vec();
+        let wrong = "c".repeat(64);
+        assert!(matches!(
+            put_blob(&dir.0, &data[..], Some(&wrong)),
+            Err(BlobError::ShaMismatch)
+        ));
+        assert!(names(&dir.0.join("blobs")).is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlinked_blob_is_refused() {
+        let dir = TempDir::new("blob-link");
+        let data = b"linked".to_vec();
+        let sha = sha_of(&data);
+        std::fs::create_dir_all(dir.0.join("blobs")).unwrap();
+        let real = dir.0.join("real.bin");
+        std::fs::write(&real, &data).unwrap();
+        let path = dir.0.join("blobs").join(&sha);
+        std::os::unix::fs::symlink(&real, &path).unwrap();
+        assert!(matches!(read_blob(&dir.0, &sha), Err(BlobError::NotAFile)));
+        assert!(matches!(
+            put_blob(&dir.0, &data[..], None),
+            Err(BlobError::NotAFile)
+        ));
+        assert!(!blob_exists(&dir.0, &sha).unwrap());
+        std::fs::remove_file(&path).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        assert!(matches!(read_blob(&dir.0, &sha), Err(BlobError::NotAFile)));
+        let src_link = dir.0.join("src-link");
+        std::os::unix::fs::symlink(&real, &src_link).unwrap();
+        assert!(matches!(
+            put_blob_from_file(&dir.0, &src_link, None),
+            Err(BlobError::NotAFile)
+        ));
+        assert_eq!(names(&dir.0.join("blobs")), vec![sha]);
+    }
+
+    #[test]
+    fn failed_put_leaves_no_temp_file() {
+        struct Failing(usize);
+        impl Read for Failing {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                if self.0 >= 1024 {
+                    return Err(std::io::Error::from(std::io::ErrorKind::BrokenPipe));
+                }
+                let n = buf.len().min(1024 - self.0);
+                buf[..n].fill(7);
+                self.0 += n;
+                Ok(n)
+            }
+        }
+        let dir = TempDir::new("blob-fail");
+        assert!(matches!(
+            put_blob(&dir.0, Failing(0), None),
+            Err(BlobError::Io(_))
+        ));
+        assert!(names(&dir.0.join("blobs")).is_empty());
+    }
+
+    #[test]
+    fn material_lookup_reports_no_file_unverified_and_ready() {
+        let conn = migrated();
+        let sha = sha_of(b"x");
+        material(&conn, "m-none", None, None);
+        material(&conn, "m-blank", Some("  "), None);
+        material(&conn, "m-raw", Some("m-raw.pdf"), None);
+        material(&conn, "m-ok", Some("m-ok.pdf"), Some(&sha));
+        material(&conn, "m-ok2", Some("m-ok2.pdf"), Some(&sha));
+        assert!(material_blob(&conn, "nope").unwrap().is_none());
+        assert!(matches!(
+            material_blob(&conn, "m-none").unwrap(),
+            Some(MaterialBlob::NoFile)
+        ));
+        assert!(matches!(
+            material_blob(&conn, "m-blank").unwrap(),
+            Some(MaterialBlob::NoFile)
+        ));
+        assert!(matches!(
+            material_blob(&conn, "m-raw").unwrap(),
+            Some(MaterialBlob::Unverified { relative_path }) if relative_path == "m-raw.pdf"
+        ));
+        match material_blob(&conn, "m-ok").unwrap() {
+            Some(MaterialBlob::Ready(f)) => {
+                assert_eq!(f.material_id, "m-ok");
+                assert_eq!(f.relative_path, "m-ok.pdf");
+                assert_eq!(f.content_sha256, sha);
+            }
+            _ => panic!("expected ready"),
+        }
+        assert_eq!(materials_with_sha(&conn, &sha).unwrap(), ["m-ok", "m-ok2"]);
+        assert!(materials_with_sha(&conn, &"d".repeat(64))
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn publish_reads_the_pdf_from_documents() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let sha = sha_of(b"pdf one");
+        let out = publish_material_blob(&conn, &app.0, &sync.0, "m-1").unwrap();
+        assert!(matches!(out, Some(PutOutcome::Written { .. })));
+        assert_eq!(read_blob(&sync.0, &sha).unwrap(), b"pdf one");
+        assert!(publish_material_blob(&conn, &app.0, &sync.0, "nope")
+            .unwrap()
+            .is_none());
+        material(&conn, "m-raw", Some("m-raw.pdf"), None);
+        assert!(matches!(
+            publish_material_blob(&conn, &app.0, &sync.0, "m-raw"),
+            Err(BlobError::NoIdentity)
+        ));
+        // Edited since it was checked.
+        let sync2 = TempDir::new("blob-sync2");
+        std::fs::write(app.0.join("documents/m-1.pdf"), b"pdf two").unwrap();
+        assert!(matches!(
+            publish_material_blob(&conn, &app.0, &sync2.0, "m-1"),
+            Err(BlobError::ShaMismatch)
+        ));
+        assert!(names(&sync2.0.join("blobs")).is_empty());
+        material(&conn, "m-bad", Some("../m.pdf"), Some(&sha));
+        assert!(matches!(
+            publish_material_blob(&conn, &app.0, &sync2.0, "m-bad"),
+            Err(BlobError::BadMaterialPath)
+        ));
+    }
+
+    #[test]
+    fn place_writes_a_missing_pdf_once() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let docs = app.0.join("documents");
+        let sha = sha_of(b"pdf one");
+        std::fs::remove_file(docs.join("m-1.pdf")).unwrap();
+        assert_eq!(
+            place_material_blob(&conn, &app.0, &sync.0, "m-1").unwrap(),
+            Some(PlaceOutcome::NotYetAvailable)
+        );
+        assert!(names(&docs).is_empty());
+        put_blob(&sync.0, &b"pdf one"[..], Some(&sha)).unwrap();
+        assert_eq!(
+            place_material_blob(&conn, &app.0, &sync.0, "m-1").unwrap(),
+            Some(PlaceOutcome::Placed { bytes: 7 })
+        );
+        assert_eq!(std::fs::read(docs.join("m-1.pdf")).unwrap(), b"pdf one");
+        assert_eq!(names(&docs), vec!["m-1.pdf"]);
+        assert_eq!(
+            place_material_blob(&conn, &app.0, &sync.0, "m-1").unwrap(),
+            Some(PlaceOutcome::AlreadyPresent)
+        );
+        assert!(place_material_blob(&conn, &app.0, &sync.0, "nope")
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
+    fn place_never_overwrites_a_different_local_file() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let docs = app.0.join("documents");
+        put_blob(&sync.0, &b"pdf one"[..], None).unwrap();
+        std::fs::write(docs.join("m-1.pdf"), b"mine").unwrap();
+        assert!(matches!(
+            place_material_blob(&conn, &app.0, &sync.0, "m-1"),
+            Err(BlobError::LocalFileDiffers)
+        ));
+        assert_eq!(std::fs::read(docs.join("m-1.pdf")).unwrap(), b"mine");
+        assert_eq!(names(&docs), vec!["m-1.pdf"]);
+        #[cfg(unix)]
+        {
+            let elsewhere = docs.join("other.pdf");
+            std::fs::write(&elsewhere, b"pdf one").unwrap();
+            std::fs::remove_file(docs.join("m-1.pdf")).unwrap();
+            std::os::unix::fs::symlink(&elsewhere, docs.join("m-1.pdf")).unwrap();
+            assert!(matches!(
+                place_material_blob(&conn, &app.0, &sync.0, "m-1"),
+                Err(BlobError::LocalFileDiffers)
+            ));
+            assert_eq!(std::fs::read(&elsewhere).unwrap(), b"pdf one");
+        }
+    }
+
+    #[test]
+    fn place_loses_a_race_to_a_new_local_file_without_overwriting() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let docs = app.0.join("documents");
+        put_blob(&sync.0, &b"pdf one"[..], None).unwrap();
+        std::fs::remove_file(docs.join("m-1.pdf")).unwrap();
+        let target = docs.join("m-1.pdf");
+        let res = place_material_blob_with(
+            &conn,
+            &app.0,
+            &sync.0,
+            "m-1",
+            |sha, sink| read_blob_into(&sync.0, sha, sink),
+            || std::fs::write(&target, b"raced").unwrap(),
+        );
+        assert!(matches!(res, Err(BlobError::LocalFileDiffers)));
+        assert_eq!(std::fs::read(&target).unwrap(), b"raced");
+        assert_eq!(names(&docs), vec!["m-1.pdf"]);
+    }
+
+    #[test]
+    fn place_treats_an_unreadable_blob_as_not_yet_available() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let docs = app.0.join("documents");
+        put_blob(&sync.0, &b"pdf one"[..], None).unwrap();
+        std::fs::remove_file(docs.join("m-1.pdf")).unwrap();
+        let res = place_material_blob_with(
+            &conn,
+            &app.0,
+            &sync.0,
+            "m-1",
+            |_, _| Err(BlobError::Io(std::io::ErrorKind::TimedOut)),
+            || {},
+        );
+        assert_eq!(res.unwrap(), Some(PlaceOutcome::NotYetAvailable));
+        assert!(names(&docs).is_empty());
+        let res = place_material_blob_with(
+            &conn,
+            &app.0,
+            &sync.0,
+            "m-1",
+            |_, _| Err(BlobError::ShaMismatch),
+            || {},
+        );
+        assert!(matches!(res, Err(BlobError::ShaMismatch)));
+        assert!(names(&docs).is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn place_refuses_a_path_outside_documents() {
+        let (conn, app, sync) = setup(b"pdf one");
+        let docs = app.0.join("documents");
+        let outside = TempDir::new("blob-outside");
+        std::os::unix::fs::symlink(&outside.0, docs.join("sub")).unwrap();
+        material(&conn, "m-2", Some("sub/m-2.pdf"), Some(&sha_of(b"pdf one")));
+        put_blob(&sync.0, &b"pdf one"[..], None).unwrap();
+        assert!(matches!(
+            place_material_blob(&conn, &app.0, &sync.0, "m-2"),
+            Err(BlobError::BadMaterialPath)
+        ));
+        assert!(names(&outside.0).is_empty());
+    }
+
+    #[test]
+    fn error_messages_name_no_path() {
+        let errors = [
+            BlobError::BadName,
+            BlobError::TooLarge,
+            BlobError::ShaMismatch,
+            BlobError::NotAFile,
+            BlobError::Missing,
+            BlobError::NoIdentity,
+            BlobError::BadMaterialPath,
+            BlobError::LocalFileDiffers,
+            BlobError::Io(std::io::ErrorKind::NotFound),
+            BlobError::Db(rusqlite::Error::QueryReturnedNoRows),
+        ];
+        for e in errors {
+            let text = e.to_string();
+            for bad in ["/", "\\", ".pdf", ".tmp", "blobs"] {
+                assert!(!text.contains(bad), "{text}");
+            }
+            assert!(!text.split_whitespace().any(is_blob_name), "{text}");
+        }
+    }
+}
