@@ -32,7 +32,9 @@ export function deviceCan() {
     getStudyMaterial: isTauri() && isIOS(),
     savePhoneWork: isTauri() && isIOS(),
     pictureFromPhoto: isTauri() && isIOS(),
-    importFiles: !isIOS(),
+    importFiles: !isIOS() || isTauri(),
+    /** Splitting a PDF into parts needs the Mac for now. */
+    splitFiles: !isIOS(),
     generate: !isIOS(),
     revealFiles: !isIOS(),
     editStudyMaterial: !isIOS(),

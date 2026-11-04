@@ -61,7 +61,7 @@ export function documentErrorMessage(error: unknown, fallback: string): string {
 }
 
 /** Ask the user for a file and copy it into private storage. */
-export async function pickAndImportDocument(materialId: string, pdfOnly = false): Promise<ImportedDocument | null> {
+export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS()): Promise<ImportedDocument | null> {
   if (!isTauri()) throw new DesktopOnlyError();
 
   const selected = await open({

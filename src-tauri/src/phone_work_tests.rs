@@ -21,7 +21,7 @@ fn root_in(container: &Path) -> PathBuf {
     connection
         .execute_batch(
             "CREATE TABLE settings (id TEXT PRIMARY KEY);
-             CREATE TABLE study_materials (id TEXT PRIMARY KEY, file_path TEXT);
+             CREATE TABLE study_materials (id TEXT PRIMARY KEY, title TEXT, file_path TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
              CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY);
              CREATE TABLE audit_payload (value TEXT NOT NULL);
              INSERT INTO _sqlx_migrations(version) VALUES (9);
@@ -50,8 +50,14 @@ fn write_baseline(root: &Path, at: &str) {
     .unwrap();
 }
 
-fn totals(w: &UnsavedPhoneWork) -> [i64; 4] {
-    [w.reviews, w.tests, w.bookmarks, w.reading_positions]
+fn totals(w: &UnsavedPhoneWork) -> [i64; 5] {
+    [
+        w.reviews,
+        w.tests,
+        w.bookmarks,
+        w.reading_positions,
+        w.materials,
+    ]
 }
 
 fn one_of_each(root: &Path, at: &str) {
@@ -61,7 +67,8 @@ fn one_of_each(root: &Path, at: &str) {
             "INSERT INTO card_review_events VALUES ('{at}');
              INSERT INTO practice_attempts VALUES ('{at}', 'abandoned');
              INSERT INTO material_bookmarks VALUES ('{at}');
-             INSERT INTO material_reading_state VALUES ('{at}');"
+             INSERT INTO material_reading_state VALUES ('{at}');
+             INSERT INTO study_materials VALUES (lower(hex(randomblob(6))), 'Fictional book', 'f.pdf', '{at}', '{at}');"
         ),
     );
 }
@@ -72,7 +79,7 @@ fn no_baseline_counts_every_row() {
     let root = root_in(&c);
     one_of_each(&root, "2026-01-01T00:00:00.000Z");
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [1, 1, 1, 1]);
+    assert_eq!(totals(&work), [1, 1, 1, 1, 1]);
     assert!(work.since.is_none());
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -82,7 +89,7 @@ fn empty_tables_are_nothing_unsaved() {
     let c = scratch();
     let root = root_in(&c);
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [0, 0, 0, 0]);
+    assert_eq!(totals(&work), [0, 0, 0, 0, 0]);
     assert!(work.since.is_none());
     assert!(sentence(&work).is_none());
     std::fs::remove_dir_all(c).unwrap();
@@ -94,7 +101,10 @@ fn rows_older_than_the_baseline_are_saved() {
     let root = root_in(&c);
     one_of_each(&root, "2026-01-01T00:00:00.000Z");
     write_baseline(&root, "2026-02-01T00:00:00Z");
-    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [0, 0, 0, 0]);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0]
+    );
     std::fs::remove_dir_all(c).unwrap();
 }
 
@@ -110,7 +120,7 @@ fn rows_newer_than_the_baseline_are_unsaved_per_kind() {
     );
     write_baseline(&root, "2026-02-01T00:00:00Z");
     let work = unsaved_phone_work_in(&root).unwrap();
-    assert_eq!(totals(&work), [2, 1, 1, 1]);
+    assert_eq!(totals(&work), [2, 1, 1, 1, 1]);
     assert_eq!(work.since.as_deref(), Some("2026-02-01T00:00:00Z"));
     std::fs::remove_dir_all(c).unwrap();
 }
@@ -147,7 +157,10 @@ fn baseline_is_never_older_than_the_newest_restored_row() {
         })
         .unwrap();
     record_baseline_in(&root, &now).unwrap();
-    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [0, 0, 0, 0]);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0]
+    );
     // A genuinely later phone review is still caught.
     exec(
         &root,
@@ -166,7 +179,7 @@ fn missing_or_corrupt_file_means_no_baseline() {
     for garbage in ["not json", "{}", "{\"baselineAt\":5}", ""] {
         std::fs::write(root.join(PHONE_WORK_FILE), garbage).unwrap();
         let work = unsaved_phone_work_in(&root).unwrap();
-        assert_eq!(totals(&work), [1, 1, 1, 1]);
+        assert_eq!(totals(&work), [1, 1, 1, 1, 1]);
         assert!(work.since.is_none());
     }
     std::fs::remove_dir_all(c).unwrap();
@@ -176,7 +189,10 @@ fn missing_or_corrupt_file_means_no_baseline() {
 fn no_database_or_missing_tables_is_nothing_unsaved() {
     let c = scratch();
     let root = c.join("app");
-    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [0, 0, 0, 0]);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0]
+    );
     record_baseline_in(&root, "2026-01-01T00:00:00Z").unwrap();
     assert_eq!(
         unsaved_phone_work_in(&root).unwrap().since.as_deref(),
@@ -257,38 +273,51 @@ fn mac_is_unaffected() {
     std::fs::remove_dir_all(c).unwrap();
 }
 
-fn work(reviews: i64, tests: i64, bookmarks: i64, reading_positions: i64) -> UnsavedPhoneWork {
+fn work(
+    reviews: i64,
+    tests: i64,
+    bookmarks: i64,
+    reading_positions: i64,
+    materials: i64,
+) -> UnsavedPhoneWork {
     UnsavedPhoneWork {
         reviews,
         tests,
         bookmarks,
         reading_positions,
+        materials,
         since: None,
     }
 }
 
 #[test]
 fn sentence_matches_the_typescript_wording() {
-    assert_eq!(sentence(&work(12, 1, 0, 0)).as_deref(), Some(BLOCKED));
+    assert_eq!(sentence(&work(12, 1, 0, 0, 0)).as_deref(), Some(BLOCKED));
+    assert_eq!(
+        sentence(&work(12, 1, 0, 0, 1)).as_deref(),
+        Some("This phone has 12 card reviews, 1 practice test, and 1 study material that aren't saved anywhere else yet. Save my phone work first, then get your study material.")
+    );
 }
 
 #[test]
 fn sentence_handles_each_kind_and_plurals() {
-    let s = sentence(&work(1, 2, 1, 1)).unwrap();
+    let s = sentence(&work(1, 2, 1, 1, 0)).unwrap();
     assert!(
         s.contains("1 card review, 2 practice tests, 1 bookmark, and 1 reading position that"),
         "{s}"
     );
-    assert!(sentence(&work(0, 0, 0, 3))
+    assert!(sentence(&work(0, 0, 0, 3, 0))
         .unwrap()
         .contains("3 reading positions that"));
-    assert!(sentence(&work(0, 0, 0, 0)).is_none());
+    assert!(sentence(&work(0, 0, 0, 0, 0)).is_none());
 }
 
 #[test]
 fn sentence_uses_plain_words() {
-    let s = sentence(&work(12, 1, 3, 2)).unwrap().to_lowercase();
-    for word in ["baseline", "ledger", "sync", "restore", "database"] {
+    let s = sentence(&work(12, 1, 3, 2, 1)).unwrap().to_lowercase();
+    for word in [
+        "baseline", "ledger", "sync", "restore", "database", "row", "table",
+    ] {
         assert!(!s.contains(word), "{word}");
     }
 }
@@ -343,7 +372,10 @@ fn saving_writes_the_phone_copy_and_marks_everything_saved() {
     assert!(saved.file_bytes > 0);
     assert_eq!(saved.file_name, PHONE_WORK_ARCHIVE);
     assert!(crate::backup::inspect_archive(&root, &file, "0.6.7").is_ok());
-    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [0, 0, 0, 0]);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0]
+    );
     std::fs::remove_dir_all(c).unwrap();
 }
 
@@ -363,7 +395,10 @@ fn baseline_moves_only_after_a_successful_save() {
         assert!(save_phone_work_in(&root, &not_a_folder, "0.6.7", &now).is_err());
         assert_eq!(std::fs::read(root.join(PHONE_WORK_FILE)).ok(), before);
         assert_eq!(before.is_some(), existing);
-        assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [1, 1, 1, 1]);
+        assert_eq!(
+            totals(&unsaved_phone_work_in(&root).unwrap()),
+            [1, 1, 1, 1, 1]
+        );
         assert!(leftovers(&c).is_empty(), "{:?}", leftovers(&c));
         std::fs::remove_dir_all(c).unwrap();
     }
@@ -437,7 +472,10 @@ fn work_done_after_a_save_is_unsaved_again() {
             sql_now("+1 minute")
         ),
     );
-    assert_eq!(totals(&unsaved_phone_work_in(&root).unwrap()), [1, 0, 0, 0]);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [1, 0, 0, 0, 0]
+    );
     assert!(refuse_unsaved(&root, true).is_err());
     // A later "now" than the new row, as a real second save would have.
     save_phone_work_in(&root, &docs, "0.6.7", &sql_now("+2 minutes")).unwrap();
@@ -677,5 +715,94 @@ fn unknown_state_keeps_an_existing_copy() {
     let kept = saved.kept_file_name.expect("the earlier copy is kept");
     assert_eq!(std::fs::read(docs.join(&kept)).unwrap(), a);
     assert_eq!(docs_names(&docs).len(), 2);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn a_study_material_added_after_the_baseline_is_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    exec(
+        &root,
+        "INSERT INTO study_materials VALUES ('m1', 'Fictional book', 'f.pdf', '2026-03-01T00:00:00.000Z', '2026-03-01T00:00:00.000Z');",
+    );
+    let work = unsaved_phone_work_in(&root).unwrap();
+    assert_eq!(work.materials, 1);
+    assert!(sentence(&work).unwrap().contains("1 study material"));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn restored_study_materials_are_saved() {
+    let c = scratch();
+    let root = root_in(&c);
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    exec(
+        &root,
+        "INSERT INTO study_materials VALUES ('m1', 'Fictional book', 'f.pdf', '2025-03-01T00:00:00.000Z', '2025-03-01T00:00:00.000Z');",
+    );
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().materials, 0);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn baseline_is_never_older_than_the_newest_study_material() {
+    let c = scratch();
+    let root = root_in(&c);
+    exec(
+        &root,
+        "INSERT INTO study_materials VALUES ('m1', 'Fictional book', 'f.pdf', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+1 hour'));",
+    );
+    record_baseline_in(&root, &now_utc().unwrap()).unwrap();
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().materials, 0);
+    exec(
+        &root,
+        "INSERT INTO study_materials VALUES ('m2', 'Fictional book 2', 'g.pdf', strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+2 hours'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '+2 hours'));",
+    );
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().materials, 1);
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn an_added_pdf_is_in_the_phone_copy() {
+    let c = scratch();
+    let root = root_in(&c);
+    let source = c.join("picked.pdf");
+    crate::documents::import_tests_write_pdf(&source, 2);
+    let documents = root.join(crate::documents::DOCUMENTS_DIR);
+    let limits = crate::documents::PhoneLimits {
+        max_bytes: u64::MAX,
+        max_pages: 1_000,
+    };
+    let added = crate::documents::import_document_in(
+        &documents,
+        source.to_str().unwrap(),
+        "m1",
+        true,
+        true,
+        limits,
+    )
+    .unwrap();
+    // The dialog's Save writes the material row that points at the stored file.
+    let at = sql_now("-1 hour");
+    exec(
+        &root,
+        &format!(
+            "INSERT INTO study_materials VALUES ('m1', 'Fictional book', '{}', '{at}', '{at}');",
+            added.relative_path
+        ),
+    );
+    let saved_copy = docs_in(&c);
+    save_phone_work_in(&root, &saved_copy, "0.6.7", &now_utc().unwrap()).unwrap();
+    let file = std::fs::File::open(saved_copy.join(PHONE_WORK_ARCHIVE)).unwrap();
+    let archive = zip::ZipArchive::new(file).unwrap();
+    let wanted = format!("documents/{}", added.relative_path);
+    let entries: Vec<String> = archive
+        .file_names()
+        .filter_map(Result::ok)
+        .map(|n| n.into_owned())
+        .collect();
+    assert!(entries.contains(&wanted), "{wanted} not in {entries:?}");
     std::fs::remove_dir_all(c).unwrap();
 }

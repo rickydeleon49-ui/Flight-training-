@@ -365,3 +365,14 @@ it("opens an iOS PDF through raw bytes without the system opener", async () => {
     vi.unstubAllGlobals();
   }
 });
+
+it("on the phone the picker is PDF-only and the app is told so", async () => {
+  mocks.isTauri.mockReturnValue(true);
+  mocks.isIOS.mockReturnValue(true);
+  mocks.pick.mockResolvedValue("file:///synthetic/local.pdf");
+  mocks.invoke.mockResolvedValue({ relativePath: "m-local.pdf", originalFileName: "local.pdf", fileSize: 120, pdfIdentity: null });
+  await pickAndImportDocument("m");
+  expect(mocks.pick).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "PDF", extensions: ["pdf"] }] }));
+  expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "file:///synthetic/local.pdf", materialId: "m", pdfOnly: true });
+  mocks.isIOS.mockReturnValue(false);
+});

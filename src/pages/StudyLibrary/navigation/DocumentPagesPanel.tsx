@@ -409,7 +409,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
           {missing ? (
             <div className="row row--between row--wrap">
               <p className="tiny muted">The file for this material isn&apos;t in your library storage, so no page can be opened. Your saved places are kept.</p>
-              {deviceCan().importFiles ? <Button size="small" variant="primary" disabled={restoring} onClick={onRestore}>
+              {deviceCan().splitFiles ? <Button size="small" variant="primary" disabled={restoring} onClick={onRestore}>
                 {restoring ? "Restoring…" : "Find and restore file"}
               </Button> : null}
             </div>

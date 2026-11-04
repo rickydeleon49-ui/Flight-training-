@@ -8,8 +8,8 @@ vi.mock("@/services/backups", async (original) => ({
 }));
 import { SavePhoneWorkCard } from "./SavePhoneWorkCard";
 
-const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, since: null };
-const some = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, since: null };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, since: null };
+const some = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, materials: 0, since: null };
 const saved = { fileName: "My phone work.hfdbackup", savedAt: "2026-11-04T10:00:00.000Z", fileBytes: 10 };
 
 beforeEach(() => {

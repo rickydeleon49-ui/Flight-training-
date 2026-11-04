@@ -13,12 +13,13 @@ use tauri::{AppHandle, Manager};
 pub(crate) const PHONE_WORK_FILE: &str = "phone-work.json";
 const DB_FILE: &str = "her-flight-deck.db";
 
-/// (table, timestamp column) for the four kinds of phone-made work.
-const KINDS: [(&str, &str); 4] = [
+/// (table, timestamp column) for the five kinds of phone-made work.
+const KINDS: [(&str, &str); 5] = [
     ("card_review_events", "reviewed_at"),
     ("practice_attempts", "started_at"),
     ("material_bookmarks", "updated_at"),
     ("material_reading_state", "updated_at"),
+    ("study_materials", "created_at"),
 ];
 
 #[derive(Debug, Serialize)]
@@ -28,6 +29,7 @@ pub struct UnsavedPhoneWork {
     pub tests: i64,
     pub bookmarks: i64,
     pub reading_positions: i64,
+    pub materials: i64,
     pub since: Option<String>,
 }
 
@@ -104,7 +106,7 @@ fn newest(connection: &Connection, table: &str, column: &str) -> Result<Option<S
         .map_err(|e| e.to_string())
 }
 
-/// Record the baseline: `now`, or the newest timestamp in the four tables if
+/// Record the baseline: `now`, or the newest timestamp in the kinds' tables if
 /// that is later (so a Mac clock running ahead of the phone is harmless).
 pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
     let mut best = now.to_string();
@@ -202,7 +204,7 @@ fn count_newer(
 
 pub(crate) fn unsaved_phone_work_in(root: &Path) -> Result<UnsavedPhoneWork, String> {
     let baseline = read_baseline(root);
-    let mut counts = [0i64; 4];
+    let mut counts = [0i64; KINDS.len()];
     if let Some(connection) = open_read_only(root)? {
         for (slot, (table, column)) in counts.iter_mut().zip(KINDS) {
             *slot = count_newer(&connection, table, column, baseline.as_deref())?;
@@ -213,6 +215,7 @@ pub(crate) fn unsaved_phone_work_in(root: &Path) -> Result<UnsavedPhoneWork, Str
         tests: counts[1],
         bookmarks: counts[2],
         reading_positions: counts[3],
+        materials: counts[4],
         since: baseline,
     })
 }
@@ -244,6 +247,7 @@ pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
             "reading position",
             "reading positions",
         ),
+        part(work.materials, "study material", "study materials"),
     ]
     .into_iter()
     .flatten()
