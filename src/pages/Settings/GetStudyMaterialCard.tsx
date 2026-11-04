@@ -19,7 +19,12 @@ function activitySentence(activity: ActivitySummary): string {
   const last = date && !Number.isNaN(date.getTime())
     ? `Your last card review on this phone was ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date)}`
     : "Your study activity on this phone will be replaced";
-  return `${last}; ${reviewsLast7Days} reviews and ${attemptsLast7Days} tests this week will be replaced.`;
+  const parts = [
+    reviewsLast7Days > 0 ? `${reviewsLast7Days} ${reviewsLast7Days === 1 ? "card review" : "card reviews"}` : null,
+    attemptsLast7Days > 0 ? `${attemptsLast7Days} ${attemptsLast7Days === 1 ? "practice test" : "practice tests"}` : null,
+  ].filter((p): p is string => p !== null);
+  if (parts.length === 0) return date && !Number.isNaN(date.getTime()) ? `${last}. Your study activity on this phone will be replaced.` : `${last}.`;
+  return `${last}; ${parts.join(" and ")} this week will be replaced.`;
 }
 
 export function GetStudyMaterialCard() {

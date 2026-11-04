@@ -9,7 +9,9 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
-import { getDatabase } from "@/data";
+import { getDatabase, isTauri } from "@/data";
+import { recordFreshPhoneBaseline } from "@/services/backups";
+import { isIOS } from "@/services/platform";
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { initializeAirlineStarterPack } from "@/data/starter";
 import type {
@@ -296,7 +298,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const db = await getDatabase();
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
-        await initializeAirlineStarterPack(repositories);
+        const firstRun = await initializeAirlineStarterPack(repositories);
+        if (firstRun && isTauri() && isIOS()) void recordFreshPhoneBaseline();
         void repositories.app.ensureDeviceId().catch(() => {});
         return loadAll(repositories);
       })();

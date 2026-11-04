@@ -52,10 +52,26 @@ describe("GetStudyMaterialCard", () => {
     }
   });
 
+  it("uses singular wording, omits a zero part, and drops the clause when both are zero", async () => {
+    mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 1, attemptsLast7Days: 1 });
+    await pick();
+    expect(screen.getByText(/Your last card review/).textContent).toContain("1 card review and 1 practice test this week will be replaced.");
+    cleanup();
+    mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 0, attemptsLast7Days: 4 });
+    await pick();
+    expect(screen.getByText(/Your last card review/).textContent).toMatch(/; 4 practice tests this week will be replaced\.$/);
+    cleanup();
+    mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 0, attemptsLast7Days: 0 });
+    await pick();
+    const text = screen.getByText(/Your last card review/).textContent ?? "";
+    expect(text).not.toContain("this week");
+    expect(text).toContain("Your study activity on this phone will be replaced.");
+  });
+
   it("previews the date, size, files and phone activity", async () => {
     await pick();
     expect(screen.getByText(/From your Mac/).textContent).toBe(`From your Mac · ${formatBackupDate(info.createdAt)} · 2 KB · 4 files`);
-    expect(screen.getByText(/Your last card review/).textContent).toContain("2 reviews and 3 tests this week will be replaced.");
+    expect(screen.getByText(/Your last card review/).textContent).toContain("2 card reviews and 3 practice tests this week will be replaced.");
     expect(screen.queryByText(/Nothing changes on this phone/)).toBeNull();
     expect(mocks.importPickedBackup).toHaveBeenCalledWith("/picked/material.hfdbackup");
   });
@@ -181,6 +197,7 @@ describe("GetStudyMaterialCard", () => {
       expect(unsavedPhoneWorkSentence(unsaved)).toBe(BLOCKED);
       expect(unsavedPhoneWorkSentence({ ...unsaved, materials: 1 })).toBe("This phone has 12 card reviews, 1 practice test, and 1 study material that aren't saved anywhere else yet. Save my phone work first, then get your study material.");
       expect(unsavedPhoneWorkSentence(none)).toBeNull();
+      expect(unsavedPhoneWorkSentence({ ...none, reviews: 1 })).toBe("This phone has 1 card review that isn't saved anywhere else yet. Save my phone work first, then get your study material.");
     });
 
     it("on iOS blocks Replace and only offers Not now", async () => {

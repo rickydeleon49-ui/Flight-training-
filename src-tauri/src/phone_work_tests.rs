@@ -806,3 +806,54 @@ fn an_added_pdf_is_in_the_phone_copy() {
     assert!(entries.contains(&wanted), "{wanted} not in {entries:?}");
     std::fs::remove_dir_all(c).unwrap();
 }
+
+#[test]
+fn fresh_install_baseline_makes_seeded_rows_not_unsaved() {
+    let c = scratch();
+    let root = root_in(&c);
+    for _ in 0..7 {
+        exec(
+            &root,
+            "INSERT INTO study_materials VALUES (lower(hex(randomblob(6))), 'Starter', 'f.pdf', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');",
+        );
+    }
+    assert_eq!(unsaved_phone_work_in(&root).unwrap().materials, 7);
+    record_baseline_if_missing_in(&root, "2026-01-02T00:00:00.000Z").unwrap();
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0]
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn existing_baseline_is_left_unchanged_by_the_fresh_install_call() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, "2026-03-01T00:00:00Z");
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    let before = std::fs::read(root.join(PHONE_WORK_FILE)).unwrap();
+    record_baseline_if_missing_in(&root, "2026-04-01T00:00:00.000Z").unwrap();
+    assert_eq!(std::fs::read(root.join(PHONE_WORK_FILE)).unwrap(), before);
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [1, 1, 1, 1, 1]
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn single_unsaved_item_uses_the_singular_verb() {
+    let work = UnsavedPhoneWork {
+        reviews: 1,
+        tests: 0,
+        bookmarks: 0,
+        reading_positions: 0,
+        materials: 0,
+        since: None,
+    };
+    assert_eq!(
+        sentence(&work).unwrap(),
+        "This phone has 1 card review that isn't saved anywhere else yet. Save my phone work first, then get your study material."
+    );
+}

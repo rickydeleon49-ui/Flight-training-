@@ -1,4 +1,5 @@
-import { deviceCan } from "@/services/platform";
+import { deviceCan, isIOS } from "@/services/platform";
+import { faaPdfPrompt } from "@/services/phoneCopy";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -454,7 +455,7 @@ function AddReference({ reference, onClose, onSave }: {
       </>}>
       <div className="stack stack--4 faa-shelf">
         <p className="small">Listed edition: {reference.edition}. {reference.publication}.</p>
-        <p className="small muted">Choose a PDF from your computer. The app keeps the edition you enter.</p>
+        <p className="small muted">{faaPdfPrompt(isIOS())} The app keeps the edition you enter.</p>
         <Field label="Your PDF’s edition (optional)" hint="You can leave this blank. Another edition stays as a separate copy.">
           {({ id: fieldId, describedBy }) => <TextInput id={fieldId} aria-describedby={describedBy}
             maxLength={200} value={edition} placeholder={reference.edition} disabled={busy}

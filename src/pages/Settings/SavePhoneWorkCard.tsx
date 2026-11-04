@@ -47,7 +47,7 @@ export function SavePhoneWorkCard() {
       <CardBody>
         {checkProblem ? <p role="alert">{checkProblem}</p>
           : work ? <p>{unsavedPhoneWorkTotal(work) > 0 && counts
-            ? `This phone has ${counts} that aren't saved anywhere else yet.`
+            ? `This phone has ${counts} that ${unsavedPhoneWorkTotal(work) === 1 ? "isn't" : "aren't"} saved anywhere else yet.`
             : "Everything you did on this phone is saved."}</p> : null}
         <Button variant="primary" disabled={busy} onClick={save}>
           {busy ? "Saving…" : "Save my phone work"}

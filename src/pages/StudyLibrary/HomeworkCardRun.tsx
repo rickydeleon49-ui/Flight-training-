@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { isIOS } from "@/services/platform";
+import { ratingKeyHint } from "@/services/phoneCopy";
 import { Button } from "@/components/ui";
 import type { HomeworkCardRun, HomeworkOperation, HomeworkSnapshot } from "@/domain/homework";
 import type { CardReviewSnapshot, CardRating, CardItemAction } from "@/domain/types";
@@ -389,7 +391,7 @@ export function HomeworkCardRun({
                           </Button>
                         ))}
                       </div>
-                      <p className="tiny dim">1–4 rate it (1: Again, 2: Hard, 3: Good, 4: Easy).</p>
+                      {ratingKeyHint(isIOS(), true) ? <p className="tiny dim">{ratingKeyHint(isIOS(), true)}</p> : null}
                     </>
                   ) : !item.visualRegionId ? (
                     <div>

@@ -7,6 +7,8 @@
  * Ratings only schedule reviews: they are never scores, mastery, FAA results
  * or readiness, and practice tests are unaffected.
  */
+import { isIOS } from "@/services/platform";
+import { ratingKeyHint } from "@/services/phoneCopy";
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
@@ -561,7 +563,7 @@ export function SessionView({
               </Button>
             ))}
           </div>
-          <p className="tiny dim">1–4 rate it.</p>
+          {ratingKeyHint(isIOS(), false) ? <p className="tiny dim">{ratingKeyHint(isIOS(), false)}</p> : null}
           {!item.visualRegionId ? (
             <AskGeminiPanel
               materialId={materialId}

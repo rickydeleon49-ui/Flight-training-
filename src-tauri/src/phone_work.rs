@@ -255,8 +255,11 @@ pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
     if parts.is_empty() {
         return None;
     }
+    let total =
+        work.reviews + work.tests + work.bookmarks + work.reading_positions + work.materials;
+    let verb = if total == 1 { "isn't" } else { "aren't" };
     Some(format!(
-        "This phone has {} that aren't saved anywhere else yet. Save my phone work first, then get your study material.",
+        "This phone has {} that {verb} saved anywhere else yet. Save my phone work first, then get your study material.",
         join_words(&parts)
     ))
 }
@@ -270,6 +273,26 @@ pub(crate) fn refuse_unsaved(root: &Path, phone: bool) -> Result<(), String> {
         None => Ok(()),
         Some(text) => Err(text),
     }
+}
+
+/// A genuinely empty first run has nothing to protect: record the baseline unless
+/// one already exists (an upgraded phone with no baseline keeps everything counted).
+pub(crate) fn record_baseline_if_missing_in(root: &Path, now: &str) -> Result<(), String> {
+    if read_file(root).is_some() {
+        return Ok(());
+    }
+    record_baseline_in(root, now)
+}
+
+#[tauri::command]
+pub async fn record_fresh_phone_baseline(app: AppHandle) -> Result<(), String> {
+    let root = crate::storage::app_root(&app)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let now = now_utc()?;
+        record_baseline_if_missing_in(&root, &now)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
