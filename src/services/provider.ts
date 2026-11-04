@@ -45,4 +45,4 @@ export function providerWording(text: string, model?: string): string {
   return providerCompany(model) === "Anthropic" ? CLAUDE_MESSAGES[text] ?? text : text;
 }
 
-export const SAVED_KEY_UNREADABLE = "Your saved key couldn't be read. Restart the app and choose Allow if your Mac asks.";
+export const SAVED_KEY_UNREADABLE = "Your saved key couldn't be read. Restart the app, and choose Allow if you're asked.";
