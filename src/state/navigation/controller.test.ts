@@ -6,7 +6,10 @@
  * ports, never sleeps. Production tests for the prototype's M4-R11, R13, R23,
  * R24, R28–R30 and R37 controller behaviours.
  */
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const platform = vi.hoisted(() => ({ ios: false }));
+vi.mock("@/services/platform", () => ({ isIOS: () => platform.ios }));
 
 import type { InspectedNavigationIdentity, NavigationOperation } from "@/domain/types";
 import { navigationRepository } from "@/data/repositories/navigationRepository";
@@ -479,6 +482,19 @@ it("passes a physical page for bookmarks and verified sources; unknown citations
   await r.controller.openForGuidance("m1", "Look for page 9");
   await r.controller.openForGuidance("m1", "Go to page 5", { materialId: "m1", contentSha256: A, physicalPage: 5, pageLabel: null });
   expect(r.pages).toEqual([3, undefined, 5]);
+});
+
+it("on iOS an unverified cited page opens that PDF page with short wording; elsewhere it passes none", async () => {
+  const r = await rig();
+  platform.ios = true;
+  try {
+    expect(await r.controller.openForGuidance("m1", "Look for page 2.", undefined, 2)).toMatchObject({ kind: "guidance", message: "Opened at PDF page 2." });
+    expect(await r.controller.openForGuidance("m1", "Look for page 99.", undefined, 99)).toMatchObject({ message: "Look for page 99." });
+  } finally {
+    platform.ios = false;
+  }
+  expect(await r.controller.openForGuidance("m1", "Look for page 2.", undefined, 2)).toMatchObject({ message: "Look for page 2." });
+  expect(r.pages).toEqual([2, undefined, undefined]);
 });
 
 it("does not save a native page open that finishes after cancellation", async () => {

@@ -108,7 +108,7 @@ private final class PdfController: UIViewController {
             pdfView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .done, target: self, action: #selector(done))
+            title: "Done", style: .done, target: self, action: #selector(done))
     }
 
     func selectInitialPage() -> Bool {

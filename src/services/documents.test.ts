@@ -374,6 +374,14 @@ it("opens an iOS PDF by material ID without bytes, blob URLs or the system opene
   mocks.isIOS.mockReturnValue(false);
 });
 
+it("does not send a picture to the PDF viewer on iOS", async () => {
+  mocks.isTauri.mockReturnValue(true);
+  mocks.isIOS.mockReturnValue(true);
+  await expect(openDocument("photo.PNG", "Picture", "synthetic-material")).rejects.toThrow("This picture could not be opened.");
+  expect(mocks.invoke).not.toHaveBeenCalled();
+  mocks.isIOS.mockReturnValue(false);
+});
+
 it("reports native failure in plain words without leaking native paths", async () => {
   mocks.isTauri.mockReturnValue(true);
   mocks.isIOS.mockReturnValue(true);

@@ -40,6 +40,7 @@
  * already been handed cannot be taken back; an obsolete one is never started.
  */
 import { openedPageMessage } from "@/services/pdfViewer";
+import { isIOS } from "@/services/platform";
 import type { InspectedNavigationIdentity, NavigationOperation, NavigationReadingState, NavigationResultByKind } from "@/domain/types";
 import { NAVIGATION_ERROR_MESSAGES, NavigationError } from "@/data/navigationTransaction";
 import { resolveDestination, type Destination, type LabelMap, type PageProvenance } from "@/logic/navigation";
@@ -217,9 +218,10 @@ export class NavigationController {
 
   /**
    * Open with guidance and save nothing. A verified saved source may supply
-   * a physical page for iOS; citations with unknown numbering never do.
+   * a physical page for iOS. On iOS only, a cited number of unknown numbering
+   * is tried as a PDF page when the file has it (the notice says "PDF page").
    */
-  async openForGuidance(materialId: string, guidance: string, saved?: SavedDestination): Promise<NavigationStatus | null> {
+  async openForGuidance(materialId: string, guidance: string, saved?: SavedDestination, citedPage?: number): Promise<NavigationStatus | null> {
     const ticket = this.enter(materialId);
     ticket.settled = true;
     this.publish(ticket, { kind: "working", materialId, step: "checking" });
@@ -233,12 +235,15 @@ export class NavigationController {
     // Retired while the file was being checked: the open is never dispatched.
     if (!this.isCurrent(ticket)) return null;
     this.publish(ticket, { kind: "working", materialId, step: "opening" });
+    // A cited number of unknown numbering is tried as a PDF page on iOS only, when the file has it.
+    const tried = !saved && citedPage !== undefined && isIOS() && Number.isInteger(citedPage) && citedPage >= 1 && citedPage <= identity.totalPages ? citedPage : undefined;
+    const page = saved?.physicalPage ?? tried;
     try {
-      await this.ports.open(materialId, identity.contentSha256, saved?.physicalPage);
+      await this.ports.open(materialId, identity.contentSha256, page);
     } catch (error) {
       return this.finish(ticket, { kind: "failed", materialId, ...messageOf(error) });
     }
-    return this.finish(ticket, { kind: "guidance", materialId, message: saved ? openedPageMessage(saved.physicalPage, guidance) : guidance });
+    return this.finish(ticket, { kind: "guidance", materialId, message: page !== undefined ? openedPageMessage(page, guidance) : guidance });
   }
 
   /** Retire the current request (navigating away, closing the panel). */

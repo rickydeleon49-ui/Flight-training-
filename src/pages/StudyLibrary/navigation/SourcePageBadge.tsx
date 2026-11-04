@@ -101,6 +101,7 @@ export function SourcePageBadge({ page, materialId, materialTitle, source }: Sou
             source
               ? { materialId, contentSha256: source.contentSha256, physicalPage: source.physicalPage, pageLabel: source.printedLabel }
               : undefined,
+            source ? undefined : Number(String(page).trim()),
           );
           // The new request's epoch is published synchronously as it starts.
           const request = { controller, epoch: controller.status().epoch };
