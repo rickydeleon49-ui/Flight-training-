@@ -35,7 +35,9 @@ export function deviceCan() {
     importFiles: !isIOS() || isTauri(),
     /** Splitting a PDF into parts needs the Mac for now. */
     splitFiles: !isIOS(),
-    generate: !isIOS(),
+    generate: !isIOS() || isTauri(),
+    /** Reading a PDF's text on this device (study kit, offline text) needs the Mac until P-2. */
+    pdfKit: !isIOS(),
     revealFiles: !isIOS(),
     editStudyMaterial: !isIOS(),
     sharePrint: !isIOS(),

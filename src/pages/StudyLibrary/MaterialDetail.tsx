@@ -610,6 +610,9 @@ function MaterialDetailPage() {
     .toLowerCase()
     .endsWith(".pdf");
   const isOverLimit = Boolean(isPdf && !fileForAi.ready);
+  const tooBig = deviceCan().splitFiles
+    ? `This PDF is too big for ${helper} — split it first.`
+    : `This PDF is too big for ${helper}. Split it on your Mac first.`;
   const pdfAskConversationKey = JSON.stringify([
     material.id,
     material.filePath,
@@ -619,7 +622,7 @@ function MaterialDetailPage() {
   const pdfContext = pdfAskContext(material.title, studySet?.summary);
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
-  const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs();
+  const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs() && deviceCan().splitFiles;
   // Before a PDF is sent, narrowing it to a chapter is a deliberate choice
   // (GEN-REL-01): it opens the existing page chooser and sends nothing. The
   // new part is generated only after its own explicit Send.
@@ -642,7 +645,7 @@ function MaterialDetailPage() {
   const generationNotice: GenerationNotice | null = !aiCheck.allowed
     ? { text: aiCheck.reason }
     : !fileForAi.ready
-      ? { text: isPdf ? "This PDF is too big for Gemini — split it first." : fileForAi.reason, split: canSplit }
+      ? { text: isPdf ? tooBig : fileForAi.reason, split: canSplit }
       : fileMissing
         ? { text: "This study file is missing from app storage. Restore or re-attach the file to regenerate or create study aids from it." }
         : geminiStatusFailed
@@ -927,7 +930,7 @@ function MaterialDetailPage() {
   const jumpToFileSection = () => jumpTo("material-file-actions");
   const kitMakerAtTop = !studySet || !practiceTest || kitJob?.phase === "running" ||
     Boolean(kitMessage) || canSaveWholeKit || discardableKitDrafts.length > 0;
-  const kitMaker = deviceCan().generate && isPdf ? (
+  const kitMaker = deviceCan().pdfKit && isPdf ? (
     <CardBody>
       <div className="stack stack--3">
         <Button disabled={isGeneratingAny || fileMissing || !gemini?.configured || !aiCheck.allowed || geminiJobs.locked()} onClick={() => void prepareStudyKit()}>Make my study kit</Button>
@@ -1113,14 +1116,14 @@ function MaterialDetailPage() {
                   </p>
                 ) : null}
                 <CardBody>
-                  {deviceCan().generate && isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
+                  {deviceCan().pdfKit && isPdf && material.filePath && !studySet && !practiceTest ? <p className="small muted">
                     <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
                   </p> : null}
                   {deviceCan().generate && isOverLimit ? (
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
+                        <p className="tiny">{tooBig}</p>
                       </div>
                     </div>
                   ) : null}
@@ -1348,7 +1351,7 @@ function MaterialDetailPage() {
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
+                        <p className="tiny">{tooBig}</p>
                       </div>
                     </div>
                   ) : null}
@@ -1578,7 +1581,7 @@ function MaterialDetailPage() {
                     <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
-                        <p className="tiny">This PDF is too big for {helper} — split it first.</p>
+                        <p className="tiny">{tooBig}</p>
                       </div>
                     </div>
                   ) : null}
@@ -1957,9 +1960,9 @@ function MaterialDetailPage() {
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
                 <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
-                {!tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                {deviceCan().pdfKit && !tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
-                  {material.filePath ? <>
+                  {deviceCan().pdfKit && material.filePath ? <>
                     <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
                     <div id="material-pdf-kit" tabIndex={-1}><PdfStudyKitPanel key={material.id} material={material} /></div>
                   </> : null}
@@ -2140,7 +2143,7 @@ function MaterialDetailPage() {
                 {!aiCheck.allowed ? (
                   <p className="small muted">{aiCheck.reason}</p>
                 ) : isOverLimit ? (
-                  <p className="small muted">This PDF is too big for {helper} — split it first.</p>
+                  <p className="small muted">{tooBig}</p>
                 ) : !canOfferGemini || fileMissing ? (
                   <p className="small muted">
                     {fileMissing

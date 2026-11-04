@@ -13,13 +13,15 @@ use tauri::{AppHandle, Manager};
 pub(crate) const PHONE_WORK_FILE: &str = "phone-work.json";
 const DB_FILE: &str = "her-flight-deck.db";
 
-/// (table, timestamp column) for the five kinds of phone-made work.
-const KINDS: [(&str, &str); 5] = [
+/// (table, timestamp column) for the kinds of phone-made work.
+const KINDS: [(&str, &str); 7] = [
     ("card_review_events", "reviewed_at"),
     ("practice_attempts", "started_at"),
     ("material_bookmarks", "updated_at"),
     ("material_reading_state", "updated_at"),
     ("study_materials", "created_at"),
+    ("ai_study_sets", "updated_at"),
+    ("practice_tests", "updated_at"),
 ];
 
 #[derive(Debug, Serialize)]
@@ -30,6 +32,8 @@ pub struct UnsavedPhoneWork {
     pub bookmarks: i64,
     pub reading_positions: i64,
     pub materials: i64,
+    pub guides: i64,
+    pub generated_tests: i64,
     pub since: Option<String>,
 }
 
@@ -216,6 +220,8 @@ pub(crate) fn unsaved_phone_work_in(root: &Path) -> Result<UnsavedPhoneWork, Str
         bookmarks: counts[2],
         reading_positions: counts[3],
         materials: counts[4],
+        guides: counts[5],
+        generated_tests: counts[6],
         since: baseline,
     })
 }
@@ -240,13 +246,18 @@ fn join_words(parts: &[String]) -> String {
 pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
     let parts: Vec<String> = [
         part(work.reviews, "card review", "card reviews"),
-        part(work.tests, "practice test", "practice tests"),
+        part(
+            work.tests + work.generated_tests,
+            "practice test",
+            "practice tests",
+        ),
         part(work.bookmarks, "bookmark", "bookmarks"),
         part(
             work.reading_positions,
             "reading position",
             "reading positions",
         ),
+        part(work.guides, "study guide", "study guides"),
         part(work.materials, "study material", "study materials"),
     ]
     .into_iter()
