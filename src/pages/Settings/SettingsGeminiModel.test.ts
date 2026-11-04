@@ -12,6 +12,13 @@ import * as backupService from "@/services/backups";
 import * as appDataApi from "@/data";
 import * as providerService from "@/services/provider";
 import * as geminiService from "@/services/gemini";
+import * as platformApi from "@/services/platform";
+
+// These tests run with isTauri() false; the AI card is shown as it was before geminiKey existed.
+const keepCardVisible = () => {
+  const real = platformApi.deviceCan();
+  vi.spyOn(platformApi, "deviceCan").mockReturnValue({ ...real, geminiKey: true });
+};
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -42,6 +49,7 @@ describe("Gemini model choice in Settings", () => {
   beforeEach(async () => {
     localStorage.clear();
     db = await createNodeSqliteDatabase();
+    keepCardVisible();
     HTMLDialogElement.prototype.showModal = function () {
       this.setAttribute("open", "");
     };
@@ -190,6 +198,7 @@ function visibleCardText(card: Element): string {
 it.each([STANDARD, { ...STANDARD, configured: false }])("keeps the Gemini-default provider card visible text unchanged (connected: $configured)", async (status) => {
   localStorage.clear();
   db = await createNodeSqliteDatabase();
+  keepCardVisible();
   vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue(status);
   try {
     await open();

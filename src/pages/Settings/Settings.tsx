@@ -99,7 +99,7 @@ import { isMacOS, isWindowsOS } from "@/lib/platform";
 
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
-import { deviceCan } from "@/services/platform";
+import { deviceCan, isIOS } from "@/services/platform";
 
 import "./settings.css";
 
@@ -126,11 +126,20 @@ function PlatformGuidance({
   mac,
   windows,
   neutral,
+  ios,
 }: {
   mac: ReactNode;
   windows?: ReactNode;
   neutral?: ReactNode;
+  ios?: ReactNode;
 }) {
+  if (isIOS() && ios) {
+    return (
+      <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
+        {ios}
+      </p>
+    );
+  }
   if (isMacOS()) {
     return (
       <p className="tiny dim" style={{ marginBottom: "var(--space-4)" }}>
@@ -1255,7 +1264,7 @@ export function Settings() {
 
         <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
           <summary>Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !gemini?.configured ? " · AI provider not set up" : ""}</summary>
-        {deviceCan().generate ? (
+        {deviceCan().geminiKey ? (
         <Card>
           <CardHeader
             title="AI provider"
@@ -1269,6 +1278,7 @@ export function Settings() {
                 mac="Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite."
                 windows="Google AI Studio opens in the default browser. The API key stays in this computer’s application data folder and is not included in backups or SQLite."
                 neutral="Google AI Studio opens in the default browser. The API key stays in your local application data folder and is not included in backups or SQLite."
+                ios="Google AI Studio opens in Safari. The key is kept in this iPhone's Keychain and is not included in backups."
               />
               <p className="small muted">
                 Gemini can turn a selected Study Library document into a study guide and
@@ -1289,7 +1299,7 @@ export function Settings() {
                   <div>
                     <p className="small strong">Ready to use</p>
                     <p className="tiny dim">
-                      {geminiModelName(gemini.model)} · key saved on this computer
+                      {geminiModelName(gemini.model)} · key saved on this {isIOS() ? "phone" : "computer"}
                     </p>
                   </div>
                 </div>

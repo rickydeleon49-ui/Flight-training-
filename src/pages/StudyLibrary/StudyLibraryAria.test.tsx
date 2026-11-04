@@ -98,7 +98,7 @@ it("follows later URL navigation and browser back without local selection drift"
 
 it("hides library and FAA import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, pictureFromPhoto: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, geminiKey: true, generate: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     open();
     expect(screen.queryByRole("button", { name: "Add material" })).toBeNull();
@@ -116,7 +116,7 @@ it("hides library and FAA import entries on the phone", async () => {
 
 it("does not offer a picture card from a photo on the Mac", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, generate: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, pictureFromPhoto: false, renderPdfPage: true });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, geminiKey: true, generate: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, pictureFromPhoto: false, renderPdfPage: true });
   try {
     open();
     expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();

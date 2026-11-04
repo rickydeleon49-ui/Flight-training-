@@ -2,6 +2,7 @@ import { PROVIDER_TERMS } from "@/logic/providerTerms";
 import { useEffect, useState, type ReactNode } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
+import { isIOS } from "@/services/platform";
 import { Button, TextInput } from "@/components/ui";
 import { SAVED_KEY_UNREADABLE, CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, retryKeyAccess, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
 
@@ -44,7 +45,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
       <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
         <p className="small strong">Claude (Anthropic)</p>
         <p className="tiny dim">{privacy}</p>
-        <p className="tiny dim">Your key stays on this computer and is not included in backups.</p>
+        <p className="tiny dim">Your key stays on this {isIOS() ? "phone" : "computer"} and is not included in backups.</p>
         {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : getKey}
         {unreadable ? null : connected ? <div className="row row--wrap">
           {status.selected !== "claude" && <Button disabled={busy} onClick={() => void run(() => choose("claude"))}>Use Claude</Button>}

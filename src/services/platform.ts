@@ -21,8 +21,12 @@ export function isMacOS(): boolean {
   return looksLikeMac() && !isIOS();
 }
 
+/**
+ * `geminiKey`: may store a key on this device. `generate`: may send files to Gemini.
+ */
 export function deviceCan() {
   return {
+    geminiKey: isTauri(),
     renderPdfPage: isTauri() && isMacOS(),
     sendToIphone: isTauri() && isMacOS() && IPHONE_SEND_ENABLED,
     getStudyMaterial: isTauri() && isIOS(),
