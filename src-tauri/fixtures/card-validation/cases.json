@@ -857,6 +857,33 @@
       "expect": "accept"
     },
     {
+      "name": "a rating carried by sync onto an appended version is accepted",
+      "category": "events",
+      "sql": [
+        "INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, first_reviewed_at, is_active) VALUES ('781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 'mat-1', 'a43c2b6c425ea155f59e999c11e0a36191978cf63d91d53c4c728b1c4f2dff3f', 3, 'gemini', '2026-10-09T10:00:00.000Z', NULL, 0)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 0, 'Synthetic front A0', 'Synthetic back A0', 1)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('d8ab0bca6b8cda6b73a371a26ea96cc5380aa9d0e766e54edd85be64204151e6', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 1, 'Synthetic front A1', 'Synthetic back A1', NULL)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('7b914082a2a765e3fd43f0091778d651440768a11ea925da0f6cf8fd1d48d687', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 2, 'Synthetic front C2', 'Synthetic back C2', NULL)",
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json) VALUES ('ab33095c-e854-475e-9fa6-d5bacac304f5', 'e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', 0, 'good', '2026-10-06T10:00:00.000Z', 'simple-v1', 'null', '{\"dueAt\":\"2026-10-07T10:00:00.000Z\",\"lapses\":0,\"lastReviewedAt\":\"2026-10-06T10:00:00.000Z\",\"reps\":1,\"schedulerVersion\":\"simple-v1\",\"step\":0}')",
+        "INSERT INTO card_review_operations (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json) VALUES ('ab33095c-e854-475e-9fa6-d5bacac304f5', 'rate', 'mat-1', 0, '9baf5152810cba1942841f28123ed3597bb00ab3996e1959d6b83283f47c47c0', '2026-10-06T10:00:00.000Z', 0, '{\"action\":\"rate\",\"dueAt\":\"2026-10-07T10:00:00.000Z\",\"flag\":null,\"generation\":0,\"itemId\":\"e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67\",\"reviewedAt\":\"2026-10-06T10:00:00.000Z\",\"revision\":1,\"suspended\":false}')",
+        "INSERT INTO card_review_state (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision) VALUES ('e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', 'mat-1', 'simple-v1', 0, '2026-10-07T10:00:00.000Z', '2026-10-06T10:00:00.000Z', 1, 0, 0, NULL, 1)"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "a carried rating without its receipt is refused",
+      "category": "events",
+      "sql": [
+        "INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, first_reviewed_at, is_active) VALUES ('781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 'mat-1', 'a43c2b6c425ea155f59e999c11e0a36191978cf63d91d53c4c728b1c4f2dff3f', 3, 'gemini', '2026-10-09T10:00:00.000Z', NULL, 0)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 0, 'Synthetic front A0', 'Synthetic back A0', 1)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('d8ab0bca6b8cda6b73a371a26ea96cc5380aa9d0e766e54edd85be64204151e6', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 1, 'Synthetic front A1', 'Synthetic back A1', NULL)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('7b914082a2a765e3fd43f0091778d651440768a11ea925da0f6cf8fd1d48d687', '781ff2b9b7dfbb1ebc597970122389b04e5e1667933ae0742fb52a299c128788', 2, 'Synthetic front C2', 'Synthetic back C2', NULL)",
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json) VALUES ('ab33095c-e854-475e-9fa6-d5bacac304f5', 'e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', 0, 'good', '2026-10-06T10:00:00.000Z', 'simple-v1', 'null', '{\"dueAt\":\"2026-10-07T10:00:00.000Z\",\"lapses\":0,\"lastReviewedAt\":\"2026-10-06T10:00:00.000Z\",\"reps\":1,\"schedulerVersion\":\"simple-v1\",\"step\":0}')",
+        "INSERT INTO card_review_state (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision) VALUES ('e99153f56f3f291ef21ec44f28172a1161de5adfa5dcca2a910fc6136b67ab67', 'mat-1', 'simple-v1', 0, '2026-10-07T10:00:00.000Z', '2026-10-06T10:00:00.000Z', 1, 0, 0, NULL, 1)"
+      ],
+      "expect": "refuse"
+    },
+    {
       "name": "a card with two derived-receipt ratings and revision 1 is refused",
       "category": "events",
       "sql": [

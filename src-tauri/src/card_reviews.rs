@@ -873,6 +873,12 @@ pub fn derived_uuid_v4(seed: &str) -> String {
     )
 }
 
+/// The id of rating `event_id` carried onto `item_id`; local carry and sync
+/// apply must agree.
+pub(crate) fn carried_event_id(event_id: &str, item_id: &str) -> String {
+    derived_uuid_v4(&format!("{event_id}\u{0}{item_id}"))
+}
+
 /// APPEND-ONLY CARRY-OVER (GUIDE-PACK-01). When a saved card list grows only
 /// by cards added at its end, every earlier card keeps its review state in the
 /// new version: the state row, and each rating with its receipt (the backup
@@ -1016,7 +1022,7 @@ fn carry_inner(
             else {
                 continue;
             };
-            let carried = derived_uuid_v4(&format!("{id}\u{0}{}", after.item_id));
+            let carried = carried_event_id(&id, &after.item_id);
             result["itemId"] = json!(after.item_id);
             tx.execute(
                 "INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)

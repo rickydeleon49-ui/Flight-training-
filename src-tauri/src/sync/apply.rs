@@ -4,7 +4,7 @@
 //! silent. Not wired to any command yet (S-3).
 
 use std::cmp::Reverse;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use base64::Engine as _;
 use rusqlite::types::Value as Sql;
@@ -12,6 +12,7 @@ use rusqlite::{params, params_from_iter, Connection, OptionalExtension, Transact
 use serde_json::{Map, Value};
 
 use crate::card_reviews::parse_iso_ms;
+use crate::logging::log;
 use crate::sync::changeset::{Change, DecodedChangeFile, Op};
 use crate::sync::receipts;
 use crate::sync::replay::{self, ReplayError};
@@ -385,6 +386,9 @@ struct Engine<'a> {
     /// Rows stood in for by an identical local row (see `version_upsert`);
     /// their children are skipped.
     shadowed: HashSet<(&'static str, String)>,
+    /// Materials that gained an event, card or version: material -> newest
+    /// `changed_at`. The carry pass runs on them before replay.
+    carry: BTreeMap<String, String>,
 }
 
 impl<'a> Engine<'a> {
@@ -402,11 +406,13 @@ impl<'a> Engine<'a> {
             claims: HashMap::new(),
             version_materials: BTreeSet::new(),
             shadowed: HashSet::new(),
+            carry: BTreeMap::new(),
         }
     }
 
     /// Inserts/updates parent-first in registry order, deletes in reverse,
-    /// then version activation, then review replay.
+    /// then version activation, then the carry of synced ratings onto
+    /// appended versions, then review replay.
     fn run(&mut self, changes: &'a [Change]) -> Result<(), ApplyError> {
         let mut upserts = Vec::new();
         let mut deletes = Vec::new();
@@ -430,7 +436,55 @@ impl<'a> Engine<'a> {
             self.delete(&SYNC_TABLES[index], change)?;
         }
         self.activate_versions()?;
+        self.carry_touched()?;
         self.replay_touched()
+    }
+
+    fn note_carry(&mut self, material: &str, changed_at: &str) {
+        let newer = self.carry.get(material).is_none_or(|old| {
+            parse_iso_ms(changed_at).unwrap_or(i64::MIN) > parse_iso_ms(old).unwrap_or(i64::MIN)
+        });
+        if newer {
+            self.carry
+                .insert(material.to_string(), changed_at.to_string());
+        }
+    }
+
+    /// Best effort per material: a carry error rolls back only that
+    /// material's carry and the file still applies.
+    fn carry_touched(&mut self) -> Result<(), ApplyError> {
+        for (material, at) in std::mem::take(&mut self.carry) {
+            self.conn.execute_batch("SAVEPOINT sync_carry")?;
+            match crate::sync::carry::carry_missing(self.conn, &material) {
+                Ok(items) => {
+                    self.conn.execute_batch("RELEASE sync_carry")?;
+                    for item in items {
+                        self.touch(&item, &at);
+                    }
+                }
+                Err(e @ ApplyError::BadRow) if !self.guarded()? => {
+                    self.conn
+                        .execute_batch("ROLLBACK TO sync_carry; RELEASE sync_carry")?;
+                    return Err(e);
+                }
+                Err(e) => {
+                    log::warn!("Sync: a rating carry was skipped for one set: {e}");
+                    self.conn
+                        .execute_batch("ROLLBACK TO sync_carry; RELEASE sync_carry")?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn guarded(&self) -> Result<bool, ApplyError> {
+        Ok(self
+            .conn
+            .query_row("SELECT 1 FROM app_metadata WHERE key = ?1", [GUARD], |r| {
+                r.get::<_, i64>(0)
+            })
+            .optional()?
+            .is_some())
     }
 
     /* ----------------------------- lookups ----------------------------- */
@@ -765,6 +819,16 @@ impl<'a> Engine<'a> {
         if self.insert_row(table, &row, false)? == 1 {
             self.write_meta(table.name, &change.row_id, change, false)?;
             self.out.written += 1;
+            if table.name == "card_review_events" {
+                let item = text(&row, "item_id").ok_or(ApplyError::BadRow)?;
+                if let Some(m) = self.material_of_item(item)? {
+                    self.note_carry(&m, &change.changed_at);
+                }
+            } else if table.name == "card_items" {
+                if let Some(m) = self.material_of_item(&change.row_id)? {
+                    self.note_carry(&m, &change.changed_at);
+                }
+            }
         } else {
             self.out.ignored += 1;
         }
@@ -993,6 +1057,9 @@ impl<'a> Engine<'a> {
             }
             self.insert_row(table, &row, false)?;
             changed = true;
+            if let (true, Some(m)) = (cards, &material) {
+                self.note_carry(m, &change.changed_at);
+            }
         } else if cards {
             let local_first: Option<String> = self.conn.query_row(
                 "SELECT first_reviewed_at FROM card_versions WHERE id = ?1",
