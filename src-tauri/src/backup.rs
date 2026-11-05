@@ -9637,6 +9637,37 @@ mod tests {
         std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
     }
 
+    #[test]
+    fn a_staged_restore_notes_which_mac_the_copy_came_from() {
+        let (root, archive) = incoming_fixture();
+        {
+            let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+            connection
+                .execute_batch(
+                    "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                INSERT INTO app_metadata VALUES ('device_id', 'aaaa-mac');",
+                )
+                .unwrap();
+        }
+        write_complete_backup(&root, &archive, "0.6.6").unwrap();
+        stage_complete_restore_in(&root, &archive, "0.6.6").unwrap();
+        assert!(matches!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        ));
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        let source: String = connection
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(source, "aaaa-mac");
+        drop(connection);
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
     fn floor_after_restore(with_log: bool) -> (Option<String>, Option<String>) {
         let (root, archive) = incoming_fixture();
         {

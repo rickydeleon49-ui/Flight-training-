@@ -845,6 +845,26 @@
         "UPDATE card_versions SET created_at = '2026-10-06T10:00:00Z' WHERE id = '26c851ad7971ca4ac8835a370618667828ead22cad3eb8e3bc32c196264095eb'"
       ],
       "expect": "refuse"
+    },
+    {
+      "name": "a card rated on two devices with derived receipts and revision at its rating count is accepted",
+      "category": "events",
+      "sql": [
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json) VALUES ('c0000000-0000-4000-8000-0000000000a1', '83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1', 0, 'good', '2026-10-06T11:00:00.000Z', 'simple-v1', 'null', '{\"dueAt\":\"2026-10-07T11:00:00.000Z\",\"lapses\":0,\"lastReviewedAt\":\"2026-10-06T11:00:00.000Z\",\"reps\":2,\"schedulerVersion\":\"simple-v1\",\"step\":0}')",
+        "INSERT INTO card_review_operations (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json) VALUES ('c0000000-0000-4000-8000-0000000000a1', 'rate', 'mat-1', 0, '88dcb6e71ebadd0a72ec2e46159453c1a2e427c0c6b4351df0ed12a0e9e3cdf5', '2026-10-06T11:00:00.000Z', 0, '{\"action\":\"rate\",\"dueAt\":\"2026-10-07T11:00:00.000Z\",\"flag\":null,\"generation\":0,\"itemId\":\"83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1\",\"reviewedAt\":\"2026-10-06T11:00:00.000Z\",\"revision\":2,\"suspended\":false}')",
+        "UPDATE card_review_state SET step = 0, due_at = '2026-10-07T11:00:00.000Z', last_reviewed_at = '2026-10-06T11:00:00.000Z', reps = 2, revision = 2 WHERE item_id = '83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1'"
+      ],
+      "expect": "accept"
+    },
+    {
+      "name": "a card with two derived-receipt ratings and revision 1 is refused",
+      "category": "events",
+      "sql": [
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json) VALUES ('c0000000-0000-4000-8000-0000000000a1', '83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1', 0, 'good', '2026-10-06T11:00:00.000Z', 'simple-v1', 'null', '{\"dueAt\":\"2026-10-07T11:00:00.000Z\",\"lapses\":0,\"lastReviewedAt\":\"2026-10-06T11:00:00.000Z\",\"reps\":2,\"schedulerVersion\":\"simple-v1\",\"step\":0}')",
+        "INSERT INTO card_review_operations (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json) VALUES ('c0000000-0000-4000-8000-0000000000a1', 'rate', 'mat-1', 0, '88dcb6e71ebadd0a72ec2e46159453c1a2e427c0c6b4351df0ed12a0e9e3cdf5', '2026-10-06T11:00:00.000Z', 0, '{\"action\":\"rate\",\"dueAt\":\"2026-10-07T11:00:00.000Z\",\"flag\":null,\"generation\":0,\"itemId\":\"83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1\",\"reviewedAt\":\"2026-10-06T11:00:00.000Z\",\"revision\":2,\"suspended\":false}')",
+        "UPDATE card_review_state SET step = 0, due_at = '2026-10-07T11:00:00.000Z', last_reviewed_at = '2026-10-06T11:00:00.000Z', reps = 2, revision = 1 WHERE item_id = '83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1'"
+      ],
+      "expect": "refuse"
     }
   ]
 }

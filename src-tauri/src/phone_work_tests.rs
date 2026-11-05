@@ -1115,3 +1115,41 @@ fn sending_keeps_the_restore_and_copy_marks() {
     );
     std::fs::remove_dir_all(c).unwrap();
 }
+
+#[test]
+fn a_stream_restart_goes_back_only_to_the_later_of_restore_and_save() {
+    let container = scratch();
+    let root = root_in(&container);
+    std::fs::write(
+        root.join(PHONE_WORK_FILE),
+        "{\"baselineAt\":\"2026-11-04T12:00:00Z\",\"restoredAt\":\"2026-11-01T08:00:00Z\",\"copySavedAt\":\"2026-11-03T09:00:00Z\"}",
+    )
+    .unwrap();
+    forget_sent_through_in(&root).unwrap();
+    let file = read_file(&root).unwrap();
+    assert_eq!(file.baseline_at, "2026-11-03T09:00:00Z");
+    assert_eq!(file.restored_at.as_deref(), Some("2026-11-01T08:00:00Z"));
+    std::fs::remove_dir_all(container).unwrap();
+}
+
+#[test]
+fn an_unreadable_restart_marker_counts_as_set() {
+    let container = scratch();
+    let root = root_in(&container);
+    // No app_metadata table: an older database, not restarted.
+    assert!(!stream_restarted_in(&root));
+    exec(
+        &root,
+        "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
+    );
+    assert!(!stream_restarted_in(&root));
+    exec(
+        &root,
+        "INSERT INTO app_metadata VALUES ('sync_stream_restarted', '1');",
+    );
+    assert!(stream_restarted_in(&root));
+    // A damaged database file cannot be read: stay conservative.
+    std::fs::write(root.join(DB_FILE), b"not a database").unwrap();
+    assert!(stream_restarted_in(&root));
+    std::fs::remove_dir_all(container).unwrap();
+}

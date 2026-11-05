@@ -421,6 +421,18 @@ pub fn run() {
                 log::error!("Could not make the safety copy before upgrading.");
             }
 
+            // Ratings that arrived from another device before receipts were
+            // derived: add the missing local receipts. Off the main thread,
+            // best effort, and silent about her data. Reached only by the
+            // instance that owns the library (a second one returned above).
+            if let Some(root) = folder.clone() {
+                std::thread::spawn(move || {
+                    if sync::receipts::repair_synced_ratings_at(&root).is_err() {
+                        log::info!("Rating receipts were not checked this launch.");
+                    }
+                });
+            }
+
             // Clean up any interrupted staged deletions from previous runs.
             if documents::cleanup_staged_deletions(app.handle()).is_err() {
                 log::warn!("Could not clean up staged deletions; will try again next launch.");
