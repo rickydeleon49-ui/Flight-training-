@@ -636,6 +636,9 @@ fn phone_preflight(
     };
     // Changes from a different Mac than the copy's cannot be placed on it.
     if copy_source(conn).is_some_and(|source| source != plan.device_id) {
+        // The Mac may have been restored to an earlier state: send everything
+        // since the copy again, and count it as unsaved until then.
+        let _ = super::send::restart_for_new_mac(root, conn);
         return Err(w.needs_earlier.to_string());
     }
     let applied: HashSet<String> = {
@@ -696,6 +699,10 @@ fn prune_confirmed(
     plan: &ProgressPlan,
     manifest: &serde_json::Value,
 ) {
+    // After a stream restart the outbox holds work the copy's Mac never saw.
+    if crate::phone_work::stream_restarted(conn) {
+        return;
+    }
     if copy_source(conn).as_deref() == Some(plan.device_id.as_str()) {
         super::send::prune_outbox(root, conn, manifest);
     }

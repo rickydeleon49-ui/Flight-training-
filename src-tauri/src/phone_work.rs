@@ -190,7 +190,9 @@ pub(crate) fn record_saved_through_in(root: &Path, now: &str) -> Result<(), Stri
             copy_saved_at: Some(now.to_string()),
             progress_sent_at,
         },
-    )
+    )?;
+    clear_restarted_in(root);
+    Ok(())
 }
 
 /// After "Send my progress" wrote its file: the baseline becomes `now` (taken
@@ -198,6 +200,20 @@ pub(crate) fn record_saved_through_in(root: &Path, now: &str) -> Result<(), Stri
 /// `copy_saved_at` stay as they were, so the full-copy rules are unaffected.
 pub(crate) fn record_sent_through_in(root: &Path, now: &str) -> Result<(), String> {
     let earlier = read_file(root);
+    // After a stream restart the sent file is not yet known to be accepted:
+    // only the "sent" time moves, so the work still counts as unsaved.
+    if stream_restarted_in(root) {
+        let Some(file) = earlier else {
+            return Ok(());
+        };
+        return write_baseline(
+            root,
+            &BaselineFile {
+                progress_sent_at: Some(now.to_string()),
+                ..file
+            },
+        );
+    }
     let mut best = now.to_string();
     if let Some(current) = earlier.as_ref().map(|f| f.baseline_at.as_str()) {
         let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
@@ -225,6 +241,101 @@ pub(crate) fn record_sent_through_in(root: &Path, now: &str) -> Result<(), Strin
             progress_sent_at: Some(now.to_string()),
         },
     )
+}
+
+/// Set (in `app_metadata`) when a different Mac's file made this phone restart
+/// its change stream. While it is set, sending does not count work as saved
+/// (the new Mac may refuse the file); only a phone save clears it, and a full
+/// copy from the Mac replaces the database, which clears it too.
+pub(crate) const RESTARTED_KEY: &str = "sync_stream_restarted";
+
+/// A marker that cannot be read counts as set (the conservative side): only
+/// "no row" or a database without `app_metadata` counts as not restarted.
+pub(crate) fn stream_restarted(connection: &Connection) -> bool {
+    match connection.query_row(
+        "SELECT 1 FROM app_metadata WHERE key = ?1",
+        [RESTARTED_KEY],
+        |_| Ok(()),
+    ) {
+        Ok(()) => true,
+        Err(rusqlite::Error::QueryReturnedNoRows) => false,
+        Err(e) => !e.to_string().contains("no such table"),
+    }
+}
+
+fn stream_restarted_in(root: &Path) -> bool {
+    match open_read_only(root) {
+        Ok(Some(c)) => stream_restarted(&c),
+        Ok(None) => false,
+        Err(_) => true,
+    }
+}
+
+/// Best effort: clears the restart marker after a phone save holds everything.
+fn clear_restarted_in(root: &Path) {
+    if let Ok(connection) = Connection::open(root.join("her-flight-deck.db")) {
+        let _ = connection.busy_timeout(std::time::Duration::from_secs(5));
+        let _ = connection.execute("DELETE FROM app_metadata WHERE key = ?1", [RESTARTED_KEY]);
+    }
+}
+
+/// The phone's stream restarts from its last Mac copy: the baseline goes back
+/// to the copy's (`restored_at`, else `copy_saved_at`), so everything made
+/// since counts as unsaved again. The other fields stay, because the
+/// full-copy rules use them. With neither time known the file is removed,
+/// which counts everything.
+pub(crate) fn forget_sent_through_in(root: &Path) -> Result<(), String> {
+    let Some(earlier) = read_file(root) else {
+        return Ok(());
+    };
+    // The later of the two: everything before a phone save is in that saved
+    // file, so going back past it would only ask her to save again.
+    let back_to = match (earlier.restored_at.clone(), earlier.copy_saved_at.clone()) {
+        (Some(restored), Some(saved)) => Some(later_of(restored, saved)),
+        (restored, saved) => restored.or(saved),
+    };
+    let Some(back_to) = back_to else {
+        return match std::fs::remove_file(root.join(PHONE_WORK_FILE)) {
+            Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e.to_string()),
+            _ => Ok(()),
+        };
+    };
+    let written = write_baseline(
+        root,
+        &BaselineFile {
+            baseline_at: back_to,
+            restored_at: earlier.restored_at,
+            copy_saved_at: earlier.copy_saved_at,
+            progress_sent_at: earlier.progress_sent_at,
+        },
+    );
+    // A baseline that could not be moved back must not keep counting her
+    // work as saved: without the file, everything counts.
+    if written.is_err() {
+        if let Err(e) = std::fs::remove_file(root.join(PHONE_WORK_FILE)) {
+            if e.kind() != std::io::ErrorKind::NotFound {
+                return written;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The later of two timestamps; one that cannot be compared loses to the
+/// other only when the other is known to be later.
+fn later_of(a: String, b: String) -> String {
+    let later_b = Connection::open_in_memory().ok().and_then(|c| {
+        c.query_row("SELECT julianday(?1) > julianday(?2)", [&b, &a], |row| {
+            row.get::<_, Option<i64>>(0)
+        })
+        .ok()
+        .flatten()
+    });
+    if later_b == Some(1) {
+        b
+    } else {
+        a
+    }
 }
 
 /// Rows newer than the baseline that this phone made. A row whose

@@ -1646,12 +1646,12 @@ mod apply {
     /* --------------------------- card helpers --------------------------- */
 
     pub(super) struct Card {
-        material: String,
-        hash: String,
-        item: String,
+        pub(super) material: String,
+        pub(super) hash: String,
+        pub(super) item: String,
     }
 
-    fn card(conn: &Connection, material: &str) -> Card {
+    pub(super) fn card(conn: &Connection, material: &str) -> Card {
         use crate::card_reviews::{card_version, CanonicalCard};
         conn.execute(
             "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES (?1, 'Synthetic', ?2, ?2)",
@@ -1686,7 +1686,7 @@ mod apply {
 
     /// Runs one card action through the live path; `extra` adds e.g. the
     /// rating or flag reason.
-    fn act(conn: &mut Connection, c: &Card, action: &str, extra: Value, op: u64) {
+    pub(super) fn act(conn: &mut Connection, c: &Card, action: &str, extra: Value, op: u64) {
         use crate::card_reviews::{decode_card_action, execute_card_review_transaction};
         let generation: i64 = conn
             .query_row(
@@ -1728,11 +1728,11 @@ mod apply {
         std::thread::sleep(std::time::Duration::from_millis(3));
     }
 
-    fn rate(conn: &mut Connection, c: &Card, rating: &str, op: u64) {
+    pub(super) fn rate(conn: &mut Connection, c: &Card, rating: &str, op: u64) {
         act(conn, c, "rate", json!({ "rating": rating }), op);
     }
 
-    type StateTuple = (
+    pub(super) type StateTuple = (
         i64,
         i64,
         i64,
@@ -1743,7 +1743,7 @@ mod apply {
         i64,
     );
 
-    fn state(conn: &Connection, item: &str) -> Option<StateTuple> {
+    pub(super) fn state(conn: &Connection, item: &str) -> Option<StateTuple> {
         conn.query_row(
             "SELECT step, reps, lapses, last_reviewed_at, due_at, suspended, flag, revision
              FROM card_review_state WHERE item_id = ?1",
@@ -2166,7 +2166,8 @@ mod apply {
                     Some(want.due_at.clone())
                 )
             );
-            assert_eq!(got.7, rev + 1);
+            // Never below the rating count (backup verification needs it).
+            assert_eq!(got.7, (rev + 1).max(4));
         }
         assert_eq!(
             state(&mac, &c.item),
@@ -5814,7 +5815,9 @@ mod prune {
             )
             .unwrap();
         assert_eq!(accept(&p, &mac).unwrap_err(), NEEDS_EARLIER);
-        assert_eq!(p.outbox().len(), 1);
+        // The phone restarts its own stream (S-6a3): the old outbox goes and
+        // its work counts as unsaved until it is sent again and saved.
+        assert!(p.outbox().is_empty());
         assert_eq!(
             count(
                 &p.db(),
@@ -5985,5 +5988,507 @@ mod prune {
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
         panic!("a temp folder was left behind");
+    }
+
+    fn restarted(p: &Phone) -> bool {
+        count(
+            &p.db(),
+            "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_stream_restarted'",
+        ) == 1
+    }
+
+    fn exported_mark(p: &Phone) -> i64 {
+        count(
+            &p.db(),
+            "SELECT COUNT(*) FROM app_metadata WHERE key = 'exported_through_seq'",
+        )
+    }
+
+    /// A second Mac (its own id) that has made one full copy and one change.
+    fn other_mac() -> MacApp {
+        let mac = mac_app();
+        mac.db()
+            .execute(
+                "UPDATE app_metadata SET value = 'cccc-mac2' WHERE key = 'device_id'",
+                [],
+            )
+            .unwrap();
+        mac.material("m9", "Elsewhere");
+        mac.mark_copy();
+        mac.material("m10", "Later");
+        mac.send().unwrap();
+        mac
+    }
+
+    #[test]
+    fn a_different_macs_file_restarts_the_phone_stream() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        accept(&p, &mac).unwrap();
+        // The copy's Mac pruned everything the phone had sent.
+        assert!(p.outbox().is_empty());
+        phone_sends(&p, "b2");
+        assert_eq!(exported_mark(&p), 1);
+        let m2 = other_mac();
+        assert_eq!(accept(&p, &m2).unwrap_err(), NEEDS_EARLIER);
+        assert!(restarted(&p));
+        assert_eq!(exported_mark(&p), 0);
+        assert!(p.outbox().is_empty());
+        assert!(crate::phone_work::refuse_unsaved(&p.root.0, true).is_err());
+        // The next send starts at the copy's floor and holds all the work.
+        let floor: i64 = p
+            .db()
+            .query_row(
+                "SELECT CAST(value AS INTEGER) FROM app_metadata WHERE key = 'sync_floor_seq'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        p.send().unwrap();
+        let name = p.outbox().remove(0);
+        assert_eq!(
+            crate::sync::changeset::parse_name(&name).unwrap().0,
+            floor + 1
+        );
+        // Sending is not saving: the work still counts, so a full copy that
+        // would replace it is still refused.
+        assert!(crate::phone_work::refuse_unsaved(&p.root.0, true).is_err());
+        // A file from the first Mac that arrives after the re-send prunes nothing.
+        mac_takes(&mac, &p);
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        assert_eq!(p.outbox().len(), 1);
+        // Only saving the phone's work clears the count.
+        crate::phone_work::record_saved_through_in(&p.root.0, NOW).unwrap();
+        assert!(!restarted(&p));
+        assert!(crate::phone_work::refuse_unsaved(&p.root.0, true).is_ok());
+    }
+
+    #[test]
+    fn an_older_mac_that_refuses_the_resend_never_lets_the_work_be_wiped() {
+        let (_mac, p) = setup();
+        let m2 = other_mac();
+        // The phone made work on a material from its own copy, which the
+        // older second Mac does not have.
+        p.db()
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b5','m1',1,'t',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+        assert_eq!(accept(&p, &m2).unwrap_err(), NEEDS_EARLIER);
+        p.send().unwrap();
+        let taken =
+            import_phone_progress_in(&m2.root.0, &p.file(), Some("cccc-mac2"), "0.0.0-test", NOW);
+        assert!(taken.is_err());
+        // Sent, but not accepted anywhere: the work still counts as unsaved,
+        // so the second Mac's full copy cannot wipe it.
+        assert!(crate::phone_work::refuse_unsaved(&p.root.0, true).is_err());
+    }
+
+    #[test]
+    fn a_gap_needs_earlier_does_not_restart_the_stream() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = '0' WHERE key = 'sync_floor_seq'",
+                [],
+            )
+            .unwrap();
+        let before = p.outbox();
+        assert_eq!(accept(&p, &mac).unwrap_err(), NEEDS_EARLIER);
+        assert!(!restarted(&p));
+        assert_eq!(exported_mark(&p), 1);
+        assert_eq!(p.outbox(), before);
+    }
+
+    #[test]
+    fn send_first_leaves_the_outbox_untouched() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        // Unsent phone work, and the Mac deletes the material it sits on.
+        p.db()
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b9','m1',1,'t',?1,?1)",
+                ["2026-11-05T00:00:00.000Z"],
+            )
+            .unwrap();
+        mac.db()
+            .execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        mac.send().unwrap();
+        let before = p.outbox();
+        let got = accept(&p, &mac);
+        assert!(got.is_err(), "{:?}", got.map(|g| g.outcome));
+        assert!(!restarted(&p));
+        assert_eq!(p.outbox(), before);
+        assert_eq!(
+            count(
+                &p.db(),
+                "SELECT COUNT(*) FROM study_materials WHERE id = 'm1'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn an_applied_list_without_its_start_prunes_nothing() {
+        let (_mac, p) = setup();
+        phone_sends(&p, "b1");
+        let manifest = serde_json::json!({ "applied": { DEVICE: 1_000_000 } });
+        prune_outbox(&p.root.0, &p.db(), &manifest);
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    /// The Mac's file with no change files, only what it has applied.
+    fn empty_files_copy(mac: &MacApp, dir: &TempDir) -> std::path::PathBuf {
+        let mut m: Value =
+            serde_json::from_slice(&super::send::read_entry(&mac.file(), "manifest.json")).unwrap();
+        m["files"] = json!([]);
+        let path = dir.0.join("Changes from my Mac.hfdchanges");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let opts = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+        zip.start_file("manifest.json", opts).unwrap();
+        zip.write_all(m.to_string().as_bytes()).unwrap();
+        zip.finish().unwrap();
+        path
+    }
+
+    #[test]
+    fn an_empty_files_list_prunes_only_for_the_copys_mac() {
+        let dir = TempDir::new("prune-empty");
+        for (copy_source, left) in [(None, 0), (Some("someone-else"), 1)] {
+            let (mac, p) = setup();
+            phone_sends(&p, "b1");
+            mac_takes(&mac, &p);
+            mac_changes(&mac, "m3");
+            if let Some(source) = copy_source {
+                p.db()
+                    .execute(
+                        "UPDATE app_metadata SET value = ?1 WHERE key = 'sync_copy_from_device'",
+                        [source],
+                    )
+                    .unwrap();
+            }
+            let path = empty_files_copy(&mac, &dir);
+            let got = import_mac_changes_in(&p.root.0, &path, Some(DEVICE), NOW);
+            assert!(got.is_ok(), "{:?}", got.err());
+            assert_eq!(p.outbox().len(), left);
+        }
+    }
+}
+
+mod synced_ratings {
+    use super::apply::{card, rate, state, MAC, PHONE};
+    use super::progress::{mac_db, mac_root, run};
+    use super::send::{phone, Phone};
+    use super::*;
+
+    /// The phone rates one card three times and another once, sends, and the
+    /// Mac takes the file. Returns the Mac folder and the two cards.
+    fn phone_rates_then_mac_takes() -> (TempDir, Vec<crate::sync_tests::apply::Card>) {
+        let dir = TempDir::new("synced-ratings");
+        let root = mac_root();
+        let p = phone();
+        let mut conn = p.db();
+        let a = card(&conn, "mat-a");
+        let b = card(&conn, "mat-b");
+        rate(&mut conn, &a, "good", 1);
+        rate(&mut conn, &a, "easy", 2);
+        rate(&mut conn, &a, "hard", 3);
+        rate(&mut conn, &b, "good", 4);
+        drop(conn);
+        p.send().unwrap();
+        let zip = zip_of(&dir, &p);
+        run(&root, &zip).unwrap();
+        (root, vec![a, b])
+    }
+
+    /// Records the migration history a real app database carries, so the
+    /// backup verifier can run on a test database.
+    fn with_history(conn: &Connection) {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);",
+        )
+        .unwrap();
+        for m in crate::migrations() {
+            conn.execute(
+                "INSERT OR IGNORE INTO _sqlx_migrations (version) VALUES (?1)",
+                [m.version],
+            )
+            .unwrap();
+        }
+    }
+
+    fn zip_of(dir: &TempDir, p: &Phone) -> std::path::PathBuf {
+        let out = dir.0.join("phone-progress.hfdprogress");
+        std::fs::copy(p.file(), &out).unwrap();
+        out
+    }
+
+    #[test]
+    fn a_mac_that_takes_phone_ratings_still_passes_backup_verification() {
+        let (root, cards) = phone_rates_then_mac_takes();
+        let mac = mac_db(&root);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+        let events: i64 = count(&mac, "SELECT COUNT(*) FROM card_review_events");
+        assert_eq!(events, 4);
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM card_review_events e JOIN card_review_operations o
+                 ON o.operation_id = e.id AND o.action = 'rate' AND o.is_erased = 0"
+            ),
+            4
+        );
+        assert!(state(&mac, &cards[0].item).unwrap().7 >= 3);
+        let copy = root.0.join("copy.db");
+        mac.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+            .unwrap();
+        crate::backup::verify_application_database(&copy).unwrap();
+    }
+
+    fn receipt_rows(conn: &Connection) -> Vec<String> {
+        conn.prepare(
+            "SELECT operation_id || '|' || action || '|' || source_material_id || '|' || generation
+                 || '|' || request_hash || '|' || applied_at || '|' || is_erased || '|' || COALESCE(result_json, '')
+             FROM card_review_operations ORDER BY operation_id",
+        )
+        .unwrap()
+        .query_map([], |r| r.get::<_, String>(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    }
+
+    #[test]
+    fn the_phone_passes_verification_after_taking_mac_ratings() {
+        use super::mac_send::mac_app;
+        use crate::sync::progress::import_mac_changes_in;
+        let mac = mac_app();
+        let mut mac_conn = mac.db();
+        let a = card(&mac_conn, "mat-a");
+        let p = phone();
+        mac.copy_to(&p);
+        rate(&mut mac_conn, &a, "good", 1);
+        rate(&mut mac_conn, &a, "easy", 2);
+        mac.send().unwrap();
+        import_mac_changes_in(&p.root.0, &mac.file(), Some(super::send::DEVICE), NOW).unwrap();
+        let conn = p.db();
+        with_history(&conn);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_review_events"), 2);
+        crate::backup::verify_application_connection(&conn).unwrap();
+        assert!(state(&conn, &a.item).unwrap().7 >= 2);
+    }
+
+    #[test]
+    fn derived_receipts_are_deterministic_and_never_overwrite() {
+        let dir = TempDir::new("synced-det");
+        let p = phone();
+        let mut conn = p.db();
+        let a = card(&conn, "mat-a");
+        rate(&mut conn, &a, "good", 1);
+        rate(&mut conn, &a, "hard", 2);
+        drop(conn);
+        p.send().unwrap();
+        let zip = zip_of(&dir, &p);
+        let (one, two) = (mac_root(), mac_root());
+        run(&one, &zip).unwrap();
+        run(&two, &zip).unwrap();
+        let first = receipt_rows(&mac_db(&one));
+        assert_eq!(first.len(), 2);
+        assert_eq!(first, receipt_rows(&mac_db(&two)));
+        // A receipt that is already there is left alone.
+        let mac = mac_db(&one);
+        mac.execute(
+            "UPDATE card_review_operations SET applied_at = '2026-01-01T00:00:00.000Z'",
+            [],
+        )
+        .unwrap();
+        let before = receipt_rows(&mac);
+        assert_eq!(
+            crate::sync::receipts::ensure_rate_receipts(&mac, None).unwrap(),
+            0
+        );
+        assert_eq!(receipt_rows(&mac), before);
+    }
+
+    /// Two devices, one card each side; `a` rates and ships to `b`.
+    fn pair() -> (Connection, Connection, crate::sync_tests::apply::Card) {
+        use super::apply::device;
+        let a = device(MAC);
+        let b = device(PHONE);
+        let c = card(&a, "mat-pair");
+        card(&b, "mat-pair");
+        (a, b, c)
+    }
+
+    #[test]
+    fn a_peer_reset_erases_receipts_and_keeps_verification() {
+        use super::apply::{act, ship, take};
+        let (mut a, mut b, c) = pair();
+        rate(&mut a, &c, "good", 1);
+        rate(&mut a, &c, "easy", 2);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        act(&mut b, &c, "reset", json!({}), 3);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        with_history(&a);
+        crate::backup::verify_application_connection(&a).unwrap();
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM card_review_events"), 0);
+        assert_eq!(state(&a, &c.item), None);
+        assert_eq!(
+            count(&a, "SELECT COUNT(*) FROM card_review_operations WHERE is_erased = 0 AND action = 'rate'"),
+            0
+        );
+        assert!(
+            count(
+                &a,
+                "SELECT COUNT(*) FROM card_review_operations WHERE is_erased = 1"
+            ) >= 2
+        );
+        rate(&mut a, &c, "good", 4);
+        crate::backup::verify_application_connection(&a).unwrap();
+    }
+
+    #[test]
+    fn a_synced_material_delete_erases_receipts_under_the_guard() {
+        let (root, _cards) = phone_rates_then_mac_takes();
+        let mac = mac_db(&root);
+        with_history(&mac);
+        mac.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+            [],
+        )
+        .unwrap();
+        mac.execute("DELETE FROM study_materials WHERE id = 'mat-a'", [])
+            .unwrap();
+        mac.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM card_review_operations WHERE source_material_id = 'mat-a' AND is_erased = 0"
+            ),
+            0
+        );
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 1);
+        crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn the_startup_repair_fixes_a_mac_hit_before_this_round() {
+        let (root, _cards) = phone_rates_then_mac_takes();
+        let mut mac = mac_db(&root);
+        with_history(&mac);
+        // The old way: events and state with no receipts and a low revision.
+        mac.execute("DELETE FROM card_review_operations", [])
+            .unwrap();
+        mac.execute("UPDATE card_review_state SET revision = 1", [])
+            .unwrap();
+        assert!(crate::backup::verify_application_connection(&mac).is_err());
+        let logged = count(&mac, "SELECT COUNT(*) FROM local_changes");
+        let n = crate::sync::receipts::repair_synced_ratings(&mut mac).unwrap();
+        assert!(n >= 4);
+        crate::backup::verify_application_connection(&mac).unwrap();
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), logged);
+        let before = receipt_rows(&mac);
+        assert_eq!(
+            crate::sync::receipts::repair_synced_ratings(&mut mac).unwrap(),
+            0
+        );
+        assert_eq!(receipt_rows(&mac), before);
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'"
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn a_late_event_from_before_a_reset_gets_no_receipt() {
+        use super::apply::{act, ship, take};
+        let (mut a, mut b, c) = pair();
+        rate(&mut b, &c, "good", 1);
+        act(&mut a, &c, "reset", json!({}), 2);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM card_review_events"), 0);
+        assert_eq!(
+            count(
+                &a,
+                "SELECT COUNT(*) FROM card_review_operations WHERE action = 'rate'"
+            ),
+            0
+        );
+        with_history(&a);
+        crate::backup::verify_application_connection(&a).unwrap();
+    }
+
+    #[test]
+    fn a_carry_after_synced_ratings_copies_them() {
+        use crate::study_sets::{decode_operation, save_on};
+        let (root, cards) = phone_rates_then_mac_takes();
+        let mut mac = mac_db(&root);
+        with_history(&mac);
+        let col = |name: &str| -> Option<String> {
+            mac.query_row(
+                &format!("SELECT {name} FROM ai_study_sets WHERE source_material_id = 'mat-a'"),
+                [],
+                |r| r.get(0),
+            )
+            .unwrap()
+        };
+        let mut expected = Map::new();
+        for name in [
+            "title",
+            "summary",
+            "sections_json",
+            "flashcards_json",
+            "source_notes",
+            "provider",
+            "model",
+            "generated_at",
+            "updated_at",
+            "summary_origin",
+            "retired_json",
+        ] {
+            expected.insert(
+                name.to_string(),
+                col(name).map(Value::String).unwrap_or(Value::Null),
+            );
+        }
+        let next = json!({
+            "title": "Synthetic", "summary": "", "summaryOrigin": null, "sections": [],
+            "flashcards": [
+                {"front": "Synthetic front", "back": "Synthetic back", "sourcePage": 1},
+                {"front": "Second front", "back": "Second back", "sourcePage": 1}
+            ],
+            "sourceNotes": "", "provider": "import", "model": "", "retired": [],
+        });
+        let op = decode_operation(&json!({
+            "operationId": "5e700000-0000-4000-8000-000000000001",
+            "materialId": "mat-a", "reason": "edit",
+            "expected": Value::Object(expected), "next": next,
+        }))
+        .unwrap();
+        save_on(&mut mac, &op, NOW).unwrap();
+        let carried: i64 = count(
+            &mac,
+            "SELECT COUNT(*) FROM card_review_events e JOIN card_items i ON i.id = e.item_id
+             JOIN card_versions v ON v.id = i.version_id
+             WHERE v.source_material_id = 'mat-a' AND v.is_active = 1",
+        );
+        assert_eq!(carried, 3);
+        crate::backup::verify_application_connection(&mac).unwrap();
+        let _ = cards;
     }
 }

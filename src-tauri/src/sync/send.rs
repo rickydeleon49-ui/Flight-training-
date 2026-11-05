@@ -1017,6 +1017,41 @@ pub(crate) fn restart_change_stream(root: &Path, mark: i64) -> Result<(), String
     export::set_exported_through_seq(&conn, mark).map_err(|_| MAC_FAILED.to_string())
 }
 
+/// A file from a different Mac than this phone's copy arrived. The phone
+/// restarts its own stream from the copy, so nothing it made is lost if the
+/// Mac was restored to an earlier state: the work counts as unsaved again,
+/// the next send starts at the copy's floor, and the old outbox files go.
+/// The restart marker goes first, even when a send holds the lock (the rest
+/// then waits for the next refusal). The change log is never touched.
+pub(crate) fn restart_for_new_mac(root: &Path, conn: &Connection) -> Result<(), String> {
+    // The marker first, even while a send holds the lock: from here a send
+    // no longer counts work as saved.
+    let marked = conn
+        .execute(
+            "INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?1, '1')",
+            [crate::phone_work::RESTARTED_KEY],
+        )
+        .map(|_| ())
+        .map_err(|_| FAILED.to_string());
+    let Some(_only_one) = try_send_lock() else {
+        return marked;
+    };
+    // Every step runs even if an earlier one failed; the first error returns.
+    let baseline = crate::phone_work::forget_sent_through_in(root).map_err(|_| FAILED.to_string());
+    let floor = conn
+        .execute(
+            "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
+            [],
+        )
+        .map(|_| ())
+        .map_err(|_| FAILED.to_string());
+    if let Ok(device_id) = device_id_of(conn) {
+        let dir = root.join(OUTBOX_DIR).join(changeset::folder(&device_id));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+    marked.and(baseline).and(floor)
+}
+
 fn mac_out_dir() -> Option<PathBuf> {
     let home = std::env::var_os("HOME").map(PathBuf::from)?;
     crate::backup::iphone_backup_dir(&home)

@@ -13,6 +13,7 @@ use serde_json::{Map, Value};
 
 use crate::card_reviews::parse_iso_ms;
 use crate::sync::changeset::{Change, DecodedChangeFile, Op};
+use crate::sync::receipts;
 use crate::sync::replay::{self, ReplayError};
 use crate::sync::tables::{self, MergeRule, SyncTable, SYNC_TABLES};
 
@@ -105,6 +106,9 @@ pub(crate) fn apply_change_file(
         engine.run(&set.changes)?;
         engine.out
     };
+    // After every upsert, delete and replay, so a receipt never names a card
+    // the same file then removes.
+    receipts::ensure_rate_receipts(&tx, None)?;
     tx.execute(
         "INSERT INTO sync_applied (peer_device, file_name, applied_at) VALUES (?1, ?2, ?3)",
         params![set.device_id, file_name, now],
@@ -721,6 +725,13 @@ impl<'a> Engine<'a> {
                WHERE v.source_material_id = ?1)",
             params![material, incoming],
         )?;
+        // Mirrors the local reset (card_reviews.rs): this device's receipts
+        // for the dropped events are erased too.
+        self.conn.execute(
+            "UPDATE card_review_operations SET is_erased = 1, result_json = NULL
+             WHERE source_material_id = ?1 AND is_erased = 0 AND generation < ?2",
+            params![material, incoming],
+        )?;
         self.conn.execute(
             "DELETE FROM card_review_state WHERE source_material_id = ?1",
             [material],
@@ -1102,7 +1113,11 @@ impl<'a> Engine<'a> {
                 }
                 continue;
             }
-            let revision = local.as_ref().map_or(1, |(_, r)| r + 1);
+            // Never below the rating count, which backup verification requires.
+            let revision = local
+                .as_ref()
+                .map_or(1, |(_, r)| r + 1)
+                .max(events.len() as i64);
             self.conn.execute(
                 "INSERT INTO card_review_state
                    (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at,
