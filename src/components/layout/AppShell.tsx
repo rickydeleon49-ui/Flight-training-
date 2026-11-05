@@ -30,6 +30,7 @@ import {
   Loading,
 } from "@/components/ui";
 
+import { IosBackButton } from "./IosBackButton";
 import { IosTabBar } from "./IosTabBar";
 
 import "./shell.css";
@@ -257,6 +258,7 @@ export function AppShell() {
       )}
 
       <main className="content">
+        {tabs ? <IosBackButton /> : null}
         <div className="content__inner">
           <GeminiOrphanNotices />
           <Suspense fallback={<Loading label="Opening this section" />}>

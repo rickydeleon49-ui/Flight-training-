@@ -64,6 +64,17 @@ describe("iPhone tab bar", () => {
     expect(document.querySelector(".shell--tabs")).toBeNull();
   });
 
+  it("shows a back button only on the iPhone", () => {
+    mount("/study/m-1");
+    expect(screen.getByRole("button", { name: "Back to Study" })).toBeTruthy();
+    cleanup();
+    mount("/study/m-1", 644, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
+    expect(screen.queryByRole("button", { name: /^Back to/ })).toBeNull();
+    cleanup();
+    mount("/study/m-1", 1200);
+    expect(screen.queryByRole("button", { name: /^Back to/ })).toBeNull();
+  });
+
   it("a Mac keeps the sidebar and menu", () => {
     mount("/", 644, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
     expect(document.querySelector(".ios-tab-bar")).toBeNull();
