@@ -772,6 +772,36 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       expect(await count()).toBe(n);
     });
 
+    it("POLISH-086: Recent reviews lists a carried rating once (its newest copy); stored events are untouched", async () => {
+      const { db } = await open(kind);
+      const repo = cardReviewRepository(db);
+      await seedMaterial(db, M, cardsA, "gemini");
+      await rateAt(repo, M, 0, "good", T0);
+      await rateAt(repo, M, 0, "easy", at(T0, 2 * DAY));
+      await rateAt(repo, M, 1, "again", at(T0, 2 * DAY));
+      const grown: CanonicalCard[] = [...cardsA, { front: "Synthetic card four", back: "E", sourcePage: 4 }];
+      const [stored] = await db.select<Record<string, string>>(
+        "SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at, summary_origin, retired_json FROM ai_study_sets WHERE source_material_id = ?",
+        [M],
+      );
+      await db.saveStudySetAtomically!(
+        {
+          operationId: "5e700000-0000-4000-8000-0000000000a1",
+          materialId: M,
+          reason: "edit",
+          expected: stored as never,
+          next: { title: "Synthetic", summary: "", summaryOrigin: null, sections: [], flashcards: grown.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourcePage })), sourceNotes: "", provider: "gemini", model: "", retired: [] },
+        } as never,
+        undefined,
+      );
+      const events = Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_review_events", []))[0]!.n);
+      expect(events).toBe(6); // 3 originals + 3 carried copies stay stored
+      const page = await repo.getRecentReviews(M);
+      expect(page.rows).toHaveLength(3);
+      expect(page.rows.every((row) => row.earlierVersion === false)).toBe(true);
+      expect(page.rows.map((row) => row.rating).sort()).toEqual(["again", "easy", "good"]);
+    });
+
     it("GUIDE-PACK-01 audit: suspended + flagged cards carry, a mixed-origin set appends, the backup validator passes, a reset after a carry stays valid", async () => {
       const { db } = await open(kind);
       const repo = cardReviewRepository(db);

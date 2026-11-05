@@ -46,6 +46,13 @@ function emptyCards(kind: GeminiJobKind, answer: Answer | null | undefined): boo
   return kind === "flashcards" && !!answer && (answer as GeneratedStudyAid).flashcards.length === 0;
 }
 
+/** Said once when a cards job saves fewer cards than it asked for. */
+export function cardsShortNote(count: number, more: boolean): string {
+  const cards = `${count} ${count === 1 ? "card" : "cards"}`;
+  if (more) return count === 0 ? "Gemini found no new cards in this file." : `Gemini found ${count} more ${count === 1 ? "card" : "cards"} in this file.`;
+  return `Gemini made ${cards}; this file is short, so there wasn't more to ask about.`;
+}
+
 export const MAX_CARDS_MESSAGE = "You have the most cards one set can hold.";
 
 /** An answer that carries only extra cards to add to the saved set (GUIDE-PACK-01). */
@@ -272,6 +279,8 @@ interface GeminiJobsValue {
   busy: boolean;
   /** True while a saved guide's flashcards and practice test are still being made. */
   makingPack(materialId: string): boolean;
+  /** One plain line about how many cards the last cards job saved, or null. */
+  cardsNote(materialId: string): string | null;
   /** The lock as it is right now, for event handlers that must not wait for a render. */
   locked(): boolean;
   recovery: GeminiRecovery;
@@ -421,6 +430,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const followUpOptionsRef = useRef(new Map<string, NonNullable<StartOptions["followUps"]>>());
   const pendingFollowUpsRef = useRef<{ target: GeminiJobTarget; options: NonNullable<StartOptions["followUps"]> }[]>([]);
   const [packMaterials, setPackMaterials] = useState<string[]>([]);
+  const [cardNotes, setCardNotes] = useState<Record<string, string>>({});
+  const askedCardsRef = useRef(new Map<string, number>());
   const runFollowUpsRef = useRef<() => Promise<void>>(async () => {});
   // Journal entries saved or dismissed here whose removal has not yet been
   // written down natively; retried until it is.
@@ -532,6 +543,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // journal until then, and a restart must recognise this save, not redo it.
       if (reviewed) rememberReviewedSave(job.jobId, reviewed);
 
+      let savedCards: number | null = null;
       let outcome: "saved" | "already" | "superseded" | "newer" | "review" | "attempt" | null;
       let practiceError: string | null = null;
       const guideFailure: { error?: SectionGuideError } = {};
@@ -581,6 +593,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
               job.materialId,
               withoutVerificationNotes((answer as GeneratedStudyAid).flashcards),
             );
+            if (added !== null) savedCards = added;
             return added === null ? ("superseded" as const) : ("saved" as const);
           }
           // Kit parts share one study set, so saving one part moves its
@@ -607,6 +620,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             }, job.sectionGuide ? job.jobId ?? undefined : undefined, "study-aid");
           } else if (job.kind === "flashcards") {
             const aid = answer as GeneratedStudyAid;
+            savedCards = aid.flashcards.length;
             const currentSet = saved as AiStudySet | undefined;
             await repos.documents.saveAiStudySet({
               sourceMaterialId: job.materialId,
@@ -649,6 +663,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         const onSaved = onSavedRef.current.get(key);
         const followUps = followUpOptionsRef.current.get(key);
         followUpOptionsRef.current.delete(key);
+        const asked = askedCardsRef.current.get(key);
+        askedCardsRef.current.delete(key);
+        // Set inside the save closure above, so TypeScript's narrowing still sees null here.
+        const savedCount = savedCards as number | null;
+        if (outcome === "saved" && job.kind === "flashcards" && savedCount !== null && asked !== undefined && savedCount < asked) {
+          const note = cardsShortNote(savedCount, isMoreCardsJob(job));
+          setCardNotes((notes) => ({ ...notes, [job.materialId]: note }));
+        }
         forget(key);
         if (outcome === "saved") onSaved?.();
         if (outcome === "saved" && followUps && job.kind === "study-aid") {
@@ -797,6 +819,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         },
       ]);
       if (options?.onSaved) onSavedRef.current.set(key, options.onSaved);
+      if (kind === "flashcards") {
+        askedCardsRef.current.set(key, options?.moreCards ? 10 : options?.targetCards ?? 40);
+        setCardNotes((notes) => {
+          if (!(target.materialId in notes)) return notes;
+          const { [target.materialId]: _gone, ...rest } = notes;
+          return rest;
+        });
+      }
       if (options?.followUps && kind === "study-aid") followUpOptionsRef.current.set(key, options.followUps);
       const current = () => jobsRef.current.find((job) => job.key === key);
 
@@ -1383,6 +1413,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       jobs,
       busy: jobs.some((job) => job.phase === "running" || job.phase === "saving"),
       makingPack: (materialId: string) => packMaterials.includes(materialId),
+      cardsNote: (materialId: string) => cardNotes[materialId] ?? null,
       locked: () => activeRef.current !== null || recoveryRef.current !== "ready",
       recovery,
       retryRecovery,
@@ -1397,7 +1428,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, packMaterials, recovery, retryRecovery, start, startKit, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
+    [jobs, packMaterials, cardNotes, recovery, retryRecovery, start, startKit, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;
