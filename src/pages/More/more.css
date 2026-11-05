@@ -1,0 +1,55 @@
+/* The More page: a plain list of every page that is not a main tab. */
+.more__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl, 1.5rem);
+  color: var(--text-primary);
+}
+
+.more__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.more__list li + li { border-top: 1px solid var(--border-subtle); }
+
+.more__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.more__icon { display: inline-flex; color: var(--accent-primary); }
+.more__label { flex: 1; min-width: 0; }
+.more__chevron { color: var(--text-tertiary); }
+
+.more__count {
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-sunken, var(--border-subtle));
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.more__note {
+  margin: 0;
+  padding: 0 var(--space-2);
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}

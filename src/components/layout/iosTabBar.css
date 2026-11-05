@@ -1,0 +1,104 @@
+/* iPhone bottom tab bar. Every rule is scoped to a phone-width iOS shell, so a
+   wide iPad, the Mac and the web keep their layouts. */
+
+html.is-ios .shell--tabs {
+  --tabbar-h: calc(49px + env(safe-area-inset-bottom, 0px));
+  --narrow-header-height: env(safe-area-inset-top, 0px);
+  display: block;
+}
+
+/* Keeps scrolled text from showing under the clock and notch. */
+html.is-ios .shell--tabs::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--surface-card);
+  z-index: 20;
+}
+
+/* Side insets too: in landscape the phone is wider than the 700px rule, and
+   the Dynamic Island would otherwise cover the left edge of the page. */
+html.is-ios .shell--tabs .content {
+  padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
+  padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--tabbar-h) + var(--space-5));
+}
+
+html.is-ios .shell--tabs .back-to-top {
+  bottom: calc(49px + env(safe-area-inset-bottom, 0px) + var(--space-4));
+}
+
+html.is-ios .shell--tabs .undo-bar {
+  min-width: 0;
+  max-width: calc(100vw - 2 * var(--space-4) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  bottom: calc(var(--tabbar-h) + var(--space-3));
+}
+
+html.is-ios .ios-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  display: flex;
+  align-items: stretch;
+  min-height: 49px;
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+}
+
+html.is-ios .ios-tab-bar__tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  touch-action: manipulation;
+  position: relative;
+}
+
+html.is-ios .ios-tab-bar__tab.is-active { color: var(--accent-primary); }
+
+html.is-ios .ios-tab-bar__icon { display: inline-flex; }
+
+html.is-ios .ios-tab-bar__label {
+  font-size: min(0.625rem, 12px);
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.is-ios .ios-tab-bar__badge {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger, #c0392b);
+  color: #fff;
+  font-size: min(0.625rem, 12px);
+  line-height: 16px;
+  text-align: center;
+}
+
+html.is-ios .ios-tab-bar__badge--quiet {
+  background: var(--text-tertiary);
+}
+
+/* Hide while typing, in a full-screen layer or in the fallback PDF viewer. */
+html.is-ios body:has(.focus-layer, dialog.pdf-viewer-dialog[open], input:focus, textarea:focus, select:focus, [contenteditable]:focus) .ios-tab-bar {
+  display: none;
+}

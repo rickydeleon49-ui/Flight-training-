@@ -392,8 +392,8 @@ describe("AppShell search hint", () => {
     cleanup();
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
     mount(644);
-    fireEvent.click(menu());
-    expect(screen.getByRole("button", { name: /^Search/ })).toBeTruthy();
+    // On an iPhone Search lives on the More page; the shell has no Menu or shortcut hint.
+    expect(screen.queryByRole("button", { name: "Menu" })).toBeNull();
     expect(document.querySelector(".nav__shortcut")).toBeNull();
     vi.restoreAllMocks();
   });
