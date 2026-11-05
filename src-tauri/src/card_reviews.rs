@@ -849,7 +849,7 @@ fn materialize(
     )
     .map_err(storage)?;
     tx.execute(
-        "UPDATE card_versions SET is_active = 1 WHERE id = ?1",
+        "UPDATE card_versions SET is_active = 1 WHERE id = ?1 AND is_active = 0",
         [&version.version_id],
     )
     .map_err(storage)?;

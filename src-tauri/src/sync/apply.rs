@@ -226,7 +226,7 @@ impl From<rusqlite::Error> for ApplyError {
 /// Applies one decoded change file. `file_name` is its S-2a name; `now` is a
 /// 24-byte ISO time used for the receipt and the guard value. Any error rolls
 /// the whole file back (the database is unchanged and the file stays for a
-/// later retry).
+/// later retry). Empty card versions from older builds are removed first.
 pub(crate) fn apply_change_file(
     conn: &mut Connection,
     file_name: &str,
@@ -256,8 +256,13 @@ pub(crate) fn apply_change_file(
         params![GUARD, now],
     )?;
     let mut outcome = {
+        // Rows an older build removed under the guard get their tombstones
+        // first, so this file's children of them skip instead of stalling.
+        tombstone_removed_rows(&tx, false)?;
         let mut engine = Engine::new(&tx, &set.device_id);
         engine.run(&set.changes)?;
+        // Rows this file removed (and empty versions repaired) get tombstones.
+        tombstone_removed_rows(&tx, engine.deleted_rows)?;
         engine.out
     };
     // After every upsert, delete and replay, so a receipt never names a card
@@ -389,6 +394,11 @@ struct Engine<'a> {
     /// Materials that gained an event, card or version: material -> newest
     /// `changed_at`. The carry pass runs on them before replay.
     carry: BTreeMap<String, String>,
+    /// (parent version table, version id) of every card/practice item this
+    /// file carries: a version may be rebuilt here only with its items.
+    children: HashSet<(&'static str, String)>,
+    /// Set when a delete actually ran (see `tombstone_removed_rows`).
+    deleted_rows: bool,
 }
 
 impl<'a> Engine<'a> {
@@ -407,12 +417,15 @@ impl<'a> Engine<'a> {
             version_materials: BTreeSet::new(),
             shadowed: HashSet::new(),
             carry: BTreeMap::new(),
+            children: HashSet::new(),
+            deleted_rows: false,
         }
     }
 
     /// Inserts/updates parent-first in registry order, deletes in reverse,
     /// then version activation, then the carry of synced ratings onto
-    /// appended versions, then review replay.
+    /// appended versions, then review replay, then removal of empty card
+    /// versions left by older builds.
     fn run(&mut self, changes: &'a [Change]) -> Result<(), ApplyError> {
         let mut upserts = Vec::new();
         let mut deletes = Vec::new();
@@ -427,6 +440,16 @@ impl<'a> Engine<'a> {
                 upserts.push((index, change));
             }
         }
+        for (_, change) in &upserts {
+            let parent = match change.table.as_str() {
+                "card_items" => "card_versions",
+                "practice_test_items" => "practice_test_versions",
+                _ => continue,
+            };
+            if let Some(id) = change.row.as_ref().and_then(|r| text(r, "version_id")) {
+                self.children.insert((parent, id.to_string()));
+            }
+        }
         upserts.sort_by_key(|(i, c)| (*i, c.seq));
         deletes.sort_by_key(|(i, c)| (Reverse(*i), c.seq));
         for (index, change) in upserts {
@@ -437,7 +460,35 @@ impl<'a> Engine<'a> {
         }
         self.activate_versions()?;
         self.carry_touched()?;
-        self.replay_touched()
+        self.replay_touched()?;
+        self.drop_empty_versions()
+    }
+
+    /// Removes `card_versions` rows that claim cards but hold none (the shape
+    /// an older build left behind), and marks their meta deleted. Unlogged.
+    fn drop_empty_versions(&mut self) -> Result<(), ApplyError> {
+        let table = tables::table("card_versions").ok_or(ApplyError::UnknownTable)?;
+        let ids: Vec<String> = self
+            .conn
+            .prepare(
+                "SELECT v.id FROM card_versions v WHERE v.card_count > 0
+                 AND NOT EXISTS (SELECT 1 FROM card_items i WHERE i.version_id = v.id)",
+            )?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<_, _>>()?;
+        for id in ids {
+            if self.delete_blocked(table, &id)? {
+                continue;
+            }
+            self.conn
+                .execute("DELETE FROM card_versions WHERE id = ?1", [&id])?;
+            self.conn.execute(
+                "UPDATE sync_row_meta SET deleted = 1
+                 WHERE table_name = 'card_versions' AND row_id = ?1",
+                [&id],
+            )?;
+        }
+        Ok(())
     }
 
     fn note_carry(&mut self, material: &str, changed_at: &str) {
@@ -669,6 +720,8 @@ impl<'a> Engine<'a> {
             }
             if !self.exists(parent.name, &fk.to, &value)? {
                 if self.meta(parent.name, &key)?.is_some_and(|m| m.deleted) {
+                    // Skipped rows shadow their own children (no meta to find).
+                    self.shadowed.insert((table.name, row_id.to_string()));
                     return Ok(None);
                 }
                 return Err(ApplyError::MissingParent(table.name));
@@ -1046,6 +1099,17 @@ impl<'a> Engine<'a> {
         let local = self.meta(table.name, &id)?;
         let wins = incoming_wins(local.as_ref(), &change.changed_at, self.peer)?;
         let present = self.exists(table.name, table.primary_key, &Sql::Text(id.clone()))?;
+        // Meta without a row means this device removed it; only a file that
+        // carries its cards may rebuild it, a bare update never does.
+        if !present
+            && local.is_some()
+            && !(wins && self.children.contains(&(table.name, id.clone())))
+        {
+            // Its items in this file skip too, instead of failing MissingParent.
+            self.shadowed.insert((table.name, id.clone()));
+            self.out.ignored += 1;
+            return Ok(());
+        }
         let mut changed = false;
         if !present {
             row.insert("is_active".into(), Value::from(0));
@@ -1177,6 +1241,7 @@ impl<'a> Engine<'a> {
             ),
             [&change.row_id],
         )?;
+        self.deleted_rows = true;
         self.write_meta(table.name, &change.row_id, change, true)?;
         self.out.written += 1;
         Ok(())
@@ -1366,4 +1431,31 @@ impl<'a> Engine<'a> {
         }
         Ok(())
     }
+}
+
+/// Marks `sync_row_meta` as deleted where the row is gone (removed under the
+/// sync guard, which logs nothing). Union and Replay tables always; the other
+/// rules only when `all_rules` (a delete ran), since their deletes propagate.
+/// Writes meta only and keeps `device_id` and `changed_at`.
+pub(crate) fn tombstone_removed_rows(
+    conn: &Connection,
+    all_rules: bool,
+) -> rusqlite::Result<usize> {
+    let mut total = 0;
+    for t in SYNC_TABLES {
+        if !(all_rules || matches!(t.rule, MergeRule::Union | MergeRule::Replay)) {
+            continue;
+        }
+        total += conn.execute(
+            &format!(
+                "UPDATE sync_row_meta SET deleted = 1
+                 WHERE table_name = ?1 AND deleted = 0
+                 AND NOT EXISTS (SELECT 1 FROM {} x WHERE x.{} = sync_row_meta.row_id)",
+                quoted(t.name),
+                quoted(t.primary_key)
+            ),
+            [t.name],
+        )?;
+    }
+    Ok(total)
 }

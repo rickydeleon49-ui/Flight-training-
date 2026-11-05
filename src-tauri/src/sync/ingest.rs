@@ -229,6 +229,7 @@ pub(crate) fn ingest_archive(
         .as_deref()
         .filter(|v| !v.is_empty() && v.len() <= 64)
         .unwrap_or(app_version);
+    crate::sync::apply::tombstone_removed_rows(&copy, true).map_err(|_| bad_db())?;
     let changes = export::export_changes_in(&mut copy, &device_id, since_seq, version, &stamp)
         .map_err(IngestError::Export);
     drop(copy);

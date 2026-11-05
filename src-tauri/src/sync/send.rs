@@ -784,6 +784,8 @@ fn send_side_inner(
 
     let mut counts = zero_counts();
     let mut mac = MacCounts::default();
+    // Heals a device an older build left stuck on rows removed under the guard.
+    crate::sync::apply::tombstone_removed_rows(&conn, true).map_err(|_| FAILED.to_string())?;
     let new_export = export::export_changes_in(&mut conn, &device_id, since, app_version, now)
         .map_err(|_| FAILED.to_string())?;
     let exported_something = new_export.is_some();
