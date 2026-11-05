@@ -292,6 +292,20 @@ pub(crate) fn material_blob(
     let Some(relative_path) = path.filter(|p| !p.trim().is_empty()) else {
         return Ok(Some(MaterialBlob::NoFile));
     };
+    // A picture card's original has no PDF identity, but every region on it
+    // records the exact hash of the image; publish and place verify the bytes
+    // against it, so it travels like a PDF (a PNG is at most 10 MB).
+    let sha = match sha {
+        Some(sha) => Some(sha),
+        None => conn
+            .query_row(
+                "SELECT image_sha256 FROM visual_card_regions WHERE image_material_id = ?1
+                 ORDER BY id LIMIT 1",
+                [material_id],
+                |r| r.get::<_, String>(0),
+            )
+            .optional()?,
+    };
     let Some(content_sha256) = sha else {
         return Ok(Some(MaterialBlob::Unverified { relative_path }));
     };

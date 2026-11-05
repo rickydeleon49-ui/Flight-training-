@@ -342,10 +342,14 @@ pub fn validate_references(conn: &Connection) -> Check<()> {
     }
     let mut stmt=conn.prepare("SELECT source_material_id,flashcards_json FROM ai_study_sets UNION ALL SELECT material_id,json_extract(previous_json,'$.flashcards_json') FROM study_set_history WHERE kind='study_set'").map_err(|_|INVALID)?;
     for pair in stmt
-        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+        .query_map([], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?))
+        })
         .map_err(|_| INVALID)?
     {
         let (owner, text) = pair.map_err(|_| INVALID)?;
+        // An earlier version that kept no card list has no pictures to check.
+        let Some(text) = text else { continue };
         match crate::card_reviews::parse_saved_cards(Some(&text)) {
             crate::card_reviews::SavedCards::Malformed => return Err(INVALID.into()),
             crate::card_reviews::SavedCards::Ok(cards) => {

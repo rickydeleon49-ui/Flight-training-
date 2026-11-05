@@ -350,12 +350,14 @@ fn registry_is_the_d6_set_in_order() {
         names,
         [
             "study_materials",
+            "visual_card_regions",
             "material_content_identities",
             "card_review_generations",
             "card_versions",
             "card_version_origins",
             "card_items",
             "card_item_origins",
+            "card_item_visual_regions",
             "card_review_events",
             "card_review_state",
             "practice_tests",
@@ -884,6 +886,10 @@ mod replay_properties {
 
 /// One minimal plain-SQL row per synced table, parents first: (table, id, insert, update).
 /// `T` is the timestamp; ids end in a digit so a suffix can make a second copy.
+/// Synced since migration 0034. Their ids are 64 hex characters (a suffix would break the
+/// CHECK), so they stay out of `ROWS`; `visual_sync` covers their ledger rows.
+const PICTURE_TABLES: [&str; 2] = ["visual_card_regions", "card_item_visual_regions"];
+
 const ROWS: &[(&str, &str, &str, &str)] = &[
     ("study_materials", "m1", "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','Mat','T','T')", "UPDATE study_materials SET title = 'Mat2'"),
     ("material_content_identities", "m1", "INSERT INTO material_content_identities (material_id,content_sha256,total_pages,verified_at) VALUES ('m1','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',3,'T')", "UPDATE material_content_identities SET total_pages = 4"),
@@ -1005,7 +1011,11 @@ mod ledger {
     #[test]
     fn rows_cover_the_registry_in_order() {
         let names: Vec<&str> = ROWS.iter().map(|r| r.0).collect();
-        let registry: Vec<&str> = SYNC_TABLES.iter().map(|t| t.name).collect();
+        let registry: Vec<&str> = SYNC_TABLES
+            .iter()
+            .map(|t| t.name)
+            .filter(|n| !PICTURE_TABLES.contains(n))
+            .collect();
         assert_eq!(names, registry);
     }
 
@@ -1024,7 +1034,7 @@ mod ledger {
                 assert_eq!(n, 1, "{} {op}", t.name);
             }
         }
-        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 57);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 63);
     }
 
     #[test]
@@ -1159,7 +1169,7 @@ mod ledger {
             .unwrap();
         crate::backup::verify_application_database(&path).unwrap();
         let copy = Connection::open(&path).unwrap();
-        assert_eq!(count(&copy, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 57);
+        assert_eq!(count(&copy, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_sync_%'"), 63);
         for table in ["local_changes", "sync_row_meta", "sync_applied"] {
             assert_eq!(
                 count(
@@ -1996,9 +2006,12 @@ mod apply {
         insert_graph(&mac, "x", T1);
         let before = count(&mac, "SELECT COUNT(*) FROM local_changes");
         let out = take(&mut mac, &file);
-        assert!(out.written >= SYNC_TABLES.len() - 1, "{out:?}");
+        assert!(out.written >= ROWS.len() - 1, "{out:?}");
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), before);
-        for t in SYNC_TABLES {
+        for t in SYNC_TABLES
+            .iter()
+            .filter(|t| !PICTURE_TABLES.contains(&t.name))
+        {
             let n = count(&mac, &format!("SELECT COUNT(*) FROM {}", t.name));
             assert!(n >= 1, "{} is empty", t.name);
         }
@@ -8144,5 +8157,598 @@ mod reset_races {
         assert_eq!(deleted, 1);
         verified(&a);
         assert!(active_version(&a).len() <= 1);
+    }
+}
+
+/// S-6a7: picture-card rows (regions and the frozen sidecar) travel between
+/// devices, and a file that would leave a device unable to open is refused.
+mod visual_sync {
+    use super::apply::{act, device, ship, take, Card, MAC, PHONE};
+    use super::synced_ratings::with_history;
+    use super::*;
+    use crate::card_reviews::{card_version, CanonicalCard};
+    use crate::sync::apply::{apply_change_file, ApplyError};
+    use crate::visual_cards::tests::region;
+
+    const T0: &str = "2026-11-01T10:00:00.000Z";
+
+    fn cards_json(region_id: &str) -> String {
+        json!([{"front": "Which label is in the middle?", "back": "Bravo",
+                "sourcePage": null, "visualRegionId": region_id}])
+        .to_string()
+    }
+
+    fn insert_set(conn: &Connection, region_id: &str) {
+        conn.execute(
+            "INSERT INTO ai_study_sets (source_material_id, title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at)
+             VALUES ('owner', 'Synthetic picture', '', '[]', ?1, '', 'manual', '', ?2, ?2)",
+            params![cards_json(region_id), T0],
+        )
+        .unwrap();
+    }
+
+    fn insert_region(conn: &Connection, r: &crate::visual_cards::Region) {
+        conn.execute(
+            "INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+            params![r.id, r.owner_material_id, r.image_material_id, r.image_sha256, r.image_width, r.image_height, r.x, r.y, r.w, r.h, r.rotation],
+        )
+        .unwrap();
+    }
+
+    /// Runs `f` with the sync guard set, as data that came with a full copy.
+    fn copied(conn: &Connection, f: impl FnOnce(&Connection)) {
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+        f(conn);
+        conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+    }
+
+    fn materials(conn: &Connection) {
+        for id in ["owner", "image"] {
+            conn.execute(
+                "INSERT INTO study_materials (id, title, created_at, updated_at, file_path) VALUES (?1, ?1, ?2, ?2, ?3)",
+                params![id, T0, (id == "image").then_some("panel.png")],
+            )
+            .unwrap();
+        }
+    }
+
+    /// Mac and phone as after a full copy: the same materials, the same
+    /// region and a saved picture set, none of it in either ledger.
+    fn copied_pair() -> (Connection, Connection, Card) {
+        let r = region();
+        let (a, b) = (device(MAC), device(PHONE));
+        for conn in [&a, &b] {
+            copied(conn, |c| {
+                materials(c);
+                insert_region(c, &r);
+                insert_set(c, &r.id);
+            });
+        }
+        let v = card_version(
+            "owner",
+            &[CanonicalCard {
+                visual_region_id: Some(r.id.clone()),
+                front: "Which label is in the middle?".into(),
+                back: "Bravo".into(),
+                source_page: None,
+                origin: None,
+            }],
+        );
+        let c = Card {
+            material: "owner".into(),
+            hash: v.content_hash.clone(),
+            item: v.items[0].item_id.clone(),
+        };
+        (a, b, c)
+    }
+
+    #[test]
+    fn a_picture_card_rated_on_the_phone_leaves_the_mac_able_to_back_up() {
+        let (mut mac, mut phone, c) = copied_pair();
+        act(&mut phone, &c, "rate", json!({ "rating": "good" }), 1);
+        take(&mut mac, &ship(&mut phone, PHONE, 0));
+        with_history(&mac);
+        let got = crate::backup::verify_application_connection(&mac);
+        assert!(got.is_ok(), "{got:?}");
+        let sidecar = count(&mac, "SELECT COUNT(*) FROM card_item_visual_regions");
+        assert_eq!(sidecar, 1);
+    }
+
+    #[test]
+    fn a_region_made_on_the_mac_reaches_the_phone_with_its_set() {
+        let (mut mac, mut phone) = (device(MAC), device(PHONE));
+        for conn in [&mac, &phone] {
+            copied(conn, materials);
+        }
+        let r = region();
+        insert_region(&mac, &r);
+        insert_set(&mac, &r.id);
+        take(&mut phone, &ship(&mut mac, MAC, 0));
+        with_history(&phone);
+        let got = crate::backup::verify_application_connection(&phone);
+        assert!(got.is_ok(), "{got:?}");
+        assert_eq!(count(&phone, "SELECT COUNT(*) FROM visual_card_regions"), 1);
+    }
+
+    #[test]
+    fn a_file_naming_a_missing_region_is_refused_and_changes_nothing() {
+        let (mut mac, mut phone) = (device(MAC), device(PHONE));
+        for conn in [&mac, &phone] {
+            copied(conn, materials);
+        }
+        // A set that names a region no device has (nothing else in the file).
+        insert_set(&mac, &"ab".repeat(32));
+        let file = ship(&mut mac, MAC, 0);
+        let snapshot = |c: &Connection| {
+            (
+                count(c, "SELECT COUNT(*) FROM ai_study_sets"),
+                count(c, "SELECT COUNT(*) FROM local_changes"),
+                count(c, "SELECT COUNT(*) FROM sync_row_meta"),
+                count(c, "SELECT COUNT(*) FROM sync_applied"),
+                count(
+                    c,
+                    "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'",
+                ),
+            )
+        };
+        let before = snapshot(&phone);
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        let got = apply_change_file(&mut phone, &file.file_name, &parsed, NOW);
+        assert!(got.is_err(), "the file must be refused");
+        assert!(!matches!(got, Err(ApplyError::Db(_))), "{got:?}");
+        assert_eq!(snapshot(&phone), before);
+    }
+
+    fn region_count(conn: &Connection) -> (i64, i64) {
+        (
+            count(conn, "SELECT COUNT(*) FROM visual_card_regions"),
+            count(conn, "SELECT COUNT(*) FROM card_item_visual_regions"),
+        )
+    }
+
+    fn ops(conn: &Connection, table: &str) -> Vec<String> {
+        conn.prepare("SELECT op FROM local_changes WHERE table_name = ?1 ORDER BY seq")
+            .unwrap()
+            .query_map([table], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    }
+
+    #[test]
+    fn the_picture_tables_are_logged_and_the_guard_silences_them() {
+        let conn = device(MAC);
+        copied(&conn, materials);
+        let r = region();
+        insert_region(&conn, &r);
+        conn.execute("UPDATE visual_card_regions SET rotation = rotation", [])
+            .unwrap();
+        assert_eq!(ops(&conn, "visual_card_regions"), ["insert", "update"]);
+        conn.execute("DELETE FROM visual_card_regions", []).unwrap();
+        assert_eq!(
+            ops(&conn, "visual_card_regions"),
+            ["insert", "update", "delete"]
+        );
+        let (a, _b, c) = copied_pair();
+        let before = count(&a, "SELECT COUNT(*) FROM local_changes");
+        copied(&a, |x| {
+            x.execute("DELETE FROM card_item_visual_regions", [])
+                .unwrap();
+            x.execute("DELETE FROM visual_card_regions", []).unwrap();
+        });
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM local_changes"), before);
+        let _ = c;
+    }
+
+    #[test]
+    fn the_migration_logs_pictures_that_already_exist_but_only_with_their_items() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.pragma_update(None, "foreign_keys", "ON").unwrap();
+        let all = crate::migrations();
+        for m in all.iter().filter(|m| m.version <= 33) {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        let r = region();
+        materials(&conn);
+        insert_region(&conn, &r);
+        // One item the ledger knows (a post-0033 version) and one it does not.
+        for (version, item, logged) in [("v-known", "i-known", true), ("v-old", "i-old", false)] {
+            conn.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+                [],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES (?1,'owner',?1,1,'import',?2,0)",
+                params![version, T0],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO card_items (id,version_id,ordinal,front,back) VALUES (?1,?2,0,'f','b')",
+                params![item, version],
+            )
+            .unwrap();
+            conn.execute(
+                "INSERT INTO card_item_visual_regions (item_id,region_id) VALUES (?1,?2)",
+                params![item, r.id],
+            )
+            .unwrap();
+            conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+            if logged {
+                conn.execute(
+                    "INSERT INTO sync_row_meta (table_name,row_id,device_id,changed_at,deleted) VALUES ('card_items',?1,NULL,?2,0)",
+                    params![item, T0],
+                )
+                .unwrap();
+            }
+        }
+        for m in all.iter().filter(|m| m.version == 34) {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        assert_eq!(ops(&conn, "visual_card_regions"), ["insert"]);
+        assert_eq!(ops(&conn, "card_item_visual_regions"), ["insert"]);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM sync_row_meta WHERE table_name = 'card_item_visual_regions' AND row_id = 'i-known'"
+            ),
+            1
+        );
+    }
+
+    /// A rated picture version as a phone that predates picture-card sync sends it.
+    fn old_phone_file(
+        phone: &mut Connection,
+        c: &Card,
+    ) -> crate::sync::changeset::EncodedChangeFile {
+        act(phone, c, "rate", json!({ "rating": "good" }), 1);
+        phone
+            .execute_batch(
+                "DELETE FROM local_changes WHERE table_name = 'card_item_visual_regions';
+                 DELETE FROM sync_row_meta WHERE table_name = 'card_item_visual_regions';",
+            )
+            .unwrap();
+        ship(phone, PHONE, 0)
+    }
+
+    fn try_take(
+        conn: &mut Connection,
+        file: &crate::sync::changeset::EncodedChangeFile,
+    ) -> Result<crate::sync::apply::ApplyOutcome, ApplyError> {
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        apply_change_file(conn, &file.file_name, &parsed, NOW)
+    }
+
+    #[test]
+    fn an_old_phone_file_that_matches_a_saved_list_exactly_is_accepted_and_mended() {
+        let (mut mac, mut phone, c) = copied_pair();
+        let file = old_phone_file(&mut phone, &c);
+        try_take(&mut mac, &file).unwrap();
+        assert_eq!(region_count(&mac).1, 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 1);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn an_old_phone_file_that_matches_no_saved_list_is_still_refused() {
+        let (mut mac, mut phone, c) = copied_pair();
+        let file = old_phone_file(&mut phone, &c);
+        mac.execute(
+            "UPDATE ai_study_sets SET flashcards_json = ?1",
+            [json!([{"front": "Other", "back": "Other", "sourcePage": null}]).to_string()],
+        )
+        .unwrap();
+        let before = count(&mac, "SELECT COUNT(*) FROM card_versions");
+        let got = try_take(&mut mac, &file);
+        assert!(matches!(got, Err(ApplyError::PictureCards)), "{got:?}");
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_versions"), before);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 0);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn an_old_file_then_the_updated_phone_file_both_apply() {
+        let (mut mac, mut phone, c) = copied_pair();
+        let f1 = old_phone_file(&mut phone, &c);
+        // After the update the migration logs the links, so the next file carries them.
+        phone
+            .execute_batch(
+                "INSERT INTO local_changes (table_name, row_id, op, changed_at)
+                   SELECT 'card_item_visual_regions', item_id, 'insert', '2026-11-04T12:00:00.000Z' FROM card_item_visual_regions;
+                 INSERT INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+                   SELECT 'card_item_visual_regions', item_id, 'bbbb-phone', '2026-11-04T12:00:00.000Z', 0 FROM card_item_visual_regions;",
+            )
+            .unwrap();
+        let f2 = ship(&mut phone, PHONE, 0);
+        try_take(&mut mac, &f1).unwrap();
+        try_take(&mut mac, &f2).unwrap();
+        assert_eq!(region_count(&mac).1, 1);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn a_region_whose_picture_original_was_deleted_here_arrives_with_the_link_cleared() {
+        let (mut mac, mut phone) = (device(MAC), device(PHONE));
+        for conn in [&mac, &phone] {
+            copied(conn, materials);
+        }
+        // The phone deleted the picture original (a tombstone); the Mac did not yet.
+        phone
+            .execute("DELETE FROM study_materials WHERE id = 'image'", [])
+            .unwrap();
+        let r = region();
+        insert_region(&mac, &r);
+        insert_set(&mac, &r.id);
+        take(&mut phone, &ship(&mut mac, MAC, 0));
+        assert_eq!(region_count(&phone).0, 1);
+        assert_eq!(
+            count(
+                &phone,
+                "SELECT COUNT(*) FROM visual_card_regions WHERE image_material_id IS NULL"
+            ),
+            1
+        );
+        with_history(&phone);
+        crate::backup::verify_application_connection(&phone).unwrap();
+    }
+
+    #[test]
+    fn a_history_row_with_no_card_list_is_not_a_picture_problem() {
+        let conn = device(MAC);
+        conn.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','M',?1,?1)",
+            [T0],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO study_set_history (id,material_id,kind,reason,previous_json,provider,created_at) VALUES ('h1','m1','study_set','edit','{}','gemini',?1)",
+            [T0],
+        )
+        .unwrap();
+        crate::visual_cards::validate_references(&conn).unwrap();
+    }
+
+    #[test]
+    fn the_standalone_picture_repair_mends_a_library_on_any_launch() {
+        let dir = crate::visual_cards::tests::TempDir::new();
+        let conn = crate::visual_cards::tests::library(dir.path());
+        let r = region();
+        insert_region(&conn, &r);
+        insert_set(&conn, &r.id);
+        let v = card_version(
+            "owner",
+            &[CanonicalCard {
+                visual_region_id: Some(r.id.clone()),
+                front: "Which label is in the middle?".into(),
+                back: "Bravo".into(),
+                source_page: None,
+                origin: None,
+            }],
+        );
+        copied(&conn, |c| {
+            c.execute(
+                "INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES (?1,'owner',?2,1,'import',?3,1)",
+                params![v.version_id, v.content_hash, T0],
+            )
+            .unwrap();
+            c.execute(
+                "INSERT INTO card_items (id,version_id,ordinal,front,back) VALUES (?1,?2,0,'Which label is in the middle?','Bravo')",
+                params![v.items[0].item_id, v.version_id],
+            )
+            .unwrap();
+        });
+        assert!(crate::backup::verify_application_connection(&conn).is_err());
+        assert_eq!(
+            crate::sync::receipts::repair_picture_links_at(dir.path()).unwrap(),
+            1
+        );
+        crate::backup::verify_application_connection(&conn).unwrap();
+    }
+
+    #[test]
+    fn a_rating_made_after_the_other_device_deleted_the_material_leaves_no_orphans() {
+        let (mut mac, mut phone, c) = copied_pair();
+        act(&mut phone, &c, "rate", json!({ "rating": "good" }), 1);
+        let late = ship(&mut phone, PHONE, 0);
+        mac.execute("DELETE FROM study_materials WHERE id = 'owner'", [])
+            .unwrap();
+        assert_eq!(region_count(&mac), (0, 0));
+        take(&mut mac, &late);
+        assert_eq!(region_count(&mac), (0, 0));
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_versions"), 0);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+        // The delete reaches the phone: its pictures go with the material.
+        take(&mut phone, &ship(&mut mac, MAC, 0));
+        assert_eq!(region_count(&phone), (0, 0));
+        with_history(&phone);
+        crate::backup::verify_application_connection(&phone).unwrap();
+        // The same late file again changes nothing.
+        let again = ship(&mut phone, PHONE, 0);
+        take(&mut mac, &again);
+        assert_eq!(region_count(&mac), (0, 0));
+    }
+
+    #[test]
+    fn deleting_the_picture_file_material_ends_the_same_on_both_devices() {
+        let (mut mac, mut phone, _c) = copied_pair();
+        // Something of the Mac's to send first, so the file is not empty.
+        mac.execute("DELETE FROM study_materials WHERE id = 'image'", [])
+            .unwrap();
+        let null_image = "SELECT COUNT(*) FROM visual_card_regions WHERE image_material_id IS NULL";
+        assert_eq!(count(&mac, null_image), 1);
+        take(&mut phone, &ship(&mut mac, MAC, 0));
+        assert_eq!(count(&phone, null_image), 1);
+        assert_eq!(region_count(&phone), (1, 0));
+        for conn in [&mac, &phone] {
+            with_history(conn);
+            crate::backup::verify_application_connection(conn).unwrap();
+        }
+    }
+
+    #[test]
+    fn startup_repair_gives_a_version_its_links_back_only_on_an_exact_match() {
+        let (_mac, mut phone, c) = copied_pair();
+        act(&mut phone, &c, "rate", json!({ "rating": "good" }), 1);
+        let mend = |conn: &Connection| {
+            copied(conn, |c| {
+                crate::sync::receipts::repair_picture_sidecars(c).unwrap();
+            });
+        };
+        let broken = |conn: &Connection| {
+            conn.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+                [],
+            )
+            .unwrap();
+            conn.execute("DELETE FROM card_item_visual_regions", [])
+                .unwrap();
+            conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+            with_history(conn);
+        };
+        // No saved list names this version: nothing is guessed.
+        broken(&phone);
+        phone
+            .execute(
+                "UPDATE ai_study_sets SET flashcards_json = ?1",
+                [json!([{"front": "Other", "back": "Other", "sourcePage": null}]).to_string()],
+            )
+            .unwrap();
+        let logged = count(&phone, "SELECT COUNT(*) FROM local_changes");
+        mend(&phone);
+        assert_eq!(region_count(&phone).1, 0);
+        assert!(crate::backup::verify_application_connection(&phone).is_err());
+        // The saved list that produced the version: mended, and not logged.
+        phone
+            .execute(
+                "UPDATE ai_study_sets SET flashcards_json = ?1",
+                [cards_json(&region().id)],
+            )
+            .unwrap();
+        let logged = logged + 1;
+        mend(&phone);
+        assert_eq!(region_count(&phone).1, 1);
+        assert_eq!(count(&phone, "SELECT COUNT(*) FROM local_changes"), logged);
+        crate::backup::verify_application_connection(&phone).unwrap();
+        // A second run changes nothing.
+        mend(&phone);
+        assert_eq!(region_count(&phone).1, 1);
+    }
+
+    #[test]
+    fn a_picture_original_travels_to_the_other_device() {
+        use super::progress::{mac_db, mac_root, run};
+        use super::send::phone;
+        let png = crate::visual_cards::tests::PNG;
+        let p = phone();
+        let r = region();
+        std::fs::create_dir_all(p.root.0.join("documents")).unwrap();
+        std::fs::write(p.root.0.join("documents/panel.png"), png).unwrap();
+        {
+            let conn = p.db();
+            materials(&conn);
+            insert_region(&conn, &r);
+            insert_set(&conn, &r.id);
+        }
+        p.send().unwrap();
+        let dir = TempDir::new("visual-zip");
+        let zip = dir.0.join("phone-progress.hfdprogress");
+        std::fs::copy(p.file(), &zip).unwrap();
+        let root = mac_root();
+        let got = run(&root, &zip).unwrap();
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (1, 0));
+        assert_eq!(
+            std::fs::read(root.0.join("documents/panel.png")).unwrap(),
+            png
+        );
+        let mac = mac_db(&root);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM visual_card_regions"), 1);
+        with_history(&mac);
+        crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn the_phone_bootstrap_seeds_pictures_made_before_the_ledger() {
+        let (_mac, mut phone, c) = copied_pair();
+        act(&mut phone, &c, "rate", json!({ "rating": "good" }), 1);
+        phone
+            .execute_batch("DELETE FROM local_changes; DELETE FROM sync_row_meta;")
+            .unwrap();
+        let dir = TempDir::new("visual-boot");
+        crate::sync::bootstrap::bootstrap_in(&dir.0, &mut phone, true, NOW).unwrap();
+        for table in PICTURE_TABLES {
+            assert_eq!(
+                count(
+                    &phone,
+                    &format!("SELECT COUNT(*) FROM sync_row_meta WHERE table_name = '{table}'")
+                ),
+                1,
+                "{table}"
+            );
+        }
+    }
+
+    #[test]
+    fn check_library_reports_the_data_problem_a_backup_would_refuse() {
+        let dir = crate::visual_cards::tests::TempDir::new();
+        let conn = crate::visual_cards::tests::library(dir.path());
+        let report = crate::documents::check_library_in(dir.path()).unwrap();
+        assert!(!report.data_problem);
+        // A saved picture card whose region is not here: the backup would refuse.
+        insert_set(&conn, &"cd".repeat(32));
+        let report = crate::documents::check_library_in(dir.path()).unwrap();
+        assert!(report.data_problem);
+        assert!(crate::backup::verify_application_connection(&conn).is_err());
+    }
+
+    #[test]
+    fn a_missing_picture_original_that_was_not_deleted_still_retries() {
+        let (mut mac, mut phone) = (device(MAC), device(PHONE));
+        copied(&mac, materials);
+        copied(&phone, |c| {
+            c.execute(
+                "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('owner','owner',?1,?1)",
+                [T0],
+            )
+            .unwrap();
+        });
+        let r = region();
+        insert_region(&mac, &r);
+        let got = try_take(&mut phone, &ship(&mut mac, MAC, 0));
+        assert!(matches!(got, Err(ApplyError::MissingParent(_))), "{got:?}");
+        assert_eq!(region_count(&phone), (0, 0));
+    }
+
+    #[test]
+    fn a_practice_version_for_a_deleted_material_is_still_skipped() {
+        let sql = |table: &str| ROWS.iter().find(|r| r.0 == table).unwrap().2;
+        let (mut mac, mut phone) = (device(MAC), device(PHONE));
+        for table in [
+            "study_materials",
+            "practice_tests",
+            "practice_test_versions",
+        ] {
+            phone.execute(&graph_sql(sql(table), "", T0), []).unwrap();
+        }
+        mac.execute(&graph_sql(sql("study_materials"), "", T0), [])
+            .unwrap();
+        mac.execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        take(&mut mac, &ship(&mut phone, PHONE, 0));
+        assert_eq!(
+            count(&mac, "SELECT COUNT(*) FROM practice_test_versions"),
+            0
+        );
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 0);
     }
 }
