@@ -707,3 +707,175 @@ fn cards_fix_restore_with_a_missing_visual_region_changes_nothing() {
     assert_eq!(row(&mut conn), current);
     assert_eq!(history(&conn).len(), entries);
 }
+
+fn gemini_set(cards: &[(&str, &str)]) -> Value {
+    json!({
+        "title": "Synthetic guide", "summary": "S.", "summaryOrigin": null, "sections": [],
+        "flashcards": cards.iter().map(|(f, b)| json!({"front": f, "back": b, "sourcePage": null})).collect::<Vec<_>>(),
+        "sourceNotes": "", "provider": "gemini", "model": "m", "retired": [],
+    })
+}
+
+fn rate_card(conn: &mut Connection, cards: &[(&str, &str)], ordinal: usize, rating: &str, n: u32) {
+    let canonical: Vec<crate::card_reviews::CanonicalCard> =
+        match crate::card_reviews::parse_saved_cards(Some(
+            &gemini_set(cards)["flashcards"].to_string(),
+        )) {
+            crate::card_reviews::SavedCards::Ok(c) => c,
+            _ => panic!("cards"),
+        };
+    let version = crate::card_reviews::card_version(M, &canonical);
+    let item_id = version.items[ordinal].item_id.clone();
+    let tx = conn.transaction().unwrap();
+    let revision: i64 = tx
+        .query_row(
+            "SELECT COALESCE(MAX(revision), 0) FROM card_review_state WHERE item_id = ?1",
+            [&item_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let value = json!({
+        "action": "rate", "rating": rating, "operationId": format!("c4000000-0000-4000-8000-{n:012x}"),
+        "materialId": M, "versionContentHash": version.content_hash, "itemId": item_id,
+        "expectedGeneration": 0, "expectedRevision": revision,
+    });
+    let action = crate::card_reviews::decode_card_action(&value).unwrap();
+    crate::card_reviews::execute_card_review_transaction(&tx, &action, &value).unwrap();
+    tx.commit().unwrap();
+}
+
+fn state_of(conn: &Connection, item_id: &str) -> Option<(i64, Option<String>, i64, i64, i64)> {
+    conn.query_row(
+        "SELECT step, due_at, reps, lapses, revision FROM card_review_state WHERE item_id = ?1",
+        [item_id],
+        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+    )
+    .ok()
+}
+
+fn item_ids(conn: &Connection, cards: &[(&str, &str)]) -> Vec<String> {
+    let canonical = match crate::card_reviews::parse_saved_cards(Some(
+        &gemini_set(cards)["flashcards"].to_string(),
+    )) {
+        crate::card_reviews::SavedCards::Ok(c) => c,
+        _ => panic!("cards"),
+    };
+    let _ = conn;
+    crate::card_reviews::card_version(M, &canonical)
+        .items
+        .into_iter()
+        .map(|i| i.item_id)
+        .collect()
+}
+
+#[test]
+fn appending_cards_carries_review_state_and_edits_do_not() {
+    let base = [("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")];
+    let more = [
+        ("Q0", "A0"),
+        ("Q1", "A1"),
+        ("Q2", "A2"),
+        ("Q3", "A3"),
+        ("Q4", "A4"),
+    ];
+    let mut conn = database();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, gemini_set(&base)),
+        NOW,
+    )
+    .unwrap();
+    rate_card(&mut conn, &base, 0, "good", 1);
+    rate_card(&mut conn, &base, 0, "easy", 2);
+    rate_card(&mut conn, &base, 1, "again", 3);
+    let old_ids = item_ids(&conn, &base);
+    let old_states: Vec<_> = old_ids.iter().map(|id| state_of(&conn, id)).collect();
+    assert!(old_states[0].is_some() && old_states[1].is_some() && old_states[2].is_none());
+
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(2, "edit", before, gemini_set(&more)),
+        LATER,
+    )
+    .unwrap();
+    let new_ids = item_ids(&conn, &more);
+    // Unchanged cards keep their schedule; the new ones start fresh.
+    assert_eq!(state_of(&conn, &new_ids[0]), old_states[0]);
+    assert_eq!(state_of(&conn, &new_ids[1]), old_states[1]);
+    for id in &new_ids[2..] {
+        assert!(state_of(&conn, id).is_none());
+    }
+    // The old version still has its own rows, now inactive; the new one is active.
+    for (id, state) in old_ids.iter().zip(old_states.iter()) {
+        assert_eq!(&state_of(&conn, id), state);
+    }
+    let active: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM card_versions WHERE source_material_id = ?1 AND is_active = 1",
+            [M],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(active, 1);
+    let events = |id: &str| -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM card_review_events WHERE item_id = ?1",
+            [id],
+            |r| r.get(0),
+        )
+        .unwrap()
+    };
+    assert_eq!((events(&old_ids[0]), events(&new_ids[0])), (2, 2));
+    assert_eq!((events(&old_ids[1]), events(&new_ids[1])), (1, 1));
+    // The whole database, receipts and ratings included, still validates.
+    crate::backup::verify_application_connection(&conn).unwrap();
+    // Carrying again (same save replayed as a second append) stays valid, and a carried card keeps rating.
+    rate_card(&mut conn, &more, 0, "good", 4);
+    rate_card(&mut conn, &more, 4, "good", 5);
+    crate::backup::verify_application_connection(&conn).unwrap();
+    let again = [
+        ("Q0", "A0"),
+        ("Q1", "A1"),
+        ("Q2", "A2"),
+        ("Q3", "A3"),
+        ("Q4", "A4"),
+        ("Q5", "A5"),
+    ];
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(3, "edit", before, gemini_set(&again)),
+        LATER,
+    )
+    .unwrap();
+    let ids = item_ids(&conn, &again);
+    assert_eq!(state_of(&conn, &ids[0]).unwrap().2, 3);
+    assert_eq!(state_of(&conn, &ids[4]).unwrap().2, 1);
+    assert!(state_of(&conn, &ids[5]).is_none());
+    crate::backup::verify_application_connection(&conn).unwrap();
+
+    // An edit (not an append) carries nothing and makes no version.
+    let versions = |conn: &Connection| -> i64 {
+        conn.query_row("SELECT COUNT(*) FROM card_versions", [], |r| r.get(0))
+            .unwrap()
+    };
+    let count = versions(&conn);
+    let edited = [
+        ("Q0", "changed"),
+        ("Q1", "A1"),
+        ("Q2", "A2"),
+        ("Q3", "A3"),
+        ("Q4", "A4"),
+        ("Q5", "A5"),
+    ];
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(4, "edit", before, gemini_set(&edited)),
+        LATER,
+    )
+    .unwrap();
+    assert_eq!(versions(&conn), count);
+    crate::backup::verify_application_connection(&conn).unwrap();
+}

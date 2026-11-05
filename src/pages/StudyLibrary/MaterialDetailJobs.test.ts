@@ -96,8 +96,14 @@ async function material(id: string, title: string, filePath = `documents/${id}.t
 }
 
 async function startStudyAid() {
-  fireEvent.click(await screen.findByRole("button", { name: /Create study aid|Regenerate/ }));
+  // The guide's own button comes first, ahead of the practice test's Regenerate.
+  fireEvent.click((await screen.findAllByRole("button", { name: /Create study aid|Regenerate/ }))[0]!);
   fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
+}
+
+/** A first guide also makes cards and a practice test (GUIDE-PACK-01); this material already has a test. */
+async function withPracticeTest(id: string) {
+  await repos.documents.savePracticeTest({ sourceMaterialId: id, title: "Mine", questions: TEST.questions, provider: "gemini", model: "gemini-3.5-flash" });
 }
 
 async function acceptStudyAid() {
@@ -479,6 +485,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
   it("R3: an acknowledgement that fails is retried later", async () => {
     await material("mat-a", "Material A");
+    await withPracticeTest("mat-a");
     acknowledge.mockRejectedValueOnce(new Error("synthetic journal write failure"));
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
       ...AID, jobId: "job-555555555555555555555555", checkpointed: true,
@@ -629,6 +636,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
 
   it("R9: after a save, a failed acknowledgement is retried on its own, without any event", async () => {
     await material("mat-a", "Material A");
+    await withPracticeTest("mat-a");
     acknowledge.mockRejectedValueOnce(new Error("synthetic journal write failure"));
     vi.spyOn(geminiService, "generateStudyAid").mockResolvedValue({
       ...AID, jobId: "job-777777777777777777777777", checkpointed: true,

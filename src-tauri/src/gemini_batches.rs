@@ -7,6 +7,13 @@ use std::collections::HashSet;
 const MAX_SUBMISSIONS: u32 = 9;
 const BATCH: usize = 10;
 
+/// GUIDE-PACK-01: marks an answer that carries only extra cards to append.
+pub(super) const MORE_CARDS_NOTE: &str = "more-cards-v1";
+/// How many cards one "Make 10 more cards" tap asks for.
+pub(super) const MORE_TARGET: u32 = 10;
+/// Existing card fronts sent to avoid repeats: bounded so the prompt stays small.
+const MAX_AVOID_FRONTS: usize = 500;
+
 pub(super) fn target(value: Option<u32>) -> Result<u32, String> {
     match value.unwrap_or(40) {
         n @ (20 | 40 | 60) => Ok(n),
@@ -181,6 +188,36 @@ fn unchanged(root: &Path, source: &LoadedSource) -> Result<(), String> {
     Ok(())
 }
 
+/// The prompt line that keeps a "more cards" batch from repeating the cards she has.
+fn avoid_line(fronts: &[String]) -> Result<String, String> {
+    let kept: Vec<&String> = fronts.iter().take(MAX_AVOID_FRONTS).collect();
+    Ok(format!(
+        "The student already has flashcards with these fronts; do not repeat or reword them: {}. ",
+        serde_json::to_string(&kept).map_err(|e| e.to_string())?
+    ))
+}
+
+/// Cards from `batch` that are new: not already in `seen` (front and back)
+/// and whose front is not one she already has.
+fn fresh_cards(
+    batch: Vec<Flashcard>,
+    seen: &mut HashSet<(String, String)>,
+    avoid: &HashSet<String>,
+) -> Vec<Flashcard> {
+    let mut kept = Vec::new();
+    for card in batch {
+        if avoid.contains(&normalized(&card.front)) {
+            continue;
+        }
+        if seen.insert(pair(&card)) {
+            kept.push(card);
+        }
+    }
+    kept
+}
+
+/// `more`: existing card fronts. One card batch only (no guide), grounded in
+/// the same source, never repeating those fronts.
 pub(super) async fn generate(
     ctx: &GenContext<'_>,
     source: &LoadedSource,
@@ -188,7 +225,11 @@ pub(super) async fn generate(
     material: &str,
     target: u32,
     cards_only: bool,
+    more: Option<&[String]>,
 ) -> Result<GeneratedStudyAid, String> {
+    let avoid: HashSet<String> = more
+        .map(|fronts| fronts.iter().map(|f| normalized(f)).collect())
+        .unwrap_or_default();
     let id = gemini_jobs::with(root, |j| {
         j.list()
             .into_iter()
@@ -216,10 +257,22 @@ pub(super) async fn generate(
                 deadline: seconds() + ctx.budget.remaining().as_secs(),
                 remaining_millis: ctx.budget.remaining().as_millis() as u64,
                 requests: [0; 7],
-                next: 0,
+                // A "more cards" draft has no guide step: it starts at the card batch.
+                next: usize::from(more.is_some()),
                 complete: false,
                 admissions: 0,
-                guide: None,
+                guide: more.is_some().then(|| GeneratedStudyAid {
+                    title: "More flashcards".to_string(),
+                    summary: String::new(),
+                    sections: vec![],
+                    flashcards: vec![],
+                    source_notes: MORE_CARDS_NOTE.to_string(),
+                    model: if ctx.provider.id() == crate::provider::ProviderId::Claude {
+                        "claude-more-cards".to_string()
+                    } else {
+                        String::new()
+                    },
+                }),
                 cards: vec![],
             },
         )?;
@@ -277,14 +330,16 @@ pub(super) async fn generate(
         let prompt = if unit == 0 {
             format!("Create the study guide only. Omit flashcards. {safety}")
         } else {
-            let previous = if draft.cards.is_empty() {
-                String::new()
-            } else {
-                format!(
+            let mut previous = match more {
+                Some(fronts) => avoid_line(fronts)?,
+                None => String::new(),
+            };
+            if !draft.cards.is_empty() {
+                previous.push_str(&format!(
                     "Do not repeat these accepted cards: {}. ",
                     serde_json::to_string(&draft.cards).map_err(|e| e.to_string())?
-                )
-            };
+                ));
+            }
             card_batch_prompt(unit, target, &previous, safety)
         };
         let mut answer = study_aid_request(ctx, source, &prompt, if unit == 0 { 8192 } else { 4096 }, unit == 0).await.map_err(|message| {
@@ -304,13 +359,15 @@ pub(super) async fn generate(
         let mut seen: HashSet<_> = draft.cards.iter().map(pair).collect();
         let returned = answer.flashcards.len();
         let before = draft.cards.len();
-        for card in answer.flashcards.drain(..) {
-            if seen.insert(pair(&card)) {
-                draft.cards.push(card);
-            }
-        }
+        let batch = std::mem::take(&mut answer.flashcards);
+        draft.cards.extend(fresh_cards(batch, &mut seen, &avoid));
         if unit == 0 {
             draft.guide = Some(answer);
+        } else if more.is_some() {
+            // The answer names the model that actually wrote these cards.
+            if let Some(guide) = &mut draft.guide {
+                guide.model = answer.model.clone();
+            }
         }
         draft.next += 1;
         draft.complete = draft.next > (target / 10) as usize
@@ -341,10 +398,19 @@ pub(super) async fn generate(
         draft.complete = false;
         draft.next = 1;
         write(root, &id, &draft)?;
+        if more.is_some() {
+            return Err(
+                "Gemini didn't find any new cards in this file. Your cards are unchanged.".into(),
+            );
+        }
         return Err("Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.".into());
     }
     let mut answer = draft.guide.take().ok_or("The guide draft is incomplete.")?;
     answer.flashcards = draft.cards;
+    if more.is_some() {
+        // Only the new cards travel; the marker tells the app to append them.
+        return Ok(answer);
+    }
     answer.source_notes.push_str(&format!("\n{} / {target} distinct cards. The target is a maximum; fewer cards means the returned source-grounded set was smaller. Verify all AI-generated material against current FAA, aircraft and instructor guidance.", answer.flashcards.len()));
     Ok(answer)
 }
@@ -451,6 +517,14 @@ mod tests {
             self.run_as(target, true)
         }
         fn run_as(&self, target: u32, cards_only: bool) -> Result<GeneratedStudyAid, String> {
+            self.run_more(target, cards_only, None)
+        }
+        fn run_more(
+            &self,
+            target: u32,
+            cards_only: bool,
+            more: Option<&[String]>,
+        ) -> Result<GeneratedStudyAid, String> {
             let (budget, _) = fake_budget(Duration::from_secs(300));
             let path = self.root.path().to_path_buf();
             let id = gemini_jobs::with(&path, |j| {
@@ -481,6 +555,7 @@ mod tests {
                 "material",
                 target,
                 cards_only,
+                more,
             ))
         }
         fn count(&self) -> usize {
@@ -556,6 +631,7 @@ mod tests {
             "material",
             20,
             true,
+            None,
         ))
         .unwrap();
         let draft = read(r.root.path(), &id).unwrap();
@@ -626,6 +702,7 @@ mod tests {
             "material",
             20,
             true,
+            None,
         ))
         .unwrap();
         let draft = read(r.root.path(), &id).unwrap();
@@ -841,6 +918,7 @@ mod tests {
             "material",
             20,
             true,
+            None,
         ));
         assert_eq!(answer.unwrap_err(), "Gemini didn't return any flashcards from this file. Nothing was saved — try again, or try a smaller part of the PDF.");
         let kept = read(root.path(), &id).unwrap();
@@ -891,6 +969,70 @@ mod tests {
         assert_eq!(answer.summary, "Only synthetic facts.");
         assert!(answer.flashcards.is_empty());
         assert_eq!(r.count(), 2);
+    }
+
+    #[test]
+    fn more_cards_is_one_batch_that_avoids_existing_fronts_and_repeats() {
+        let r = Rig::new();
+        r.begin();
+        // Cards 0-2 exist already; the model repeats 1 and 2 and adds 3 and 4.
+        let mut batch = aid(1, 4);
+        batch["flashcards"][1]["front"] = json!("  QUESTION 2 ");
+        r.script(vec![batch]);
+        let existing: Vec<String> = (0..3).map(|n| format!("Question {n}")).collect();
+        let answer = r.run_more(MORE_TARGET, true, Some(&existing)).unwrap();
+        // One request only: no guide step and no second card batch.
+        assert_eq!(r.count(), 1);
+        let fronts: Vec<&str> = answer.flashcards.iter().map(|c| c.front.as_str()).collect();
+        assert_eq!(fronts, vec!["Question 3", "Question 4"]);
+        assert_eq!(answer.source_notes, MORE_CARDS_NOTE);
+        assert!(answer.sections.is_empty());
+        let prompt = r
+            .fake
+            .log()
+            .into_iter()
+            .find(|q| q.is_generate())
+            .unwrap()
+            .json()
+            .to_string();
+        assert!(prompt.contains("do not repeat or reword them"));
+        assert!(prompt.contains("Question 2"));
+        assert!(!prompt.contains("study guide only"));
+    }
+
+    #[test]
+    fn more_cards_with_nothing_new_says_so_and_changes_nothing() {
+        let r = Rig::new();
+        r.begin();
+        r.script(vec![aid(0, 3)]);
+        let existing: Vec<String> = (0..3).map(|n| format!("Question {n}")).collect();
+        assert_eq!(
+            r.run_more(MORE_TARGET, true, Some(&existing)).unwrap_err(),
+            "Gemini didn't find any new cards in this file. Your cards are unchanged."
+        );
+    }
+
+    #[test]
+    fn fresh_cards_drops_known_fronts_and_pairs() {
+        let card = |f: &str, b: &str| Flashcard {
+            front: f.to_string(),
+            back: b.to_string(),
+            source_page: Some(1),
+            verification_note: None,
+        };
+        let avoid: HashSet<String> = [normalized("Known front")].into();
+        let mut seen = HashSet::new();
+        let kept = fresh_cards(
+            vec![
+                card("known  FRONT", "a"),
+                card("New", "b"),
+                card("new", "B"),
+            ],
+            &mut seen,
+            &avoid,
+        );
+        assert_eq!(kept.len(), 1);
+        assert_eq!(kept[0].front, "New");
     }
 
     #[test]
@@ -1071,7 +1213,7 @@ mod tests {
             let token = registration.token.clone();
             let worker = scope.spawn(|| {
                 tauri::async_runtime::block_on(gemini_cancel::Cancellable::new(
-                    generate(&ctx, &r.source, r.root.path(), "material", 20, true),
+                    generate(&ctx, &r.source, r.root.path(), "material", 20, true, None),
                     token,
                 ))
             });
@@ -1238,7 +1380,8 @@ mod tests {
             r.root.path(),
             "material",
             20,
-            true
+            true,
+            None,
         ))
         .is_err());
         assert_eq!(r.count(), 1);

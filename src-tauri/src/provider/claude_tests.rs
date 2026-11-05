@@ -503,7 +503,7 @@ fn claude_flashcard_batches_and_practice_use_selected_provider() {
         "fictional-material",
         None,
         &source,
-        batches::generate(&ctx, &source, &root.0, "fictional-material", 20, true),
+        batches::generate(&ctx, &source, &root.0, "fictional-material", 20, true, None),
         &|_| {},
     ))
     .unwrap();
@@ -535,7 +535,7 @@ fn claude_flashcard_batches_and_practice_use_selected_provider() {
         "partial-material",
         None,
         &source,
-        batches::generate(&ctx, &source, &root.0, "partial-material", 20, true),
+        batches::generate(&ctx, &source, &root.0, "partial-material", 20, true, None),
         &|_| {}
     ))
     .is_err());
@@ -549,7 +549,7 @@ fn claude_flashcard_batches_and_practice_use_selected_provider() {
         "partial-material",
         None,
         &source,
-        batches::generate(&ctx, &source, &root.0, "partial-material", 20, true),
+        batches::generate(&ctx, &source, &root.0, "partial-material", 20, true, None),
         &|_| {},
     ))
     .unwrap_err();

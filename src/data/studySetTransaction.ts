@@ -495,6 +495,10 @@ async function apply(
     try { await writeBookmarkCardSource(run, query, operation.pageSource, next!, now); }
     catch (e) { if (e instanceof Error && e.message === "SOURCE_CHANGED") throw new StudySetSaveError("SOURCE_CHANGED"); throw e; }
   }
+  if (next && current) {
+    const { carryReviewState } = await import("./cardReviewTransaction");
+    await carryReviewState(run, query, operation.materialId, current.flashcards_json, JSON.stringify(next.flashcards), next.provider, now);
+  }
   if (next) await carryCardSources(run, query, operation.materialId, current ? JSON.parse(current.flashcards_json) : [], next.flashcards);
   if (operation.pdfKitSources || operation.pageSource || operation.visualRegions) await run("INSERT INTO study_set_save_operations (operation_id, material_id, payload_json, payload_hash) VALUES (?, ?, ?, ?)", [operation.operationId, operation.materialId, payloadJson, payloadHash]);
   const { invalidateHomeworkCardRuns } = await import("./homeworkCards");

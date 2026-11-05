@@ -83,7 +83,10 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
     vi.spyOn(documentService, "documentExists").mockResolvedValue(true);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // A saved first guide goes on to make its cards and test (GUIDE-PACK-01);
+    // let that finish so it cannot leak into the next test's spies.
+    await new Promise((resolve) => setTimeout(resolve, 400));
     cleanup();
     db.close();
     vi.restoreAllMocks();
@@ -673,7 +676,8 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       const studySets = await repos.documents.listAiStudySets();
       expect(studySets).toHaveLength(1);
     });
-    expect(generatePracticeSpy).not.toHaveBeenCalled();
+    // A first guide also makes its study test (GUIDE-PACK-01), once saved.
+    await waitFor(() => expect(generatePracticeSpy).toHaveBeenCalledTimes(1));
   });
 
   it("starting practice-test generation prevents a study-aid request and disables both buttons", async () => {

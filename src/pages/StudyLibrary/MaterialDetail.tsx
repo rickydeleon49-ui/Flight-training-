@@ -85,7 +85,8 @@ import "./studyLibrary.css";
 const TARGET_CARD_COUNTS = [20, 40, 60] as const;
 type TargetCardCount = (typeof TARGET_CARD_COUNTS)[number];
 import { GeminiErrorText, GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
-import { useGeminiJobs, isNewerJob, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
+import { useGeminiJobs, isNewerJob, GUIDE_PACK_CARDS, isMoreCardsJob, isNoNewCardsError, MAX_CARDS_MESSAGE, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
+import { MAX_CARDS } from "@/logic/cardIdentity";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
 import { pdfAskContext } from "@/logic/pdfAskContext";
@@ -268,6 +269,7 @@ function MaterialDetailPage() {
   const [discardingAll, setDiscardingAll] = useState(false);
   const [unfinishedPractice, setUnfinishedPractice] = useState<{ answered: number; total: number } | null>(null);
   const [confirmingCards, setConfirmingCards] = useState(false);
+  const [confirmingMoreCards, setConfirmingMoreCards] = useState(false);
   const [reviewingCardRegeneration, setReviewingCardRegeneration] = useState(false);
 
   // One Gemini generation at a time across the whole app, whichever page asked;
@@ -695,8 +697,13 @@ function MaterialDetailPage() {
   // only the generation is repeated.
   const retryStudy =
     canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingAi(true) : undefined;
+  // A failed "Make 10 more cards" is retried as more cards (append), never as a
+  // whole new set; "nothing new" offers no retry at all.
+  const cardJobIsMore = !!cardJob && isMoreCardsJob(cardJob);
   const retryFlashcards =
-    canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingCards(true) : undefined;
+    canOfferGemini && !isGeneratingAny && !fileMissing && !(cardJobIsMore && isNoNewCardsError(cardJob?.error))
+      ? () => (cardJobIsMore ? setConfirmingMoreCards(true) : setConfirmingCards(true))
+      : undefined;
   const retryPractice =
     canOfferGemini && !isGeneratingAny && !fileMissing ? () => setConfirmingPracticeTest(true) : undefined;
 
@@ -861,12 +868,15 @@ function MaterialDetailPage() {
     if (emptyFailedGuide && studyJob) {
       await geminiJobs.dismiss(studyJob.key);
     }
+    // The first guide brings 20 flashcards and a practice test; Regenerate is the guide alone.
+    const firstGuide = !hasSavedGuide;
     const refusal = await geminiJobs.start(
       "study-aid",
       { materialId: material.id, filePath: material.filePath },
       {
         targetCards,
         preflight: preflight(material.filePath),
+        ...(firstGuide ? { followUps: { preflight: preflight(material.filePath) } } : {}),
         onSaved: () => {
           if (isMountedRef.current) {
             setCardIndex(0);
@@ -905,6 +915,21 @@ function MaterialDetailPage() {
           }
         },
       },
+    );
+    if (refusal && isMountedRef.current) setStartRefusal({ kind: "flashcards", message: refusal });
+  };
+
+  const createMoreCards = async () => {
+    setStartRefusal(null);
+    const check = material ? checkAiSubmission(material, data.toolkit.credentials, "file", providerCompany(gemini?.model)) : null;
+    if (!material?.filePath || !check?.allowed) {
+      setStartRefusal({ kind: "flashcards", message: check?.reason ?? "Attach a study file before asking Gemini." });
+      return;
+    }
+    const refusal = await geminiJobs.start(
+      "flashcards",
+      { materialId: material.id, filePath: material.filePath },
+      { moreCards: true, preflight: preflight(material.filePath) },
     );
     if (refusal && isMountedRef.current) setStartRefusal({ kind: "flashcards", message: refusal });
   };
@@ -1168,6 +1193,7 @@ function MaterialDetailPage() {
                       <GeminiJobNotice model={gemini?.model} key={job.key} job={job} jobs={geminiJobs} />
                     ))}
                   {guideBlockedReason ? <p className="tiny muted">{guideBlockedReason}</p> : null}
+                  {geminiJobs.makingPack(material.id) ? <p role="status" className="small">Making your flashcards and study test…</p> : null}
                   {studySet && (studySet.summary || guideSections.length > 0) ? (
                     <div className="stack stack--5">
                       <div className="ai-disclaimer">
@@ -1335,6 +1361,21 @@ function MaterialDetailPage() {
                           >
                             {generatingCards ? "Reading document…" : `Make new cards with ${helper}`}
                           </Button>
+                          {savedCardCount > 0 ? (
+                            <Button
+                              size="small"
+                              variant="secondary"
+                              disabled={isGeneratingAny || fileMissing || draftWaiting(cardJob?.phase) || savedCardCount >= MAX_CARDS}
+                              onClick={() => {
+                                if (geminiJobs.locked()) {
+                                  setStartRefusal({ kind: "flashcards", message: "Gemini is already working or checking earlier work. Try again in a moment." });
+                                } else setConfirmingMoreCards(true);
+                              }}
+                            >
+                              Make 10 more cards
+                            </Button>
+                          ) : null}
+                          {savedCardCount >= MAX_CARDS ? <span className="tiny muted">{MAX_CARDS_MESSAGE}</span> : null}
                         </>
                       ) : null}
                     </div>
@@ -1384,7 +1425,7 @@ function MaterialDetailPage() {
                       jobs={geminiJobs}
                       onRetry={retryFlashcards}
                       onReview={
-                        (setHasHerItems || cardJob.needsReview) && cardJob.answer
+                        !isMoreCardsJob(cardJob) && (setHasHerItems || cardJob.needsReview) && cardJob.answer
                           ? () => setReviewingCardRegeneration(true)
                           : undefined
                       }
@@ -2281,6 +2322,7 @@ function MaterialDetailPage() {
         }}
         onCancel={() => setConfirmingAi(false)}
       >
+        {!hasSavedGuide ? <p className="tiny dim">Along with the guide, this makes {isPdf ? `${GUIDE_PACK_CARDS} flashcards` : "flashcards"} and a short study test. You can make 10 more cards any time.</p> : null}
         {!isPdf ? <><label className="field">Target cards
           <select aria-label="Target cards" value={targetCards} onChange={(event) => setTargetCards(Number(event.target.value) as TargetCardCount)}>
             {TARGET_CARD_COUNTS.map((count) => <option key={count} value={count}>{count}</option>)}
@@ -2311,6 +2353,22 @@ function MaterialDetailPage() {
         </label>
         <p className="tiny dim">Short sources may give you fewer cards.</p>
       </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmingMoreCards}
+        title={`Send this file to ${providerCompany(gemini?.model)}?`}
+        message={`This adds up to 10 new cards to the ${savedCardCount} you have; nothing is replaced. ${aiCheck.reason} ${sendDisclosure.message}${geminiModelSentence(gemini)}`}
+        details={sendDisclosure.details}
+        detailsSummary="What Google keeps"
+        confirmLabel={`Send to ${providerCompany(gemini?.model) === "Anthropic" ? "Claude" : "Gemini"}`}
+        destructive={false}
+        {...chooseChapterFirst(() => setConfirmingMoreCards(false))}
+        onConfirm={() => {
+          setConfirmingMoreCards(false);
+          void createMoreCards();
+        }}
+        onCancel={() => setConfirmingMoreCards(false)}
+      />
 
       <ConfirmDialog
         open={confirmingPracticeTest}
