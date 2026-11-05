@@ -328,7 +328,7 @@ pub(crate) fn now_utc() -> Result<String, String> {
 pub(crate) const PHONE_WORK_ARCHIVE: &str = "My phone work.hfdbackup";
 
 const REFUSE_PHONE_COPY: &str =
-    "This is your iPhone's copy \u{2014} it can't replace what's on the Mac.";
+    "This is your iPhone's copy \u{2014} it can't replace what's on the Mac. Use \u{201c}Get progress from my iPhone\u{201d} in Settings instead.";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

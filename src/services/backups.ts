@@ -265,7 +265,8 @@ export async function savePhoneWork(): Promise<SavedPhoneWork> {
 
 export function savedPhoneWorkSentence(saved: Pick<SavedPhoneWork, "fileName" | "keptFileName">): string {
   const base = `Saved in Files \u2192 Your Flight Deck \u2192 ${saved.fileName}.`;
-  return saved.keptFileName ? `${base} Your earlier copy is kept as ${saved.keptFileName}.` : base;
+  const kept = saved.keptFileName ? ` Your earlier copy is kept as ${saved.keptFileName}.` : "";
+  return `${base}${kept} Then on your Mac: Settings \u2192 Get progress from my iPhone.`;
 }
 
 /** "12 card reviews and 1 practice test", or null when nothing is unsaved. */

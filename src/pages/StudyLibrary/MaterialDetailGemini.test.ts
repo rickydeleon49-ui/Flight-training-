@@ -746,7 +746,7 @@ describe("MaterialDetail Gemini workflow boundaries", () => {
       const platform = await import("@/services/platform");
       vi.spyOn(platform, "deviceCan").mockReturnValue({
         editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false,
-        sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false,
+        sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false,
       });
     }
     async function pdf(fileSize = 2000) {

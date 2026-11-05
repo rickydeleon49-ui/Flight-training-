@@ -98,7 +98,7 @@ it("follows later URL navigation and browser back without local selection drift"
 
 it("on the phone offers Add material but no packet import or splitting", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: false, pdfKit: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: true, splitFiles: false, geminiKey: true, generate: false, pdfKit: false, revealFiles: false, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     open();
     expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();
@@ -116,7 +116,7 @@ it("on the phone offers Add material but no packet import or splitting", async (
 
 it("does not offer a picture card from a photo on the Mac", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: true, geminiKey: true, generate: true, pdfKit: true, revealFiles: true, sendToIphone: false, getStudyMaterial: false, savePhoneWork: false, pictureFromPhoto: false, renderPdfPage: true });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: true, geminiKey: true, generate: true, pdfKit: true, revealFiles: true, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: false, savePhoneWork: false, pictureFromPhoto: false, renderPdfPage: true });
   try {
     open();
     expect(screen.getByRole("button", { name: /Add material/ })).toBeTruthy();
@@ -128,7 +128,7 @@ it("does not offer a picture card from a photo on the Mac", async () => {
 
 it("on the phone the More menu saves a handout or cards without an ellipsis", async () => {
   const platform = await import("@/services/platform");
-  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false, sendToIphone: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  const spy = vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: true, sharePrint: true, importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
   try {
     open();
     expect(screen.getByText("More")).toBeTruthy();

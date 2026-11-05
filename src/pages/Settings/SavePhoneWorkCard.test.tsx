@@ -42,7 +42,7 @@ describe("SavePhoneWorkCard", () => {
     await screen.findByText(/12 card reviews/);
     mocks.unsavedPhoneWork.mockResolvedValue(none);
     fireEvent.click(screen.getByRole("button", { name: "Save my phone work" }));
-    expect((await screen.findByRole("status")).textContent).toBe("Saved in Files → Your Flight Deck → My phone work.hfdbackup.");
+    expect((await screen.findByRole("status")).textContent).toBe("Saved in Files → Your Flight Deck → My phone work.hfdbackup. Then on your Mac: Settings → Get progress from my iPhone.");
     expect(mocks.savePhoneWork).toHaveBeenCalledOnce();
     await screen.findByText("Everything you did on this phone is saved.");
     expect(mocks.unsavedPhoneWork).toHaveBeenCalledTimes(2);

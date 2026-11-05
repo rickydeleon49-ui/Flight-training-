@@ -29,6 +29,8 @@ export function deviceCan() {
     geminiKey: isTauri(),
     renderPdfPage: isTauri() && isMacOS(),
     sendToIphone: isTauri() && isMacOS() && IPHONE_SEND_ENABLED,
+    /** Bringing in work done on the iPhone: the Mac reads the phone's saved file. */
+    getPhoneProgress: isTauri() && isMacOS(),
     getStudyMaterial: isTauri() && isIOS(),
     savePhoneWork: isTauri() && isIOS(),
     pictureFromPhoto: isTauri() && isIOS(),

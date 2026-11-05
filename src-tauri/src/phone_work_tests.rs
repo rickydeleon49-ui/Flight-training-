@@ -533,7 +533,7 @@ fn now_utc_is_rfc3339_utc() {
 fn mac_refuses_the_phones_copy() {
     assert_eq!(
         refuse_phone_copy(Some("ios"), false).unwrap_err(),
-        "This is your iPhone's copy \u{2014} it can't replace what's on the Mac."
+        "This is your iPhone's copy \u{2014} it can't replace what's on the Mac. Use \u{201c}Get progress from my iPhone\u{201d} in Settings instead."
     );
     assert!(refuse_phone_copy(Some("ios"), true).is_ok());
     assert!(refuse_phone_copy(Some("macos"), false).is_ok());

@@ -7238,10 +7238,10 @@ pub fn exit_for_restore(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-fn clear_restored_device_id_best_effort(root: &Path) {
+fn reset_sync_identity_best_effort(root: &Path) {
     // Non-critical: the restore already succeeded; a failure only keeps the old id.
-    if let Err(e) = clear_restored_device_id(root) {
-        log::warn!("Restore: could not reset the device id: {e}");
+    if let Err(e) = reset_sync_identity(root) {
+        log::warn!("Restore: could not reset the sync identity: {e}");
     }
 }
 
@@ -7254,7 +7254,7 @@ fn record_phone_baseline_best_effort(root: &Path) {
     }
 }
 
-fn clear_restored_device_id(root: &Path) -> Result<(), String> {
+fn reset_sync_identity(root: &Path) -> Result<(), String> {
     let connection =
         Connection::open_with_flags(root.join(DB_FILES[0]), OpenFlags::SQLITE_OPEN_READ_WRITE)
             .map_err(|e| e.to_string())?;
@@ -7262,10 +7262,33 @@ fn clear_restored_device_id(root: &Path) -> Result<(), String> {
         .busy_timeout(BUSY_TIMEOUT)
         .map_err(|e| e.to_string())?;
     match connection.execute("DELETE FROM app_metadata WHERE key = 'device_id'", []) {
-        Ok(_) => Ok(()),
-        Err(e) if e.to_string().contains("no such table: app_metadata") => Ok(()),
-        Err(e) => Err(e.to_string()),
+        Ok(_) => {}
+        Err(e) if e.to_string().contains("no such table: app_metadata") => return Ok(()),
+        Err(e) => return Err(e.to_string()),
     }
+    // Whatever the change log holds now came with the restored copy, not from
+    // this device: later exports start after it.
+    let floor: i64 =
+        match connection.query_row("SELECT COALESCE(MAX(seq), 0) FROM local_changes", [], |r| {
+            r.get(0)
+        }) {
+            Ok(n) => n,
+            Err(e) if e.to_string().contains("no such table: local_changes") => 0,
+            Err(e) => return Err(e.to_string()),
+        };
+    connection
+        .execute(
+            "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+            [floor.to_string()],
+        )
+        .map_err(|e| e.to_string())?;
+    connection
+        .execute(
+            "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 fn remove_pending_directory_safely(pending: &Path) -> Result<(), std::io::Error> {
@@ -8747,7 +8770,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 return Ok(StartupRestoreDecision::ProceedNormally)
             }
             Ok(RestoreApplicationResult::Installed) => {
-                clear_restored_device_id_best_effort(root);
+                reset_sync_identity_best_effort(root);
                 record_phone_baseline_best_effort(root);
                 return Ok(StartupRestoreDecision::RestoreCompleted);
             }
@@ -8829,7 +8852,7 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
                 }
             }
             if cleanup_succeeded {
-                clear_restored_device_id_best_effort(root);
+                reset_sync_identity_best_effort(root);
                 record_phone_baseline_best_effort(root);
                 let _ = prune(root);
                 // A restore interrupted after it committed: finish forgetting
@@ -9579,6 +9602,56 @@ mod tests {
         );
         drop(connection);
         std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    fn floor_after_restore(with_log: bool) -> (Option<String>, Option<String>) {
+        let (root, archive) = incoming_fixture();
+        {
+            let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+            connection
+                .execute_batch(
+                    "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                INSERT INTO app_metadata VALUES ('device_id', 'mac-1'), ('exported_through_seq', '2');",
+                )
+                .unwrap();
+            if with_log {
+                connection
+                    .execute_batch(
+                        "CREATE TABLE local_changes (seq INTEGER PRIMARY KEY AUTOINCREMENT, note TEXT);
+                    INSERT INTO local_changes (note) VALUES ('a'), ('b'), ('c');",
+                    )
+                    .unwrap();
+            }
+        }
+        write_complete_backup(&root, &archive, "0.6.6").unwrap();
+        stage_complete_restore_in(&root, &archive, "0.6.6").unwrap();
+        assert!(matches!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        ));
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        let get = |key: &str| -> Option<String> {
+            connection
+                .query_row(
+                    "SELECT value FROM app_metadata WHERE key = ?1",
+                    [key],
+                    |r| r.get(0),
+                )
+                .optional()
+                .unwrap()
+        };
+        let out = (get("sync_floor_seq"), get("exported_through_seq"));
+        drop(connection);
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+        out
+    }
+
+    #[test]
+    fn restore_sets_the_sync_floor_and_clears_the_watermark() {
+        // The change log came with the restored copy: the floor is its newest entry.
+        assert_eq!(floor_after_restore(true), (Some("3".to_string()), None));
+        // No change log at all (an older copy) still restores, floor 0.
+        assert_eq!(floor_after_restore(false), (Some("0".to_string()), None));
     }
 
     #[test]
