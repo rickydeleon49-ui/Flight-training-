@@ -3,6 +3,7 @@
 pub(crate) mod apply;
 pub(crate) mod blobs;
 pub(crate) mod bootstrap;
+pub(crate) mod carry;
 pub(crate) mod changeset;
 pub(crate) mod export;
 pub(crate) mod ingest;

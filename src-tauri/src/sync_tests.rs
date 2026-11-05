@@ -6421,7 +6421,7 @@ mod synced_ratings {
 
     /// Records the migration history a real app database carries, so the
     /// backup verifier can run on a test database.
-    fn with_history(conn: &Connection) {
+    pub(super) fn with_history(conn: &Connection) {
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);",
         )
@@ -6530,7 +6530,7 @@ mod synced_ratings {
     }
 
     /// Two devices, one card each side; `a` rates and ships to `b`.
-    fn pair() -> (Connection, Connection, crate::sync_tests::apply::Card) {
+    pub(super) fn pair() -> (Connection, Connection, crate::sync_tests::apply::Card) {
         use super::apply::device;
         let a = device(MAC);
         let b = device(PHONE);
@@ -6960,16 +6960,16 @@ mod synced_ratings {
         assert!(crate::backup::verify_application_connection(&a).is_err());
     }
 
-    #[test]
-    fn a_carry_after_synced_ratings_copies_them() {
+    /// Saves the full card list `cards` (front, back; page 1) for `material`
+    /// through the live save path, as an edit of the current list.
+    pub(super) fn append(conn: &mut Connection, material: &str, cards: &[(&str, &str)]) {
         use crate::study_sets::{decode_operation, save_on};
-        let (root, cards) = phone_rates_then_mac_takes();
-        let mut mac = mac_db(&root);
-        with_history(&mac);
+        static OPS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        let n = OPS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let col = |name: &str| -> Option<String> {
-            mac.query_row(
-                &format!("SELECT {name} FROM ai_study_sets WHERE source_material_id = 'mat-a'"),
-                [],
+            conn.query_row(
+                &format!("SELECT {name} FROM ai_study_sets WHERE source_material_id = ?1"),
+                [material],
                 |r| r.get(0),
             )
             .unwrap()
@@ -6993,21 +6993,62 @@ mod synced_ratings {
                 col(name).map(Value::String).unwrap_or(Value::Null),
             );
         }
+        let flashcards: Vec<Value> = cards
+            .iter()
+            .map(|(f, b)| json!({"front": f, "back": b, "sourcePage": 1}))
+            .collect();
         let next = json!({
             "title": "Synthetic", "summary": "", "summaryOrigin": null, "sections": [],
-            "flashcards": [
-                {"front": "Synthetic front", "back": "Synthetic back", "sourcePage": 1},
-                {"front": "Second front", "back": "Second back", "sourcePage": 1}
-            ],
+            "flashcards": flashcards,
             "sourceNotes": "", "provider": "import", "model": "", "retired": [],
         });
         let op = decode_operation(&json!({
-            "operationId": "5e700000-0000-4000-8000-000000000001",
-            "materialId": "mat-a", "reason": "edit",
+            "operationId": format!("5e700000-0000-4000-8000-{n:012x}"),
+            "materialId": material, "reason": "edit",
             "expected": Value::Object(expected), "next": next,
         }))
         .unwrap();
-        save_on(&mut mac, &op, NOW).unwrap();
+        save_on(conn, &op, NOW).unwrap();
+    }
+
+    /// The card at `ordinal` of the list `cards` (front, back; page 1).
+    pub(super) fn card_at(
+        material: &str,
+        cards: &[(&str, &str)],
+        ordinal: usize,
+    ) -> crate::sync_tests::apply::Card {
+        use crate::card_reviews::{card_version, CanonicalCard};
+        let list: Vec<CanonicalCard> = cards
+            .iter()
+            .map(|(f, b)| CanonicalCard {
+                visual_region_id: None,
+                front: (*f).into(),
+                back: (*b).into(),
+                source_page: Some(1),
+                origin: None,
+            })
+            .collect();
+        let v = card_version(material, &list);
+        crate::sync_tests::apply::Card {
+            material: material.to_string(),
+            hash: v.content_hash.clone(),
+            item: v.items[ordinal].item_id.clone(),
+        }
+    }
+
+    #[test]
+    fn a_carry_after_synced_ratings_copies_them() {
+        let (root, cards) = phone_rates_then_mac_takes();
+        let mut mac = mac_db(&root);
+        with_history(&mac);
+        append(
+            &mut mac,
+            "mat-a",
+            &[
+                ("Synthetic front", "Synthetic back"),
+                ("Second front", "Second back"),
+            ],
+        );
         let carried: i64 = count(
             &mac,
             "SELECT COUNT(*) FROM card_review_events e JOIN card_items i ON i.id = e.item_id
@@ -7017,5 +7058,415 @@ mod synced_ratings {
         assert_eq!(carried, 3);
         crate::backup::verify_application_connection(&mac).unwrap();
         let _ = cards;
+    }
+}
+
+mod carried_versions {
+    use super::apply::{act, card, rate, ship, state, take, Card, MAC, PHONE};
+    use super::synced_ratings::{append, card_at, pair, with_history};
+    use super::*;
+    use crate::card_reviews::carried_event_id as d;
+
+    const B: [(&str, &str); 2] = [
+        ("Synthetic front", "Synthetic back"),
+        ("Second front", "Second back"),
+    ];
+    const C: [(&str, &str); 3] = [
+        ("Synthetic front", "Synthetic back"),
+        ("Second front", "Second back"),
+        ("Third front", "Third back"),
+    ];
+    const MAT: &str = "mat-pair";
+
+    fn events(conn: &Connection, item: &str) -> Vec<String> {
+        conn.prepare(
+            "SELECT id FROM card_review_events WHERE item_id = ?1 ORDER BY reviewed_at, id",
+        )
+        .unwrap()
+        .query_map([item], |r| r.get(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    }
+
+    fn rows(conn: &Connection, item: &str) -> Vec<(String, String, String)> {
+        conn.prepare(
+            "SELECT id, prior_state_json, next_state_json FROM card_review_events
+             WHERE item_id = ?1 ORDER BY id",
+        )
+        .unwrap()
+        .query_map([item], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    }
+
+    fn cols(conn: &Connection, item: &str) -> (i64, i64, i64, Option<String>, Option<String>) {
+        let s = state(conn, item).unwrap();
+        (s.0, s.1, s.2, s.4, s.3)
+    }
+
+    fn sorted(mut v: Vec<String>) -> Vec<String> {
+        v.sort();
+        v
+    }
+
+    fn verified(conn: &Connection) {
+        with_history(conn);
+        crate::backup::verify_application_connection(conn).unwrap();
+    }
+
+    fn same(a: &Connection, b: &Connection, item: &str) {
+        assert_eq!(rows(a, item), rows(b, item));
+        assert_eq!(cols(a, item), cols(b, item));
+    }
+
+    fn all_events(conn: &Connection) -> i64 {
+        count(conn, "SELECT COUNT(*) FROM card_review_events")
+    }
+
+    /// The scene of the repro: e1 on A1 synced, a appends A->B, b rates A1
+    /// (e2) while still on A. Returns (a, b, A1, B1, e1) before any exchange.
+    fn scene() -> (Connection, Connection, Card, Card, String) {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        let e1 = events(&a, &a1.item)[0].clone();
+        append(&mut a, MAT, &B);
+        let b1 = card_at(MAT, &B, 0);
+        assert_eq!(events(&a, &b1.item), vec![d(&e1, &b1.item)]);
+        rate(&mut b, &a1, "easy", 2);
+        (a, b, a1, b1, e1)
+    }
+
+    fn exchange(a: &mut Connection, b: &mut Connection) {
+        let fa = ship(a, MAC, 0);
+        let fb = ship(b, PHONE, 0);
+        take(b, &fa);
+        take(a, &fb);
+    }
+
+    #[test]
+    fn a_rating_on_the_old_list_after_an_append_reaches_the_new_card() {
+        let (mut a, mut b, a1, b1, e1) = scene();
+        exchange(&mut a, &mut b);
+        let e2 = events(&a, &a1.item).last().unwrap().clone();
+        assert_ne!(e1, e2);
+        let want = sorted(vec![d(&e1, &b1.item), d(&e2, &b1.item)]);
+        for conn in [&a, &b] {
+            assert_eq!(sorted(events(conn, &b1.item)), want);
+            assert_eq!(state(conn, &b1.item).unwrap().1, 2);
+            verified(conn);
+        }
+        same(&a, &b, &b1.item);
+        let copy = std::env::temp_dir().join(format!("carry-c1-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&copy);
+        a.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+            .unwrap();
+        crate::backup::verify_application_database(&copy).unwrap();
+        let _ = std::fs::remove_file(&copy);
+    }
+
+    #[test]
+    fn a_chain_of_appends_carries_through_each_step() {
+        let (mut a, mut b, a1) = {
+            let (a, b, c) = pair();
+            (a, b, c)
+        };
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        append(&mut a, MAT, &B);
+        append(&mut a, MAT, &C);
+        rate(&mut b, &a1, "easy", 2);
+        exchange(&mut a, &mut b);
+        let e2 = events(&a, &a1.item).last().unwrap().clone();
+        let (b1, c1) = (card_at(MAT, &B, 0), card_at(MAT, &C, 0));
+        for conn in [&a, &b] {
+            assert!(events(conn, &b1.item).contains(&d(&e2, &b1.item)));
+            assert!(events(conn, &c1.item).contains(&d(&d(&e2, &b1.item), &c1.item)));
+            verified(conn);
+        }
+        same(&a, &b, &c1.item);
+    }
+
+    #[test]
+    fn the_carry_is_silent_idempotent_and_keeps_the_origin() {
+        let (mut a, mut b, a1, b1, e1) = scene();
+        let fa = ship(&mut a, MAC, 0);
+        let fb = ship(&mut b, PHONE, 0);
+        let log = |c: &Connection| count(c, "SELECT COUNT(*) FROM local_changes");
+        let (la, lb) = (log(&a), log(&b));
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        assert_eq!((log(&a), log(&b)), (la, lb));
+        let e2 = events(&a, &a1.item).last().unwrap().clone();
+        let carried = d(&e2, &b1.item);
+        for conn in [&a, &b] {
+            let origin: String = conn
+                .query_row(
+                    "SELECT device_id FROM sync_row_meta WHERE table_name = 'card_review_events' AND row_id = ?1",
+                    [&carried],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            assert_eq!(origin, PHONE);
+        }
+        let _ = e1;
+        let held = (rows(&a, &b1.item), rows(&b, &b1.item), all_events(&a));
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        assert_eq!(
+            (rows(&a, &b1.item), rows(&b, &b1.item), all_events(&a)),
+            held
+        );
+        // Guarded: nothing left to carry.
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+        assert!(crate::sync::carry::carry_missing(&a, MAT)
+            .unwrap()
+            .is_empty());
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        assert_eq!(all_events(&a), held.2);
+        // Unguarded: refused, nothing written.
+        assert!(crate::sync::carry::carry_missing(&a, MAT).is_err());
+        assert_eq!(all_events(&a), held.2);
+    }
+
+    #[test]
+    fn a_visual_list_carries_nothing() {
+        let (mut a, _b, a1) = pair();
+        with_history(&a);
+        rate(&mut a, &a1, "good", 1);
+        append(&mut a, MAT, &B);
+        let b0 = card_at(MAT, &B, 0);
+        let guarded = |sql: &str| {
+            a.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+                [],
+            )
+            .unwrap();
+            a.execute_batch(sql).unwrap();
+            a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+        };
+        guarded(&format!(
+            "PRAGMA foreign_keys = OFF;
+             DELETE FROM card_review_events WHERE item_id = '{}';
+             INSERT INTO card_item_visual_regions (item_id, region_id) VALUES ('{}', 'synthetic-region');
+             PRAGMA foreign_keys = ON;",
+            b0.item, b0.item
+        ));
+        let before = all_events(&a);
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+        assert!(crate::sync::carry::carry_missing(&a, MAT)
+            .unwrap()
+            .is_empty());
+        assert_eq!(all_events(&a), before);
+    }
+
+    #[test]
+    fn an_edit_or_delete_carries_nothing() {
+        let edit = [("Edited front", "Synthetic back")];
+        let deleted = [
+            ("Second front", "Second back"),
+            ("Third front", "Third back"),
+        ];
+        for (list, delete) in [(&edit[..], false), (&deleted[..], true)] {
+            let (mut a, mut b, a1) = pair();
+            with_history(&a);
+            with_history(&b);
+            rate(&mut a, &a1, "good", 1);
+            take(&mut b, &ship(&mut a, MAC, 0));
+            rate(&mut b, &a1, "easy", 2);
+            if delete {
+                // Grow to three cards, sync, then save the list minus card 1.
+                append(&mut a, MAT, &C);
+                take(&mut a, &ship(&mut b, PHONE, 0));
+            }
+            append(&mut a, MAT, list);
+            exchange(&mut a, &mut b);
+            for conn in [&a, &b] {
+                assert_eq!(events(conn, &a1.item).len(), 2);
+                for n in 0..list.len() {
+                    assert!(events(conn, &card_at(MAT, list, n).item).is_empty());
+                }
+                if !delete {
+                    assert_eq!(all_events(conn), 2);
+                }
+                verified(conn);
+            }
+        }
+    }
+
+    #[test]
+    fn the_carry_ignores_events_of_an_older_generation() {
+        let (mut a, _b, a1) = pair();
+        with_history(&a);
+        rate(&mut a, &a1, "good", 1);
+        append(&mut a, MAT, &B);
+        let b0 = card_at(MAT, &B, 0);
+        let hold = |sql: &str| {
+            a.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+                [],
+            )
+            .unwrap();
+            a.execute_batch(sql).unwrap();
+            a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+        };
+        hold(&format!(
+            "DELETE FROM card_review_events WHERE item_id = '{}';
+             INSERT INTO card_review_generations (source_material_id, generation) VALUES ('{MAT}', 1)
+               ON CONFLICT(source_material_id) DO UPDATE SET generation = 1;",
+            b0.item
+        ));
+        let before = all_events(&a);
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', '1')",
+            [],
+        )
+        .unwrap();
+        // The only source event is generation 0; the material is at 1.
+        assert!(crate::sync::carry::carry_missing(&a, MAT)
+            .unwrap()
+            .is_empty());
+        assert_eq!(all_events(&a), before);
+    }
+
+    #[test]
+    fn a_duplicate_with_another_id_is_skipped() {
+        // a appends A->C, b appends A->B, then they exchange: b derives the
+        // chain copy of e1 onto C1, which a's direct copy already covers.
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        append(&mut a, MAT, &C);
+        append(&mut b, MAT, &B);
+        exchange(&mut a, &mut b);
+        let c1 = card_at(MAT, &C, 0);
+        for conn in [&a, &b] {
+            assert_eq!(events(conn, &c1.item).len(), 1);
+            verified(conn);
+        }
+        same(&a, &b, &c1.item);
+    }
+
+    #[test]
+    fn a_rating_from_before_a_reset_is_not_carried() {
+        // a appends, takes b's old-list rating (carried onto B1), then resets:
+        // the carried copy is a lower-generation event and goes everywhere.
+        let (mut a, mut b, a1, b1, _e1) = scene();
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        assert_eq!(events(&a, &b1.item).len(), 2);
+        act(&mut a, &b1, "reset", json!({}), 3);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        for conn in [&a, &b] {
+            assert!(events(conn, &a1.item).is_empty());
+            assert!(events(conn, &b1.item).is_empty());
+            assert_eq!(all_events(conn), 0);
+            verified(conn);
+        }
+    }
+
+    #[test]
+    fn two_append_paths_do_not_count_one_rating_twice() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        // a saves the long list directly; b only receives it.
+        append(&mut a, MAT, &C);
+        exchange(&mut a, &mut b);
+        let c1 = card_at(MAT, &C, 0);
+        for conn in [&a, &b] {
+            assert_eq!(events(conn, &c1.item).len(), 1);
+            assert_eq!(state(conn, &c1.item).unwrap().1, 1);
+            verified(conn);
+        }
+        same(&a, &b, &c1.item);
+    }
+
+    #[test]
+    fn a_carried_rating_folds_before_a_newer_one() {
+        let (mut a, mut b, a1, b1, e1) = scene();
+        rate(&mut a, &b1, "hard", 3);
+        exchange(&mut a, &mut b);
+        let e2 = events(&a, &a1.item).last().unwrap().clone();
+        for conn in [&a, &b] {
+            let ids = events(conn, &b1.item);
+            assert_eq!(ids.len(), 3);
+            assert_eq!(state(conn, &b1.item).unwrap().1, 3);
+            let mut prev: Option<String> = None;
+            for id in &ids {
+                let (p, n): (String, String) = conn
+                    .query_row(
+                        "SELECT prior_state_json, next_state_json FROM card_review_events WHERE id = ?1",
+                        [id],
+                        |r| Ok((r.get(0)?, r.get(1)?)),
+                    )
+                    .unwrap();
+                if let Some(prev) = prev {
+                    assert_eq!(p, prev);
+                }
+                prev = Some(n);
+            }
+            let last = ids.last().unwrap();
+            assert!(*last != d(&e1, &b1.item) && *last != d(&e2, &b1.item));
+            verified(conn);
+        }
+        same(&a, &b, &b1.item);
+    }
+
+    #[test]
+    fn the_phone_path_carries_and_does_not_count_mac_work() {
+        use super::mac_send::mac_app;
+        use super::send::{phone, DEVICE};
+        use crate::sync::progress::import_mac_changes_in;
+        let mac = mac_app();
+        let mut m = mac.db();
+        let a1 = card(&m, MAT);
+        let p = phone();
+        rate(&mut m, &a1, "good", 1);
+        drop(m);
+        mac.copy_to(&p);
+        let mut pc = p.db();
+        let e1 = events(&pc, &a1.item)[0].clone();
+        append(&mut pc, MAT, &B);
+        let b1 = card_at(MAT, &B, 0);
+        assert_eq!(events(&pc, &b1.item), vec![d(&e1, &b1.item)]);
+        drop(pc);
+        let mut m = mac.db();
+        rate(&mut m, &a1, "easy", 3);
+        drop(m);
+        let e3 = events(&mac.db(), &a1.item).last().unwrap().clone();
+        mac.send().unwrap();
+        let before = crate::phone_work::unsaved_phone_work_in(&p.root.0)
+            .unwrap()
+            .reviews;
+        import_mac_changes_in(&p.root.0, &mac.file(), Some(DEVICE), NOW).unwrap();
+        let after = crate::phone_work::unsaved_phone_work_in(&p.root.0)
+            .unwrap()
+            .reviews;
+        let pc = p.db();
+        assert!(events(&pc, &b1.item).contains(&d(&e3, &b1.item)));
+        assert_eq!(before, after);
+        with_history(&pc);
+        crate::backup::verify_application_connection(&pc).unwrap();
     }
 }
