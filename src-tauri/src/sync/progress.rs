@@ -77,6 +77,7 @@ struct Words {
     unreadable: &'static str,
     not_saved: &'static str,
     needs_earlier: &'static str,
+    picture_cards: &'static str,
     newer_app: &'static str,
     stopped_partway: &'static str,
     no_library: &'static str,
@@ -93,6 +94,7 @@ static MAC_WORDS: Words = Words {
     unreadable: "That file couldn't be read as phone work. Nothing on this Mac was changed.",
     not_saved: "That file couldn't be brought in. Nothing on this Mac was changed.",
     needs_earlier: "That file needs earlier work from your iPhone that isn't on this Mac yet. Nothing on this Mac was changed.",
+    picture_cards: "That file would leave a picture card unusable, so nothing on this Mac was changed. Update the app on your iPhone, then send again.",
     newer_app: "That file was made by a newer version of the app. Update the app on this Mac first.",
     stopped_partway: "Some of that file was brought in, then it stopped. What's here is safe. Keep the file \u{2014} a later update may take the rest.",
     no_library: "This Mac's study library couldn't be opened. Nothing was changed.",
@@ -109,6 +111,7 @@ static PHONE_WORDS: Words = Words {
     unreadable: "That file couldn't be read as changes from your Mac. Nothing on this phone was changed.",
     not_saved: "That file couldn't be brought in. Nothing on this phone was changed.",
     needs_earlier: "That file needs earlier changes from your Mac that aren't on this phone yet. On the Mac, send a full copy instead.",
+    picture_cards: "That file would leave a picture card unusable, so nothing on this phone was changed. Update the app on your Mac, then send again.",
     newer_app: "That file was made by a newer version of the app. Update the app on this phone first.",
     stopped_partway: "Some of that file was brought in, then it stopped. What's here is safe. Keep the file \u{2014} a later update may take the rest.",
     no_library: "This phone's study library couldn't be opened. Nothing was changed.",
@@ -153,6 +156,7 @@ fn apply_message(w: &'static Words, error: &ApplyError) -> &'static str {
             w.overlap
         }
         ApplyError::MissingParent(_) => w.needs_earlier,
+        ApplyError::PictureCards => w.picture_cards,
         ApplyError::UnknownTable | ApplyError::UnknownColumn(_) | ApplyError::BadRow => {
             w.unreadable
         }

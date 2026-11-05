@@ -95,7 +95,7 @@ use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 33;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 34;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -302,6 +302,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0033_sync_ledger.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 34,
+            description: "sync_picture_cards",
+            sql: include_str!("../migrations/0034_sync_picture_cards.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -432,6 +438,9 @@ pub fn run() {
                     if sync::receipts::repair_synced_ratings_at(&root).is_err() {
                         log::info!("Rating receipts were not checked this launch.");
                     }
+                    // Separate and not tied to a pending migration, so a Mac that
+                    // lost its picture links is mended on any launch.
+                    let _ = sync::receipts::repair_picture_links_at(&root);
                 });
             }
 

@@ -265,8 +265,10 @@ export function Settings() {
   }, []);
 
   const reloadLibrary = async () => {
-    setLibraryReport(await checkLibrary());
+    const report = await checkLibrary();
+    setLibraryReport(report);
     setLibraryVisible(50);
+    return report;
   };
 
   const runLibraryCheck = async () => {
@@ -275,8 +277,13 @@ export function Settings() {
     setLibraryNote(null);
     setLibraryProblem(false);
     try {
-      await reloadLibrary();
-      setLibraryNote("Library check complete.");
+      const report = await reloadLibrary();
+      if (report.dataProblem) {
+        setLibraryProblem(true);
+        setLibraryNote("Some study data doesn't match. Backups can't be made until this is fixed.");
+      } else {
+        setLibraryNote("Library check complete.");
+      }
     } catch (error) {
       setLibraryProblem(true);
       setLibraryNote(documentErrorMessage(error, "The library could not be checked."));

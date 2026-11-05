@@ -49,6 +49,7 @@ function assertUpgrade(before: Record<string, unknown[]>, after: Record<string, 
         expect.objectContaining({ version: 31, description: "faa_downloads" }),
         expect.objectContaining({ version: 32, description: "oral_answers" }),
         expect.objectContaining({ version: 33, description: "sync_ledger" }),
+        expect.objectContaining({ version: 34, description: "sync_picture_cards" }),
       ]);
     } else if (table === "journal_entries") {
       expect(after[table], table).toEqual(

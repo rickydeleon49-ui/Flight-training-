@@ -178,6 +178,8 @@ export async function validateVisualReferences(query: VisualQuery) {
     [],
   );
   for (const row of sets) {
+    // An earlier version that kept no card list has no pictures to check (twin of validate_references).
+    if (row.cards == null) continue;
     const parsed = parseSavedCards(String(row.cards));
     if (parsed.status === "malformed") throw Error("Damaged picture cards.");
     if (parsed.status !== "ok") continue;

@@ -140,6 +140,15 @@ for (const engine of ["node", "sql.js"]) {
       await db.execute("DELETE FROM card_item_visual_regions");
       await expect(validateApplicationDatabase(query, query)).rejects.toThrow(/hash/);
     });
+    it("skips a history row that kept no card list, as the native check does", async () => {
+      const { db, query } = await setup(engine);
+      await db.execute(
+        "INSERT INTO study_set_history (id,material_id,kind,reason,previous_json,provider,created_at) VALUES ('h1','owner','study_set','edit','{}','gemini','2026-10-28T12:00:00.000Z')",
+        [],
+      );
+      await expect(validateVisualReferences(query)).resolves.toBeUndefined();
+    });
+
     it("limits the current image to twenty covers without collecting retained descriptors", async () => {
       const { docs, op, region, db } = await setup(engine);
       op.next!.flashcards = Array.from({ length: 21 }, (_, i) => ({

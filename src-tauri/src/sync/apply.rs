@@ -11,12 +11,13 @@ use rusqlite::types::Value as Sql;
 use rusqlite::{params, params_from_iter, Connection, OptionalExtension, TransactionBehavior};
 use serde_json::{Map, Value};
 
-use crate::card_reviews::parse_iso_ms;
+use crate::card_reviews::{self, parse_iso_ms};
 use crate::logging::log;
 use crate::sync::changeset::{Change, DecodedChangeFile, Op};
 use crate::sync::receipts;
 use crate::sync::replay::{self, ReplayError};
 use crate::sync::tables::{self, MergeRule, SyncTable, SYNC_TABLES};
+use crate::visual_cards;
 
 const GUARD: &str = "sync_applying";
 const STATE: &str = "card_review_state";
@@ -198,6 +199,9 @@ pub(crate) enum ApplyError {
     /// cannot be read.
     BadRow,
     Replay(ReplayError),
+    /// The file would leave a picture card without its picture details (a
+    /// missing region, or a card version whose pictures do not match its hash).
+    PictureCards,
 }
 
 impl std::fmt::Display for ApplyError {
@@ -211,6 +215,9 @@ impl std::fmt::Display for ApplyError {
             }
             Self::BadRow => f.write_str("the change file holds a row that is not valid"),
             Self::Replay(e) => write!(f, "{e}"),
+            Self::PictureCards => f.write_str(
+                "the change file would leave a picture card without its picture details",
+            ),
         }
     }
 }
@@ -251,6 +258,9 @@ pub(crate) fn apply_change_file(
             ..ApplyOutcome::default()
         });
     }
+    // A library that is already inconsistent is not made a reason to refuse
+    // the file that may repair it; only a file that breaks a sound one is.
+    let sound_before = visual_cards::validate_references(&tx).is_ok();
     tx.execute(
         "INSERT INTO app_metadata (key, value) VALUES (?1, ?2)",
         params![GUARD, now],
@@ -268,6 +278,15 @@ pub(crate) fn apply_change_file(
     // After every upsert, delete and replay, so a receipt never names a card
     // the same file then removes.
     receipts::ensure_rate_receipts(&tx, None)?;
+    // Fail closed: a file that would leave a picture card without its region
+    // or sidecar is refused here, not found when the app next opens.
+    // A version from a device that predates picture-card sync arrives without its
+    // links; when this device's own saved list matches it exactly, they are
+    // restored here (no guessing) before the check.
+    receipts::repair_picture_sidecars(&tx)?;
+    if sound_before && !picture_cards_sound(&tx, &set.changes)? {
+        return Err(ApplyError::PictureCards);
+    }
     tx.execute(
         "INSERT INTO sync_applied (peer_device, file_name, applied_at) VALUES (?1, ?2, ?3)",
         params![set.device_id, file_name, now],
@@ -277,6 +296,77 @@ pub(crate) fn apply_change_file(
     outcome.applied = true;
     outcome.created_in_future = parsed.created_in_future;
     Ok(outcome)
+}
+
+/// True when every region, saved card list and (for the versions this file
+/// touched) frozen picture link is consistent after the file was applied.
+fn picture_cards_sound(conn: &Connection, changes: &[Change]) -> Result<bool, ApplyError> {
+    if visual_cards::validate_references(conn).is_err() {
+        return Ok(false);
+    }
+    let mut versions = BTreeSet::new();
+    for change in changes {
+        let Some(row) = change.row.as_ref() else {
+            continue;
+        };
+        match change.table.as_str() {
+            "card_versions" => versions.extend(text(row, "id").map(str::to_string)),
+            "card_items" => versions.extend(text(row, "version_id").map(str::to_string)),
+            "card_item_visual_regions" => versions.extend(
+                conn.query_row(
+                    "SELECT version_id FROM card_items WHERE id = ?1",
+                    [&change.row_id],
+                    |r| r.get::<_, String>(0),
+                )
+                .optional()?,
+            ),
+            _ => {}
+        }
+    }
+    for version in versions {
+        if !version_hash_holds(conn, &version)? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+/// A card version that is genuine (its id is the hash of its material and
+/// content) must still hash to its content once its cards, origins and
+/// pictures are read back. A row that was never a real version is not judged.
+fn version_hash_holds(conn: &Connection, version: &str) -> Result<bool, ApplyError> {
+    let head = conn
+        .query_row(
+            "SELECT source_material_id, content_hash FROM card_versions WHERE id = ?1",
+            [version],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+        )
+        .optional()?;
+    let Some((material, content_hash)) = head else {
+        return Ok(true);
+    };
+    if card_reviews::sha256_hex(&format!("{material}\u{0}{content_hash}")) != version {
+        return Ok(true);
+    }
+    let mut stmt = conn.prepare(
+        "SELECT i.front, i.back, i.source_page, o.origin, v.region_id
+         FROM card_items i
+         LEFT JOIN card_item_origins o ON o.item_id = i.id
+         LEFT JOIN card_item_visual_regions v ON v.item_id = i.id
+         WHERE i.version_id = ?1 ORDER BY i.ordinal",
+    )?;
+    let cards = stmt
+        .query_map([version], |r| {
+            Ok(card_reviews::CanonicalCard {
+                front: r.get(0)?,
+                back: r.get(1)?,
+                source_page: r.get(2)?,
+                origin: r.get(3)?,
+                visual_region_id: r.get(4)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(card_reviews::sha256_hex(&card_reviews::canonical_cards_json(&cards)) == content_hash)
 }
 
 struct Meta {
@@ -293,6 +383,8 @@ struct Fk {
     parent_name: String,
     from: String,
     to: String,
+    /// `ON DELETE SET NULL`: a missing parent clears the column.
+    set_null: bool,
 }
 
 /// One `card_review_state` row without its key and revision.
@@ -663,12 +755,13 @@ impl<'a> Engine<'a> {
                     r.get::<_, String>(2)?,
                     r.get::<_, String>(3)?,
                     r.get::<_, Option<String>>(4)?,
+                    r.get::<_, String>(6)?,
                 ))
             })?
             .collect::<Result<Vec<_>, _>>()?;
         let list: Vec<Fk> = raw
             .into_iter()
-            .map(|(parent_name, from, to)| {
+            .map(|(parent_name, from, to, on_delete)| {
                 let parent = tables::table(&parent_name);
                 let to = match (to, parent) {
                     (Some(to), _) if !to.is_empty() => to,
@@ -680,6 +773,7 @@ impl<'a> Engine<'a> {
                     parent_name,
                     from,
                     to,
+                    set_null: on_delete == "SET NULL",
                 }
             })
             .collect();
@@ -714,6 +808,20 @@ impl<'a> Engine<'a> {
                 Sql::Text(s) => s.clone(),
                 _ => return Err(ApplyError::BadRow),
             };
+            // Only a picture's original: the sender's delete already cleared the link.
+            // A parent that is merely missing still retries (MissingParent below),
+            // and every other SET NULL link (practice rows) keeps being skipped.
+            if fk.set_null
+                && table.name == "visual_card_regions"
+                && fk.from == "image_material_id"
+                && (self.shadowed.contains(&(parent.name, key.clone()))
+                    || (!self.exists(parent.name, &fk.to, &value)?
+                        && self.meta(parent.name, &key)?.is_some_and(|m| m.deleted)))
+            {
+                // Same result as the sender's cascade, instead of hiding the row.
+                row.insert(fk.from.clone(), Value::Null);
+                continue;
+            }
             if self.shadowed.contains(&(parent.name, key.clone())) {
                 self.shadowed.insert((table.name, row_id.to_string()));
                 return Ok(None);

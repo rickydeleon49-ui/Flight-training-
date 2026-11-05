@@ -43,6 +43,8 @@ export interface LibraryReport {
   unlinkedFiles: UnlinkedFileInfo[];
   totalMaterials: number;
   totalFiles: number;
+  /** The study data fails the check every backup starts with. */
+  dataProblem?: boolean;
 }
 
 export class DesktopOnlyError extends Error {

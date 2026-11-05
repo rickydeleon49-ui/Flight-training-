@@ -41,6 +41,8 @@ const fn t(name: &'static str, primary_key: &'static str, rule: MergeRule) -> Sy
 /// they stay local.
 pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("study_materials", "id", MergeRule::Lww),
+    // Content-addressed and write-once: the id is the hash of the descriptor.
+    t("visual_card_regions", "id", MergeRule::Union),
     // Re-verified in place (navigation.rs upsert), so LWW, not Union.
     t("material_content_identities", "material_id", MergeRule::Lww),
     t(
@@ -52,6 +54,8 @@ pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("card_version_origins", "version_id", MergeRule::Union),
     t("card_items", "id", MergeRule::Union),
     t("card_item_origins", "item_id", MergeRule::Union),
+    // Fixed by the version's content hash; needs its item and its region.
+    t("card_item_visual_regions", "item_id", MergeRule::Union),
     t("card_review_events", "id", MergeRule::Union),
     t("card_review_state", "item_id", MergeRule::Replay),
     t("practice_tests", "source_material_id", MergeRule::Lww),

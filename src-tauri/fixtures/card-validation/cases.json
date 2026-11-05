@@ -902,6 +902,15 @@
         "UPDATE card_review_state SET step = 0, due_at = '2026-10-07T11:00:00.000Z', last_reviewed_at = '2026-10-06T11:00:00.000Z', reps = 2, revision = 2 WHERE item_id = '83ea029be4084d5b4290264400d67f4cb8468b2608e25d71b2b2eb90a056bfd1'"
       ],
       "expect": "refuse"
+    },
+    {
+      "name": "a picture-card version whose frozen region link is missing is refused",
+      "category": "identity",
+      "sql": [
+        "INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, first_reviewed_at, is_active) VALUES ('8e5bdc4319b1ced3d39e22e6e01b97f8f53b663373c40b446a3a76eea5352bcc', 'mat-1', '9a06226ee294c1c45f867c6069df3d77da34fcb740fde8541e22eca312be5063', 1, 'gemini', '2026-10-06T10:00:00.000Z', NULL, 0)",
+        "INSERT INTO card_items (id, version_id, ordinal, front, back, source_page) VALUES ('9aac81c37f23bc001c47b2ee8d7dcf528b0454511f47f97cc447f59c710405e8', '8e5bdc4319b1ced3d39e22e6e01b97f8f53b663373c40b446a3a76eea5352bcc', 0, 'Synthetic picture', 'Synthetic', NULL)"
+      ],
+      "expect": "refuse"
     }
   ]
 }

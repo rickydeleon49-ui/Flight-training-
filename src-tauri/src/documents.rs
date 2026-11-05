@@ -54,6 +54,10 @@ pub struct LibraryReport {
     pub unlinked_files: Vec<UnlinkedFileInfo>,
     pub total_materials: usize,
     pub total_files: usize,
+    /// The study data fails the same check a backup runs first, so the two
+    /// screens agree. Files are judged separately above.
+    #[serde(default)]
+    pub data_problem: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -1289,11 +1293,28 @@ pub fn check_library_in(root: &Path) -> Result<LibraryReport, String> {
     missing_materials.sort_by_key(|a| a.title.to_lowercase());
     unlinked_files.sort_by_key(|a| a.file_name.to_lowercase());
 
+    drop(stmt);
+    drop(connection);
+    // The same read-only check every backup starts with.
+    // Only a real verification failure counts; a busy, locked or unreadable file
+    // goes through the normal error path instead of a false alarm.
+    let data_problem = match crate::backup::verify_application_database(&db_path) {
+        Ok(()) => false,
+        Err(message)
+            if crate::backup::is_transient_lock_error(&message)
+                || message.starts_with("Could not open") =>
+        {
+            return Err(message);
+        }
+        Err(_) => true,
+    };
+
     Ok(LibraryReport {
         missing_materials,
         unlinked_files,
         total_materials,
         total_files,
+        data_problem,
     })
 }
 

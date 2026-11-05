@@ -4677,7 +4677,7 @@ pub(crate) fn verify_schema_12_card_semantics(connection: &Connection) -> Result
 
 /// Whether a failure looks like transient SQLite lock contention rather than
 /// a real problem with the database.
-fn is_transient_lock_error(message: &str) -> bool {
+pub(crate) fn is_transient_lock_error(message: &str) -> bool {
     let lower = message.to_ascii_lowercase();
     lower.contains("database is locked") || lower.contains("sqlite_busy")
 }
@@ -4715,6 +4715,16 @@ fn database_snapshot_with_retry(root: &Path) -> Result<PathBuf, String> {
 
 fn database_snapshot(root: &Path) -> Result<PathBuf, String> {
     let source_path = root.join(DB_FILES[0]);
+    // Restores picture links a phone-made version lost (exact matches only), so
+    // the check below does not refuse a library this build can mend.
+    // Only when the check itself refuses (not when the file is merely busy).
+    if let Err(first) = verify_application_database(&source_path) {
+        if is_transient_lock_error(&first)
+            || !crate::sync::receipts::repair_picture_links_at(root).is_ok_and(|n| n > 0)
+        {
+            return Err(first);
+        }
+    }
     verify_application_database(&source_path)?;
     let nonce = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

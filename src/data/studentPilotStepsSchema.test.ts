@@ -28,7 +28,7 @@ describe("student pilot steps schema 30", () => {
   it("upgrades schema 29 without changing existing materials", async () => {
     const engine = await openNodeEngine();
     try {
-      await applyMigrations((sql) => engine.exec(sql), new Set([30, 31, 32, 33]));
+      await applyMigrations((sql) => engine.exec(sql), new Set([30, 31, 32, 33, 34]));
       engine.exec("INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('section','Synthetic section','now','now')");
       const before = engine.query("SELECT * FROM study_materials");
       await applyMigrations((sql) => engine.exec(sql), new Set(MIGRATIONS.filter((m) => m.version <= 29).map((m) => m.version)));

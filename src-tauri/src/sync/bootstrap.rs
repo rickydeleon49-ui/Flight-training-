@@ -61,6 +61,14 @@ fn seed_sql(name: &str, pk: &str) -> Option<String> {
              JOIN card_versions v ON v.id = i.version_id WHERE {}",
             newer("v.created_at")
         ),
+        // Write-once pictures (migration 0034). Regions have no time of their own and
+        // cost a few bytes, so every one is seeded; a link only with a newer card.
+        "visual_card_regions" => format!("SELECT id, ?2 FROM {name}"),
+        "card_item_visual_regions" => format!(
+            "SELECT o.item_id, v.created_at FROM {name} o JOIN card_items i ON i.id = o.item_id \
+             JOIN card_versions v ON v.id = i.version_id WHERE {}",
+            newer("v.created_at")
+        ),
         "card_review_state" => format!(
             "SELECT s.item_id, MAX(e.reviewed_at) FROM {name} s JOIN card_review_events e ON e.item_id = s.item_id \
              WHERE {} GROUP BY s.item_id",
