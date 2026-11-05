@@ -2789,7 +2789,7 @@ mod ingest {
 
     fn phone_manifest() -> Value {
         json!({"format": "her-flight-deck-complete-backup", "formatVersion": 3,
-               "appVersion": "0.0.0-test", "createdAt": 1, "schemaVersion": SCHEMA, "platform": "ios"})
+               "appVersion": "0.0.0-test", "schemaVersion": SCHEMA, "platform": "ios"})
     }
 
     fn ingest(
@@ -2918,6 +2918,69 @@ mod ingest {
     }
 
     #[test]
+    fn ingest_uses_the_manifest_time_for_the_file_name() {
+        let dir = TempDir::new("ingest-time");
+        let (phone, _) = every_rule_peer(PHONE);
+        let mut manifest = phone_manifest();
+        manifest["createdAt"] = json!(1_700_000_000u64);
+        manifest["appVersion"] = json!("9.9.9-phone");
+        let path = archive(&dir, &phone, manifest);
+        let a = ingest_at(&path, NOW).unwrap().unwrap();
+        let b = ingest_at(&path, "2030-01-01T00:00:00.000Z")
+            .unwrap()
+            .unwrap();
+        assert_eq!(a.file.file_name, b.file.file_name);
+        assert_eq!(a.file.bytes, b.file.bytes);
+        let set = decode(&a.file.bytes, &a.file.file_name, SCHEMA, NOW)
+            .unwrap()
+            .set;
+        assert_eq!(set.created_at, "2023-11-14T22:13:20.000Z");
+        assert_eq!(set.app_version, "9.9.9-phone");
+        // A manifest without them falls back to the arguments.
+        let path = archive(&dir, &phone, phone_manifest());
+        let c = ingest_at(&path, NOW).unwrap().unwrap();
+        let set = decode(&c.file.bytes, &c.file.file_name, SCHEMA, NOW)
+            .unwrap()
+            .set;
+        assert_eq!(
+            (set.created_at.as_str(), set.app_version.as_str()),
+            (NOW, "0.0.0-test")
+        );
+    }
+
+    #[test]
+    fn a_restored_phone_sends_only_work_after_the_restore() {
+        let dir = TempDir::new("ingest-floor");
+        let (phone, _) = every_rule_peer(PHONE);
+        let floor: i64 = count(&phone, "SELECT MAX(seq) FROM local_changes");
+        // Odd spellings read as text, like the export watermark.
+        phone
+            .execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+                [floor.to_string()],
+            )
+            .unwrap();
+        assert!(ingest(&archive(&dir, &phone, phone_manifest()))
+            .unwrap()
+            .is_none());
+        phone
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b9','m1',2,'after',?1,?1)",
+                [NEW],
+            )
+            .unwrap();
+        let out = ingest(&archive(&dir, &phone, phone_manifest()))
+            .unwrap()
+            .unwrap();
+        let set = decode(&out.file.bytes, &out.file.file_name, SCHEMA, NOW)
+            .unwrap()
+            .set;
+        assert_eq!(set.from_seq, floor + 1);
+        assert_eq!(set.changes.len(), 1);
+        assert_eq!(set.changes[0].row_id, "b9");
+    }
+
+    #[test]
     fn ingest_removes_its_temp_dir() {
         let dir = TempDir::new("ingest-clean");
         let (phone, _) = every_rule_peer(PHONE);
@@ -2928,6 +2991,313 @@ mod ingest {
         assert!(ingest(&bad).is_err());
         let _one = INGESTS.lock().unwrap_or_else(|e| e.into_inner());
         assert_eq!(leftover_dirs(), 0);
+    }
+}
+
+mod progress {
+    use super::apply::{device, every_rule_peer, MAC, PHONE};
+    use super::*;
+    use crate::sync::progress::{import_phone_progress_in, PhoneProgress, ProgressOutcome};
+    use sha2::{Digest, Sha256};
+
+    const SAVED: u64 = 1_699_000_000;
+    const OLD_TIME: &str = "2026-10-01T10:00:00.000Z";
+
+    fn manifest() -> Value {
+        json!({"format": "her-flight-deck-complete-backup", "formatVersion": 3,
+               "appVersion": "0.0.0-test", "createdAt": SAVED,
+               "schemaVersion": SCHEMA, "platform": "ios"})
+    }
+
+    /// A phone archive: the manifest, a copy of `conn`, and `docs` under `documents/`.
+    fn archive(
+        dir: &TempDir,
+        conn: &Connection,
+        manifest: Value,
+        docs: &[(&str, &[u8])],
+    ) -> std::path::PathBuf {
+        let db = dir.0.join("source.db");
+        let _ = std::fs::remove_file(&db);
+        conn.execute("VACUUM INTO ?1", [db.to_str().unwrap()])
+            .unwrap();
+        let path = dir.0.join("My phone work.hfdbackup");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let opts = zip::write::SimpleFileOptions::default();
+        zip.start_file("manifest.json", opts).unwrap();
+        zip.write_all(manifest.to_string().as_bytes()).unwrap();
+        zip.start_file("her-flight-deck.db", opts).unwrap();
+        zip.write_all(&std::fs::read(&db).unwrap()).unwrap();
+        for (name, bytes) in docs {
+            zip.start_file(format!("documents/{name}"), opts).unwrap();
+            zip.write_all(bytes).unwrap();
+        }
+        zip.finish().unwrap();
+        path
+    }
+
+    /// The Mac's app folder with an empty library database.
+    fn mac_root() -> TempDir {
+        let root = TempDir::new("progress-mac");
+        let conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [MAC],
+        )
+        .unwrap();
+        root
+    }
+
+    fn mac_db(root: &TempDir) -> Connection {
+        Connection::open(root.0.join("her-flight-deck.db")).unwrap()
+    }
+
+    fn run(root: &TempDir, archive: &std::path::Path) -> Result<PhoneProgress, String> {
+        import_phone_progress_in(&root.0, archive, Some(MAC), "0.0.0-test", NOW)
+    }
+
+    #[test]
+    fn a_phone_backup_brings_in_reviews_and_counts_them() {
+        let dir = TempDir::new("progress-a");
+        let root = mac_root();
+        let (phone, _) = every_rule_peer(PHONE);
+        let got = run(&root, &archive(&dir, &phone, manifest(), &[])).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        let c = &got.counts;
+        assert_eq!(
+            (c.reviews, c.tests, c.bookmarks, c.reading_positions),
+            (1, 1, 1, 1)
+        );
+        assert_eq!((c.materials, c.guides, c.generated_tests), (1, 1, 1));
+        assert_eq!(got.phone_saved_at, Some(SAVED));
+        assert!(!got.from_future);
+        let mac = mac_db(&root);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 1);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM local_changes"), 0);
+    }
+
+    #[test]
+    fn the_same_backup_twice_is_already_in() {
+        let dir = TempDir::new("progress-b");
+        let root = mac_root();
+        let (phone, _) = every_rule_peer(PHONE);
+        let path = archive(&dir, &phone, manifest(), &[]);
+        run(&root, &path).unwrap();
+        let again = run(&root, &path).unwrap();
+        assert_eq!(again.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!(again.counts.reviews, 0);
+    }
+
+    #[test]
+    fn a_newer_backup_adds_only_the_new_work() {
+        let dir = TempDir::new("progress-c");
+        let root = mac_root();
+        let (phone, _) = every_rule_peer(PHONE);
+        run(&root, &archive(&dir, &phone, manifest(), &[])).unwrap();
+        phone
+            .execute(
+                "INSERT INTO card_review_events (id,item_id,generation,rating,reviewed_at,scheduler_version,prior_state_json,next_state_json) VALUES ('e2','i1',1,'good',?1,?2,'{}','{}')",
+                params![NEW, crate::card_reviews::SCHEDULER_VERSION],
+            )
+            .unwrap();
+        let mut later = manifest();
+        later["createdAt"] = json!(SAVED + 3600);
+        let got = run(&root, &archive(&dir, &phone, later, &[])).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!(got.counts.reviews, 1);
+        assert_eq!(got.counts.bookmarks, 0);
+        assert_eq!(got.counts.materials, 0);
+        assert_eq!(
+            count(&mac_db(&root), "SELECT COUNT(*) FROM card_review_events"),
+            2
+        );
+    }
+
+    /// Every row of the tables a failed apply must leave alone.
+    fn snapshot(conn: &Connection) -> Vec<String> {
+        let mut out = Vec::new();
+        for (table, cols) in [
+            (
+                "sync_row_meta",
+                "table_name || row_id || changed_at || device_id || deleted",
+            ),
+            ("sync_applied", "peer_device || file_name"),
+            ("practice_responses", "id || attempt_id || item_id"),
+            ("app_metadata", "key || '=' || value"),
+        ] {
+            let mut stmt = conn
+                .prepare(&format!("SELECT {cols} FROM {table} ORDER BY 1"))
+                .unwrap();
+            out.extend(
+                stmt.query_map([], |r| r.get::<_, String>(0))
+                    .unwrap()
+                    .map(|r| format!("{table}:{}", r.unwrap())),
+            );
+        }
+        out
+    }
+
+    #[test]
+    fn a_unique_collision_changes_nothing_and_keeps_plain_words() {
+        let dir = TempDir::new("progress-d");
+        let root = mac_root();
+        {
+            let mac = mac_db(&root);
+            insert_graph_unlogged(&mac, "", OLD_TIME);
+            unlogged(&mac, "UPDATE practice_responses SET id = 'r-mac'");
+        }
+        let (phone, _) = every_rule_peer(PHONE);
+        let before = snapshot(&mac_db(&root));
+        let err = run(&root, &archive(&dir, &phone, manifest(), &[])).unwrap_err();
+        assert!(err.starts_with("Part of that file overlaps work already on this Mac"));
+        assert!(err.contains("Keep the file"));
+        assert_eq!(snapshot(&mac_db(&root)), before);
+        let mac = mac_db(&root);
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'"
+            ),
+            0
+        );
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM sync_applied"), 0);
+    }
+
+    #[test]
+    fn an_attempt_for_a_deleted_material_is_skipped() {
+        let dir = TempDir::new("progress-e");
+        let root = mac_root();
+        let phone = device(PHONE);
+        insert_graph(&phone, "", OLD_TIME);
+        let path = archive(&dir, &phone, manifest(), &[]);
+        // The Mac deletes the material after the phone's work was logged.
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        {
+            let mac = mac_db(&root);
+            insert_graph_unlogged(&mac, "", OLD_TIME);
+            mac.execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+                .unwrap();
+        }
+        let got = run(&root, &path).unwrap();
+        assert_ne!(got.outcome, ProgressOutcome::AlreadyIn);
+        let mac = mac_db(&root);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 0);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM practice_attempts"), 0);
+    }
+
+    fn phone_with_pdf(bytes: &[u8]) -> Connection {
+        let phone = device(PHONE);
+        insert_graph(&phone, "", OLD_TIME);
+        phone
+            .execute("UPDATE study_materials SET file_path = 'phone-one.pdf'", [])
+            .unwrap();
+        phone
+            .execute(
+                "UPDATE material_content_identities SET content_sha256 = ?1",
+                [hex::encode(Sha256::digest(bytes))],
+            )
+            .unwrap();
+        phone
+    }
+
+    #[test]
+    fn a_phone_pdf_is_placed_from_the_archive() {
+        let dir = TempDir::new("progress-f");
+        let root = mac_root();
+        let pdf: &[u8] = b"%PDF-1.4 synthetic phone pdf";
+        let phone = phone_with_pdf(pdf);
+        let path = archive(&dir, &phone, manifest(), &[("phone-one.pdf", pdf)]);
+        let got = run(&root, &path).unwrap();
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (1, 0));
+        assert_eq!(
+            std::fs::read(root.0.join("documents/phone-one.pdf")).unwrap(),
+            pdf
+        );
+        // Nothing is left behind next to it.
+        let names: Vec<_> = std::fs::read_dir(root.0.join("documents"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        assert_eq!(names.len(), 1);
+        // Again: already in, and a PDF already in place is not "waiting".
+        let again = run(&root, &path).unwrap();
+        assert_eq!(again.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!((again.pdfs_added, again.pdfs_waiting), (0, 0));
+    }
+
+    #[test]
+    fn a_missing_pdf_is_reported_not_fatal() {
+        let dir = TempDir::new("progress-g");
+        let root = mac_root();
+        let pdf: &[u8] = b"%PDF-1.4 synthetic phone pdf";
+        let phone = phone_with_pdf(pdf);
+        let got = run(&root, &archive(&dir, &phone, manifest(), &[])).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (0, 1));
+        assert_eq!(
+            count(&mac_db(&root), "SELECT COUNT(*) FROM study_materials"),
+            1
+        );
+        // A wrong file under the right name is also only reported.
+        let wrong = archive(
+            &dir,
+            &phone,
+            manifest(),
+            &[("phone-one.pdf", b"other bytes")],
+        );
+        let got = run(&root, &wrong).unwrap();
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (0, 1));
+        assert!(!root.0.join("documents/phone-one.pdf").exists());
+        // The right file arriving later is picked up even though the work is already in.
+        let right = archive(&dir, &phone, manifest(), &[("phone-one.pdf", pdf)]);
+        let got = run(&root, &right).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (1, 0));
+    }
+
+    #[test]
+    fn progress_errors_name_no_path() {
+        let dir = TempDir::new("progress-h");
+        let root = mac_root();
+        let (phone, _) = every_rule_peer(PHONE);
+        let mut errors = Vec::new();
+        errors.push(run(&root, &dir.0.join("missing.hfdbackup")).unwrap_err());
+        let junk = dir.0.join("junk.hfdbackup");
+        std::fs::write(&junk, b"not a zip").unwrap();
+        errors.push(run(&root, &junk).unwrap_err());
+        let mut mac_manifest = manifest();
+        mac_manifest["platform"] = json!("macos");
+        errors.push(run(&root, &archive(&dir, &phone, mac_manifest, &[])).unwrap_err());
+        let (mac_copy, _) = every_rule_peer(MAC);
+        errors.push(run(&root, &archive(&dir, &mac_copy, manifest(), &[])).unwrap_err());
+        let mut newer = manifest();
+        newer["schemaVersion"] = json!(SCHEMA + 1);
+        errors.push(run(&root, &archive(&dir, &phone, newer, &[])).unwrap_err());
+        let elsewhere = TempDir::new("progress-h-empty");
+        errors.push(run(&elsewhere, &archive(&dir, &phone, manifest(), &[])).unwrap_err());
+        for err in errors {
+            let lower = err.to_lowercase();
+            assert!(!err.contains('/') && !err.contains('\\'), "{err}");
+            assert!(!err.contains(dir.0.to_str().unwrap()), "{err}");
+            for word in [
+                "sync",
+                "merge",
+                "conflict",
+                "import",
+                "ingest",
+                "ledger",
+                "change file",
+                "device",
+                "database",
+                "sqlite",
+                "manifest",
+                "constraint",
+            ] {
+                assert!(!lower.contains(word), "{word} in {err}");
+            }
+        }
     }
 }
 

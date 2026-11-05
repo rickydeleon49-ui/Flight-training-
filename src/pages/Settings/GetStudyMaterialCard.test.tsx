@@ -232,7 +232,7 @@ describe("GetStudyMaterialCard", () => {
       fireEvent.click(screen.getByRole("button", { name: "Save my phone work first" }));
       await screen.findByRole("button", { name: "Replace what's on this phone" });
       expect(mocks.savePhoneWork).toHaveBeenCalledOnce();
-      expect(screen.getByRole("status").textContent).toBe("Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup.");
+      expect(screen.getByRole("status").textContent).toBe("Saved in Files \u2192 Your Flight Deck \u2192 My phone work.hfdbackup. Then on your Mac: Settings \u2192 Get progress from my iPhone.");
       expect(mocks.stageCompleteRestore).not.toHaveBeenCalled();
     });
 

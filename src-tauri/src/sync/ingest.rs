@@ -1,6 +1,6 @@
 //! A W-1 phone backup turned into a change file: the S-2b export run on the
 //! archive's own ledger. Reads the archive; writes only a temp copy of its
-//! database, removed on every return path. Not wired yet (S-3).
+//! database, removed on every return path.
 
 use std::fs::File;
 use std::io::Read;
@@ -44,7 +44,7 @@ impl std::fmt::Display for IngestError {
             Self::NoDeviceId => f.write_str(
                 "This phone backup does not say which phone made it. Open the app on your phone, then make a new backup.",
             ),
-            Self::SameDevice => f.write_str("That backup was made on this device."),
+            Self::SameDevice => f.write_str("That file was made on this Mac."),
             Self::Archive(text) => f.write_str(text),
             Self::Export(e) => write!(f, "{e}"),
         }
@@ -60,6 +60,11 @@ struct Manifest {
     platform: Option<String>,
     #[serde(default)]
     schema_version: Option<i64>,
+    /// Unix seconds when the phone made the archive.
+    #[serde(default)]
+    created_at: Option<u64>,
+    #[serde(default)]
+    app_version: Option<String>,
 }
 
 /// Removes the temp dir when dropped, so every return path cleans up.
@@ -101,16 +106,41 @@ fn extract(archive: &mut ZipArchive<File>, name: &str, to: &Path) -> Result<bool
     Ok(true)
 }
 
-/// The phone's changes in a W-1 archive, as one change file from seq 0 (the
-/// archive is a whole-ledger snapshot; re-applying rows already here writes
-/// nothing). `None` when the phone's ledger is empty. `local_device_id` is
-/// this device's id: an archive made here is refused.
+/// What reading a phone archive gave.
+pub(crate) struct Ingested {
+    /// `None` when the phone has nothing after its sync floor.
+    pub changes: Option<ExportedChanges>,
+    /// The archive's own creation time, unix seconds.
+    pub saved_at: Option<u64>,
+}
+
+/// Fixed-width ISO time for a unix-seconds manifest time, so the same archive
+/// always gives the same bytes and file name.
+fn iso_from_seconds(seconds: u64) -> Option<String> {
+    let ms = i64::try_from(seconds).ok()?.checked_mul(1000)?;
+    Some(crate::card_reviews::format_iso_ms(ms))
+}
+
+/// The phone's changes in a W-1 archive, as one change file after the
+/// archive's own sync floor (the archive is a whole-ledger snapshot; re-applying
+/// rows already here writes nothing). `None` when the phone's ledger is empty.
+/// `local_device_id` is this device's id: an archive made here is refused.
+/// `app_version` and `created_at` are fallbacks for a manifest that lacks them.
 pub(crate) fn export_changes_from_archive(
     archive: &Path,
     local_device_id: Option<&str>,
     app_version: &str,
     created_at: &str,
 ) -> Result<Option<ExportedChanges>, IngestError> {
+    ingest_archive(archive, local_device_id, app_version, created_at).map(|i| i.changes)
+}
+
+pub(crate) fn ingest_archive(
+    archive: &Path,
+    local_device_id: Option<&str>,
+    app_version: &str,
+    created_at: &str,
+) -> Result<Ingested, IngestError> {
     let unreadable = IngestError::Archive("That is not a readable Flight Deck backup.");
     let file = File::open(archive).map_err(|_| unreadable)?;
     let mut zip = ZipArchive::new(file)
@@ -187,9 +217,34 @@ pub(crate) fn export_changes_from_archive(
     if local_device_id == Some(device_id.as_str()) {
         return Err(IngestError::SameDevice);
     }
-    let out = export::export_changes_in(&mut copy, &device_id, 0, app_version, created_at)
+    // Parsed like `exported_through_seq`: text, junk means 0.
+    let floor: Option<String> = copy
+        .query_row(
+            "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'sync_floor_seq'",
+            [],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|_| bad_db())?;
+    let since_seq = floor
+        .and_then(|v| v.parse::<i64>().ok())
+        .unwrap_or(0)
+        .max(0);
+    let stamp = manifest
+        .created_at
+        .and_then(iso_from_seconds)
+        .unwrap_or_else(|| created_at.to_string());
+    let version = manifest
+        .app_version
+        .as_deref()
+        .filter(|v| !v.is_empty() && v.len() <= 64)
+        .unwrap_or(app_version);
+    let changes = export::export_changes_in(&mut copy, &device_id, since_seq, version, &stamp)
         .map_err(IngestError::Export);
     drop(copy);
     drop(dir);
-    out
+    Ok(Ingested {
+        changes: changes?,
+        saved_at: manifest.created_at,
+    })
 }
