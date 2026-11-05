@@ -1483,6 +1483,6 @@ mod scheduler_properties {
 fn carried_rating_ids_are_the_shared_golden_value() {
     // The same seed is asserted by src/data/cardReviewContract.test.ts.
     let id = derived_uuid_v4("rating-id\u{0}item-id");
-    assert!(lower_uuid_v4(&id), "{id}");
+    assert!(lower_uuid_v4(&id));
     assert_eq!(id, "56ca09f2-6e83-421f-9baf-88ef8e90cafd");
 }
