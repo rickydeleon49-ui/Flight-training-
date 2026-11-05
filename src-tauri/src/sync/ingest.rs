@@ -218,18 +218,7 @@ pub(crate) fn ingest_archive(
         return Err(IngestError::SameDevice);
     }
     // Parsed like `exported_through_seq`: text, junk means 0.
-    let floor: Option<String> = copy
-        .query_row(
-            "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'sync_floor_seq'",
-            [],
-            |r| r.get(0),
-        )
-        .optional()
-        .map_err(|_| bad_db())?;
-    let since_seq = floor
-        .and_then(|v| v.parse::<i64>().ok())
-        .unwrap_or(0)
-        .max(0);
+    let since_seq = export::sync_floor_seq(&copy).map_err(|_| bad_db())?;
     let stamp = manifest
         .created_at
         .and_then(iso_from_seconds)

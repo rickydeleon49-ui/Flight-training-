@@ -1065,3 +1065,53 @@ fn an_edited_practice_test_is_unsaved() {
     assert!(sentence(&work).unwrap().contains("1 practice test"));
     std::fs::remove_dir_all(c).unwrap();
 }
+
+#[test]
+fn sending_moves_the_baseline_forward_only_and_clears_the_unsaved_count() {
+    let c = scratch();
+    let root = root_in(&c);
+    one_of_each(&root, "2026-03-01T00:00:00Z");
+    write_baseline(&root, "2026-02-01T00:00:00Z");
+    assert_ne!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0, 0, 0]
+    );
+    record_sent_through_in(&root, "2026-04-01T00:00:00Z").unwrap();
+    assert_eq!(
+        totals(&unsaved_phone_work_in(&root).unwrap()),
+        [0, 0, 0, 0, 0, 0, 0]
+    );
+    // An earlier `now` never moves the baseline back.
+    record_sent_through_in(&root, "2026-03-15T00:00:00Z").unwrap();
+    assert_eq!(
+        read_baseline(&root).as_deref(),
+        Some("2026-04-01T00:00:00Z")
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn sending_keeps_the_restore_and_copy_marks() {
+    let c = scratch();
+    let root = root_in(&c);
+    std::fs::write(
+        root.join(PHONE_WORK_FILE),
+        r#"{"baselineAt":"2026-02-01T00:00:00Z","restoredAt":"2026-02-01T00:00:00Z","copySavedAt":"2026-01-01T00:00:00Z"}"#,
+    )
+    .unwrap();
+    record_sent_through_in(&root, "2026-04-01T00:00:00Z").unwrap();
+    let file = read_file(&root).unwrap();
+    assert_eq!(file.restored_at.as_deref(), Some("2026-02-01T00:00:00Z"));
+    assert_eq!(file.copy_saved_at.as_deref(), Some("2026-01-01T00:00:00Z"));
+    assert_eq!(
+        file.progress_sent_at.as_deref(),
+        Some("2026-04-01T00:00:00Z")
+    );
+    // Later saves and restores keep the sent mark.
+    record_saved_through_in(&root, "2026-05-01T00:00:00Z").unwrap();
+    assert_eq!(
+        read_file(&root).unwrap().progress_sent_at.as_deref(),
+        Some("2026-04-01T00:00:00Z")
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}

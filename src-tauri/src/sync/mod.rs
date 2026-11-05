@@ -10,4 +10,5 @@ pub(crate) mod export;
 pub(crate) mod ingest;
 pub(crate) mod progress;
 pub(crate) mod replay;
+pub(crate) mod send;
 pub(crate) mod tables;

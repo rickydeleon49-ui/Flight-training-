@@ -149,7 +149,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
   const platform = await import("@/services/platform");
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     editStudyMaterial: !phone, sharePrint: !phone, importFiles: !phone, splitFiles: !phone, geminiKey: true, generate: !phone, pdfKit: !phone, revealFiles: !phone,
-    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: phone, savePhoneWork: phone, pictureFromPhoto: phone, renderPdfPage: !phone,
+    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: phone, savePhoneWork: phone, sendPhoneProgress: phone, pictureFromPhoto: phone, renderPdfPage: !phone,
   });
   vi.spyOn(documents, "openDocument").mockRejectedValue(new Error("Synthetic open failure"));
   await open("?tab=more");
@@ -172,7 +172,7 @@ it.each([true, false])("keeps PDF Open and gates desktop entry buttons (phone=%s
 
 it("hides all generation and missing-file import entries on the phone", async () => {
   const platform = await import("@/services/platform");
-  vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, splitFiles: false, geminiKey: true, generate: false, pdfKit: false, revealFiles: false, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true, renderPdfPage: false });
+  vi.spyOn(platform, "deviceCan").mockReturnValue({ editStudyMaterial: false, sharePrint: false, importFiles: false, splitFiles: false, geminiKey: true, generate: false, pdfKit: false, revealFiles: false, sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, sendPhoneProgress: true, pictureFromPhoto: true, renderPdfPage: false });
   vi.mocked(gemini.getGeminiStatus).mockResolvedValue({ configured: true, model: "gemini-3.5-flash", choice: "standard" });
   vi.mocked(documents.documentExists).mockResolvedValue(false);
   await open();
@@ -188,7 +188,7 @@ it.each([true, false])("saved guide wording and editing/sharing follow device ca
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     importFiles: !phone, splitFiles: !phone, geminiKey: true, generate: !phone, pdfKit: !phone, revealFiles: !phone,
     editStudyMaterial: !phone, sharePrint: !phone, renderPdfPage: !phone,
-    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: phone, savePhoneWork: phone, pictureFromPhoto: phone,
+    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: phone, savePhoneWork: phone, sendPhoneProgress: phone, pictureFromPhoto: phone,
   });
   await createRepositories(db).documents.saveAiStudySet({
     sourceMaterialId: "tips", title: "Synthetic guide", summary: "Saved synthetic summary",
@@ -239,7 +239,7 @@ it("on the iPhone app a saved guide can be edited and saved to Files", async () 
   vi.spyOn(platform, "deviceCan").mockReturnValue({
     importFiles: true, splitFiles: false, geminiKey: true, generate: true, pdfKit: false, revealFiles: false,
     editStudyMaterial: true, sharePrint: true, renderPdfPage: false,
-    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, pictureFromPhoto: true,
+    sendToIphone: false, getPhoneProgress: false, getStudyMaterial: true, savePhoneWork: true, sendPhoneProgress: true, pictureFromPhoto: true,
   });
   await createRepositories(db).documents.saveAiStudySet({
     sourceMaterialId: "tips", title: "Synthetic guide", summary: "Saved synthetic summary",

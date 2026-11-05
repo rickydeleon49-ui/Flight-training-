@@ -98,7 +98,7 @@ import { useAppData } from "@/state/AppDataContext";
 import { isMacOS, isWindowsOS } from "@/lib/platform";
 
 import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
-import { SavePhoneWorkCard } from "./SavePhoneWorkCard";
+import { PhoneProgressCard } from "./PhoneProgressCard";
 import { GetPhoneProgressCard } from "./GetPhoneProgressCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
 import { deviceCan, isIOS } from "@/services/platform";
@@ -227,7 +227,7 @@ export function Settings() {
     // A result or problem inside a fold must never be hidden by a navigation (force-open rule).
     if (backupsFold.current) backupsFold.current.open = hash === "#settings-backups" || forceOpen.current.backups;
     if (advancedFold.current) advancedFold.current.open = hash === "#ai-provider" || forceOpen.current.advanced;
-    if (["#settings-backups", "#send-to-iphone", "#get-phone-progress", "#ai-provider"].includes(hash)) {
+    if (["#settings-backups", "#send-to-iphone", "#get-phone-progress", "#phone-progress", "#ai-provider"].includes(hash)) {
       document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
     }
   }, [hash, key]);
@@ -692,7 +692,7 @@ export function Settings() {
         {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
         {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
         {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
-        {deviceCan().savePhoneWork ? <SavePhoneWorkCard /> : null}
+        {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
         <Card>
           <CardHeader title="About you" eyebrow="Greeting and focus" />

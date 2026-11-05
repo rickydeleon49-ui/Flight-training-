@@ -3747,3 +3747,598 @@ mod blobs {
         }
     }
 }
+
+mod send {
+    use super::*;
+    use crate::phone_work::PHONE_WORK_FILE;
+    use crate::sync::apply::apply_change_file;
+    use crate::sync::blobs::{place_material_blob, put_blob, PlaceOutcome};
+    use crate::sync::bootstrap::bootstrap_in;
+    use crate::sync::export::{exported_through_seq, set_exported_through_seq};
+    use crate::sync::send::{
+        remove_stale_temps, send_locked, send_phone_progress_in, SentPhoneProgress, PROGRESS_FILE,
+    };
+    use sha2::{Digest, Sha256};
+    use std::path::{Path, PathBuf};
+
+    const DEVICE: &str = "aaaaaaaa-2222-4333-8444-555555555555";
+    const BEFORE: &str = "2026-11-01T00:00:00.000Z";
+
+    struct Phone {
+        root: TempDir,
+        docs: PathBuf,
+    }
+
+    impl Phone {
+        fn db(&self) -> Connection {
+            let c = Connection::open(self.root.0.join("her-flight-deck.db")).unwrap();
+            c.pragma_update(None, "foreign_keys", "ON").unwrap();
+            c
+        }
+        fn send(&self) -> Result<SentPhoneProgress, String> {
+            send_locked(&self.root.0, &self.docs, "0.0.0-test", NOW)
+        }
+        fn file(&self) -> PathBuf {
+            self.docs.join(PROGRESS_FILE)
+        }
+        fn outbox(&self) -> Vec<String> {
+            let dir = self
+                .root
+                .0
+                .join("outbox")
+                .join(crate::sync::changeset::folder(DEVICE));
+            let mut v: Vec<String> = std::fs::read_dir(dir)
+                .map(|rd| {
+                    rd.map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                        .collect()
+                })
+                .unwrap_or_default();
+            v.sort();
+            v
+        }
+        fn baseline(&self) -> String {
+            std::fs::read_to_string(self.root.0.join(PHONE_WORK_FILE)).unwrap_or_default()
+        }
+    }
+
+    /// A phone: migrated database on disk, its own id, ledger already seeded,
+    /// and a baseline from the last Mac copy.
+    fn phone() -> Phone {
+        static PHONES: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = PHONES.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let root = TempDir::new(&format!("send-root-{n}"));
+        let docs = root.0.join("docs-out");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{BEFORE}\"}}"),
+        )
+        .unwrap();
+        let mut conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [DEVICE],
+        )
+        .unwrap();
+        bootstrap_in(&root.0, &mut conn, true, BEFORE).unwrap();
+        Phone { root, docs }
+    }
+
+    fn sha_of(bytes: &[u8]) -> String {
+        hex::encode(Sha256::digest(bytes))
+    }
+
+    fn add_bookmark(conn: &Connection, id: &str) {
+        conn.execute(
+            "INSERT OR IGNORE INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a',?1,?1)",
+            [NOW],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES (?1,'m1',1,'t',?2,?2)",
+            params![id, NOW],
+        )
+        .unwrap();
+    }
+
+    fn add_pdf(p: &Phone, id: &str, name: &str, bytes: &[u8], identity: bool) {
+        std::fs::create_dir_all(p.root.0.join("documents")).unwrap();
+        std::fs::write(p.root.0.join("documents").join(name), bytes).unwrap();
+        let conn = p.db();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,file_path,created_at,updated_at) VALUES (?1,'T',?2,?3,?3)",
+            params![id, name, NOW],
+        )
+        .unwrap();
+        if identity {
+            conn.execute(
+                "INSERT INTO material_content_identities (material_id, content_sha256, total_pages, verified_at) VALUES (?1, ?2, 1, ?3)",
+                params![id, sha_of(bytes), NOW],
+            )
+            .unwrap();
+        }
+    }
+
+    fn entries(path: &Path) -> Vec<String> {
+        let mut zip = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+        let mut v: Vec<String> = (0..zip.len())
+            .map(|i| zip.by_index(i).unwrap().name().unwrap().to_string())
+            .collect();
+        v.sort();
+        v
+    }
+
+    fn read_entry(path: &Path, name: &str) -> Vec<u8> {
+        use std::io::Read;
+        let mut zip = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+        let mut out = Vec::new();
+        zip.by_name(name).unwrap().read_to_end(&mut out).unwrap();
+        out
+    }
+
+    fn manifest(path: &Path) -> Value {
+        serde_json::from_slice(&read_entry(path, "manifest.json")).unwrap()
+    }
+
+    fn unsaved(p: &Phone) -> i64 {
+        let w = crate::phone_work::unsaved_phone_work_in(&p.root.0).unwrap();
+        w.reviews + w.tests + w.bookmarks + w.reading_positions + w.materials
+    }
+
+    #[test]
+    fn a_send_writes_one_file_in_documents_with_the_store_layout() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 one", true);
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (1, 0));
+        assert!(sent.file_bytes > 0);
+        let names = entries(&p.file());
+        let change = format!("changes/{DEVICE}/{}", p.outbox()[0]);
+        assert_eq!(
+            names,
+            vec![
+                "blobs/".to_string() + &sha_of(b"%PDF-1.7 one"),
+                change,
+                "manifest.json".to_string()
+            ]
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>()
+        );
+        let m = manifest(&p.file());
+        assert_eq!(m["kind"], "phoneProgress");
+        assert_eq!(m["platform"], "ios");
+        assert_eq!(m["deviceId"], DEVICE);
+        // Only the one file in Documents, no temps, no staging.
+        let left: Vec<_> = std::fs::read_dir(&p.docs)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, vec![PROGRESS_FILE.to_string()]);
+        assert!(!std::fs::read_dir(&p.root.0).unwrap().any(|e| e
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".progress-staging")));
+        assert_eq!(unsaved(&p), 0);
+    }
+
+    #[test]
+    fn the_zip_is_the_s3c_contract() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let pdf = b"%PDF-1.7 contract";
+        add_pdf(&p, "m2", "m2.pdf", pdf, true);
+        p.send().unwrap();
+        let m = manifest(&p.file());
+        let mut mac = migrated();
+        let sync = TempDir::new("send-contract");
+        for name in m["files"].as_array().unwrap() {
+            let name = name.as_str().unwrap();
+            let bytes = read_entry(&p.file(), &format!("changes/{DEVICE}/{name}"));
+            let parsed = decode(&bytes, name, SCHEMA, NOW).unwrap();
+            apply_change_file(&mut mac, name, &parsed, NOW).unwrap();
+        }
+        let sha = sha_of(pdf);
+        let blob = read_entry(&p.file(), &format!("blobs/{sha}"));
+        put_blob(&sync.0, &blob[..], Some(&sha)).unwrap();
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM material_bookmarks"), 1);
+        let app = TempDir::new("send-contract-app");
+        std::fs::create_dir_all(app.0.join("documents")).unwrap();
+        let placed = place_material_blob(&mac, &app.0, &sync.0, "m2");
+        assert!(
+            matches!(placed, Ok(Some(PlaceOutcome::Placed { .. }))),
+            "{placed:?}"
+        );
+    }
+
+    #[test]
+    fn a_second_send_adds_a_second_file_and_the_zip_holds_both() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        add_bookmark(&p.db(), "b2");
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!(sent.counts.bookmarks, 1);
+        assert_eq!(p.outbox().len(), 2);
+        let m = manifest(&p.file());
+        assert_eq!(m["files"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            m["fromSeq"].as_i64().unwrap(),
+            1.max(m["fromSeq"].as_i64().unwrap())
+        );
+    }
+
+    #[test]
+    fn nothing_new_leaves_the_file_alone() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let before = std::fs::read(p.file()).unwrap();
+        let mtime = std::fs::metadata(p.file()).unwrap().modified().unwrap();
+        let again = p.send().unwrap();
+        assert!(again.nothing_new);
+        assert_eq!(std::fs::read(p.file()).unwrap(), before);
+        assert_eq!(
+            std::fs::metadata(p.file()).unwrap().modified().unwrap(),
+            mtime
+        );
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn a_deleted_file_is_rebuilt_from_the_outbox_and_still_noted_as_sent() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        std::fs::remove_file(p.file()).unwrap();
+        let again = p.send().unwrap();
+        assert!(!again.nothing_new);
+        assert!(p.file().is_file());
+        assert_eq!(p.outbox().len(), 1);
+        assert!(p.baseline().contains("progressSentAt"));
+    }
+
+    #[test]
+    fn nothing_to_send_at_all_changes_nothing() {
+        let p = phone();
+        let before = p.baseline();
+        let sent = p.send().unwrap();
+        assert!(sent.nothing_new);
+        assert!(!p.file().exists());
+        assert_eq!(p.baseline(), before);
+    }
+
+    #[test]
+    fn a_send_starts_after_the_sync_floor() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_bookmark(&p.db(), "b2");
+        let top = count(&p.db(), "SELECT MAX(seq) FROM local_changes");
+        p.db()
+            .execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+                [(top - 1).to_string()],
+            )
+            .unwrap();
+        p.send().unwrap();
+        assert_eq!(p.outbox().len(), 1);
+        assert!(
+            p.outbox()[0].starts_with(&format!("{top}-")),
+            "{:?}",
+            p.outbox()
+        );
+    }
+
+    #[test]
+    fn a_restore_clears_the_old_outbox() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let other = p
+            .root
+            .0
+            .join("outbox/changes/bbbbbbbb-2222-4333-8444-555555555555");
+        std::fs::create_dir_all(&other).unwrap();
+        std::fs::write(other.join("1-1-abcdefabcdef.json.gz"), b"old").unwrap();
+        p.send().unwrap();
+        assert!(!other.exists());
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn the_watermark_moves_only_after_the_file_is_durable() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        // The Documents folder is a plain file: the zip cannot be written.
+        std::fs::write(&p.docs, b"not a folder").unwrap();
+        let before = p.baseline();
+        assert!(p.send().is_err());
+        assert_eq!(p.baseline(), before, "baseline must not move");
+        assert!(unsaved(&p) > 0);
+        std::fs::remove_file(&p.docs).unwrap();
+        // Simulated crash: the outbox file was written but the watermark never moved.
+        let wm = exported_through_seq(&p.db()).unwrap();
+        assert!(wm >= 1, "the failed send exported once");
+        set_exported_through_seq(&p.db(), 0).unwrap();
+        p.db()
+            .execute(
+                "DELETE FROM app_metadata WHERE key='exported_through_seq'",
+                [],
+            )
+            .unwrap();
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        let names = p.outbox();
+        let mut froms: Vec<&str> = names.iter().map(|n| n.split('-').next().unwrap()).collect();
+        froms.dedup();
+        assert_eq!(froms.len(), names.len(), "one file per from_seq: {names:?}");
+        assert_eq!(unsaved(&p), 0);
+    }
+
+    #[test]
+    fn a_failed_send_leaves_the_old_file_and_the_baseline_alone() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let old = std::fs::read(p.file()).unwrap();
+        add_bookmark(&p.db(), "b2");
+        p.db()
+            .execute(
+                "UPDATE material_bookmarks SET updated_at = '2026-11-05T00:00:00.000Z' WHERE id = 'b2'",
+                [],
+            )
+            .unwrap();
+        let before = p.baseline();
+        // An unreadable outbox file makes the build fail part-way.
+        use std::os::unix::fs::PermissionsExt;
+        let first = p
+            .root
+            .0
+            .join("outbox")
+            .join(crate::sync::changeset::folder(DEVICE))
+            .join(&p.outbox()[0]);
+        std::fs::set_permissions(&first, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let failed = p.send();
+        std::fs::set_permissions(&first, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(failed.is_err());
+        assert_eq!(p.baseline(), before);
+        assert_eq!(std::fs::read(p.file()).unwrap(), old);
+        assert!(unsaved(&p) > 0);
+        // Next time it works and both files are in.
+        assert!(!p.send().unwrap().nothing_new);
+        assert_eq!(manifest(&p.file())["files"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn an_unchecked_pdf_is_left_behind_not_fatal() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 unchecked", false);
+        add_pdf(&p, "m3", "m3.pdf", b"%PDF-1.7 checked", true);
+        let sent = p.send().unwrap();
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (1, 1));
+        assert!(p.file().is_file());
+        assert_eq!(entries(&p.file()).len(), 3);
+    }
+
+    #[test]
+    fn two_materials_sharing_one_pdf_make_one_entry() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 same", true);
+        add_pdf(&p, "m3", "m3.pdf", b"%PDF-1.7 same", true);
+        let sent = p.send().unwrap();
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (2, 0));
+        let blobs: Vec<_> = entries(&p.file())
+            .into_iter()
+            .filter(|n| n.starts_with("blobs/"))
+            .collect();
+        assert_eq!(blobs.len(), 1);
+    }
+
+    #[test]
+    fn stale_temps_older_than_a_day_are_removed_and_fresh_ones_kept() {
+        let p = phone();
+        std::fs::create_dir_all(&p.docs).unwrap();
+        let old_stage = p.root.0.join(".progress-staging-1-1");
+        let new_stage = p.root.0.join(".progress-staging-2-2");
+        let old_tmp = p.docs.join(".My phone progress-1-1.writing");
+        let new_tmp = p.docs.join(".My phone progress-2-2.writing");
+        let other = p.docs.join("keep-me.txt");
+        for d in [&old_stage, &new_stage] {
+            std::fs::create_dir_all(d.join("blobs")).unwrap();
+        }
+        for f in [&old_tmp, &new_tmp, &other] {
+            std::fs::write(f, b"x").unwrap();
+        }
+        let old = std::time::SystemTime::now() - std::time::Duration::from_secs(3 * 86_400);
+        std::fs::File::open(&old_stage)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        std::fs::File::options()
+            .write(true)
+            .open(&old_tmp)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        std::fs::File::options()
+            .write(true)
+            .open(&other)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        remove_stale_temps(&p.root.0, &p.docs, std::time::SystemTime::now());
+        assert!(!old_stage.exists() && new_stage.exists());
+        assert!(!old_tmp.exists() && new_tmp.exists());
+        assert!(other.exists());
+    }
+
+    #[test]
+    fn send_errors_name_no_path() {
+        let empty = TempDir::new("send-empty");
+        let docs = empty.0.join("docs");
+        let e = send_locked(&empty.0, &docs, "0.0.0-test", NOW).unwrap_err();
+        assert!(!e.contains("Mac"), "{e}");
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        std::fs::write(&p.docs, b"x").unwrap();
+        let e = p.send().unwrap_err();
+        for banned in [
+            "/", "sync", "merge", "conflict", "Mac", "outbox", "ledger", "sqlite",
+        ] {
+            assert!(!e.to_lowercase().contains(&banned.to_lowercase()), "{e}");
+        }
+        // No device id yet.
+        let q = phone();
+        q.db()
+            .execute("DELETE FROM app_metadata WHERE key = 'device_id'", [])
+            .unwrap();
+        let e = q.send().unwrap_err();
+        assert!(e.contains("isn't ready"), "{e}");
+    }
+
+    #[test]
+    fn counts_match_the_kinds_table() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_bookmark(&p.db(), "b2");
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 c", true);
+        let before = crate::phone_work::unsaved_phone_work_in(&p.root.0).unwrap();
+        let sent = p.send().unwrap();
+        assert_eq!(sent.counts.bookmarks, before.bookmarks);
+        assert_eq!(sent.counts.materials, before.materials);
+        assert_eq!(sent.counts.reviews, before.reviews);
+    }
+
+    #[test]
+    fn a_send_seeds_the_ledger_first_when_prepare_never_ran() {
+        let root = TempDir::new("send-unprepared");
+        let docs = root.0.join("docs-out");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{BEFORE}\"}}"),
+        )
+        .unwrap();
+        let conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [DEVICE],
+        )
+        .unwrap();
+        // Pre-ledger phone work: present without any ledger row.
+        conn.execute_batch("DROP TRIGGER IF EXISTS trg_sync_study_materials_insert;")
+            .ok();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('old1','a',?1,?1)",
+            [NOW],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM local_changes", []).unwrap();
+        conn.execute("DELETE FROM sync_row_meta", []).unwrap();
+        drop(conn);
+        let sent = send_locked(&root.0, &docs, "0.0.0-test", NOW).unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!(sent.counts.materials, 1);
+        let m = manifest(&docs.join(PROGRESS_FILE));
+        assert_eq!(m["files"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn a_send_after_a_restore_keeps_the_earlier_progress_file() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let first = std::fs::read(p.file()).unwrap();
+        // A restore: new identity, floor moved, watermark gone.
+        let top = count(&p.db(), "SELECT MAX(seq) FROM local_changes");
+        let other = "cccccccc-2222-4333-8444-555555555555";
+        let c = p.db();
+        c.execute(
+            "UPDATE app_metadata SET value = ?1 WHERE key = 'device_id'",
+            [other],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+            [top.to_string()],
+        )
+        .unwrap();
+        c.execute(
+            "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
+            [],
+        )
+        .unwrap();
+        drop(c);
+        add_bookmark(&p.db(), "b2");
+        p.send().unwrap();
+        let kept = p
+            .docs
+            .join("My phone progress (before 4 Nov 2026).hfdprogress");
+        assert_eq!(std::fs::read(&kept).unwrap(), first);
+        assert_eq!(manifest(&p.file())["deviceId"], other);
+    }
+
+    #[test]
+    fn a_watermark_ahead_of_the_log_refuses_without_changes() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        set_exported_through_seq(&p.db(), 9999).unwrap();
+        let before = p.baseline();
+        assert!(p.send().is_err());
+        assert_eq!(p.baseline(), before);
+        assert!(!p.file().exists());
+    }
+
+    #[test]
+    fn a_second_send_at_the_same_time_is_refused() {
+        let p = phone();
+        let _held = crate::sync::send::hold_for_test();
+        let e = send_phone_progress_in(&p.root.0, &p.docs, "0.0.0-test", NOW).unwrap_err();
+        assert_eq!(e, "Already sending. Try again in a moment.");
+    }
+
+    #[test]
+    fn bootstrap_after_a_restore_seeds_nothing_and_marks_done() {
+        let root = TempDir::new("send-restored");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{NOW}\"}}"),
+        )
+        .unwrap();
+        let mut conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('r1','a',?1,?1)",
+            [BEFORE],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM local_changes", []).unwrap();
+        conn.execute("DELETE FROM sync_row_meta", []).unwrap();
+        let out = bootstrap_in(&root.0, &mut conn, true, NOW).unwrap();
+        assert_eq!(out.seeded, 0);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM app_metadata WHERE key='sync_bootstrapped'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn the_pdf_sentence_inputs_survive_a_sent_status() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 u", false);
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new && sent.pdfs_left == 1);
+        // A left-out PDF keeps the work counted as not saved.
+        assert!(unsaved(&p) > 0);
+    }
+}

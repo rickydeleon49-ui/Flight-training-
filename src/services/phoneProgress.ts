@@ -58,3 +58,40 @@ export function phoneProgressSentence(progress: PhoneProgress): string {
   }
   return parts.join(" ");
 }
+
+export interface SentPhoneProgress {
+  fileName: string;
+  sentAt: string;
+  nothingNew: boolean;
+  counts: UnsavedPhoneWork;
+  pdfsIncluded: number;
+  pdfsLeft: number;
+  fileBytes: number;
+}
+
+/** Phone: write all unsent progress into Files for the Mac. */
+export async function sendPhoneProgress(): Promise<SentPhoneProgress> {
+  if (!isTauri()) throw new Error("Only the phone sends its progress this way.");
+  return invoke<SentPhoneProgress>("send_phone_progress");
+}
+
+/** Phone startup: get the progress log ready. Never throws; a problem is only noted in the console. */
+export async function preparePhoneProgress(): Promise<void> {
+  try {
+    await invoke("prepare_phone_progress");
+  } catch (error) {
+    console.warn("Could not get phone progress ready", error);
+  }
+}
+
+/** What the student sees after sending. */
+export function sentPhoneProgressSentence(sent: SentPhoneProgress): string {
+  if (sent.nothingNew) return "Nothing new to send since last time.";
+  let line = `Sent: ${unsavedPhoneWorkCounts(sent.counts) ?? "your latest work"}`;
+  if (sent.pdfsIncluded > 0) line += ` · ${pdfs(sent.pdfsIncluded)}`;
+  line += `. It's in Files → Your Flight Deck → ${sent.fileName}. On your Mac: Settings → Get progress from my iPhone.`;
+  if (sent.pdfsLeft > 0) {
+    line += ` ${sent.pdfsLeft === 1 ? "1 PDF couldn't" : `${sent.pdfsLeft} PDFs couldn't`} be included this time.`;
+  }
+  return line;
+}

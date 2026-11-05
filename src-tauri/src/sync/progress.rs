@@ -88,7 +88,7 @@ fn temp_dir() -> Result<TempDir, String> {
     Ok(TempDir(dir))
 }
 
-fn open_app_db(root: &Path) -> Result<Connection, String> {
+pub(crate) fn open_app_db(root: &Path) -> Result<Connection, String> {
     let path = root.join(DB_FILE);
     if !path.is_file() {
         return Err(NO_LIBRARY.to_string());
