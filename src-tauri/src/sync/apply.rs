@@ -20,6 +20,159 @@ use crate::sync::tables::{self, MergeRule, SyncTable, SYNC_TABLES};
 const GUARD: &str = "sync_applying";
 const STATE: &str = "card_review_state";
 
+/// Local events for one item, each with its durable origin device
+/// (`sync_row_meta`, else this device, else '').
+pub(crate) fn item_events(
+    conn: &Connection,
+    item: &str,
+) -> Result<Vec<replay::ReviewEvent>, ApplyError> {
+    let ids: Vec<(String, String)> = conn
+        .prepare(
+            "SELECT e.id, COALESCE(m.device_id,
+               (SELECT value FROM app_metadata WHERE key = 'device_id'), '')
+             FROM card_review_events e
+             LEFT JOIN sync_row_meta m
+               ON m.table_name = 'card_review_events' AND m.row_id = e.id
+             WHERE e.item_id = ?1",
+        )?
+        .query_map([item], |r| Ok((r.get(0)?, r.get(1)?)))?
+        .collect::<Result<_, _>>()?;
+    let events_table = tables::table("card_review_events").ok_or(ApplyError::UnknownTable)?;
+    let mut events = Vec::with_capacity(ids.len());
+    for (id, device) in ids {
+        let row = tables::read_row_json(conn, events_table, &id)?.ok_or(ApplyError::BadRow)?;
+        events.push(replay::event_from_row(&row, &device).ok_or(ApplyError::BadRow)?);
+    }
+    Ok(events)
+}
+
+/// Re-derives the two state columns of each folded event, exactly as a local
+/// rating writes them. Only writes where the stored JSON differs. Fails closed
+/// (nothing written) unless the sync guard row is present, so the ledger
+/// triggers stay silent. Returns how many rows changed.
+pub(crate) fn rewrite_event_states(
+    conn: &Connection,
+    folded: &[replay::FoldedEvent],
+) -> Result<usize, ApplyError> {
+    let guarded: Option<i64> = conn
+        .query_row("SELECT 1 FROM app_metadata WHERE key = ?1", [GUARD], |r| {
+            r.get(0)
+        })
+        .optional()?;
+    if guarded.is_none() {
+        return Err(ApplyError::BadRow);
+    }
+    let mut changed = 0;
+    for f in folded {
+        let prior = f.prior.as_ref().map_or_else(
+            || "null".to_string(),
+            |p| crate::practice_sessions::canonical_json(&p.to_json()),
+        );
+        let next = crate::practice_sessions::canonical_json(&f.next.to_json());
+        changed += conn.execute(
+            "UPDATE card_review_events SET prior_state_json = ?2, next_state_json = ?3
+             WHERE id = ?1 AND (prior_state_json IS NOT ?2 OR next_state_json IS NOT ?3)",
+            params![f.id, prior, next],
+        )?;
+    }
+    Ok(changed)
+}
+
+/// Startup re-fold for synced cards: for each item with an event that came
+/// from another device, re-derive the event states, but only when the stored
+/// `card_review_state` already equals the fold's last schedule. Any other item
+/// or a fold error is skipped. The caller holds the sync guard.
+pub(crate) fn refold_synced_items(conn: &Connection) -> rusqlite::Result<usize> {
+    // Once per database: later synced ratings are re-folded during replay.
+    let done: Option<i64> = conn
+        .query_row(
+            "SELECT 1 FROM app_metadata WHERE key = ?1",
+            [REFOLD_DONE],
+            |r| r.get(0),
+        )
+        .optional()?;
+    if done.is_some() {
+        return Ok(0);
+    }
+    let changed = refold_all_synced_items(conn)?;
+    conn.execute(
+        "INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?1, '1')",
+        [REFOLD_DONE],
+    )?;
+    Ok(changed)
+}
+
+/// App-metadata key set once the startup re-fold has run on this database.
+const REFOLD_DONE: &str = "sync_refold_done";
+
+fn refold_all_synced_items(conn: &Connection) -> rusqlite::Result<usize> {
+    let items: Vec<String> = conn
+        .prepare(
+            "SELECT DISTINCT e.item_id FROM card_review_events e
+             JOIN sync_row_meta m ON m.table_name = 'card_review_events' AND m.row_id = e.id
+             WHERE m.device_id IS NOT NULL
+               AND m.device_id <> COALESCE((SELECT value FROM app_metadata WHERE key = 'device_id'), '')
+             ORDER BY e.item_id",
+        )?
+        .query_map([], |r| r.get(0))?
+        .collect::<Result<_, _>>()?;
+    let mut changed = 0;
+    for item in items {
+        let found: Option<(String, i64)> = conn
+            .query_row(
+                "SELECT v.source_material_id,
+                        COALESCE((SELECT g.generation FROM card_review_generations g
+                                  WHERE g.source_material_id = v.source_material_id), 0)
+                 FROM card_items i JOIN card_versions v ON v.id = i.version_id
+                 WHERE i.id = ?1",
+                [&item],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?;
+        let Some((_material, generation)) = found else {
+            continue;
+        };
+        // A row that can't be read skips only this card.
+        let Ok(events) = item_events(conn, &item) else {
+            continue;
+        };
+        let Ok(folded) = replay::fold_item(&events, generation) else {
+            continue;
+        };
+        let Some(last) = folded.last() else {
+            continue;
+        };
+        let s = &last.next;
+        let same: bool = conn
+            .query_row(
+                "SELECT scheduler_version = ?2 AND step = ?3 AND due_at IS ?4
+                        AND last_reviewed_at IS ?5 AND reps = ?6 AND lapses = ?7
+                 FROM card_review_state WHERE item_id = ?1",
+                params![
+                    item,
+                    s.scheduler_version,
+                    s.step,
+                    s.due_at,
+                    s.last_reviewed_at,
+                    s.reps,
+                    s.lapses
+                ],
+                |r| r.get(0),
+            )
+            .optional()?
+            .unwrap_or(false);
+        if !same {
+            continue;
+        }
+        match rewrite_event_states(conn, &folded) {
+            Ok(n) => changed += n,
+            Err(ApplyError::Db(e)) => return Err(e),
+            Err(_) => {}
+        }
+    }
+    Ok(changed)
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct ApplyOutcome {
     /// `false`: the receipt already existed and nothing was done.
@@ -964,29 +1117,8 @@ impl<'a> Engine<'a> {
 
     /* ------------------------------ replay ----------------------------- */
 
-    /// Local events for one item, each with its durable origin device
-    /// (`sync_row_meta`, else this device, else '').
     fn local_events(&self, item: &str) -> Result<Vec<replay::ReviewEvent>, ApplyError> {
-        let ids: Vec<(String, String)> = self
-            .conn
-            .prepare(
-                "SELECT e.id, COALESCE(m.device_id,
-                   (SELECT value FROM app_metadata WHERE key = 'device_id'), '')
-                 FROM card_review_events e
-                 LEFT JOIN sync_row_meta m
-                   ON m.table_name = 'card_review_events' AND m.row_id = e.id
-                 WHERE e.item_id = ?1",
-            )?
-            .query_map([item], |r| Ok((r.get(0)?, r.get(1)?)))?
-            .collect::<Result<_, _>>()?;
-        let events_table = tables::table("card_review_events").ok_or(ApplyError::UnknownTable)?;
-        let mut events = Vec::with_capacity(ids.len());
-        for (id, device) in ids {
-            let row =
-                tables::read_row_json(self.conn, events_table, &id)?.ok_or(ApplyError::BadRow)?;
-            events.push(replay::event_from_row(&row, &device).ok_or(ApplyError::BadRow)?);
-        }
-        Ok(events)
+        item_events(self.conn, item)
     }
 
     fn local_state(&self, item: &str) -> Result<Option<(StateRow, i64)>, ApplyError> {
@@ -1019,6 +1151,8 @@ impl<'a> Engine<'a> {
 
     /// `Replay`: the schedule always comes from the local events (after the
     /// Union inserts above); the file's schedule columns are never written.
+    /// Then each kept event's prior/next state is re-derived from the fold, so
+    /// every device holds one history (backup step 9).
     /// `suspended`/`flag` come from the file's row only when it wins LWW,
     /// else they stay as they are here: replay never clears them.
     fn replay_touched(&mut self) -> Result<(), ApplyError> {
@@ -1036,8 +1170,10 @@ impl<'a> Engine<'a> {
                 continue;
             };
             let events = self.local_events(&item)?;
-            let schedule = replay::replay_item(&events, self.generation(&material)?)
+            let folded = replay::fold_item(&events, self.generation(&material)?)
                 .map_err(ApplyError::Replay)?;
+            rewrite_event_states(self.conn, &folded)?;
+            let schedule = folded.last().map(|f| f.next.clone());
             let local = self.local_state(&item)?;
             let incoming = match change {
                 Some(c)

@@ -85,8 +85,9 @@ pub(crate) fn ensure_rate_receipts(
 
 /// Startup repair for a database that took ratings before receipts were
 /// derived: adds the missing receipts and raises any state revision that is
-/// below its current rating count. Only ever adds or raises, and is not
-/// logged as a local change. Returns the number of rows touched.
+/// below its current rating count, and re-derives the event states of synced
+/// cards whose stored state already equals the fold. Not logged as a local
+/// change. Returns the number of rows touched.
 pub(crate) fn repair_synced_ratings(conn: &mut Connection) -> rusqlite::Result<usize> {
     let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
     // Only once every migration is recorded: sqlx then has nothing left to
@@ -117,7 +118,8 @@ pub(crate) fn repair_synced_ratings(conn: &mut Connection) -> rusqlite::Result<u
         "INSERT INTO app_metadata (key, value) VALUES (?1, 'repair')",
         [GUARD],
     )?;
-    let mut changed = ensure_rate_receipts(&tx, None)?;
+    let mut changed = crate::sync::apply::refold_synced_items(&tx)?;
+    changed += ensure_rate_receipts(&tx, None)?;
     changed += tx.execute(
         "UPDATE card_review_state SET revision = (
            SELECT COUNT(*) FROM card_review_events e
