@@ -598,6 +598,19 @@ fn count_mac_changes(conn: &Connection, changes: &[Change], peer: &str) -> MacCo
     counts
 }
 
+/// The Mac whose full copy this phone was restored from, when known.
+fn copy_source(conn: &Connection) -> Option<String> {
+    conn.query_row(
+        "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'sync_copy_from_device'",
+        [],
+        |r| r.get::<_, Option<String>>(0),
+    )
+    .optional()
+    .ok()
+    .flatten()
+    .flatten()
+}
+
 /// Before anything is written, on the phone: the copy must be there, no
 /// file may leave a gap, and a delete of study material must not meet
 /// phone work that is saved nowhere else.
@@ -621,6 +634,10 @@ fn phone_preflight(
     let Some(floor) = floor.map(|f| f.max(0)) else {
         return Err(w.not_yet.to_string());
     };
+    // Changes from a different Mac than the copy's cannot be placed on it.
+    if copy_source(conn).is_some_and(|source| source != plan.device_id) {
+        return Err(w.needs_earlier.to_string());
+    }
     let applied: HashSet<String> = {
         let mut stmt = conn
             .prepare("SELECT file_name FROM sync_applied WHERE peer_device = ?1")
@@ -669,6 +686,21 @@ fn phone_preflight(
     Ok(())
 }
 
+/// The Mac says how far it has applied this phone's files; the phone drops
+/// those from its own outbox. Only for the Mac this phone's copy came from,
+/// and only once the file has passed every check of its kind, platform, id
+/// and version.
+fn prune_confirmed(
+    root: &Path,
+    conn: &Connection,
+    plan: &ProgressPlan,
+    manifest: &serde_json::Value,
+) {
+    if copy_source(conn).as_deref() == Some(plan.device_id.as_str()) {
+        super::send::prune_outbox(root, conn, manifest);
+    }
+}
+
 /// Brings in a progress or changes file. Two passes over the open zip: the
 /// first checks every change file and keeps only the names of the materials;
 /// the second reads, counts and applies one file at a time. `receiver` is the
@@ -700,12 +732,18 @@ fn import_progress_file(
         from_future,
     };
     if plan.files.is_empty() {
+        if receiver == Side::Phone {
+            if let Ok(conn) = open_app_db(root) {
+                prune_confirmed(root, &conn, &plan, manifest);
+            }
+        }
         return Ok(nothing(false));
     }
 
     let mut conn = open_app_db(root).map_err(|_| w.no_library.to_string())?;
     if receiver == Side::Phone {
         phone_preflight(&conn, root, &plan, &parent_deletes)?;
+        prune_confirmed(root, &conn, &plan, manifest);
     }
     let staging = temp_dir().map_err(|_| w.not_saved.to_string())?;
     let mut counts = zero_counts();

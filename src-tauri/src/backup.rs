@@ -7254,41 +7254,65 @@ fn record_phone_baseline_best_effort(root: &Path) {
     }
 }
 
-fn reset_sync_identity(root: &Path) -> Result<(), String> {
-    let connection =
+pub(crate) fn reset_sync_identity(root: &Path) -> Result<(), String> {
+    let mut connection =
         Connection::open_with_flags(root.join(DB_FILES[0]), OpenFlags::SQLITE_OPEN_READ_WRITE)
             .map_err(|e| e.to_string())?;
     connection
         .busy_timeout(BUSY_TIMEOUT)
         .map_err(|e| e.to_string())?;
-    match connection.execute("DELETE FROM app_metadata WHERE key = 'device_id'", []) {
-        Ok(_) => {}
+    // One transaction: a failed save can never leave the restored phone with
+    // the Mac's id, and the copy's source is stored before the id is dropped.
+    let tx = connection
+        .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
+        .map_err(|e| e.to_string())?;
+    // The restored copy's own id is the Mac it came from: later changes files
+    // are accepted only from that Mac.
+    match tx.query_row(
+        "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'device_id'",
+        [],
+        |r| r.get::<_, Option<String>>(0),
+    ) {
+        Ok(Some(id)) if crate::sync::changeset::valid_device_id(&id) => {
+            tx.execute(
+                "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_copy_from_device', ?1)",
+                [id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        Ok(_) | Err(rusqlite::Error::QueryReturnedNoRows) => {
+            tx.execute(
+                "DELETE FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+            )
+            .map_err(|e| e.to_string())?;
+        }
         Err(e) if e.to_string().contains("no such table: app_metadata") => return Ok(()),
         Err(e) => return Err(e.to_string()),
     }
+    tx.execute("DELETE FROM app_metadata WHERE key = 'device_id'", [])
+        .map_err(|e| e.to_string())?;
     // Whatever the change log holds now came with the restored copy, not from
     // this device: later exports start after it.
     let floor: i64 =
-        match connection.query_row("SELECT COALESCE(MAX(seq), 0) FROM local_changes", [], |r| {
+        match tx.query_row("SELECT COALESCE(MAX(seq), 0) FROM local_changes", [], |r| {
             r.get(0)
         }) {
             Ok(n) => n,
             Err(e) if e.to_string().contains("no such table: local_changes") => 0,
             Err(e) => return Err(e.to_string()),
         };
-    connection
-        .execute(
-            "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
-            [floor.to_string()],
-        )
-        .map_err(|e| e.to_string())?;
-    connection
-        .execute(
-            "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
-            [],
-        )
-        .map_err(|e| e.to_string())?;
-    Ok(())
+    tx.execute(
+        "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+        [floor.to_string()],
+    )
+    .map_err(|e| e.to_string())?;
+    tx.execute(
+        "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())
 }
 
 fn remove_pending_directory_safely(pending: &Path) -> Result<(), std::io::Error> {
