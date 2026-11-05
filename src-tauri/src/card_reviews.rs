@@ -886,6 +886,9 @@ pub(crate) fn carried_event_id(event_id: &str, item_id: &str) -> String {
 /// existing is changed or deleted: the old version keeps its own rows. Any
 /// edit, delete or reorder carries nothing. Failure inside rolls back to a
 /// savepoint and leaves the save itself untouched.
+/// An append to a list never studied on this device still snapshots the new
+/// list, so ratings from another device carry in sync (S-6a5). The browser
+/// twin skips this, because the browser build has no sync.
 pub fn carry_review_state(
     tx: &Transaction,
     material_id: &str,
@@ -940,9 +943,17 @@ fn carry_inner(
         .map(|r| r.is_some())
         .map_err(storage)
     };
-    // Nothing was ever reviewed in the old list, or the new list is already
-    // known: nothing to carry.
-    if !exists(&old_version.version_id)? || exists(&new_version.version_id)? {
+    // The new list is already known: nothing to do.
+    if exists(&new_version.version_id)? {
+        return Ok(());
+    }
+    // Never studied here: snapshot the appended list anyway (logged, like a
+    // first rating's), so a device that holds ratings on an earlier list can
+    // carry them when it arrives (sync::carry). Nothing to carry locally.
+    if !exists(&old_version.version_id)? {
+        if !old.is_empty() {
+            materialize(tx, material_id, &new_version, provider, now)?;
+        }
         return Ok(());
     }
     materialize(tx, material_id, &new_version, provider, now)?;

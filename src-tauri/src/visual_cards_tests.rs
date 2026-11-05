@@ -1,6 +1,6 @@
-struct TempDir(std::path::PathBuf);
+pub(crate) struct TempDir(std::path::PathBuf);
 impl TempDir {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         static COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let n = COUNT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let p = std::env::temp_dir().join(format!(
@@ -14,7 +14,7 @@ impl TempDir {
         std::fs::create_dir_all(&p).unwrap();
         Self(p)
     }
-    fn path(&self) -> &std::path::Path {
+    pub(crate) fn path(&self) -> &std::path::Path {
         &self.0
     }
 }

@@ -769,6 +769,145 @@ fn item_ids(conn: &Connection, cards: &[(&str, &str)]) -> Vec<String> {
 }
 
 #[test]
+fn an_append_to_a_never_studied_list_snapshots_it_and_carries_nothing() {
+    let base = [("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")];
+    let more = [
+        ("Q0", "A0"),
+        ("Q1", "A1"),
+        ("Q2", "A2"),
+        ("Q3", "A3"),
+        ("Q4", "A4"),
+    ];
+    let n =
+        |conn: &Connection, sql: &str| -> i64 { conn.query_row(sql, [], |r| r.get(0)).unwrap() };
+    let mut conn = database();
+    save_on(
+        &mut conn,
+        &operation(1, "create", Value::Null, gemini_set(&base)),
+        NOW,
+    )
+    .unwrap();
+    assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 0);
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(2, "edit", before, gemini_set(&more)),
+        LATER,
+    )
+    .unwrap();
+    let canonical = match crate::card_reviews::parse_saved_cards(Some(
+        &gemini_set(&more)["flashcards"].to_string(),
+    )) {
+        crate::card_reviews::SavedCards::Ok(c) => c,
+        _ => panic!("cards"),
+    };
+    let want = crate::card_reviews::card_version(M, &canonical);
+    let (id, active, count): (String, i64, i64) = conn
+        .query_row(
+            "SELECT id, is_active, card_count FROM card_versions",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .unwrap();
+    assert_eq!(
+        (id.as_str(), active, count),
+        (want.version_id.as_str(), 1, 5)
+    );
+    let mut items: Vec<String> = conn
+        .prepare("SELECT id FROM card_items WHERE version_id = ?1")
+        .unwrap()
+        .query_map([&id], |r| r.get(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect();
+    let mut expected = item_ids(&conn, &more);
+    items.sort();
+    expected.sort();
+    assert_eq!(items, expected);
+    for table in [
+        "card_review_state",
+        "card_review_events",
+        "card_review_operations",
+    ] {
+        assert_eq!(n(&conn, &format!("SELECT COUNT(*) FROM {table}")), 0);
+    }
+    let logged = |table: &str, row_id: &str| -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM local_changes WHERE table_name = ?1 AND row_id = ?2 AND op = 'insert'",
+            params![table, row_id],
+            |r| r.get(0),
+        )
+        .unwrap()
+    };
+    assert!(logged("card_versions", &id) >= 1);
+    for item in &expected {
+        assert!(logged("card_items", item) >= 1);
+    }
+    crate::backup::verify_application_connection(&conn).unwrap();
+    // Rating B0 on the same device works and keeps the database valid.
+    rate_card(&mut conn, &more, 0, "good", 9);
+    crate::backup::verify_application_connection(&conn).unwrap();
+
+    // An edit (not an append) of the snapshotted list makes no version.
+    let edited = [
+        ("Q0", "A0"),
+        ("Q1", "changed"),
+        ("Q2", "A2"),
+        ("Q3", "A3"),
+        ("Q4", "A4"),
+    ];
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(3, "edit", before, gemini_set(&edited)),
+        LATER,
+    )
+    .unwrap();
+    assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 1);
+
+    // An empty old list makes no version.
+    let mut conn = database();
+    save_on(
+        &mut conn,
+        &operation(4, "create", Value::Null, gemini_set(&[])),
+        NOW,
+    )
+    .unwrap();
+    let before = row(&mut conn);
+    save_on(
+        &mut conn,
+        &operation(5, "edit", before, gemini_set(&base)),
+        LATER,
+    )
+    .unwrap();
+    assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 0);
+}
+
+#[test]
+fn an_append_with_a_picture_card_makes_no_version() {
+    use crate::visual_cards::tests::{expected, library, operation as visual_op, region, TempDir};
+    let dir = TempDir::new();
+    let conn = library(dir.path());
+    let r = region();
+    let plain = json!({"itemId": "c-0", "front": "Plain front", "back": "Plain back", "sourcePage": null, "origin": "user"});
+    let mut create = visual_op(&r);
+    create["visualRegions"] = json!([]);
+    create["next"]["flashcards"] = json!([plain.clone()]);
+    save_study_set_at(dir.path(), &create).unwrap();
+    let mut edit = visual_op(&r);
+    edit["operationId"] = json!("5e700000-0000-4000-8000-000000000002");
+    edit["reason"] = json!("edit");
+    edit["expected"] = expected(&conn);
+    let picture = edit["next"]["flashcards"][0].clone();
+    edit["next"]["flashcards"] = json!([plain, picture]);
+    save_study_set_at(dir.path(), &edit).unwrap();
+    let versions: i64 = conn
+        .query_row("SELECT COUNT(*) FROM card_versions", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(versions, 0);
+}
+
+#[test]
 fn appending_cards_carries_review_state_and_edits_do_not() {
     let base = [("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")];
     let more = [
