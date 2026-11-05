@@ -1441,6 +1441,7 @@ pub async fn acknowledge_gemini_job(app: AppHandle, job_id: String) -> Result<bo
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn generate_study_aid(
     app: AppHandle,
     relative_path: String,
@@ -1449,8 +1450,15 @@ pub async fn generate_study_aid(
     request_id: Option<String>,
     target_cards: Option<u32>,
     cards_only: Option<bool>,
+    existing_fronts: Option<Vec<String>>,
 ) -> Result<JobAnswer<GeneratedStudyAid>, String> {
-    let target = batches::target(target_cards)?;
+    // "Make 10 more cards": one card batch that avoids the fronts she has.
+    let more = existing_fronts.as_deref();
+    let target = if more.is_some() {
+        batches::MORE_TARGET
+    } else {
+        batches::target(target_cards)?
+    };
     // Only a flashcards request fails on an empty card set; a guide-and-cards
     // request keeps its guide even when no cards came back.
     let cards_only = cards_only.unwrap_or(false);
@@ -1496,7 +1504,7 @@ pub async fn generate_study_aid(
         base_revision.as_deref(),
         &source,
         async {
-            batches::generate(&ctx, &source, &root, &material_id, target, cards_only)
+            batches::generate(&ctx, &source, &root, &material_id, target, cards_only, more)
                 .await
                 .map_err(|m| {
                     format!(

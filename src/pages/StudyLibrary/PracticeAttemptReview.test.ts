@@ -1958,7 +1958,7 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
     expect(document.activeElement).toBe(answerInput);
   });
 
-  it("contracts approved C-D3 versioning: rating 2 cards Easy, then adding 1 card via revealed compact UI creates fresh version with 3 new in due queue, 0 rated in current snapshot, and preserves old raw reviews and 6 practice tables deep-unchanged", async () => {
+  it("GUIDE-PACK-01 (was C-D3): rating 2 cards Easy, then adding 1 card via revealed compact UI creates a new version that keeps the 2 schedules, 1 new card in the queue, old raw reviews intact and 6 practice tables deep-unchanged", async () => {
     const matId = "m-card-cd3";
     await seed(matId, "CD3Mat");
     await seedStudySet(matId, "CD3Mat material", [
@@ -2059,10 +2059,14 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
       expect(newItemIds).not.toContain(oldId);
     }
 
-    // Snapshot current rated states 0 under approved C-D3
-    expect(Object.keys(currentSnap.states)).toHaveLength(0);
+    // GUIDE-PACK-01: a card added at the end keeps the earlier cards' schedules
+    // (copied to their new ids); only the new card starts fresh.
+    expect(Object.keys(currentSnap.states)).toHaveLength(2);
+    expect(currentSnap.states[newItemIds[0]!]?.lastReviewedAt).toBeTruthy();
+    expect(currentSnap.states[newItemIds[1]!]?.lastReviewedAt).toBeTruthy();
+    expect(currentSnap.states[newItemIds[2]!]).toBeUndefined();
 
-    // getDueQueue returns 3 new under APPROVED C-D3
+    // getDueQueue: the two Easy cards are not due yet; the new card is new
     const nowUtc = new Date().toISOString();
     const nextLocalMidnight = nextLocalMidnightUtc(nowUtc, currentTimeZone());
     const queue = await repos.cardReviews.getDueQueue({
@@ -2072,19 +2076,20 @@ describe("Safe Make a card entry from mistake followup panel (MISTAKES-01d)", ()
       nowUtc,
       nextLocalMidnightUtc: nextLocalMidnight,
     });
-    expect(queue).toHaveLength(3);
-    expect(queue.filter((q) => q.kind === "new")).toHaveLength(3);
-    expect(queue.filter((q) => q.kind === "due")).toHaveLength(0);
-    expect(queue.filter((q) => q.kind === "again")).toHaveLength(0);
-    expect(queue.every((q) => q.kind === "new" && q.dueAt === null)).toBe(true);
+    expect(queue).toHaveLength(1);
+    expect(queue[0]).toMatchObject({ itemId: newItemIds[2], kind: "new", dueAt: null });
 
     // Old raw states/events/receipts deep UNCHANGED, no fake events
+    // Old rows are untouched; the carry only ADDED rows for the new version's items.
     const postRawStates = await testDb.select("SELECT * FROM card_review_state ORDER BY item_id");
-    expect(postRawStates).toEqual(oldRawStates);
+    for (const row of oldRawStates) expect(postRawStates).toContainEqual(row);
+    expect(postRawStates).toHaveLength(oldRawStates.length * 2);
     const postRawEvents = await testDb.select("SELECT * FROM card_review_events ORDER BY id");
-    expect(postRawEvents).toEqual(oldRawEvents);
+    for (const row of oldRawEvents) expect(postRawEvents).toContainEqual(row);
+    expect(postRawEvents).toHaveLength(oldRawEvents.length * 2);
     const postRawOperations = await testDb.select("SELECT * FROM card_review_operations ORDER BY operation_id");
-    expect(postRawOperations).toEqual(oldRawOperations);
+    for (const row of oldRawOperations) expect(postRawOperations).toContainEqual(row);
+    expect(postRawOperations).toHaveLength(oldRawOperations.length * 2);
 
     // Practice baseline unchanged
     expect(await storedState()).toEqual(practiceBaseline);

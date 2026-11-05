@@ -856,6 +856,192 @@ fn materialize(
     Ok(())
 }
 
+/// A UUIDv4-shaped id derived from `seed`, so the native and browser twins
+/// (and a retry) make the same ids for the same carried rating.
+pub fn derived_uuid_v4(seed: &str) -> String {
+    let h = sha256_hex(seed);
+    let nibble = u8::from_str_radix(&h[16..17], 16).unwrap_or(0);
+    let variant = b"89ab"[(nibble % 4) as usize] as char;
+    format!(
+        "{}-{}-4{}-{}{}-{}",
+        &h[0..8],
+        &h[8..12],
+        &h[13..16],
+        variant,
+        &h[17..20],
+        &h[20..32]
+    )
+}
+
+/// APPEND-ONLY CARRY-OVER (GUIDE-PACK-01). When a saved card list grows only
+/// by cards added at its end, every earlier card keeps its review state in the
+/// new version: the state row, and each rating with its receipt (the backup
+/// check needs both to agree), are copied to the new version's items. Nothing
+/// existing is changed or deleted: the old version keeps its own rows. Any
+/// edit, delete or reorder carries nothing. Failure inside rolls back to a
+/// savepoint and leaves the save itself untouched.
+pub fn carry_review_state(
+    tx: &Transaction,
+    material_id: &str,
+    before_json: &str,
+    after_json: &str,
+    provider: &str,
+    now: &str,
+) {
+    if tx.execute_batch("SAVEPOINT review_carry").is_err() {
+        return;
+    }
+    let ok = carry_inner(tx, material_id, before_json, after_json, provider, now).is_ok();
+    let _ = tx.execute_batch(if ok {
+        "RELEASE review_carry"
+    } else {
+        "ROLLBACK TO review_carry; RELEASE review_carry"
+    });
+}
+
+fn carry_inner(
+    tx: &Transaction,
+    material_id: &str,
+    before_json: &str,
+    after_json: &str,
+    provider: &str,
+    now: &str,
+) -> Check<()> {
+    let (SavedCards::Ok(old), SavedCards::Ok(new)) = (
+        parse_saved_cards(Some(before_json)),
+        parse_saved_cards(Some(after_json)),
+    ) else {
+        return Ok(());
+    };
+    if !matches!(provider, "gemini" | "import" | "manual")
+        || new.len() <= old.len()
+        || new.iter().any(|card| card.visual_region_id.is_some())
+        || new[..old.len()] != old[..]
+    {
+        return Ok(());
+    }
+    let (old_version, new_version) = (
+        card_version(material_id, &old),
+        card_version(material_id, &new),
+    );
+    let exists = |id: &str| -> Check<bool> {
+        tx.query_row(
+            "SELECT 1 FROM card_versions WHERE id = ?1 AND source_material_id = ?2",
+            params![id, material_id],
+            |_| Ok(()),
+        )
+        .optional()
+        .map(|r| r.is_some())
+        .map_err(storage)
+    };
+    // Nothing was ever reviewed in the old list, or the new list is already
+    // known: nothing to carry.
+    if !exists(&old_version.version_id)? || exists(&new_version.version_id)? {
+        return Ok(());
+    }
+    materialize(tx, material_id, &new_version, provider, now)?;
+    // One read for every earlier rating of the old list, grouped by card.
+    let mut statement = tx
+        .prepare(
+            "SELECT e.item_id, e.id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json,
+                    o.generation, o.applied_at, o.result_json
+             FROM card_review_events e
+             JOIN card_review_operations o ON o.operation_id = e.id AND o.is_erased = 0 AND o.action = 'rate'
+             WHERE e.item_id IN (SELECT id FROM card_items WHERE version_id = ?1)
+             ORDER BY e.reviewed_at, e.id",
+        )
+        .map_err(storage)?;
+    type Rating = (
+        String,
+        i64,
+        String,
+        String,
+        String,
+        String,
+        String,
+        i64,
+        String,
+        Option<String>,
+    );
+    let mut by_item: std::collections::HashMap<String, Vec<Rating>> =
+        std::collections::HashMap::new();
+    let rows = statement
+        .query_map([&old_version.version_id], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                (
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                    r.get(6)?,
+                    r.get(7)?,
+                    r.get(8)?,
+                    r.get(9)?,
+                    r.get(10)?,
+                ),
+            ))
+        })
+        .map_err(storage)?;
+    for row in rows {
+        let (item, rating) = row.map_err(storage)?;
+        by_item.entry(item).or_default().push(rating);
+    }
+    drop(statement);
+    for (before, after) in old_version.items.iter().zip(new_version.items.iter()) {
+        tx.prepare_cached(
+            "INSERT OR IGNORE INTO card_review_state
+               (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+             SELECT ?1, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+             FROM card_review_state WHERE item_id = ?2",
+        )
+        .and_then(|mut st| st.execute(params![after.item_id, before.item_id]))
+        .map_err(storage)?;
+        let ratings = by_item.remove(&before.item_id).unwrap_or_default();
+        for (
+            id,
+            generation,
+            rating,
+            reviewed_at,
+            scheduler,
+            prior,
+            next,
+            op_generation,
+            applied_at,
+            result,
+        ) in ratings
+        {
+            let Some(mut result) = result.and_then(|r| serde_json::from_str::<Value>(&r).ok())
+            else {
+                continue;
+            };
+            let carried = derived_uuid_v4(&format!("{id}\u{0}{}", after.item_id));
+            result["itemId"] = json!(after.item_id);
+            tx.execute(
+                "INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![carried, after.item_id, generation, rating, reviewed_at, scheduler, prior, next],
+            )
+            .map_err(storage)?;
+            tx.execute(
+                "INSERT OR IGNORE INTO card_review_operations
+                   (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
+                 VALUES (?1, 'rate', ?2, ?3, ?4, ?5, 0, ?6)",
+                params![carried, material_id, op_generation, sha256_hex(&carried), applied_at, canonical_json(&result)],
+            )
+            .map_err(storage)?;
+        }
+    }
+    tx.execute(
+        "UPDATE card_versions SET first_reviewed_at = (SELECT first_reviewed_at FROM card_versions WHERE id = ?1)
+         WHERE id = ?2 AND first_reviewed_at IS NULL",
+        params![old_version.version_id, new_version.version_id],
+    )
+    .map_err(storage)?;
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 fn apply_item(
     tx: &Transaction,

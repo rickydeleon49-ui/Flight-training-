@@ -21,6 +21,11 @@ vi.mock("sql.js/dist/sql-wasm.wasm?url", () => ({
 
 import type { CardItemAction, CardRating, CardReviewAction, CardReviewSnapshot } from "@/domain/types";
 import { cardVersion, type CanonicalCard } from "@/logic/cardIdentity";
+import { derivedUuidV4 } from "./cardReviewTransaction";
+import { validateCardReviewState } from "./practiceStateValidation";
+
+// Same value is asserted by the native test `carried_rating_ids_are_the_shared_golden_value`.
+const GOLDEN_CARRIED_ID = "56ca09f2-6e83-421f-9baf-88ef8e90cafd";
 import { DAY, MINUTE } from "@/logic/cardScheduler";
 import { nextLocalMidnightUtc } from "@/logic/localDay";
 
@@ -701,6 +706,131 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       expect(pages).toBe(500);
     }, 60_000); // 500 page reads over 10,000 rows
   });
+
+    it("GUIDE-PACK-01: cards added at the end keep their review state, ratings and receipts; new cards start fresh; edits carry nothing", async () => {
+      const { db } = await open(kind);
+      const repo = cardReviewRepository(db);
+      await seedMaterial(db, M, cardsA, "gemini");
+      await rateAt(repo, M, 0, "good", T0);
+      await rateAt(repo, M, 0, "easy", at(T0, 2 * DAY));
+      await rateAt(repo, M, 1, "again", at(T0, 2 * DAY));
+      const A = await cardVersion(M, cardsA);
+      const grown: CanonicalCard[] = [...cardsA, { front: "Synthetic card four", back: "E", sourcePage: 4 }, { front: "Synthetic card five", back: "F", sourcePage: null }];
+      const G = await cardVersion(M, grown);
+      const save = async (next: CanonicalCard[], reason: "edit", n: number) => {
+        const [stored] = await db.select<Record<string, string>>(
+          "SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at, summary_origin, retired_json FROM ai_study_sets WHERE source_material_id = ?",
+          [M],
+        );
+        await db.saveStudySetAtomically!(
+          {
+            operationId: `5e700000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`,
+            materialId: M,
+            reason,
+            expected: stored as never,
+            next: { title: "Synthetic", summary: "", summaryOrigin: null, sections: [], flashcards: next.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourcePage })), sourceNotes: "", provider: "gemini", model: "", retired: [] },
+          } as never,
+          undefined,
+        );
+      };
+      const state = async (itemId: string) =>
+        (await db.select<Record<string, unknown>>(
+          "SELECT step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision FROM card_review_state WHERE item_id = ?",
+          [itemId],
+        ))[0];
+      const oldStates = [await state(A.items[0]!.itemId), await state(A.items[1]!.itemId)];
+      expect(oldStates[0]).toBeTruthy();
+      await save(grown, "edit", 1);
+      expect(await state(G.items[0]!.itemId)).toEqual(oldStates[0]);
+      expect(await state(G.items[1]!.itemId)).toEqual(oldStates[1]);
+      expect(await state(G.items[2]!.itemId)).toBeUndefined();
+      expect(await state(G.items[3]!.itemId)).toBeUndefined();
+      // The earlier version still has its own state, but is no longer active.
+      expect(await state(A.items[0]!.itemId)).toEqual(oldStates[0]);
+      const versions = await db.select<Record<string, unknown>>("SELECT id, is_active FROM card_versions WHERE source_material_id = ? ORDER BY created_at, id", [M]);
+      expect(versions.filter((v) => Number(v.is_active) === 1).map((v) => v.id)).toEqual([G.versionId]);
+      const eventCount = async (itemId: string) =>
+        Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_review_events WHERE item_id = ?", [itemId]))[0]!.n);
+      expect([await eventCount(A.items[0]!.itemId), await eventCount(G.items[0]!.itemId)]).toEqual([2, 2]);
+      expect([await eventCount(A.items[1]!.itemId), await eventCount(G.items[1]!.itemId)]).toEqual([1, 1]);
+      // Every carried receipt names its new card and is a live rating receipt.
+      const receipts = await db.select<Record<string, unknown>>(
+        "SELECT result_json FROM card_review_operations o WHERE o.operation_id IN (SELECT id FROM card_review_events WHERE item_id IN (?, ?))",
+        [G.items[0]!.itemId, G.items[1]!.itemId],
+      );
+      expect(receipts).toHaveLength(3);
+      for (const r of receipts) expect([G.items[0]!.itemId, G.items[1]!.itemId]).toContain((JSON.parse(String(r.result_json)) as { itemId: string }).itemId);
+      // Carried cards keep rating (their revision continues), new ones rate from fresh.
+      await rateAt(repo, M, 0, "good", at(T0, 5 * DAY));
+      await rateAt(repo, M, 3, "good", at(T0, 5 * DAY));
+      expect(Number((await state(G.items[0]!.itemId))!.reps)).toBe(3);
+      expect(Number((await state(G.items[3]!.itemId))!.reps)).toBe(1);
+      // An edit is not an append: no new version, nothing carried.
+      const count = async () => Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_versions", []))[0]!.n);
+      const n = await count();
+      await save(grown.map((c, i) => (i === 0 ? { ...c, back: "changed" } : c)), "edit", 2);
+      expect(await count()).toBe(n);
+    });
+
+    it("GUIDE-PACK-01 audit: suspended + flagged cards carry, a mixed-origin set appends, the backup validator passes, a reset after a carry stays valid", async () => {
+      const { db } = await open(kind);
+      const repo = cardReviewRepository(db);
+      const mixed: CanonicalCard[] = [
+        ...cardsA.slice(0, 2),
+        { front: "Mine: my own card", back: "Z", sourcePage: null, origin: "user" } as CanonicalCard,
+      ];
+      await seedMaterial(db, M, mixed, "gemini");
+      await rateAt(repo, M, 0, "good", T0);
+      await rateAt(repo, M, 0, "easy", at(T0, 2 * DAY));
+      await itemActionNow(repo, M, 1, { action: "suspend" });
+      await itemActionNow(repo, M, 2, { action: "flag", reason: "unclear" });
+      const before = await cardVersion(M, mixed);
+      const grown: CanonicalCard[] = [...mixed, { front: "Synthetic card nine", back: "N", sourcePage: 9 }];
+      const after = await cardVersion(M, grown);
+      const [stored] = await db.select<Record<string, string>>(
+        "SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at, summary_origin, retired_json FROM ai_study_sets WHERE source_material_id = ?",
+        [M],
+      );
+      await (db as TestDatabase).saveStudySetAtomically!(
+        {
+          operationId: "5e700000-0000-4000-8000-0000000000aa",
+          materialId: M,
+          reason: "edit",
+          expected: stored as never,
+          next: { title: "Synthetic", summary: "", summaryOrigin: null, sections: [], flashcards: grown.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourcePage, ...(c.origin ? { origin: c.origin } : {}) })), sourceNotes: "", provider: "gemini", model: "", retired: [] },
+        } as never,
+        undefined,
+      );
+      const state = async (itemId: string) =>
+        (await db.select<Record<string, unknown>>(
+          "SELECT step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision FROM card_review_state WHERE item_id = ?",
+          [itemId],
+        ))[0];
+      for (let i = 0; i < 3; i++) expect(await state(after.items[i]!.itemId)).toEqual(await state(before.items[i]!.itemId));
+      expect(Number((await state(after.items[1]!.itemId))!.suspended)).toBe(1);
+      expect((await state(after.items[2]!.itemId))!.flag).toBeTruthy();
+      expect(await state(after.items[3]!.itemId)).toBeUndefined();
+      const origin = await db.select<Record<string, unknown>>("SELECT origin FROM card_version_origins WHERE version_id = ?", [after.versionId]);
+      expect(origin.map((r) => r.origin)).toEqual(["mixed"]);
+      // The browser backup validator accepts the carried rows.
+      const reference = await createNodeSqliteDatabase();
+      try {
+        const q = (sql: string, params: unknown[]) => db.select<Record<string, unknown>>(sql, params as never);
+        const ref = (sql: string, params: unknown[]) => reference.select<Record<string, unknown>>(sql, params as never);
+        await validateCardReviewState(q, ref);
+        // Reset after a carry removes every version's rows and receipts; still valid.
+        await repo.saveAction(reset(await repo.getCardReviewSnapshot(M)));
+        expect(await counts(db)).toMatchObject({ states: 0, events: 0 });
+        expect(await db.select("SELECT 1 FROM card_review_operations WHERE is_erased = 0 AND action = 'rate'")).toEqual([]);
+        await validateCardReviewState(q, ref);
+      } finally {
+        reference.close();
+      }
+    });
+
+    it("GUIDE-PACK-01: the carried rating id is the golden value shared with the native twin", async () => {
+      expect(await derivedUuidV4("rating-id\u0000item-id")).toBe(GOLDEN_CARRIED_ID);
+    });
 });
 
 describe("browser storage durability for card reviews (sql.js)", () => {

@@ -195,6 +195,8 @@ export async function generateStudyAid(
   requestId?: string,
   targetCards = 40,
   cardsOnly = false,
+  /** "Make more cards": the fronts the student already has. One batch of 10 comes back, to append. */
+  existingFronts?: string[],
 ): Promise<GeneratedStudyAid & GenerationJobIdentity> {
   if (!isTauri()) throw new Error("Gemini study tools need the desktop application.");
   // cardsOnly: a flashcards request fails on an empty card set; a guide-and-cards
@@ -206,8 +208,12 @@ export async function generateStudyAid(
     requestId,
     targetCards,
     cardsOnly,
+    existingFronts,
   });
 }
+
+/** Marks a study-aid answer that carries only extra cards to add to the saved set. */
+export const MORE_CARDS_NOTE = "more-cards-v1";
 
 export async function generatePracticeTest(
   relativePath: string,

@@ -276,6 +276,8 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     await repos.documents.create({
       id: "mat-other", title: "Weather handout", filePath: "documents/wx.txt", originalFileName: "wx.txt", fileSize: 2048,
     });
+    // The first guide also makes cards and a test unless the material has them (GUIDE-PACK-01).
+    await repos.documents.savePracticeTest({ sourceMaterialId: "mat-other", title: "Mine", questions: [{ question: "Q?", options: ["A", "B"], correctIndex: 1, explanation: "E", sourcePage: null }], provider: "gemini", model: "gemini-3.5-flash" });
     let finish!: (aid: geminiService.GeneratedStudyAid) => void;
     studyAid.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
     render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study/mat-other"] }, h(Probe), h(Ready))));
@@ -291,7 +293,8 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     await studySavedContent();
 
     await act(async () => finish({
-      title: "Weather guide", summary: "Late summary", sections: [], flashcards: [], sourceNotes: "", model: "gemini-3.5-flash",
+      title: "Weather guide", summary: "Late summary", sections: [], sourceNotes: "", model: "gemini-3.5-flash",
+      flashcards: [{ front: "Q", back: "A", sourcePage: null }],
     }));
     // The late study answer waits for acceptance on its own material.
     expect((await repos.documents.listAiStudySets()).map((set) => set.title)).toEqual(["Saved VOR guide"]);

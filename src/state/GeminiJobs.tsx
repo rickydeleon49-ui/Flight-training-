@@ -1,4 +1,4 @@
-import { withoutVerificationNotes } from "@/services/gemini";
+import { MORE_CARDS_NOTE, withoutVerificationNotes } from "@/services/gemini";
 import {
   createContext,
   useCallback,
@@ -18,6 +18,7 @@ import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES, KIT_PRACTICE_ATTEMPT_MESSAGE } from "@/data/persistenceErrors";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import { inspectPdf } from "@/services/pdf";
+import { MAX_CARDS } from "@/logic/cardIdentity";
 import {
   resumeStudyGuide, restartStudyGuide, sectionGuideError, queueStudyGuide,
   SectionGuideError, type SectionGuideRequest, type SectionGuideErrorCode,
@@ -44,6 +45,26 @@ export const EMPTY_FLASHCARDS_MESSAGE = "Gemini didn't return any flashcards fro
 function emptyCards(kind: GeminiJobKind, answer: Answer | null | undefined): boolean {
   return kind === "flashcards" && !!answer && (answer as GeneratedStudyAid).flashcards.length === 0;
 }
+
+export const MAX_CARDS_MESSAGE = "You have the most cards one set can hold.";
+
+/** An answer that carries only extra cards to add to the saved set (GUIDE-PACK-01). */
+export function isMoreCards(kind: GeminiJobKind, answer: Answer | null | undefined): boolean {
+  return kind === "flashcards" && !!answer && (answer as GeneratedStudyAid).sourceNotes === MORE_CARDS_NOTE;
+}
+
+/** True for a "Make 10 more cards" job, even one that failed before it had an answer. */
+export function isMoreCardsJob(job: Pick<GeminiJob, "kind" | "answer" | "draft"> & { more?: boolean }): boolean {
+  return job.kind === "flashcards" && (job.more === true || job.draft?.target === 10 || isMoreCards(job.kind, job.answer));
+}
+
+/** The native "nothing new" outcome: asking again would not help. */
+export function isNoNewCardsError(error: string | null | undefined): boolean {
+  return !!error && error.includes("didn't find any new cards");
+}
+
+/** How many cards a study guide brings along. */
+export const GUIDE_PACK_CARDS = 20;
 
 export function effectiveJobKind(record: GeminiJobRecord): GeminiJobKind {
   const reqId = record.requestId ?? (record as unknown as { request_id?: string }).request_id;
@@ -140,6 +161,8 @@ export type GeminiJobPhase =
 type Answer = GeneratedStudyAid | GeneratedPracticeTest;
 
 export interface GeminiJob {
+  /** True for "Make 10 more cards": its answer only ever appends. */
+  more?: boolean;
   studyKitPart?: boolean;
   sectionGuide?: boolean;
   queueState?: "waiting-for-her" | "running" | "paused" | "cancelled";
@@ -224,6 +247,14 @@ export interface StartOptions {
   preflight?: () => Promise<string | null>;
   /** Called once the answer is saved, for the page that is still showing it. */
   onSaved?: () => void;
+  /** Flashcards only: add 10 more cards to the saved set instead of replacing it. */
+  moreCards?: boolean;
+  /**
+   * Study guide only: once the guide is saved, also make 20 flashcards and a
+   * practice test for the same material, skipping any the material already has.
+   * `preflight` is repeated before each follow-up.
+   */
+  followUps?: { preflight?: () => Promise<string | null> };
 }
 
 /**
@@ -239,6 +270,8 @@ interface GeminiJobsValue {
   jobs: GeminiJob[];
   /** True while any generation is running or being saved. */
   busy: boolean;
+  /** True while a saved guide's flashcards and practice test are still being made. */
+  makingPack(materialId: string): boolean;
   /** The lock as it is right now, for event handlers that must not wait for a render. */
   locked(): boolean;
   recovery: GeminiRecovery;
@@ -329,6 +362,11 @@ function alreadySaved(kind: GeminiJobKind, saved: AiStudySet | PracticeTest | un
   if (kind === "flashcards") {
     const s = saved as AiStudySet;
     const a = answer as GeneratedStudyAid;
+    if (a.sourceNotes === MORE_CARDS_NOTE) {
+      // Extra cards are already in when every one of their fronts is in the set.
+      const have = new Set(s.flashcards.map((card) => card.front.trim().toLowerCase()));
+      return a.flashcards.length > 0 && a.flashcards.every((card) => have.has(card.front.trim().toLowerCase()));
+    }
     const cards = (list: AiStudySet["flashcards"]) =>
       list.map(({ front, back, sourcePage }) => ({ front, back, sourcePage: generatedPage(sourcePage) }));
     return s.model === a.model && canonical(cards(s.flashcards)) === canonical(cards(a.flashcards));
@@ -379,6 +417,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const repositoriesRef = useRef(repositories);
   repositoriesRef.current = repositories;
   const onSavedRef = useRef(new Map<string, () => void>());
+  // Guide jobs asked to bring flashcards and a practice test once saved.
+  const followUpOptionsRef = useRef(new Map<string, NonNullable<StartOptions["followUps"]>>());
+  const pendingFollowUpsRef = useRef<{ target: GeminiJobTarget; options: NonNullable<StartOptions["followUps"]> }[]>([]);
+  const [packMaterials, setPackMaterials] = useState<string[]>([]);
+  const runFollowUpsRef = useRef<() => Promise<void>>(async () => {});
   // Journal entries saved or dismissed here whose removal has not yet been
   // written down natively; retried until it is.
   const pendingAcksRef = useRef(new Set<string>());
@@ -532,6 +575,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           if (job.kind === "practice-test" && job.studyKitPart && await repos.practiceSessions.getCurrentAttempt(job.materialId)) return "attempt" as const;
           const saved = await savedContent(repos, job.kind, job.materialId);
           if (alreadySaved(job.kind, saved, answer)) return "already" as const;
+          if (isMoreCards(job.kind, answer)) {
+            // Extra cards are added to the end of the saved set; nothing is replaced.
+            const added = await repos.documents.appendGeneratedCards(
+              job.materialId,
+              withoutVerificationNotes((answer as GeneratedStudyAid).flashcards),
+            );
+            return added === null ? ("superseded" as const) : ("saved" as const);
+          }
           // Kit parts share one study set, so saving one part moves its
           // revision past the others' base: that alone is not "newer". The student's
           // own edits still go to review just below.
@@ -596,8 +647,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       }
       if (outcome === "saved" || outcome === "already") {
         const onSaved = onSavedRef.current.get(key);
+        const followUps = followUpOptionsRef.current.get(key);
+        followUpOptionsRef.current.delete(key);
         forget(key);
         if (outcome === "saved") onSaved?.();
+        if (outcome === "saved" && followUps && job.kind === "study-aid") {
+          pendingFollowUpsRef.current.push({ target: { materialId: job.materialId, filePath: job.filePath }, options: followUps });
+          setPackMaterials((list) => (list.includes(job.materialId) ? list : [...list, job.materialId]));
+        }
         return true;
       } else if (outcome === "attempt") {
         update(key, { phase: "recovered", error: KIT_PRACTICE_ATTEMPT_MESSAGE });
@@ -689,6 +746,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             job.phase === "discard-failed"),
       );
       if (waiting) return "Save or discard the earlier draft first, then try again.";
+      // "Make 10 more cards" needs the set it adds to.
+      const moreFronts = options?.moreCards && kind === "flashcards"
+        ? dataRef.current.aiStudySets.find((set) => set.sourceMaterialId === target.materialId)?.flashcards.map((card) => card.front)
+        : undefined;
+      if (options?.moreCards && kind === "flashcards") {
+        if (!moreFronts || moreFronts.length === 0) return "Make some flashcards first, then you can add more.";
+        if (moreFronts.length >= MAX_CARDS) return MAX_CARDS_MESSAGE;
+      }
       const useSections = kind === "study-aid" && target.filePath.toLowerCase().endsWith(".pdf") && !jobsRef.current.some(job => job.materialId === target.materialId && job.draft);
       const key = newKey();
       activeRef.current = key;
@@ -728,9 +793,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           invoked: false,
           local: true,
           sectionGuide: useSections,
+          more: options?.moreCards && kind === "flashcards" ? true : undefined,
         },
       ]);
       if (options?.onSaved) onSavedRef.current.set(key, options.onSaved);
+      if (options?.followUps && kind === "study-aid") followUpOptionsRef.current.set(key, options.followUps);
       const current = () => jobsRef.current.find((job) => job.key === key);
 
       let stopWatching = () => {};
@@ -778,7 +845,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             }
             answer = await resumeStudyGuide(request);
           } else answer = (kind === "study-aid" || kind === "flashcards")
-            ? await generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40, kind === "flashcards")
+            ? await (moreFronts
+              ? generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40, true, moreFronts)
+              : generateStudyAid(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId, options?.targetCards ?? 40, kind === "flashcards"))
             : await generatePracticeTest(target.filePath, target.materialId, baseRevision ?? undefined, current()?.requestId);
         } catch (error) {
           // Cancelled only if the native side says so: the journal decided.
@@ -831,7 +900,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         const { jobId = null, contentSha256 = null, checkpointed = false, ...rest } = answer;
         const currentSet = kind === "flashcards" ? (saved as AiStudySet | undefined) : undefined;
         const jobAnswer: Answer =
-          kind === "flashcards"
+          kind === "flashcards" && !options?.moreCards
             ? {
                 ...(rest as GeneratedStudyAid),
                 title: currentSet?.title || (rest as GeneratedStudyAid).title,
@@ -877,6 +946,41 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     },
     [commit, flushAcks, forget, persist, release, syncPendingCount, update],
   );
+
+  /**
+   * A saved guide brings 20 flashcards and a practice test (GUIDE-PACK-01),
+   * each made by the ordinary job. Whatever the material already has is
+   * left alone, and a part that fails leaves the guide saved and its own retry
+   * button in place.
+   */
+  const runFollowUps = useCallback(async () => {
+    const todo = pendingFollowUpsRef.current.splice(0);
+    for (const { target, options } of todo) {
+      try {
+        const repos = repositoriesRef.current;
+        let hasCards = true;
+        let hasTest = true;
+        if (repos) {
+          try {
+            const set = (await repos.documents.listAiStudySets()).find((candidate) => candidate.sourceMaterialId === target.materialId);
+            hasCards = (set?.flashcards.length ?? 0) > 0;
+            hasTest = (await repos.documents.listPracticeTests()).some((test) => test.sourceMaterialId === target.materialId && test.questions.length > 0);
+          } catch {
+            continue;
+          }
+        } else continue;
+        // The new guide must show in the app's data before cards are based on it.
+        for (let i = 0; i < 80 && !dataRef.current.aiStudySets.some((set) => set.sourceMaterialId === target.materialId); i++) {
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        if (!hasCards) await start("flashcards", target, { targetCards: GUIDE_PACK_CARDS, preflight: options.preflight });
+        if (!hasTest) await start("practice-test", target, { preflight: options.preflight });
+      } finally {
+        setPackMaterials((list) => list.filter((id) => id !== target.materialId));
+      }
+    }
+  }, [start]);
+  runFollowUpsRef.current = runFollowUps;
 
   const continueGuide = useCallback(async (key: string, restart = false) => {
     const job = jobsRef.current.find(j => j.key === key);
@@ -939,6 +1043,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       } finally {
         release(key);
       }
+      await runFollowUpsRef.current();
     },
     [persist, release],
   );
@@ -947,13 +1052,18 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     async (key: string, reviewed: ReviewedRegeneration) => {
       const job = jobsRef.current.find((candidate) => candidate.key === key);
       if (!job || !job.answer || (((job.kind === "study-aid" || job.kind === "flashcards") !== (reviewed.kind === "study-set"))) || (job.phase !== "save-failed" && job.phase !== "recovered")) return false;
+      // Extra cards only ever append (saveAgain); they are never a whole replacement.
+      if (isMoreCardsJob(job)) return false;
       if (activeRef.current !== null) return false;
       activeRef.current = key;
+      let saved = false;
       try {
-        return await persist(key, reviewed);
+        saved = await persist(key, reviewed);
       } finally {
         release(key);
       }
+      await runFollowUpsRef.current();
+      return saved;
     },
     [persist, release],
   );
@@ -1272,6 +1382,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     () => ({
       jobs,
       busy: jobs.some((job) => job.phase === "running" || job.phase === "saving"),
+      makingPack: (materialId: string) => packMaterials.includes(materialId),
       locked: () => activeRef.current !== null || recoveryRef.current !== "ready",
       recovery,
       retryRecovery,
@@ -1286,7 +1397,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, recovery, retryRecovery, start, startKit, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
+    [jobs, packMaterials, recovery, retryRecovery, start, startKit, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

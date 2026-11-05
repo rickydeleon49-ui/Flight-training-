@@ -51,6 +51,7 @@ import {
   readCurrentSnapshot,
   snapshotFromHistoryRow,
 } from "../practiceAuthoring";
+import { MAX_CARDS } from "@/logic/cardIdentity";
 import { generatedPage, needsRegenerationReview, preserveOtherStudyContent } from "@/logic/studySetEditing";
 import {
   decodeStoredRow,
@@ -487,6 +488,40 @@ export function documentRepository(db: SqlDatabase) {
         expected: current,
         next: kind ? preserveOtherStudyContent(next, current ? nextOfStored(current) : null, kind) : next,
       }, guideJobId);
+    },
+
+    /**
+     * GUIDE-PACK-01: add generated cards to the end of a saved set. Never
+     * replaces: the cards and everything else stay as they are, repeats (same
+     * front, ignoring case and spacing) are skipped, and the set stays under
+     * the card limit. Returns how many were added, or null when there is no set.
+     * The whole previous set is kept in history by the same atomic save.
+     */
+    async appendGeneratedCards(
+      sourceMaterialId: Id,
+      cards: ReadonlyArray<{ front: string; back: string; sourcePage: number | null }>,
+    ): Promise<number | null> {
+      const current = await readStoredSet(sourceMaterialId);
+      if (!current) return null;
+      const base = nextOfStored(current);
+      const key = (text: string) => text.split(/\s+/).filter(Boolean).join(" ").toLowerCase();
+      const known = new Set(base.flashcards.map((card) => key(card.front)));
+      const added: NextStudySet["flashcards"] = [];
+      for (const card of cards) {
+        if (base.flashcards.length + added.length >= MAX_CARDS) break;
+        if (known.has(key(card.front))) continue;
+        known.add(key(card.front));
+        added.push({ front: card.front, back: card.back, sourcePage: generatedPage(card.sourcePage) });
+      }
+      if (added.length === 0) return 0;
+      await saveStudySet({
+        operationId: newId(),
+        materialId: sourceMaterialId,
+        reason: "edit",
+        expected: current,
+        next: { ...base, flashcards: [...base.flashcards, ...added] },
+      });
+      return added.length;
     },
 
     /** Remove a study set; the whole set stays in history until its material is deleted. */

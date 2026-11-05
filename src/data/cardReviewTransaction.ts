@@ -240,6 +240,104 @@ async function materialize(
   await run("UPDATE card_versions SET is_active = 1 WHERE id = ?", [version.versionId]);
 }
 
+/** A UUIDv4-shaped id derived from `seed`: the twin of native `derived_uuid_v4`. */
+export async function derivedUuidV4(seed: string): Promise<string> {
+  const h = await sha256Hex(seed);
+  const variant = "89ab"[parseInt(h[16]!, 16) % 4]!;
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${variant}${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
+
+/**
+ * APPEND-ONLY CARRY-OVER (GUIDE-PACK-01), the twin of native
+ * `carry_review_state`. When a saved card list grows only by cards added at its
+ * end, each earlier card keeps its review state in the new version: its state
+ * row and each rating with its receipt are copied to the new item. Nothing
+ * existing is changed or deleted; the old version keeps its own rows. Edits,
+ * deletes and reorders carry nothing. Unlike native there is no savepoint
+ * (the single-connection drivers refuse them), so cases that could make
+ * materialize refuse (picture cards, unknown providers) carry nothing in both.
+ */
+export async function carryReviewState(
+  run: (sql: string, params: SqlValue[]) => Promise<void> | void,
+  query: Query,
+  materialId: string,
+  beforeJson: string,
+  afterJson: string,
+  provider: string,
+  now: string,
+): Promise<void> {
+  if (!["gemini", "import", "manual"].includes(provider)) return;
+  const before = parseSavedCards(beforeJson);
+  const after = parseSavedCards(afterJson);
+  if (before.status !== "ok" || after.status !== "ok") return;
+  const old = before.cards;
+  const next = after.cards;
+  if (next.length <= old.length || next.some((card) => card.visualRegionId)) return;
+  if (canonicalJson(next.slice(0, old.length)) !== canonicalJson(old)) return;
+  const oldVersion = await cardVersion(materialId, old);
+  const newVersion = await cardVersion(materialId, next);
+  const exists = async (id: string) =>
+    (await query("SELECT 1 FROM card_versions WHERE id = ? AND source_material_id = ?", [id, materialId])).length > 0;
+  if (!(await exists(oldVersion.versionId)) || (await exists(newVersion.versionId))) return;
+  await materialize(run, query, materialId, newVersion, provider, now);
+  // One read for every earlier rating of the old list, grouped by card.
+  const allRatings = await query(
+    `SELECT e.item_id, e.id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json,
+            o.generation AS op_generation, o.applied_at, o.result_json
+     FROM card_review_events e
+     JOIN card_review_operations o ON o.operation_id = e.id AND o.is_erased = 0 AND o.action = 'rate'
+     WHERE e.item_id IN (SELECT id FROM card_items WHERE version_id = ?)
+     ORDER BY e.reviewed_at, e.id`,
+    [oldVersion.versionId],
+  );
+  const byItem = new Map<string, typeof allRatings>();
+  for (const row of allRatings) {
+    const key = String(row.item_id);
+    const list = byItem.get(key);
+    if (list) list.push(row);
+    else byItem.set(key, [row]);
+  }
+  for (let i = 0; i < old.length; i++) {
+    const from = oldVersion.items[i]!.itemId;
+    const to = newVersion.items[i]!.itemId;
+    await run(
+      `INSERT OR IGNORE INTO card_review_state
+         (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+       SELECT ?, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+       FROM card_review_state WHERE item_id = ?`,
+      [to, from],
+    );
+    const ratings = byItem.get(from) ?? [];
+    for (const row of ratings) {
+      if (row.result_json === null || row.result_json === undefined) continue;
+      let result: Record<string, unknown>;
+      try {
+        result = JSON.parse(String(row.result_json)) as Record<string, unknown>;
+      } catch {
+        continue;
+      }
+      const carried = await derivedUuidV4(`${String(row.id)}\u0000${to}`);
+      result.itemId = to;
+      await run(
+        `INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [carried, to, int(row.generation), String(row.rating), String(row.reviewed_at), String(row.scheduler_version), String(row.prior_state_json), String(row.next_state_json)],
+      );
+      await run(
+        `INSERT OR IGNORE INTO card_review_operations
+           (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
+         VALUES (?, 'rate', ?, ?, ?, ?, 0, ?)`,
+        [carried, materialId, int(row.op_generation), await sha256Hex(carried), String(row.applied_at), canonicalJson(result)],
+      );
+    }
+  }
+  await run(
+    `UPDATE card_versions SET first_reviewed_at = (SELECT first_reviewed_at FROM card_versions WHERE id = ?)
+     WHERE id = ? AND first_reviewed_at IS NULL`,
+    [oldVersion.versionId, newVersion.versionId],
+  );
+}
+
 async function applyItem(
   run: (sql: string, params: SqlValue[]) => Promise<void> | void,
   query: Query,
