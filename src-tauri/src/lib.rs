@@ -422,7 +422,9 @@ pub fn run() {
             }
 
             // Ratings that arrived from another device before receipts were
-            // derived: add the missing local receipts. Off the main thread,
+            // derived: add the missing local receipts, after migrations are
+            // complete (a launch that still has a migration pending repairs on
+            // the next launch). Off the main thread,
             // best effort, and silent about her data. Reached only by the
             // instance that owns the library (a second one returned above).
             if let Some(root) = folder.clone() {

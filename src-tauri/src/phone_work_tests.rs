@@ -1153,3 +1153,18 @@ fn an_unreadable_restart_marker_counts_as_set() {
     assert!(stream_restarted_in(&root));
     std::fs::remove_dir_all(container).unwrap();
 }
+
+#[test]
+fn copy_superseded_reads_present_absent_and_no_table() {
+    let c = Connection::open_in_memory().unwrap();
+    assert!(!crate::phone_work::copy_superseded(&c));
+    c.execute_batch("CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);")
+        .unwrap();
+    assert!(!crate::phone_work::copy_superseded(&c));
+    c.execute(
+        "INSERT INTO app_metadata VALUES (?1, 'old-mac')",
+        [crate::phone_work::SUPERSEDED_KEY],
+    )
+    .unwrap();
+    assert!(crate::phone_work::copy_superseded(&c));
+}

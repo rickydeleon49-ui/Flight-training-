@@ -1021,9 +1021,10 @@ pub(crate) fn restart_change_stream(root: &Path, mark: i64) -> Result<(), String
 /// restarts its own stream from the copy, so nothing it made is lost if the
 /// Mac was restored to an earlier state: the work counts as unsaved again,
 /// the next send starts at the copy's floor, and the old outbox files go.
-/// The restart marker goes first, even when a send holds the lock (the rest
-/// then waits for the next refusal). The change log is never touched.
+/// The restart marker goes first, even when a send holds the lock (then it
+/// returns `Err` and the rest waits for the next refusal). The change log is never touched.
 pub(crate) fn restart_for_new_mac(root: &Path, conn: &Connection) -> Result<(), String> {
+    let source = copy_source(conn);
     // The marker first, even while a send holds the lock: from here a send
     // no longer counts work as saved.
     let marked = conn
@@ -1033,8 +1034,22 @@ pub(crate) fn restart_for_new_mac(root: &Path, conn: &Connection) -> Result<(), 
         )
         .map(|_| ())
         .map_err(|_| FAILED.to_string());
+    // The old source's leftover files must never prune after a save.
+    let superseded = match source {
+        Some(source) => conn
+            .execute(
+                "INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?1, ?2)",
+                rusqlite::params![crate::phone_work::SUPERSEDED_KEY, source],
+            )
+            .map(|_| ())
+            .map_err(|_| FAILED.to_string()),
+        None => Ok(()),
+    };
+    let marked = marked.and(superseded);
+    // A running send holds the lock: the markers are set, but the baseline
+    // was not moved back, so callers must refuse (the next try restarts).
     let Some(_only_one) = try_send_lock() else {
-        return marked;
+        return marked.and(Err(BUSY.to_string()));
     };
     // Every step runs even if an earlier one failed; the first error returns.
     let baseline = crate::phone_work::forget_sent_through_in(root).map_err(|_| FAILED.to_string());
@@ -1050,6 +1065,46 @@ pub(crate) fn restart_for_new_mac(root: &Path, conn: &Connection) -> Result<(), 
         let _ = std::fs::remove_dir_all(dir);
     }
     marked.and(baseline).and(floor)
+}
+
+/// The Mac whose full copy this phone was restored from, when known.
+pub(crate) fn copy_source(conn: &Connection) -> Option<String> {
+    copy_source_checked(conn).ok().flatten()
+}
+
+/// Like [`copy_source`], but a read error is an error (no row or no
+/// `app_metadata` table is `None`), so callers can fail closed.
+fn copy_source_checked(conn: &Connection) -> Result<Option<String>, String> {
+    match conn
+        .query_row(
+            "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'sync_copy_from_device'",
+            [],
+            |r| r.get::<_, Option<String>>(0),
+        )
+        .optional()
+    {
+        Ok(v) => Ok(v.flatten()),
+        Err(e) if e.to_string().contains("no such table") => Ok(None),
+        Err(_) => Err(FAILED.to_string()),
+    }
+}
+
+/// Restarts the phone's stream when `incoming` (a Mac's device id, or `None`
+/// when unknown) is not the Mac this phone's copy came from. `Ok(false)`: no
+/// restart was needed (no copy source, or the same Mac).
+pub(crate) fn restart_if_other_mac(
+    root: &Path,
+    conn: &Connection,
+    incoming: Option<&str>,
+) -> Result<bool, String> {
+    let Some(source) = copy_source_checked(conn)? else {
+        return Ok(false);
+    };
+    if incoming == Some(source.as_str()) {
+        return Ok(false);
+    }
+    restart_for_new_mac(root, conn)?;
+    Ok(true)
 }
 
 fn mac_out_dir() -> Option<PathBuf> {

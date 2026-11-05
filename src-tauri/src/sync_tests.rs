@@ -6161,10 +6161,175 @@ mod prune {
         path
     }
 
+    /// A full copy made by a Mac with this device id.
+    fn full_copy_from(id: Option<&str>, dir: &TempDir, name: &str) -> std::path::PathBuf {
+        let m = mac_app();
+        match id {
+            Some(id) => m
+                .db()
+                .execute(
+                    "UPDATE app_metadata SET value = ?1 WHERE key = 'device_id'",
+                    [id],
+                )
+                .unwrap(),
+            None => m
+                .db()
+                .execute("DELETE FROM app_metadata WHERE key = 'device_id'", [])
+                .unwrap(),
+        };
+        // The test Mac keeps no migration history; a backup needs a minimal one.
+        m.db()
+            .execute_batch(
+                "CREATE TABLE IF NOT EXISTS _sqlx_migrations (version INTEGER PRIMARY KEY);
+                 INSERT OR IGNORE INTO _sqlx_migrations(version) VALUES (9);",
+            )
+            .unwrap();
+        let path = dir.0.join(name);
+        crate::backup::write_complete_backup(&m.root.0, &path, "0.6.7").unwrap();
+        path
+    }
+
+    fn copy_source_of(p: &Phone) -> String {
+        p.db()
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap()
+    }
+
+    fn superseded_of(p: &Phone) -> Option<String> {
+        p.db()
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'sync_copy_superseded'",
+                [],
+                |r| r.get(0),
+            )
+            .ok()
+    }
+
+    fn pending(p: &Phone) -> bool {
+        p.root.0.join(".restore-pending").exists()
+    }
+
+    #[test]
+    fn a_restored_macs_full_copy_cannot_wipe_phone_work() {
+        let dir = TempDir::new("restored-mac");
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        assert!(crate::phone_work::refuse_unsaved(&p.root.0, true).is_ok());
+        let old_source = copy_source_of(&p);
+        let path = full_copy_from(Some("cccc-mac2"), &dir, "m2.hfdbackup");
+        let err = crate::backup::stage_complete_restore_guarded_in(&p.root.0, &path, "0.6.7", true)
+            .unwrap_err();
+        assert!(err.contains("Save my phone work"), "{err}");
+        assert!(!pending(&p));
+        assert!(restarted(&p));
+        assert_eq!(exported_mark(&p), 0);
+        assert_eq!(superseded_of(&p), Some(old_source));
+    }
+
+    #[test]
+    fn a_running_send_cannot_let_a_restored_macs_copy_through() {
+        let dir = TempDir::new("restored-busy");
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        let path = full_copy_from(Some("cccc-mac2"), &dir, "m2.hfdbackup");
+        crate::sync::send::tests_wait::NO_WAIT.with(|n| n.set(true));
+        let busy = crate::sync::send::hold_for_test();
+        let err = crate::backup::stage_complete_restore_guarded_in(&p.root.0, &path, "0.6.7", true)
+            .unwrap_err();
+        drop(busy);
+        crate::sync::send::tests_wait::NO_WAIT.with(|n| n.set(false));
+        assert!(err.contains("Save my phone work"), "{err}");
+        assert!(!pending(&p));
+        assert!(restarted(&p));
+    }
+
+    #[test]
+    fn a_full_copy_from_the_copys_own_mac_does_not_restart() {
+        let dir = TempDir::new("restored-own");
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        let own = copy_source_of(&p);
+        let path = full_copy_from(Some(&own), &dir, "own.hfdbackup");
+        crate::backup::stage_complete_restore_guarded_in(&p.root.0, &path, "0.6.7", true).unwrap();
+        assert!(!restarted(&p));
+        assert_eq!(exported_mark(&p), 1);
+    }
+
+    #[test]
+    fn a_full_copy_from_another_mac_stages_when_nothing_is_at_risk() {
+        let dir = TempDir::new("restored-idle");
+        let (_mac, p) = setup();
+        let path = full_copy_from(Some("cccc-mac2"), &dir, "m2.hfdbackup");
+        crate::backup::stage_complete_restore_guarded_in(&p.root.0, &path, "0.6.7", true).unwrap();
+        assert!(restarted(&p));
+        assert!(pending(&p));
+    }
+
+    #[test]
+    fn a_full_copy_without_a_device_id_counts_as_another_mac() {
+        let dir = TempDir::new("restored-unknown");
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        let path = full_copy_from(None, &dir, "none.hfdbackup");
+        let err = crate::backup::stage_complete_restore_guarded_in(&p.root.0, &path, "0.6.7", true)
+            .unwrap_err();
+        assert!(err.contains("Save my phone work"), "{err}");
+        assert!(restarted(&p));
+        assert!(!pending(&p));
+    }
+
+    #[test]
+    fn an_empty_files_file_from_another_mac_restarts() {
+        let dir = TempDir::new("empty-other");
+        let dir2 = TempDir::new("empty-other-copy");
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        let m2 = other_mac();
+        let path = empty_files_copy(&m2, &dir);
+        assert_eq!(
+            import_mac_changes_in(&p.root.0, &path, Some(DEVICE), NOW).unwrap_err(),
+            NEEDS_EARLIER
+        );
+        assert!(restarted(&p));
+        assert_eq!(exported_mark(&p), 0);
+        let copy = full_copy_from(Some("cccc-mac2"), &dir2, "m2.hfdbackup");
+        let err = crate::backup::stage_complete_restore_guarded_in(&p.root.0, &copy, "0.6.7", true)
+            .unwrap_err();
+        assert!(err.contains("Save my phone work"), "{err}");
+    }
+
+    #[test]
+    fn a_leftover_first_mac_file_prunes_nothing_after_a_save() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        accept(&p, &mac).unwrap();
+        phone_sends(&p, "b2");
+        let m2 = other_mac();
+        assert_eq!(accept(&p, &m2).unwrap_err(), NEEDS_EARLIER);
+        p.send().unwrap();
+        mac_takes(&mac, &p);
+        crate::phone_work::record_saved_through_in(&p.root.0, NOW).unwrap();
+        assert!(!restarted(&p));
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        assert_eq!(p.outbox().len(), 1);
+    }
+
     #[test]
     fn an_empty_files_list_prunes_only_for_the_copys_mac() {
         let dir = TempDir::new("prune-empty");
-        for (copy_source, left) in [(None, 0), (Some("someone-else"), 1)] {
+        for (copy_source, left) in [(None, 0), (Some("someone-else"), 0)] {
             let (mac, p) = setup();
             phone_sends(&p, "b1");
             mac_takes(&mac, &p);
@@ -6179,7 +6344,14 @@ mod prune {
             }
             let path = empty_files_copy(&mac, &dir);
             let got = import_mac_changes_in(&p.root.0, &path, Some(DEVICE), NOW);
-            assert!(got.is_ok(), "{:?}", got.err());
+            if copy_source.is_some() {
+                // Another Mac's file gets the same answer as one with changes;
+                // the restart removes the outbox.
+                assert_eq!(got.unwrap_err(), NEEDS_EARLIER);
+                assert!(restarted(&p));
+            } else {
+                assert!(got.is_ok(), "{:?}", got.err());
+            }
             assert_eq!(p.outbox().len(), left);
         }
     }
@@ -6381,6 +6553,53 @@ mod synced_ratings {
         );
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 1);
         crate::backup::verify_application_connection(&mac).unwrap();
+    }
+
+    #[test]
+    fn the_startup_repair_waits_for_migrations() {
+        let (root, _cards) = phone_rates_then_mac_takes();
+        let mut mac = mac_db(&root);
+        with_history(&mac);
+        mac.execute("DELETE FROM card_review_operations", [])
+            .unwrap();
+        mac.execute("UPDATE card_review_state SET revision = 1", [])
+            .unwrap();
+        let newest: i64 = count(&mac, "SELECT MAX(version) FROM _sqlx_migrations");
+        mac.execute("DELETE FROM _sqlx_migrations WHERE version = ?1", [newest])
+            .unwrap();
+        let receipts = count(&mac, "SELECT COUNT(*) FROM card_review_operations");
+        let err = crate::sync::receipts::repair_synced_ratings(&mut mac).unwrap_err();
+        assert_eq!(err.to_string(), "not migrated yet");
+        assert_eq!(
+            count(&mac, "SELECT COUNT(*) FROM card_review_operations"),
+            receipts
+        );
+        assert_eq!(
+            count(&mac, "SELECT MAX(revision) FROM card_review_state"),
+            1
+        );
+        assert_eq!(
+            count(
+                &mac,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'"
+            ),
+            0
+        );
+        mac.execute(
+            "INSERT INTO _sqlx_migrations (version) VALUES (?1)",
+            [newest],
+        )
+        .unwrap();
+        assert!(crate::sync::receipts::repair_synced_ratings(&mut mac).unwrap() > 0);
+        // No migration table at all: nothing changes.
+        mac.execute("UPDATE card_review_state SET revision = 1", [])
+            .unwrap();
+        mac.execute("DROP TABLE _sqlx_migrations", []).unwrap();
+        assert!(crate::sync::receipts::repair_synced_ratings(&mut mac).is_err());
+        assert_eq!(
+            count(&mac, "SELECT MAX(revision) FROM card_review_state"),
+            1
+        );
     }
 
     #[test]

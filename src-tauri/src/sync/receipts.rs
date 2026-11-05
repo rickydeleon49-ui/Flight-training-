@@ -89,6 +89,29 @@ pub(crate) fn ensure_rate_receipts(
 /// logged as a local change. Returns the number of rows touched.
 pub(crate) fn repair_synced_ratings(conn: &mut Connection) -> rusqlite::Result<usize> {
     let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+    // Only once every migration is recorded: sqlx then has nothing left to
+    // run, so it cannot race this repair. A pending one waits for next launch.
+    let latest = crate::migrations()
+        .iter()
+        .map(|m| m.version)
+        .max()
+        .unwrap_or(0);
+    let done: i64 = match tx.query_row(
+        "SELECT COALESCE(MAX(version), 0) FROM _sqlx_migrations",
+        [],
+        |r| r.get(0),
+    ) {
+        Ok(n) => n,
+        Err(e) if e.to_string().contains("no such table") => 0,
+        Err(e) => return Err(e),
+    };
+    if done < latest {
+        // Dropping the transaction rolls it back: nothing changed.
+        return Err(rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_SCHEMA),
+            Some("not migrated yet".to_string()),
+        ));
+    }
     tx.execute("DELETE FROM app_metadata WHERE key = ?1", [GUARD])?;
     tx.execute(
         "INSERT INTO app_metadata (key, value) VALUES (?1, 'repair')",

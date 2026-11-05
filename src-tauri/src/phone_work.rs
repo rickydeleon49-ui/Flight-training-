@@ -245,9 +245,28 @@ pub(crate) fn record_sent_through_in(root: &Path, now: &str) -> Result<(), Strin
 
 /// Set (in `app_metadata`) when a different Mac's file made this phone restart
 /// its change stream. While it is set, sending does not count work as saved
-/// (the new Mac may refuse the file); only a phone save clears it, and a full
-/// copy from the Mac replaces the database, which clears it too.
+/// (the new Mac may refuse the file). A phone save clears it, and a restore of
+/// a full copy clears it and `SUPERSEDED_KEY` (the restore sets a new copy
+/// source and baseline).
 pub(crate) const RESTARTED_KEY: &str = "sync_stream_restarted";
+
+/// Set with `RESTARTED_KEY`: the Mac this phone's copy came from, which a
+/// restart left behind. Its leftover files must never prune the outbox. A
+/// save does not clear it; only a new full copy does.
+pub(crate) const SUPERSEDED_KEY: &str = "sync_copy_superseded";
+
+/// Same fail-closed reading as `stream_restarted`.
+pub(crate) fn copy_superseded(connection: &Connection) -> bool {
+    match connection.query_row(
+        "SELECT 1 FROM app_metadata WHERE key = ?1",
+        [SUPERSEDED_KEY],
+        |_| Ok(()),
+    ) {
+        Ok(()) => true,
+        Err(rusqlite::Error::QueryReturnedNoRows) => false,
+        Err(e) => !e.to_string().contains("no such table"),
+    }
+}
 
 /// A marker that cannot be read counts as set (the conservative side): only
 /// "no row" or a database without `app_metadata` counts as not restarted.
@@ -476,6 +495,10 @@ pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
         join_words(&parts)
     ))
 }
+
+/// The refusal when the stream could not be restarted: the work can't be
+/// counted, so it is treated as unsaved.
+pub(crate) const UNSAVED_REFUSAL: &str = "This phone has work that isn't saved anywhere else yet. Save my phone work first, then get your study material.";
 
 /// `Ok` when this is not a phone or nothing is unsaved; otherwise the sentence.
 pub(crate) fn refuse_unsaved(root: &Path, phone: bool) -> Result<(), String> {
