@@ -126,6 +126,7 @@ fn iso_from_seconds(seconds: u64) -> Option<String> {
 /// rows already here writes nothing). `None` when the phone's ledger is empty.
 /// `local_device_id` is this device's id: an archive made here is refused.
 /// `app_version` and `created_at` are fallbacks for a manifest that lacks them.
+#[allow(dead_code)] // S-4 reads backups the same way
 pub(crate) fn export_changes_from_archive(
     archive: &Path,
     local_device_id: Option<&str>,

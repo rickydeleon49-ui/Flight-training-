@@ -22,7 +22,7 @@ export async function choosePhoneProgressFile(): Promise<string | null> {
     multiple: false,
     directory: false,
     title: "Choose the file from your iPhone",
-    filters: [{ name: "Your Flight Deck file", extensions: ["hfdbackup"] }],
+    filters: [{ name: "Your Flight Deck file", extensions: ["hfdbackup", "hfdprogress"] }],
   });
   return typeof selected === "string" ? selected : null;
 }

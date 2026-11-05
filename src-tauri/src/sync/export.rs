@@ -12,11 +12,13 @@ pub(crate) struct ExportedChanges {
     pub file: changeset::EncodedChangeFile,
     pub from_seq: i64,
     pub to_seq: i64,
+    #[allow(dead_code)] // S-4 reports sizes
     pub change_count: usize,
 }
 
 #[derive(Debug)]
 pub(crate) enum ExportError {
+    #[allow(dead_code)] // error detail for S-4 reports
     Db(rusqlite::Error),
     Encode(changeset::ChangeFileError),
     /// A ledger entry whose row or metadata is gone.
