@@ -921,9 +921,11 @@ struct TempDir(std::path::PathBuf);
 
 impl TempDir {
     fn new(label: &str) -> Self {
+        static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
-            "hfd-sync-test-{label}-{}-{}",
+            "hfd-sync-test-{label}-{}-{}-{}",
             std::process::id(),
+            COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
@@ -4927,6 +4929,13 @@ mod mac_send {
                     [mark.to_string()],
                 )
                 .unwrap();
+            // A restore notes which Mac the copy came from.
+            p.db()
+                .execute(
+                    "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_copy_from_device', ?1)",
+                    [MAC],
+                )
+                .unwrap();
             restart_change_stream(&self.root.0, mark).unwrap();
             mark
         }
@@ -5014,6 +5023,18 @@ mod mac_send {
         let again = mac.send().unwrap();
         assert!(again.nothing_new);
         assert_eq!(std::fs::read(mac.file()).unwrap(), before);
+    }
+
+    #[test]
+    fn a_missing_mac_file_is_written_again_and_reported() {
+        let mac = mac_app();
+        mac.mark_copy();
+        mac.material("m2", "y");
+        mac.send().unwrap();
+        std::fs::remove_file(mac.file()).unwrap();
+        let again = mac.send().unwrap();
+        assert!(!again.nothing_new);
+        assert!(mac.file().exists());
     }
 
     #[test]
@@ -5572,5 +5593,397 @@ mod phone_accept {
                 assert!(!lower.contains(word), "{word} in {text}");
             }
         }
+    }
+}
+
+mod prune {
+    use super::apply::MAC;
+    use super::mac_send::{mac_app, MacApp};
+    use super::send::{phone, Phone, DEVICE};
+    use super::*;
+    use crate::sync::progress::{import_mac_changes_in, import_phone_progress_in, ProgressOutcome};
+    use crate::sync::send::{applied_map, prune_files, prune_outbox, restart_change_stream};
+
+    const NEEDS_EARLIER: &str = "That file needs earlier changes from your Mac that aren't on this phone yet. On the Mac, send a full copy instead.";
+
+    fn setup() -> (MacApp, Phone) {
+        let mac = mac_app();
+        mac.material("m1", "One");
+        let p = phone();
+        mac.copy_to(&p);
+        (mac, p)
+    }
+
+    fn accept(p: &Phone, mac: &MacApp) -> Result<crate::sync::progress::MacChanges, String> {
+        import_mac_changes_in(&p.root.0, &mac.file(), Some(DEVICE), NOW)
+    }
+
+    /// The phone does one more thing and sends it; returns the new outbox file.
+    fn phone_sends(p: &Phone, id: &str) {
+        p.db()
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES (?1,'m1',1,'t',?2,?2)",
+                params![id, NOW],
+            )
+            .unwrap();
+        p.send().unwrap();
+    }
+
+    fn mac_takes(mac: &MacApp, p: &Phone) {
+        import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW).unwrap();
+    }
+
+    fn mac_changes(mac: &MacApp, id: &str) {
+        mac.material(id, "More");
+        mac.send().unwrap();
+    }
+
+    fn applied_in(path: &std::path::Path) -> serde_json::Value {
+        super::send::manifest(path)["applied"].clone()
+    }
+
+    #[test]
+    fn the_phone_drops_what_the_mac_confirmed() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_changes(&mac, "m3");
+        // Before the Mac has seen anything, its file confirms nothing.
+        assert!(applied_in(&mac.file()).is_null());
+        mac_takes(&mac, &p);
+        // The Mac has no new change, only a new mark: the file is still rewritten.
+        let again = mac.send().unwrap();
+        assert!(again.nothing_new);
+        assert_eq!(applied_in(&mac.file())[DEVICE].as_i64().unwrap(), p_to(&p));
+        accept(&p, &mac).unwrap();
+        assert!(p.outbox().is_empty());
+        // The next send starts from what is left, and the Mac still takes it.
+        phone_sends(&p, "b2");
+        assert_eq!(p.outbox().len(), 1);
+        let got =
+            import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!(got.counts.bookmarks, 1);
+    }
+
+    fn p_to(p: &Phone) -> i64 {
+        let name = p.outbox().last().cloned().unwrap();
+        crate::sync::changeset::parse_name(&name).unwrap().1
+    }
+
+    #[test]
+    fn nothing_is_dropped_without_a_confirmation() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_changes(&mac, "m3");
+        accept(&p, &mac).unwrap();
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn a_hole_in_the_macs_applied_list_stops_pruning_there() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        phone_sends(&p, "b2");
+        phone_sends(&p, "b3");
+        let all = p.outbox();
+        assert_eq!(all.len(), 3);
+        mac_takes(&mac, &p);
+        mac.db()
+            .execute("DELETE FROM sync_applied WHERE file_name = ?1", [&all[1]])
+            .unwrap();
+        mac_changes(&mac, "m3");
+        accept(&p, &mac).unwrap();
+        assert_eq!(p.outbox(), all[1..].to_vec());
+    }
+
+    #[test]
+    fn the_applied_map_skips_unparsable_names_and_bad_ids() {
+        let mac = mac_app();
+        let conn = mac.db();
+        for (peer, name) in [
+            (DEVICE, "1-5-aaaaaaaaaaaa.json.gz"),
+            (DEVICE, "6-9-bbbbbbbbbbbb.json.gz"),
+            (DEVICE, "nonsense"),
+            (DEVICE, "20-30-cccccccccccc.json.gz"),
+            ("BAD ID", "1-5-dddddddddddd.json.gz"),
+        ] {
+            conn.execute(
+                "INSERT INTO sync_applied (peer_device, file_name, applied_at) VALUES (?1, ?2, ?3)",
+                params![peer, name, NOW],
+            )
+            .unwrap();
+        }
+        let map = applied_map(&conn);
+        assert_eq!(map.len(), 1);
+        assert_eq!(map[DEVICE], (1, 9));
+    }
+
+    #[test]
+    fn a_crash_mid_prune_only_leaves_more_files() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        phone_sends(&p, "b2");
+        phone_sends(&p, "b3");
+        let all = p.outbox();
+        mac_takes(&mac, &p);
+        let dir = p
+            .root
+            .0
+            .join("outbox")
+            .join(crate::sync::changeset::folder(DEVICE));
+        let mut calls = 0;
+        let removed = prune_files(&dir, 0, i64::MAX, |path| {
+            calls += 1;
+            if calls == 2 {
+                return Err(std::io::Error::other("crash"));
+            }
+            std::fs::remove_file(path)
+        });
+        assert_eq!(removed, 1);
+        assert_eq!(p.outbox(), all[1..].to_vec());
+        // The next send rebuilds from what is left and the Mac takes it all.
+        phone_sends(&p, "b4");
+        let got =
+            import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!(got.counts.bookmarks, 1);
+        assert_eq!(
+            count(&mac.db(), "SELECT COUNT(*) FROM material_bookmarks"),
+            4
+        );
+    }
+
+    #[test]
+    fn a_stop_partway_keeps_earlier_files() {
+        let (_mac, p) = setup();
+        phone_sends(&p, "b1");
+        phone_sends(&p, "b2");
+        phone_sends(&p, "b3");
+        let all = p.outbox();
+        let dir = p
+            .root
+            .0
+            .join("outbox")
+            .join(crate::sync::changeset::folder(DEVICE));
+        let (_, first_to, _) = crate::sync::changeset::parse_name(&all[0]).unwrap();
+        // Only the first file is confirmed: the pass ends there.
+        assert_eq!(
+            prune_files(&dir, 0, first_to, |p| std::fs::remove_file(p)),
+            1
+        );
+        assert_eq!(p.outbox(), all[1..].to_vec());
+        // A run that starts after the oldest file confirms nothing of it.
+        assert_eq!(
+            prune_files(&dir, i64::MAX, i64::MAX, |p| std::fs::remove_file(p)),
+            0
+        );
+        assert_eq!(p.outbox(), all[1..].to_vec());
+    }
+
+    #[test]
+    fn pruning_never_passes_the_phones_own_watermark() {
+        let (_mac, p) = setup();
+        phone_sends(&p, "b1");
+        phone_sends(&p, "b2");
+        let all = p.outbox();
+        let (_, first_to, _) = crate::sync::changeset::parse_name(&all[0]).unwrap();
+        let conn = p.db();
+        crate::sync::export::set_exported_through_seq(&conn, first_to).unwrap();
+        let manifest = serde_json::json!({
+            "applied": { DEVICE: 1_000_000 },
+            "appliedFrom": { DEVICE: 0 },
+        });
+        prune_outbox(&p.root.0, &conn, &manifest);
+        assert_eq!(p.outbox(), all[1..].to_vec());
+        // A manifest without the run's start confirms nothing.
+        let partial = serde_json::json!({ "applied": { DEVICE: 1_000_000 } });
+        prune_outbox(&p.root.0, &conn, &partial);
+        assert_eq!(p.outbox(), all[1..].to_vec());
+    }
+
+    #[test]
+    fn another_macs_file_is_refused_and_prunes_nothing() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = 'someone-else' WHERE key = 'sync_copy_from_device'",
+                [],
+            )
+            .unwrap();
+        assert_eq!(accept(&p, &mac).unwrap_err(), NEEDS_EARLIER);
+        assert_eq!(p.outbox().len(), 1);
+        assert_eq!(
+            count(
+                &p.db(),
+                "SELECT COUNT(*) FROM study_materials WHERE id = 'm3'"
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn a_phone_that_does_not_know_its_copys_mac_prunes_nothing() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        p.db()
+            .execute(
+                "DELETE FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+            )
+            .unwrap();
+        accept(&p, &mac).unwrap();
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn a_restore_notes_which_mac_the_copy_came_from() {
+        let p = phone();
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = ?1 WHERE key = 'device_id'",
+                [MAC],
+            )
+            .unwrap();
+        crate::backup::reset_sync_identity(&p.root.0).unwrap();
+        let db = p.db();
+        let source: String = db
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(source, MAC);
+        assert_eq!(
+            count(
+                &db,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'device_id'"
+            ),
+            0
+        );
+        // A copy with no usable id leaves no stale source behind.
+        db.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', 'Not Valid!')",
+            [],
+        )
+        .unwrap();
+        crate::backup::reset_sync_identity(&p.root.0).unwrap();
+        assert_eq!(
+            count(
+                &p.db(),
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_copy_from_device'"
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn a_failed_source_save_leaves_the_device_id_untouched() {
+        let p = phone();
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = ?1 WHERE key = 'device_id'",
+                [MAC],
+            )
+            .unwrap();
+        p.db()
+            .execute_batch(
+                "CREATE TRIGGER block_source BEFORE INSERT ON app_metadata
+                 WHEN NEW.key = 'sync_copy_from_device'
+                 BEGIN SELECT RAISE(ABORT, 'blocked'); END;",
+            )
+            .unwrap();
+        assert!(crate::backup::reset_sync_identity(&p.root.0).is_err());
+        // Nothing half-done: the id is untouched, so the whole reset can rerun.
+        assert_eq!(
+            count(
+                &p.db(),
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'device_id'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn a_running_send_makes_pruning_wait_for_the_next_file() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        crate::sync::send::tests_wait::NO_WAIT.with(|n| n.set(true));
+        let busy = crate::sync::send::hold_for_test();
+        accept(&p, &mac).unwrap();
+        drop(busy);
+        crate::sync::send::tests_wait::NO_WAIT.with(|n| n.set(false));
+        assert_eq!(p.outbox().len(), 1);
+        accept(&p, &mac).unwrap();
+        assert!(p.outbox().is_empty());
+    }
+
+    #[test]
+    fn a_mark_past_the_log_cannot_skip_changes() {
+        let mac = mac_app();
+        mac.material("m1", "One");
+        let max: i64 = mac
+            .db()
+            .query_row("SELECT MAX(seq) FROM local_changes", [], |r| r.get(0))
+            .unwrap();
+        restart_change_stream(&mac.root.0, max + 1_000).unwrap();
+        mac.material("m2", "Two");
+        let sent = mac.send().unwrap();
+        assert_eq!(sent.counts.materials, 1);
+        assert_eq!(
+            super::send::manifest(&mac.file())["fromSeq"]
+                .as_i64()
+                .unwrap(),
+            max + 1
+        );
+    }
+
+    #[test]
+    fn the_temp_root_is_removed_on_every_path() {
+        let (mac, p) = setup();
+        phone_sends(&p, "b1");
+        mac_takes(&mac, &p);
+        mac_changes(&mac, "m3");
+        accept(&p, &mac).unwrap();
+        accept(&p, &mac).unwrap();
+        let other = phone();
+        accept(&other, &mac).unwrap_err();
+        let me = format!("hfd-progress-{}-", std::process::id());
+        for _ in 0..40 {
+            let n = std::fs::read_dir(std::env::temp_dir())
+                .unwrap()
+                .filter(|e| {
+                    e.as_ref()
+                        .unwrap()
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(&me)
+                })
+                .count();
+            let docs_left = std::fs::read_dir(&p.docs)
+                .map(|rd| {
+                    rd.filter(|e| {
+                        e.as_ref()
+                            .unwrap()
+                            .file_name()
+                            .to_string_lossy()
+                            .starts_with('.')
+                    })
+                    .count()
+                })
+                .unwrap_or(0);
+            if n == 0 && docs_left == 0 {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        panic!("a temp folder was left behind");
     }
 }

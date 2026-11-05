@@ -101,7 +101,9 @@ import { GetStudyMaterialCard } from "./GetStudyMaterialCard";
 import { PhoneProgressCard } from "./PhoneProgressCard";
 import { GetPhoneProgressCard } from "./GetPhoneProgressCard";
 import { SendToIphoneCard } from "./SendToIphoneCard";
-import { deviceCan, isIOS } from "@/services/platform";
+import { SendChangesToIphoneCard } from "./SendChangesToIphoneCard";
+import { GetMacChangesCard } from "./GetMacChangesCard";
+import { deviceCan, IPHONE_SEND_ENABLED, isIOS } from "@/services/platform";
 
 import "./settings.css";
 
@@ -690,8 +692,10 @@ export function Settings() {
 
       <div className="settings-layout stack stack--5">
         {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
+        {deviceCan().sendToIphone ? <SendChangesToIphoneCard /> : null}
         {deviceCan().getPhoneProgress ? <GetPhoneProgressCard /> : null}
         {deviceCan().getStudyMaterial ? <GetStudyMaterialCard /> : null}
+        {deviceCan().getStudyMaterial && IPHONE_SEND_ENABLED ? <GetMacChangesCard /> : null}
         {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
         <Card>

@@ -7,7 +7,7 @@
 //! it is always complete. Every error reaches the student as a fixed plain
 //! sentence; no path, row or internal wording escapes.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -394,18 +394,151 @@ fn add_kind(counts: &mut UnsavedPhoneWork, table: &str) {
     }
 }
 
-/// What the existing progress file says about itself: (deviceId, toSeq).
-fn existing_identity(path: &Path) -> Option<(String, i64)> {
+/// The manifest of the file already written, if it can be read.
+fn existing_manifest(path: &Path) -> Option<Value> {
     let file = std::fs::File::open(path).ok()?;
     let mut zip = ZipArchive::new(file).ok()?;
     let mut entry = zip.by_name("manifest.json").ok()?;
     let mut text = String::new();
     (&mut entry).take(1 << 20).read_to_string(&mut text).ok()?;
-    let value: Value = serde_json::from_str(&text).ok()?;
+    serde_json::from_str(&text).ok()
+}
+
+/// What the existing progress file says about itself: (deviceId, toSeq).
+fn existing_identity(path: &Path) -> Option<(String, i64)> {
+    let value = existing_manifest(path)?;
     Some((
         value.get("deviceId")?.as_str()?.to_string(),
         value.get("toSeq")?.as_i64()?,
     ))
+}
+
+/// For each phone: the first and last change number of the unbroken run of
+/// its files this Mac has applied. The run starts at the phone's lowest
+/// applied file and stops at the first hole, so a missing file in the middle
+/// never counts as applied. Names that do not parse are skipped. Any trouble
+/// reading gives an empty map, which confirms nothing.
+pub(crate) fn applied_map(conn: &Connection) -> BTreeMap<String, (i64, i64)> {
+    let mut runs: BTreeMap<String, Vec<(i64, i64)>> = BTreeMap::new();
+    let Ok(mut stmt) = conn.prepare("SELECT peer_device, file_name FROM sync_applied") else {
+        return BTreeMap::new();
+    };
+    let Ok(rows) = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+    else {
+        return BTreeMap::new();
+    };
+    for (peer, name) in rows.filter_map(Result::ok) {
+        if !changeset::valid_device_id(&peer) {
+            continue;
+        }
+        if let Some((from, to, _)) = changeset::parse_name(&name) {
+            runs.entry(peer).or_default().push((from, to));
+        }
+    }
+    let mut out = BTreeMap::new();
+    for (peer, mut files) in runs {
+        files.sort();
+        let first = files[0].0;
+        let mut covered = files[0].1;
+        for (from, to) in &files[1..] {
+            if *from > covered + 1 {
+                break;
+            }
+            covered = covered.max(*to);
+        }
+        out.insert(peer, (first, covered));
+    }
+    out
+}
+
+/// The `applied` / `appliedFrom` manifest entries for a map (none when empty).
+fn applied_json(map: &BTreeMap<String, (i64, i64)>) -> Option<(Value, Value)> {
+    if map.is_empty() {
+        return None;
+    }
+    let to: serde_json::Map<String, Value> =
+        map.iter().map(|(k, v)| (k.clone(), json!(v.1))).collect();
+    let from: serde_json::Map<String, Value> =
+        map.iter().map(|(k, v)| (k.clone(), json!(v.0))).collect();
+    Some((Value::Object(to), Value::Object(from)))
+}
+
+/// Phone side: removes this phone's own outbox files the Mac has confirmed
+/// applied, oldest first. A file goes only when its whole range lies inside
+/// the Mac's unbroken run and at or below this phone's own watermark; the
+/// first file that does not qualify, or that cannot be removed, ends the pass.
+/// So an interruption only ever leaves more files (a bigger re-send), never a
+/// gap. Skipped while a send is running. Errors are ignored; the next file
+/// from the Mac tries again.
+pub(crate) fn prune_outbox(root: &Path, conn: &Connection, manifest: &Value) {
+    let Some(_only_one) = try_send_lock() else {
+        return;
+    };
+    let Ok(device_id) = device_id_of(conn) else {
+        return;
+    };
+    let number = |key: &str| {
+        manifest
+            .get(key)
+            .and_then(|m| m.get(device_id.as_str()))
+            .and_then(Value::as_i64)
+    };
+    let (Some(applied_to), Some(applied_from)) = (number("applied"), number("appliedFrom")) else {
+        return;
+    };
+    let Ok(exported) = export::exported_through_seq(conn) else {
+        return;
+    };
+    let dir = root.join(OUTBOX_DIR).join(changeset::folder(&device_id));
+    prune_files(&dir, applied_from, applied_to.min(exported), |p| {
+        std::fs::remove_file(p)
+    });
+}
+
+#[cfg(test)]
+pub(crate) mod tests_wait {
+    thread_local! {
+        /// A test that checks the busy case turns the waiting off for its thread.
+        pub(crate) static NO_WAIT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    }
+}
+
+/// The one-send lock, or `None` when a send is running. Tests run side by
+/// side and share the lock, so they wait a moment before giving up.
+fn try_send_lock() -> Option<std::sync::MutexGuard<'static, ()>> {
+    #[cfg(test)]
+    if !tests_wait::NO_WAIT.with(|n| n.get()) {
+        let mut guard = None;
+        crate::test_wait::wait_for("the one-send lock", || {
+            guard = SENDING.try_lock().ok();
+            guard.is_some()
+        });
+        return guard;
+    }
+    SENDING.try_lock().ok()
+}
+
+/// The removal loop of `prune_outbox`; `remove` is a seam for tests.
+pub(crate) fn prune_files(
+    dir: &Path,
+    run_from: i64,
+    limit: i64,
+    mut remove: impl FnMut(&Path) -> std::io::Result<()>,
+) -> usize {
+    let Ok(files) = list_outbox(dir) else {
+        return 0;
+    };
+    let mut removed = 0;
+    for (from, to, name) in files {
+        if from < run_from || to > limit || remove(&dir.join(&name)).is_err() {
+            break;
+        }
+        removed += 1;
+    }
+    if removed > 0 {
+        sync_dir(dir);
+    }
+    removed
 }
 
 /// Rename the existing file to `<name> (before <day>).hfdprogress`;
@@ -469,7 +602,7 @@ fn write_zip(
     let created = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
-    let manifest = json!({
+    let mut manifest = json!({
         "kind": side.kind(),
         "formatVersion": 1,
         "platform": side.platform(),
@@ -481,6 +614,14 @@ fn write_zip(
         "toSeq": to_seq,
         "files": outbox.iter().map(|f| f.2.as_str()).collect::<Vec<_>>(),
     });
+    // The Mac tells each phone how far its files are applied here, so the
+    // phone can drop what is safely on the Mac.
+    if side == Side::Mac {
+        if let Some((to, from)) = applied_json(&applied_map(conn)) {
+            manifest["applied"] = to;
+            manifest["appliedFrom"] = from;
+        }
+    }
     zip.start_file("manifest.json", deflated).map_err(failed)?;
     zip.write_all(manifest.to_string().as_bytes())
         .map_err(failed)?;
@@ -684,10 +825,18 @@ fn send_side_inner(
             file_bytes: existing.unwrap_or(0),
         });
     };
-    if !exported_something
-        && existing_identity(&destination)
-            .is_some_and(|(dev, to)| dev == device_id && to == outbox_to)
-    {
+    // The Mac's file also says how far the phone's work is applied here, so it
+    // is rewritten when that has moved even if no change is new.
+    let applied_unchanged = side != Side::Mac || {
+        let now_applied = applied_json(&applied_map(&conn));
+        let was = existing_manifest(&destination);
+        let was = |key: &str| was.as_ref().and_then(|m| m.get(key)).cloned();
+        was("applied") == now_applied.as_ref().map(|a| a.0.clone())
+            && was("appliedFrom") == now_applied.map(|a| a.1)
+    };
+    let file_current = existing_identity(&destination)
+        .is_some_and(|(dev, to)| dev == device_id && to == outbox_to);
+    if !exported_something && applied_unchanged && file_current {
         return Ok(SideSent {
             nothing_new: true,
             counts,
@@ -744,7 +893,8 @@ fn send_side_inner(
         crate::phone_work::record_sent_through_in(root, now).map_err(|_| NOT_NOTED.to_string())?;
     }
     Ok(SideSent {
-        nothing_new: false,
+        // A Mac file rewritten only to carry the applied marks holds nothing new.
+        nothing_new: side == Side::Mac && !exported_something && file_current,
         counts,
         mac,
         pdfs_included: built.pdfs_included,
@@ -855,6 +1005,9 @@ pub(crate) fn restart_change_stream(root: &Path, mark: i64) -> Result<(), String
     let _only_one = SENDING.lock().unwrap_or_else(|e| e.into_inner());
     let conn = crate::sync::progress::open_app_db(root).map_err(|_| MAC_NO_LIBRARY.to_string())?;
     let device_id = device_id_of(&conn).map_err(|e| Side::Mac.words(e))?;
+    // A value from the page must never move the mark past the log: that would
+    // skip changes. Too low only re-sends more.
+    let mark = mark.min(max_logged_seq(&conn).map_err(|e| Side::Mac.words(e))?);
     let dir = root.join(OUTBOX_DIR).join(changeset::folder(&device_id));
     match std::fs::remove_dir_all(&dir) {
         Ok(()) => {}
