@@ -30,6 +30,9 @@ pub(crate) const OUTBOX_DIR: &str = "outbox";
 const STAGING_PREFIX: &str = ".progress-staging-";
 const WRITING_PREFIX: &str = ".My phone progress-";
 const WRITING_SUFFIX: &str = ".writing";
+pub(crate) const MAC_FILE: &str = "Changes from my Mac.hfdprogress";
+const MAC_STAGING_PREFIX: &str = ".changes-staging-";
+const MAC_WRITING_PREFIX: &str = ".Changes from my Mac-";
 const STALE_AFTER: Duration = Duration::from_secs(24 * 60 * 60);
 
 const FAILED: &str = "Your progress couldn't be sent. Nothing on this phone was changed.";
@@ -43,7 +46,102 @@ const NOT_NOTED: &str =
 const KEPT_NOT_REPLACED: &str =
     "Your earlier progress file couldn't be kept, so nothing was replaced. Try again.";
 
+const MAC_FAILED: &str = "Your changes couldn't be sent. Nothing on this Mac was changed.";
+const MAC_NO_LIBRARY: &str =
+    "This Mac's study library couldn't be opened. Close and open the app, then try again.";
+const MAC_NOT_READY: &str =
+    "This Mac isn't ready to send yet. Close and open the app, then try again.";
+const MAC_KEPT_NOT_REPLACED: &str =
+    "Your earlier changes file couldn't be kept, so nothing was replaced. Try again.";
+const MAC_COPY_FIRST: &str =
+    "Send a full copy to your iPhone first; after that only changes are sent.";
+
 static SENDING: Mutex<()> = Mutex::new(());
+
+/// Which device is sending: the phone (its progress) or the Mac (its changes).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Side {
+    Phone,
+    Mac,
+}
+
+impl Side {
+    pub(crate) fn file_name(self) -> &'static str {
+        match self {
+            Self::Phone => PROGRESS_FILE,
+            Self::Mac => MAC_FILE,
+        }
+    }
+    pub(crate) fn kind(self) -> &'static str {
+        match self {
+            Self::Phone => "phoneProgress",
+            Self::Mac => "macChanges",
+        }
+    }
+    pub(crate) fn platform(self) -> &'static str {
+        match self {
+            Self::Phone => "ios",
+            Self::Mac => "macos",
+        }
+    }
+    fn staging_prefix(self) -> &'static str {
+        match self {
+            Self::Phone => STAGING_PREFIX,
+            Self::Mac => MAC_STAGING_PREFIX,
+        }
+    }
+    fn writing_prefix(self) -> &'static str {
+        match self {
+            Self::Phone => WRITING_PREFIX,
+            Self::Mac => MAC_WRITING_PREFIX,
+        }
+    }
+    fn keep_prefix(self) -> &'static str {
+        match self {
+            Self::Phone => "My phone progress",
+            Self::Mac => "Changes from my Mac",
+        }
+    }
+    /// The Mac's wording for the fixed sentences the shared steps produce.
+    fn words(self, text: String) -> String {
+        if self == Self::Phone {
+            return text;
+        }
+        match text.as_str() {
+            FAILED => MAC_FAILED,
+            NO_LIBRARY => MAC_NO_LIBRARY,
+            NOT_READY => MAC_NOT_READY,
+            KEPT_NOT_REPLACED => MAC_KEPT_NOT_REPLACED,
+            _ => return text,
+        }
+        .to_string()
+    }
+}
+
+/// What a Mac file holds, in the words the student sees.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MacCounts {
+    pub materials: u32,
+    pub removed: u32,
+    pub card_sets: u32,
+    pub practice_tests: u32,
+    pub study_guides: u32,
+}
+
+impl MacCounts {
+    pub(crate) fn add(&mut self, table: &str, op: Op) {
+        match (table, op) {
+            ("study_materials", Op::Delete) => self.removed += 1,
+            (_, Op::Delete) => {}
+            ("study_materials", _) => self.materials += 1,
+            ("card_versions", _) => self.card_sets += 1,
+            ("practice_test_versions", _) => self.practice_tests += 1,
+            ("ai_study_sets", _) => self.study_guides += 1,
+            _ => {}
+        }
+    }
+}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -136,12 +234,22 @@ fn older_than_a_day(path: &Path, now: SystemTime) -> bool {
 /// Leftovers of a send that was cut short and is over a day old: staging
 /// folders in the app folder and half-written progress files in Documents.
 /// Nothing else is ever touched.
+#[cfg(test)]
 pub(crate) fn remove_stale_temps(root: &Path, documents_dir: &Path, now: SystemTime) {
+    remove_stale_temps_for(Side::Phone, root, documents_dir, now);
+}
+
+pub(crate) fn remove_stale_temps_for(
+    side: Side,
+    root: &Path,
+    documents_dir: &Path,
+    now: SystemTime,
+) {
     if let Ok(entries) = std::fs::read_dir(root) {
         for entry in entries.flatten() {
             let name = entry.file_name();
             let path = entry.path();
-            if name.to_string_lossy().starts_with(STAGING_PREFIX)
+            if name.to_string_lossy().starts_with(side.staging_prefix())
                 && std::fs::symlink_metadata(&path).is_ok_and(|m| m.is_dir())
                 && older_than_a_day(&path, now)
             {
@@ -153,7 +261,7 @@ pub(crate) fn remove_stale_temps(root: &Path, documents_dir: &Path, now: SystemT
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
             let path = entry.path();
-            if name.starts_with(WRITING_PREFIX)
+            if name.starts_with(side.writing_prefix())
                 && name.ends_with(WRITING_SUFFIX)
                 && std::fs::symlink_metadata(&path).is_ok_and(|m| m.is_file())
                 && older_than_a_day(&path, now)
@@ -177,6 +285,19 @@ fn device_id_of(conn: &Connection) -> Result<String, String> {
         Some(id) if changeset::valid_device_id(&id) => Ok(id),
         _ => Err(NOT_READY.to_string()),
     }
+}
+
+/// Whether a full copy has restarted this Mac's change stream (or a send has
+/// moved it) since the last restore.
+fn has_exported_mark(conn: &Connection) -> Result<bool, String> {
+    conn.query_row(
+        "SELECT 1 FROM app_metadata WHERE key = 'exported_through_seq'",
+        [],
+        |_| Ok(()),
+    )
+    .optional()
+    .map(|r| r.is_some())
+    .map_err(|_| FAILED.to_string())
 }
 
 fn max_logged_seq(conn: &Connection) -> Result<i64, String> {
@@ -287,15 +408,21 @@ fn existing_identity(path: &Path) -> Option<(String, i64)> {
     ))
 }
 
-/// Rename the existing file to `My phone progress (before <day>).hfdprogress`;
+/// Rename the existing file to `<name> (before <day>).hfdprogress`;
 /// nothing else is touched.
-fn keep_earlier_file(documents_dir: &Path, destination: &Path, now: &str) -> Result<(), String> {
+fn keep_earlier_file(
+    side: Side,
+    documents_dir: &Path,
+    destination: &Path,
+    now: &str,
+) -> Result<(), String> {
     let label = crate::phone_work::day_label(now).map_err(|_| KEPT_NOT_REPLACED.to_string())?;
+    let keep = side.keep_prefix();
     for n in 1..=99u32 {
         let name = if n == 1 {
-            format!("My phone progress (before {label}).hfdprogress")
+            format!("{keep} (before {label}).hfdprogress")
         } else {
-            format!("My phone progress (before {label}) {n}.hfdprogress")
+            format!("{keep} (before {label}) {n}.hfdprogress")
         };
         let target = documents_dir.join(name);
         if target.symlink_metadata().is_ok() {
@@ -317,6 +444,7 @@ fn failed<E>(_: E) -> String {
 
 #[allow(clippy::too_many_arguments)]
 fn write_zip(
+    side: Side,
     conn: &Connection,
     root: &Path,
     staging: &Path,
@@ -331,14 +459,20 @@ fn write_zip(
     let deflated = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
     let stored = SimpleFileOptions::default().compression_method(CompressionMethod::Stored);
     let from_seq = outbox.iter().map(|f| f.0).min().unwrap_or(0);
+    // The phone looks back to its floor; the Mac only to what its files hold
+    // (the PDFs before that are already on the phone, in the full copy).
+    let pdf_since = match side {
+        Side::Phone => floor,
+        Side::Mac => from_seq.saturating_sub(1).max(floor),
+    };
     let to_seq = outbox.iter().map(|f| f.1).max().unwrap_or(0);
     let created = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
     let manifest = json!({
-        "kind": "phoneProgress",
+        "kind": side.kind(),
         "formatVersion": 1,
-        "platform": "ios",
+        "platform": side.platform(),
         "deviceId": device_id,
         "appVersion": app_version,
         "schemaVersion": crate::CURRENT_SCHEMA_VERSION,
@@ -366,7 +500,7 @@ fn write_zip(
                  WHERE table_name = 'study_materials' AND seq > ?1 ORDER BY row_id",
             )
             .map_err(failed)?;
-        let rows = stmt.query_map([floor], |r| r.get(0)).map_err(failed)?;
+        let rows = stmt.query_map([pdf_since], |r| r.get(0)).map_err(failed)?;
         rows.collect::<Result<_, _>>().map_err(failed)?
     };
     let mut added: BTreeSet<String> = BTreeSet::new();
@@ -440,13 +574,59 @@ pub(crate) fn send_locked(
     app_version: &str,
     now: &str,
 ) -> Result<SentPhoneProgress, String> {
-    remove_stale_temps(root, documents_dir, SystemTime::now());
+    let sent = send_side(Side::Phone, root, documents_dir, app_version, now)?;
+    Ok(SentPhoneProgress {
+        file_name: PROGRESS_FILE.to_string(),
+        sent_at: now.to_string(),
+        nothing_new: sent.nothing_new,
+        counts: sent.counts,
+        pdfs_included: sent.pdfs_included,
+        pdfs_left: sent.pdfs_left,
+        file_bytes: sent.file_bytes,
+    })
+}
+
+/// What one send did, for either side.
+pub(crate) struct SideSent {
+    pub nothing_new: bool,
+    /// The phone's counts (phone side only).
+    pub counts: UnsavedPhoneWork,
+    /// The Mac's counts (Mac side only).
+    pub mac: MacCounts,
+    pub pdfs_included: u32,
+    pub pdfs_left: u32,
+    pub file_bytes: u64,
+}
+
+/// Sends for `side` into `out_dir` (the phone's Documents folder, or the
+/// Mac's iCloud Drive folder). The caller holds the one-send lock.
+pub(crate) fn send_side(
+    side: Side,
+    root: &Path,
+    out_dir: &Path,
+    app_version: &str,
+    now: &str,
+) -> Result<SideSent, String> {
+    send_side_inner(side, root, out_dir, app_version, now).map_err(|e| side.words(e))
+}
+
+fn send_side_inner(
+    side: Side,
+    root: &Path,
+    documents_dir: &Path,
+    app_version: &str,
+    now: &str,
+) -> Result<SideSent, String> {
+    remove_stale_temps_for(side, root, documents_dir, SystemTime::now());
     let mut conn = crate::sync::progress::open_app_db(root).map_err(|_| NO_LIBRARY.to_string())?;
     let device_id = device_id_of(&conn)?;
     // The ledger must hold the work from before it existed, whether or not the
     // startup preparation ever finished; otherwise the baseline would move
     // past rows no file carries.
-    bootstrap_in(root, &mut conn, true, now).map_err(|_| FAILED.to_string())?;
+    bootstrap_in(root, &mut conn, side == Side::Phone, now).map_err(|_| FAILED.to_string())?;
+    if side == Side::Mac && !has_exported_mark(&conn)? {
+        return Err(MAC_COPY_FIRST.to_string());
+    }
     let floor = export::sync_floor_seq(&conn).map_err(|_| FAILED.to_string())?;
     let exported = export::exported_through_seq(&conn).map_err(|_| FAILED.to_string())?;
     // A watermark ahead of the log means the identity reset after a restore
@@ -462,6 +642,7 @@ pub(crate) fn send_locked(
     outbox.retain(|(_, to, _)| *to > floor);
 
     let mut counts = zero_counts();
+    let mut mac = MacCounts::default();
     let new_export = export::export_changes_in(&mut conn, &device_id, since, app_version, now)
         .map_err(|_| FAILED.to_string())?;
     let exported_something = new_export.is_some();
@@ -474,8 +655,13 @@ pub(crate) fn send_locked(
         )
         .map_err(|_| FAILED.to_string())?;
         for change in &decoded.set.changes {
-            if change.op != Op::Delete {
-                add_kind(&mut counts, &change.table);
+            match side {
+                Side::Phone => {
+                    if change.op != Op::Delete {
+                        add_kind(&mut counts, &change.table);
+                    }
+                }
+                Side::Mac => mac.add(&change.table, change.op),
             }
         }
         write_outbox_file(&outbox_dir, &exp.file.file_name, &exp.file.bytes)?;
@@ -485,15 +671,14 @@ pub(crate) fn send_locked(
         outbox.sort();
     }
 
-    let destination = documents_dir.join(PROGRESS_FILE);
+    let destination = documents_dir.join(side.file_name());
     let outbox_to = outbox.iter().map(|f| f.1).max();
     let existing = destination.symlink_metadata().ok().map(|m| m.len());
     let Some(outbox_to) = outbox_to else {
-        return Ok(SentPhoneProgress {
-            file_name: PROGRESS_FILE.to_string(),
-            sent_at: now.to_string(),
+        return Ok(SideSent {
             nothing_new: true,
             counts,
+            mac,
             pdfs_included: 0,
             pdfs_left: 0,
             file_bytes: existing.unwrap_or(0),
@@ -503,11 +688,10 @@ pub(crate) fn send_locked(
         && existing_identity(&destination)
             .is_some_and(|(dev, to)| dev == device_id && to == outbox_to)
     {
-        return Ok(SentPhoneProgress {
-            file_name: PROGRESS_FILE.to_string(),
-            sent_at: now.to_string(),
+        return Ok(SideSent {
             nothing_new: true,
             counts,
+            mac,
             pdfs_included: 0,
             pdfs_left: 0,
             file_bytes: existing.unwrap_or(0),
@@ -516,7 +700,8 @@ pub(crate) fn send_locked(
 
     std::fs::create_dir_all(documents_dir).map_err(|_| FAILED.to_string())?;
     let writing = documents_dir.join(format!(
-        "{WRITING_PREFIX}{}{WRITING_SUFFIX}",
+        "{}{}{WRITING_SUFFIX}",
+        side.writing_prefix(),
         unique_suffix()
     ));
     let out = std::fs::OpenOptions::new()
@@ -525,9 +710,10 @@ pub(crate) fn send_locked(
         .open(&writing)
         .map_err(|_| FAILED.to_string())?;
     let mut writing_guard = Cleanup::file(writing.clone());
-    let staging = root.join(format!("{STAGING_PREFIX}{}", unique_suffix()));
+    let staging = root.join(format!("{}{}", side.staging_prefix(), unique_suffix()));
     let staging_guard = Cleanup::folder(staging.clone());
     let built = write_zip(
+        side,
         &conn,
         root,
         &staging,
@@ -545,7 +731,7 @@ pub(crate) fn send_locked(
     if existing.is_some() {
         let own = existing_identity(&destination).is_some_and(|(dev, _)| dev == device_id);
         if !own {
-            keep_earlier_file(documents_dir, &destination, now)?;
+            keep_earlier_file(side, documents_dir, &destination, now)?;
         }
     }
     std::fs::rename(&writing, &destination).map_err(|_| FAILED.to_string())?;
@@ -554,14 +740,13 @@ pub(crate) fn send_locked(
     let file_bytes = std::fs::metadata(&destination).map_or(0, |m| m.len());
     // A PDF left out means the Mac copy would be incomplete: the work stays
     // counted as not saved, and the next send tries that PDF again.
-    if built.pdfs_left == 0 {
+    if side == Side::Phone && built.pdfs_left == 0 {
         crate::phone_work::record_sent_through_in(root, now).map_err(|_| NOT_NOTED.to_string())?;
     }
-    Ok(SentPhoneProgress {
-        file_name: PROGRESS_FILE.to_string(),
-        sent_at: now.to_string(),
+    Ok(SideSent {
         nothing_new: false,
         counts,
+        mac,
         pdfs_included: built.pdfs_included,
         pdfs_left: built.pdfs_left,
         file_bytes,
@@ -606,4 +791,157 @@ pub async fn prepare_phone_progress(app: tauri::AppHandle) -> Result<(), String>
     tauri::async_runtime::spawn_blocking(move || prepare_phone_progress_in(&root, &now))
         .await
         .map_err(|_| "This phone couldn't get its progress ready.".to_string())?
+}
+
+/// What "Send changes to my iPhone" reports.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SentChanges {
+    pub file_name: String,
+    pub sent_at: String,
+    pub nothing_new: bool,
+    pub counts: MacCounts,
+    pub pdfs_included: u32,
+    pub pdfs_left: u32,
+    pub file_bytes: u64,
+    pub path: String,
+}
+
+/// Takes the one-send-at-a-time lock, then sends the Mac's changes into `out_dir`.
+pub(crate) fn send_mac_changes_in(
+    root: &Path,
+    out_dir: &Path,
+    app_version: &str,
+    now: &str,
+) -> Result<SentChanges, String> {
+    let _only_one = SENDING.try_lock().map_err(|e| match e {
+        std::sync::TryLockError::Poisoned(_) => MAC_FAILED.to_string(),
+        std::sync::TryLockError::WouldBlock => BUSY.to_string(),
+    })?;
+    send_mac_changes_locked(root, out_dir, app_version, now)
+}
+
+/// The Mac send itself; the caller holds the one-send lock.
+pub(crate) fn send_mac_changes_locked(
+    root: &Path,
+    out_dir: &Path,
+    app_version: &str,
+    now: &str,
+) -> Result<SentChanges, String> {
+    let sent = send_side(Side::Mac, root, out_dir, app_version, now)?;
+    Ok(SentChanges {
+        file_name: MAC_FILE.to_string(),
+        sent_at: now.to_string(),
+        nothing_new: sent.nothing_new,
+        counts: sent.mac,
+        pdfs_included: sent.pdfs_included,
+        pdfs_left: sent.pdfs_left,
+        file_bytes: sent.file_bytes,
+        path: out_dir.join(MAC_FILE).to_string_lossy().into_owned(),
+    })
+}
+
+/// The newest change number now. Read this BEFORE a full copy starts: an
+/// overlap with the copy is harmless, a gap is not.
+pub(crate) fn change_stream_mark(root: &Path) -> Result<i64, String> {
+    let conn = crate::sync::progress::open_app_db(root).map_err(|_| MAC_NO_LIBRARY.to_string())?;
+    max_logged_seq(&conn).map_err(|e| Side::Mac.words(e))
+}
+
+/// After a full copy is durable: the Mac's next changes file starts after
+/// `mark`, and the files it kept for the earlier stream are removed. The
+/// files go first, so an interruption only ever re-sends more.
+pub(crate) fn restart_change_stream(root: &Path, mark: i64) -> Result<(), String> {
+    let _only_one = SENDING.lock().unwrap_or_else(|e| e.into_inner());
+    let conn = crate::sync::progress::open_app_db(root).map_err(|_| MAC_NO_LIBRARY.to_string())?;
+    let device_id = device_id_of(&conn).map_err(|e| Side::Mac.words(e))?;
+    let dir = root.join(OUTBOX_DIR).join(changeset::folder(&device_id));
+    match std::fs::remove_dir_all(&dir) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => return Err(MAC_FAILED.to_string()),
+    }
+    export::set_exported_through_seq(&conn, mark).map_err(|_| MAC_FAILED.to_string())
+}
+
+fn mac_out_dir() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    crate::backup::iphone_backup_dir(&home)
+}
+
+fn mac_context(app: &tauri::AppHandle) -> Result<(PathBuf, String, String), String> {
+    let root = crate::storage::app_root(app).map_err(|_| MAC_FAILED.to_string())?;
+    let version = app.package_info().version.to_string();
+    let now = crate::phone_work::now_utc().map_err(|_| MAC_FAILED.to_string())?;
+    Ok((root, version, now))
+}
+
+/// Writes "Changes from my Mac" into the iCloud Drive folder. `Ok(None)` when
+/// that folder is not available: the page then asks where to save.
+#[tauri::command]
+pub async fn send_mac_changes(app: tauri::AppHandle) -> Result<Option<SentChanges>, String> {
+    if !cfg!(target_os = "macos") {
+        return Ok(None);
+    }
+    let (root, version, now) = mac_context(&app)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(dir) = mac_out_dir() else {
+            return Ok(None);
+        };
+        send_mac_changes_in(&root, &dir, &version, &now).map(Some)
+    })
+    .await
+    .map_err(|_| MAC_FAILED.to_string())?
+}
+
+/// The same, into the folder of a place she chose in a save dialog.
+#[tauri::command]
+pub async fn send_mac_changes_to(
+    app: tauri::AppHandle,
+    destination_path: String,
+) -> Result<SentChanges, String> {
+    if !cfg!(target_os = "macos") {
+        return Err("Only the Mac sends its changes this way.".into());
+    }
+    crate::picked_paths::require_picked(&app, &destination_path)?;
+    let dir = Path::new(&destination_path)
+        .parent()
+        .map(Path::to_path_buf)
+        .ok_or_else(|| MAC_FAILED.to_string())?;
+    let (root, version, now) = mac_context(&app)?;
+    tauri::async_runtime::spawn_blocking(move || send_mac_changes_in(&root, &dir, &version, &now))
+        .await
+        .map_err(|_| MAC_FAILED.to_string())?
+}
+
+/// Call before a full copy that is saved elsewhere (AirDrop); pass the value to
+/// `restart_change_stream_after_copy` once the copy is saved.
+#[tauri::command]
+pub async fn change_stream_mark_before_copy(app: tauri::AppHandle) -> Result<Option<i64>, String> {
+    if !cfg!(target_os = "macos") {
+        return Ok(None);
+    }
+    let root = crate::storage::app_root(&app).map_err(|_| MAC_FAILED.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || change_stream_mark(&root).map(Some))
+        .await
+        .map_err(|_| MAC_FAILED.to_string())?
+}
+
+/// After the save-elsewhere full copy succeeded: the Mac's changes now start
+/// after `mark_before_copy` (read before the copy began).
+#[tauri::command]
+pub async fn restart_change_stream_after_copy(
+    app: tauri::AppHandle,
+    mark_before_copy: Option<i64>,
+) -> Result<(), String> {
+    if !cfg!(target_os = "macos") {
+        return Ok(());
+    }
+    let Some(mark) = mark_before_copy.filter(|m| *m >= 0) else {
+        return Err(MAC_FAILED.to_string());
+    };
+    let root = crate::storage::app_root(&app).map_err(|_| MAC_FAILED.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || restart_change_stream(&root, mark))
+        .await
+        .map_err(|_| MAC_FAILED.to_string())?
 }

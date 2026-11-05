@@ -227,34 +227,82 @@ pub(crate) fn record_sent_through_in(root: &Path, now: &str) -> Result<(), Strin
     )
 }
 
+/// Rows newer than the baseline that this phone made. A row whose
+/// `sync_row_meta.device_id` is set and is not `own_device` came from the Mac
+/// (a changes file), so it is already saved there; a local edit rewrites the
+/// meta through the ledger trigger and counts again.
 fn count_newer(
     connection: &Connection,
     table: &str,
     column: &str,
     baseline: Option<&str>,
+    own_device: Option<&str>,
 ) -> Result<i64, String> {
     if !table_exists(connection, table)? {
         return Ok(0);
     }
+    let key = crate::sync::tables::table(table).map(|t| t.primary_key);
+    let from_mac = match (key, own_device) {
+        (Some(key), Some(_)) if table_exists(connection, "sync_row_meta")? => format!(
+            " AND NOT EXISTS (SELECT 1 FROM sync_row_meta m WHERE m.table_name = '{table}' \
+             AND m.row_id = {table}.{key} AND m.device_id IS NOT NULL AND m.device_id <> ?2)"
+        ),
+        _ => String::new(),
+    };
+    let own = own_device.unwrap_or("");
     match baseline {
-        Some(at) => connection.query_row(
+        Some(at) if from_mac.is_empty() => connection.query_row(
             &format!("SELECT COUNT(*) FROM {table} WHERE julianday({column}) > julianday(?1)"),
             [at],
             |row| row.get(0),
         ),
-        None => connection.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
-            row.get(0)
-        }),
+        Some(at) => connection.query_row(
+            &format!(
+                "SELECT COUNT(*) FROM {table} WHERE julianday({column}) > julianday(?1){from_mac}"
+            ),
+            [at, own],
+            |row| row.get(0),
+        ),
+        None if from_mac.is_empty() => {
+            connection.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+                row.get(0)
+            })
+        }
+        None => connection.query_row(
+            &format!("SELECT COUNT(*) FROM {table} WHERE ?1 = ?1{from_mac}"),
+            [own, own],
+            |row| row.get(0),
+        ),
     }
     .map_err(|e| e.to_string())
+}
+
+fn own_device_id(connection: &Connection) -> Option<String> {
+    if !table_exists(connection, "app_metadata").ok()? {
+        return None;
+    }
+    connection
+        .query_row(
+            "SELECT value FROM app_metadata WHERE key = 'device_id'",
+            [],
+            |r| r.get(0),
+        )
+        .ok()
 }
 
 pub(crate) fn unsaved_phone_work_in(root: &Path) -> Result<UnsavedPhoneWork, String> {
     let baseline = read_baseline(root);
     let mut counts = [0i64; KINDS.len()];
     if let Some(connection) = open_read_only(root)? {
+        let own = own_device_id(&connection);
         for (slot, (table, column)) in counts.iter_mut().zip(KINDS) {
-            *slot = count_newer(&connection, table, column, baseline.as_deref())?;
+            *slot = count_newer(
+                &connection,
+                table,
+                column,
+                baseline.as_deref(),
+                own.as_deref(),
+            )?;
         }
     }
     Ok(UnsavedPhoneWork {

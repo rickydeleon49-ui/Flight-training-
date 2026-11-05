@@ -553,6 +553,11 @@ pub fn run() {
             sync::progress::import_phone_progress,
             sync::send::send_phone_progress,
             sync::send::prepare_phone_progress,
+            sync::send::send_mac_changes,
+            sync::send::send_mac_changes_to,
+            sync::send::change_stream_mark_before_copy,
+            sync::send::restart_change_stream_after_copy,
+            sync::progress::get_mac_changes,
             backup::app_version,
             quit_settlement::settled_before_quit,
         ])
