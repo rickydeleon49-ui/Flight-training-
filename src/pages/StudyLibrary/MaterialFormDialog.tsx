@@ -17,7 +17,7 @@ import {
   type StudyMaterial,
   type Topic,
 } from "@/domain/types";
-import { canHandleFiles, cleanupDocuments, formatFileSize, pickAndImportDocument } from "@/services/documents";
+import { canHandleFiles, cleanupDocuments, documentErrorMessage, formatFileSize, pickAndImportDocument } from "@/services/documents";
 
 export interface MaterialDraft {
   id?: Id;
@@ -122,9 +122,7 @@ export function MaterialFormDialog({
         }));
       }
     } catch (importError) {
-      setFileError(
-        importError instanceof Error ? importError.message : "That file could not be added.",
-      );
+      setFileError(documentErrorMessage(importError, "That file could not be added."));
     } finally {
       setImporting(false);
     }

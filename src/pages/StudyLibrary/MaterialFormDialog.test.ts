@@ -14,6 +14,9 @@ vi.mock("@/services/documents", () => ({
   formatFileSize: () => "2 KB",
   pickAndImportDocument: files.pick,
   cleanupDocuments: files.cleanup,
+  documentErrorMessage: (error: unknown, fallback: string) =>
+    error instanceof Error && error.message.trim() ? error.message
+      : typeof error === "string" && error.trim() ? error : fallback,
 }));
 
 import { MaterialFormDialog } from "./MaterialFormDialog";
@@ -334,4 +337,17 @@ it("offers the PDF picker on the phone, with no desktop-application wording", as
     expect(screen.getByRole("button", { name: "Choose a file" })).toBeTruthy();
     expect(screen.queryByText(/desktop application/)).toBeNull();
   } finally { spy.mockRestore(); }
+});
+
+it("shows the app's own reason when a chosen file is refused", async () => {
+  // Tauri commands reject with a plain string, not an Error.
+  files.pick.mockRejectedValue("That PDF is bigger than 50 MB. Add it on your Mac, which can split it into parts.");
+  render(h(MaterialFormDialog, {
+    open: true, goals: [], events: [], newMaterialId: "new",
+    onClose: vi.fn(), onSave: vi.fn(),
+  }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Choose a file" }));
+  expect(await screen.findByText(/bigger than 50 MB/)).toBeTruthy();
+  expect(screen.queryByText("That file could not be added.")).toBeNull();
 });
