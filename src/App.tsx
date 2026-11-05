@@ -16,6 +16,7 @@ const JournalEntryDetail = lazy(() => import("@/pages/FlightJournal/JournalEntry
 const JournalForm = lazy(() => import("@/pages/FlightJournal/JournalForm").then((m) => ({ default: m.JournalForm })));
 const FlightPath = lazy(() => import("@/pages/FlightPath/FlightPath").then((m) => ({ default: m.FlightPath })));
 const SkillPage = lazy(() => import("@/pages/FlightPath/skills/SkillPage").then((m) => ({ default: m.SkillPage })));
+const More = lazy(() => import("@/pages/More/More").then((m) => ({ default: m.More })));
 const Notes = lazy(() => import("@/pages/Notes/Notes").then((m) => ({ default: m.Notes })));
 const Questions = lazy(() => import("@/pages/Questions/Questions").then((m) => ({ default: m.Questions })));
 const PilotToolkit = lazy(() => import("@/pages/PilotToolkit/PilotToolkit").then((m) => ({ default: m.PilotToolkit })));
@@ -80,6 +81,7 @@ function Gate() {
           <Route path="finances" element={<Finances />} />
           <Route path="toolkit" element={<PilotToolkit />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="more" element={<More />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

@@ -187,3 +187,9 @@ export const SettingsIcon = (p: IconProps) => (
     <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" />
   </Icon>
 );
+
+export const MoreIcon = (p: IconProps) => (
+  <Icon strokeWidth={2.4} {...p}>
+    <path d="M5.5 12h.01M12 12h.01M18.5 12h.01" />
+  </Icon>
+);

@@ -30,6 +30,8 @@ import {
   Loading,
 } from "@/components/ui";
 
+import { IosTabBar } from "./IosTabBar";
+
 import "./shell.css";
 
 interface NavItem {
@@ -112,8 +114,11 @@ export function AppShell() {
     resizeFocusRef.current = null;
   }, [desktop]);
 
+  // iPhone only: a bottom tab bar replaces the header and menu. A wide iPad keeps the sidebar.
+  const tabs = isIOS() && !desktop;
+
   const beforeQuickFindOpen = useCallback(() => {
-    if (desktop) return;
+    if (desktop || tabs) return;
     // Give the dialog a visible return target before it captures focus.
     // WebKit doesn't focus a button on mouse click, so an open Menu with focus
     // on the page body also returns to the Menu button.
@@ -122,7 +127,7 @@ export function AppShell() {
       menuRef.current?.focus();
     }
     setMenuOpen(false);
-  }, [desktop, menuOpen]);
+  }, [desktop, tabs, menuOpen]);
 
   const closeMenu = () => {
     if (!desktop) {
@@ -149,7 +154,8 @@ export function AppShell() {
   }, [desktop, location.pathname]);
 
   return (
-    <div className="shell">
+    <div className={tabs ? "shell shell--tabs" : "shell"}>
+      {tabs ? <IosTabBar overdueCount={overdueCount} questionsToAsk={questionsToAsk} /> : (
       <aside ref={sidebarRef} className="sidebar" onKeyDown={(event) => {
         if (event.key !== "Escape" || event.defaultPrevented || desktop || !menuOpen) return;
         const target = event.target as HTMLElement;
@@ -248,6 +254,7 @@ export function AppShell() {
           </div>
         </div>
       </aside>
+      )}
 
       <main className="content">
         <div className="content__inner">
