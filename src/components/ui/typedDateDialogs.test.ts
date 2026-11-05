@@ -76,9 +76,9 @@ describe("DATES-01 dialogs save a typed date as typed", () => {
 
   it("RescheduleDialog: a quick choice replaces the typed text", () => {
     inRouter(h(RescheduleDialog, { action, onClose: () => undefined, onReschedule: vi.fn() }));
-    const input = typeDate("Or type a date", "11052026");
+    const input = typeDate("Or type a date", "01022031");
     fireEvent.click(screen.getByRole("button", { name: "Today" }));
-    expect(input.value).not.toBe("11052026");
+    expect(input.value).not.toBe("01022031");
     expect(input.value).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
   });
 
