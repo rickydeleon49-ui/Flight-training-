@@ -23,6 +23,11 @@ vi.mock("@/services/offlineContent", async (original) => ({
   offlineStudyEnabled: () => offline.enabled,
   searchOfflineContent: (...args: unknown[]) => offline.search(...args),
 }));
+const device = vi.hoisted(() => ({ ios: false }));
+vi.mock("@/services/platform", async (original) => ({
+  ...await original<typeof import("@/services/platform")>(),
+  isIOS: () => device.ios,
+}));
 let db: TestDatabase | null = null;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 
@@ -77,6 +82,7 @@ async function mountLibrary() {
 afterEach(() => {
   cleanup();
   offline.enabled = true;
+  device.ios = false;
   offline.search.mockReset();
   restore?.();
   restore = null;
@@ -328,4 +334,20 @@ it("PACKS-05 omits the material empty card for PDF-only hits and resets for new 
   await screen.findByText(/No matches in 1 document/);
   expect(screen.getByText("Nothing matches those filters.")).toBeTruthy();
   expect(screen.queryByText("No study materials match.")).toBeNull();
+});
+
+describe("Quick Find keyboard hint", () => {
+  it("shows the esc hint on the Mac", async () => {
+    await mount();
+    openWithShortcut();
+    expect(document.querySelector(".quick-find__hint")?.textContent).toBe("esc");
+  });
+
+  it("hides the esc hint on the iPhone, which has no Esc key", async () => {
+    device.ios = true;
+    await mount();
+    openWithShortcut();
+    expect(screen.getByRole("dialog", { name: "Quick find" })).toBeTruthy();
+    expect(document.querySelector(".quick-find__hint")).toBeNull();
+  });
 });
