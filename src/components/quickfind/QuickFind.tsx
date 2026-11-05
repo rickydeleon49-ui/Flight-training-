@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SearchIcon } from "@/components/ui";
 import { useModalDialog } from "@/components/ui/useModalDialog";
 import { offlineStudyEnabled } from "@/services/offlineContent";
+import { isIOS } from "@/services/platform";
 import { todayIso } from "@/lib/dates";
 import { quickFind, type QuickFindResult } from "@/logic/quickFind";
 import { useAppData } from "@/state/AppDataContext";
@@ -181,7 +182,7 @@ export function QuickFind({ onBeforeOpen }: { onBeforeOpen?: () => void } = {}) 
               }
             }}
           />
-          <kbd className="quick-find__hint">esc</kbd>
+          {isIOS() ? null : <kbd className="quick-find__hint">esc</kbd>}
         </div>
 
         {results.length === 0 && !pdfRow ? (
