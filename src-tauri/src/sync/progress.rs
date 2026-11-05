@@ -598,19 +598,6 @@ fn count_mac_changes(conn: &Connection, changes: &[Change], peer: &str) -> MacCo
     counts
 }
 
-/// The Mac whose full copy this phone was restored from, when known.
-fn copy_source(conn: &Connection) -> Option<String> {
-    conn.query_row(
-        "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = 'sync_copy_from_device'",
-        [],
-        |r| r.get::<_, Option<String>>(0),
-    )
-    .optional()
-    .ok()
-    .flatten()
-    .flatten()
-}
-
 /// Before anything is written, on the phone: the copy must be there, no
 /// file may leave a gap, and a delete of study material must not meet
 /// phone work that is saved nowhere else.
@@ -635,10 +622,9 @@ fn phone_preflight(
         return Err(w.not_yet.to_string());
     };
     // Changes from a different Mac than the copy's cannot be placed on it.
-    if copy_source(conn).is_some_and(|source| source != plan.device_id) {
-        // The Mac may have been restored to an earlier state: send everything
-        // since the copy again, and count it as unsaved until then.
-        let _ = super::send::restart_for_new_mac(root, conn);
+    // The Mac may have been restored to an earlier state: the phone then sends
+    // everything since the copy again, and counts it as unsaved until then.
+    if super::send::restart_if_other_mac(root, conn, Some(&plan.device_id)).unwrap_or(true) {
         return Err(w.needs_earlier.to_string());
     }
     let applied: HashSet<String> = {
@@ -700,10 +686,10 @@ fn prune_confirmed(
     manifest: &serde_json::Value,
 ) {
     // After a stream restart the outbox holds work the copy's Mac never saw.
-    if crate::phone_work::stream_restarted(conn) {
+    if crate::phone_work::stream_restarted(conn) || crate::phone_work::copy_superseded(conn) {
         return;
     }
-    if copy_source(conn).as_deref() == Some(plan.device_id.as_str()) {
+    if super::send::copy_source(conn).as_deref() == Some(plan.device_id.as_str()) {
         super::send::prune_outbox(root, conn, manifest);
     }
 }
@@ -741,6 +727,13 @@ fn import_progress_file(
     if plan.files.is_empty() {
         if receiver == Side::Phone {
             if let Ok(conn) = open_app_db(root) {
+                // A file from another Mac gets the same answer as one with
+                // change files.
+                if super::send::restart_if_other_mac(root, &conn, Some(&plan.device_id))
+                    .unwrap_or(true)
+                {
+                    return Err(w.needs_earlier.to_string());
+                }
                 prune_confirmed(root, &conn, &plan, manifest);
             }
         }

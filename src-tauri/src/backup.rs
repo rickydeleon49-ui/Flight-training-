@@ -5332,6 +5332,29 @@ fn verify_archive_database_and_documents<R: Read + Seek>(
     ))
 }
 
+/// Reads the small manifest entry of an open archive.
+fn read_manifest_from(archive: &mut ZipArchive<File>) -> Result<CompleteBackupManifest, String> {
+    let mut entry = archive
+        .by_name(ARCHIVE_MANIFEST)
+        .map_err(|_| "That backup does not contain a manifest.".to_string())?;
+    if entry.size() > 64 * 1024 {
+        return Err("That backup manifest is unexpectedly large.".to_string());
+    }
+    let mut json = String::new();
+    entry
+        .read_to_string(&mut json)
+        .map_err(|e| format!("Could not read the backup manifest: {e}"))?;
+    serde_json::from_str(&json).map_err(|e| format!("The backup manifest is invalid: {e}"))
+}
+
+/// The Mac (device id) a full copy was made by; only the manifest is read.
+fn archive_device_id(source: &Path) -> Result<Option<String>, String> {
+    let file = File::open(source).map_err(|e| format!("Could not open that backup: {e}"))?;
+    let mut archive = ZipArchive::new(file)
+        .map_err(|e| zip_error("That is not a readable Flight Deck backup", e))?;
+    Ok(read_manifest_from(&mut archive)?.device_id)
+}
+
 pub(crate) fn inspect_archive(
     root: &Path,
     source: &Path,
@@ -5341,19 +5364,7 @@ pub(crate) fn inspect_archive(
     let mut archive = ZipArchive::new(file)
         .map_err(|e| zip_error("That is not a readable Flight Deck backup", e))?;
 
-    let manifest: CompleteBackupManifest = {
-        let mut entry = archive
-            .by_name(ARCHIVE_MANIFEST)
-            .map_err(|_| "That backup does not contain a manifest.".to_string())?;
-        if entry.size() > 64 * 1024 {
-            return Err("That backup manifest is unexpectedly large.".to_string());
-        }
-        let mut json = String::new();
-        entry
-            .read_to_string(&mut json)
-            .map_err(|e| format!("Could not read the backup manifest: {e}"))?;
-        serde_json::from_str(&json).map_err(|e| format!("The backup manifest is invalid: {e}"))?
-    };
+    let manifest = read_manifest_from(&mut archive)?;
 
     crate::phone_work::refuse_phone_copy(manifest.platform.as_deref(), cfg!(target_os = "ios"))?;
     if manifest.format != ARCHIVE_FORMAT
@@ -7312,6 +7323,12 @@ pub(crate) fn reset_sync_identity(root: &Path) -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
+    // The restore sets a new copy source and baseline: the restart keys are stale.
+    tx.execute(
+        "DELETE FROM app_metadata WHERE key IN ('sync_stream_restarted', 'sync_copy_superseded')",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())
 }
 
@@ -7458,6 +7475,24 @@ pub(crate) fn stage_complete_restore_guarded_in(
     current_app_version: &str,
     phone: bool,
 ) -> Result<CompleteBackupInfo, String> {
+    if phone {
+        // A full copy from a Mac other than the copy's own restarts the
+        // phone's stream first, so the check below counts its work. A copy
+        // whose manifest can't be read is refused by the staging step.
+        if let Ok(incoming) = archive_device_id(source) {
+            // No library yet means no work to lose; one that can't be
+            // opened is refused (fail closed).
+            if root.join(DB_FILES[0]).is_file() {
+                let restart = crate::sync::progress::open_app_db(root).and_then(|conn| {
+                    crate::sync::send::restart_if_other_mac(root, &conn, incoming.as_deref())
+                });
+                if restart.is_err() {
+                    // Fail closed: never stage after a failed restart.
+                    return Err(crate::phone_work::UNSAVED_REFUSAL.to_string());
+                }
+            }
+        }
+    }
     crate::phone_work::refuse_unsaved(root, phone)?;
     stage_complete_restore_in(root, source, current_app_version)
 }
@@ -9664,6 +9699,43 @@ mod tests {
             )
             .unwrap();
         assert_eq!(source, "aaaa-mac");
+        drop(connection);
+        std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn a_restore_clears_the_restart_keys() {
+        let (root, archive) = incoming_fixture();
+        {
+            let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+            connection
+                .execute_batch(
+                    "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                INSERT INTO app_metadata VALUES ('device_id', 'aaaa-mac'),
+                  ('sync_stream_restarted', '1'), ('sync_copy_superseded', 'bbbb-mac');",
+                )
+                .unwrap();
+        }
+        write_complete_backup(&root, &archive, "0.6.6").unwrap();
+        stage_complete_restore_in(&root, &archive, "0.6.6").unwrap();
+        assert!(matches!(
+            handle_startup_restore_in(&root).unwrap(),
+            StartupRestoreDecision::RestoreCompleted
+        ));
+        let connection = Connection::open(root.join(DB_FILES[0])).unwrap();
+        let has = |key: &str| -> bool {
+            connection
+                .query_row(
+                    "SELECT COUNT(*) FROM app_metadata WHERE key = ?1",
+                    [key],
+                    |r| r.get::<_, i64>(0),
+                )
+                .unwrap()
+                == 1
+        };
+        assert!(!has("sync_stream_restarted"));
+        assert!(!has("sync_copy_superseded"));
+        assert!(has("sync_copy_from_device"));
         drop(connection);
         std::fs::remove_dir_all(root.parent().unwrap()).unwrap();
     }
