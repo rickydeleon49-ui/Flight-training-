@@ -747,7 +747,7 @@ describe("Gemini generations outlive their page (GEN-REL-02)", () => {
     await screen.findByText("Gemini is writing practice questions");
     expect(scroll).not.toHaveBeenCalled();
     await act(async () => answer.resolve(TEST));
-    await screen.findByText("Question 1 of 1");
+    await screen.findByRole("button", { name: "Start practice test" });
     expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "start", behavior: "auto" });
     expect(screen.getByRole("heading", { name: "Material A" })).toBe(title);
     expect(document.getElementById("material-practice-test")).toBe(section);

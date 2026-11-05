@@ -322,6 +322,27 @@ function MaterialDetailPage() {
   const generating = working(studyJob?.phase);
   const generatingCards = working(cardJob?.phase);
   const generatingPractice = working(practiceJob?.phase);
+  const makingPackNow = geminiJobs.makingPack(materialId ?? "");
+  const guideReadyBelow = studyJob?.phase === "recovered" && Boolean(studyJob.answer) && !studyJob.sectionGuide;
+  const guideStatusLine = generating
+    ? "Making your study guide…"
+    : makingPackNow
+      ? "Making your flashcards and study test…"
+      : guideReadyBelow
+        ? "Your guide is ready below. Look it over, then save it."
+        : null;
+  const cardsStatusLine = generatingCards && !makingPackNow
+    ? (cardJob && isMoreCardsJob(cardJob) ? "Making 10 more cards…" : "Making your flashcards…")
+    : geminiJobs.cardsNote(materialId ?? "");
+  // The draft arrives while the student is looking at the button: bring it into view once.
+  const sawRunningGuide = useRef(false);
+  useEffect(() => {
+    if (generating) sawRunningGuide.current = true;
+    else if (guideReadyBelow && sawRunningGuide.current) {
+      sawRunningGuide.current = false;
+      document.getElementById("material-guide-draft")?.scrollIntoView?.({ block: "nearest" });
+    }
+  }, [generating, guideReadyBelow]);
   const [startRefusal, setStartRefusal] = useState<{ kind: "study-aid" | "flashcards" | "practice-test"; message: string } | null>(null);
   // Job notices show failures with recovery actions; refusals belong to this page.
   const refusalFor = (kind: "study-aid" | "flashcards" | "practice-test") =>
@@ -1129,6 +1150,9 @@ function MaterialDetailPage() {
                     </div>
                   }
                 />
+                {guideStatusLine ? (
+                  <p aria-live="polite" className="small" data-guide-status style={{ padding: "var(--space-3) var(--space-5) 0" }}>{guideStatusLine}</p>
+                ) : null}
                 {!tipsHidden && !hasSavedGuide ? (
                   <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
                     {pdfSet
@@ -1174,6 +1198,7 @@ function MaterialDetailPage() {
                       ) : null}
                     </div>
                   ) : null}
+                  <span id="material-guide-draft" />
                   {studyJob ? (
                     <GeminiJobNotice
                       model={gemini?.model}
@@ -1193,7 +1218,6 @@ function MaterialDetailPage() {
                       <GeminiJobNotice model={gemini?.model} key={job.key} job={job} jobs={geminiJobs} />
                     ))}
                   {guideBlockedReason ? <p className="tiny muted">{guideBlockedReason}</p> : null}
-                  {geminiJobs.makingPack(material.id) ? <p role="status" className="small">Making your flashcards and study test…</p> : null}
                   {studySet && (studySet.summary || guideSections.length > 0) ? (
                     <div className="stack stack--5">
                       <div className="ai-disclaimer">
@@ -1381,6 +1405,9 @@ function MaterialDetailPage() {
                     </div>
                   }
                 />
+                {cardsStatusLine ? (
+                  <p aria-live="polite" className="small" data-cards-status style={{ padding: "var(--space-3) var(--space-5) 0" }}>{cardsStatusLine}</p>
+                ) : null}
                 {!tipsHidden ? (
                   <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
                     Create key flashcards to practice recall, and review cards you've saved.

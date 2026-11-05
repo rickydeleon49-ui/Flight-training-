@@ -1339,6 +1339,16 @@ export function PracticeTestPanel({
 
   if (!question) return <div className="stack stack--3">{notices}</div>;
 
+  const startBlock = <div className="row row--wrap">
+        {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
+          if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
+        }}>Start practice test</Button> : null}
+        <ShortSavedReviewLink materialId={materialId} />
+        {historyAction}
+      </div>;
+  // Before Start the screen is a preview: no "Question 1 of N" counter or question selector yet.
+  const beforeStart = entrySummary && !state.attempt;
+
   const chosenOptionText = shownDontKnow
     ? "I don't know"
     : shownChoice !== null && shownChoice !== undefined && question.options[shownChoice]
@@ -1352,19 +1362,13 @@ export function PracticeTestPanel({
     <div ref={keyboardPanelRef} className="stack stack--3" aria-labelledby="practice-test-title">
       {notices}
 
-      {entrySummary ? <div className="row row--wrap">
-        {!state.attempt && startHeld ? <p className="small muted">{startHeld}</p> : !state.attempt ? <Button variant="primary" disabled={!canEdit} onClick={() => {
-          if (state.version) void beginIntent({ payload: { action: "start_or_resume", operationId: crypto.randomUUID(), materialId, versionId: state.version.id }, heldAnswer: null });
-        }}>Start practice test</Button> : null}
-        <ShortSavedReviewLink materialId={materialId} />
-        {historyAction}
-      </div> : null}
+      {entrySummary ? startBlock : null}
 
-      <p className="tiny muted" role="status" aria-label="Practice progress">
+      {beforeStart ? null : <p className="tiny muted" role="status" aria-label="Practice progress">
         {state.attempt && resumedAttempt.current === state.attempt.attemptId
           ? `Resuming your attempt — ${answeredCount} of ${totalQuestions} answered. Feedback appears after each answer is saved.`
           : <>Question <span>{state.index + 1}</span> of <span>{totalQuestions}</span></>}
-      </p>
+      </p>}
 
       {totalQuestions > 1 && (
         <div className="practice-nav-pills" role="navigation" aria-label="Question selector">
@@ -1393,7 +1397,7 @@ export function PracticeTestPanel({
 
       <div className="row row--between">
         <h3 ref={questionHeadingRef} tabIndex={-1} id="practice-test-title" className="ai-guide__title">
-          Question {state.index + 1} of {totalQuestions}
+          {beforeStart ? "Practice test" : `Question ${state.index + 1} of ${totalQuestions}`}
         </h3>
         <SourcePageBadge source={question.pageSource} page={question.sourcePage} materialId={materialId} />
       </div>

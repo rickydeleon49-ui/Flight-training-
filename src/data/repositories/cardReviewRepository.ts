@@ -186,7 +186,10 @@ export function cardReviewRepository(db: SqlDatabase) {
       return [...due, ...fresh];
     },
 
-    /** Recent ratings for this material, newest first, 20 per page; earlier versions are labelled. */
+    /**
+     * Recent ratings for this material, newest first, 20 per page; earlier versions are labelled.
+     * A rating carried to a newer version of the same cards is listed once, as its newest copy (display only).
+     */
     async getRecentReviews(
       materialId: string,
       cursor?: CardRecentReviewCursor | null,
@@ -206,6 +209,14 @@ export function cardReviewRepository(db: SqlDatabase) {
          JOIN card_items i ON i.id = e.item_id
          JOIN card_versions v ON v.id = i.version_id
          WHERE v.source_material_id = ? ${keyset}
+           AND NOT EXISTS (
+             SELECT 1 FROM card_review_events e2
+             JOIN card_items i2 ON i2.id = e2.item_id
+             JOIN card_versions v2 ON v2.id = i2.version_id
+             WHERE v2.source_material_id = v.source_material_id
+               AND e2.reviewed_at = e.reviewed_at AND e2.rating = e.rating AND i2.front = i.front
+               AND v2.id <> v.id
+               AND (v2.created_at > v.created_at OR (v2.created_at = v.created_at AND v2.id > v.id)))
          ORDER BY e.reviewed_at DESC, e.id DESC
          LIMIT ?`,
         params,
