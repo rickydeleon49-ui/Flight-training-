@@ -2432,6 +2432,31 @@ mod apply {
         )
     }
 
+    /// The version change plus its one card, as a real device ships them.
+    fn version_with_item(
+        seq: i64,
+        id: &str,
+        hash: &str,
+        active: i64,
+        at: &str,
+        first: Option<&str>,
+    ) -> Vec<Change> {
+        vec![
+            version_change(seq, id, hash, active, at, first),
+            ch(
+                seq + 1,
+                "card_items",
+                &format!("{id}-item"),
+                Op::Insert,
+                at,
+                Some(
+                    json!({"id": format!("{id}-item"), "version_id": id, "ordinal": 0,
+                    "front": "F", "back": "B", "source_page": null}),
+                ),
+            ),
+        ]
+    }
+
     fn active_card_version(conn: &Connection) -> Vec<String> {
         conn.prepare("SELECT id FROM card_versions WHERE is_active = 1")
             .unwrap()
@@ -2447,25 +2472,14 @@ mod apply {
         take(&mut mac, &material_file(PHONE));
         take(
             &mut mac,
-            &file_of(
-                PHONE,
-                T1,
-                vec![version_change(2, "v1", "h1", 1, T1, Some(T2))],
-            ),
+            &file_of(PHONE, T1, version_with_item(2, "v1", "h1", 1, T1, Some(T2))),
         );
         take(
             &mut mac,
             &file_of(
                 "cccc",
                 T2,
-                vec![version_change(
-                    1,
-                    "v2",
-                    "h2",
-                    1,
-                    T2,
-                    Some("2026-11-01T12:00:00.000Z"),
-                )],
+                version_with_item(1, "v2", "h2", 1, T2, Some("2026-11-01T12:00:00.000Z")),
             ),
         );
         assert_eq!(active_card_version(&mac), ["v2"]);
@@ -2519,6 +2533,11 @@ mod apply {
                     params![id, hash, created, active],
                 )
                 .unwrap();
+                conn.execute(
+                    "INSERT INTO card_items (id,version_id,ordinal,front,back) VALUES (?1,?2,0,'F','B')",
+                    params![format!("{id}-item"), id],
+                )
+                .unwrap();
             }
         }
         let mac_seq = count(&mac, "SELECT MAX(seq) FROM local_changes");
@@ -2567,6 +2586,31 @@ mod apply {
             .map(Result::unwrap)
             .collect();
         assert_eq!(active, ["pv2"]);
+    }
+
+    #[test]
+    fn a_bare_update_of_a_pruned_practice_version_is_ignored() {
+        let mut mac = device(MAC);
+        take(&mut mac, &file_of(PHONE, T1, practice_base()));
+        mac.execute("DELETE FROM practice_test_versions WHERE id = 'pv1'", [])
+            .unwrap();
+        let later = "2099-01-01T00:00:00.000Z";
+        let bare = ch(
+            1,
+            "practice_test_versions",
+            "pv1",
+            Op::Update,
+            later,
+            Some(json!({
+            "id": "pv1", "source_material_id": "m1", "history_key": "hk",
+            "source_material_title": "Mat", "content_hash": "h1", "created_at": T1, "is_active": 1})),
+        );
+        let out = take(&mut mac, &file_of("cccc", later, vec![bare]));
+        assert_eq!(out.written, 0);
+        assert_eq!(
+            count(&mac, "SELECT COUNT(*) FROM practice_test_versions"),
+            0
+        );
     }
 
     #[test]
@@ -7067,18 +7111,18 @@ mod carried_versions {
     use super::*;
     use crate::card_reviews::carried_event_id as d;
 
-    const B: [(&str, &str); 2] = [
+    pub(super) const B: [(&str, &str); 2] = [
         ("Synthetic front", "Synthetic back"),
         ("Second front", "Second back"),
     ];
-    const C: [(&str, &str); 3] = [
+    pub(super) const C: [(&str, &str); 3] = [
         ("Synthetic front", "Synthetic back"),
         ("Second front", "Second back"),
         ("Third front", "Third back"),
     ];
-    const MAT: &str = "mat-pair";
+    pub(super) const MAT: &str = "mat-pair";
 
-    fn events(conn: &Connection, item: &str) -> Vec<String> {
+    pub(super) fn events(conn: &Connection, item: &str) -> Vec<String> {
         conn.prepare(
             "SELECT id FROM card_review_events WHERE item_id = ?1 ORDER BY reviewed_at, id",
         )
@@ -7111,7 +7155,7 @@ mod carried_versions {
         v
     }
 
-    fn verified(conn: &Connection) {
+    pub(super) fn verified(conn: &Connection) {
         with_history(conn);
         crate::backup::verify_application_connection(conn).unwrap();
     }
@@ -7121,7 +7165,7 @@ mod carried_versions {
         assert_eq!(cols(a, item), cols(b, item));
     }
 
-    fn all_events(conn: &Connection) -> i64 {
+    pub(super) fn all_events(conn: &Connection) -> i64 {
         count(conn, "SELECT COUNT(*) FROM card_review_events")
     }
 
@@ -7141,7 +7185,7 @@ mod carried_versions {
         (a, b, a1, b1, e1)
     }
 
-    fn exchange(a: &mut Connection, b: &mut Connection) {
+    pub(super) fn exchange(a: &mut Connection, b: &mut Connection) {
         let fa = ship(a, MAC, 0);
         let fb = ship(b, PHONE, 0);
         take(b, &fa);
@@ -7167,7 +7211,7 @@ mod carried_versions {
         .unwrap()
     }
 
-    fn active_version(conn: &Connection) -> Vec<String> {
+    pub(super) fn active_version(conn: &Connection) -> Vec<String> {
         conn.prepare("SELECT id FROM card_versions WHERE source_material_id = ?1 AND is_active = 1 ORDER BY id")
             .unwrap()
             .query_map([MAT], |r| r.get(0))
@@ -7176,7 +7220,7 @@ mod carried_versions {
             .collect()
     }
 
-    fn backup_ok(conn: &Connection, tag: &str) {
+    pub(super) fn backup_ok(conn: &Connection, tag: &str) {
         let copy = std::env::temp_dir().join(format!("carry-{tag}-{}.db", std::process::id()));
         let _ = std::fs::remove_file(&copy);
         conn.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
@@ -7665,5 +7709,440 @@ mod unstudied_append_native {
             .reviews;
         eprintln!("X5 reviews before={before} after={after}");
         assert!(after >= before);
+    }
+}
+
+mod reset_races {
+    use super::apply::{act, card, rate, ship, take, Card, MAC, PHONE};
+    use super::carried_versions::{
+        active_version, all_events, backup_ok, events, verified, B, C, MAT,
+    };
+    use super::synced_ratings::{append, card_at, pair, with_history};
+    use super::*;
+    use crate::sync::apply::tombstone_removed_rows;
+    use crate::sync::export::{export_changes_in, ExportError};
+
+    const A_LIST: [(&str, &str); 1] = [("Synthetic front", "Synthetic back")];
+
+    fn can_send(conn: &mut Connection, dev: &str) {
+        match export_changes_in(conn, dev, 0, "0.0.0-test", NOW) {
+            Ok(_) => {}
+            Err(ExportError::Inconsistent) => panic!("{dev} cannot send: Inconsistent"),
+            Err(_) => panic!("{dev} cannot send"),
+        }
+    }
+
+    fn versions_with(conn: &Connection, hash: &str) -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM card_versions WHERE content_hash = ?1",
+            [hash],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+
+    fn items_of(conn: &Connection, hash: &str) -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM card_items i JOIN card_versions v ON v.id = i.version_id
+             WHERE v.content_hash = ?1",
+            [hash],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+
+    fn generation(conn: &Connection) -> i64 {
+        conn.query_row(
+            "SELECT COALESCE(MAX(generation), 0) FROM card_review_generations WHERE source_material_id = ?1",
+            [MAT],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+
+    fn active_hash(conn: &Connection) -> Vec<String> {
+        conn.prepare("SELECT content_hash FROM card_versions WHERE source_material_id = ?1 AND is_active = 1")
+            .unwrap()
+            .query_map([MAT], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    }
+
+    fn ledger(conn: &Connection) -> i64 {
+        count(conn, "SELECT COUNT(*) FROM local_changes")
+    }
+
+    /// Both files are made before either is taken; apply writes no ledger rows.
+    fn exchange_silent(a: &mut Connection, b: &mut Connection) -> (i64, i64) {
+        let fa = ship(a, MAC, 0);
+        let fb = ship(b, PHONE, 0);
+        let (la, lb) = (ledger(a), ledger(b));
+        let wb = take(b, &fa).written;
+        let wa = take(a, &fb).written;
+        assert_eq!((ledger(a), ledger(b)), (la, lb));
+        (wa as i64, wb as i64)
+    }
+
+    fn settled(a: &mut Connection, b: &mut Connection, a1: &Card, b1: &Card, gen: i64) {
+        for conn in [&mut *a, &mut *b] {
+            assert_eq!(all_events(conn), 0);
+            assert_eq!(versions_with(conn, &a1.hash), 0);
+            assert_eq!(active_hash(conn), vec![b1.hash.clone()]);
+            assert_eq!(generation(conn), gen);
+            verified(conn);
+            backup_ok(
+                conn,
+                &format!(
+                    "reset-races-{}",
+                    std::thread::current().name().unwrap_or("t")
+                ),
+            );
+        }
+        can_send(a, MAC);
+        can_send(b, PHONE);
+    }
+
+    /// e1 synced, a appends B and resets (A pruned), b rates A1 unsent.
+    fn raced() -> (Connection, Connection, Card, Card) {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        append(&mut a, MAT, &B);
+        let b1 = card_at(MAT, &B, 0);
+        act(&mut a, &b1, "reset", json!({}), 2);
+        rate(&mut b, &a1, "easy", 3);
+        (a, b, a1, b1)
+    }
+
+    #[test]
+    fn a_reset_beats_an_unsent_rating_on_the_pruned_list() {
+        let (mut a, mut b, a1, b1) = raced();
+        exchange_silent(&mut a, &mut b);
+        settled(&mut a, &mut b, &a1, &b1, 1);
+        let (wa, wb) = exchange_silent(&mut a, &mut b);
+        // One echo is expected: a re-sends b's own material insert (same time,
+        // lower device id wins the tie), which rewrites that meta only.
+        assert_eq!(wa, 0);
+        assert!(wb <= 1, "{wb}");
+        settled(&mut a, &mut b, &a1, &b1, 1);
+    }
+
+    #[test]
+    fn a_reset_on_the_phone_beats_a_mac_rating() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "good", 1);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        append(&mut b, MAT, &B);
+        let b1 = card_at(MAT, &B, 0);
+        act(&mut b, &b1, "reset", json!({}), 2);
+        rate(&mut a, &a1, "easy", 3);
+        exchange_silent(&mut a, &mut b);
+        settled(&mut a, &mut b, &a1, &b1, 1);
+        exchange_silent(&mut a, &mut b);
+        settled(&mut a, &mut b, &a1, &b1, 1);
+    }
+
+    #[test]
+    fn a_plain_reset_with_an_unsent_rating_keeps_both_devices_sending() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        act(&mut a, &a1, "reset", json!({}), 2);
+        rate(&mut b, &a1, "easy", 3);
+        exchange_silent(&mut a, &mut b);
+        for conn in [&mut a, &mut b] {
+            assert_eq!(all_events(conn), 0);
+            assert_eq!(generation(conn), 1);
+            assert_eq!(active_hash(conn), vec![a1.hash.clone()]);
+            verified(conn);
+        }
+        can_send(&mut a, MAC);
+        can_send(&mut b, PHONE);
+        // b's next file applies on a without writing events.
+        let next = ship(&mut b, PHONE, 0);
+        take(&mut a, &next);
+        assert_eq!(all_events(&a), 0);
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM card_review_state"), 0);
+        verified(&a);
+    }
+
+    #[test]
+    fn a_rating_on_an_active_version_logs_no_version_change() {
+        let (mut a, _b, a1) = pair();
+        rate(&mut a, &a1, "good", 1);
+        let versions = |c: &Connection| {
+            count(
+                c,
+                "SELECT COUNT(*) FROM local_changes WHERE table_name = 'card_versions'",
+            )
+        };
+        let before = versions(&a);
+        assert!(before >= 1);
+        rate(&mut a, &a1, "easy", 2);
+        assert_eq!(versions(&a), before);
+    }
+
+    #[test]
+    fn a_bare_version_update_never_resurrects_a_pruned_version() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &a1, "good", 1);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        append(&mut a, MAT, &B);
+        let b1 = card_at(MAT, &B, 0);
+        act(&mut a, &b1, "reset", json!({}), 2);
+        // Later by the clock, before hearing of the reset.
+        append(&mut b, MAT, &C);
+        exchange_silent(&mut a, &mut b);
+        let c_hash = card_at(MAT, &C, 0).hash;
+        assert_eq!(versions_with(&a, &a1.hash), 0);
+        assert_eq!(versions_with(&a, &c_hash), 1);
+        assert_eq!(items_of(&a, &c_hash), 3);
+        verified(&a);
+        verified(&b);
+        assert!(events(&b, &a1.item).is_empty());
+        assert_eq!(
+            count(
+                &b,
+                "SELECT COUNT(*) FROM card_review_state WHERE source_material_id = 'mat-pair'"
+            ),
+            0
+        );
+        can_send(&mut a, MAC);
+        can_send(&mut b, PHONE);
+    }
+
+    #[test]
+    fn a_list_saved_again_after_a_reset_brings_its_version_back() {
+        let (mut a, mut b, a1, b1) = raced();
+        exchange_silent(&mut a, &mut b);
+        append(&mut b, MAT, &A_LIST);
+        rate(&mut b, &a1, "easy", 4);
+        exchange_silent(&mut a, &mut b);
+        for conn in [&a, &b] {
+            assert_eq!(versions_with(conn, &a1.hash), 1);
+            assert_eq!(items_of(conn, &a1.hash), 1);
+            assert_eq!(versions_with(conn, &b1.hash), 1);
+            assert_eq!(events(conn, &a1.item).len(), 1);
+            verified(conn);
+        }
+        let ids = |c: &Connection| -> Vec<String> {
+            c.prepare("SELECT id FROM card_versions ORDER BY id")
+                .unwrap()
+                .query_map([], |r| r.get(0))
+                .unwrap()
+                .map(Result::unwrap)
+                .collect()
+        };
+        assert_eq!(ids(&a), ids(&b));
+    }
+
+    #[test]
+    fn a_list_deleted_on_one_device_keeps_the_other_sending() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "easy", 1);
+        a.execute("DELETE FROM study_materials WHERE id = ?1", [MAT])
+            .unwrap();
+        exchange_silent(&mut a, &mut b);
+        for table in [
+            "study_materials",
+            "card_versions",
+            "card_items",
+            "card_review_events",
+            "card_review_state",
+            "ai_study_sets",
+        ] {
+            assert_eq!(
+                count(&b, &format!("SELECT COUNT(*) FROM {table}")),
+                0,
+                "{table}"
+            );
+        }
+        verified(&a);
+        verified(&b);
+        can_send(&mut a, MAC);
+        let file = ship(&mut b, PHONE, 0);
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        assert!(parsed
+            .set
+            .changes
+            .iter()
+            .any(|c| c.table == "card_review_events" && c.op == Op::Delete));
+    }
+
+    /// The old-build damage: the event and its state row are gone, their
+    /// ledger rows and live meta stay.
+    fn break_rating(conn: &Connection, a1: &Card) {
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', ?1)",
+            [NOW],
+        )
+        .unwrap();
+        conn.execute(
+            "DELETE FROM card_review_events WHERE item_id = ?1",
+            [&a1.item],
+        )
+        .unwrap();
+        conn.execute(
+            "DELETE FROM card_review_state WHERE item_id = ?1",
+            [&a1.item],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+    }
+
+    #[test]
+    fn a_device_stuck_by_an_older_build_sends_again() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "good", 1);
+        break_rating(&b, &a1);
+        assert!(matches!(
+            export_changes_in(&mut b, PHONE, 0, "0.0.0-test", NOW),
+            Err(ExportError::Inconsistent)
+        ));
+        assert_eq!(tombstone_removed_rows(&b, false).unwrap(), 2);
+        let file = ship(&mut b, PHONE, 0);
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        assert!(parsed
+            .set
+            .changes
+            .iter()
+            .any(|c| c.table == "card_review_events" && c.op == Op::Delete));
+        take(&mut a, &file);
+        verified(&a);
+        assert_eq!(tombstone_removed_rows(&b, false).unwrap(), 0);
+        // A real Mac send in the same shape.
+        let mac = super::mac_send::mac_app();
+        let mc = card(&mac.db(), "mat-h1");
+        mac.mark_copy();
+        rate(&mut mac.db(), &mc, "good", 1);
+        break_rating(&mac.db(), &mc);
+        mac.send().unwrap();
+    }
+
+    #[test]
+    fn a_stuck_lww_row_heals_at_send() {
+        let mac = super::mac_send::mac_app();
+        card(&mac.db(), "mat-l1");
+        mac.mark_copy();
+        {
+            let c = mac.db();
+            c.execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('bk1','mat-l1',1,'t',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+            c.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', ?1)",
+                [NOW],
+            )
+            .unwrap();
+            c.execute("DELETE FROM material_bookmarks WHERE id = 'bk1'", [])
+                .unwrap();
+            c.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+        }
+        mac.send().unwrap();
+    }
+
+    #[test]
+    fn the_first_file_after_an_old_build_removed_an_item_does_not_stall() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "good", 1);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        let since = count(&b, "SELECT MAX(seq) FROM local_changes");
+        // An older build removed the card under the guard: meta stays live.
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', ?1)",
+            [NOW],
+        )
+        .unwrap();
+        a.execute("DELETE FROM card_review_events", []).unwrap();
+        a.execute("DELETE FROM card_review_state", []).unwrap();
+        a.execute("DELETE FROM card_items", []).unwrap();
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        rate(&mut b, &a1, "easy", 2);
+        take(&mut a, &ship(&mut b, PHONE, since));
+        assert_eq!(all_events(&a), 0);
+    }
+
+    #[test]
+    fn a_resurrected_empty_version_is_removed_on_the_next_apply() {
+        let (mut a, mut b, a1) = pair();
+        let ghost_hash = a1.hash.clone();
+        let ghost_id = crate::card_reviews::card_version(
+            MAT,
+            &[crate::card_reviews::CanonicalCard {
+                visual_region_id: None,
+                front: "Synthetic front".into(),
+                back: "Synthetic back".into(),
+                source_page: Some(1),
+                origin: None,
+            }],
+        )
+        .version_id;
+        with_history(&a);
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', ?1)",
+            [NOW],
+        )
+        .unwrap();
+        a.execute(
+            "INSERT INTO card_versions (id, source_material_id, content_hash, card_count, provider, created_at, is_active)
+             VALUES (?4, ?1, ?3, 1, 'import', ?2, 1)",
+            params![MAT, NOW, ghost_hash, ghost_id],
+        )
+        .unwrap();
+        a.execute(
+            "INSERT INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+             VALUES ('card_versions', ?3, ?1, ?2, 0)",
+            params![PHONE, NOW, ghost_id],
+        )
+        .unwrap();
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        let err = crate::backup::verify_application_connection(&a).unwrap_err();
+        assert!(err.contains("card_count does not match its cards"), "{err}");
+        b.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('mat-other', 'Other', ?1, ?1)",
+            [NOW],
+        )
+        .unwrap();
+        let before = ledger(&a);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        assert_eq!(ledger(&a), before);
+        assert_eq!(
+            count(
+                &a,
+                &format!("SELECT COUNT(*) FROM card_versions WHERE id = '{ghost_id}'")
+            ),
+            0
+        );
+        let deleted: i64 = a
+            .query_row(
+                "SELECT deleted FROM sync_row_meta WHERE table_name = 'card_versions' AND row_id = ?1",
+                [&ghost_id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(deleted, 1);
+        verified(&a);
+        assert!(active_version(&a).len() <= 1);
     }
 }
