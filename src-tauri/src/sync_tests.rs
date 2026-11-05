@@ -7148,6 +7148,145 @@ mod carried_versions {
         take(a, &fb);
     }
 
+    /// `rater` rates A0 (e1) and `appender` never studied the list; the
+    /// appender grows it (A->B) before anything is exchanged. Returns e1.
+    fn unstudied(rater: &mut Connection, appender: &mut Connection, a0: &Card) -> String {
+        rate(rater, a0, "good", 1);
+        let e1 = events(rater, &a0.item)[0].clone();
+        assert_eq!(count(appender, "SELECT COUNT(*) FROM card_versions"), 0);
+        append(appender, MAT, &B);
+        e1
+    }
+
+    fn origin_of(conn: &Connection, event: &str) -> String {
+        conn.query_row(
+            "SELECT device_id FROM sync_row_meta WHERE table_name = 'card_review_events' AND row_id = ?1",
+            [event],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+
+    fn active_version(conn: &Connection) -> Vec<String> {
+        conn.prepare("SELECT id FROM card_versions WHERE source_material_id = ?1 AND is_active = 1 ORDER BY id")
+            .unwrap()
+            .query_map([MAT], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    }
+
+    fn backup_ok(conn: &Connection, tag: &str) {
+        let copy = std::env::temp_dir().join(format!("carry-{tag}-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&copy);
+        conn.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+            .unwrap();
+        crate::backup::verify_application_database(&copy).unwrap();
+        let _ = std::fs::remove_file(&copy);
+    }
+
+    fn counts(c: &Connection) -> (i64, i64, i64, i64) {
+        (
+            all_events(c),
+            count(c, "SELECT COUNT(*) FROM card_review_state"),
+            count(c, "SELECT COUNT(*) FROM card_versions"),
+            count(c, "SELECT COUNT(*) FROM local_changes"),
+        )
+    }
+
+    /// Both devices hold B0 = carried e1, owned by `origin`, and agree.
+    fn check_b(a: &Connection, b: &Connection, e1: &str, origin: &str) {
+        let (b0, b1) = (card_at(MAT, &B, 0), card_at(MAT, &B, 1));
+        for conn in [a, b] {
+            assert_eq!(events(conn, &b0.item), vec![d(e1, &b0.item)]);
+            assert_eq!(origin_of(conn, &d(e1, &b0.item)), origin);
+            assert_eq!(state(conn, &b0.item).unwrap().1, 1);
+            assert_eq!(state(conn, &b1.item), None);
+            verified(conn);
+        }
+        same(a, b, &b0.item);
+        assert_eq!(active_version(a), active_version(b));
+    }
+
+    #[test]
+    fn an_append_where_the_list_was_never_studied_keeps_the_other_device_progress() {
+        let (mut a, mut b, a0) = pair();
+        with_history(&a);
+        with_history(&b);
+        let e1 = unstudied(&mut b, &mut a, &a0);
+        let fa = ship(&mut a, MAC, 0);
+        take(&mut b, &fa);
+        let fb = ship(&mut b, PHONE, 0);
+        take(&mut a, &fb);
+        check_b(&a, &b, &e1, PHONE);
+        backup_ok(&a, "x1");
+        let held = (counts(&a), counts(&b));
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        assert_eq!((counts(&a), counts(&b)), held);
+    }
+
+    #[test]
+    fn roles_swapped_and_reverse_order_converge_the_same() {
+        let (mut a, mut b, a0) = pair();
+        with_history(&a);
+        with_history(&b);
+        let e1 = unstudied(&mut a, &mut b, &a0);
+        let fa = ship(&mut a, MAC, 0);
+        let fb = ship(&mut b, PHONE, 0);
+        take(&mut a, &fb);
+        take(&mut b, &fa);
+        check_b(&a, &b, &e1, MAC);
+        backup_ok(&b, "x2");
+    }
+
+    #[test]
+    fn a_chain_of_appends_on_the_unstudied_device_carries_through() {
+        let (mut a, mut b, a0) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a0, "good", 1);
+        let e1 = events(&b, &a0.item)[0].clone();
+        append(&mut a, MAT, &B);
+        append(&mut a, MAT, &C);
+        let fa = ship(&mut a, MAC, 0);
+        take(&mut b, &fa);
+        let fb = ship(&mut b, PHONE, 0);
+        take(&mut a, &fb);
+        let (b0, c0) = (card_at(MAT, &B, 0), card_at(MAT, &C, 0));
+        for conn in [&a, &b] {
+            assert_eq!(events(conn, &b0.item), vec![d(&e1, &b0.item)]);
+            assert_eq!(events(conn, &c0.item), vec![d(&d(&e1, &b0.item), &c0.item)]);
+            verified(conn);
+        }
+        same(&a, &b, &b0.item);
+        same(&a, &b, &c0.item);
+    }
+
+    #[test]
+    fn a_later_rating_on_the_old_list_still_carries() {
+        let (mut a, mut b, a0) = pair();
+        with_history(&a);
+        with_history(&b);
+        let e1 = unstudied(&mut b, &mut a, &a0);
+        take(&mut a, &ship(&mut b, PHONE, 0));
+        rate(&mut b, &a0, "easy", 2);
+        let e2 = events(&b, &a0.item).last().unwrap().clone();
+        assert_ne!(e1, e2);
+        let fa = ship(&mut a, MAC, 0);
+        let fb = ship(&mut b, PHONE, 0);
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        let b0 = card_at(MAT, &B, 0);
+        let want = sorted(vec![d(&e1, &b0.item), d(&e2, &b0.item)]);
+        for conn in [&a, &b] {
+            assert_eq!(sorted(events(conn, &b0.item)), want);
+            assert_eq!(state(conn, &b0.item).unwrap().1, 2);
+            verified(conn);
+        }
+        same(&a, &b, &b0.item);
+    }
+
     #[test]
     fn a_rating_on_the_old_list_after_an_append_reaches_the_new_card() {
         let (mut a, mut b, a1, b1, e1) = scene();
@@ -7468,5 +7607,63 @@ mod carried_versions {
         assert_eq!(before, after);
         with_history(&pc);
         crate::backup::verify_application_connection(&pc).unwrap();
+    }
+}
+
+mod unstudied_append_native {
+    use super::apply::{card, rate, state};
+    use super::mac_send::mac_app;
+    use super::send::{phone, DEVICE};
+    use super::synced_ratings::{append, card_at, with_history};
+    use super::*;
+    use crate::card_reviews::carried_event_id as d;
+    use crate::sync::progress::import_mac_changes_in;
+
+    #[test]
+    fn the_phone_gets_its_progress_on_a_list_the_mac_grew() {
+        let mac = mac_app();
+        let a0 = card(&mac.db(), "mat-x5");
+        let p = phone();
+        mac.copy_to(&p);
+        rate(&mut p.db(), &a0, "good", 1);
+        let e1: String = p
+            .db()
+            .query_row(
+                "SELECT id FROM card_review_events WHERE item_id = ?1",
+                [&a0.item],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let before = crate::phone_work::unsaved_phone_work_in(&p.root.0)
+            .unwrap()
+            .reviews;
+        let list = [
+            ("Synthetic front", "Synthetic back"),
+            ("Second front", "Second back"),
+        ];
+        append(&mut mac.db(), "mat-x5", &list);
+        mac.send().unwrap();
+        let got = import_mac_changes_in(&p.root.0, &mac.file(), Some(DEVICE), NOW);
+        eprintln!("X5 import: {:?}", got.as_ref().map(|_| ()));
+        got.unwrap();
+        let conn = p.db();
+        with_history(&conn);
+        let b0 = card_at("mat-x5", &list, 0);
+        let want = d(&e1, &b0.item);
+        let have: Vec<String> = conn
+            .prepare("SELECT id FROM card_review_events WHERE item_id = ?1")
+            .unwrap()
+            .query_map([&b0.item], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect();
+        assert_eq!(have, vec![want]);
+        assert_eq!(state(&conn, &b0.item).unwrap().1, 1);
+        crate::backup::verify_application_connection(&conn).unwrap();
+        let after = crate::phone_work::unsaved_phone_work_in(&p.root.0)
+            .unwrap()
+            .reviews;
+        eprintln!("X5 reviews before={before} after={after}");
+        assert!(after >= before);
     }
 }
