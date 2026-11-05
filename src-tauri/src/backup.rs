@@ -9296,6 +9296,9 @@ pub async fn create_iphone_backup(
             None => iphone_backup_file_name(std::time::SystemTime::now()),
         };
         let root = app_root(&app)?;
+        // Read before the copy starts: a change made during it may be in
+        // neither the copy nor a file otherwise (overlap is harmless).
+        let mark = crate::sync::send::change_stream_mark(&root).ok();
         let info = create_consistent_complete_backup_with_retry(
             &root,
             &dir.join(name),
@@ -9303,6 +9306,12 @@ pub async fn create_iphone_backup(
         )?;
         if let Err(e) = prune_iphone_backups(&dir, IPHONE_BACKUPS_KEPT) {
             log::warn!("{e}");
+        }
+        // The Mac's changes now start after this copy. Never fails the copy.
+        if let Some(mark) = mark {
+            if let Err(e) = crate::sync::send::restart_change_stream(&root, mark) {
+                log::warn!("Could not restart the change stream after the copy: {e}");
+            }
         }
         Ok(Some(info))
     })

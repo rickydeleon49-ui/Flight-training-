@@ -4782,7 +4782,6 @@ mod accept {
         };
         assert_eq!(strip(after), strip(before));
     }
-
     #[test]
     fn accept_errors_name_no_path_and_no_banned_word() {
         let dir = TempDir::new("accept-q");
@@ -4835,5 +4834,743 @@ mod accept {
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
         panic!("a temp folder was left behind");
+    }
+}
+
+mod mac_send {
+    use super::apply::MAC;
+    use super::progress::mac_root;
+    use super::send::{entries, manifest, phone, read_entry, sha_of, Phone};
+    use super::*;
+    use crate::sync::apply::apply_change_file;
+    use crate::sync::export::export_changes_in;
+    use crate::sync::send::{
+        change_stream_mark, remove_stale_temps_for, restart_change_stream, send_mac_changes_in,
+        send_mac_changes_locked, SentChanges, Side, MAC_FILE,
+    };
+    use std::path::PathBuf;
+
+    pub(super) const COPY_FIRST: &str =
+        "Send a full copy to your iPhone first; after that only changes are sent.";
+
+    pub(super) struct MacApp {
+        pub(super) root: TempDir,
+        pub(super) out: PathBuf,
+    }
+
+    pub(super) fn mac_app() -> MacApp {
+        let root = mac_root();
+        let out = root.0.join("icloud");
+        MacApp { root, out }
+    }
+
+    impl MacApp {
+        pub(super) fn db(&self) -> Connection {
+            let c = Connection::open(self.root.0.join("her-flight-deck.db")).unwrap();
+            c.pragma_update(None, "foreign_keys", "ON").unwrap();
+            c
+        }
+        pub(super) fn send(&self) -> Result<SentChanges, String> {
+            send_mac_changes_locked(&self.root.0, &self.out, "0.0.0-test", NOW)
+        }
+        pub(super) fn file(&self) -> PathBuf {
+            self.out.join(MAC_FILE)
+        }
+        pub(super) fn outbox_dir(&self) -> PathBuf {
+            self.root
+                .0
+                .join("outbox")
+                .join(crate::sync::changeset::folder(MAC))
+        }
+        /// A full copy was made: the stream restarts after the newest change.
+        pub(super) fn mark_copy(&self) -> i64 {
+            let mark = change_stream_mark(&self.root.0).unwrap();
+            restart_change_stream(&self.root.0, mark).unwrap();
+            mark
+        }
+        pub(super) fn material(&self, id: &str, title: &str) {
+            self.db()
+                .execute(
+                    "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES (?1,?2,?3,?3)",
+                    params![id, title, NOW],
+                )
+                .unwrap();
+        }
+        /// Gives the phone what a full copy holds, then restarts the stream.
+        pub(super) fn copy_to(&self, p: &Phone) -> i64 {
+            let mark = change_stream_mark(&self.root.0).unwrap();
+            let mut conn = self.db();
+            if let Some(exp) = export_changes_in(&mut conn, MAC, 0, "0.0.0-test", NOW).unwrap() {
+                let parsed = decode(&exp.file.bytes, &exp.file.file_name, SCHEMA, NOW).unwrap();
+                let mut phone_db = p.db();
+                apply_change_file(&mut phone_db, &exp.file.file_name, &parsed, NOW).unwrap();
+                phone_db.execute("DELETE FROM sync_applied", []).unwrap();
+            }
+            // A restored phone's change log holds the copy's: numbers up to the mark.
+            let have: i64 = p
+                .db()
+                .query_row("SELECT COALESCE(MAX(seq), 0) FROM local_changes", [], |r| {
+                    r.get(0)
+                })
+                .unwrap();
+            for seq in (have + 1)..=mark {
+                p.db()
+                    .execute(
+                        "INSERT INTO local_changes (seq, table_name, row_id, op, changed_at) VALUES (?1, 'study_materials', 'copied', 'insert', ?2)",
+                        params![seq, OLD],
+                    )
+                    .unwrap();
+            }
+            p.db()
+                .execute(
+                    "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+                    [mark.to_string()],
+                )
+                .unwrap();
+            restart_change_stream(&self.root.0, mark).unwrap();
+            mark
+        }
+    }
+
+    #[test]
+    fn a_mac_send_writes_one_file_with_the_store_layout() {
+        let mac = mac_app();
+        mac.material("m1", "Before the copy");
+        let mark = mac.mark_copy();
+        mac.material("m2", "After the copy");
+        let sent = mac.send().unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!(sent.counts.materials, 1);
+        assert_eq!(sent.file_name, MAC_FILE);
+        let m = manifest(&mac.file());
+        assert_eq!(m["kind"], "macChanges");
+        assert_eq!(m["platform"], "macos");
+        assert_eq!(m["deviceId"], MAC);
+        assert_eq!(m["fromSeq"].as_i64().unwrap(), mark + 1);
+        let names = entries(&mac.file());
+        assert_eq!(names.len(), 2, "{names:?}");
+        assert!(names.contains(&"manifest.json".to_string()));
+        assert!(names
+            .iter()
+            .any(|n| n.starts_with(&format!("changes/{MAC}/"))));
+        let left: Vec<_> = std::fs::read_dir(&mac.out)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, vec![MAC_FILE.to_string()]);
+    }
+
+    #[test]
+    fn a_mac_with_no_copy_refuses_changes() {
+        let mac = mac_app();
+        mac.material("m1", "x");
+        assert_eq!(mac.send().unwrap_err(), COPY_FIRST);
+        assert!(!mac.file().exists());
+    }
+
+    #[test]
+    fn a_full_copy_restarts_the_stream() {
+        let mac = mac_app();
+        mac.material("m1", "x");
+        mac.mark_copy();
+        mac.material("m2", "y");
+        mac.send().unwrap();
+        assert!(mac.outbox_dir().is_dir());
+        mac.material("m3", "z");
+        let mark = mac.mark_copy();
+        assert!(!mac.outbox_dir().exists());
+        assert_eq!(
+            crate::sync::export::exported_through_seq(&mac.db()).unwrap(),
+            mark
+        );
+        mac.material("m4", "w");
+        let sent = mac.send().unwrap();
+        assert_eq!(sent.counts.materials, 1);
+        assert_eq!(manifest(&mac.file())["fromSeq"].as_i64().unwrap(), mark + 1);
+    }
+
+    #[test]
+    fn a_change_during_the_copy_still_arrives() {
+        let mac = mac_app();
+        mac.material("m1", "x");
+        // The mark is read before the copy starts; this change lands during it.
+        let mark = change_stream_mark(&mac.root.0).unwrap();
+        mac.material("m5", "during");
+        restart_change_stream(&mac.root.0, mark).unwrap();
+        let sent = mac.send().unwrap();
+        assert_eq!(sent.counts.materials, 1);
+    }
+
+    #[test]
+    fn nothing_new_leaves_the_mac_file_alone() {
+        let mac = mac_app();
+        mac.mark_copy();
+        let first = mac.send().unwrap();
+        assert!(first.nothing_new);
+        assert!(!mac.file().exists());
+        mac.material("m2", "y");
+        mac.send().unwrap();
+        let before = std::fs::read(mac.file()).unwrap();
+        let again = mac.send().unwrap();
+        assert!(again.nothing_new);
+        assert_eq!(std::fs::read(mac.file()).unwrap(), before);
+    }
+
+    #[test]
+    fn a_mac_pdf_travels_as_a_blob() {
+        let mac = mac_app();
+        mac.mark_copy();
+        let pdf = b"%PDF-1.7 from the mac";
+        std::fs::create_dir_all(mac.root.0.join("documents")).unwrap();
+        std::fs::write(mac.root.0.join("documents").join("m9.pdf"), pdf).unwrap();
+        mac.db()
+            .execute(
+                "INSERT INTO study_materials (id,title,file_path,created_at,updated_at) VALUES ('m9','T','m9.pdf',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+        mac.db()
+            .execute(
+                "INSERT INTO material_content_identities (material_id, content_sha256, total_pages, verified_at) VALUES ('m9', ?1, 1, ?2)",
+                params![sha_of(pdf), NOW],
+            )
+            .unwrap();
+        let sent = mac.send().unwrap();
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (1, 0));
+        let sha = sha_of(pdf);
+        assert_eq!(read_entry(&mac.file(), &format!("blobs/{sha}")), pdf);
+    }
+
+    #[test]
+    fn mac_send_errors_name_no_path() {
+        let empty = TempDir::new("mac-send-empty");
+        let e =
+            send_mac_changes_locked(&empty.0, &empty.0.join("out"), "0.0.0-test", NOW).unwrap_err();
+        assert_eq!(
+            e,
+            "This Mac's study library couldn't be opened. Close and open the app, then try again."
+        );
+        let mac = mac_app();
+        let held = crate::sync::send::hold_for_test();
+        let busy = send_mac_changes_in(&mac.root.0, &mac.out, "0.0.0-test", NOW).unwrap_err();
+        drop(held);
+        assert_eq!(busy, "Already sending. Try again in a moment.");
+        for text in [e, busy, COPY_FIRST.to_string()] {
+            assert!(!text.contains('/') && !text.contains('\\'), "{text}");
+            let lower = text.to_lowercase();
+            for word in ["sync", "ledger", "outbox", "device", "blob", "export"] {
+                assert!(!lower.contains(word), "{word} in {text}");
+            }
+        }
+    }
+
+    #[test]
+    fn stale_temps_are_swept_by_side_prefix() {
+        let root = TempDir::new("mac-send-stale");
+        let out = root.0.join("out");
+        std::fs::create_dir_all(&out).unwrap();
+        let mine = out.join(".Changes from my Mac-1.writing");
+        let phones = out.join(".My phone progress-1.writing");
+        std::fs::write(&mine, b"x").unwrap();
+        std::fs::write(&phones, b"x").unwrap();
+        let later = std::time::SystemTime::now() + std::time::Duration::from_secs(3 * 86_400);
+        remove_stale_temps_for(Side::Mac, &root.0, &out, later);
+        assert!(!mine.exists());
+        assert!(phones.exists());
+    }
+
+    #[test]
+    fn an_unknown_earlier_file_is_kept_not_replaced() {
+        let mac = mac_app();
+        mac.mark_copy();
+        std::fs::create_dir_all(&mac.out).unwrap();
+        std::fs::write(mac.file(), b"not a zip").unwrap();
+        mac.material("m2", "y");
+        mac.send().unwrap();
+        let names: Vec<String> = std::fs::read_dir(&mac.out)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(names.len(), 2, "{names:?}");
+        assert!(names
+            .iter()
+            .any(|n| n.starts_with("Changes from my Mac (before ")));
+        let _ = phone;
+    }
+}
+
+mod phone_accept {
+    use super::apply::MAC;
+    use super::mac_send::{mac_app, MacApp};
+    use super::progress::{mac_db, mac_root};
+    use super::send::{phone, Phone, DEVICE};
+    use super::*;
+    use crate::sync::progress::{import_mac_changes_in, import_phone_progress_in, ProgressOutcome};
+
+    const NOT_YET: &str = "Put your study material on this phone first: on the Mac, Settings \u{2192} Send to my iPhone \u{2192} Send a full copy instead.";
+    const NEEDS_EARLIER: &str = "That file needs earlier changes from your Mac that aren't on this phone yet. On the Mac, send a full copy instead.";
+    const SEND_FIRST: &str = "This phone has work that isn't saved anywhere else yet. Send my progress to the Mac first, then get the Mac's changes.";
+
+    /// A Mac with materials m1 and m2, and a phone that holds its full copy.
+    fn setup() -> (MacApp, Phone) {
+        let mac = mac_app();
+        mac.material("m1", "One");
+        mac.material("m2", "Two");
+        let p = phone();
+        mac.copy_to(&p);
+        (mac, p)
+    }
+
+    fn accept(p: &Phone, mac: &MacApp) -> Result<crate::sync::progress::MacChanges, String> {
+        import_mac_changes_in(&p.root.0, &mac.file(), Some(DEVICE), NOW)
+    }
+
+    fn unsaved(p: &Phone) -> i64 {
+        let w = crate::phone_work::unsaved_phone_work_in(&p.root.0).unwrap();
+        w.reviews
+            + w.tests
+            + w.bookmarks
+            + w.reading_positions
+            + w.materials
+            + w.guides
+            + w.generated_tests
+    }
+
+    fn bookmark(conn: &Connection, id: &str, material: &str) {
+        conn.execute(
+            "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES (?1,?2,1,'t',?3,?3)",
+            params![id, material, NOW],
+        )
+        .unwrap();
+    }
+
+    fn has(conn: &Connection, table: &str, key: &str, id: &str) -> bool {
+        count(
+            conn,
+            &format!("SELECT COUNT(*) FROM {table} WHERE {key} = '{id}'"),
+        ) == 1
+    }
+
+    #[test]
+    fn a_changes_file_brings_in_the_macs_work() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        let before = count(&p.db(), "SELECT COUNT(*) FROM local_changes");
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!(got.counts.materials, 1);
+        assert!(got.mac_saved_at.is_some());
+        assert!(has(&p.db(), "study_materials", "id", "m3"));
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM sync_applied"), 1);
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM local_changes"), before);
+    }
+
+    #[test]
+    fn the_same_file_twice_is_already_in() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        let again = accept(&p, &mac).unwrap();
+        assert_eq!(again.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!(again.counts.materials, 0);
+    }
+
+    #[test]
+    fn a_phone_without_a_copy_is_refused() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        p.db()
+            .execute("DELETE FROM app_metadata WHERE key = 'sync_floor_seq'", [])
+            .unwrap();
+        assert_eq!(accept(&p, &mac).unwrap_err(), NOT_YET);
+        assert!(!has(&p.db(), "study_materials", "id", "m3"));
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM sync_applied"), 0);
+    }
+
+    #[test]
+    fn a_gap_is_refused() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = '0' WHERE key = 'sync_floor_seq'",
+                [],
+            )
+            .unwrap();
+        assert_eq!(accept(&p, &mac).unwrap_err(), NEEDS_EARLIER);
+        assert!(!has(&p.db(), "study_materials", "id", "m3"));
+    }
+
+    #[test]
+    fn a_gap_after_an_applied_file_is_refused() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        // A second file that skips a change number: its zip lists only itself.
+        mac.material("m4", "Four");
+        mac.send().unwrap();
+        mac.material("m5", "Five");
+        let conn = mac.db();
+        let hole = conn
+            .query_row("SELECT MAX(seq) FROM local_changes", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .unwrap();
+        // Move the watermark past m5 without exporting it.
+        crate::sync::export::set_exported_through_seq(&conn, hole).unwrap();
+        mac.material("m6", "Six");
+        mac.send().unwrap();
+        let got = accept(&p, &mac);
+        assert_eq!(got.unwrap_err(), NEEDS_EARLIER);
+        assert!(!has(&p.db(), "study_materials", "id", "m6"));
+    }
+
+    #[test]
+    fn overlap_below_the_floor_writes_nothing() {
+        let (mac, p) = setup();
+        // Re-send everything the copy already holds.
+        crate::sync::export::set_exported_through_seq(&mac.db(), 0).unwrap();
+        mac.send().unwrap();
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::NothingNew);
+        assert_eq!(got.counts.materials, 0);
+        assert!(has(&p.db(), "study_materials", "id", "m1"));
+    }
+
+    #[test]
+    fn a_phone_file_on_the_phone_is_wrong_side() {
+        let (_, p) = setup();
+        bookmark(&p.db(), "b1", "m1");
+        p.send().unwrap();
+        let other = phone();
+        let e =
+            import_mac_changes_in(&other.root.0, &p.file(), Some("zzzz-other"), NOW).unwrap_err();
+        assert_eq!(
+            e,
+            "That file was made on an iPhone. Choose the file from your Mac."
+        );
+    }
+
+    #[test]
+    fn a_mac_file_on_the_mac_is_wrong_side() {
+        let (mac, _p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        let other = mac_root();
+        let e = import_phone_progress_in(
+            &other.0,
+            &mac.file(),
+            Some("dddd-other-mac"),
+            "0.0.0-test",
+            NOW,
+        )
+        .unwrap_err();
+        assert_eq!(
+            e,
+            "That file holds changes from a Mac. Choose the file from your iPhone."
+        );
+        assert_eq!(
+            count(&mac_db(&other), "SELECT COUNT(*) FROM sync_applied"),
+            0
+        );
+    }
+
+    #[test]
+    fn cascade_delete_keeps_sent_phone_events_in_the_file_and_other_materials_intact() {
+        let (mac, p) = setup();
+        bookmark(&p.db(), "bm1", "m1");
+        bookmark(&p.db(), "bm2", "m2");
+        p.send().unwrap();
+        let progress = std::fs::read(p.file()).unwrap();
+        import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW).unwrap();
+        mac.db()
+            .execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        mac.send().unwrap();
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!(got.counts.removed, 1);
+        let db = p.db();
+        assert!(!has(&db, "study_materials", "id", "m1"));
+        assert!(!has(&db, "material_bookmarks", "id", "bm1"));
+        assert!(has(&db, "study_materials", "id", "m2"));
+        assert!(has(&db, "material_bookmarks", "id", "bm2"));
+        // Her sent work is still in the file and on the Mac.
+        assert_eq!(std::fs::read(p.file()).unwrap(), progress);
+        let m = mac.db();
+        assert_eq!(
+            count(
+                &m,
+                &format!("SELECT COUNT(*) FROM sync_applied WHERE peer_device = '{DEVICE}'")
+            ),
+            1
+        );
+        assert!(has(&m, "material_bookmarks", "id", "bm2"));
+    }
+
+    #[test]
+    fn cascade_delete_takes_review_events_but_keeps_the_sent_file() {
+        let mac = mac_app();
+        insert_graph(&mac.db(), "", OLD);
+        mac.db()
+            .execute(
+                "UPDATE card_review_events SET generation = 1, scheduler_version = ?1",
+                [crate::card_reviews::SCHEDULER_VERSION],
+            )
+            .unwrap();
+        let p = phone();
+        mac.copy_to(&p);
+        p.db()
+            .execute(
+                "INSERT INTO card_review_events (id,item_id,generation,rating,reviewed_at,scheduler_version,prior_state_json,next_state_json) VALUES ('e2','i1',1,'good',?1,?2,'{}','{}')",
+                params![NOW, crate::card_reviews::SCHEDULER_VERSION],
+            )
+            .unwrap();
+        p.send().unwrap();
+        let sent = std::fs::read(p.file()).unwrap();
+        import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW).unwrap();
+        assert!(has(&mac.db(), "card_review_events", "id", "e2"));
+        mac.db()
+            .execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        mac.send().unwrap();
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        let db = p.db();
+        assert!(!has(&db, "study_materials", "id", "m1"));
+        assert!(!has(&db, "card_review_events", "id", "e1"));
+        assert!(!has(&db, "card_review_events", "id", "e2"));
+        assert_eq!(std::fs::read(p.file()).unwrap(), sent);
+    }
+
+    #[test]
+    fn a_delete_is_refused_while_phone_work_is_unsent() {
+        let (mac, p) = setup();
+        mac.db()
+            .execute("DELETE FROM study_materials WHERE id = 'm2'", [])
+            .unwrap();
+        mac.send().unwrap();
+        bookmark(&p.db(), "bm1", "m1");
+        assert_eq!(accept(&p, &mac).unwrap_err(), SEND_FIRST);
+        assert!(has(&p.db(), "study_materials", "id", "m2"));
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM sync_applied"), 0);
+        p.send().unwrap();
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert!(!has(&p.db(), "study_materials", "id", "m2"));
+    }
+
+    #[test]
+    fn a_child_tombstone_never_touches_another_parent() {
+        let (mac, p) = setup();
+        bookmark(&mac.db(), "ba", "m1");
+        bookmark(&mac.db(), "bb", "m2");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        // A real cascade: deleting m1 tombstones its bookmark too.
+        mac.db()
+            .execute("DELETE FROM study_materials WHERE id = 'm1'", [])
+            .unwrap();
+        assert_eq!(
+            count(
+                &mac.db(),
+                "SELECT COUNT(*) FROM local_changes WHERE table_name = 'material_bookmarks' AND row_id = 'ba' AND op = 'delete'"
+            ),
+            1
+        );
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        let db = p.db();
+        assert!(!has(&db, "material_bookmarks", "id", "ba"));
+        assert!(has(&db, "material_bookmarks", "id", "bb"));
+        assert!(!has(&db, "study_materials", "id", "m1"));
+        assert!(has(&db, "study_materials", "id", "m2"));
+    }
+
+    #[test]
+    fn the_phones_newer_edit_wins_over_the_macs() {
+        let (mac, p) = setup();
+        mac.db()
+            .execute(
+                "UPDATE study_materials SET title = 'From Mac' WHERE id = 'm1'",
+                [],
+            )
+            .unwrap();
+        mac.send().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        p.db()
+            .execute(
+                "UPDATE study_materials SET title = 'From phone' WHERE id = 'm1'",
+                [],
+            )
+            .unwrap();
+        accept(&p, &mac).unwrap();
+        let title: String = p
+            .db()
+            .query_row(
+                "SELECT title FROM study_materials WHERE id = 'm1'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(title, "From phone");
+    }
+
+    #[test]
+    fn macs_rows_are_not_unsaved_phone_work() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        assert!(has(&p.db(), "study_materials", "id", "m3"));
+        assert_eq!(unsaved(&p), 0);
+    }
+
+    #[test]
+    fn a_phone_edit_of_a_mac_row_is_unsaved() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        p.db()
+            .execute(
+                "UPDATE study_materials SET title = 'Mine' WHERE id = 'm3'",
+                [],
+            )
+            .unwrap();
+        assert_eq!(unsaved(&p), 1);
+    }
+
+    #[test]
+    fn a_blocked_practice_delete_keeps_the_phones_attempts_on_the_phone() {
+        let (mac, p) = {
+            let mac = mac_app();
+            mac.material("m1", "One");
+            for table in [
+                "practice_tests",
+                "practice_test_versions",
+                "practice_test_items",
+            ] {
+                let sql = ROWS.iter().find(|r| r.0 == table).unwrap().2;
+                mac.db().execute(&graph_sql(sql, "", NOW), []).unwrap();
+            }
+            let p = phone();
+            mac.copy_to(&p);
+            (mac, p)
+        };
+        // The phone takes a test on that version and sends it.
+        let attempt = ROWS.iter().find(|r| r.0 == "practice_attempts").unwrap().2;
+        p.db().execute(&graph_sql(attempt, "", NOW), []).unwrap();
+        p.send().unwrap();
+        // The Mac deletes the version before it has seen the attempt.
+        mac.db()
+            .execute("DELETE FROM practice_test_versions WHERE id = 'pv1'", [])
+            .unwrap();
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        let db = p.db();
+        assert!(has(&db, "practice_test_versions", "id", "pv1"));
+        assert!(has(&db, "practice_attempts", "id", "a1"));
+        // The Mac skips the attempt: its parent is gone there.
+        let _ = import_phone_progress_in(&mac.root.0, &p.file(), Some(MAC), "0.0.0-test", NOW);
+        assert!(!has(&mac.db(), "practice_attempts", "id", "a1"));
+    }
+
+    #[test]
+    fn a_stop_partway_keeps_the_earlier_file_and_resumes() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        // m4 is never exported; the second file's bookmark needs it.
+        mac.material("m4", "Four");
+        let hole: i64 = mac
+            .db()
+            .query_row("SELECT MAX(seq) FROM local_changes", [], |r| r.get(0))
+            .unwrap();
+        crate::sync::export::set_exported_through_seq(&mac.db(), hole).unwrap();
+        bookmark(&mac.db(), "b9", "m4");
+        mac.send().unwrap();
+        // The phone is told its copy already covers the numbers between.
+        p.db()
+            .execute(
+                "UPDATE app_metadata SET value = ?1 WHERE key = 'sync_floor_seq'",
+                [hole.to_string()],
+            )
+            .unwrap();
+        let e = accept(&p, &mac).unwrap_err();
+        assert!(e.starts_with("Some of that file was brought in"), "{e}");
+        assert!(has(&p.db(), "study_materials", "id", "m3"));
+        assert!(!has(&p.db(), "material_bookmarks", "id", "b9"));
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM sync_applied"), 1);
+        // A later file that carries m4 lets the rest through.
+        p.db()
+            .execute(
+                "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m4','Four',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+        let got = accept(&p, &mac).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert!(has(&p.db(), "material_bookmarks", "id", "b9"));
+        assert_eq!(count(&p.db(), "SELECT COUNT(*) FROM sync_applied"), 2);
+    }
+
+    #[test]
+    fn the_temp_root_is_removed_on_every_path() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        accept(&p, &mac).unwrap();
+        accept(&p, &mac).unwrap();
+        let other = phone();
+        accept(&other, &mac).unwrap_err();
+        let me = format!("hfd-progress-{}-", std::process::id());
+        for _ in 0..40 {
+            let n = std::fs::read_dir(std::env::temp_dir())
+                .unwrap()
+                .filter(|e| {
+                    e.as_ref()
+                        .unwrap()
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(&me)
+                })
+                .count();
+            if n == 0 {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        panic!("a temp folder was left behind");
+    }
+
+    #[test]
+    fn accept_errors_name_no_path() {
+        let (mac, p) = setup();
+        mac.material("m3", "Three");
+        mac.send().unwrap();
+        let other = phone();
+        let texts = [
+            accept(&other, &mac).unwrap_err(),
+            import_mac_changes_in(&p.root.0, &p.root.0.join("missing"), Some(DEVICE), NOW)
+                .unwrap_err(),
+            NOT_YET.to_string(),
+            NEEDS_EARLIER.to_string(),
+            SEND_FIRST.to_string(),
+        ];
+        for text in texts {
+            assert!(!text.contains('/') && !text.contains('\\'), "{text}");
+            let lower = text.to_lowercase();
+            for word in [
+                "sync", "merge", "conflict", "export", "ledger", "outbox", "blob", "ingest",
+            ] {
+                assert!(!lower.contains(word), "{word} in {text}");
+            }
+        }
     }
 }
