@@ -9,3 +9,10 @@ it("every iOS tab bar rule is scoped to html.is-ios", () => {
     for (const selector of list.split(",")) expect(selector.trim()).toMatch(/^html\.is-ios\b/);
   }
 });
+
+it("keeps page content clear of the side notch in landscape", () => {
+  const css = readFileSync(new URL("./iosTabBar.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rule = css.match(/html\.is-ios \.shell--tabs \.content\s*\{([^}]*)\}/)?.[1] ?? "";
+  expect(rule).toMatch(/padding-left:\s*max\([^;]*safe-area-inset-left/);
+  expect(rule).toMatch(/padding-right:\s*max\([^;]*safe-area-inset-right/);
+});

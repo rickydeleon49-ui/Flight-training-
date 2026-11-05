@@ -19,8 +19,12 @@ html.is-ios .shell--tabs::before {
   z-index: 20;
 }
 
+/* Side insets too: in landscape the phone is wider than the 700px rule, and
+   the Dynamic Island would otherwise cover the left edge of the page. */
 html.is-ios .shell--tabs .content {
   padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
+  padding-left: max(var(--space-4), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--space-4), env(safe-area-inset-right, 0px));
   padding-bottom: calc(var(--tabbar-h) + var(--space-5));
 }
 
