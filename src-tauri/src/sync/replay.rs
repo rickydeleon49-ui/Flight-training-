@@ -56,10 +56,28 @@ pub(crate) fn order_key(e: &ReviewEvent) -> (i64, &str, &str) {
 /// barrier replay (older ones were reset away). Returns the schedule only:
 /// `suspended`/`flag` are LWW columns that S-2c carries over from the local
 /// `card_review_state` row; replay never clears them.
+#[cfg(test)]
 pub(crate) fn replay_item(
     events: &[ReviewEvent],
     local_generation: i64,
 ) -> Result<Option<CardSchedule>, ReplayError> {
+    fold_item(events, local_generation).map(|f| f.last().map(|e| e.next.clone()))
+}
+
+/// One kept event with the schedule before and after it in the fold.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FoldedEvent {
+    pub id: String,
+    pub prior: Option<CardSchedule>,
+    pub next: CardSchedule,
+}
+
+/// The fold behind `replay_item`: one entry per kept event in D4 order. An
+/// empty Vec means "nothing at the barrier".
+pub(crate) fn fold_item(
+    events: &[ReviewEvent],
+    local_generation: i64,
+) -> Result<Vec<FoldedEvent>, ReplayError> {
     if local_generation < 0 || events.iter().any(|e| e.generation < 0) {
         return Err(ReplayError::BadGeneration);
     }
@@ -90,7 +108,7 @@ pub(crate) fn replay_item(
         .filter(|e| e.generation == barrier)
         .collect();
     if kept.is_empty() {
-        return Ok(None);
+        return Ok(Vec::new());
     }
     if kept
         .iter()
@@ -108,12 +126,18 @@ pub(crate) fn replay_item(
     }
     kept.sort_by(|a, b| order_key(a).cmp(&order_key(b)));
     let mut prior: Option<CardSchedule> = None;
+    let mut out = Vec::with_capacity(kept.len());
     for e in kept {
         let next = card_reviews::schedule_card(prior.as_ref(), &e.rating, &e.reviewed_at)
             .map_err(ReplayError::Scheduler)?;
+        out.push(FoldedEvent {
+            id: e.id.clone(),
+            prior: prior.take(),
+            next: next.clone(),
+        });
         prior = Some(next);
     }
-    Ok(prior)
+    Ok(out)
 }
 
 /// Decode a `card_review_events` row as `read_row_json` produces it. Extra

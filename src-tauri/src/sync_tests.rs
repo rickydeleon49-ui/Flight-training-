@@ -660,6 +660,42 @@ fn older_generation_never_replays() {
 }
 
 #[test]
+fn fold_item_is_order_independent() {
+    use crate::sync::replay::fold_item;
+    let t = 1_000_000_000_000;
+    let events = vec![
+        ev("e1", "i", "dev-b", 0, "good", t),
+        ev("e2", "i", "dev-a", 0, "easy", t),
+        ev("e3", "i", "dev-a", 0, "hard", t + 60_000),
+    ];
+    let base = fold_item(&events, 0).unwrap();
+    assert_eq!(base.len(), 3);
+    // The tie on reviewed_at breaks by device id: dev-a first.
+    assert_eq!(base[0].id, "e2");
+    assert_eq!(base[1].id, "e1");
+    let perms = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
+    for p in perms {
+        let shuffled: Vec<_> = p.iter().map(|i| events[*i].clone()).collect();
+        assert_eq!(fold_item(&shuffled, 0).unwrap(), base);
+    }
+    assert_eq!(
+        replay_item(&events, 0).unwrap().unwrap(),
+        base.last().unwrap().next
+    );
+    assert_eq!(base[0].prior, None);
+    for w in base.windows(2) {
+        assert_eq!(w[1].prior.as_ref(), Some(&w[0].next));
+    }
+}
+
+#[test]
 fn identical_duplicates_count_once() {
     let t = 1_000_000_000_000;
     let a = ev("a", "i", "d", 0, "good", t);
@@ -6650,6 +6686,278 @@ mod synced_ratings {
         );
         with_history(&a);
         crate::backup::verify_application_connection(&a).unwrap();
+    }
+
+    /// Both devices rate card `c` (a: 1, b: 2, a: 3), then swap files.
+    fn both_rate_and_swap() -> (Connection, Connection, crate::sync_tests::apply::Card) {
+        use super::apply::{ship, take};
+        let (mut a, mut b, c) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut a, &c, "good", 1);
+        rate(&mut b, &c, "easy", 2);
+        rate(&mut a, &c, "hard", 3);
+        let fa = ship(&mut a, MAC, 0);
+        let fb = ship(&mut b, PHONE, 0);
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        (a, b, c)
+    }
+
+    fn event_rows(conn: &Connection) -> Vec<String> {
+        conn.prepare(
+            "SELECT id || '|' || COALESCE(prior_state_json, 'NULL') || '|' || next_state_json
+             FROM card_review_events ORDER BY id",
+        )
+        .unwrap()
+        .query_map([], |r| r.get::<_, String>(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    }
+
+    fn state_cols(
+        conn: &Connection,
+        item: &str,
+    ) -> (i64, i64, i64, Option<String>, Option<String>) {
+        let s = state(conn, item).unwrap();
+        (s.0, s.1, s.2, s.4, s.3)
+    }
+
+    fn event_reps(conn: &Connection) -> Vec<i64> {
+        let mut reps: Vec<i64> = conn
+            .prepare("SELECT next_state_json FROM card_review_events")
+            .unwrap()
+            .query_map([], |r| r.get::<_, String>(0))
+            .unwrap()
+            .map(|j| {
+                serde_json::from_str::<Value>(&j.unwrap()).unwrap()["reps"]
+                    .as_i64()
+                    .unwrap()
+            })
+            .collect();
+        reps.sort();
+        reps
+    }
+
+    #[test]
+    fn both_devices_rate_the_same_card_between_syncs() {
+        let (a, b, c) = both_rate_and_swap();
+        crate::backup::verify_application_connection(&a).unwrap();
+        crate::backup::verify_application_connection(&b).unwrap();
+        assert_eq!(state(&a, &c.item).unwrap().1, 3);
+        assert_eq!(state(&b, &c.item).unwrap().1, 3);
+        assert_eq!(event_reps(&a), vec![1, 2, 3]);
+        assert_eq!(event_reps(&b), vec![1, 2, 3]);
+        let dir = TempDir::new("both-rate");
+        let copy = dir.0.join("copy.db");
+        a.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+            .unwrap();
+        crate::backup::verify_application_database(&copy).unwrap();
+    }
+
+    #[test]
+    fn both_devices_converge_to_identical_rows() {
+        use super::apply::{ship, take};
+        let (a, b, c) = both_rate_and_swap();
+        assert_eq!(event_rows(&a), event_rows(&b));
+        assert_eq!(state_cols(&a, &c.item), state_cols(&b, &c.item));
+        // The files arrive in the opposite order.
+        let (mut a2, mut b2, c2) = pair();
+        rate(&mut a2, &c2, "good", 1);
+        rate(&mut b2, &c2, "easy", 2);
+        rate(&mut a2, &c2, "hard", 3);
+        let fa = ship(&mut a2, MAC, 0);
+        let fb = ship(&mut b2, PHONE, 0);
+        take(&mut a2, &fb);
+        take(&mut b2, &fa);
+        assert_eq!(event_rows(&a2), event_rows(&b2));
+        assert_eq!(state_cols(&a2, &c2.item), state_cols(&b2, &c2.item));
+        assert_eq!(event_reps(&a2), vec![1, 2, 3]);
+    }
+
+    fn meta_rows(conn: &Connection) -> Vec<String> {
+        conn.prepare(
+            "SELECT row_id || '|' || COALESCE(device_id, '') || '|' || changed_at
+             FROM sync_row_meta WHERE table_name = 'card_review_events' ORDER BY row_id",
+        )
+        .unwrap()
+        .query_map([], |r| r.get::<_, String>(0))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+    }
+
+    fn fold_of(conn: &Connection, item: &str) -> Vec<crate::sync::replay::FoldedEvent> {
+        let events = crate::sync::apply::item_events(conn, item).unwrap();
+        crate::sync::replay::fold_item(&events, 0).unwrap()
+    }
+
+    #[test]
+    fn the_refold_is_silent_and_idempotent() {
+        use super::apply::{ship, take};
+        let (mut a, mut b, c) = pair();
+        rate(&mut a, &c, "good", 1);
+        rate(&mut b, &c, "easy", 2);
+        let fa = ship(&mut a, MAC, 0);
+        let fb = ship(&mut b, PHONE, 0);
+        let (la, lb) = (
+            count(&a, "SELECT COUNT(*) FROM local_changes"),
+            count(&b, "SELECT COUNT(*) FROM local_changes"),
+        );
+        let (ma, mb) = (meta_rows(&a), meta_rows(&b));
+        take(&mut b, &fa);
+        take(&mut a, &fb);
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM local_changes"), la);
+        assert_eq!(count(&b, "SELECT COUNT(*) FROM local_changes"), lb);
+        // Metadata of the events that were already here is untouched.
+        for m in &ma {
+            assert!(meta_rows(&a).contains(m));
+        }
+        for m in &mb {
+            assert!(meta_rows(&b).contains(m));
+        }
+        let folded = fold_of(&a, &c.item);
+        // Without the guard the rewrite fails closed and changes nothing.
+        let before = event_rows(&a);
+        assert!(crate::sync::apply::rewrite_event_states(&a, &folded).is_err());
+        assert_eq!(event_rows(&a), before);
+        // With the guard it finds nothing left to change.
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+            [],
+        )
+        .unwrap();
+        assert_eq!(
+            crate::sync::apply::rewrite_event_states(&a, &folded).unwrap(),
+            0
+        );
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        assert_eq!(event_rows(&a), before);
+    }
+
+    #[test]
+    fn later_ratings_after_the_merge_stay_one_history() {
+        use super::apply::{ship, take};
+        let (mut a, mut b, c) = both_rate_and_swap();
+        let before = event_rows(&a);
+        let since: i64 = count(&a, "SELECT COALESCE(MAX(seq), 0) FROM local_changes");
+        rate(&mut a, &c, "good", 4);
+        take(&mut b, &ship(&mut a, MAC, since));
+        crate::backup::verify_application_connection(&a).unwrap();
+        crate::backup::verify_application_connection(&b).unwrap();
+        assert_eq!(event_rows(&a), event_rows(&b));
+        assert_eq!(event_reps(&a), vec![1, 2, 3, 4]);
+        let after = event_rows(&a);
+        for row in &before {
+            assert!(after.contains(row));
+        }
+    }
+
+    #[test]
+    fn the_phone_verifies_when_both_rate_the_same_card() {
+        use super::mac_send::mac_app;
+        use crate::sync::progress::import_mac_changes_in;
+        let mac = mac_app();
+        let mut mac_conn = mac.db();
+        let a = card(&mac_conn, "mat-a");
+        let p = phone();
+        mac.copy_to(&p);
+        rate(&mut mac_conn, &a, "good", 1);
+        {
+            let mut pc = p.db();
+            rate(&mut pc, &a, "easy", 2);
+        }
+        mac.send().unwrap();
+        import_mac_changes_in(&p.root.0, &mac.file(), Some(super::send::DEVICE), NOW).unwrap();
+        let conn = p.db();
+        with_history(&conn);
+        crate::backup::verify_application_connection(&conn).unwrap();
+        assert_eq!(state(&conn, &a.item).unwrap().1, 2);
+    }
+
+    #[test]
+    fn the_startup_repair_refolds_a_card_hit_before_this_round() {
+        use super::apply::{ship, take};
+        let (mut a, mut b, c) = pair();
+        with_history(&a);
+        rate(&mut a, &c, "good", 1);
+        rate(&mut b, &c, "easy", 2);
+        let fb = ship(&mut b, PHONE, 0);
+        let pre = event_rows(&a);
+        take(&mut a, &fb);
+        let put_back = |conn: &Connection| {
+            conn.execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+                [],
+            )
+            .unwrap();
+            for row in &pre {
+                let mut parts = row.splitn(3, '|');
+                let (id, prior, next) = (
+                    parts.next().unwrap(),
+                    parts.next().unwrap(),
+                    parts.next().unwrap(),
+                );
+                let prior = (prior != "NULL").then_some(prior);
+                conn.execute(
+                    "UPDATE card_review_events SET prior_state_json = ?2, next_state_json = ?3 WHERE id = ?1",
+                    params![id, prior, next],
+                )
+                .unwrap();
+            }
+            // The phone event keeps its own per-device JSON (reps 1).
+            conn.execute(
+                "UPDATE card_review_events SET prior_state_json = 'null',
+                   next_state_json = REPLACE(next_state_json, '\"reps\":2', '\"reps\":1')
+                 WHERE prior_state_json IS NOT NULL",
+                [],
+            )
+            .unwrap();
+            conn.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+                .unwrap();
+        };
+        put_back(&a);
+        assert!(crate::backup::verify_application_connection(&a).is_err());
+        let logged = count(&a, "SELECT COUNT(*) FROM local_changes");
+        assert!(crate::sync::receipts::repair_synced_ratings(&mut a).unwrap() > 0);
+        crate::backup::verify_application_connection(&a).unwrap();
+        assert_eq!(count(&a, "SELECT COUNT(*) FROM local_changes"), logged);
+        let once = event_rows(&a);
+        assert_eq!(
+            crate::sync::receipts::repair_synced_ratings(&mut a).unwrap(),
+            0
+        );
+        assert_eq!(event_rows(&a), once);
+        // Runs once per database.
+        assert_eq!(
+            count(
+                &a,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_refold_done'"
+            ),
+            1
+        );
+        a.execute(
+            "DELETE FROM app_metadata WHERE key = 'sync_refold_done'",
+            [],
+        )
+        .unwrap();
+        // Conservative: a state that differs from the fold leaves events alone.
+        put_back(&a);
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+            [],
+        )
+        .unwrap();
+        a.execute("UPDATE card_review_state SET lapses = lapses + 1", [])
+            .unwrap();
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        let held = event_rows(&a);
+        crate::sync::receipts::repair_synced_ratings(&mut a).unwrap();
+        assert_eq!(event_rows(&a), held);
+        assert!(crate::backup::verify_application_connection(&a).is_err());
     }
 
     #[test]
