@@ -67,9 +67,9 @@ describe("GetPhoneProgressCard", () => {
   it("explains the steps in plain words", () => {
     render(<GetPhoneProgressCard />);
     expect(screen.getByRole("heading", { name: "Get progress from my iPhone" })).toBeTruthy();
-    expect(screen.getByText(/On your iPhone, open Settings → Save my phone work/)).toBeTruthy();
+    expect(screen.getByText(/On your iPhone, open Settings → Send my progress to the Mac/)).toBeTruthy();
     const copy = (source.match(/>[^<>{}]*[A-Za-z][^<>{}]*</g)?.join(" ") ?? "") + document.body.textContent;
-    for (const word of ["sync", "merge", "conflict", "import", "ingest", "ledger", "change file", "device"]) {
+    for (const word of ["sync", "merge", "conflict", "import", "ingest", "ledger", "change file", "device", "export", "blob", "outbox"]) {
       expect(copy.toLowerCase()).not.toContain(word);
     }
   });

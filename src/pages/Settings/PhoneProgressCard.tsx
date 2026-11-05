@@ -5,12 +5,13 @@ import {
   backupErrorMessage, savedPhoneWorkSentence, savePhoneWork, unsavedPhoneWork,
   unsavedPhoneWorkCounts, unsavedPhoneWorkTotal, type UnsavedPhoneWork,
 } from "@/services/backups";
+import { sendPhoneProgress, sentPhoneProgressSentence } from "@/services/phoneProgress";
 
-export function SavePhoneWorkCard() {
+export function PhoneProgressCard() {
   const [work, setWork] = useState<UnsavedPhoneWork | null>(null);
   const [checkProblem, setCheckProblem] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [savedLine, setSavedLine] = useState<string | null>(null);
+  const [busy, setBusy] = useState<null | "send" | "save">(null);
+  const [statusLine, setStatusLine] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const check = useCallback(async () => {
@@ -24,36 +25,48 @@ export function SavePhoneWorkCard() {
 
   useEffect(() => { void check(); }, [check]);
 
-  const save = async () => {
+  const run = async (kind: "send" | "save", action: () => Promise<string>, fallback: string) => {
     if (busy) return;
-    setBusy(true);
+    setBusy(kind);
     setProblem(null);
-    setSavedLine(null);
+    setStatusLine(null);
     try {
-      const saved = await savePhoneWork();
-      setSavedLine(savedPhoneWorkSentence(saved));
+      setStatusLine(await action());
       await check();
     } catch (error) {
-      setProblem(backupErrorMessage(error, "Your phone work could not be saved."));
+      setProblem(backupErrorMessage(error, fallback));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
+
+  const send = () => run(
+    "send",
+    async () => sentPhoneProgressSentence(await sendPhoneProgress()),
+    "Your progress couldn't be sent. Nothing on this phone was changed.",
+  );
+  const saveCopy = () => run(
+    "save",
+    async () => savedPhoneWorkSentence(await savePhoneWork()),
+    "Your phone work could not be saved.",
+  );
 
   const counts = work ? unsavedPhoneWorkCounts(work) : null;
   return (
     <Card>
-      <CardHeader title="Save my phone work" eyebrow="A copy of what you did on this phone" />
+      <CardHeader title="Send my progress to the Mac" eyebrow="What you did on this phone" headingId="phone-progress" />
       <CardBody>
         {checkProblem ? <p role="alert">{checkProblem}</p>
           : work ? <p>{unsavedPhoneWorkTotal(work) > 0 && counts
             ? `This phone has ${counts} that ${unsavedPhoneWorkTotal(work) === 1 ? "isn't" : "aren't"} saved anywhere else yet.`
             : "Everything you did on this phone is saved."}</p> : null}
-        <Button variant="primary" disabled={busy} onClick={save}>
-          {busy ? "Saving…" : "Save my phone work"}
+        <Button variant="primary" disabled={busy !== null} onClick={send}>
+          {busy === "send" ? "Sending…" : "Send my progress to the Mac"}
         </Button>
-        {savedLine ? <p role="status">{savedLine}</p> : null}
+        {statusLine ? <p role="status">{statusLine}</p> : null}
         {problem ? <p role="alert">{problem}</p> : null}
+        <Button disabled={busy !== null} onClick={saveCopy}>{busy === "save" ? "Saving…" : "Save a full copy instead"}</Button>
+        <p>Everything on this phone, for safekeeping.</p>
       </CardBody>
     </Card>
   );

@@ -34,8 +34,10 @@ pub(crate) enum ApplyError {
     Db(rusqlite::Error),
     UnknownTable,
     /// The table whose row named a column this database lacks.
+    #[allow(dead_code)] // detail kept for logs/S-4
     UnknownColumn(&'static str),
     /// The table whose row needs a parent that is missing (not tombstoned).
+    #[allow(dead_code)] // detail kept for logs/S-4
     MissingParent(&'static str),
     /// Primary key differs from `row_id`, a value has a bad shape, or a time
     /// cannot be read.

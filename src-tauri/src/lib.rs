@@ -551,6 +551,8 @@ pub fn run() {
             backup::create_iphone_backup,
             backup::reveal_iphone_backup,
             sync::progress::import_phone_progress,
+            sync::send::send_phone_progress,
+            sync::send::prepare_phone_progress,
             backup::app_version,
             quit_settlement::settled_before_quit,
         ])

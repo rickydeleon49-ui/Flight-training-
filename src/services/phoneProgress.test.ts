@@ -30,7 +30,7 @@ describe("phone progress service", () => {
     expect(await choosePhoneProgressFile()).toBeNull();
   });
 
-  it("asks for one hfdbackup file with no default folder", async () => {
+  it("asks for one iPhone file (hfdbackup or hfdprogress) with no default folder", async () => {
     mocks.open.mockResolvedValue("/x/My phone work.hfdbackup");
     expect(await choosePhoneProgressFile()).toBe("/x/My phone work.hfdbackup");
     const options = mocks.open.mock.calls[0]![0];
@@ -38,7 +38,7 @@ describe("phone progress service", () => {
       multiple: false,
       directory: false,
       title: "Choose the file from your iPhone",
-      filters: [{ name: "Your Flight Deck file", extensions: ["hfdbackup"] }],
+      filters: [{ name: "Your Flight Deck file", extensions: ["hfdbackup", "hfdprogress"] }],
     });
     expect(options).not.toHaveProperty("defaultPath");
   });

@@ -25,7 +25,9 @@ pub(crate) enum BlobError {
     NoIdentity,
     BadMaterialPath,
     LocalFileDiffers,
+    #[allow(dead_code)] // error detail for S-4 sync reports
     Io(std::io::ErrorKind),
+    #[allow(dead_code)] // error detail for S-4 sync reports
     Db(rusqlite::Error),
 }
 
@@ -67,6 +69,7 @@ pub(crate) fn is_blob_name(name: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
+#[allow(dead_code)] // S-4 share-folder path
 pub(crate) fn blob_relative_path(sha: &str) -> Option<String> {
     is_blob_name(sha).then(|| format!("{BLOBS_DIR}/{sha}"))
 }
@@ -248,6 +251,7 @@ fn read_verified<R: Read, W: Write>(source: R, sha: &str, sink: &mut W) -> Resul
     Ok(bytes)
 }
 
+#[allow(dead_code)] // S-4 reads blobs back
 pub(crate) fn read_blob(sync_root: &Path, sha: &str) -> Result<Vec<u8>, BlobError> {
     let mut out = Vec::new();
     read_blob_into(sync_root, sha, &mut out)?;
@@ -255,6 +259,7 @@ pub(crate) fn read_blob(sync_root: &Path, sha: &str) -> Result<Vec<u8>, BlobErro
 }
 
 pub(crate) struct MaterialFile {
+    #[allow(dead_code)] // S-4 blob publish
     pub material_id: String,
     pub relative_path: String,
     pub content_sha256: String,
@@ -262,7 +267,10 @@ pub(crate) struct MaterialFile {
 
 pub(crate) enum MaterialBlob {
     NoFile,
-    Unverified { relative_path: String },
+    #[allow(dead_code)] // S-4 blob publish
+    Unverified {
+        relative_path: String,
+    },
     Ready(MaterialFile),
 }
 
@@ -297,6 +305,7 @@ pub(crate) fn material_blob(
     })))
 }
 
+#[allow(dead_code)] // S-4 shared-PDF lookups
 pub(crate) fn materials_with_sha(conn: &Connection, sha: &str) -> Result<Vec<String>, BlobError> {
     if !is_blob_name(sha) {
         return Err(BlobError::BadName);

@@ -40,7 +40,7 @@ export function GetPhoneProgressCard() {
       <CardBody>
         <div className="stack stack--4">
           <p className="small">
-            On your iPhone, open Settings → Save my phone work, then share that file to this Mac and choose it here.
+            On your iPhone, open Settings → Send my progress to the Mac, then share that file to this Mac and choose it here. A full copy made with “Save a full copy instead” works too.
           </p>
           {line ? (
             <p className="small" role="status">

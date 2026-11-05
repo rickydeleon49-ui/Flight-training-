@@ -47,6 +47,9 @@ struct BaselineFile {
     /// The `now` of the last successful phone save.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     copy_saved_at: Option<String>,
+    /// The `now` of the last successful "Send my progress" on this phone.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    progress_sent_at: Option<String>,
 }
 
 /// Missing, unreadable or malformed file means nothing is known.
@@ -130,13 +133,16 @@ pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
             }
         }
     }
-    let copy_saved_at = read_file(root).and_then(|f| f.copy_saved_at);
+    let earlier = read_file(root);
+    let copy_saved_at = earlier.as_ref().and_then(|f| f.copy_saved_at.clone());
+    let progress_sent_at = earlier.and_then(|f| f.progress_sent_at);
     write_baseline(
         root,
         &BaselineFile {
             baseline_at: best,
             restored_at: Some(now.to_string()),
             copy_saved_at,
+            progress_sent_at,
         },
     )
 }
@@ -173,13 +179,50 @@ pub(crate) fn record_saved_through_in(root: &Path, now: &str) -> Result<(), Stri
             best = current;
         }
     }
-    let restored_at = read_file(root).and_then(|f| f.restored_at);
+    let earlier = read_file(root);
+    let restored_at = earlier.as_ref().and_then(|f| f.restored_at.clone());
+    let progress_sent_at = earlier.and_then(|f| f.progress_sent_at);
     write_baseline(
         root,
         &BaselineFile {
             baseline_at: best,
             restored_at,
             copy_saved_at: Some(now.to_string()),
+            progress_sent_at,
+        },
+    )
+}
+
+/// After "Send my progress" wrote its file: the baseline becomes `now` (taken
+/// before the export started) unless it is already later. `restored_at` and
+/// `copy_saved_at` stay as they were, so the full-copy rules are unaffected.
+pub(crate) fn record_sent_through_in(root: &Path, now: &str) -> Result<(), String> {
+    let earlier = read_file(root);
+    let mut best = now.to_string();
+    if let Some(current) = earlier.as_ref().map(|f| f.baseline_at.as_str()) {
+        let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
+        // A current baseline that cannot be compared is never trusted over `now`.
+        let later: Option<i64> = connection
+            .query_row(
+                "SELECT julianday(?1) > julianday(?2)",
+                [current, &best],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+        if later == Some(1) {
+            best = current.to_string();
+        }
+    }
+    let (restored_at, copy_saved_at) = earlier
+        .map(|f| (f.restored_at, f.copy_saved_at))
+        .unwrap_or((None, None));
+    write_baseline(
+        root,
+        &BaselineFile {
+            baseline_at: best,
+            restored_at,
+            copy_saved_at,
+            progress_sent_at: Some(now.to_string()),
         },
     )
 }
@@ -348,7 +391,7 @@ const MONTHS: [&str; 12] = [
 ];
 
 /// "4 Nov 2026" from an RFC3339 UTC timestamp.
-fn day_label(at: &str) -> Result<String, String> {
+pub(crate) fn day_label(at: &str) -> Result<String, String> {
     let connection = Connection::open_in_memory().map_err(|e| e.to_string())?;
     let (y, m, d): (Option<String>, Option<String>, Option<String>) = connection
         .query_row(

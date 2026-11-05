@@ -17,7 +17,7 @@ vi.mock("@/services/platform", async (original) => ({
   ...await original<typeof import("@/services/platform")>(),
   isIOS: () => mocks.phone,
   isMacOS: () => !mocks.phone,
-  deviceCan: () => ({ geminiKey: true, getStudyMaterial: mocks.phone, savePhoneWork: mocks.phone, generate: !mocks.phone, pdfKit: !mocks.phone, sendToIphone: !mocks.phone, getPhoneProgress: !mocks.phone }),
+  deviceCan: () => ({ geminiKey: true, getStudyMaterial: mocks.phone, savePhoneWork: mocks.phone, sendPhoneProgress: mocks.phone, generate: !mocks.phone, pdfKit: !mocks.phone, sendToIphone: !mocks.phone, getPhoneProgress: !mocks.phone }),
 }));
 function Ready() { return useAppData().status === "ready" ? <Settings /> : null; }
 beforeEach(async () => { localStorage.clear(); db = await createNodeSqliteDatabase(); });
@@ -41,7 +41,7 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
   } else {
     expect(card).toMatch(/Application Support/);
   }
-  expect(Boolean(screen.queryByRole("heading", { name: "Save my phone work" }))).toBe(phone);
+  expect(Boolean(screen.queryByRole("heading", { name: "Send my progress to the Mac" }))).toBe(phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Get progress from my iPhone" }))).toBe(!phone);
   expect(document.querySelector(".stack.stack--5 > .card h2")?.textContent).toBe(phone ? "Get my study material" : "Send to my iPhone");

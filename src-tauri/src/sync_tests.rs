@@ -3003,14 +3003,14 @@ mod progress {
     const SAVED: u64 = 1_699_000_000;
     const OLD_TIME: &str = "2026-10-01T10:00:00.000Z";
 
-    fn manifest() -> Value {
+    pub(super) fn manifest() -> Value {
         json!({"format": "her-flight-deck-complete-backup", "formatVersion": 3,
                "appVersion": "0.0.0-test", "createdAt": SAVED,
                "schemaVersion": SCHEMA, "platform": "ios"})
     }
 
     /// A phone archive: the manifest, a copy of `conn`, and `docs` under `documents/`.
-    fn archive(
+    pub(super) fn archive(
         dir: &TempDir,
         conn: &Connection,
         manifest: Value,
@@ -3036,7 +3036,7 @@ mod progress {
     }
 
     /// The Mac's app folder with an empty library database.
-    fn mac_root() -> TempDir {
+    pub(super) fn mac_root() -> TempDir {
         let root = TempDir::new("progress-mac");
         let conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
         for m in crate::migrations() {
@@ -3050,11 +3050,11 @@ mod progress {
         root
     }
 
-    fn mac_db(root: &TempDir) -> Connection {
+    pub(super) fn mac_db(root: &TempDir) -> Connection {
         Connection::open(root.0.join("her-flight-deck.db")).unwrap()
     }
 
-    fn run(root: &TempDir, archive: &std::path::Path) -> Result<PhoneProgress, String> {
+    pub(super) fn run(root: &TempDir, archive: &std::path::Path) -> Result<PhoneProgress, String> {
         import_phone_progress_in(&root.0, archive, Some(MAC), "0.0.0-test", NOW)
     }
 
@@ -3116,7 +3116,7 @@ mod progress {
     }
 
     /// Every row of the tables a failed apply must leave alone.
-    fn snapshot(conn: &Connection) -> Vec<String> {
+    pub(super) fn snapshot(conn: &Connection) -> Vec<String> {
         let mut out = Vec::new();
         for (table, cols) in [
             (
@@ -3745,5 +3745,1095 @@ mod blobs {
             }
             assert!(!text.split_whitespace().any(is_blob_name), "{text}");
         }
+    }
+}
+
+mod send {
+    use super::*;
+    use crate::phone_work::PHONE_WORK_FILE;
+    use crate::sync::apply::apply_change_file;
+    use crate::sync::blobs::{place_material_blob, put_blob, PlaceOutcome};
+    use crate::sync::bootstrap::bootstrap_in;
+    use crate::sync::export::{exported_through_seq, set_exported_through_seq};
+    use crate::sync::send::{
+        remove_stale_temps, send_locked, send_phone_progress_in, SentPhoneProgress, PROGRESS_FILE,
+    };
+    use sha2::{Digest, Sha256};
+    use std::path::{Path, PathBuf};
+
+    pub(super) const DEVICE: &str = "aaaaaaaa-2222-4333-8444-555555555555";
+    pub(super) const BEFORE: &str = "2026-11-01T00:00:00.000Z";
+
+    pub(super) struct Phone {
+        pub(super) root: TempDir,
+        pub(super) docs: PathBuf,
+    }
+
+    impl Phone {
+        pub(super) fn db(&self) -> Connection {
+            let c = Connection::open(self.root.0.join("her-flight-deck.db")).unwrap();
+            c.pragma_update(None, "foreign_keys", "ON").unwrap();
+            c
+        }
+        pub(super) fn send(&self) -> Result<SentPhoneProgress, String> {
+            send_locked(&self.root.0, &self.docs, "0.0.0-test", NOW)
+        }
+        pub(super) fn file(&self) -> PathBuf {
+            self.docs.join(PROGRESS_FILE)
+        }
+        pub(super) fn outbox(&self) -> Vec<String> {
+            let dir = self
+                .root
+                .0
+                .join("outbox")
+                .join(crate::sync::changeset::folder(DEVICE));
+            let mut v: Vec<String> = std::fs::read_dir(dir)
+                .map(|rd| {
+                    rd.map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                        .collect()
+                })
+                .unwrap_or_default();
+            v.sort();
+            v
+        }
+        fn baseline(&self) -> String {
+            std::fs::read_to_string(self.root.0.join(PHONE_WORK_FILE)).unwrap_or_default()
+        }
+    }
+
+    /// A phone: migrated database on disk, its own id, ledger already seeded,
+    /// and a baseline from the last Mac copy.
+    pub(super) fn phone() -> Phone {
+        static PHONES: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = PHONES.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let root = TempDir::new(&format!("send-root-{n}"));
+        let docs = root.0.join("docs-out");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{BEFORE}\"}}"),
+        )
+        .unwrap();
+        let mut conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [DEVICE],
+        )
+        .unwrap();
+        bootstrap_in(&root.0, &mut conn, true, BEFORE).unwrap();
+        Phone { root, docs }
+    }
+
+    pub(super) fn sha_of(bytes: &[u8]) -> String {
+        hex::encode(Sha256::digest(bytes))
+    }
+
+    pub(super) fn add_bookmark(conn: &Connection, id: &str) {
+        conn.execute(
+            "INSERT OR IGNORE INTO study_materials (id,title,created_at,updated_at) VALUES ('m1','a',?1,?1)",
+            [NOW],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES (?1,'m1',1,'t',?2,?2)",
+            params![id, NOW],
+        )
+        .unwrap();
+    }
+
+    pub(super) fn add_pdf(p: &Phone, id: &str, name: &str, bytes: &[u8], identity: bool) {
+        std::fs::create_dir_all(p.root.0.join("documents")).unwrap();
+        std::fs::write(p.root.0.join("documents").join(name), bytes).unwrap();
+        let conn = p.db();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,file_path,created_at,updated_at) VALUES (?1,'T',?2,?3,?3)",
+            params![id, name, NOW],
+        )
+        .unwrap();
+        if identity {
+            conn.execute(
+                "INSERT INTO material_content_identities (material_id, content_sha256, total_pages, verified_at) VALUES (?1, ?2, 1, ?3)",
+                params![id, sha_of(bytes), NOW],
+            )
+            .unwrap();
+        }
+    }
+
+    pub(super) fn entries(path: &Path) -> Vec<String> {
+        let mut zip = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+        let mut v: Vec<String> = (0..zip.len())
+            .map(|i| zip.by_index(i).unwrap().name().unwrap().to_string())
+            .collect();
+        v.sort();
+        v
+    }
+
+    pub(super) fn read_entry(path: &Path, name: &str) -> Vec<u8> {
+        use std::io::Read;
+        let mut zip = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
+        let mut out = Vec::new();
+        zip.by_name(name).unwrap().read_to_end(&mut out).unwrap();
+        out
+    }
+
+    pub(super) fn manifest(path: &Path) -> Value {
+        serde_json::from_slice(&read_entry(path, "manifest.json")).unwrap()
+    }
+
+    fn unsaved(p: &Phone) -> i64 {
+        let w = crate::phone_work::unsaved_phone_work_in(&p.root.0).unwrap();
+        w.reviews + w.tests + w.bookmarks + w.reading_positions + w.materials
+    }
+
+    #[test]
+    fn a_send_writes_one_file_in_documents_with_the_store_layout() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 one", true);
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (1, 0));
+        assert!(sent.file_bytes > 0);
+        let names = entries(&p.file());
+        let change = format!("changes/{DEVICE}/{}", p.outbox()[0]);
+        assert_eq!(
+            names,
+            vec![
+                "blobs/".to_string() + &sha_of(b"%PDF-1.7 one"),
+                change,
+                "manifest.json".to_string()
+            ]
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>()
+        );
+        let m = manifest(&p.file());
+        assert_eq!(m["kind"], "phoneProgress");
+        assert_eq!(m["platform"], "ios");
+        assert_eq!(m["deviceId"], DEVICE);
+        // Only the one file in Documents, no temps, no staging.
+        let left: Vec<_> = std::fs::read_dir(&p.docs)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, vec![PROGRESS_FILE.to_string()]);
+        assert!(!std::fs::read_dir(&p.root.0).unwrap().any(|e| e
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".progress-staging")));
+        assert_eq!(unsaved(&p), 0);
+    }
+
+    #[test]
+    fn the_zip_is_the_s3c_contract() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let pdf = b"%PDF-1.7 contract";
+        add_pdf(&p, "m2", "m2.pdf", pdf, true);
+        p.send().unwrap();
+        let m = manifest(&p.file());
+        let mut mac = migrated();
+        let sync = TempDir::new("send-contract");
+        for name in m["files"].as_array().unwrap() {
+            let name = name.as_str().unwrap();
+            let bytes = read_entry(&p.file(), &format!("changes/{DEVICE}/{name}"));
+            let parsed = decode(&bytes, name, SCHEMA, NOW).unwrap();
+            apply_change_file(&mut mac, name, &parsed, NOW).unwrap();
+        }
+        let sha = sha_of(pdf);
+        let blob = read_entry(&p.file(), &format!("blobs/{sha}"));
+        put_blob(&sync.0, &blob[..], Some(&sha)).unwrap();
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM material_bookmarks"), 1);
+        let app = TempDir::new("send-contract-app");
+        std::fs::create_dir_all(app.0.join("documents")).unwrap();
+        let placed = place_material_blob(&mac, &app.0, &sync.0, "m2");
+        assert!(
+            matches!(placed, Ok(Some(PlaceOutcome::Placed { .. }))),
+            "{placed:?}"
+        );
+    }
+
+    #[test]
+    fn a_second_send_adds_a_second_file_and_the_zip_holds_both() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        add_bookmark(&p.db(), "b2");
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!(sent.counts.bookmarks, 1);
+        assert_eq!(p.outbox().len(), 2);
+        let m = manifest(&p.file());
+        assert_eq!(m["files"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            m["fromSeq"].as_i64().unwrap(),
+            1.max(m["fromSeq"].as_i64().unwrap())
+        );
+    }
+
+    #[test]
+    fn nothing_new_leaves_the_file_alone() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let before = std::fs::read(p.file()).unwrap();
+        let mtime = std::fs::metadata(p.file()).unwrap().modified().unwrap();
+        let again = p.send().unwrap();
+        assert!(again.nothing_new);
+        assert_eq!(std::fs::read(p.file()).unwrap(), before);
+        assert_eq!(
+            std::fs::metadata(p.file()).unwrap().modified().unwrap(),
+            mtime
+        );
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn a_deleted_file_is_rebuilt_from_the_outbox_and_still_noted_as_sent() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        std::fs::remove_file(p.file()).unwrap();
+        let again = p.send().unwrap();
+        assert!(!again.nothing_new);
+        assert!(p.file().is_file());
+        assert_eq!(p.outbox().len(), 1);
+        assert!(p.baseline().contains("progressSentAt"));
+    }
+
+    #[test]
+    fn nothing_to_send_at_all_changes_nothing() {
+        let p = phone();
+        let before = p.baseline();
+        let sent = p.send().unwrap();
+        assert!(sent.nothing_new);
+        assert!(!p.file().exists());
+        assert_eq!(p.baseline(), before);
+    }
+
+    #[test]
+    fn a_send_starts_after_the_sync_floor() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_bookmark(&p.db(), "b2");
+        let top = count(&p.db(), "SELECT MAX(seq) FROM local_changes");
+        p.db()
+            .execute(
+                "INSERT INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+                [(top - 1).to_string()],
+            )
+            .unwrap();
+        p.send().unwrap();
+        assert_eq!(p.outbox().len(), 1);
+        assert!(
+            p.outbox()[0].starts_with(&format!("{top}-")),
+            "{:?}",
+            p.outbox()
+        );
+    }
+
+    #[test]
+    fn a_restore_clears_the_old_outbox() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let other = p
+            .root
+            .0
+            .join("outbox/changes/bbbbbbbb-2222-4333-8444-555555555555");
+        std::fs::create_dir_all(&other).unwrap();
+        std::fs::write(other.join("1-1-abcdefabcdef.json.gz"), b"old").unwrap();
+        p.send().unwrap();
+        assert!(!other.exists());
+        assert_eq!(p.outbox().len(), 1);
+    }
+
+    #[test]
+    fn the_watermark_moves_only_after_the_file_is_durable() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        // The Documents folder is a plain file: the zip cannot be written.
+        std::fs::write(&p.docs, b"not a folder").unwrap();
+        let before = p.baseline();
+        assert!(p.send().is_err());
+        assert_eq!(p.baseline(), before, "baseline must not move");
+        assert!(unsaved(&p) > 0);
+        std::fs::remove_file(&p.docs).unwrap();
+        // Simulated crash: the outbox file was written but the watermark never moved.
+        let wm = exported_through_seq(&p.db()).unwrap();
+        assert!(wm >= 1, "the failed send exported once");
+        set_exported_through_seq(&p.db(), 0).unwrap();
+        p.db()
+            .execute(
+                "DELETE FROM app_metadata WHERE key='exported_through_seq'",
+                [],
+            )
+            .unwrap();
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new);
+        let names = p.outbox();
+        let mut froms: Vec<&str> = names.iter().map(|n| n.split('-').next().unwrap()).collect();
+        froms.dedup();
+        assert_eq!(froms.len(), names.len(), "one file per from_seq: {names:?}");
+        assert_eq!(unsaved(&p), 0);
+    }
+
+    #[test]
+    fn a_failed_send_leaves_the_old_file_and_the_baseline_alone() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let old = std::fs::read(p.file()).unwrap();
+        add_bookmark(&p.db(), "b2");
+        p.db()
+            .execute(
+                "UPDATE material_bookmarks SET updated_at = '2026-11-05T00:00:00.000Z' WHERE id = 'b2'",
+                [],
+            )
+            .unwrap();
+        let before = p.baseline();
+        // An unreadable outbox file makes the build fail part-way.
+        use std::os::unix::fs::PermissionsExt;
+        let first = p
+            .root
+            .0
+            .join("outbox")
+            .join(crate::sync::changeset::folder(DEVICE))
+            .join(&p.outbox()[0]);
+        std::fs::set_permissions(&first, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let failed = p.send();
+        std::fs::set_permissions(&first, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(failed.is_err());
+        assert_eq!(p.baseline(), before);
+        assert_eq!(std::fs::read(p.file()).unwrap(), old);
+        assert!(unsaved(&p) > 0);
+        // Next time it works and both files are in.
+        assert!(!p.send().unwrap().nothing_new);
+        assert_eq!(manifest(&p.file())["files"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn an_unchecked_pdf_is_left_behind_not_fatal() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 unchecked", false);
+        add_pdf(&p, "m3", "m3.pdf", b"%PDF-1.7 checked", true);
+        let sent = p.send().unwrap();
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (1, 1));
+        assert!(p.file().is_file());
+        assert_eq!(entries(&p.file()).len(), 3);
+    }
+
+    #[test]
+    fn two_materials_sharing_one_pdf_make_one_entry() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 same", true);
+        add_pdf(&p, "m3", "m3.pdf", b"%PDF-1.7 same", true);
+        let sent = p.send().unwrap();
+        assert_eq!((sent.pdfs_included, sent.pdfs_left), (2, 0));
+        let blobs: Vec<_> = entries(&p.file())
+            .into_iter()
+            .filter(|n| n.starts_with("blobs/"))
+            .collect();
+        assert_eq!(blobs.len(), 1);
+    }
+
+    #[test]
+    fn stale_temps_older_than_a_day_are_removed_and_fresh_ones_kept() {
+        let p = phone();
+        std::fs::create_dir_all(&p.docs).unwrap();
+        let old_stage = p.root.0.join(".progress-staging-1-1");
+        let new_stage = p.root.0.join(".progress-staging-2-2");
+        let old_tmp = p.docs.join(".My phone progress-1-1.writing");
+        let new_tmp = p.docs.join(".My phone progress-2-2.writing");
+        let other = p.docs.join("keep-me.txt");
+        for d in [&old_stage, &new_stage] {
+            std::fs::create_dir_all(d.join("blobs")).unwrap();
+        }
+        for f in [&old_tmp, &new_tmp, &other] {
+            std::fs::write(f, b"x").unwrap();
+        }
+        let old = std::time::SystemTime::now() - std::time::Duration::from_secs(3 * 86_400);
+        std::fs::File::open(&old_stage)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        std::fs::File::options()
+            .write(true)
+            .open(&old_tmp)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        std::fs::File::options()
+            .write(true)
+            .open(&other)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        remove_stale_temps(&p.root.0, &p.docs, std::time::SystemTime::now());
+        assert!(!old_stage.exists() && new_stage.exists());
+        assert!(!old_tmp.exists() && new_tmp.exists());
+        assert!(other.exists());
+    }
+
+    #[test]
+    fn send_errors_name_no_path() {
+        let empty = TempDir::new("send-empty");
+        let docs = empty.0.join("docs");
+        let e = send_locked(&empty.0, &docs, "0.0.0-test", NOW).unwrap_err();
+        assert!(!e.contains("Mac"), "{e}");
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        std::fs::write(&p.docs, b"x").unwrap();
+        let e = p.send().unwrap_err();
+        for banned in [
+            "/", "sync", "merge", "conflict", "Mac", "outbox", "ledger", "sqlite",
+        ] {
+            assert!(!e.to_lowercase().contains(&banned.to_lowercase()), "{e}");
+        }
+        // No device id yet.
+        let q = phone();
+        q.db()
+            .execute("DELETE FROM app_metadata WHERE key = 'device_id'", [])
+            .unwrap();
+        let e = q.send().unwrap_err();
+        assert!(e.contains("isn't ready"), "{e}");
+    }
+
+    #[test]
+    fn counts_match_the_kinds_table() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        add_bookmark(&p.db(), "b2");
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 c", true);
+        let before = crate::phone_work::unsaved_phone_work_in(&p.root.0).unwrap();
+        let sent = p.send().unwrap();
+        assert_eq!(sent.counts.bookmarks, before.bookmarks);
+        assert_eq!(sent.counts.materials, before.materials);
+        assert_eq!(sent.counts.reviews, before.reviews);
+    }
+
+    #[test]
+    fn a_send_seeds_the_ledger_first_when_prepare_never_ran() {
+        let root = TempDir::new("send-unprepared");
+        let docs = root.0.join("docs-out");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{BEFORE}\"}}"),
+        )
+        .unwrap();
+        let conn = Connection::open(root.0.join("her-flight-deck.db")).unwrap();
+        for m in crate::migrations() {
+            conn.execute_batch(m.sql).unwrap();
+        }
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('device_id', ?1)",
+            [DEVICE],
+        )
+        .unwrap();
+        // Pre-ledger phone work: present without any ledger row.
+        conn.execute_batch("DROP TRIGGER IF EXISTS trg_sync_study_materials_insert;")
+            .ok();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('old1','a',?1,?1)",
+            [NOW],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM local_changes", []).unwrap();
+        conn.execute("DELETE FROM sync_row_meta", []).unwrap();
+        drop(conn);
+        let sent = send_locked(&root.0, &docs, "0.0.0-test", NOW).unwrap();
+        assert!(!sent.nothing_new);
+        assert_eq!(sent.counts.materials, 1);
+        let m = manifest(&docs.join(PROGRESS_FILE));
+        assert_eq!(m["files"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn a_send_after_a_restore_keeps_the_earlier_progress_file() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        p.send().unwrap();
+        let first = std::fs::read(p.file()).unwrap();
+        // A restore: new identity, floor moved, watermark gone.
+        let top = count(&p.db(), "SELECT MAX(seq) FROM local_changes");
+        let other = "cccccccc-2222-4333-8444-555555555555";
+        let c = p.db();
+        c.execute(
+            "UPDATE app_metadata SET value = ?1 WHERE key = 'device_id'",
+            [other],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT OR REPLACE INTO app_metadata (key, value) VALUES ('sync_floor_seq', ?1)",
+            [top.to_string()],
+        )
+        .unwrap();
+        c.execute(
+            "DELETE FROM app_metadata WHERE key = 'exported_through_seq'",
+            [],
+        )
+        .unwrap();
+        drop(c);
+        add_bookmark(&p.db(), "b2");
+        p.send().unwrap();
+        let kept = p
+            .docs
+            .join("My phone progress (before 4 Nov 2026).hfdprogress");
+        assert_eq!(std::fs::read(&kept).unwrap(), first);
+        assert_eq!(manifest(&p.file())["deviceId"], other);
+    }
+
+    #[test]
+    fn a_watermark_ahead_of_the_log_refuses_without_changes() {
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        set_exported_through_seq(&p.db(), 9999).unwrap();
+        let before = p.baseline();
+        assert!(p.send().is_err());
+        assert_eq!(p.baseline(), before);
+        assert!(!p.file().exists());
+    }
+
+    #[test]
+    fn a_second_send_at_the_same_time_is_refused() {
+        let p = phone();
+        let _held = crate::sync::send::hold_for_test();
+        let e = send_phone_progress_in(&p.root.0, &p.docs, "0.0.0-test", NOW).unwrap_err();
+        assert_eq!(e, "Already sending. Try again in a moment.");
+    }
+
+    #[test]
+    fn bootstrap_after_a_restore_seeds_nothing_and_marks_done() {
+        let root = TempDir::new("send-restored");
+        std::fs::write(
+            root.0.join(PHONE_WORK_FILE),
+            format!("{{\"baselineAt\":\"{NOW}\"}}"),
+        )
+        .unwrap();
+        let mut conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('r1','a',?1,?1)",
+            [BEFORE],
+        )
+        .unwrap();
+        conn.execute("DELETE FROM local_changes", []).unwrap();
+        conn.execute("DELETE FROM sync_row_meta", []).unwrap();
+        let out = bootstrap_in(&root.0, &mut conn, true, NOW).unwrap();
+        assert_eq!(out.seeded, 0);
+        assert_eq!(
+            count(
+                &conn,
+                "SELECT COUNT(*) FROM app_metadata WHERE key='sync_bootstrapped'"
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn the_pdf_sentence_inputs_survive_a_sent_status() {
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 u", false);
+        let sent = p.send().unwrap();
+        assert!(!sent.nothing_new && sent.pdfs_left == 1);
+        // A left-out PDF keeps the work counted as not saved.
+        assert!(unsaved(&p) > 0);
+    }
+}
+
+mod accept {
+    use super::apply::MAC;
+    use super::progress::{archive, mac_db, mac_root, manifest as backup_manifest, run, snapshot};
+    use super::send::{add_bookmark, add_pdf, entries, phone, read_entry, sha_of, Phone, DEVICE};
+    use super::*;
+    use crate::sync::progress::{PhoneProgress, ProgressOutcome};
+    use std::path::PathBuf;
+
+    /// Sends from the phone and returns the name of the file that appeared.
+    fn send_new(p: &Phone) -> String {
+        let before = p.outbox();
+        p.send().unwrap();
+        p.outbox()
+            .into_iter()
+            .find(|n| !before.contains(n))
+            .expect("a new file")
+    }
+
+    fn change_bytes(p: &Phone, name: &str) -> Vec<u8> {
+        let folder = crate::sync::changeset::folder(DEVICE);
+        std::fs::read(p.root.0.join("outbox").join(folder).join(name)).unwrap()
+    }
+
+    /// Every PDF entry the phone's current progress file carries.
+    fn blob_entries(p: &Phone) -> Vec<(String, Vec<u8>)> {
+        entries(&p.file())
+            .into_iter()
+            .filter(|n| n.starts_with("blobs/"))
+            .map(|n| {
+                let bytes = read_entry(&p.file(), &n);
+                (n, bytes)
+            })
+            .collect()
+    }
+
+    /// A progress file listing exactly `files`, with `extra` entries beside them.
+    fn progress_zip(
+        dir: &TempDir,
+        p: &Phone,
+        files: &[&str],
+        extra: &[(String, Vec<u8>)],
+        edit: impl FnOnce(&mut Value),
+    ) -> PathBuf {
+        let mut m: Value = serde_json::from_slice(&read_entry(&p.file(), "manifest.json")).unwrap();
+        m["files"] = json!(files);
+        edit(&mut m);
+        let path = dir.0.join("My phone progress.hfdprogress");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let opts = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+        zip.start_file("manifest.json", opts).unwrap();
+        zip.write_all(m.to_string().as_bytes()).unwrap();
+        for name in files {
+            zip.start_file(format!("changes/{DEVICE}/{name}"), opts)
+                .unwrap();
+            zip.write_all(&change_bytes(p, name)).unwrap();
+        }
+        for (name, bytes) in extra {
+            zip.start_file(name.as_str(), opts).unwrap();
+            zip.write_all(bytes).unwrap();
+        }
+        zip.finish().unwrap();
+        path
+    }
+
+    fn applied(conn: &Connection) -> i64 {
+        count(conn, "SELECT COUNT(*) FROM sync_applied")
+    }
+
+    const BANNED: [&str; 12] = [
+        "sync",
+        "merge",
+        "conflict",
+        "export",
+        "ledger",
+        "change file",
+        "device",
+        "blob",
+        "outbox",
+        "import",
+        "ingest",
+        "hfd-progress",
+    ];
+
+    fn assert_plain(text: &str) {
+        let lower = text.to_lowercase();
+        assert!(!text.contains('/') && !text.contains('\\'), "{text}");
+        for word in BANNED {
+            assert!(!lower.contains(word), "{word} in {text}");
+        }
+    }
+
+    fn leftovers() -> usize {
+        std::fs::read_dir(std::env::temp_dir())
+            .unwrap()
+            .filter(|e| {
+                e.as_ref()
+                    .unwrap()
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with(&format!("hfd-progress-{}-", std::process::id()))
+            })
+            .count()
+    }
+
+    #[test]
+    fn a_progress_file_brings_in_the_phones_work() {
+        let dir = TempDir::new("accept-a");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let got = run(&root, &progress_zip(&dir, &p, &[&name], &[], |_| {})).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!((got.counts.bookmarks, got.counts.materials), (1, 1));
+        assert!(got.phone_saved_at.is_some());
+        let mac = mac_db(&root);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM material_bookmarks"), 1);
+        assert_eq!(
+            count(
+                &mac,
+                &format!("SELECT COUNT(*) FROM sync_applied WHERE peer_device='{DEVICE}' AND file_name='{name}'")
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn the_same_progress_file_twice_is_already_in() {
+        let dir = TempDir::new("accept-b");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&name], &[], |_| {});
+        run(&root, &path).unwrap();
+        let before = snapshot(&mac_db(&root));
+        let again = run(&root, &path).unwrap();
+        assert_eq!(again.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!(again.counts.bookmarks, 0);
+        assert_eq!(snapshot(&mac_db(&root)), before);
+    }
+
+    #[test]
+    fn a_second_send_with_more_work_adds_only_the_new_file() {
+        let dir = TempDir::new("accept-c");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let first = send_new(&p);
+        run(&root, &progress_zip(&dir, &p, &[&first], &[], |_| {})).unwrap();
+        add_bookmark(&p.db(), "b2");
+        let second = send_new(&p);
+        let got = run(
+            &root,
+            &progress_zip(&dir, &p, &[&first, &second], &[], |_| {}),
+        )
+        .unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!((got.counts.bookmarks, got.counts.materials), (1, 0));
+        assert_eq!(applied(&mac_db(&root)), 2);
+    }
+
+    #[test]
+    fn a_pdf_arrives_on_a_later_import_of_the_same_file() {
+        let dir = TempDir::new("accept-d");
+        let root = mac_root();
+        let p = phone();
+        let pdf = b"%PDF-1.7 later";
+        add_pdf(&p, "m2", "m2.pdf", pdf, true);
+        let name = send_new(&p);
+        let blobs = blob_entries(&p);
+        assert_eq!(blobs.len(), 1);
+        let first = run(&root, &progress_zip(&dir, &p, &[&name], &[], |_| {})).unwrap();
+        assert_eq!(first.outcome, ProgressOutcome::Added);
+        assert_eq!((first.pdfs_added, first.pdfs_waiting), (0, 1));
+        let second = run(&root, &progress_zip(&dir, &p, &[&name], &blobs, |_| {})).unwrap();
+        assert_eq!(second.outcome, ProgressOutcome::AlreadyIn);
+        assert_eq!((second.pdfs_added, second.pdfs_waiting), (1, 0));
+        let placed = std::fs::read(root.0.join("documents").join("m2.pdf")).unwrap();
+        assert_eq!(sha_of(&placed), sha_of(pdf));
+    }
+
+    #[test]
+    fn two_materials_sharing_one_pdf_are_both_placed() {
+        let dir = TempDir::new("accept-e");
+        let root = mac_root();
+        let p = phone();
+        let pdf = b"%PDF-1.7 shared";
+        add_pdf(&p, "m2", "a.pdf", pdf, true);
+        add_pdf(&p, "m3", "b.pdf", pdf, true);
+        let name = send_new(&p);
+        let blobs = blob_entries(&p);
+        assert_eq!(blobs.len(), 1);
+        let got = run(&root, &progress_zip(&dir, &p, &[&name], &blobs, |_| {})).unwrap();
+        assert_eq!((got.pdfs_added, got.pdfs_waiting), (2, 0));
+        assert!(root.0.join("documents").join("a.pdf").is_file());
+        assert!(root.0.join("documents").join("b.pdf").is_file());
+    }
+
+    #[test]
+    fn a_file_from_this_mac_is_refused() {
+        let dir = TempDir::new("accept-f");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&name], &[], |m| m["deviceId"] = json!(MAC));
+        let e = run(&root, &path).unwrap_err();
+        assert_eq!(e, "That file was made on this Mac.");
+        assert_eq!(applied(&mac_db(&root)), 0);
+    }
+
+    #[test]
+    fn a_newer_app_file_is_refused() {
+        let dir = TempDir::new("accept-g");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let newer =
+            "That file was made by a newer version of the app. Update the app on this Mac first.";
+        let schema = progress_zip(&dir, &p, &[&name], &[], |m| {
+            m["schemaVersion"] = json!(SCHEMA + 1)
+        });
+        assert_eq!(run(&root, &schema).unwrap_err(), newer);
+        let format = progress_zip(&dir, &p, &[&name], &[], |m| m["formatVersion"] = json!(2));
+        assert_eq!(run(&root, &format).unwrap_err(), newer);
+        let none = progress_zip(&dir, &p, &[&name], &[], |m| {
+            m.as_object_mut().unwrap().remove("formatVersion");
+        });
+        let e = run(&root, &none).unwrap_err();
+        assert!(e.starts_with("That file couldn't be read"), "{e}");
+        assert_eq!(applied(&mac_db(&root)), 0);
+    }
+
+    #[test]
+    fn an_older_schema_file_is_taken() {
+        let dir = TempDir::new("accept-h");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&name], &[], |m| {
+            m["schemaVersion"] = json!(SCHEMA - 1)
+        });
+        assert_eq!(run(&root, &path).unwrap().outcome, ProgressOutcome::Added);
+    }
+
+    #[test]
+    fn an_empty_list_is_nothing_new() {
+        let dir = TempDir::new("accept-i");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        send_new(&p);
+        let got = run(&root, &progress_zip(&dir, &p, &[], &[], |_| {})).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::NothingNew);
+    }
+
+    #[test]
+    fn a_bad_change_file_changes_nothing() {
+        let dir = TempDir::new("accept-j");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let first = send_new(&p);
+        add_bookmark(&p.db(), "b2");
+        let second = send_new(&p);
+        // Same listing, the second file's bytes damaged.
+        let mut bad = change_bytes(&p, &second);
+        let mid = bad.len() / 2;
+        bad[mid] ^= 0xff;
+        let folder = crate::sync::changeset::folder(DEVICE);
+        std::fs::write(p.root.0.join("outbox").join(&folder).join(&second), &bad).unwrap();
+        let path = progress_zip(&dir, &p, &[&first, &second], &[], |_| {});
+        let e = run(&root, &path).unwrap_err();
+        assert!(e.starts_with("That file couldn't be read"), "{e}");
+        assert_eq!(applied(&mac_db(&root)), 0);
+        assert_eq!(
+            count(&mac_db(&root), "SELECT COUNT(*) FROM study_materials"),
+            0
+        );
+    }
+
+    #[test]
+    fn a_stop_partway_keeps_the_earlier_file_and_resumes() {
+        let dir = TempDir::new("accept-k");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let first = send_new(&p);
+        // The material m2 arrives in `middle`, its bookmark in `last`.
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 k", true);
+        let middle = send_new(&p);
+        p.db()
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b9','m2',1,'t',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+        let last = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&first, &last], &[], |_| {});
+        let e = run(&root, &path).unwrap_err();
+        assert!(e.starts_with("Some of that file was brought in"), "{e}");
+        assert_plain(&e);
+        assert_eq!(applied(&mac_db(&root)), 1);
+        let path = progress_zip(&dir, &p, &[&first, &middle, &last], &[], |_| {});
+        let got = run(&root, &path).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        assert_eq!((got.counts.bookmarks, got.counts.materials), (1, 1));
+        assert_eq!(applied(&mac_db(&root)), 3);
+    }
+
+    #[test]
+    fn a_stop_still_places_the_pdfs_of_earlier_files() {
+        let dir = TempDir::new("accept-l");
+        let root = mac_root();
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 l", true);
+        let first = send_new(&p);
+        let blobs = blob_entries(&p);
+        add_pdf(&p, "m3", "m3.pdf", b"%PDF-1.7 skipped", true);
+        let _skipped = send_new(&p);
+        p.db()
+            .execute(
+                "INSERT INTO material_bookmarks (id,material_id,page_index,title,created_at,updated_at) VALUES ('b9','m3',1,'t',?1,?1)",
+                [NOW],
+            )
+            .unwrap();
+        let last = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&first, &last], &[], |_| {});
+        run(&root, &path).unwrap_err();
+        // Nothing was lost: the first file is in; its PDF has not come yet.
+        let path = progress_zip(&dir, &p, &[&first, &last], &blobs, |_| {});
+        let e = run(&root, &path).unwrap_err();
+        assert!(e.starts_with("Some of that file was brought in"), "{e}");
+        assert!(root.0.join("documents").join("m2.pdf").is_file());
+    }
+
+    #[test]
+    fn zip_entries_outside_the_manifest_are_ignored() {
+        let dir = TempDir::new("accept-m");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let extra = vec![
+            ("../x".to_string(), b"x".to_vec()),
+            (
+                "changes/other/1-1-abcdefabcdef.json.gz".to_string(),
+                b"x".to_vec(),
+            ),
+            ("blobs/notahash".to_string(), b"x".to_vec()),
+        ];
+        let path = progress_zip(&dir, &p, &[&name], &extra, |_| {});
+        assert_eq!(run(&root, &path).unwrap().outcome, ProgressOutcome::Added);
+        assert!(!root.0.join("../x").exists());
+        let mut found: Vec<String> = std::fs::read_dir(&root.0)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        found.sort();
+        assert!(
+            found.iter().all(|n| n.starts_with("her-flight-deck.db")),
+            "{found:?}"
+        );
+    }
+
+    #[test]
+    fn an_oversized_entry_is_refused_before_any_write() {
+        let dir = TempDir::new("accept-n");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let first = send_new(&p);
+        add_bookmark(&p.db(), "b2");
+        let second = send_new(&p);
+        let path = progress_zip(&dir, &p, &[&first, &second], &[], |_| {});
+        // Rebuild with the second entry far over the cap.
+        let mut zipped = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        let opts = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored);
+        let mut m: Value = serde_json::from_slice(&read_entry(&p.file(), "manifest.json")).unwrap();
+        m["files"] = json!([first, second]);
+        zipped.start_file("manifest.json", opts).unwrap();
+        zipped.write_all(m.to_string().as_bytes()).unwrap();
+        zipped
+            .start_file(format!("changes/{DEVICE}/{first}"), opts)
+            .unwrap();
+        zipped.write_all(&change_bytes(&p, &first)).unwrap();
+        zipped
+            .start_file(format!("changes/{DEVICE}/{second}"), opts)
+            .unwrap();
+        let chunk = vec![0u8; 1024 * 1024];
+        for _ in 0..65 {
+            zipped.write_all(&chunk).unwrap();
+        }
+        zipped.finish().unwrap();
+        let e = run(&root, &path).unwrap_err();
+        assert!(e.starts_with("That file couldn't be read"), "{e}");
+        assert_eq!(applied(&mac_db(&root)), 0);
+    }
+
+    #[test]
+    fn a_backup_file_still_takes_the_old_path() {
+        let dir = TempDir::new("accept-o");
+        let root = mac_root();
+        let (phone_db, _) = super::apply::every_rule_peer(super::apply::PHONE);
+        let got = run(&root, &archive(&dir, &phone_db, backup_manifest(), &[])).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+    }
+
+    #[test]
+    fn a_progress_file_after_a_backup_of_the_same_work_adds_nothing() {
+        let dir = TempDir::new("accept-p");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let backup = archive(&dir, &p.db(), backup_manifest(), &[]);
+        let got = run(&root, &backup).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::Added);
+        let before = snapshot(&mac_db(&root));
+        let name = send_new(&p);
+        let got: PhoneProgress =
+            run(&root, &progress_zip(&dir, &p, &[&name], &[], |_| {})).unwrap();
+        assert_eq!(got.outcome, ProgressOutcome::NothingNew);
+        assert_eq!(
+            count(&mac_db(&root), "SELECT COUNT(*) FROM material_bookmarks"),
+            1
+        );
+        let after = snapshot(&mac_db(&root));
+        let strip = |v: Vec<String>| -> Vec<String> {
+            v.into_iter()
+                .filter(|r| !r.starts_with("sync_applied:"))
+                .collect()
+        };
+        assert_eq!(strip(after), strip(before));
+    }
+
+    #[test]
+    fn accept_errors_name_no_path_and_no_banned_word() {
+        let dir = TempDir::new("accept-q");
+        let root = mac_root();
+        let p = phone();
+        add_bookmark(&p.db(), "b1");
+        let name = send_new(&p);
+        let cases = vec![
+            progress_zip(&dir, &p, &[&name], &[], |m| m["deviceId"] = json!(MAC)),
+            progress_zip(&dir, &p, &[&name], &[], |m| m["formatVersion"] = json!(2)),
+            progress_zip(&dir, &p, &[&name], &[], |m| {
+                m["files"] = json!([name, name])
+            }),
+            progress_zip(&dir, &p, &[&name], &[], |m| {
+                m["files"] = json!(["../evil.json.gz"])
+            }),
+            progress_zip(&dir, &p, &[&name], &[], |m| {
+                m["files"] = json!(["9-9-abcdefabcdef.json.gz"])
+            }),
+        ];
+        for path in cases {
+            let e = run(&root, &path).unwrap_err();
+            assert_plain(&e);
+        }
+        let mut stopped = String::new();
+        stopped.push_str("Some of that file was brought in, then it stopped. What's here is safe. Keep the file \u{2014} a later update may take the rest.");
+        assert_plain(&stopped);
+        let platform = progress_zip(&dir, &p, &[&name], &[], |m| m["platform"] = json!("macos"));
+        // Existing sentences for a file that is not from the phone say "backup".
+        assert!(run(&root, &platform)
+            .unwrap_err()
+            .contains("not made on the phone"));
+    }
+
+    #[test]
+    fn the_temp_root_is_removed_on_every_path() {
+        let dir = TempDir::new("accept-r");
+        let root = mac_root();
+        let p = phone();
+        add_pdf(&p, "m2", "m2.pdf", b"%PDF-1.7 r", true);
+        let name = send_new(&p);
+        let blobs = blob_entries(&p);
+        run(&root, &progress_zip(&dir, &p, &[&name], &blobs, |_| {})).unwrap();
+        let bad = progress_zip(&dir, &p, &[&name], &[], |m| m["deviceId"] = json!(MAC));
+        run(&root, &bad).unwrap_err();
+        for _ in 0..40 {
+            if leftovers() == 0 {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        panic!("a temp folder was left behind");
     }
 }

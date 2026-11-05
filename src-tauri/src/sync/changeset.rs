@@ -192,7 +192,7 @@ fn validate(set: &ChangeSet) -> Result<(), ChangeFileError> {
 }
 
 /// `<from>-<to>-<sha12>.json.gz` taken apart; `None` for any other shape.
-fn parse_name(name: &str) -> Option<(i64, i64, &str)> {
+pub(crate) fn parse_name(name: &str) -> Option<(i64, i64, &str)> {
     let stem = name.strip_suffix(SUFFIX)?;
     let mut parts = stem.splitn(3, '-');
     let from = parts.next()?.parse().ok()?;

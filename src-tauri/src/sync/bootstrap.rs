@@ -12,7 +12,9 @@ use crate::sync::tables::SYNC_TABLES;
 const DONE_KEY: &str = "sync_bootstrapped";
 
 pub(crate) struct BootstrapOutcome {
+    #[allow(dead_code)] // S-4 reports the seed
     pub seeded: usize,
+    #[allow(dead_code)] // S-4 reports the seed
     pub skipped: bool,
 }
 

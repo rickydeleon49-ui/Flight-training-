@@ -33,6 +33,8 @@ export function deviceCan() {
     getPhoneProgress: isTauri() && isMacOS(),
     getStudyMaterial: isTauri() && isIOS(),
     savePhoneWork: isTauri() && isIOS(),
+    /** Writing the phone's progress as one file in Files for the Mac to read. */
+    sendPhoneProgress: isTauri() && isIOS(),
     pictureFromPhoto: isTauri() && isIOS(),
     importFiles: !isIOS() || isTauri(),
     /** Splitting a PDF into parts needs the Mac for now. */

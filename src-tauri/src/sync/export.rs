@@ -6,16 +6,19 @@ use crate::sync::changeset::{self, Change, ChangeSet, Op, CHANGE_FORMAT_VERSION}
 use crate::sync::tables;
 
 const EXPORTED_KEY: &str = "exported_through_seq";
+const FLOOR_KEY: &str = "sync_floor_seq";
 
 pub(crate) struct ExportedChanges {
     pub file: changeset::EncodedChangeFile,
     pub from_seq: i64,
     pub to_seq: i64,
+    #[allow(dead_code)] // S-4 reports sizes
     pub change_count: usize,
 }
 
 #[derive(Debug)]
 pub(crate) enum ExportError {
+    #[allow(dead_code)] // error detail for S-4 reports
     Db(rusqlite::Error),
     Encode(changeset::ChangeFileError),
     /// A ledger entry whose row or metadata is gone.
@@ -154,4 +157,20 @@ pub(crate) fn set_exported_through_seq(
         rusqlite::params![EXPORTED_KEY, to_seq.to_string()],
     )?;
     Ok(())
+}
+
+/// Where this device's own exports start: whatever the change log held when a
+/// restore put it there. Stored as text; missing, junk or negative means 0.
+pub(crate) fn sync_floor_seq(conn: &Connection) -> Result<i64, rusqlite::Error> {
+    let value: Option<String> = conn
+        .query_row(
+            "SELECT CAST(value AS TEXT) FROM app_metadata WHERE key = ?1",
+            [FLOOR_KEY],
+            |r| r.get(0),
+        )
+        .optional()?;
+    Ok(value
+        .and_then(|v| v.parse::<i64>().ok())
+        .unwrap_or(0)
+        .max(0))
 }
