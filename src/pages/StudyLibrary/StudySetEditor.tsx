@@ -120,6 +120,8 @@ export interface StudySetEditorProps {
   onClose?: () => void;
   bookmarkSeed?: Omit<BookmarkCardSource, "itemId">;
   createFirst?: boolean;
+  /** Keep the source-page link but open Question and Answer empty. */
+  blankFields?: boolean;
 }
 
 /**
@@ -135,6 +137,7 @@ export function StudySetEditor({
   onClose,
   bookmarkSeed,
   createFirst = false,
+  blankFields = false,
 }: StudySetEditorProps) {
   const { mutate, repositories } = useAppData();
   const [action, setAction] = useState<Action | null>(null);
@@ -236,7 +239,7 @@ export function StudySetEditor({
       }
       setOpened({ ...read, state });
       if (next.mode === "add") {
-        setFields(bookmarkSeed ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
+        setFields(bookmarkSeed && !blankFields ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
         if (bookmarkSeed) setPage(String(bookmarkSeed.source.physicalPage));
       } else {
         const item = locate(state, next.target);

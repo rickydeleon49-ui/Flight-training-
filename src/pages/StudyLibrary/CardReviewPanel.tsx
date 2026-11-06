@@ -9,6 +9,7 @@
  */
 import { isIOS } from "@/services/platform";
 import { ratingKeyHint } from "@/services/phoneCopy";
+import { createPortal } from "react-dom";
 import { useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 
 import { Badge, Button } from "@/components/ui";
@@ -62,9 +63,11 @@ interface CardReviewPanelProps {
   /** Opened from Review due: start this material's session once its cards are read. */
   autoStart?: boolean;
   studySet?: AiStudySet | null;
+  /** Where the rarely used reset action is shown: the end of the Flashcards panel. */
+  resetSlot?: HTMLElement | null;
 }
 
-export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet, numberedAction = false }: CardReviewPanelProps) {
+export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet, numberedAction = false, resetSlot }: CardReviewPanelProps) {
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
@@ -171,6 +174,15 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
     statusLine = reviewStatusLine(summary.dueNow, summary.newCount);
   }
   if (hasMixedSources) statusLine = `${statusLine} (${userCount} you wrote, ${pdfCount} from your PDF)`;
+
+  const resetBlock = (
+    <div className="card-review__reset">
+      <Button size="small" variant="secondary" disabled={review.blocked} onClick={() => setResetOpen(true)}>
+        Reset card reviews
+      </Button>
+    </div>
+  );
+  const resetButton = resetSlot ? createPortal(resetBlock, resetSlot) : resetBlock;
 
   return (
     <section className="card-review stack stack--3" aria-labelledby="card-review-title">
@@ -281,11 +293,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
 
       <RecentReviews review={review} zone={zone} />
 
-      <div className="card-review__reset">
-        <Button size="small" variant="danger" disabled={review.blocked} onClick={() => setResetOpen(true)}>
-          Reset card reviews
-        </Button>
-      </div>
+      {resetButton}
 
       <ResetCardReviewsDialog
         open={resetOpen}

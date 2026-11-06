@@ -558,6 +558,30 @@ describe("Make a card from a page note (PDF-STUDY-01c)",()=>{
   });
 });
 
+describe("Make a card from the Flashcards panel (POLISH-087)",()=>{
+  it("opens empty, keeps the source page, and returns to the Flashcards panel after Save",async()=>{
+    await seed();
+    await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000002',?,3,'iv',?,'Page two','Some note','verified','x','x')",[M,A]);
+    const scrolled=vi.fn();
+    Element.prototype.scrollIntoView=scrolled;
+    render(h(AppDataProvider,null,h(ControllerProbe),h(MemoryRouter,{initialEntries:[`/study/${M}?tab=study`]},h(Routes,null,h(Route,{path:"/study/:materialId",element:h(MaterialDetail)})))));
+    const flash=await screen.findByRole("heading",{name:"Flashcards"});
+    const make=await waitFor(()=>{const b=within(flash.closest(".card") as HTMLElement).queryByRole("button",{name:"Make a card"});if(!b)throw new Error("no button");return b;});
+    fireEvent.click(make);
+    const dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await waitFor(()=>expect((within(dialog).getByLabelText("Source page (optional)") as HTMLInputElement).value).toBe("3"));
+    expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("");
+    expect((within(dialog).getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("");
+    fireEvent.change(within(dialog).getByLabelText("Question"),{target:{value:"My own question"}});
+    fireEvent.change(within(dialog).getByLabelText("Answer"),{target:{value:"My own answer"}});
+    fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
+    await waitFor(()=>expect(screen.getByRole("tab",{name:"Study"}).getAttribute("aria-selected")).toBe("true"));
+    await waitFor(()=>expect(scrolled).toHaveBeenCalled());
+    await waitFor(()=>expect(document.getElementById("material-flashcards")?.textContent).toContain("My own question"));
+  });
+});
+
 describe("Make a question from a page note (PDF-STUDY-01d)",()=>{
   for(const first of [true,false]) it(`prefills with no answer, Cancel writes nothing, blank answer can't save, double Save ${first ? 'creates the first test' : 'appends'}`,async()=>{
     await seed();
@@ -637,9 +661,10 @@ it("offers the Study shortcut only with a saved page note and opens its existing
   fireEvent.click(make);
   const dialog = await screen.findByRole("dialog", { name: "Add a card" });
   expect(document.getElementById("material-tab-notes")?.getAttribute("aria-selected")).toBe("true");
-  expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("Fictional note question");
+  expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("");
   fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
   expect(await db.select("SELECT * FROM study_set_save_operations")).toEqual(before);
+  await waitFor(() => expect(document.getElementById("material-tab-study")?.getAttribute("aria-selected")).toBe("true"));
 });
 
 const pictureAction = "Make a picture card from this page";

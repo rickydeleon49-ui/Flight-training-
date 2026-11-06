@@ -440,6 +440,31 @@ function MaterialDetailPage() {
   const hasKitItems = kitSections.length > 0 || kitFlashcards.length > 0;
   const safeCardIndex = Math.min(cardIndex, Math.max(0, guideFlashcards.length - 1));
   const safeKitCardIndex = Math.min(kitCardIndex, Math.max(0, kitFlashcards.length - 1));
+  // "Make a card" on the Flashcards panel goes through the page-notes editor. Afterwards the
+  // student is back on the tab they started from, at their cards, with the new card showing.
+  const [resetSlot, setResetSlot] = useState<HTMLElement | null>(null);
+  const flashcardRoute = useRef(false);
+  const flashcardReturnTab = useRef<MaterialTab>("study");
+  const flashcardCountBefore = useRef<number | null>(null);
+  const showFlashcards = () => {
+    requestAnimationFrame(() => {
+      const target = document.getElementById("material-flashcards");
+      target?.scrollIntoView({ block: "start" });
+      target?.focus({ preventScroll: true });
+    });
+  };
+  const returnToFlashcards = () => {
+    selectTab(flashcardReturnTab.current);
+    showFlashcards();
+  };
+  useEffect(() => {
+    const before = flashcardCountBefore.current;
+    if (before === null || guideFlashcards.length <= before) return;
+    flashcardCountBefore.current = null;
+    setCardIndex(guideFlashcards.length - 1);
+    setCardRevealed(false);
+    showFlashcards();
+  }, [guideFlashcards.length]);
 
   // A link from offline search (OFFLINE-02c §4): open the guide section,
   // card or practice question it names, only while it is unchanged.
@@ -1344,6 +1369,9 @@ function MaterialDetailPage() {
                   action={
                     <div className="row row--wrap" style={{ alignItems: "center" }}>
                       {pageNotesAvailable ? <Button size="small" onClick={() => {
+                        flashcardRoute.current = true;
+                        flashcardReturnTab.current = tab;
+                        flashcardCountBefore.current = guideFlashcards.length;
                         selectTab("notes");
                         requestAnimationFrame(() => document.querySelector<HTMLButtonElement>("[data-material-make-card]")?.click());
                       }}>Make a card</Button> : null}
@@ -1492,6 +1520,7 @@ function MaterialDetailPage() {
                               }
                             : null
                         }
+                        resetSlot={resetSlot}
                       />
                       <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
                       {guideFlashcards.length > 0 ? (
@@ -1585,6 +1614,7 @@ function MaterialDetailPage() {
                           </ul>
                         </details>
                       ) : null}
+                      <div ref={setResetSlot} />
 
 
                     </div>
@@ -1862,7 +1892,8 @@ function MaterialDetailPage() {
 
           {isPdf && material.filePath ? (
             <DocumentPagesPanel active={tab === "notes"} material={material} fileMissing={fileMissing} restoring={restoringFile}
-              onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable} />
+              onRestore={() => void restoreFile()} showTips={!tipsHidden} onPageNotesAvailable={setPageNotesAvailable}
+              flashcardRoute={flashcardRoute} onFlashcardRouteDone={returnToFlashcards} />
           ) : null}
 
           </div><div className="detail__column">
