@@ -264,6 +264,41 @@ fn capture_on(
         "{title} p. {} (picture)",
         label.unwrap_or_else(|| page.to_string())
     );
+    // Same page, same picture bytes: reuse the picture already in this material
+    // so a second capture does not add a duplicate picture material.
+    let png_sha = format!("{:x}", Sha256::digest(&png));
+    let mut found = tx
+        .prepare("SELECT s.id,s.printed_label,m.file_path FROM study_page_sources s JOIN study_materials m ON m.id=s.id WHERE s.source_material_id=?1 AND s.physical_page=?2 AND s.content_sha256=?3 ORDER BY s.created_at,s.id")
+        .map_err(err)?;
+    let old: Vec<(String, Option<String>, String)> = found
+        .query_map(params![material, page, source.content_sha256], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+        })
+        .map_err(err)?
+        .collect::<Result<_, _>>()
+        .map_err(err)?;
+    drop(found);
+    for (old_id, old_label, old_file) in old {
+        let Ok(rel) = crate::documents::safe_relative_path(&old_file) else {
+            continue;
+        };
+        let Ok(old_bytes) = bounded(&documents.join(rel), crate::visual_cards::MAX_BYTES) else {
+            continue;
+        };
+        if format!("{:x}", Sha256::digest(&old_bytes)) == png_sha {
+            return Ok(Capture {
+                material_id: old_id.clone(),
+                source: crate::study_page_sources::Source {
+                    id: old_id,
+                    printed_label: old_label,
+                    ..source
+                },
+                image_sha256: png_sha,
+                image_width: w,
+                image_height: h,
+            });
+        }
+    }
     let (destination, stored) =
         crate::documents::stored_destination_in(&documents, &id, "page.png")?;
     let save = (|| {

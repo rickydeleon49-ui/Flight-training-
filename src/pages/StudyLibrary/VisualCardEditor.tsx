@@ -172,6 +172,10 @@ export function VisualCardEditor({
           sourcePage: opened.pageSource?.source.physicalPage ?? prior?.sourcePage ?? null,
           visualRegionId: region.id,
         };
+        if (next.flashcards.some((c, i) => i !== cardIndex && c.visualRegionId === region.id)) {
+          setError("You already have a picture card for this part of the page. Move or resize the box to make a different one.");
+          return;
+        }
         if (cardIndex === undefined) next.flashcards.push(card);
         else next.flashcards[cardIndex] = card;
         pending.current = {
@@ -236,6 +240,7 @@ export function VisualCardEditor({
       dismissible={!busy}
       footer={
         <>
+          {error ? <p role="alert" style={{ flexBasis: "100%", margin: 0 }}>{error}</p> : null}
           <Button disabled={busy} onClick={onClose}>
             Cancel
           </Button>
@@ -249,7 +254,6 @@ export function VisualCardEditor({
         </>
       }
     >
-      {error ? <p role="alert">{error}</p> : null}
       {!opened && !error ? <p role="status">Checking this picture…</p> : null}
       {!lease.active ? <Button onClick={lease.activate}>Show this picture</Button> : null}
       {opened && size && lease.active ? (

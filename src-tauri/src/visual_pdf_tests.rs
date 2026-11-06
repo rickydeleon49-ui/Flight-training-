@@ -404,3 +404,20 @@ fn validated_size_builds_literal_args_and_page_never_reaches_tools() {
         .unwrap();
     }
 }
+#[test]
+fn capturing_the_same_page_bytes_twice_gives_one_picture_material() {
+    let mut f = fixture();
+    let before = count(&f);
+    let first = capture_on(&mut f.conn, &f.root, "owner", 1, 100, fake).unwrap();
+    let second = capture_on(&mut f.conn, &f.root, "owner", 1, 100, fake).unwrap();
+    assert_eq!(first.material_id, second.material_id);
+    assert_eq!(first.source.id, second.source.id);
+    assert_eq!(count(&f), before + 1);
+    let sources: i64 = f
+        .conn
+        .query_row("SELECT count(*) FROM study_page_sources", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(sources, 1);
+    let other = capture_on(&mut f.conn, &f.root, "owner", 2, 100, fake).unwrap();
+    assert_ne!(other.material_id, first.material_id);
+}
