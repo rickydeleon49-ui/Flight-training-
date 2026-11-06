@@ -12,6 +12,7 @@ import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -24,6 +25,7 @@ let navigate: ReturnType<typeof useNavigate>;
 
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   navigate = useNavigate();
   return null;
 }
@@ -48,7 +50,7 @@ async function open(path: string) {
       h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready)),
     ),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 function createDeferred<T>() {

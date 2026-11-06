@@ -15,6 +15,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { StudyLibrary } from "./StudyLibrary";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -33,6 +34,7 @@ vi.mock("@/services/documents", async (importOriginal) => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 
@@ -50,7 +52,7 @@ beforeEach(async () => {
       ),
     ),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 });
 
 afterEach(() => {

@@ -15,6 +15,7 @@ import { JournalForm } from "@/pages/FlightJournal/JournalForm";
 import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -25,6 +26,7 @@ vi.mock("@/data", () => ({
 let app: ReturnType<typeof useAppData>;
 function Probe() {
   app = useAppData();
+  useStatusAfterEffects(app.status);
   return null;
 }
 function Ready() {
@@ -41,7 +43,7 @@ function Ready() {
 }
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(app.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 const NOT_A_DATE = "That isn't a date — try 11/05/2026.";

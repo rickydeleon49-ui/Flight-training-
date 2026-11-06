@@ -17,6 +17,7 @@ import { geminiModelSentence, MaterialDetail } from "@/pages/StudyLibrary/Materi
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -27,6 +28,7 @@ vi.mock("@/data", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -38,7 +40,7 @@ async function open(id: string) {
   render(
     h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}`] }, h(Probe), h(Ready))),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 function status(choice: geminiService.GeminiModelChoice): geminiService.GeminiStatus {

@@ -117,6 +117,8 @@ interface ConfirmDialogProps {
    */
   pending?: boolean;
   pendingLabel?: string;
+  /** The action can't be confirmed yet (e.g. what it needs is still loading); Cancel still works. */
+  confirmDisabled?: boolean;
   /** An alternative to confirming, such as narrowing what will be sent. */
   secondaryLabel?: string;
   onSecondary?: () => void;
@@ -138,6 +140,7 @@ export function ConfirmDialog({
   destructive = true,
   pending = false,
   pendingLabel,
+  confirmDisabled = false,
   secondaryLabel,
   onSecondary,
   extraActions,
@@ -169,7 +172,7 @@ export function ConfirmDialog({
             <Button
               variant={destructive ? "danger" : "primary"}
               onClick={onConfirm}
-              disabled={pending}
+              disabled={pending || confirmDisabled}
             >
               {pending && pendingLabel ? pendingLabel : confirmLabel}
             </Button>

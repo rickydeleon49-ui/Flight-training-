@@ -17,6 +17,7 @@ import * as documentService from "@/services/documents";
 import * as offlineService from "@/services/offlineContent";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -24,6 +25,7 @@ vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () =
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -76,7 +78,7 @@ afterEach(() => {
 
 async function open(search: string) {
   const view = render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/mat-saved${search}`] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await screen.findByRole("heading", { name: "VOR navigation handout" });
   return view;
 }

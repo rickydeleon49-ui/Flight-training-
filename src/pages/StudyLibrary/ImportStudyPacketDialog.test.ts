@@ -21,6 +21,7 @@ import { removeCapabilities } from "@/testing/capabilities";
 import { IMPORT_REFRESH_WARNING, IMPORTED_CONTENT_DISCLAIMER, ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
 import { MaterialDetail } from "./MaterialDetail";
 import { StudyLibrary } from "./StudyLibrary";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -45,6 +46,7 @@ let context: ReturnType<typeof useAppData>;
 let location: ReturnType<typeof useLocation>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   location = useLocation();
   return null;
 }
@@ -63,7 +65,7 @@ function Ready() {
 
 async function openLibrary() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study"] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await screen.findByRole("heading", { name: "Study Library" });
 }
 
@@ -353,7 +355,7 @@ describe("without native modal dialogs (macOS 12.0–12.2 fallback, source-level
       );
     }
     render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(Harness))));
-    await waitFor(() => expect(context.status).toBe("ready"));
+    await waitForReadyAfterEffects();
     await screen.findByRole("heading", { name: "Letters and labels" });
     fireEvent.click(screen.getByRole("button", { name: "Open nested", hidden: true }));
     await screen.findByRole("dialog", { name: "Nested question" });

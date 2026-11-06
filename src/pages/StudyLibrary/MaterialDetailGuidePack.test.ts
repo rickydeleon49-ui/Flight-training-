@@ -11,6 +11,7 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * GUIDE-PACK-01: a first study guide brings 20 flashcards and a practice test
@@ -28,6 +29,7 @@ let context: ReturnType<typeof useAppData>;
 
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 
@@ -51,7 +53,7 @@ function Ready() {
 
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 const AID = {

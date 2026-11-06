@@ -19,6 +19,7 @@ import * as localDay from "@/logic/localDay";
 import * as documentService from "@/services/documents";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider } from "@/state/AppDataContext";
+import { afterEffects } from "@/testing/afterEffects";
 import { mockSpeechSynthesis } from "@/testing/mockSpeechSynthesis";
 
 import { MaterialDetail } from "./MaterialDetail";
@@ -113,7 +114,8 @@ function deferred<T>() {
 async function openSession() {
   await waitFor(() => expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(false));
   fireEvent.click(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }));
-  return screen.findByRole("button", { name: "Show answer" });
+  // The session opens after a database read; its card's mount effects must run before the test clicks.
+  return afterEffects(screen.findByRole("button", { name: "Show answer" }));
 }
 
 async function revealAndRate(rating: "Again" | "Hard" | "Good" | "Easy") {
@@ -170,7 +172,7 @@ it("reads only card fronts, preserves reveal and rating keys, and stops on navig
   expect(speak.mock.lastCall![0].text).toBe(CARDS[0]!.front);
   cancel.mockClear();
   fireEvent.keyDown(sessionRegion().getByRole("button", { name: "Stop" }), { key: "3" });
-  await screen.findByRole("heading", { name: "Card 2 of 3 · new" });
+  await afterEffects(screen.findByRole("heading", { name: "Card 2 of 3 · new" }));
   expect(cancel).toHaveBeenCalled();
   fireEvent.click(sessionRegion().getByRole("button", { name: "Read aloud" }));
   expect(speak.mock.lastCall![0].text).toBe(CARDS[1]!.front);

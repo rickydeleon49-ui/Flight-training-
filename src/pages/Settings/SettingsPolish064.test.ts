@@ -8,6 +8,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/lib/platform", async (original) => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -32,7 +34,7 @@ function Ready() {
 }
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await screen.findByRole("heading", { name: "About you" });
   (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
   (document.getElementById("settings-backups") as HTMLDetailsElement).open = true;

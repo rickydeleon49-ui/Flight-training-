@@ -11,6 +11,7 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * POLISH-086 (student run R11 friction): status near the button, short card counts,
@@ -29,6 +30,7 @@ let context: ReturnType<typeof useAppData>;
 
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 
@@ -52,7 +54,7 @@ function Ready() {
 
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 const AID = {

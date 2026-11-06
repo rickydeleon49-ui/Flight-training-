@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Appearance setting (Classic vs Glass) in Settings and application startup. */
 import { createElement as h } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -16,6 +16,7 @@ import {
 import { Settings } from "@/pages/Settings/Settings";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import { expectNoA11yViolations } from "@/testing/a11y";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -26,6 +27,7 @@ vi.mock("@/data", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -35,7 +37,7 @@ function Ready() {
 }
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 describe("Appearance setting in Settings", () => {

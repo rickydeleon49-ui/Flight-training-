@@ -37,6 +37,7 @@ import { Questions } from "@/pages/Questions/Questions";
 import { EventDetail } from "@/pages/Schedule/EventDetail";
 import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -89,6 +90,7 @@ async function openDatabase() {
 
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   navigate = useNavigate();
   return null;
 }
@@ -113,7 +115,7 @@ async function launch(path = "/") {
   const view = render(
     h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Pages))),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   return view;
 }
 

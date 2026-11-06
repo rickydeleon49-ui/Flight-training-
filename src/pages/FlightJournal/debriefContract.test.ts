@@ -21,7 +21,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { createElement as h } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,6 +30,7 @@ import { createRepositories } from "@/data/repositories";
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { JournalForm } from "@/pages/FlightJournal/JournalForm";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 const FIXTURES = join(process.cwd(), "src-tauri", "fixtures", "debrief-contract");
 const UPDATE = process.env.UPDATE_DEBRIEF_FIXTURES === "1";
@@ -122,6 +123,7 @@ describe("debrief contract: payloads captured from the real form", () => {
   let context: ReturnType<typeof useAppData>;
   function Probe() {
     context = useAppData();
+    useStatusAfterEffects(context.status);
     return null;
   }
   function Ready() {
@@ -149,7 +151,7 @@ describe("debrief contract: payloads captured from the real form", () => {
     );
 
     render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/journal/new?mode=quick"] }, h(Probe), h(Ready))));
-    await waitFor(() => expect(context.status).toBe("ready"));
+    await waitForReadyAfterEffects();
 
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Crosswind practice" } });
     fireEvent.change(screen.getByLabelText("What was difficult?"), { target: { value: "Drifting left in the flare" } });

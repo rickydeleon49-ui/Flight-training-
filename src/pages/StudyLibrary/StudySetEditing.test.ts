@@ -13,6 +13,7 @@ import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
 import { StudySetSaveError } from "@/data/persistenceErrors";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * OFFLINE-03a in the material page: her own study guide, editing with
@@ -30,6 +31,7 @@ vi.mock("@/data", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -48,7 +50,7 @@ function Ready() {
 
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"), SLOW_RUNNER);
+  await waitForReadyAfterEffects(SLOW_RUNNER);
 }
 
 let repos: ReturnType<typeof createRepositories>;
@@ -186,7 +188,8 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     expect(await versions.findByText("Before an edit", undefined, SLOW_RUNNER)).toBeTruthy();
     await click(versions.findByRole("button", { name: "Restore" }, SLOW_RUNNER));
     const restoreConfirm = await dialog("Restore this version?");
-    fireEvent.click(restoreConfirm.getByRole("button", { name: "Restore" }));
+    // Restore is enabled once the guide as it is now has been read.
+    await click(restoreConfirm.getByRole("button", { name: "Restore" }));
     await waitFor(async () => expect((await savedSet()).flashcards[0]!.back).toBe("The downwind wing."), SLOW_RUNNER);
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "restore"]);
     // What she retired since stays retired.
@@ -368,6 +371,37 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     expect((await history()).map((row) => row.reason)).toEqual(["edit", "regenerate"]);
   });
 
+  it("a quick Restore click is not lost while the guide is still being read", async () => {
+    await open("/study/mat-a");
+    const editor = await openEditor();
+    fireEvent.click(editor.getAllByRole("button", { name: "Edit" })[0]!);
+    const edit = await dialog("Edit this summary");
+    await fill(edit, "Summary", "Mine.");
+    fireEvent.click(edit.getByRole("button", { name: "Save" }));
+    await waitFor(async () => expect((await savedSet()).summary).toBe("Mine."), SLOW_RUNNER);
+    await click(screen.findByRole("button", { name: "Previous versions" }, SLOW_RUNNER));
+    const versions = within(await screen.findByRole("list", { name: "Previous versions" }, SLOW_RUNNER));
+    const restoreBtn = await versions.findByRole("button", { name: "Restore" }, SLOW_RUNNER);
+    const documents = context.repositories!.documents;
+    const read = documents.readStoredStudySet.bind(documents);
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    vi.spyOn(documents, "readStoredStudySet").mockImplementation(async (id) => { await held; return read(id); });
+    await click(restoreBtn);
+    const confirm = await dialog("Restore this version?");
+    const restore = confirm.getByRole("button", { name: "Restore" }) as HTMLButtonElement;
+    // While the read is held, Restore can't be pressed (so a click can't vanish); Cancel still works.
+    expect(restore.disabled).toBe(true);
+    expect(restore.textContent).toBe("Restore");
+    expect((confirm.getByRole("button", { name: "Cancel" }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(restore);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
+    release();
+    await click(restore);
+    await waitFor(async () => expect((await savedSet()).summary).not.toBe("Mine."), SLOW_RUNNER);
+    expect((await history()).map((row) => row.reason)).toEqual(["edit", "restore"]);
+  });
+
   it("restoring is refused when the guide changed after she opened the confirmation", async () => {
     await open("/study/mat-a");
     const editor = await openEditor();
@@ -386,7 +420,7 @@ describe("editing a generated study guide", { timeout: TEST_TIMEOUT }, () => {
     await waitFor(() => expect(readSpy).toHaveBeenCalled(), SLOW_RUNNER);
     await readSpy.mock.results[readSpy.mock.results.length - 1]!.value;
     await db.execute("UPDATE ai_study_sets SET summary = 'Changed in another window.'");
-    fireEvent.click(confirm.getByRole("button", { name: "Restore" }));
+    await click(confirm.getByRole("button", { name: "Restore" }));
     expect(await confirm.findByText(/changed after you opened it/, undefined, SLOW_RUNNER)).toBeTruthy();
     expect((await savedSet()).summary).toBe("Changed in another window.");
     expect((await history()).map((row) => row.reason)).toEqual(["edit"]);
