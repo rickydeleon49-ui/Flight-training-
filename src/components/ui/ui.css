@@ -556,7 +556,7 @@ dialog:not([open]) { display: none; }
 /* Keep destructive controls last, with breathing room from everyday actions. */
 .destructive-action { margin-inline-start: var(--space-5); }
 
-.section-jump-target { scroll-margin-top: var(--space-5); }
+.section-jump-target, .material-fold, .material-fold > summary { scroll-margin-top: var(--space-5); }
 .section-jump-target:focus {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
