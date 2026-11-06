@@ -177,6 +177,17 @@ function MacNote({ children }: { children: ReactNode }) {
   );
 }
 
+const JUMPS: Array<[string, string]> = [
+  ["About you", "settings-about-you"],
+  ["Where you train", "settings-where-you-train"],
+  ["Why you started", "settings-why-you-started"],
+  ["Look and feel", "settings-look-and-feel"],
+  ["Career starter pack", "settings-career-pack"],
+  ["Backups and data", "settings-backups-summary"],
+  ["Advanced", "settings-advanced-summary"],
+  ["About & legal", "settings-about-summary"],
+];
+
 export function Settings() {
   const { data, mutate, refresh, repositories } = useAppData();
   const { hash, key } = useLocation();
@@ -703,9 +714,27 @@ export function Settings() {
 
   const duration = trainingDuration(draft.trainingStartedOn);
 
+  // A short jump row: real links that open a closed fold and move focus to the heading.
+  const jumpTo = (event: React.MouseEvent, id: string) => {
+    event.preventDefault();
+    const target = document.getElementById(id);
+    if (!target) return;
+    const fold = target.closest("details");
+    if (fold) fold.open = true;
+    (fold ? fold.querySelector("summary") ?? target : target).scrollIntoView?.({ block: "start" });
+    (fold ? (fold.querySelector("summary") as HTMLElement | null) ?? target : target).focus();
+  };
+
   return (
     <>
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
+
+      <nav aria-label="Jump to" className="row row--wrap small" style={{ gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
+        <span className="muted">Jump to:</span>
+        {JUMPS.map(([label, id]) => (
+          <a key={id} href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
+        ))}
+      </nav>
 
       <div className="settings-layout stack stack--5">
         {deviceCan().sendToIphone ? <SendToIphoneCard repositories={repositories} /> : null}
@@ -716,7 +745,7 @@ export function Settings() {
         {deviceCan().sendPhoneProgress ? <PhoneProgressCard /> : null}
 
         <Card>
-          <CardHeader title="About you" eyebrow="Greeting and focus" />
+          <CardHeader title="About you" headingId="settings-about-you" eyebrow="Greeting and focus" />
           <CardBody>
             <MacNote>Press Save profile before closing the window.</MacNote>
             <div className="form-grid">
@@ -772,6 +801,7 @@ export function Settings() {
         <Card>
           <CardHeader
             title="Where you train"
+            headingId="settings-where-you-train"
             eyebrow="Used to fill in new lessons"
           />
           <CardBody>
@@ -870,7 +900,7 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Why you started" eyebrow="Yours alone" />
+          <CardHeader title="Why you started" headingId="settings-why-you-started" eyebrow="Yours alone" />
           <CardBody>
             <MacNote>
               Export a picture from Photos or choose one from Finder. It is resized and stored
@@ -949,7 +979,7 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Look and feel" eyebrow="Accent colour" />
+          <CardHeader title="Look and feel" headingId="settings-look-and-feel" eyebrow="Accent colour" />
           <CardBody>
             <div className="stack stack--4">
               <p className="small muted">
@@ -988,7 +1018,7 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Appearance" eyebrow="Visual style" />
+          <CardHeader title="Appearance" headingId="settings-appearance" eyebrow="Visual style" />
           <CardBody>
             <div className="stack stack--3">
               <p className="small muted">
@@ -1042,7 +1072,7 @@ export function Settings() {
         </Card>
 
         <Card>
-          <CardHeader title="Career starter pack" eyebrow="Built-in guidance" />
+          <CardHeader title="Career starter pack" headingId="settings-career-pack" eyebrow="Built-in guidance" />
           <CardBody>
             <PlatformGuidance
               mac="Restoring starter items changes only this Mac’s local library."
@@ -1071,7 +1101,7 @@ export function Settings() {
         </Card>
 
         <details id="settings-backups" className="card material-fold" ref={backupsFold}>
-          <summary>Backups and data</summary>
+          <summary id="settings-backups-summary">Backups and data</summary>
         {!deviceCan().getStudyMaterial ? (
         <Card>
           <CardHeader
@@ -1292,7 +1322,7 @@ export function Settings() {
         </details>
 
         <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
-          <summary>Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !gemini?.configured ? " · AI provider not set up" : ""}</summary>
+          <summary id="settings-advanced-summary">Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !gemini?.configured ? " · AI provider not set up" : ""}</summary>
         {deviceCan().geminiKey ? (
         <Card>
           <CardHeader
@@ -1444,7 +1474,7 @@ export function Settings() {
         </details>
 
         <details id="settings-about" className="card material-fold">
-          <summary>About &amp; legal</summary>
+          <summary id="settings-about-summary">About &amp; legal</summary>
           <CardBody>
             <PlatformGuidance
               mac={

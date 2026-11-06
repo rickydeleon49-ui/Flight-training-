@@ -1384,8 +1384,16 @@ function MaterialDetailPage() {
                         <Button size="small" variant="secondary" onClick={jumpToFileSection}>
                           Split file
                         </Button>
-                      ) : canOfferGemini ? (
-                        <>
+                      ) : null}
+                    </div>
+                  }
+                />
+                {canOfferGemini && !(deviceCan().splitFiles && isOverLimit) ? (
+                  <div
+                    data-gemini-cards
+                    className="row row--wrap"
+                    style={{ alignItems: "center", margin: "var(--space-4) var(--space-5) 0", paddingTop: "var(--space-3)", borderTop: "1px solid var(--border, rgba(128,128,128,0.25))", gap: "var(--space-3)" }}
+                  >
                           <label className="row row--compact small" style={{ alignItems: "center", gap: "var(--space-2)" }}>
                             Target cards
                             <select
@@ -1428,11 +1436,8 @@ function MaterialDetailPage() {
                             </Button>
                           ) : null}
                           {savedCardCount >= MAX_CARDS ? <span className="tiny muted">{MAX_CARDS_MESSAGE}</span> : null}
-                        </>
-                      ) : null}
-                    </div>
-                  }
-                />
+                  </div>
+                ) : null}
                 {cardsStatusLine ? (
                   <p aria-live="polite" className="small" data-cards-status style={{ padding: "var(--space-3) var(--space-5) 0" }}>{cardsStatusLine}</p>
                 ) : null}

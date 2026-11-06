@@ -239,7 +239,8 @@ export function StudySetEditor({
       }
       setOpened({ ...read, state });
       if (next.mode === "add") {
-        setFields(bookmarkSeed && !blankFields ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
+        // A title-only bookmark gives no real help: open empty, keep the page link.
+        setFields(bookmarkSeed && !blankFields && bookmarkSeed.bookmark.notes.trim() ? [bookmarkSeed.bookmark.title, bookmarkSeed.bookmark.notes] : ["", ""]);
         if (bookmarkSeed) setPage(String(bookmarkSeed.source.physicalPage));
       } else {
         const item = locate(state, next.target);
