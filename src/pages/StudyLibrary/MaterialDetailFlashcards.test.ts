@@ -270,6 +270,28 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     expect(dialog.queryByText(/Previous versions|brought back/)).toBeNull();
   });
 
+  it("R13C: a cards-only set shows Edit cards and opens the editor with its cards; a guide set shows only Edit study guide", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Cards", summary: "", sections: [],
+      flashcards: [{ front: "Q1", back: "A", sourcePage: 1 }, { front: "Q2", back: "B", sourcePage: 2 }], sourceNotes: "", model: "old" });
+    await openMaterial("mat-pdf");
+    expect(screen.queryByRole("button", { name: "Edit study guide" })).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit cards" }));
+    const editor = within(await screen.findByRole("region", { name: "Edit these cards" }));
+    expect(editor.getByText(/Q1/)).toBeTruthy();
+    expect(editor.getByText(/Q2/)).toBeTruthy();
+    expect(editor.queryByText("Summary")).toBeNull();
+    expect(editor.getAllByRole("button", { name: "Edit" }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Done editing" }));
+  });
+
+  it("R13C: a set with guide content keeps Edit study guide and no Edit cards", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Guide", summary: "A guide", sections: [],
+      flashcards: [{ front: "Q1", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
+    await openMaterial("mat-pdf");
+    expect(await screen.findByRole("button", { name: "Edit study guide" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Edit cards" })).toBeNull();
+  });
+
   it("CARDS-FIX-01: the recovery offer sits inside the Flashcards card", async () => {
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Old", summary: "Old guide", sections: [],
       flashcards: [{ front: "Lost Q", back: "Lost A", sourcePage: 1 }], sourceNotes: "", model: "old" });
