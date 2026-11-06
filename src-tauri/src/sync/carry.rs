@@ -23,13 +23,34 @@
 //!   root id wins. That tie is not order-independent if a device already holds
 //!   the higher root's copy, which needs two different ratings at the same
 //!   millisecond on matching cards. It is accepted.
-//! - Residual: an old-build path id, or a relayed copy that arrives before its
-//!   root with 3+ devices, whose intermediate copy is absent cannot be
-//!   resolved to its root (it counts as its own root), so apply's duplicate
-//!   pass cannot fold it and it can still count twice. Dropping an intermediate
-//!   path copy also degrades later resolution: a deeper old-build copy
-//!   `carried(P, D)` arriving in a later file finds no parent and is its own
-//!   root, so it double-counts only if the device already holds `carried(e, D)`.
+//! - Duplicates and the fold ledger (CARRY-3DEV): two ids can name one rating (an
+//!   old-build path id, or a copy that reached a device before its parent). Apply
+//!   folds such a foreign duplicate away after the rows land, after activation and
+//!   the carry, and after a local save, and keeps the removed row in the local
+//!   table `card_review_event_folds` (never exported, never counted) so a later
+//!   copy that names it as a parent still resolves to the original rating.
+//!   Claim: when every device runs this build, applies every other device's change
+//!   files (any order, delays and overlapping re-exports allowed) and the devices
+//!   agree on the active version, each card of the active version, in the current
+//!   generation, counts one rating per distinct original rating that reached it.
+//!   Not claimed: equal ids everywhere (a device keeps its own local copy); two
+//!   local-origin copies of one rating, or a copy with missing meta or a
+//!   non-derived/erased receipt, which stay and count twice with a warning; two
+//!   distinct ratings in the same millisecond on one card (ordered by id); a link
+//!   an older build's duplicate pass deleted without a ledger (it returns only if
+//!   an overlapping export re-delivers it); delivery that is not all-to-all; old
+//!   builds; a device where a schema-34 build already applied the creator file
+//!   after a bare claim (that file has a receipt and is never applied again, so B
+//!   is not rebuilt unless the file is sent again, and the activation claim that
+//!   build dropped is not recovered: the next activation change on any device
+//!   makes the devices agree again; clearing receipts to force a re-apply is too
+//!   risky); a device that synced a bare update under a schema-34 build (3+
+//!   devices only), which can keep an empty-version tombstone and stay on a
+//!   different active version until that card set is re-saved (recovery is
+//!   deliberately not attempted: a tombstone cannot tell a cleanup from a
+//!   reset, and guessing could resurrect a deleted version); and the time before the last link arrives. Inactive versions never
+//!   hold two counted copies of one rating once their links are present, but their
+//!   contents may differ between devices (the sync carry fills only the active one).
 //! - Local vs sync: a logged local carry skips a root with no live receipt,
 //!   sync does not (that device catches up on its next incoming event for the
 //!   set; in practice only damaged rows). The same id can carry different meta

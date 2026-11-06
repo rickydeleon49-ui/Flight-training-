@@ -20,6 +20,7 @@ use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use tauri::AppHandle;
 
+use crate::logging::log;
 use crate::practice_sessions::{canonical_json, compute_canonical_hash, db_now_iso, is_root_ready};
 use crate::storage::app_root;
 
@@ -952,7 +953,51 @@ fn carry_inner(
     // the active version; reverting to a stored list takes this path too.
     materialize(tx, material_id, &new_version, provider, now)?;
     carry_into(tx, material_id, &new_version.version_id, true)?;
+    fold_after_local_carry(tx, material_id)?;
     Ok(())
+}
+
+/// A local save's carry can mint the link that lets a foreign duplicate resolve
+/// to the rating this device already holds (CARRY-3DEV). Folds those copies and
+/// replays their items, under a guard row of its own (unlogged), inside its own
+/// `local_fold` savepoint. A failure rolls back only the fold (the carry the
+/// caller just made stays, and the next sync apply folds the copies again) and
+/// is logged, not returned.
+fn fold_after_local_carry(conn: &Connection, material_id: &str) -> Check<()> {
+    conn.execute_batch("SAVEPOINT local_fold")
+        .map_err(storage)?;
+    let run = || -> Result<(), crate::sync::apply::ApplyError> {
+        conn.execute("DELETE FROM app_metadata WHERE key = ?1", [SYNC_GUARD])?;
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES (?1, 'local-fold')",
+            [SYNC_GUARD],
+        )?;
+        let folded = crate::sync::apply::fold_material(conn, material_id)?;
+        #[cfg(test)]
+        if crate::sync::apply::fault::hit("local-fold") && !folded.is_empty() {
+            return Err(crate::sync::apply::ApplyError::BadRow);
+        }
+        let items: Vec<String> = folded.into_iter().map(|(item, _)| item).collect();
+        crate::sync::apply::replay_items(conn, &items)?;
+        conn.execute("DELETE FROM app_metadata WHERE key = ?1", [SYNC_GUARD])?;
+        Ok(())
+    };
+    match run() {
+        Ok(()) => conn.execute_batch("RELEASE local_fold").map_err(storage),
+        Err(e) => {
+            log::warn!("Local save: the duplicate-rating fold failed and was skipped: {e}");
+            conn.execute_batch("ROLLBACK TO local_fold; RELEASE local_fold")
+                .map_err(storage)?;
+            // Re-arm the one-time startup sweep: it folds every material again at
+            // the next launch. This delete commits or rolls back with the save.
+            conn.execute(
+                "DELETE FROM app_metadata WHERE key = 'card_folds_swept'",
+                [],
+            )
+            .map_err(storage)?;
+            Ok(())
+        }
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -1076,8 +1121,12 @@ fn load_versions(conn: &Connection, material: &str) -> Check<Vec<StoredVersion>>
     Ok(out)
 }
 
-/// A current-generation rating event with its durable origin.
+/// A current-generation rating event with its durable origin, or (`fold`) a
+/// row of the local fold ledger standing in for a rating event this device
+/// folded away. A fold takes part in root resolution only: it is never
+/// counted, replayed, exported or used as a source.
 struct StoredEvent {
+    fold: bool,
     id: String,
     item_id: String,
     generation: i64,
@@ -1088,6 +1137,47 @@ struct StoredEvent {
     next: String,
     device: String,
     changed_at: String,
+}
+
+/// Events of the current generation, then (CARRY-3DEV) the material's fold
+/// ledger rows of that generation, in one list. Root resolution walks all of it;
+/// everything else (sources, counts, presence) reads the `fold == false` part.
+/// A ledger id that is also a live event is ignored.
+fn load_links(conn: &Connection, material: &str, generation: i64) -> Check<Vec<StoredEvent>> {
+    let mut links = load_events(conn, material, generation)?;
+    let live: std::collections::HashSet<String> = links.iter().map(|e| e.id.clone()).collect();
+    let folds: Vec<StoredEvent> = conn
+        .prepare(
+            "SELECT f.id, f.item_id, f.generation, f.rating, f.reviewed_at,
+                    COALESCE(f.device_id, (SELECT value FROM app_metadata WHERE key = 'device_id'), ''),
+                    COALESCE(f.changed_at, f.reviewed_at)
+             FROM card_review_event_folds f
+             JOIN card_items i ON i.id = f.item_id
+             JOIN card_versions v ON v.id = i.version_id
+             WHERE v.source_material_id = ?1 AND f.generation = ?2
+             ORDER BY f.reviewed_at, f.id",
+        )
+        .map_err(storage)?
+        .query_map(params![material, generation], |r| {
+            Ok(StoredEvent {
+                fold: true,
+                id: r.get(0)?,
+                item_id: r.get(1)?,
+                generation: r.get(2)?,
+                rating: r.get(3)?,
+                reviewed_at: r.get(4)?,
+                scheduler_version: String::new(),
+                prior: String::new(),
+                next: String::new(),
+                device: r.get(5)?,
+                changed_at: r.get(6)?,
+            })
+        })
+        .map_err(storage)?
+        .collect::<Result<_, _>>()
+        .map_err(storage)?;
+    links.extend(folds.into_iter().filter(|f| !live.contains(&f.id)));
+    Ok(links)
 }
 
 fn load_events(conn: &Connection, material: &str, generation: i64) -> Check<Vec<StoredEvent>> {
@@ -1106,6 +1196,7 @@ fn load_events(conn: &Connection, material: &str, generation: i64) -> Check<Vec<
     .map_err(storage)?
     .query_map(params![material, generation], |r| {
         Ok(StoredEvent {
+            fold: false,
             id: r.get(0)?,
             item_id: r.get(1)?,
             generation: r.get(2)?,
@@ -1138,27 +1229,37 @@ fn events_by_key(events: &[StoredEvent]) -> EventsByKey<'_> {
 /// The original rating behind event `start`. Event x is a copy when some event
 /// r with the same time and rating has `carried_event_id(r.id, x.item) == x.id`;
 /// follow that to the root. A one-hop id is the same as a plain carry makes.
-/// Multi-hop ids exist only from old builds, which carried by path. The walk
-/// is bounded by the number of versions; a cycle makes `start` its own root.
+/// Multi-hop ids exist only from old builds, which carried by path. `events`
+/// holds the live events and the fold ledger (a fold can be a parent or the
+/// root). The walk is bounded by the number of links, since reverts can make a
+/// chain longer than the number of versions; a cycle makes `start` its own root.
 fn root_index(
     events: &[StoredEvent],
     by_key: &EventsByKey<'_>,
     start: usize,
     bound: usize,
 ) -> usize {
-    let mut seen = vec![start];
-    let mut current = start;
-    for _ in 0..=bound {
+    walk_root(start, bound, |current| {
         let x = &events[current];
-        let parent = by_key
+        by_key
             .get(&(x.reviewed_at.as_str(), x.rating.as_str()))
             .and_then(|candidates| {
                 candidates
                     .iter()
                     .copied()
                     .find(|&r| r != current && carried_event_id(&events[r].id, &x.item_id) == x.id)
-            });
-        match parent {
+            })
+    })
+}
+
+/// The bounded walk behind `root_index`, with the parent lookup as a closure so
+/// a real cycle can be tested (a cycle cannot be written as hash ids). A cycle
+/// or a walk past `bound` returns `start`.
+fn walk_root(start: usize, bound: usize, parent: impl Fn(usize) -> Option<usize>) -> usize {
+    let mut seen = vec![start];
+    let mut current = start;
+    for _ in 0..=bound {
+        match parent(current) {
             None => return current,
             Some(p) if seen.contains(&p) => return start,
             Some(p) => {
@@ -1218,11 +1319,12 @@ impl<'a> RootResolver<'a> {
 #[cfg(test)]
 pub(crate) fn root_event_id(conn: &Connection, material: &str, event_id: &str) -> Check<String> {
     let generation = read_generation_conn(conn, material)?;
-    let events = load_events(conn, material, generation)?;
-    let versions = load_versions(conn, material)?.len();
+    let events = load_links(conn, material, generation)?;
     let by_key = events_by_key(&events);
     Ok(match events.iter().position(|e| e.id == event_id) {
-        Some(i) => events[root_index(&events, &by_key, i, versions)].id.clone(),
+        Some(i) => events[root_index(&events, &by_key, i, events.len())]
+            .id
+            .clone(),
         None => event_id.to_string(),
     })
 }
@@ -1235,64 +1337,147 @@ pub(crate) fn version_is_verified(conn: &Connection, material: &str, version_id:
         .unwrap_or(false)
 }
 
-/// Which of `candidates` (event ids just inserted by a sync apply) are
-/// duplicate copies of a rating the item already holds: another event on the
-/// same item with the same generation, time and rating whose root (all rows now
-/// present) is the same. Of two candidates the canonical id stays, then the lowest; a candidate
-/// is never kept over a non-candidate. A root that cannot be resolved is its
-/// own root, so such a row is never reported. Sorted ids, current generation.
-pub(crate) fn duplicate_copies(
-    conn: &Connection,
-    material: &str,
-    candidates: &[String],
-) -> Check<Vec<String>> {
-    let generation = read_generation_conn(conn, material)?;
-    let events = load_events(conn, material, generation)?;
-    // Only the count is needed for the walk bound: no re-hash of every card.
-    let versions: usize = conn
+/// One duplicate copy of a rating that `fold_material` removes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FoldRow {
+    pub id: String,
+    pub item_id: String,
+    /// The copy of the same rating that stays on the item.
+    pub keeper: String,
+}
+
+/// Whether the event row `id` was made on this device: its sync meta is
+/// missing, names this device, or the id has a `local_changes` row (which a
+/// restore onto a new device id never prunes). Anything else is foreign.
+fn event_is_local(conn: &Connection, id: &str) -> Check<bool> {
+    let meta: Option<(Option<String>, Option<String>)> = conn
         .query_row(
-            "SELECT COUNT(*) FROM card_versions WHERE source_material_id = ?1",
-            [material],
-            |r| r.get::<_, i64>(0),
+            "SELECT m.device_id, (SELECT value FROM app_metadata WHERE key = 'device_id')
+             FROM sync_row_meta m WHERE m.table_name = 'card_review_events' AND m.row_id = ?1",
+            [id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
         )
-        .map_err(storage)? as usize;
-    let by_key = events_by_key(&events);
-    let mut resolver = RootResolver::new(&events, &by_key, versions);
-    let wanted: std::collections::BTreeSet<&str> = candidates.iter().map(String::as_str).collect();
-    // Of two copies the canonical id (the root itself or carried(root, item))
-    // stays, then the lowest id: a device that already holds the root copy keeps it.
-    let rank_of = |i: usize, resolver: &mut RootResolver<'_>| {
-        let root = resolver.root(i);
-        let canonical = events[i].id == events[root].id
-            || events[i].id == carried_event_id(&events[root].id, &events[i].item_id);
-        (!canonical, events[i].id.clone())
-    };
-    let mut ordered: Vec<usize> = (0..events.len())
-        .filter(|&i| wanted.contains(events[i].id.as_str()))
-        .collect();
-    ordered.sort_by_key(|&i| rank_of(i, &mut resolver));
-    let mut dropped: std::collections::BTreeSet<usize> = std::collections::BTreeSet::new();
-    for &c in &ordered {
-        let key = (events[c].reviewed_at.as_str(), events[c].rating.as_str());
-        let Some(group) = by_key.get(&key) else {
-            continue;
-        };
-        let root = resolver.root(c);
-        let mine = rank_of(c, &mut resolver);
-        let beaten = group.iter().copied().any(|o| {
-            o != c
-                && !dropped.contains(&o)
-                && events[o].item_id == events[c].item_id
-                && resolver.root(o) == root
-                && (!wanted.contains(events[o].id.as_str()) || rank_of(o, &mut resolver) < mine)
-        });
-        if beaten {
-            dropped.insert(c);
+        .optional()
+        .map_err(storage)?;
+    let foreign = matches!(&meta, Some((Some(device), own)) if Some(device) != own.as_ref());
+    if !foreign {
+        return Ok(true);
+    }
+    conn.query_row(
+        "SELECT 1 FROM local_changes WHERE table_name = 'card_review_events' AND row_id = ?1 LIMIT 1",
+        [id],
+        |_| Ok(()),
+    )
+    .optional()
+    .map_err(storage)
+    .map(|r| r.is_some())
+}
+
+/// Whether the rating `id` has no receipt, or only the derived one that
+/// `ensure_rate_receipts` writes for a synced rating. Anything else (an erased
+/// or hand-made receipt) is a record this device must keep.
+fn receipt_is_absent_or_derived(conn: &Connection, id: &str) -> Check<bool> {
+    let receipt: Option<(String, i64, String)> = conn
+        .query_row(
+            "SELECT request_hash, is_erased, action FROM card_review_operations WHERE operation_id = ?1",
+            [id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()
+        .map_err(storage)?;
+    Ok(match receipt {
+        None => true,
+        Some((hash, erased, action)) => erased == 0 && action == "rate" && hash == sha256_hex(id),
+    })
+}
+
+/// The duplicate copies of one rating that `material` holds (read-only).
+///
+/// A class is one item plus one root rating (`root_index` over events and the
+/// fold ledger); different roots never share a class, so two distinct ratings
+/// at one millisecond are both kept. Inside a class one copy is the keeper by
+/// a total order: local origin, then the canonical id (the root itself or
+/// `carried(root, item)`), then the lowest id. Every other copy is folded when
+/// it is foreign (made on another device) and its receipt is absent or
+/// derived. A copy that is local, has no meta, or has any other receipt is
+/// kept and logged: new builds cannot make these.
+/// Looks at all current-generation rows of the material, active version or not.
+pub(crate) fn fold_plan(conn: &Connection, material: &str) -> Check<Vec<FoldRow>> {
+    let generation = read_generation_conn(conn, material)?;
+    // Cheap exit: only an (item, time, rating) group of two or more can fold.
+    let any = conn
+        .query_row(
+            "SELECT 1 FROM card_review_events e
+             JOIN card_items i ON i.id = e.item_id
+             JOIN card_versions v ON v.id = i.version_id
+             WHERE v.source_material_id = ?1 AND e.generation = ?2
+             GROUP BY e.item_id, e.reviewed_at, e.rating HAVING COUNT(*) > 1 LIMIT 1",
+            params![material, generation],
+            |_| Ok(()),
+        )
+        .optional()
+        .map_err(storage)?;
+    if any.is_none() {
+        return Ok(Vec::new());
+    }
+    let links = load_links(conn, material, generation)?;
+    let by_key = events_by_key(&links);
+    let mut resolver = RootResolver::new(&links, &by_key, links.len());
+    let mut groups: std::collections::BTreeMap<(&str, &str, &str), Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for (i, e) in links.iter().enumerate().filter(|(_, e)| !e.fold) {
+        groups
+            .entry((
+                e.item_id.as_str(),
+                e.reviewed_at.as_str(),
+                e.rating.as_str(),
+            ))
+            .or_default()
+            .push(i);
+    }
+    let mut out = Vec::new();
+    for members in groups.values().filter(|m| m.len() > 1) {
+        let mut classes: std::collections::BTreeMap<usize, Vec<usize>> =
+            std::collections::BTreeMap::new();
+        for &i in members {
+            classes.entry(resolver.root(i)).or_default().push(i);
+        }
+        for (root, class) in classes {
+            if class.len() < 2 {
+                continue;
+            }
+            let mut ranked: Vec<((bool, bool, &str), usize)> = Vec::new();
+            for &i in &class {
+                let e = &links[i];
+                let canonical =
+                    e.id == links[root].id || e.id == carried_event_id(&links[root].id, &e.item_id);
+                ranked.push((
+                    (!event_is_local(conn, &e.id)?, !canonical, e.id.as_str()),
+                    i,
+                ));
+            }
+            ranked.sort();
+            let keeper = &links[ranked[0].1];
+            for (_, i) in &ranked[1..] {
+                let e = &links[*i];
+                let foldable =
+                    !event_is_local(conn, &e.id)? && receipt_is_absent_or_derived(conn, &e.id)?;
+                if foldable {
+                    out.push(FoldRow {
+                        id: e.id.clone(),
+                        item_id: e.item_id.clone(),
+                        keeper: keeper.id.clone(),
+                    });
+                } else {
+                    log::warn!(
+                        "Card ratings: a duplicate copy of one rating was kept (it is local or has its own receipt)."
+                    );
+                }
+            }
         }
     }
-    let mut ids: Vec<String> = dropped.into_iter().map(|i| events[i].id.clone()).collect();
-    ids.sort();
-    Ok(ids)
+    out.sort_by(|a, b| a.id.cmp(&b.id));
+    Ok(out)
 }
 
 fn read_generation_conn(conn: &Connection, material: &str) -> Check<i64> {
@@ -1405,13 +1590,20 @@ pub(crate) fn carry_into(
         return Ok(Vec::new());
     }
 
-    let events = load_events(conn, material, generation)?;
+    // `events` is every link: live events and the fold ledger. Roots resolve over
+    // all of it; sources, presence and counts below use the live part only.
+    let events = load_links(conn, material, generation)?;
     let by_key = events_by_key(&events);
     let mut by_item: std::collections::HashMap<&str, Vec<usize>> = std::collections::HashMap::new();
-    for (i, e) in events.iter().enumerate() {
+    for (i, e) in events.iter().enumerate().filter(|(_, e)| !e.fold) {
         by_item.entry(e.item_id.as_str()).or_default().push(i);
     }
-    let mut resolver = RootResolver::new(&events, &by_key, versions.len());
+    let fold_ids: std::collections::HashSet<&str> = events
+        .iter()
+        .filter(|e| e.fold)
+        .map(|e| e.id.as_str())
+        .collect();
+    let mut resolver = RootResolver::new(&events, &by_key, events.len());
     // Live rate receipts: (generation, applied_at, result_json) by operation id.
     let mut receipts: std::collections::HashMap<String, (i64, String, String)> =
         std::collections::HashMap::new();
@@ -1465,8 +1657,9 @@ pub(crate) fn carry_into(
                     .collect()
             })
             .unwrap_or_default();
-        // (time, rating) -> root id -> (root index, source event index, source version)
-        type Group<'a> = std::collections::BTreeMap<&'a str, (usize, usize, usize)>;
+        // (time, rating) -> root id -> (root index, every matched source copy as
+        // (source event index, source version) in source order)
+        type Group<'a> = std::collections::BTreeMap<&'a str, (usize, Vec<(usize, usize)>)>;
         let mut groups: std::collections::BTreeMap<(&str, &str), Group<'_>> =
             std::collections::BTreeMap::new();
         for &(si, src_item) in &matched {
@@ -1476,7 +1669,9 @@ pub(crate) fn carry_into(
                     .entry((events[ei].reviewed_at.as_str(), events[ei].rating.as_str()))
                     .or_default()
                     .entry(events[root].id.as_str())
-                    .or_insert((root, ei, si));
+                    .or_insert_with(|| (root, Vec::new()))
+                    .1
+                    .push((ei, si));
             }
         }
         let mut gain = Gain {
@@ -1490,14 +1685,46 @@ pub(crate) fn carry_into(
             if present.contains(key) {
                 continue;
             }
-            let chosen = group
-                .values()
-                .find(|(root, _, _)| !logged || receipts.contains_key(&events[*root].id));
-            let Some(&(root, ei, si)) = chosen else {
+            // The receipt AND the source fields come from the same candidate. A
+            // logged carry needs a live receipt: the root's own (when the root is
+            // a live event), else a matched copy's, lowest id first. The first
+            // root (lowest id) with a candidate carries. A fold can be the root.
+            let chosen = group.values().find_map(|(root, copies)| {
+                let (first_ei, first_si) = *copies.first()?;
+                if !logged {
+                    return Some((*root, first_ei, first_si, first_ei));
+                }
+                let root_ev = &events[*root];
+                // The root's receipt is used only when the version holding the
+                // root's own item is a verified source: the receipt, the source
+                // version and the id then come from one copy. Otherwise fall
+                // through to the copy rule below.
+                if !root_ev.fold && receipts.contains_key(&root_ev.id) {
+                    let root_version = versions
+                        .iter()
+                        .find(|v| v.item_ids.contains(&root_ev.item_id));
+                    let root_si = root_version
+                        .and_then(|rv| sources.iter().position(|s| s.version_id == rv.version_id));
+                    if let Some(root_si) = root_si {
+                        return Some((*root, *root, root_si, first_ei));
+                    }
+                }
+                let mut by_id: Vec<&(usize, usize)> = copies
+                    .iter()
+                    .filter(|(ei, _)| receipts.contains_key(&events[*ei].id))
+                    .collect();
+                by_id.sort_by(|a, b| events[a.0].id.cmp(&events[b.0].id));
+                by_id.first().map(|&&(ei, si)| (*root, ei, si, ei))
+            });
+            let Some((root, ei, si, first_ei)) = chosen else {
                 continue;
             };
             let (root_ev, src_ev) = (&events[root], &events[ei]);
             let carried = carried_event_id(&root_ev.id, dst_item);
+            if fold_ids.contains(carried.as_str()) {
+                // Defensive: this device folded that copy away on purpose.
+                continue;
+            }
             let inserted = conn
                 .execute(
                     "INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
@@ -1518,7 +1745,7 @@ pub(crate) fn carry_into(
                 continue;
             }
             if logged {
-                let (op_generation, applied_at, result) = &receipts[&root_ev.id];
+                let (op_generation, applied_at, result) = &receipts[&src_ev.id];
                 let Ok(mut result) = serde_json::from_str::<Value>(result) else {
                     return Err(CardReviewErrorCode::InvalidState);
                 };
@@ -1545,7 +1772,7 @@ pub(crate) fn carry_into(
                 )
                 .map_err(storage)?;
             }
-            gain.sources.insert(events[ei].item_id.clone());
+            gain.sources.insert(events[first_ei].item_id.clone());
             gain.added += 1;
             contributing.insert(si);
         }
@@ -1963,6 +2190,18 @@ fn apply_reset(
     };
     tx.execute(
         "DELETE FROM card_review_events WHERE item_id IN (
+           SELECT i.id FROM card_items i JOIN card_versions v ON v.id = i.version_id WHERE v.source_material_id = ?1)",
+        [material_id],
+    )
+    .map_err(storage)?;
+    tx.execute(
+        "UPDATE card_version_pending_claims SET first_reviewed_at = NULL WHERE source_material_id = ?1",
+        [material_id],
+    )
+    .map_err(storage)?;
+    // The local fold ledger belongs to the generation that is being dropped.
+    tx.execute(
+        "DELETE FROM card_review_event_folds WHERE item_id IN (
            SELECT i.id FROM card_items i JOIN card_versions v ON v.id = i.version_id WHERE v.source_material_id = ?1)",
         [material_id],
     )

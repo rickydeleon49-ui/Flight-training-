@@ -711,6 +711,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 32 {
         verify_schema_32_oral_answers(connection)?;
     }
+    if newest_migration >= 35 {
+        verify_schema_35_fold_semantics(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -905,6 +908,127 @@ pub(crate) fn verify_schema_32_oral_answers(connection: &Connection) -> Result<(
         return Err("Damaged oral answers schema.".into());
     }
     crate::oral_scenarios::validate_answers(connection)
+}
+
+/// CARRY-3DEV: the local fold ledger `card_review_event_folds`, exactly as
+/// migrated, then its row rules. A fold is never counted, so it has no receipt
+/// rule. It is gated on schema 35 (not part of `CARD_TABLES`, which a
+/// schema-34 backup must still pass).
+pub(crate) fn verify_schema_35_fold_semantics(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let table = "card_review_event_folds";
+    let present = card_count(
+        connection,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+        &[&table],
+    )?;
+    if present != 1 {
+        return Err(format!("The database is missing required table: {table}"));
+    }
+    if m3_columns(connection, table)? != m3_columns(&reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+        || check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(&reference, table)?)
+    {
+        return Err("Damaged card fold ledger schema.".into());
+    }
+    let mut statement = connection
+        .prepare(
+            "SELECT f.id, f.reviewed_at, f.rating, f.generation,
+                    (SELECT COUNT(*) FROM card_items i WHERE i.id = f.item_id),
+                    COALESCE((SELECT g.generation FROM card_review_generations g
+                              WHERE g.source_material_id = v.source_material_id), 0),
+                    0
+             FROM card_review_event_folds f
+             LEFT JOIN card_items it ON it.id = f.item_id
+             LEFT JOIN card_versions v ON v.id = it.version_id",
+        )
+        .map_err(|e| format!("Could not read the card fold ledger: {e}"))?;
+    let rows = statement
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, i64>(3)?,
+                r.get::<_, i64>(4)?,
+                r.get::<_, i64>(5)?,
+                r.get::<_, i64>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Could not read the card fold ledger: {e}"))?;
+    for row in rows {
+        // A fold id that is also a live event is not refused: the runtime
+        // (`load_links`) ignores such a row, the live event always wins, and
+        // nothing is counted from a fold, so it can hide no data. The startup
+        // sweep deletes it.
+        let (id, reviewed_at, rating, generation, item_rows, current, _) =
+            row.map_err(|e| format!("Could not read the card fold ledger: {e}"))?;
+        let owner = format!("Card fold {id}");
+        if !is_valid_uuid_v4(&id) || id.bytes().any(|b| b.is_ascii_uppercase()) {
+            return Err(format!("{owner} has an invalid id."));
+        }
+        card_timestamp(&reviewed_at, &owner)?;
+        if !["again", "hard", "good", "easy"].contains(&rating.as_str()) {
+            return Err(format!("{owner} has an unknown rating."));
+        }
+        if item_rows != 1 {
+            return Err(format!("{owner} names a card that does not exist."));
+        }
+        if generation > current {
+            return Err(format!("{owner} is from a future generation."));
+        }
+    }
+    verify_pending_claims(connection, &reference)
+}
+
+/// CARRY-3DEV: `card_version_pending_claims` (device-local sync state, carried
+/// with the backup like `sync_applied`/`sync_row_meta`): shape, then row rules.
+fn verify_pending_claims(connection: &Connection, reference: &Connection) -> Result<(), String> {
+    let table = "card_version_pending_claims";
+    let present = card_count(
+        connection,
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+        &[&table],
+    )?;
+    if present != 1 {
+        return Err(format!("The database is missing required table: {table}"));
+    }
+    if m3_columns(connection, table)? != m3_columns(reference, table)?
+        || foreign_key_shapes(connection, table)? != foreign_key_shapes(reference, table)?
+        || check_constraints(&table_sql(connection, table)?)
+            != check_constraints(&table_sql(reference, table)?)
+    {
+        return Err("Damaged pending card version claims schema.".into());
+    }
+    let mut statement = connection
+        .prepare(
+            "SELECT id, changed_at, device_id, first_reviewed_at FROM card_version_pending_claims",
+        )
+        .map_err(|e| format!("Could not read the pending claims: {e}"))?;
+    let rows = statement
+        .query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, Option<String>>(3)?,
+            ))
+        })
+        .map_err(|e| format!("Could not read the pending claims: {e}"))?;
+    for row in rows {
+        let (id, changed_at, device, first) =
+            row.map_err(|e| format!("Could not read the pending claims: {e}"))?;
+        let owner = format!("Pending claim {id}");
+        if id.is_empty() || device.is_empty() {
+            return Err(format!("{owner} is incomplete."));
+        }
+        card_timestamp(&changed_at, &owner)?;
+        if let Some(first) = first {
+            card_timestamp(&first, &owner)?;
+        }
+    }
+    Ok(())
 }
 
 pub(crate) fn verify_schema_27_faa_references(connection: &Connection) -> Result<(), String> {
@@ -18184,6 +18308,118 @@ mod faa_downloads_schema_tests {
             .unwrap();
         assert_eq!(
             m3_count(&restored, "SELECT COUNT(*) FROM faa_downloads", &[]).unwrap(),
+            0
+        );
+    }
+}
+
+#[cfg(test)]
+mod card_fold_schema_tests {
+    use super::*;
+    use rusqlite::params;
+
+    const FOLD: &str = "11111111-1111-4111-8111-111111111111";
+
+    /// A reference schema with one material, version and card (`i1`).
+    fn base() -> Connection {
+        let c = get_reference_schema_connection().unwrap();
+        c.execute_batch(
+            "PRAGMA foreign_keys=ON;
+             INSERT INTO study_materials (id,title,created_at,updated_at) VALUES ('m','T','2026-11-05T10:00:00.000Z','2026-11-05T10:00:00.000Z');
+             INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active)
+               VALUES ('v1','m','h',1,'import','2026-11-05T10:00:00.000Z',1);
+             INSERT INTO card_items (id,version_id,ordinal,front,back) VALUES ('i1','v1',0,'f','b');",
+        )
+        .unwrap();
+        c
+    }
+
+    fn fold(c: &Connection, id: &str, at: &str, generation: i64) {
+        c.execute(
+            "INSERT INTO card_review_event_folds (id,item_id,generation,rating,reviewed_at,device_id,changed_at,folded_at)
+             VALUES (?1,'i1',?3,'good',?2,NULL,NULL,'2026-11-05T10:00:00.000Z')",
+            params![id, at, generation],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn schema_35_accepts_a_sound_ledger_and_refuses_each_damaged_row() {
+        let c = base();
+        verify_schema_35_fold_semantics(&c).unwrap();
+        fold(&c, FOLD, "2026-11-05T10:00:00.000Z", 0);
+        verify_schema_35_fold_semantics(&c).unwrap();
+
+        // Not a lower-case UUIDv4 id (fold id, case and shape).
+        for bad in ["not-a-uuid", "AAAAAAAA-1111-4111-8111-111111111111"] {
+            let c = base();
+            fold(&c, bad, "2026-11-05T10:00:00.000Z", 0);
+            assert!(verify_schema_35_fold_semantics(&c).is_err(), "{bad}");
+        }
+        // A timestamp that is not the 24-character form.
+        let c = base();
+        fold(&c, FOLD, "yesterday", 0);
+        assert!(verify_schema_35_fold_semantics(&c).is_err());
+        // A fold from a generation the material has not reached.
+        let c = base();
+        fold(&c, FOLD, "2026-11-05T10:00:00.000Z", 1);
+        assert!(verify_schema_35_fold_semantics(&c).is_err());
+        c.execute(
+            "INSERT INTO card_review_generations (source_material_id, generation) VALUES ('m', 1)",
+            [],
+        )
+        .unwrap();
+        verify_schema_35_fold_semantics(&c).unwrap();
+        // A fold id that is also a live rating event is accepted (the runtime ignores it).
+        let c = base();
+        fold(&c, FOLD, "2026-11-05T10:00:00.000Z", 0);
+        c.execute(
+            "INSERT INTO card_review_events (id,item_id,generation,rating,reviewed_at,scheduler_version,prior_state_json,next_state_json)
+             VALUES (?1,'i1',0,'good','2026-11-05T10:00:00.000Z','simple-v1','null','{}')",
+            [FOLD],
+        )
+        .unwrap();
+        verify_schema_35_fold_semantics(&c).unwrap();
+        // A fold whose card is missing (foreign keys off, as a damaged copy would be).
+        let c = base();
+        c.execute_batch("PRAGMA foreign_keys=OFF").unwrap();
+        c.execute(
+            "INSERT INTO card_review_event_folds (id,item_id,generation,rating,reviewed_at,device_id,changed_at,folded_at)
+             VALUES (?1,'gone',0,'good','2026-11-05T10:00:00.000Z',NULL,NULL,'2026-11-05T10:00:00.000Z')",
+            [FOLD],
+        )
+        .unwrap();
+        assert!(verify_schema_35_fold_semantics(&c).is_err());
+        // The table itself damaged or missing.
+        let c = base();
+        c.execute_batch("DROP TABLE card_review_event_folds")
+            .unwrap();
+        assert!(verify_schema_35_fold_semantics(&c).is_err());
+        let c = base();
+        c.execute_batch(
+            "DROP TABLE card_review_event_folds;
+             CREATE TABLE card_review_event_folds (id TEXT PRIMARY KEY, item_id TEXT NOT NULL);",
+        )
+        .unwrap();
+        assert!(verify_schema_35_fold_semantics(&c).is_err());
+    }
+
+    #[test]
+    fn deleting_a_card_or_its_version_cascades_its_folds() {
+        let c = base();
+        fold(&c, FOLD, "2026-11-05T10:00:00.000Z", 0);
+        c.execute("DELETE FROM card_items WHERE id = 'i1'", [])
+            .unwrap();
+        assert_eq!(
+            m3_count(&c, "SELECT COUNT(*) FROM card_review_event_folds", &[]).unwrap(),
+            0
+        );
+        let c = base();
+        fold(&c, FOLD, "2026-11-05T10:00:00.000Z", 0);
+        c.execute("DELETE FROM card_versions WHERE id = 'v1'", [])
+            .unwrap();
+        assert_eq!(
+            m3_count(&c, "SELECT COUNT(*) FROM card_review_event_folds", &[]).unwrap(),
             0
         );
     }

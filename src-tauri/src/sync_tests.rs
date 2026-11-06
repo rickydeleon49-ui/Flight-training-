@@ -9496,12 +9496,12 @@ mod edit_carry {
         backup_ok(&a, "s12b");
     }
 
-    /// Residual, pinned (old-build, or a relayed copy that arrives before its
-    /// root with 3+ devices): the path copy arrives one file BEFORE its intermediate.
-    /// It cannot be resolved then, so it stays its own root; the later
-    /// intermediate does not remove it (only rows inserted by an apply go).
+    /// The path copy arrives one file BEFORE its intermediate (was the pinned
+    /// residual, 2 events). It cannot be resolved then, so it stays beside the root
+    /// copy; when the intermediate arrives the late fold resolves it to the same
+    /// root and folds it, so the card counts once (CARRY-3DEV).
     #[test]
-    fn s12_a_path_copy_before_its_intermediate_is_the_documented_residual() {
+    fn s12_a_path_copy_before_its_intermediate_is_folded_when_it_arrives() {
         let (mut a, mut b, e, b0, c0, seq) = s12_scene();
         let via_b = d(&e, &b0.item);
         let via_path = d(&via_b, &c0.item);
@@ -9511,11 +9511,1452 @@ mod edit_carry {
         old_copy(&b, &e, &via_b, &b0.item);
         let late = ship(&mut b, PHONE, seq2);
         take(&mut a, &early);
+        assert_eq!(
+            events(&a, &c0.item).len(),
+            2,
+            "unresolved until its parent arrives"
+        );
         take(&mut a, &late);
         let have = events(&a, &c0.item);
-        assert!(have.contains(&d(&e, &c0.item)));
-        // Pinned: the unresolvable early copy stays beside the root copy.
-        assert_eq!(have.len(), 2);
+        assert_eq!(have, vec![d(&e, &c0.item)]);
+        assert_eq!(have.len(), 1);
+        assert_eq!(state(&a, &c0.item).unwrap().1, 1);
         verified(&a);
+        backup_ok(&a, "s12-late");
+    }
+
+    // ---- carry-3dev: a path copy that arrives before its root (3 devices) ----
+
+    const PC: &str = "cccc-pc";
+    /// The fourth device (a second PC): a valid device id, see `valid_device_id`.
+    const WIN: &str = "dddd-win";
+    const U: (&str, &str) = ("Unrelated front", "Unrelated back");
+
+    fn nap() {
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+
+    /// Z = Mac (rates), X = phone (edits A->B), Y = PC (reverts B->A).
+    /// `edit` is the list X saves; `third` is a list Z saves after the rating.
+    /// Returns (z, x, y, z2-shipped files...) as the Z2/X1/Y1 files plus a1, e.
+    struct Three {
+        z1: crate::sync::changeset::EncodedChangeFile,
+        z: Connection,
+        x: Connection,
+        y: Connection,
+        x1: crate::sync::changeset::EncodedChangeFile,
+        y1: crate::sync::changeset::EncodedChangeFile,
+        z2: crate::sync::changeset::EncodedChangeFile,
+        a1: Card,
+        e: String,
+    }
+
+    fn s13_scene(a_list: L, edit: L) -> Three {
+        s13_scene_op(a_list, edit, 1)
+    }
+
+    /// `op` numbers Z's rating, so it fixes the rating's id `e` (and with it
+    /// the hash-derived ids that decide the lowest-root ties).
+    ///
+    /// Export bounds: Z1 = Z from 0 (the list A only), Z2 = Z since Z1 (the
+    /// rating), X1 = X from 0 (Z1, Z2 taken, then the edit A->B and its carry),
+    /// Y1 = Y from 0 (Z1 and X1 taken, then the revert B->A: Y holds Bc but not
+    /// e, so it mints the path id P). Activation order: Z active A throughout;
+    /// X A then B; Y B then A (the newest claim).
+    fn s13_scene_op(a_list: L, edit: L, op: u64) -> Three {
+        s13_scene_gen(a_list, edit, op, false)
+    }
+
+    /// `reset`: Z resets the material right after growing the list, so the whole
+    /// run happens in generation 1 (Z1 carries the new generation).
+    fn s13_scene_gen(a_list: L, edit: L, op: u64, reset: bool) -> Three {
+        let mut z = super::apply::device(MAC);
+        let mut x = super::apply::device(PHONE);
+        let mut y = super::apply::device(PC);
+        let a1 = at(a_list, 0);
+        for c in [&z, &x, &y] {
+            super::apply::card(c, MAT);
+            with_history(c);
+        }
+        append(&mut z, MAT, a_list);
+        if reset {
+            act(&mut z, &a1, "reset", json!({}), 900);
+        }
+        let z1 = ship(&mut z, MAC, 0);
+        take(&mut x, &z1);
+        take(&mut y, &z1);
+        let since = seq_of(&z);
+        rate(&mut z, &a1, "good", op);
+        let e = events(&z, &a1.item)[0].clone();
+        let z2 = ship(&mut z, MAC, since);
+        take(&mut x, &z2);
+        nap();
+        append(&mut x, MAT, edit);
+        let x1 = ship(&mut x, PHONE, 0);
+        take(&mut y, &x1);
+        nap();
+        append(&mut y, MAT, a_list);
+        let y1 = ship(&mut y, PC, 0);
+        Three {
+            z1,
+            z,
+            x,
+            y,
+            x1,
+            y1,
+            z2,
+            a1,
+            e,
+        }
+    }
+
+    fn all_three_hold_one(t: &mut Three, tag: &str) {
+        // Full exchange until quiet.
+        for _ in 0..2 {
+            let (fx, fy, fz) = (
+                ship(&mut t.x, PHONE, 0),
+                ship(&mut t.y, PC, 0),
+                ship(&mut t.z, MAC, 0),
+            );
+            for (c, files) in [
+                (&mut t.z, [&fx, &fy]),
+                (&mut t.x, [&fz, &fy]),
+                (&mut t.y, [&fz, &fx]),
+            ] {
+                for f in files {
+                    take(c, f);
+                }
+            }
+        }
+        for (n, c) in [&t.z, &t.x, &t.y].into_iter().enumerate() {
+            assert_eq!(events(c, &t.a1.item).len(), 1, "device {n} {tag}");
+            assert_eq!(state(c, &t.a1.item).unwrap().1, 1, "device {n} {tag}");
+            verified(c);
+        }
+    }
+
+    fn s13_check_z(z: &Connection, a1: &Card, tag: &str) {
+        assert_eq!(events(z, &a1.item).len(), 1, "events {tag}");
+        assert_eq!(state(z, &a1.item).unwrap().1, 1, "reps {tag}");
+        verified(z);
+        backup_ok(z, tag);
+    }
+
+    /// S13a (RED before the fold). Export bounds: Y1, X1 and Z2 are from the scene
+    /// (see `s13_scene_op`). Order on Z: Y1 (e and the path copy P on a1), then X1
+    /// (Bc, so P resolves to e). Activation: A stays active throughout (Y's claim
+    /// is the newest).
+    #[test]
+    fn s13a_a_path_copy_arriving_before_its_root_is_folded() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        s13_check_z(&t.z, &t.a1, "s13a");
+        all_three_hold_one(&mut t, "s13a");
+    }
+
+    /// S13b (GUARD). Same files as S13a, other order on Z: X1 (Bc), then Y1 (P is
+    /// inserted already resolvable and folded in the same apply). Activation: A.
+    #[test]
+    fn s13b_guard_the_root_before_the_path_copy_counts_once() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.x1);
+        take(&mut t.z, &t.y1);
+        s13_check_z(&t.z, &t.a1, "s13b");
+        all_three_hold_one(&mut t, "s13b");
+    }
+
+    /// Audit's shape: Z also saves D before Y's path id arrives. Export bounds as
+    /// S13a; Z's own save of D = [F, T] is a local change that is never shipped
+    /// here. Order on Z: D saved, Y1, X1. Activation: D (Z's newest claim).
+    #[test]
+    fn s13c_an_identical_edit_variant_is_folded() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        nap();
+        append(&mut t.z, MAT, &[F, T]);
+        let d1 = at(&[F, T], 0);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        assert_eq!(events(&t.z, &d1.item).len(), 1, "D events");
+        s13_check_z(&t.z, &t.a1, "s13c");
+        let _ = &t.e;
+    }
+
+    /// S13d (rewritten for the fold ledger). Y keeps its own path copy P; the
+    /// foreign e it takes from Z2 is folded, and the ledger keeps e as the root of
+    /// both Bc (X's carry) and P. Export bounds: Z2 is Z since Z1.
+    #[test]
+    fn s13d_the_path_copy_stays_on_its_own_device() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let before = events(&t.y, &t.a1.item);
+        assert_eq!(before.len(), 1);
+        assert_ne!(before[0], t.e, "Y minted a path id");
+        take(&mut t.y, &t.z2);
+        assert_eq!(events(&t.y, &t.a1.item), before);
+        assert_eq!(state(&t.y, &t.a1.item).unwrap().1, 1);
+        assert!(!events(&t.y, &t.a1.item).contains(&t.e));
+        assert_eq!(fold_ids(&t.y), vec![t.e.clone()], "e is a fold on Y");
+        let bc = d(&t.e, &at(&[F, EDITED], 0).item);
+        let root = |id: &str| crate::card_reviews::root_event_id(&t.y, MAT, id).unwrap();
+        assert_eq!(root(&bc), t.e);
+        assert_eq!(root(&before[0]), t.e);
+        verified(&t.y);
+        backup_ok(&t.y, "s13d");
+    }
+
+    /// S13e (keep): the SAME file again (identical name), so this tests the
+    /// `sync_applied` receipt only; S13e2 covers a re-export with a new name.
+    /// Export bounds as S13a. Activation: A.
+    #[test]
+    fn s13e_retaking_the_path_copy_after_the_fold_changes_nothing() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        let held = (
+            dump(&t.z),
+            count(&t.z, "SELECT COUNT(*) FROM local_changes"),
+        );
+        take(&mut t.z, &t.y1);
+        assert_eq!(
+            (
+                dump(&t.z),
+                count(&t.z, "SELECT COUNT(*) FROM local_changes")
+            ),
+            held
+        );
+        assert_eq!(
+            count(&t.z, "SELECT COUNT(*) FROM local_changes WHERE table_name = 'card_review_events' AND op = 'delete'"),
+            0
+        );
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1, "s13e events");
+    }
+
+    /* ---- carry-3dev: helpers for the fold-ledger scenarios ---- */
+
+    fn fold_ids(conn: &Connection) -> Vec<String> {
+        conn.prepare("SELECT id FROM card_review_event_folds ORDER BY id")
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    }
+
+    /// Full exchange until quiet: every device ships all it has (since 0) and the
+    /// others take it, three rounds.
+    fn quiet(devs: &mut [(&str, &mut Connection)]) {
+        for _ in 0..3 {
+            let files: Vec<_> = devs.iter_mut().map(|(n, c)| ship(c, n, 0)).collect();
+            for (i, (_, c)) in devs.iter_mut().enumerate() {
+                for (j, f) in files.iter().enumerate() {
+                    if i != j {
+                        take(c, f);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Incremental rounds: each device ships only what it logged since its last
+    /// export (`since`), the others take it. Three rounds from `since`, then one
+    /// more that must write nothing on any device (quiescence).
+    fn quiet_incremental(devs: &mut [(&str, &mut Connection)]) {
+        let mut since: Vec<i64> = devs.iter().map(|_| 0).collect();
+        let mut round = |devs: &mut [(&str, &mut Connection)], last: bool| {
+            let files: Vec<_> = devs
+                .iter_mut()
+                .enumerate()
+                .map(|(i, (n, c))| {
+                    // `None`: the device logged nothing new, so it ships nothing.
+                    let f =
+                        crate::sync::export::export_changes_in(c, n, since[i], "0.0.0-test", NOW)
+                            .unwrap()
+                            .map(|e| e.file);
+                    since[i] = seq_of(c);
+                    f
+                })
+                .collect();
+            for (i, (n, c)) in devs.iter_mut().enumerate() {
+                for (j, f) in files.iter().enumerate() {
+                    if let (true, Some(f)) = (i != j, f) {
+                        let out = take(c, f);
+                        if last {
+                            assert_eq!(out.written, 0, "{n} still writing: {out:?}");
+                        }
+                    }
+                }
+            }
+        };
+        for _ in 0..3 {
+            round(devs, false);
+        }
+        round(devs, true);
+    }
+
+    /// Every device counts the card's one rating once, and is sound.
+    fn all_hold_one(devs: &[(&str, &Connection)], card: &Card, tag: &str) {
+        // The schedule must agree too, not only the counts.
+        type Schedule = (i64, Option<String>, Option<String>, i64, i64);
+        let schedule = |c: &Connection| -> Option<Schedule> {
+            c.query_row(
+                "SELECT step, due_at, last_reviewed_at, reps, lapses FROM card_review_state WHERE item_id = ?1",
+                [&card.item],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+            )
+            .ok()
+        };
+        let first = schedule(devs[0].1);
+        for (n, c) in devs {
+            assert_eq!(schedule(c), first, "{n} schedule {tag}");
+        }
+        for (n, c) in devs {
+            assert_eq!(events(c, &card.item).len(), 1, "{n} events {tag}");
+            assert_eq!(state(c, &card.item).unwrap().1, 1, "{n} reps {tag}");
+            assert_eq!(
+                count(c, "SELECT COUNT(*) FROM (SELECT 1 FROM card_review_events GROUP BY item_id, reviewed_at, rating HAVING COUNT(*) > 1)"),
+                0,
+                "{n}: no item holds two copies of one rating {tag}"
+            );
+            verified(c);
+        }
+    }
+
+    /// The card tables, the ledger and the bookkeeping, byte for byte. The
+    /// `sync_applied` list is left out on purpose (a taken file adds a row).
+    fn full_dump(conn: &Connection) -> Vec<String> {
+        let mut out = Vec::new();
+        for name in [
+            "card_review_events",
+            "card_review_event_folds",
+            "card_review_operations",
+            "card_review_state",
+            "card_review_generations",
+            "card_versions",
+            "card_items",
+            "card_version_pending_claims",
+            "local_changes",
+            "sync_row_meta",
+            "app_metadata",
+        ] {
+            let mut stmt = conn
+                .prepare(&format!("SELECT * FROM {name} ORDER BY 1, 2"))
+                .unwrap();
+            let n = stmt.column_count();
+            let rows: Vec<String> = stmt
+                .query_map([], |r| {
+                    let mut cells = Vec::new();
+                    for i in 0..n {
+                        cells.push(format!("{:?}", r.get::<_, rusqlite::types::Value>(i)?));
+                    }
+                    Ok(format!("{name}: {}", cells.join("|")))
+                })
+                .unwrap()
+                .map(Result::unwrap)
+                .collect();
+            out.extend(rows);
+        }
+        out
+    }
+
+    /// The fourth device W, holding the list A (Z1) and the empty history flag.
+    fn fourth() -> Connection {
+        let w = super::apply::device(WIN);
+        super::apply::card(&w, MAT);
+        with_history(&w);
+        w
+    }
+
+    /// S13f (RED today). After S13d (Y folded e) Y and Z each save C = [F, U].
+    /// Both mint carried(e, c1): Y reads e through the ledger (P -> Bc -> e). Today
+    /// Y mints carried(Bc, c1) and the card counts 2. Export bounds: all files are
+    /// from 0, so they carry the whole history. Activation: C is newest on Z and
+    /// X and Y take it.
+    #[test]
+    fn s13f_two_devices_saving_the_same_list_after_a_fold_mint_one_id() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.y, &t.z2);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        let cl: L = &[F, U];
+        nap();
+        append(&mut t.y, MAT, cl);
+        nap();
+        append(&mut t.z, MAT, cl);
+        let c1 = at(cl, 0);
+        let want = d(&t.e, &c1.item);
+        assert_eq!(
+            events(&t.y, &c1.item),
+            vec![want.clone()],
+            "Y mints carried(e, c1)"
+        );
+        assert_eq!(events(&t.z, &c1.item), vec![want]);
+        let mut devs = [(MAC, &mut t.z), (PHONE, &mut t.x), (PC, &mut t.y)];
+        quiet(&mut devs);
+        let devs = [(MAC, &t.z), (PHONE, &t.x), (PC, &t.y)];
+        all_hold_one(&devs, &c1, "s13f c1");
+        all_hold_one(&devs, &t.a1, "s13f a1");
+        backup_ok(&t.z, "s13f");
+    }
+
+    /// The scene plus W: W takes Z1 and Y1 only (so it holds P but neither e
+    /// nor Bc) and saves D = [F, T]: Q = carried(P, d1).
+    fn s13_with_w() -> (
+        Three,
+        Connection,
+        crate::sync::changeset::EncodedChangeFile,
+        Card,
+        String,
+    ) {
+        let t = s13_scene(&[F, S], &[F, EDITED]);
+        let mut w = fourth();
+        take(&mut w, &t.z1);
+        take(&mut w, &t.y1);
+        nap();
+        let dl: L = &[F, T];
+        append(&mut w, MAT, dl);
+        let d1 = at(dl, 0);
+        let p = events(&w, &t.a1.item);
+        assert_eq!(p.len(), 1);
+        let q = d(&p[0], &d1.item);
+        assert_eq!(
+            events(&w, &d1.item),
+            vec![q.clone()],
+            "W mints carried(P, d1)"
+        );
+        let w1 = ship(&mut w, WIN, 0);
+        (t, w, w1, d1, q)
+    }
+
+    /// S13g (RED today): a copy that depends on a folded copy. Z folds P, saves D
+    /// (carried(e, d1)), then W's Q = carried(P, d1) arrives. Without the ledger
+    /// Q cannot resolve through the folded P and d1 counts 2.
+    #[test]
+    fn s13g_a_future_child_of_a_folded_copy_is_folded_too() {
+        let (mut t, mut w, w1, d1, q) = s13_with_w();
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        let p = d(&d(&t.e, &at(&[F, EDITED], 0).item), &t.a1.item);
+        assert!(fold_ids(&t.z).contains(&p), "Z folded P");
+        nap();
+        append(&mut t.z, MAT, &[F, T]);
+        assert_eq!(events(&t.z, &d1.item), vec![d(&t.e, &d1.item)]);
+        take(&mut t.z, &w1);
+        assert_eq!(events(&t.z, &d1.item), vec![d(&t.e, &d1.item)], "Q is gone");
+        assert!(fold_ids(&t.z).contains(&q), "Q is in the ledger");
+        let mut devs = [
+            (MAC, &mut t.z),
+            (PHONE, &mut t.x),
+            (PC, &mut t.y),
+            (WIN, &mut w),
+        ];
+        quiet(&mut devs);
+        let devs = [(MAC, &t.z), (PHONE, &t.x), (PC, &t.y), (WIN, &w)];
+        all_hold_one(&devs, &t.a1, "s13g a1");
+        all_hold_one(&devs, &d1, "s13g d1");
+        for (n, c) in devs {
+            backup_ok(c, &format!("s13g-{n}"));
+        }
+    }
+
+    /// Fix pass 2 (N10): the three devices settle through incremental exports
+    /// too, and a further round writes nothing on any of them.
+    #[test]
+    fn s13_incremental_rounds_settle_and_go_quiet() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let mut devs = [(MAC, &mut t.z), (PHONE, &mut t.x), (PC, &mut t.y)];
+        quiet_incremental(&mut devs);
+        let devs = [(MAC, &t.z), (PHONE, &t.x), (PC, &t.y)];
+        all_hold_one(&devs, &t.a1, "incremental");
+    }
+
+    /// S13h: Z saves D after Y1 and takes W1 BEFORE X1. X1 then folds P (and Q,
+    /// when Z minted another id for the same rating) in one pass. Whether Z's own
+    /// D mint equals Q depends on the lowest-root tie, so both are accepted.
+    #[test]
+    fn s13h_one_file_folds_the_parent_and_its_child_together() {
+        let (mut t, mut w, w1, d1, q) = s13_with_w();
+        take(&mut t.z, &t.y1);
+        nap();
+        append(&mut t.z, MAT, &[F, T]);
+        let own = events(&t.z, &d1.item);
+        assert_eq!(own.len(), 1);
+        take(&mut t.z, &w1);
+        let before_x1 = events(&t.z, &d1.item).len();
+        let out = take(&mut t.z, &t.x1);
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1, "a1");
+        assert_eq!(events(&t.z, &d1.item).len(), 1, "d1");
+        assert!(out.folded >= 1, "{out:?}");
+        assert_eq!(
+            out.folded,
+            1 + usize::from(before_x1 == 2),
+            "P always, Q too when Z minted another id"
+        );
+        if before_x1 == 2 {
+            assert!(fold_ids(&t.z).contains(&q));
+        }
+        assert_eq!(own[0] == q, before_x1 == 1);
+        let mut devs = [
+            (MAC, &mut t.z),
+            (PHONE, &mut t.x),
+            (PC, &mut t.y),
+            (WIN, &mut w),
+        ];
+        quiet(&mut devs);
+        let devs = [(MAC, &t.z), (PHONE, &t.x), (PC, &t.y), (WIN, &w)];
+        all_hold_one(&devs, &t.a1, "s13h a1");
+        all_hold_one(&devs, &d1, "s13h d1");
+    }
+
+    /// S13e2 (fixed): after the fold Y logs one unrelated change and ships it as
+    /// Y2 (since its last seq); Z takes Y2. Y then re-ships from 0 (Y1', a new
+    /// name that holds P and that change again) and Z takes it. Y1' repeats
+    /// Y1, so Z already settled Y's claim on B and the first overlap writes
+    /// nothing either (rows, pending claims and `local_changes` are unchanged).
+    /// After that, a second change (Y3) and a second full re-export
+    /// (Y1'') change NOTHING: the card tables, the ledger, the receipts, the state
+    /// and `local_changes` are byte-identical, no delete row exists and nothing is
+    /// written.
+    #[test]
+    fn s13e2_an_overlapping_export_after_the_fold_changes_nothing() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let since = seq_of(&t.y);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1);
+        t.y.execute(
+            "UPDATE study_materials SET title = 'Synthetic 2' WHERE id = ?1",
+            [MAT],
+        )
+        .unwrap();
+        let y2 = ship(&mut t.y, PC, since);
+        take(&mut t.z, &y2);
+        let y1_again = ship(&mut t.y, PC, 0);
+        assert_ne!(y1_again.file_name, t.y1.file_name);
+        let before_first = full_dump(&t.z);
+        let first = take(&mut t.z, &y1_again);
+        assert_eq!(first.folded, 0, "{first:?}");
+        // The first overlap changes nothing either: Z took Y1 before, so the
+        // bare claim is already settled.
+        assert_eq!(first.written, 0, "{first:?}");
+        assert_eq!(full_dump(&t.z), before_first);
+        assert_eq!(
+            count(&t.z, "SELECT COUNT(*) FROM local_changes WHERE table_name = 'card_review_events' AND op = 'delete'"),
+            0
+        );
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1);
+        let since = seq_of(&t.y);
+        t.y.execute(
+            "UPDATE study_materials SET title = 'Synthetic 3' WHERE id = ?1",
+            [MAT],
+        )
+        .unwrap();
+        take(&mut t.z, &ship(&mut t.y, PC, since));
+        let y1_third = ship(&mut t.y, PC, 0);
+        assert_ne!(y1_third.file_name, y1_again.file_name);
+        let held = full_dump(&t.z);
+        let out = take(&mut t.z, &y1_third);
+        assert_eq!(out.written, 0, "{out:?}");
+        assert_eq!(full_dump(&t.z), held);
+        assert_eq!(
+            count(&t.z, "SELECT COUNT(*) FROM local_changes WHERE table_name = 'card_review_events' AND op = 'delete'"),
+            0
+        );
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1);
+        verified(&t.z);
+    }
+
+    /// An op number whose rating id `e` sorts below (or above) the path id P of
+    /// the S13 scene, so the lowest-root tie picks e (or P). Both ids are pure
+    /// functions of the op number, so this needs no scene.
+    fn op_with_lowest_root(e_lowest: bool) -> u64 {
+        let a1 = at(&[F, S], 0);
+        let b1 = at(&[F, EDITED], 0);
+        (1u64..20_000)
+            .find(|op| {
+                let e = format!("e1000000-0000-4000-8000-{op:012x}");
+                let p = d(&d(&e, &b1.item), &a1.item);
+                (e < p) == e_lowest
+            })
+            .expect("an op number for this tie")
+    }
+
+    /// S13i (RED today): the delivery order that has no event insert. V (= W)
+    /// saves an identical unrated B after Y's revert (the newest claim) and ships
+    /// it as V1 (from 0). Z takes Y1 (e and P on a1), then V1: B activates on Z and
+    /// the sync carry mints the missing link; the post-carry pass folds P.
+    /// Export bounds: Y1 and X1 as in the scene, V1 = V from 0 (Z1 taken, then the
+    /// save). Two tie outcomes, both covered:
+    /// - e is the lowest root: the carry mints carried(e, b1) = Bc, P resolves to e
+    ///   and is folded at once (a1 = 1) with no event in the file;
+    /// - P is the lowest root: the carry mints carried(P, b1), so a1 is still 2
+    ///   until X1 brings Bc; then both P and carried(P, b1) are folded.
+    #[test]
+    fn s13i_a_carry_that_mints_the_missing_link_folds_the_parent() {
+        for e_lowest in [true, false] {
+            let op = op_with_lowest_root(e_lowest);
+            let mut t = s13_scene_op(&[F, S], &[F, EDITED], op);
+            let mut v = fourth();
+            take(&mut v, &t.z1);
+            nap();
+            append(&mut v, MAT, &[F, EDITED]);
+            let v1 = ship(&mut v, WIN, 0);
+            let b1 = at(&[F, EDITED], 0);
+            let bc = d(&t.e, &b1.item);
+            take(&mut t.z, &t.y1);
+            assert_eq!(events(&t.z, &t.a1.item).len(), 2, "e and P");
+            let p = events(&t.z, &t.a1.item)
+                .into_iter()
+                .find(|id| *id != t.e)
+                .unwrap();
+            let out = take(&mut t.z, &v1);
+            assert_eq!(active_version(&t.z), active_version(&v), "B is active");
+            if e_lowest {
+                assert_eq!(events(&t.z, &b1.item), vec![bc.clone()]);
+                assert_eq!(
+                    events(&t.z, &t.a1.item),
+                    vec![t.e.clone()],
+                    "folded at once"
+                );
+                assert_eq!(out.folded, 1, "{out:?}");
+                assert_eq!(fold_ids(&t.z), vec![p.clone()]);
+            } else {
+                assert_eq!(events(&t.z, &b1.item), vec![d(&p, &b1.item)]);
+                assert_eq!(events(&t.z, &t.a1.item).len(), 2, "P still waits for Bc");
+                take(&mut t.z, &t.x1);
+                assert_eq!(events(&t.z, &t.a1.item), vec![t.e.clone()]);
+                assert_eq!(events(&t.z, &b1.item), vec![bc.clone()]);
+                let mut want = vec![p.clone(), d(&p, &b1.item)];
+                want.sort();
+                assert_eq!(fold_ids(&t.z), want);
+            }
+            assert_eq!(state(&t.z, &t.a1.item).unwrap().1, 1);
+            verified(&t.z);
+            backup_ok(&t.z, &format!("s13i-{e_lowest}"));
+            let mut devs = [
+                (MAC, &mut t.z),
+                (PHONE, &mut t.x),
+                (PC, &mut t.y),
+                (WIN, &mut v),
+            ];
+            quiet(&mut devs);
+            let devs = [(MAC, &t.z), (PHONE, &t.x), (PC, &t.y), (WIN, &v)];
+            all_hold_one(&devs, &t.a1, &format!("s13i {e_lowest}"));
+        }
+    }
+
+    /// S13j (RED today): Z holds e and the unresolved P, then saves B locally. The
+    /// local save's carry mints Bc, so the local-save fold makes a1 = 1 at once
+    /// (the lowest root is e here). X1 later is a no-op for the counts.
+    #[test]
+    fn s13j_a_local_save_that_mints_the_missing_link_folds_the_parent() {
+        let op = op_with_lowest_root(true);
+        let mut t = s13_scene_op(&[F, S], &[F, EDITED], op);
+        take(&mut t.z, &t.y1);
+        assert_eq!(events(&t.z, &t.a1.item).len(), 2, "e and P");
+        nap();
+        append(&mut t.z, MAT, &[F, EDITED]);
+        let b1 = at(&[F, EDITED], 0);
+        assert_eq!(
+            events(&t.z, &t.a1.item),
+            vec![t.e.clone()],
+            "folded at the save"
+        );
+        assert_eq!(events(&t.z, &b1.item), vec![d(&t.e, &b1.item)]);
+        assert_eq!(state(&t.z, &t.a1.item).unwrap().1, 1);
+        assert_eq!(fold_ids(&t.z).len(), 1);
+        // The fold is not a local change: nothing was logged for the removed copy.
+        assert_eq!(
+            count(&t.z, "SELECT COUNT(*) FROM local_changes WHERE table_name = 'card_review_events' AND op = 'delete'"),
+            0
+        );
+        verified(&t.z);
+        backup_ok(&t.z, "s13j");
+        let held = (events(&t.z, &t.a1.item), events(&t.z, &b1.item));
+        take(&mut t.z, &t.x1);
+        assert_eq!((events(&t.z, &t.a1.item), events(&t.z, &b1.item)), held);
+        verified(&t.z);
+    }
+
+    /// Applies a file by hand, so a failure can be inspected.
+    fn try_take_raw(
+        conn: &mut Connection,
+        file: &crate::sync::changeset::EncodedChangeFile,
+    ) -> Result<crate::sync::apply::ApplyOutcome, crate::sync::apply::ApplyError> {
+        let parsed = decode(&file.bytes, &file.file_name, SCHEMA, NOW).unwrap();
+        crate::sync::apply::apply_change_file(conn, &file.file_name, &parsed, NOW)
+    }
+
+    /// Rollback 1: a file that folds and then fails (a test fault after pass (b))
+    /// leaves the database byte-identical, with no receipt for the file; the
+    /// retry then lands.
+    #[test]
+    fn a_file_that_folds_and_then_fails_leaves_the_database_unchanged() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        let held = full_dump(&t.z);
+        let applied = count(&t.z, "SELECT COUNT(*) FROM sync_applied");
+        crate::sync::apply::fault::set("after-fold-b");
+        let failed = try_take_raw(&mut t.z, &t.x1);
+        crate::sync::apply::fault::set("");
+        assert!(failed.is_err());
+        assert_eq!(full_dump(&t.z), held);
+        assert_eq!(count(&t.z, "SELECT COUNT(*) FROM sync_applied"), applied);
+        assert!(fold_ids(&t.z).is_empty());
+        let out = take(&mut t.z, &t.x1);
+        assert_eq!(out.folded, 1);
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1);
+    }
+
+    /// Rollback 2: a local save whose fold fails rolls back only the fold (its own
+    /// `local_fold` savepoint): the carry and the save stay, no guard row is left,
+    /// and the next sync apply folds the copies again.
+    #[test]
+    fn a_local_save_whose_fold_fails_rolls_back_to_the_savepoint_and_the_save_lands() {
+        let op = op_with_lowest_root(true);
+        let mut t = s13_scene_op(&[F, S], &[F, EDITED], op);
+        take(&mut t.z, &t.y1);
+        let before = events(&t.z, &t.a1.item);
+        assert_eq!(before.len(), 2);
+        nap();
+        crate::sync::apply::fault::set("local-fold");
+        append(&mut t.z, MAT, &[F, EDITED]);
+        crate::sync::apply::fault::set("");
+        let b1 = at(&[F, EDITED], 0);
+        assert_eq!(events(&t.z, &t.a1.item), before, "nothing folded");
+        assert!(
+            !events(&t.z, &b1.item).is_empty(),
+            "the carry survives the fold failure"
+        );
+        assert!(fold_ids(&t.z).is_empty());
+        let saved: String =
+            t.z.query_row(
+                "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?1",
+                [MAT],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert!(saved.contains("Edited front"), "the save landed");
+        assert_eq!(
+            count(
+                &t.z,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_applying'"
+            ),
+            0
+        );
+        verified(&t.z);
+    }
+
+    /// Fix pass 2 (S7): a local save whose fold fails re-arms the one-time sweep
+    /// (the marker is deleted in the same transaction as the save), so the next
+    /// launch folds the copies the save could not.
+    #[test]
+    fn a_failed_local_fold_is_retried_at_the_next_launch() {
+        let op = op_with_lowest_root(true);
+        let mut t = s13_scene_op(&[F, S], &[F, EDITED], op);
+        take(&mut t.z, &t.y1);
+        crate::sync::receipts::repair_synced_ratings(&mut t.z).unwrap();
+        // The sweep ran before the save and found nothing it could fold or the
+        // marker would not be set: it is set either way.
+        assert_eq!(
+            count(
+                &t.z,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'card_folds_swept'"
+            ),
+            1
+        );
+        assert_eq!(events(&t.z, &t.a1.item).len(), 2);
+        nap();
+        crate::sync::apply::fault::set("local-fold");
+        append(&mut t.z, MAT, &[F, EDITED]);
+        crate::sync::apply::fault::set("");
+        assert_eq!(
+            count(
+                &t.z,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'card_folds_swept'"
+            ),
+            0,
+            "the failed fold re-armed the sweep"
+        );
+        assert_eq!(events(&t.z, &t.a1.item).len(), 2, "nothing folded yet");
+        crate::sync::receipts::repair_synced_ratings(&mut t.z).unwrap();
+        assert_eq!(events(&t.z, &t.a1.item).len(), 1);
+        assert_eq!(state(&t.z, &t.a1.item).unwrap().1, 1);
+        assert_eq!(
+            count(
+                &t.z,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'card_folds_swept'"
+            ),
+            1
+        );
+        verified(&t.z);
+    }
+
+    /// Fix pass 2 (S7): a sweep that always fails is rolled back to its own
+    /// savepoint; the receipt and revision repairs after it still commit, and the
+    /// marker stays unset so the next launch retries.
+    #[test]
+    fn a_sweep_fault_keeps_the_other_repairs() {
+        let (mut a, _b, e, b0, c0, _seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        stored_old_copy(&a, &e, &via_b, &b0.item);
+        // A rated event with no receipt, and a state revision below its count.
+        a.execute(
+            "DELETE FROM card_review_operations WHERE operation_id = ?1",
+            [&e],
+        )
+        .unwrap();
+        let receipts = count(&a, "SELECT COUNT(*) FROM card_review_operations");
+        crate::sync::apply::fault::set("sweep");
+        let out = crate::sync::receipts::repair_synced_ratings(&mut a);
+        crate::sync::apply::fault::set("");
+        assert!(out.is_ok(), "{out:?}");
+        assert_eq!(swept(&a), 0, "the marker stays unset");
+        assert!(
+            count(&a, "SELECT COUNT(*) FROM card_review_operations") > receipts,
+            "the receipt repair still committed"
+        );
+        let _ = c0;
+    }
+
+    /// What an older phone stored: a copy of `e` under `id` on `item`, as a
+    /// foreign synced row (meta of the phone, derived receipt).
+    fn stored_old_copy(a: &Connection, e: &str, id: &str, item: &str) {
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+            [],
+        )
+        .unwrap();
+        old_copy(a, e, id, item);
+        a.execute(
+            "INSERT INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+             VALUES ('card_review_events', ?1, ?2, '2026-11-05T09:00:00.000Z', 0)",
+            params![id, PHONE],
+        )
+        .unwrap();
+        crate::sync::receipts::ensure_rate_receipts(a, None).unwrap();
+        crate::sync::apply::replay_items(a, &[item.to_string()]).unwrap();
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+    }
+
+    fn swept(conn: &Connection) -> i64 {
+        count(
+            conn,
+            "SELECT COUNT(*) FROM app_metadata WHERE key = 'card_folds_swept'",
+        )
+    }
+
+    /// Startup sweep: a stored path-id duplicate (s12 `old_copy`, intermediate
+    /// present) folds once; reps, the surviving chain, the state row and the
+    /// backup check are right; a second launch is a no-op.
+    #[test]
+    fn the_startup_sweep_folds_a_stored_path_duplicate_once() {
+        let (mut a, _b, e, b0, c0, _seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        let via_path = d(&via_b, &c0.item);
+        stored_old_copy(&a, &e, &via_b, &b0.item);
+        stored_old_copy(&a, &e, &via_path, &c0.item);
+        assert_eq!(events(&a, &c0.item).len(), 2);
+        assert_eq!(
+            state(&a, &c0.item).unwrap().1,
+            2,
+            "double counted before the sweep"
+        );
+        assert_eq!(swept(&a), 0);
+        let local_changes = count(&a, "SELECT COUNT(*) FROM local_changes");
+        crate::sync::receipts::repair_synced_ratings(&mut a).unwrap();
+        assert_eq!(events(&a, &c0.item), vec![d(&e, &c0.item)]);
+        assert_eq!(state(&a, &c0.item).unwrap().1, 1);
+        assert_eq!(fold_ids(&a), vec![via_path.clone()]);
+        assert_eq!(swept(&a), 1);
+        assert_eq!(
+            count(&a, "SELECT COUNT(*) FROM local_changes"),
+            local_changes,
+            "nothing logged"
+        );
+        // The surviving event's chain is the one-event chain.
+        let (prior, next): (String, String) = a
+            .query_row(
+                "SELECT prior_state_json, next_state_json FROM card_review_events WHERE item_id = ?1",
+                [&c0.item],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(prior, "null");
+        assert!(next.contains("\"reps\":1"), "{next}");
+        verified(&a);
+        backup_ok(&a, "sweep1");
+        // A second launch is a no-op.
+        let held = full_dump(&a);
+        crate::sync::receipts::repair_synced_ratings(&mut a).unwrap();
+        assert_eq!(full_dump(&a), held);
+    }
+
+    /// A fault after the sweep's fold leaves the database unchanged with NO
+    /// marker; the next run folds and sets it.
+    #[test]
+    fn a_sweep_that_fails_after_the_fold_rolls_back_the_marker_too() {
+        let (mut a, _b, e, b0, c0, _seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        let via_path = d(&via_b, &c0.item);
+        stored_old_copy(&a, &e, &via_b, &b0.item);
+        stored_old_copy(&a, &e, &via_path, &c0.item);
+        let held = full_dump(&a);
+        crate::sync::apply::fault::set("sweep");
+        let failed = crate::sync::receipts::repair_synced_ratings(&mut a);
+        crate::sync::apply::fault::set("");
+        // Fix pass 2: the sweep has its own savepoint, so the repair itself no
+        // longer fails; the sweep's work (fold, marker) is still all rolled back.
+        assert!(failed.is_ok(), "{failed:?}");
+        // The repairs after the sweep commit: the only new row is their marker.
+        let mut after = full_dump(&a);
+        assert_eq!(
+            after.pop().as_deref(),
+            Some("app_metadata: Text(\"sync_refold_done\")|Text(\"1\")")
+        );
+        assert_eq!(after, held);
+        assert_eq!(swept(&a), 0);
+        assert!(fold_ids(&a).is_empty());
+        crate::sync::receipts::repair_synced_ratings(&mut a).unwrap();
+        assert_eq!(fold_ids(&a), vec![via_path]);
+        assert_eq!(swept(&a), 1);
+        verified(&a);
+    }
+
+    /// Backup and restore after the fold: the ledger travels with the copy, the
+    /// restored device (a new device id) verifies, counts a1 once, and still
+    /// folds Q = carried(P, d1) when W1 arrives.
+    #[test]
+    fn a_backup_after_the_fold_restores_with_its_ledger_and_still_folds_later_children() {
+        let (mut t, _w, w1, d1, q) = s13_with_w();
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        assert_eq!(fold_ids(&t.z).len(), 1);
+        // Z saves D too (its own carried(e, d1)); W's Q = carried(P, d1) comes later.
+        nap();
+        append(&mut t.z, MAT, &[F, T]);
+        assert_eq!(events(&t.z, &d1.item), vec![d(&t.e, &d1.item)]);
+        // A pending claim that must travel with the copy (a version Z does not
+        // hold; plain device-local sync state).
+        t.z.execute(
+            "INSERT INTO card_version_pending_claims
+               (id, source_material_id, is_active, changed_at, device_id, first_reviewed_at)
+             VALUES (?1, ?2, 1, '2026-11-05T10:00:00.000Z', ?3, NULL)",
+            params!["f".repeat(64), MAT, PC],
+        )
+        .unwrap();
+        backup_ok(&t.z, "restore-src");
+        // The way production restores: the copy becomes the database file of a
+        // root, `reset_sync_identity` runs on it, and the app mints a new device
+        // id when it opens it (insert-if-absent, as `ensureDeviceId` does).
+        let root = TempDir::new("restore-root");
+        let copy = root.0.join("her-flight-deck.db");
+        t.z.execute("VACUUM INTO ?1", [copy.to_str().unwrap()])
+            .unwrap();
+        crate::backup::reset_sync_identity(&root.0).unwrap();
+        let mut restored = Connection::open(&copy).unwrap();
+        restored.pragma_update(None, "foreign_keys", "ON").unwrap();
+        assert_eq!(
+            count(
+                &restored,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'device_id'"
+            ),
+            0,
+            "the restore dropped the copied id"
+        );
+        restored
+            .execute(
+                "INSERT OR IGNORE INTO app_metadata VALUES ('device_id', 'eeee-restored')",
+                [],
+            )
+            .unwrap();
+        let source: String = restored
+            .query_row(
+                "SELECT value FROM app_metadata WHERE key = 'sync_copy_from_device'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(source, MAC, "the source Mac is noted");
+        assert_eq!(
+            count(
+                &restored,
+                "SELECT COUNT(*) FROM app_metadata WHERE key = 'sync_floor_seq'"
+            ),
+            1,
+            "the floor is set"
+        );
+        assert_eq!(fold_ids(&restored).len(), 1, "the ledger survived");
+        assert_eq!(pending_claims(&restored), 1, "the pending claim survived");
+        assert_eq!(events(&restored, &t.a1.item).len(), 1);
+        assert_eq!(state(&restored, &t.a1.item).unwrap().1, 1);
+        verified(&restored);
+        take(&mut restored, &w1);
+        assert_eq!(
+            events(&restored, &d1.item).len(),
+            1,
+            "Q folds: d1 counts once"
+        );
+        assert!(fold_ids(&restored).contains(&q));
+        assert_eq!(state(&restored, &d1.item).unwrap().1, 1);
+        verified(&restored);
+        drop(restored);
+    }
+
+    /// A schema-34 backup (no ledger table, version 35 not recorded) verifies,
+    /// and verifies again after the migration is applied.
+    #[test]
+    fn a_schema_34_backup_verifies_before_and_after_the_migration() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        let conn = &t.z;
+        conn.execute_batch(
+            "DROP TABLE card_review_event_folds; DROP TABLE card_version_pending_claims;
+             DELETE FROM _sqlx_migrations WHERE version = 35;",
+        )
+        .unwrap();
+        crate::backup::verify_application_connection(conn).unwrap();
+        // The migration restores the table; recording it makes the check apply.
+        for m in crate::migrations().iter().filter(|m| m.version == 35) {
+            conn.execute_batch(m.sql).unwrap();
+            conn.execute("INSERT INTO _sqlx_migrations (version) VALUES (35)", [])
+                .unwrap();
+        }
+        crate::backup::verify_application_connection(conn).unwrap();
+        // A schema-35 backup without the pending-claims table is refused too
+        // (rolled back, so the next check stays about the ledger alone).
+        conn.execute_batch("SAVEPOINT no_pending; DROP TABLE card_version_pending_claims")
+            .unwrap();
+        assert!(crate::backup::verify_application_connection(conn).is_err());
+        conn.execute_batch("ROLLBACK TO no_pending; RELEASE no_pending")
+            .unwrap();
+        crate::backup::verify_application_connection(conn).unwrap();
+        // A schema-35 backup whose ledger table is gone is refused.
+        conn.execute_batch("DROP TABLE card_review_event_folds")
+            .unwrap();
+        assert!(crate::backup::verify_application_connection(conn).is_err());
+    }
+
+    /// The class on a non-active version folds, and once the links are present no
+    /// item of the material holds two counted copies of one rating. Here the path
+    /// duplicate sits on the inactive C beside the active D.
+    #[test]
+    fn a_duplicate_on_an_inactive_version_folds_too() {
+        let (mut a, _b, e, b0, c0, _seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        let via_path = d(&via_b, &c0.item);
+        // Make a longer list active, so C (which gets the duplicate) is inactive.
+        nap();
+        append(&mut a, MAT, &[F, S, T, FOURTH]);
+        let c_version: String = a
+            .query_row(
+                "SELECT version_id FROM card_items WHERE id = ?1",
+                [&c0.item],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert!(!active_version(&a).contains(&c_version), "C is inactive");
+        stored_old_copy(&a, &e, &via_b, &b0.item);
+        stored_old_copy(&a, &e, &via_path, &c0.item);
+        a.execute(
+            "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'test')",
+            [],
+        )
+        .unwrap();
+        let folded = crate::sync::apply::fold_material(&a, MAT).unwrap();
+        a.execute("DELETE FROM app_metadata WHERE key = 'sync_applying'", [])
+            .unwrap();
+        assert_eq!(folded.len(), 1);
+        assert_eq!(folded[0].1, vec![via_path]);
+        assert_eq!(
+            count(&a, "SELECT COUNT(*) FROM (SELECT 1 FROM card_review_events GROUP BY item_id, reviewed_at, rating HAVING COUNT(*) > 1)"),
+            0
+        );
+    }
+
+    fn pending_claims(conn: &Connection) -> i64 {
+        count(conn, "SELECT COUNT(*) FROM card_version_pending_claims")
+    }
+
+    /// Three devices, all incremental exports. X saves B (T1). Y takes X1, edits
+    /// B to C, then goes back to B (a bare B claim at T3, in Y1 = Y since it took
+    /// X1). Z, still on A, saves D (T2.5, between them). Returns
+    /// (z, x, y, x1, y1, b version id).
+    fn pending_scene() -> (
+        Connection,
+        Connection,
+        Connection,
+        crate::sync::changeset::EncodedChangeFile,
+        crate::sync::changeset::EncodedChangeFile,
+        String,
+    ) {
+        let mut z = super::apply::device(MAC);
+        let mut x = super::apply::device(PHONE);
+        let mut y = super::apply::device(PC);
+        for c in [&z, &x, &y] {
+            super::apply::card(c, MAT);
+            with_history(c);
+        }
+        append(&mut z, MAT, &[F, S]);
+        let z1 = ship(&mut z, MAC, 0);
+        take(&mut x, &z1);
+        take(&mut y, &z1);
+        nap();
+        append(&mut x, MAT, &[F, EDITED]);
+        let x1 = ship(&mut x, PHONE, 0);
+        nap();
+        append(&mut z, MAT, &[F, U]);
+        nap();
+        take(&mut y, &x1);
+        let since = seq_of(&y);
+        append(&mut y, MAT, &[F, T]);
+        nap();
+        append(&mut y, MAT, &[F, EDITED]);
+        let y1 = ship(&mut y, PC, since);
+        let b: String = x
+            .query_row(
+                "SELECT version_id FROM card_items WHERE id = ?1",
+                [&at(&[F, EDITED], 0).item],
+                |r| r.get(0),
+            )
+            .unwrap();
+        (z, x, y, x1, y1, b)
+    }
+
+    /// SHOULD 1 (RED before the pending-claims table). Z takes Y's file (which
+    /// holds only a bare claim on B) before X's (which builds B). Without the
+    /// pending claim Z ends on D while X and Y stay on B forever; with it Z merges
+    /// Y's newer claim when B is built and all three agree.
+    #[test]
+    fn a_skipped_bare_claim_is_merged_when_the_version_is_built() {
+        let (mut z, mut x, mut y, x1, y1, b) = pending_scene();
+        assert_eq!(active_version(&x), vec![b.clone()]);
+        assert_eq!(active_version(&y), vec![b.clone()]);
+        take(&mut z, &y1);
+        assert_eq!(pending_claims(&z), 1, "the skipped claim is kept");
+        take(&mut z, &x1);
+        assert_eq!(pending_claims(&z), 0, "merged and cleared");
+        assert_eq!(
+            active_version(&z),
+            vec![b.clone()],
+            "Z follows the newest claim"
+        );
+        // Full exchange: nobody moves.
+        for _ in 0..2 {
+            let (fx, fy, fz) = (
+                ship(&mut x, PHONE, 0),
+                ship(&mut y, PC, 0),
+                ship(&mut z, MAC, 0),
+            );
+            for (c, files) in [
+                (&mut z, [&fx, &fy]),
+                (&mut x, [&fz, &fy]),
+                (&mut y, [&fz, &fx]),
+            ] {
+                for f in files {
+                    take(c, f);
+                }
+            }
+        }
+        let want = vec![b];
+        for c in [&z, &x, &y] {
+            assert_eq!(active_version(c), want);
+            assert_eq!(pending_claims(c), 0);
+            verified(c);
+        }
+    }
+
+    /// The pending claim is plain SQLite state: it survives a restart (a copy of
+    /// the database file reopened), is carried by a backup that verifies, and a
+    /// reset of the material clears the first review it held but keeps the claim.
+    #[test]
+    fn a_pending_claim_survives_a_restart_and_a_reset_clears_its_first_review() {
+        let (mut z, _x, _y, x1, y1, b) = pending_scene();
+        take(&mut z, &y1);
+        assert_eq!(pending_claims(&z), 1);
+        backup_ok(&z, "pending");
+        let path =
+            std::env::temp_dir().join(format!("carry-pending-restart-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        z.execute("VACUUM INTO ?1", [path.to_str().unwrap()])
+            .unwrap();
+        let mut reopened = Connection::open(&path).unwrap();
+        reopened.pragma_update(None, "foreign_keys", "ON").unwrap();
+        assert_eq!(pending_claims(&reopened), 1, "survives the restart");
+        take(&mut reopened, &x1);
+        assert_eq!(pending_claims(&reopened), 0);
+        assert_eq!(active_version(&reopened), vec![b]);
+        drop(reopened);
+        let _ = std::fs::remove_file(&path);
+
+        // A reset of the material: the first review it carried is cleared.
+        z.execute(
+            "UPDATE card_version_pending_claims SET first_reviewed_at = '2026-11-05T10:00:00.000Z'",
+            [],
+        )
+        .unwrap();
+        let a1 = at(&[F, S], 0);
+        act(&mut z, &a1, "reset", json!({}), 901);
+        assert_eq!(pending_claims(&z), 1, "the activation claim is kept");
+        assert_eq!(
+            count(
+                &z,
+                "SELECT COUNT(*) FROM card_version_pending_claims WHERE first_reviewed_at IS NOT NULL"
+            ),
+            0
+        );
+    }
+
+    // ---- fix pass 3 (S6): a tombstone is never rebuilt from ----
+
+    fn version_present(conn: &Connection, id: &str) -> bool {
+        count(
+            conn,
+            &format!("SELECT COUNT(*) FROM card_versions WHERE id = '{id}'"),
+        ) == 1
+    }
+
+    /// Writes the shape a schema-34 build left behind: no pending claim, and
+    /// meta `deleted = 1` for the bare-claim version `b` (device PC) with no row.
+    fn schema34_tombstone(z: &Connection, b: &str, at: &str) {
+        assert!(!version_present(z, b), "the tombstone shape has no row");
+        z.execute("DELETE FROM card_version_pending_claims", [])
+            .unwrap();
+        z.execute(
+            "INSERT OR REPLACE INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+             VALUES ('card_versions', ?1, ?2, ?3, 1)",
+            params![b, PC, at],
+        )
+        .unwrap();
+    }
+
+    /// The id and the claim time of the bare B claim Z holds after taking Y1.
+    ///
+    /// Export bounds (s13 scene): Z1 = Z from 0 (list A), Z2 = Z since Z1 (the
+    /// rating), X1 = X from 0 (the edit A->B and its carry), Y1 = Y from 0 (Y
+    /// took X1 under the sync guard, so Y1 holds only Y's own rows: a bare claim
+    /// on B and its revert to A, not B's cards). Activation order: Z active A;
+    /// X A then B; Y B then A.
+    fn s34_bare_claim(t: &mut Three) -> (String, String) {
+        take(&mut t.z, &t.y1);
+        t.z.query_row(
+            "SELECT id, changed_at FROM card_version_pending_claims
+             WHERE id IN (SELECT version_id FROM card_items WHERE id = ?1)",
+            [at(&[F, EDITED], 0).item],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap_or_else(|_| {
+            let b: String =
+                t.x.query_row(
+                    "SELECT version_id FROM card_items WHERE id = ?1",
+                    [at(&[F, EDITED], 0).item],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            let at: String =
+                t.y.query_row(
+                    "SELECT changed_at FROM sync_row_meta WHERE table_name = 'card_versions' AND row_id = ?1",
+                    [&b],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            (b, at)
+        })
+    }
+
+    /// Astra's counterexample (fix pass 3): A's reset deleted B (tombstone by PC);
+    /// a later reset by C with a skewed clock left generation meta that looks
+    /// older than the tombstone. The old creator file must not bring B back, and
+    /// the tombstone stays: a tombstone cannot tell a cleanup from a reset.
+    #[test]
+    fn a_tombstone_is_never_rebuilt_even_after_a_skewed_clock_reset() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let (b, at_y) = s34_bare_claim(&mut t);
+        schema34_tombstone(&t.z, &b, &at_y);
+        t.z.execute(
+            "INSERT OR REPLACE INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+             VALUES ('card_review_generations', ?1, 'skewed-device-c', '2000-01-01T00:00:00.000Z', 0)",
+            params![MAT],
+        )
+        .unwrap();
+        take(&mut t.z, &t.x1);
+        assert!(!version_present(&t.z, &b), "B stays deleted");
+        assert_eq!(
+            count(
+                &t.z,
+                &format!(
+                    "SELECT COUNT(*) FROM sync_row_meta WHERE table_name = 'card_versions'
+                     AND row_id = '{b}' AND deleted = 1"
+                )
+            ),
+            1,
+            "the tombstone is kept"
+        );
+    }
+
+    /// Guard: a remote reset logged a generation row by the tombstone's device, so
+    /// the missing B is a deletion and an older creator file never rebuilds it.
+    #[test]
+    fn a_reset_deletion_is_never_rebuilt() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let (b, at_y) = s34_bare_claim(&mut t);
+        schema34_tombstone(&t.z, &b, &at_y);
+        t.z.execute(
+            "INSERT OR REPLACE INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+             VALUES ('card_review_generations', ?1, ?2, '2099-01-01T00:00:00.000Z', 0)",
+            params![MAT, PC],
+        )
+        .unwrap();
+        take(&mut t.z, &t.x1);
+        assert!(!version_present(&t.z, &b), "stays deleted");
+    }
+
+    /// Guard: a reset on this device tombstones the version under its own device
+    /// id, so it is never read as a cleanup tombstone.
+    #[test]
+    fn a_local_reset_deletion_is_never_rebuilt() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.x1);
+        let (b, _) = {
+            let b: String =
+                t.x.query_row(
+                    "SELECT version_id FROM card_items WHERE id = ?1",
+                    [at(&[F, EDITED], 0).item],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            (b, ())
+        };
+        assert!(version_present(&t.z, &b));
+        // Z saves list A again, so the reset keeps A's version and deletes B.
+        nap();
+        append(&mut t.z, MAT, &[F, S]);
+        nap();
+        act(&mut t.z, &t.a1, "reset", json!({}), 902);
+        assert!(!version_present(&t.z, &b), "the reset deleted B");
+        take(&mut t.z, &t.y1);
+        assert!(!version_present(&t.z, &b), "stays deleted");
+        assert_eq!(pending_claims(&t.z), 0);
+    }
+
+    /// Guard: a deleted material cascades its versions; the creator file cannot
+    /// bring B back for a material this device no longer has.
+    #[test]
+    fn a_deleted_material_is_never_rebuilt() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        let (b, at_y) = s34_bare_claim(&mut t);
+        schema34_tombstone(&t.z, &b, &at_y);
+        t.z.execute("DELETE FROM study_materials WHERE id = ?1", [MAT])
+            .unwrap();
+        take(&mut t.z, &t.x1);
+        assert!(!version_present(&t.z, &b), "stays deleted");
+    }
+
+    /// Accounting: an item that pass (a) only folds and that the carry then writes
+    /// to (a carried row) is still counted as the fold's replay, not as a write
+    /// of the file. Z holds e and the path copy P; X1 builds B whose carry mints Bc.
+    #[test]
+    fn fold_replayed_never_counts_as_written_when_the_carry_also_touches_the_item() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        let before =
+            t.z.query_row("SELECT COUNT(*) FROM card_review_events", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .unwrap();
+        let out = take(&mut t.z, &t.x1);
+        // The file's rows: B + its cards + Bc by the carry. The fold of P never adds to written.
+        assert_eq!(out.fold_replayed, 1, "{out:?}");
+        assert_eq!(out.folded, 1, "{out:?}");
+        let after =
+            t.z.query_row("SELECT COUNT(*) FROM card_review_events", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .unwrap();
+        // P folded away, Bc minted by the carry: net events unchanged.
+        assert_eq!(after, before);
+        // The carry did touch B's item (it minted Bc) and that is a write of the
+        // file; the fold's replay of a1 is the one counted in fold_replayed.
+        let bc = d(&t.e, &at(&[F, EDITED], 0).item);
+        assert_eq!(events(&t.z, &at(&[F, EDITED], 0).item), vec![bc]);
+        // The split between written and ignored claim rows depends on a
+        // same-millisecond tie (seen as 6+3 and 7+2); the total of 9 rows is the
+        // exact invariant. The fold's own work is counted apart in `folded` and
+        // `fold_replayed`, never in `written`.
+        assert_eq!(out.written + out.ignored, 9, "{out:?}");
+        assert_eq!(out.replayed_items, 1, "{out:?}");
+    }
+
+    /// Accounting: Z taking X1 writes only X1's own rows (the fold is not a
+    /// write), counts the stored copy it folded, and the replay of a1 that only
+    /// the fold caused is counted apart from `written`.
+    #[test]
+    fn a_fold_is_counted_apart_from_the_rows_a_file_writes() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        let out = take(&mut t.z, &t.x1);
+        assert_eq!(out.folded, 1, "{out:?}");
+        assert_eq!(out.fold_replayed, 1, "{out:?}");
+        // The file's own state row (on B) is the only replay it counts.
+        assert_eq!(out.replayed_items, 1, "{out:?}");
+        // An incoming duplicate (X1 first, then Y1): inserted then folded in one
+        // apply, so it is not a stored fold and not a write.
+        let mut t2 = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t2.z, &t2.x1);
+        let out = take(&mut t2.z, &t2.y1);
+        assert_eq!(out.folded, 0, "{out:?}");
+        // Y1 after X1: a claim row is written or ignored depending on which
+        // device's claim is newer at the same millisecond (a timing tie, seen as
+        // 4+2 and 5+1), so the exact invariant is the total: 6 rows, none folded.
+        assert_eq!(out.written + out.ignored, 6, "{out:?}");
+        assert_eq!(events(&t2.z, &t2.a1.item).len(), 1);
+    }
+
+    /// Reset 1: a local reset prunes the material's ledger rows.
+    #[test]
+    fn a_local_reset_prunes_the_folds() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        assert_eq!(fold_ids(&t.z).len(), 1);
+        act(&mut t.z, &t.a1, "reset", json!({}), 901);
+        assert!(fold_ids(&t.z).is_empty());
+        // Reset 3: a delayed old-generation file that carries P is ignored.
+        let late = ship(&mut t.y, PC, 0);
+        let _ = take(&mut t.z, &late);
+        assert!(
+            events(&t.z, &t.a1.item).is_empty(),
+            "old generation ignored"
+        );
+        assert!(fold_ids(&t.z).is_empty());
+        verified(&t.z);
+    }
+
+    /// Reset 2: a synced reset (Y resets, Z takes it) prunes the ledger.
+    #[test]
+    fn a_synced_reset_prunes_the_folds() {
+        let mut t = s13_scene(&[F, S], &[F, EDITED]);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        assert_eq!(fold_ids(&t.z).len(), 1);
+        let since = seq_of(&t.y);
+        nap();
+        act(&mut t.y, &t.a1, "reset", json!({}), 902);
+        let reset = ship(&mut t.y, PC, since);
+        take(&mut t.z, &reset);
+        assert!(fold_ids(&t.z).is_empty());
+        assert!(events(&t.z, &t.a1.item).is_empty());
+        verified(&t.z);
+    }
+
+    /// Reset 4: after a reset a fresh three-device run folds cleanly.
+    #[test]
+    fn a_fresh_three_device_run_after_a_reset_folds_cleanly() {
+        let mut t = s13_scene_gen(&[F, S], &[F, EDITED], 1, true);
+        take(&mut t.z, &t.y1);
+        take(&mut t.z, &t.x1);
+        s13_check_z(&t.z, &t.a1, "after a reset");
+        assert_eq!(fold_ids(&t.z).len(), 1);
+        all_three_hold_one(&mut t, "after a reset");
     }
 }

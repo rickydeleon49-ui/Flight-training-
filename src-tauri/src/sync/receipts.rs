@@ -84,6 +84,62 @@ pub(crate) fn ensure_rate_receipts(
     Ok(added)
 }
 
+/// App-metadata key set once the one-time duplicate sweep has run (CARRY-3DEV).
+const FOLDS_SWEPT: &str = "card_folds_swept";
+
+/// One-time startup sweep: fold the duplicate copies of a rating a stored
+/// database already holds (for example an old build's path ids whose links are
+/// present), replay the affected items, derive the receipts, then set the
+/// marker. The caller's transaction holds the sync guard, so any error rolls the
+/// folds back WITH the marker and the next launch tries again. Own rows are
+/// never deleted (`fold_plan` keeps a local copy). Returns the rows folded plus the
+/// receipts it derived.
+fn sweep_duplicate_copies(conn: &Connection) -> rusqlite::Result<usize> {
+    let done: Option<i64> = conn
+        .query_row(
+            "SELECT 1 FROM app_metadata WHERE key = ?1",
+            [FOLDS_SWEPT],
+            |r| r.get(0),
+        )
+        .optional()?;
+    if done.is_some() {
+        return Ok(0);
+    }
+    let materials: Vec<String> = conn
+        .prepare("SELECT DISTINCT source_material_id FROM card_versions ORDER BY 1")?
+        .query_map([], |r| r.get(0))?
+        .collect::<Result<_, _>>()?;
+    let to_sql = |e: crate::sync::apply::ApplyError| match e {
+        crate::sync::apply::ApplyError::Db(e) => e,
+        other => rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_ERROR),
+            Some(other.to_string()),
+        ),
+    };
+    let mut folded = 0;
+    let mut items: Vec<String> = Vec::new();
+    for material in &materials {
+        for (item, ids) in crate::sync::apply::fold_material(conn, material).map_err(to_sql)? {
+            folded += ids.len();
+            items.push(item);
+        }
+    }
+    #[cfg(test)]
+    if crate::sync::apply::fault::hit("sweep") {
+        return Err(rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_ERROR),
+            Some("test fault after the fold".to_string()),
+        ));
+    }
+    crate::sync::apply::replay_items(conn, &items).map_err(to_sql)?;
+    let receipts = ensure_rate_receipts(conn, None)?;
+    conn.execute(
+        "INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?1, '1')",
+        [FOLDS_SWEPT],
+    )?;
+    Ok(folded + receipts)
+}
+
 /// Startup repair for a database that took ratings before receipts were
 /// derived: adds the missing receipts and raises any state revision that is
 /// below its current rating count, and re-derives the event states of synced
@@ -119,7 +175,37 @@ pub(crate) fn repair_synced_ratings(conn: &mut Connection) -> rusqlite::Result<u
         "INSERT INTO app_metadata (key, value) VALUES (?1, 'repair')",
         [GUARD],
     )?;
-    let mut changed = crate::sync::apply::refold_synced_items(&tx)?;
+    // A ledger row that is also a live event is dead weight the resolver ignores.
+    tx.execute(
+        "DELETE FROM card_review_event_folds WHERE id IN (SELECT id FROM card_review_events)",
+        [],
+    )?;
+    // The sweep runs in its own savepoint: a material that always fails to fold
+    // must not block the repairs below. The marker stays unset, so the next
+    // launch retries.
+    let mut changed = 0;
+    tx.execute_batch("SAVEPOINT folds_sweep")?;
+    match sweep_duplicate_copies(&tx).and_then(|n| {
+        // Pending claims whose material is gone can never be used.
+        let pruned = tx.execute(
+            "DELETE FROM card_version_pending_claims
+             WHERE source_material_id NOT IN (SELECT id FROM study_materials)",
+            [],
+        )?;
+        Ok(n + pruned)
+    }) {
+        Ok(n) => {
+            tx.execute_batch("RELEASE folds_sweep")?;
+            changed += n;
+        }
+        Err(e) => {
+            log::warn!(
+                "Startup repair: the duplicate sweep failed and will retry next launch: {e}"
+            );
+            tx.execute_batch("ROLLBACK TO folds_sweep; RELEASE folds_sweep")?;
+        }
+    }
+    changed += crate::sync::apply::refold_synced_items(&tx)?;
     changed += ensure_rate_receipts(&tx, None)?;
     changed += tx.execute(
         "UPDATE card_review_state SET revision = (

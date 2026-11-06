@@ -37,8 +37,10 @@ const fn t(name: &'static str, primary_key: &'static str, rule: MergeRule) -> Sy
 }
 
 /// Every foreign-key parent comes before its children (S-2c deletes in reverse).
-/// Never list `*_operations`, `app_metadata` or `material_operation_claims`:
-/// they stay local.
+/// Never list `*_operations`, `app_metadata`, `material_operation_claims` or
+/// `card_review_event_folds` (the local fold ledger of duplicate rating copies,
+/// migration 0035) or `card_version_pending_claims` (bare card-version claims
+/// waiting for their cards): they stay local.
 pub(crate) const SYNC_TABLES: &[SyncTable] = &[
     t("study_materials", "id", MergeRule::Lww),
     // Content-addressed and write-once: the id is the hash of the descriptor.
