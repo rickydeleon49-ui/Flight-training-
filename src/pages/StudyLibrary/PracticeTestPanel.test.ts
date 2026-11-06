@@ -180,7 +180,10 @@ describe("PracticeTestPanel", () => {
     await screen.findByText("Correct");
     // A click can also leave focus on the body; Enter still advances.
     document.activeElement instanceof HTMLElement && document.activeElement.blur();
-    fireEvent.keyDown(document.body, {key:"Enter"});
+    // The document shortcut re-arms in a passive effect after "Correct" commits;
+    // under load the press can land first and be ignored. Wait until Enter is
+    // handled (default prevented) rather than racing that effect.
+    await waitFor(() => expect(fireEvent.keyDown(document.body, {key:"Enter"})).toBe(false));
     await waitFor(async () => expect(await repos.practiceSessions.getCurrentAttempt("mat-1")).toBeNull());
   });
 
