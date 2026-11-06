@@ -580,6 +580,8 @@ function MaterialDetailPage() {
   const manualSet = studySet?.provider === "manual";
   const showStudyGuide =
     Boolean(material?.filePath || studySet) && !(manualSet && !studySet.summary && studySet.sections.length === 0 && studySet.flashcards.length > 0);
+  // A cards-only set the student wrote hides the Study guide card, so its Edit cards button lives in the Flashcards card.
+  const cardsOnlyManual = Boolean(studySet) && !showStudyGuide && manualSet;
   const setHasHerItems = needsRegenerationReview(studySet);
   const importedTest = practiceTest?.provider === "import";
   const hasImported = importedSet || importedTest;
@@ -1368,6 +1370,17 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap" style={{ alignItems: "center" }}>
+                      {cardsOnlyManual && deviceCan().editStudyMaterial ? (
+                        <Button
+                          size="small"
+                          variant="secondary"
+                          aria-pressed={editingSet}
+                          disabled={isGeneratingAny}
+                          onClick={() => setEditingSet((open) => !open)}
+                        >
+                          {editingSet ? "Done editing" : "Edit cards"}
+                        </Button>
+                      ) : null}
                       {pageNotesAvailable ? <Button size="small" onClick={() => {
                         flashcardRoute.current = true;
                         flashcardReturnTab.current = tab;
@@ -1388,6 +1401,11 @@ function MaterialDetailPage() {
                     </div>
                   }
                 />
+                {cardsOnlyManual && editingSet && studySet && deviceCan().editStudyMaterial ? (
+                  <div className="stack stack--5" style={{ padding: "var(--space-4) var(--space-5) 0" }}>
+                    <StudySetEditor material={material} studySet={studySet} />
+                  </div>
+                ) : null}
                 {canOfferGemini && !(deviceCan().splitFiles && isOverLimit) ? (
                   <div
                     data-gemini-cards

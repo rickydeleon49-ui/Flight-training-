@@ -721,7 +721,7 @@ export function Settings() {
     if (!target) return;
     const fold = target.closest("details");
     if (fold) fold.open = true;
-    (fold ? fold.querySelector("summary") ?? target : target).scrollIntoView?.({ block: "start" });
+    (fold ?? target).scrollIntoView?.({ block: "start" });
     (fold ? (fold.querySelector("summary") as HTMLElement | null) ?? target : target).focus();
   };
 

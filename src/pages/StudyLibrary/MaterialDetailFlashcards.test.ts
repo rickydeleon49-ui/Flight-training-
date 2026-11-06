@@ -284,6 +284,25 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     fireEvent.click(screen.getByRole("button", { name: "Done editing" }));
   });
 
+  it("R13D: a manual cards-only set shows one Edit cards button in the Flashcards card, and wording can be edited and saved", async () => {
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Weather sample A", summary: "", sections: [],
+      flashcards: [{ front: "Q1", back: "A1", sourcePage: null }], sourceNotes: "", model: "" });
+    await db.execute("UPDATE ai_study_sets SET provider = 'manual' WHERE source_material_id = 'mat-pdf'");
+    await openMaterial("mat-pdf");
+    expect(document.getElementById("material-study-guide")).toBeNull();
+    const open = await screen.findByRole("button", { name: "Edit cards" });
+    expect(screen.getAllByRole("button", { name: "Edit cards" })).toHaveLength(1);
+    expect(document.getElementById("material-flashcards")!.contains(open)).toBe(true);
+    fireEvent.click(open);
+    const editor = within(await screen.findByRole("region", { name: "Edit these cards" }));
+    expect(editor.queryByText("Summary")).toBeNull();
+    fireEvent.click(editor.getAllByRole("button", { name: "Edit" })[0]!);
+    const dialog = within(await screen.findByRole("dialog"));
+    fireEvent.change(dialog.getByLabelText("Question"), { target: { value: "Q1 reworded" } });
+    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
+    await waitFor(async () => expect((await repos.documents.listAiStudySets())[0]!.flashcards[0]!.front).toBe("Q1 reworded"));
+  });
+
   it("R13C: a set with guide content keeps Edit study guide and no Edit cards", async () => {
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-pdf", title: "Guide", summary: "A guide", sections: [],
       flashcards: [{ front: "Q1", back: "A", sourcePage: 1 }], sourceNotes: "", model: "old" });
