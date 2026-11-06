@@ -165,7 +165,7 @@ it("lists picture cards in a closed Edit section below the card viewer and edits
   const question = await screen.findByRole("textbox", { name: "Question" }) as HTMLInputElement;
   expect(question.value).toBe("Second picture?");
   expect((screen.getByRole("textbox", { name: "Answer" }) as HTMLInputElement).value).toBe("Bravo");
-  expect(screen.getByText(/New or changed cards start fresh reviews for this set; earlier reviews stay saved/)).toBeTruthy();
+  expect(screen.getByText(/Changing a card starts this set's reviews fresh. Adding cards keeps them/)).toBeTruthy();
   fireEvent.change(question, { target: { value: "Updated second picture?" } });
   fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

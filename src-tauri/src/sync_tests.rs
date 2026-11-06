@@ -8958,3 +8958,64 @@ mod visual_sync {
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM study_materials"), 0);
     }
 }
+
+mod r13a_set_counts {
+    use super::*;
+    use crate::sync::progress::count_mac_changes;
+    use crate::sync::send::MacCounts;
+
+    fn version(seq: i64, id: &str, set: &str, active: i64, op: Op) -> Change {
+        change(
+            seq,
+            "card_versions",
+            id,
+            op,
+            row(&[
+                ("id", json!(id)),
+                ("source_material_id", json!(set)),
+                ("is_active", json!(active)),
+            ]),
+        )
+    }
+
+    /// One set edited: a new version arrives and the old one is switched off.
+    fn replaced_set() -> Vec<Change> {
+        vec![
+            version(1, "v2", "m1", 1, Op::Insert),
+            version(2, "v1", "m1", 0, Op::Update),
+        ]
+    }
+
+    #[test]
+    fn mac_counts_a_replaced_set_once() {
+        let mut mac = MacCounts::default();
+        for c in replaced_set() {
+            mac.add(&c);
+        }
+        assert_eq!(mac.card_sets, 1);
+        let mut two = MacCounts::default();
+        two.add(&version(1, "v3", "m2", 1, Op::Insert));
+        mac.merge(&two);
+        mac.merge(&two);
+        assert_eq!(mac.card_sets, 2);
+    }
+
+    #[test]
+    fn phone_counts_a_replaced_set_once_and_matches_the_mac() {
+        let conn = migrated();
+        conn.execute(
+            "INSERT INTO study_materials (id, title, created_at, updated_at) VALUES ('m1','S','2026-11-01T10:00:00.000Z','2026-11-01T10:00:00.000Z')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO card_versions (id,source_material_id,content_hash,card_count,provider,created_at,is_active) VALUES ('v1','m1','h',1,'import','T',1)",
+            [],
+        )
+        .unwrap();
+        let changes = replaced_set();
+        assert_eq!(count_mac_changes(&conn, &changes, "peer").card_sets, 1);
+        // Only the older version is switched off here: still one set.
+        assert_eq!(count_mac_changes(&conn, &changes[1..], "peer").card_sets, 1);
+    }
+}
