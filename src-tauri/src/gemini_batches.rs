@@ -342,7 +342,7 @@ pub(super) async fn generate(
             }
             card_batch_prompt(unit, target, &previous, safety)
         };
-        let mut answer = study_aid_request(ctx, source, &prompt, if unit == 0 { 8192 } else { 4096 }, unit == 0).await.map_err(|message| {
+        let mut answer = study_aid_request(ctx, source, &prompt, AID_OUTPUT_TOKENS, unit == 0).await.map_err(|message| {
             if message == gemini_cancel::CANCELLED && gemini_jobs::with(root, |j| j.admits(&id)) {
                 "The job reached its request allowance, or its request reservation could not be kept. The earlier draft is kept; nothing was published.".to_string()
             } else { message }
@@ -852,16 +852,13 @@ mod tests {
                 .map(|r| r.body.len())
                 .sum();
             assert_eq!(upload_bytes, r.source.bytes.len());
-            for (i, req) in log.iter().filter(|r| r.is_generate()).enumerate() {
+            for req in log.iter().filter(|r| r.is_generate()) {
                 let v = req.json();
                 assert!(v
                     .pointer("/contents/0/parts/1/file_data/file_uri")
                     .is_some());
                 assert!(v.to_string().find("inline_data").is_none());
-                assert_eq!(
-                    v["generationConfig"]["maxOutputTokens"],
-                    if i == 0 { 8192 } else { 4096 }
-                );
+                assert_eq!(v["generationConfig"]["maxOutputTokens"], AID_OUTPUT_TOKENS);
             }
             println!("MEASURE target={n} upload_bytes={upload_bytes} source_bytes={} generation_requests={} all_http={} admission_checks={}",r.source.bytes.len(), r.count(), log.len(), draft.admissions);
         }

@@ -1526,6 +1526,13 @@ pub async fn generate_study_aid(
     .map_err(|message| provider.wording(message))
 }
 
+/// Output allowance for one study-aid or practice-test request (guide,
+/// card batch, test). Gemini 3.x thinks by default and that thinking counts in
+/// the same allowance as the answer, so the old 8,192/4,096 ran out on a
+/// 10-page PDF (MAX_TOKENS). Below the kit's 49,152; Gemini Flash allows 65,536.
+/// Claude ignores it (provider/claude.rs keeps its own 16,000 max_tokens).
+pub(crate) const AID_OUTPUT_TOKENS: u32 = 32_768;
+
 /// The study guide and flashcards, from the selected source.
 #[cfg(test)]
 async fn study_aid_with(
@@ -1543,7 +1550,7 @@ async fn study_aid_with(
          This is a study aid, not operational flight instruction; remind the learner to verify current FAA, aircraft, \
          flight-school, and instructor guidance.";
 
-    study_aid_request(ctx, source, prompt, 8192, false).await
+    study_aid_request(ctx, source, prompt, AID_OUTPUT_TOKENS, false).await
 }
 
 async fn study_aid_request(
@@ -1934,7 +1941,7 @@ async fn practice_test_with(
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "responseSchema": crate::provider::AnyProvider::default().translate_schema(&crate::provider::schemas::practice_test()),
-                "maxOutputTokens": 8192
+                "maxOutputTokens": AID_OUTPUT_TOKENS
             }
         })
     };
