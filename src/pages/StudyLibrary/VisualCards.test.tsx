@@ -442,3 +442,36 @@ it("POLISH-04 says Picture card saved. in Edit study guide after moving a cover,
   expect(status.getAttribute("role")).toBe("status");
   expect(screen.queryByRole("textbox", { name: "Question" })).toBeNull();
 });
+
+it("PICSAVE-01 refuses a second card on the same part of the page and saves once the box moves", async () => {
+  const save = vi.spyOn(db, "saveStudySetAtomically");
+  mount();
+  await draft();
+  fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(save).toHaveBeenCalledTimes(1);
+  await draft();
+  fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
+  const alert = await screen.findByRole("alert");
+  expect(alert.textContent).toBe("You already have a picture card for this part of the page. Move or resize the box to make a different one.");
+  expect(alert.parentElement!.contains(screen.getByRole("button", { name: "Save picture card" }))).toBe(true);
+  expect(save).toHaveBeenCalledTimes(1);
+  const x = screen.getByRole("dialog").querySelector('input[type="number"]') as HTMLInputElement;
+  fireEvent.change(x, { target: { value: String(Number(x.value) + 40) } });
+  expect((screen.getByRole("button", { name: "Save picture card" }) as HTMLButtonElement).disabled).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Save picture card" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(await db.select("SELECT COUNT(*) AS n FROM visual_card_regions")).toEqual([{ n: 2 }]);
+});
+
+it("PICSAVE-01 shows a save error next to the Save button", async () => {
+  vi.spyOn(db, "saveStudySetAtomically").mockRejectedValue(new StudySetSaveError("INVALID_ARGUMENT"));
+  mount();
+  await draft();
+  const save = screen.getByRole("button", { name: "Save picture card" });
+  fireEvent.click(save);
+  const alert = await screen.findByRole("alert");
+  expect(alert.parentElement!.contains(save)).toBe(true);
+  expect(screen.getByRole("dialog").querySelector(".dialog__footer")!.contains(alert)).toBe(true);
+});
