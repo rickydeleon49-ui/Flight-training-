@@ -22,7 +22,7 @@ use zip::{CompressionMethod, ZipArchive, ZipWriter};
 use crate::phone_work::UnsavedPhoneWork;
 use crate::sync::blobs::{self, BlobError, MaterialBlob};
 use crate::sync::bootstrap::bootstrap_in;
-use crate::sync::changeset::{self, Op};
+use crate::sync::changeset::{self, Change, Op};
 use crate::sync::export;
 
 pub(crate) const PROGRESS_FILE: &str = "My phone progress.hfdprogress";
@@ -127,18 +127,46 @@ pub struct MacCounts {
     pub card_sets: u32,
     pub practice_tests: u32,
     pub study_guides: u32,
+    /// The card sets already counted, so a new version and its switched-off
+    /// older version count once. Not shown to the student.
+    #[serde(skip)]
+    card_set_ids: BTreeSet<String>,
 }
 
 impl MacCounts {
-    pub(crate) fn add(&mut self, table: &str, op: Op) {
+    pub(crate) fn add(&mut self, change: &Change) {
+        let (table, op) = (change.table.as_str(), change.op);
         match (table, op) {
             ("study_materials", Op::Delete) => self.removed += 1,
             (_, Op::Delete) => {}
             ("study_materials", _) => self.materials += 1,
-            ("card_versions", _) => self.card_sets += 1,
+            ("card_versions", _) => {
+                let set = change
+                    .row
+                    .as_ref()
+                    .and_then(|r| r.get("source_material_id"))
+                    .and_then(Value::as_str)
+                    .unwrap_or(&change.row_id);
+                if self.card_set_ids.insert(set.to_string()) {
+                    self.card_sets += 1;
+                }
+            }
             ("practice_test_versions", _) => self.practice_tests += 1,
             ("ai_study_sets", _) => self.study_guides += 1,
             _ => {}
+        }
+    }
+
+    /// Adds another batch, counting a card set that is in both once.
+    pub(crate) fn merge(&mut self, more: &MacCounts) {
+        self.materials += more.materials;
+        self.removed += more.removed;
+        self.practice_tests += more.practice_tests;
+        self.study_guides += more.study_guides;
+        for set in &more.card_set_ids {
+            if self.card_set_ids.insert(set.clone()) {
+                self.card_sets += 1;
+            }
         }
     }
 }
@@ -804,7 +832,7 @@ fn send_side_inner(
                         add_kind(&mut counts, &change.table);
                     }
                 }
-                Side::Mac => mac.add(&change.table, change.op),
+                Side::Mac => mac.add(change),
             }
         }
         write_outbox_file(&outbox_dir, &exp.file.file_name, &exp.file.bytes)?;

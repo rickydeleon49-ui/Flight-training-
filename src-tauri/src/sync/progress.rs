@@ -589,16 +589,38 @@ fn delete_would_win(conn: &Connection, change: &Change, peer: &str) -> bool {
     }
 }
 
+/// Whether a card version already here is switched on or off by `change`.
+/// The set still counts once, however many of its versions change.
+fn switches_version(conn: &Connection, change: &Change) -> bool {
+    if change.table != "card_versions" {
+        return false;
+    }
+    let incoming = change
+        .row
+        .as_ref()
+        .and_then(|r| r.get("is_active"))
+        .and_then(|v| v.as_i64());
+    let local: Option<i64> = conn
+        .query_row(
+            "SELECT is_active FROM card_versions WHERE id = ?1",
+            [&change.row_id],
+            |r| r.get(0),
+        )
+        .optional()
+        .unwrap_or(None);
+    matches!((incoming, local), (Some(a), Some(b)) if a != b)
+}
+
 /// What a Mac file would add on this phone, by the kinds the Mac card shows.
-fn count_mac_changes(conn: &Connection, changes: &[Change], peer: &str) -> MacCounts {
+pub(crate) fn count_mac_changes(conn: &Connection, changes: &[Change], peer: &str) -> MacCounts {
     let mut counts = MacCounts::default();
     for change in changes {
         if change.op == Op::Delete {
             if change.table == "study_materials" && delete_would_win(conn, change, peer) {
                 counts.removed += 1;
             }
-        } else if would_change_row(conn, change) {
-            counts.add(&change.table, change.op);
+        } else if would_change_row(conn, change) || switches_version(conn, change) {
+            counts.add(change);
         }
     }
     counts
@@ -782,11 +804,7 @@ fn import_progress_file(
                     if outcome.written > 0 {
                         any_written = true;
                         add_counts(&mut counts, &these);
-                        mac.materials += these_mac.materials;
-                        mac.removed += these_mac.removed;
-                        mac.card_sets += these_mac.card_sets;
-                        mac.practice_tests += these_mac.practice_tests;
-                        mac.study_guides += these_mac.study_guides;
+                        mac.merge(&these_mac);
                     }
                 }
             }
