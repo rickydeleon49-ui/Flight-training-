@@ -582,6 +582,20 @@ describe("Make a card from the Flashcards panel (POLISH-087)",()=>{
   });
 });
 
+describe("Make a card from a title-only bookmark (POLISH-088)",()=>{
+  it("opens with Question empty but keeps the From page link",async()=>{
+    await seed();
+    await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000003',?,3,'iv',?,'Page two','','verified','x','x')",[M,A]);
+    renderDetail();const scope=await panel();
+    fireEvent.click(await within(scope).findByRole("button",{name:"Make a card"}));
+    const dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await waitFor(()=>expect((within(dialog).getByLabelText("Source page (optional)") as HTMLInputElement).value).toBe("3"));
+    expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("");
+    expect((within(dialog).getByLabelText("Answer") as HTMLTextAreaElement).value).toBe("");
+    expect(within(dialog).getByText(/From page 3 \(printed page iv\)/)).toBeTruthy();
+  });
+});
+
 describe("Make a question from a page note (PDF-STUDY-01d)",()=>{
   for(const first of [true,false]) it(`prefills with no answer, Cancel writes nothing, blank answer can't save, double Save ${first ? 'creates the first test' : 'appends'}`,async()=>{
     await seed();

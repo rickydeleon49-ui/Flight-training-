@@ -44,7 +44,7 @@ it.each(["backup", "restore"])("a %s result opens Backups and data; she can clos
   let reject!: (reason: string) => void;
   vi.spyOn(backups, operation === "backup" ? "chooseCompleteBackupDestination" : "chooseCompleteBackup").mockImplementation(() => new Promise((_, no) => { reject = no; }));
   await open();
-  fireEvent.click(screen.getByText("Backups and data"));
+  fireEvent.click(document.getElementById("settings-backups-summary")!);
   fireEvent.click(screen.getByRole("button", { name: operation === "backup" ? "Save complete backup" : "Restore backup" }));
   fold("backups").open = false;
   await act(async () => { reject("Synthetic backup failure"); });
@@ -103,4 +103,19 @@ it("an asynchronous provider error opens Advanced", async () => {
   await open();
   await screen.findByRole("alert");
   await waitFor(() => expect(fold("advanced").open).toBe(true));
+});
+
+it("POLISH-088: a Jump to row moves focus to the section heading and opens a fold", async () => {
+  await open();
+  const nav = screen.getByRole("navigation", { name: "Jump to" });
+  const links = Array.from(nav.querySelectorAll("a")).map((a) => a.textContent);
+  expect(links).toEqual(expect.arrayContaining(["About you", "Where you train", "Backups and data", "Advanced", "About & legal"]));
+  fireEvent.click(screen.getByRole("link", { name: "Where you train" }));
+  expect(document.activeElement).toBe(screen.getByRole("heading", { name: "Where you train" }));
+  expect(fold("backups").open).toBe(false);
+  fireEvent.click(screen.getByRole("link", { name: "Backups and data" }));
+  expect(fold("backups").open).toBe(true);
+  expect(document.activeElement?.textContent).toBe("Backups and data");
+  fireEvent.click(screen.getByRole("link", { name: "Advanced" }));
+  expect(fold("advanced").open).toBe(true);
 });

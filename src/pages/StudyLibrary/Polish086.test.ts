@@ -131,6 +131,21 @@ describe("POLISH-086 guide-pack friction", () => {
     await waitFor(() => expect(document.querySelector("[data-cards-status]")?.textContent).toBe("Gemini found 1 more card in this file."));
   });
 
+  it("POLISH-088: the Gemini-sending buttons sit in their own row, apart from the local card buttons", async () => {
+    await material("mat-a", "Material A");
+    await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", title: "Guide", summary: "S.", sections: [], flashcards: three, sourceNotes: "", model: "gemini-3.5-flash" });
+    await open("/study/mat-a");
+    const make = await screen.findByRole("button", { name: /Make new cards with/ });
+    const more = await screen.findByRole("button", { name: "Make 10 more cards" });
+    const group = make.closest("[data-gemini-cards]");
+    expect(group).not.toBeNull();
+    expect(group!.contains(more)).toBe(true);
+    expect(make.closest("header")).toBeNull();
+    expect(more.closest("header")).toBeNull();
+    const header = (await screen.findByRole("heading", { name: "Flashcards" })).closest("header")!;
+    expect(header.contains(make)).toBe(false);
+  });
+
   it("item 2: fewer cards than the target are explained once", async () => {
     await material("mat-a", "Material A");
     await repos.documents.saveAiStudySet({ sourceMaterialId: "mat-a", title: "Guide", summary: "S.", sections: [], flashcards: three, sourceNotes: "", model: "gemini-3.5-flash" });
