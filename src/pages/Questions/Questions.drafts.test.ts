@@ -25,6 +25,7 @@ import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/node
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 import { QUESTION_PAGE_SIZE, Questions } from "./Questions";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * Seeding and rendering hundreds of questions takes about 2.3 s on its own,
@@ -44,6 +45,7 @@ vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () =
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -51,7 +53,7 @@ function Ready() {
 }
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, null, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await screen.findByRole("heading", { name: "Questions" });
 }
 

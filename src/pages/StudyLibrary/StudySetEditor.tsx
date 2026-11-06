@@ -722,6 +722,8 @@ export function StudySetHistory({ material }: { material: StudyMaterial }) {
         destructive={false}
         pending={busy}
         pendingLabel="Restoring…"
+        // Restore needs the guide as it is now; until that read lands a click would do nothing.
+        confirmDisabled={restoreExpected === undefined}
         onConfirm={() => void restore()}
         onCancel={() => {
           if (!busyRef.current) setRestoring(null);

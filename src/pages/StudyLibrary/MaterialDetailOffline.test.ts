@@ -20,6 +20,7 @@ import { MaterialDetail } from "@/pages/StudyLibrary/MaterialDetail";
 import * as documentService from "@/services/documents";
 import * as geminiService from "@/services/gemini";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
@@ -28,6 +29,7 @@ let context: ReturnType<typeof useAppData>;
 let navigate: ReturnType<typeof useNavigate>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   navigate = useNavigate();
   return null;
 }
@@ -109,7 +111,7 @@ async function seed(material: Partial<NewMaterial> = {}) {
 
 async function open(id = "mat-saved") {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [`/study/${id}`] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await screen.findByRole("heading", { name: "VOR navigation handout" });
 }
 
@@ -281,7 +283,7 @@ describe("A4: generation eligibility stays separate from saved content", () => {
     let finish!: (aid: geminiService.GeneratedStudyAid) => void;
     studyAid.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
     render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study/mat-other"] }, h(Probe), h(Ready))));
-    await waitFor(() => expect(context.status).toBe("ready"));
+    await waitForReadyAfterEffects();
     fireEvent.click(await screen.findByRole("button", { name: "Create study aid" }));
     fireEvent.click(await screen.findByRole("button", { name: "Send to Gemini" }));
     await waitFor(() => expect(studyAid).toHaveBeenCalledTimes(1));

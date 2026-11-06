@@ -16,6 +16,7 @@ import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
 import { StudySetSaveError } from "@/data/persistenceErrors";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * GEN-REL-02: a generation belongs to the app, not to the page. Its answer is
@@ -36,6 +37,7 @@ let navigate: ReturnType<typeof useNavigate>;
 
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   navigate = useNavigate();
   return null;
 }
@@ -60,7 +62,7 @@ function Ready() {
 
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 function deferred<T>() {

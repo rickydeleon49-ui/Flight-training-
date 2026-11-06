@@ -23,6 +23,7 @@ import {
   IMPORT_TEST_REGENERATE_WARNING,
   MaterialDetail,
 } from "./MaterialDetail";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -38,6 +39,7 @@ const ID = OPERATION.materialId;
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 
@@ -58,7 +60,7 @@ async function open(id: string) {
       ),
     ),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 /** Attach a (synthetic) file, the precondition for offering Gemini at all. */

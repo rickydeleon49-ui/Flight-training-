@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createNodeSqliteDatabase, type TestDatabase } from "@/data/testing/nodeSqliteDb";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 /**
  * QUIT-01: when the Rust side asks to settle before quitting, a deletion in
@@ -37,12 +38,13 @@ vi.mock("@tauri-apps/api/core", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 
 async function mount() {
   render(h(AppDataProvider, null, h(Probe)));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   await waitFor(() => expect(quitHandler).not.toBeNull());
 }
 /** The close request, as the Rust side sends it. */

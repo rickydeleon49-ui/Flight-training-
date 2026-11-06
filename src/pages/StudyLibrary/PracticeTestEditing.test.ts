@@ -13,6 +13,7 @@ import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
 import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES } from "@/data/persistenceErrors";
 import { buildPracticeEditOperation, draftFromSnapshot } from "@/data/practiceAuthoringDraft";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 // Synthetic materials only; all authoring saves use the real SQLite transaction.
 let db: TestDatabase;
@@ -24,6 +25,7 @@ vi.mock("@/data", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -48,7 +50,7 @@ function Ready() {
 
 async function open(path: string) {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 
 let repos: ReturnType<typeof createRepositories>;

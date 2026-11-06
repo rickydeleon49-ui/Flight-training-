@@ -21,6 +21,7 @@ import { PilotToolkit } from "@/pages/PilotToolkit/PilotToolkit";
 import { Settings } from "@/pages/Settings/Settings";
 import { JournalForm } from "@/pages/FlightJournal/JournalForm";
 import { AppDataProvider, useAppData } from "./AppDataContext";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({
@@ -31,6 +32,7 @@ let context: ReturnType<typeof useAppData>;
 let navigate: ReturnType<typeof useNavigate>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   navigate = useNavigate();
   return null;
 }
@@ -57,7 +59,7 @@ async function open(path: string) {
       h(MemoryRouter, { initialEntries: [path] }, h(Probe), h(Ready)),
     ),
   );
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 beforeEach(async () => {
   localStorage.clear();

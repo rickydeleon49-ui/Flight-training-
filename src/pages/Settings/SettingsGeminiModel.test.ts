@@ -13,6 +13,7 @@ import * as appDataApi from "@/data";
 import * as providerService from "@/services/provider";
 import * as geminiService from "@/services/gemini";
 import * as platformApi from "@/services/platform";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 // These tests run with isTauri() false; the AI card is shown as it was before geminiKey existed.
 const keepCardVisible = () => {
@@ -29,6 +30,7 @@ vi.mock("@/data", () => ({
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready() {
@@ -38,7 +40,7 @@ function Ready() {
 }
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/settings"] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   (document.getElementById("settings-advanced") as HTMLDetailsElement).open = true;
 }
 

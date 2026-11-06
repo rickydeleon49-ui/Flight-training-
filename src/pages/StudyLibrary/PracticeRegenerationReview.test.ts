@@ -13,17 +13,18 @@ import { MaterialDetail } from "./MaterialDetail";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 import * as geminiService from "@/services/gemini";
 import * as documentService from "@/services/documents";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 let db: TestDatabase;
 vi.mock("@/data", () => ({ getDatabase: () => Promise.resolve(db), isTauri: () => false }));
 let context: ReturnType<typeof useAppData>;
-function Probe() { context = useAppData(); return null; }
+function Probe() { context = useAppData(); useStatusAfterEffects(context.status); return null; }
 function Ready() {
   return useAppData().status === "ready" ? h(Routes, null, h(Route, { path: "/study/:materialId", element: h(MaterialDetail) })) : null;
 }
 async function open() {
   render(h(AppDataProvider, null, h(MemoryRouter, { initialEntries: ["/study/mat"] }, h(Probe), h(Ready))));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
 }
 configure({ asyncUtilTimeout: 10_000 });
 let repos: ReturnType<typeof createRepositories>;

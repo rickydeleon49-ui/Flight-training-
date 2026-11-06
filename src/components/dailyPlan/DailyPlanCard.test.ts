@@ -20,6 +20,7 @@ import type { NextAction } from "@/domain/types";
 import { AppDataProvider, useAppData } from "@/state/AppDataContext";
 
 import { DailyPlanCard } from "./DailyPlanCard";
+import { useStatusAfterEffects, waitForReadyAfterEffects } from "@/testing/afterEffects";
 
 const TODAY = "2026-09-25";
 const TOMORROW = "2026-09-26";
@@ -93,6 +94,7 @@ afterEach(() => {
 let context: ReturnType<typeof useAppData>;
 function Probe() {
   context = useAppData();
+  useStatusAfterEffects(context.status);
   return null;
 }
 function Ready({ today }: { today: string }) {
@@ -104,7 +106,7 @@ function tree(today: string) {
 }
 async function mount(today = TODAY) {
   const view = render(tree(today));
-  await waitFor(() => expect(context.status).toBe("ready"));
+  await waitForReadyAfterEffects();
   return view;
 }
 
