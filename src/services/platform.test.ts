@@ -12,9 +12,11 @@ function stub(userAgent: string, maxTouchPoints = 0) {
 afterEach(() => { vi.unstubAllGlobals(); mocks.isTauri.mockReturnValue(true); });
 
 describe("platform", () => {
-  it("the send card is off until the iPhone app is ready", () => {
-    expect(IPHONE_SEND_ENABLED).toBe(false);
+  it("the Mac app can send to the iPhone", () => {
+    expect(IPHONE_SEND_ENABLED).toBe(true);
     stub("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
+    expect(deviceCan().sendToIphone).toBe(true);
+    stub("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)", 5);
     expect(deviceCan().sendToIphone).toBe(false);
   });
 
