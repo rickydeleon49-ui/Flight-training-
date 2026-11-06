@@ -1238,7 +1238,7 @@ pub(crate) fn version_is_verified(conn: &Connection, material: &str, version_id:
 /// Which of `candidates` (event ids just inserted by a sync apply) are
 /// duplicate copies of a rating the item already holds: another event on the
 /// same item with the same generation, time and rating whose root (all rows now
-/// present) is the same. Of two candidates the lowest id stays; a candidate
+/// present) is the same. Of two candidates the canonical id stays, then the lowest; a candidate
 /// is never kept over a non-candidate. A root that cannot be resolved is its
 /// own root, so such a row is never reported. Sorted ids, current generation.
 pub(crate) fn duplicate_copies(

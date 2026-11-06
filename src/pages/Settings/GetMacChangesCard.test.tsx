@@ -2,7 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ choose: vi.fn(), get: vi.fn() }));
+const mocks = vi.hoisted(() => ({ choose: vi.fn(), get: vi.fn(), refresh: vi.fn() }));
+vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ refresh: mocks.refresh }) }));
 vi.mock("@/services/macChanges", async (original) => ({
   ...(await original<typeof import("@/services/macChanges")>()),
   chooseMacChangesFile: mocks.choose,
@@ -30,6 +31,8 @@ afterEach(cleanup);
 beforeEach(() => {
   mocks.choose.mockReset();
   mocks.get.mockReset();
+  mocks.refresh.mockReset();
+  mocks.refresh.mockResolvedValue(undefined);
 });
 
 describe("GetMacChangesCard", () => {
@@ -43,6 +46,18 @@ describe("GetMacChangesCard", () => {
     expect(status.textContent).toContain("2 PDFs copied.");
     expect(status.textContent).toContain("1 PDF from your Mac isn't here yet.");
     expect(mocks.get).toHaveBeenCalledWith("/f/Changes from my Mac.hfdprogress");
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the Brought in line when the reload fails", async () => {
+    mocks.choose.mockResolvedValue("/f");
+    mocks.get.mockResolvedValue(got);
+    mocks.refresh.mockRejectedValue(new Error("boom"));
+    render(<GetMacChangesCard />);
+    fireEvent.click(button());
+    expect((await screen.findByRole("status")).textContent).toContain("Brought in from your Mac");
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("says when the file was already in", async () => {
@@ -67,6 +82,7 @@ describe("GetMacChangesCard", () => {
     render(<GetMacChangesCard />);
     fireEvent.click(button());
     expect((await screen.findByRole("alert")).textContent).toContain("Send my progress to the Mac first");
+    expect(mocks.refresh).not.toHaveBeenCalled();
   });
 
   it("uses no developer words", () => {

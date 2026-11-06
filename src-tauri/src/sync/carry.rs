@@ -23,7 +23,8 @@
 //!   root id wins. That tie is not order-independent if a device already holds
 //!   the higher root's copy, which needs two different ratings at the same
 //!   millisecond on matching cards. It is accepted.
-//! - Residual: an old-build path id whose intermediate copy is absent cannot be
+//! - Residual: an old-build path id, or a relayed copy that arrives before its
+//!   root with 3+ devices, whose intermediate copy is absent cannot be
 //!   resolved to its root (it counts as its own root), so apply's duplicate
 //!   pass cannot fold it and it can still count twice. Dropping an intermediate
 //!   path copy also degrades later resolution: a deeper old-build copy

@@ -2,7 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ choose: vi.fn(), run: vi.fn() }));
+const mocks = vi.hoisted(() => ({ choose: vi.fn(), run: vi.fn(), refresh: vi.fn() }));
+vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ refresh: mocks.refresh }) }));
 vi.mock("@/services/phoneProgress", async (original) => ({
   ...(await original<typeof import("@/services/phoneProgress")>()),
   choosePhoneProgressFile: mocks.choose,
@@ -19,6 +20,8 @@ afterEach(cleanup);
 beforeEach(() => {
   mocks.choose.mockReset();
   mocks.run.mockReset();
+  mocks.refresh.mockReset();
+  mocks.refresh.mockResolvedValue(undefined);
 });
 
 describe("GetPhoneProgressCard", () => {
@@ -38,6 +41,7 @@ describe("GetPhoneProgressCard", () => {
       "Brought in from your iPhone: 12 card reviews and 1 practice test.",
     );
     expect(mocks.run).toHaveBeenCalledWith("/x/My phone work.hfdbackup");
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalledTimes(1));
   });
 
   it("does nothing when she cancels", async () => {

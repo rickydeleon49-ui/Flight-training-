@@ -9496,7 +9496,8 @@ mod edit_carry {
         backup_ok(&a, "s12b");
     }
 
-    /// Residual, pinned: the path copy arrives one file BEFORE its intermediate.
+    /// Residual, pinned (old-build, or a relayed copy that arrives before its
+    /// root with 3+ devices): the path copy arrives one file BEFORE its intermediate.
     /// It cannot be resolved then, so it stays its own root; the later
     /// intermediate does not remove it (only rows inserted by an apply go).
     #[test]

@@ -595,7 +595,7 @@ impl<'a> Engine<'a> {
     /// (an intermediate copy may come later in the same file), delete an
     /// inserted event when its item holds another event of the same
     /// generation, time and rating with the same root. Only rows inserted by
-    /// this apply are ever removed (the lowest id stays between two of them).
+    /// this apply are ever removed (the canonical id stays, then the lowest, between two of them).
     /// Unlogged (the sync guard is held); the row's meta goes too.
     fn drop_duplicate_copies(&mut self) -> Result<(), ApplyError> {
         let mut by_material: BTreeMap<String, Vec<String>> = BTreeMap::new();
