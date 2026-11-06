@@ -1227,6 +1227,74 @@ pub(crate) fn root_event_id(conn: &Connection, material: &str, event_id: &str) -
     })
 }
 
+/// Whether `version_id` is stored for `material` with items that still hash to
+/// its `content_hash` (a missing picture link makes it false).
+pub(crate) fn version_is_verified(conn: &Connection, material: &str, version_id: &str) -> bool {
+    load_versions(conn, material)
+        .map(|v| v.iter().any(|v| v.version_id == version_id && v.verified))
+        .unwrap_or(false)
+}
+
+/// Which of `candidates` (event ids just inserted by a sync apply) are
+/// duplicate copies of a rating the item already holds: another event on the
+/// same item with the same generation, time and rating whose root (all rows now
+/// present) is the same. Of two candidates the lowest id stays; a candidate
+/// is never kept over a non-candidate. A root that cannot be resolved is its
+/// own root, so such a row is never reported. Sorted ids, current generation.
+pub(crate) fn duplicate_copies(
+    conn: &Connection,
+    material: &str,
+    candidates: &[String],
+) -> Check<Vec<String>> {
+    let generation = read_generation_conn(conn, material)?;
+    let events = load_events(conn, material, generation)?;
+    // Only the count is needed for the walk bound: no re-hash of every card.
+    let versions: usize = conn
+        .query_row(
+            "SELECT COUNT(*) FROM card_versions WHERE source_material_id = ?1",
+            [material],
+            |r| r.get::<_, i64>(0),
+        )
+        .map_err(storage)? as usize;
+    let by_key = events_by_key(&events);
+    let mut resolver = RootResolver::new(&events, &by_key, versions);
+    let wanted: std::collections::BTreeSet<&str> = candidates.iter().map(String::as_str).collect();
+    // Of two copies the canonical id (the root itself or carried(root, item))
+    // stays, then the lowest id: a device that already holds the root copy keeps it.
+    let rank_of = |i: usize, resolver: &mut RootResolver<'_>| {
+        let root = resolver.root(i);
+        let canonical = events[i].id == events[root].id
+            || events[i].id == carried_event_id(&events[root].id, &events[i].item_id);
+        (!canonical, events[i].id.clone())
+    };
+    let mut ordered: Vec<usize> = (0..events.len())
+        .filter(|&i| wanted.contains(events[i].id.as_str()))
+        .collect();
+    ordered.sort_by_key(|&i| rank_of(i, &mut resolver));
+    let mut dropped: std::collections::BTreeSet<usize> = std::collections::BTreeSet::new();
+    for &c in &ordered {
+        let key = (events[c].reviewed_at.as_str(), events[c].rating.as_str());
+        let Some(group) = by_key.get(&key) else {
+            continue;
+        };
+        let root = resolver.root(c);
+        let mine = rank_of(c, &mut resolver);
+        let beaten = group.iter().copied().any(|o| {
+            o != c
+                && !dropped.contains(&o)
+                && events[o].item_id == events[c].item_id
+                && resolver.root(o) == root
+                && (!wanted.contains(events[o].id.as_str()) || rank_of(o, &mut resolver) < mine)
+        });
+        if beaten {
+            dropped.insert(c);
+        }
+    }
+    let mut ids: Vec<String> = dropped.into_iter().map(|i| events[i].id.clone()).collect();
+    ids.sort();
+    Ok(ids)
+}
+
 fn read_generation_conn(conn: &Connection, material: &str) -> Check<i64> {
     conn.query_row(
         "SELECT generation FROM card_review_generations WHERE source_material_id = ?1",

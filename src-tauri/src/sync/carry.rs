@@ -1,53 +1,44 @@
-//! Carries synced ratings onto appended card versions during apply.
-//! A rating that reaches a device after it already holds a longer version
-//! (the old card list plus new cards at the end) is copied onto the matching
-//! cards of that version, with the same ids a local carry makes. It is
-//! unlogged and deterministic (a pure function of versions and events), so
-//! both devices derive identical rows. It writes no receipts: apply's
-//! `ensure_rate_receipts` derives them after the run. Picture cards take part:
-//! their region id is part of the card compared (once its link is present), so
-//! a picture never matches a plain card or a different picture.
+//! Carries synced ratings onto the active card version during apply (R13b2).
+//!
+//! One rule for local saves and sync: a rating on ANY other stored version of
+//! a material is copied, card by card (`card_reviews::match_cards`: the k-th
+//! occurrence of a card maps to the k-th), onto the material's ACTIVE version.
+//! This is `card_reviews::carry_into(.., logged = false)`, the same engine a
+//! local save runs, so both devices derive identical rows. Ids are
+//! `carried_event_id(root, dst_item)` where root is the original rating, so
+//! every path to a card gives the same id. The pass is unlogged and
+//! deterministic (a pure function of versions, events and the active claim):
+//! it writes no receipts, because apply's `ensure_rate_receipts` derives them
+//! after the run. Picture cards take part: their region id is part of the card
+//! compared, and a version whose recomputed hash differs from its stored hash
+//! (for example a picture whose link is still missing) is never a source.
+//!
+//! - Active only: with no active version nothing is carried. Inactive versions
+//!   never gain rows here. They may differ between devices (one holds copies
+//!   made while it was active, the other does not) but never hold duplicates.
+//! - Union, never deleted: rows carried into a version stay there after
+//!   another version becomes active.
+//! - Present rule: a (generation, time, rating) already on the destination
+//!   item is skipped. When one group has several distinct roots the lowest
+//!   root id wins. That tie is not order-independent if a device already holds
+//!   the higher root's copy, which needs two different ratings at the same
+//!   millisecond on matching cards. It is accepted.
+//! - Residual: an old-build path id whose intermediate copy is absent cannot be
+//!   resolved to its root (it counts as its own root), so apply's duplicate
+//!   pass cannot fold it and it can still count twice. Dropping an intermediate
+//!   path copy also degrades later resolution: a deeper old-build copy
+//!   `carried(P, D)` arriving in a later file finds no parent and is its own
+//!   root, so it double-counts only if the device already holds `carried(e, D)`.
+//! - Local vs sync: a logged local carry skips a root with no live receipt,
+//!   sync does not (that device catches up on its next incoming event for the
+//!   set; in practice only damaged rows). The same id can carry different meta
+//!   (the local device after a logged carry, the root's device after a sync
+//!   carry); this matters only for order ties at the same millisecond.
+//! - A picture link or origin arriving in a later file re-triggers the carry.
 
-use rusqlite::types::Value as Sql;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension};
 
-use crate::card_reviews::carried_event_id;
 use crate::sync::apply::ApplyError;
-
-type Card = Vec<Sql>;
-
-struct Version {
-    items: Vec<(String, Card)>,
-}
-
-fn load_versions(conn: &Connection, material: &str) -> Result<Vec<Version>, ApplyError> {
-    let ids: Vec<String> = conn
-        .prepare(
-            "SELECT id FROM card_versions v WHERE source_material_id = ?1
-             ORDER BY card_count, id",
-        )?
-        .query_map([material], |r| r.get(0))?
-        .collect::<Result<_, _>>()?;
-    let mut versions = Vec::with_capacity(ids.len());
-    for id in ids {
-        let items = conn
-            .prepare(
-                "SELECT i.id, i.front, i.back, i.source_page, o.origin, r.region_id FROM card_items i
-                 LEFT JOIN card_item_origins o ON o.item_id = i.id
-                 LEFT JOIN card_item_visual_regions r ON r.item_id = i.id
-                 WHERE i.version_id = ?1 ORDER BY i.ordinal",
-            )?
-            .query_map([&id], |r| {
-                Ok((
-                    r.get::<_, String>(0)?,
-                    vec![r.get::<_, Sql>(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?],
-                ))
-            })?
-            .collect::<Result<Vec<_>, _>>()?;
-        versions.push(Version { items });
-    }
-    Ok(versions)
-}
 
 /// Returns the item ids that gained at least one event, sorted and deduped.
 /// Fails closed (writes nothing) without the sync guard row.
@@ -62,102 +53,20 @@ pub(crate) fn carry_missing(conn: &Connection, material: &str) -> Result<Vec<Str
     if guarded.is_none() {
         return Err(ApplyError::BadRow);
     }
-    let generation: i64 = conn.query_row(
-        "SELECT COALESCE((SELECT generation FROM card_review_generations
-                          WHERE source_material_id = ?1), 0)",
-        [material],
-        |r| r.get(0),
-    )?;
-    let versions = load_versions(conn, material)?;
-    let mut gained = Vec::new();
-    for (wi, w) in versions.iter().enumerate() {
-        // Longest strict prefix among the shorter versions.
-        let prefix = versions[..wi]
-            .iter()
-            .rev()
-            .filter(|p| p.items.len() < w.items.len())
-            .find(|p| p.items.iter().zip(&w.items).all(|(a, b)| a.1 == b.1));
-        let Some(p) = prefix else { continue };
-        for (src, dst) in p.items.iter().zip(&w.items) {
-            carry_item(conn, &src.0, &dst.0, generation, &mut gained)?;
-        }
+    let active: Option<String> = conn
+        .query_row(
+            "SELECT id FROM card_versions WHERE source_material_id = ?1 AND is_active = 1",
+            [material],
+            |r| r.get(0),
+        )
+        .optional()?;
+    let Some(active) = active else {
+        return Ok(Vec::new());
+    };
+    // A version whose items no longer hash to it (a picture link still
+    // missing) takes nothing.
+    if !crate::card_reviews::version_is_verified(conn, material, &active) {
+        return Ok(Vec::new());
     }
-    gained.sort();
-    gained.dedup();
-    Ok(gained)
-}
-
-type SourceEvent = (
-    String,
-    i64,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-);
-
-fn carry_item(
-    conn: &Connection,
-    src: &str,
-    dst: &str,
-    generation: i64,
-    gained: &mut Vec<String>,
-) -> Result<(), ApplyError> {
-    let events: Vec<SourceEvent> = conn
-        .prepare(
-            "SELECT e.id, e.generation, e.rating, e.reviewed_at, e.scheduler_version,
-                    e.prior_state_json, e.next_state_json,
-                    COALESCE(m.device_id, (SELECT value FROM app_metadata WHERE key = 'device_id'), ''),
-                    COALESCE(m.changed_at, e.reviewed_at)
-             FROM card_review_events e
-             LEFT JOIN sync_row_meta m ON m.table_name = 'card_review_events' AND m.row_id = e.id
-             WHERE e.item_id = ?1 AND e.generation = ?2
-             ORDER BY e.reviewed_at, e.id",
-        )?
-        .query_map(params![src, generation], |r| {
-            Ok((
-                r.get(0)?,
-                r.get(1)?,
-                r.get(2)?,
-                r.get(3)?,
-                r.get(4)?,
-                r.get(5)?,
-                r.get(6)?,
-                r.get(7)?,
-                r.get(8)?,
-            ))
-        })?
-        .collect::<Result<_, _>>()?;
-    for (id, gen, rating, at, scheduler, prior, next, origin, changed_at) in events {
-        let present: Option<i64> = conn
-            .query_row(
-                "SELECT 1 FROM card_review_events
-                 WHERE item_id = ?1 AND generation = ?2 AND reviewed_at = ?3 AND rating = ?4",
-                params![dst, gen, at, rating],
-                |r| r.get(0),
-            )
-            .optional()?;
-        if present.is_some() {
-            continue;
-        }
-        let carried = carried_event_id(&id, dst);
-        let inserted = conn.execute(
-            "INSERT OR IGNORE INTO card_review_events
-               (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![carried, dst, gen, rating, at, scheduler, prior, next],
-        )?;
-        if inserted == 1 {
-            conn.execute(
-                "INSERT OR IGNORE INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
-                 VALUES ('card_review_events', ?1, ?2, ?3, 0)",
-                params![carried, origin, changed_at],
-            )?;
-            gained.push(dst.to_string());
-        }
-    }
-    Ok(())
+    crate::card_reviews::carry_into(conn, material, &active, false).map_err(|_| ApplyError::BadRow)
 }
