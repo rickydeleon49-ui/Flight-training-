@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Button, Card, CardBody, CardHeader } from "@/components/ui";
 import { backupErrorMessage } from "@/services/backups";
 import { macChangesCounts } from "@/services/iphone";
+import { useAppData } from "@/state/AppDataContext";
 import { chooseMacChangesFile, getMacChanges, macChangesSentence } from "@/services/macChanges";
 
 /** One button that brings in the file of changes the Mac saved. */
 export function GetMacChangesCard() {
+  const { refresh } = useAppData();
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -19,6 +21,15 @@ export function GetMacChangesCard() {
       if (!path) return;
       const got = await getMacChanges(path);
       setLine(macChangesSentence(got, macChangesCounts(got)));
+      if (got.outcome !== "alreadyIn") {
+        // The lists on screen still hold the old wording. A failed reload must
+        // not hide the "Brought in" line or claim the import failed.
+        try {
+          await refresh();
+        } catch {
+          /* the import itself worked */
+        }
+      }
     } catch (error) {
       setLine(null);
       setProblem(backupErrorMessage(error, "That file couldn't be brought in. Nothing on this phone was changed."));
