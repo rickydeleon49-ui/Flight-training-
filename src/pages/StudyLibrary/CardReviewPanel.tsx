@@ -193,7 +193,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
             {statusLine}
           </h3>
         </div>
-        {review.session ? null : (
+        {review.session || (numberedAction && !reviewable && !review.starting) ? null : (
           <Button
             size={numberedAction ? undefined : "small"}
             variant="primary"

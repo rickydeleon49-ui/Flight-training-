@@ -55,11 +55,11 @@ describe("GetStudyMaterialCard", () => {
   it("uses singular wording, omits a zero part, and drops the clause when both are zero", async () => {
     mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 1, attemptsLast7Days: 1 });
     await pick();
-    expect(screen.getByText(/Your last card review/).textContent).toContain("1 card review and 1 practice test this week will be replaced.");
+    expect(screen.getByText(/Your last card review/).textContent).toContain("1 card review and 1 practice test this week, across all your card sets and tests, will be replaced.");
     cleanup();
     mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 0, attemptsLast7Days: 4 });
     await pick();
-    expect(screen.getByText(/Your last card review/).textContent).toMatch(/; 4 practice tests this week will be replaced\.$/);
+    expect(screen.getByText(/Your last card review/).textContent).toMatch(/; 4 practice tests this week, across all your card sets and tests, will be replaced\.$/);
     cleanup();
     mocks.phoneActivitySummary.mockResolvedValue({ ...activity, reviewsLast7Days: 0, attemptsLast7Days: 0 });
     await pick();
@@ -71,7 +71,7 @@ describe("GetStudyMaterialCard", () => {
   it("previews the date, size, files and phone activity", async () => {
     await pick();
     expect(screen.getByText(/From your Mac/).textContent).toBe(`From your Mac · ${formatBackupDate(info.createdAt)} · 2 KB · 4 files`);
-    expect(screen.getByText(/Your last card review/).textContent).toContain("2 card reviews and 3 practice tests this week will be replaced.");
+    expect(screen.getByText(/Your last card review/).textContent).toContain("2 card reviews and 3 practice tests this week, across all your card sets and tests, will be replaced.");
     expect(screen.queryByText(/Nothing changes on this phone/)).toBeNull();
     expect(mocks.importPickedBackup).toHaveBeenCalledWith("/picked/material.hfdbackup");
   });

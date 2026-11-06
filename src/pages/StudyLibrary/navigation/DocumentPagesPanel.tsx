@@ -176,9 +176,12 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       cardEpoch.current++;
     };
   }, [material.id]);
+  // Saving a card re-renders the page; the student should come back to the same place on the Notes tab.
+  const placeBeforeCard = useRef<number | null>(null);
   const makeCard = async (bookmark: NavigationBookmark) => {
     const epoch = ++cardEpoch.current;
     const blank = Boolean(flashcardRoute?.current);
+    placeBeforeCard.current = blank ? null : window.scrollY;
     if (flashcardRoute) flashcardRoute.current = false;
     try {
       if (!app?.repositories) { if (blank) onFlashcardRouteDone?.(); return; }
@@ -206,6 +209,13 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       if (epoch === cardEpoch.current) setActionError("This card couldn't be opened. Try again.");
       if (blank) onFlashcardRouteDone?.();
     }
+  };
+  const restorePlace = () => {
+    const top = placeBeforeCard.current;
+    placeBeforeCard.current = null;
+    if (top === null) return;
+    const put = () => window.scrollTo(0, top);
+    requestAnimationFrame(() => { put(); requestAnimationFrame(put); });
   };
   const makeQuestion = async (bookmark: NavigationBookmark) => {
     const epoch = ++cardEpoch.current;
@@ -511,6 +521,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
               const blank = cardDraft.blank;
               setCardDraft(null);
               if (blank) onFlashcardRouteDone?.();
+              else restorePlace();
             }}
           />
         ) : null}

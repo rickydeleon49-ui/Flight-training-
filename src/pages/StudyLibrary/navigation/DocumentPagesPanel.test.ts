@@ -558,6 +558,28 @@ describe("Make a card from a page note (PDF-STUDY-01c)",()=>{
   });
 });
 
+describe("Make a card from Notes keeps her place (POLISH-089)",()=>{
+  it("puts the page back where it was after the card is saved",async()=>{
+    await seed();
+    await db.execute("INSERT INTO material_bookmarks (id,material_id,page_index,page_label,originating_content_sha256,title,notes,status,created_at,updated_at) VALUES ('5e700000-0000-4000-8000-000000000002',?,3,'iv',?,'Q','A','verified','x','x')",[M,A]);
+    renderDetail();const scope=await panel();
+    const make=await within(scope).findByRole("button",{name:"Make a card"});
+    const scrollY=vi.spyOn(window,"scrollY","get").mockReturnValue(640);
+    const scrollTo=vi.spyOn(window,"scrollTo").mockImplementation(()=>{});
+    const frames:FrameRequestCallback[]=[];
+    vi.spyOn(window,"requestAnimationFrame").mockImplementation((cb)=>{frames.push(cb);return frames.length;});
+    fireEvent.click(make);
+    const dialog=await screen.findByRole("dialog",{name:"Add a card"});
+    await within(dialog).findByLabelText("Question");
+    scrollY.mockReturnValue(0);
+    frames.length=0;
+    fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
+    await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Add a card"})).toBeNull());
+    for(let i=0;i<4&&frames.length;i++) frames.splice(0).forEach((cb)=>cb(0));
+    expect(scrollTo).toHaveBeenCalledWith(0,640);
+  });
+});
+
 describe("Make a card from the Flashcards panel (POLISH-087)",()=>{
   it("opens empty, keeps the source page, and returns to the Flashcards panel after Save",async()=>{
     await seed();
