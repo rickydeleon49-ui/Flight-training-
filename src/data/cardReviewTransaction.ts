@@ -26,7 +26,7 @@ import type {
   CardReviewAction,
   CardReviewResult,
 } from "@/domain/types";
-import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, versionOrigin, type CardVersion } from "@/logic/cardIdentity";
+import { canonicalJson, cardVersion, parseSavedCards, sha256Hex, versionOrigin, type CanonicalCard, type CardVersion } from "@/logic/cardIdentity";
 import { isIsoInstant, SCHEDULER_VERSION, scheduleCard, SchedulerRefusal, type CardSchedule } from "@/logic/cardScheduler";
 
 import { freezeCardSources } from "./studyPageSources";
@@ -247,19 +247,459 @@ export async function derivedUuidV4(seed: string): Promise<string> {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${variant}${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
 
+/* ------------------------------------------------------------------ */
+/* Per-card carry-over (R13b1): the twin of native `carry_into`         */
+/* ------------------------------------------------------------------ */
+
+type Run = (sql: string, params: SqlValue[]) => Promise<void> | void;
+
+/** The compared form of one card: sorted-key JSON, a missing origin or picture left out. */
+function cardKey(card: CanonicalCard): string {
+  return canonicalJson({
+    front: card.front,
+    back: card.back,
+    sourcePage: card.sourcePage,
+    ...(card.origin ? { origin: card.origin } : {}),
+    ...(card.visualRegionId ? { visualRegionId: card.visualRegionId } : {}),
+  });
+}
+
 /**
- * APPEND-ONLY CARRY-OVER (GUIDE-PACK-01), the twin of native
- * `carry_review_state`. When a saved card list grows only by cards added at its
- * end, each earlier card keeps its review state in the new version: its state
- * row and each rating with its receipt are copied to the new item. Nothing
- * existing is changed or deleted; the old version keeps its own rows. Edits,
- * deletes and reorders carry nothing. Unlike native there is no savepoint
- * (the single-connection drivers refuse them), so cases that could make
- * materialize refuse (a picture region the material does not own, unknown
- * providers) are checked first and carry nothing in both.
+ * Pairs `[srcOrdinal, dstOrdinal]` of equal cards (the twin of native
+ * `match_cards`). The k-th occurrence of a card in `src` maps to the k-th in
+ * `dst`; extra copies on either side get no match. Bytes are compared exactly.
+ */
+export function matchCards(src: readonly CanonicalCard[], dst: readonly CanonicalCard[]): Array<[number, number]> {
+  const slots = new Map<string, number[]>();
+  dst.forEach((card, d) => {
+    const key = cardKey(card);
+    const list = slots.get(key);
+    if (list) list.push(d);
+    else slots.set(key, [d]);
+  });
+  const taken = new Map<string, number>();
+  const out: Array<[number, number]> = [];
+  src.forEach((card, s) => {
+    const key = cardKey(card);
+    const used = taken.get(key) ?? 0;
+    const d = slots.get(key)?.[used];
+    if (d !== undefined) {
+      out.push([s, d]);
+      taken.set(key, used + 1);
+    }
+  });
+  return out;
+}
+
+interface StoredVersion {
+  versionId: string;
+  createdAt: string;
+  firstReviewedAt: string | null;
+  cards: CanonicalCard[];
+  itemIds: string[];
+  /** False when the recomputed hash or item ids differ from what is stored: never a source. */
+  verified: boolean;
+}
+
+/** Every stored version of the material, ordered by `card_count, id`. */
+async function loadVersions(query: Query, materialId: string): Promise<StoredVersion[]> {
+  const hasVisual = (await query("SELECT 1 FROM sqlite_master WHERE name='card_item_visual_regions'", [])).length > 0;
+  const heads = await query(
+    "SELECT id, content_hash, created_at, first_reviewed_at FROM card_versions WHERE source_material_id = ? ORDER BY card_count, id",
+    [materialId],
+  );
+  const out: StoredVersion[] = [];
+  for (const head of heads) {
+    const rows = await query(
+      `SELECT i.id, i.front, i.back, i.source_page, o.origin${hasVisual ? ", r.region_id" : ""} FROM card_items i
+       LEFT JOIN card_item_origins o ON o.item_id = i.id
+       ${hasVisual ? "LEFT JOIN card_item_visual_regions r ON r.item_id = i.id" : ""}
+       WHERE i.version_id = ? ORDER BY i.ordinal`,
+      [String(head.id)],
+    );
+    const cards: CanonicalCard[] = rows.map((row) => ({
+      front: String(row.front),
+      back: String(row.back),
+      sourcePage: row.source_page === null || row.source_page === undefined ? null : int(row.source_page),
+      ...(row.origin ? { origin: String(row.origin) as CanonicalCard["origin"] } : {}),
+      ...(row.region_id ? { visualRegionId: String(row.region_id) } : {}),
+    }));
+    const itemIds = rows.map((row) => String(row.id));
+    const derived = await cardVersion(materialId, cards);
+    out.push({
+      versionId: String(head.id),
+      createdAt: String(head.created_at),
+      firstReviewedAt: head.first_reviewed_at === null || head.first_reviewed_at === undefined ? null : String(head.first_reviewed_at),
+      cards,
+      itemIds,
+      verified:
+        cards.length > 0 &&
+        derived.versionId === String(head.id) &&
+        derived.contentHash === String(head.content_hash) &&
+        derived.items.every((item, i) => item.itemId === itemIds[i]),
+    });
+  }
+  return out;
+}
+
+interface StoredEvent {
+  id: string;
+  itemId: string;
+  generation: number;
+  rating: CardRating;
+  reviewedAt: string;
+  schedulerVersion: string;
+  prior: string;
+  next: string;
+}
+
+type EventsByKey = Map<string, number[]>;
+const timeKey = (e: { reviewedAt: string; rating: string }) => `${e.reviewedAt}\u0000${e.rating}`;
+
+/**
+ * The original rating behind event `start` (native `root_index`). Event x is a
+ * copy when some event r with the same time and rating has
+ * `derivedUuidV4(r.id, x.item) == x.id`; follow that to the root. A cycle makes
+ * `start` its own root; the walk is bounded by the number of versions.
+ */
+async function rootIndex(
+  events: StoredEvent[],
+  byKey: EventsByKey,
+  start: number,
+  bound: number,
+  carried: (parent: string, item: string) => Promise<string>,
+): Promise<number> {
+  const seen = [start];
+  let current = start;
+  for (let hop = 0; hop <= bound; hop++) {
+    const x = events[current]!;
+    let parent: number | undefined;
+    for (const r of byKey.get(timeKey(x)) ?? []) {
+      if (r !== current && (await carried(events[r]!.id, x.itemId)) === x.id) {
+        parent = r;
+        break;
+      }
+    }
+    if (parent === undefined) return current;
+    if (seen.includes(parent)) return start;
+    seen.push(parent);
+    current = parent;
+  }
+  return start;
+}
+
+/**
+ * Lazy, memoized root lookup (native `RootResolver`): only events asked about are
+ * resolved, and the first root found in a (time, rating) group is tried first, so
+ * one hash confirms a one-hop copy. Only an old-build path id takes the full walk.
+ */
+function rootResolver(events: StoredEvent[], byKey: EventsByKey, bound: number) {
+  const hashes = new Map<string, Promise<string>>();
+  const carried = (parent: string, item: string) => {
+    const key = `${parent}\u0000${item}`;
+    let found = hashes.get(key);
+    if (!found) {
+      found = derivedUuidV4(key);
+      hashes.set(key, found);
+    }
+    return found;
+  };
+  const memo = new Map<number, number>();
+  const hint = new Map<string, number>();
+  return async (i: number): Promise<number> => {
+    const known = memo.get(i);
+    if (known !== undefined) return known;
+    const x = events[i]!;
+    const key = timeKey(x);
+    const h = hint.get(key);
+    let root: number;
+    if (h !== undefined && (h === i || (await carried(events[h]!.id, x.itemId)) === x.id)) root = h;
+    else {
+      root = await rootIndex(events, byKey, i, bound, carried);
+      if (!hint.has(key)) hint.set(key, root);
+    }
+    memo.set(i, root);
+    return root;
+  };
+}
+
+interface Write {
+  sql: string;
+  params: SqlValue[];
+}
+
+interface Folded {
+  id: string;
+  prior: CardSchedule | null;
+  next: CardSchedule;
+}
+
+/** D4 order without devices (the browser has no sync): (reviewed_at, id). */
+function foldEvents(events: ReadonlyArray<{ id: string; rating: CardRating; reviewedAt: string; schedulerVersion: string }>): Folded[] {
+  const sorted = [...events].sort((a, b) => Date.parse(a.reviewedAt) - Date.parse(b.reviewedAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const out: Folded[] = [];
+  let prior: CardSchedule | null = null;
+  for (const e of sorted) {
+    if (e.schedulerVersion !== SCHEDULER_VERSION) throw new SchedulerRefusal("UNSUPPORTED_SCHEDULER_VERSION");
+    const next = scheduleCard(prior, e.rating, e.reviewedAt);
+    out.push({ id: e.id, prior, next });
+    prior = next;
+  }
+  return out;
+}
+
+const STATE_COPY_SQL = `INSERT OR IGNORE INTO card_review_state
+     (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+   SELECT ?, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+   FROM card_review_state WHERE item_id = ?`;
+
+/**
+ * Plans (reads only, nothing written) the carry of every other stored version
+ * of the material onto `dst`, card by card: the twin of native `carry_into`
+ * with `logged = true`. The browser has no savepoint, so everything that can
+ * fail runs here, before the first write. Returns the writes in order, the
+ * destination items that gained events, and the earliest first-review time of
+ * the contributing versions.
+ */
+async function planCarry(
+  query: Query,
+  materialId: string,
+  dst: CardVersion,
+): Promise<{ writes: Write[]; gained: string[] }> {
+  const generation = await readGeneration(query, materialId);
+  const versions = await loadVersions(query, materialId);
+  const sources = versions.filter((v) => v.verified && v.versionId !== dst.versionId);
+  const dstCards: CanonicalCard[] = dst.items.map(({ front, back, sourcePage, origin, visualRegionId }) => ({
+    front,
+    back,
+    sourcePage,
+    ...(origin ? { origin } : {}),
+    ...(visualRegionId ? { visualRegionId } : {}),
+  }));
+  const matches = sources.map((s) => matchCards(s.cards, dstCards));
+  if (matches.every((m) => m.length === 0)) return { writes: [], gained: [] };
+
+  const eventRows = await query(
+    `SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json
+     FROM card_review_events e
+     JOIN card_items i ON i.id = e.item_id
+     JOIN card_versions v ON v.id = i.version_id
+     WHERE v.source_material_id = ? AND e.generation = ?
+     ORDER BY e.reviewed_at, e.id`,
+    [materialId, generation],
+  );
+  const events: StoredEvent[] = eventRows.map((row) => ({
+    id: String(row.id),
+    itemId: String(row.item_id),
+    generation: int(row.generation),
+    rating: String(row.rating) as CardRating,
+    reviewedAt: String(row.reviewed_at),
+    schedulerVersion: String(row.scheduler_version),
+    prior: String(row.prior_state_json),
+    next: String(row.next_state_json),
+  }));
+  const byKey: EventsByKey = new Map();
+  const byItem = new Map<string, number[]>();
+  events.forEach((e, i) => {
+    const k = timeKey(e);
+    if (byKey.has(k)) byKey.get(k)!.push(i);
+    else byKey.set(k, [i]);
+    if (byItem.has(e.itemId)) byItem.get(e.itemId)!.push(i);
+    else byItem.set(e.itemId, [i]);
+  });
+  const rootOf = rootResolver(events, byKey, versions.length);
+  // Live rate receipts by operation id.
+  const receiptRows = await query(
+    `SELECT operation_id, generation, applied_at, result_json FROM card_review_operations
+     WHERE source_material_id = ? AND action = 'rate' AND is_erased = 0 AND result_json IS NOT NULL`,
+    [materialId],
+  );
+  const receipts = new Map(receiptRows.map((row) => [String(row.operation_id), { generation: int(row.generation), appliedAt: String(row.applied_at), result: String(row.result_json) }]));
+
+  const writes: Write[] = [];
+  interface Gain {
+    item: string;
+    sources: Set<string>;
+    added: number;
+    hadEvents: boolean;
+    hadState: boolean;
+    newEvents: StoredEvent[];
+  }
+  const gains: Gain[] = [];
+  const contributing = new Set<number>();
+  const preferred = (matched: Array<[number, string]>) =>
+    [...matched].sort((a, b) => (sources[b[0]]!.createdAt < sources[a[0]]!.createdAt ? -1 : sources[b[0]]!.createdAt > sources[a[0]]!.createdAt ? 1 : sources[a[0]]!.versionId < sources[b[0]]!.versionId ? -1 : 1));
+
+  for (let d = 0; d < dst.items.length; d++) {
+    const dstItem = dst.items[d]!.itemId;
+    const matched: Array<[number, string]> = [];
+    matches.forEach((pairs, si) => {
+      for (const [s, dd] of pairs) if (dd === d) matched.push([si, sources[si]!.itemIds[s]!]);
+    });
+    if (matched.length === 0) continue;
+    const existing = byItem.get(dstItem) ?? [];
+    const present = new Set(existing.map((i) => timeKey(events[i]!)));
+    // time+rating -> root id -> [root index, source event index, source version]
+    const groups = new Map<string, Map<string, [number, number, number]>>();
+    for (const [si, srcItem] of matched) {
+      for (const ei of byItem.get(srcItem) ?? []) {
+        const root = await rootOf(ei);
+        const k = timeKey(events[ei]!);
+        if (!groups.has(k)) groups.set(k, new Map());
+        const group = groups.get(k)!;
+        if (!group.has(events[root]!.id)) group.set(events[root]!.id, [root, ei, si]);
+      }
+    }
+    const gain: Gain = {
+      item: dstItem,
+      sources: new Set(),
+      added: 0,
+      hadEvents: existing.length > 0,
+      hadState: (await readState(query, dstItem)) !== null,
+      newEvents: [],
+    };
+    // Groups in (time, rating) order, roots in id order: nothing depends on map iteration.
+    for (const k of [...groups.keys()].sort()) {
+      if (present.has(k)) continue;
+      const group = groups.get(k)!;
+      const chosen = [...group.keys()]
+        .sort()
+        .map((id) => group.get(id)!)
+        .find(([root]) => receipts.has(events[root]!.id));
+      if (!chosen) continue;
+      const [root, ei, si] = chosen;
+      const rootEvent = events[root]!;
+      const srcEvent = events[ei]!;
+      const carried = await derivedUuidV4(`${rootEvent.id}\u0000${dstItem}`);
+      const receipt = receipts.get(rootEvent.id)!;
+      let result: Record<string, unknown>;
+      try {
+        result = JSON.parse(receipt.result) as Record<string, unknown>;
+      } catch {
+        refuse("INVALID_STATE");
+      }
+      result.itemId = dstItem;
+      writes.push({
+        sql: `INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [carried, dstItem, srcEvent.generation, srcEvent.rating, srcEvent.reviewedAt, srcEvent.schedulerVersion, srcEvent.prior, srcEvent.next],
+      });
+      writes.push({
+        sql: `INSERT OR IGNORE INTO card_review_operations
+                (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
+              VALUES (?, 'rate', ?, ?, ?, ?, 0, ?)`,
+        params: [carried, materialId, receipt.generation, await sha256Hex(carried), receipt.appliedAt, canonicalJson(result)],
+      });
+      gain.sources.add(srcEvent.itemId);
+      gain.added += 1;
+      gain.newEvents.push({ ...srcEvent, id: carried, itemId: dstItem });
+      contributing.add(si);
+    }
+    if (gain.added > 0) gains.push(gain);
+    else if (!gain.hadState) {
+      // Nothing rated to carry: a paused or flagged card keeps that (unrated state rows only).
+      for (const [, srcItem] of preferred(matched)) {
+        const state = await readState(query, srcItem);
+        if (!state) continue;
+        if (state.dueAt === null && state.lastReviewedAt === null && state.reps === 0) {
+          writes.push({ sql: STATE_COPY_SQL, params: [dstItem, srcItem] });
+        }
+        break;
+      }
+    }
+  }
+
+  for (const gain of gains) {
+    let verbatim = false;
+    if (!gain.hadEvents && !gain.hadState && gain.sources.size === 1) {
+      const srcItem = [...gain.sources][0]!;
+      const state = await readState(query, srcItem);
+      if (state && state.reps === gain.added && (byItem.get(srcItem)?.length ?? 0) === gain.added) {
+        writes.push({ sql: STATE_COPY_SQL, params: [gain.item, srcItem] });
+        verbatim = true;
+      }
+    }
+    if (verbatim) continue;
+    // Re-fold: all of the item's events in order, each event's prior/next rewritten, the state set from the fold.
+    const all = [...eventsOf(gain.item, byItem, events), ...gain.newEvents];
+    const folded = foldEvents(all);
+    const last = folded.at(-1);
+    if (!last) continue;
+    for (const f of folded) {
+      const prior = f.prior ? canonicalJson(f.prior) : "null";
+      const next = canonicalJson(f.next);
+      writes.push({
+        sql: `UPDATE card_review_events SET prior_state_json = ?, next_state_json = ?
+              WHERE id = ? AND (prior_state_json IS NOT ? OR next_state_json IS NOT ?)`,
+        params: [prior, next, f.id, prior, next],
+      });
+    }
+    const local = await readState(query, gain.item);
+    let suspended = local?.suspended ?? false;
+    let flag: CardFlagReason | null = local?.flag ?? null;
+    if (!local) {
+      const d = dst.items.findIndex((item) => item.itemId === gain.item);
+      const matched: Array<[number, string]> = [];
+      matches.forEach((pairs, si) => {
+        for (const [s, dd] of pairs) if (dd === d) matched.push([si, sources[si]!.itemIds[s]!]);
+      });
+      for (const [, srcItem] of preferred(matched)) {
+        const state = await readState(query, srcItem);
+        if (state) {
+          suspended = state.suspended;
+          flag = state.flag;
+          break;
+        }
+      }
+    }
+    const revision = Math.max(local ? local.revision + 1 : 1, folded.length);
+    const s = last.next;
+    writes.push({
+      sql: `INSERT INTO card_review_state
+              (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(item_id) DO UPDATE SET
+              scheduler_version = excluded.scheduler_version, step = excluded.step, due_at = excluded.due_at,
+              last_reviewed_at = excluded.last_reviewed_at, reps = excluded.reps, lapses = excluded.lapses,
+              suspended = excluded.suspended, flag = excluded.flag, revision = excluded.revision`,
+      params: [gain.item, materialId, s.schedulerVersion, s.step, s.dueAt, s.lastReviewedAt, s.reps, s.lapses, suspended ? 1 : 0, flag, revision],
+    });
+  }
+
+  if (gains.length > 0) {
+    const times = [...contributing].map((si) => sources[si]!.firstReviewedAt).filter((t): t is string => t !== null).sort();
+    if (times[0] !== undefined) {
+      writes.push({
+        sql: "UPDATE card_versions SET first_reviewed_at = ? WHERE id = ? AND first_reviewed_at IS NULL",
+        params: [times[0], dst.versionId],
+      });
+    }
+  }
+  return { writes, gained: gains.map((g) => g.item).sort() };
+}
+
+function eventsOf(item: string, byItem: Map<string, number[]>, events: StoredEvent[]): StoredEvent[] {
+  return (byItem.get(item) ?? []).map((i) => events[i]!);
+}
+
+/**
+ * PER-CARD CARRY-OVER, the twin of native `carry_review_state` (owner decision
+ * 05 Nov: an edit changes only the edited card). Every card of the new
+ * list that is the same card as a card of ANY stored version of the material
+ * keeps that card's ratings: they are copied onto the new version's item with
+ * their receipts, the state row follows, and nothing existing is deleted. A
+ * card is the same card when `matchCards` pairs it (front, back, page, origin,
+ * picture region), so an edited card starts fresh, a moved card keeps its
+ * ratings and a deleted card does not stop the others. A save that matches no
+ * stored card makes no version, and a save that changes no card does nothing.
+ * Unlike native there is no savepoint (the single-connection drivers refuse
+ * them), so what could make `materialize` refuse (a picture region the material
+ * does not own, unknown providers) is checked first, and the whole carry is
+ * planned from reads before the first write. The browser has no sync, so a
+ * never-studied list is not snapshotted when nothing is stored to carry.
  */
 export async function carryReviewState(
-  run: (sql: string, params: SqlValue[]) => Promise<void> | void,
+  run: Run,
   query: Query,
   materialId: string,
   beforeJson: string,
@@ -273,8 +713,10 @@ export async function carryReviewState(
   if (before.status !== "ok" || after.status !== "ok") return;
   const old = before.cards;
   const next = after.cards;
-  if (next.length <= old.length) return;
-  if (canonicalJson(next.slice(0, old.length)) !== canonicalJson(old)) return;
+  const oldVersion = await cardVersion(materialId, old);
+  const newVersion = await cardVersion(materialId, next);
+  // A save with no change: nothing to carry and no activation to record.
+  if (oldVersion.versionId === newVersion.versionId) return;
   // Picture cards carry like any other card. The browser has no savepoint, so
   // check first what native `materialize` would refuse: a region this material
   // does not own (or that is damaged) carries nothing.
@@ -287,68 +729,26 @@ export async function carryReviewState(
       return;
     }
   }
-  const oldVersion = await cardVersion(materialId, old);
-  const newVersion = await cardVersion(materialId, next);
-  const exists = async (id: string) =>
-    (await query("SELECT 1 FROM card_versions WHERE id = ? AND source_material_id = ?", [id, materialId])).length > 0;
-  if (!(await exists(oldVersion.versionId)) || (await exists(newVersion.versionId))) return;
-  await materialize(run, query, materialId, newVersion, provider, now);
-  // One read for every earlier rating of the old list, grouped by card.
-  const allRatings = await query(
-    `SELECT e.item_id, e.id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json,
-            o.generation AS op_generation, o.applied_at, o.result_json
-     FROM card_review_events e
-     JOIN card_review_operations o ON o.operation_id = e.id AND o.is_erased = 0 AND o.action = 'rate'
-     WHERE e.item_id IN (SELECT id FROM card_items WHERE version_id = ?)
-     ORDER BY e.reviewed_at, e.id`,
-    [oldVersion.versionId],
-  );
-  const byItem = new Map<string, typeof allRatings>();
-  for (const row of allRatings) {
-    const key = String(row.item_id);
-    const list = byItem.get(key);
-    if (list) list.push(row);
-    else byItem.set(key, [row]);
+  // Everything that can refuse runs before the first write and only skips the
+  // carry (native rolls the carry back and the save stands): a damaged stored
+  // version, a refused `materialize`, a scheduler refusal.
+  let plan: { writes: Write[]; gained: string[] };
+  try {
+    const stored = await loadVersions(query, materialId);
+    const sharesACard = (cards: readonly CanonicalCard[]) => matchCards(cards, next).length > 0;
+    const storedShares = stored.some((v) => v.verified && v.versionId !== newVersion.versionId && sharesACard(v.cards));
+    if (!sharesACard(old) && !storedShares) return;
+    // Native snapshots a never-studied list so sync can carry into it; the browser has no sync.
+    if (!stored.some((v) => v.versionId === oldVersion.versionId) && !storedShares) return;
+    // A stored copy of the new list that no longer matches its hash, items or pictures: carry nothing.
+    const storedNew = stored.find((v) => v.versionId === newVersion.versionId);
+    if (storedNew && !storedNew.verified) return;
+    plan = await planCarry(query, materialId, newVersion);
+    await materialize(run, query, materialId, newVersion, provider, now);
+  } catch {
+    return;
   }
-  for (let i = 0; i < old.length; i++) {
-    const from = oldVersion.items[i]!.itemId;
-    const to = newVersion.items[i]!.itemId;
-    await run(
-      `INSERT OR IGNORE INTO card_review_state
-         (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
-       SELECT ?, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
-       FROM card_review_state WHERE item_id = ?`,
-      [to, from],
-    );
-    const ratings = byItem.get(from) ?? [];
-    for (const row of ratings) {
-      if (row.result_json === null || row.result_json === undefined) continue;
-      let result: Record<string, unknown>;
-      try {
-        result = JSON.parse(String(row.result_json)) as Record<string, unknown>;
-      } catch {
-        continue;
-      }
-      const carried = await derivedUuidV4(`${String(row.id)}\u0000${to}`);
-      result.itemId = to;
-      await run(
-        `INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [carried, to, int(row.generation), String(row.rating), String(row.reviewed_at), String(row.scheduler_version), String(row.prior_state_json), String(row.next_state_json)],
-      );
-      await run(
-        `INSERT OR IGNORE INTO card_review_operations
-           (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
-         VALUES (?, 'rate', ?, ?, ?, ?, 0, ?)`,
-        [carried, materialId, int(row.op_generation), await sha256Hex(carried), String(row.applied_at), canonicalJson(result)],
-      );
-    }
-  }
-  await run(
-    `UPDATE card_versions SET first_reviewed_at = (SELECT first_reviewed_at FROM card_versions WHERE id = ?)
-     WHERE id = ? AND first_reviewed_at IS NULL`,
-    [oldVersion.versionId, newVersion.versionId],
-  );
+  for (const write of plan.writes) await run(write.sql, write.params);
 }
 
 async function applyItem(

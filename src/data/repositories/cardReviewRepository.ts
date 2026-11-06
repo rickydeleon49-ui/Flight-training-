@@ -188,7 +188,7 @@ export function cardReviewRepository(db: SqlDatabase) {
 
     /**
      * Recent ratings for this material, newest first, 20 per page; earlier versions are labelled.
-     * A rating carried to a newer version of the same cards is listed once, as its newest copy (display only).
+     * A rating carried to another version of the same cards is listed once: its copy on the active version, else its newest copy (display only).
      */
     async getRecentReviews(
       materialId: string,
@@ -216,7 +216,9 @@ export function cardReviewRepository(db: SqlDatabase) {
              WHERE v2.source_material_id = v.source_material_id
                AND e2.reviewed_at = e.reviewed_at AND e2.rating = e.rating AND i2.front = i.front
                AND v2.id <> v.id
-               AND (v2.created_at > v.created_at OR (v2.created_at = v.created_at AND v2.id > v.id)))
+               AND (v2.is_active > v.is_active
+                    OR (v2.is_active = v.is_active
+                        AND (v2.created_at > v.created_at OR (v2.created_at = v.created_at AND v2.id > v.id)))))
          ORDER BY e.reviewed_at DESC, e.id DESC
          LIMIT ?`,
         params,

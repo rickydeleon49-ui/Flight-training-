@@ -769,7 +769,7 @@ fn item_ids(conn: &Connection, cards: &[(&str, &str)]) -> Vec<String> {
 }
 
 #[test]
-fn an_append_to_a_never_studied_list_snapshots_it_and_carries_nothing() {
+fn an_append_to_a_never_studied_list_snapshots_it_and_a_later_edit_snapshots_again() {
     let base = [("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")];
     let more = [
         ("Q0", "A0"),
@@ -863,7 +863,10 @@ fn an_append_to_a_never_studied_list_snapshots_it_and_carries_nothing() {
         LATER,
     )
     .unwrap();
-    assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 1);
+    // Owner decision 05 Nov (R13b1) replaces D1: an edit that keeps other cards
+    // snapshots the new list and carries those cards, like an append.
+    assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 2);
+    crate::backup::verify_application_connection(&conn).unwrap();
 
     // An empty old list makes no version.
     let mut conn = database();
@@ -1030,7 +1033,7 @@ fn t1_appending_to_a_mixed_set_keeps_the_old_ratings() {
 }
 
 #[test]
-fn t4_a_new_picture_card_carries_but_edits_and_reorders_of_a_picture_card_do_not() {
+fn t4_a_new_picture_card_carries_and_edits_and_reorders_of_a_picture_card_keep_the_other_cards() {
     use crate::visual_cards::tests::{library, operation as visual_op, region, TempDir};
     use mixed::*;
     // Appending a NEW picture card to a studied text list carries the old card.
@@ -1056,11 +1059,12 @@ fn t4_a_new_picture_card_carries_but_edits_and_reorders_of_a_picture_card_do_not
     assert_ne!(old[0], new[0]);
     crate::backup::verify_application_connection(&conn).unwrap();
 
-    // An edit or a reorder involving the picture card carries nothing.
+    // An edit or a reorder involving the picture card carries the other cards.
     let (dir, conn, picture, text) = mixed_set();
     rate_at(dir.path(), &conn, 0, 30);
     rate_at(dir.path(), &conn, 1, 31);
     let versions = count(&conn, "SELECT COUNT(*) FROM card_versions");
+    let first_items = saved_items(&conn);
     let mut edited = picture.clone();
     edited["back"] = json!("Charlie");
     save_cards(
@@ -1069,14 +1073,52 @@ fn t4_a_new_picture_card_carries_but_edits_and_reorders_of_a_picture_card_do_not
         32,
         json!([edited, text.clone(), plain("c-1", "More")]),
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    // Owner decision 05 Nov (R13b1) replaces D1: the unedited text card keeps its
+    // rating, and the edited picture card starts fresh.
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM card_versions"),
+        versions + 1
+    );
+    let edited_items = saved_items(&conn);
+    assert_eq!(events(&conn, &edited_items[0]), 0);
+    assert_eq!(events(&conn, &edited_items[1]), 1);
+    crate::backup::verify_application_connection(&conn).unwrap();
+    // The original input of this test: a reorder with the ORIGINAL picture card
+    // back (D-e). The text card keeps its rating and the picture card regains the
+    // one it had on the first version; the new card is fresh.
     save_cards(
         dir.path(),
         &conn,
         33,
         json!([text, picture, plain("c-2", "Again")]),
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    let reordered = saved_items(&conn);
+    assert_eq!(events(&conn, &reordered[0]), 1);
+    assert_eq!(events(&conn, &reordered[1]), 1);
+    assert_eq!(events(&conn, &reordered[2]), 0);
+    assert_eq!(
+        state_of(&conn, &reordered[1]),
+        state_of(&conn, &first_items[0])
+    );
+    let carried_id: String = conn
+        .query_row(
+            "SELECT id FROM card_review_events WHERE item_id = ?1",
+            [&reordered[1]],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let root: String = conn
+        .query_row(
+            "SELECT id FROM card_review_events WHERE item_id = ?1",
+            [&first_items[0]],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(
+        carried_id,
+        crate::card_reviews::carried_event_id(&root, &reordered[1])
+    );
+    crate::backup::verify_application_connection(&conn).unwrap();
 }
 
 #[test]
@@ -1120,7 +1162,7 @@ fn t4_a_region_the_material_does_not_own_rolls_the_carry_back_and_the_save_still
 }
 
 #[test]
-fn appending_cards_carries_review_state_and_edits_do_not() {
+fn appending_cards_carries_review_state_and_edits_keep_the_other_cards() {
     let base = [("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")];
     let more = [
         ("Q0", "A0"),
@@ -1227,6 +1269,503 @@ fn appending_cards_carries_review_state_and_edits_do_not() {
         LATER,
     )
     .unwrap();
-    assert_eq!(versions(&conn), count);
+    // Owner decision 05 Nov (R13b1) replaces D1: the edit makes a version and the
+    // other cards keep their ratings; the edited card starts fresh.
+    assert_eq!(versions(&conn), count + 1);
+    let edited_ids = item_ids(&conn, &edited);
+    assert!(state_of(&conn, &edited_ids[0]).is_none());
+    assert_eq!(state_of(&conn, &edited_ids[4]).unwrap().2, 1);
     crate::backup::verify_application_connection(&conn).unwrap();
+}
+
+/// R13b1: per-card carry (owner decision 05 Nov: when she edits one card, the
+/// other cards keep their ratings). Replaces "an edit or a reorder carries
+/// nothing" (D1, S-6a8).
+mod r13 {
+    use super::*;
+
+    pub type Cards<'a> = &'a [(&'a str, &'a str)];
+
+    pub fn create(conn: &mut Connection, cards: Cards) {
+        save_on(
+            conn,
+            &operation(1, "create", Value::Null, gemini_set(cards)),
+            NOW,
+        )
+        .unwrap();
+    }
+
+    pub fn edit(conn: &mut Connection, n: u32, cards: Cards) {
+        let before = row(conn);
+        save_on(
+            conn,
+            &operation(n, "edit", before, gemini_set(cards)),
+            LATER,
+        )
+        .unwrap();
+    }
+
+    pub fn rate(conn: &mut Connection, cards: Cards, ordinal: usize, rating: &str, n: u32) {
+        std::thread::sleep(std::time::Duration::from_millis(3));
+        rate_card(conn, cards, ordinal, rating, n);
+    }
+
+    pub fn id(cards: Cards, ordinal: usize) -> String {
+        item_ids(&Connection::open_in_memory().unwrap(), cards)[ordinal].clone()
+    }
+
+    /// (event id, rating, reviewed_at) in review order.
+    pub fn events(conn: &Connection, item: &str) -> Vec<(String, String, String)> {
+        conn.prepare("SELECT id, rating, reviewed_at FROM card_review_events WHERE item_id = ?1 ORDER BY reviewed_at, id")
+            .unwrap()
+            .query_map([item], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap()
+    }
+
+    pub fn receipts(conn: &Connection, item: &str) -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM card_review_operations WHERE action = 'rate' AND is_erased = 0
+               AND json_extract(result_json, '$.itemId') = ?1",
+            [item],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+
+    pub fn count(conn: &Connection, sql: &str) -> i64 {
+        conn.query_row(sql, [], |r| r.get(0)).unwrap()
+    }
+
+    pub fn carried(event: &str, item: &str) -> String {
+        crate::card_reviews::carried_event_id(event, item)
+    }
+
+    pub fn valid(conn: &Connection) {
+        crate::backup::verify_application_connection(conn).unwrap();
+    }
+
+    /// `new` holds exactly `old`'s ratings, carried one hop, with receipts and
+    /// the same schedule.
+    pub fn kept(conn: &Connection, old: &str, new: &str) {
+        let (o, n) = (events(conn, old), events(conn, new));
+        assert!(!o.is_empty(), "the old card was rated");
+        assert_eq!(o.len(), n.len(), "events of {new}");
+        for (a, b) in o.iter().zip(&n) {
+            assert_eq!(b.0, carried(&a.0, new));
+            assert_eq!((&a.1, &a.2), (&b.1, &b.2));
+        }
+        assert_eq!(receipts(conn, new), o.len() as i64, "receipts of {new}");
+        assert_eq!(state_of(conn, old), state_of(conn, new));
+    }
+
+    pub fn fresh(conn: &Connection, new: &str) {
+        assert!(events(conn, new).is_empty(), "events of {new}");
+        assert!(state_of(conn, new).is_none(), "state of {new}");
+    }
+}
+
+#[test]
+fn n1_editing_one_card_keeps_the_other_cards_ratings() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (
+        &[("Q0", "A0"), ("Q1", "A1"), ("Q2", "A2")],
+        &[("Q0", "A0"), ("Q1", "edited"), ("Q2", "A2")],
+    );
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 1);
+    rate(&mut conn, a, 0, "easy", 2);
+    rate(&mut conn, a, 1, "again", 3);
+    rate(&mut conn, a, 2, "hard", 4);
+    edit(&mut conn, 2, b);
+    // Owner decision 05 Nov replaces D1: the other cards keep, the edited one is fresh.
+    kept(&conn, &id(a, 0), &id(b, 0));
+    kept(&conn, &id(a, 2), &id(b, 2));
+    fresh(&conn, &id(b, 1));
+    assert_eq!(
+        count(
+            &conn,
+            "SELECT COUNT(*) FROM card_versions WHERE is_active = 1"
+        ),
+        1
+    );
+    valid(&conn);
+    // The old version keeps its own rows.
+    assert_eq!(events(&conn, &id(a, 1)).len(), 1);
+    // A carried card keeps rating, and a rating on the edited card starts it.
+    rate(&mut conn, b, 0, "good", 5);
+    rate(&mut conn, b, 1, "good", 6);
+    assert_eq!(state_of(&conn, &id(b, 0)).unwrap().2, 3);
+    assert_eq!(state_of(&conn, &id(b, 1)).unwrap().2, 1);
+    valid(&conn);
+}
+
+#[test]
+fn n2_editing_one_of_nine_picture_cards_keeps_the_other_eight() {
+    use crate::visual_cards::tests::{expected, library, operation as visual_op, region, TempDir};
+    use mixed::*;
+    let dir = TempDir::new();
+    let conn = library(dir.path());
+    let regions: Vec<_> = (0..10)
+        .map(|i| {
+            let mut r = region();
+            r.x = 20 - i;
+            r.id = r.hash();
+            r
+        })
+        .collect();
+    let picture = |i: usize, r: &crate::visual_cards::Region| {
+        json!({"itemId": format!("cover-{i}"), "front": format!("Which label is {i}?"), "back": "Bravo",
+               "sourcePage": null, "origin": "user", "visualRegionId": r.id})
+    };
+    let first: Vec<Value> = (0..9).map(|i| picture(i, &regions[i])).collect();
+    let mut create = visual_op(&regions[0]);
+    create["visualRegions"] = json!(regions[..9]);
+    create["next"]["flashcards"] = json!(first);
+    save_study_set_at(dir.path(), &create).unwrap();
+    for i in 0..9 {
+        rate_at(dir.path(), &conn, i, 300 + i as u32);
+    }
+    let old = saved_items(&conn);
+    // A VisualCardEditor-style edit: card 4 keeps its place and gets a new region.
+    let mut second = first.clone();
+    second[4] = picture(4, &regions[9]);
+    let mut edit = visual_op(&regions[0]);
+    edit["operationId"] = json!(op_id(400));
+    edit["reason"] = json!("edit");
+    edit["expected"] = expected(&conn);
+    let mut used: Vec<_> = regions[..9].to_vec();
+    used[4] = regions[9].clone();
+    edit["visualRegions"] = json!(used);
+    edit["next"]["flashcards"] = json!(second);
+    save_study_set_at(dir.path(), &edit).unwrap();
+    let new = saved_items(&conn);
+    assert_eq!(new.len(), 9);
+    for i in 0..9 {
+        if i == 4 {
+            assert_eq!(events(&conn, &new[i]), 0);
+            assert!(state_of(&conn, &new[i]).is_none());
+        } else {
+            assert_eq!(events(&conn, &new[i]), 1, "events of card {i}");
+            assert_eq!(state_of(&conn, &new[i]), state_of(&conn, &old[i]));
+            assert!(state_of(&conn, &new[i]).is_some());
+        }
+    }
+    crate::backup::verify_application_connection(&conn).unwrap();
+}
+
+#[test]
+fn n3_a_reorder_keeps_every_rating_matched_by_content() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (
+        &[("A", "1"), ("B", "2"), ("C", "3")],
+        &[("C", "3"), ("A", "1"), ("B", "2")],
+    );
+    let mut conn = database();
+    create(&mut conn, a);
+    for (i, rating) in ["good", "again", "easy"].iter().enumerate() {
+        rate(&mut conn, a, i, rating, 10 + i as u32);
+    }
+    edit(&mut conn, 2, b);
+    kept(&conn, &id(a, 0), &id(b, 1));
+    kept(&conn, &id(a, 1), &id(b, 2));
+    kept(&conn, &id(a, 2), &id(b, 0));
+    valid(&conn);
+}
+
+#[test]
+fn n4_duplicate_cards_match_the_kth_copy_to_the_kth_copy() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (
+        &[("X", "1"), ("X", "1"), ("Y", "2")],
+        &[("Y", "2"), ("X", "1"), ("X", "1")],
+    );
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 20);
+    rate(&mut conn, a, 1, "again", 21);
+    rate(&mut conn, a, 2, "easy", 22);
+    edit(&mut conn, 2, b);
+    kept(&conn, &id(a, 2), &id(b, 0));
+    kept(&conn, &id(a, 0), &id(b, 1));
+    kept(&conn, &id(a, 1), &id(b, 2));
+    valid(&conn);
+
+    // An edit that creates a duplicate: the first copy keeps, the second is fresh.
+    let (a, b): (Cards, Cards) = (&[("A", "1"), ("B", "2")], &[("A", "1"), ("A", "1")]);
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 23);
+    rate(&mut conn, a, 1, "hard", 24);
+    edit(&mut conn, 2, b);
+    kept(&conn, &id(a, 0), &id(b, 0));
+    fresh(&conn, &id(b, 1));
+    valid(&conn);
+}
+
+#[test]
+fn n5_an_edit_and_an_append_in_one_save_keep_the_others() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (
+        &[("A", "1"), ("B", "2"), ("C", "3")],
+        &[("A", "1"), ("B", "edited"), ("C", "3"), ("D", "4")],
+    );
+    let mut conn = database();
+    create(&mut conn, a);
+    for i in 0..3 {
+        rate(&mut conn, a, i, "good", 30 + i as u32);
+    }
+    edit(&mut conn, 2, b);
+    kept(&conn, &id(a, 0), &id(b, 0));
+    kept(&conn, &id(a, 2), &id(b, 2));
+    fresh(&conn, &id(b, 1));
+    fresh(&conn, &id(b, 3));
+    valid(&conn);
+}
+
+#[test]
+fn n6_deleting_one_card_keeps_the_others() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (
+        &[("A", "1"), ("B", "2"), ("C", "3")],
+        &[("A", "1"), ("C", "3")],
+    );
+    let mut conn = database();
+    create(&mut conn, a);
+    for i in 0..3 {
+        rate(&mut conn, a, i, "good", 40 + i as u32);
+    }
+    edit(&mut conn, 2, b);
+    kept(&conn, &id(a, 0), &id(b, 0));
+    kept(&conn, &id(a, 2), &id(b, 1));
+    valid(&conn);
+}
+
+#[test]
+fn n7_a_chain_of_edits_gives_path_independent_ids_and_keeps_every_rating() {
+    use r13::*;
+    let a: Cards = &[("A", "1"), ("B", "2"), ("C", "3")];
+    let b: Cards = &[("A", "1"), ("B", "2"), ("C", "c2")];
+    let c: Cards = &[("A", "1"), ("B", "b2"), ("C", "c2")];
+    let d: Cards = &[("A", "1"), ("B", "b3"), ("C", "c2")];
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 50);
+    edit(&mut conn, 2, b);
+    rate(&mut conn, b, 0, "again", 51);
+    edit(&mut conn, 3, c);
+    rate(&mut conn, c, 0, "easy", 52);
+    edit(&mut conn, 4, d);
+    let root = |item: &str, rating: &str| -> String {
+        events(&conn, item)
+            .into_iter()
+            .find(|e| e.1 == rating)
+            .unwrap()
+            .0
+    };
+    // The originals: one rating on each version's first card.
+    let (e1, e2, e3) = (
+        root(&id(a, 0), "good"),
+        root(&id(b, 0), "again"),
+        root(&id(c, 0), "easy"),
+    );
+    let on_d = events(&conn, &id(d, 0));
+    let mut want = vec![
+        carried(&e1, &id(d, 0)),
+        carried(&e2, &id(d, 0)),
+        carried(&e3, &id(d, 0)),
+    ];
+    want.sort();
+    let mut got: Vec<String> = on_d.iter().map(|e| e.0.clone()).collect();
+    got.sort();
+    assert_eq!(got, want, "every id is carried(root, dst)");
+    // No item holds two events with the same time and rating.
+    let dupes = count(
+        &conn,
+        "SELECT COUNT(*) FROM (SELECT item_id, generation, reviewed_at, rating FROM card_review_events
+           GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1)",
+    );
+    assert_eq!(dupes, 0);
+    // Ratings made on B and C are kept on C's and D's cards too.
+    assert_eq!(events(&conn, &id(c, 0)).len(), 3);
+    assert_eq!(events(&conn, &id(b, 0)).len(), 2);
+    assert_eq!(state_of(&conn, &id(d, 0)).unwrap().2, 3);
+    assert_eq!(receipts(&conn, &id(d, 0)), 3);
+    // The unedited, never-rated card stays fresh through every version.
+    assert_eq!(events(&conn, &id(d, 2)).len(), 0);
+    valid(&conn);
+}
+
+#[test]
+fn n8_a_save_that_shares_no_card_makes_no_version() {
+    use r13::*;
+    let (a, b): (Cards, Cards) = (&[("A", "1"), ("B", "2")], &[("X", "9"), ("Y", "8")]);
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 60);
+    let versions = count(&conn, "SELECT COUNT(*) FROM card_versions");
+    let events_before = count(&conn, "SELECT COUNT(*) FROM card_review_events");
+    edit(&mut conn, 2, b);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM card_review_events"),
+        events_before
+    );
+    valid(&conn);
+}
+
+#[test]
+fn n9_editing_back_to_an_earlier_list_carries_the_ratings_made_since() {
+    use r13::*;
+    let a: Cards = &[("A", "1"), ("B", "2")];
+    let b: Cards = &[("A", "1"), ("B", "b2")];
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 70);
+    rate(&mut conn, a, 1, "hard", 71);
+    edit(&mut conn, 2, b);
+    rate(&mut conn, b, 0, "again", 72);
+    rate(&mut conn, b, 0, "easy", 73);
+    let versions = count(&conn, "SELECT COUNT(*) FROM card_versions");
+    edit(&mut conn, 3, a);
+    // The earlier list is the active one again; no new version was made.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    let active: String = conn
+        .query_row(
+            "SELECT id FROM card_versions WHERE is_active = 1",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let crate::card_reviews::SavedCards::Ok(cards) =
+        crate::card_reviews::parse_saved_cards(Some(&gemini_set(a)["flashcards"].to_string()))
+    else {
+        panic!("cards")
+    };
+    assert_eq!(
+        active,
+        crate::card_reviews::card_version(M, &cards).version_id
+    );
+    // A's first card holds its own rating plus B's two.
+    assert_eq!(events(&conn, &id(a, 0)).len(), 3);
+    let state = state_of(&conn, &id(a, 0)).unwrap();
+    assert_eq!(state.2, 3, "reps equal the number of events");
+    // The history is one history: the event reps run 1..n.
+    let mut reps: Vec<i64> = conn
+        .prepare("SELECT json_extract(next_state_json, '$.reps') FROM card_review_events WHERE item_id = ?1")
+        .unwrap()
+        .query_map([id(a, 0)], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    reps.sort();
+    assert_eq!(reps, vec![1, 2, 3]);
+    assert_eq!(receipts(&conn, &id(a, 0)), 3);
+    // The second card of A was edited away on B: it keeps only its own rating.
+    assert_eq!(events(&conn, &id(a, 1)).len(), 1);
+    // The backup validator itself passes (reps and history checks included).
+    valid(&conn);
+    // And the card keeps rating.
+    rate(&mut conn, a, 0, "good", 74);
+    valid(&conn);
+}
+
+#[test]
+fn n10_a_deleted_then_restored_card_gets_its_old_ratings_back() {
+    use r13::*;
+    let a: Cards = &[("P", "1"), ("Q", "2"), ("R", "3")];
+    let b: Cards = &[("P", "1"), ("Q", "2")];
+    let c: Cards = &[("P", "1"), ("Q", "2"), ("R", "3"), ("S", "4")];
+    let mut conn = database();
+    create(&mut conn, a);
+    for i in 0..3 {
+        rate(&mut conn, a, i, "good", 80 + i as u32);
+    }
+    edit(&mut conn, 2, b);
+    rate(&mut conn, b, 0, "hard", 83);
+    edit(&mut conn, 3, c);
+    // R's rating from A is on C, although the save came from B.
+    kept(&conn, &id(a, 2), &id(c, 2));
+    fresh(&conn, &id(c, 3));
+    // P holds A's rating and the one made on B.
+    assert_eq!(events(&conn, &id(c, 0)).len(), 2);
+    assert_eq!(state_of(&conn, &id(c, 0)).unwrap().2, 2);
+    valid(&conn);
+}
+
+#[test]
+fn n11_a_save_that_changes_no_card_writes_nothing_and_logs_no_activation() {
+    use r13::*;
+    let a: Cards = &[("A", "1"), ("B", "2")];
+    let mut conn = database();
+    create(&mut conn, a);
+    rate(&mut conn, a, 0, "good", 90);
+    let logged = |conn: &Connection| {
+        count(
+            conn,
+            "SELECT COUNT(*) FROM local_changes WHERE table_name LIKE 'card%'",
+        )
+    };
+    let (changes, versions, events_before) = (
+        logged(&conn),
+        count(&conn, "SELECT COUNT(*) FROM card_versions"),
+        count(&conn, "SELECT COUNT(*) FROM card_review_events"),
+    );
+    let before = row(&mut conn);
+    let mut next = gemini_set(a);
+    next["title"] = json!("A new title");
+    save_on(&mut conn, &operation(2, "edit", before, next), LATER).unwrap();
+    assert_eq!(logged(&conn), changes);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM card_review_events"),
+        events_before
+    );
+    valid(&conn);
+}
+
+#[test]
+fn n12_a_save_after_many_versions_and_ratings_stays_fast() {
+    use r13::*;
+    // 40 versions x 50 cards x 3 ratings: root lookup must not grow with
+    // ratings x versions squared.
+    let names: Vec<(String, String)> = (0..50)
+        .map(|i| (format!("Q{i}"), format!("A{i}")))
+        .collect();
+    fn view(list: &[(String, String)]) -> Vec<(&str, &str)> {
+        list.iter().map(|(f, b)| (f.as_str(), b.as_str())).collect()
+    }
+    let mut conn = database();
+    let mut current = names.clone();
+    create(&mut conn, &view(&current));
+    for card in 0..50 {
+        for (k, rating) in ["good", "easy", "good"].iter().enumerate() {
+            rate(
+                &mut conn,
+                &view(&current),
+                card,
+                rating,
+                1000 + (card * 3 + k) as u32,
+            );
+        }
+    }
+    for edit_number in 0..39 {
+        current[edit_number % 50].1 = format!("edit {edit_number}");
+        edit(&mut conn, 2 + edit_number as u32, &view(&current));
+    }
+    current[45].1 = "last edit".into();
+    let started = std::time::Instant::now();
+    edit(&mut conn, 100, &view(&current));
+    let took = started.elapsed();
+    assert!(
+        took < std::time::Duration::from_millis(3000),
+        "the 41st save took {took:?}"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), 41);
+    // An untouched card still holds exactly its three ratings, one hop from the root.
+    let untouched = id(&view(&current), 49);
+    assert_eq!(events(&conn, &untouched).len(), 3);
+    valid(&conn);
 }

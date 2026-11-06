@@ -887,7 +887,7 @@ pub fn apply_operation(
         &before,
         &operation.payload["next"]["flashcards"],
     )?;
-    // Cards only added at the end keep their review progress (GUIDE-PACK-01).
+    // Cards that match a stored card keep their review progress (R13b1 per-card carry).
     if let (Some(row), Some(next)) = (&current, operation.payload["next"].as_object()) {
         if let Some(before) = row.get("flashcards_json").and_then(Value::as_str) {
             crate::card_reviews::carry_review_state(

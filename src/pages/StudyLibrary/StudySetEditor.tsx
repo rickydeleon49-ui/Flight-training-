@@ -369,7 +369,7 @@ export function StudySetEditor({
           {opened ? (
             <>
               <p className="tiny muted">
-                New cards start fresh. Your earlier reviews are kept.
+                New and changed cards start fresh. Other cards keep their reviews.
               </p>
               <Field label="Question">
                 <TextArea

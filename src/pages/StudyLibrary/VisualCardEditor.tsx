@@ -235,7 +235,7 @@ export function VisualCardEditor({
       description={
         uncertain
           ? "The save may already have happened. Try save again checks the same request; closing does not undo a saved card."
-          : "One picture, one cover, one question. PNG pictures only. Changing a card starts this set's reviews fresh. Adding cards keeps them."
+          : "One picture, one cover, one question. PNG pictures only. Changing a card starts that card fresh. Other cards keep their reviews."
       }
       dismissible={!busy}
       footer={

@@ -879,20 +879,24 @@ pub(crate) fn carried_event_id(event_id: &str, item_id: &str) -> String {
     derived_uuid_v4(&format!("{event_id}\u{0}{item_id}"))
 }
 
-/// APPEND-ONLY CARRY-OVER (GUIDE-PACK-01). When a saved card list grows only
-/// by cards added at its end, every earlier card keeps its review state in the
-/// new version: the state row, and each rating with its receipt (the backup
-/// check needs both to agree), are copied to the new version's items. Nothing
-/// existing is changed or deleted: the old version keeps its own rows. Any
-/// edit, delete or reorder carries nothing (a picture card counts as edited
-/// when its region changes: the prefix compare includes `visual_region_id`).
-/// Picture cards are carried like any other card, old or newly appended; their
-/// sidecars are written by `materialize` inside the savepoint, which refuses a
-/// region the material does not own. Failure inside rolls back to the savepoint
-/// and leaves the save itself untouched.
-/// An append to a list never studied on this device still snapshots the new
-/// list, so ratings from another device carry in sync (S-6a5). The browser
-/// twin skips this, because the browser build has no sync.
+/// PER-CARD CARRY-OVER (owner decision 05 Nov: an edit changes only the card
+/// she edited). After a save, every card of the new list that is the same card
+/// as a card of ANY stored version of the material keeps that card's ratings:
+/// the ratings are copied onto the new version's item (with their receipts),
+/// the state row follows, and nothing existing is changed or deleted. A card
+/// is "the same card" when its `CanonicalCard` is equal (front, back, page,
+/// origin, picture region), so an edited card starts fresh, a moved card keeps
+/// its ratings and a deleted card does not stop the others (`match_cards`).
+/// The work is done by `carry_into`, which the sync apply also uses (R13b2),
+/// so both paths derive the same rows. Picture cards are carried like any
+/// other card; their sidecars are written by `materialize` inside the
+/// savepoint, which refuses a region the material does not own. Failure
+/// inside rolls back to the savepoint and leaves the save itself untouched.
+/// A save that matches no stored card makes no version. A list never studied
+/// on this device that shares a card with its predecessor is still
+/// snapshotted, so ratings from another device carry in sync (S-6a5). The
+/// browser twin skips the snapshot of a never-studied list, because the
+/// browser build has no sync.
 pub fn carry_review_state(
     tx: &Transaction,
     material_id: &str,
@@ -926,137 +930,752 @@ fn carry_inner(
     ) else {
         return Ok(());
     };
-    if !matches!(provider, "gemini" | "import" | "manual")
-        || new.len() <= old.len()
-        || new[..old.len()] != old[..]
-    {
+    if !matches!(provider, "gemini" | "import" | "manual") {
         return Ok(());
     }
     let (old_version, new_version) = (
         card_version(material_id, &old),
         card_version(material_id, &new),
     );
-    let exists = |id: &str| -> Check<bool> {
-        tx.query_row(
-            "SELECT 1 FROM card_versions WHERE id = ?1 AND source_material_id = ?2",
-            params![id, material_id],
-            |_| Ok(()),
+    // A save with no change: nothing to carry and no activation to log.
+    if old_version.version_id == new_version.version_id {
+        return Ok(());
+    }
+    let shares_a_card = |cards: &[CanonicalCard]| !match_cards(cards, &new).is_empty();
+    let stored_shares = load_versions(tx, material_id)?
+        .iter()
+        .any(|v| v.verified && v.version_id != new_version.version_id && shares_a_card(&v.cards));
+    if !shares_a_card(&old) && !stored_shares {
+        return Ok(());
+    }
+    // Stores the new list when it is new (verifying a stored one) and makes it
+    // the active version; reverting to a stored list takes this path too.
+    materialize(tx, material_id, &new_version, provider, now)?;
+    carry_into(tx, material_id, &new_version.version_id, true)?;
+    Ok(())
+}
+
+/* ------------------------------------------------------------------ */
+/* The per-card carry engine (shared with the sync apply)              */
+/* ------------------------------------------------------------------ */
+
+type CardKey<'a> = (
+    &'a str,
+    &'a str,
+    Option<i64>,
+    Option<&'a str>,
+    Option<&'a str>,
+);
+
+fn card_key(card: &CanonicalCard) -> CardKey<'_> {
+    (
+        card.front.as_str(),
+        card.back.as_str(),
+        card.source_page,
+        card.origin.as_deref(),
+        card.visual_region_id.as_deref(),
+    )
+}
+
+/// Pairs `(src_ordinal, dst_ordinal)` of equal cards. The k-th occurrence of a
+/// card in `src` maps to the k-th occurrence in `dst`; extra copies on either
+/// side get no match. Bytes are compared exactly: no trimming, no folding. The
+/// result is sorted by `src_ordinal` and depends on nothing but the inputs.
+pub(crate) fn match_cards(src: &[CanonicalCard], dst: &[CanonicalCard]) -> Vec<(usize, usize)> {
+    let mut slots: std::collections::BTreeMap<CardKey<'_>, Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for (d, card) in dst.iter().enumerate() {
+        slots.entry(card_key(card)).or_default().push(d);
+    }
+    let mut taken: std::collections::BTreeMap<CardKey<'_>, usize> =
+        std::collections::BTreeMap::new();
+    let mut out = Vec::new();
+    for (s, card) in src.iter().enumerate() {
+        let key = card_key(card);
+        let used = taken.entry(key).or_insert(0);
+        if let Some(&d) = slots.get(&key).and_then(|v| v.get(*used)) {
+            out.push((s, d));
+            *used += 1;
+        }
+    }
+    out
+}
+
+/// One stored version of a material with its cards re-read from the database.
+/// `verified` is false when the recomputed content hash or item ids differ from
+/// what is stored (a missing picture link, damage): such a version is never a
+/// source, so a broken picture cannot match a plain card.
+struct StoredVersion {
+    version_id: String,
+    created_at: String,
+    first_reviewed_at: Option<String>,
+    cards: Vec<CanonicalCard>,
+    item_ids: Vec<String>,
+    verified: bool,
+}
+
+/// Every stored version of the material, ordered by `card_count, id`.
+fn load_versions(conn: &Connection, material: &str) -> Check<Vec<StoredVersion>> {
+    type Head = (String, String, String, Option<String>);
+    let heads: Vec<Head> = conn
+        .prepare(
+            "SELECT id, content_hash, created_at, first_reviewed_at FROM card_versions
+             WHERE source_material_id = ?1 ORDER BY card_count, id",
+        )
+        .map_err(storage)?
+        .query_map([material], |r| {
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?))
+        })
+        .map_err(storage)?
+        .collect::<Result<_, _>>()
+        .map_err(storage)?;
+    let mut out = Vec::with_capacity(heads.len());
+    for (version_id, content_hash, created_at, first_reviewed_at) in heads {
+        let rows: Vec<(String, CanonicalCard)> = conn
+            .prepare(
+                "SELECT i.id, i.front, i.back, i.source_page, o.origin, r.region_id FROM card_items i
+                 LEFT JOIN card_item_origins o ON o.item_id = i.id
+                 LEFT JOIN card_item_visual_regions r ON r.item_id = i.id
+                 WHERE i.version_id = ?1 ORDER BY i.ordinal",
+            )
+            .map_err(storage)?
+            .query_map([&version_id], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    CanonicalCard {
+                        front: r.get(1)?,
+                        back: r.get(2)?,
+                        source_page: r.get(3)?,
+                        origin: r.get(4)?,
+                        visual_region_id: r.get(5)?,
+                    },
+                ))
+            })
+            .map_err(storage)?
+            .collect::<Result<_, _>>()
+            .map_err(storage)?;
+        let (item_ids, cards): (Vec<String>, Vec<CanonicalCard>) = rows.into_iter().unzip();
+        let derived = card_version(material, &cards);
+        let verified = !cards.is_empty()
+            && derived.version_id == version_id
+            && derived.content_hash == content_hash
+            && derived
+                .items
+                .iter()
+                .map(|i| i.item_id.as_str())
+                .eq(item_ids.iter().map(String::as_str));
+        out.push(StoredVersion {
+            version_id,
+            created_at,
+            first_reviewed_at,
+            cards,
+            item_ids,
+            verified,
+        });
+    }
+    Ok(out)
+}
+
+/// A current-generation rating event with its durable origin.
+struct StoredEvent {
+    id: String,
+    item_id: String,
+    generation: i64,
+    rating: String,
+    reviewed_at: String,
+    scheduler_version: String,
+    prior: String,
+    next: String,
+    device: String,
+    changed_at: String,
+}
+
+fn load_events(conn: &Connection, material: &str, generation: i64) -> Check<Vec<StoredEvent>> {
+    conn.prepare(
+        "SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, e.scheduler_version,
+                e.prior_state_json, e.next_state_json,
+                COALESCE(m.device_id, (SELECT value FROM app_metadata WHERE key = 'device_id'), ''),
+                COALESCE(m.changed_at, e.reviewed_at)
+         FROM card_review_events e
+         JOIN card_items i ON i.id = e.item_id
+         JOIN card_versions v ON v.id = i.version_id
+         LEFT JOIN sync_row_meta m ON m.table_name = 'card_review_events' AND m.row_id = e.id
+         WHERE v.source_material_id = ?1 AND e.generation = ?2
+         ORDER BY e.reviewed_at, e.id",
+    )
+    .map_err(storage)?
+    .query_map(params![material, generation], |r| {
+        Ok(StoredEvent {
+            id: r.get(0)?,
+            item_id: r.get(1)?,
+            generation: r.get(2)?,
+            rating: r.get(3)?,
+            reviewed_at: r.get(4)?,
+            scheduler_version: r.get(5)?,
+            prior: r.get(6)?,
+            next: r.get(7)?,
+            device: r.get(8)?,
+            changed_at: r.get(9)?,
+        })
+    })
+    .map_err(storage)?
+    .collect::<Result<_, _>>()
+    .map_err(storage)
+}
+
+type EventsByKey<'a> = std::collections::BTreeMap<(&'a str, &'a str), Vec<usize>>;
+
+fn events_by_key(events: &[StoredEvent]) -> EventsByKey<'_> {
+    let mut map: EventsByKey<'_> = std::collections::BTreeMap::new();
+    for (i, e) in events.iter().enumerate() {
+        map.entry((e.reviewed_at.as_str(), e.rating.as_str()))
+            .or_default()
+            .push(i);
+    }
+    map
+}
+
+/// The original rating behind event `start`. Event x is a copy when some event
+/// r with the same time and rating has `carried_event_id(r.id, x.item) == x.id`;
+/// follow that to the root. A one-hop id is the same as a plain carry makes.
+/// Multi-hop ids exist only from old builds, which carried by path. The walk
+/// is bounded by the number of versions; a cycle makes `start` its own root.
+fn root_index(
+    events: &[StoredEvent],
+    by_key: &EventsByKey<'_>,
+    start: usize,
+    bound: usize,
+) -> usize {
+    let mut seen = vec![start];
+    let mut current = start;
+    for _ in 0..=bound {
+        let x = &events[current];
+        let parent = by_key
+            .get(&(x.reviewed_at.as_str(), x.rating.as_str()))
+            .and_then(|candidates| {
+                candidates
+                    .iter()
+                    .copied()
+                    .find(|&r| r != current && carried_event_id(&events[r].id, &x.item_id) == x.id)
+            });
+        match parent {
+            None => return current,
+            Some(p) if seen.contains(&p) => return start,
+            Some(p) => {
+                seen.push(p);
+                current = p;
+            }
+        }
+    }
+    start
+}
+
+/// Lazy, memoized root lookup. Only events asked about are resolved. Copies of
+/// one rating share a (time, rating) group and one root, so the first root found
+/// in a group is tried first: one hash confirms a one-hop copy (checked, never
+/// assumed), and only an event it does not confirm (an old-build path id) takes
+/// the full walk. This keeps a save near R x V hashes, not R x V^2.
+struct RootResolver<'a> {
+    events: &'a [StoredEvent],
+    by_key: &'a EventsByKey<'a>,
+    bound: usize,
+    memo: Vec<Option<usize>>,
+    hint: std::collections::HashMap<(&'a str, &'a str), usize>,
+}
+
+impl<'a> RootResolver<'a> {
+    fn new(events: &'a [StoredEvent], by_key: &'a EventsByKey<'a>, bound: usize) -> Self {
+        Self {
+            events,
+            by_key,
+            bound,
+            memo: vec![None; events.len()],
+            hint: std::collections::HashMap::new(),
+        }
+    }
+
+    fn root(&mut self, i: usize) -> usize {
+        if let Some(r) = self.memo[i] {
+            return r;
+        }
+        let x = &self.events[i];
+        let key = (x.reviewed_at.as_str(), x.rating.as_str());
+        let root = match self.hint.get(&key) {
+            Some(&h) if h == i || carried_event_id(&self.events[h].id, &x.item_id) == x.id => h,
+            _ => {
+                let r = root_index(self.events, self.by_key, i, self.bound);
+                self.hint.entry(key).or_insert(r);
+                r
+            }
+        };
+        self.memo[i] = Some(root);
+        root
+    }
+}
+
+/// The id of the original rating behind `event_id` (itself when it is one, or
+/// when its chain cycles or is unknown). Current generation only.
+#[cfg(test)]
+pub(crate) fn root_event_id(conn: &Connection, material: &str, event_id: &str) -> Check<String> {
+    let generation = read_generation_conn(conn, material)?;
+    let events = load_events(conn, material, generation)?;
+    let versions = load_versions(conn, material)?.len();
+    let by_key = events_by_key(&events);
+    Ok(match events.iter().position(|e| e.id == event_id) {
+        Some(i) => events[root_index(&events, &by_key, i, versions)].id.clone(),
+        None => event_id.to_string(),
+    })
+}
+
+fn read_generation_conn(conn: &Connection, material: &str) -> Check<i64> {
+    conn.query_row(
+        "SELECT generation FROM card_review_generations WHERE source_material_id = ?1",
+        [material],
+        |r| r.get(0),
+    )
+    .optional()
+    .map_err(storage)
+    .map(|g| g.unwrap_or(0))
+}
+
+type StateTuple = (
+    String,
+    i64,
+    Option<String>,
+    Option<String>,
+    i64,
+    i64,
+    i64,
+    Option<String>,
+    i64,
+);
+
+fn state_tuple(conn: &Connection, item: &str) -> Check<Option<StateTuple>> {
+    conn.query_row(
+        "SELECT scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+         FROM card_review_state WHERE item_id = ?1",
+        [item],
+        |r| {
+            Ok((
+                r.get(0)?,
+                r.get(1)?,
+                r.get(2)?,
+                r.get(3)?,
+                r.get(4)?,
+                r.get(5)?,
+                r.get(6)?,
+                r.get(7)?,
+                r.get(8)?,
+            ))
+        },
+    )
+    .optional()
+    .map_err(storage)
+}
+
+const SYNC_GUARD: &str = "sync_applying";
+
+/// Carry the ratings of every other stored version of `material` onto the
+/// version `dst_version_id`, card by card (`match_cards`). Returns the
+/// destination items that gained at least one event, sorted and deduped.
+///
+/// - Sources: every other VERIFIED stored version. All current-generation
+///   events of a matched source item are read, receipt or not.
+/// - Ids: `carried_event_id(root, dst_item)`, where root is the original
+///   rating (`root_index`), so every path to a card gives the same id.
+/// - Present rule: a group (time, rating) is skipped when the destination item
+///   already holds an event with that time and rating. A group fed by several
+///   roots takes the lowest root id.
+/// - `logged = true` (a local save): each event gets a receipt copied from its
+///   root's live `rate` receipt, with `itemId` = the destination; a root with
+///   no live receipt is skipped. `logged = false` (sync, caller holds the sync
+///   guard row): the root's `sync_row_meta` is copied and no receipt is made
+///   (`ensure_rate_receipts` derives them later).
+/// - State: an item that had no events and no state and got all its events
+///   from ONE source item whose state agrees with them copies that state row
+///   (today's append shape). Any other item that gained events is re-folded:
+///   `fold_item` over its events, each event's prior/next rewritten under the
+///   sync guard (unlogged, so provenance stays), the state row set from the
+///   fold (`suspended`/`flag` kept, else taken from the newest matched source).
+/// - R13b2 note: a copy takes its prior/next from the chosen SOURCE event, not
+///   the root row (the re-fold rewrites them, and the verbatim branch needs the
+///   source item's own chain). Two devices that pick different source copies can
+///   give the same id with different prior/next until the receiver re-folds.
+pub(crate) fn carry_into(
+    conn: &Connection,
+    material: &str,
+    dst_version_id: &str,
+    logged: bool,
+) -> Check<Vec<String>> {
+    let guard_present = conn
+        .query_row(
+            "SELECT 1 FROM app_metadata WHERE key = ?1",
+            [SYNC_GUARD],
+            |r| r.get::<_, i64>(0),
         )
         .optional()
-        .map(|r| r.is_some())
-        .map_err(storage)
-    };
-    // The new list is already known: nothing to do.
-    if exists(&new_version.version_id)? {
-        return Ok(());
+        .map_err(storage)?
+        .is_some();
+    if !logged && !guard_present {
+        return Err(CardReviewErrorCode::InvalidState);
     }
-    // Never studied here: snapshot the appended list anyway (logged, like a
-    // first rating's), so a device that holds ratings on an earlier list can
-    // carry them when it arrives (sync::carry). Nothing to carry locally.
-    if !exists(&old_version.version_id)? {
-        if !old.is_empty() {
-            materialize(tx, material_id, &new_version, provider, now)?;
-        }
-        return Ok(());
+    let generation = read_generation_conn(conn, material)?;
+    let versions = load_versions(conn, material)?;
+    let dst = versions
+        .iter()
+        .find(|v| v.version_id == dst_version_id && v.verified)
+        .ok_or(CardReviewErrorCode::InvalidState)?;
+    let sources: Vec<&StoredVersion> = versions
+        .iter()
+        .filter(|v| v.verified && v.version_id != dst_version_id)
+        .collect();
+    let matches: Vec<Vec<(usize, usize)>> = sources
+        .iter()
+        .map(|s| match_cards(&s.cards, &dst.cards))
+        .collect();
+    if matches.iter().all(Vec::is_empty) {
+        return Ok(Vec::new());
     }
-    materialize(tx, material_id, &new_version, provider, now)?;
-    // One read for every earlier rating of the old list, grouped by card.
-    let mut statement = tx
-        .prepare(
-            "SELECT e.item_id, e.id, e.generation, e.rating, e.reviewed_at, e.scheduler_version, e.prior_state_json, e.next_state_json,
-                    o.generation, o.applied_at, o.result_json
-             FROM card_review_events e
-             JOIN card_review_operations o ON o.operation_id = e.id AND o.is_erased = 0 AND o.action = 'rate'
-             WHERE e.item_id IN (SELECT id FROM card_items WHERE version_id = ?1)
-             ORDER BY e.reviewed_at, e.id",
-        )
-        .map_err(storage)?;
-    type Rating = (
-        String,
-        i64,
-        String,
-        String,
-        String,
-        String,
-        String,
-        i64,
-        String,
-        Option<String>,
-    );
-    let mut by_item: std::collections::HashMap<String, Vec<Rating>> =
+
+    let events = load_events(conn, material, generation)?;
+    let by_key = events_by_key(&events);
+    let mut by_item: std::collections::HashMap<&str, Vec<usize>> = std::collections::HashMap::new();
+    for (i, e) in events.iter().enumerate() {
+        by_item.entry(e.item_id.as_str()).or_default().push(i);
+    }
+    let mut resolver = RootResolver::new(&events, &by_key, versions.len());
+    // Live rate receipts: (generation, applied_at, result_json) by operation id.
+    let mut receipts: std::collections::HashMap<String, (i64, String, String)> =
         std::collections::HashMap::new();
-    let rows = statement
-        .query_map([&old_version.version_id], |r| {
-            Ok((
-                r.get::<_, String>(0)?,
-                (
-                    r.get(1)?,
-                    r.get(2)?,
-                    r.get(3)?,
-                    r.get(4)?,
-                    r.get(5)?,
-                    r.get(6)?,
-                    r.get(7)?,
-                    r.get(8)?,
-                    r.get(9)?,
-                    r.get(10)?,
-                ),
-            ))
-        })
-        .map_err(storage)?;
-    for row in rows {
-        let (item, rating) = row.map_err(storage)?;
-        by_item.entry(item).or_default().push(rating);
+    if logged {
+        let rows: Vec<(String, i64, String, String)> = conn
+            .prepare(
+                "SELECT operation_id, generation, applied_at, result_json FROM card_review_operations
+                 WHERE source_material_id = ?1 AND action = 'rate' AND is_erased = 0
+                   AND result_json IS NOT NULL",
+            )
+            .map_err(storage)?
+            .query_map([material], |r| {
+                Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?))
+            })
+            .map_err(storage)?
+            .collect::<Result<_, _>>()
+            .map_err(storage)?;
+        for (id, g, at, result) in rows {
+            receipts.insert(id, (g, at, result));
+        }
     }
-    drop(statement);
-    for (before, after) in old_version.items.iter().zip(new_version.items.iter()) {
-        tx.prepare_cached(
-            "INSERT OR IGNORE INTO card_review_state
-               (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
-             SELECT ?1, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
-             FROM card_review_state WHERE item_id = ?2",
-        )
-        .and_then(|mut st| st.execute(params![after.item_id, before.item_id]))
-        .map_err(storage)?;
-        let ratings = by_item.remove(&before.item_id).unwrap_or_default();
-        for (
-            id,
-            generation,
-            rating,
-            reviewed_at,
-            scheduler,
-            prior,
-            next,
-            op_generation,
-            applied_at,
-            result,
-        ) in ratings
-        {
-            let Some(mut result) = result.and_then(|r| serde_json::from_str::<Value>(&r).ok())
-            else {
+
+    struct Gain {
+        item: String,
+        sources: std::collections::BTreeSet<String>,
+        added: i64,
+        had_events: bool,
+        had_state: bool,
+    }
+    let mut gains: Vec<Gain> = Vec::new();
+    let mut contributing: std::collections::BTreeSet<usize> = std::collections::BTreeSet::new();
+
+    for (d, dst_item) in dst.item_ids.iter().enumerate() {
+        // Matched source items of this card, in source order.
+        let mut matched: Vec<(usize, &str)> = Vec::new();
+        for (si, pairs) in matches.iter().enumerate() {
+            for &(s, dd) in pairs {
+                if dd == d {
+                    matched.push((si, sources[si].item_ids[s].as_str()));
+                }
+            }
+        }
+        if matched.is_empty() {
+            continue;
+        }
+        let existing = by_item.get(dst_item.as_str());
+        let present: std::collections::BTreeSet<(&str, &str)> = existing
+            .map(|v| {
+                v.iter()
+                    .map(|&i| (events[i].reviewed_at.as_str(), events[i].rating.as_str()))
+                    .collect()
+            })
+            .unwrap_or_default();
+        // (time, rating) -> root id -> (root index, source event index, source version)
+        type Group<'a> = std::collections::BTreeMap<&'a str, (usize, usize, usize)>;
+        let mut groups: std::collections::BTreeMap<(&str, &str), Group<'_>> =
+            std::collections::BTreeMap::new();
+        for &(si, src_item) in &matched {
+            for &ei in by_item.get(src_item).map(Vec::as_slice).unwrap_or(&[]) {
+                let root = resolver.root(ei);
+                groups
+                    .entry((events[ei].reviewed_at.as_str(), events[ei].rating.as_str()))
+                    .or_default()
+                    .entry(events[root].id.as_str())
+                    .or_insert((root, ei, si));
+            }
+        }
+        let mut gain = Gain {
+            item: dst_item.clone(),
+            sources: std::collections::BTreeSet::new(),
+            added: 0,
+            had_events: existing.is_some_and(|v| !v.is_empty()),
+            had_state: state_tuple(conn, dst_item)?.is_some(),
+        };
+        for (key, group) in &groups {
+            if present.contains(key) {
+                continue;
+            }
+            let chosen = group
+                .values()
+                .find(|(root, _, _)| !logged || receipts.contains_key(&events[*root].id));
+            let Some(&(root, ei, si)) = chosen else {
                 continue;
             };
-            let carried = carried_event_id(&id, &after.item_id);
-            result["itemId"] = json!(after.item_id);
-            tx.execute(
-                "INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-                params![carried, after.item_id, generation, rating, reviewed_at, scheduler, prior, next],
-            )
-            .map_err(storage)?;
-            tx.execute(
-                "INSERT OR IGNORE INTO card_review_operations
-                   (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
-                 VALUES (?1, 'rate', ?2, ?3, ?4, ?5, 0, ?6)",
-                params![carried, material_id, op_generation, sha256_hex(&carried), applied_at, canonical_json(&result)],
+            let (root_ev, src_ev) = (&events[root], &events[ei]);
+            let carried = carried_event_id(&root_ev.id, dst_item);
+            let inserted = conn
+                .execute(
+                    "INSERT OR IGNORE INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                    params![
+                        carried,
+                        dst_item,
+                        src_ev.generation,
+                        src_ev.rating,
+                        src_ev.reviewed_at,
+                        src_ev.scheduler_version,
+                        src_ev.prior,
+                        src_ev.next
+                    ],
+                )
+                .map_err(storage)?;
+            if inserted != 1 {
+                continue;
+            }
+            if logged {
+                let (op_generation, applied_at, result) = &receipts[&root_ev.id];
+                let Ok(mut result) = serde_json::from_str::<Value>(result) else {
+                    return Err(CardReviewErrorCode::InvalidState);
+                };
+                result["itemId"] = json!(dst_item);
+                conn.execute(
+                    "INSERT OR IGNORE INTO card_review_operations
+                       (operation_id, action, source_material_id, generation, request_hash, applied_at, is_erased, result_json)
+                     VALUES (?1, 'rate', ?2, ?3, ?4, ?5, 0, ?6)",
+                    params![
+                        carried,
+                        material,
+                        op_generation,
+                        sha256_hex(&carried),
+                        applied_at,
+                        canonical_json(&result)
+                    ],
+                )
+                .map_err(storage)?;
+            } else {
+                conn.execute(
+                    "INSERT OR IGNORE INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
+                     VALUES ('card_review_events', ?1, ?2, ?3, 0)",
+                    params![carried, root_ev.device, root_ev.changed_at],
+                )
+                .map_err(storage)?;
+            }
+            gain.sources.insert(events[ei].item_id.clone());
+            gain.added += 1;
+            contributing.insert(si);
+        }
+        if gain.added > 0 {
+            gains.push(gain);
+        } else if logged && !gain.had_state {
+            // Nothing rated to carry: a paused or flagged card keeps that.
+            copy_unrated_state(conn, &sources, &matched, dst_item)?;
+        }
+    }
+
+    for gain in &gains {
+        let verbatim = if !gain.had_events && !gain.had_state && gain.sources.len() == 1 {
+            let src_item = gain.sources.iter().next().map(String::as_str).unwrap_or("");
+            let src_events = by_item.get(src_item).map_or(0, Vec::len) as i64;
+            match state_tuple(conn, src_item)? {
+                Some(s) if s.4 == gain.added && src_events == gain.added => {
+                    conn.execute(
+                        "INSERT OR IGNORE INTO card_review_state
+                           (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+                         SELECT ?1, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+                         FROM card_review_state WHERE item_id = ?2",
+                        params![gain.item, src_item],
+                    )
+                    .map_err(storage)?;
+                    true
+                }
+                _ => false,
+            }
+        } else {
+            false
+        };
+        if !verbatim {
+            refold_item(
+                conn,
+                material,
+                generation,
+                dst,
+                &gain.item,
+                &sources,
+                &matches,
+                guard_present,
+            )?;
+        }
+    }
+
+    if !gains.is_empty() {
+        let earliest = contributing
+            .iter()
+            .filter_map(|&si| sources[si].first_reviewed_at.clone())
+            .min();
+        if let Some(at) = earliest {
+            conn.execute(
+                "UPDATE card_versions SET first_reviewed_at = ?1 WHERE id = ?2 AND first_reviewed_at IS NULL",
+                params![at, dst_version_id],
             )
             .map_err(storage)?;
         }
     }
-    tx.execute(
-        "UPDATE card_versions SET first_reviewed_at = (SELECT first_reviewed_at FROM card_versions WHERE id = ?1)
-         WHERE id = ?2 AND first_reviewed_at IS NULL",
-        params![old_version.version_id, new_version.version_id],
+    let mut gained: Vec<String> = gains.into_iter().map(|g| g.item).collect();
+    gained.sort();
+    gained.dedup();
+    Ok(gained)
+}
+
+/// The newest-created matched source item (tie: lowest version id) that has a
+/// state row, for `suspended`/`flag`.
+fn preferred_source_state(
+    conn: &Connection,
+    sources: &[&StoredVersion],
+    matched: &[(usize, &str)],
+) -> Check<Option<StateTuple>> {
+    let mut order: Vec<&(usize, &str)> = matched.iter().collect();
+    order.sort_by(|a, b| {
+        sources[b.0]
+            .created_at
+            .cmp(&sources[a.0].created_at)
+            .then(sources[a.0].version_id.cmp(&sources[b.0].version_id))
+    });
+    for (_, item) in order {
+        if let Some(state) = state_tuple(conn, item)? {
+            return Ok(Some(state));
+        }
+    }
+    Ok(None)
+}
+
+/// A card that gained no rating but is paused or flagged on a matched source
+/// keeps that (today's append did this); only an unrated state row is copied.
+fn copy_unrated_state(
+    conn: &Connection,
+    sources: &[&StoredVersion],
+    matched: &[(usize, &str)],
+    dst_item: &str,
+) -> Check<()> {
+    let mut order: Vec<&(usize, &str)> = matched.iter().collect();
+    order.sort_by(|a, b| {
+        sources[b.0]
+            .created_at
+            .cmp(&sources[a.0].created_at)
+            .then(sources[a.0].version_id.cmp(&sources[b.0].version_id))
+    });
+    for (_, item) in order {
+        if let Some(state) = state_tuple(conn, item)? {
+            if state.2.is_none() && state.3.is_none() && state.4 == 0 {
+                conn.execute(
+                    "INSERT OR IGNORE INTO card_review_state
+                       (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+                     SELECT ?1, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision
+                     FROM card_review_state WHERE item_id = ?2",
+                    params![dst_item, item],
+                )
+                .map_err(storage)?;
+            }
+            return Ok(());
+        }
+    }
+    Ok(())
+}
+
+/// Re-derive one item's history after events were added: fold all its events
+/// in D4 order, rewrite each event's prior/next (unlogged, under the guard row,
+/// so `sync_row_meta` provenance survives), and set the state row from the
+/// fold. `suspended`/`flag` and the revision counter follow `replay_touched`.
+#[allow(clippy::too_many_arguments)]
+fn refold_item(
+    conn: &Connection,
+    material: &str,
+    generation: i64,
+    dst: &StoredVersion,
+    item: &str,
+    sources: &[&StoredVersion],
+    matches: &[Vec<(usize, usize)>],
+    guard_present: bool,
+) -> Check<()> {
+    let events = crate::sync::apply::item_events(conn, item).map_err(storage)?;
+    let folded = crate::sync::replay::fold_item(&events, generation).map_err(storage)?;
+    let Some(last) = folded.last() else {
+        return Ok(());
+    };
+    if !guard_present {
+        conn.execute(
+            "INSERT INTO app_metadata (key, value) VALUES (?1, ?2)",
+            params![SYNC_GUARD, "carry"],
+        )
+        .map_err(storage)?;
+    }
+    let rewritten = crate::sync::apply::rewrite_event_states(conn, &folded).map_err(storage);
+    if !guard_present {
+        conn.execute("DELETE FROM app_metadata WHERE key = ?1", [SYNC_GUARD])
+            .map_err(storage)?;
+    }
+    rewritten?;
+    let schedule = &last.next;
+    let local = state_tuple(conn, item)?;
+    let (suspended, flag, revision) = match &local {
+        Some(l) => (l.6, l.7.clone(), l.8 + 1),
+        None => {
+            let d = dst
+                .item_ids
+                .iter()
+                .position(|i| i == item)
+                .ok_or(CardReviewErrorCode::InvalidState)?;
+            let mut matched: Vec<(usize, &str)> = Vec::new();
+            for (si, pairs) in matches.iter().enumerate() {
+                for &(s, dd) in pairs {
+                    if dd == d {
+                        matched.push((si, sources[si].item_ids[s].as_str()));
+                    }
+                }
+            }
+            match preferred_source_state(conn, sources, &matched)? {
+                Some(s) => (s.6, s.7, 1),
+                None => (0, None, 1),
+            }
+        }
+    };
+    conn.execute(
+        "INSERT INTO card_review_state
+           (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+         ON CONFLICT(item_id) DO UPDATE SET
+           scheduler_version = excluded.scheduler_version, step = excluded.step, due_at = excluded.due_at,
+           last_reviewed_at = excluded.last_reviewed_at, reps = excluded.reps, lapses = excluded.lapses,
+           suspended = excluded.suspended, flag = excluded.flag, revision = excluded.revision",
+        params![
+            item,
+            material,
+            schedule.scheduler_version,
+            schedule.step,
+            schedule.due_at,
+            schedule.last_reviewed_at,
+            schedule.reps,
+            schedule.lapses,
+            suspended,
+            flag,
+            revision.max(folded.len() as i64)
+        ],
     )
     .map_err(storage)?;
     Ok(())
@@ -1497,3 +2116,7 @@ pub async fn save_card_review_atomically(
 #[cfg(test)]
 #[path = "card_reviews_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "card_carry_tests.rs"]
+mod carry_tests;

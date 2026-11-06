@@ -765,11 +765,16 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       await rateAt(repo, M, 3, "good", at(T0, 5 * DAY));
       expect(Number((await state(G.items[0]!.itemId))!.reps)).toBe(3);
       expect(Number((await state(G.items[3]!.itemId))!.reps)).toBe(1);
-      // An edit is not an append: no new version, nothing carried.
+      // Owner decision 05 Nov (R13b1) replaces D1: an edit makes a version and the other cards keep their ratings.
       const count = async () => Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_versions", []))[0]!.n);
       const n = await count();
-      await save(grown.map((c, i) => (i === 0 ? { ...c, back: "changed" } : c)), "edit", 2);
-      expect(await count()).toBe(n);
+      const edited = grown.map((c, i) => (i === 0 ? { ...c, back: "changed" } : c));
+      await save(edited, "edit", 2);
+      expect(await count()).toBe(n + 1);
+      const E = await cardVersion(M, edited);
+      expect(await eventCount(E.items[0]!.itemId)).toBe(0);
+      expect(await eventCount(E.items[1]!.itemId)).toBe(1);
+      expect(await state(E.items[0]!.itemId)).toBeUndefined();
     });
 
     it("POLISH-086: Recent reviews lists a carried rating once (its newest copy); stored events are untouched", async () => {
@@ -858,7 +863,7 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       }
     });
 
-    it("S-6a8 T2: appending to a set that holds a picture card keeps the old ratings; picture edits carry nothing; a region the material does not own carries nothing", async () => {
+    it("S-6a8 T2: appending to a set that holds a picture card keeps the old ratings; a picture edit keeps the other cards; a region the material does not own carries nothing", async () => {
       const { db } = await open(kind);
       const repo = cardReviewRepository(db);
       const { visualRegionHash } = await import("./visualCards");
@@ -907,14 +912,17 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       const foreign = { front: "Foreign picture", back: "F", sourcePage: null, origin: "user", visualRegionId: foreignId } as CanonicalCard;
       await carry([...mixed, foreign]);
       expect(await versions()).toBe(before);
-      // An edit to the picture card carries nothing.
-      await carry([{ ...mixed[0]!, back: "Charlie" }, mixed[1]!, { front: "More", back: "M", sourcePage: null, origin: "user" } as CanonicalCard]);
-      expect(await versions()).toBe(before);
+      // Owner decision 05 Nov (R13b1) replaces D1: an edit to the picture card keeps the plain card.
+      const editedPicture = [{ ...mixed[0]!, back: "Charlie" }, mixed[1]!, { front: "More", back: "M", sourcePage: null, origin: "user" } as CanonicalCard];
+      await carry(editedPicture);
+      expect(await versions()).toBe(before + 1);
+      const Ed = await cardVersion(M, editedPicture);
+      expect([await events(Ed.items[0]!.itemId), await events(Ed.items[1]!.itemId), await events(Ed.items[2]!.itemId)]).toEqual([0, 1, 0]);
       // A plain append carries both old cards, picture card included.
       const grown = [...mixed, { front: "Synthetic plain two", back: "Q", sourcePage: null, origin: "user" } as CanonicalCard];
       await carry(grown);
       const G = await cardVersion(M, grown);
-      expect(await versions()).toBe(before + 1);
+      expect(await versions()).toBe(before + 2);
       expect(await state(G.items[0]!.itemId)).toEqual(await state(A.items[0]!.itemId));
       expect(await state(G.items[1]!.itemId)).toEqual(await state(A.items[1]!.itemId));
       expect(await state(G.items[2]!.itemId)).toBeUndefined();
@@ -926,7 +934,7 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       const withPicture = [...mixed, ownPicture2];
       await carry(withPicture);
       const P = await cardVersion(M, withPicture);
-      expect(await versions()).toBe(before + 2);
+      expect(await versions()).toBe(before + 3);
       expect([await events(P.items[0]!.itemId), await events(P.items[1]!.itemId), await events(P.items[2]!.itemId)]).toEqual([1, 1, 0]);
       expect(await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [P.items[0]!.itemId])).toEqual([{ region_id: regionId }]);
       expect(await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [P.items[2]!.itemId])).toEqual([{ region_id: ownId2 }]);
@@ -934,6 +942,390 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
 
     it("GUIDE-PACK-01: the carried rating id is the golden value shared with the native twin", async () => {
       expect(await derivedUuidV4("rating-id\u0000item-id")).toBe(GOLDEN_CARRIED_ID);
+    });
+
+    describe("R13b1 per-card carry (owner decision 05 Nov replaces D1: an edit changes only the edited card)", () => {
+      const list = (names: string[]): CanonicalCard[] => names.map((n) => ({ front: `Q ${n}`, back: `A ${n}`, sourcePage: null }));
+      const minute = (k: number) => at(T0, k * MINUTE);
+      const carriedId = (root: string, item: string) => derivedUuidV4(`${root}\u0000${item}`);
+      const id = async (cards: CanonicalCard[], ordinal: number) => (await cardVersion(M, cards)).items[ordinal]!.itemId;
+
+      async function env() {
+        const { db } = await open(kind);
+        const repo = cardReviewRepository(db);
+        let n = 0x100;
+        const save = async (cards: CanonicalCard[]) => {
+          const [row] = await db.select<Record<string, string>>(
+            "SELECT title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at, summary_origin, retired_json FROM ai_study_sets WHERE source_material_id = ?",
+            [M],
+          );
+          n += 1;
+          await db.saveStudySetAtomically!(
+            {
+              operationId: `5e700000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`,
+              materialId: M,
+              reason: "edit",
+              expected: row as never,
+              next: { title: "Synthetic", summary: "", summaryOrigin: null, sections: [], flashcards: cards.map((c) => ({ front: c.front, back: c.back, sourcePage: c.sourcePage })), sourceNotes: "", provider: "gemini", model: "", retired: [] },
+            } as never,
+            undefined,
+          );
+        };
+        const events = async (item: string) =>
+          (await db.select<Record<string, unknown>>("SELECT id, rating, reviewed_at FROM card_review_events WHERE item_id = ? ORDER BY reviewed_at, id", [item])).map((r) => ({
+            id: String(r.id),
+            rating: String(r.rating),
+            at: String(r.reviewed_at),
+          }));
+        const receipts = async (item: string) =>
+          Number(
+            (await db.select<Record<string, unknown>>(
+              "SELECT COUNT(*) AS n FROM card_review_operations WHERE action = 'rate' AND is_erased = 0 AND json_extract(result_json, '$.itemId') = ?",
+              [item],
+            ))[0]!.n,
+          );
+        const state = async (item: string) =>
+          (await db.select<Record<string, unknown>>("SELECT step, due_at, last_reviewed_at, reps, lapses, suspended, flag, revision FROM card_review_state WHERE item_id = ?", [item]))[0];
+        const versions = async () => Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_versions", []))[0]!.n);
+        const valid = async () => {
+          const reference = await createNodeSqliteDatabase();
+          try {
+            await validateCardReviewState(
+              (sql, params) => db.select<Record<string, unknown>>(sql, params as never),
+              (sql, params) => reference.select<Record<string, unknown>>(sql, params as never),
+            );
+          } finally {
+            reference.close();
+          }
+        };
+        /** `next` holds exactly `old`'s ratings, carried one hop, with receipts and the same schedule. */
+        const kept = async (old: string, next: string) => {
+          const [o, c] = [await events(old), await events(next)];
+          expect(o.length).toBeGreaterThan(0);
+          expect(c.map((e) => e.id)).toEqual(await Promise.all(o.map((e) => carriedId(e.id, next))));
+          expect(c.map((e) => [e.rating, e.at])).toEqual(o.map((e) => [e.rating, e.at]));
+          expect(await receipts(next)).toBe(o.length);
+          expect(await state(next)).toEqual(await state(old));
+        };
+        const fresh = async (next: string) => {
+          expect(await events(next)).toEqual([]);
+          expect(await state(next)).toBeUndefined();
+        };
+        return { db, repo, save, events, receipts, state, versions, valid, kept, fresh };
+      }
+
+      it("N1: editing one card keeps the other cards' ratings; the edited card starts fresh", async () => {
+        const { db, repo, save, events, state, valid, kept, fresh } = await env();
+        const a = list(["0", "1", "2"]);
+        const b = a.map((c, i) => (i === 1 ? { ...c, back: "edited" } : c));
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        await rateAt(repo, M, 0, "easy", minute(2));
+        await rateAt(repo, M, 1, "again", minute(3));
+        await rateAt(repo, M, 2, "hard", minute(4));
+        await save(b);
+        await kept(await id(a, 0), await id(b, 0));
+        await kept(await id(a, 2), await id(b, 2));
+        await fresh(await id(b, 1));
+        expect(await events(await id(a, 1))).toHaveLength(1);
+        await valid();
+        await rateAt(repo, M, 0, "good", minute(10));
+        await rateAt(repo, M, 1, "good", minute(11));
+        expect(Number((await state(await id(b, 0)))!.reps)).toBe(3);
+        expect(Number((await state(await id(b, 1)))!.reps)).toBe(1);
+        await valid();
+      });
+
+      it("N2: editing one of nine picture cards (same position, new region) keeps the other eight", async () => {
+        const { db, repo, events, state, versions, valid } = await env();
+        const { visualRegionHash } = await import("./visualCards");
+        const { carryReviewState } = await import("./cardReviewTransaction");
+        const descriptor = (x: number) => ({ ownerMaterialId: M, imageMaterialId: "mat-image", imageSha256: "a".repeat(64), imageWidth: 600, imageHeight: 400, x, y: 30, w: 90, h: 20, rotation: 0 as const });
+        await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at, file_path) VALUES ('mat-image', 'Panel', ?, ?, 'panel.png')", [T0, T0]);
+        const regionIds: string[] = [];
+        for (let i = 0; i < 10; i++) {
+          const rid = await visualRegionHash(descriptor(40 + i));
+          regionIds.push(rid);
+        }
+        const picture = (i: number, rid: string) => ({ front: `Which label is ${i}?`, back: "Bravo", sourcePage: null, origin: "user", visualRegionId: rid }) as CanonicalCard;
+        const nine = Array.from({ length: 9 }, (_, i) => picture(i, regionIds[i]!));
+        await seedMaterial(db, M, nine, "manual");
+        for (const [i, rid] of regionIds.entries()) {
+          await db.execute(
+            "INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            [rid, M, "mat-image", "a".repeat(64), 600, 400, 40 + i, 30, 90, 20, 0],
+          );
+        }
+        for (let i = 0; i < 9; i++) await rateAt(repo, M, i, "good", minute(1 + i));
+        const edited = nine.map((c, i) => (i === 4 ? picture(4, regionIds[9]!) : c));
+        const before = await versions();
+        await carryReviewState(
+          async (sql, params) => {
+            await db.execute(sql, params);
+          },
+          (sql, params) => db.select<Record<string, unknown>>(sql, params),
+          M,
+          JSON.stringify(nine),
+          JSON.stringify(edited),
+          "manual",
+          minute(30),
+        );
+        expect(await versions()).toBe(before + 1);
+        for (let i = 0; i < 9; i++) {
+          const [oldItem, newItem] = [await id(nine, i), await id(edited, i)];
+          if (i === 4) {
+            expect(await events(newItem)).toEqual([]);
+            expect(await state(newItem)).toBeUndefined();
+          } else {
+            expect((await events(newItem)).map((e) => e.id)).toEqual([await carriedId((await events(oldItem))[0]!.id, newItem)]);
+            expect(await state(newItem)).toEqual(await state(oldItem));
+          }
+        }
+        await valid();
+      });
+
+      it("N3: a reorder keeps every rating, matched by content", async () => {
+        const { db, repo, save, valid, kept } = await env();
+        const a = list(["A", "B", "C"]);
+        const b = [a[2]!, a[0]!, a[1]!];
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        await rateAt(repo, M, 1, "again", minute(2));
+        await rateAt(repo, M, 2, "easy", minute(3));
+        await save(b);
+        await kept(await id(a, 0), await id(b, 1));
+        await kept(await id(a, 1), await id(b, 2));
+        await kept(await id(a, 2), await id(b, 0));
+        await valid();
+      });
+
+      it("N4: duplicate cards match the k-th copy to the k-th copy; an edit that makes a duplicate keeps the first", async () => {
+        const first = await env();
+        const [x, y] = list(["X", "Y"]) as [CanonicalCard, CanonicalCard];
+        const a = [x, x, y];
+        const b = [y, x, x];
+        await seedMaterial(first.db, M, a, "gemini");
+        await rateAt(first.repo, M, 0, "good", minute(1));
+        await rateAt(first.repo, M, 1, "again", minute(2));
+        await rateAt(first.repo, M, 2, "easy", minute(3));
+        await first.save(b);
+        await first.kept(await id(a, 2), await id(b, 0));
+        await first.kept(await id(a, 0), await id(b, 1));
+        await first.kept(await id(a, 1), await id(b, 2));
+        await first.valid();
+      });
+
+      it("N4b: an edit that creates a duplicate keeps the first copy's ratings and starts the second fresh", async () => {
+        const e = await env();
+        const [p, q] = list(["P", "Q"]) as [CanonicalCard, CanonicalCard];
+        const a = [p, q];
+        const b = [p, p];
+        await seedMaterial(e.db, M, a, "gemini");
+        await rateAt(e.repo, M, 0, "good", minute(1));
+        await rateAt(e.repo, M, 1, "hard", minute(2));
+        await e.save(b);
+        await e.kept(await id(a, 0), await id(b, 0));
+        await e.fresh(await id(b, 1));
+        await e.valid();
+      });
+
+      it("N5: an edit and an append in one save keep the other cards", async () => {
+        const { db, repo, save, valid, kept, fresh } = await env();
+        const a = list(["A", "B", "C"]);
+        const b = [a[0]!, { ...a[1]!, back: "edited" }, a[2]!, ...list(["D"])];
+        await seedMaterial(db, M, a, "gemini");
+        for (let i = 0; i < 3; i++) await rateAt(repo, M, i, "good", minute(1 + i));
+        await save(b);
+        await kept(await id(a, 0), await id(b, 0));
+        await kept(await id(a, 2), await id(b, 2));
+        await fresh(await id(b, 1));
+        await fresh(await id(b, 3));
+        await valid();
+      });
+
+      it("N6: deleting one card keeps the others", async () => {
+        const { db, repo, save, valid, kept } = await env();
+        const a = list(["A", "B", "C"]);
+        const b = [a[0]!, a[2]!];
+        await seedMaterial(db, M, a, "gemini");
+        for (let i = 0; i < 3; i++) await rateAt(repo, M, i, "good", minute(1 + i));
+        await save(b);
+        await kept(await id(a, 0), await id(b, 0));
+        await kept(await id(a, 2), await id(b, 1));
+        await valid();
+      });
+
+      it("N7: a chain of edits gives path-independent ids (carried(root, dst)) and keeps every rating", async () => {
+        const { db, repo, save, events, receipts, state, valid } = await env();
+        const a = list(["A", "B", "C"]);
+        const b = a.map((c, i) => (i === 2 ? { ...c, back: "c2" } : c));
+        const c = b.map((card, i) => (i === 1 ? { ...card, back: "b2" } : card));
+        const d = c.map((card, i) => (i === 1 ? { ...card, back: "b3" } : card));
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        await save(b);
+        await rateAt(repo, M, 0, "again", minute(2));
+        await save(c);
+        await rateAt(repo, M, 0, "easy", minute(3));
+        await save(d);
+        const root = async (item: string, rating: string) => (await events(item)).find((e) => e.rating === rating)!.id;
+        const [e1, e2, e3] = [await root(await id(a, 0), "good"), await root(await id(b, 0), "again"), await root(await id(c, 0), "easy")];
+        const dItem = await id(d, 0);
+        const want = (await Promise.all([e1, e2, e3].map((e) => carriedId(e, dItem)))).sort();
+        expect((await events(dItem)).map((e) => e.id).sort()).toEqual(want);
+        const dupes = await db.select<Record<string, unknown>>(
+          "SELECT COUNT(*) AS n FROM (SELECT item_id, generation, reviewed_at, rating FROM card_review_events GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1)",
+          [],
+        );
+        expect(Number(dupes[0]!.n)).toBe(0);
+        expect(await events(await id(c, 0))).toHaveLength(3);
+        expect(await events(await id(b, 0))).toHaveLength(2);
+        expect(Number((await state(dItem))!.reps)).toBe(3);
+        expect(await receipts(dItem)).toBe(3);
+        await valid();
+      });
+
+      it("N8: a save that shares no card makes no version (guard)", async () => {
+        const { db, repo, save, versions, valid } = await env();
+        const a = list(["A", "B"]);
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        const before = await versions();
+        await save(list(["X", "Y"]));
+        expect(await versions()).toBe(before);
+        await valid();
+      });
+
+      it("N9: editing back to an earlier list carries the ratings made since; the history stays one history; Recent reviews labels them current", async () => {
+        const { db, repo, save, events, receipts, state, versions, valid } = await env();
+        const a = list(["A", "B"]);
+        const b = a.map((c, i) => (i === 1 ? { ...c, back: "b2" } : c));
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        await rateAt(repo, M, 1, "hard", minute(2));
+        await save(b);
+        await rateAt(repo, M, 0, "again", minute(3));
+        await rateAt(repo, M, 0, "easy", minute(4));
+        const count = await versions();
+        await save(a);
+        expect(await versions()).toBe(count);
+        const A = await cardVersion(M, a);
+        const active = await db.select<Record<string, unknown>>("SELECT id FROM card_versions WHERE is_active = 1", []);
+        expect(active.map((r) => r.id)).toEqual([A.versionId]);
+        expect(await events(A.items[0]!.itemId)).toHaveLength(3);
+        expect(Number((await state(A.items[0]!.itemId))!.reps)).toBe(3);
+        const reps = (await db.select<Record<string, unknown>>("SELECT json_extract(next_state_json, '$.reps') AS reps FROM card_review_events WHERE item_id = ?", [A.items[0]!.itemId])).map((r) => Number(r.reps)).sort();
+        expect(reps).toEqual([1, 2, 3]);
+        expect(await receipts(A.items[0]!.itemId)).toBe(3);
+        expect(await events(A.items[1]!.itemId)).toHaveLength(1);
+        await valid();
+        // Recent reviews: the three ratings of the active card show on the active version, not as "earlier version".
+        const page = await repo.getRecentReviews(M);
+        const onA = page.rows.filter((r) => r.itemId === A.items[0]!.itemId);
+        expect(onA).toHaveLength(3);
+        expect(onA.every((r) => r.earlierVersion === false)).toBe(true);
+      });
+
+      it("N10: a deleted then restored card gets its old ratings back, from every stored version", async () => {
+        const { db, repo, save, events, state, valid, kept, fresh } = await env();
+        const a = list(["P", "Q", "R"]);
+        const b = [a[0]!, a[1]!];
+        const c = [...a, ...list(["S"])];
+        await seedMaterial(db, M, a, "gemini");
+        for (let i = 0; i < 3; i++) await rateAt(repo, M, i, "good", minute(1 + i));
+        await save(b);
+        await rateAt(repo, M, 0, "hard", minute(5));
+        await save(c);
+        await kept(await id(a, 2), await id(c, 2));
+        await fresh(await id(c, 3));
+        expect(await events(await id(c, 0))).toHaveLength(2);
+        expect(Number((await state(await id(c, 0)))!.reps)).toBe(2);
+        await valid();
+      });
+
+      it("matchCards: the k-th copy maps to the k-th copy; every field is compared exactly (twin of native match_cards)", async () => {
+        const { matchCards } = await import("./cardReviewTransaction");
+        const x = { front: "x", back: "1", sourcePage: null } as CanonicalCard;
+        const y = { front: "y", back: "2", sourcePage: null } as CanonicalCard;
+        expect(matchCards([x, y], [y, x])).toEqual([[0, 1], [1, 0]]);
+        expect(matchCards([x, x, y], [y, x, x])).toEqual([[0, 1], [1, 2], [2, 0]]);
+        expect(matchCards([x, x], [x])).toEqual([[0, 0]]);
+        expect(matchCards([x], [x, x])).toEqual([[0, 0]]);
+        expect(matchCards([x, y], [{ ...x, back: "changed" }, y])).toEqual([[1, 1]]);
+        // A missing page, origin or picture is not a present one; a picture never matches a plain card or another picture.
+        const picture = { ...x, visualRegionId: "a".repeat(64) } as CanonicalCard;
+        for (const other of [{ ...x, sourcePage: 3 }, { ...x, origin: "user" }, picture] as CanonicalCard[]) {
+          expect(matchCards([x], [other])).toEqual([]);
+          expect(matchCards([other], [x])).toEqual([]);
+        }
+        expect(matchCards([picture], [{ ...x, visualRegionId: "b".repeat(64) } as CanonicalCard])).toEqual([]);
+        expect(matchCards([{ ...x, front: "x " }], [x])).toEqual([]);
+      });
+
+      it("a revert to a damaged stored version still saves; nothing is carried and no version is made", async () => {
+        const { db, repo, save, events, versions } = await env();
+        const a = list(["A", "B"]);
+        const b = a.map((c, i) => (i === 1 ? { ...c, back: "b2" } : c));
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        await save(b);
+        await rateAt(repo, M, 0, "again", minute(2));
+        const A = await cardVersion(M, a);
+        await db.execute("UPDATE card_versions SET content_hash = ? WHERE id = ?", ["f".repeat(64), A.versionId]);
+        const count = await versions();
+        await save(a);
+        expect(await versions()).toBe(count);
+        const [row] = await db.select<Record<string, unknown>>("SELECT flashcards_json FROM ai_study_sets WHERE source_material_id = ?", [M]);
+        expect(JSON.parse(String(row!.flashcards_json)).map((c: { front: string }) => c.front)).toEqual(a.map((c) => c.front));
+        expect(await events(A.items[0]!.itemId)).toHaveLength(1);
+      });
+
+      it("perf: a save after 40 versions x 50 cards x 3 ratings stays fast", async () => {
+        const { db, repo, save, events, versions, valid } = await env();
+        const names = Array.from({ length: 50 }, (_, i) => String(i));
+        let current = list(names);
+        await seedMaterial(db, M, current, "gemini");
+        let t = 1;
+        for (let card = 0; card < 50; card++) {
+          for (const rating of ["good", "easy", "good"] as const) await rateAt(repo, M, card, rating, minute(t++));
+        }
+        for (let e = 0; e < 39; e++) {
+          current = current.map((c, i) => (i === e % 50 ? { ...c, back: `edit ${e}` } : c));
+          await save(current);
+        }
+        current = current.map((c, i) => (i === 45 ? { ...c, back: "last edit" } : c));
+        const started = performance.now();
+        await save(current);
+        const took = performance.now() - started;
+        expect(took).toBeLessThan(10000);
+        expect(await versions()).toBe(41);
+        expect(await events(await id(current, 49))).toHaveLength(3);
+        await valid();
+      }, 240_000);
+
+      it("N11: a save that changes no card writes nothing (guard)", async () => {
+        const { db, repo, versions } = await env();
+        const a = list(["A", "B"]);
+        await seedMaterial(db, M, a, "gemini");
+        await rateAt(repo, M, 0, "good", minute(1));
+        const before = await versions();
+        const { carryReviewState } = await import("./cardReviewTransaction");
+        const writes: string[] = [];
+        await carryReviewState(
+          async (sql, params) => {
+            writes.push(sql);
+            await db.execute(sql, params);
+          },
+          (sql, params) => db.select<Record<string, unknown>>(sql, params),
+          M,
+          JSON.stringify(a),
+          JSON.stringify(a),
+          "gemini",
+          minute(2),
+        );
+        expect(writes).toEqual([]);
+        expect(await versions()).toBe(before);
+      });
     });
 });
 
