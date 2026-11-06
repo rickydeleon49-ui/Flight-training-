@@ -443,7 +443,7 @@ del.changed-words { background: var(--status-overdue-fill); text-decoration: lin
 }
 .card-review__browse-options { align-items: flex-start; gap: var(--space-2); }
 .card-review__reset {
-  margin-top: var(--space-4);
+  margin-top: var(--space-8);
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-subtle);
 }

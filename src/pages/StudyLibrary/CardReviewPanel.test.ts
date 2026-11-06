@@ -361,8 +361,14 @@ describe("card reviews in MaterialDetail", () => {
     await reviewHeading();
     await openSession();
     const reset = button("Reset card reviews");
-    expect(reset.classList.contains("button--danger")).toBe(true);
+    expect(reset.classList.contains("button--danger")).toBe(false);
+    expect(reset.classList.contains("button--secondary")).toBe(true);
     expect(reset.parentElement?.className).toBe("card-review__reset");
+    // POLISH-087: it is the last thing in the Flashcards panel body, after the card list.
+    const body = reset.closest(".card__body")!;
+    expect(body.lastElementChild === reset.closest(".card-review") || body.contains(reset)).toBe(true);
+    const cardList = document.getElementById("search-target-cards");
+    if (cardList) expect(cardList.compareDocumentPosition(reset) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(sessionRegion().queryByRole("button", { name: "Reset card reviews" })).toBeNull();
     fireEvent.click(reset);
     const dialog = await screen.findByRole("dialog", { name: `Reset card reviews for “${TITLE}”?` });

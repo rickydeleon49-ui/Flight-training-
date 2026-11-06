@@ -58,6 +58,10 @@ interface DocumentPagesPanelProps {
   showTips?: boolean;
   active?: boolean;
   onPageNotesAvailable?: (available: boolean) => void;
+  /** Set by the Flashcards panel "Make a card": the next card opens empty. */
+  flashcardRoute?: { current: boolean };
+  /** Called when that card editor closes, so the student can go back to where they were. */
+  onFlashcardRouteDone?: () => void;
 }
 
 // Remember attempts across closing and reopening Pages, including failed checks.
@@ -113,11 +117,11 @@ function emptyCardSet(material: StudyMaterial): AiStudySet {
   };
 }
 
-export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true, active = true, onPageNotesAvailable }: DocumentPagesPanelProps) {
+export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore, showTips = true, active = true, onPageNotesAvailable, flashcardRoute, onFlashcardRouteDone }: DocumentPagesPanelProps) {
   const { repo, controller, status } = useNavigationController();
   const app = useOptionalAppData();
   // "Make a card" opens the card editor prefilled from one page note.
-  const [cardDraft, setCardDraft] = useState<{ createFirst: boolean; seed: Omit<BookmarkCardSource, "itemId">; set: AiStudySet } | null>(null);
+  const [cardDraft, setCardDraft] = useState<{ createFirst: boolean; blank: boolean; seed: Omit<BookmarkCardSource, "itemId">; set: AiStudySet } | null>(null);
   // "Make a question" opens the practice editor with one question from the note.
   const [questionDraft, setQuestionDraft] = useState<NoteQuestionSeed | null>(null);
   const [questionAdded, setQuestionAdded] = useState(false);
@@ -174,13 +178,16 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
   }, [material.id]);
   const makeCard = async (bookmark: NavigationBookmark) => {
     const epoch = ++cardEpoch.current;
+    const blank = Boolean(flashcardRoute?.current);
+    if (flashcardRoute) flashcardRoute.current = false;
     try {
-      if (!app?.repositories) return;
+      if (!app?.repositories) { if (blank) onFlashcardRouteDone?.(); return; }
       const read = await app.repositories.documents.readStudySetForEdit(material.id);
       const preview = await previewStudyPageSource(material.id);
       if (epoch !== cardEpoch.current) return;
       setCardDraft({
         createFirst: !read,
+        blank,
         seed: {
           source: {
             id: newId(),
@@ -197,6 +204,7 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
       });
     } catch {
       if (epoch === cardEpoch.current) setActionError("This card couldn't be opened. Try again.");
+      if (blank) onFlashcardRouteDone?.();
     }
   };
   const makeQuestion = async (bookmark: NavigationBookmark) => {
@@ -498,7 +506,12 @@ export function DocumentPagesPanel({ material, fileMissing, restoring, onRestore
             studySet={cardDraft.set}
             bookmarkSeed={cardDraft.seed}
             createFirst={cardDraft.createFirst}
-            onClose={() => setCardDraft(null)}
+            blankFields={cardDraft.blank}
+            onClose={() => {
+              const blank = cardDraft.blank;
+              setCardDraft(null);
+              if (blank) onFlashcardRouteDone?.();
+            }}
           />
         ) : null}
         {questionDraft && app?.repositories ? (

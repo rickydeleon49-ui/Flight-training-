@@ -264,6 +264,15 @@ export function Settings() {
     return () => observers.forEach((observer) => observer.disconnect());
   }, []);
 
+  const libraryResult = useRef<HTMLDivElement>(null);
+  const [libraryChecked, setLibraryChecked] = useState(0);
+  // After Check library finishes, bring its answer into view so scrolling is not needed to find it.
+  useEffect(() => {
+    if (libraryChecked === 0) return;
+    libraryResult.current?.scrollIntoView({ block: "nearest" });
+    libraryResult.current?.focus({ preventScroll: true });
+  }, [libraryChecked]);
+
   const reloadLibrary = async () => {
     const report = await checkLibrary();
     setLibraryReport(report);
@@ -289,6 +298,7 @@ export function Settings() {
       setLibraryNote(documentErrorMessage(error, "The library could not be checked."));
     } finally {
       setLibraryBusy(false);
+      setLibraryChecked((n) => n + 1);
     }
   };
 
@@ -1217,6 +1227,8 @@ export function Settings() {
                 </Button>
               </div>
               {!canHandleFiles() ? <p className="tiny dim">Library file checks need the desktop app.</p> : null}
+              {libraryNote || libraryReport ? (
+              <div ref={libraryResult} data-library-result tabIndex={-1} className="stack stack--4" style={{ outline: "none" }}>
               {libraryNote ? (
                 <p className="small" role={libraryProblem ? "alert" : "status"}>
                   {libraryNote}
@@ -1260,6 +1272,8 @@ export function Settings() {
                     <Button size="small" disabled={libraryBusy} onClick={() => setLibraryVisible((count) => count + 50)}>Show more results</Button>
                   ) : null}
                 </div>
+              ) : null}
+              </div>
               ) : null}
               {libraryTrashUndo.length > 0 ? (
                 <div className="stack stack--2" aria-label="Files recently moved to trash">
