@@ -491,6 +491,9 @@ struct Engine<'a> {
     children: HashSet<(&'static str, String)>,
     /// Set when a delete actually ran (see `tombstone_removed_rows`).
     deleted_rows: bool,
+    /// Review events this file inserted: (event id, material), for the
+    /// duplicate pass.
+    inserted_events: Vec<(String, String)>,
 }
 
 impl<'a> Engine<'a> {
@@ -511,6 +514,7 @@ impl<'a> Engine<'a> {
             carry: BTreeMap::new(),
             children: HashSet::new(),
             deleted_rows: false,
+            inserted_events: Vec::new(),
         }
     }
 
@@ -550,6 +554,7 @@ impl<'a> Engine<'a> {
         for (index, change) in deletes {
             self.delete(&SYNC_TABLES[index], change)?;
         }
+        self.drop_duplicate_copies()?;
         self.activate_versions()?;
         crate::sync::receipts::repair_picture_sidecars(self.conn)?;
         self.carry_touched()?;
@@ -580,6 +585,59 @@ impl<'a> Engine<'a> {
                  WHERE table_name = 'card_versions' AND row_id = ?1",
                 [&id],
             )?;
+        }
+        Ok(())
+    }
+
+    /// Union dedupe (R13b2). An old-build phone can send a path id
+    /// `carried(carried(e,B),C)` while this device already holds
+    /// `carried(e,C)`: two ids for one rating. After the whole file has landed
+    /// (an intermediate copy may come later in the same file), delete an
+    /// inserted event when its item holds another event of the same
+    /// generation, time and rating with the same root. Only rows inserted by
+    /// this apply are ever removed (the lowest id stays between two of them).
+    /// Unlogged (the sync guard is held); the row's meta goes too.
+    fn drop_duplicate_copies(&mut self) -> Result<(), ApplyError> {
+        let mut by_material: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for (id, material) in std::mem::take(&mut self.inserted_events) {
+            by_material.entry(material).or_default().push(id);
+        }
+        for (material, ids) in by_material {
+            // Cheap exit: only an id that shares (item, generation, time,
+            // rating) with another row can be a duplicate.
+            let mut ids: Vec<String> = ids;
+            ids.retain(|id| {
+                self.conn
+                    .query_row(
+                        "SELECT 1 FROM card_review_events a JOIN card_review_events b
+                           ON b.item_id = a.item_id AND b.generation = a.generation
+                          AND b.reviewed_at = a.reviewed_at AND b.rating = a.rating AND b.id != a.id
+                         WHERE a.id = ?1 LIMIT 1",
+                        [id],
+                        |_| Ok(()),
+                    )
+                    .optional()
+                    .map(|r| r.is_some())
+                    .unwrap_or(true)
+            });
+            if ids.is_empty() {
+                continue;
+            }
+            let dups = crate::card_reviews::duplicate_copies(self.conn, &material, &ids)
+                .map_err(|_| ApplyError::BadRow)?;
+            for id in dups {
+                let removed = self
+                    .conn
+                    .execute("DELETE FROM card_review_events WHERE id = ?1", [&id])?;
+                self.conn.execute(
+                    "DELETE FROM sync_row_meta WHERE table_name = 'card_review_events' AND row_id = ?1",
+                    [&id],
+                )?;
+                if removed == 1 {
+                    self.out.written = self.out.written.saturating_sub(1);
+                    self.out.ignored += 1;
+                }
+            }
         }
         Ok(())
     }
@@ -984,9 +1042,16 @@ impl<'a> Engine<'a> {
             if table.name == "card_review_events" {
                 let item = text(&row, "item_id").ok_or(ApplyError::BadRow)?;
                 if let Some(m) = self.material_of_item(item)? {
+                    self.inserted_events
+                        .push((change.row_id.clone(), m.clone()));
                     self.note_carry(&m, &change.changed_at);
                 }
-            } else if table.name == "card_items" {
+            } else if matches!(
+                table.name,
+                "card_items" | "card_item_visual_regions" | "card_item_origins"
+            ) {
+                // A picture link or origin arriving later can make a version
+                // verified (R13b2), so it re-triggers the carry.
                 if let Some(m) = self.material_of_item(&change.row_id)? {
                     self.note_carry(&m, &change.changed_at);
                 }
@@ -1279,6 +1344,10 @@ impl<'a> Engine<'a> {
                 ))?
                 .query_map([&material], |r| Ok((r.get(0)?, r.get(1)?)))?
                 .collect::<Result<_, _>>()?;
+            let stored_active: Option<String> = rows
+                .iter()
+                .find(|(_, stored)| *stored == 1)
+                .map(|(id, _)| id.clone());
             let mut best: Option<(Rank, Reverse<String>)> = None;
             for (id, stored) in rows {
                 let (active, at) = match self.claims.get(&(name, id.clone())) {
@@ -1291,6 +1360,18 @@ impl<'a> Engine<'a> {
                 }
             }
             let winner = best.map(|(_, Reverse(id))| id);
+            // A new winner needs the ratings of the other versions even when
+            // the file carried no event or card (R13b2).
+            if name == "card_versions" {
+                if let Some(w) = &winner {
+                    let was_active = stored_active.as_deref() == Some(w.as_str());
+                    if !was_active {
+                        if let Some(m) = self.meta(name, w)? {
+                            self.note_carry(&material, &m.changed_at);
+                        }
+                    }
+                }
+            }
             self.conn.execute(
                 &format!(
                     "UPDATE {} SET is_active = 0

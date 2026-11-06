@@ -7312,11 +7312,13 @@ mod carried_versions {
         take(&mut a, &fb);
         let (b0, c0) = (card_at(MAT, &B, 0), card_at(MAT, &C, 0));
         for conn in [&a, &b] {
-            assert_eq!(events(conn, &b0.item), vec![d(&e1, &b0.item)]);
-            assert_eq!(events(conn, &c0.item), vec![d(&d(&e1, &b0.item), &c0.item)]);
+            // R13b2 (owner 05 Nov): a synced rating lands on the ACTIVE version only
+            // (C), with the root id; the inactive B in between gains nothing.
+            assert!(events(conn, &b0.item).is_empty());
+            assert_eq!(state(conn, &b0.item), None);
+            assert_eq!(events(conn, &c0.item), vec![d(&e1, &c0.item)]);
             verified(conn);
         }
-        same(&a, &b, &b0.item);
         same(&a, &b, &c0.item);
     }
 
@@ -7382,8 +7384,10 @@ mod carried_versions {
         let e2 = events(&a, &a1.item).last().unwrap().clone();
         let (b1, c1) = (card_at(MAT, &B, 0), card_at(MAT, &C, 0));
         for conn in [&a, &b] {
-            assert!(events(conn, &b1.item).contains(&d(&e2, &b1.item)));
-            assert!(events(conn, &c1.item).contains(&d(&d(&e2, &b1.item), &c1.item)));
+            // R13b2 (owner 05 Nov): only the active version (C) takes the synced rating, under
+            // the root id; the inactive B does not.
+            assert!(!events(conn, &b1.item).contains(&d(&e2, &b1.item)));
+            assert!(events(conn, &c1.item).contains(&d(&e2, &c1.item)));
             verified(conn);
         }
         same(&a, &b, &c1.item);
@@ -7473,7 +7477,7 @@ mod carried_versions {
     }
 
     #[test]
-    fn an_edit_or_delete_carries_nothing() {
+    fn the_edited_or_deleted_card_carries_nothing() {
         let edit = [("Edited front", "Synthetic back")];
         let deleted = [
             ("Second front", "Second back"),
@@ -8760,6 +8764,46 @@ mod visual_sync {
         assert!(got.is_ok(), "{got:?}");
     }
 
+    /// R13b2 S7: the tmpdir01 shape (an older phone's file without picture
+    /// links), now with an EDIT on the Mac instead of an append. The picture
+    /// card and the plain card both keep the phone's ratings except the edited one.
+    #[test]
+    fn s7_an_older_phones_file_without_links_still_carries_per_card_after_an_edit() {
+        let (mut mac, mut phone, rid) = mixed_pair();
+        let a = mixed_cards(&rid, false);
+        let (a0, a1) = (card_of(&a, 0), card_of(&a, 1));
+        act(&mut phone, &a0, "rate", json!({ "rating": "good" }), 1);
+        act(&mut phone, &a1, "rate", json!({ "rating": "again" }), 2);
+        let e1 = item_events(&phone, &a0.item)[0].clone();
+        phone
+            .execute(
+                "DELETE FROM local_changes WHERE table_name = 'card_item_visual_regions'",
+                [],
+            )
+            .unwrap();
+        // The Mac edits the plain card; the picture card stays.
+        let edited = vec![
+            mixed_card("Which label is in the middle?", Some(&rid)),
+            mixed_card("Edited plain front", None),
+        ];
+        save_mixed(&mut mac, &edited);
+        let mac_file = ship(&mut mac, MAC, 0);
+        take(&mut mac, &ship(&mut phone, PHONE, 0));
+        // And the other direction: the phone takes the Mac's edit.
+        take(&mut phone, &mac_file);
+        let (e0n, e1n) = (card_of(&edited, 0), card_of(&edited, 1));
+        for conn in [&mac, &phone] {
+            assert_eq!(
+                item_events(conn, &e0n.item),
+                vec![crate::card_reviews::carried_event_id(&e1, &e0n.item)]
+            );
+            assert!(item_events(conn, &e1n.item).is_empty());
+            with_history(conn);
+            let got = crate::backup::verify_application_connection(conn);
+            assert!(got.is_ok(), "{got:?}");
+        }
+    }
+
     #[test]
     fn a_rating_made_after_the_other_device_deleted_the_material_leaves_no_orphans() {
         let (mut mac, mut phone, c) = copied_pair();
@@ -9017,5 +9061,460 @@ mod r13a_set_counts {
         assert_eq!(count_mac_changes(&conn, &changes, "peer").card_sets, 1);
         // Only the older version is switched off here: still one set.
         assert_eq!(count_mac_changes(&conn, &changes[1..], "peer").card_sets, 1);
+    }
+}
+
+/// R13b2: per-card carry over sync. A rating made on any stored version of a
+/// set reaches the ACTIVE version card by card (owner decision, 05 Nov: editing
+/// one card leaves the other cards' ratings alone), the same way on both
+/// devices and in either exchange order.
+mod edit_carry {
+    use super::apply::{act, ship, take, MAC, PHONE};
+    use super::apply::{rate, state, Card};
+    use super::carried_versions::{
+        active_version, all_events, backup_ok, events, verified, B, C, MAT,
+    };
+    use super::synced_ratings::{append, card_at, pair, with_history};
+    use super::*;
+    use crate::card_reviews::carried_event_id as d;
+
+    type L<'a> = &'a [(&'a str, &'a str)];
+
+    const F: (&str, &str) = ("Synthetic front", "Synthetic back");
+    const S: (&str, &str) = ("Second front", "Second back");
+    const T: (&str, &str) = ("Third front", "Third back");
+    const EDITED: (&str, &str) = ("Edited front", "Edited back");
+    const FOURTH: (&str, &str) = ("Fourth front", "Fourth back");
+
+    /// Both devices hold the three-card list C (Mac grew it, the phone took it).
+    fn base() -> (Connection, Connection) {
+        let (mut a, mut b, _a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        append(&mut a, MAT, &C);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        (a, b)
+    }
+
+    /// Exchange once; `flip` swaps which side takes first.
+    fn xchg(a: &mut Connection, b: &mut Connection, flip: bool) {
+        let fa = ship(a, MAC, 0);
+        let fb = ship(b, PHONE, 0);
+        if flip {
+            take(a, &fb);
+            take(b, &fa);
+        } else {
+            take(b, &fa);
+            take(a, &fb);
+        }
+    }
+
+    /// Events, state rows and the active version of the ACTIVE version's items
+    /// (inactive versions may differ between devices by design).
+    fn dump(conn: &Connection) -> Vec<String> {
+        let mut out = Vec::new();
+        for sql in [
+            "SELECT e.id||'|'||e.item_id||'|'||e.generation||'|'||e.rating||'|'||e.reviewed_at||'|'||e.prior_state_json||'|'||e.next_state_json
+             FROM card_review_events e JOIN card_items i ON i.id = e.item_id
+             JOIN card_versions v ON v.id = i.version_id WHERE v.is_active = 1 ORDER BY e.id",
+            "SELECT s.item_id||'|'||s.step||'|'||s.reps||'|'||s.lapses||'|'||IFNULL(s.last_reviewed_at,'')||'|'||IFNULL(s.due_at,'')||'|'||s.suspended||'|'||IFNULL(s.flag,'')
+             FROM card_review_state s JOIN card_items i ON i.id = s.item_id
+             JOIN card_versions v ON v.id = i.version_id WHERE v.is_active = 1 ORDER BY s.item_id",
+            "SELECT id||'|'||content_hash||'|'||is_active FROM card_versions ORDER BY id",
+        ] {
+            out.extend(
+                conn.prepare(sql)
+                    .unwrap()
+                    .query_map([], |r| r.get::<_, String>(0))
+                    .unwrap()
+                    .map(Result::unwrap),
+            );
+        }
+        out
+    }
+
+    fn at(list: L, n: usize) -> Card {
+        card_at(MAT, list, n)
+    }
+
+    fn settle(a: &Connection, b: &Connection, tag: &str) {
+        assert_eq!(dump(a), dump(b));
+        assert_eq!(active_version(a), active_version(b));
+        for conn in [a, b] {
+            verified(conn);
+        }
+        backup_ok(a, &format!("{tag}-a"));
+        backup_ok(b, &format!("{tag}-b"));
+    }
+
+    /// The new card holds exactly the root copy of the old card's one rating,
+    /// and its state counts it once.
+    fn holds(conn: &Connection, root: &str, dst: &Card) {
+        assert_eq!(events(conn, &dst.item), vec![d(root, &dst.item)]);
+        assert_eq!(state(conn, &dst.item).unwrap().1, 1);
+    }
+
+    fn fresh(conn: &Connection, dst: &Card) {
+        assert!(events(conn, &dst.item).is_empty());
+        assert_eq!(state(conn, &dst.item), None);
+    }
+
+    #[test]
+    fn s1_an_edit_keeps_the_phones_ratings_on_the_other_cards() {
+        for flip in [false, true] {
+            let (mut a, mut b) = base();
+            let ev: Vec<String> = [("good", 1), ("easy", 2), ("again", 3)]
+                .iter()
+                .enumerate()
+                .map(|(n, (r, op))| {
+                    rate(&mut b, &at(&C, n), r, *op);
+                    events(&b, &at(&C, n).item)[0].clone()
+                })
+                .collect();
+            let list = [F, EDITED, T];
+            append(&mut a, MAT, &list);
+            xchg(&mut a, &mut b, flip);
+            for conn in [&a, &b] {
+                holds(conn, &ev[0], &at(&list, 0));
+                fresh(conn, &at(&list, 1));
+                holds(conn, &ev[2], &at(&list, 2));
+            }
+            settle(&a, &b, &format!("s1{flip}"));
+        }
+    }
+
+    #[test]
+    fn s2_a_reorder_keeps_the_ratings() {
+        for flip in [false, true] {
+            let (mut a, mut b) = base();
+            rate(&mut b, &at(&C, 0), "good", 1);
+            rate(&mut b, &at(&C, 1), "easy", 2);
+            let e0 = events(&b, &at(&C, 0).item)[0].clone();
+            let e1 = events(&b, &at(&C, 1).item)[0].clone();
+            let list = [T, F, S];
+            append(&mut a, MAT, &list);
+            xchg(&mut a, &mut b, flip);
+            for conn in [&a, &b] {
+                fresh(conn, &at(&list, 0));
+                holds(conn, &e0, &at(&list, 1));
+                holds(conn, &e1, &at(&list, 2));
+            }
+            settle(&a, &b, &format!("s2{flip}"));
+        }
+    }
+
+    #[test]
+    fn s3_duplicate_cards_match_kth_to_kth() {
+        for flip in [false, true] {
+            let (mut a, mut b, _a1) = pair();
+            with_history(&a);
+            with_history(&b);
+            let dup = [S, S, T];
+            append(&mut a, MAT, &dup);
+            take(&mut b, &ship(&mut a, MAC, 0));
+            rate(&mut b, &at(&dup, 0), "good", 1);
+            rate(&mut b, &at(&dup, 1), "easy", 2);
+            rate(&mut b, &at(&dup, 2), "again", 3);
+            let e: Vec<String> = (0..3)
+                .map(|n| events(&b, &at(&dup, n).item)[0].clone())
+                .collect();
+            let list = [T, S, S];
+            append(&mut a, MAT, &list);
+            xchg(&mut a, &mut b, flip);
+            for conn in [&a, &b] {
+                holds(conn, &e[2], &at(&list, 0));
+                holds(conn, &e[0], &at(&list, 1));
+                holds(conn, &e[1], &at(&list, 2));
+            }
+            settle(&a, &b, &format!("s3{flip}"));
+        }
+    }
+
+    #[test]
+    fn s4_an_edit_plus_an_append_in_one_save() {
+        for flip in [false, true] {
+            let (mut a, mut b) = base();
+            rate(&mut b, &at(&C, 0), "good", 1);
+            rate(&mut b, &at(&C, 2), "easy", 2);
+            let e0 = events(&b, &at(&C, 0).item)[0].clone();
+            let e2 = events(&b, &at(&C, 2).item)[0].clone();
+            let list = [F, EDITED, T, FOURTH];
+            append(&mut a, MAT, &list);
+            xchg(&mut a, &mut b, flip);
+            for conn in [&a, &b] {
+                holds(conn, &e0, &at(&list, 0));
+                fresh(conn, &at(&list, 1));
+                holds(conn, &e2, &at(&list, 2));
+                fresh(conn, &at(&list, 3));
+            }
+            settle(&a, &b, &format!("s4{flip}"));
+        }
+    }
+
+    #[test]
+    fn s5_two_devices_making_the_same_edit_hold_one_copy_per_rating() {
+        for flip in [false, true] {
+            let (mut a, mut b, a1) = pair();
+            with_history(&a);
+            with_history(&b);
+            rate(&mut b, &a1, "good", 1);
+            let e = events(&b, &a1.item)[0].clone();
+            // The Mac holds B active when the rating on A arrives.
+            let bl = [F, S];
+            append(&mut a, MAT, &bl);
+            take(&mut a, &ship(&mut b, PHONE, 0));
+            assert_eq!(events(&a, &at(&bl, 0).item), vec![d(&e, &at(&bl, 0).item)]);
+            // Both make the same edit to C, independently. A card of C sits
+            // where no prefix rule could reach it.
+            let cl = [EDITED, F];
+            append(&mut a, MAT, &cl);
+            append(&mut b, MAT, &cl);
+            xchg(&mut a, &mut b, flip);
+            let c1 = at(&cl, 1);
+            for conn in [&a, &b] {
+                // Literal root id; one event per rating; replay counts it once.
+                assert_eq!(events(conn, &c1.item), vec![d(&e, &c1.item)]);
+                assert_eq!(state(conn, &c1.item).unwrap().1, 1);
+                fresh(conn, &at(&cl, 0));
+            }
+            settle(&a, &b, &format!("s5{flip}"));
+        }
+    }
+
+    #[test]
+    fn s6_guard_a_reset_beats_a_stale_file_applied_twice() {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "good", 1);
+        let stale = ship(&mut b, PHONE, 0);
+        append(&mut a, MAT, &B);
+        act(&mut a, &at(&B, 0), "reset", json!({}), 2);
+        take(&mut a, &stale);
+        take(&mut a, &stale);
+        assert_eq!(all_events(&a), 0);
+        verified(&a);
+    }
+
+    #[test]
+    fn s8_a_reverted_longer_version_gains_nothing() {
+        for flip in [false, true] {
+            let (mut a, mut b, a1) = pair();
+            with_history(&a);
+            with_history(&b);
+            rate(&mut b, &a1, "good", 1);
+            let a_list = [F];
+            // The Mac grows the list, then goes back to the original.
+            append(&mut a, MAT, &B);
+            append(&mut a, MAT, &a_list);
+            xchg(&mut a, &mut b, flip);
+            for conn in [&a, &b] {
+                assert_eq!(active_version(conn).len(), 1);
+                assert_eq!(
+                    count(conn, &format!("SELECT COUNT(*) FROM card_versions WHERE is_active = 1 AND content_hash = '{}'", a1.hash)),
+                    1
+                );
+                assert!(events(conn, &at(&B, 0).item).is_empty());
+                assert!(events(conn, &at(&B, 1).item).is_empty());
+                assert_eq!(events(conn, &a1.item).len(), 1);
+            }
+            settle(&a, &b, &format!("s8{flip}"));
+        }
+    }
+
+    #[test]
+    fn s9_an_activation_claim_alone_carries_onto_the_new_active_version() {
+        for flip in [false, true] {
+            let (mut mac, mut phone, a1) = pair();
+            with_history(&mac);
+            with_history(&phone);
+            let bl = [EDITED, F];
+            append(&mut mac, MAT, &bl);
+            take(&mut phone, &ship(&mut mac, MAC, 0));
+            // The phone goes back to A and rates there: B is inactive, holds nothing.
+            append(&mut phone, MAT, &[F]);
+            rate(&mut phone, &a1, "good", 1);
+            let e = events(&phone, &a1.item)[0].clone();
+            assert!(events(&phone, &at(&bl, 1).item).is_empty());
+            // The Mac switches away and back, later than the phone's claim.
+            std::thread::sleep(std::time::Duration::from_millis(5));
+            let since = seq_of(&mac);
+            append(&mut mac, MAT, &[F]);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+            append(&mut mac, MAT, &bl);
+            let file = ship(&mut mac, MAC, since);
+            if flip {
+                // The Mac takes the phone's rating first, then the claim reaches the phone.
+                take(&mut mac, &ship(&mut phone, PHONE, 0));
+            }
+            take(&mut phone, &file);
+            // The file carried no event and no item: only the activation claim.
+            assert_eq!(
+                events(&phone, &at(&bl, 1).item),
+                vec![d(&e, &at(&bl, 1).item)]
+            );
+            assert_eq!(state(&phone, &at(&bl, 1).item).unwrap().1, 1);
+            // Applied twice: nothing changes.
+            let held = (all_events(&phone), dump(&phone));
+            take(&mut phone, &file);
+            assert_eq!((all_events(&phone), dump(&phone)), held);
+            if !flip {
+                take(&mut mac, &ship(&mut phone, PHONE, 0));
+            }
+            take(&mut phone, &ship(&mut mac, MAC, 0));
+            settle(&mac, &phone, &format!("s9{flip}"));
+        }
+    }
+
+    /// A rating and the tombstone of its version in the SAME file: the deleted
+    /// version is not a source, so the active version gains nothing.
+    #[test]
+    fn s10_a_rating_and_the_tombstone_of_its_version_in_one_file() {
+        for flip in [false, true] {
+            let (mut mac, mut phone, a1) = pair();
+            with_history(&mac);
+            with_history(&phone);
+            // The Mac holds A and B (active); the phone holds A only.
+            append(&mut mac, MAT, &B);
+            rate(&mut phone, &a1, "good", 1);
+            phone
+                .execute(
+                    "DELETE FROM card_versions WHERE content_hash = ?1",
+                    [&a1.hash],
+                )
+                .unwrap();
+            let before = all_events(&mac);
+            let (fm, fp) = (ship(&mut mac, MAC, 0), ship(&mut phone, PHONE, 0));
+            if flip {
+                take(&mut mac, &fp);
+                take(&mut phone, &fm);
+            } else {
+                take(&mut phone, &fm);
+                take(&mut mac, &fp);
+            }
+            assert_eq!(
+                count(
+                    &mac,
+                    &format!(
+                        "SELECT COUNT(*) FROM card_versions WHERE content_hash = '{}'",
+                        a1.hash
+                    )
+                ),
+                0
+            );
+            assert!(events(&mac, &at(&B, 0).item).is_empty());
+            assert_eq!(all_events(&mac), before);
+            verified(&mac);
+            backup_ok(&mac, &format!("s10{flip}"));
+        }
+    }
+
+    #[test]
+    fn s11_a_local_edit_chain_and_a_synced_one_agree() {
+        for flip in [false, true] {
+            let (mut x, mut y) = base();
+            let (p, q, r) = (at(&C, 0), at(&C, 1), at(&C, 2));
+            rate(&mut x, &p, "good", 1);
+            rate(&mut x, &q, "easy", 2);
+            rate(&mut x, &r, "again", 3);
+            let er = events(&x, &r.item)[0].clone();
+            let bl = [F, S];
+            append(&mut x, MAT, &bl);
+            rate(&mut x, &at(&bl, 0), "hard", 4);
+            let cl = [F, S, T, FOURTH];
+            append(&mut x, MAT, &cl);
+            // Y rates r on A offline.
+            rate(&mut y, &r, "good", 5);
+            xchg(&mut x, &mut y, flip);
+            for conn in [&x, &y] {
+                // r's rating from A (not from the one-shorter B) is on C_2.
+                assert!(events(conn, &at(&cl, 2).item).contains(&d(&er, &at(&cl, 2).item)));
+                assert!(!events(conn, &at(&cl, 2).item).is_empty());
+                fresh(conn, &at(&cl, 3));
+            }
+            settle(&x, &y, &format!("s11{flip}"));
+        }
+    }
+
+    /// The receiver `a` holds the root copy on the active C; `b` is the older
+    /// phone. Returns (a, b, e, B0, C0, b's log position).
+    fn s12_scene() -> (Connection, Connection, String, Card, Card, i64) {
+        let (mut a, mut b, a1) = pair();
+        with_history(&a);
+        with_history(&b);
+        rate(&mut b, &a1, "good", 1);
+        let e = events(&b, &a1.item)[0].clone();
+        append(&mut a, MAT, &B);
+        append(&mut a, MAT, &C);
+        take(&mut b, &ship(&mut a, MAC, 0));
+        let first = ship(&mut b, PHONE, 0);
+        take(&mut a, &first);
+        let (b0, c0) = (at(&B, 0), at(&C, 0));
+        // The receiver already holds the root copy on the active version.
+        assert_eq!(events(&a, &c0.item), vec![d(&e, &c0.item)]);
+        let seq = seq_of(&b);
+        (a, b, e, b0, c0, seq)
+    }
+
+    fn seq_of(c: &Connection) -> i64 {
+        c.query_row("SELECT MAX(seq) FROM local_changes", [], |r| r.get(0))
+            .unwrap()
+    }
+
+    /// What an older phone logs: a copy of `e` under `id` on `item`.
+    fn old_copy(b: &Connection, e: &str, id: &str, item: &str) {
+        b.execute(
+            "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+             SELECT ?1, ?2, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json
+             FROM card_review_events WHERE id = ?3",
+            params![id, item, e],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn s12_an_old_build_path_id_is_folded_into_the_root_copy() {
+        let (mut a, mut b, e, b0, c0, seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        let via_path = d(&via_b, &c0.item);
+        old_copy(&b, &e, &via_b, &b0.item);
+        old_copy(&b, &e, &via_path, &c0.item);
+        let second = ship(&mut b, PHONE, seq);
+        let held = all_events(&a);
+        take(&mut a, &second);
+        assert_eq!(events(&a, &c0.item), vec![d(&e, &c0.item)]);
+        assert_eq!(state(&a, &c0.item).unwrap().1, 1);
+        // Only the intermediate copy (on the inactive B) was added.
+        assert_eq!(all_events(&a), held + 1);
+        verified(&a);
+        backup_ok(&a, "s12a");
+        // The same file again: the path copy is dropped again, nothing changes.
+        take(&mut a, &second);
+        assert_eq!(events(&a, &c0.item), vec![d(&e, &c0.item)]);
+        assert_eq!(all_events(&a), held + 1);
+        verified(&a);
+        backup_ok(&a, "s12b");
+    }
+
+    /// Residual, pinned: the path copy arrives one file BEFORE its intermediate.
+    /// It cannot be resolved then, so it stays its own root; the later
+    /// intermediate does not remove it (only rows inserted by an apply go).
+    #[test]
+    fn s12_a_path_copy_before_its_intermediate_is_the_documented_residual() {
+        let (mut a, mut b, e, b0, c0, seq) = s12_scene();
+        let via_b = d(&e, &b0.item);
+        let via_path = d(&via_b, &c0.item);
+        old_copy(&b, &e, &via_path, &c0.item);
+        let early = ship(&mut b, PHONE, seq);
+        let seq2 = seq_of(&b);
+        old_copy(&b, &e, &via_b, &b0.item);
+        let late = ship(&mut b, PHONE, seq2);
+        take(&mut a, &early);
+        take(&mut a, &late);
+        let have = events(&a, &c0.item);
+        assert!(have.contains(&d(&e, &c0.item)));
+        // Pinned: the unresolvable early copy stays beside the root copy.
+        assert_eq!(have.len(), 2);
+        verified(&a);
     }
 }

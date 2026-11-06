@@ -303,3 +303,149 @@ fn an_unlogged_carry_copies_the_roots_provenance_and_writes_no_receipts() {
         .unwrap()
         .is_empty());
 }
+
+#[test]
+fn duplicate_copies_drop_only_candidates_and_keep_the_root_copy() {
+    let (a, b, c) = (
+        [("a", "1")].as_slice(),
+        [("a", "1"), ("b", "2")].as_slice(),
+        [("a", "1"), ("b", "2"), ("c", "3")].as_slice(),
+    );
+    let mut conn = db();
+    save(&mut conn, &[], a);
+    let e = rate_on(&mut conn, a, 0, 1);
+    save(&mut conn, a, b);
+    save(&mut conn, b, c);
+    let (b0, c0) = (
+        version_of(b).items[0].item_id.clone(),
+        version_of(c).items[0].item_id.clone(),
+    );
+    let root_copy = carried_event_id(&e, &c0);
+    let path = carried_event_id(&carried_event_id(&e, &b0), &c0);
+    assert_ne!(root_copy, path);
+    conn.execute(
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+         SELECT ?1, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json
+         FROM card_review_events WHERE id = ?2",
+        params![path, root_copy],
+    )
+    .unwrap();
+    let dup = |ids: &[&str]| {
+        let ids: Vec<String> = ids.iter().map(|s| s.to_string()).collect();
+        duplicate_copies(&conn, M, &ids).unwrap()
+    };
+    // The path copy was inserted by this apply; the root copy was already here.
+    assert_eq!(dup(&[&path]), vec![path.clone()]);
+    // Both inserted: the canonical root copy stays, whatever the id order.
+    assert_eq!(dup(&[&root_copy, &path]), vec![path.clone()]);
+    // A row that was already here is never reported.
+    assert!(dup(&[]).is_empty());
+    // A distinct rating on the same card with the same time and rating (a
+    // synthetic unrelated root) is never a duplicate, candidate or not.
+    let other = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    conn.execute(
+        "INSERT INTO card_review_events (id, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json)
+         SELECT ?1, item_id, generation, rating, reviewed_at, scheduler_version, prior_state_json, next_state_json
+         FROM card_review_events WHERE id = ?2",
+        params![other, root_copy],
+    )
+    .unwrap();
+    assert!(!dup(&[other]).contains(&other.to_string()));
+    assert!(!dup(&[other, &root_copy]).contains(&other.to_string()));
+    assert!(!dup(&[]).contains(&other.to_string()));
+    // A different card's rating is not a duplicate either.
+    assert!(dup(&[&e]).is_empty());
+}
+
+fn long_chain_db(versions: usize, cards: usize, ratings: usize) -> (Connection, Vec<String>) {
+    let mut conn = db();
+    let list = |n: usize| -> Vec<(String, String)> {
+        (0..cards)
+            .map(|i| {
+                (
+                    format!("front {i}"),
+                    if i == 0 {
+                        format!("back v{n}")
+                    } else {
+                        format!("back {i}")
+                    },
+                )
+            })
+            .collect()
+    };
+    fn as_refs(v: &[(String, String)]) -> Vec<(&str, &str)> {
+        v.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect()
+    }
+    let first = list(0);
+    save(&mut conn, &[], &as_refs(&first));
+    let mut prior = first;
+    let mut last = Vec::new();
+    for n in 0..ratings {
+        last.push(rate_on(
+            &mut conn,
+            &as_refs(&prior),
+            1 + n % (cards - 1),
+            1 + n as u32,
+        ));
+    }
+    for n in 1..versions {
+        let next = list(n);
+        save(&mut conn, &as_refs(&prior), &as_refs(&next));
+        prior = next;
+    }
+    (conn, last)
+}
+
+/// R13b2 perf guard (R13b1 audit #3): 40 versions x 50 cards x 3 ratings. One
+/// local save and one unlogged sync carry each finish well inside the (generous,
+/// CI-loaded) limit.
+#[test]
+fn a_long_version_chain_carries_in_seconds() {
+    let (mut conn, _) = long_chain_db(40, 50, 3);
+    let start = std::time::Instant::now();
+    let last: Vec<(String, String)> = (0..50)
+        .map(|i| {
+            (
+                format!("front {i}"),
+                if i == 0 {
+                    "back v39".into()
+                } else {
+                    format!("back {i}")
+                },
+            )
+        })
+        .collect();
+    let mut next = last.clone();
+    next[0].1 = "back v40".into();
+    let r = |v: &Vec<(String, String)>| -> Vec<(String, String)> { v.clone() };
+    let (l, n) = (r(&last), r(&next));
+    let lr: Vec<(&str, &str)> = l.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
+    let nr: Vec<(&str, &str)> = n.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
+    save(&mut conn, &lr, &nr);
+    let local = start.elapsed();
+    assert!(
+        local < std::time::Duration::from_secs(10),
+        "local save took {local:?}"
+    );
+    // Sync carry onto the active version with the guard held: nothing new, but
+    // it reads every version and event.
+    conn.execute(
+        "INSERT INTO app_metadata (key, value) VALUES ('sync_applying', 'x')",
+        [],
+    )
+    .unwrap();
+    let active: String = conn
+        .query_row(
+            "SELECT id FROM card_versions WHERE source_material_id = ?1 AND is_active = 1",
+            [M],
+            |r| r.get(0),
+        )
+        .unwrap();
+    let start = std::time::Instant::now();
+    carry_into(&conn, M, &active, false).unwrap();
+    let sync = start.elapsed();
+    assert!(
+        sync < std::time::Duration::from_secs(10),
+        "sync carry took {sync:?}"
+    );
+}
