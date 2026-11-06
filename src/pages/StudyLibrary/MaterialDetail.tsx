@@ -1123,7 +1123,7 @@ function MaterialDetailPage() {
                   }
                   action={
                     <div className="row row--wrap">
-                      {deviceCan().editStudyMaterial && studySet && (studySet.summary || studySet.sections.length > 0) ? (
+                      {deviceCan().editStudyMaterial && studySet && (studySet.summary || studySet.sections.length > 0 || studySet.flashcards.length > 0) ? (
                         <Button
                           size="small"
                           variant="secondary"
@@ -1131,7 +1131,7 @@ function MaterialDetailPage() {
                           disabled={isGeneratingAny}
                           onClick={() => setEditingSet((open) => !open)}
                         >
-                          {editingSet ? "Done editing" : "Edit study guide"}
+                          {editingSet ? "Done editing" : studySet.summary || studySet.sections.length > 0 ? "Edit study guide" : "Edit cards"}
                         </Button>
                       ) : null}
                       {deviceCan().sharePrint && (studySet || practiceTest) ? (

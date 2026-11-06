@@ -443,11 +443,53 @@ export function StudySetEditor({
     </div>
   );
 
+  const summaryRow = (
+    <>
+          <div className="row row--between row--wrap">
+            <p className="small"><strong>Summary</strong> {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : <AuthorBadge origin={studySet.summaryOrigin ?? undefined} />}</p>
+            {itemActions({ kind: "summary" }, studySet.summaryOrigin ?? undefined)}
+          </div>
+    </>
+  );
+  const sectionRows = (
+    <>
+          {studySet.sections.map((section, index) => (
+            <div className="row row--between row--wrap" key={`section-${index}`}>
+              <p className="small wrap-anywhere">{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</p>
+              {itemActions({ kind: "section", index }, section.origin)}
+            </div>
+          ))}
+          <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "section" })}>
+            Add a section
+          </Button>
+    </>
+  );
+  const cardRows = (
+    <>
+          {studySet.flashcards.map((card, index) => (
+            <div className="row row--between row--wrap" key={`card-${index}`}>
+              <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
+              {card.visualRegionId ? (
+                <Button size="small" onClick={() => { setPictureSaved(false); setVisualIndex(index); }}>
+                  Move or resize cover
+                </Button>
+              ) : null}
+              {itemActions({ kind: "card", index }, card.origin)}
+            </div>
+          ))}
+          <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "card" })}>
+            Add a card
+          </Button>
+    </>
+  );
+
+  const cardsOnly = !studySet.summary && studySet.sections.length === 0 && studySet.flashcards.length > 0;
+
   return (
     <section className="stack stack--3" aria-labelledby="edit-study-set-title">
       <div>
         <p className="eyebrow">Your changes</p>
-        <h3 id="edit-study-set-title" className="ai-guide__title">Edit this study guide</h3>
+        <h3 id="edit-study-set-title" className="ai-guide__title">{cardsOnly ? "Edit these cards" : "Edit this study guide"}</h3>
         <p className="tiny muted">
           Anything you change is marked as yours. Every earlier version is kept in Previous versions, and a
           regenerated guide won't quietly bring back what you deleted or corrected.
@@ -455,33 +497,7 @@ export function StudySetEditor({
       </div>
 
       <div className="stack stack--2">
-        <div className="row row--between row--wrap">
-          <p className="small"><strong>Summary</strong> {studySet.summaryPdfProvenance ? <PdfItemLabel provenance={studySet.summaryPdfProvenance} origin={studySet.summaryOrigin} /> : <AuthorBadge origin={studySet.summaryOrigin ?? undefined} />}</p>
-          {itemActions({ kind: "summary" }, studySet.summaryOrigin ?? undefined)}
-        </div>
-        {studySet.sections.map((section, index) => (
-          <div className="row row--between row--wrap" key={`section-${index}`}>
-            <p className="small wrap-anywhere">{section.heading} {section.pdfProvenance ? <PdfItemLabel provenance={section.pdfProvenance} origin={section.origin} /> : <AuthorBadge origin={section.origin} />}</p>
-            {itemActions({ kind: "section", index }, section.origin)}
-          </div>
-        ))}
-        <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "section" })}>
-          Add a section
-        </Button>
-        {studySet.flashcards.map((card, index) => (
-          <div className="row row--between row--wrap" key={`card-${index}`}>
-            <p className="small wrap-anywhere">{card.front} {card.pdfProvenance ? <PdfItemLabel provenance={card.pdfProvenance} origin={card.origin} /> : <AuthorBadge origin={card.origin} />}</p>
-            {card.visualRegionId ? (
-              <Button size="small" onClick={() => { setPictureSaved(false); setVisualIndex(index); }}>
-                Move or resize cover
-              </Button>
-            ) : null}
-            {itemActions({ kind: "card", index }, card.origin)}
-          </div>
-        ))}
-        <Button size="small" disabled={busy} onClick={() => void begin({ mode: "add", kind: "card" })}>
-          Add a card
-        </Button>
+        {cardsOnly ? (<>{cardRows}{sectionRows}</>) : (<>{summaryRow}{sectionRows}{cardRows}</>)}
         <p className="small" role="status">{pictureSaved ? "Picture card saved." : ""}</p>
       </div>
 
