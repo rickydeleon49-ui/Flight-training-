@@ -5,8 +5,8 @@
 import { isTauri } from "@/data";
 import { isMacOS as looksLikeMac } from "@/lib/platform";
 
-/** Flipped on when the iPhone app can open what the Mac sends. */
-export const IPHONE_SEND_ENABLED = false;
+/** On: the iPhone app opens what the Mac sends (R12 passed 5 Nov 2026). */
+export const IPHONE_SEND_ENABLED = true;
 
 const userAgent = (): string => (typeof navigator === "undefined" ? "" : navigator.userAgent || "");
 
