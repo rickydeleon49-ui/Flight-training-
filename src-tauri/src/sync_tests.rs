@@ -8554,6 +8554,174 @@ mod visual_sync {
         crate::backup::verify_application_connection(&conn).unwrap();
     }
 
+    // ---- S-6a8 T3: a mixed (picture + text) set carries across devices ----
+
+    fn mixed_card(front: &str, region: Option<&str>) -> CanonicalCard {
+        CanonicalCard {
+            visual_region_id: region.map(String::from),
+            front: front.into(),
+            back: "Bravo".into(),
+            source_page: None,
+            origin: None,
+        }
+    }
+
+    fn mixed_json(list: &[CanonicalCard]) -> String {
+        let cards: Vec<Value> = list
+            .iter()
+            .map(|c| {
+                let mut v = json!({"front": c.front, "back": c.back, "sourcePage": null});
+                if let Some(id) = &c.visual_region_id {
+                    v["visualRegionId"] = json!(id);
+                }
+                v
+            })
+            .collect();
+        Value::Array(cards).to_string()
+    }
+
+    fn mixed_cards(region_id: &str, extra: bool) -> Vec<CanonicalCard> {
+        let mut list = vec![
+            mixed_card("Which label is in the middle?", Some(region_id)),
+            mixed_card("Plain front", None),
+        ];
+        if extra {
+            list.push(mixed_card("Plain front two", None));
+        }
+        list
+    }
+
+    fn card_of(list: &[CanonicalCard], ordinal: usize) -> Card {
+        let v = card_version("owner", list);
+        Card {
+            material: "owner".into(),
+            hash: v.content_hash.clone(),
+            item: v.items[ordinal].item_id.clone(),
+        }
+    }
+
+    /// Saves `list` as the Mac's set through the live save path.
+    fn save_mixed(conn: &mut Connection, list: &[CanonicalCard]) {
+        use crate::study_sets::decode_operation;
+        let mut expected = serde_json::Map::new();
+        for name in [
+            "title",
+            "summary",
+            "sections_json",
+            "flashcards_json",
+            "source_notes",
+            "provider",
+            "model",
+            "generated_at",
+            "updated_at",
+            "summary_origin",
+            "retired_json",
+        ] {
+            let v: Option<String> = conn
+                .query_row(
+                    &format!("SELECT {name} FROM ai_study_sets WHERE source_material_id = 'owner'"),
+                    [],
+                    |r| r.get(0),
+                )
+                .unwrap();
+            expected.insert(name.into(), v.map(Value::String).unwrap_or(Value::Null));
+        }
+        let flashcards: Value = serde_json::from_str(&mixed_json(list)).unwrap();
+        let op = decode_operation(&json!({
+            "operationId": "5e700000-0000-4000-8000-0000000000a8",
+            "materialId": "owner", "reason": "edit", "expected": Value::Object(expected),
+            "next": {"title": "Synthetic picture", "summary": "", "summaryOrigin": null, "sections": [],
+                     "flashcards": flashcards, "sourceNotes": "", "provider": "manual", "model": "", "retired": []},
+        }))
+        .unwrap();
+        crate::study_sets::save_on(conn, &op, NOW).unwrap();
+    }
+
+    /// Both devices as after a full copy of a [picture, text] set.
+    fn mixed_pair() -> (Connection, Connection, String) {
+        let r = region();
+        let (a, b) = (device(MAC), device(PHONE));
+        for conn in [&a, &b] {
+            copied(conn, |c| {
+                materials(c);
+                insert_region(c, &r);
+                c.execute(
+                    "INSERT INTO ai_study_sets (source_material_id, title, summary, sections_json, flashcards_json, source_notes, provider, model, generated_at, updated_at)
+                     VALUES ('owner', 'Synthetic picture', '', '[]', ?1, '', 'manual', '', ?2, ?2)",
+                    params![mixed_json(&mixed_cards(&r.id, false)), T0],
+                )
+                .unwrap();
+            });
+        }
+        (a, b, r.id)
+    }
+
+    fn rows_of(conn: &Connection) -> Vec<String> {
+        let mut out = Vec::new();
+        for sql in [
+            "SELECT id||'|'||item_id||'|'||generation||'|'||rating||'|'||reviewed_at||'|'||prior_state_json||'|'||next_state_json FROM card_review_events ORDER BY id",
+            "SELECT item_id||'|'||step||'|'||reps||'|'||revision FROM card_review_state ORDER BY item_id",
+            "SELECT id||'|'||content_hash FROM card_versions ORDER BY id",
+            "SELECT item_id||'|'||region_id FROM card_item_visual_regions ORDER BY item_id",
+        ] {
+            out.extend(
+                conn.prepare(sql)
+                    .unwrap()
+                    .query_map([], |r| r.get::<_, String>(0))
+                    .unwrap()
+                    .map(Result::unwrap),
+            );
+        }
+        out
+    }
+
+    fn item_events(conn: &Connection, item: &str) -> Vec<String> {
+        crate::sync_tests::carried_versions::events(conn, item)
+    }
+
+    #[test]
+    fn t3_a_mixed_list_carries_ratings_across_devices_and_a_reset_beats_a_stale_file() {
+        let (mut mac, mut phone, rid) = mixed_pair();
+        let (a, b) = (mixed_cards(&rid, false), mixed_cards(&rid, true));
+        let (a0, a1) = (card_of(&a, 0), card_of(&a, 1));
+        act(&mut phone, &a0, "rate", json!({ "rating": "good" }), 1);
+        act(&mut phone, &a1, "rate", json!({ "rating": "again" }), 2);
+        let e1 = item_events(&phone, &a0.item)[0].clone();
+        let e2 = item_events(&phone, &a1.item)[0].clone();
+        // The Mac grows the list without ever holding the phone's version A.
+        save_mixed(&mut mac, &b);
+        let stale = ship(&mut phone, PHONE, 0);
+        let fresh_mac = ship(&mut mac, MAC, 0);
+        take(&mut phone, &fresh_mac);
+        take(&mut mac, &stale);
+        let (b0, b1, b2) = (card_of(&b, 0), card_of(&b, 1), card_of(&b, 2));
+        for conn in [&mac, &phone] {
+            assert_eq!(
+                item_events(conn, &b0.item),
+                vec![crate::card_reviews::carried_event_id(&e1, &b0.item)]
+            );
+            assert_eq!(
+                item_events(conn, &b1.item),
+                vec![crate::card_reviews::carried_event_id(&e2, &b1.item)]
+            );
+            assert!(item_events(conn, &b2.item).is_empty());
+            with_history(conn);
+            let got = crate::backup::verify_application_connection(conn);
+            assert!(got.is_ok(), "{got:?}");
+        }
+        assert_eq!(rows_of(&mac), rows_of(&phone));
+
+        // Reset beats stale: a new Mac, reset after the append, then the phone's old file.
+        let (mut mac, mut phone, _rid) = mixed_pair();
+        act(&mut phone, &a0, "rate", json!({ "rating": "good" }), 11);
+        save_mixed(&mut mac, &b);
+        act(&mut mac, &b0, "reset", json!({}), 12);
+        let stale = ship(&mut phone, PHONE, 0);
+        take(&mut mac, &stale);
+        assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 0);
+        assert!(item_events(&mac, &b0.item).is_empty());
+    }
+
     #[test]
     fn a_rating_made_after_the_other_device_deleted_the_material_leaves_no_orphans() {
         let (mut mac, mut phone, c) = copied_pair();

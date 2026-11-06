@@ -255,7 +255,8 @@ export async function derivedUuidV4(seed: string): Promise<string> {
  * existing is changed or deleted; the old version keeps its own rows. Edits,
  * deletes and reorders carry nothing. Unlike native there is no savepoint
  * (the single-connection drivers refuse them), so cases that could make
- * materialize refuse (picture cards, unknown providers) carry nothing in both.
+ * materialize refuse (a picture region the material does not own, unknown
+ * providers) are checked first and carry nothing in both.
  */
 export async function carryReviewState(
   run: (sql: string, params: SqlValue[]) => Promise<void> | void,
@@ -272,8 +273,20 @@ export async function carryReviewState(
   if (before.status !== "ok" || after.status !== "ok") return;
   const old = before.cards;
   const next = after.cards;
-  if (next.length <= old.length || next.some((card) => card.visualRegionId)) return;
+  if (next.length <= old.length) return;
   if (canonicalJson(next.slice(0, old.length)) !== canonicalJson(old)) return;
+  // Picture cards carry like any other card. The browser has no savepoint, so
+  // check first what native `materialize` would refuse: a region this material
+  // does not own (or that is damaged) carries nothing.
+  const { readVisualRegion } = await import("./visualCards");
+  for (const card of next) {
+    if (!card.visualRegionId) continue;
+    try {
+      await readVisualRegion(query, card.visualRegionId, materialId);
+    } catch {
+      return;
+    }
+  }
   const oldVersion = await cardVersion(materialId, old);
   const newVersion = await cardVersion(materialId, next);
   const exists = async (id: string) =>

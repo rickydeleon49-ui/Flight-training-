@@ -4,7 +4,9 @@
 //! cards of that version, with the same ids a local carry makes. It is
 //! unlogged and deterministic (a pure function of versions and events), so
 //! both devices derive identical rows. It writes no receipts: apply's
-//! `ensure_rate_receipts` derives them after the run.
+//! `ensure_rate_receipts` derives them after the run. Picture cards take part:
+//! their region id is part of the card compared, so a picture never matches a
+//! plain card or a different picture.
 
 use rusqlite::types::Value as Sql;
 use rusqlite::{params, Connection, OptionalExtension};
@@ -22,9 +24,6 @@ fn load_versions(conn: &Connection, material: &str) -> Result<Vec<Version>, Appl
     let ids: Vec<String> = conn
         .prepare(
             "SELECT id FROM card_versions v WHERE source_material_id = ?1
-               AND NOT EXISTS (SELECT 1 FROM card_items i
-                               JOIN card_item_visual_regions r ON r.item_id = i.id
-                               WHERE i.version_id = v.id)
              ORDER BY card_count, id",
         )?
         .query_map([material], |r| r.get(0))?
@@ -33,14 +32,15 @@ fn load_versions(conn: &Connection, material: &str) -> Result<Vec<Version>, Appl
     for id in ids {
         let items = conn
             .prepare(
-                "SELECT i.id, i.front, i.back, i.source_page, o.origin FROM card_items i
+                "SELECT i.id, i.front, i.back, i.source_page, o.origin, r.region_id FROM card_items i
                  LEFT JOIN card_item_origins o ON o.item_id = i.id
+                 LEFT JOIN card_item_visual_regions r ON r.item_id = i.id
                  WHERE i.version_id = ?1 ORDER BY i.ordinal",
             )?
             .query_map([&id], |r| {
                 Ok((
                     r.get::<_, String>(0)?,
-                    vec![r.get::<_, Sql>(1)?, r.get(2)?, r.get(3)?, r.get(4)?],
+                    vec![r.get::<_, Sql>(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?],
                 ))
             })?
             .collect::<Result<Vec<_>, _>>()?;
