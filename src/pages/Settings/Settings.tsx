@@ -729,10 +729,10 @@ export function Settings() {
     <>
       <PageHeader title="Settings" subtitle="Your profile and how this application behaves." />
 
-      <nav aria-label="Jump to" className="row row--wrap small" style={{ gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
+      <nav aria-label="Jump to" className="row row--wrap small settings-jumps" style={{ marginBottom: "var(--space-4)" }}>
         <span className="muted">Jump to:</span>
         {JUMPS.map(([label, id]) => (
-          <a key={id} href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
+          <a key={id} className="settings-jumps__link" href={`#${id}`} onClick={(event) => jumpTo(event, id)}>{label}</a>
         ))}
       </nav>
 

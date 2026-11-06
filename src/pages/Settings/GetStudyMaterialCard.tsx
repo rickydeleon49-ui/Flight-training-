@@ -24,7 +24,7 @@ function activitySentence(activity: ActivitySummary): string {
     attemptsLast7Days > 0 ? `${attemptsLast7Days} ${attemptsLast7Days === 1 ? "practice test" : "practice tests"}` : null,
   ].filter((p): p is string => p !== null);
   if (parts.length === 0) return date && !Number.isNaN(date.getTime()) ? `${last}. Your study activity on this phone will be replaced.` : `${last}.`;
-  return `${last}; ${parts.join(" and ")} this week will be replaced.`;
+  return `${last}; ${parts.join(" and ")} this week, across all your card sets and tests, will be replaced.`;
 }
 
 export function GetStudyMaterialCard() {

@@ -119,3 +119,14 @@ it("POLISH-088: a Jump to row moves focus to the section heading and opens a fol
   fireEvent.click(screen.getByRole("link", { name: "Advanced" }));
   expect(fold("advanced").open).toBe(true);
 });
+
+it("POLISH-089: Jump to links are button-sized targets with space between them", async () => {
+  await open();
+  const nav = screen.getByRole("navigation", { name: "Jump to" });
+  const links = Array.from(nav.querySelectorAll("a"));
+  expect(links.length).toBeGreaterThan(3);
+  for (const link of links) expect(link.className).toContain("settings-jumps__link");
+  const css = readFileSync("src/pages/Settings/settings.css", "utf8");
+  expect(css).toMatch(/\.settings-jumps__link\s*{[^}]*min-height:\s*36px/);
+  expect(css).toMatch(/\.settings-jumps\s*{[^}]*gap:/);
+});

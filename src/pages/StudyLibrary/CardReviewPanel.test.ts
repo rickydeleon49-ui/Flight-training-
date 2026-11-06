@@ -653,7 +653,8 @@ describe("card reviews in MaterialDetail", () => {
     }
     const paused = renderDetail();
     expect((await reviewHeading()).textContent).toBe("Nothing to review — all cards are paused or flagged.");
-    expect(screen.getByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ }).hasAttribute("disabled")).toBe(true);
+    // POLISH-089: nothing to review means no idle button.
+    expect(screen.queryByRole("button", { name: /^(Review (\d+ cards?|cards)|Start \d+ new cards?)$/ })).toBeNull();
     paused.unmount();
 
     await db.execute("UPDATE ai_study_sets SET flashcards_json = ? WHERE source_material_id = ?", [
@@ -1330,6 +1331,8 @@ describe("REVIEW-ANYWAY-01 panel", () => {
     await rateAll();
     renderDetail();
     expect((await reviewHeading()).textContent).toMatch(/^All caught up/);
+    // POLISH-089: nothing is due, so no idle Review cards button sits beside the status.
+    expect(screen.queryByRole("button", { name: /^Review cards$|^Review \d+ (due|new)/ })).toBeNull();
     const before = await counts();
     // Three rated cards: the button names what it will really show.
     fireEvent.click(await screen.findByRole("button", { name: "Review 3 anyway" }));
