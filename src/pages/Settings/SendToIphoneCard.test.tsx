@@ -36,6 +36,17 @@ describe("SendToIphoneCard", () => {
     expect(repositories.app.recordIphoneSend).toHaveBeenCalled();
   });
 
+  it("shows the size of the file (as Files shows it), not the unpacked bytes, and remembers it", async () => {
+    mocks.sendToIphone.mockResolvedValue({
+      info: { bytes: 1_200_000, fileBytes: 94_208, path: "/Users/x/Downloads/a.hfdbackup" },
+      viaICloud: false,
+    });
+    render(<SendToIphoneCard repositories={repositories} />);
+    fireEvent.click(screen.getByRole("button", { name: "Send to my iPhone" }));
+    expect(await screen.findByText(/Saved for your iPhone · 92 KB/)).toBeTruthy();
+    expect(repositories.app.recordIphoneSend).toHaveBeenCalledWith(expect.objectContaining({ bytes: 94_208 }));
+  });
+
   it("explains AirDrop when iCloud Drive was not used", async () => {
     mocks.sendToIphone.mockResolvedValue({
       info: { bytes: 10, path: "/Users/x/Downloads/a.hfdbackup" },

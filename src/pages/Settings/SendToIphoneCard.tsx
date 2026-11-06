@@ -30,7 +30,8 @@ export function SendToIphoneCard({ repositories }: { repositories: Repositories 
       if (!repositories) throw new Error("The database is still starting. Try again in a moment.");
       const result = await sendToIphone();
       if (!result) return;
-      const record = { at: new Date().toISOString(), bytes: result.info.bytes, path: result.info.path };
+      // The size of the file as Files shows it, not the unpacked bytes inside it.
+      const record = { at: new Date().toISOString(), bytes: result.info.fileBytes ?? result.info.bytes, path: result.info.path };
       setLast(record);
       try {
         await repositories.app.recordIphoneSend(record);

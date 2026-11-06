@@ -858,6 +858,70 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       }
     });
 
+    it("S-6a8 T2: appending to a set that holds a picture card keeps the old ratings; picture edits carry nothing; a region the material does not own carries nothing", async () => {
+      const { db } = await open(kind);
+      const repo = cardReviewRepository(db);
+      const { visualRegionHash } = await import("./visualCards");
+      const descriptor = (owner: string) => ({ ownerMaterialId: owner, imageMaterialId: "mat-image", imageSha256: "a".repeat(64), imageWidth: 600, imageHeight: 400, x: 40, y: 30, w: 90, h: 20, rotation: 0 as const });
+      const regionId = await visualRegionHash(descriptor(M));
+      const foreignId = await visualRegionHash(descriptor(OTHER));
+      await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at, file_path) VALUES ('mat-image', 'Panel', ?, ?, 'panel.png')", [T0, T0]);
+      const mixed: CanonicalCard[] = [
+        { front: "Which label is in the middle?", back: "Bravo", sourcePage: null, origin: "user", visualRegionId: regionId } as CanonicalCard,
+        { front: "Synthetic plain card", back: "P", sourcePage: null, origin: "user" } as CanonicalCard,
+      ];
+      await seedMaterial(db, M, mixed, "manual");
+      await seedMaterial(db, OTHER, [], "manual");
+      for (const [id, owner] of [[regionId, M], [foreignId, OTHER]] as const) {
+        await db.execute(
+          "INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          [id, owner, "mat-image", "a".repeat(64), 600, 400, 40, 30, 90, 20, 0],
+        );
+      }
+      await rateAt(repo, M, 0, "good", T0);
+      await rateAt(repo, M, 1, "again", at(T0, DAY));
+      const A = await cardVersion(M, mixed);
+      const asJson = (cards: CanonicalCard[]) => JSON.stringify(cards);
+      const carry = async (next: CanonicalCard[], provider = "manual") => {
+        const { carryReviewState } = await import("./cardReviewTransaction");
+        await carryReviewState(
+          async (sql, params) => {
+            await db.execute(sql, params);
+          },
+          (sql, params) => db.select<Record<string, unknown>>(sql, params),
+          M,
+          asJson(mixed),
+          asJson(next),
+          provider,
+          T0,
+        );
+      };
+      const state = async (itemId: string) =>
+        (await db.select<Record<string, unknown>>("SELECT step, due_at, reps, lapses, revision FROM card_review_state WHERE item_id = ?", [itemId]))[0];
+      const events = async (itemId: string) =>
+        Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_review_events WHERE item_id = ?", [itemId]))[0]!.n);
+      const versions = async () => Number((await db.select<Record<string, unknown>>("SELECT COUNT(*) AS n FROM card_versions", []))[0]!.n);
+      const before = await versions();
+      // A region owned by another material: nothing carried, nothing written.
+      const foreign = { front: "Foreign picture", back: "F", sourcePage: null, origin: "user", visualRegionId: foreignId } as CanonicalCard;
+      await carry([...mixed, foreign]);
+      expect(await versions()).toBe(before);
+      // An edit to the picture card carries nothing.
+      await carry([{ ...mixed[0]!, back: "Charlie" }, mixed[1]!, { front: "More", back: "M", sourcePage: null, origin: "user" } as CanonicalCard]);
+      expect(await versions()).toBe(before);
+      // A plain append carries both old cards, picture card included.
+      const grown = [...mixed, { front: "Synthetic plain two", back: "Q", sourcePage: null, origin: "user" } as CanonicalCard];
+      await carry(grown);
+      const G = await cardVersion(M, grown);
+      expect(await versions()).toBe(before + 1);
+      expect(await state(G.items[0]!.itemId)).toEqual(await state(A.items[0]!.itemId));
+      expect(await state(G.items[1]!.itemId)).toEqual(await state(A.items[1]!.itemId));
+      expect(await state(G.items[2]!.itemId)).toBeUndefined();
+      expect([await events(G.items[0]!.itemId), await events(G.items[1]!.itemId), await events(G.items[2]!.itemId)]).toEqual([1, 1, 0]);
+      const sidecar = await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [G.items[0]!.itemId]);
+      expect(sidecar).toEqual([{ region_id: regionId }]);
+    });
+
     it("GUIDE-PACK-01: the carried rating id is the golden value shared with the native twin", async () => {
       expect(await derivedUuidV4("rating-id\u0000item-id")).toBe(GOLDEN_CARRIED_ID);
     });

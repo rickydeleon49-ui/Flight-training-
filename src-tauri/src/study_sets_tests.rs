@@ -883,8 +883,101 @@ fn an_append_to_a_never_studied_list_snapshots_it_and_carries_nothing() {
     assert_eq!(n(&conn, "SELECT COUNT(*) FROM card_versions"), 0);
 }
 
+/// Helpers for the picture-card carry tests (S-6a8).
+mod mixed {
+    use super::*;
+    use crate::visual_cards::tests::{expected, library, operation as visual_op, region, TempDir};
+
+    pub fn plain(id: &str, front: &str) -> Value {
+        json!({"itemId": id, "front": front, "back": "Plain back", "sourcePage": null, "origin": "user"})
+    }
+
+    /// Creates [picture, plain] as a manual set; returns (dir, conn, picture card, plain card).
+    pub fn mixed_set() -> (TempDir, Connection, Value, Value) {
+        let dir = TempDir::new();
+        let conn = library(dir.path());
+        let r = region();
+        let mut create = visual_op(&r);
+        let picture = create["next"]["flashcards"][0].clone();
+        let text = plain("c-0", "Plain front");
+        create["next"]["flashcards"] = json!([picture.clone(), text.clone()]);
+        save_study_set_at(dir.path(), &create).unwrap();
+        (dir, conn, picture, text)
+    }
+
+    pub fn save_cards(dir: &std::path::Path, conn: &Connection, n: u32, cards: Value) {
+        let r = region();
+        let mut edit = visual_op(&r);
+        edit["operationId"] = json!(op_id(n));
+        edit["reason"] = json!("edit");
+        edit["expected"] = expected(conn);
+        edit["next"]["flashcards"] = cards;
+        save_study_set_at(dir, &edit).unwrap();
+    }
+
+    pub fn saved_items(conn: &Connection) -> Vec<String> {
+        let text: String = conn
+            .query_row(
+                "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id='owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let crate::card_reviews::SavedCards::Ok(cards) =
+            crate::card_reviews::parse_saved_cards(Some(&text))
+        else {
+            panic!("cards")
+        };
+        crate::card_reviews::card_version("owner", &cards)
+            .items
+            .into_iter()
+            .map(|i| i.item_id)
+            .collect()
+    }
+
+    /// Rates card `ordinal` of the saved list.
+    pub fn rate_at(dir: &std::path::Path, conn: &Connection, ordinal: usize, n: u32) {
+        let text: String = conn
+            .query_row(
+                "SELECT flashcards_json FROM ai_study_sets WHERE source_material_id='owner'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let crate::card_reviews::SavedCards::Ok(cards) =
+            crate::card_reviews::parse_saved_cards(Some(&text))
+        else {
+            panic!("cards")
+        };
+        let v = crate::card_reviews::card_version("owner", &cards);
+        let item = &v.items[ordinal].item_id;
+        let revision: i64 = conn
+            .query_row(
+                "SELECT COALESCE(MAX(revision),0) FROM card_review_state WHERE item_id=?1",
+                [item],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let op = json!({"operationId": format!("5e700000-0000-4000-8000-{n:012x}"), "action": "rate", "materialId": "owner",
+            "versionContentHash": v.content_hash, "itemId": item, "expectedGeneration": 0, "expectedRevision": revision, "rating": "good"});
+        crate::card_reviews::save_card_review_at(dir, &op).unwrap();
+    }
+
+    pub fn count(conn: &Connection, sql: &str) -> i64 {
+        conn.query_row(sql, [], |r| r.get(0)).unwrap()
+    }
+    pub fn events(conn: &Connection, item: &str) -> i64 {
+        conn.query_row(
+            "SELECT COUNT(*) FROM card_review_events WHERE item_id=?1",
+            [item],
+            |r| r.get(0),
+        )
+        .unwrap()
+    }
+}
+
 #[test]
-fn an_append_with_a_picture_card_makes_no_version() {
+fn an_append_to_a_never_studied_set_with_a_picture_snapshots_it() {
     use crate::visual_cards::tests::{expected, library, operation as visual_op, region, TempDir};
     let dir = TempDir::new();
     let conn = library(dir.path());
@@ -904,7 +997,126 @@ fn an_append_with_a_picture_card_makes_no_version() {
     let versions: i64 = conn
         .query_row("SELECT COUNT(*) FROM card_versions", [], |r| r.get(0))
         .unwrap();
-    assert_eq!(versions, 0);
+    // D1: appending a picture card is a carry-eligible append like any other.
+    assert_eq!(versions, 1);
+}
+
+#[test]
+fn t1_appending_to_a_mixed_set_keeps_the_old_ratings() {
+    use mixed::*;
+    let (dir, conn, picture, text) = mixed_set();
+    rate_at(dir.path(), &conn, 0, 10);
+    rate_at(dir.path(), &conn, 1, 11);
+    let old = saved_items(&conn);
+    save_cards(
+        dir.path(),
+        &conn,
+        3,
+        json!([picture, text, plain("c-1", "Second plain")]),
+    );
+    let new = saved_items(&conn);
+    assert_eq!(new.len(), 3);
+    for i in 0..2 {
+        assert!(state_of(&conn, &new[i]).is_some(), "state of card {i}");
+        assert_eq!(events(&conn, &new[i]), 1, "events of card {i}");
+        assert_eq!(
+            state_of(&conn, &new[i]).unwrap(),
+            state_of(&conn, &old[i]).unwrap()
+        );
+    }
+    assert!(state_of(&conn, &new[2]).is_none());
+    assert_eq!(events(&conn, &new[2]), 0);
+    crate::backup::verify_application_connection(&conn).unwrap();
+}
+
+#[test]
+fn t4_a_new_picture_card_carries_but_edits_and_reorders_of_a_picture_card_do_not() {
+    use crate::visual_cards::tests::{library, operation as visual_op, region, TempDir};
+    use mixed::*;
+    // Appending a NEW picture card to a studied text list carries the old card.
+    let dir = TempDir::new();
+    let conn = library(dir.path());
+    let r = region();
+    let mut create = visual_op(&r);
+    create["visualRegions"] = json!([]);
+    let picture = create["next"]["flashcards"][0].clone();
+    create["next"]["flashcards"] = json!([plain("c-0", "Plain front")]);
+    save_study_set_at(dir.path(), &create).unwrap();
+    rate_at(dir.path(), &conn, 0, 20);
+    let old = saved_items(&conn);
+    save_cards(
+        dir.path(),
+        &conn,
+        21,
+        json!([plain("c-0", "Plain front"), picture]),
+    );
+    let new = saved_items(&conn);
+    assert_eq!(events(&conn, &new[0]), 1);
+    assert!(state_of(&conn, &new[0]).is_some());
+    assert_ne!(old[0], new[0]);
+    crate::backup::verify_application_connection(&conn).unwrap();
+
+    // An edit or a reorder involving the picture card carries nothing.
+    let (dir, conn, picture, text) = mixed_set();
+    rate_at(dir.path(), &conn, 0, 30);
+    rate_at(dir.path(), &conn, 1, 31);
+    let versions = count(&conn, "SELECT COUNT(*) FROM card_versions");
+    let mut edited = picture.clone();
+    edited["back"] = json!("Charlie");
+    save_cards(
+        dir.path(),
+        &conn,
+        32,
+        json!([edited, text.clone(), plain("c-1", "More")]),
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+    save_cards(
+        dir.path(),
+        &conn,
+        33,
+        json!([text, picture, plain("c-2", "Again")]),
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM card_versions"), versions);
+}
+
+#[test]
+fn t4_a_region_the_material_does_not_own_rolls_the_carry_back_and_the_save_still_succeeds() {
+    use mixed::*;
+    let (dir, conn, picture, text) = mixed_set();
+    rate_at(dir.path(), &conn, 0, 40);
+    rate_at(dir.path(), &conn, 1, 41);
+    let before = (
+        count(&conn, "SELECT COUNT(*) FROM card_versions"),
+        count(&conn, "SELECT COUNT(*) FROM card_items"),
+        count(&conn, "SELECT COUNT(*) FROM card_review_events"),
+    );
+    // A foreign region (owned by "image") appended to the list: materialize refuses.
+    let mut other = crate::visual_cards::tests::region();
+    other.owner_material_id = "image".into();
+    other.id = other.hash();
+    conn.execute("INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+        params![other.id, other.owner_material_id, other.image_material_id, other.image_sha256, other.image_width, other.image_height, other.x, other.y, other.w, other.h, other.rotation]).unwrap();
+    let mut foreign = picture.clone();
+    foreign["visualRegionId"] = json!(other.id);
+    foreign["itemId"] = json!("cover-2");
+    let cards = |list: Vec<&Value>| serde_json::to_string(&list).unwrap();
+    let mut conn = conn;
+    let tx = conn.transaction().unwrap();
+    crate::card_reviews::carry_review_state(
+        &tx,
+        "owner",
+        &cards(vec![&picture, &text]),
+        &cards(vec![&picture, &text, &foreign]),
+        "manual",
+        LATER,
+    );
+    tx.commit().unwrap();
+    let after = (
+        count(&conn, "SELECT COUNT(*) FROM card_versions"),
+        count(&conn, "SELECT COUNT(*) FROM card_items"),
+        count(&conn, "SELECT COUNT(*) FROM card_review_events"),
+    );
+    assert_eq!(before, after);
 }
 
 #[test]

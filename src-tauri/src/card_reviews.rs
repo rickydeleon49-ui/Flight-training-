@@ -884,8 +884,12 @@ pub(crate) fn carried_event_id(event_id: &str, item_id: &str) -> String {
 /// new version: the state row, and each rating with its receipt (the backup
 /// check needs both to agree), are copied to the new version's items. Nothing
 /// existing is changed or deleted: the old version keeps its own rows. Any
-/// edit, delete or reorder carries nothing. Failure inside rolls back to a
-/// savepoint and leaves the save itself untouched.
+/// edit, delete or reorder carries nothing (a picture card counts as edited
+/// when its region changes: the prefix compare includes `visual_region_id`).
+/// Picture cards are carried like any other card, old or newly appended; their
+/// sidecars are written by `materialize` inside the savepoint, which refuses a
+/// region the material does not own. Failure inside rolls back to the savepoint
+/// and leaves the save itself untouched.
 /// An append to a list never studied on this device still snapshots the new
 /// list, so ratings from another device carry in sync (S-6a5). The browser
 /// twin skips this, because the browser build has no sync.
@@ -924,7 +928,6 @@ fn carry_inner(
     };
     if !matches!(provider, "gemini" | "import" | "manual")
         || new.len() <= old.len()
-        || new.iter().any(|card| card.visual_region_id.is_some())
         || new[..old.len()] != old[..]
     {
         return Ok(());
