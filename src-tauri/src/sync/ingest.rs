@@ -77,10 +77,15 @@ impl Drop for TempDir {
 }
 
 fn temp_dir() -> Result<TempDir, IngestError> {
+    static COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos());
-    let dir = std::env::temp_dir().join(format!("hfd-sync-ingest-{}-{nanos}", std::process::id()));
+    let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let dir = std::env::temp_dir().join(format!(
+        "hfd-sync-ingest-{}-{nanos}-{n}",
+        std::process::id()
+    ));
     std::fs::create_dir_all(&dir)
         .map_err(|_| IngestError::Archive("A working folder could not be made."))?;
     Ok(TempDir(dir))

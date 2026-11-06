@@ -8663,6 +8663,8 @@ mod visual_sync {
             "SELECT item_id||'|'||step||'|'||reps||'|'||revision FROM card_review_state ORDER BY item_id",
             "SELECT id||'|'||content_hash FROM card_versions ORDER BY id",
             "SELECT item_id||'|'||region_id FROM card_item_visual_regions ORDER BY item_id",
+            "SELECT item_id||'|'||origin FROM card_item_origins ORDER BY item_id",
+            "SELECT table_name||'|'||row_id||'|'||deleted FROM sync_row_meta WHERE table_name = 'card_review_events' ORDER BY row_id",
         ] {
             out.extend(
                 conn.prepare(sql)
@@ -8718,8 +8720,44 @@ mod visual_sync {
         act(&mut mac, &b0, "reset", json!({}), 12);
         let stale = ship(&mut phone, PHONE, 0);
         take(&mut mac, &stale);
+        take(&mut mac, &stale);
         assert_eq!(count(&mac, "SELECT COUNT(*) FROM card_review_events"), 0);
         assert!(item_events(&mac, &b0.item).is_empty());
+    }
+
+    #[test]
+    fn tmpdir01_a_version_from_an_older_phone_without_its_link_still_carries() {
+        let (mut mac, mut phone, rid) = mixed_pair();
+        let (a, b) = (mixed_cards(&rid, false), mixed_cards(&rid, true));
+        let (a0, a1) = (card_of(&a, 0), card_of(&a, 1));
+        act(&mut phone, &a0, "rate", json!({ "rating": "good" }), 1);
+        act(&mut phone, &a1, "rate", json!({ "rating": "again" }), 2);
+        let e1 = item_events(&phone, &a0.item)[0].clone();
+        let e2 = item_events(&phone, &a1.item)[0].clone();
+        // An older build never logged the picture links: the file carries none.
+        phone
+            .execute(
+                "DELETE FROM local_changes WHERE table_name = 'card_item_visual_regions'",
+                [],
+            )
+            .unwrap();
+        // The Mac grows the list (its saved history names version A) without holding A.
+        save_mixed(&mut mac, &b);
+        let old_file = ship(&mut phone, PHONE, 0);
+        take(&mut mac, &old_file);
+        let (b0, b1, b2) = (card_of(&b, 0), card_of(&b, 1), card_of(&b, 2));
+        assert_eq!(
+            item_events(&mac, &b0.item),
+            vec![crate::card_reviews::carried_event_id(&e1, &b0.item)]
+        );
+        assert_eq!(
+            item_events(&mac, &b1.item),
+            vec![crate::card_reviews::carried_event_id(&e2, &b1.item)]
+        );
+        assert!(item_events(&mac, &b2.item).is_empty());
+        with_history(&mac);
+        let got = crate::backup::verify_application_connection(&mac);
+        assert!(got.is_ok(), "{got:?}");
     }
 
     #[test]

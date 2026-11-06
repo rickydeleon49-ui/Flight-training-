@@ -865,6 +865,7 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       const descriptor = (owner: string) => ({ ownerMaterialId: owner, imageMaterialId: "mat-image", imageSha256: "a".repeat(64), imageWidth: 600, imageHeight: 400, x: 40, y: 30, w: 90, h: 20, rotation: 0 as const });
       const regionId = await visualRegionHash(descriptor(M));
       const foreignId = await visualRegionHash(descriptor(OTHER));
+      const ownId2 = await visualRegionHash({ ...descriptor(M), y: 60 });
       await db.execute("INSERT INTO study_materials (id, title, created_at, updated_at, file_path) VALUES ('mat-image', 'Panel', ?, ?, 'panel.png')", [T0, T0]);
       const mixed: CanonicalCard[] = [
         { front: "Which label is in the middle?", back: "Bravo", sourcePage: null, origin: "user", visualRegionId: regionId } as CanonicalCard,
@@ -872,10 +873,10 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       ];
       await seedMaterial(db, M, mixed, "manual");
       await seedMaterial(db, OTHER, [], "manual");
-      for (const [id, owner] of [[regionId, M], [foreignId, OTHER]] as const) {
+      for (const [id, owner, y] of [[regionId, M, 30], [foreignId, OTHER, 30], [ownId2, M, 60]] as const) {
         await db.execute(
           "INSERT INTO visual_card_regions (id,owner_material_id,image_material_id,image_sha256,image_width,image_height,x,y,w,h,rotation) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-          [id, owner, "mat-image", "a".repeat(64), 600, 400, 40, 30, 90, 20, 0],
+          [id, owner, "mat-image", "a".repeat(64), 600, 400, 40, y, 90, 20, 0],
         );
       }
       await rateAt(repo, M, 0, "good", T0);
@@ -920,6 +921,15 @@ describe.each<Kind>(["node", "sqljs"])("card review contract on %s", (kind) => {
       expect([await events(G.items[0]!.itemId), await events(G.items[1]!.itemId), await events(G.items[2]!.itemId)]).toEqual([1, 1, 0]);
       const sidecar = await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [G.items[0]!.itemId]);
       expect(sidecar).toEqual([{ region_id: regionId }]);
+      // Appending a NEW own picture card carries the old cards too.
+      const ownPicture2 = { front: "Second picture", back: "S", sourcePage: null, origin: "user", visualRegionId: ownId2 } as CanonicalCard;
+      const withPicture = [...mixed, ownPicture2];
+      await carry(withPicture);
+      const P = await cardVersion(M, withPicture);
+      expect(await versions()).toBe(before + 2);
+      expect([await events(P.items[0]!.itemId), await events(P.items[1]!.itemId), await events(P.items[2]!.itemId)]).toEqual([1, 1, 0]);
+      expect(await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [P.items[0]!.itemId])).toEqual([{ region_id: regionId }]);
+      expect(await db.select<Record<string, unknown>>("SELECT region_id FROM card_item_visual_regions WHERE item_id = ?", [P.items[2]!.itemId])).toEqual([{ region_id: ownId2 }]);
     });
 
     it("GUIDE-PACK-01: the carried rating id is the golden value shared with the native twin", async () => {
