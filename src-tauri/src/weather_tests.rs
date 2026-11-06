@@ -242,6 +242,8 @@ impl Server {
                 }
                 match listener.accept() {
                     Ok((socket, _)) => {
+                        // macOS: accepted sockets inherit the listener's non-blocking mode.
+                        socket.set_nonblocking(false).unwrap();
                         stream = Some(socket);
                         true
                     }

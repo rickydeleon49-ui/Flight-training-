@@ -5,8 +5,8 @@
 //! unlogged and deterministic (a pure function of versions and events), so
 //! both devices derive identical rows. It writes no receipts: apply's
 //! `ensure_rate_receipts` derives them after the run. Picture cards take part:
-//! their region id is part of the card compared, so a picture never matches a
-//! plain card or a different picture.
+//! their region id is part of the card compared (once its link is present), so
+//! a picture never matches a plain card or a different picture.
 
 use rusqlite::types::Value as Sql;
 use rusqlite::{params, Connection, OptionalExtension};

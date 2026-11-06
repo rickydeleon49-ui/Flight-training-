@@ -551,6 +551,7 @@ impl<'a> Engine<'a> {
             self.delete(&SYNC_TABLES[index], change)?;
         }
         self.activate_versions()?;
+        crate::sync::receipts::repair_picture_sidecars(self.conn)?;
         self.carry_touched()?;
         self.replay_touched()?;
         self.drop_empty_versions()
