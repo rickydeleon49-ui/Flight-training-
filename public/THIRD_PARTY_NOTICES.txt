@@ -9,7 +9,7 @@ packages) and Cargo.lock (via `cargo metadata`). Do not edit it by hand: run
 `node scripts/third-party-notices.mjs` after changing dependencies. CI runs it with --check.
 Vite copies public/ into dist/, and Tauri embeds dist/, so this file ships inside every build.
 
-Contents: 30 npm packages, 619 Rust crates (4 of them test-only), bundled fonts and data.
+Contents: 31 npm packages, 623 Rust crates (4 of them test-only), bundled fonts and data.
 The Rust list covers every target platform (macOS, Windows, Linux, iOS, Android); a given
 build contains only the crates for its platform. Where a package offers a choice of licenses,
 the entry says which one this app uses.
@@ -176,6 +176,16 @@ Package license files: LICENSE-APACHE-2.0 (standard Apache-2.0), LICENSE-MIT (st
 From: npm
 License: MIT OR Apache-2.0 (used under MIT)
 Source: https://registry.npmjs.org/@tauri-apps/plugin-dialog/-/plugin-dialog-2.7.3.tgz
+Repository: https://github.com/tauri-apps/plugins-workspace
+Copyright: no copyright line in the package's license files (see Authors and Repository).
+License text: MIT standard text in Part 6.
+Package license files: none in the published package.
+
+-------------------------------------------------------------------------------
+@tauri-apps/plugin-notification 2.4.0
+From: npm
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://registry.npmjs.org/@tauri-apps/plugin-notification/-/plugin-notification-2.4.0.tgz
 Repository: https://github.com/tauri-apps/plugins-workspace
 Copyright: no copyright line in the package's license files (see Authors and Repository).
 License text: MIT standard text in Part 6.
@@ -3128,6 +3138,17 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE-APACHE (standard Apache-2.0), LICENSE-MIT (standard MIT), LICENSE-ZLIB (standard Zlib)
 
 -------------------------------------------------------------------------------
+mac-notification-sys 0.6.15
+From: crates.io
+License: MIT/Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/mac-notification-sys/0.6.15
+Repository: https://github.com/h4llow3En/mac-notification-sys
+Authors: Felix Döring <development@felixdoering.com>, Hendrik Sollich <hendrik@hoodie.de>
+Copyright: no copyright line in the package's license files (see Authors and Repository).
+License text: MIT standard text in Part 6.
+Package license files: none in the published package.
+
+-------------------------------------------------------------------------------
 markup5ever 0.39.0
 From: crates.io
 License: MIT OR Apache-2.0 (used under MIT)
@@ -3299,6 +3320,17 @@ Authors: contact@geoffroycouprie.com
 Copyright (c) 2014-2019 Geoffroy Couprie
 License text: MIT standard text in Part 6.
 Package license files: LICENSE (standard MIT)
+
+-------------------------------------------------------------------------------
+notify-rust 4.18.2
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/notify-rust/4.18.2
+Repository: https://github.com/hoodie/notify-rust
+Authors: Hendrik Sollich <hendrik@hoodie.de>
+Copyright (c) 2017 Hendrik Sollich
+License text: MIT standard text in Part 6.
+Package license files: LICENSE-Apache (standard Apache-2.0), LICENSE-MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 num-bigint-dig 0.8.6
@@ -5269,6 +5301,17 @@ License text: MIT standard text in Part 6.
 Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
 
 -------------------------------------------------------------------------------
+tauri-plugin-notification 2.4.0
+From: crates.io
+License: Apache-2.0 OR MIT (used under MIT)
+Source: https://crates.io/crates/tauri-plugin-notification/2.4.0
+Repository: https://github.com/tauri-apps/plugins-workspace
+Authors: Tauri Programme within The Commons Conservancy
+Copyright (c) 2017 - Present Tauri Apps Contributors
+License text: MIT standard text in Part 6.
+Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
+
+-------------------------------------------------------------------------------
 tauri-plugin-opener 2.5.5
 From: crates.io
 License: Apache-2.0 OR MIT (used under MIT)
@@ -5356,6 +5399,17 @@ Copyright (c) 2023 - Present Tauri Apps Contributors
 Copyright (c) 2016 Max Resch
 License text: MIT standard text in Part 6.
 Package license files: LICENSE (standard MIT)
+
+-------------------------------------------------------------------------------
+tauri-winrt-notification 0.8.1
+From: crates.io
+License: MIT OR Apache-2.0 (used under MIT)
+Source: https://crates.io/crates/tauri-winrt-notification/0.8.1
+Repository: https://github.com/tauri-apps/winrt-notification
+Authors: allenbenz, Tauri Programme within The Commons Conservancy
+Copyright (c) 2017 - Present Tauri Apps Contributors
+License text: MIT standard text in Part 6.
+Package license files: LICENSE_APACHE-2.0 (standard Apache-2.0), LICENSE_MIT (standard MIT)
 
 -------------------------------------------------------------------------------
 tempfile 3.27.0

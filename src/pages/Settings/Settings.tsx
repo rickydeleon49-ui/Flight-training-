@@ -24,6 +24,7 @@ import {
   TypedDateField,
   type TypedDateFieldHandle,
 } from "@/components/ui";
+import { StudyGuideNoticeCard } from "./StudyGuideNoticeCard";
 import { restoreAirlineStarterPack } from "@/data/starter";
 import type { LastCompleteBackup } from "@/data/repositories/appRepository";
 import { ACCENT_LABELS, ACCENT_ORDER, type AccentColor, type Profile } from "@/domain/types";
@@ -1016,6 +1017,8 @@ export function Settings() {
           <CardHeader title="Airport weather" />
           <CardBody><WeatherPreference /></CardBody>
         </Card>
+
+        <StudyGuideNoticeCard />
 
         <Card>
           <CardHeader title="Appearance" headingId="settings-appearance" eyebrow="Visual style" />

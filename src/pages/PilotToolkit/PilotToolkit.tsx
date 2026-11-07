@@ -52,6 +52,7 @@ import {
   reminderLeadDays,
   trainingCostForecast,
 } from "@/logic/toolkit";
+import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 import { TOOLKIT_UNREADABLE_MESSAGE } from "@/data/repositories/toolkitRepository";
 
@@ -1231,17 +1232,8 @@ function ReminderTool({ state, save }: ToolProps) {
   );
 
   const setEnabled = async (enabled: boolean) => {
-    if (
-      enabled &&
-      "Notification" in window &&
-      Notification.permission === "default"
-    ) {
-      try {
-        await Notification.requestPermission();
-      } catch {
-        /* The reminder list is still available here. */
-      }
-    }
+    // Asked only from this tap; if you say no, the reminder list still works here.
+    if (enabled) await askPermission();
     await save((current) => ({ ...current, remindersEnabled: enabled }));
   };
   return (

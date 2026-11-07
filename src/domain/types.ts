@@ -1401,6 +1401,8 @@ export interface ToolkitState {
   safetyChecks: SafetyCheck[];
   quizAttempts: QuizAttempt[];
   remindersEnabled: boolean;
+  /** Optional (off when missing): tell you when a study guide is ready while the app is in the background. */
+  studyGuideNotice?: boolean;
   reminderLeadDays: number;
   estimatedHourlyCost: Cents;
   additionalTrainingCosts: Cents;

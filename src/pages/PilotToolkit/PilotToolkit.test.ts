@@ -14,9 +14,13 @@ vi.mock("@/state/AppDataContext", () => ({
   useAppData: () => ({ data, mutate: async () => null }),
 }));
 
+const askPermission = vi.hoisted(() => vi.fn());
+vi.mock("@/services/notify", () => ({ askPermission }));
+
 import { PilotToolkit } from "./PilotToolkit";
 
 beforeEach(() => {
+  askPermission.mockReset().mockResolvedValue(false);
   data = {
     profile: {
       id: "profile-1",
@@ -195,8 +199,7 @@ describe("PilotToolkit WAI-ARIA tabs and accessibility", () => {
 });
 
 it("shows reminders in Toolkit and asks notification permission only through its switch", () => {
-  const requestPermission = vi.fn().mockResolvedValue("denied");
-  vi.stubGlobal("Notification", class { static permission = "default"; static requestPermission = requestPermission; });
+  const requestPermission = askPermission;
   data.events = [makeEvent({ title: "Fictional pattern work", date: todayIso() })];
   data.toolkit = { ...data.toolkit, remindersEnabled: false };
   render(h(MemoryRouter, null, h(PilotToolkit)));
