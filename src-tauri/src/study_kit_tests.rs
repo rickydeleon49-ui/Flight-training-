@@ -469,7 +469,7 @@ fn malformed_checked_envelopes_stay_failed_without_inventing_answers() {
 }
 
 #[test]
-fn claude_kit_prompt_is_v5c_and_gemini_stays_v4() {
+fn claude_kit_prompt_is_v5d_and_gemini_stays_v4() {
     let text = |body: &Value| {
         body["contents"][0]["parts"][0]["text"]
             .as_str()
@@ -481,7 +481,7 @@ fn claude_kit_prompt_is_v5c_and_gemini_stays_v4() {
     assert!(g.starts_with("study-kit-prompt-v4: Make a basic study kit"));
     assert!(g.ends_with(&format!("instruction. {}", crate::acs_tasks::prompt())));
     assert!(!g.contains("Write the guide first"));
-    assert!(c.starts_with("study-kit-prompt-v5c: Make a study kit"));
+    assert!(c.starts_with("study-kit-prompt-v5d: Make a study kit"));
     assert!(!c.contains("basic"));
     assert!(c.contains("Write the guide first and make it complete; the cards and questions come after it and must never make it shorter."));
     assert!(c.contains("acsTask is for questions only. Never put ACS task codes, this app or these instructions into the guide or cards (facts the pages themselves state about the ACS are fine)."));
@@ -490,5 +490,12 @@ fn claude_kit_prompt_is_v5c_and_gemini_stays_v4() {
     // the ACS list sits inside the questions instruction, once, not at the end
     assert_eq!(c.matches(&crate::acs_tasks::prompt()).count(), 1);
     assert!(c.find("Make up to about 10").unwrap() < c.find(&crate::acs_tasks::prompt()).unwrap());
+    assert!(c.contains("tests one learning objective that can be answered on its own"));
+    assert!(c.contains("A card back supplies the missing fact and never restates the front"));
+    assert!(c.contains("no giveaways in length or wording"));
+    assert!(c.contains("cites the physical PDF page matching sourcePage"));
+    assert!(c.contains("silently recheck every card and question"));
+    assert!(c.contains("never print this check"));
+    assert!(!g.contains("silently recheck"));
     assert!(c.ends_with("not operational flight instruction."));
 }
