@@ -29,6 +29,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({ open: mocks.pick }));
 import {
   cleanupDocuments,
   checkLibrary,
+  ensureLibraryFree,
   commitDeleteDocument,
   deleteDocument,
   DesktopOnlyError,
@@ -64,6 +65,19 @@ it("FAA PDF intake uses the existing import command, and browser mode never call
   await expect(pickAndImportDocument("shelf-id", true)).resolves.toMatchObject({ relativePath: "shelf-id.pdf" });
   expect(mocks.pick).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "PDF", extensions: ["pdf"] }] }));
   expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "/synthetic/local.pdf", materialId: "shelf-id", pdfOnly: true });
+});
+
+describe("library free check", () => {
+  it("does nothing in the browser and asks the desktop shell otherwise", async () => {
+    await expect(ensureLibraryFree()).resolves.toBeUndefined();
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    mocks.isTauri.mockReturnValue(true);
+    mocks.invoke.mockResolvedValueOnce(undefined);
+    await ensureLibraryFree();
+    expect(mocks.invoke).toHaveBeenCalledWith("ensure_library_free");
+    mocks.invoke.mockRejectedValueOnce("Your library is busy. Try again in a moment.");
+    await expect(ensureLibraryFree()).rejects.toBe("Your library is busy. Try again in a moment.");
+  });
 });
 
 describe("library repair desktop commands", () => {

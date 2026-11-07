@@ -78,6 +78,7 @@ import {
   reattachUnlinkedFile,
   rollbackDeleteDocument,
   trashUnlinkedFile,
+  ensureLibraryFree,
   type LibraryReport,
   type UnlinkedFileInfo,
 } from "@/services/documents";
@@ -331,6 +332,8 @@ export function Settings() {
     setLibraryNote(null);
     let importedPath: string | null = null;
     try {
+      // Ask first: a busy library says "try again" before any file is copied.
+      await ensureLibraryFree();
       const imported = await pickAndImportDocument(materialId);
       if (!imported) return;
       importedPath = imported.relativePath;

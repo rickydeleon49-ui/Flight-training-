@@ -2270,6 +2270,17 @@ fn the_library_lock_keeps_a_pack_and_a_backup_or_restore_from_interleaving() {
 }
 
 #[test]
+fn the_library_free_check_refuses_while_a_backup_or_restore_holds_the_library() {
+    let her = her();
+    crate::documents::ensure_library_free_locked(her.root(), true).unwrap();
+    let busy = crate::library_lock::with_library_lock(her.root(), true, Mode::Normal, |_| {
+        crate::documents::ensure_library_free_locked(her.root(), true)
+    })
+    .unwrap_err();
+    assert_eq!(busy, crate::library_lock::LIBRARY_BUSY);
+}
+
+#[test]
 fn storage_that_this_process_does_not_own_is_never_touched() {
     let (producer, _) = seeded();
     let her = her();

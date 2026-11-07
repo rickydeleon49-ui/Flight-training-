@@ -1406,6 +1406,28 @@ pub fn trash_unlinked_file_locked(
     )
 }
 
+/// Succeeds when no backup, restore or study pack holds the library right now.
+/// Asked before a replacement file is copied in, so a busy library says "try
+/// again" before anything is copied.
+pub fn ensure_library_free_locked(root: &Path, owned: bool) -> Result<(), String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| Ok(()),
+    )
+}
+
+#[tauri::command]
+pub async fn ensure_library_free(app: AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        ensure_library_free_locked(&root, crate::library_lock::owned(&app))
+    })
+    .await
+    .map_err(|e| format!("Could not check the library: {e}"))?
+}
+
 /// Check the library: compare database file references with app-owned storage.
 #[tauri::command]
 pub async fn check_library(app: AppHandle) -> Result<LibraryReport, String> {

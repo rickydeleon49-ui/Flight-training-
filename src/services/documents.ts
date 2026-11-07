@@ -244,6 +244,12 @@ export async function importUnlinkedFile(relativePath: string): Promise<string> 
 }
 
 /** Move an app-owned unlinked file to private trash, returning an undo token. */
+/** Resolves when the library is free; rejects with a plain "try again" while a backup, restore or study pack is running. */
+export async function ensureLibraryFree(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("ensure_library_free");
+}
+
 export async function trashUnlinkedFile(relativePath: string): Promise<StagedDeletion> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<StagedDeletion>("trash_unlinked_file", { relativePath });
