@@ -2357,6 +2357,82 @@ fn a_finished_restore_journal_does_not_block_adding_a_pack() {
     }
 }
 
+#[cfg(unix)]
+fn make_undeletable(op: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let stuck = op.join("files").join("stuck");
+    std::fs::create_dir_all(&stuck).unwrap();
+    std::fs::write(stuck.join("x"), b"x").unwrap();
+    std::fs::set_permissions(&stuck, std::fs::Permissions::from_mode(0o555)).unwrap();
+}
+
+#[cfg(unix)]
+fn make_deletable(root: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    fn walk(dir: &Path) {
+        let _ = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o755));
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for e in entries.flatten() {
+                if e.path().is_dir() {
+                    walk(&e.path());
+                }
+            }
+        }
+    }
+    walk(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn a_restore_is_not_blocked_by_an_op_folder_that_cannot_be_cleaned_up() {
+    let (producer, _) = seeded();
+    let pack = all_pack(&producer);
+    // Receipt present: the folder is left alone and the restore goes ahead.
+    let her1 = her();
+    die_at(&her1, &pack, "after-committed");
+    let op1 = op_dir_of(&her1);
+    make_undeletable(&op1);
+    crate::library_lock::with_library_lock(her1.root(), true, Mode::Restore, |_| Ok(()))
+        .expect("receipt present: restore staging must succeed");
+    assert!(op1.exists(), "left in place");
+    make_deletable(her1.root());
+
+    // No receipt: the folder is set aside in .failed/.
+    let her2 = her();
+    let (op2, j) = installed_and_dead(&her2, &producer);
+    make_undeletable(&op2);
+    crate::library_lock::with_library_lock(her2.root(), true, Mode::Restore, |_| Ok(()))
+        .expect("no receipt: restore staging must succeed");
+    assert!(!op2.exists());
+    assert!(journal::imports_dir(her2.root())
+        .join(journal::FAILED_DIR)
+        .join(&j.op_id)
+        .exists());
+    make_deletable(her2.root());
+}
+
+#[test]
+fn a_busy_database_during_rollback_keeps_the_folder_for_later() {
+    let (producer, _) = seeded();
+    let her = her();
+    let (_, j) = installed_and_dead(&her, &producer);
+    let names = doc_names(&her);
+    let holder = super::open_library(her.root(), false, 100).unwrap();
+    holder.execute_batch("BEGIN IMMEDIATE").unwrap();
+    let report = reconcile(&her);
+    assert_eq!(report.left, 1);
+    assert_eq!(report.quarantined, 0);
+    assert!(staging_left(&her), "evidence stays for a later try");
+    assert!(!journal::imports_dir(her.root())
+        .join(journal::FAILED_DIR)
+        .exists());
+    assert_eq!(doc_names(&her), names);
+    holder.execute_batch("ROLLBACK").unwrap();
+    drop(holder);
+    assert_eq!(reconcile(&her).rolled_back, 1, "{}", j.op_id);
+    assert!(!staging_left(&her));
+}
+
 #[test]
 fn a_result_is_recovered_from_its_receipt_and_acknowledged_once() {
     let (producer, _) = seeded();

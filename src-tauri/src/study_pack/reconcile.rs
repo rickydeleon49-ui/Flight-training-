@@ -81,10 +81,65 @@ pub fn reconcile_locked(guard: &LibraryGuard, root: &Path, mode: Mode) -> Result
             // A folder that can't be cleaned up must not block backups or
             // later imports: nothing was deleted, try it again next time.
             Err(_) if mode == Mode::Normal => report.left += 1,
-            Err(e) => return Err(e),
+            Err(e) => set_aside_for_restore(root, &op, &mut report, e)?,
         }
     }
     Ok(report)
+}
+
+/// Restore staging only: an op dir that could not be cleaned up must not
+/// stop the restore. If a receipt confirms the import, leave it alone (the
+/// restored library decides later). Otherwise set it aside in `.failed/`.
+/// Only an op that may have moved files and cannot be set aside refuses.
+fn set_aside_for_restore(
+    root: &Path,
+    op: &Path,
+    report: &mut Report,
+    original: String,
+) -> Result<(), String> {
+    if !op.exists() {
+        return Ok(());
+    }
+    if matches!(receipt_exists(root, &journal_op_id(op)), Ok(true)) {
+        report.left += 1;
+        return Ok(());
+    }
+    let name = op
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_string();
+    if quarantine(root, op, &name).is_ok() {
+        report.quarantined += 1;
+        return Ok(());
+    }
+    // Could not set it aside. Safe to leave only when nothing was moved.
+    let moved = match journal::read(op) {
+        Ok(j) => matches!(
+            j.state,
+            State::Installing | State::Installed | State::Committed
+        ),
+        Err(_) => op.join(journal::JOURNAL_FILE).exists(),
+    };
+    if moved {
+        return Err(original);
+    }
+    report.left += 1;
+    Ok(())
+}
+
+fn journal_op_id(op: &Path) -> String {
+    journal::read(op)
+        .map(|j| j.op_id)
+        .unwrap_or_else(|_| op.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string())
+}
+
+/// A failure of the database (busy, locked, could not look), not of a rule:
+/// the evidence must stay for a later try.
+fn is_transient(error: &str) -> bool {
+    error.starts_with("lookup failed")
+        || error.starts_with("Could not finish cleaning up")
+        || error.starts_with("Could not check existing file links")
 }
 
 /// One op dir. Errors are only for things this code cannot decide about at all
@@ -133,6 +188,13 @@ pub fn reconcile_op(root: &Path, op: &Path, mode: Mode, report: &mut Report) -> 
                         remove_dir(op)?;
                         report.rolled_back += 1;
                     }
+                    Err(e) if is_transient(&e) => match mode {
+                        Mode::Normal => report.left += 1,
+                        Mode::Restore => {
+                            quarantine(root, op, &name)?;
+                            report.quarantined += 1;
+                        }
+                    },
                     Err(_) => {
                         fail_closed(root, op, &name)?;
                         report.quarantined += 1;
