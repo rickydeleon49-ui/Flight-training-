@@ -283,8 +283,10 @@ impl<'a> Pictures<'a> {
                                           AND json_type(s.flashcards_json) = 'array' \
                                     THEN s.flashcards_json ELSE '[]' END) c \
                      JOIN visual_card_regions r \
-                       ON r.id = json_extract(c.value, '$.visualRegionId') \
-                      AND json_type(c.value, '$.visualRegionId') = 'text' \
+                       ON r.id = CASE WHEN c.type = 'object' THEN \
+                                   CASE WHEN json_type(c.value, '$.visualRegionId') = 'text' \
+                                        THEN json_extract(c.value, '$.visualRegionId') END \
+                                 END \
                      WHERE r.image_material_id IS NOT NULL \
                      GROUP BY r.image_material_id",
                 )?)
@@ -570,4 +572,40 @@ fn plan_pictures(
     }
     plan.regions = kept;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn picture_use_counts_only_object_cards_with_a_text_region() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE ai_study_sets (id TEXT PRIMARY KEY, flashcards_json TEXT);
+             CREATE TABLE visual_card_regions (id TEXT PRIMARY KEY, image_material_id TEXT);
+             INSERT INTO visual_card_regions VALUES ('r1', 'img-a'), ('r2', 'img-b');",
+        )
+        .unwrap();
+        let sets = [
+            r#"[{"visualRegionId":"r1"},{"visualRegionId":"r1"},{"front":"plain"}]"#,
+            // Plain strings, a string that looks like a card, a number id.
+            r#"["just text","{\"visualRegionId\":\"r2\"}",{"visualRegionId":7}]"#,
+            r#"{"visualRegionId":"r2"}"#,
+            "not json",
+        ];
+        for (n, text) in sets.iter().enumerate() {
+            conn.execute(
+                "INSERT INTO ai_study_sets VALUES (?1, ?2)",
+                rusqlite::params![n.to_string(), text],
+            )
+            .unwrap();
+        }
+        conn.execute("INSERT INTO ai_study_sets VALUES ('null', NULL)", [])
+            .unwrap();
+        let root = std::path::PathBuf::new();
+        let mut pictures = Pictures::new(&conn, &root);
+        assert_eq!(pictures.used("img-a").unwrap(), 2);
+        assert_eq!(pictures.used("img-b").unwrap(), 0);
+    }
 }

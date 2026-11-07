@@ -136,14 +136,6 @@ fn journal_op_id(op: &Path) -> String {
     })
 }
 
-/// A failure of the database (busy, locked, could not look), not of a rule:
-/// the evidence must stay for a later try.
-fn is_transient(error: &str) -> bool {
-    error.starts_with("lookup failed")
-        || error.starts_with("Could not finish cleaning up")
-        || error.starts_with("Could not check existing file links")
-}
-
 /// One op dir. Errors are only for things this code cannot decide about at all
 /// (it never deletes on doubt).
 pub fn reconcile_op(root: &Path, op: &Path, mode: Mode, report: &mut Report) -> Result<(), String> {
@@ -190,17 +182,16 @@ pub fn reconcile_op(root: &Path, op: &Path, mode: Mode, report: &mut Report) -> 
                         remove_dir(op)?;
                         report.rolled_back += 1;
                     }
-                    Err(e) if is_transient(&e) => match mode {
+                    // Rule failures keep files and return Ok, so an error
+                    // here is the disk or the database: keep all evidence and
+                    // try again later (Restore sets the whole folder aside).
+                    Err(_) => match mode {
                         Mode::Normal => report.left += 1,
                         Mode::Restore => {
                             quarantine(root, op, &name)?;
                             report.quarantined += 1;
                         }
                     },
-                    Err(_) => {
-                        fail_closed(root, op, &name)?;
-                        report.quarantined += 1;
-                    }
                 }
             }
         },

@@ -1431,8 +1431,12 @@ pub(crate) fn import_and_reattach_locked(
             if let Err(error) =
                 reattach_unlinked_file_in(root, material_id, &imported.relative_path)
             {
-                if let Ok(copy) = contained_document_path(&docs, &imported.relative_path) {
-                    let _ = std::fs::remove_file(copy);
+                let removed = contained_document_path(&docs, &imported.relative_path)
+                    .is_ok_and(|copy| std::fs::remove_file(copy).is_ok());
+                if !removed {
+                    return Err(format!(
+                        "{error} The copied file remains in app storage; run Check library to recover it."
+                    ));
                 }
                 return Err(error);
             }
