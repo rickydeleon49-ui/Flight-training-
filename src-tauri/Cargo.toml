@@ -72,3 +72,12 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+# Reading a long PDF's pages in a debug build (QA runs) is ~20x slower
+# unoptimized; keep the PDF reading crates optimized there.
+[profile.dev.package.lopdf]
+opt-level = 3
+[profile.dev.package.miniz_oxide]
+opt-level = 3
+[profile.dev.package.flate2]
+opt-level = 3

@@ -4,7 +4,7 @@ import { Button, Dialog } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { pdfPartNotes } from "@/logic/pdfParts";
-import { detectPdfChapters, splitPdfRanges, type PdfChapter, type PdfChapters } from "@/services/pdf";
+import { detectPdfChapters, splitPdfRanges, watchSplitProgress, type PdfChapter, type PdfChapters } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
 
 import { saveSplitParts } from "./splitSave";
@@ -99,10 +99,12 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setError(null);
+    setProgress(null);
     setRows(
       (outline.chapters ?? []).map((chapter) => ({
         ...chapter,
@@ -122,8 +124,11 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
   const save = async () => {
     if (!canSave || !material.filePath) return;
     setError(null);
+    setProgress(null);
     setWorking(true);
+    let stopWatching = () => {};
     try {
+      stopWatching = await watchSplitProgress(setProgress);
       const ranges = checked.map((row) => ({
         firstPage: Number(row.first),
         lastPage: Number(row.last),
@@ -151,7 +156,7 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
           const label = range?.title ?? material.title;
           return {
             id: part.id,
-            title: `${material.title} — ${label}${shared ? ` (pages ${part.selection.start}–${part.selection.end})` : ""}`,
+            title: `${material.title} \u2013 ${label}${shared ? ` (pages ${part.selection.start}–${part.selection.end})` : ""}`,
             notes: pdfPartNotes(material.title, { firstPage: part.selection.start, lastPage: part.selection.end }),
           };
         }),
@@ -168,6 +173,7 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
     } catch (splitError) {
       setError(splitError instanceof Error ? splitError.message : String(splitError));
     } finally {
+      stopWatching();
       setWorking(false);
     }
   };
@@ -192,6 +198,14 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
     >
       <div className="stack stack--4">
         <p className="small muted">{SOURCE_LINES[outline.chapterSource]}</p>
+        <p className="small">{rows.length} {rows.length === 1 ? "part" : "parts"} found</p>
+        {/* A long book has dozens of parts: the list scrolls, by wheel or keys. */}
+        <div
+          role="region"
+          aria-label="Parts found"
+          tabIndex={0}
+          style={{ maxHeight: "50vh", overflowY: "auto" }}
+        >
         <ul className="stack stack--2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {rows.map((row, index) => (
             <li key={index} className="stack stack--1">
@@ -238,7 +252,8 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
             </li>
           ))}
         </ul>
-        {working ? <p className="small muted" role="status">Saving chapters…</p> : null}
+        </div>
+        {working ? <p className="small muted" role="status">{progress ?? "Saving chapters…"}</p> : null}
         {error ? (
           <p className="field__error" role="alert">
             {error}

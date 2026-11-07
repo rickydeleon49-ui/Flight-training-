@@ -142,3 +142,28 @@ it("offers the choice when chapters exist", async () => {
   const { result } = renderHook(() => useChapterChoice(material.filePath, true));
   await waitFor(() => expect(result.current).not.toBeNull());
 });
+
+it("says how many parts were found, in a list that can scroll", () => {
+  setup();
+  expect(screen.getByText("3 parts found")).toBeTruthy();
+  const list = screen.getByRole("region", { name: "Parts found" });
+  expect(list.getAttribute("tabindex")).toBe("0");
+  expect(list.style.overflowY).toBe("auto");
+});
+
+it("shows which chapter is being saved while it works", async () => {
+  let say: (message: string) => void = () => {};
+  vi.spyOn(pdf, "watchSplitProgress").mockImplementation(async (onMessage) => {
+    say = onMessage;
+    return () => {};
+  });
+  let finish: (value: never) => void = () => {};
+  vi.spyOn(pdf, "splitPdfRanges").mockReturnValue(new Promise((resolve) => { finish = resolve as never; }));
+  setup();
+  fireEvent.click(save());
+  await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saving chapters…"));
+  say("Saving chapter 2 of 3…");
+  await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saving chapter 2 of 3…"));
+  finish(receipt);
+  await waitFor(() => expect(splitSave.saveSplitParts).toHaveBeenCalled());
+});
