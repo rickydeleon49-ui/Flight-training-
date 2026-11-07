@@ -74,6 +74,7 @@ import { PracticeTestPanel } from "./PracticeTestPanel";
 import { usePracticeMetadata } from "./usePracticeMetadata";
 import { ManualSplitDialog } from "./ManualSplitDialog";
 import { SplitPdfDialog } from "./SplitPdfDialog";
+import { SplitByChapterDialog, useChapterChoice } from "./SplitByChapterDialog";
 import { SplitLineageDetails } from "./SplitLineageDetails";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { ExportStudyDialog } from "./ExportStudyDialog";
@@ -232,6 +233,7 @@ function MaterialDetailPage() {
   const [exporting, setExporting] = useState(false);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [splittingManually, setSplittingManually] = useState(false);
+  const [splittingByChapter, setSplittingByChapter] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
@@ -619,6 +621,12 @@ function MaterialDetailPage() {
       cancelled = true;
     };
   }, [material?.filePath]);
+
+  // Before the early return: hooks must run on every render.
+  const chapterOutline = useChapterChoice(material?.filePath, splittingByChapter, (message) => {
+    setSplittingByChapter(false);
+    setOpenError(message);
+  });
 
   if (!material) {
     return (
@@ -1047,6 +1055,9 @@ function MaterialDetailPage() {
               <Button onClick={() => setEditing(true)}>Edit</Button>
               {deviceCan().splitFiles && canSplit ? <>
                 <Button onClick={() => setSplitting(true)}>Split automatically</Button>
+                <Button onClick={() => { setOpenError(null); setSplittingByChapter(true); }} disabled={splittingByChapter && !chapterOutline}>
+                  {splittingByChapter && !chapterOutline ? "Finding chapters\u2026" : "Split by chapter"}
+                </Button>
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
               {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
@@ -2320,6 +2331,19 @@ function MaterialDetailPage() {
           source={{ material, studySet: studySet ?? null, practiceTest: practiceTest ?? null }}
           onClose={() => setExporting(false)}
           onFlashcardCsv={() => { setExporting(false); setExportingCsv(true); }}
+        />
+      ) : null}
+
+      {canSplit && chapterOutline ? (
+        <SplitByChapterDialog
+          open={splittingByChapter}
+          material={material}
+          outline={chapterOutline}
+          onClose={() => setSplittingByChapter(false)}
+          onCreated={() => {
+            setSplittingByChapter(false);
+            navigate("/study");
+          }}
         />
       ) : null}
 
