@@ -237,11 +237,11 @@ export class KitQueueRunner {
     try { stored = await this.deps.stored(next.id); } catch { stored = null; }
     // Stopped here meanwhile: Stop wins, and its write lands after this one.
     if (this.epoch !== epoch || this.q?.state === "stopped") {
-      // Show the queue as it ends up stored (stopped, or still done when the reopen was refused).
+      // Show the queue exactly as it ends up stored (stopped with its chapters, or still done when refused).
       await this.writes;
       let after: Queue | null = null;
       try { after = await this.deps.stored(next.id); } catch { after = null; }
-      if (after && after.state !== "stopped" && this.q?.id === after.id) this.adopt(after);
+      if (after && this.q?.id === after.id) this.adopt(after);
       return false;
     }
     const row = stored?.items.find((item) => item.position === position);

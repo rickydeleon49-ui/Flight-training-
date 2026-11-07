@@ -830,6 +830,8 @@ describe("kit queue runner", () => {
           expect((await env.repo.get("q1"))?.state).toBe("stopped");
           expect(await env.repo.findOpen()).toBeNull();
           expect(r.queue?.state).toBe("stopped");
+          // Memory shows the chapters exactly as stored (status and request id).
+          expect(r.queue?.items).toEqual((await env.repo.get("q1"))?.items);
         } finally { env.db.close(); }
       });
 
@@ -853,6 +855,8 @@ describe("kit queue runner", () => {
           expect((await env.repo.get("q1"))?.state).toBe("stopped");
           expect(await env.repo.findOpen()).toBeNull();
           expect(r.queue?.state).toBe("stopped");
+          // Memory shows the chapters exactly as stored (status and request id).
+          expect(r.queue?.items).toEqual((await env.repo.get("q1"))?.items);
         } finally { env.db.close(); }
       });
 
