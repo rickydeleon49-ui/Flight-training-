@@ -85,9 +85,65 @@ enum FileData {
 }
 
 impl FileData {
-    fn bytes(&self) -> &[u8] {
+    fn into_bytes(self) -> Vec<u8> {
         match self {
             Self::Pdf { bytes, .. } | Self::Png { bytes, .. } => bytes,
+        }
+    }
+}
+
+/// Item-count and byte limits for one pack, enforced while files are read.
+#[derive(Clone, Copy)]
+pub(crate) struct Limits {
+    pub max_items: usize,
+    pub max_bytes: u64,
+}
+
+impl Default for Limits {
+    fn default() -> Self {
+        Self {
+            max_items: MAX_ITEMS,
+            max_bytes: MAX_TOTAL_UNCOMPRESSED,
+        }
+    }
+}
+
+struct Budget {
+    limits: Limits,
+    items: usize,
+    bytes: u64,
+    tripped: bool,
+}
+
+impl Budget {
+    fn new(limits: Limits) -> Self {
+        Self {
+            limits,
+            items: 0,
+            bytes: 0,
+            tripped: false,
+        }
+    }
+
+    fn take_item(&mut self) -> Result<(), String> {
+        if self.items >= self.limits.max_items {
+            self.tripped = true;
+            return Err("That is too many items for one study pack.".to_string());
+        }
+        self.items += 1;
+        Ok(())
+    }
+
+    fn take_bytes(&mut self, n: u64) -> Result<(), String> {
+        match self.bytes.checked_add(n) {
+            Some(total) if total <= self.limits.max_bytes => {
+                self.bytes = total;
+                Ok(())
+            }
+            _ => {
+                self.tripped = true;
+                Err("These items are too large to share in one study pack.".to_string())
+            }
         }
     }
 }
@@ -105,7 +161,12 @@ fn no_longer_exists() -> String {
     "That study material no longer exists.".to_string()
 }
 
-fn read_stored_file(root: &Path, relative: &str, limit: u64) -> Result<Vec<u8>, String> {
+fn read_stored_file(
+    root: &Path,
+    relative: &str,
+    limit: u64,
+    budget: &mut Budget,
+) -> Result<Vec<u8>, String> {
     let unreadable = || "A file in your library can't be read.".to_string();
     let documents = root.join("documents");
     let path = crate::documents::contained_document_path(&documents, relative)
@@ -114,6 +175,7 @@ fn read_stored_file(root: &Path, relative: &str, limit: u64) -> Result<Vec<u8>, 
     if !meta.is_file() || meta.len() > limit {
         return Err("A file in your library is too large to share.".to_string());
     }
+    budget.take_bytes(meta.len())?;
     let mut bytes = Vec::new();
     std::fs::File::open(&path)
         .map_err(|_| unreadable())?
@@ -126,7 +188,13 @@ fn read_stored_file(root: &Path, relative: &str, limit: u64) -> Result<Vec<u8>, 
     Ok(bytes)
 }
 
-fn load_material(conn: &Connection, root: &Path, id: &str) -> Result<Loaded, String> {
+fn load_material(
+    conn: &Connection,
+    root: &Path,
+    id: &str,
+    budget: &mut Budget,
+) -> Result<Loaded, String> {
+    budget.take_item()?;
     type MaterialRow = (String, String, String, Option<String>, Option<String>);
     let row: Option<MaterialRow> = conn
         .query_row(
@@ -141,7 +209,7 @@ fn load_material(conn: &Connection, root: &Path, id: &str) -> Result<Loaded, Str
     let (file, default_name) = match file_path.as_deref().filter(|p| !p.is_empty()) {
         None => (None, String::new()),
         Some(relative) => {
-            let bytes = read_stored_file(root, relative, MAX_PDF_BYTES)?;
+            let bytes = read_stored_file(root, relative, MAX_PDF_BYTES, budget)?;
             if bytes.starts_with(&PNG_SIGNATURE) {
                 if bytes.len() as u64 > MAX_PNG_BYTES {
                     return Err("A picture in your library is too large to share.".to_string());
@@ -711,7 +779,40 @@ struct BuiltItem {
     file_bytes: Option<Vec<u8>>,
 }
 
-fn temp_beside(dest: &Path) -> Result<PathBuf, String> {
+const OUTSIDE_LIBRARY: &str = "Choose a place outside the app's library to save the study pack.";
+
+/// The destination must not be a shortcut and must not resolve (through any
+/// folder alias) to a place inside the library folder.
+fn check_destination(root: &Path, dest: &Path) -> Result<(), String> {
+    let name = dest
+        .file_name()
+        .ok_or_else(|| "Choose a file name for the study pack.".to_string())?;
+    if std::fs::symlink_metadata(dest).is_ok_and(|m| m.file_type().is_symlink()) {
+        return Err("Choose a regular file name for the study pack, not a shortcut.".to_string());
+    }
+    let parent = dest
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let parent = parent
+        .canonicalize()
+        .map_err(|_| "Choose a folder that exists to save the study pack.".to_string())?;
+    let root = root
+        .canonicalize()
+        .map_err(|_| "Could not open your library.".to_string())?;
+    if parent.join(name).starts_with(&root) {
+        return Err(OUTSIDE_LIBRARY.to_string());
+    }
+    Ok(())
+}
+
+/// Create a fresh temp file beside the destination. A name that already
+/// exists is never touched; the next token is tried instead. Only a file this
+/// call created is returned, so only that file is ever cleaned up.
+fn create_temp(
+    dest: &Path,
+    mut token: impl FnMut() -> Result<String, String>,
+) -> Result<(PathBuf, std::fs::File), String> {
     let name = dest
         .file_name()
         .and_then(|n| n.to_str())
@@ -720,19 +821,52 @@ fn temp_beside(dest: &Path) -> Result<PathBuf, String> {
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
-    Ok(parent.join(format!(".{name}.{}.tmp", std::process::id())))
+    for _ in 0..8 {
+        let path = parent.join(format!(".{name}.{}.tmp", token()?));
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(file) => return Ok((path, file)),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(_) => break,
+        }
+    }
+    Err("Could not save the study pack.".to_string())
 }
 
-fn write_zip(temp: &Path, manifest: &[u8], items: &[BuiltItem]) -> Result<(), String> {
+#[cfg(test)]
+pub(crate) fn create_temp_for_test(
+    dest: &Path,
+    token: impl FnMut() -> Result<String, String>,
+) -> Result<(PathBuf, std::fs::File), String> {
+    create_temp(dest, token)
+}
+
+/// Free bytes on the volume holding `dir`, where the platform can say.
+#[cfg(unix)]
+fn free_space(dir: &Path) -> Option<u64> {
+    use std::os::unix::ffi::OsStrExt;
+    let path = std::ffi::CString::new(dir.as_os_str().as_bytes()).ok()?;
+    let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
+    // SAFETY: `path` is a valid C string and `stat` is a valid out-pointer.
+    if unsafe { libc::statvfs(path.as_ptr(), &mut stat) } != 0 {
+        return None;
+    }
+    (stat.f_bavail as u64).checked_mul(stat.f_frsize as u64)
+}
+
+#[cfg(not(unix))]
+fn free_space(_dir: &Path) -> Option<u64> {
+    None
+}
+
+fn write_zip(file: std::fs::File, manifest: &[u8], items: &[BuiltItem]) -> Result<(), String> {
     use zip::write::SimpleFileOptions;
     fn failed<E>(_: E) -> String {
         "Could not save the study pack.".to_string()
     }
-    let file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(temp)
-        .map_err(|_| "Could not save the study pack.".to_string())?;
     let mut zip = zip::ZipWriter::new(file);
     let json = SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
@@ -763,6 +897,26 @@ pub fn export_study_pack_in(
     dest: &Path,
     app_version: &str,
 ) -> Result<ExportSummary, String> {
+    export_study_pack_with(
+        root,
+        material_ids,
+        dest,
+        app_version,
+        Limits::default(),
+        validate::validate_pack,
+    )
+}
+
+pub(crate) fn export_study_pack_with(
+    root: &Path,
+    material_ids: &[String],
+    dest: &Path,
+    app_version: &str,
+    limits: Limits,
+    validator: fn(&Path) -> Result<validate::ValidatedPack, String>,
+) -> Result<ExportSummary, String> {
+    check_destination(root, dest)?;
+    let mut budget = Budget::new(limits);
     let conn = Connection::open(root.join("her-flight-deck.db"))
         .map_err(|_| "Could not open your library.".to_string())?;
     conn.busy_timeout(std::time::Duration::from_secs(5))
@@ -785,6 +939,9 @@ pub fn export_study_pack_in(
     if selected.is_empty() {
         return Err("Choose at least one item to share.".to_string());
     }
+    if selected.len() > limits.max_items {
+        return Err("That is too many items for one study pack.".to_string());
+    }
 
     // One consistent read of everything below.
     let read = conn
@@ -793,7 +950,7 @@ pub fn export_study_pack_in(
 
     let mut loaded: Vec<Loaded> = Vec::new();
     for id in &selected {
-        loaded.push(load_material(&read, root, id)?);
+        loaded.push(load_material(&read, root, id, &mut budget)?);
     }
     let mut guides: HashMap<String, DbGuide> = HashMap::new();
     for m in &loaded {
@@ -823,10 +980,11 @@ pub fn export_study_pack_in(
     }
     dependencies.sort();
     for id in dependencies {
-        if let Ok(m) = load_material(&read, root, &id) {
-            if matches!(m.file, Some(FileData::Png { .. })) {
-                loaded.push(m);
-            }
+        match load_material(&read, root, &id, &mut budget) {
+            Ok(m) if matches!(m.file, Some(FileData::Png { .. })) => loaded.push(m),
+            Ok(_) => {}
+            Err(error) if budget.tripped => return Err(error),
+            Err(_) => {}
         }
     }
     if loaded.len() > MAX_ITEMS {
@@ -866,7 +1024,7 @@ pub fn export_study_pack_in(
         pictures: 0,
     };
     let mut cards_left_out = 0u64;
-    for (index, m) in loaded.iter().enumerate() {
+    for (index, mut m) in loaded.into_iter().enumerate() {
         let n = index + 1;
         let is_picture = matches!(m.file, Some(FileData::Png { .. }));
         let kind = match &m.file {
@@ -876,7 +1034,7 @@ pub fn export_study_pack_in(
         };
         let (mut guide, mut regions, mut ids) = (None, None, IdMap::default());
         if let Some(db) = guides.get(&m.id) {
-            let b = build_guide(&read, db, &pictures, m)?;
+            let b = build_guide(&read, db, &pictures, &m)?;
             cards_left_out += b.left_out;
             ids = b.ids;
             regions = (!b.regions.is_empty()).then_some(b.regions);
@@ -885,12 +1043,12 @@ pub fn export_study_pack_in(
         let practice = if is_picture {
             None
         } else {
-            build_practice(&read, m, &mut ids)?
+            build_practice(&read, &m, &mut ids)?
         };
         let citations = if is_picture {
             None
         } else {
-            build_citations(&read, m, guide.as_ref(), practice.as_ref(), &ids)?
+            build_citations(&read, &m, guide.as_ref(), practice.as_ref(), &ids)?
         };
         let videos = if is_picture {
             Vec::new()
@@ -974,7 +1132,7 @@ pub fn export_study_pack_in(
                 file,
             },
             item_bytes,
-            file_bytes: m.file.as_ref().map(|f| f.bytes().to_vec()),
+            file_bytes: m.file.take().map(FileData::into_bytes),
         });
     }
     drop(read);
@@ -1003,27 +1161,49 @@ pub fn export_study_pack_in(
         return Err("That is too many items for one study pack.".to_string());
     }
 
-    let temp = temp_beside(dest)?;
-    let result = write_zip(&temp, &manifest_bytes, &built).and_then(|()| {
-        std::fs::rename(&temp, dest).map_err(|_| "Could not save the study pack.".to_string())
-    });
-    if let Err(error) = result {
-        let _ = std::fs::remove_file(&temp);
-        return Err(error);
+    let needed = manifest_bytes.len() as u64
+        + built
+            .iter()
+            .map(|b| b.item_bytes.len() as u64 + b.file_bytes.as_ref().map_or(0, |f| f.len() as u64))
+            .sum::<u64>();
+    let folder = dest
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    if free_space(folder).is_some_and(|free| free < needed) {
+        return Err("There isn't enough free space to save the study pack there.".to_string());
     }
+
+    let (temp, file) = create_temp(dest, || {
+        crate::practice_sessions::generate_uuid_v4(&conn)
+            .map_err(|_| "Could not prepare the study pack.".to_string())
+    })?;
+    // The finished temp file must pass the same checks as a pack from
+    // outside before it replaces anything.
+    let finished = write_zip(file, &manifest_bytes, &built)
+        .and_then(|()| {
+            validator(&temp)
+                .map_err(|error| format!("The study pack didn't pass its own check. {error}"))
+        })
+        .and_then(|validated| {
+            check_destination(root, dest)?;
+            std::fs::rename(&temp, dest)
+                .map_err(|_| "Could not save the study pack.".to_string())?;
+            Ok(validated)
+        });
+    let validated = match finished {
+        Ok(v) => v,
+        Err(error) => {
+            // Only the temp file this call created; the destination is untouched.
+            let _ = std::fs::remove_file(&temp);
+            return Err(error);
+        }
+    };
     if let Some(parent) = dest.parent().filter(|p| !p.as_os_str().is_empty()) {
         if let Ok(dir) = std::fs::File::open(parent) {
             let _ = dir.sync_all();
         }
     }
-    // The pack must pass the same checks as one that arrives from outside.
-    let validated = match validate::validate_pack(dest) {
-        Ok(v) => v,
-        Err(error) => {
-            let _ = std::fs::remove_file(dest);
-            return Err(format!("The study pack didn't pass its own check. {error}"));
-        }
-    };
     Ok(ExportSummary {
         pack_id,
         namespace,

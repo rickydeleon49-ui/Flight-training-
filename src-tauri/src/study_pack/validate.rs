@@ -96,6 +96,18 @@ fn entry_limit(kind: EntryKind) -> u64 {
     }
 }
 
+/// Exact pack limit: small entries pass; larger ones need
+/// `uncompressed <= 200 * compressed`. (Backup keeps its own truncating check.)
+pub(super) fn ratio_ok(uncompressed: u64, compressed: u64) -> bool {
+    const FLOOR: u64 = 1024 * 1024;
+    if uncompressed <= FLOOR {
+        return true;
+    }
+    MAX_COMPRESSION_RATIO
+        .checked_mul(compressed)
+        .map_or(true, |limit| uncompressed <= limit)
+}
+
 /// Open the archive and check every entry's name, mode and size claims
 /// without reading any content. Returns the entry index by name.
 fn scan_archive(archive: &mut ZipArchive<File>) -> Result<(HashMap<String, usize>, u64), String> {
@@ -117,12 +129,9 @@ fn scan_archive(archive: &mut ZipArchive<File>) -> Result<(HashMap<String, usize
             .ok_or_else(|| damaged("it contains an unsafe file path"))?;
         crate::backup::validate_archive_path(&raw_name, &path)
             .map_err(|_| damaged("it contains an unsafe or excessively long file path"))?;
-        crate::backup::validate_compression_ratio(
-            entry.size(),
-            entry.compressed_size(),
-            MAX_COMPRESSION_RATIO,
-        )
-        .map_err(|_| damaged("it contains an unsafe compression ratio"))?;
+        if !ratio_ok(entry.size(), entry.compressed_size()) {
+            return Err(damaged("it contains an unsafe compression ratio"));
+        }
         if entry.is_dir() {
             return Err(damaged("it contains a folder"));
         }
@@ -393,30 +402,145 @@ fn check_file(entry: &ManifestItem, file: &ManifestFile, bytes: &[u8]) -> Result
 /* ------------------------------------------------------------------ */
 
 /// The Rust twin of `validateVideoUrl` in materialVideoLinkRepository.ts:
-/// trimmed, `https:` only, an `http:` link is upgraded. Returns the stored
-/// spelling, or None when the link is refused.
+/// trimmed, must parse as a WHATWG URL with an `https:` (or `http:`, which is
+/// upgraded) scheme, at most 2000 UTF-16 units. Returns the stored spelling,
+/// or None when the link is refused. Shared parity cases live in
+/// src/testing/videoUrlParity.json and run in both languages.
 pub fn canonical_video_url(input: &str) -> Option<String> {
-    let url = input.trim();
-    if url.is_empty() || url.chars().any(|c| c.is_whitespace() || c.is_control()) {
-        return None;
-    }
-    let (scheme, rest) = url.split_once(':')?;
-    let authority_and_more = rest.strip_prefix("//")?;
-    let authority = authority_and_more
-        .split(['/', '?', '#'])
-        .next()
-        .unwrap_or("");
-    let host_port = authority.rsplit('@').next().unwrap_or("");
-    let host = host_port.split(':').next().unwrap_or("");
-    if host.is_empty() || authority.contains('\\') {
-        return None;
-    }
-    let out = match scheme.to_ascii_lowercase().as_str() {
+    let url = crate::card_reviews::js_trim(input);
+    let scheme = whatwg_special_scheme(url)?;
+    let out = match scheme {
         "https" => url.to_string(),
-        "http" => format!("https:{rest}"),
-        _ => return None,
+        _ => {
+            let rest = &url[url.find(':')? + 1..];
+            format!("https:{rest}")
+        }
     };
     (utf16_len(&out) <= 2000).then_some(out)
+}
+
+/// A hand port of the WHATWG URL parser, enough to decide whether
+/// `new URL(text)` succeeds for an http(s) address. Returns the lowercase
+/// scheme. Internationalised host names are accepted without the full IDNA
+/// mapping table.
+fn whatwg_special_scheme(text: &str) -> Option<&'static str> {
+    let cleaned: String = text
+        .trim_matches(|c: char| (c as u32) <= 0x20)
+        .chars()
+        .filter(|c| !matches!(c, '\t' | '\n' | '\r'))
+        .collect();
+    let (scheme, rest) = cleaned.split_once(':')?;
+    let mut chars = scheme.chars();
+    if !chars.next()?.is_ascii_alphabetic()
+        || !chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+    {
+        return None;
+    }
+    let scheme: &'static str = match scheme.to_ascii_lowercase().as_str() {
+        "https" => "https",
+        "http" => "http",
+        _ => return None,
+    };
+    let rest = rest.trim_start_matches(['/', '\\']);
+    let end = rest.find(['/', '\\', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..end];
+    let host_port = authority.rsplit_once('@').map_or(authority, |(_, h)| h);
+    let (host, port) = if let Some(after) = host_port.strip_prefix('[') {
+        let close = after.find(']')?;
+        let tail = &after[close + 1..];
+        let port = match tail {
+            "" => "",
+            _ => tail.strip_prefix(':')?,
+        };
+        (&host_port[..close + 2], port)
+    } else {
+        match host_port.split_once(':') {
+            Some((h, p)) => (h, p),
+            None => (host_port, ""),
+        }
+    };
+    if !port.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    if port.trim_start_matches('0').len() > 5
+        || port.trim_start_matches('0').parse::<u32>().is_ok_and(|n| n > 65535)
+    {
+        return None;
+    }
+    host_ok(host).then_some(scheme)
+}
+
+fn host_ok(host: &str) -> bool {
+    if let Some(inner) = host.strip_prefix('[') {
+        return inner
+            .strip_suffix(']')
+            .is_some_and(|v| v.parse::<std::net::Ipv6Addr>().is_ok());
+    }
+    let mut decoded: Vec<u8> = Vec::with_capacity(host.len());
+    let bytes = host.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        let hex = |b: u8| (b as char).to_digit(16);
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let (Some(h), Some(l)) = (hex(bytes[i + 1]), hex(bytes[i + 2])) {
+                decoded.push((h * 16 + l) as u8);
+                i += 3;
+                continue;
+            }
+        }
+        decoded.push(bytes[i]);
+        i += 1;
+    }
+    let domain = String::from_utf8_lossy(&decoded).to_lowercase();
+    if domain.is_empty()
+        || domain.chars().any(|c| {
+            (c as u32) <= 0x20
+                || c as u32 == 0x7f
+                || matches!(
+                    c,
+                    '#' | '/' | ':' | '<' | '>' | '?' | '@' | '[' | '\\' | ']' | '^' | '|' | '%'
+                )
+        })
+    {
+        return false;
+    }
+    let mut labels: Vec<&str> = domain.split('.').collect();
+    if labels.len() > 1 && labels.last() == Some(&"") {
+        labels.pop();
+    }
+    let last = labels.last().copied().unwrap_or("");
+    let numeric = !last.is_empty()
+        && (last.chars().all(|c| c.is_ascii_digit())
+            || last
+                .strip_prefix("0x")
+                .is_some_and(|h| h.chars().all(|c| c.is_ascii_hexdigit())));
+    !numeric || ipv4_ok(&labels)
+}
+
+fn ipv4_ok(labels: &[&str]) -> bool {
+    if labels.len() > 4 || labels.iter().any(|l| l.is_empty()) {
+        return false;
+    }
+    let mut numbers: Vec<u64> = Vec::new();
+    for label in labels {
+        let (digits, radix) = if let Some(h) = label.strip_prefix("0x") {
+            (h, 16)
+        } else if label.len() > 1 && label.starts_with('0') {
+            (&label[1..], 8)
+        } else {
+            (*label, 10)
+        };
+        if digits.is_empty() {
+            numbers.push(0);
+        } else {
+            match u64::from_str_radix(digits, radix) {
+                Ok(n) => numbers.push(n),
+                Err(_) => return false,
+            }
+        }
+    }
+    let (last, init) = numbers.split_last().expect("non-empty");
+    init.iter().all(|n| *n <= 255) && *last < 256u64.pow((5 - numbers.len()) as u32)
 }
 
 fn text_within(text: &str, min: usize, max: usize) -> bool {
@@ -820,6 +944,16 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_pack_ratio_check_is_exact() {
+        assert!(ratio_ok(1024 * 1024, 0));
+        assert!(!ratio_ok(2 * 1024 * 1024, 0));
+        let c = 10_000;
+        assert!(ratio_ok(200 * c, c));
+        assert!(!ratio_ok(200 * c + 1, c));
+        assert!(ratio_ok(u64::MAX, u64::MAX / 100), "the limit overflowing means no limit");
+    }
+
+    #[test]
     fn video_links_follow_the_app_rules() {
         assert_eq!(
             canonical_video_url(" https://youtu.be/x ").as_deref(),
@@ -829,12 +963,22 @@ mod tests {
             canonical_video_url("http://example.com/a?b=1").as_deref(),
             Some("https://example.com/a?b=1")
         );
+        let cases: Vec<Value> =
+            serde_json::from_str(include_str!("../../../src/testing/videoUrlParity.json")).unwrap();
+        assert!(cases.len() > 20);
+        for case in &cases {
+            let input = case["input"].as_str().unwrap();
+            assert_eq!(
+                canonical_video_url(input).as_deref(),
+                case["expected"].as_str(),
+                "{input:?}"
+            );
+        }
         for bad in [
             "",
             "ftp://example.com",
             "javascript:alert(1)",
             "https://",
-            "https:///x",
             "example.com",
             "https://exa mple.com",
             "https://user@:80/x",

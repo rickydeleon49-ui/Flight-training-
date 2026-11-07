@@ -98,6 +98,7 @@ fn sha(bytes: &[u8]) -> String {
 
 struct Lib {
     dir: TempDir,
+    outside: TempDir,
     conn: Connection,
 }
 
@@ -113,7 +114,11 @@ fn lib() -> Lib {
         conn.execute("INSERT INTO _sqlx_migrations VALUES (?1)", [m.version])
             .unwrap();
     }
-    Lib { dir, conn }
+    Lib {
+        dir,
+        outside: TempDir::new(),
+        conn,
+    }
 }
 
 impl Lib {
@@ -276,9 +281,7 @@ impl Lib {
     }
 
     fn out(&self, name: &str) -> PathBuf {
-        let dir = self.root().join("out");
-        std::fs::create_dir_all(&dir).unwrap();
-        dir.join(name)
+        self.outside.path().join(name)
     }
 }
 
@@ -528,13 +531,55 @@ fn round_trip_export_validates_and_counts_match() {
     assert_eq!(handbook.json.videos.len(), 2);
 }
 
+/// Synthetic reviews, attempts and settings that must never be exported.
+fn seed_private_rows(lib: &Lib) {
+    let c = &lib.conn;
+    c.execute(
+        "INSERT INTO settings (id, pilot_name, created_at, updated_at)
+         VALUES ('profile', 'SECRET-PILOT-NAME', ?1, ?1)",
+        [NOW],
+    )
+    .unwrap();
+    c.execute(
+        "INSERT INTO card_versions VALUES ('cv-1','m-pdf',?1,1,'gemini',?2,?2,1)",
+        params![sha(b"cv"), NOW],
+    )
+    .unwrap();
+    c.execute(
+        "INSERT INTO card_items VALUES ('ci-1','cv-1',0,'F1','B1',2)",
+        [],
+    )
+    .unwrap();
+    c.execute(
+        "INSERT INTO card_review_state VALUES ('ci-1','m-pdf','SECRET-REVIEW-STATE',1,?1,?1,3,1,0,NULL,1)",
+        [NOW],
+    )
+    .unwrap();
+    c.execute(
+        "INSERT INTO card_review_events VALUES ('ce-1','ci-1',0,'good',?1,'v1','SECRET-REVIEW-STATE','{}')",
+        [NOW],
+    )
+    .unwrap();
+    c.execute(
+        "INSERT INTO practice_attempts (id, version_id, source_material_id, source_material_title,
+             started_at, status, total_questions)
+         VALUES ('at-1','ver-1','m-pdf','SECRET-ATTEMPT-TITLE',?1,'in_progress',2)",
+        [NOW],
+    )
+    .unwrap();
+}
+
 #[test]
 fn nothing_private_is_in_any_entry() {
     let (lib, _) = seeded();
+    seed_private_rows(&lib);
     lib.export(&all_ids(), "all.hfdpack").unwrap();
     for (name, bytes) in read_pack(&lib.out("all.hfdpack")) {
         let text = String::from_utf8_lossy(&bytes);
         for secret in [
+            "SECRET-PILOT-NAME",
+            "SECRET-REVIEW-STATE",
+            "SECRET-ATTEMPT-TITLE",
             "SECRET-NOTE-TEXT",
             "SECRET-API-KEY",
             "SECRET-KEY-FILE",
@@ -1341,11 +1386,125 @@ fn export_writes_nothing_but_the_namespace_and_leaves_no_temp_file() {
     let before = dump(&lib.conn);
     lib.export(&all_ids(), "x.hfdpack").unwrap();
     assert_eq!(before, dump(&lib.conn));
-    let leftovers: Vec<_> = std::fs::read_dir(lib.root().join("out"))
+    let leftovers: Vec<_> = std::fs::read_dir(lib.outside.path())
         .unwrap()
         .map(|e| e.unwrap().file_name())
         .collect();
     assert_eq!(leftovers.len(), 1, "{leftovers:?}");
     assert!(lib.export(&[], "none.hfdpack").is_err());
     assert!(lib.export(&["missing"], "none.hfdpack").is_err());
+}
+
+#[test]
+fn a_destination_inside_the_library_is_refused() {
+    let (lib, _) = seeded();
+    let ids = vec!["m-guide".to_string()];
+    let run = |dest: &Path| export_study_pack_in(lib.root(), &ids, dest, "0.6.9");
+    let db = lib.root().join("her-flight-deck.db");
+    let before = std::fs::read(&db).unwrap();
+    for dest in [
+        db.clone(),
+        lib.root().join("documents").join("new.hfdpack"),
+        lib.root().join("new.hfdpack"),
+    ] {
+        let error = run(&dest).unwrap_err();
+        assert!(error.contains("outside the app's library"), "{error}");
+    }
+    assert_eq!(std::fs::read(&db).unwrap(), before, "the database survives");
+
+    #[cfg(unix)]
+    {
+        // A folder alias that points into the library.
+        let alias = lib.outside.path().join("alias");
+        std::os::unix::fs::symlink(lib.root().join("documents"), &alias).unwrap();
+        let error = run(&alias.join("x.hfdpack")).unwrap_err();
+        assert!(error.contains("outside the app's library"), "{error}");
+        assert!(!lib.root().join("documents").join("x.hfdpack").exists());
+        // The destination itself being a shortcut.
+        let link = lib.outside.path().join("link.hfdpack");
+        std::os::unix::fs::symlink(&db, &link).unwrap();
+        assert!(run(&link).is_err());
+        assert_eq!(std::fs::read(&db).unwrap(), before);
+    }
+    assert!(lib.export(&["m-guide"], "fine.hfdpack").is_ok());
+}
+
+#[test]
+fn a_temp_name_that_already_exists_is_never_used_or_deleted() {
+    let lib = lib();
+    let dest = lib.out("p.hfdpack");
+    let squatter = lib.outside.path().join(".p.hfdpack.same.tmp");
+    std::fs::write(&squatter, b"someone else's").unwrap();
+    let mut tokens = ["same", "same", "fresh"].into_iter();
+    let (path, _file) =
+        super::export::create_temp_for_test(&dest, || Ok(tokens.next().unwrap().to_string()))
+            .unwrap();
+    assert_eq!(path, lib.outside.path().join(".p.hfdpack.fresh.tmp"));
+    assert_eq!(std::fs::read(&squatter).unwrap(), b"someone else's");
+}
+
+#[test]
+fn a_failed_export_leaves_an_existing_pack_and_removes_only_its_temp() {
+    let (lib, _) = seeded();
+    lib.export(&["m-guide"], "keep.hfdpack").unwrap();
+    let dest = lib.out("keep.hfdpack");
+    let before = std::fs::read(&dest).unwrap();
+    let bystander = lib.outside.path().join("bystander.tmp");
+    std::fs::write(&bystander, b"x").unwrap();
+    let ids = vec!["m-pdf".to_string()];
+    let error = super::export::export_study_pack_with(
+        lib.root(),
+        &ids,
+        &dest,
+        "0.6.9",
+        super::export::Limits::default(),
+        |_| Err("forced failure".to_string()),
+    )
+    .unwrap_err();
+    assert!(error.contains("forced failure"), "{error}");
+    assert_eq!(std::fs::read(&dest).unwrap(), before);
+    validate_pack(&dest).unwrap();
+    let mut names: Vec<_> = std::fs::read_dir(lib.outside.path())
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(names, ["bystander.tmp", "keep.hfdpack"]);
+}
+
+#[test]
+fn a_limit_hit_while_loading_stops_before_reading_more_files() {
+    let lib = lib();
+    for (id, salt) in [("a", "one"), ("b", "two"), ("c", "three")] {
+        lib.material(id, id, Some(("f.pdf", &pdf_bytes(2, salt))));
+    }
+    let size = std::fs::metadata(lib.root().join("documents").join("a-f.pdf"))
+        .unwrap()
+        .len();
+    // The third file is gone: reaching it would give a different error.
+    std::fs::remove_file(lib.root().join("documents").join("c-f.pdf")).unwrap();
+    let ids: Vec<String> = ["a", "b", "c"].map(String::from).to_vec();
+    let run = |limits| {
+        super::export::export_study_pack_with(
+            lib.root(),
+            &ids,
+            &lib.out("x.hfdpack"),
+            "0.6.9",
+            limits,
+            validate_pack,
+        )
+    };
+    let bytes = run(super::export::Limits {
+        max_items: 10,
+        max_bytes: size + size / 2,
+    })
+    .unwrap_err();
+    assert!(bytes.contains("too large to share in one"), "{bytes}");
+    let items = run(super::export::Limits {
+        max_items: 2,
+        max_bytes: u64::MAX,
+    })
+    .unwrap_err();
+    assert!(items.contains("too many items"), "{items}");
+    assert!(!lib.out("x.hfdpack").exists());
 }
