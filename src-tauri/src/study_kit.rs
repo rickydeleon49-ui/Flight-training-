@@ -49,30 +49,38 @@ fn request_body(part: Value, pages: u32, claude: bool) -> Value {
         "responseSchema":AnyProvider::default().translate_schema(&crate::provider::schemas::study_kit())}})
 }
 
-/// Claude-only kit prompt (v5c). Gemini keeps v4 byte for byte. The guide comes
+/// Claude-only kit prompt (v5d). Gemini keeps v4 byte for byte. The guide comes
 /// first and must stay complete; the ACS list belongs to the questions only, so
 /// it cannot leak into the guide or cards.
 fn claude_prompt(v4: &str) -> String {
     let swap = |text: String, from: &str, to: &str| {
-        debug_assert!(text.contains(from), "v5c anchor missing: {from}");
+        debug_assert!(text.contains(from), "v5d anchor missing: {from}");
         text.replacen(from, to, 1)
     };
     let text = swap(
         v4.to_string(),
         "study-kit-prompt-v4: Make a basic study kit",
-        "study-kit-prompt-v5c: Make a study kit",
+        "study-kit-prompt-v5d: Make a study kit",
     );
     let text = swap(
         text,
         "guide {body, sourcePages}, cards, questions. ",
         "guide {body, sourcePages}, cards, questions. Write the guide first and make it complete; the cards and questions come after it and must never make it shorter. ",
     );
-    swap(
+    let text = swap(
         text,
         "explanation, sourcePage, quote. Every card",
         &format!("explanation, sourcePage, quote. If the pages show a question with fewer than three options or no answer, write a three-option question only when the pages state enough facts to establish the correct answer; otherwise leave that question out. Never invent an answer, and never mention this limit. {} acsTask is for questions only. Never put ACS task codes, this app or these instructions into the guide or cards (facts the pages themselves state about the ACS are fine). Every card", crate::acs_tasks::prompt()),
+    );
+    swap(
+        text,
+        "Cite the pages actually used. This is an AI study aid",
+        &format!("Cite the pages actually used. {CLAUDE_ITEM_RULES} This is an AI study aid"),
     )
 }
+
+/// Quality rules for Claude cards and questions, ending in a silent check.
+const CLAUDE_ITEM_RULES: &str = "Card and question quality: each card or question tests one learning objective that can be answered on its own; keep a mechanism and its mitigation in separate items, but a valid cause→effect pair stays one card. A card back supplies the missing fact and never restates the front. All options of a question answer the same question, read grammatically with the stem, and are plausible confusions taken from the source, with no giveaways in length or wording. Each explanation says why the answer follows and cites the physical PDF page matching sourcePage; the quote must support the answer. Before answering, silently recheck every card and question against these rules and fix or drop any that fail; never print this check.";
 
 fn aid(cards: Value, body: Option<String>, model: &str) -> Value {
     json!({"title":"Study kit", "summary":"", "sections":body.map(|body| vec![json!({"heading":"Study guide", "body":body})]).unwrap_or_default(),
