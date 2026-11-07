@@ -282,6 +282,11 @@ fn backoff_delay(attempt: u32, jitter: u64) -> Duration {
     Duration::from_millis(base + jitter % (base / 4 + 1))
 }
 
+/// Whether a PDF of this many bytes is within Google's PDF limit.
+pub(crate) fn pdf_fits(bytes: u64) -> bool {
+    check_size("application/pdf", bytes).is_ok()
+}
+
 /// The largest this kind of file may be, and what to do when it is larger.
 ///
 /// The limits are Google's, not ours — see the constants. Saying which limit

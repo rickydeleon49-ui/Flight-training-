@@ -722,6 +722,37 @@ impl SplitFiles {
     }
 }
 
+impl SplitFiles {
+    /// Remove every owned path now. Returns whether all removals succeeded
+    /// (a file already gone counts as removed). Drop then does nothing more.
+    fn discard(&mut self) -> bool {
+        let mut all_removed = true;
+        for path in self.paths.drain(..) {
+            #[cfg(test)]
+            if tests_remove_fails() {
+                all_removed = false;
+                continue;
+            }
+            match std::fs::remove_file(&path) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(_) => all_removed = false,
+            }
+        }
+        all_removed
+    }
+}
+
+#[cfg(test)]
+thread_local! {
+    pub(crate) static FAIL_SPLIT_REMOVE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+#[cfg(test)]
+fn tests_remove_fails() -> bool {
+    FAIL_SPLIT_REMOVE.with(|flag| flag.get())
+}
+
 impl Drop for SplitFiles {
     fn drop(&mut self) {
         if !self.keep {

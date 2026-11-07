@@ -261,8 +261,13 @@ fn validate_ranges(
 }
 
 /// Whether a part of this many bytes can go to the provider with its prompt.
-fn fits_provider(bytes: u64) -> bool {
-    crate::provider::claude::check_size(bytes.saturating_add(PROMPT_OVERHEAD_BYTES)).is_ok()
+fn fits_provider(provider: crate::provider::AnyProvider, bytes: u64) -> bool {
+    match provider {
+        crate::provider::AnyProvider::Claude(_) => {
+            crate::provider::claude::check_size(bytes.saturating_add(PROMPT_OVERHEAD_BYTES)).is_ok()
+        }
+        crate::provider::AnyProvider::Gemini(_) => crate::gemini::pdf_fits(bytes),
+    }
 }
 
 /// Cut `first..=last` (pages of the window starting at `offset`) into parts
@@ -302,11 +307,14 @@ pub fn split_ranges_at(
     file_name: &str,
     ranges: &[PageRangeRequest],
 ) -> Result<SplitSourceReceipt, String> {
+    let provider = crate::provider::AnyProvider::selected(root);
     split_ranges_with_limits(
         root,
         (source_material_id, relative_path, batch_id, file_name),
         ranges,
-        (KIT_PAGE_LIMIT.min(MAX_PAGES), &fits_provider),
+        (KIT_PAGE_LIMIT.min(MAX_PAGES), &|bytes| {
+            fits_provider(provider, bytes)
+        }),
     )
 }
 
@@ -379,8 +387,18 @@ fn split_ranges_with_limits(
             &[],
         )
     })();
-    files.keep = result.is_ok();
-    result
+    if result.is_ok() {
+        files.keep = true;
+        return result;
+    }
+    if files.discard() {
+        return result;
+    }
+    result.map_err(|error| {
+        format!(
+            "{error} Some temporary files could not be removed; restart the app before trying again."
+        )
+    })
 }
 
 #[cfg(test)]
@@ -919,6 +937,56 @@ mod tests {
         assert!(error.contains("no longer in the library"), "{error}");
         assert_eq!(files_in(&root), before);
         assert_eq!(receipts(&root), 0);
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn a_failed_rollback_says_to_restart_and_records_nothing() {
+        let mut doc = book(&plain(8), &[], &[]);
+        let root = library("rollback", &mut doc);
+        crate::pdf::FAIL_SPLIT_REMOVE.with(|f| f.set(true));
+        let error = split_ranges_with_limits(
+            &root,
+            ("NOT-A-MATERIAL", "R-handbook.pdf", "batch", "Handbook.pdf"),
+            &[range(1, 4, "a"), range(5, 8, "b")],
+            (150, &|_| true),
+        )
+        .unwrap_err();
+        crate::pdf::FAIL_SPLIT_REMOVE.with(|f| f.set(false));
+        assert!(error.contains("restart the app"), "{error}");
+        assert!(error.contains("no longer in the library"), "{error}");
+        assert_eq!(receipts(&root), 0);
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn a_part_over_claudes_limit_stays_whole_for_gemini() {
+        use crate::provider::{save_choice, AnyProvider, ProviderId};
+        // Between Claude's request limit and Gemini's PDF limit.
+        let size = 40 * 1024 * 1024;
+        let root = std::env::temp_dir().join(format!("fits-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        save_choice(&root, ProviderId::Claude).unwrap();
+        assert!(!fits_provider(AnyProvider::selected(&root), size));
+        save_choice(&root, ProviderId::Gemini).unwrap();
+        assert!(fits_provider(AnyProvider::selected(&root), size));
+        assert!(!fits_provider(
+            AnyProvider::selected(&root),
+            crate::pdf::MAX_PDF_BYTES + 1
+        ));
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn the_selected_providers_limit_decides_whether_a_part_is_subdivided() {
+        let mut doc = book(&plain(6), &[(5, 30_000)], &[]);
+        let root = library("provider-limit", &mut doc);
+        let claude_like = |b: u64| b <= 15_000;
+        let gemini_like = |_: u64| true;
+        let refused = split(&root, &[range(1, 6, "All")], (150, &claude_like)).unwrap_err();
+        assert!(refused.contains("too large"), "{refused}");
+        let whole = split(&root, &[range(1, 6, "All")], (150, &gemini_like)).unwrap();
+        assert_eq!(whole.core.plan.len(), 1);
         let _ = std::fs::remove_dir_all(root);
     }
 
