@@ -257,6 +257,24 @@ fn load_material(
     })
 }
 
+impl DbGuide {
+    /// A close estimate of the memory this guide holds.
+    fn approx_bytes(&self) -> u64 {
+        let text = self.title.len()
+            + self.summary.len()
+            + self.source_notes.len()
+            + self.provider.len()
+            + self.model.len();
+        let json: usize = self
+            .sections
+            .iter()
+            .chain(&self.cards)
+            .map(|v| v.to_string().len())
+            .sum();
+        (text + json) as u64
+    }
+}
+
 struct DbGuide {
     title: String,
     summary: String,
@@ -956,6 +974,7 @@ pub(crate) fn export_study_pack_with(
     for m in &loaded {
         if !matches!(m.file, Some(FileData::Png { .. })) {
             if let Some(g) = read_guide(&read, &m.id)? {
+                budget.take_bytes(g.approx_bytes())?;
                 guides.insert(m.id.clone(), g);
             }
         }
@@ -1106,6 +1125,7 @@ pub(crate) fn export_study_pack_with(
         if item_bytes.len() as u64 > MAX_ITEM_JSON_BYTES {
             return Err(format!("\"{}\" is too large for a study pack.", m.title));
         }
+        budget.take_bytes(item_bytes.len() as u64)?;
         if let Some(g) = &item.guide {
             counts.guides += 1;
             counts.cards += g.flashcards.len() as u64;
@@ -1164,7 +1184,9 @@ pub(crate) fn export_study_pack_with(
     let needed = manifest_bytes.len() as u64
         + built
             .iter()
-            .map(|b| b.item_bytes.len() as u64 + b.file_bytes.as_ref().map_or(0, |f| f.len() as u64))
+            .map(|b| {
+                b.item_bytes.len() as u64 + b.file_bytes.as_ref().map_or(0, |f| f.len() as u64)
+            })
             .sum::<u64>();
     let folder = dest
         .parent()

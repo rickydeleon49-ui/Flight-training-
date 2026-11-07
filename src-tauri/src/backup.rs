@@ -4996,7 +4996,10 @@ pub(crate) fn validate_compression_ratio(
 /// per just-written file, most of a large restore). The check is the same: the bytes
 /// that went to the file must match the archive's integrity record before the
 /// restore is staged, and the file is still flushed with `sync_all` first.
-pub(crate) fn copy_and_hash(reader: &mut impl Read, output: &mut File) -> Result<(u64, String), String> {
+pub(crate) fn copy_and_hash(
+    reader: &mut impl Read,
+    output: &mut File,
+) -> Result<(u64, String), String> {
     let mut hasher = Sha256::new();
     let mut bytes = 0u64;
     let mut buffer = [0u8; 64 * 1024];
@@ -7682,7 +7685,11 @@ pub(crate) fn stage_complete_restore_in(
                 .enclosed_name()
                 .ok_or_else(|| "The backup contains an unsafe file path.".to_string())?;
             validate_archive_path(&raw_name, &path)?;
-            validate_compression_ratio(entry.size(), entry.compressed_size(), MAX_COMPRESSION_RATIO)?;
+            validate_compression_ratio(
+                entry.size(),
+                entry.compressed_size(),
+                MAX_COMPRESSION_RATIO,
+            )?;
             if !allowed_archive_path(&path, entry.is_dir()) {
                 return Err(format!(
                     "The backup contains an unexpected file: {raw_name}"

@@ -1,5 +1,61 @@
 [
  {
+  "input": "https://+1.2/x",
+  "expected": null
+ },
+ {
+  "input": "https://%FF.example/x",
+  "expected": null
+ },
+ {
+  "input": "https://münchen.de/x",
+  "expected": "https://münchen.de/x"
+ },
+ {
+  "input": "https://日本語.jp/",
+  "expected": "https://日本語.jp/"
+ },
+ {
+  "input": "https://xn--bcher-kva.example/",
+  "expected": "https://xn--bcher-kva.example/"
+ },
+ {
+  "input": "https://xn--/x",
+  "expected": null
+ },
+ {
+  "input": "https://EXAMPLE.com/Path",
+  "expected": "https://EXAMPLE.com/Path"
+ },
+ {
+  "input": "https://a..b/x",
+  "expected": "https://a..b/x"
+ },
+ {
+  "input": "https://-a.com/",
+  "expected": "https://-a.com/"
+ },
+ {
+  "input": "https://a.com:0/x",
+  "expected": "https://a.com:0/x"
+ },
+ {
+  "input": "https://ex ample.com/",
+  "expected": null
+ },
+ {
+  "input": "https://faß.de/",
+  "expected": "https://faß.de/"
+ },
+ {
+  "input": "https://​example.com/",
+  "expected": "https://​example.com/"
+ },
+ {
+  "input": "https://example.com。jp/",
+  "expected": "https://example.com。jp/"
+ },
+ {
   "input": "https://youtu.be/x",
   "expected": "https://youtu.be/x"
  },

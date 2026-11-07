@@ -75,8 +75,8 @@ mod skill_evidence;
 mod startup_guard;
 mod storage;
 mod study_export;
-mod study_packet;
 mod study_pack;
+mod study_packet;
 mod study_page_sources;
 mod study_sets;
 #[cfg(test)]

@@ -1508,3 +1508,33 @@ fn a_limit_hit_while_loading_stops_before_reading_more_files() {
     assert!(items.contains("too many items"), "{items}");
     assert!(!lib.out("x.hfdpack").exists());
 }
+
+#[test]
+fn guides_and_item_json_count_toward_the_memory_budget() {
+    let (lib, _) = seeded();
+    let ids = ["m-pdf", "m-pic", "m-guide", "m-child"]
+        .map(String::from)
+        .to_vec();
+    let files: u64 = std::fs::read_dir(lib.root().join("documents"))
+        .unwrap()
+        .map(|e| e.unwrap().metadata().unwrap().len())
+        .sum();
+    let run = |max_bytes| {
+        super::export::export_study_pack_with(
+            lib.root(),
+            &ids,
+            &lib.out("budget.hfdpack"),
+            "0.6.9",
+            super::export::Limits {
+                max_items: 500,
+                max_bytes,
+            },
+            validate_pack,
+        )
+    };
+    // Files alone would fit, but the guides and item JSON push it over.
+    let error = run(files).unwrap_err();
+    assert!(error.contains("too large to share in one"), "{error}");
+    assert!(!lib.out("budget.hfdpack").exists());
+    assert!(run(files + 10 * 1024 * 1024).is_ok());
+}
