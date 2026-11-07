@@ -3,13 +3,30 @@ import { describe, expect, it, vi } from "vitest";
 import type { GeminiJobRecord } from "@/services/gemini";
 import type { KitStartResult } from "./GeminiJobs";
 import { KIT_QUEUE_TEXT as TEXT, type Queue } from "./kitQueueLogic";
-import { KitQueueRunner, type RunnerDeps } from "./kitQueueRunner";
+import { KitQueueRunner, type RunnerDeps, type StartKitOptions } from "./kitQueueRunner";
 
-type Start = (materialId: string, call: number) => Promise<KitStartResult> | KitStartResult;
+type Start = (materialId: string, call: number, options: StartKitOptions) => Promise<KitStartResult> | KitStartResult;
 
-function record(id: string, requestId: string, stage: GeminiJobRecord["stage"] = "ready", result?: unknown): GeminiJobRecord {
-  return { id, requestId, kind: "study-kit", materialId: "m", relativePath: "documents/m.pdf", contentSha256: "x", stage, createdAt: 0, updatedAt: 0, result } as unknown as GeminiJobRecord;
+const NOW = "2026-11-07T10:00:00.000Z";
+/** Native journal times are whole seconds. */
+const T = Date.parse(NOW) / 1000;
+type Parts = Partial<Record<"guide" | "cards" | "questions", boolean>>;
+
+/**
+ * A finished kit exactly as the native listing shows it (study_kit.rs review_records):
+ * one virtual record per part, "<job>#<part>" ids, request ids rewritten to
+ * "study-kit:<job>", and no `parts` field. A part already saved is simply absent.
+ */
+function kit(jobId: string, materialId: string, parts: Parts = { guide: true, cards: true, questions: true }, createdAt = T): GeminiJobRecord[] {
+  return Object.entries(parts).map(([part, ok]) => ({
+    id: `${jobId}#${part}`, requestId: `${part === "cards" ? "flashcards:" : ""}study-kit:${jobId}`,
+    kind: part === "questions" ? "practice-test" : "study-aid", materialId, relativePath: `documents/${materialId}.pdf`,
+    contentSha256: `sha-${materialId}`, stage: ok ? "ready" : "failed", createdAt, updatedAt: createdAt,
+    result: ok ? { title: "t" } : undefined, draft: { kind: "study-kit-part" }, error: ok ? undefined : "That part did not come back.",
+  }) as unknown as GeminiJobRecord);
 }
+const open = (q: Queue | null) => Boolean(q && (q.state === "active" || q.state === "paused"));
+const clone = (q: Queue) => JSON.parse(JSON.stringify(q)) as Queue;
 
 /** A fake world: a journal, a library, the provider, and the queue's own storage. */
 function world(chapterIds: string[], start?: Start) {
@@ -21,39 +38,65 @@ function world(chapterIds: string[], start?: Start) {
     company: "Google",
     unkept: new Set<string>(),
     saved: new Set<string>(),
+    /** Every startKit call the window made. */
     calls: [] as string[],
+    /** Calls the native side let through to the provider (its expected check passed). */
+    paid: [] as string[],
+    expected: [] as StartKitOptions["expected"][],
     cancelled: [] as string[],
     start: start as Start | undefined,
+    /** Runs inside startKit, before the native check: a change landing in the last gap. */
+    beforeSend: null as (() => void) | null,
+    /** Hooks that hold a wait open so the test can act in the middle of it. */
+    recordsWait: null as (() => Promise<void>) | null,
+    providerWait: null as (() => Promise<void>) | null,
+    shaWait: null as ((id: string) => Promise<void>) | null,
     n: 0,
   };
   const deps: RunnerDeps = {
-    now: () => "2026-11-07T10:00:00.000Z",
+    now: () => NOW,
     newId: () => "q1",
     newRequestId: () => `req-${++w.n}`,
-    provider: async () => w.company,
+    provider: async () => { if (w.providerWait) await w.providerWait(); return w.company; },
     title: (id) => w.titles[id] ?? null,
     filePath: (id) => (w.titles[id] ? `documents/${id}.pdf` : null),
-    sourceSha: async (id) => w.sha[id] ?? null,
-    records: async () => [...w.journal],
+    sourceSha: async (id) => { if (w.shaWait) await w.shaWait(id); return w.sha[id] ?? null; },
+    records: async () => { if (w.recordsWait) await w.recordsWait(); return [...w.journal]; },
     startKit: async (target, options) => {
       w.calls.push(target.materialId);
+      w.expected.push(options.expected);
+      w.beforeSend?.();
+      // The native side (study_kit.rs check_expected) refuses before any job begins.
+      if (options.expected.provider !== w.company) return { outcome: "refused", message: TEXT.consentStale, sent: false, stale: "provider", shown: true, requestId: options.requestId };
+      if (options.expected.sha256 !== w.sha[target.materialId]) return { outcome: "refused", message: TEXT.skipped, sent: false, stale: "source", shown: true, requestId: options.requestId };
+      w.paid.push(target.materialId);
       const call = w.calls.length;
-      if (w.start) return w.start(target.materialId, call);
+      if (w.start) return w.start(target.materialId, call, options);
       const jobId = `job-${call}`;
-      w.journal.push(record(jobId, options.requestId));
+      options.onJobId?.(jobId);
+      w.journal.push(...kit(jobId, target.materialId));
       return { outcome: "checkpointed", jobId, sent: true, requestId: options.requestId };
     },
     cancelRunning: async (requestId) => { w.cancelled.push(requestId); },
     holdsUnkeptDraft: (id) => w.unkept.has(id),
     hasSavedKit: (id) => w.saved.has(id),
-    persist: async (queue) => { w.stored = JSON.parse(JSON.stringify(queue)) as Queue; },
-    findOpen: async () => (w.stored && (w.stored.state === "active" || w.stored.state === "paused") ? (JSON.parse(JSON.stringify(w.stored)) as Queue) : null),
+    persist: async (queue) => { w.stored = clone(queue); },
+    // The repository's single INSERT ... WHERE NOT EXISTS, guarded by a unique index.
+    claim: async (queue) => { await Promise.resolve(); if (open(w.stored)) return false; w.stored = clone(queue); return true; },
+    findOpen: async () => (open(w.stored) ? clone(w.stored!) : null),
   };
   const runner = () => new KitQueueRunner(deps, () => {});
   const chapters = chapterIds.map((id) => ({ materialId: id, sourceSha256: `sha-${id}` }));
   const consent = { provider: "Google", materialIds: chapterIds };
   return { w, deps, runner, chapters, consent };
 }
+/** A wait the test opens and closes by hand. */
+function gate() {
+  let release!: () => void;
+  const opened = new Promise<void>((resolve) => { release = resolve; });
+  return { wait: () => opened, release };
+}
+const slotCount = (records: GeminiJobRecord[]) => new Set(records.map((r) => r.id.split("#")[0])).size;
 const statuses = (q: Queue | null) => q?.items.map((i) => i.status);
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `c${i + 1}`);
 
@@ -64,7 +107,7 @@ describe("kit queue runner", () => {
       const item = w.stored!.items[call - 1]!;
       expect(item.status).toBe("running");
       expect(item.requestId).toBe(`req-${call}`);
-      w.journal.push(record(`job-${call}`, item.requestId!));
+      w.journal.push(...kit(`job-${call}`, `c${call}`));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: item.requestId! };
     });
     const r = runner();
@@ -86,18 +129,24 @@ describe("kit queue runner", () => {
     // Still full: nothing happens.
     await r.poke();
     expect(w.calls).toHaveLength(8);
-    // Saving one frees a slot; the queue goes on by itself.
+    // Each kit is listed as three review parts but holds one slot.
+    expect(w.journal).toHaveLength(24);
+    expect(slotCount(w.journal)).toBe(8);
+    // Saving one part does not free its slot; saving the whole kit does, and the queue goes on by itself.
     w.journal.shift();
+    await r.poke();
+    expect(w.calls).toHaveLength(8);
+    w.journal = w.journal.filter((rec) => !rec.id.startsWith("job-1#"));
     await r.poke();
     expect(w.calls).toHaveLength(9);
     expect(r.queue?.state).toBe("done");
-    expect(w.journal).toHaveLength(8);
+    expect(slotCount(w.journal)).toBe(8);
   });
 
   it("2. after a restart the journal job is found and nothing is paid for again", async () => {
     // The call finished and the journal has it, but the queue never moved past "running".
-    const { w, runner, chapters, consent } = world(ids(2), async (_id, call) => {
-      w.journal.push(record("job-1", `req-${call}`));
+    const { w, runner, chapters, consent } = world(ids(2), async (id) => {
+      w.journal.push(...kit("job-1", id));
       throw new Error("quit before the queue could move on");
     });
     const first = runner();
@@ -143,7 +192,7 @@ describe("kit queue runner", () => {
     let first = true;
     const { w, runner, chapters, consent } = world(ids(2), async (id, call) => {
       if (first) { first = false; w.unkept.add(id); return { outcome: "memory-only", sent: true, requestId: "r" }; }
-      w.journal.push(record(`job-${call}`, `req-${call}`));
+      w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
     });
     const r = runner();
@@ -177,7 +226,7 @@ describe("kit queue runner", () => {
 
   it("5. a partial kit is kept, listed, and not made again by itself", async () => {
     const { w, runner, chapters, consent } = world(ids(2), async (id, call) => {
-      w.journal.push(record(`job-${call}`, `req-${call}`));
+      w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, partial: id === "c1", sent: true, requestId: `req-${call}` };
     });
     const r = runner();
@@ -194,9 +243,9 @@ describe("kit queue runner", () => {
   it("6. a double start makes one provider call only", async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => { release = resolve; });
-    const { w, runner, chapters, consent } = world(ids(1), async (_id, call) => {
+    const { w, runner, chapters, consent } = world(ids(1), async (id, call) => {
       await gate;
-      w.journal.push(record(`job-${call}`, `req-${call}`));
+      w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
     });
     const r = runner();
@@ -214,9 +263,9 @@ describe("kit queue runner", () => {
 
   it("7. Stop racing a finish keeps the draft, ends Stopped, and makes no next call", async () => {
     let r!: KitQueueRunner;
-    const { w, runner, chapters, consent } = world(ids(3), async (_id, call) => {
+    const { w, runner, chapters, consent } = world(ids(3), async (id, call) => {
       await r.stop();
-      w.journal.push(record(`job-${call}`, `req-${call}`));
+      w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
     });
     r = runner();
@@ -225,7 +274,7 @@ describe("kit queue runner", () => {
     expect(r.queue?.state).toBe("stopped");
     expect(r.queue?.items[0]?.status).toBe("checkpointed");
     expect(w.cancelled).toEqual(["req-1"]);
-    expect(w.journal).toHaveLength(1);
+    expect(slotCount(w.journal)).toBe(1);
     expect(r.queue?.items[1]?.status).toBe("waiting");
   });
 
@@ -246,9 +295,9 @@ describe("kit queue runner", () => {
     expect(await r.begin(chapters, consent)).toEqual({ ok: false, reason: "consent" });
     expect(w.calls).toHaveLength(0);
     // And after the queue began: the provider changes between two chapters.
-    const second = world(ids(2), async (_id, call) => {
+    const second = world(ids(2), async (id, call) => {
       second.w.company = "Anthropic";
-      second.w.journal.push(record(`job-${call}`, `req-${call}`));
+      second.w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
     });
     const r2 = second.runner();
@@ -272,9 +321,9 @@ describe("kit queue runner", () => {
 
   it("10. a rate limit pauses with no automatic retry; Continue makes one call", async () => {
     let limited = true;
-    const { w, runner, chapters, consent } = world(ids(2), async (_id, call) => {
+    const { w, runner, chapters, consent } = world(ids(2), async (id, call) => {
       if (limited) return { outcome: "failed", message: "Gemini's rate or spending limit was reached for this project.", sent: true, requestId: "r" };
-      w.journal.push(record(`job-${call}`, `req-${call}`));
+      w.journal.push(...kit(`job-${call}`, id));
       return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
     });
     const r = runner();
@@ -315,8 +364,8 @@ describe("kit queue runner", () => {
   });
 
   it("11c. a manual retry does nothing when the journal shows the kit after all", async () => {
-    const { w, runner, chapters, consent } = world(ids(1), async (_id, call) => {
-      w.journal.push(record("job-late", `req-${call}`));
+    const { w, runner, chapters, consent } = world(ids(1), async (id, call) => {
+      w.journal.push(...kit("job-late", id));
       return { outcome: "failed", message: "lost the reply", sent: true, requestId: `req-${call}` };
     });
     const r = runner();
@@ -341,5 +390,200 @@ describe("kit queue runner", () => {
     const text = JSON.stringify(w.stored);
     expect(Object.keys(w.stored!.items[0]!).sort()).toEqual(["jobId", "materialId", "position", "requestId", "sourceSha256", "status", "updatedAt"]);
     expect(text).not.toMatch(/answer|apiKey|secret|credential/i);
+  });
+
+  describe("audit fixes", () => {
+    /** A queue paused by a rate limit on c1, ready for Continue. */
+    async function pausedByLimit(n = 2) {
+      let limited = true;
+      const env = world(ids(n), async (id, call) => {
+        if (limited) return { outcome: "failed", message: "Gemini's rate or spending limit was reached for this project.", sent: true, requestId: "r" };
+        env.w.journal.push(...kit(`job-${call}`, id));
+        return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: `req-${call}` };
+      });
+      const r = env.runner();
+      await r.begin(env.chapters, env.consent);
+      expect(r.queue?.pauseReason).toBe("rate-limit");
+      limited = false;
+      return { ...env, r };
+    }
+
+    it("Stop during Continue's journal check wins: nothing is sent", async () => {
+      const { w, r } = await pausedByLimit();
+      const g = gate();
+      w.recordsWait = g.wait;
+      const resumed = r.resume();
+      await r.stop();
+      w.recordsWait = null;
+      g.release();
+      expect(await resumed).toBe(false);
+      expect(r.queue?.state).toBe("stopped");
+      expect(w.stored?.state).toBe("stopped");
+      expect(w.calls).toEqual(["c1"]);
+    });
+
+    it("Stop during a fresh consent's provider check wins: nothing is sent", async () => {
+      const { w, r } = await pausedByLimit();
+      const g = gate();
+      w.providerWait = g.wait;
+      const agreed = r.confirmAgain({ provider: "Google", materialIds: ["c1", "c2"] });
+      await r.stop();
+      w.providerWait = null;
+      g.release();
+      expect(await agreed).toBe(false);
+      expect(r.queue?.state).toBe("stopped");
+      expect(w.calls).toEqual(["c1"]);
+    });
+
+    it("Stop during Make again's journal look wins: nothing is sent", async () => {
+      const { w, runner, chapters, consent } = world(ids(2), async () => ({ outcome: "failed", message: "The connection dropped.", sent: true, requestId: "r" }));
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(r.queue?.items[0]?.status).toBe("unclear");
+      w.start = undefined;
+      const g = gate();
+      w.recordsWait = g.wait;
+      const retried = r.retry(0);
+      await r.stop();
+      w.recordsWait = null;
+      g.release();
+      expect(await retried).toBe(false);
+      expect(r.queue?.state).toBe("stopped");
+      expect(w.calls).toEqual(["c1"]);
+    });
+
+    it("Stop during the last checks before a call puts the chapter back and sends nothing", async () => {
+      let r!: KitQueueRunner;
+      const { w, runner, chapters, consent } = world(ids(2));
+      w.shaWait = async () => { if (w.stored?.items[0]?.status === "running") await r.stop(); };
+      r = runner();
+      await r.begin(chapters, consent);
+      expect(w.calls).toEqual([]);
+      expect(r.queue?.state).toBe("stopped");
+      expect(r.queue?.items[0]?.status).toBe("waiting");
+    });
+
+    it("a provider changed during the checksum look sends nothing and asks again", async () => {
+      const { w, runner, chapters, consent } = world(ids(2));
+      w.shaWait = async () => { w.company = "Anthropic"; };
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(w.calls).toEqual([]);
+      expect(r.queue?.state).toBe("paused");
+      expect(r.queue?.pauseReason).toBe("consent");
+      expect(r.queue?.consentAt).toBeNull();
+      expect(r.queue?.items[0]?.status).toBe("waiting");
+    });
+
+    it("every call carries the agreed provider and checksum, and the native refusal sends nothing", async () => {
+      const { w, runner, chapters, consent } = world(ids(3));
+      // The change lands after the window's last check, in the gap before the native side.
+      w.beforeSend = () => { if (w.calls.length === 2) w.company = "Anthropic"; };
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(w.expected[0]).toEqual({ provider: "Google", sha256: "sha-c1" });
+      expect(w.paid).toEqual(["c1"]);
+      expect(r.queue?.pauseReason).toBe("consent");
+      expect(r.queue?.consentAt).toBeNull();
+      expect(r.queue?.items[1]).toMatchObject({ status: "waiting", requestId: null });
+      // A chapter file changed in that same gap is skipped by the native refusal.
+      const second = world(ids(2));
+      second.w.beforeSend = () => { if (second.w.calls.length === 1) second.w.sha.c1 = "edited"; };
+      const r2 = second.runner();
+      await r2.begin(second.chapters, second.consent);
+      expect(second.w.paid).toEqual(["c2"]);
+      expect(r2.queue?.items.map((i) => i.status)).toEqual(["skipped", "checkpointed"]);
+    });
+
+    it("Make again is held back while a paid kit is only in this window", async () => {
+      const { w, runner, chapters, consent } = world(ids(2), async (id) => {
+        if (id === "c1") return { outcome: "failed", message: "The connection dropped.", sent: true, requestId: "r" };
+        w.unkept.add(id);
+        return { outcome: "memory-only", sent: true, requestId: "r" };
+      });
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(r.queue?.items[0]?.status).toBe("unclear");
+      expect(await r.resume()).toBe(true);
+      expect(r.queue?.pauseReason).toBe("not-kept");
+      expect(w.paid).toEqual(["c1", "c2"]);
+      w.start = undefined;
+      expect(await r.retry(0)).toBe(false);
+      expect(w.paid).toEqual(["c1", "c2"]);
+    });
+
+    it("a restart finds a kit whose request id the native listing rewrote and whose job id was never written", async () => {
+      const { w, runner, chapters, consent } = world(ids(2), async (id) => {
+        w.journal.push(...kit("job-a", id, { guide: true, cards: false, questions: true }));
+        throw new Error("quit before the job id came back");
+      });
+      await runner().begin(chapters, consent).catch(() => {});
+      expect(w.stored?.items[0]).toMatchObject({ status: "running", jobId: null });
+      w.start = undefined;
+      const again = runner();
+      await again.restore();
+      // Partly done, read from the review parts themselves (no result.parts there).
+      expect(again.queue?.items[0]).toMatchObject({ status: "partial", jobId: "job-a" });
+      expect(w.paid).toEqual(["c1"]);
+    });
+
+    it("a restart writes the job id down as soon as it is known, and matches on it", async () => {
+      const { w, runner, chapters, consent } = world(ids(1), async (id, _call, options) => {
+        options.onJobId?.("job-b");
+        await Promise.resolve();
+        w.journal.push(...kit("job-b", id, { guide: true }, T - 3600));
+        throw new Error("quit");
+      });
+      await runner().begin(chapters, consent).catch(() => {});
+      expect(w.stored?.items[0]).toMatchObject({ status: "running", jobId: "job-b" });
+      const again = runner();
+      await again.restore();
+      expect(again.queue?.items[0]?.status).toBe("checkpointed");
+    });
+
+    it("a restart never takes an older kit of the same chapter for this one", async () => {
+      const { w, runner, chapters, consent } = world(ids(1), async (id) => {
+        w.journal.push(...kit("job-old", id, { guide: true }, T - 3600));
+        throw new Error("quit");
+      });
+      await runner().begin(chapters, consent).catch(() => {});
+      const again = runner();
+      await again.restore();
+      expect(again.queue?.items[0]?.status).toBe("unclear");
+    });
+
+    it("a restart reads a kit with no good part left as failed", async () => {
+      const { w, runner, chapters, consent } = world(ids(1), async (id) => {
+        w.journal.push(...kit("job-c", id, { guide: false, cards: false, questions: false }));
+        throw new Error("quit");
+      });
+      await runner().begin(chapters, consent).catch(() => {});
+      const again = runner();
+      await again.restore();
+      expect(again.queue?.items[0]?.status).toBe("failed");
+    });
+
+    it("three whole kits hold three slots, not nine: chapter four is made", async () => {
+      const { w, runner, chapters, consent } = world(ids(4));
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(w.paid).toEqual(["c1", "c2", "c3", "c4"]);
+      expect(r.queue?.state).toBe("done");
+    });
+
+    it("two runners starting at once claim one queue and make one call per chapter", async () => {
+      const { w, runner, chapters, consent } = world(ids(2));
+      const [a, b] = await Promise.all([runner().begin(chapters, consent), runner().begin(chapters, consent)]);
+      expect([a, b].filter((r) => r.ok)).toHaveLength(1);
+      expect([a, b].filter((r) => !r.ok)).toEqual([{ ok: false, reason: "already" }]);
+      expect(w.paid).toEqual(["c1", "c2"]);
+    });
+
+    it("a second window's runner is refused by the stored claim", async () => {
+      const { w, deps, chapters, consent } = world(ids(1));
+      w.stored = { id: "other", provider: "Google", createdAt: NOW, state: "paused", consentAt: NOW, items: [] };
+      expect(await new KitQueueRunner(deps, () => {}).begin(chapters, consent)).toEqual({ ok: false, reason: "already" });
+      expect(w.calls).toHaveLength(0);
+    });
   });
 });

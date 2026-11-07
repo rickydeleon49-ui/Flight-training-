@@ -483,7 +483,11 @@ export interface GeneratedStudyKit {
     questions?: { answer?: GeneratedPracticeTest; error?: string };
   };
 }
-export async function generateStudyKit(target: { filePath: string; materialId: string }, baseRevision: string | null, practiceRevision: string | null, requestId: string): Promise<GeneratedStudyKit & GenerationJobIdentity> {
+/** The native refusals when a kit queue's consent no longer matches (study_kit.rs). Nothing was sent. */
+export const KIT_PROVIDER_CHANGED = "Your provider or your chapters changed. Check them and confirm again.";
+export const KIT_SOURCE_CHANGED = "This chapter changed. Make it again from its page.";
+
+export async function generateStudyKit(target: { filePath: string; materialId: string }, baseRevision: string | null, practiceRevision: string | null, requestId: string, expected?: { provider: string; sha256: string }): Promise<GeneratedStudyKit & GenerationJobIdentity> {
   if (!isTauri()) throw new DesktopOnlyError();
-  return invoke<GeneratedStudyKit & GenerationJobIdentity>("generate_study_kit", { relativePath: target.filePath, materialId: target.materialId, baseRevision, practiceRevision, requestId });
+  return invoke<GeneratedStudyKit & GenerationJobIdentity>("generate_study_kit", { relativePath: target.filePath, materialId: target.materialId, baseRevision, practiceRevision, requestId, expectedProvider: expected?.provider ?? null, expectedSha256: expected?.sha256 ?? null });
 }

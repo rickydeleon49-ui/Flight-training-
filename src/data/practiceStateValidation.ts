@@ -2171,8 +2171,14 @@ export async function validateKitQueue(query: ValidationQuery, reference: Valida
     if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
         !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
         !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+        !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
         (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged study kit queue schema.");
   }
+  // The one-open-queue rule (native `verify_schema_36_kit_queue`).
+  const indexSql = "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'kit_queue_one_open'";
+  const [actualIndex] = await query(indexSql, []);
+  const [expectedIndex] = await reference(indexSql, []);
+  if (!actualIndex || !expectedIndex || normalizeSql(text(actualIndex, "sql")) !== normalizeSql(text(expectedIndex, "sql"))) refuse("Damaged study kit queue schema.");
 }
 
 export async function validateFaaDownloads(query: ValidationQuery, reference: ValidationQuery) {

@@ -32,6 +32,8 @@ import {
   watchGeminiProgress,
   cancelGeminiJob,
   GEMINI_CANCELLED_MESSAGE,
+  KIT_PROVIDER_CHANGED,
+  KIT_SOURCE_CHANGED,
   type GeminiJobKind,
   type GeminiProgressEvent,
   type GeminiWorkStage,
@@ -276,6 +278,10 @@ export interface StartOptions {
   followUps?: { preflight?: () => Promise<string | null> };
   /** Kits only: use this request id (the kit queue records it before the paid call). */
   requestId?: string;
+  /** Kits only: the provider and file checksum the student agreed to; the native side refuses anything else. */
+  expected?: { provider: string; sha256: string };
+  /** Kits only: told the journal job id as soon as the native side has begun it. */
+  onJobId?: (jobId: string) => void;
 }
 
 /** How a kit start ended, for the kit queue (SOURCE-01b). */
@@ -292,6 +298,8 @@ export interface KitStartResult {
   shown?: boolean;
   /** Whether the request reached the provider (so a failure is unclear, not free). */
   sent: boolean;
+  /** Refused because the agreed provider or chapter file no longer matches. */
+  stale?: "provider" | "source";
   requestId: string;
 }
 
@@ -1320,12 +1328,15 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       if (refusal) { update(key, { phase: "failed", error: refusal }); return { outcome: "refused", message: refusal, shown: true, sent: false, requestId }; }
       try { stop = await watchGeminiProgress(event => {
         const job = jobsRef.current.find(j => j.key === key);
-        if (job && belongsTo(job, event)) update(key, { jobId: event.jobId ?? job.jobId, progress: event.message ?? job.progress, stage: event.stage, ...stepStart(job, event) });
+        if (job && belongsTo(job, event)) {
+          update(key, { jobId: event.jobId ?? job.jobId, progress: event.message ?? job.progress, stage: event.stage, ...stepStart(job, event) });
+          if (event.jobId) options?.onJobId?.(event.jobId);
+        }
       }); } catch { /* Progress is optional. */ }
       if (jobsRef.current.find(j => j.key === key)?.cancelRequested) { update(key, { phase: "cancelled", error: CANCELLED_BEFORE_SENDING }); return { outcome: "cancelled", message: CANCELLED_BEFORE_SENDING, sent: false, requestId }; }
       update(key, { invoked: true });
       tracked = { ...tracked, sent: true };
-      const result = await generateStudyKit(target, baseRevision, practiceRevision, requestId);
+      const result = await generateStudyKit(target, baseRevision, practiceRevision, requestId, options?.expected);
       if (!result.checkpointed || !result.jobId) {
         // A disk failure must not throw away a paid answer the command returned.
         // These drafts stay in this window, with an explicit keep-open message.
@@ -1351,6 +1362,9 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       const message = geminiErrorMessage(error);
       const cancelled = message === GEMINI_CANCELLED_MESSAGE;
       update(key, { phase: cancelled ? "cancelled" : "failed", error: message, progress: null, stage: null });
+      // The native side refused before beginning a job: nothing was sent.
+      if (message === KIT_PROVIDER_CHANGED) return { outcome: "refused", message, shown: true, sent: false, stale: "provider", requestId };
+      if (message === KIT_SOURCE_CHANGED) return { outcome: "refused", message, shown: true, sent: false, stale: "source", requestId };
       // Recovery can still retrieve a finished answer if only the list failed.
       return { ...tracked, outcome: cancelled ? "cancelled" : "failed", message };
     } finally { stop(); release(key); }

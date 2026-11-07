@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { GeminiJobRecord } from "@/services/gemini";
 import {
-  IllegalMove, KIT_QUEUE_TEXT, canMove, consentValid, isPartialKit, looksRateLimited, moveItem, slotsFull, slotsHeld, type ItemStatus, type QueueItem,
+  IllegalMove, KIT_QUEUE_TEXT, canMove, consentValid, isPartialKit, kitEnd, kitRecords, looksRateLimited, moveItem, slotsFull, slotsHeld, type ItemStatus, type QueueItem,
 } from "./kitQueueLogic";
 
 const ALL: ItemStatus[] = ["waiting", "running", "checkpointed", "saved", "partial", "unclear", "skipped", "failed"];
@@ -47,6 +47,31 @@ describe("kit queue rules", () => {
     expect(slotsFull(eight)).toBe(true);
     expect(slotsHeld([...eight.slice(0, 7), rec("failed")])).toBe(7);
     expect(slotsHeld([...eight.slice(0, 7), rec("failed", { kind: "x" })])).toBe(8);
+  });
+  it("counts one slot per journal job, however many review parts it is listed as (gemini_jobs.rs MAX_JOBS)", () => {
+    const parts = (job: string, ...names: string[]) => names.map((part) => ({ id: `${job}#${part}`, stage: part === "cards" ? "failed" : "ready", draft: { kind: "study-kit-part" } }) as unknown as GeminiJobRecord);
+    const three = ["a", "b", "c"].flatMap((job) => parts(job, "guide", "cards", "questions"));
+    expect(three).toHaveLength(9);
+    expect(slotsHeld(three)).toBe(3);
+    expect(slotsFull(three)).toBe(false);
+    const eight = Array.from({ length: 8 }, (_, i) => parts(`k${i}`, "guide", "cards")).flat();
+    expect(slotsFull(eight)).toBe(true);
+  });
+  it("finds a kit by what survives in the native listing, and reads partial from the review parts", () => {
+    const at = Date.parse("2026-11-07T10:00:00.000Z") / 1000;
+    const part = (job: string, name: string, ok: boolean, createdAt = at) => ({
+      id: `${job}#${name}`, requestId: `study-kit:${job}`, materialId: "m", contentSha256: "s", stage: ok ? "ready" : "failed", createdAt, draft: { kind: "study-kit-part" },
+    }) as unknown as GeminiJobRecord;
+    const records = [part("old", "guide", true, at - 60), part("new", "guide", true), part("new", "cards", false)];
+    const running = { requestId: "req-gone", jobId: null, materialId: "m", sourceSha256: "s" };
+    expect(kitRecords(records, running, "2026-11-07T10:00:00.000Z").map((r) => r.id)).toEqual(["new#guide", "new#cards"]);
+    expect(kitRecords(records, { ...running, sourceSha256: "other" }, "2026-11-07T10:00:00.000Z")).toEqual([]);
+    expect(kitRecords(records, { requestId: null, jobId: "old" }).map((r) => r.id)).toEqual(["old#guide"]);
+    expect(kitEnd(kitRecords(records, running, "2026-11-07T10:00:00.000Z"))).toBe("partial");
+    expect(kitEnd([part("x", "guide", true), part("x", "cards", true), part("x", "questions", true)])).toBe("whole");
+    expect(kitEnd([part("x", "guide", false), part("x", "cards", false), part("x", "questions", false)])).toBe("empty");
+    // A saved part has left the listing: what is left failed, so the kit is partly done.
+    expect(kitEnd([part("x", "cards", false)])).toBe("partial");
   });
   it("tells a partial kit from a whole or empty one", () => {
     expect(isPartialKit({ guide: { answer: 1 }, cards: { error: "no" } })).toBe(true);

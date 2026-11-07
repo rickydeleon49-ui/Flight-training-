@@ -19,3 +19,7 @@ CREATE TABLE IF NOT EXISTS kit_queue_item (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (queue_id, position)
 );
+
+-- At most one open (active or paused) queue: a second start is refused by the
+-- database itself, so two windows can never both claim one.
+CREATE UNIQUE INDEX IF NOT EXISTS kit_queue_one_open ON kit_queue ((1)) WHERE state IN ('active', 'paused');

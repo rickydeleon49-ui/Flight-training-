@@ -70,6 +70,7 @@ export function KitQueueProvider({ children }: { children: ReactNode }) {
       holdsUnkeptDraft: (id) => gemRef.current.jobs.some((j) => j.materialId === id && j.jobId === null && Boolean(j.answer)),
       hasSavedKit: (id) => appRef.current.data.aiStudySets.some((s) => s.sourceMaterialId === id),
       persist: (q) => repos().kitQueue.save(q),
+      claim: (q) => repos().kitQueue.claim(q),
       findOpen: async () => (appRef.current.repositories ? appRef.current.repositories.kitQueue.findOpen() : null),
     };
     runnerRef.current = new KitQueueRunner(deps, (q, m) => { setQueue(q); setMessage(m); });

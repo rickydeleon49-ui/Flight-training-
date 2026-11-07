@@ -30,7 +30,18 @@ describe("kit queue schema 36", () => {
     }
   });
   it("refuses a missing or changed table", async () => {
-    for (const damage of ["DROP TABLE kit_queue_item", "ALTER TABLE kit_queue DROP COLUMN consent_at"]) {
+    const uncheckedQueue = `DROP TABLE kit_queue_item; DROP TABLE kit_queue;
+      CREATE TABLE kit_queue (id TEXT PRIMARY KEY, provider TEXT NOT NULL, created_at TEXT NOT NULL, state TEXT NOT NULL, consent_at TEXT);
+      CREATE UNIQUE INDEX kit_queue_one_open ON kit_queue ((1)) WHERE state IN ('active', 'paused');
+      CREATE TABLE kit_queue_item (queue_id TEXT NOT NULL REFERENCES kit_queue(id) ON DELETE CASCADE, position INTEGER NOT NULL,
+        material_id TEXT NOT NULL, source_sha256 TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('waiting', 'running', 'checkpointed', 'saved', 'partial', 'unclear', 'skipped', 'failed')),
+        request_id TEXT, job_id TEXT, updated_at TEXT NOT NULL, PRIMARY KEY (queue_id, position));`;
+    const uncheckedItem = `DROP TABLE kit_queue_item;
+      CREATE TABLE kit_queue_item (queue_id TEXT NOT NULL REFERENCES kit_queue(id) ON DELETE CASCADE, position INTEGER NOT NULL,
+        material_id TEXT NOT NULL, source_sha256 TEXT NOT NULL, status TEXT NOT NULL,
+        request_id TEXT, job_id TEXT, updated_at TEXT NOT NULL, PRIMARY KEY (queue_id, position));`;
+    for (const damage of ["DROP TABLE kit_queue_item", "ALTER TABLE kit_queue DROP COLUMN consent_at", uncheckedQueue, uncheckedItem, "DROP INDEX kit_queue_one_open"]) {
       const reference = await openNodeEngine();
       const damaged = await openNodeEngine();
       try {
@@ -83,6 +94,22 @@ describe("kit queue repository", () => {
       await repo.remove("q1");
       expect(await repo.latest()).toBeNull();
       expect(await db.select("SELECT * FROM kit_queue_item", [])).toEqual([]);
+    } finally { db.close(); }
+  });
+  it("claims the one open queue atomically: a racing second claim and a second open row are refused", async () => {
+    const db = await createNodeSqliteDatabase();
+    try {
+      const repo = createRepositories(db).kitQueue;
+      const results = await Promise.all([repo.claim(queue("active", "qa")), repo.claim(queue("active", "qb"))]);
+      expect(results.filter(Boolean)).toHaveLength(1);
+      expect(await db.select("SELECT id FROM kit_queue WHERE state IN ('active', 'paused')", [])).toHaveLength(1);
+      // Even a write that skips the claim cannot open a second queue.
+      await expect(db.execute("INSERT INTO kit_queue (id, provider, created_at, state) VALUES ('qc', 'Google', 'now', 'paused')", [])).rejects.toThrow();
+      expect((await repo.findOpen())?.items).toHaveLength(2);
+      // Once it ends, a new queue may be claimed.
+      const winner = (await repo.findOpen())!;
+      await repo.save({ ...winner, state: "done" });
+      expect(await repo.claim(queue("active", "qd"))).toBe(true);
     } finally { db.close(); }
   });
   it("refuses a status outside the list", async () => {

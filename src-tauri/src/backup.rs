@@ -940,6 +940,12 @@ pub(crate) fn verify_schema_36_kit_queue(connection: &Connection) -> Result<(), 
             return Err("Damaged study kit queue schema.".into());
         }
     }
+    // At most one open queue: the partial unique index, exactly as migrated.
+    let index =
+        |c: &Connection| card_index_sql(c, "kit_queue_one_open").map(|sql| normalize_sql(&sql));
+    if index(connection).is_none() || index(connection) != index(&reference) {
+        return Err("Damaged study kit queue schema.".into());
+    }
     Ok(())
 }
 
@@ -18264,17 +18270,26 @@ mod kit_queue_tests {
         verify_schema_36_kit_queue(&connection).unwrap();
         for (table, expected) in [
             ("kit_queue", "id,provider,created_at,state,consent_at"),
-            ("kit_queue_item", "queue_id,position,material_id,source_sha256,status,request_id,job_id,updated_at"),
+            (
+                "kit_queue_item",
+                "queue_id,position,material_id,source_sha256,status,request_id,job_id,updated_at",
+            ),
         ] {
             let mut statement = connection
-                .prepare(&format!("SELECT name FROM pragma_table_info('{table}') ORDER BY cid"))
+                .prepare(&format!(
+                    "SELECT name FROM pragma_table_info('{table}') ORDER BY cid"
+                ))
                 .unwrap();
             let names: Vec<String> = statement
                 .query_map([], |r| r.get::<_, String>(0))
                 .unwrap()
                 .map(|r| r.unwrap())
                 .collect();
-            assert_eq!(names.join(","), expected, "{table} holds ids, checksums and status only");
+            assert_eq!(
+                names.join(","),
+                expected,
+                "{table} holds ids, checksums and status only"
+            );
         }
         connection
             .execute_batch("DROP TABLE kit_queue_item")
@@ -18288,6 +18303,25 @@ mod kit_queue_tests {
             )
             .unwrap();
         assert!(verify_schema_36_kit_queue(&damaged).is_err());
+        // Without the one-open-queue index two windows could both claim a queue.
+        let unguarded = get_reference_schema_connection().unwrap();
+        unguarded
+            .execute_batch("DROP INDEX kit_queue_one_open")
+            .unwrap();
+        assert!(verify_schema_36_kit_queue(&unguarded).is_err());
+        // A state or status CHECK that was dropped is refused too.
+        let unchecked = get_reference_schema_connection().unwrap();
+        unchecked
+            .execute_batch(
+                "DROP TABLE kit_queue_item;
+                 CREATE TABLE kit_queue_item (
+                   queue_id TEXT NOT NULL REFERENCES kit_queue(id) ON DELETE CASCADE,
+                   position INTEGER NOT NULL, material_id TEXT NOT NULL, source_sha256 TEXT NOT NULL,
+                   status TEXT NOT NULL, request_id TEXT, job_id TEXT, updated_at TEXT NOT NULL,
+                   PRIMARY KEY (queue_id, position));",
+            )
+            .unwrap();
+        assert!(verify_schema_36_kit_queue(&unchecked).is_err());
     }
 }
 

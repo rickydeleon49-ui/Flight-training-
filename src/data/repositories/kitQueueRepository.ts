@@ -18,19 +18,40 @@ export function kitQueueRepository(db: SqlDatabase) {
               request_id AS requestId, job_id AS jobId, updated_at AS updatedAt
        FROM kit_queue_item WHERE queue_id = ? ORDER BY position ASC`, [queueId]);
   }
+  async function saveItems(queue: Queue): Promise<void> {
+    for (const item of queue.items) {
+      await db.execute(`INSERT INTO kit_queue_item (queue_id, position, material_id, source_sha256, status, request_id, job_id, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(queue_id, position) DO UPDATE SET status = excluded.status, request_id = excluded.request_id,
+          job_id = excluded.job_id, updated_at = excluded.updated_at`,
+      [queue.id, item.position, item.materialId, item.sourceSha256, item.status, item.requestId, item.jobId, item.updatedAt]);
+    }
+  }
   return {
+    /**
+     * Claims the one open queue slot for a new queue, in a single statement: it is
+     * written only when no other queue is active or paused (the unique index
+     * kit_queue_one_open refuses a racing second one). False when another holds it.
+     */
+    async claim(queue: Queue): Promise<boolean> {
+      try {
+        await db.execute(`INSERT INTO kit_queue (id, provider, created_at, state, consent_at)
+          SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM kit_queue WHERE state IN ('active', 'paused'))`,
+        [queue.id, queue.provider, queue.createdAt, queue.state, queue.consentAt]);
+      } catch {
+        return false;
+      }
+      const rows = await db.select<{ id: string }>("SELECT id FROM kit_queue WHERE id = ? AND state IN ('active', 'paused')", [queue.id]);
+      if (rows.length !== 1) return false;
+      await saveItems(queue);
+      return true;
+    },
     /** Writes the whole queue: the row and every item. */
     async save(queue: Queue): Promise<void> {
       await db.execute(`INSERT INTO kit_queue (id, provider, created_at, state, consent_at) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET provider = excluded.provider, state = excluded.state, consent_at = excluded.consent_at`,
       [queue.id, queue.provider, queue.createdAt, queue.state, queue.consentAt]);
-      for (const item of queue.items) {
-        await db.execute(`INSERT INTO kit_queue_item (queue_id, position, material_id, source_sha256, status, request_id, job_id, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(queue_id, position) DO UPDATE SET status = excluded.status, request_id = excluded.request_id,
-            job_id = excluded.job_id, updated_at = excluded.updated_at`,
-        [queue.id, item.position, item.materialId, item.sourceSha256, item.status, item.requestId, item.jobId, item.updatedAt]);
-      }
+      await saveItems(queue);
     },
     /** The newest queue that is not finished (active or paused), or null. */
     async findOpen(): Promise<Queue | null> {
