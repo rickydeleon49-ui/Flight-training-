@@ -616,7 +616,7 @@ export function PdfStudyKitPanel({ material }: { material: StudyMaterial }) {
                   }
                 }}
               >
-                Read this PDF’s text
+                Read the text first
               </Button>
               <Button disabled={extracting} onClick={() => void start()}>
                 Try making the kit again

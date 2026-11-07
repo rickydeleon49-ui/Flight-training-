@@ -45,7 +45,7 @@ const values = () =>
   ["Date", "Departure airport", "Arrival airport", "Night flight time", "Total flight time"].map(
     (label) => field(label).value,
   );
-const lineText = /^[A-Z0-9]+, .+: sunset .+\. Night from .+; night landings count from .+ \(your Mac's time\)\.$/;
+const lineText = /^[A-Z0-9]+, .+: sunset .+\. Night from .+; night landings count from .+ \(your local time\)\.$/;
 
 describe("night hint line under Night flight time", () => {
   it("appears for a known airport, is tied to the input, and changes no field", async () => {
