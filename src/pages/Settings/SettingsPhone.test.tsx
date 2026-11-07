@@ -39,7 +39,7 @@ it.each([true, false])("renders only the appropriate Settings cards (phone=%s)",
     expect(card).toMatch(/this iPhone/);
     expect(card).not.toMatch(/this computer|Application Support|desktop application/);
   } else {
-    expect(card).toMatch(/Application Support/);
+    expect(card).toMatch(/Mac’s Keychain/);
   }
   expect(Boolean(screen.queryByRole("heading", { name: "Send my progress to the Mac" }))).toBe(phone);
   expect(Boolean(screen.queryByRole("heading", { name: "Send to my iPhone" }))).toBe(!phone);
