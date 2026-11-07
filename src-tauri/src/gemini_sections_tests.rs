@@ -2268,3 +2268,92 @@ fn source_identity_for_test() -> Identity {
         .unwrap()
         .0
 }
+
+#[test]
+fn flat_markdown_gets_real_line_breaks_only_when_it_is_flat() {
+    let flat = "Overview of the packet. ### Wings - Blue - Fast ### Tails - Red";
+    assert_eq!(
+        unflatten_markdown(flat),
+        "Overview of the packet.\n\n### Wings\n- Blue\n- Fast\n\n### Tails\n- Red"
+    );
+    // already has newlines: untouched
+    let ok = "Overview\n\n### Wings\n- Blue";
+    assert_eq!(unflatten_markdown(ok), ok);
+    // ordinary prose with one dash: untouched
+    for prose in [
+        "Climb 500 - 700 feet per minute.",
+        "Subtract 10 - 2 to get 8, and a - b is lowercase. x - y - z too.",
+        "Pick A - Beta only once.",
+    ] {
+        assert_eq!(unflatten_markdown(prose), prose);
+    }
+    // arithmetic inside a flat guide survives while headings still split
+    assert_eq!(
+        unflatten_markdown("Intro ### Math - Subtract 10 - 2 and a - b"),
+        "Intro\n\n### Math\n- Subtract 10 - 2 and a - b"
+    );
+    // bullets without headings still split once there are several
+    assert_eq!(
+        unflatten_markdown("Intro - Aa - Bb - Cc"),
+        "Intro\n- Aa\n- Bb\n- Cc"
+    );
+}
+
+#[test]
+fn only_claude_guides_are_unflattened_when_validated() {
+    let s = Section {
+        id: "s".into(),
+        heading: "h".into(),
+        page_start: 1,
+        page_end: 3,
+    };
+    let text = r#"{"body":"Intro ### A - Xx - Yy","sourcePages":[1]}"#;
+    let claude = validate_section(&s, text, &[1, 2, 3], "claude-haiku-5-5").unwrap();
+    assert_eq!(claude.body, "Intro\n\n### A\n- Xx\n- Yy");
+    let gemini = validate_section(&s, text, &[1, 2, 3], "gemini-3.5-flash").unwrap();
+    assert_eq!(gemini.body, "Intro ### A - Xx - Yy");
+}
+
+#[test]
+fn source_facts_that_mention_acs_survive_guide_validation() {
+    // No code strips words from a guide: only the prompt asks the model not to
+    // add our own metadata, and it allows what the pages themselves say.
+    let s = Section {
+        id: "s".into(),
+        heading: "h".into(),
+        page_start: 1,
+        page_end: 3,
+    };
+    let text = r#"{"body":"The ACS lists the knowledge a candidate needs.\n- Task PA.I.A is named on page 1.","sourcePages":[1]}"#;
+    let kept = validate_section(&s, text, &[1, 2, 3], "claude-haiku-5-5").unwrap();
+    assert!(kept.body.contains("The ACS lists") && kept.body.contains("PA.I.A"));
+}
+
+#[test]
+fn unflatten_handles_mixed_newlines_numbers_bold_and_equations() {
+    // one flat line among real lines: only that line is repaired
+    assert_eq!(
+        unflatten_markdown("Intro\n### Wings - Blue - Fast ### Tails - Red\n- keep - this"),
+        "Intro\n### Wings\n- Blue\n- Fast\n\n### Tails\n- Red\n- keep - this"
+    );
+    // numeric and bold-led bullets
+    assert_eq!(
+        unflatten_markdown("Intro ### Speeds - 55 knots stall - 70 knots climb - **Vne** is red"),
+        "Intro\n\n### Speeds\n- 55 knots stall\n- 70 knots climb\n- **Vne** is red"
+    );
+    // lowercase bullet after a sentence end
+    assert_eq!(
+        unflatten_markdown("Intro ### Notes - Wind shifts. - gusts matter. - Check Weather"),
+        "Intro\n\n### Notes\n- Wind shifts.\n- gusts matter.\n- Check Weather"
+    );
+    // equation: the heading splits, "Lift - Weight" does not
+    assert_eq!(
+        unflatten_markdown("Intro ### Forces - Net force = Lift - Weight"),
+        "Intro\n\n### Forces\n- Net force = Lift - Weight"
+    );
+    // a well-formed guide and a lone equation line are untouched
+    let ok = "Intro\n\n### Forces\n- Net force = Lift - Weight\n- Drag - Thrust";
+    assert_eq!(unflatten_markdown(ok), ok);
+    let eq = "Net = Lift - Weight, then Climb - Descent";
+    assert_eq!(unflatten_markdown(eq), eq);
+}

@@ -36,10 +36,21 @@ pub(crate) fn translate_schema(schema: &Value) -> Value {
                 .flatten()
                 .map(|(key, value)| (key.clone(), translate_schema(value)))
                 .collect();
-            out.insert(
-                "required".into(),
-                json!(properties.keys().collect::<Vec<_>>()),
-            );
+            // Every property is required. Keep the contract's own order (the
+            // order Claude writes its answer in); any others follow alphabetically.
+            let mut order: Vec<&str> = schema["required"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .filter(|key| properties.contains_key(*key))
+                .collect();
+            for key in properties.keys() {
+                if !order.contains(&key.as_str()) {
+                    order.push(key);
+                }
+            }
+            out.insert("required".into(), json!(order));
             out.insert("properties".into(), json!(properties));
             out.insert("additionalProperties".into(), json!(false));
         }
@@ -51,6 +62,66 @@ pub(crate) fn translate_schema(schema: &Value) -> Value {
         out.insert("enum".into(), values.clone());
     }
     Value::Object(out)
+}
+
+/// Serialize a translated schema with every `properties` object written in the
+/// order of its sibling `required` array (others alphabetical), because Claude's
+/// structured output follows the schema's property order. Every piece goes through
+/// serde_json, so the bytes parse back to exactly the same Value.
+pub(crate) fn ordered_json(value: &Value) -> String {
+    match value {
+        Value::Object(map) => {
+            let mut parts = Vec::with_capacity(map.len());
+            for (key, inner) in map {
+                let text = match (key.as_str(), inner) {
+                    ("properties", Value::Object(props)) => {
+                        let mut keys: Vec<&String> = Vec::with_capacity(props.len());
+                        for name in map
+                            .get("required")
+                            .and_then(Value::as_array)
+                            .into_iter()
+                            .flatten()
+                            .filter_map(Value::as_str)
+                        {
+                            if let Some((k, _)) = props.get_key_value(name) {
+                                if !keys.contains(&k) {
+                                    keys.push(k);
+                                }
+                            }
+                        }
+                        for k in props.keys() {
+                            if !keys.contains(&k) {
+                                keys.push(k);
+                            }
+                        }
+                        let items: Vec<String> = keys
+                            .into_iter()
+                            .map(|k| {
+                                format!(
+                                    "{}:{}",
+                                    serde_json::to_string(k).unwrap_or_default(),
+                                    ordered_json(&props[k])
+                                )
+                            })
+                            .collect();
+                        format!("{{{}}}", items.join(","))
+                    }
+                    _ => ordered_json(inner),
+                };
+                parts.push(format!(
+                    "{}:{}",
+                    serde_json::to_string(key).unwrap_or_default(),
+                    text
+                ));
+            }
+            format!("{{{}}}", parts.join(","))
+        }
+        Value::Array(items) => format!(
+            "[{}]",
+            items.iter().map(ordered_json).collect::<Vec<_>>().join(",")
+        ),
+        other => serde_json::to_string(other).unwrap_or_default(),
+    }
 }
 
 pub(crate) fn source_part(source: &LoadedSource) -> Value {
@@ -86,9 +157,15 @@ pub(crate) fn check_size(bytes: u64) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) fn check_request(body: &Value) -> Result<(), String> {
     let bytes =
         serde_json::to_vec(body).map_err(|_| "The request could not be prepared.".to_string())?;
+    check_wire(&bytes)
+}
+
+/// The cap applies to the bytes actually sent.
+pub(crate) fn check_wire(bytes: &[u8]) -> Result<(), String> {
     if bytes.len() > MAX_REQUEST_BYTES {
         return Err(error_message(413));
     }
@@ -110,8 +187,6 @@ impl ClaudeProvider {
             }
         }
         content.extend(text);
-        // Effort "medium" (Haiku 5.5's default): the live test's "low" guide
-        // skipped the recovery steps; at Haiku's price completeness wins.
         // A combined kit needs room for all three outputs plus Haiku 5.5's
         // default adaptive thinking (128K output cap). Existing requests
         // retain their accepted 16,000-token Claude allowance.
@@ -123,9 +198,28 @@ impl ClaudeProvider {
         } else {
             MAX_OUTPUT_TOKENS
         };
+        // Haiku thinks less (it was spending its budget before the answer);
+        // Sonnet keeps "medium".
+        let effort = if model == MODEL { "low" } else { "medium" };
         json!({"model":model,"max_tokens":tokens,"messages":[{"role":"user","content":content}],
-            "output_config":{"effort":"medium","format":{"type":"json_schema",
+            "output_config":{"effort":effort,"format":{"type":"json_schema",
                 "schema":translate_schema(&body["generationConfig"]["responseSchema"])}}})
+    }
+    /// The exact bytes sent: `body()` with the schema's properties written in
+    /// contract order (guide, then cards, then questions).
+    pub(crate) fn wire(self, model: &str, body: &Value) -> Vec<u8> {
+        let sent = self.body(model, body);
+        let schema = ordered_json(&sent["output_config"]["format"]["schema"]);
+        let json_str = |v: &Value| serde_json::to_string(v).unwrap_or_default();
+        format!(
+            "{{\"model\":{},\"max_tokens\":{},\"messages\":{},\"output_config\":{{\"effort\":{},\"format\":{{\"type\":\"json_schema\",\"schema\":{}}}}}}}",
+            json_str(&sent["model"]),
+            json_str(&sent["max_tokens"]),
+            json_str(&sent["messages"]),
+            json_str(&sent["output_config"]["effort"]),
+            schema
+        )
+        .into_bytes()
     }
     pub(crate) fn request(
         self,
@@ -138,7 +232,8 @@ impl ClaudeProvider {
         http.post(format!("{base}/v1/messages"))
             .header("x-api-key", key)
             .header("anthropic-version", VERSION)
-            .json(&self.body(model, body))
+            .header("content-type", "application/json")
+            .body(self.wire(model, body))
     }
     pub(crate) async fn generate_json(
         self,
@@ -146,7 +241,7 @@ impl ClaudeProvider {
         model: &str,
         body: &Value,
     ) -> Result<Attempt, Failure> {
-        check_request(&self.body(model, body))?;
+        check_wire(&self.wire(model, body))?;
         crate::gemini::provider_impl::generate_once_for(ctx, AnyProvider::Claude(self), model, body)
             .await
     }

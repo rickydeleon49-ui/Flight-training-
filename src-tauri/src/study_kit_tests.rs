@@ -138,7 +138,7 @@ fn study_kit_drops_only_invalid_cards_and_questions() {
 
 #[test]
 fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
-    let body = request_body(json!({"text":"synthetic PDF"}), 150);
+    let body = request_body(json!({"text":"synthetic PDF"}), 150, false);
     assert_eq!(body["contents"].as_array().unwrap().len(), 1);
     assert_eq!(body["generationConfig"]["maxOutputTokens"], 49_152);
     let prompt = body["contents"][0]["parts"][0]["text"].as_str().unwrap();
@@ -169,7 +169,7 @@ fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
     );
     assert_eq!(props["guide"]["properties"]["body"]["maxLength"], 12000);
     let source = LoadedSource::new(vec![1, 2, 3], "application/pdf", "synthetic.pdf");
-    let claude_body = request_body(crate::provider::claude::source_part(&source), 150);
+    let claude_body = request_body(crate::provider::claude::source_part(&source), 150, true);
     let claude = crate::provider::claude::ClaudeProvider.body("claude-haiku-5-5", &claude_body);
     let content = claude["messages"][0]["content"].as_array().unwrap();
     assert_eq!(
@@ -466,4 +466,29 @@ fn malformed_checked_envelopes_stay_failed_without_inventing_answers() {
             assert!(checked["parts"][part].get("error").is_some());
         }
     }
+}
+
+#[test]
+fn claude_kit_prompt_is_v5c_and_gemini_stays_v4() {
+    let text = |body: &Value| {
+        body["contents"][0]["parts"][0]["text"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    let g = text(&request_body(json!({"text":"x"}), 3, false));
+    let c = text(&request_body(json!({"text":"x"}), 3, true));
+    assert!(g.starts_with("study-kit-prompt-v4: Make a basic study kit"));
+    assert!(g.ends_with(&format!("instruction. {}", crate::acs_tasks::prompt())));
+    assert!(!g.contains("Write the guide first"));
+    assert!(c.starts_with("study-kit-prompt-v5c: Make a study kit"));
+    assert!(!c.contains("basic"));
+    assert!(c.contains("Write the guide first and make it complete; the cards and questions come after it and must never make it shorter."));
+    assert!(c.contains("acsTask is for questions only. Never put ACS task codes, this app or these instructions into the guide or cards (facts the pages themselves state about the ACS are fine)."));
+    assert!(c.contains("only when the pages state enough facts to establish the correct answer; otherwise leave that question out"));
+    assert!(c.contains("Never invent an answer"));
+    // the ACS list sits inside the questions instruction, once, not at the end
+    assert_eq!(c.matches(&crate::acs_tasks::prompt()).count(), 1);
+    assert!(c.find("Make up to about 10").unwrap() < c.find(&crate::acs_tasks::prompt()).unwrap());
+    assert!(c.ends_with("not operational flight instruction."));
 }

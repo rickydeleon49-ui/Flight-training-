@@ -779,6 +779,80 @@ const REQUESTED_BODY_CHARS: usize = 12_000;
 const PART_OUTPUT_TOKENS: u32 = 16_384;
 /// The length the earlier, longer prompt asked for (older drafts only).
 const LEGACY_BODY_CHARS: usize = 12_000;
+/// Repairs guide text that came back flattened: inline " ### " headings and
+/// " - " bullets with no line breaks. Works line by line, so a body that has
+/// some newlines is still repaired where one line is clearly flat. A line is
+/// flat when it has a heading in its middle, or at least three bullet markers
+/// (two when it starts with a heading). Ambiguous " - " (arithmetic such as
+/// "Lift - Weight" after an "=", "10 - 2", "a - b") is never split.
+pub(crate) fn unflatten_markdown(body: &str) -> String {
+    body.split('\n')
+        .map(unflatten_line)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn unflatten_line(line: &str) -> String {
+    let chars: Vec<char> = line.chars().collect();
+    let heading_at = |i: usize| chars[i..].starts_with(&[' ', '#', '#', '#', ' ']);
+    // Marker positions, found left to right; `seg` = start of the text since
+    // the last break or accepted marker.
+    let mut markers = Vec::new();
+    let mut seg = 0;
+    let mut i = 0;
+    while i < chars.len() {
+        if heading_at(i) {
+            seg = i + 5;
+            i += 5;
+            continue;
+        }
+        if chars[i..].starts_with(&[' ', '-', ' ']) && i > 0 {
+            let prev = chars[i - 1];
+            let next = chars.get(i + 3).copied();
+            let so_far: String = chars[seg.min(i)..i].iter().collect();
+            let arithmetic = [" = ", " + ", " × ", " / ", " * "]
+                .iter()
+                .any(|op| so_far.contains(op));
+            let bullet = next.is_some_and(|n| {
+                if prev.is_ascii_digit() && n.is_ascii_digit() {
+                    false
+                } else if n.is_uppercase() || n.is_ascii_digit() || n == '*' {
+                    true
+                } else {
+                    n.is_lowercase() && ".!?:;)".contains(prev)
+                }
+            });
+            if bullet && !arithmetic {
+                markers.push(i);
+                seg = i + 3;
+                i += 3;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    let mid_heading = (0..chars.len()).any(|i| i > 0 && heading_at(i));
+    let starts_heading = line.starts_with("### ");
+    let flat = mid_heading || markers.len() >= 3 || (starts_heading && markers.len() >= 2);
+    if !flat {
+        return line.to_string();
+    }
+    let mut out = String::with_capacity(line.len() + 16);
+    let mut i = 0;
+    while i < chars.len() {
+        if i > 0 && heading_at(i) {
+            out.push_str("\n\n### ");
+            i += 5;
+        } else if markers.contains(&i) {
+            out.push_str("\n- ");
+            i += 3;
+        } else {
+            out.push(chars[i]);
+            i += 1;
+        }
+    }
+    out
+}
 fn validate_section(
     s: &Section,
     text: &str,
@@ -798,6 +872,11 @@ fn validate_section(
         a.body.replace("\\r\\n", "\n").replace("\\n", "\n")
     } else {
         a.body
+    };
+    let body = if model.starts_with("claude-") {
+        unflatten_markdown(&body)
+    } else {
+        body
     };
     let mut source_pages = a.source_pages;
     source_pages.sort_unstable();
