@@ -96,6 +96,26 @@ pub async fn reconcile_study_pack_imports(app: AppHandle) -> Result<(), String> 
     .map_err(|error| format!("Could not check the study packs: {error}"))?
 }
 
+/// The one way into the library database from study pack code. Read-only
+/// connections never write; every connection waits `busy_ms` for a lock.
+pub(crate) fn open_library(
+    root: &std::path::Path,
+    read_only: bool,
+    busy_ms: u64,
+) -> rusqlite::Result<rusqlite::Connection> {
+    let path = root.join(crate::backup::DB_FILES[0]);
+    let conn = if read_only {
+        rusqlite::Connection::open_with_flags(
+            path,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+        )?
+    } else {
+        rusqlite::Connection::open(path)?
+    };
+    conn.busy_timeout(std::time::Duration::from_millis(busy_ms))?;
+    Ok(conn)
+}
+
 /// Storage this process does not own is never reconciled: another copy could
 /// be in the middle of an import there.
 pub fn reconcile_study_pack_imports_in(
@@ -111,19 +131,7 @@ pub fn reconcile_study_pack_imports_in(
 
 fn open_for_results(app: &AppHandle, write: bool) -> Result<rusqlite::Connection, String> {
     let root = crate::storage::app_root(app)?;
-    let path = root.join("her-flight-deck.db");
-    let conn = if write {
-        rusqlite::Connection::open(path)
-    } else {
-        rusqlite::Connection::open_with_flags(
-            path,
-            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        )
-    }
-    .map_err(|e| format!("Could not open your library: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(5000))
-        .map_err(|e| format!("Could not open your library: {e}"))?;
-    Ok(conn)
+    open_library(&root, !write, 5000).map_err(|e| format!("Could not open your library: {e}"))
 }
 
 /// What an earlier `add_study_pack(op_id)` did, read from its receipt.

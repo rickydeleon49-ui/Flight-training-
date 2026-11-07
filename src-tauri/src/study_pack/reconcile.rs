@@ -36,19 +36,10 @@ pub struct Report {
     pub quarantined: u32,
 }
 
-fn db_path(root: &Path) -> PathBuf {
-    root.join("her-flight-deck.db")
-}
-
 /// Does a receipt exist for this operation? Any failure to look is an error.
 pub fn receipt_exists(root: &Path, op_id: &str) -> Result<bool, String> {
-    let conn = Connection::open_with_flags(
-        db_path(root),
-        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )
-    .map_err(|e| format!("lookup failed: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(2000))
-        .map_err(|e| format!("lookup failed: {e}"))?;
+    let conn =
+        super::open_library(root, true, 2000).map_err(|e| format!("lookup failed: {e}"))?;
     receipt_in(&conn, op_id)
 }
 
@@ -262,9 +253,8 @@ fn remove_owned_file(
     // D5: the reference check and the delete are one IMMEDIATE transaction on
     // a connection that holds the write lock, so no writer can link the file
     // in between.
-    let mut conn = Connection::open(db_path(root)).map_err(|e| format!("lookup failed: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(2000))
-        .map_err(|e| format!("lookup failed: {e}"))?;
+    let mut conn =
+        super::open_library(root, false, 2000).map_err(|e| format!("lookup failed: {e}"))?;
     let tx = conn
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|e| format!("lookup failed: {e}"))?;

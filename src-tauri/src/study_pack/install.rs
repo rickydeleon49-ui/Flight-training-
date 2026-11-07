@@ -101,14 +101,7 @@ fn fresh_id(conn: &Connection) -> String {
 }
 
 fn read_only(root: &Path) -> Result<Connection, String> {
-    let conn = Connection::open_with_flags(
-        root.join("her-flight-deck.db"),
-        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )
-    .map_err(|e| format!("Could not open your library: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(5000))
-        .map_err(|e| format!("Could not open your library: {e}"))?;
-    Ok(conn)
+    super::open_library(root, true, 5000).map_err(|e| format!("Could not open your library: {e}"))
 }
 
 fn sha256_of_file(path: &Path) -> Result<String, String> {

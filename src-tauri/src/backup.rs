@@ -66,7 +66,7 @@ const COMPRESSION_RATIO_FLOOR: u64 = 1024 * 1024;
 const KEEP_BACKUPS: usize = 10;
 
 /// The database, plus the write-ahead log files that belong with it.
-const DB_FILES: [&str; 3] = [
+pub(crate) const DB_FILES: [&str; 3] = [
     "her-flight-deck.db",
     "her-flight-deck.db-wal",
     "her-flight-deck.db-shm",

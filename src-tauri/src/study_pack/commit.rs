@@ -46,9 +46,7 @@ pub struct CommitInput<'a> {
 }
 
 pub fn open_commit_connection(root: &Path) -> Result<Connection, String> {
-    let conn = Connection::open(root.join("her-flight-deck.db"))
-        .map_err(|e| format!("Could not open your library: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(5000))
+    let conn = super::open_library(root, false, 5000)
         .map_err(|e| format!("Could not open your library: {e}"))?;
     conn.pragma_update(None, "foreign_keys", true)
         .map_err(|e| format!("Could not open your library: {e}"))?;

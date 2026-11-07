@@ -23,12 +23,7 @@ pub struct Preview {
 
 pub fn inspect_study_pack_in(root: &Path, pack_path: &Path) -> Result<Preview, String> {
     let pack = validate_pack(pack_path)?;
-    let conn = Connection::open_with_flags(
-        root.join("her-flight-deck.db"),
-        OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-    )
-    .map_err(|e| format!("Could not open your library: {e}"))?;
-    conn.busy_timeout(std::time::Duration::from_millis(5000))
+    let conn = super::open_library(root, true, 5000)
         .map_err(|e| format!("Could not open your library: {e}"))?;
     let mut count = 0u64;
     let mut ids = |_: &str| {
