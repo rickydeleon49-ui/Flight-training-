@@ -62,7 +62,7 @@ export function documentErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Ask the user for a file; null when she cancels. */
+/** Ask the user for a file; null when cancelled. */
 async function pickDocumentPath(pdfOnly: boolean): Promise<string | null> {
   const selected = await open({
     multiple: false,
@@ -94,7 +94,7 @@ export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS(
 /**
  * Pick a replacement file for a material whose file is missing. The copy and
  * the attach are one native step under the library lock, so a busy library
- * refuses before anything is copied. Resolves false when she cancels.
+ * refuses before anything is copied. Resolves false when cancelled.
  */
 export async function pickAndReattachDocument(materialId: string): Promise<boolean> {
   if (!isTauri()) throw new DesktopOnlyError();
