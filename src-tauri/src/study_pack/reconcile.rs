@@ -85,7 +85,13 @@ pub fn reconcile_locked(guard: &LibraryGuard, root: &Path, mode: Mode) -> Result
         .collect();
     ops.sort();
     for op in ops {
-        reconcile_op(root, &op, mode, &mut report)?;
+        match reconcile_op(root, &op, mode, &mut report) {
+            Ok(()) => {}
+            // A folder that can't be cleaned up must not block backups or
+            // later imports: nothing was deleted, try it again next time.
+            Err(_) if mode == Mode::Normal => report.left += 1,
+            Err(e) => return Err(e),
+        }
     }
     Ok(report)
 }
@@ -154,7 +160,11 @@ fn remove_dir(op: &Path) -> Result<(), String> {
 
 fn failed_dir(root: &Path) -> Result<PathBuf, String> {
     let dir = journal::imports_dir(root).join(FAILED_DIR);
-    if !dir.exists() {
+    if let Ok(meta) = std::fs::symlink_metadata(&dir) {
+        if crate::backup::is_symlink_or_reparse(&meta) || !meta.is_dir() {
+            return Err("Could not keep the study pack record.".into());
+        }
+    } else {
         std::fs::create_dir(&dir)
             .map_err(|e| format!("Could not keep the study pack record: {e}"))?;
     }
