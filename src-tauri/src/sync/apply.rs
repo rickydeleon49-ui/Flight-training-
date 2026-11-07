@@ -175,6 +175,119 @@ fn refold_all_synced_items(conn: &Connection) -> rusqlite::Result<usize> {
     Ok(changed)
 }
 
+/// Test-only fault points (CARRY-3DEV): a thread-local switch that makes the
+/// named checkpoint fail, to prove a failure after a fold rolls everything back.
+#[cfg(test)]
+pub(crate) mod fault {
+    use std::cell::Cell;
+    thread_local!(static AT: Cell<&'static str> = const { Cell::new("") });
+    pub(crate) fn set(point: &'static str) {
+        AT.with(|c| c.set(point));
+    }
+    pub(crate) fn hit(point: &str) -> bool {
+        AT.with(|c| c.get() == point)
+    }
+}
+
+/// Folds the duplicate copies of one rating in `material` (`card_reviews::fold_plan`):
+/// each folded event is kept in the local fold ledger, then its row, its meta
+/// and its derived receipt are removed. Needs the sync guard row (nothing is
+/// logged, no tombstone is written). Returns the affected items with the ids
+/// folded on each, so the caller can replay them.
+pub(crate) fn fold_material(
+    conn: &Connection,
+    material: &str,
+) -> Result<Vec<(String, Vec<String>)>, ApplyError> {
+    let guarded: Option<i64> = conn
+        .query_row("SELECT 1 FROM app_metadata WHERE key = ?1", [GUARD], |r| {
+            r.get(0)
+        })
+        .optional()?;
+    if guarded.is_none() {
+        return Err(ApplyError::BadRow);
+    }
+    let plan = card_reviews::fold_plan(conn, material).map_err(|_| ApplyError::BadRow)?;
+    let mut by_item: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for row in plan {
+        conn.execute(
+            "INSERT OR IGNORE INTO card_review_event_folds
+               (id, item_id, generation, rating, reviewed_at, device_id, changed_at, folded_at)
+             SELECT e.id, e.item_id, e.generation, e.rating, e.reviewed_at, m.device_id, m.changed_at,
+                    strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             FROM card_review_events e
+             LEFT JOIN sync_row_meta m ON m.table_name = 'card_review_events' AND m.row_id = e.id
+             WHERE e.id = ?1",
+            [&row.id],
+        )?;
+        conn.execute("DELETE FROM card_review_events WHERE id = ?1", [&row.id])?;
+        conn.execute(
+            "DELETE FROM sync_row_meta WHERE table_name = 'card_review_events' AND row_id = ?1",
+            [&row.id],
+        )?;
+        conn.execute(
+            "DELETE FROM card_review_operations WHERE operation_id = ?1 AND request_hash = ?2",
+            params![row.id, card_reviews::sha256_hex(&row.id)],
+        )?;
+        by_item.entry(row.item_id).or_default().push(row.id);
+    }
+    Ok(by_item.into_iter().collect())
+}
+
+/// Re-derives the history of `items` after a fold: fold each item's events in D4
+/// order, rewrite their prior/next, and set the schedule columns of its state
+/// row from the last one (`suspended`/`flag` stay; the revision never drops
+/// below the rating count). Unlogged: needs the guard row, writes no meta.
+/// Explicit on purpose: `refold_synced_items` skips an item whose stored state
+/// differs from the fold, which a fold causes.
+pub(crate) fn replay_items(conn: &Connection, items: &[String]) -> Result<(), ApplyError> {
+    for item in items {
+        let found: Option<(String, i64)> = conn
+            .query_row(
+                "SELECT v.source_material_id,
+                        COALESCE((SELECT g.generation FROM card_review_generations g
+                                  WHERE g.source_material_id = v.source_material_id), 0)
+                 FROM card_items i JOIN card_versions v ON v.id = i.version_id
+                 WHERE i.id = ?1",
+                [item],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?;
+        let Some((material, generation)) = found else {
+            continue;
+        };
+        let events = item_events(conn, item)?;
+        let folded = replay::fold_item(&events, generation).map_err(ApplyError::Replay)?;
+        rewrite_event_states(conn, &folded)?;
+        let Some(last) = folded.last() else {
+            continue;
+        };
+        let s = &last.next;
+        conn.execute(
+            "INSERT INTO card_review_state
+               (item_id, source_material_id, scheduler_version, step, due_at, last_reviewed_at,
+                reps, lapses, suspended, flag, revision)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0, NULL, ?9)
+             ON CONFLICT(item_id) DO UPDATE SET
+               scheduler_version = excluded.scheduler_version, step = excluded.step,
+               due_at = excluded.due_at, last_reviewed_at = excluded.last_reviewed_at,
+               reps = excluded.reps, lapses = excluded.lapses,
+               revision = MAX(card_review_state.revision, excluded.revision)",
+            params![
+                item,
+                material,
+                s.scheduler_version,
+                s.step,
+                s.due_at,
+                s.last_reviewed_at,
+                s.reps,
+                s.lapses,
+                events.len() as i64
+            ],
+        )?;
+    }
+    Ok(())
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct ApplyOutcome {
     /// `false`: the receipt already existed and nothing was done.
@@ -183,6 +296,13 @@ pub(crate) struct ApplyOutcome {
     pub ignored: usize,
     pub replayed_items: usize,
     pub created_in_future: bool,
+    /// Stored duplicate copies of a rating folded into their keeper (CARRY-3DEV).
+    /// Never part of `written` or `ignored`.
+    pub folded: usize,
+    /// Items re-folded only because a duplicate was folded away; never counted
+    /// in `written` or `replayed_items`, so a file whose only effect is a fold
+    /// still reports "nothing new".
+    pub fold_replayed: usize,
 }
 
 #[derive(Debug)]
@@ -492,8 +612,13 @@ struct Engine<'a> {
     /// Set when a delete actually ran (see `tombstone_removed_rows`).
     deleted_rows: bool,
     /// Review events this file inserted: (event id, material), for the
-    /// duplicate pass.
+    /// fold passes.
     inserted_events: Vec<(String, String)>,
+    /// Items whose duplicate copies a fold pass removed in this apply.
+    fold_touched: BTreeSet<String>,
+    /// Items touched ONLY by a fold (no incoming row on them): their replay
+    /// counts in `fold_replayed`, not in `written`.
+    fold_only: BTreeSet<String>,
 }
 
 impl<'a> Engine<'a> {
@@ -515,6 +640,8 @@ impl<'a> Engine<'a> {
             children: HashSet::new(),
             deleted_rows: false,
             inserted_events: Vec::new(),
+            fold_touched: BTreeSet::new(),
+            fold_only: BTreeSet::new(),
         }
     }
 
@@ -554,10 +681,27 @@ impl<'a> Engine<'a> {
         for (index, change) in deletes {
             self.delete(&SYNC_TABLES[index], change)?;
         }
-        self.drop_duplicate_copies()?;
+        // Pass (a): fold the duplicates the incoming rows made, before activation,
+        // so the carry sees clean roots.
+        let inserted: BTreeSet<String> = self
+            .inserted_events
+            .iter()
+            .map(|(_, m)| m.clone())
+            .collect();
+        self.fold_materials(inserted)?;
         self.activate_versions()?;
         crate::sync::receipts::repair_picture_sidecars(self.conn)?;
+        // Pass (b) runs after the carry, over every material the carry may have
+        // changed: the carry itself can mint the link that resolves a copy.
+        let mut after_carry: BTreeSet<String> = self.carry.keys().cloned().collect();
+        after_carry.extend(self.inserted_events.iter().map(|(_, m)| m.clone()));
+        let newest: BTreeMap<String, String> = self.carry.clone();
         self.carry_touched()?;
+        self.fold_materials_at(after_carry, &newest)?;
+        #[cfg(test)]
+        if fault::hit("after-fold-b") {
+            return Err(ApplyError::BadRow);
+        }
         self.replay_touched()?;
         self.drop_empty_versions()
     }
@@ -589,54 +733,49 @@ impl<'a> Engine<'a> {
         Ok(())
     }
 
-    /// Union dedupe (R13b2). An old-build phone can send a path id
-    /// `carried(carried(e,B),C)` while this device already holds
-    /// `carried(e,C)`: two ids for one rating. After the whole file has landed
-    /// (an intermediate copy may come later in the same file), delete an
-    /// inserted event when its item holds another event of the same
-    /// generation, time and rating with the same root. Only rows inserted by
-    /// this apply are ever removed (the canonical id stays, then the lowest, between two of them).
-    /// Unlogged (the sync guard is held); the row's meta goes too.
-    fn drop_duplicate_copies(&mut self) -> Result<(), ApplyError> {
-        let mut by_material: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for (id, material) in std::mem::take(&mut self.inserted_events) {
-            by_material.entry(material).or_default().push(id);
-        }
-        for (material, ids) in by_material {
-            // Cheap exit: only an id that shares (item, generation, time,
-            // rating) with another row can be a duplicate.
-            let mut ids: Vec<String> = ids;
-            ids.retain(|id| {
-                self.conn
-                    .query_row(
-                        "SELECT 1 FROM card_review_events a JOIN card_review_events b
-                           ON b.item_id = a.item_id AND b.generation = a.generation
-                          AND b.reviewed_at = a.reviewed_at AND b.rating = a.rating AND b.id != a.id
-                         WHERE a.id = ?1 LIMIT 1",
-                        [id],
-                        |_| Ok(()),
-                    )
-                    .optional()
-                    .map(|r| r.is_some())
-                    .unwrap_or(true)
-            });
-            if ids.is_empty() {
+    /// Late fold (CARRY-3DEV, replaces the R13b2 duplicate drop). Two ids can
+    /// name one rating: an old-build path id, or a copy that reached this device
+    /// before its parent. For each material, `fold_material` removes the foreign
+    /// duplicate copies it can prove (same item, time, rating and root, over
+    /// events and the fold ledger) and keeps them in the ledger so later copies
+    /// still resolve. Unlogged (the sync guard is held).
+    fn fold_materials(&mut self, materials: BTreeSet<String>) -> Result<(), ApplyError> {
+        let newest = self.carry.clone();
+        self.fold_materials_at(materials, &newest)
+    }
+
+    fn fold_materials_at(
+        &mut self,
+        materials: BTreeSet<String>,
+        newest: &BTreeMap<String, String>,
+    ) -> Result<(), ApplyError> {
+        for material in materials {
+            let folded = fold_material(self.conn, &material)?;
+            if folded.is_empty() {
                 continue;
             }
-            let dups = crate::card_reviews::duplicate_copies(self.conn, &material, &ids)
-                .map_err(|_| ApplyError::BadRow)?;
-            for id in dups {
-                let removed = self
-                    .conn
-                    .execute("DELETE FROM card_review_events WHERE id = ?1", [&id])?;
-                self.conn.execute(
-                    "DELETE FROM sync_row_meta WHERE table_name = 'card_review_events' AND row_id = ?1",
-                    [&id],
-                )?;
-                if removed == 1 {
-                    self.out.written = self.out.written.saturating_sub(1);
-                    self.out.ignored += 1;
+            let at = newest.get(&material).cloned().unwrap_or_default();
+            for (item, ids) in folded {
+                for id in ids {
+                    if self.inserted_events.iter().any(|(i, _)| *i == id) {
+                        // Inserted by this very file: as if never inserted.
+                        self.out.written = self.out.written.saturating_sub(1);
+                        self.out.ignored += 1;
+                    } else {
+                        self.out.folded += 1;
+                    }
                 }
+                let fold_only_so_far =
+                    !self.touched.contains(&item) || self.fold_only.contains(&item);
+                if at.is_empty() {
+                    self.touched.insert(item.clone());
+                } else {
+                    self.touch(&item, &at);
+                }
+                if fold_only_so_far {
+                    self.fold_only.insert(item.clone());
+                }
+                self.fold_touched.insert(item);
             }
         }
         Ok(())
@@ -716,19 +855,24 @@ impl<'a> Engine<'a> {
         change: &Change,
         deleted: bool,
     ) -> Result<(), ApplyError> {
+        self.write_meta_as(table, row_id, self.peer, &change.changed_at, deleted)
+    }
+
+    fn write_meta_as(
+        &self,
+        table: &str,
+        row_id: &str,
+        device: &str,
+        changed_at: &str,
+        deleted: bool,
+    ) -> Result<(), ApplyError> {
         self.conn.execute(
             "INSERT INTO sync_row_meta (table_name, row_id, device_id, changed_at, deleted)
              VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT (table_name, row_id) DO UPDATE SET
                device_id = excluded.device_id, changed_at = excluded.changed_at,
                deleted = excluded.deleted",
-            params![
-                table,
-                row_id,
-                self.peer,
-                change.changed_at,
-                i64::from(deleted)
-            ],
+            params![table, row_id, device, changed_at, i64::from(deleted)],
         )?;
         Ok(())
     }
@@ -981,6 +1125,7 @@ impl<'a> Engine<'a> {
 
     fn touch(&mut self, item: &str, changed_at: &str) {
         self.touched.insert(item.to_string());
+        self.fold_only.remove(item);
         let newer = self.item_changed_at.get(item).is_none_or(|old| {
             parse_iso_ms(changed_at).unwrap_or(i64::MIN) > parse_iso_ms(old).unwrap_or(i64::MIN)
         });
@@ -1028,6 +1173,20 @@ impl<'a> Engine<'a> {
                 .get("generation")
                 .and_then(Value::as_i64)
                 .ok_or(ApplyError::BadRow)?;
+            // A copy this device folded away on purpose stays gone: no insert,
+            // no meta, no touch.
+            let folded: Option<i64> = self
+                .conn
+                .query_row(
+                    "SELECT 1 FROM card_review_event_folds WHERE id = ?1 AND generation = ?2",
+                    params![change.row_id, generation],
+                    |r| r.get(0),
+                )
+                .optional()?;
+            if folded.is_some() {
+                self.out.ignored += 1;
+                return Ok(());
+            }
             self.touch(item, &change.changed_at);
             let material = self.material_of_item(item)?.ok_or(ApplyError::BadRow)?;
             // A delayed event from before a reset this device already has.
@@ -1169,6 +1328,18 @@ impl<'a> Engine<'a> {
                WHERE v.source_material_id = ?1)",
             params![material, incoming],
         )?;
+        // A pending claim's first review belonged to the dropped generation.
+        self.conn.execute(
+            "UPDATE card_version_pending_claims SET first_reviewed_at = NULL WHERE source_material_id = ?1",
+            [material],
+        )?;
+        // The local fold ledger of the dropped generations goes with them.
+        self.conn.execute(
+            "DELETE FROM card_review_event_folds WHERE generation < ?2 AND item_id IN (
+               SELECT i.id FROM card_items i JOIN card_versions v ON v.id = i.version_id
+               WHERE v.source_material_id = ?1)",
+            params![material, incoming],
+        )?;
         // Mirrors the local reset (card_reviews.rs): this device's receipts
         // for the dropped events are erased too.
         self.conn.execute(
@@ -1259,28 +1430,102 @@ impl<'a> Engine<'a> {
                 id = existing;
             }
         }
-        let incoming_first = match (cards, &material, text(&row, "first_reviewed_at")) {
+        let mut incoming_first = match (cards, &material, text(&row, "first_reviewed_at")) {
             (true, Some(m), Some(at)) if self.first_review_counts(m, at)? => Some(at.to_string()),
             _ => None,
         };
+        let mut claim_active = row.get("is_active").and_then(Value::as_i64) == Some(1);
+        let mut claim_at = change.changed_at.clone();
+        let mut claim_device = self.peer.to_string();
+        // A claim an earlier file left here because this version was not held
+        // (see the bare-update skip below) competes with this one by the same
+        // LWW order; the winner is used, the older one is dropped (CARRY-3DEV).
+        if let (true, Some(m)) = (cards, &material) {
+            let pending: Option<(i64, String, String, Option<String>)> = self
+                .conn
+                .query_row(
+                    "SELECT is_active, changed_at, device_id, first_reviewed_at
+                     FROM card_version_pending_claims WHERE id = ?1",
+                    [&change.row_id],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+                )
+                .optional()?;
+            if let Some((active, at, device, first)) = pending {
+                let theirs = rank(parse_iso_ms(&at).ok_or(ApplyError::BadRow)?, &device);
+                let ours = rank(
+                    parse_iso_ms(&claim_at).ok_or(ApplyError::BadRow)?,
+                    &claim_device,
+                );
+                if theirs > ours {
+                    claim_active = active == 1;
+                    claim_at = at;
+                    claim_device = device;
+                }
+                let first = match first {
+                    Some(f) if self.first_review_counts(m, &f)? => Some(f),
+                    _ => None,
+                };
+                incoming_first = earliest(incoming_first, first);
+                self.conn.execute(
+                    "DELETE FROM card_version_pending_claims WHERE id = ?1",
+                    [&change.row_id],
+                )?;
+            }
+        }
         let claim = (
-            row.get("is_active").and_then(Value::as_i64) == Some(1),
+            claim_active,
             rank(
-                parse_iso_ms(&change.changed_at).ok_or(ApplyError::BadRow)?,
-                self.peer,
+                parse_iso_ms(&claim_at).ok_or(ApplyError::BadRow)?,
+                &claim_device,
             ),
         );
         let local = self.meta(table.name, &id)?;
-        let wins = incoming_wins(local.as_ref(), &change.changed_at, self.peer)?;
         let present = self.exists(table.name, table.primary_key, &Sql::Text(id.clone()))?;
-        // Meta without a row means this device removed it; only a file that
-        // carries its cards may rebuild it, a bare update never does.
+        let wins = incoming_wins(local.as_ref(), &claim_at, &claim_device)?;
+        // Meta without a row means this device removed it (or a reset did, or a
+        // deleted material cascaded it): a deletion. Only a file that carries its
+        // cards may rebuild it, a bare update never does. A tombstone is never
+        // rebuilt from by guesswork: it cannot tell a schema-34 cleanup from a reset.
         if !present
             && local.is_some()
             && !(wins && self.children.contains(&(table.name, id.clone())))
         {
             // Its items in this file skip too, instead of failing MissingParent.
             self.shadowed.insert((table.name, id.clone()));
+            self.out.ignored += 1;
+            return Ok(());
+        }
+        // A bare card-version update for a version this device does not hold, with
+        // none of its cards in this file, cannot be built: the row would be
+        // inserted and removed again as an empty version, leaving a tombstone that
+        // keeps the real version (with its ratings) from being rebuilt when its own
+        // file arrives later (CARRY-3DEV). Skip it and write no meta, but keep the
+        // claim (and its first review) in the local pending table so the version,
+        // when a later file builds it, is activated by the newest claim seen.
+        if !present
+            && cards
+            && row.get("card_count").and_then(Value::as_i64).unwrap_or(0) > 0
+            && !self.children.contains(&(table.name, id.clone()))
+        {
+            if let Some(m) = &material {
+                self.conn.execute(
+                    "INSERT INTO card_version_pending_claims
+                       (id, source_material_id, is_active, changed_at, device_id, first_reviewed_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+                     ON CONFLICT (id) DO UPDATE SET
+                       is_active = excluded.is_active, changed_at = excluded.changed_at,
+                       device_id = excluded.device_id,
+                       first_reviewed_at = excluded.first_reviewed_at",
+                    params![
+                        change.row_id,
+                        m,
+                        i64::from(claim_active),
+                        claim_at,
+                        claim_device,
+                        incoming_first
+                    ],
+                )?;
+            }
             self.out.ignored += 1;
             return Ok(());
         }
@@ -1315,7 +1560,7 @@ impl<'a> Engine<'a> {
         }
         if !present || wins {
             self.claims.insert((table.name, id.clone()), claim);
-            self.write_meta(table.name, &id, change, false)?;
+            self.write_meta_as(table.name, &id, &claim_device, &claim_at, false)?;
             changed = true;
         }
         if changed {
@@ -1603,7 +1848,7 @@ impl<'a> Engine<'a> {
             )?;
             if let Some(c) = meta_from {
                 self.write_meta(STATE, &item, c, false)?;
-            } else if local.is_none() {
+            } else if local.is_none() && !self.fold_only.contains(&item) {
                 // A new row with local values: the newest file change behind it.
                 if let Some(at) = self.item_changed_at.get(&item) {
                     self.conn.execute(
@@ -1616,8 +1861,13 @@ impl<'a> Engine<'a> {
                     )?;
                 }
             }
-            self.out.written += 1;
-            self.out.replayed_items += 1;
+            if self.fold_only.contains(&item) {
+                // Only a fold caused this replay: not a write of this file.
+                self.out.fold_replayed += 1;
+            } else {
+                self.out.written += 1;
+                self.out.replayed_items += 1;
+            }
         }
         Ok(())
     }

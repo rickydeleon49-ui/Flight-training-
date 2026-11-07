@@ -46,6 +46,7 @@ import faaDownloads from "../../src-tauri/migrations/0031_faa_downloads.sql?raw"
 import oralAnswers from "../../src-tauri/migrations/0032_oral_answers.sql?raw";
 import syncLedger from "../../src-tauri/migrations/0033_sync_ledger.sql?raw";
 import syncPictureCards from "../../src-tauri/migrations/0034_sync_picture_cards.sql?raw";
+import cardReviewEventFolds from "../../src-tauri/migrations/0035_card_review_event_folds.sql?raw";
 
 export interface Migration {
   version: number;
@@ -88,6 +89,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 32, description: "oral_answers", sql: oralAnswers },
   { version: 33, description: "sync_ledger", sql: syncLedger },
   { version: 34, description: "sync_picture_cards", sql: syncPictureCards },
+  { version: 35, description: "card_review_event_folds", sql: cardReviewEventFolds },
 ];
 
 /**
