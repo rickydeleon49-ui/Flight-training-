@@ -40,6 +40,7 @@ import { onSettleBeforeQuit, reportSettled } from "@/services/quit";
 import type { DailyPlanState } from "@/logic/dailyPlan";
 import type { Id } from "@/domain/types";
 import { GeminiJobsProvider } from "./GeminiJobs";
+import { KitQueueProvider } from "./KitQueue";
 
 /**
  * Everything the application knows about, held in memory.
@@ -463,7 +464,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         mutate={mutate}
         repositories={repositoriesRef.current}
       >
-        {children}
+        <KitQueueProvider>{children}</KitQueueProvider>
       </GeminiJobsProvider>
     </AppDataContext.Provider>
   );

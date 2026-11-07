@@ -328,7 +328,36 @@ pub(super) fn review_records(record: JobRecord) -> Vec<JobRecord> {
     .collect()
 }
 
+/// The kit queue's consent no longer matches: another provider is selected.
+pub(crate) const KIT_PROVIDER_CHANGED: &str =
+    "Your provider or your chapters changed. Check them and confirm again.";
+/// The kit queue's consent no longer matches: the chapter file changed.
+pub(crate) const KIT_SOURCE_CHANGED: &str = "This chapter changed. Make it again from its page.";
+
+/// The kit queue (SOURCE-01b) asks for exactly the provider and the file bytes
+/// the student agreed to. Either one differing refuses before any job begins,
+/// so nothing is sent or paid for.
+fn check_expected(
+    provider: crate::provider::ProviderId,
+    content_sha256: &str,
+    expected_provider: Option<&str>,
+    expected_sha256: Option<&str>,
+) -> Result<(), String> {
+    let company = match provider {
+        crate::provider::ProviderId::Claude => "Anthropic",
+        crate::provider::ProviderId::Gemini => "Google",
+    };
+    if expected_provider.is_some_and(|expected| expected != company) {
+        return Err(KIT_PROVIDER_CHANGED.to_string());
+    }
+    if expected_sha256.is_some_and(|expected| expected != content_sha256) {
+        return Err(KIT_SOURCE_CHANGED.to_string());
+    }
+    Ok(())
+}
+
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn generate_study_kit(
     app: AppHandle,
     relative_path: String,
@@ -336,6 +365,8 @@ pub async fn generate_study_kit(
     base_revision: Option<String>,
     practice_revision: Option<String>,
     request_id: Option<String>,
+    expected_provider: Option<String>,
+    expected_sha256: Option<String>,
 ) -> Result<JobAnswer<Value>, String> {
     let budget = Budget::new(gemini_budget::ACTIVE_BUDGET);
     budget.section_generation_limit(480);
@@ -344,6 +375,13 @@ pub async fn generate_study_kit(
         .run(prepare_submission(&app, &relative_path))
         .await
         .map_err(|_| "Preparing your PDF took too long.")??;
+    // SOURCE-01b: the last check before anything is sent or a job is begun.
+    check_expected(
+        provider.id(),
+        &source.content_sha256,
+        expected_provider.as_deref(),
+        expected_sha256.as_deref(),
+    )?;
     check_source(&source)?;
     let root = app_root(&app)?;
     let http = generation_client()?;
@@ -388,6 +426,27 @@ mod tests;
 #[cfg(test)]
 #[path = "live_bench_tests.rs"]
 mod live_bench;
+
+#[cfg(test)]
+mod kit_queue_expected_tests {
+    use super::*;
+    use crate::provider::ProviderId;
+
+    #[test]
+    fn kit_queue_expected_provider_and_checksum_refuse_before_sending() {
+        assert!(check_expected(ProviderId::Gemini, "abc", None, None).is_ok());
+        assert!(check_expected(ProviderId::Gemini, "abc", Some("Google"), Some("abc")).is_ok());
+        assert!(check_expected(ProviderId::Claude, "abc", Some("Anthropic"), Some("abc")).is_ok());
+        assert_eq!(
+            check_expected(ProviderId::Claude, "abc", Some("Google"), Some("abc")).unwrap_err(),
+            KIT_PROVIDER_CHANGED
+        );
+        assert_eq!(
+            check_expected(ProviderId::Gemini, "abc", Some("Google"), Some("def")).unwrap_err(),
+            KIT_SOURCE_CHANGED
+        );
+    }
+}
 
 #[cfg(test)]
 mod acs_tests {

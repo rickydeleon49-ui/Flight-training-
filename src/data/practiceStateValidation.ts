@@ -256,6 +256,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 30) await validateStudentPilotSteps(query, reference);
   if (newest >= 31) await validateFaaDownloads(query, reference);
   if (newest >= 32) await validateOralAnswers(query, reference);
+  if (newest >= 36) await validateKitQueue(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2163,6 +2164,21 @@ export async function validateStudentPilotSteps(query: ValidationQuery, referenc
   if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
       !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
       !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table))) refuse("Damaged student pilot steps schema.");
+}
+
+export async function validateKitQueue(query: ValidationQuery, reference: ValidationQuery) {
+  for (const table of ["kit_queue", "kit_queue_item"]) {
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+        !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+        !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+        !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
+        (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) refuse("Damaged study kit queue schema.");
+  }
+  // The one-open-queue rule (native `verify_schema_36_kit_queue`).
+  const indexSql = "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'kit_queue_one_open'";
+  const [actualIndex] = await query(indexSql, []);
+  const [expectedIndex] = await reference(indexSql, []);
+  if (!actualIndex || !expectedIndex || normalizeSql(text(actualIndex, "sql")) !== normalizeSql(text(expectedIndex, "sql"))) refuse("Damaged study kit queue schema.");
 }
 
 export async function validateFaaDownloads(query: ValidationQuery, reference: ValidationQuery) {

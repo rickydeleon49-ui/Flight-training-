@@ -32,6 +32,8 @@ import {
   watchGeminiProgress,
   cancelGeminiJob,
   GEMINI_CANCELLED_MESSAGE,
+  KIT_PROVIDER_CHANGED,
+  KIT_SOURCE_CHANGED,
   type GeminiJobKind,
   type GeminiProgressEvent,
   type GeminiWorkStage,
@@ -274,6 +276,31 @@ export interface StartOptions {
    * `preflight` is repeated before each follow-up.
    */
   followUps?: { preflight?: () => Promise<string | null> };
+  /** Kits only: use this request id (the kit queue records it before the paid call). */
+  requestId?: string;
+  /** Kits only: the provider and file checksum the student agreed to; the native side refuses anything else. */
+  expected?: { provider: string; sha256: string };
+  /** Kits only: told the journal job id as soon as the native side has begun it. */
+  onJobId?: (jobId: string) => void;
+}
+
+/** How a kit start ended, for the kit queue (SOURCE-01b). */
+export type KitStartOutcome = "checkpointed" | "memory-only" | "failed" | "cancelled" | "refused";
+export interface KitStartResult {
+  outcome: KitStartOutcome;
+  /** The plain message, when the start was refused or failed. */
+  message?: string;
+  /** The journal job, once the kit is checkpointed. */
+  jobId?: string | null;
+  /** Some parts came back and some did not. */
+  partial?: boolean;
+  /** The refusal is already shown on the kit's own job. */
+  shown?: boolean;
+  /** Whether the request reached the provider (so a failure is unclear, not free). */
+  sent: boolean;
+  /** Refused because the agreed provider or chapter file no longer matches. */
+  stale?: "provider" | "source";
+  requestId: string;
 }
 
 /**
@@ -299,6 +326,8 @@ interface GeminiJobsValue {
   retryRecovery(): void;
   start(kind: GeminiJobKind, target: GeminiJobTarget, options?: StartOptions): Promise<string | void>;
   startKit(target: GeminiJobTarget, options?: StartOptions): Promise<string | void>;
+  /** Same as startKit, but says how it ended (SOURCE-01b). */
+  startKitTracked(target: GeminiJobTarget, options?: StartOptions): Promise<KitStartResult>;
   queueGuide(target: GeminiJobTarget): Promise<string | null>;
   continueGuide(key: string, restart?: boolean): Promise<void>;
   saveAgain(key: string): Promise<void>;
@@ -1279,12 +1308,14 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     [commit, flushAcks, syncPendingCount],
   );
 
-  const startKit = useCallback(async (target: GeminiJobTarget, options?: StartOptions) => {
-    if (activeRef.current !== null || recoveryRef.current !== "ready") return "Wait for the current study aid to finish, then try again.";
+  const startKitTracked = useCallback(async (target: GeminiJobTarget, options?: StartOptions): Promise<KitStartResult> => {
+    const requestId = options?.requestId ?? newRequestId();
+    const refused = (message: string): KitStartResult => ({ outcome: "refused", message, sent: false, requestId });
+    if (activeRef.current !== null || recoveryRef.current !== "ready") return refused("Wait for the current study aid to finish, then try again.");
     // A failed kit part holds nothing to save, so it never blocks a new kit.
-    if (jobsRef.current.some(j => j.materialId === target.materialId && (j.answer || j.sectionGuide))) return "Save or discard the earlier drafts first, then make a study kit.";
+    if (jobsRef.current.some(j => j.materialId === target.materialId && (j.answer || j.sectionGuide))) return refused("Save or discard the earlier drafts first, then make a study kit.");
     const key = newKey();
-    const requestId = newRequestId();
+    let tracked: KitStartResult = { outcome: "failed", sent: false, requestId };
     activeRef.current = key;
     const baseRevision = dataRef.current.aiStudySets.find(s => s.sourceMaterialId === target.materialId)?.updatedAt ?? null;
     const practiceRevision = dataRef.current.practiceTests.find(s => s.sourceMaterialId === target.materialId)?.updatedAt ?? null;
@@ -1294,14 +1325,18 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     let stop = () => {};
     try {
       const refusal = await options?.preflight?.();
-      if (refusal) { update(key, { phase: "failed", error: refusal }); return; }
+      if (refusal) { update(key, { phase: "failed", error: refusal }); return { outcome: "refused", message: refusal, shown: true, sent: false, requestId }; }
       try { stop = await watchGeminiProgress(event => {
         const job = jobsRef.current.find(j => j.key === key);
-        if (job && belongsTo(job, event)) update(key, { jobId: event.jobId ?? job.jobId, progress: event.message ?? job.progress, stage: event.stage, ...stepStart(job, event) });
+        if (job && belongsTo(job, event)) {
+          update(key, { jobId: event.jobId ?? job.jobId, progress: event.message ?? job.progress, stage: event.stage, ...stepStart(job, event) });
+          if (event.jobId) options?.onJobId?.(event.jobId);
+        }
       }); } catch { /* Progress is optional. */ }
-      if (jobsRef.current.find(j => j.key === key)?.cancelRequested) { update(key, { phase: "cancelled", error: CANCELLED_BEFORE_SENDING }); return; }
+      if (jobsRef.current.find(j => j.key === key)?.cancelRequested) { update(key, { phase: "cancelled", error: CANCELLED_BEFORE_SENDING }); return { outcome: "cancelled", message: CANCELLED_BEFORE_SENDING, sent: false, requestId }; }
       update(key, { invoked: true });
-      const result = await generateStudyKit(target, baseRevision, practiceRevision, requestId);
+      tracked = { ...tracked, sent: true };
+      const result = await generateStudyKit(target, baseRevision, practiceRevision, requestId, options?.expected);
       if (!result.checkpointed || !result.jobId) {
         // A disk failure must not throw away a paid answer the command returned.
         // These drafts stay in this window, with an explicit keep-open message.
@@ -1314,18 +1349,32 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             checkpointed: false, local: true, createdAt: Date.now() }];
         });
         commit([...jobsRef.current.filter(j => j.key !== key), ...drafts]);
-        return;
+        return { outcome: "memory-only", sent: true, requestId };
       }
       update(key, { jobId: result.jobId });
       // Read the durable checkpoint before dropping the local running notice.
       const records = await listGeminiJobs();
       commit(jobsRef.current.filter(j => j.key !== key));
       await reconcile(records);
+      const parts = Object.values(result.parts ?? {}).filter(Boolean) as { answer?: unknown }[];
+      return { outcome: "checkpointed", jobId: result.jobId, partial: parts.some(p => p.answer) && parts.some(p => !p.answer), sent: true, requestId };
     } catch (error) {
-      update(key, { phase: geminiErrorMessage(error) === GEMINI_CANCELLED_MESSAGE ? "cancelled" : "failed", error: geminiErrorMessage(error), progress: null, stage: null });
+      const message = geminiErrorMessage(error);
+      const cancelled = message === GEMINI_CANCELLED_MESSAGE;
+      update(key, { phase: cancelled ? "cancelled" : "failed", error: message, progress: null, stage: null });
+      // The native side refused before beginning a job: nothing was sent.
+      if (message === KIT_PROVIDER_CHANGED) return { outcome: "refused", message, shown: true, sent: false, stale: "provider", requestId };
+      if (message === KIT_SOURCE_CHANGED) return { outcome: "refused", message, shown: true, sent: false, stale: "source", requestId };
       // Recovery can still retrieve a finished answer if only the list failed.
+      return { ...tracked, outcome: cancelled ? "cancelled" : "failed", message };
     } finally { stop(); release(key); }
   }, [commit, reconcile, release, update]);
+
+  const startKit = useCallback(async (target: GeminiJobTarget, options?: StartOptions) => {
+    const result = await startKitTracked(target, options);
+    // A preflight refusal is already shown on the job, as before; the other refusals are returned.
+    return result.outcome === "refused" && !result.shown ? result.message : undefined;
+  }, [startKitTracked]);
 
   const follow = useCallback(async () => {
     try {
@@ -1431,6 +1480,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       retryRecovery,
       start,
       startKit,
+      startKitTracked,
       queueGuide,
       continueGuide,
       saveAgain,
@@ -1440,7 +1490,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
     }),
     // lockTick: the lock is a ref, so its release must change the value for
     // pages reading `locked()` to render again.
-    [jobs, packMaterials, cardNotes, recovery, retryRecovery, start, startKit, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
+    [jobs, packMaterials, cardNotes, recovery, retryRecovery, start, startKit, startKitTracked, queueGuide, continueGuide, saveAgain, saveReviewed, dismiss, cancel, lockTick],
   );
 
   return <GeminiJobsContext.Provider value={value}>{children}</GeminiJobsContext.Provider>;

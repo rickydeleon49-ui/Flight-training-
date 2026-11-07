@@ -29,11 +29,13 @@ import { oralAnswerRepository } from "./oralAnswerRepository";
 import { materialVideoLinkRepository } from "./materialVideoLinkRepository";
 import { studentPilotStepRepository } from "./studentPilotStepRepository";
 import { faaDownloadRepository } from "./faaDownloadRepository";
+import { kitQueueRepository } from "./kitQueueRepository";
 
 export interface Repositories {
   materialVideoLinks: ReturnType<typeof materialVideoLinkRepository>;
   studentPilotSteps: ReturnType<typeof studentPilotStepRepository>;
   faaDownloads: ReturnType<typeof faaDownloadRepository>;
+  kitQueue: ReturnType<typeof kitQueueRepository>;
   homework: ReturnType<typeof homeworkRepository>;
   app: ReturnType<typeof appRepository>;
   profile: ReturnType<typeof profileRepository>;
@@ -63,6 +65,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
     faaDownloads: faaDownloadRepository(db, documents),
     materialVideoLinks: materialVideoLinkRepository(db),
     studentPilotSteps: studentPilotStepRepository(db),
+    kitQueue: kitQueueRepository(db),
     homework: homeworkRepository(db),
     app: appRepository(db),
     profile: profileRepository(db),

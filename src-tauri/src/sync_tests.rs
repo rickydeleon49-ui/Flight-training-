@@ -10512,7 +10512,8 @@ mod edit_carry {
         let conn = &t.z;
         conn.execute_batch(
             "DROP TABLE card_review_event_folds; DROP TABLE card_version_pending_claims;
-             DELETE FROM _sqlx_migrations WHERE version = 35;",
+             DROP TABLE kit_queue_item; DROP TABLE kit_queue;
+             DELETE FROM _sqlx_migrations WHERE version IN (35, 36);",
         )
         .unwrap();
         crate::backup::verify_application_connection(conn).unwrap();
