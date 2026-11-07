@@ -24,6 +24,17 @@ const CHUNK_PAGES: u32 = 30;
 const NAME_PART_CHARS: usize = 60;
 /// Only the first lines of a page count as "the top of the page".
 const TOP_LINES: usize = 3;
+/// Longest chapter title shown; longer "titles" are page text.
+const MAX_TITLE_CHARS: usize = 80;
+/// An outline with more entries than this per page is the page text turned
+/// into bookmarks, not a contents list.
+const MAX_OUTLINE_ENTRIES_PER_PAGE: u64 = 4;
+/// Chapters average at least this many pages; finer outline levels are not
+/// chapters.
+const MIN_CHAPTER_PAGES: u32 = 3;
+/// A heading kept after "Chapter N" on the same line is at most this long.
+const MAX_HEADING_CHARS: usize = 50;
+const MAX_HEADING_WORDS: usize = 8;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,8 +75,18 @@ fn clip(text: &str, max: usize) -> String {
         .to_string()
 }
 
+/// True when `title` reads like a heading, not a run of page text: short,
+/// mostly letters. Outline and text titles that fail this are not shown.
+fn clean_title(title: &str) -> bool {
+    let title = title.trim();
+    let visible = title.chars().filter(|c| !c.is_whitespace()).count();
+    let letters = title.chars().filter(|c| c.is_alphabetic()).count();
+    title.chars().count() <= MAX_TITLE_CHARS && letters >= 1 && letters * 2 >= visible
+}
+
 /// Turn sorted, distinct chapter starts into ranges that cover every page.
-/// Pages before the first start become a leading "Front pages" entry.
+/// Pages before the first start become a leading "Front pages" entry. A start
+/// without a clean title is named by its pages.
 fn cover(starts: Vec<(u32, String)>, total: u32) -> Vec<Chapter> {
     let mut chapters = Vec::new();
     if let Some((first, _)) = starts.first() {
@@ -78,24 +99,51 @@ fn cover(starts: Vec<(u32, String)>, total: u32) -> Vec<Chapter> {
         }
     }
     for (i, (page, title)) in starts.iter().enumerate() {
+        let last_page = starts.get(i + 1).map_or(total, |(next, _)| next - 1);
+        let title = if clean_title(title) {
+            title.trim().to_string()
+        } else {
+            pages_title(*page, last_page)
+        };
         chapters.push(Chapter {
-            title: title.trim().to_string(),
+            title,
             first_page: *page,
-            last_page: starts.get(i + 1).map_or(total, |(next, _)| next - 1),
+            last_page,
         });
     }
     chapters
 }
 
+fn pages_title(first: u32, last: u32) -> String {
+    if first == last {
+        format!("Page {first}")
+    } else {
+        format!("Pages {first}\u{2013}{last}")
+    }
+}
+
 /// Chapters from the outline: the shallowest level with at least two distinct
-/// chapter starts (a lone wrapper bookmark is skipped).
+/// chapter starts (a lone wrapper bookmark is skipped). An outline that is
+/// really the page text turned into bookmarks (as some PDF tools make from the
+/// tagged structure: thousands of entries, paragraphs and figure text as
+/// titles, a "chapter" every page or two) is not used.
 pub(crate) fn outline_chapters(document: &Document, total: u32) -> Vec<Chapter> {
-    for entries in outline_levels(document, total).into_values() {
+    let levels = outline_levels(document, total);
+    let entries: usize = levels.values().map(Vec::len).sum();
+    if entries as u64 > u64::from(total) * MAX_OUTLINE_ENTRIES_PER_PAGE {
+        return Vec::new();
+    }
+    for entries in levels.into_values() {
         let mut by_page: BTreeMap<u32, String> = BTreeMap::new();
         for (page, title) in entries {
             by_page.entry(page).or_insert(title);
         }
         if by_page.len() >= 2 {
+            let clean = by_page.values().filter(|t| clean_title(t)).count();
+            let too_fine = by_page.len() as u64 * u64::from(MIN_CHAPTER_PAGES) > u64::from(total);
+            if too_fine || clean * 2 < by_page.len() {
+                return Vec::new();
+            }
             return cover(by_page.into_iter().collect(), total);
         }
     }
@@ -124,36 +172,148 @@ fn top_lines(text: &str) -> Vec<String> {
 }
 
 /// The chapter number if the line starts with "Chapter N" (digits, or a roman
-/// numeral as its own word). Digits may run straight into the next text.
-fn chapter_number(line: &str) -> Option<String> {
+/// numeral as its own word), with a clean title: "Chapter N", plus the rest of
+/// the line only when it is a short heading set apart from the number.
+fn chapter_number(line: &str) -> Option<(String, String)> {
     let head = line.get(..8)?;
     if !head.eq_ignore_ascii_case("chapter ") {
         return None;
     }
     let rest = line[8..].trim_start();
     let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-    if !digits.is_empty() {
-        return Some(digits);
-    }
-    let word = rest
-        .split(|c: char| !c.is_alphanumeric())
-        .next()
-        .unwrap_or("");
-    let roman = !word.is_empty() && word.len() <= 6 && word.chars().all(|c| "IVXLivxl".contains(c));
-    roman.then(|| word.to_ascii_uppercase())
+    let number = if digits.is_empty() {
+        let word = rest
+            .split(|c: char| !c.is_alphanumeric())
+            .next()
+            .unwrap_or("");
+        let roman =
+            !word.is_empty() && word.len() <= 6 && word.chars().all(|c| "IVXLivxl".contains(c));
+        if !roman {
+            return None;
+        }
+        word.to_ascii_uppercase()
+    } else {
+        digits
+    };
+    let after = &rest[number.len()..];
+    let heading = after
+        .strip_prefix(|c: char| c.is_whitespace() || ":-\u{2013}\u{2014}.".contains(c))
+        .map(|h| h.trim_matches(|c: char| c.is_whitespace() || ":-\u{2013}\u{2014}.".contains(c)))
+        .filter(|h| {
+            h.chars().count() <= MAX_HEADING_CHARS
+                && h.split_whitespace().count() <= MAX_HEADING_WORDS
+                && !h.contains(". ")
+                && clean_title(h)
+        });
+    let title = match heading {
+        Some(h) => format!("Chapter {number}: {h}"),
+        None => format!("Chapter {number}"),
+    };
+    Some((number, title))
 }
 
-/// Chapter starts read from page text: "Chapter N" in the first lines of a
-/// page. A line repeated at the top of most pages is a running header, not a
-/// start, and the same chapter number twice in a row is a header too.
-fn text_starts(document: &Document, total: u32) -> Vec<(u32, String)> {
-    let tops: Vec<(u32, Vec<String>)> = (1..=total)
-        .map(|page| {
-            (
-                page,
-                top_lines(&document.extract_text(&[page]).unwrap_or_default()),
-            )
+/// A chapter page number at the start of a line, as many handbooks print
+/// them: "5-12" (chapter 5, page 12) or "A-3" (appendix A). Returns the
+/// chapter label and the page within it. "1-10" is never read as "1-1".
+fn page_label(line: &str) -> Option<(String, u32)> {
+    let (label, rest) = line.split_once('-')?;
+    let numbered =
+        !label.is_empty() && label.len() <= 2 && label.chars().all(|c| c.is_ascii_digit());
+    let lettered = label.len() == 1 && label.chars().all(|c| c.is_ascii_uppercase());
+    if !numbered && !lettered || numbered && label.starts_with('0') {
+        return None;
+    }
+    let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+    if digits.is_empty() || digits.len() > 3 {
+        return None;
+    }
+    Some((label.to_string(), digits.parse().ok()?))
+}
+
+/// Chapter starts from chapter page numbers ("3-1" opens chapter 3), used only
+/// when most pages carry such a number as their first or last line (where
+/// page numbers sit). A start counts only when the next page carries the same
+/// chapter's numbers too, so a contents page that ends in "I-1" is not a
+/// start. Chapters must count up; lettered parts (appendices, glossary,
+/// index) come after, each once.
+fn label_starts(texts: &[(u32, String)], total: u32) -> Vec<(u32, String)> {
+    let labelled: Vec<(u32, String, u32, Vec<String>)> = texts
+        .iter()
+        .filter_map(|(page, text)| {
+            let lines: Vec<String> = text
+                .lines()
+                .map(|l| l.split_whitespace().collect::<Vec<_>>().join(" "))
+                .filter(|l| !l.is_empty())
+                .collect();
+            let (label, within) = [lines.first(), lines.last()]
+                .into_iter()
+                .flatten()
+                .find_map(|l| page_label(l))?;
+            Some((
+                *page,
+                label,
+                within,
+                lines.into_iter().take(TOP_LINES).collect(),
+            ))
         })
+        .collect();
+    if (labelled.len() as u64) * 2 <= u64::from(total) {
+        return Vec::new();
+    }
+    let mut starts = Vec::new();
+    let mut last_number = 0;
+    let mut letters_seen: Vec<String> = Vec::new();
+    let label_on: HashMap<u32, String> = labelled
+        .iter()
+        .map(|(page, label, _, _)| (*page, label.clone()))
+        .collect();
+    for (page, label, within, top) in labelled {
+        let continues = page == total || label_on.get(&(page + 1)) == Some(&label);
+        if within != 1 || !continues {
+            continue;
+        }
+        let title = if let Ok(number) = label.parse::<u32>() {
+            if number <= last_number || !letters_seen.is_empty() {
+                continue;
+            }
+            last_number = number;
+            format!("Chapter {number}")
+        } else {
+            if letters_seen.contains(&label) {
+                continue;
+            }
+            letters_seen.push(label.clone());
+            // Only a known name; otherwise `cover` names it by its pages.
+            top.iter()
+                .find_map(|l| {
+                    ["Glossary", "Index"]
+                        .into_iter()
+                        .find(|word| l.eq_ignore_ascii_case(word))
+                })
+                .unwrap_or_default()
+                .to_string()
+        };
+        starts.push((page, title));
+    }
+    starts
+}
+
+/// Chapter starts read from page text: chapter page numbers ("4-1") when the
+/// book uses them, otherwise "Chapter N" in the first lines of a page. A line
+/// repeated at the top of most pages is a running header, not a start, and
+/// the same chapter number twice in a row is a header too. Titles are never
+/// page text: "Chapter N" (with a short heading), or the pages.
+fn text_starts(document: &Document, total: u32) -> Vec<(u32, String)> {
+    let texts: Vec<(u32, String)> = (1..=total)
+        .map(|page| (page, document.extract_text(&[page]).unwrap_or_default()))
+        .collect();
+    let by_label = label_starts(&texts, total);
+    if by_label.len() >= 2 {
+        return by_label;
+    }
+    let tops: Vec<(u32, Vec<String>)> = texts
+        .iter()
+        .map(|(page, text)| (*page, top_lines(text)))
         .collect();
     let mut repeats: HashMap<String, u32> = HashMap::new();
     for (_, lines) in &tops {
@@ -170,11 +330,11 @@ fn text_starts(document: &Document, total: u32) -> Vec<(u32, String)> {
         let found = lines
             .iter()
             .filter(|l| !header(l))
-            .find_map(|l| chapter_number(l).map(|n| (n, l.clone())));
-        if let Some((number, line)) = found {
+            .find_map(|l| chapter_number(l));
+        if let Some((number, title)) = found {
             if last_number.as_ref() != Some(&number) {
                 last_number = Some(number);
-                starts.push((page, line));
+                starts.push((page, title));
             }
         }
     }
@@ -725,6 +885,157 @@ mod tests {
             &[(1, "A", 1), (1, "B", 5)],
         );
         assert_eq!(found(&doc, 10), (vec![(1, 4), (5, 10)], "outline"));
+    }
+
+    /// A book whose pages carry chapter page numbers ("2-3") as their first
+    /// line, like the FAA handbooks, after `front` unnumbered pages.
+    fn numbered(front: usize, chapters: &[(&str, u32)]) -> Vec<Vec<String>> {
+        let mut pages: Vec<Vec<String>> = (0..front)
+            .map(|_| vec!["Front matter words on a page.".to_string()])
+            .collect();
+        for (label, count) in chapters {
+            for k in 1..=*count {
+                pages.push(vec![
+                    format!("{label}-{k}"),
+                    "Introduction".to_string(),
+                    "Body text of a page with enough words to count as text.".to_string(),
+                ]);
+            }
+        }
+        pages
+    }
+
+    fn as_refs(pages: &[Vec<String>]) -> Vec<Vec<&str>> {
+        pages
+            .iter()
+            .map(|p| p.iter().map(String::as_str).collect())
+            .collect()
+    }
+
+    #[test]
+    fn an_outline_made_from_page_text_is_not_used() {
+        // Like the real PHAK: wrapper bookmarks, then a "level" whose entries
+        // are figure captions, map labels and paragraphs, nearly one a page.
+        // (Bookmark titles are distinct: the outline reader keeps one per title.)
+        let junk: Vec<String> = (1..=12u32)
+            .map(|page| match page % 4 {
+                0 => format!("15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 11 Rock Springs {page} Salt Lake City"),
+                1 => format!("Figure 1-{page}.  Standard airway beacon installation. D-KC"),
+                2 => format!("SubchaptersVolumeChapterTitleCode of Federal Regulations12345{page}"),
+                _ => format!("The Aeronautical Information Manual is designed to provide the aviation community with basic flight information {page}"),
+            })
+            .collect();
+        let mut outline = vec![(1, "Document", 12), (2, "Article", 12)];
+        for (page, title) in (1..=12u32).zip(&junk) {
+            outline.push((3, title.as_str(), page));
+        }
+        let doc = book(&plain(12), &[], &outline);
+        assert!(outline_chapters(&doc, 12).is_empty());
+        let (chapters, source) = detect_chapters(&doc, 12, false);
+        assert_eq!(source, "chunks");
+        assert_eq!(spans(&chapters), vec![(1, 12)]);
+        assert!(chapters.iter().all(|c| !c.title.contains("Rock Springs")));
+    }
+
+    #[test]
+    fn an_outline_with_thousands_of_entries_is_not_used() {
+        // Two clean top-level entries, but 52 bookmarks for 10 pages.
+        let paragraphs: Vec<String> = (0..50).map(|i| format!("Paragraph {i}")).collect();
+        let mut outline: Vec<(usize, &str, u32)> = vec![(1, "One", 1)];
+        outline.extend(paragraphs[..25].iter().map(|t| (2, t.as_str(), 1)));
+        outline.push((1, "Two", 5));
+        outline.extend(paragraphs[25..].iter().map(|t| (2, t.as_str(), 5)));
+        let doc = book(&plain(10), &[], &outline);
+        assert!(outline_chapters(&doc, 10).is_empty());
+    }
+
+    #[test]
+    fn one_messy_outline_title_is_named_by_its_pages() {
+        let doc = book(
+            &plain(30),
+            &[],
+            &[
+                (1, "Weather Theory", 1),
+                (1, "1051209075 0.1600.150", 11),
+                (1, "Navigation", 21),
+            ],
+        );
+        let titles: Vec<String> = outline_chapters(&doc, 30)
+            .into_iter()
+            .map(|c| c.title)
+            .collect();
+        assert_eq!(
+            titles,
+            vec!["Weather Theory", "Pages 11\u{2013}20", "Navigation"]
+        );
+    }
+
+    #[test]
+    fn chapter_page_numbers_find_the_chapters() {
+        let mut pages = numbered(3, &[("1", 4), ("2", 3), ("3", 5), ("A", 2), ("I", 2)]);
+        // The index's first page says what it is.
+        pages[3 + 4 + 3 + 5 + 2].insert(1, "Index".to_string());
+        // A contents page lists chapter starts mid-page and ends with "I-1".
+        pages[1] = vec![
+            "Contents".into(),
+            "Chapter 3 ....".into(),
+            "3-1".into(),
+            "Index ....".into(),
+            "I-1".into(),
+        ];
+        let doc = book(&as_refs(&pages), &[], &[]);
+        let (chapters, source) = detect_chapters(&doc, pages.len() as u32, false);
+        assert_eq!(source, "text");
+        assert_eq!(
+            spans(&chapters),
+            vec![(1, 3), (4, 7), (8, 10), (11, 15), (16, 17), (18, 19)]
+        );
+        let titles: Vec<&str> = chapters.iter().map(|c| c.title.as_str()).collect();
+        assert_eq!(
+            titles,
+            vec![
+                "Front pages",
+                "Chapter 1",
+                "Chapter 2",
+                "Chapter 3",
+                "Pages 16\u{2013}17",
+                "Index"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_later_page_number_is_not_read_as_a_chapter_start() {
+        // "1-10" and "1-11" must not count as "1-1"; only real "N-1" pages.
+        let pages = numbered(0, &[("1", 12), ("2", 12)]);
+        let doc = book(&as_refs(&pages), &[], &[]);
+        assert_eq!(found(&doc, 24), (vec![(1, 12), (13, 24)], "text"));
+    }
+
+    #[test]
+    fn text_titles_are_never_page_text() {
+        let doc = book(
+            &headed(
+                12,
+                &[
+                    (1, "Chapter 7IntroductionThis chapter covers the primary systems found on most aircraft."),
+                    (5, "Chapter 8 In order to safely fly any aircraft, a pilot must understand. The rest"),
+                    (9, "Chapter 9: Weather Theory"),
+                ],
+                None,
+            ),
+            &[],
+            &[],
+        );
+        let titles: Vec<String> = detect_chapters(&doc, 12, false)
+            .0
+            .into_iter()
+            .map(|c| c.title)
+            .collect();
+        assert_eq!(
+            titles,
+            vec!["Chapter 7", "Chapter 8", "Chapter 9: Weather Theory"]
+        );
     }
 
     // ---- splitting ranges ----
