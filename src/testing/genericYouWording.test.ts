@@ -7,7 +7,7 @@ const PRONOUN = /\b(she|her|hers|herself)\b/i;
 
 // Wire-format text sent to the provider, byte-matched by a Rust test fixture
 // (maxContext); changing it is a provider-contract change, not wording.
-const ALLOWED_LINES = [/"Her chosen answer: "/, /iCloud Drive → Her Flight Deck/];
+const ALLOWED_LINES = [/"Her chosen answer: "/, /iCloud Drive → Her Flight Deck/, /notifications for Her Flight Deck in System Settings/];
 
 // Product name and stored identifiers (hyphenated storage keys, persisted job
 // state "waiting-for-her", db file names) are allowed; nothing else is.

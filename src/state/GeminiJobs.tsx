@@ -18,6 +18,7 @@ import { needsPracticeRegenerationReview } from "@/logic/practiceRegeneration";
 import { PracticeAuthoringError, PRACTICE_AUTHORING_ERROR_MESSAGES, KIT_PRACTICE_ATTEMPT_MESSAGE } from "@/data/persistenceErrors";
 import { generatedPage, needsRegenerationReview } from "@/logic/studySetEditing";
 import { inspectPdf } from "@/services/pdf";
+import { notify } from "@/services/notify";
 import { MAX_CARDS } from "@/logic/cardIdentity";
 import {
   resumeStudyGuide, restartStudyGuide, sectionGuideError, queueStudyGuide,
@@ -449,6 +450,18 @@ async function goneFromJournal(id: string): Promise<boolean> {
   }
 }
 
+const NOTICE_TITLE = "Your Flight Deck";
+const NOTICE_TEXT = {
+  ready: "Your study guide is ready",
+  partial: "Your study guide finished, but part of it didn't work. Open the app to see.",
+  failed: "A study guide couldn't be made. Open the app to see.",
+} as const;
+
+/** One notice for a whole study kit, by how many of its parts have an answer. */
+function kitNotice(answered: number, total: number): keyof typeof NOTICE_TEXT {
+  return answered === 0 ? "failed" : answered < total ? "partial" : "ready";
+}
+
 interface Props {
   children: ReactNode;
   data: AppData;
@@ -487,10 +500,29 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
   const recoveryRef = useRef<GeminiRecovery>("pending");
   const [recoveryAttempt, setRecoveryAttempt] = useState(0);
 
+  /**
+   * "Your study guide is ready" (NOTIFY-01). Only when you turned it on and the
+   * window is in the background. The text never holds your titles or content.
+   */
+  const announce = useCallback((what: keyof typeof NOTICE_TEXT) => {
+    if (dataRef.current.toolkit?.studyGuideNotice !== true) return;
+    if (typeof document !== "undefined" && document.hasFocus() && document.visibilityState === "visible") return;
+    void notify(NOTICE_TITLE, NOTICE_TEXT[what]);
+  }, []);
+
   const commit = useCallback((next: GeminiJob[]) => {
+    // Only a job seen running here and finishing here gets a notice, so jobs
+    // that finished before the app started stay quiet. Study-kit parts are
+    // announced once for the whole kit instead.
+    const before = new Map(jobsRef.current.map((job) => [job.key, job.phase]));
+    for (const job of next) {
+      if (before.get(job.key) !== "running" || job.studyKitPart) continue;
+      if (job.phase === "recovered" || job.phase === "saving") announce("ready");
+      else if (job.phase === "failed") announce("failed");
+    }
     jobsRef.current = next;
     setJobs(next);
-  }, []);
+  }, [announce]);
 
   const update = useCallback(
     (key: string, change: Partial<GeminiJob>) => {
@@ -1235,6 +1267,8 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           };
         });
         // A recovered running kit becomes its three review jobs once ready.
+        const settledKits = jobsRef.current.filter((j) => j.kind === "study-kit" && j.phase === "running" && j.jobId && !j.local
+          && records.some((r) => r.id.startsWith(`${j.jobId}#`)));
         next = next.filter(j => !(j.kind === "study-kit" && j.jobId && records.some(r => r.id.startsWith(`${j.jobId}#`))));
         const known = new Set(next.map((job) => job.jobId).filter(Boolean));
         for (const record of records) {
@@ -1296,6 +1330,11 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
           ? { ...job, phase: "failed", error: EMPTY_FLASHCARDS_MESSAGE, answer: null }
           : job);
         commit(next);
+        for (const kit of settledKits) {
+          const parts = records.filter((r) => r.id.startsWith(`${kit.jobId}#`));
+          if (parts.some((r) => r.stage === "running")) continue;
+          announce(kitNotice(parts.filter((r) => r.stage === "ready" && r.result).length, parts.length));
+        }
         const running = next.find((job) => job.phase === "running" && job.jobId !== null && !job.local);
         if (running && activeRef.current === null) activeRef.current = running.key;
         syncPendingCount();
@@ -1305,7 +1344,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       reconcileChainRef.current = queued.catch(() => {});
       return queued;
     },
-    [commit, flushAcks, syncPendingCount],
+    [announce, commit, flushAcks, syncPendingCount],
   );
 
   const startKitTracked = useCallback(async (target: GeminiJobTarget, options?: StartOptions): Promise<KitStartResult> => {
@@ -1349,6 +1388,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
             checkpointed: false, local: true, createdAt: Date.now() }];
         });
         commit([...jobsRef.current.filter(j => j.key !== key), ...drafts]);
+        announce(kitNotice(drafts.filter(d => d.answer).length, 3));
         return { outcome: "memory-only", sent: true, requestId };
       }
       update(key, { jobId: result.jobId });
@@ -1357,6 +1397,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       commit(jobsRef.current.filter(j => j.key !== key));
       await reconcile(records);
       const parts = Object.values(result.parts ?? {}).filter(Boolean) as { answer?: unknown }[];
+      announce(kitNotice(parts.filter(p => p.answer).length, 3));
       return { outcome: "checkpointed", jobId: result.jobId, partial: parts.some(p => p.answer) && parts.some(p => !p.answer), sent: true, requestId };
     } catch (error) {
       const message = geminiErrorMessage(error);
@@ -1368,7 +1409,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
       // Recovery can still retrieve a finished answer if only the list failed.
       return { ...tracked, outcome: cancelled ? "cancelled" : "failed", message };
     } finally { stop(); release(key); }
-  }, [commit, reconcile, release, update]);
+  }, [announce, commit, reconcile, release, update]);
 
   const startKit = useCallback(async (target: GeminiJobTarget, options?: StartOptions) => {
     const result = await startKitTracked(target, options);

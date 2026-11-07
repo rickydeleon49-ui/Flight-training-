@@ -98,6 +98,14 @@ describe("toolkit defaults without structuredClone", () => {
     expect(normalizeToolkitState({ credentials: {} }).credentials).toEqual([]);
   });
 
+  it("keeps the optional study-guide notice switch only when it is a real boolean", () => {
+    expect("studyGuideNotice" in defaultToolkitState()).toBe(false);
+    expect(normalizeToolkitState({}).studyGuideNotice).toBeUndefined();
+    expect(normalizeToolkitState({ studyGuideNotice: "yes" }).studyGuideNotice).toBeUndefined();
+    expect(normalizeToolkitState({ studyGuideNotice: true }).studyGuideNotice).toBe(true);
+    expect(normalizeToolkitState({ studyGuideNotice: false }).studyGuideNotice).toBe(false);
+  });
+
   it("keeps valid stored values and owns every nested object and array", async () => {
     const stored = normalizeToolkitState({
       ...DEFAULT_TOOLKIT_STATE,

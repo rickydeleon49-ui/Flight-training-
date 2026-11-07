@@ -363,6 +363,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_notification::init())
         // Quitting settles her pending work first (QUIT-01): our own Quit item
         // for Cmd-Q, and the close button or Cmd-W held until it is done.
         .manage(quit_settlement::Settlement::default())

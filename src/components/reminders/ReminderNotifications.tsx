@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { todayIso } from "@/lib/dates";
 import { buildReminders } from "@/logic/toolkit";
+import { notify } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 
 /** Reminders are viewed in Pilot Toolkit; this only sends permitted OS notices. */
@@ -20,21 +21,23 @@ export function ReminderNotifications() {
     }),
     [data.actions, data.events, data.profile, data.toolkit, data.homework, today],
   );
+  const sending = useRef<string | null>(null);
   const sessionKey = `her-flight-deck-reminders-${today}`;
 
   useEffect(() => {
     if (status !== "ready" || !data.toolkit.remindersEnabled || reminders.length === 0) return;
     if (sessionStorage.getItem(sessionKey)) return;
-    // Only the explicit Toolkit switch requests permission.
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    try {
-      new Notification("Your Flight Deck", {
-        body: `${reminders.length} training reminder${reminders.length === 1 ? "" : "s"} need a look.`,
-      });
-      sessionStorage.setItem(sessionKey, "seen");
-    } catch {
-      // The reminder list remains available in Pilot Toolkit.
-    }
+    if (sending.current === sessionKey) return;
+    sending.current = sessionKey;
+    // Only the explicit Toolkit switch requests permission; notify() sends
+    // only if the system already allows it, and never throws.
+    void notify(
+      "Your Flight Deck",
+      `${reminders.length} training reminder${reminders.length === 1 ? "" : "s"} need a look.`,
+    ).then((sent) => {
+      if (sent) sessionStorage.setItem(sessionKey, "seen");
+      else sending.current = null;
+    });
   }, [status, data.toolkit.remindersEnabled, reminders, sessionKey]);
 
   return null;

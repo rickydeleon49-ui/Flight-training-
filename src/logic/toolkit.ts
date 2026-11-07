@@ -102,9 +102,11 @@ export function normalizeToolkitState(value: unknown): ToolkitState {
     (item) => item?.id && !DEFAULT_READINESS_ITEMS.some((fallback) => fallback.id === item.id),
   );
 
+  const { studyGuideNotice, ...rest } = input;
   return copyToolkitData({
     ...DEFAULT_TOOLKIT_STATE,
-    ...input,
+    ...rest,
+    ...(typeof studyGuideNotice === "boolean" ? { studyGuideNotice } : {}),
     version: 1,
     readinessItems: [...mergedItems, ...customItems],
     credentials: Array.isArray(input.credentials) ? input.credentials : [],
