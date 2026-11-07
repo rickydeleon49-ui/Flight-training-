@@ -47,6 +47,7 @@ import oralAnswers from "../../src-tauri/migrations/0032_oral_answers.sql?raw";
 import syncLedger from "../../src-tauri/migrations/0033_sync_ledger.sql?raw";
 import syncPictureCards from "../../src-tauri/migrations/0034_sync_picture_cards.sql?raw";
 import cardReviewEventFolds from "../../src-tauri/migrations/0035_card_review_event_folds.sql?raw";
+import kitQueue from "../../src-tauri/migrations/0036_kit_queue.sql?raw";
 
 export interface Migration {
   version: number;
@@ -90,6 +91,7 @@ export const MIGRATIONS: Migration[] = [
   { version: 33, description: "sync_ledger", sql: syncLedger },
   { version: 34, description: "sync_picture_cards", sql: syncPictureCards },
   { version: 35, description: "card_review_event_folds", sql: cardReviewEventFolds },
+  { version: 36, description: "kit_queue", sql: kitQueue },
 ];
 
 /**

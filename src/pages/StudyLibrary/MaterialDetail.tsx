@@ -2,6 +2,7 @@ import { MaterialVideoLinks } from "./MaterialVideoLinks";
 import { inspectPdf } from "@/services/pdf";
 import { ScannedPdfNote } from "./ScannedPdfNote";
 import { providerCompany, providerWording } from "@/services/provider";
+import { useOptionalKitQueue } from "@/state/KitQueue";
 import { GuideCardRecoveryNotice } from "./GuideCardRecoveryNotice";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTab, useTabList, useTabPanel } from "@react-aria/tabs";
@@ -234,6 +235,7 @@ function MaterialDetailPage() {
   const [exportingCsv, setExportingCsv] = useState(false);
   const [splittingManually, setSplittingManually] = useState(false);
   const [splittingByChapter, setSplittingByChapter] = useState(false);
+  const kitQueue = useOptionalKitQueue();
   const [openError, setOpenError] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState(false);
   const [gemini, setGemini] = useState<GeminiStatus | null>(null);
@@ -676,6 +678,10 @@ function MaterialDetailPage() {
   const pdfContext = pdfAskContext(material.title, studySet?.summary);
   const pdfSet = pdfLabelState(studySet);
   const pdfTest = pdfLabelState(practiceTest);
+  // Chapters already split out of this book (also those split in earlier versions).
+  const chapterPartIds = data.materials
+    .filter((candidate) => candidate.filePath && candidate.lineage?.rootMaterialId === material.id)
+    .map((candidate) => candidate.id);
   const canSplit = Boolean(material.filePath) && isPdf && !fileMissing && canSplitPdfs() && deviceCan().splitFiles;
   // Before a PDF is sent, narrowing it to a chapter is a deliberate choice
   // (GEN-REL-01): it opens the existing page chooser and sends nothing. The
@@ -1060,6 +1066,9 @@ function MaterialDetailPage() {
                 </Button>
                 <Button onClick={() => setSplittingManually(true)}>Take out a chapter</Button>
               </> : null}
+              {kitQueue && deviceCan().generate && gemini?.configured && chapterPartIds.length > 0 ? (
+                <Button onClick={() => kitQueue.offer(chapterPartIds)}>Make study kits</Button>
+              ) : null}
               {material.filePath && !fileMissing && canHandleFiles() ? <Button onClick={() => { void open(); }}>Open</Button> : null}
               <Button variant="danger" className="destructive-action" onClick={() => void prepareDelete()}>Delete</Button>
             </MaterialActionsMenu>
@@ -2340,8 +2349,10 @@ function MaterialDetailPage() {
           material={material}
           outline={chapterOutline}
           onClose={() => setSplittingByChapter(false)}
-          onCreated={() => {
+          onCreated={(ids) => {
             setSplittingByChapter(false);
+            // Offer one study kit per new chapter, with a single consent screen.
+            if (kitQueue && deviceCan().generate && gemini?.configured && ids.length > 0) kitQueue.offer(ids);
             navigate("/study");
           }}
         />

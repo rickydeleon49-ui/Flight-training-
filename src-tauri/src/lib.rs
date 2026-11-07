@@ -96,7 +96,7 @@ use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 35;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 36;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -313,6 +313,12 @@ pub fn migrations() -> Vec<Migration> {
             version: 35,
             description: "card_review_event_folds",
             sql: include_str!("../migrations/0035_card_review_event_folds.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 36,
+            description: "kit_queue",
+            sql: include_str!("../migrations/0036_kit_queue.sql"),
             kind: MigrationKind::Up,
         },
     ]

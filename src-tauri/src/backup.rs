@@ -714,6 +714,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 35 {
         verify_schema_35_fold_semantics(connection)?;
     }
+    if newest_migration >= 36 {
+        verify_schema_36_kit_queue(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -908,6 +911,36 @@ pub(crate) fn verify_schema_32_oral_answers(connection: &Connection) -> Result<(
         return Err("Damaged oral answers schema.".into());
     }
     crate::oral_scenarios::validate_answers(connection)
+}
+
+/// SOURCE-01b: the local study-kit queue, exactly as migrated. It holds ids,
+/// checksums and status only, and is not part of the sync ledger.
+pub(crate) fn verify_schema_36_kit_queue(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    for table in ["kit_queue", "kit_queue_item"] {
+        let present = card_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )?;
+        if present != 1 {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err("Damaged study kit queue schema.".into());
+        }
+    }
+    Ok(())
 }
 
 /// CARRY-3DEV: the local fold ledger `card_review_event_folds`, exactly as
@@ -18218,6 +18251,43 @@ mod material_video_link_tests {
             m3_count(&restored, "SELECT COUNT(*) FROM material_video_links", &[]).unwrap(),
             0
         );
+    }
+}
+
+#[cfg(test)]
+mod kit_queue_tests {
+    use super::*;
+
+    #[test]
+    fn schema_36_kit_queue_requires_the_table_shape_and_holds_no_secrets() {
+        let connection = get_reference_schema_connection().unwrap();
+        verify_schema_36_kit_queue(&connection).unwrap();
+        for (table, expected) in [
+            ("kit_queue", "id,provider,created_at,state,consent_at"),
+            ("kit_queue_item", "queue_id,position,material_id,source_sha256,status,request_id,job_id,updated_at"),
+        ] {
+            let mut statement = connection
+                .prepare(&format!("SELECT name FROM pragma_table_info('{table}') ORDER BY cid"))
+                .unwrap();
+            let names: Vec<String> = statement
+                .query_map([], |r| r.get::<_, String>(0))
+                .unwrap()
+                .map(|r| r.unwrap())
+                .collect();
+            assert_eq!(names.join(","), expected, "{table} holds ids, checksums and status only");
+        }
+        connection
+            .execute_batch("DROP TABLE kit_queue_item")
+            .unwrap();
+        assert!(verify_schema_36_kit_queue(&connection).is_err());
+        let damaged = get_reference_schema_connection().unwrap();
+        damaged
+            .execute_batch(
+                "DROP TABLE kit_queue_item;
+                 CREATE TABLE kit_queue_item (queue_id TEXT NOT NULL, position INTEGER NOT NULL);",
+            )
+            .unwrap();
+        assert!(verify_schema_36_kit_queue(&damaged).is_err());
     }
 }
 
