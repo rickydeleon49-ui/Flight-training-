@@ -116,14 +116,19 @@ function parseBlocks(lines: string[], depth: number): GuideBlock[] {
 
     if (startsTable(lines, i)) {
       const header = splitRow(line);
-      const rows: GuideInline[][][] = [];
+      const rawRows: string[][] = [];
       i += 2;
       while (i < lines.length && !blank(at(i)) && isTableRow(at(i))) {
-        const cells = splitRow(at(i));
-        // Every row has the header's columns: missing cells are empty, extra ones dropped.
-        rows.push(header.map((_, column) => parseGuideInline(cells[column] ?? "")));
+        rawRows.push(splitRow(at(i)));
         i += 1;
       }
+      // Never hide text: a row wider than the header widens the whole table
+      // (extra header cells stay empty); missing cells are empty.
+      const columns = Math.max(header.length, ...rawRows.map((cells) => cells.length));
+      const rows: GuideInline[][][] = rawRows.map((cells) =>
+        Array.from({ length: columns }, (_, column) => parseGuideInline(cells[column] ?? "")),
+      );
+      header.push(...Array.from({ length: columns - header.length }, () => ""));
       blocks.push({ kind: "table", header: header.map((cell) => parseGuideInline(cell)), rows });
       continue;
     }

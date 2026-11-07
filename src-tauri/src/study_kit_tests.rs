@@ -103,7 +103,13 @@ fn study_kit_drops_only_invalid_cards_and_questions() {
 
     // More than a kit keeps is trimmed, not failed.
     let mut many = valid();
-    many["questions"] = json!(vec![good_question.clone(); 25]);
+    many["questions"] = json!((0..25)
+        .map(|n| {
+            let mut q = good_question.clone();
+            q["question"] = json!(format!("Question {n}?"));
+            q
+        })
+        .collect::<Vec<_>>());
     let result = validate(many, 2, MODEL, None);
     assert_eq!(
         result["parts"]["questions"]["answer"]["questions"]
@@ -498,4 +504,98 @@ fn claude_kit_prompt_is_v5d_and_gemini_stays_v4() {
     assert!(c.contains("never print this check"));
     assert!(!g.contains("silently recheck"));
     assert!(c.ends_with("not operational flight instruction."));
+}
+
+fn q(stem: &str, options: Value, index: Value) -> Value {
+    json!({"question":stem,"options":options,"correctIndex":index,"explanation":"why","sourcePage":1})
+}
+fn kept_questions(result: &Value) -> Vec<String> {
+    result["parts"]["questions"]["answer"]["questions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|q| q["question"].as_str().unwrap().to_string())
+        .collect()
+}
+
+#[test]
+fn one_bad_correct_index_drops_only_that_question() {
+    for bad in [json!(-1), json!(7), json!("1"), json!(1.5), json!(null)] {
+        let mut v = valid();
+        v["questions"] = json!([
+            q("A?", json!(["a", "b", "c"]), json!(0)),
+            q("Bad?", json!(["a", "b", "c"]), bad),
+            q("C?", json!(["x", "y", "z"]), json!(2))
+        ]);
+        let kept = kept_questions(&validate(v, 2, MODEL, None));
+        assert_eq!(kept, ["A?", "C?"]);
+    }
+}
+
+#[test]
+fn duplicate_choices_and_duplicate_items_are_dropped() {
+    let mut v = valid();
+    v["questions"] = json!([
+        q(
+            "Dup?",
+            json!(["Increase", " increase ", "Decrease"]),
+            json!(0)
+        ),
+        q(
+            "Spaced?",
+            json!(["Same  thing", "same thing", "Other"]),
+            json!(0)
+        ),
+        q("Keep?", json!(["Up", "Down", "Level"]), json!(0)),
+        q(" keep? ", json!(["up", "DOWN", "level"]), json!(1))
+    ]);
+    v["cards"] = json!([
+        {"front":"What lifts?","back":"Wings.","sourcePage":1},
+        {"front":" what  lifts? ","back":"WINGS.","sourcePage":1},
+        {"front":"What lifts?","back":"Wings and speed.","sourcePage":1}
+    ]);
+    let result = validate(v, 2, MODEL, None);
+    assert_eq!(kept_questions(&result), ["Keep?"]);
+    assert_eq!(
+        result["parts"]["cards"]["answer"]["flashcards"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+}
+
+#[test]
+fn cards_over_the_storage_limit_are_dropped_by_code_points() {
+    let card = |front: String, back: String, n: u32| json!({"front":front,"back":back,"sourcePage":1,"n":n});
+    // Multibyte: 1,000 code points is far more than 1,000 bytes.
+    let front_ok = "é".repeat(KIT_CARD_FRONT_MAX);
+    let back_ok = "é".repeat(KIT_CARD_BACK_MAX);
+    let mut v = valid();
+    v["cards"] = json!([
+        card(front_ok.clone(), back_ok.clone(), 1),
+        card(format!("{front_ok}é"), "b".into(), 2),
+        card("f".into(), format!("{back_ok}é"), 3),
+        card("ok front".into(), "ok back".into(), 4)
+    ]);
+    let result = validate(v, 2, MODEL, None);
+    let cards = result["parts"]["cards"]["answer"]["flashcards"]
+        .as_array()
+        .unwrap();
+    // Exactly at the limit is kept; one more is dropped.
+    assert_eq!(cards.len(), 2);
+    assert_eq!(cards[1]["front"], "ok front");
+}
+
+#[test]
+fn a_kit_keeps_every_cited_page_and_shows_runs_compressed() {
+    let mut v = valid();
+    let pages: Vec<u32> = (1..=25).chain([31]).collect();
+    v["guide"]["sourcePages"] = json!(pages);
+    let result = validate(v, 40, MODEL, None);
+    let notes = result["parts"]["guide"]["answer"]["sourceNotes"]
+        .as_str()
+        .unwrap();
+    assert!(notes.starts_with("Source pages: 1–25, 31."), "{notes}");
+    assert_eq!(compress_pages(&[1, 2, 4, 6, 7, 8]), "1, 2, 4, 6–8");
 }

@@ -15,6 +15,37 @@ pub(crate) const WRITING: &str = "Gemini is writing your study kit…";
 /// Most cards and questions one kit keeps.
 const MAX_KIT_CARDS: usize = 60;
 const MAX_KIT_QUESTIONS: usize = 20;
+/// Storage limits (trimmed code points) a ready card must fit. These mirror
+/// STUDY_SET_LIMITS.front/back in src/data/studySetTransaction.ts; a vitest
+/// (src/data/kitLimits.test.ts) fails if the two sides drift apart.
+const KIT_CARD_FRONT_MAX: usize = 1_000;
+const KIT_CARD_BACK_MAX: usize = 2_000;
+
+/// Contiguous runs compress for display: [1,2,3,5] -> "1–3, 5".
+fn compress_pages(pages: &[u32]) -> String {
+    let mut out: Vec<String> = Vec::new();
+    let mut i = 0;
+    while i < pages.len() {
+        let mut j = i;
+        while j + 1 < pages.len() && pages[j + 1] == pages[j] + 1 {
+            j += 1;
+        }
+        out.push(if j > i + 1 {
+            format!("{}–{}", pages[i], pages[j])
+        } else if j == i + 1 {
+            format!("{}, {}", pages[i], pages[j])
+        } else {
+            pages[i].to_string()
+        });
+        i = j + 1;
+    }
+    out.join(", ")
+}
+
+fn card_fits_storage(card: &Flashcard) -> bool {
+    (1..=KIT_CARD_FRONT_MAX).contains(&card.front.trim().chars().count())
+        && (1..=KIT_CARD_BACK_MAX).contains(&card.back.trim().chars().count())
+}
 
 fn check_source(source: &LoadedSource) -> Result<u32, String> {
     if source.mime != "application/pdf" {
@@ -94,7 +125,7 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
     let guide = sections::validate_basic_kit_guide(&value["guide"], &chosen, model)
         .map(|(body, pages)| {
             let mut result = aid(json!([]), Some(body), model);
-            result["sourceNotes"] = json!(format!("Source pages: {}. AI study aid. Check against current FAA material and your instructor.", pages.iter().map(u32::to_string).collect::<Vec<_>>().join(", ")));
+            result["sourceNotes"] = json!(format!("Source pages: {}. AI study aid. Check against current FAA material and your instructor.", compress_pages(&pages)));
             result
         });
     // One bad card or question costs only itself: each is checked by the
@@ -106,7 +137,14 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
                 .map_err(|_| "Invalid cards")?;
         parsed
             .flashcards
-            .retain(|card| batches::card_ok(card, Some(pages)));
+            .retain(|card| batches::card_ok(card, Some(pages)) && card_fits_storage(card));
+        let mut seen = std::collections::HashSet::new();
+        parsed.flashcards.retain(|card| {
+            seen.insert((
+                batches::normalized(&card.front),
+                batches::normalized(&card.back),
+            ))
+        });
         parsed.flashcards.truncate(MAX_KIT_CARDS);
         if parsed.flashcards.is_empty() {
             return Err("No cards".into());
@@ -119,13 +157,27 @@ fn validate(value: Value, pages: u32, model: &str, practice_revision: Option<&st
         Ok(v)
     })();
     let questions = (|| -> Result<Value, String> {
-        let mut test: GeneratedPracticeTest = serde_json::from_value(
-            json!({"title":"Practice questions", "questions":value["questions"], "model":model}),
-        )
-        .map_err(|_| "Invalid questions")?;
-        test.questions.retain(|q| {
-            q.options.len() == 3 && q.source_page.is_some_and(|p| p != 0 && p <= pages)
-        });
+        // Each question is read on its own: a bad correctIndex (negative,
+        // string, fractional) or missing field drops only that question.
+        let items = value["questions"].as_array().ok_or("Invalid questions")?;
+        let mut seen = std::collections::HashSet::new();
+        let questions: Vec<PracticeQuestion> = items
+            .iter()
+            .filter_map(|item| serde_json::from_value::<PracticeQuestion>(item.clone()).ok())
+            .filter(|q| q.options.len() == 3 && q.source_page.is_some_and(|p| p != 0 && p <= pages))
+            .filter(|q| {
+                let choices: Vec<String> =
+                    q.options.iter().map(|o| batches::normalized(o)).collect();
+                let distinct: std::collections::HashSet<_> = choices.iter().collect();
+                distinct.len() == choices.len()
+                    && seen.insert((batches::normalized(&q.question), choices))
+            })
+            .collect();
+        let test = GeneratedPracticeTest {
+            title: "Practice questions".into(),
+            questions,
+            model: model.into(),
+        };
         let mut test = sanitize_practice_test(test)?;
         test.questions.truncate(MAX_KIT_QUESTIONS);
         serde_json::to_value(test).map_err(|e| e.to_string())

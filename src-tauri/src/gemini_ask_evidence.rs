@@ -17,11 +17,29 @@ struct GroundedReply {
     passages: Vec<AskPassage>,
 }
 
+/// PDF text extraction keeps typographic ligatures ("eﬃcient") that a model
+/// writes as plain letters. Expand them before comparing; nothing else changes.
+pub(crate) fn expand_ligatures(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for ch in text.chars() {
+        match ch {
+            'ﬀ' => out.push_str("ff"),
+            'ﬁ' => out.push_str("fi"),
+            'ﬂ' => out.push_str("fl"),
+            'ﬃ' => out.push_str("ffi"),
+            'ﬄ' => out.push_str("ffl"),
+            'ﬅ' | 'ﬆ' => out.push_str("st"),
+            _ => out.push(ch),
+        }
+    }
+    out
+}
+
 // Preserve punctuation, numbers and ordinary hyphens. Only join a line-end
 // hyphen between letters, remove discretionary soft hyphens, fold case and
 // collapse whitespace. Never use fuzzy matching or search another page.
 fn normalized(text: &str) -> String {
-    let chars: Vec<char> = text.chars().collect();
+    let chars: Vec<char> = expand_ligatures(text).chars().collect();
     let mut joined = String::new();
     let mut i = 0;
     while i < chars.len() {

@@ -57,13 +57,15 @@ impl PageText {
 }
 
 fn loose(t: &str) -> String {
-    t.chars()
+    crate::gemini_ask_evidence::expand_ligatures(t)
+        .chars()
         .filter(|c| c.is_alphanumeric())
         .flat_map(char::to_lowercase)
         .collect()
 }
 fn words(t: &str) -> Vec<String> {
-    t.split(|c: char| !c.is_alphanumeric())
+    crate::gemini_ask_evidence::expand_ligatures(t)
+        .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.chars().count() >= 3)
         .map(str::to_lowercase)
         .collect()
@@ -410,5 +412,22 @@ mod tests {
             let c = run(&mut items, |_| Some("Speed limit 12-15 knots".into()));
             assert_eq!(c.dropped_by_quote, 1);
         }
+    }
+    #[test]
+    fn pdf_ligatures_match_plain_letters_but_numbers_stay_exact() {
+        let page = "Eﬃcient ﬂight control is the ﬁrst skill; maximum 12 knots.";
+        assert!(kit_quote_matches(page, "Efficient flight control"));
+        assert!(kit_quote_matches(
+            page,
+            "efficient flight control is the first skill"
+        ));
+        assert!(!kit_quote_matches(
+            page,
+            "efficient flight control; maximum 13 knots"
+        ));
+        assert!(crate::gemini_ask_evidence::quote_matches(
+            page,
+            "Efficient flight control"
+        ));
     }
 }

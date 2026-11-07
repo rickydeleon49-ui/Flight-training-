@@ -859,6 +859,17 @@ fn validate_section(
     chosen: &[u32],
     model: &str,
 ) -> Result<ResultBody, SectionError> {
+    validate_section_keeping(s, text, chosen, model, 10)
+}
+/// `keep_pages` caps the cited pages: guide parts keep 10, a study kit keeps
+/// every valid citation (it can cover 150 pages).
+fn validate_section_keeping(
+    s: &Section,
+    text: &str,
+    chosen: &[u32],
+    model: &str,
+    keep_pages: usize,
+) -> Result<ResultBody, SectionError> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase", deny_unknown_fields)]
     struct Answer {
@@ -882,7 +893,7 @@ fn validate_section(
     source_pages.sort_unstable();
     source_pages.dedup();
     source_pages.retain(|p| *p >= s.page_start && *p <= s.page_end && chosen.contains(p));
-    source_pages.truncate(10);
+    source_pages.truncate(keep_pages);
     // The prompt asks for at most REQUESTED_BODY_CHARS; models sometimes run
     // over, so accept anything the study set itself can store.
     if body.trim().is_empty()
@@ -917,8 +928,8 @@ pub(super) fn validate_basic_kit_guide(
         page_start: 1,
         page_end: pages.last().copied().unwrap_or(0),
     };
-    let result =
-        validate_section(&section, &value.to_string(), pages, model).map_err(|e| e.message)?;
+    let result = validate_section_keeping(&section, &value.to_string(), pages, model, usize::MAX)
+        .map_err(|e| e.message)?;
     Ok((result.body, result.source_pages))
 }
 
