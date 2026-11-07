@@ -697,6 +697,62 @@ fn holds(row: &Map<String, Value>, next: &NextSet) -> bool {
         && parsed(row, "retired_json") == next.retired
 }
 
+/// Insert-only twin of `apply_operation` for a set that does not exist yet
+/// (study-pack import). It refuses if the material already has a set, writes
+/// no history and no carried state, and only ever inserts: the picture
+/// regions and citations go through the insert-or-verify writers, and the set
+/// is a plain INSERT. Timestamps are `now`.
+pub fn insert_new_set(
+    tx: &Transaction,
+    material_id: &str,
+    next: &NextSet,
+    regions: &[crate::visual_cards::Region],
+    sources: Option<&crate::pdf_kit_sources::Sources>,
+    now: &str,
+) -> Result<(), String> {
+    let exists: bool = tx
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM ai_study_sets WHERE source_material_id = ?1)",
+            [material_id],
+            |r| r.get(0),
+        )
+        .map_err(|e| format!("Could not add a study guide: {e}"))?;
+    if exists {
+        return Err("A study guide already exists for that material.".into());
+    }
+    if let Some(sources) = sources {
+        crate::pdf_kit_sources::write(tx, sources)?;
+    }
+    let has_pictures = next
+        .flashcards
+        .as_array()
+        .is_some_and(|cards| cards.iter().any(|c| c.get("visualRegionId").is_some()));
+    if has_pictures || !regions.is_empty() {
+        crate::visual_cards::write(tx, material_id, regions, &next.flashcards)?;
+    }
+    tx.execute(
+        "INSERT INTO ai_study_sets
+           (source_material_id, title, summary, sections_json, flashcards_json, source_notes,
+            provider, model, generated_at, updated_at, summary_origin, retired_json)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9, ?10, ?11)",
+        params![
+            material_id,
+            next.title,
+            next.summary,
+            next.sections.to_string(),
+            next.flashcards.to_string(),
+            next.source_notes,
+            next.provider,
+            next.model,
+            now,
+            next.summary_origin,
+            next.retired.to_string()
+        ],
+    )
+    .map_err(|e| format!("Could not add a study guide: {e}"))?;
+    Ok(())
+}
+
 /// The result of a save.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]

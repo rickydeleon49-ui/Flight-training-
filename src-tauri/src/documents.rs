@@ -175,7 +175,7 @@ fn is_hidden_or_ambiguous(safe: &str) -> bool {
 /// simply missing; any other failure to resolve a reference fails closed.
 ///
 /// Call this inside the writer transaction that also performs the cleanup.
-fn document_is_referenced(
+pub(crate) fn document_is_referenced(
     tx: &Connection,
     docs_dir: &Path,
     safe_rel: &str,
@@ -384,6 +384,18 @@ pub(crate) fn rename_no_replace(from: &Path, to: &Path) -> std::io::Result<()> {
     std::fs::remove_file(from)
 }
 
+/// Flush a directory's entries to disk. Unlike a best-effort sync, an error
+/// is returned: a study pack must know its new names are durable.
+#[cfg(unix)]
+pub(crate) fn sync_dir(path: &Path) -> std::io::Result<()> {
+    std::fs::File::open(path)?.sync_all()
+}
+
+#[cfg(not(unix))]
+pub(crate) fn sync_dir(_path: &Path) -> std::io::Result<()> {
+    Ok(())
+}
+
 pub(crate) fn is_already_exists_error(err: &std::io::Error) -> bool {
     err.kind() == std::io::ErrorKind::AlreadyExists
         || err.raw_os_error() == Some(183) // Windows ERROR_ALREADY_EXISTS
@@ -395,7 +407,7 @@ pub(crate) fn is_already_exists_error(err: &std::io::Error) -> bool {
 ///
 /// Runs of dots collapse to one. A stored name is never meant to be a `..`
 /// component, and one dot reads the same to her as three.
-fn sanitize_file_name(name: &str) -> String {
+pub(crate) fn sanitize_file_name(name: &str) -> String {
     let mut cleaned = String::with_capacity(name.len());
     for character in name.chars() {
         let kept = match character {
@@ -476,7 +488,7 @@ pub(crate) struct PhoneLimits {
     pub max_pages: u32,
 }
 
-const PHONE_LIMITS: PhoneLimits = PhoneLimits {
+pub(crate) const PHONE_LIMITS: PhoneLimits = PhoneLimits {
     max_bytes: crate::pdf::MAX_PDF_BYTES,
     max_pages: crate::pdf::MAX_PAGES,
 };
@@ -1341,12 +1353,128 @@ pub fn check_library_in(root: &Path) -> Result<LibraryReport, String> {
     })
 }
 
+/// The commands' entry points. Each takes the shared library lock once (a
+/// study pack, backup or restore in progress gives a "try again" sentence),
+/// finishes any interrupted study pack first, then does the same work as its
+/// `_in` twin.
+pub fn check_library_locked(root: &Path, owned: bool) -> Result<LibraryReport, String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| check_library_in(root),
+    )
+}
+
+pub fn reattach_unlinked_file_locked(
+    root: &Path,
+    owned: bool,
+    material_id: &str,
+    relative_path: &str,
+) -> Result<(), String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| reattach_unlinked_file_in(root, material_id, relative_path),
+    )
+}
+
+pub fn import_unlinked_file_locked(
+    root: &Path,
+    owned: bool,
+    relative_path: &str,
+) -> Result<String, String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| import_unlinked_file_in(root, relative_path),
+    )
+}
+
+pub fn trash_unlinked_file_locked(
+    root: &Path,
+    owned: bool,
+    relative_path: &str,
+) -> Result<StagedDeletion, String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| trash_unlinked_file_in(root, relative_path),
+    )
+}
+
+/// Copy her picked replacement file in and attach it to the material, both
+/// under the library lock. A busy library refuses before anything is copied,
+/// and a failed attach removes the copy this call just made (its name was
+/// freshly reserved, so it is no one else's file).
+pub(crate) fn import_and_reattach_locked(
+    root: &Path,
+    owned: bool,
+    source_path: &str,
+    material_id: &str,
+    phone: bool,
+    limits: PhoneLimits,
+) -> Result<(), String> {
+    crate::library_lock::with_library_lock(
+        root,
+        owned,
+        crate::study_pack::reconcile::Mode::Normal,
+        |_| {
+            let docs = root.join(DOCUMENTS_DIR);
+            std::fs::create_dir_all(&docs)
+                .map_err(|e| format!("Could not create the documents directory: {e}"))?;
+            let imported =
+                import_document_in(&docs, source_path, material_id, phone, phone, limits)?;
+            if let Err(error) =
+                reattach_unlinked_file_in(root, material_id, &imported.relative_path)
+            {
+                let removed = contained_document_path(&docs, &imported.relative_path)
+                    .is_ok_and(|copy| std::fs::remove_file(copy).is_ok());
+                if !removed {
+                    return Err(format!(
+                        "{error} The copied file remains in app storage; run Check library to recover it."
+                    ));
+                }
+                return Err(error);
+            }
+            Ok(())
+        },
+    )
+}
+
+/// Re-attach: pick happens first in the webview, then this one command copies
+/// and attaches under the library lock.
+#[tauri::command]
+pub async fn reattach_picked_file(
+    app: AppHandle,
+    source_path: String,
+    material_id: String,
+) -> Result<(), String> {
+    crate::picked_paths::require_picked(&app, &source_path)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        import_and_reattach_locked(
+            &root,
+            crate::library_lock::owned(&app),
+            &source_path,
+            &material_id,
+            cfg!(target_os = "ios"),
+            PHONE_LIMITS,
+        )
+    })
+    .await
+    .map_err(|e| format!("Could not complete re-attaching file: {e}"))?
+}
+
 /// Check the library: compare database file references with app-owned storage.
 #[tauri::command]
 pub async fn check_library(app: AppHandle) -> Result<LibraryReport, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        check_library_in(&root)
+        check_library_locked(&root, crate::library_lock::owned(&app))
     })
     .await
     .map_err(|e| format!("Could not complete library check: {e}"))?
@@ -1448,7 +1576,12 @@ pub async fn reattach_unlinked_file(
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        reattach_unlinked_file_in(&root, &material_id, &relative_path)
+        reattach_unlinked_file_locked(
+            &root,
+            crate::library_lock::owned(&app),
+            &material_id,
+            &relative_path,
+        )
     })
     .await
     .map_err(|e| format!("Could not complete re-attaching file: {e}"))?
@@ -1534,7 +1667,7 @@ pub fn import_unlinked_file_in(root: &Path, relative_path: &str) -> Result<Strin
 pub async fn import_unlinked_file(app: AppHandle, relative_path: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        import_unlinked_file_in(&root, &relative_path)
+        import_unlinked_file_locked(&root, crate::library_lock::owned(&app), &relative_path)
     })
     .await
     .map_err(|e| format!("Could not complete importing unlinked file: {e}"))?
@@ -1582,7 +1715,7 @@ pub async fn trash_unlinked_file(
 ) -> Result<StagedDeletion, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        trash_unlinked_file_in(&root, &relative_path)
+        trash_unlinked_file_locked(&root, crate::library_lock::owned(&app), &relative_path)
     })
     .await
     .map_err(|e| format!("Could not move unlinked file to trash: {e}"))?

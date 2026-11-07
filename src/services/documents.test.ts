@@ -29,6 +29,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({ open: mocks.pick }));
 import {
   cleanupDocuments,
   checkLibrary,
+  pickAndReattachDocument,
   commitDeleteDocument,
   deleteDocument,
   DesktopOnlyError,
@@ -64,6 +65,27 @@ it("FAA PDF intake uses the existing import command, and browser mode never call
   await expect(pickAndImportDocument("shelf-id", true)).resolves.toMatchObject({ relativePath: "shelf-id.pdf" });
   expect(mocks.pick).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "PDF", extensions: ["pdf"] }] }));
   expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "/synthetic/local.pdf", materialId: "shelf-id", pdfOnly: true });
+});
+
+describe("re-attach a picked file", () => {
+  it("picks first, then copies and attaches in one native step", async () => {
+    await expect(pickAndReattachDocument("material-1")).rejects.toThrow(DesktopOnlyError);
+    mocks.isTauri.mockReturnValue(true);
+    mocks.pick.mockResolvedValueOnce(null);
+    await expect(pickAndReattachDocument("material-1")).resolves.toBe(false);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    mocks.pick.mockResolvedValueOnce("/synthetic/replacement.pdf");
+    mocks.invoke.mockResolvedValueOnce(undefined);
+    await expect(pickAndReattachDocument("material-1")).resolves.toBe(true);
+    expect(mocks.invoke).toHaveBeenCalledWith("reattach_picked_file", {
+      sourcePath: "/synthetic/replacement.pdf",
+      materialId: "material-1",
+    });
+    expect(mocks.invoke).not.toHaveBeenCalledWith("import_document", expect.anything());
+    mocks.pick.mockResolvedValueOnce("/synthetic/replacement.pdf");
+    mocks.invoke.mockRejectedValueOnce("A backup or restore is running. Try again in a moment.");
+    await expect(pickAndReattachDocument("material-1")).rejects.toBe("A backup or restore is running. Try again in a moment.");
+  });
 });
 
 describe("library repair desktop commands", () => {

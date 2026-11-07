@@ -75,8 +75,7 @@ import {
   documentErrorMessage,
   formatFileSize,
   importUnlinkedFile,
-  pickAndImportDocument,
-  reattachUnlinkedFile,
+  pickAndReattachDocument,
   rollbackDeleteDocument,
   trashUnlinkedFile,
   type LibraryReport,
@@ -330,24 +329,12 @@ export function Settings() {
   const reattachLibraryMaterial = async (materialId: string) => {
     setLibraryBusy(true);
     setLibraryNote(null);
-    let importedPath: string | null = null;
     try {
-      const imported = await pickAndImportDocument(materialId);
-      if (!imported) return;
-      importedPath = imported.relativePath;
-      await reattachUnlinkedFile(materialId, imported.relativePath);
+      if (!(await pickAndReattachDocument(materialId))) return;
       await finishLibraryAction("The replacement file is attached. Existing notes and study data were kept.");
     } catch (error) {
-      let cleanupWarning = "";
-      if (importedPath) {
-        try {
-          await trashUnlinkedFile(importedPath);
-        } catch {
-          cleanupWarning = " The copied file remains in app storage; run Check library to recover it.";
-        }
-      }
       setLibraryProblem(true);
-      setLibraryNote(`${documentErrorMessage(error, "The file could not be attached.")}${cleanupWarning}`);
+      setLibraryNote(documentErrorMessage(error, "The file could not be attached."));
     } finally {
       setLibraryBusy(false);
     }

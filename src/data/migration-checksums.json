@@ -34,5 +34,6 @@
   "0033_sync_ledger.sql": "a6a6a94ac1c4e6f3b2850cc5dd5bbe5c01ef595b36de2babfaef35d6cf0048a9",
   "0034_sync_picture_cards.sql": "8e00e67066202a03a379b79ff407206439d1adf7275dd5f572fea543253cc985",
   "0035_card_review_event_folds.sql": "61f3fa1ef39f8c4869ca0b21846bac009774da4d852471a71325f961109e833f",
-  "0036_kit_queue.sql": "c0564c739072f82ca584448563b7f0be202ba7c6474adf736fde2f8e944129b3"
+  "0036_kit_queue.sql": "c0564c739072f82ca584448563b7f0be202ba7c6474adf736fde2f8e944129b3",
+  "0037_study_pack_provenance.sql": "3afdb93f75f40b24b41b3f4b5a1babcbe1d85c91017975e0917eef5a862271e4"
 }
