@@ -37,10 +37,12 @@ fn key(root: &Path) -> PathBuf {
 #[derive(Debug)]
 pub(crate) struct LibraryGuard {
     key: PathBuf,
+    #[allow(dead_code)]
     holder: Holder,
 }
 
 impl LibraryGuard {
+    #[allow(dead_code)]
     pub(crate) fn holder(&self) -> Holder {
         self.holder
     }

@@ -79,6 +79,7 @@ pub fn ack(conn: &Connection, op_id: &str, now: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(dead_code)] // used by the Stage 3 screen
 pub fn other_versions_line(count: u64) -> Option<String> {
     match count {
         0 => None,
@@ -93,6 +94,7 @@ pub fn other_versions_line(count: u64) -> Option<String> {
 }
 
 /// "Added 11 guides, 3 PDFs and 1 practice set. Your own work wasn't changed."
+#[allow(dead_code)] // used by the Stage 3 screen
 pub fn success_sentence(result: &PackResult) -> String {
     if result.added == 0 {
         return "Everything in this study pack is already in your library.".to_string();

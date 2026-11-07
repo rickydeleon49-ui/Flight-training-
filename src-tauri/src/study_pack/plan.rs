@@ -133,8 +133,8 @@ impl Plan {
 /* Lookups L1-L4 (design section 3). All orderings are total.          */
 /* ------------------------------------------------------------------ */
 
-struct Lookups<'a> {
-    conn: &'a Connection,
+pub(super) struct Lookups<'a> {
+    pub(super) conn: &'a Connection,
 }
 
 impl Lookups<'_> {
@@ -156,7 +156,7 @@ impl Lookups<'_> {
     }
 
     /// L1: this identity's own live row with this revision. Oldest link wins.
-    fn l1(&self, ns: &str, id: &str, rev: &str) -> Result<Option<String>, String> {
+    pub(super) fn l1(&self, ns: &str, id: &str, rev: &str) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND revision = ?3 AND material_id IS NOT NULL
@@ -166,7 +166,7 @@ impl Lookups<'_> {
     }
 
     /// L2: any live row with this revision. Oldest link wins.
-    fn l2(&self, rev: &str) -> Result<Option<String>, String> {
+    pub(super) fn l2(&self, rev: &str) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE revision = ?1 AND material_id IS NOT NULL
@@ -176,7 +176,7 @@ impl Lookups<'_> {
     }
 
     /// L3: the identity's newest live row.
-    fn l3(&self, ns: &str, id: &str) -> Result<Option<String>, String> {
+    pub(super) fn l3(&self, ns: &str, id: &str) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND material_id IS NOT NULL
@@ -185,14 +185,14 @@ impl Lookups<'_> {
         )
     }
 
-    fn identity_known(&self, ns: &str, id: &str) -> Result<bool, String> {
+    pub(super) fn identity_known(&self, ns: &str, id: &str) -> Result<bool, String> {
         self.exists(
             "SELECT 1 FROM study_pack_items WHERE namespace = ?1 AND item_id = ?2 LIMIT 1",
             &[&ns, &id],
         )
     }
 
-    fn revision_known(&self, rev: &str) -> Result<bool, String> {
+    pub(super) fn revision_known(&self, rev: &str) -> Result<bool, String> {
         self.exists(
             "SELECT 1 FROM study_pack_items WHERE revision = ?1 LIMIT 1",
             &[&rev],
@@ -200,7 +200,7 @@ impl Lookups<'_> {
     }
 
     /// A live picture row of this identity with these bytes (any revision).
-    fn own_picture_bytes(&self, ns: &str, id: &str, sha: &str) -> Result<Option<String>, String> {
+    pub(super) fn own_picture_bytes(&self, ns: &str, id: &str, sha: &str) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND kind = 'picture' AND file_sha256 = ?3
@@ -210,7 +210,7 @@ impl Lookups<'_> {
         )
     }
 
-    fn picture_bytes(&self, sha: &str) -> Result<Option<String>, String> {
+    pub(super) fn picture_bytes(&self, sha: &str) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE kind = 'picture' AND file_sha256 = ?1 AND material_id IS NOT NULL
@@ -219,7 +219,7 @@ impl Lookups<'_> {
         )
     }
 
-    fn picture_bytes_known(&self, sha: &str) -> Result<bool, String> {
+    pub(super) fn picture_bytes_known(&self, sha: &str) -> Result<bool, String> {
         self.exists(
             "SELECT 1 FROM study_pack_items WHERE kind = 'picture' AND file_sha256 = ?1 LIMIT 1",
             &[&sha],

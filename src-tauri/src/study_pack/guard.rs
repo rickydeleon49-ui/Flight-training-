@@ -46,8 +46,8 @@ pub fn pack_sql(sql: &str) -> Result<&str, String> {
             _ => plain.push(c),
         }
     }
-    let upper = plain.to_uppercase();
-    let trimmed = upper.trim().trim_end_matches(';').trim_end();
+    let spaced = plain.to_uppercase().split_whitespace().collect::<Vec<_>>().join(" ");
+    let trimmed = spaced.trim_end_matches(';').trim_end();
     let starts_ok = trimmed.starts_with("INSERT INTO ") || trimmed.starts_with("SELECT ");
     let one_statement = !trimmed.contains(';');
     let words_ok = !trimmed

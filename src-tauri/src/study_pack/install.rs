@@ -160,14 +160,13 @@ pub fn add_locked(
     let pack = validate_pack(pack_path)?;
     let pack_sha = sha256_of_file(pack_path)?;
     let op = journal::op_dir(root, op_id);
-    let mut created = false;
-    let outcome = run(root, pack_path, op_id, &pack, &pack_sha, &op, &mut created);
+    let outcome = run(root, pack_path, op_id, &pack, &pack_sha, &op);
     match outcome {
         Ok(result) => Ok(result),
         Err(Stop::Crash) => Err(CRASH.to_string()),
         Err(Stop::Keep(message)) => Err(message),
         Err(Stop::Fail(message)) => {
-            if created {
+            if op.exists() {
                 // No receipt: whatever this operation did is undone, by the
                 // same rules that undo it after a crash.
                 let mut report = reconcile::Report::default();
@@ -185,10 +184,8 @@ fn run(
     pack: &ValidatedPack,
     pack_sha: &str,
     op: &Path,
-    created: &mut bool,
 ) -> Result<PackResult, Stop> {
     journal::create_staging(root, op_id)?;
-    *created = true;
     check_storage(root, op)?;
     let mut journal = Journal {
         version: 1,

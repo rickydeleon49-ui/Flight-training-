@@ -90,15 +90,23 @@ pub async fn add_study_pack(
 pub async fn reconcile_study_pack_imports(app: AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = crate::storage::app_root(&app)?;
-        if !crate::library_lock::owned(&app) {
-            return Ok(());
-        }
-        let guard =
-            crate::library_lock::try_acquire(&root, crate::library_lock::Holder::Pack)?;
-        reconcile::reconcile_locked(&guard, &root, reconcile::Mode::Normal).map(|_| ())
+        reconcile_study_pack_imports_in(&root, crate::library_lock::owned(&app)).map(|_| ())
     })
     .await
     .map_err(|error| format!("Could not check the study packs: {error}"))?
+}
+
+/// Storage this process does not own is never reconciled: another copy could
+/// be in the middle of an import there.
+pub fn reconcile_study_pack_imports_in(
+    root: &std::path::Path,
+    owned: bool,
+) -> Result<reconcile::Report, String> {
+    if !owned {
+        return Ok(reconcile::Report::default());
+    }
+    let guard = crate::library_lock::try_acquire(root, crate::library_lock::Holder::Pack)?;
+    reconcile::reconcile_locked(&guard, root, reconcile::Mode::Normal)
 }
 
 fn open_for_results(app: &AppHandle, write: bool) -> Result<rusqlite::Connection, String> {
