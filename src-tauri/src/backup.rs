@@ -4958,7 +4958,7 @@ fn allowed_archive_path(path: &Path, is_dir: bool) -> bool {
     false
 }
 
-fn validate_archive_path(raw_name: &str, path: &Path) -> Result<(), String> {
+pub(crate) fn validate_archive_path(raw_name: &str, path: &Path) -> Result<(), String> {
     // zip 9 enclosed_name strips a leading root; reject it before accepting
     // the normalized path, preserving zip 2's absolute-path refusal.
     if raw_name.starts_with('/')
@@ -4974,13 +4974,15 @@ fn validate_archive_path(raw_name: &str, path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_compression_ratio(uncompressed: u64, compressed: u64) -> Result<(), String> {
+pub(crate) fn validate_compression_ratio(
+    uncompressed: u64,
+    compressed: u64,
+    max_ratio: u64,
+) -> Result<(), String> {
     if uncompressed <= COMPRESSION_RATIO_FLOOR {
         return Ok(());
     }
-    if compressed == 0
-        || uncompressed.checked_div(compressed).unwrap_or(u64::MAX) > MAX_COMPRESSION_RATIO
-    {
+    if compressed == 0 || uncompressed.checked_div(compressed).unwrap_or(u64::MAX) > max_ratio {
         return Err("The backup contains an unsafe compression ratio.".to_string());
     }
     Ok(())
@@ -4994,7 +4996,7 @@ fn validate_compression_ratio(uncompressed: u64, compressed: u64) -> Result<(), 
 /// per just-written file, most of a large restore). The check is the same: the bytes
 /// that went to the file must match the archive's integrity record before the
 /// restore is staged, and the file is still flushed with `sync_all` first.
-fn copy_and_hash(reader: &mut impl Read, output: &mut File) -> Result<(u64, String), String> {
+pub(crate) fn copy_and_hash(reader: &mut impl Read, output: &mut File) -> Result<(u64, String), String> {
     let mut hasher = Sha256::new();
     let mut bytes = 0u64;
     let mut buffer = [0u8; 64 * 1024];
@@ -5570,7 +5572,7 @@ pub(crate) fn inspect_archive(
             .enclosed_name()
             .ok_or_else(|| "The backup contains an unsafe file path.".to_string())?;
         validate_archive_path(&raw_name, &path)?;
-        validate_compression_ratio(entry.size(), entry.compressed_size())?;
+        validate_compression_ratio(entry.size(), entry.compressed_size(), MAX_COMPRESSION_RATIO)?;
         if !allowed_archive_path(&path, entry.is_dir()) {
             return Err(format!(
                 "The backup contains an unexpected file: {raw_name}"
@@ -7680,7 +7682,7 @@ pub(crate) fn stage_complete_restore_in(
                 .enclosed_name()
                 .ok_or_else(|| "The backup contains an unsafe file path.".to_string())?;
             validate_archive_path(&raw_name, &path)?;
-            validate_compression_ratio(entry.size(), entry.compressed_size())?;
+            validate_compression_ratio(entry.size(), entry.compressed_size(), MAX_COMPRESSION_RATIO)?;
             if !allowed_archive_path(&path, entry.is_dir()) {
                 return Err(format!(
                     "The backup contains an unexpected file: {raw_name}"
@@ -10893,9 +10895,9 @@ mod tests {
 
     #[test]
     fn extreme_compression_ratios_are_refused() {
-        assert!(validate_compression_ratio(1024, 1).is_ok());
-        assert!(validate_compression_ratio(2 * 1024 * 1024, 1024).is_err());
-        assert!(validate_compression_ratio(2 * 1024 * 1024, 0).is_err());
+        assert!(validate_compression_ratio(1024, 1, MAX_COMPRESSION_RATIO).is_ok());
+        assert!(validate_compression_ratio(2 * 1024 * 1024, 1024, MAX_COMPRESSION_RATIO).is_err());
+        assert!(validate_compression_ratio(2 * 1024 * 1024, 0, MAX_COMPRESSION_RATIO).is_err());
     }
 
     #[test]
