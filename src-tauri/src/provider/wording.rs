@@ -1,6 +1,7 @@
 //! Explicit variants for fixed application messages. Dynamic messages are
 //! built with the captured provider at their source; user text is never edited.
 pub(super) const MESSAGES: &[(&str, &str)] = &[
+    ("Gemini 3.8 Flash is not answering right now, so trying the standard Gemini model…", "Claude Sonnet 5.5 is not answering right now, so trying Claude Haiku 5.5…"),
     ("Gemini study tools currently support PDF, TXT, Markdown, PNG, JPG, and WebP files. Convert this file to PDF first.", "Claude study tools currently support PDF, TXT, Markdown, PNG, JPG, and WebP files. Convert this file to PDF first."),
     ("Gemini was disconnected or its key changed while this PDF was being prepared, so nothing was generated. Try again.", "Claude was disconnected or its key changed while this PDF was being prepared, so nothing was generated. Try again."),
     ("Creating this study aid stopped before Gemini's answer arrived. Nothing was saved; try again.", "Creating this study aid stopped before Claude's answer arrived. Nothing was saved; try again."),

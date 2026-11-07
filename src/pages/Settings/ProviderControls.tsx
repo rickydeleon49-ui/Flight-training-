@@ -4,6 +4,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauri } from "@/data";
 import { isIOS } from "@/services/platform";
 import { Button, TextInput } from "@/components/ui";
+import { CLAUDE_MODEL_CHOICES, getGeminiStatus, setGeminiModel, geminiModelName, type GeminiModelChoice } from "@/services/gemini";
 import { SAVED_KEY_UNREADABLE, CLAUDE_KEY_URL, configureProvider, disconnectProvider, providerStatus, retryKeyAccess, selectProvider, type ProviderId, type ProviderStatus } from "@/services/provider";
 
 export function ProviderControls({ children, onStatus, reloadToken = 0, onRetried }: { children: ReactNode; onStatus?: (status: ProviderStatus) => void; reloadToken?: number; onRetried?: () => void }) {
@@ -12,10 +13,16 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [problem, setProblem] = useState(false);
+  const [claudeChoice, setClaudeChoice] = useState<{ choice: GeminiModelChoice; model: string } | null>(null);
   useEffect(() => {
     if (isTauri()) void providerStatus().then(setStatus).catch(() => { setProblem(true); setNote("Could not check your AI connections. Reopen Settings to try again."); });
   }, [reloadToken]);
   useEffect(() => { onStatus?.(status); }, [status, onStatus]);
+  const claudeReady = status.selected === "claude" && status.providers.some((p) => p.id === "claude" && p.connected);
+  useEffect(() => {
+    if (isTauri() && claudeReady) void getGeminiStatus().then((s) => setClaudeChoice({ choice: s.choice, model: s.model })).catch(() => setClaudeChoice(null));
+    else setClaudeChoice(null);
+  }, [claudeReady, reloadToken]);
   const unreadable = status.providers.some((p) => p.id === "claude" && p.keyUnreadable);
   const connected = status.providers.some((p) => p.id === "claude" && p.connected);
   async function run(work: () => Promise<void>) {
@@ -28,7 +35,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
   async function choose(id: ProviderId) {
     await selectProvider(id);
     setStatus(await providerStatus());
-    setNote(`New study aids will use ${id === "claude" ? "Claude Haiku 5.5" : "Gemini"}. Your saved study material is kept.`);
+    setNote(`New study aids will use ${id === "claude" ? "Claude" : "Gemini"}. Your saved study material is kept.`);
   }
   const getKey = <div><a className="small" href={CLAUDE_KEY_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => {
     if (isTauri()) { event.preventDefault(); void run(async () => { await openUrl(CLAUDE_KEY_URL); }); }
@@ -56,8 +63,17 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
   return <div className="stack stack--4">
     <p className="tiny dim">You need to be 18 or older and use your own API key. Your use of the AI service follows that company's terms.</p>
     {status.selected === "gemini" ? children : <div className="stack stack--2">
-      <p className="small strong">Claude Haiku 5.5 · {unreadable ? "Saved key unavailable" : connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
+      <p className="small strong">{geminiModelName(claudeChoice?.model ?? "claude-haiku-5-5")} · {unreadable ? "Saved key unavailable" : connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
       <p className="tiny dim">{privacy}</p>
+      {claudeChoice && <fieldset className="gemini-model-choice stack stack--2">
+        <legend className="field__label">Model for new study aids</legend>
+        {(["standard", "most-capable"] as const).map((choice) => <label key={choice} className="small">
+          <input type="radio" name="claude-model-choice" checked={claudeChoice.choice === choice} disabled={busy}
+            onChange={() => void run(async () => { const next = await setGeminiModel(choice); setClaudeChoice({ choice: next.choice, model: next.model }); setNote(`New study aids will use ${geminiModelName(next.model)}. Saved study guides and flashcards are unchanged.`); })} />{" "}
+          <span className="strong">{CLAUDE_MODEL_CHOICES[choice].label}</span>
+          <span className="tiny dim"> — {CLAUDE_MODEL_CHOICES[choice].detail}</span>
+        </label>)}
+      </fieldset>}
       {unreadable ? <><p className="small" role="status">{SAVED_KEY_UNREADABLE}</p>{tryAgain}</> : connected
         ? <Button variant="danger" disabled={busy} onClick={() => void run(async () => { setStatus(await disconnectProvider("claude")); setNote("Claude disconnected. Study tools use Gemini again. Your saved study material is kept."); })}>Disconnect Claude</Button>
         // Claude chosen but its key is missing: let the student put a key back in.

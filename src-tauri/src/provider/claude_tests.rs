@@ -122,7 +122,7 @@ fn context<'a>(
         http,
         base: &fake.base,
         api_key: "synthetic-claude-key-only",
-        choice: ModelChoice::MostCapable,
+        choice: ModelChoice::Standard,
         cache,
         epoch: cache.epoch(),
         budget,
@@ -180,12 +180,12 @@ fn claude_study_aid_records_headers_document_before_text_and_schema() {
         request.header("x-api-key"),
         Some("synthetic-claude-key-only")
     );
-    assert_eq!(request.header("anthropic-version"), Some("2026-10-21"));
+    assert_eq!(request.header("anthropic-version"), Some("2023-06-01"));
     assert_eq!(request.header("content-type"), Some("application/json"));
     assert!(request.header("x-goog-api-key").is_none());
     let body = request.json();
     assert_eq!(body["model"], claude::MODEL);
-    assert_eq!(body["max_tokens"], 16000);
+    assert_eq!(body["max_tokens"], 32000);
     assert_eq!(body["output_config"]["effort"], "medium");
     for key in ["temperature", "top_p", "top_k", "thinking", "citations"] {
         assert!(body.get(key).is_none());
@@ -366,7 +366,7 @@ fn claude_key_check_uses_model_get_and_busy_never_means_bad_key() {
         assert_eq!(log.len(), 1);
         assert_eq!(log[0].method, "GET");
         assert_eq!(log[0].path, format!("/v1/models/{}", claude::MODEL));
-        assert_eq!(log[0].header("anthropic-version"), Some("2026-10-21"));
+        assert_eq!(log[0].header("anthropic-version"), Some("2023-06-01"));
         assert_eq!(log[0].header("x-api-key"), Some("synthetic-key"));
     }
 }
@@ -425,7 +425,7 @@ fn claude_ask_cut_off_by_max_tokens_says_to_ask_a_shorter_question() {
         "Claude's answer got too long and was cut off. Try asking a shorter or more specific question."
     );
     assert_eq!(fake.log().len(), 1);
-    assert_eq!(fake.log()[0].json()["max_tokens"], 16000);
+    assert_eq!(fake.log()[0].json()["max_tokens"], 32000);
 }
 #[test]
 fn claude_text_source_uses_text_not_document() {
@@ -576,7 +576,7 @@ fn claude_section_guide_sends_selected_pdf_without_upload_or_descriptor() {
         Budget::new(Duration::from_secs(30)),
     );
     let ctx = context(&fake, &http, &cache, &budget, &|_| {});
-    let id = sections::queue_study_guide_at(&root.0, &request, ModelChoice::MostCapable).unwrap();
+    let id = sections::queue_study_guide_at(&root.0, &request, ModelChoice::Standard).unwrap();
     let answer = tauri::async_runtime::block_on(sections::activate(
         &ctx,
         &root.0,

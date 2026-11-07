@@ -36,10 +36,23 @@ export const GEMINI_MODEL_CHOICES: Record<
   },
 };
 
+/** The same two choices when Claude is the provider. */
+export const CLAUDE_MODEL_CHOICES: typeof GEMINI_MODEL_CHOICES = {
+  standard: {
+    label: "Standard — Claude Haiku 5.5",
+    detail: "Fast and inexpensive.",
+  },
+  "most-capable": {
+    label: "Most capable — Claude Sonnet 5.5",
+    detail: "A little more thorough; costs more of your Claude credits.",
+  },
+};
+
 /** A model ID as the student would read it. Historical models keep their original labels. */
 export function geminiModelName(model: string): string {
   if (typeof model !== "string" || !model) return "Gemini";
   if (model === "claude-haiku-5-5") return "Claude Haiku 5.5";
+  if (model === "claude-sonnet-5-5") return "Claude Sonnet 5.5";
   if (model === "gemini-4-argon") return "Gemini 4 Argon";
   if (model === "gemini-3.5-flash") return "Gemini 3.5 Flash";
   if (model === "gemini-3.8-flash") return "Gemini 3.8 Flash";
