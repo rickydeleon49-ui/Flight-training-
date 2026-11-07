@@ -7,7 +7,7 @@ import { getGeminiStatus } from "@/services/gemini";
 import { providerCompany } from "@/services/provider";
 import { previewStudyPageSource } from "@/services/studyPageSources";
 import { useAppData } from "@/state/AppDataContext";
-import { useKitQueue } from "@/state/KitQueue";
+import { useOptionalKitQueue, type KitQueueValue } from "@/state/KitQueue";
 import { KIT_QUEUE_TEXT as TEXT, nextWaiting, summarize, type Consent, type Queue } from "@/state/kitQueueLogic";
 
 /** What the provider keeps, in plain words, for the company that would receive the chapters. */
@@ -25,8 +25,13 @@ interface Prepared {
 
 /** One screen to choose and agree, then one progress line with Stop. */
 export function KitQueueDialog() {
+  const kit = useOptionalKitQueue();
+  // The shell also renders without the data providers (tests, early start).
+  return kit ? <KitQueueDialogBody kit={kit} /> : null;
+}
+
+function KitQueueDialogBody({ kit }: { kit: KitQueueValue }) {
   const { data } = useAppData();
-  const kit = useKitQueue();
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [company, setCompany] = useState<string | null>(null);
@@ -160,7 +165,7 @@ export function KitQueueDialog() {
   );
 }
 
-function queueView(queue: Queue, message: string | null, title: (id: string) => string, kit: ReturnType<typeof useKitQueue>, close: () => void, company: string | null) {
+function queueView(queue: Queue, message: string | null, title: (id: string) => string, kit: KitQueueValue, close: () => void, company: string | null) {
   const summary = summarize(queue);
   const running = queue.items.find((i) => i.status === "running");
   const total = queue.items.length;

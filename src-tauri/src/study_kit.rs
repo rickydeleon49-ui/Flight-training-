@@ -357,6 +357,7 @@ fn check_expected(
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn generate_study_kit(
     app: AppHandle,
     relative_path: String,

@@ -11,7 +11,7 @@ import { useGeminiJobs } from "./GeminiJobs";
 import { KitQueueRunner, type BeginResult, type RunnerDeps } from "./kitQueueRunner";
 import type { Consent, Queue } from "./kitQueueLogic";
 
-interface KitQueueValue {
+export interface KitQueueValue {
   queue: Queue | null;
   message: string | null;
   /** The chapters the picker is open for, or null when it is closed. */
