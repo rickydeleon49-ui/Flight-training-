@@ -697,7 +697,9 @@ it("offers the Study shortcut only with a saved page note and opens its existing
   fireEvent.click(make);
   const dialog = await screen.findByRole("dialog", { name: "Add a card" });
   expect(document.getElementById("material-tab-notes")?.getAttribute("aria-selected")).toBe("true");
-  expect((within(dialog).getByLabelText("Question") as HTMLTextAreaElement).value).toBe("");
+  // The dialog shows "Opening…" while it re-reads the set for editing; under
+  // load it is found before the fields replace that, so wait for the field.
+  expect((await within(dialog).findByLabelText("Question") as HTMLTextAreaElement).value).toBe("");
   fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
   expect(await db.select("SELECT * FROM study_set_save_operations")).toEqual(before);
   await waitFor(() => expect(document.getElementById("material-tab-study")?.getAttribute("aria-selected")).toBe("true"));
