@@ -85,6 +85,13 @@ function world(chapterIds: string[], start?: Start) {
     persist: async (queue) => { w.stored = clone(queue); },
     // The repository's single INSERT ... WHERE NOT EXISTS, guarded by a unique index.
     claim: async (queue) => { await Promise.resolve(); if (open(w.stored)) return false; w.stored = clone(queue); return true; },
+    // The repository's single UPDATE: only a done or paused queue, never a stopped one.
+    reopen: async (queue) => {
+      await Promise.resolve();
+      if (w.stored?.id !== queue.id || (w.stored.state !== "done" && w.stored.state !== "paused")) return false;
+      w.stored = clone(queue);
+      return true;
+    },
     findOpen: async () => (open(w.stored) ? clone(w.stored!) : null),
     stored: async (id) => (w.stored?.id === id ? clone(w.stored) : null),
   };
@@ -599,6 +606,7 @@ describe("kit queue runner", () => {
         ...env.deps,
         persist: (q) => repo.save(q),
         claim: (q) => repo.claim(q),
+        reopen: (q) => repo.reopen(q),
         findOpen: () => repo.findOpen(),
         stored: (id) => repo.get(id),
       };
@@ -706,6 +714,120 @@ describe("kit queue runner", () => {
       expect(r.queue?.state).toBe("done");
       expect(summarize(r.queue!).made.map((i) => i.materialId)).toEqual(["c1", "c2"]);
       expect(w.paid).toEqual(["c1", "c2"]);
+    });
+
+    describe("Make again on a done queue", () => {
+      /** A queue left in the store as given, written straight to the tables. */
+      async function seed(env: Awaited<ReturnType<typeof sqliteWorld>>, id: string, state: Queue["state"], statuses: string[], createdAt = NOW) {
+        await env.db.execute("INSERT INTO kit_queue (id, provider, created_at, state, consent_at) VALUES (?, 'Google', ?, ?, ?)", [id, createdAt, state, createdAt]);
+        for (const [position, status] of statuses.entries()) {
+          await env.db.execute(`INSERT INTO kit_queue_item (queue_id, position, material_id, source_sha256, status, request_id, job_id, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, NULL, ?)`, [id, position, `c${position + 1}`, `sha-c${position + 1}`, status, status === "waiting" ? null : "req-old", createdAt]);
+        }
+        return (await env.repo.get(id))!;
+      }
+      const partialKit = (env: Awaited<ReturnType<typeof sqliteWorld>>) => async (id: string, call: number, options: StartKitOptions): Promise<KitStartResult> => {
+        options.onJobId?.(`job-${call}`);
+        env.w.journal.push(...kit(`job-${call}`, id, { guide: true, cards: false }));
+        return { outcome: "checkpointed", jobId: `job-${call}`, partial: true, sent: true, requestId: options.requestId };
+      };
+
+      for (const status of ["partial", "failed", "unclear"]) {
+        it(`reopens a done queue for a ${status} chapter, stores it active, and sends the kit once`, async () => {
+          const env = await sqliteWorld(ids(1));
+          try {
+            const done = await seed(env, "q1", "done", [status]);
+            const seen: { state?: string; item?: string; open?: string | null } = {};
+            env.w.start = async (id, call, options) => {
+              const now = await env.repo.get("q1");
+              seen.state = now?.state;
+              seen.item = now?.items[0]?.status;
+              seen.open = (await env.repo.findOpen())?.id ?? null;
+              env.w.journal.push(...kit(`job-${call}`, id));
+              return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: options.requestId };
+            };
+            const r = new KitQueueRunner(env.deps, () => {}, done);
+            expect(await r.retry(0)).toBe(true);
+            expect(seen).toEqual({ state: "active", item: "running", open: "q1" });
+            expect(env.w.paid).toEqual(["c1"]);
+            const stored = (await env.repo.get("q1"))!;
+            expect(stored.state).toBe("done");
+            expect(stored.items[0]?.status).toBe("checkpointed");
+            expect(r.queue?.state).toBe(stored.state);
+          } finally { env.db.close(); }
+        });
+      }
+
+      it("reopen alone stores the queue active with the chapter waiting, and findOpen returns it", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["failed"]);
+          const next: Queue = { ...done, state: "active", items: done.items.map((i) => ({ ...i, status: "waiting", requestId: null })) };
+          expect(await env.repo.reopen(next)).toBe(true);
+          expect((await env.repo.findOpen())).toMatchObject({ id: "q1", state: "active" });
+          expect((await env.repo.get("q1"))?.items[0]?.status).toBe("waiting");
+        } finally { env.db.close(); }
+      });
+
+      it("a stale plain save of an older active copy is still refused on a done queue", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["partial"]);
+          await env.repo.save({ ...done, state: "active" });
+          expect((await env.repo.get("q1"))?.state).toBe("done");
+          expect(await env.repo.findOpen()).toBeNull();
+        } finally { env.db.close(); }
+      });
+
+      it("a stopped queue never reopens: Make again returns false and the store stays stopped", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const stopped = await seed(env, "q1", "stopped", ["failed"]);
+          // A window still holding an older "done" copy.
+          const r = new KitQueueRunner(env.deps, () => {}, { ...stopped, state: "done" });
+          expect(await r.retry(0)).toBe(false);
+          expect(await env.repo.reopen({ ...stopped, state: "active" })).toBe(false);
+          const stored = (await env.repo.get("q1"))!;
+          expect(stored.state).toBe("stopped");
+          expect(stored.items[0]?.status).toBe("failed");
+          expect(r.queue?.state).toBe("stopped");
+          expect(env.w.calls).toEqual([]);
+        } finally { env.db.close(); }
+      });
+
+      it("a done queue does not reopen while another queue is open: nothing is sent and both rows stay as they were", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["failed"]);
+          await seed(env, "q2", "active", ["waiting"], "2026-11-07T11:00:00.000Z");
+          const before = [await env.repo.get("q1"), await env.repo.get("q2")];
+          const r = new KitQueueRunner(env.deps, () => {}, done);
+          expect(await r.retry(0)).toBe(false);
+          expect(env.w.calls).toEqual([]);
+          expect([await env.repo.get("q1"), await env.repo.get("q2")]).toEqual(before);
+          expect(r.queue?.state).toBe("done");
+          expect(statuses(r.queue)).toEqual(statuses(before[0]!));
+        } finally { env.db.close(); }
+      });
+
+      it("a second Make again after a successful one works the same way", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["partial"]);
+          env.w.start = partialKit(env);
+          const r = new KitQueueRunner(env.deps, () => {}, done);
+          expect(await r.retry(0)).toBe(true);
+          expect(statuses(r.queue)).toEqual(["partial"]);
+          expect((await env.repo.get("q1"))?.state).toBe("done");
+          expect(await r.retry(0)).toBe(true);
+          expect(env.w.paid).toEqual(["c1", "c1"]);
+          const stored = (await env.repo.get("q1"))!;
+          expect(stored).toMatchObject({ state: "done" });
+          expect(stored.items[0]?.status).toBe("partial");
+          expect(r.queue?.state).toBe("done");
+          expect(await env.repo.findOpen()).toBeNull();
+        } finally { env.db.close(); }
+      });
     });
 
     it("a window-only kit that was dismissed is listed as needing another try, not dropped from the summary", async () => {

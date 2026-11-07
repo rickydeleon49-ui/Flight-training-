@@ -71,6 +71,7 @@ export function KitQueueProvider({ children }: { children: ReactNode }) {
       hasSavedKit: (id) => appRef.current.data.aiStudySets.some((s) => s.sourceMaterialId === id),
       persist: (q) => repos().kitQueue.save(q),
       claim: (q) => repos().kitQueue.claim(q),
+      reopen: (q) => repos().kitQueue.reopen(q),
       findOpen: async () => (appRef.current.repositories ? appRef.current.repositories.kitQueue.findOpen() : null),
       stored: (id) => repos().kitQueue.get(id),
     };

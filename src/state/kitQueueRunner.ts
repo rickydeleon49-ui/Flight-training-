@@ -40,6 +40,11 @@ export interface RunnerDeps {
   persist(queue: Queue): Promise<void>;
   /** Writes a new queue only when no other queue is open, in one step. False when one is. */
   claim(queue: Queue): Promise<boolean>;
+  /**
+   * "Make again" only: stores a done or paused queue as active again, in one step,
+   * while no other queue is open. Never a stopped one. False when it was refused.
+   */
+  reopen(queue: Queue): Promise<boolean>;
   findOpen(): Promise<Queue | null>;
   /** The queue as it is stored now (any window may have changed it), or null. */
   stored(id: string): Promise<Queue | null>;
@@ -205,10 +210,35 @@ export class KitQueueRunner {
         item = retryable(this.q);
         if (this.epoch !== epoch || !item || item.status !== "unclear" || this.holdsUnkept()) return false;
       }
-      await this.commit({ ...moveIn(this.q!, position, "waiting", { requestId: null }, this.deps.now()), state: "active", pauseReason: null }, null);
+      if (!(await this.reopen({ ...moveIn(this.q!, position, "waiting", { requestId: null }, this.deps.now()), state: "active", pauseReason: null }, position, epoch))) return false;
       await this.loop();
       return true;
     } finally { this.running = false; working.delete(id); }
+  }
+
+  /**
+   * Make again: the one way a done queue becomes active again. Plain writes keep a
+   * done or stopped queue as it is. Only true once the stored queue reads back active
+   * with this chapter waiting; otherwise the stored queue is shown and nothing runs.
+   */
+  private async reopen(next: Queue, position: number, epoch: number): Promise<boolean> {
+    const write = this.writes.then(() => this.deps.reopen(next));
+    this.writes = write.then(() => {}, () => {});
+    let ok = false;
+    try { ok = await write; } catch { ok = false; }
+    let stored: Queue | null = null;
+    try { stored = await this.deps.stored(next.id); } catch { stored = null; }
+    // Stopped here meanwhile: Stop wins, and its write lands after this one.
+    if (this.epoch !== epoch || this.q?.state === "stopped") return false;
+    const row = stored?.items.find((item) => item.position === position);
+    if (!ok || !stored || stored.state !== "active" || row?.status !== "waiting") {
+      if (stored) this.adopt(stored);
+      return false;
+    }
+    this.q = { ...stored, pauseReason: null };
+    this.note = null;
+    this.onChange(this.q, null);
+    return true;
   }
 
   /** On launch: load the open queue as paused, read the journal, never pay. */

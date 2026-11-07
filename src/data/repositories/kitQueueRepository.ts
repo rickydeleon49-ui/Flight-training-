@@ -66,6 +66,25 @@ export function kitQueueRepository(db: SqlDatabase) {
       [queue.id, queue.provider, queue.createdAt, queue.state, queue.consentAt]);
       await saveItems(queue);
     },
+    /**
+     * "Make again" only: opens a done (or paused) queue as active again, in a single
+     * statement, and only while no other queue is open (the unique index
+     * kit_queue_one_open refuses a racing one). A stopped queue never reopens. The items
+     * then make only allowed moves. True only when the stored queue is active afterwards.
+     */
+    async reopen(queue: Queue): Promise<boolean> {
+      try {
+        await db.execute(`UPDATE kit_queue SET state = 'active' WHERE id = ? AND state IN ('done', 'paused')
+          AND NOT EXISTS (SELECT 1 FROM kit_queue other WHERE other.id <> ? AND other.state IN ('active', 'paused'))`,
+        [queue.id, queue.id]);
+      } catch {
+        return false;
+      }
+      const rows = await db.select<{ id: string }>("SELECT id FROM kit_queue WHERE id = ? AND state = 'active'", [queue.id]);
+      if (rows.length !== 1) return false;
+      await saveItems(queue);
+      return true;
+    },
     /** One queue as it is stored now, or null. */
     async get(id: string): Promise<Queue | null> {
       return queueOf((await db.select<QueueRow>(
