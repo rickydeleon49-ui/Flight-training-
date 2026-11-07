@@ -217,7 +217,11 @@ fn run_kit(ctx: &GenContext<'_>, source: &LoadedSource, pages: u32) -> KitRow {
     let mut row = KitRow::default();
     let started = Instant::now();
     let generated = tauri::async_runtime::block_on(run_generation(ctx, source, &|part| {
-        request_body(part, pages)
+        request_body(
+            part,
+            pages,
+            ctx.provider.id() == crate::provider::ProviderId::Claude,
+        )
     }));
     row.seconds = started.elapsed().as_secs_f64();
     let (raw, model) = match generated {

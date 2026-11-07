@@ -186,7 +186,7 @@ fn claude_study_aid_records_headers_document_before_text_and_schema() {
     let body = request.json();
     assert_eq!(body["model"], claude::MODEL);
     assert_eq!(body["max_tokens"], 32000);
-    assert_eq!(body["output_config"]["effort"], "medium");
+    assert_eq!(body["output_config"]["effort"], "low");
     for key in ["temperature", "top_p", "top_k", "thinking", "citations"] {
         assert!(body.get(key).is_none());
     }
@@ -827,4 +827,131 @@ fn claude_and_gemini_question_schemas_share_nullable_acs_task() {
             );
         }
     }
+}
+
+fn schema_body(schema: crate::provider::Schema) -> Value {
+    json!({"contents":[{"role":"user","parts":[{"text":"x"}]}],
+        "generationConfig":{"responseSchema":AnyProvider::default().translate_schema(&schema)}})
+}
+
+fn at(text: &str, needle: &str) -> usize {
+    text.find(&format!("\"{needle}\":"))
+        .unwrap_or_else(|| panic!("{needle} missing"))
+}
+
+#[test]
+fn claude_wire_writes_kit_properties_in_contract_order() {
+    let body = schema_body(crate::provider::schemas::study_kit());
+    let wire = String::from_utf8(ClaudeProvider.wire(claude::MODEL, &body)).unwrap();
+    let schema = &wire[wire.find("\"schema\":").unwrap()..];
+    let (guide, cards, questions) = (
+        at(schema, "guide"),
+        at(schema, "cards"),
+        at(schema, "questions"),
+    );
+    assert!(guide < cards && cards < questions);
+    // card: front < back < sourcePage < quote
+    let card = &schema[cards..questions];
+    assert!(at(card, "front") < at(card, "back"));
+    assert!(at(card, "back") < at(card, "sourcePage"));
+    assert!(at(card, "sourcePage") < at(card, "quote"));
+    let q = &schema[questions..];
+    let order = [
+        "question",
+        "acsTask",
+        "options",
+        "correctIndex",
+        "explanation",
+        "sourcePage",
+        "quote",
+    ];
+    for pair in order.windows(2) {
+        assert!(at(q, pair[0]) < at(q, pair[1]), "{pair:?}");
+    }
+    // the required array carries the same order
+    let parsed: Value = serde_json::from_str(&wire).unwrap();
+    assert_eq!(
+        parsed["output_config"]["format"]["schema"]["required"],
+        json!(["guide", "cards", "questions"])
+    );
+}
+
+#[test]
+fn claude_wire_parses_back_to_body_for_every_contract() {
+    for schema in [
+        crate::provider::schemas::study_kit(),
+        crate::provider::schemas::study_aid(),
+        crate::provider::schemas::practice_test(),
+        crate::provider::schemas::section(),
+        crate::provider::schemas::ask_pdf(),
+        crate::provider::schemas::ask_text(),
+    ] {
+        let body = schema_body(schema);
+        for model in [claude::MODEL, claude::CAPABLE_MODEL] {
+            let wire = ClaudeProvider.wire(model, &body);
+            let parsed: Value = serde_json::from_slice(&wire).unwrap();
+            assert_eq!(parsed, ClaudeProvider.body(model, &body));
+        }
+    }
+}
+
+#[test]
+fn claude_wire_text_with_quotes_and_unicode_round_trips() {
+    let body = json!({"contents":[{"parts":[{"text":"say \"hi\" \\ é–\n"}]}],
+        "generationConfig":{"responseSchema":{"type":"OBJECT","properties":{"b":{"type":"STRING"},"a":{"type":"STRING"}}}}});
+    let wire = ClaudeProvider.wire(claude::MODEL, &body);
+    let parsed: Value = serde_json::from_slice(&wire).unwrap();
+    assert_eq!(parsed, ClaudeProvider.body(claude::MODEL, &body));
+    // no required list given: every key is still required, alphabetical
+    assert_eq!(
+        parsed["output_config"]["format"]["schema"]["required"],
+        json!(["a", "b"])
+    );
+}
+
+#[test]
+fn claude_request_cap_measures_the_wire_bytes() {
+    assert!(claude::check_wire(&vec![b'x'; 32_000_000]).is_ok());
+    assert!(claude::check_wire(&vec![b'x'; 32_000_001])
+        .unwrap_err()
+        .contains("too large"));
+}
+
+#[test]
+fn claude_request_sends_the_wire_bytes_with_json_content_type() {
+    let body = schema_body(crate::provider::schemas::study_kit());
+    let http = Client::new();
+    let built = ClaudeProvider
+        .request(&http, "http://127.0.0.1:1", "k", claude::MODEL, &body)
+        .build()
+        .unwrap();
+    assert_eq!(built.headers()["content-type"], "application/json");
+    assert_eq!(
+        built.body().unwrap().as_bytes().unwrap(),
+        ClaudeProvider.wire(claude::MODEL, &body).as_slice()
+    );
+}
+
+#[test]
+fn haiku_thinks_at_low_effort_and_sonnet_at_medium() {
+    let body = schema_body(crate::provider::schemas::section());
+    assert_eq!(
+        ClaudeProvider.body(claude::MODEL, &body)["output_config"]["effort"],
+        "low"
+    );
+    assert_eq!(
+        ClaudeProvider.body(claude::CAPABLE_MODEL, &body)["output_config"]["effort"],
+        "medium"
+    );
+}
+
+#[test]
+fn gemini_kit_schema_keeps_its_own_shape() {
+    let schema = AnyProvider::default().translate_schema(&crate::provider::schemas::study_kit());
+    assert_eq!(schema["type"], "OBJECT");
+    assert_eq!(schema["required"], json!(["guide", "cards", "questions"]));
+    assert_eq!(
+        schema["properties"]["guide"]["properties"]["body"]["maxLength"],
+        12000
+    );
 }
