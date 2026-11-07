@@ -212,6 +212,10 @@ fn a_guide_then_a_practice_test_upload_the_pdf_once_and_refer_to_it() {
 
     let generations = r.generations();
     assert_eq!(generations.len(), 2);
+    for g in &generations {
+        assert_eq!(g["generationConfig"]["maxOutputTokens"], AID_OUTPUT_TOKENS);
+    }
+    assert_eq!(AID_OUTPUT_TOKENS, 32_768);
     let uri = file_uri(&generations[0]).expect("guide refers to the prepared file");
     assert_eq!(
         file_uri(&generations[1]),
