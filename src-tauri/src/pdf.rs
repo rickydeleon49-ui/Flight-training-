@@ -53,7 +53,17 @@ pub struct PdfOutline {
     /// is stored and no migration is needed.
     #[serde(default)]
     pub mostly_pictures: bool,
+    /// Chapters worked out from the outline, the page text, or even chunks, so
+    /// every page belongs to exactly one entry. See `chapters`.
+    pub chapters: Vec<chapters::Chapter>,
+    /// "outline", "text" or "chunks": how `chapters` was found.
+    pub chapter_source: &'static str,
 }
+
+mod chapters;
+pub(crate) use chapters::{detect_chapters, outline_levels};
+#[doc(hidden)]
+pub use chapters::{split_ranges_at, PageRangeRequest};
 
 /// A page with fewer extracted characters than this counts as a picture. A
 /// text page of a handbook has hundreds; a page number or running header alone
@@ -577,10 +587,14 @@ pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOut
         if pages == 0 {
             return Err("That PDF has no pages this application can read.".to_string());
         }
+        let mostly_pictures = mostly_pictures(&document);
+        let (chapters, chapter_source) = detect_chapters(&document, pages, mostly_pictures);
         Ok(PdfOutline {
             pages,
             max_pages_per_split: MAX_PAGES,
-            mostly_pictures: mostly_pictures(&document),
+            mostly_pictures,
+            chapters,
+            chapter_source,
         })
     })
     .await
@@ -613,6 +627,34 @@ pub async fn split_pdf(
             first_page,
             last_page,
             &file_name,
+        )
+    })
+    .await
+}
+
+/// Save several page ranges (chapters) of a stored PDF as separate parts, all
+/// under ONE receipt. All or nothing: if any range fails, every file this
+/// operation made is removed and no receipt is recorded. Ranges over the study
+/// kit's page limit or the provider's size limit are split further before they
+/// are returned. The original PDF is kept.
+#[tauri::command]
+pub async fn split_pdf_ranges(
+    app: AppHandle,
+    relative_path: String,
+    batch_id: String,
+    file_name: String,
+    ranges: Vec<PageRangeRequest>,
+    source_material_id: String,
+) -> Result<SplitSourceReceipt, String> {
+    let root = crate::storage::app_root(&app)?;
+    run_off_thread(move || {
+        split_ranges_at(
+            &root,
+            &source_material_id,
+            &relative_path,
+            &batch_id,
+            &file_name,
+            &ranges,
         )
     })
     .await

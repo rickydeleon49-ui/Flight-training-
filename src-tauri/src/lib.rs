@@ -545,6 +545,7 @@ pub fn run() {
             pdf::inspect_pdf,
             pdf::split_pdf,
             pdf::split_pdf_automatically,
+            pdf::split_pdf_ranges,
             provider::provider_status,
             provider::retry_key_access,
             provider::select_provider,

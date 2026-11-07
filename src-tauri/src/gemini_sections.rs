@@ -559,19 +559,7 @@ fn source(
     // become boundaries: the next level joins only while the outline still
     // leaves the guide within the section limit for these pages. Prefer the
     // outer heading at duplicate starts and derive nonoverlapping ranges once.
-    let mut levels: BTreeMap<usize, Vec<(u32, String)>> = BTreeMap::new();
-    if let Ok(toc) = document.get_toc() {
-        for entry in toc.toc {
-            if let Ok(page) = u32::try_from(entry.page) {
-                if page > 0 && page <= total && !entry.title.trim().is_empty() {
-                    levels
-                        .entry(entry.level)
-                        .or_default()
-                        .push((page, entry.title));
-                }
-            }
-        }
-    }
+    let levels = crate::pdf::outline_levels(&document, total);
     let chosen = (
         request.chosen_pages.first().copied().unwrap_or(1),
         request.chosen_pages.last().copied().unwrap_or(total),
