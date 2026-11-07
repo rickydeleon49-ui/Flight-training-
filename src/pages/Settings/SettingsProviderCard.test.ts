@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ProviderControls } from "./ProviderControls";
 import * as provider from "@/services/provider";
+import * as gemini from "@/services/gemini";
 const mocks = vi.hoisted(() => ({ openUrl: vi.fn() }));
 vi.mock("@/data", () => ({ isTauri: () => true }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: mocks.openUrl }));
@@ -35,7 +36,7 @@ it("clears the key on submission, connects then switches without deleting anythi
   expect((screen.getByLabelText("Claude API key") as HTMLInputElement).value).toBe("");
   await screen.findByText("Claude is connected and will be used for your study tools. Your saved study material is kept.");
   expect(connect).toHaveBeenCalledWith("claude","synthetic-claude-key-only");
-  await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+  await screen.findByText(/Claude Sonnet 5.5 · Ready to use/);
   expect(container.querySelector("details")!.open).toBe(false);
   expect(container.querySelector("details")!.textContent).toContain("Gemini setup unchanged");
   expect(screen.getByRole("button",{name:"Disconnect Claude"}).closest("details")).toBeNull();
@@ -86,16 +87,24 @@ it("BUGFIX-064: Claude chosen but its key is missing shows the key box and keeps
   vi.mocked(provider.providerStatus).mockResolvedValue(status("claude", false));
   const connect = vi.spyOn(provider, "configureProvider").mockResolvedValue(status("claude", true));
   const { container } = open();
-  await screen.findByText(/Claude Haiku 5.5 · Connect Claude to use study tools/);
+  await screen.findByText(/Claude Sonnet 5.5 · Connect Claude to use study tools/);
   expect(screen.queryByRole("button", { name: "Disconnect Claude" })).toBeNull();
   const input = screen.getByLabelText("Claude API key");
   expect(input.closest("details")).toBeNull();
   fireEvent.change(input, { target: { value: "synthetic-claude-key-only" } });
   fireEvent.click(screen.getByRole("button", { name: "Connect Claude" }));
-  await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+  await screen.findByText(/Claude Sonnet 5.5 · Ready to use/);
   expect(connect).toHaveBeenCalledWith("claude", "synthetic-claude-key-only");
   container.querySelector("details")!.open = true;
   expect(screen.getByRole("button", { name: "Use Gemini" })).toBeTruthy();
+});
+
+it("a saved Standard Claude choice still shows Haiku; the saved choice wins over the Sonnet default", async () => {
+  vi.mocked(provider.providerStatus).mockResolvedValue(status("claude", true));
+  vi.spyOn(gemini, "getGeminiStatus").mockResolvedValue({ configured: true, model: "claude-haiku-5-5", choice: "standard" } as never);
+  open();
+  await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+  expect(screen.queryByText(/Claude Sonnet 5.5 ·/)).toBeNull();
 });
 
 it("shows the adult and own-key requirement beside AI setup", () => {

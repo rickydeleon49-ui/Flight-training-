@@ -113,6 +113,7 @@ impl ModelChoice {
     }
 
     /// The model asked once when the primary stays busy or is unavailable.
+    #[cfg(test)]
     fn fallback(self) -> &'static str {
         AnyProvider::default().models(self.into()).1
     }
@@ -135,13 +136,10 @@ pub(crate) fn load_choice(root: &Path) -> ModelChoice {
     std::fs::read_to_string(root.join(choice_files(root).0))
         .ok()
         .and_then(|value| ModelChoice::parse(&value))
-        .unwrap_or_else(|| {
-            if crate::provider::load_choice(root) == crate::provider::ProviderId::Claude {
-                ModelChoice::Standard
-            } else {
-                ModelChoice::MostCapable
-            }
-        })
+        // Owner 6 Nov 2026: Sonnet is the Claude default (blind eval: complete
+        // kits every time, where Haiku lost parts). Gemini also starts on
+        // its most capable model.
+        .unwrap_or(ModelChoice::MostCapable)
 }
 
 /// Save her choice, replacing any previous one.
@@ -2092,7 +2090,7 @@ async fn generate_with_retries_inner(
         if has_fallback && attempt == MAX_GENERATION_ATTEMPTS && !on_fallback {
             // The last attempt goes to the backup model: a model-specific
             // capacity or rate limit may spare it.
-            model = choice.fallback();
+            model = ctx.fallback();
             on_fallback = true;
             (ctx.say)(choice.fallback_notice().to_string());
         }
@@ -2128,11 +2126,11 @@ async fn generate_with_retries_inner(
                     && choice == ModelChoice::MostCapable
                     && status == 403
                     && !matches!(
-                        AnyProvider::default().describe_refusal(status, &body, None),
+                        ctx.provider.describe_refusal(status, &body, None),
                         crate::provider::RefusalKind::InvalidKey
                     )
                 {
-                    model = choice.fallback();
+                    model = ctx.fallback();
                     on_fallback = true;
                     (ctx.say)(choice.fallback_notice().to_string());
                     continue;
@@ -2157,7 +2155,7 @@ async fn generate_with_retries_inner(
                 });
                 retry_after = asked;
                 if has_fallback && !on_fallback && moves_straight_to_fallback(choice, status) {
-                    model = choice.fallback();
+                    model = ctx.fallback();
                     on_fallback = true;
                     (ctx.say)(choice.fallback_notice().to_string());
                 }
@@ -3052,15 +3050,15 @@ mod tests {
     }
 
     #[test]
-    fn claude_defaults_to_haiku_until_she_chooses() {
+    fn claude_defaults_to_sonnet_until_she_chooses() {
         let root = choice_scratch("claude-default");
         std::fs::write(root.join("ai-provider"), "claude").unwrap();
-        assert_eq!(load_choice(&root), ModelChoice::Standard);
-        // The Gemini choice never decides the Claude model.
-        std::fs::write(root.join(MODEL_CHOICE_FILE), "most-capable").unwrap();
-        assert_eq!(load_choice(&root), ModelChoice::Standard);
-        std::fs::write(root.join(CLAUDE_MODEL_CHOICE_FILE), "most-capable").unwrap();
         assert_eq!(load_choice(&root), ModelChoice::MostCapable);
+        // The Gemini choice never decides the Claude model.
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "standard").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
+        std::fs::write(root.join(CLAUDE_MODEL_CHOICE_FILE), "standard").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
         let _ = std::fs::remove_dir_all(&root);
     }
 
