@@ -11,7 +11,14 @@
 #   - one "Developer ID Application: <name> (TEAMID)" identity in the login
 #     keychain (or APPLE_SIGNING_IDENTITY naming exactly one of them);
 #   - a notarytool keychain profile, named by HFD_NOTARY_PROFILE
-#     (default hfd-notary).
+#     (default hfd-notary), OR an App Store Connect API key file:
+#     HFD_NOTARY_KEY=<path to AuthKey_KEYID.p8> HFD_NOTARY_KEY_ID=<KEYID>
+#     HFD_NOTARY_ISSUER=<issuer ID>. The key file needs no keychain, so it also
+#     works when the Mac locks during the build (a locked Mac hides keychain
+#     profiles and notarytool then says "No Keychain password item found").
+#
+# The display is kept awake while the script runs (caffeinate), so the Mac does
+# not lock part-way through.
 #
 # This script never reads or prints a secret, never removes quarantine and
 # never weakens Gatekeeper. The committed tauri.conf.json keeps its ad-hoc
@@ -24,6 +31,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 NOTARY_PROFILE="${HFD_NOTARY_PROFILE:-hfd-notary}"
+NOTARY_KEY="${HFD_NOTARY_KEY:-}"
+NOTARY_KEY_ID="${HFD_NOTARY_KEY_ID:-}"
+NOTARY_ISSUER="${HFD_NOTARY_ISSUER:-}"
 BUNDLE_ID="com.herflightdeck.app"
 DMG_DIR="src-tauri/target/release/bundle/dmg"
 
@@ -91,15 +101,40 @@ TEAM_ID="$(printf '%s\n' "$IDENTITY" | sed -n 's/^Developer ID Application: .* (
 [[ -n "$TEAM_ID" ]] || fail "could not read the team ID from the identity name: $IDENTITY"
 echo "Signing identity: $IDENTITY"
 
-# --- Notary profile ------------------------------------------------------------
-if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
-  fail "the notarytool keychain profile \"$NOTARY_PROFILE\" is missing or not working.
-One-time step (in Terminal; it is stored in the keychain, never in this repository):
+# --- Notary credentials ---------------------------------------------------------
+# Either an API key file (path, key ID and issuer; the file's contents are never
+# read or printed here) or a keychain profile.
+if [[ -n "$NOTARY_KEY$NOTARY_KEY_ID$NOTARY_ISSUER" ]]; then
+  [[ -n "$NOTARY_KEY" && -n "$NOTARY_KEY_ID" && -n "$NOTARY_ISSUER" ]] \
+    || fail "set all three of HFD_NOTARY_KEY, HFD_NOTARY_KEY_ID and HFD_NOTARY_ISSUER, or none of them."
+  [[ -f "$NOTARY_KEY" && -r "$NOTARY_KEY" ]] || fail "HFD_NOTARY_KEY is not a readable file: $NOTARY_KEY"
+  NOTARY_AUTH=(--key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER")
+  NOTARY_LABEL="API key $NOTARY_KEY_ID"
+  NOTARY_HELP="Check the key file, key ID and issuer ID in App Store Connect (Users and Access, Integrations)."
+else
+  NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")
+  NOTARY_LABEL="profile $NOTARY_PROFILE"
+  NOTARY_HELP="One-time step (in Terminal; it is stored in the keychain, never in this repository):
   xcrun notarytool store-credentials $NOTARY_PROFILE --key <AuthKey_KEYID.p8> --key-id <KEYID> --issuer <issuer ID>
   (or: --apple-id <your Apple ID> --team-id $TEAM_ID with an app-specific password)
+If it is already stored, the Mac may be locked: unlock it, or use HFD_NOTARY_KEY.
 See README.md, Signed Mac builds, step 2."
 fi
-echo "Notary profile $NOTARY_PROFILE works."
+if ! xcrun notarytool history "${NOTARY_AUTH[@]}" >/dev/null 2>&1; then
+  if [[ -n "$NOTARY_KEY" ]]; then
+    fail "the notary API key $NOTARY_KEY_ID is not working.
+$NOTARY_HELP"
+  fi
+  fail "the notarytool keychain profile \"$NOTARY_PROFILE\" is missing or not working.
+$NOTARY_HELP"
+fi
+echo "Notary $NOTARY_LABEL works."
+
+# Keep the display awake until this script exits, so the Mac does not lock
+# during the long build (a locked Mac hides keychain profiles from notarytool).
+if command -v caffeinate >/dev/null 2>&1; then
+  caffeinate -d -i -u -w $$ >/dev/null 2>&1 &
+fi
 
 [[ -x node_modules/.bin/tauri ]] || fail "dependencies are not installed. Run npm ci first (Node 22)."
 
@@ -128,7 +163,7 @@ rm -rf "$DMG_DIR"
 echo "Building the signed DMG (HFD_OFFLINE_EXTRACTION=1)..."
 # Tauri may also notarize or import certificates when Apple account variables
 # are present; clear them so notarization happens exactly once, below, with
-# the keychain profile.
+# the notary credentials chosen above.
 env -u APPLE_ID -u APPLE_PASSWORD -u APPLE_TEAM_ID -u APPLE_API_KEY \
   -u APPLE_API_ISSUER -u APPLE_API_KEY_PATH -u APPLE_CERTIFICATE -u APPLE_CERTIFICATE_PASSWORD \
   HFD_OFFLINE_EXTRACTION=1 APPLE_SIGNING_IDENTITY="$IDENTITY" \
@@ -150,7 +185,7 @@ echo "Built: $DMG"
 # --- Notarize and staple -------------------------------------------------------
 echo "Submitting to Apple notarization (this can take several minutes)..."
 set +e
-SUBMIT_JSON="$(xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait --output-format json)"
+SUBMIT_JSON="$(xcrun notarytool submit "$DMG" "${NOTARY_AUTH[@]}" --wait --output-format json)"
 submit_status=$?
 set -e
 read_field() {
@@ -164,9 +199,12 @@ SUBMISSION_ID="$(read_field id)"
 NOTARY_STATUS="$(read_field status)"
 if [[ "$submit_status" -ne 0 || "$NOTARY_STATUS" != "Accepted" ]]; then
   echo "Notarization result: ${NOTARY_STATUS:-unknown} (notarytool exit $submit_status)" >&2
+  if [[ -z "$SUBMIT_JSON" && -z "$NOTARY_KEY" ]]; then
+    echo "If notarytool said \"No Keychain password item found\", the Mac was probably locked; unlock it and rerun, or use HFD_NOTARY_KEY." >&2
+  fi
   if [[ -n "$SUBMISSION_ID" ]]; then
     echo "Submission id: $SUBMISSION_ID" >&2
-    echo "Details: xcrun notarytool log $SUBMISSION_ID --keychain-profile $NOTARY_PROFILE" >&2
+    echo "Details: xcrun notarytool log $SUBMISSION_ID ${NOTARY_AUTH[*]}" >&2
   fi
   fail "notarization was not Accepted. Do not upload this DMG."
 fi

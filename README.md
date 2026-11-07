@@ -101,6 +101,11 @@ the repository.
 2. Store a notarytool profile once:
    `xcrun notarytool store-credentials <profile> --key <AuthKey.p8> --key-id <KEYID> --issuer <issuer ID>`.
    The script uses the profile named by `HFD_NOTARY_PROFILE` (default `hfd-notary`).
+   Or skip the keychain and point the script at the API key file:
+   `HFD_NOTARY_KEY=<path/AuthKey_KEYID.p8> HFD_NOTARY_KEY_ID=<KEYID> HFD_NOTARY_ISSUER=<issuer ID>`.
+   A locked Mac hides keychain profiles (notarytool then says "No Keychain password
+   item found"), so the script keeps the display awake while it runs; the key file
+   works even if the Mac locks anyway.
 3. Check out the tag `v<version>` with a clean tree, run `npm ci`, then run the script.
 
 Never bypass or weaken operating-system protections (Gatekeeper, SmartScreen,
