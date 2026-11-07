@@ -41,12 +41,17 @@ export interface RunnerDeps {
   /** Writes a new queue only when no other queue is open, in one step. False when one is. */
   claim(queue: Queue): Promise<boolean>;
   findOpen(): Promise<Queue | null>;
+  /** The queue as it is stored now (any window may have changed it), or null. */
+  stored(id: string): Promise<Queue | null>;
 }
 
 export type BeginResult = { ok: true } | { ok: false; reason: "already" | "consent" | "empty" };
 
 /** One claim at a time in this window, whichever runner asks. */
 let claiming = false;
+/** Queues some runner in this window is working on right now: only one runner works on a queue at a time. */
+const working = new Set<string>();
+const hold = (id: string): boolean => { if (working.has(id)) return false; working.add(id); return true; };
 
 export class KitQueueRunner {
   private q: Queue | null;
@@ -99,6 +104,7 @@ export class KitQueueRunner {
   async begin(chapters: { materialId: string; sourceSha256: string }[], consent: Consent): Promise<BeginResult> {
     if (this.running || claiming || (this.q && (this.q.state === "active" || this.q.state === "paused"))) return { ok: false, reason: "already" };
     this.running = true;
+    let id = "";
     try {
       claiming = true;
       try {
@@ -117,8 +123,10 @@ export class KitQueueRunner {
         this.q = queue;
         this.note = null;
         this.onChange(queue, null);
+        working.add(queue.id);
+        id = queue.id;
       } finally { claiming = false; }
-      await this.loop();
+      try { await this.loop(); } finally { working.delete(id); }
       return { ok: true };
     } finally { this.running = false; }
   }
@@ -126,11 +134,12 @@ export class KitQueueRunner {
   /** Continue a paused queue. Refused while a finished kit is still only in this window. */
   async resume(): Promise<boolean> {
     const q = this.q;
-    if (this.running || !q || q.state !== "paused" || !q.consentAt) return false;
+    if (this.running || !q || q.state !== "paused" || !q.consentAt || !hold(q.id)) return false;
     this.running = true;
     const epoch = this.epoch;
     try {
       if (this.holdsUnkept()) return false;
+      if (!(await this.fromStore(["paused"])) || this.epoch !== epoch) return false;
       await this.settle();
       // Checked again after every wait: Stop, consent and kept drafts may have changed.
       const now = this.q;
@@ -138,16 +147,18 @@ export class KitQueueRunner {
       await this.commit({ ...now, state: "active", pauseReason: null }, null);
       await this.loop();
       return true;
-    } finally { this.running = false; }
+    } finally { this.running = false; working.delete(q.id); }
   }
 
   /** A fresh consent after the provider changed. */
   async confirmAgain(consent: Consent): Promise<boolean> {
-    if (this.running || this.q?.state !== "paused") return false;
+    const id = this.q?.id;
+    if (this.running || this.q?.state !== "paused" || !id || !hold(id)) return false;
     this.running = true;
     const epoch = this.epoch;
     let agreed = false;
     try {
+      if (!(await this.fromStore(["paused"]))) return false;
       const provider = await this.deps.provider();
       const q = this.q;
       if (this.epoch !== epoch || !q || q.state !== "paused") return false;
@@ -155,7 +166,7 @@ export class KitQueueRunner {
       if (!consentValid(consent, { provider, materialIds: waiting })) return false;
       await this.commit({ ...q, provider, consentAt: this.deps.now() }, null);
       agreed = this.epoch === epoch && this.q?.state === "paused";
-    } finally { this.running = false; }
+    } finally { this.running = false; working.delete(id); }
     return agreed ? this.resume() : false;
   }
 
@@ -176,11 +187,13 @@ export class KitQueueRunner {
       const item = q.items.find((candidate) => candidate.position === position);
       return item && ["partial", "unclear", "failed"].includes(item.status) ? item : null;
     };
-    if (this.running || !retryable(this.q)) return false;
+    const id = this.q?.id;
+    if (this.running || !retryable(this.q) || !id || !hold(id)) return false;
     this.running = true;
     const epoch = this.epoch;
     try {
       if (this.holdsUnkept()) return false;
+      if (!(await this.fromStore(["paused", "done"])) || this.epoch !== epoch) return false;
       await this.settle();
       if (this.epoch !== epoch || this.holdsUnkept()) return false;
       let item = retryable(this.q);
@@ -195,7 +208,7 @@ export class KitQueueRunner {
       await this.commit({ ...moveIn(this.q!, position, "waiting", { requestId: null }, this.deps.now()), state: "active", pauseReason: null }, null);
       await this.loop();
       return true;
-    } finally { this.running = false; }
+    } finally { this.running = false; working.delete(id); }
   }
 
   /** On launch: load the open queue as paused, read the journal, never pay. */
@@ -204,20 +217,30 @@ export class KitQueueRunner {
     this.running = true;
     try {
       const open = await this.deps.findOpen();
-      if (!open || this.q) return;
-      const records = await this.deps.records();
-      if (this.q) return;
-      let next = reconcileQueue(open, records, this.deps.now());
+      // Another runner in this window is working on it: that one owns it.
+      if (!open || this.q || !hold(open.id)) return;
+      try {
+        const records = await this.deps.records();
+        // Built on the queue as stored after the wait: it may have been stopped meanwhile.
+        const fresh = await this.deps.stored(open.id);
+        if (this.q || !fresh) return;
+        if (fresh.state !== "active" && fresh.state !== "paused") { this.adopt(fresh); return; }
+        let next = reconcileQueue(fresh, records, this.deps.now());
       // A queue whose chapters never got written has nothing to do.
-      if (next.items.length === 0) next = { ...next, state: "done", pauseReason: null };
-      await this.commit(next, next.state === "paused" ? TEXT.restart : null);
+        if (next.items.length === 0) next = { ...next, state: "done", pauseReason: null };
+        await this.commit(next, next.state === "paused" ? TEXT.restart : null);
+      } finally { working.delete(open.id); }
     } finally { this.running = false; }
   }
 
   /** Called when the journal or the drafts change: settle what is done, and wake a queue that waited for room. */
   async poke(): Promise<void> {
-    if (this.running || this.q?.state !== "paused") return;
-    await this.settle();
+    const id = this.q?.id;
+    if (this.running || this.q?.state !== "paused" || !id || !hold(id)) return;
+    try {
+      if (!(await this.fromStore(["paused"]))) return;
+      await this.settle();
+    } finally { working.delete(id); }
     const now = this.q;
     if (!now || now.state !== "paused") return;
     if (now.pauseReason === "slots") {
@@ -240,7 +263,7 @@ export class KitQueueRunner {
     const at = this.deps.now();
     let changed = false;
     for (const item of q.items) {
-      if (item.status === "running" && item.jobId === null && !this.deps.holdsUnkeptDraft(item.materialId) && this.pausedNotKept()) {
+      if (item.status === "running" && !this.deps.holdsUnkeptDraft(item.materialId) && this.pausedNotKept()) {
         if (this.deps.hasSavedKit(item.materialId)) q = moveIn(moveIn(q, item.position, "checkpointed", {}, at), item.position, "saved", {}, at);
         else q = moveIn(q, item.position, "unclear", {}, at);
         changed = true;
@@ -253,6 +276,32 @@ export class KitQueueRunner {
   }
 
   private pausedNotKept(): boolean { return this.q?.state === "paused" && this.q.pauseReason === "not-kept"; }
+
+  /** Show a queue as stored, without writing: another window stopped, ended or is running it. */
+  private adopt(stored: Queue | null): void {
+    const base = stored ?? (this.q ? { ...this.q, state: "stopped" as const } : null);
+    if (!base) return;
+    const elsewhere = base.state === "active";
+    this.q = { ...base, state: elsewhere ? "paused" : base.state, pauseReason: elsewhere ? "busy" : base.state === "paused" ? base.pauseReason ?? "restart" : null };
+    this.note = base.state === "stopped" ? TEXT.stopped : elsewhere ? TEXT.busy : base.state === "done" ? null : this.note;
+    this.onChange(this.q, this.note);
+  }
+
+  /**
+   * Start from the queue as stored, never an older copy in this window. False (and
+   * shown as stored) when it is no longer in one of `states`.
+   */
+  private async fromStore(states: Queue["state"][]): Promise<boolean> {
+    const mine = this.q;
+    if (!mine) return false;
+    let stored: Queue | null;
+    try { stored = await this.deps.stored(mine.id); } catch { return false; }
+    // Changed here meanwhile (Stop): that newer state wins.
+    if (this.q !== mine) return false;
+    if (!stored || !states.includes(stored.state)) { this.adopt(stored); return false; }
+    this.q = { ...stored, pauseReason: stored.state === "paused" ? mine.pauseReason ?? "restart" : null };
+    return true;
+  }
 
   /** One chapter at a time until the queue ends, pauses or is stopped. */
   private async loop(): Promise<void> {
@@ -271,7 +320,8 @@ export class KitQueueRunner {
   /** Nothing was sent: put a "running" item back (Stop, or a check failed after it was written down). */
   private async putBack(position: number, then?: "skipped"): Promise<void> {
     const at = this.deps.now();
-    let next = moveIn(this.q!, position, "waiting", { requestId: null, jobId: null }, at);
+    // The request id stays: only the run that set "running" may move it on (kitQueueRepository).
+    let next = moveIn(this.q!, position, "waiting", { jobId: null }, at);
     if (then) next = moveIn(next, position, then, {}, at);
     await this.commit(next, then === "skipped" ? TEXT.skipped : this.note);
   }
@@ -333,6 +383,25 @@ export class KitQueueRunner {
       return;
     }
     if (current === null || current !== item.sourceSha256) { await this.putBack(item.position, "skipped"); return; }
+    // Last, the stored queue must still be active with this chapter running under this
+    // request: another window may have stopped it or taken the chapter.
+    let stored: Queue | null;
+    try { stored = await this.deps.stored(now.id); } catch {
+      await this.putBack(item.position);
+      await this.pause("busy", TEXT.busy);
+      return;
+    }
+    const row = stored?.items.find((candidate) => candidate.position === item.position);
+    const ours = row?.status === "running" && row.requestId === requestId;
+    if (!stored || stored.state !== "active" || !ours || !this.live(epoch)) {
+      if (stored && ours) {
+        // Our own row: put it back, leaving the stored state as it is.
+        const back = moveIn(this.q!, item.position, "waiting", { jobId: null }, this.deps.now());
+        await this.commit({ ...back, state: stored.state === "active" ? "paused" : stored.state, pauseReason: stored.state === "active" ? "busy" : null },
+          stored.state === "stopped" ? TEXT.stopped : stored.state === "active" ? TEXT.busy : this.note);
+      } else this.adopt(stored);
+      return;
+    }
     const filePath = this.deps.filePath(item.materialId)!;
     // The native side checks the provider and checksum once more and refuses before sending.
     const result = await this.deps.startKit({ materialId: item.materialId, filePath }, {
@@ -361,7 +430,7 @@ export class KitQueueRunner {
         return;
       case "refused":
         if (result.stale === "source") { await this.putBack(position, "skipped"); return; }
-        if (result.stale === "provider") { await this.pause("consent", TEXT.consentStale, { ...items("waiting", { requestId: null }), consentAt: null }); return; }
+        if (result.stale === "provider") { await this.pause("consent", TEXT.consentStale, { ...items("waiting"), consentAt: null }); return; }
         await this.pause("busy", result.message ?? TEXT.busy, items("waiting"));
         return;
       case "cancelled":

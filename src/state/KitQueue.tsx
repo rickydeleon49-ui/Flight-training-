@@ -72,6 +72,7 @@ export function KitQueueProvider({ children }: { children: ReactNode }) {
       persist: (q) => repos().kitQueue.save(q),
       claim: (q) => repos().kitQueue.claim(q),
       findOpen: async () => (appRef.current.repositories ? appRef.current.repositories.kitQueue.findOpen() : null),
+      stored: (id) => repos().kitQueue.get(id),
     };
     runnerRef.current = new KitQueueRunner(deps, (q, m) => { setQueue(q); setMessage(m); });
   }

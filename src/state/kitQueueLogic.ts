@@ -73,6 +73,17 @@ const MOVES: Record<ItemStatus, readonly ItemStatus[]> = {
   saved: [],
 };
 
+/**
+ * Every move one write may store, as "from>to", for the storage guard
+ * (kitQueueRepository). Two writes are made in one step: a kept kit settled straight
+ * to saved (running>checkpointed>saved) and a chapter put back and skipped.
+ */
+export const ITEM_MOVE_PAIRS: readonly string[] = [
+  ...(Object.keys(MOVES) as ItemStatus[]).flatMap((from) => MOVES[from].map((to) => `${from}>${to}`)),
+  "running>saved",
+  "running>skipped",
+];
+
 export function canMove(from: ItemStatus, to: ItemStatus): boolean {
   return MOVES[from].includes(to);
 }

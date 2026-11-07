@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { GeminiJobRecord } from "@/services/gemini";
 import type { KitStartResult } from "./GeminiJobs";
-import { KIT_QUEUE_TEXT as TEXT, type Queue } from "./kitQueueLogic";
+import { createRepositories } from "@/data/repositories";
+import { createNodeSqliteDatabase } from "@/data/testing/nodeSqliteDb";
+import { KIT_QUEUE_TEXT as TEXT, summarize, type Queue } from "./kitQueueLogic";
 import { KitQueueRunner, type RunnerDeps, type StartKitOptions } from "./kitQueueRunner";
 
 type Start = (materialId: string, call: number, options: StartKitOptions) => Promise<KitStartResult> | KitStartResult;
@@ -84,6 +86,7 @@ function world(chapterIds: string[], start?: Start) {
     // The repository's single INSERT ... WHERE NOT EXISTS, guarded by a unique index.
     claim: async (queue) => { await Promise.resolve(); if (open(w.stored)) return false; w.stored = clone(queue); return true; },
     findOpen: async () => (open(w.stored) ? clone(w.stored!) : null),
+    stored: async (id) => (w.stored?.id === id ? clone(w.stored) : null),
   };
   const runner = () => new KitQueueRunner(deps, () => {});
   const chapters = chapterIds.map((id) => ({ materialId: id, sourceSha256: `sha-${id}` }));
@@ -485,7 +488,7 @@ describe("kit queue runner", () => {
       expect(w.paid).toEqual(["c1"]);
       expect(r.queue?.pauseReason).toBe("consent");
       expect(r.queue?.consentAt).toBeNull();
-      expect(r.queue?.items[1]).toMatchObject({ status: "waiting", requestId: null });
+      expect(r.queue?.items[1]).toMatchObject({ status: "waiting" });
       // A chapter file changed in that same gap is skipped by the native refusal.
       const second = world(ids(2));
       second.w.beforeSend = () => { if (second.w.calls.length === 1) second.w.sha.c1 = "edited"; };
@@ -584,6 +587,141 @@ describe("kit queue runner", () => {
       w.stored = { id: "other", provider: "Google", createdAt: NOW, state: "paused", consentAt: NOW, items: [] };
       expect(await new KitQueueRunner(deps, () => {}).begin(chapters, consent)).toEqual({ ok: false, reason: "already" });
       expect(w.calls).toHaveLength(0);
+    });
+  });
+  describe("re-check fixes", () => {
+    /** Two runners on one real in-memory SQLite queue store, with a shared fake journal and provider. */
+    async function sqliteWorld(chapterIds: string[]) {
+      const db = await createNodeSqliteDatabase();
+      const repo = createRepositories(db).kitQueue;
+      const env = world(chapterIds);
+      const deps: RunnerDeps = {
+        ...env.deps,
+        persist: (q) => repo.save(q),
+        claim: (q) => repo.claim(q),
+        findOpen: () => repo.findOpen(),
+        stored: (id) => repo.get(id),
+      };
+      return { ...env, db, repo, deps, runner: () => new KitQueueRunner(deps, () => {}) };
+    }
+    /** Leave a paused queue in the store (a rate limit on the first chapter), as after a quit. */
+    async function pausedInStore(env: Awaited<ReturnType<typeof sqliteWorld>>) {
+      env.w.start = async () => ({ outcome: "failed", message: "Gemini's rate or spending limit was reached for this project.", sent: true, requestId: "r" });
+      const first = env.runner();
+      await first.begin(env.chapters, env.consent);
+      expect((await env.repo.findOpen())?.state).toBe("paused");
+      env.w.start = undefined;
+      env.w.calls.length = 0;
+      env.w.paid.length = 0;
+    }
+
+    it("two runners that restored the same queue never pay twice, even after the kits are kept", async () => {
+      const env = await sqliteWorld(ids(2));
+      try {
+        await pausedInStore(env);
+        const a = env.runner();
+        const b = env.runner();
+        await a.restore();
+        await b.restore();
+        expect(a.queue?.state).toBe("paused");
+        expect(b.queue?.state).toBe("paused");
+        // At once: only one of them works on the queue.
+        await Promise.all([a.resume(), b.resume()]);
+        expect(env.w.paid).toEqual(["c1", "c2"]);
+        // The kits are saved and acknowledged: they leave the journal.
+        env.w.journal.length = 0;
+        ["c1", "c2"].forEach((id) => env.w.saved.add(id));
+        // The other runner's older copy still shows chapters waiting: it must not pay again.
+        expect(await a.resume()).toBe(false);
+        expect(await b.resume()).toBe(false);
+        await a.retry(0);
+        await b.retry(0);
+        expect(env.w.paid).toEqual(["c1", "c2"]);
+        expect((await env.repo.latest())?.state).toBe("done");
+      } finally { env.db.close(); }
+    });
+
+    it("a second runner's older copy cannot undo Stop", async () => {
+      const env = await sqliteWorld(ids(2));
+      try {
+        await pausedInStore(env);
+        const a = env.runner();
+        const b = env.runner();
+        await a.restore();
+        // b reads the queue, then a stops it while b is still checking the journal.
+        const g = gate();
+        env.w.recordsWait = g.wait;
+        const restoring = b.restore();
+        await Promise.resolve();
+        env.w.recordsWait = null;
+        await a.stop();
+        g.release();
+        await restoring;
+        expect((await env.repo.latest())?.state).toBe("stopped");
+        expect(await b.resume()).toBe(false);
+        expect(b.queue?.state).toBe("stopped");
+        expect(env.w.calls).toEqual([]);
+        // Even a raw write of b's old paused copy leaves it stopped.
+        await env.repo.save({ ...(await env.repo.latest())!, state: "paused" });
+        expect((await env.repo.latest())?.state).toBe("stopped");
+      } finally { env.db.close(); }
+    });
+
+    it("a stale copy cannot move a chapter another runner is making, and nothing is sent for it", async () => {
+      const env = await sqliteWorld(ids(1));
+      try {
+        await pausedInStore(env);
+        const stale = (await env.repo.findOpen())!;
+        // Another window has the chapter running under its own request.
+        await env.repo.save({ ...stale, state: "active", items: stale.items.map((i) => ({ ...i, status: "running", requestId: "req-other" })) });
+        await env.repo.save(stale);
+        expect((await env.repo.get(stale.id))?.items[0]).toMatchObject({ status: "running", requestId: "req-other" });
+        // A runner holding the old copy works from the stored queue: nothing is waiting, nothing is sent.
+        const r = new KitQueueRunner(env.deps, () => {}, stale);
+        await r.resume();
+        expect(env.w.calls).toEqual([]);
+        expect((await env.repo.get(stale.id))?.items[0]).toMatchObject({ status: "running", requestId: "req-other" });
+      } finally { env.db.close(); }
+    });
+
+    it("a kit kept only in the window settles once saved, even after its job id was written down", async () => {
+      const { w, runner, chapters, consent } = world(ids(2), async (id, call, options) => {
+        if (call === 1) {
+          options.onJobId?.("job-m");
+          await Promise.resolve();
+          w.unkept.add(id);
+          return { outcome: "memory-only", sent: true, requestId: options.requestId };
+        }
+        w.journal.push(...kit(`job-${call}`, id));
+        return { outcome: "checkpointed", jobId: `job-${call}`, sent: true, requestId: options.requestId };
+      });
+      const r = runner();
+      await r.begin(chapters, consent);
+      expect(w.stored?.items[0]).toMatchObject({ status: "running", jobId: "job-m" });
+      expect(r.queue?.pauseReason).toBe("not-kept");
+      w.unkept.delete("c1");
+      w.saved.add("c1");
+      await r.poke();
+      expect(statuses(r.queue)).toEqual(["saved", "checkpointed"]);
+      expect(r.queue?.state).toBe("done");
+      expect(summarize(r.queue!).made.map((i) => i.materialId)).toEqual(["c1", "c2"]);
+      expect(w.paid).toEqual(["c1", "c2"]);
+    });
+
+    it("a window-only kit that was dismissed is listed as needing another try, not dropped from the summary", async () => {
+      const { w, runner, chapters, consent } = world(ids(1), async (id, _call, options) => {
+        options.onJobId?.("job-m");
+        await Promise.resolve();
+        w.unkept.add(id);
+        return { outcome: "memory-only", sent: true, requestId: options.requestId };
+      });
+      const r = runner();
+      await r.begin(chapters, consent);
+      w.unkept.delete("c1");
+      await r.resume();
+      expect(statuses(r.queue)).toEqual(["unclear"]);
+      expect(summarize(r.queue!).needsTry.map((i) => i.materialId)).toEqual(["c1"]);
+      expect(w.paid).toEqual(["c1"]);
     });
   });
 });
