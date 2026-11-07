@@ -75,6 +75,7 @@ mod skill_evidence;
 mod startup_guard;
 mod storage;
 mod study_export;
+mod study_pack;
 mod study_packet;
 mod study_page_sources;
 mod study_sets;
@@ -483,6 +484,7 @@ pub fn run() {
             faa_downloads::download_faa_handbook,
             faa_downloads::cancel_faa_download,
             faa_downloads::faa_download_progress,
+            study_pack::export_study_pack,
             backup::import_picked_backup,
             backup::discard_incoming_backup,
             backup::exit_for_restore,
