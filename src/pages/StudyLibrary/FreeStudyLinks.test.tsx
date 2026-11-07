@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { FreeStudyLinks, FREE_STUDY_LINKS } from "./FreeStudyLinks";
@@ -21,5 +21,16 @@ describe("free study links card", () => {
     render(<FreeStudyLinks />);
     fireEvent.click(screen.getByText("CFI Notebook"));
     expect(openUrl).toHaveBeenCalledWith("https://www.cfinotebook.net/");
+  });
+  it("shows a hidden chevron and toggles aria-expanded", async () => {
+    render(<FreeStudyLinks />);
+    const summary = document.querySelector("summary")!;
+    const chevron = screen.getByTestId("free-links-chevron");
+    expect(chevron.getAttribute("aria-hidden")).toBe("true");
+    expect(summary.getAttribute("aria-expanded")).toBe("false");
+    const details = document.querySelector("details")!;
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    await waitFor(() => expect(summary.getAttribute("aria-expanded")).toBe("true"));
   });
 });

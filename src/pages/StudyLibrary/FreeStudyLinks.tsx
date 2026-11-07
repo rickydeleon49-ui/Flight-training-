@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, CardBody } from "@/components/ui";
+import { ChevronRightIcon } from "@/components/ui/Icons";
 import { openExternalLink } from "./openExternalLink";
 
 export const FREE_STUDY_LINKS = [
@@ -17,11 +18,14 @@ export const FREE_STUDY_LINKS = [
 
 export function FreeStudyLinks() {
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
   return <div style={{ marginBottom: "var(--space-4)" }}><Card>
-    <details>
-      <summary className="card__header" style={{ cursor: "pointer" }}>
+    <details open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary className="card__header" aria-expanded={open} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
         <h2 className="card__title" style={{ display: "inline" }}>More free study help</h2>{" "}
         <span className="small muted">optional</span>
+        <ChevronRightIcon size={16} aria-hidden="true" data-testid="free-links-chevron"
+          style={{ marginLeft: "auto", transition: "transform 0.15s", transform: open ? "rotate(-90deg)" : "rotate(90deg)" }} />
       </summary>
       <CardBody><div className="stack stack--3">
         <ul className="stack stack--3">{FREE_STUDY_LINKS.map((link) => <li key={link.url}>
