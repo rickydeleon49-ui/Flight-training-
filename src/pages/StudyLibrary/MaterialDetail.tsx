@@ -85,7 +85,7 @@ import "./studyLibrary.css";
 const TARGET_CARD_COUNTS = [20, 40, 60] as const;
 type TargetCardCount = (typeof TARGET_CARD_COUNTS)[number];
 import { GeminiErrorText, GeminiJobNotice, GeminiProgressView, GeminiRecoveryNotice } from "./GeminiJobNotice";
-import { useGeminiJobs, isNewerJob, GUIDE_PACK_CARDS, isMoreCardsJob, isNoNewCardsError, MAX_CARDS_MESSAGE, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
+import { useGeminiJobs, isNewerJob, newestJob, GUIDE_PACK_CARDS, isMoreCardsJob, isNoNewCardsError, MAX_CARDS_MESSAGE, type GeminiJob, type GeminiJobPhase } from "@/state/GeminiJobs";
 import { MAX_CARDS } from "@/logic/cardIdentity";
 import { DocumentPagesPanel } from "./navigation/DocumentPagesPanel";
 import { needsRegenerationReview } from "@/logic/studySetEditing";
@@ -303,12 +303,8 @@ function MaterialDetailPage() {
       undefined,
     );
   const kitJob = geminiJobs.jobs.find(job => job.materialId === materialId && job.kind === "study-kit");
-  const cardJob = geminiJobs.jobs.find(
-    (job) => job.materialId === materialId && job.kind === "flashcards",
-  );
-  const practiceJob = geminiJobs.jobs.find(
-    (job) => job.materialId === materialId && job.kind === "practice-test",
-  );
+  const cardJob = newestJob(geminiJobs.jobs, materialId ?? "", "flashcards");
+  const practiceJob = newestJob(geminiJobs.jobs, materialId ?? "", "practice-test");
   useEffect(() => {
     let live = true;
     if (materialId && repositories) {

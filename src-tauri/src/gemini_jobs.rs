@@ -487,7 +487,7 @@ impl Journal {
             created_at: at,
             updated_at: at,
             result: None,
-            draft: carried.and_then(|j| j.draft),
+            draft: carried.and_then(|j| j.draft).map(fresh_clock),
             error: None,
         });
         self.commit(next)?;
@@ -1335,4 +1335,45 @@ mod tests;
 #[cfg(test)]
 pub(crate) fn forget(root: &Path) {
     OPEN.lock().unwrap().as_mut().unwrap().remove(root);
+}
+
+/// A draft carried into a new request starts a new clock and a new
+/// allowance: she asked again, and the frozen timing, deadline and request
+/// counts of the earlier attempt have usually run out. Finished work stays.
+/// Earlier request counts are kept for the record in `previousRequests`.
+/// Section-guide drafts renew themselves.
+fn fresh_clock(mut draft: Value) -> Value {
+    if draft.get("kind").is_some() {
+        return draft;
+    }
+    let Some(fields) = draft.as_object_mut() else {
+        return draft;
+    };
+    fields.remove("timing");
+    fields.insert("admissions".into(), serde_json::json!(0));
+    if fields.contains_key("target") {
+        fields.insert("deadline".into(), serde_json::json!(now() + 300));
+        fields.insert("remainingMillis".into(), serde_json::json!(300_000));
+        let sum = |key: &str| -> Vec<u64> {
+            fields
+                .get(key)
+                .and_then(Value::as_array)
+                .map(|a| a.iter().map(|n| n.as_u64().unwrap_or(0)).collect())
+                .unwrap_or_default()
+        };
+        let (now_counts, before) = (sum("requests"), sum("previousRequests"));
+        if !now_counts.is_empty() {
+            let total: Vec<u64> = now_counts
+                .iter()
+                .enumerate()
+                .map(|(i, n)| n + before.get(i).copied().unwrap_or(0))
+                .collect();
+            fields.insert("previousRequests".into(), serde_json::json!(total));
+            fields.insert(
+                "requests".into(),
+                serde_json::json!(vec![0u64; now_counts.len()]),
+            );
+        }
+    }
+    draft
 }

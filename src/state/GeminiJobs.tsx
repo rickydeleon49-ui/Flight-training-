@@ -243,6 +243,18 @@ export function isNewerJob(a: GeminiJob, b: GeminiJob): boolean {
   return false;
 }
 
+/** The newest job of this kind for the material; an older failed one never hides it. */
+export function newestJob(jobs: GeminiJob[], materialId: string, kind: GeminiJob["kind"]): GeminiJob | undefined {
+  return jobs
+    .filter((job) => job.materialId === materialId && job.kind === kind)
+    .reduce<GeminiJob | undefined>((latest, candidate) => (!latest || isNewerJob(candidate, latest) ? candidate : latest), undefined);
+}
+
+/** A PDF study guide goes by sections unless an earlier study-aid draft waits to be continued. */
+export function usesSectionGuide(jobs: GeminiJob[], materialId: string, filePath: string): boolean {
+  return filePath.toLowerCase().endsWith(".pdf") && !jobs.some((job) => job.materialId === materialId && job.kind === "study-aid" && job.draft);
+}
+
 export interface GeminiJobTarget {
   materialId: string;
   filePath: string;
@@ -776,7 +788,7 @@ export function GeminiJobsProvider({ children, data, ready, mutate, repositories
         if (!moreFronts || moreFronts.length === 0) return "Make some flashcards first, then you can add more.";
         if (moreFronts.length >= MAX_CARDS) return MAX_CARDS_MESSAGE;
       }
-      const useSections = kind === "study-aid" && target.filePath.toLowerCase().endsWith(".pdf") && !jobsRef.current.some(job => job.materialId === target.materialId && job.draft);
+      const useSections = kind === "study-aid" && usesSectionGuide(jobsRef.current, target.materialId, target.filePath);
       const key = newKey();
       activeRef.current = key;
       // Asking again replaces this material's older outcome of the same kind.
