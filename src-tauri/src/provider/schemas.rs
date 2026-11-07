@@ -112,7 +112,7 @@ pub(crate) fn study_kit() -> Schema {
                 "guide",
                 Schema::object(
                     &[
-                        ("body", Schema::string().max_length(8000)),
+                        ("body", Schema::string().max_length(12000)),
                         ("sourcePages", Schema::array(Schema::integer())),
                     ],
                     &["body", "sourcePages"],

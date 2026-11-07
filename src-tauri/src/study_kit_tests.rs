@@ -52,13 +52,13 @@ fn study_kit_existing_validators_reject_invalid_references_and_answers() {
             .is_some());
     }
 }
-/// A paid guide that runs past the requested 8,000 characters is kept, up
+/// A paid guide that runs past the requested 12,000 characters is kept, up
 /// to what a study set stores, like a guide part.
 #[test]
 fn study_kit_guide_over_the_requested_length_is_kept() {
     let mut v = valid();
-    let body = format!("Overview.\n### Lift\n- {}", "Study lift. ".repeat(800));
-    assert!(body.chars().count() > 8_000 && body.chars().count() <= 20_000);
+    let body = format!("Overview.\n### Lift\n- {}", "Study lift. ".repeat(1200));
+    assert!(body.chars().count() > 12_000 && body.chars().count() <= 20_000);
     v["guide"] = json!({"body": body, "sourcePages":[1]});
     assert!(validate(v, 2, MODEL, None)["parts"]["guide"]
         .get("answer")
@@ -146,7 +146,11 @@ fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
     assert!(prompt.contains(r#"{"pdfPage":150,"sourcePage":150}"#));
     assert!(prompt.contains("never the number printed on the page"));
     assert!(prompt.contains("Never refer to option letters or positions in explanations."));
-    assert!(prompt.starts_with("study-kit-prompt-v3: "));
+    assert!(prompt.starts_with("study-kit-prompt-v4: "));
+    assert!(
+        prompt.contains("Make up to about 20 distinct cards, only as many as the pages support")
+    );
+    assert!(prompt.contains("say it is not defined in these pages"));
     assert!(prompt.contains(
         "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid)"
     ));
@@ -163,7 +167,7 @@ fn study_kit_request_has_three_shared_shapes_tokens_and_claude_envelope() {
         props["questions"]["items"],
         practice["properties"]["questions"]["items"]
     );
-    assert_eq!(props["guide"]["properties"]["body"]["maxLength"], 8000);
+    assert_eq!(props["guide"]["properties"]["body"]["maxLength"], 12000);
     let source = LoadedSource::new(vec![1, 2, 3], "application/pdf", "synthetic.pdf");
     let claude_body = request_body(crate::provider::claude::source_part(&source), 150);
     let claude = crate::provider::claude::ClaudeProvider.body("claude-haiku-5-5", &claude_body);
