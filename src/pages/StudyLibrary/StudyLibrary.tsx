@@ -58,6 +58,7 @@ import { StudyHowTo } from "./StudyHowTo";
 import { StudyLibraryReviewDue } from "./StudyLibraryReviewDue";
 import { useLibraryDueStream } from "./useLibraryReviews";
 import { useOfflineBadges, type OfflineBadge } from "./useOfflineBadges";
+import { FreeStudyLinks } from "./FreeStudyLinks";
 import "./studyLibrary.css";
 
 export type LibraryTab = "library" | "due" | "history" | "howto";
@@ -507,6 +508,8 @@ export function StudyLibrary() {
           ) : null}
         </>
       )}
+
+      <FreeStudyLinks />
 
       <div style={{ marginBottom: "var(--space-4)", display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
         <CheckrideTopicPractice practiceTests={data.practiceTests} materials={data.materials} />
