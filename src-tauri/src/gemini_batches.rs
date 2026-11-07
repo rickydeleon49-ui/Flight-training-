@@ -31,9 +31,15 @@ struct Draft {
     #[serde(default = "initial_remaining_millis")]
     remaining_millis: u64,
     requests: [u32; 7],
+    /// Request counts of earlier activations, kept for the record.
+    #[serde(default)]
+    previous_requests: [u32; 7],
     next: usize,
     complete: bool,
     admissions: u32,
+    /// Who started this draft, so another provider never continues it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    provider: Option<String>,
     guide: Option<GeneratedStudyAid>,
     cards: Vec<Flashcard>,
 }
@@ -241,12 +247,26 @@ pub(super) async fn generate(
             .map(|j| j.id)
     })
     .ok_or("The generation record is missing.")?;
-    let has_draft = gemini_jobs::with(root, |j| {
+    let provider_name = ctx.provider.id().name();
+    let mut has_draft = gemini_jobs::with(root, |j| {
         j.list()
             .into_iter()
             .find(|j| j.id == id)
             .is_some_and(|j| j.draft.as_ref().is_some_and(|d| d.get("target").is_some()))
     });
+    // A carried draft that another provider started, with nothing finished in
+    // it, is not worth keeping: start fresh. One with finished work keeps the
+    // "use that provider or discard it" message below.
+    if has_draft {
+        if let Ok(old) = read(root, &id) {
+            if old.provider.as_deref().map_or(true, |p| p != provider_name)
+                && old.guide.is_none()
+                && old.cards.is_empty()
+            {
+                has_draft = false;
+            }
+        }
+    }
     if !has_draft {
         write(
             root,
@@ -257,10 +277,12 @@ pub(super) async fn generate(
                 deadline: seconds() + ctx.budget.remaining().as_secs(),
                 remaining_millis: ctx.budget.remaining().as_millis() as u64,
                 requests: [0; 7],
+                previous_requests: [0; 7],
                 // A "more cards" draft has no guide step: it starts at the card batch.
                 next: usize::from(more.is_some()),
                 complete: false,
                 admissions: 0,
+                provider: Some(provider_name.to_string()),
                 guide: more.is_some().then(|| GeneratedStudyAid {
                     title: "More flashcards".to_string(),
                     summary: String::new(),
@@ -278,6 +300,12 @@ pub(super) async fn generate(
         )?;
     }
     let mut draft = read(root, &id)?;
+    if let Some(name) = draft.provider.as_deref().filter(|p| *p != provider_name) {
+        return Err(format!("This draft was started with {name}. Use {name} in Settings to continue it, or discard it and start a new one. Your finished work is kept."));
+    }
+    if draft.provider.is_none() && draft.guide.is_none() && !draft.cards.is_empty() {
+        return Err("This draft was started by an earlier version of the app, so it can't be matched to a provider. Discard it and start a new one.".to_string());
+    }
     if !draft.complete {
         if let Some(guide) = &draft.guide {
             let started_with = if guide.model.starts_with("claude-") {
@@ -865,6 +893,113 @@ mod tests {
     }
 
     #[test]
+    fn carried_draft_starts_with_fresh_timing() {
+        let r = Rig::new();
+        let old = r.begin();
+        gemini_jobs::with(r.root.path(), |j| {
+            j.checkpoint_draft(
+                &old,
+                json!({"target":20,"timing":{"remainingMillis":0,"deadlineUtc":1000},"deadline":1,"remainingMillis":0,"requests":[1,0,0,0,0,0,0],"next":1,"complete":false,"admissions":1,"guide":null,"cards":[]}),
+            )
+            .unwrap();
+            j.failed(&old, "Gemini's answer reached its output limit.")
+        })
+        .unwrap();
+        let new = r.begin();
+        let draft = gemini_jobs::with(r.root.path(), |j| {
+            j.list().into_iter().find(|j| j.id == new).unwrap().draft
+        })
+        .unwrap();
+        assert!(draft.get("timing").is_none());
+        assert!(draft["deadline"].as_u64().unwrap() > seconds());
+        assert!(draft["remainingMillis"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn exhausted_allowance_is_renewed_and_kept_for_the_record() {
+        let r = Rig::new();
+        let old = r.begin();
+        gemini_jobs::with(r.root.path(), |j| {
+            j.checkpoint_draft(
+                &old,
+                json!({"target":20,"provider":"Gemini","deadline":seconds()+300,"remainingMillis":300000,"requests":[3,3,3,3,3,3,3],"next":0,"complete":false,"admissions":512,"guide":null,"cards":[]}),
+            )
+            .unwrap();
+            j.failed(&old, "failed")
+        })
+        .unwrap();
+        let new = r.begin();
+        let d = read(r.root.path(), &new).unwrap();
+        assert_eq!(d.requests, [0; 7]);
+        assert_eq!(d.previous_requests, [3; 7]);
+        assert_eq!(d.admissions, 0);
+        r.script(vec![aid(900, 0), aid(0, 10), aid(10, 10)]);
+        assert_eq!(r.run(20).unwrap().flashcards.len(), 20);
+    }
+
+    #[test]
+    fn timing_only_draft_of_other_jobs_also_gets_a_fresh_clock() {
+        let r = Rig::new();
+        let old = r.begin();
+        gemini_jobs::with(r.root.path(), |j| {
+            j.checkpoint_draft(
+                &old,
+                json!({"admissions":40,"timing":{"remainingMillis":0,"deadlineUtc":1000}}),
+            )
+            .unwrap();
+            j.failed(&old, "failed")
+        })
+        .unwrap();
+        let new = r.begin();
+        let draft = gemini_jobs::with(r.root.path(), |j| {
+            j.list().into_iter().find(|j| j.id == new).unwrap().draft
+        })
+        .unwrap();
+        assert!(draft.get("timing").is_none());
+        assert_eq!(draft["admissions"], 0);
+    }
+
+    #[test]
+    fn ownerless_draft_with_cards_is_refused_not_dropped() {
+        let r = Rig::new();
+        let old = r.begin();
+        gemini_jobs::with(r.root.path(), |j| {
+            j.checkpoint_draft(
+                &old,
+                json!({"target":20,"deadline":seconds()+300,"remainingMillis":300000,"requests":[1,1,0,0,0,0,0],"next":2,"complete":false,"admissions":2,"guide":null,"cards":[{"front":"Q","back":"A","sourcePage":1,"quote":"Synthetic body."}]}),
+            )
+            .unwrap();
+            j.failed(&old, "failed")
+        })
+        .unwrap();
+        r.begin();
+        let err = r.run(20).unwrap_err();
+        assert!(err.contains("earlier version"), "{err}");
+        let id = gemini_jobs::with(r.root.path(), |j| j.list()[0].id.clone());
+        assert_eq!(read(r.root.path(), &id).unwrap().cards.len(), 1);
+    }
+
+    #[test]
+    fn draft_from_another_provider_is_not_carried() {
+        let r = Rig::new();
+        let old = r.begin();
+        gemini_jobs::with(r.root.path(), |j| {
+            j.checkpoint_draft(
+                &old,
+                json!({"target":20,"provider":"Claude","deadline":seconds()+300,"remainingMillis":300000,"requests":[3,0,0,0,0,0,0],"next":1,"complete":false,"admissions":3,"guide":null,"cards":[]}),
+            )
+            .unwrap();
+            j.failed(&old, "failed")
+        })
+        .unwrap();
+        r.begin();
+        r.script(vec![aid(900, 0), aid(0, 10), aid(10, 10)]);
+        let result = r.run(20).unwrap();
+        assert_eq!(result.flashcards.len(), 20);
+        assert_eq!(r.count(), 3);
+    }
+
+    #[test]
     fn completed_empty_draft_is_an_error_without_network() {
         let root = TempDir::new();
         let source = LoadedSource::new(b"Synthetic source".to_vec(), "text/plain", "source.txt");
@@ -884,9 +1019,11 @@ mod tests {
             deadline: seconds() + 300,
             remaining_millis: 300_000,
             requests: [1, 1, 0, 0, 0, 0, 0],
+            previous_requests: [0; 7],
             next: 2,
             complete: true,
             admissions: 2,
+            provider: None,
             guide: Some(serde_json::from_value(aid(0, 0)).unwrap()),
             cards: vec![],
         };
@@ -1277,15 +1414,14 @@ mod tests {
             b.generate_answers = vec![envelope(aid(0, 10)), envelope(aid(10, 10))];
         });
         let next_id = r.begin();
-        assert_eq!(
-            read(r.root.path(), &next_id).unwrap().deadline,
-            draft.deadline
-        );
+        // The carried draft keeps its work and starts a fresh clock.
+        assert!(read(r.root.path(), &next_id).unwrap().deadline >= draft.deadline);
         let result = r.run(20).unwrap();
         assert_eq!(result.flashcards.len(), 20);
         let d = read(r.root.path(), &next_id).unwrap();
-        assert_eq!(d.requests[0], 1);
-        assert_eq!(d.requests[1], 2);
+        // The carried draft counts this activation afresh; the earlier one is kept.
+        assert_eq!(d.previous_requests[1], 1);
+        assert_eq!(d.requests[1], 1);
         assert_eq!(d.requests[2], 1);
         assert_eq!(r.count(), 4);
         // With all units checkpointed, a repeated completion makes no request.
