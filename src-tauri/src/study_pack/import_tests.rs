@@ -186,16 +186,6 @@ fn staging_left(lib: &Lib) -> bool {
             .any(|e| e.file_name() != journal::FAILED_DIR)
 }
 
-fn titles_of(lib: &Lib) -> Vec<String> {
-    lib.conn
-        .prepare("SELECT title FROM study_materials ORDER BY title")
-        .unwrap()
-        .query_map([], |r| r.get(0))
-        .unwrap()
-        .map(Result::unwrap)
-        .collect()
-}
-
 fn new_material(lib: &Lib, title: &str) -> String {
     text(
         lib,
@@ -1977,6 +1967,7 @@ fn link_row(her: &Lib, id: &str, file_path: &str) {
         .unwrap();
 }
 
+#[allow(clippy::type_complexity)]
 #[test]
 fn a_rolled_back_file_that_a_row_references_is_kept_in_every_spelling() {
     let (producer, _) = seeded();
@@ -2241,7 +2232,7 @@ fn the_library_lock_keeps_a_pack_and_a_backup_or_restore_from_interleaving() {
     let pack2 = pack.clone();
     fault::set_hook(move |p| {
         if p == "installing" {
-            let mut note = |e: Result<(), String>| out.borrow_mut().push(e.unwrap_err());
+            let note = |e: Result<(), String>| out.borrow_mut().push(e.unwrap_err());
             note(crate::documents::check_library_locked(&root, true).map(|_| ()));
             note(crate::library_lock::with_library_lock(
                 &root,
@@ -2677,7 +2668,14 @@ fn the_preview_counts_what_is_in_the_pack_and_what_she_has_without_writing_anyth
     let before = snapshot(&her);
     let preview = super::inspect::inspect_study_pack_in(her.root(), &pack).unwrap();
     assert_eq!(
-        (preview.guides, preview.cards, preview.questions, preview.videos, preview.documents, preview.already_in_library),
+        (
+            preview.guides,
+            preview.cards,
+            preview.questions,
+            preview.videos,
+            preview.documents,
+            preview.already_in_library
+        ),
         (2, 3, 2, 2, 2, 0)
     );
     assert_untouched(&before, &her);
