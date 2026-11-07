@@ -11,7 +11,7 @@ const PLANNER: &str = "pdf-parts-150-v1";
 /// guides started with it keep it, so they still resume after an update.
 const LEGACY_PLANNER: &str = "pdf-outline-5-10-v1";
 /// The prompt new guides use: a basic section (short overview + key points).
-const PROMPT: &str = "guide-section-prompt-v2";
+const PROMPT: &str = "guide-section-prompt-v3";
 /// The earlier, longer prompt. Drafts started with it finish with it, so one
 /// guide never mixes the two styles.
 const LEGACY_PROMPT: &str = "guide-section-prompt-v1";
@@ -768,11 +768,11 @@ fn digest(content: &ResultBody) -> String {
     )
 }
 /// Length asked of the model for one basic guide part: a 2–3 sentence
-/// overview (~400 characters) plus 6–10 topic headings with 2–4 short bullets
-/// each (~450–650 a topic) is about 3,000–7,000 characters, so 8,000 fits the
+/// overview (~400 characters) plus a heading per main topic with 3–6 short bullets
+/// each is about 4,000–10,000 characters, so 12,000 fits the
 /// largest without inviting long paragraphs. Validation still accepts up to
 /// study_sets::MAX_BODY.
-const REQUESTED_BODY_CHARS: usize = 8_000;
+const REQUESTED_BODY_CHARS: usize = 12_000;
 /// Output tokens for one part: the answer is about 2,000–2,500 tokens, and
 /// Gemini 3.x counts its thinking on up to 150 pages in the same allowance,
 /// so 16,384 leaves room for both (the old 8,192 risked a cut-off answer).
@@ -825,7 +825,7 @@ fn validate_section(
     Ok(content)
 }
 /// Study kits use the same section validator, so a guide that runs over the
-/// requested 8,000 characters is kept up to what a study set can store
+/// requested 12,000 characters is kept up to what a study set can store
 /// (study_sets::MAX_BODY), exactly like a guide part.
 pub(super) fn validate_basic_kit_guide(
     value: &Value,
@@ -871,7 +871,7 @@ fn request_body(section: &Section, identity: &Identity, part: Value) -> Value {
                 section.heading
             ),
         };
-        format!("{PROMPT}: Write {what}. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid). No long paragraphs. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", json!(mapping))
+        format!("{PROMPT}: Write {what}. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter, each with short bullets in plain words. Cover every main topic AND every key fact a beginner must learn from these pages: definitions, numbers and values (with units), cause→effect, cautions, and the point of each figure. Preserve complete lists, methods, conditions, comparisons and stated purposes, and state both halves of compound facts; naming a topic is not enough. Use only as many short bullets as the pages support; fewer are fine. Do not repeat content or add generic explanations. Remove repetition before shortening facts; if everything cannot fit, name the topics you left out. Before returning, check every page and figure for missed facts. Never add a fact, definition or page that is not in the pages. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), using only explanations found in these pages; if a needed term is not defined there, say it is not defined in these pages. Keep the source's distinctions; never narrow a claim or add advice. No long paragraphs. Return JSON with body (nonempty Markdown, at most {REQUESTED_BODY_CHARS} characters) and sourcePages (ordered unique original source page numbers actually used). This is a {helper} study aid to check against current FAA material and her instructor.", json!(mapping))
     };
     let tokens = if identity.prompt_version == LEGACY_PROMPT {
         8192

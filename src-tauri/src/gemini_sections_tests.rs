@@ -691,7 +691,7 @@ fn finish_3_kill_reopen_retry_only_section_4() {
         let pages: Vec<_> = (first..=last)
             .map(|p| json!({"pdfPage":p,"sourcePage":p}))
             .collect();
-        let prompt=format!("guide-section-prompt-v2: Write part {} of 4 (Pages {first}–{last}) of a study guide for the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter (about 6–10 topics), each with 2–4 short bullets in plain words. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid). No long paragraphs. Return JSON with body (nonempty Markdown, at most 8000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
+        let prompt=format!("guide-section-prompt-v3: Write part {} of 4 (Pages {first}–{last}) of a study guide for the attached PDF. Read ONLY these selected PDF pages and cite their original sourcePage numbers: {}. Do not discuss other pages. Use only supported facts; do not invent procedures or regulations. Keep it basic for a beginner, like a short chat answer: a 2–3 sentence overview, then one Markdown ### heading per main topic or chapter, each with short bullets in plain words. Cover every main topic AND every key fact a beginner must learn from these pages: definitions, numbers and values (with units), cause→effect, cautions, and the point of each figure. Preserve complete lists, methods, conditions, comparisons and stated purposes, and state both halves of compound facts; naming a topic is not enough. Use only as many short bullets as the pages support; fewer are fine. Do not repeat content or add generic explanations. Remove repetition before shortening facts; if everything cannot fit, name the topics you left out. Before returning, check every page and figure for missed facts. Never add a fact, definition or page that is not in the pages. Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), using only explanations found in these pages; if a needed term is not defined there, say it is not defined in these pages. Keep the source's distinctions; never narrow a claim or add advice. No long paragraphs. Return JSON with body (nonempty Markdown, at most 12000 characters) and sourcePages (ordered unique original source page numbers actually used). This is a Gemini study aid to check against current FAA material and her instructor.",i+1,json!(pages));
         let expected = json!({"contents":[{"role":"user","parts":[{"text":prompt},{"file_data":{"mime_type":"application/pdf","file_uri":format!("{}/v1beta/files/synthetic-1",r.fake.base)}}]}],"generationConfig":{"responseMimeType":"application/json","maxOutputTokens":16384,"responseSchema":{"type":"OBJECT","required":["body","sourcePages"],"properties":{"body":{"type":"STRING"},"sourcePages":{"type":"ARRAY","items":{"type":"INTEGER"}}}}}});
         assert_eq!(*body, expected);
         assert!(
@@ -2080,11 +2080,12 @@ fn a_whole_pdf_guide_is_one_request_with_plain_progress() {
         .as_str()
         .unwrap();
     assert!(text.starts_with(
-        "guide-section-prompt-v2: Write a study guide for the attached PDF (Pages 1–95). "
+        "guide-section-prompt-v3: Write a study guide for the attached PDF (Pages 1–95). "
     ));
-    assert!(text.contains("at most 8000 characters"));
+    assert!(text.contains("at most 12000 characters"));
+    assert!(text.contains("if everything cannot fit, name the topics you left out"));
     assert!(text.contains(
-        "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid)."
+        "Explain each technical term in plain words the first time it appears (e.g. precession, aneroid), using only explanations found in these pages;"
     ));
     assert_eq!(
         requests[0]["generationConfig"]["maxOutputTokens"],
