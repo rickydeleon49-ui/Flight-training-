@@ -483,6 +483,34 @@ const PHONE_LIMITS: PhoneLimits = PhoneLimits {
 
 const INCOMING_DIR: &str = ".incoming";
 
+const EMPTY_FILE_MESSAGE: &str = "This file is empty, so it can't be added.";
+
+/// Hidden direction and control characters can make a name look like it has a
+/// different extension, so the name shown and offered as a title leaves them out.
+fn is_hidden_name_char(c: char) -> bool {
+    matches!(c, '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}' | '\u{200E}' | '\u{200F}' | '\u{061C}')
+        || c.is_control()
+}
+
+pub(crate) fn clean_file_name(name: &str) -> String {
+    let cleaned: String = name.chars().filter(|c| !is_hidden_name_char(*c)).collect();
+    let cleaned = cleaned.trim();
+    if cleaned.is_empty() {
+        "document".to_string()
+    } else {
+        cleaned.to_string()
+    }
+}
+
+fn shown_file_name(source: &Path) -> String {
+    clean_file_name(
+        source
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("document"),
+    )
+}
+
 fn import_document_from_path(
     app: &AppHandle,
     source_path: &str,
@@ -518,12 +546,11 @@ pub(crate) fn import_document_in(
     if !metadata.is_file() {
         return Err("Only files can be added to the library.".to_string());
     }
+    if metadata.len() == 0 {
+        return Err(EMPTY_FILE_MESSAGE.to_string());
+    }
 
-    let original_file_name = source
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("document")
-        .to_string();
+    let original_file_name = shown_file_name(&source);
 
     let (destination, stored_name) =
         stored_destination_in(documents_dir, material_id, &original_file_name)?;
@@ -569,11 +596,7 @@ fn import_on_phone(
     if !metadata.is_file() || crate::backup::is_symlink_or_reparse(&metadata) {
         return Err("Choose a file.".to_string());
     }
-    let original_file_name = source
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("document")
-        .to_string();
+    let original_file_name = shown_file_name(&source);
     let is_pdf = source
         .extension()
         .and_then(|e| e.to_str())

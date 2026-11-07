@@ -208,3 +208,52 @@ fn phone_import_uses_a_temp_then_renames() {
         .exists());
     std::fs::remove_dir_all(c).unwrap();
 }
+
+#[test]
+fn mac_refuses_an_empty_file_and_copies_nothing() {
+    let c = scratch();
+    let src = c.join("source").join("empty-zero-byte.pdf");
+    std::fs::write(&src, b"").unwrap();
+    let docs = c.join("documents");
+    std::fs::create_dir_all(&docs).unwrap();
+    let err = import_document_in(&docs, src.to_str().unwrap(), "m1", false, false, BIG)
+        .err()
+        .unwrap();
+    assert_eq!(err, "This file is empty, so it can't be added.");
+    assert!(names(&docs).is_empty(), "{:?}", names(&docs));
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn mac_strips_hidden_direction_characters_from_the_shown_name() {
+    let c = scratch();
+    let src = c
+        .join("source")
+        .join("odd \u{2019}q\u{201D} \u{202E}exe.pdf");
+    std::fs::write(&src, b"hello").unwrap();
+    let docs = c.join("documents");
+    std::fs::create_dir_all(&docs).unwrap();
+    let done = import_document_in(&docs, src.to_str().unwrap(), "m1", false, false, BIG).unwrap();
+    assert_eq!(done.original_file_name, "odd \u{2019}q\u{201D} exe.pdf");
+    assert!(docs.join(&done.relative_path).is_file());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn clean_file_name_keeps_ordinary_odd_names() {
+    for name in [
+        "notes.txt",
+        "$(whoami).pdf",
+        ".hidden notes.md",
+        "it's \"fine\".pdf",
+    ] {
+        assert_eq!(clean_file_name(name), name);
+    }
+    assert_eq!(
+        clean_file_name(
+            "a\u{2066}b\u{2069}\u{200E}\u{200F}\u{061C}\u{202A}\u{202D}c\u{1}\u{9F}.pdf"
+        ),
+        "abc.pdf"
+    );
+    assert_eq!(clean_file_name("\u{202E}\u{200F} "), "document");
+}
