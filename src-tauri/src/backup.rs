@@ -9359,18 +9359,11 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
     }
 }
 
-/// Installs or resolves any pending restore before SQLite opens. Returns
-/// whether this startup finished a restore, so the caller can bring the
-/// restarted window forward: the restart execs the binary directly rather than
-/// through LaunchServices, and macOS would otherwise leave it behind whatever
-/// was in front.
-pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
-    let root = app_root(app)?;
-    // Hold the library lock while a staged restore is installed. Nothing else
-    // holds it this early, and a lock that cannot be taken (read-only folder,
-    // odd volume) must never stop the app from opening: carry on without it,
-    // exactly as before the lock existed.
-    let _guard = match crate::library_lock::try_acquire(&root, crate::library_lock::Holder::Library)
+/// The startup restore under the library lock. Nothing else holds it this
+/// early, and a lock that cannot be taken must never stop the app from
+/// opening: it carries on without the lock, exactly as before the lock existed.
+pub(crate) fn handle_startup_restore_locked(root: &Path) -> Result<StartupRestoreDecision, String> {
+    let _guard = match crate::library_lock::try_acquire(root, crate::library_lock::Holder::Library)
     {
         Ok(guard) => Some(guard),
         Err(_) => {
@@ -9378,7 +9371,17 @@ pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
             None
         }
     };
-    let decision = handle_startup_restore_in(&root)?;
+    handle_startup_restore_in(root)
+}
+
+/// Installs or resolves any pending restore before SQLite opens. Returns
+/// whether this startup finished a restore, so the caller can bring the
+/// restarted window forward: the restart execs the binary directly rather than
+/// through LaunchServices, and macOS would otherwise leave it behind whatever
+/// was in front.
+pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
+    let root = app_root(app)?;
+    let decision = handle_startup_restore_locked(&root)?;
     crate::safety_notices::record_restore_outcome(&root, &decision);
     startup_restore_outcome(decision)
 }
