@@ -31,9 +31,10 @@ jobs:
   checks:
     name: Tests, types, and the data-safety guards
     runs-on: ubuntu-latest
-    # This job takes two minutes warm and about fifteen cold. The default is
-    # six hours, which is how long a stuck run sat here before anyone noticed.
-    timeout-minutes: 45
+    # A full run now takes about 45 minutes (the Rust tests are most of it).
+    # The default is six hours, which is how long a stuck run sat here before
+    # anyone noticed, so keep a cap with headroom over the normal run.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
