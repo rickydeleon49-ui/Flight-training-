@@ -1334,8 +1334,8 @@ export function Settings() {
             <ProviderControls onStatus={setProviderConnection} reloadToken={providerReload} onRetried={refreshGemini}>
             <div className="stack stack--4">
               <PlatformGuidance
-                mac="Google AI Studio opens in the default browser. The API key stays in this Mac’s Application Support folder and is not included in backups or SQLite."
-                windows="Google AI Studio opens in the default browser. The API key stays in this computer’s application data folder and is not included in backups or SQLite."
+                mac="Google AI Studio opens in the default browser. The key is kept in this Mac’s Keychain and is not included in backups."
+                windows="Google AI Studio opens in the default browser. The key is kept in Windows Credential Manager and is not included in backups."
                 neutral="Google AI Studio opens in the default browser. The API key stays in your local application data folder and is not included in backups or SQLite."
                 ios="Google AI Studio opens in Safari. The key is kept in this iPhone's Keychain and is not included in backups."
               />
