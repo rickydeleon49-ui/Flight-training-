@@ -303,6 +303,39 @@ fn claude_retries_429_and_529_on_same_model_without_backup_notice() {
         );
     }
 }
+fn capable_models_sent(statuses: Vec<(u16, String, Option<u64>)>) -> Vec<String> {
+    let fake = FakeClaude::start(statuses);
+    let (http, cache, budget) = (
+        generation_client().unwrap(),
+        cache(),
+        Budget::new(Duration::from_secs(30)),
+    );
+    let mut ctx = context(&fake, &http, &cache, &budget, &|_| {});
+    ctx.choice = ModelChoice::MostCapable;
+    assert!(tauri::async_runtime::block_on(study_aid_with(&ctx, &source())).is_ok());
+    fake.log()
+        .iter()
+        .map(|r| r.json()["model"].as_str().unwrap().to_string())
+        .collect()
+}
+#[test]
+fn claude_capable_429_falls_back_to_haiku_never_a_gemini_model() {
+    let models = capable_models_sent(vec![(429, "{}".into(), Some(0)), reply(aid())]);
+    assert_eq!(models, [claude::CAPABLE_MODEL, claude::MODEL]);
+}
+#[test]
+fn claude_capable_transient_retries_end_on_haiku_never_a_gemini_model() {
+    let models = capable_models_sent(vec![
+        (529, "{}".into(), Some(0)),
+        (529, "{}".into(), Some(0)),
+        reply(aid()),
+    ]);
+    assert_eq!(
+        models,
+        [claude::CAPABLE_MODEL, claude::CAPABLE_MODEL, claude::MODEL]
+    );
+    assert!(models.iter().all(|m| m.starts_with("claude-")));
+}
 #[test]
 fn claude_retry_after_beyond_budget_stops_without_another_request() {
     let fake = FakeClaude::start(vec![(429, "{}".into(), Some(120))]);

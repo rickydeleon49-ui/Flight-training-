@@ -63,7 +63,7 @@ export function ProviderControls({ children, onStatus, reloadToken = 0, onRetrie
   return <div className="stack stack--4">
     <p className="tiny dim">You need to be 18 or older and use your own API key. Your use of the AI service follows that company's terms.</p>
     {status.selected === "gemini" ? children : <div className="stack stack--2">
-      <p className="small strong">{geminiModelName(claudeChoice?.model ?? "claude-haiku-5-5")} · {unreadable ? "Saved key unavailable" : connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
+      <p className="small strong">{geminiModelName(claudeChoice?.model ?? "claude-sonnet-5-5")} · {unreadable ? "Saved key unavailable" : connected ? "Ready to use" : "Connect Claude to use study tools"}</p>
       <p className="tiny dim">{privacy}</p>
       {claudeChoice && <fieldset className="gemini-model-choice stack stack--2">
         <legend className="field__label">Model for new study aids</legend>
