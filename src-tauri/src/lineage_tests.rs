@@ -618,6 +618,30 @@ fn cancelling_removes_only_its_own_files_and_never_touches_a_saved_split() {
     );
 }
 
+#[cfg(unix)]
+#[test]
+fn cancelling_reports_part_files_it_could_not_remove_and_retries() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = library("cancel-fail");
+    material(&dir, "R", "Root", ROOT_FILE, ROOT);
+    let receipt = issue(&dir, "R", ROOT_FILE, 400, &[part(&dir, "A", 1, 10)]).unwrap();
+    let docs = dir.path().join(DOCUMENTS_DIR);
+    std::fs::set_permissions(&docs, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let error = cancel_split_batch_at(dir.path(), &receipt.operation_id);
+    std::fs::set_permissions(&docs, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let error = error.unwrap_err();
+    assert!(error.contains("could not be removed"), "{error}");
+    assert_eq!(
+        status(&dir, &receipt.operation_id).as_deref(),
+        Some("cancelled")
+    );
+    assert!(docs.join("A-part.pdf").is_file());
+
+    let again = cancel_split_batch_at(dir.path(), &receipt.operation_id).unwrap();
+    assert_eq!(again.removed_files, vec!["A-part.pdf".to_string()]);
+    assert!(!docs.join("A-part.pdf").exists());
+}
+
 #[test]
 fn reconcile_reads_a_split_back_by_its_operation_id() {
     let dir = library("reconcile");

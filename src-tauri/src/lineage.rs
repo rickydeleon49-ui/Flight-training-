@@ -887,6 +887,7 @@ pub fn cancel_split_batch_at(
     }
     // Pending (just cancelled) or already cancelled: its files are not in use.
     let mut removed = Vec::new();
+    let mut failed = 0usize;
     for part in &plan {
         let Ok(path) = stored_path(root, &part.file_path) else {
             continue;
@@ -898,9 +899,18 @@ pub fn cancel_split_batch_at(
                 |row| row.get(0),
             )
             .map_err(|error| format!("Could not check a part file: {error}"))?;
-        if owned_elsewhere == 0 && path.is_file() && std::fs::remove_file(&path).is_ok() {
-            removed.push(part.file_path.clone());
+        if owned_elsewhere == 0 && path.is_file() {
+            match std::fs::remove_file(&path) {
+                Ok(()) => removed.push(part.file_path.clone()),
+                Err(_) => failed += 1,
+            }
         }
+    }
+    if failed > 0 {
+        // The split stays cancelled; cancelling again retries the removal.
+        return Err(format!(
+            "This split was cancelled, but {failed} of its temporary files could not be removed."
+        ));
     }
     Ok(result("cancelled", true, removed))
 }

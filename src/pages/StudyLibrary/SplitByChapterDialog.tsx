@@ -23,7 +23,7 @@ export const SOURCE_LINES = {
 } as const;
 
 /**
- * The detected chapters of a stored PDF, read only while `enabled` (when she
+ * The detected chapters of a stored PDF, read only while `enabled` (when the user
  * asks to split by chapter: finding chapters reads every page of a book with
  * no contents list, so it must not run on every visit). `onUnavailable` gets a
  * plain message when the PDF cannot be read or has no chapters to offer.
