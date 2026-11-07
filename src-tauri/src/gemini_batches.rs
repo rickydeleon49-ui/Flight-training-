@@ -106,7 +106,7 @@ fn reserve(root: &Path, id: &str, unit: usize, remaining_millis: u64) -> Option<
     })
 }
 
-fn normalized(value: &str) -> String {
+pub(super) fn normalized(value: &str) -> String {
     value
         .split_whitespace()
         .collect::<Vec<_>>()

@@ -123,9 +123,11 @@ describe("tables", () => {
     ]);
   });
 
-  it("gives every row the header's columns", () => {
-    const body = "A | B\n---|---\nonly one |\n1 | 2 | 3";
-    expect(outline(parseGuideBody(body))).toEqual([["table", ["A", "B"], [["only one", ""], ["1", "2"]]]]);
+  it("fills short rows and renders cells beyond the header instead of hiding them", () => {
+    const body = "A | B\n---|---\nonly one |\n1 | 2 | important caveat";
+    expect(outline(parseGuideBody(body))).toEqual([
+      ["table", ["A", "B", ""], [["only one", "", ""], ["1", "2", "important caveat"]]],
+    ]);
   });
 
   it("keeps an escaped pipe inside a cell", () => {
