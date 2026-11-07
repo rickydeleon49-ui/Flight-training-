@@ -91,6 +91,12 @@ export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS(
   });
 }
 
+/** Save pasted or typed text as a plain .txt document in private storage. */
+export async function savePastedText(materialId: string, title: string, text: string): Promise<ImportedDocument> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<ImportedDocument>("save_pasted_text", { materialId, title, text });
+}
+
 /**
  * Pick a replacement file for a material whose file is missing. The copy and
  * the attach are one native step under the library lock, so a busy library

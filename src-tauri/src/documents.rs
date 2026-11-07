@@ -481,6 +481,67 @@ pub async fn import_document(
     .map_err(|error| format!("Could not finish importing that file: {error}"))?
 }
 
+/// Save text the user pasted or typed as a plain `.txt` document, so it is
+/// added to the library the same way a picked file is.
+#[tauri::command]
+pub async fn save_pasted_text(
+    app: AppHandle,
+    material_id: String,
+    title: String,
+    text: String,
+) -> Result<ImportedDocument, String> {
+    let root = documents_root(&app)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        save_pasted_text_in(&root, &material_id, &title, &text)
+    })
+    .await
+    .map_err(|error| format!("Could not finish saving that text: {error}"))?
+}
+
+pub(crate) fn save_pasted_text_in(
+    documents_dir: &Path,
+    material_id: &str,
+    title: &str,
+    text: &str,
+) -> Result<ImportedDocument, String> {
+    if text.trim().is_empty() {
+        return Err("Paste or type some text first.".to_string());
+    }
+    if text.len() as u64 > crate::gemini::MAX_TEXT_BYTES {
+        return Err("That text is longer than 4 MB. Paste a shorter part of it.".to_string());
+    }
+    std::fs::create_dir_all(documents_dir)
+        .map_err(|e| format!("Could not create the documents folder: {e}"))?;
+    let incoming = documents_dir.join(INCOMING_DIR);
+    std::fs::create_dir_all(&incoming)
+        .map_err(|e| format!("Could not prepare the library: {e}"))?;
+
+    let stem = clean_file_name(title);
+    let original_file_name = if stem == "document" && title.trim().is_empty() {
+        "Pasted text.txt".to_string()
+    } else {
+        format!("{stem}.txt")
+    };
+    let (destination, stored_name) = reserve_destination(
+        documents_dir,
+        &format!("{}.txt", sanitize_file_name(material_id)),
+    )?;
+    let temp = incoming.join(format!("{stored_name}.tmp"));
+    let result =
+        std::fs::write(&temp, text.as_bytes()).and_then(|_| std::fs::rename(&temp, &destination));
+    if let Err(error) = result {
+        let _ = std::fs::remove_file(&temp);
+        let _ = std::fs::remove_file(&destination);
+        return Err(format!("Could not save that text: {error}"));
+    }
+    Ok(ImportedDocument {
+        relative_path: stored_name,
+        original_file_name,
+        file_size: text.len() as u64,
+        pdf_identity: None,
+    })
+}
+
 /// Phone limits: a PDF the phone cannot yet split must be refused before it is copied.
 #[derive(Clone, Copy)]
 pub(crate) struct PhoneLimits {
