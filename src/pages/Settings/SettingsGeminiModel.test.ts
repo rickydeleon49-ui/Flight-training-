@@ -70,9 +70,12 @@ describe("Gemini model choice in Settings", () => {
     vi.spyOn(appDataApi, "isTauri").mockReturnValue(true);
     vi.spyOn(backupService, "backupsAvailable").mockReturnValue(false);
     vi.spyOn(providerService, "providerStatus").mockResolvedValue({selected:"claude",providers:[{id:"gemini",connected:false},{id:"claude",connected:true}]});
-    vi.spyOn(geminiService, "getGeminiStatus").mockResolvedValue({...STANDARD,configured});
+    // Like the native command: Settings' Gemini card asks for Gemini only; the Claude panel asks for the selected provider.
+    vi.spyOn(geminiService, "getGeminiStatus").mockImplementation(async (geminiOnly) =>
+      geminiOnly ? { ...STANDARD, configured } : { configured: true, model: "claude-haiku-5-5", choice: "standard" });
     await open();
-    await screen.findByText(/Claude Haiku 5.5 · Ready to use/);
+    await screen.findByRole("radio", { name: /Standard — Claude Haiku 5.5/ });
+    expect(screen.getByText(/Claude Haiku 5.5 · Ready to use/)).toBeTruthy();
     const header = screen.getByRole("heading",{name:"AI provider"}).closest("header")!;
     const card = header.closest(".card")!;
     const disclosure = card.querySelector("details")!;
