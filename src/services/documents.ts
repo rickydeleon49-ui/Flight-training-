@@ -62,10 +62,8 @@ export function documentErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Ask the user for a file and copy it into private storage. */
-export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS()): Promise<ImportedDocument | null> {
-  if (!isTauri()) throw new DesktopOnlyError();
-
+/** Ask the user for a file; null when she cancels. */
+async function pickDocumentPath(pdfOnly: boolean): Promise<string | null> {
   const selected = await open({
     multiple: false,
     directory: false,
@@ -77,14 +75,33 @@ export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS(
       },
     ],
   });
+  return typeof selected === "string" ? selected : null;
+}
 
-  if (typeof selected !== "string") return null;
+/** Ask the user for a file and copy it into private storage. */
+export async function pickAndImportDocument(materialId: string, pdfOnly = isIOS()): Promise<ImportedDocument | null> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const selected = await pickDocumentPath(pdfOnly);
+  if (selected === null) return null;
 
   return invoke<ImportedDocument>("import_document", {
     sourcePath: selected,
     materialId,
     ...(pdfOnly ? { pdfOnly: true } : {}),
   });
+}
+
+/**
+ * Pick a replacement file for a material whose file is missing. The copy and
+ * the attach are one native step under the library lock, so a busy library
+ * refuses before anything is copied. Resolves false when she cancels.
+ */
+export async function pickAndReattachDocument(materialId: string): Promise<boolean> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const selected = await pickDocumentPath(isIOS());
+  if (selected === null) return false;
+  await invoke("reattach_picked_file", { sourcePath: selected, materialId });
+  return true;
 }
 
 /** Whether a stored document is still on disk. Missing files are shown, not hidden. */
@@ -244,12 +261,6 @@ export async function importUnlinkedFile(relativePath: string): Promise<string> 
 }
 
 /** Move an app-owned unlinked file to private trash, returning an undo token. */
-/** Resolves when the library is free; rejects with a plain "try again" while a backup, restore or study pack is running. */
-export async function ensureLibraryFree(): Promise<void> {
-  if (!isTauri()) return;
-  await invoke("ensure_library_free");
-}
-
 export async function trashUnlinkedFile(relativePath: string): Promise<StagedDeletion> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<StagedDeletion>("trash_unlinked_file", { relativePath });

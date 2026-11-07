@@ -29,7 +29,7 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({ open: mocks.pick }));
 import {
   cleanupDocuments,
   checkLibrary,
-  ensureLibraryFree,
+  pickAndReattachDocument,
   commitDeleteDocument,
   deleteDocument,
   DesktopOnlyError,
@@ -67,16 +67,24 @@ it("FAA PDF intake uses the existing import command, and browser mode never call
   expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "/synthetic/local.pdf", materialId: "shelf-id", pdfOnly: true });
 });
 
-describe("library free check", () => {
-  it("does nothing in the browser and asks the desktop shell otherwise", async () => {
-    await expect(ensureLibraryFree()).resolves.toBeUndefined();
-    expect(mocks.invoke).not.toHaveBeenCalled();
+describe("re-attach a picked file", () => {
+  it("picks first, then copies and attaches in one native step", async () => {
+    await expect(pickAndReattachDocument("material-1")).rejects.toThrow(DesktopOnlyError);
     mocks.isTauri.mockReturnValue(true);
+    mocks.pick.mockResolvedValueOnce(null);
+    await expect(pickAndReattachDocument("material-1")).resolves.toBe(false);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    mocks.pick.mockResolvedValueOnce("/synthetic/replacement.pdf");
     mocks.invoke.mockResolvedValueOnce(undefined);
-    await ensureLibraryFree();
-    expect(mocks.invoke).toHaveBeenCalledWith("ensure_library_free");
-    mocks.invoke.mockRejectedValueOnce("Your library is busy. Try again in a moment.");
-    await expect(ensureLibraryFree()).rejects.toBe("Your library is busy. Try again in a moment.");
+    await expect(pickAndReattachDocument("material-1")).resolves.toBe(true);
+    expect(mocks.invoke).toHaveBeenCalledWith("reattach_picked_file", {
+      sourcePath: "/synthetic/replacement.pdf",
+      materialId: "material-1",
+    });
+    expect(mocks.invoke).not.toHaveBeenCalledWith("import_document", expect.anything());
+    mocks.pick.mockResolvedValueOnce("/synthetic/replacement.pdf");
+    mocks.invoke.mockRejectedValueOnce("A backup or restore is running. Try again in a moment.");
+    await expect(pickAndReattachDocument("material-1")).rejects.toBe("A backup or restore is running. Try again in a moment.");
   });
 });
 

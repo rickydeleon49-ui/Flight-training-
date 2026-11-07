@@ -488,7 +488,7 @@ pub(crate) struct PhoneLimits {
     pub max_pages: u32,
 }
 
-const PHONE_LIMITS: PhoneLimits = PhoneLimits {
+pub(crate) const PHONE_LIMITS: PhoneLimits = PhoneLimits {
     max_bytes: crate::pdf::MAX_PDF_BYTES,
     max_pages: crate::pdf::MAX_PAGES,
 };
@@ -1406,26 +1406,63 @@ pub fn trash_unlinked_file_locked(
     )
 }
 
-/// Succeeds when no backup, restore or study pack holds the library right now.
-/// Asked before a replacement file is copied in, so a busy library says "try
-/// again" before anything is copied.
-pub fn ensure_library_free_locked(root: &Path, owned: bool) -> Result<(), String> {
+/// Copy her picked replacement file in and attach it to the material, both
+/// under the library lock. A busy library refuses before anything is copied,
+/// and a failed attach removes the copy this call just made (its name was
+/// freshly reserved, so it is no one else's file).
+pub(crate) fn import_and_reattach_locked(
+    root: &Path,
+    owned: bool,
+    source_path: &str,
+    material_id: &str,
+    phone: bool,
+    limits: PhoneLimits,
+) -> Result<(), String> {
     crate::library_lock::with_library_lock(
         root,
         owned,
         crate::study_pack::reconcile::Mode::Normal,
-        |_| Ok(()),
+        |_| {
+            let docs = root.join(DOCUMENTS_DIR);
+            std::fs::create_dir_all(&docs)
+                .map_err(|e| format!("Could not create the documents directory: {e}"))?;
+            let imported =
+                import_document_in(&docs, source_path, material_id, phone, phone, limits)?;
+            if let Err(error) =
+                reattach_unlinked_file_in(root, material_id, &imported.relative_path)
+            {
+                if let Ok(copy) = contained_document_path(&docs, &imported.relative_path) {
+                    let _ = std::fs::remove_file(copy);
+                }
+                return Err(error);
+            }
+            Ok(())
+        },
     )
 }
 
+/// Re-attach: pick happens first in the webview, then this one command copies
+/// and attaches under the library lock.
 #[tauri::command]
-pub async fn ensure_library_free(app: AppHandle) -> Result<(), String> {
+pub async fn reattach_picked_file(
+    app: AppHandle,
+    source_path: String,
+    material_id: String,
+) -> Result<(), String> {
+    crate::picked_paths::require_picked(&app, &source_path)?;
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        ensure_library_free_locked(&root, crate::library_lock::owned(&app))
+        import_and_reattach_locked(
+            &root,
+            crate::library_lock::owned(&app),
+            &source_path,
+            &material_id,
+            cfg!(target_os = "ios"),
+            PHONE_LIMITS,
+        )
     })
     .await
-    .map_err(|e| format!("Could not check the library: {e}"))?
+    .map_err(|e| format!("Could not complete re-attaching file: {e}"))?
 }
 
 /// Check the library: compare database file references with app-owned storage.

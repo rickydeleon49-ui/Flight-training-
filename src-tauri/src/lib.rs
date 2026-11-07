@@ -529,7 +529,7 @@ pub fn run() {
             documents::reattach_unlinked_file,
             documents::import_unlinked_file,
             documents::trash_unlinked_file,
-            documents::ensure_library_free,
+            documents::reattach_picked_file,
             documents::save_split_materials,
             lineage::save_split_batch,
             lineage::cancel_split_batch,

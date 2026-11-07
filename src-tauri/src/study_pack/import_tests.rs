@@ -2269,15 +2269,83 @@ fn the_library_lock_keeps_a_pack_and_a_backup_or_restore_from_interleaving() {
     assert_eq!(busy, crate::library_lock::LIBRARY_BUSY);
 }
 
+fn reattach_picked(her: &Lib, source: &Path, material: &str) -> Result<(), String> {
+    crate::documents::import_and_reattach_locked(
+        her.root(),
+        true,
+        source.to_str().unwrap(),
+        material,
+        false,
+        crate::documents::PHONE_LIMITS,
+    )
+}
+
 #[test]
-fn the_library_free_check_refuses_while_a_backup_or_restore_holds_the_library() {
+fn re_attach_refuses_before_copying_while_the_library_is_busy() {
     let her = her();
-    crate::documents::ensure_library_free_locked(her.root(), true).unwrap();
+    her.material("her-2", "Needs a file", None);
+    let source = her.root().join("picked-replacement.pdf");
+    std::fs::write(&source, pdf_bytes(1, "replacement")).unwrap();
+    let before = doc_names(&her);
     let busy = crate::library_lock::with_library_lock(her.root(), true, Mode::Normal, |_| {
-        crate::documents::ensure_library_free_locked(her.root(), true)
+        reattach_picked(&her, &source, "her-2")
     })
     .unwrap_err();
     assert_eq!(busy, crate::library_lock::LIBRARY_BUSY);
+    assert_eq!(doc_names(&her), before, "nothing was copied");
+    assert_eq!(
+        count(
+            &her,
+            "SELECT COUNT(*) FROM study_materials WHERE id='her-2' AND file_path IS NULL"
+        ),
+        1
+    );
+
+    reattach_picked(&her, &source, "her-2").unwrap();
+    let attached = text(
+        &her,
+        "SELECT file_path FROM study_materials WHERE id='her-2'",
+    );
+    assert!(her.root().join("documents").join(&attached).is_file());
+}
+
+#[test]
+fn a_failed_re_attach_removes_only_the_copy_it_just_made() {
+    let her = her();
+    let source = her.root().join("picked-replacement.pdf");
+    std::fs::write(&source, pdf_bytes(1, "replacement")).unwrap();
+    let before = doc_names(&her);
+    // "her-1" still has its file, so the attach is refused after the copy.
+    let refused = reattach_picked(&her, &source, "her-1").unwrap_err();
+    assert!(
+        refused.contains("already has an available file"),
+        "{refused}"
+    );
+    assert_eq!(
+        doc_names(&her),
+        before,
+        "the copy was removed, her files kept"
+    );
+}
+
+#[test]
+fn startup_restore_holds_the_library_lock_and_never_fails_because_of_it() {
+    use crate::backup::{handle_startup_restore_locked, StartupRestoreDecision};
+    let her = her();
+    // Even if the lock were somehow taken, startup carries on.
+    let held =
+        crate::library_lock::try_acquire(her.root(), crate::library_lock::Holder::Pack).unwrap();
+    assert_eq!(
+        handle_startup_restore_locked(her.root()).unwrap(),
+        StartupRestoreDecision::ProceedNormally
+    );
+    drop(held);
+    assert_eq!(
+        handle_startup_restore_locked(her.root()).unwrap(),
+        StartupRestoreDecision::ProceedNormally
+    );
+    // Released when the startup restore is done.
+    crate::library_lock::try_acquire(her.root(), crate::library_lock::Holder::Pack).unwrap();
 }
 
 #[test]
