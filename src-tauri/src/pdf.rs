@@ -71,7 +71,7 @@ pub struct PdfChapters {
 mod chapters;
 pub(crate) use chapters::{detect_chapters, outline_levels};
 #[doc(hidden)]
-pub use chapters::{split_ranges_at, PageRangeRequest};
+pub use chapters::{split_ranges_reporting, PageRangeRequest};
 
 /// A page with fewer extracted characters than this counts as a picture. A
 /// text page of a handbook has hundreds; a page number or running header alone
@@ -676,13 +676,11 @@ pub async fn split_pdf_ranges(
 ) -> Result<SplitSourceReceipt, String> {
     let root = crate::storage::app_root(&app)?;
     run_off_thread(move || {
-        split_ranges_at(
+        split_ranges_reporting(
             &root,
-            &source_material_id,
-            &relative_path,
-            &batch_id,
-            &file_name,
+            (&source_material_id, &relative_path, &batch_id, &file_name),
             &ranges,
+            &|message| say(&app, message),
         )
     })
     .await

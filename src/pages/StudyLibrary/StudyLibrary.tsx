@@ -39,6 +39,7 @@ import {
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
+import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
@@ -252,8 +253,24 @@ export function StudyLibrary() {
     searchText(material.title).includes(searchText(search.trim())),
   );
 
-  const shownMaterials = useMemo(() => visible.slice(0, visibleLimit), [visible, visibleLimit]);
-  const offlineBadges = useOfflineBadges(shownMaterials);
+  // Chapters split out of a book wait under the book (searching lists them flat).
+  const grouped = useMemo(
+    () => (search.trim() ? { topLevel: visible, partsOf: new Map<string, StudyMaterial[]>() } : groupChapterParts(visible)),
+    [visible, search],
+  );
+  const [openBooks, setOpenBooks] = useState<ReadonlySet<string>>(new Set());
+  const toggleBook = (id: string) =>
+    setOpenBooks((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const shownMaterials = useMemo(() => grouped.topLevel.slice(0, visibleLimit), [grouped, visibleLimit]);
+  const badgeMaterials = useMemo(
+    () => shownMaterials.flatMap((material) => (openBooks.has(material.id) ? [material, ...(grouped.partsOf.get(material.id) ?? [])] : [material])),
+    [shownMaterials, openBooks, grouped],
+  );
+  const offlineBadges = useOfflineBadges(badgeMaterials);
 
   const nextActionTitles = useMemo(() => {
     const titles = new Map<string, string>();
@@ -486,20 +503,36 @@ export function StudyLibrary() {
       ) : (
         <>
           <p className="small muted library__result-count">
-            Showing {Math.min(visibleLimit, visible.length).toLocaleString()} of {visible.length.toLocaleString()} materials
+            Showing {Math.min(visibleLimit, grouped.topLevel.length).toLocaleString()} of {grouped.topLevel.length.toLocaleString()} materials
           </p>
           <div className="material-grid">
-            {shownMaterials.map((material) => (
-              <MaterialCard
-                key={material.id}
-                material={material}
-                nextActionTitle={nextActionTitles.get(material.id)}
-                offline={offlineBadges.get(material.id)}
-                review={tab === "library" ? reviewIndicator(binderStatus, material.id, materialsWithCards.has(material.id)) : null}
-              />
-            ))}
+            {shownMaterials.map((material) => {
+              const parts = grouped.partsOf.get(material.id) ?? [];
+              const open = openBooks.has(material.id);
+              const card = (item: StudyMaterial) => (
+                <MaterialCard
+                  key={item.id}
+                  material={item}
+                  nextActionTitle={nextActionTitles.get(item.id)}
+                  offline={offlineBadges.get(item.id)}
+                  review={tab === "library" ? reviewIndicator(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
+                />
+              );
+              if (parts.length === 0) return card(material);
+              return (
+                <div key={material.id} className="material-group" style={{ display: "contents" }}>
+                  {card(material)}
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <Button aria-expanded={open} onClick={() => toggleBook(material.id)}>
+                      {open ? "Hide" : "Show"} {chapterCountLabel(parts.length)} from {material.title}
+                    </Button>
+                  </div>
+                  {open ? parts.map(card) : null}
+                </div>
+              );
+            })}
           </div>
-          {visible.length > visibleLimit ? (
+          {grouped.topLevel.length > visibleLimit ? (
             <div className="library__more">
               <Button onClick={() => setPage({ key: filterKey, limit: visibleLimit + MATERIAL_PAGE_SIZE })}>
                 Show 100 more materials

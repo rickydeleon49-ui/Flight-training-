@@ -122,6 +122,34 @@ fn pages_title(first: u32, last: u32) -> String {
     }
 }
 
+/// An outline title without the publisher's file-name dressing: "02 - AFH
+/// Chapter 1 (Draft 4)" reads "Chapter 1". Anything else is left as it is.
+fn tidy_outline_title(title: &str) -> String {
+    let mut text = title.trim();
+    if let Some(open) = text.rfind('(') {
+        let draft = text[open + 1..].strip_suffix(')').map(|inner| {
+            let words: Vec<&str> = inner.split_whitespace().collect();
+            words.len() == 2
+                && words[0].eq_ignore_ascii_case("draft")
+                && words[1].chars().all(|c| c.is_ascii_digit())
+        });
+        if draft == Some(true) && open > 0 {
+            text = text[..open].trim_end();
+        }
+    }
+    if let Some((number, rest)) = text.split_once(" - ") {
+        let numbered = !number.is_empty() && number.chars().all(|c| c.is_ascii_digit() || c == '.');
+        if let (true, Some((tag, tail))) = (numbered, rest.split_once(' ')) {
+            let tag_ok =
+                (2..=6).contains(&tag.len()) && tag.chars().all(|c| c.is_ascii_uppercase());
+            if tag_ok && !tail.trim().is_empty() {
+                text = tail.trim();
+            }
+        }
+    }
+    text.to_string()
+}
+
 /// Chapters from the outline: the shallowest level with at least two distinct
 /// chapter starts (a lone wrapper bookmark is skipped). An outline that is
 /// really the page text turned into bookmarks (as some PDF tools make from the
@@ -136,7 +164,9 @@ pub(crate) fn outline_chapters(document: &Document, total: u32) -> Vec<Chapter> 
     for entries in levels.into_values() {
         let mut by_page: BTreeMap<u32, String> = BTreeMap::new();
         for (page, title) in entries {
-            by_page.entry(page).or_insert(title);
+            by_page
+                .entry(page)
+                .or_insert_with(|| tidy_outline_title(&title));
         }
         if by_page.len() >= 2 {
             let clean = by_page.values().filter(|t| clean_title(t)).count();
@@ -249,12 +279,7 @@ fn label_starts(texts: &[(u32, String)], total: u32) -> Vec<(u32, String)> {
                 .into_iter()
                 .flatten()
                 .find_map(|l| page_label(l))?;
-            Some((
-                *page,
-                label,
-                within,
-                lines.into_iter().take(TOP_LINES).collect(),
-            ))
+            Some((*page, label, within, lines))
         })
         .collect();
     if (labelled.len() as u64) * 2 <= u64::from(total) {
@@ -267,7 +292,7 @@ fn label_starts(texts: &[(u32, String)], total: u32) -> Vec<(u32, String)> {
         .iter()
         .map(|(page, label, _, _)| (*page, label.clone()))
         .collect();
-    for (page, label, within, top) in labelled {
+    for (page, label, within, lines) in labelled {
         let continues = page == total || label_on.get(&(page + 1)) == Some(&label);
         if within != 1 || !continues {
             continue;
@@ -284,14 +309,17 @@ fn label_starts(texts: &[(u32, String)], total: u32) -> Vec<(u32, String)> {
             }
             letters_seen.push(label.clone());
             // Only a known name; otherwise `cover` names it by its pages.
-            top.iter()
-                .find_map(|l| {
-                    ["Glossary", "Index"]
-                        .into_iter()
-                        .find(|word| l.eq_ignore_ascii_case(word))
-                })
-                .unwrap_or_default()
-                .to_string()
+            let appendix = format!("Appendix {label}");
+            let named = |word: &str| lines.iter().any(|l| l.eq_ignore_ascii_case(word));
+            if named(&appendix) {
+                appendix
+            } else {
+                ["Glossary", "Index"]
+                    .into_iter()
+                    .find(|word| named(word))
+                    .unwrap_or_default()
+                    .to_string()
+            }
         };
         starts.push((page, title));
     }
@@ -309,7 +337,7 @@ fn text_starts(document: &Document, total: u32) -> Vec<(u32, String)> {
         .collect();
     let by_label = label_starts(&texts, total);
     if by_label.len() >= 2 {
-        return by_label;
+        return name_chapters(document, by_label);
     }
     let tops: Vec<(u32, Vec<String>)> = texts
         .iter()
@@ -338,7 +366,107 @@ fn text_starts(document: &Document, total: u32) -> Vec<(u32, String)> {
             }
         }
     }
+    name_chapters(document, starts)
+}
+
+/// One whitespace-collapsed, non-empty line of page text.
+fn page_lines(text: &str) -> Vec<String> {
+    text.lines()
+        .map(|l| l.split_whitespace().collect::<Vec<_>>().join(" "))
+        .filter(|l| !l.is_empty())
+        .collect()
+}
+
+/// A short line with no sentence in it: a piece of a title.
+fn title_piece(line: &str) -> bool {
+    line.chars().count() <= 40
+        && line.split_whitespace().count() <= 6
+        && !line.ends_with(['.', ',', ';', ':', ']', ')', '?', '!'])
+        && !line.chars().any(|c| c.is_ascii_digit() || c == '[')
+        && line.chars().any(char::is_alphabetic)
+}
+
+/// The title lines just before `lines[end]`: up to three short pieces, and
+/// only when the line before them ends a sentence (or is the page number or
+/// the top of the page), so a run of body text is never taken.
+fn pieces_before(lines: &[String], end: usize) -> Option<String> {
+    let mut start = end;
+    while start > 0
+        && end - start < 3
+        && title_piece(&lines[start - 1])
+        && page_label(&lines[start - 1]).is_none()
+    {
+        start -= 1;
+    }
+    if start == end {
+        return None;
+    }
+    let stop_ok = start == 0
+        || page_label(&lines[start - 1]).is_some()
+        || lines[start - 1].ends_with(['.', ']', ')', '?', '!']);
+    stop_ok.then(|| lines[start..end].join(" "))
+}
+
+/// The real name of chapter `number` from the text of its first page. These
+/// handbooks print the name as large lines that the text extractor puts after
+/// the body, next to a lone "Chapter N" line; or just before a line that
+/// starts "Chapter NBody..." (glued); or split around a glued "Chapter N"
+/// ("FlightChapter 8 Instruments"). Anything else gives None, and a body
+/// sentence is never taken.
+fn chapter_heading(text: &str, number: &str) -> Option<String> {
+    let lines = page_lines(text);
+    let marker = format!("Chapter {number}");
+    let heading = lines.iter().enumerate().find_map(|(i, line)| {
+        if *line == marker {
+            return pieces_before(&lines, i);
+        }
+        if let Some(rest) = line.strip_prefix(&marker) {
+            // Glued: "Chapter 7Introduction...", the name is the lines above.
+            return rest
+                .chars()
+                .next()
+                .is_some_and(char::is_alphabetic)
+                .then(|| pieces_before(&lines, i))
+                .flatten();
+        }
+        // Split: "FlightChapter 8 Instruments".
+        let at = line.find(&marker)?;
+        let before = &line[..at];
+        let after = line[at + marker.len()..].trim();
+        let glued = before.chars().last().is_some_and(char::is_alphabetic);
+        let whole = format!("{before} {after}");
+        (glued
+            && !after.is_empty()
+            && title_piece(before)
+            && title_piece(after)
+            && title_piece(&whole))
+        .then_some(whole)
+    })?;
+    let ok = heading.chars().count() <= MAX_HEADING_CHARS
+        && heading.split_whitespace().count() <= MAX_HEADING_WORDS
+        && !heading.eq_ignore_ascii_case("introduction")
+        && clean_title(&heading);
+    ok.then_some(heading)
+}
+
+/// Give chapters named only "Chapter N" the name printed on their first page.
+fn name_chapters(document: &Document, starts: Vec<(u32, String)>) -> Vec<(u32, String)> {
     starts
+        .into_iter()
+        .map(|(page, title)| {
+            let number = title
+                .strip_prefix("Chapter ")
+                .filter(|n| n.chars().all(|c| c.is_ascii_alphanumeric()));
+            let named = number.and_then(|number| {
+                let text = document.extract_text(&[page]).ok()?;
+                chapter_heading(&text, number)
+            });
+            match named {
+                Some(heading) => (page, format!("{title}: {heading}")),
+                None => (page, title),
+            }
+        })
+        .collect()
 }
 
 /// Even chunks of about `CHUNK_PAGES` pages covering every page.
@@ -458,31 +586,41 @@ fn fit_parts(
     fit_parts(window, offset, (middle + 1, last), limits, out)
 }
 
-#[doc(hidden)]
-pub fn split_ranges_at(
+/// Saves the ranges as parts of one receipt, and says "Saving chapter 5 of 23\u{2026}" before each range.
+pub fn split_ranges_reporting(
     root: &Path,
-    source_material_id: &str,
-    relative_path: &str,
-    batch_id: &str,
-    file_name: &str,
+    ids: (&str, &str, &str, &str),
     ranges: &[PageRangeRequest],
+    progress: &dyn Fn(String),
 ) -> Result<SplitSourceReceipt, String> {
     let provider = crate::provider::AnyProvider::selected(root);
-    split_ranges_with_limits(
+    split_ranges_inner(
         root,
-        (source_material_id, relative_path, batch_id, file_name),
+        ids,
         ranges,
         (KIT_PAGE_LIMIT.min(MAX_PAGES), &|bytes| {
             fits_provider(provider, bytes)
         }),
+        progress,
     )
 }
 
+#[cfg(test)]
 fn split_ranges_with_limits(
+    root: &Path,
+    ids: (&str, &str, &str, &str),
+    ranges: &[PageRangeRequest],
+    limits: (u32, &dyn Fn(u64) -> bool),
+) -> Result<SplitSourceReceipt, String> {
+    split_ranges_inner(root, ids, ranges, limits, &|_| {})
+}
+
+fn split_ranges_inner(
     root: &Path,
     (source_material_id, relative_path, batch_id, file_name): (&str, &str, &str, &str),
     ranges: &[PageRangeRequest],
     limits: (u32, &dyn Fn(u64) -> bool),
+    progress: &dyn Fn(String),
 ) -> Result<SplitSourceReceipt, String> {
     let documents_dir = root.join(documents::DOCUMENTS_DIR);
     let source = documents::contained_document_path(&documents_dir, relative_path)?;
@@ -498,7 +636,12 @@ fn split_ranges_with_limits(
     let mut files = SplitFiles::default();
     let result = (|| {
         let mut parts = Vec::new();
-        for range in &ranges {
+        let count = ranges.len();
+        for (position, range) in ranges.iter().enumerate() {
+            progress(format!(
+                "Saving chapter {} of {count}\u{2026}",
+                position + 1
+            ));
             let window = window_document(&document, range.first_page, range.last_page, total);
             let mut fitted = Vec::new();
             fit_parts(
@@ -1038,6 +1181,114 @@ mod tests {
         );
     }
 
+    // ---- real chapter names, AFH name cleanup, progress ----
+
+    #[test]
+    fn heading_is_the_title_lines_set_apart_from_the_body() {
+        // Normal: the big title lines come after the body, beside a lone "Chapter 5".
+        let text = "5-1\nIntroduction\nThrust, drag, lift and weight act on all aircraft.  \n\
+                    opposes the downward force of weight.\nAerodynamics  \nof Flight\nChapter 5\n";
+        assert_eq!(
+            chapter_heading(text, "5").as_deref(),
+            Some("Aerodynamics of Flight")
+        );
+        // Glued: the name is the line above "Chapter 7Introduction...".
+        let glued = "7-1\nAircraft Systems\nChapter 7IntroductionThis chapter covers the engine.\n";
+        assert_eq!(
+            chapter_heading(glued, "7").as_deref(),
+            Some("Aircraft Systems")
+        );
+        // Split around the number.
+        let split =
+            "8-1\nIntroductionIn order to fly, a pilot must read.\nFlightChapter 8 Instruments\n";
+        assert_eq!(
+            chapter_heading(split, "8").as_deref(),
+            Some("Flight Instruments")
+        );
+    }
+
+    #[test]
+    fn heading_is_missing_or_rejected_rather_than_guessed() {
+        // No "Chapter N" line at all.
+        assert_eq!(
+            chapter_heading("3-1\nIntroduction\nSome words here.\n", "3"),
+            None
+        );
+        // Body text before "Chapter 4" that is not a sentence end: not a title.
+        let body = "4-1\nThis chapter examines the fundamental physical laws governing the forces\nChapter 4\n";
+        assert_eq!(chapter_heading(body, "4"), None);
+        // A sentence before it is never taken.
+        let sentence = "6-1\nThe pilot reads the manual.\nChapter 6\n";
+        assert_eq!(chapter_heading(sentence, "6"), None);
+        // A section label alone is not a name.
+        assert_eq!(chapter_heading("9-1\nIntroduction\nChapter 9\n", "9"), None);
+        // A cross-reference in the body is not the chapter marker.
+        assert_eq!(chapter_heading("2-1\nSee Chapter 2 for more.\n", "2"), None);
+    }
+
+    #[test]
+    fn text_chapters_get_real_names_from_their_first_pages() {
+        let pages: Vec<Vec<String>> = (1..=12)
+            .map(|page| {
+                let (chapter, within) = if page <= 6 { (1, page) } else { (2, page - 6) };
+                let mut lines = vec![format!("{chapter}-{within}")];
+                if within == 1 {
+                    lines.push("Body of the introduction ends here.".into());
+                    lines.push(if chapter == 1 {
+                        "Basic Flying".into()
+                    } else {
+                        "Weather".into()
+                    });
+                    lines.push(format!("Chapter {chapter}"));
+                } else {
+                    lines.push("Body text of a page with enough words to count as text.".into());
+                }
+                lines
+            })
+            .collect();
+        let refs: Vec<Vec<&str>> = pages
+            .iter()
+            .map(|p| p.iter().map(String::as_str).collect())
+            .collect();
+        let doc = book(&refs, &[], &[]);
+        let (chapters, source) = detect_chapters(&doc, 12, false);
+        assert_eq!(source, "text");
+        let titles: Vec<&str> = chapters.iter().map(|c| c.title.as_str()).collect();
+        assert_eq!(
+            titles,
+            vec!["Chapter 1: Basic Flying", "Chapter 2: Weather"]
+        );
+    }
+
+    #[test]
+    fn afh_outline_names_lose_the_file_name_dressing() {
+        for (raw, wanted) in [
+            ("02 - AFH Chapter 1 (Draft 4)", "Chapter 1"),
+            ("19 - AFH Chapter 18 (Draft 3)", "Chapter 18"),
+            ("20 - AFH Glossary (Draft 4)", "Glossary"),
+            ("21 - AFH Index (Draft 5)", "Index"),
+            ("01.1 - AFH Front Matter (Draft 3)", "Front Matter"),
+            ("1 Introduction", "1 Introduction"),
+            ("Chapter 3 (Draft)", "Chapter 3 (Draft)"),
+            ("Ground - Handling", "Ground - Handling"),
+        ] {
+            assert_eq!(tidy_outline_title(raw), wanted, "{raw}");
+        }
+        let doc = book(
+            &plain(10),
+            &[],
+            &[
+                (1, "02 - AFH Chapter 1 (Draft 4)", 1),
+                (1, "03 - AFH Chapter 2 (Draft 2)", 5),
+            ],
+        );
+        let titles: Vec<String> = outline_chapters(&doc, 10)
+            .into_iter()
+            .map(|c| c.title)
+            .collect();
+        assert_eq!(titles, vec!["Chapter 1", "Chapter 2"]);
+    }
+
     // ---- splitting ranges ----
 
     fn library(label: &str, document: &mut Document) -> std::path::PathBuf {
@@ -1139,6 +1390,29 @@ mod tests {
             assert_eq!(child.get_pages().len() as u32, part.child_page_count);
         }
         assert!(receipt.core.plan[1].original_file_name.contains("Two"));
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn saving_says_which_chapter_it_is_on() {
+        let mut doc = book(&plain(12), &[], &[]);
+        let root = library("progress", &mut doc);
+        let said = std::cell::RefCell::new(Vec::new());
+        split_ranges_inner(
+            &root,
+            ("R", "R-handbook.pdf", "batch", "Handbook.pdf"),
+            &[range(1, 4, "One"), range(5, 12, "Two")],
+            (150, &|_| true),
+            &|message| said.borrow_mut().push(message),
+        )
+        .unwrap();
+        assert_eq!(
+            said.into_inner(),
+            vec![
+                "Saving chapter 1 of 2\u{2026}",
+                "Saving chapter 2 of 2\u{2026}"
+            ]
+        );
         let _ = std::fs::remove_dir_all(root);
     }
 
