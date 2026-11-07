@@ -245,7 +245,7 @@ fn remove_owned_file(
         }
     };
     match same_file(&path) {
-        None => return Ok(()), // not there (never moved)
+        None => return Ok(()),        // not there (never moved)
         Some(false) => return Ok(()), // D2/D3 fail: not the very file this op wrote
         Some(true) => {}
     }

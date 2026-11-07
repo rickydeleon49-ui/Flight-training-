@@ -13,7 +13,8 @@ use super::validate::validate_pack;
 use crate::practice_sessions::compute_canonical_hash;
 
 pub(super) const NOW: &str = "2026-11-01T10:00:00.000Z";
-pub(super) const PANEL: &[u8] = include_bytes!("../../../src/testing/fixtures/visual/practice-panel.png");
+pub(super) const PANEL: &[u8] =
+    include_bytes!("../../../src/testing/fixtures/visual/practice-panel.png");
 pub(super) const Q1: &str = "aaaaaaaa-0000-4000-8000-000000000001";
 pub(super) const Q2: &str = "aaaaaaaa-0000-4000-8000-000000000002";
 pub(super) const GONE: &str = "bbbbbbbb-0000-4000-8000-000000000009";

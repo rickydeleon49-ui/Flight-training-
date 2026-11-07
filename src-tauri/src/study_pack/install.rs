@@ -92,7 +92,11 @@ fn fresh_id(conn: &Connection) -> String {
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_nanos());
-        format!("{:08x}-0000-4000-8000-{:012x}", nanos as u32, (nanos >> 32) as u64 & 0xffff_ffff_ffff)
+        format!(
+            "{:08x}-0000-4000-8000-{:012x}",
+            nanos as u32,
+            (nanos >> 32) as u64 & 0xffff_ffff_ffff
+        )
     })
 }
 
@@ -227,7 +231,10 @@ fn run(
     journal::write(op, &journal)?;
     fault::hit("installing")?;
     install_files(root, op, &journal)?;
-    journal::sync(&root.join(crate::documents::DOCUMENTS_DIR), "fsync:documents")?;
+    journal::sync(
+        &root.join(crate::documents::DOCUMENTS_DIR),
+        "fsync:documents",
+    )?;
     journal::sync(&op.join(FILES_DIR), "fsync:files-moved")?;
     journal.state = State::Installed;
     journal::write(op, &journal)?;
@@ -335,11 +342,14 @@ fn stage_files(
             .create_new(true)
             .open(&staged)
             .map_err(|e| format!("Could not prepare the study pack files: {e}"))?;
-        let (bytes, sha) = crate::backup::copy_and_hash(&mut (&mut entry).take(limit + 1), &mut out)?;
+        let (bytes, sha) =
+            crate::backup::copy_and_hash(&mut (&mut entry).take(limit + 1), &mut out)?;
         out.sync_all()
             .map_err(|e| format!("Could not prepare the study pack files: {e}"))?;
         if bytes != manifest_file.bytes || sha != manifest_file.sha256 {
-            return Err(super::validate::damaged("a file doesn't match its checksum"));
+            return Err(super::validate::damaged(
+                "a file doesn't match its checksum",
+            ));
         }
         let meta = std::fs::symlink_metadata(&staged)
             .map_err(|e| format!("Could not prepare the study pack files: {e}"))?;

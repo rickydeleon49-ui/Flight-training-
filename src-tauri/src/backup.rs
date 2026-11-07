@@ -991,9 +991,7 @@ pub(crate) fn verify_schema_37_study_packs(connection: &Connection) -> Result<()
             return Err(damaged());
         }
     }
-    let bad = |sql: &str| -> Result<bool, String> {
-        Ok(m3_count(connection, sql, &[])? != 0)
-    };
+    let bad = |sql: &str| -> Result<bool, String> { Ok(m3_count(connection, sql, &[])? != 0) };
     if bad("SELECT COUNT(*) FROM study_pack_imports
             WHERE added < 0 OR skipped < 0 OR new_versions < 0 OR readded < 0
                OR cards_left_out < 0 OR cards_left_out_removed < 0
@@ -7931,7 +7929,7 @@ pub async fn stage_local_restore(app: AppHandle, name: String) -> Result<BackupI
         )
     })
     .await
-        .map_err(|error| format!("Could not finish restoring that safety copy: {error}"))?
+    .map_err(|error| format!("Could not finish restoring that safety copy: {error}"))?
 }
 
 /// Stage a named safety copy, against a plain directory.

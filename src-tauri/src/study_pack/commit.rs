@@ -79,8 +79,9 @@ pub fn commit(input: &CommitInput<'_>) -> Result<(), CommitError> {
         }
         write_all(&tx, input, &live)?;
         fault::hit("before-commit")?;
-        tx.commit()
-            .map_err(|e| CommitError::Unknown(format!("The study pack may not have been saved: {e}")))?;
+        tx.commit().map_err(|e| {
+            CommitError::Unknown(format!("The study pack may not have been saved: {e}"))
+        })?;
     }
     fault::hit("after-commit").map_err(CommitError::Unknown)?;
     Ok(())
@@ -427,12 +428,18 @@ fn remap_citations(
     for source in &citations.items {
         let logical = match source.item_kind.as_str() {
             "summary" => format!("summary:{run_id}"),
-            "section" => card_ids.get(&source.logical_id).cloned().ok_or("citation")?,
+            "section" => card_ids
+                .get(&source.logical_id)
+                .cloned()
+                .ok_or("citation")?,
             "card" => {
                 if ip.dropped_cards.contains(&source.logical_id) {
                     continue;
                 }
-                card_ids.get(&source.logical_id).cloned().ok_or("citation")?
+                card_ids
+                    .get(&source.logical_id)
+                    .cloned()
+                    .ok_or("citation")?
             }
             "question" => question_ids
                 .get(&source.logical_id)

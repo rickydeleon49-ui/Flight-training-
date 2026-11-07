@@ -31,7 +31,8 @@ pub fn normalize(text: &str) -> String {
 /// ` (updated 1 Nov 2026)` from the manifest `createdAt` (UTC).
 pub fn suffix(created_at: &str) -> String {
     let iso = parse_iso_ms(created_at).map_or_else(|| created_at.to_string(), format_iso_ms);
-    let number = |range: std::ops::Range<usize>| iso.get(range).and_then(|t| t.parse::<usize>().ok());
+    let number =
+        |range: std::ops::Range<usize>| iso.get(range).and_then(|t| t.parse::<usize>().ok());
     match (number(0..4), number(5..7), number(8..10)) {
         (Some(year), Some(month @ 1..=12), Some(day)) => {
             format!(" (updated {day} {} {year})", MONTHS[month - 1])

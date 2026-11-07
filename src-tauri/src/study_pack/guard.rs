@@ -46,7 +46,11 @@ pub fn pack_sql(sql: &str) -> Result<&str, String> {
             _ => plain.push(c),
         }
     }
-    let spaced = plain.to_uppercase().split_whitespace().collect::<Vec<_>>().join(" ");
+    let spaced = plain
+        .to_uppercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
     let trimmed = spaced.trim_end_matches(';').trim_end();
     let starts_ok = trimmed.starts_with("INSERT INTO ") || trimmed.starts_with("SELECT ");
     let one_statement = !trimmed.contains(';');
@@ -73,7 +77,8 @@ pub fn guarded_tables(conn: &Connection) -> Result<Vec<String>, String> {
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| format!("Could not read the library structure: {e}"))
     };
-    let tables = read("SELECT name, sql FROM main.sqlite_master WHERE type = 'table' ORDER BY name")?;
+    let tables =
+        read("SELECT name, sql FROM main.sqlite_master WHERE type = 'table' ORDER BY name")?;
     let virtual_names: Vec<String> = tables
         .iter()
         .filter(|(_, sql)| sql.to_uppercase().starts_with("CREATE VIRTUAL"))
@@ -84,7 +89,9 @@ pub fn guarded_tables(conn: &Connection) -> Result<Vec<String>, String> {
         .filter(|(name, sql)| {
             !name.to_lowercase().starts_with("sqlite_")
                 && !sql.to_uppercase().starts_with("CREATE VIRTUAL")
-                && !virtual_names.iter().any(|v| name.starts_with(&format!("{v}_")))
+                && !virtual_names
+                    .iter()
+                    .any(|v| name.starts_with(&format!("{v}_")))
                 && !EXCLUDED_TABLES.contains(&name.as_str())
         })
         .map(|(name, _)| name)

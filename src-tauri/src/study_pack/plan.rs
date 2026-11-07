@@ -138,7 +138,11 @@ pub(super) struct Lookups<'a> {
 }
 
 impl Lookups<'_> {
-    fn material(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Option<String>, String> {
+    fn material(
+        &self,
+        sql: &str,
+        params: &[&dyn rusqlite::ToSql],
+    ) -> Result<Option<String>, String> {
         let sql = pack_sql(sql)?;
         self.conn
             .query_row(sql, params, |r| r.get::<_, String>(0))
@@ -200,7 +204,12 @@ impl Lookups<'_> {
     }
 
     /// A live picture row of this identity with these bytes (any revision).
-    pub(super) fn own_picture_bytes(&self, ns: &str, id: &str, sha: &str) -> Result<Option<String>, String> {
+    pub(super) fn own_picture_bytes(
+        &self,
+        ns: &str,
+        id: &str,
+        sha: &str,
+    ) -> Result<Option<String>, String> {
         self.material(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND kind = 'picture' AND file_sha256 = ?3
@@ -285,7 +294,9 @@ impl<'a> Pictures<'a> {
                     let image: Option<Option<String>> = self
                         .conn
                         .query_row(
-                            pack_sql("SELECT image_material_id FROM visual_card_regions WHERE id = ?1")?,
+                            pack_sql(
+                                "SELECT image_material_id FROM visual_card_regions WHERE id = ?1",
+                            )?,
                             [region],
                             |r| r.get(0),
                         )
