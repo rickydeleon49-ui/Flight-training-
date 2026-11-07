@@ -38,8 +38,7 @@ pub struct Report {
 
 /// Does a receipt exist for this operation? Any failure to look is an error.
 pub fn receipt_exists(root: &Path, op_id: &str) -> Result<bool, String> {
-    let conn =
-        super::open_library(root, true, 2000).map_err(|e| format!("lookup failed: {e}"))?;
+    let conn = super::open_library(root, true, 2000).map_err(|e| format!("lookup failed: {e}"))?;
     receipt_in(&conn, op_id)
 }
 
@@ -129,9 +128,12 @@ fn set_aside_for_restore(
 }
 
 fn journal_op_id(op: &Path) -> String {
-    journal::read(op)
-        .map(|j| j.op_id)
-        .unwrap_or_else(|_| op.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string())
+    journal::read(op).map(|j| j.op_id).unwrap_or_else(|_| {
+        op.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string()
+    })
 }
 
 /// A failure of the database (busy, locked, could not look), not of a rule:

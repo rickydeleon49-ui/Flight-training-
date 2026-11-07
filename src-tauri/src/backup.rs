@@ -9065,8 +9065,6 @@ fn forget_gemini_jobs(root: &Path) -> bool {
 #[allow(dead_code)]
 pub fn apply_pending_restore(app: &AppHandle) -> Result<(), String> {
     let root = app_root(app)?;
-    // Only the lock: the database is not open yet, so no pack can be reconciled.
-    let _guard = crate::library_lock::try_acquire(&root, crate::library_lock::Holder::Library)?;
     apply_pending_restore_in(&root)
 }
 
@@ -9368,6 +9366,18 @@ pub(crate) fn handle_startup_restore_in(root: &Path) -> Result<StartupRestoreDec
 /// was in front.
 pub fn handle_startup_restore(app: &AppHandle) -> Result<bool, String> {
     let root = app_root(app)?;
+    // Hold the library lock while a staged restore is installed. Nothing else
+    // holds it this early, and a lock that cannot be taken (read-only folder,
+    // odd volume) must never stop the app from opening: carry on without it,
+    // exactly as before the lock existed.
+    let _guard = match crate::library_lock::try_acquire(&root, crate::library_lock::Holder::Library)
+    {
+        Ok(guard) => Some(guard),
+        Err(_) => {
+            log::warn!("Could not lock the study library at startup; continuing without the lock.");
+            None
+        }
+    };
     let decision = handle_startup_restore_in(&root)?;
     crate::safety_notices::record_restore_outcome(&root, &decision);
     startup_restore_outcome(decision)
