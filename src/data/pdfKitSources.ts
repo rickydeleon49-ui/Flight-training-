@@ -96,48 +96,143 @@ export interface PdfItemProvenance {
   editOrigin?: "user" | "instructor";
   sources: (PdfKitSource & { runId: string })[];
 }
-/** Read-only lineage resolution. A broken row carries an explicit invalid state;
- * callers must use that state before any provider or human-origin fallback.
- */
-export async function readPdfItemProvenance(
-  query: Query, materialId: string, kind: PdfKitSource["itemKind"], logicalId: string,
-  current: Record<string, unknown> | string, editOrigin?: "user" | "instructor",
-): Promise<PdfItemProvenance | undefined> {
-  const invalid = (): PdfItemProvenance => ({ status: "invalid", label: "PDF source details unavailable", sources: [], ...(editOrigin ? { editOrigin } : {}) });
-  const rows = await query(`SELECT s.*, r.material_id, r.content_sha256, r.selected_pages_json, r.extractor_version, r.algorithm_version, r.created_at
+type Item = Record<string, unknown> | string;
+/** Where provenance reads come from: one item at a time, or batched for a whole list. */
+interface Evidence {
+  rows(kind: PdfKitSource["itemKind"], materialId: string): Promise<Record<string, unknown>[]>;
+  hasRun(materialId: string): Promise<boolean>;
+  /** Every stored and earlier version of the material's items by id; throws when unreadable. */
+  content(kind: PdfKitSource["itemKind"], materialId: string, logicalId: string): Promise<Map<string, Item[]>>;
+}
+const ITEM_SQL = `SELECT s.*, r.material_id, r.content_sha256, r.selected_pages_json, r.extractor_version, r.algorithm_version, r.created_at
     FROM pdf_kit_item_sources s LEFT JOIN pdf_kit_runs r ON r.run_id = s.run_id
-    WHERE s.item_kind = ? AND (r.material_id = ? OR r.run_id IS NULL)
-    ORDER BY s.run_id, s.page, s.start_offset`, [kind, materialId]);
-  if (!rows.length) {
-    const runs = await query("SELECT run_id FROM pdf_kit_runs WHERE material_id = ? LIMIT 1", [materialId]);
-    return runs.length && !editOrigin ? invalid() : undefined;
-  }
-  const content = new Map<string, (Record<string, unknown> | string)[]>();
-  const add = (id: string, item: Record<string, unknown> | string) => content.set(id, [...(content.get(id) ?? []), item]);
-  add(logicalId, current);
+    WHERE s.item_kind = ?`;
+const ITEM_ORDER = " ORDER BY s.run_id, s.page, s.start_offset";
+
+interface ContentRows { items: Record<string, unknown>[]; history: Record<string, unknown>[] }
+const SET_ROWS = "SELECT source_material_id AS content_owner, summary, sections_json, flashcards_json FROM ai_study_sets";
+const QUESTION_ROWS = "SELECT i.*, COALESCE(i.logical_id, i.id) AS identity, v.source_material_id AS content_owner FROM practice_test_items i JOIN practice_test_versions v ON v.id = i.version_id";
+const HISTORY_ROWS = "SELECT material_id AS content_owner, previous_json FROM study_set_history WHERE kind = ?";
+const historyKind = (kind: PdfKitSource["itemKind"]) => kind === "question" ? "practice" : "study_set";
+
+async function readContentRows(query: Query, kind: PdfKitSource["itemKind"], materialId: string): Promise<ContentRows> {
+  const items = await query(kind === "question" ? `${QUESTION_ROWS} WHERE v.source_material_id = ?` : `${SET_ROWS} WHERE source_material_id = ?`, [materialId]);
+  const history = await query(`${HISTORY_ROWS} AND material_id = ?`, [historyKind(kind), materialId]);
+  return { items, history };
+}
+
+/** Every stored and earlier version of a material's items, by id. Throws on unreadable JSON. */
+function buildContent(kind: PdfKitSource["itemKind"], logicalId: string, rows: ContentRows): Map<string, Item[]> {
+  const content = new Map<string, Item[]>();
+  const add = (id: string, item: Item) => content.set(id, [...(content.get(id) ?? []), item]);
   const addSet = (summary: unknown, sections: unknown, cards: unknown) => {
     if (kind === "summary" && typeof summary === "string") add(logicalId, summary);
     const list = kind === "section" ? sections : kind === "card" ? cards : [];
     if (Array.isArray(list)) for (const item of list) if (record(item) && typeof item.itemId === "string") add(item.itemId, item);
   };
-  try {
-    if (kind === "question") {
-      for (const r of await query(`SELECT i.*, COALESCE(i.logical_id, i.id) AS identity FROM practice_test_items i JOIN practice_test_versions v ON v.id = i.version_id WHERE v.source_material_id = ?`, [materialId])) {
-        add(String(r.identity), { question: r.question_text, options: JSON.parse(String(r.options_json)), correctIndex: r.correct_index, explanation: r.explanation, sourcePage: r.source_page, replaces: r.replaces_id });
-      }
-    } else {
-      for (const r of await query("SELECT summary, sections_json, flashcards_json FROM ai_study_sets WHERE source_material_id = ?", [materialId])) addSet(r.summary, JSON.parse(String(r.sections_json)), JSON.parse(String(r.flashcards_json)));
+  for (const r of rows.items) {
+    if (kind === "question") add(String(r.identity), { question: r.question_text, options: JSON.parse(String(r.options_json)), correctIndex: r.correct_index, explanation: r.explanation, sourcePage: r.source_page, replaces: r.replaces_id });
+    else addSet(r.summary, JSON.parse(String(r.sections_json)), JSON.parse(String(r.flashcards_json)));
+  }
+  for (const r of rows.history) {
+    const s = JSON.parse(String(r.previous_json));
+    if (kind === "question") { for (const q of s.questions ?? []) if (record(q) && typeof q.identity === "string") add(q.identity, q); }
+    else addSet(s.summary, JSON.parse(s.sections_json), JSON.parse(s.flashcards_json));
+  }
+  return content;
+}
+
+const oneItem = (query: Query): Evidence => ({
+  rows: async (kind, materialId) => query(`${ITEM_SQL} AND (r.material_id = ? OR r.run_id IS NULL)${ITEM_ORDER}`, [kind, materialId]),
+  hasRun: async (materialId) => (await query("SELECT run_id FROM pdf_kit_runs WHERE material_id = ? LIMIT 1", [materialId])).length > 0,
+  content: async (kind, materialId, logicalId) => buildContent(kind, logicalId, await readContentRows(query, kind, materialId)),
+});
+
+/**
+ * Provenance for many items, possibly across materials, with a fixed number
+ * of reads: evidence rows once per kind, runs once, and stored versions once
+ * for study sets and once for practice tests. Results match readPdfItemProvenance.
+ * `only` limits the reads to one material.
+ */
+export function pdfProvenanceReader(query: Query, only?: string) {
+  const memo = <T>(cache: Map<string, Promise<T>>, key: string, read: () => Promise<T>) => {
+    let hit = cache.get(key);
+    if (!hit) { hit = read(); cache.set(key, hit); }
+    return hit;
+  };
+  const rowCache = new Map<string, Promise<Record<string, unknown>[]>>();
+  const runCache = new Map<string, Promise<Set<string>>>();
+  const contentCache = new Map<string, Promise<Map<string, Item[]>>>();
+  const ownerCache = new Map<string, Promise<Map<string, ContentRows>>>();
+  const group = (rows: Record<string, unknown>[], into: Map<string, ContentRows>, field: keyof ContentRows) => {
+    for (const row of rows) {
+      const owner = String(row.content_owner);
+      const entry = into.get(owner) ?? { items: [], history: [] };
+      entry[field].push(row);
+      into.set(owner, entry);
     }
-    for (const r of await query("SELECT previous_json FROM study_set_history WHERE material_id = ? AND kind = ?", [materialId, kind === "question" ? "practice" : "study_set"])) {
-      const s = JSON.parse(String(r.previous_json));
-      if (kind === "question") { for (const q of s.questions ?? []) if (record(q) && typeof q.identity === "string") add(q.identity, q); }
-      else addSet(s.summary, JSON.parse(s.sections_json), JSON.parse(s.flashcards_json));
-    }
-  } catch { return invalid(); }
+  };
+  const contentRows = async (kind: PdfKitSource["itemKind"], materialId: string) => {
+    const table = kind === "question" ? "question" : "set";
+    const all = await memo(ownerCache, table, async () => {
+      const scope = only === undefined ? "" : kind === "question" ? " WHERE v.source_material_id = ?" : " WHERE source_material_id = ?";
+      const items = await query(`${kind === "question" ? QUESTION_ROWS : SET_ROWS}${scope}`, only === undefined ? [] : [only]);
+      const history = await query(`${HISTORY_ROWS}${only === undefined ? "" : " AND material_id = ?"}`, only === undefined ? [historyKind(kind)] : [historyKind(kind), only]);
+      const byOwner = new Map<string, ContentRows>();
+      group(items, byOwner, "items");
+      group(history, byOwner, "history");
+      return byOwner;
+    });
+    return all.get(materialId) ?? { items: [], history: [] };
+  };
+  const evidence: Evidence = {
+    async rows(kind, materialId) {
+      const rows = await memo(rowCache, kind, async () => only === undefined
+        ? query(`${ITEM_SQL}${ITEM_ORDER}`, [kind])
+        : query(`${ITEM_SQL} AND (r.material_id = ? OR r.run_id IS NULL)${ITEM_ORDER}`, [kind, only]));
+      // A row without its run applies to every material, as in the single read.
+      return rows.filter(r => r.material_id === materialId || r.material_id === null || r.material_id === undefined);
+    },
+    async hasRun(materialId) {
+      const runs = await memo(runCache, "", async () => new Set((await (only === undefined
+        ? query("SELECT DISTINCT material_id FROM pdf_kit_runs", [])
+        : query("SELECT DISTINCT material_id FROM pdf_kit_runs WHERE material_id = ?", [only]))).map(r => String(r.material_id))));
+      return runs.has(materialId);
+    },
+    content: (kind, materialId, logicalId) =>
+      memo(contentCache, JSON.stringify([kind, materialId, kind === "summary" ? logicalId : ""]), async () => buildContent(kind, logicalId, await contentRows(kind, materialId))),
+  };
+  return (materialId: string, kind: PdfKitSource["itemKind"], logicalId: string, current: Item, editOrigin?: "user" | "instructor") =>
+    resolveProvenance(evidence, materialId, kind, logicalId, current, editOrigin);
+}
+
+/** Read-only lineage resolution. A broken row carries an explicit invalid state;
+ * callers must use that state before any provider or human-origin fallback.
+ */
+export async function readPdfItemProvenance(
+  query: Query, materialId: string, kind: PdfKitSource["itemKind"], logicalId: string,
+  current: Item, editOrigin?: "user" | "instructor",
+): Promise<PdfItemProvenance | undefined> {
+  return resolveProvenance(oneItem(query), materialId, kind, logicalId, current, editOrigin);
+}
+
+async function resolveProvenance(
+  evidence: Evidence, materialId: string, kind: PdfKitSource["itemKind"], logicalId: string,
+  current: Item, editOrigin?: "user" | "instructor",
+): Promise<PdfItemProvenance | undefined> {
+  const invalid = (): PdfItemProvenance => ({ status: "invalid", label: "PDF source details unavailable", sources: [], ...(editOrigin ? { editOrigin } : {}) });
+  const rows = await evidence.rows(kind, materialId);
+  if (!rows.length) {
+    return (await evidence.hasRun(materialId)) && !editOrigin ? invalid() : undefined;
+  }
+  let stored: Map<string, Item[]>;
+  try { stored = await evidence.content(kind, materialId, logicalId); } catch { return invalid(); }
+  // The item as shown comes first, then every stored version.
+  const versions = (id: string): Item[] => id === logicalId ? [current, ...(stored.get(id) ?? [])] : stored.get(id) ?? [];
   const lineage = new Set([logicalId]);
   for (let changed = true; changed;) {
     changed = false;
-    for (const id of [...lineage]) for (const item of content.get(id) ?? []) if (record(item) && typeof item.replaces === "string" && !lineage.has(item.replaces)) { lineage.add(item.replaces); changed = true; }
+    for (const id of [...lineage]) for (const item of versions(id)) if (record(item) && typeof item.replaces === "string" && !lineage.has(item.replaces)) { lineage.add(item.replaces); changed = true; }
   }
   const relevant = rows.filter(r => kind === "summary" || lineage.has(String(r.logical_id)));
   if (!relevant.length) return !editOrigin ? invalid() : undefined;
@@ -146,7 +241,7 @@ export async function readPdfItemProvenance(
     try {
       const s = decodePdfKitSources({ runId: row.run_id, run: { materialId: row.material_id, contentSha256: row.content_sha256, selectedPages: JSON.parse(String(row.selected_pages_json)), extractorVersion: row.extractor_version, algorithmVersion: row.algorithm_version, createdAt: row.created_at }, items: [{ itemKind: row.item_kind, logicalId: row.logical_id, contentHash: row.content_hash, page: row.page, startOffset: row.start_offset, endOffset: row.end_offset, quote: row.quote }] }, materialId);
       const item = s.items[0]!;
-      const prior = content.get(kind === "summary" ? logicalId : item.logicalId) ?? [];
+      const prior = versions(kind === "summary" ? logicalId : item.logicalId);
       const hashes = await Promise.all(prior.map(v => pdfKitContentHash(kind, v)));
       if (!hashes.includes(item.contentHash)) return invalid();
       // An immutable older question may share its logical id with a later edit.

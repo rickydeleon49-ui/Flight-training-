@@ -21,6 +21,7 @@ import { AppDataContext } from "@/state/AppDataContext";
 import { AskGeminiPanel, formatFlashcardContext } from "./AskGeminiPanel";
 import { reviewButtonLabel, reviewStatusLine } from "@/logic/cardReviewStatus";
 
+import { useReviewBodySpace } from "./useReviewBodySpace";
 import { ResetCardReviewsDialog } from "./ResetCardReviewsDialog";
 import {
   describeReturn,
@@ -68,6 +69,7 @@ interface CardReviewPanelProps {
 }
 
 export function CardReviewPanel({ materialId, materialTitle, repository, materialFilePath, contentKey, browseCard, autoStart = false, studySet, numberedAction = false, resetSlot }: CardReviewPanelProps) {
+  useReviewBodySpace();
   const review = useCardReview(materialId, repository, { contentKey });
   const [resetOpen, setResetOpen] = useState(false);
   const resetWasPending = useRef(false);
@@ -193,7 +195,7 @@ export function CardReviewPanel({ materialId, materialTitle, repository, materia
             {statusLine}
           </h3>
         </div>
-        {review.session || (numberedAction && !reviewable && !review.starting) ? null : (
+        {review.session || (!reviewable && !review.starting) ? null : (
           <Button
             size={numberedAction ? undefined : "small"}
             variant="primary"
@@ -407,6 +409,7 @@ export function SessionView({
   const session = review.session!;
   const region = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const question = useRef<HTMLDivElement>(null);
   const entryFocusHandled = useRef(false);
   const navigationFrom = useRef<string | null>(null);
   const shown = session.cards[session.position];
@@ -418,12 +421,19 @@ export function SessionView({
   const currentMaterial = appData?.data?.materials?.find((m) => m.id === materialId);
   const resolvedFilePath = materialFilePath ?? currentMaterial?.filePath ?? null;
 
+  // Extra review keeps its place unless the next question would be clipped.
+  const extraCardOffScreen = () => {
+    const top = heading.current?.getBoundingClientRect().top ?? 0;
+    const bottom = question.current?.getBoundingClientRect().bottom ?? 0;
+    return top < 0 || bottom > window.innerHeight;
+  };
+
   useLayoutEffect(() => {
     if (focusEntry) {
       if (entryFocusHandled.current) return;
       entryFocusHandled.current = true;
       const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-      region.current?.scrollIntoView?.({ block: "start", behavior });
+      if (!session.extra || extraCardOffScreen()) region.current?.scrollIntoView?.({ block: "start", behavior });
       heading.current?.focus({ preventScroll: true });
       onEntryShown();
     } else {
@@ -435,7 +445,7 @@ export function SessionView({
     if (!shown || navigationFrom.current === null || navigationFrom.current === shown.itemId) return;
     navigationFrom.current = null;
     heading.current?.focus({ preventScroll: true });
-    heading.current?.scrollIntoView?.({
+    if (!session.extra || extraCardOffScreen()) heading.current?.scrollIntoView?.({
       block: "start",
       behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
     });
@@ -513,7 +523,7 @@ export function SessionView({
       {progress ? <p className="tiny dim">From {progress.from}</p> : null}
       {item.visualRegionId ? (
         visual.loaded ? (
-          <div className="stack stack--3">
+          <div ref={question} className="stack stack--3">
             <VisualPicture
               key={item.itemId}
               picture={visual.loaded.picture}
@@ -545,7 +555,7 @@ export function SessionView({
           </div>
         )
       ) : (
-        <div className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
+        <div ref={question} className={`flashcard${review.revealed ? " is-revealed" : ""}`} aria-live="polite">
           <span className="tiny dim">{review.revealed ? "Answer" : "Question"}</span>
           <span>{item.front}</span>
           {review.revealed ? <span className="card-review__answer">{item.back}</span> : null}

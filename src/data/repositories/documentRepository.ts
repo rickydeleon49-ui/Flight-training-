@@ -1,6 +1,6 @@
 import { guideCardRecovery, type RecoveryHistoryRow } from "../guideCardRecovery";
-import { collectQuestionSources, readCardPageSource } from "../studyPageSources";
-import { readPdfItemProvenance } from "../pdfKitSources";
+import { cardPageSourceReader, collectQuestionSources } from "../studyPageSources";
+import { pdfProvenanceReader } from "../pdfKitSources";
 import { nowIso } from "@/lib/dates";
 import { newId } from "@/lib/id";
 import {
@@ -340,19 +340,26 @@ export function documentRepository(db: SqlDatabase) {
     return grouped;
   }
 
-  async function withPdfSources(set: AiStudySet): Promise<AiStudySet> {
+  type SourceReaders = { pdf: ReturnType<typeof pdfProvenanceReader>; page: ReturnType<typeof cardPageSourceReader> };
+  /** Readers shared by every set in one load, so sources are read in batches, not per card. */
+  function sourceReaders(only?: Id): SourceReaders {
     const query = (sql: string, params: import("../db").SqlValue[]) => db.select<Record<string, unknown>>(sql, params);
-    const summaryPdfProvenance = set.summary.trim() ? await readPdfItemProvenance(query, set.sourceMaterialId, "summary", "summary", set.summary, set.summaryOrigin ?? undefined) : undefined;
+    return { pdf: pdfProvenanceReader(query, only), page: cardPageSourceReader(query, "authored_card", only) };
+  }
+
+  async function withPdfSources(set: AiStudySet, readers: SourceReaders = sourceReaders(set.sourceMaterialId)): Promise<AiStudySet> {
+    const { pdf, page } = readers;
+    const summaryPdfProvenance = set.summary.trim() ? await pdf(set.sourceMaterialId, "summary", "summary", set.summary, set.summaryOrigin ?? undefined) : undefined;
     const sections = await Promise.all(set.sections.map(async item => {
       if (!item.itemId) return item;
-      const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "section", item.itemId, item as unknown as Record<string, unknown>, item.origin);
+      const pdfProvenance = await pdf(set.sourceMaterialId, "section", item.itemId, item as unknown as Record<string, unknown>, item.origin);
       return pdfProvenance ? { ...item, pdfProvenance } : item;
     }));
     const flashcards = await Promise.all(set.flashcards.map(async item => {
       if (!item.itemId) return item;
-      const pageSource = await readCardPageSource(query, set.sourceMaterialId, "authored_card", item.itemId, item);
+      const pageSource = await page(set.sourceMaterialId, item.itemId, item);
       if (pageSource) return { ...item, pageSource };
-      const pdfProvenance = await readPdfItemProvenance(query, set.sourceMaterialId, "card", item.itemId, item as unknown as Record<string, unknown>, item.origin);
+      const pdfProvenance = await pdf(set.sourceMaterialId, "card", item.itemId, item as unknown as Record<string, unknown>, item.origin);
       return pdfProvenance ? { ...item, pdfProvenance } : item;
     }));
     return { ...set, sections, flashcards, ...(summaryPdfProvenance ? { summaryPdfProvenance } : {}) };
@@ -453,7 +460,8 @@ export function documentRepository(db: SqlDatabase) {
 
     async listAiStudySets(): Promise<AiStudySet[]> {
       const rows = await db.select<AiRow>("SELECT * FROM ai_study_sets ORDER BY updated_at DESC");
-      return Promise.all(rows.map(row => withPdfSources(mapAiStudySet(row))));
+      const readers = sourceReaders();
+      return Promise.all(rows.map(row => withPdfSources(mapAiStudySet(row), readers)));
     },
 
     /**
@@ -594,18 +602,25 @@ export function documentRepository(db: SqlDatabase) {
         "SELECT * FROM practice_tests ORDER BY updated_at DESC",
       );
       const tests: PracticeTest[] = [];
+      const query = (sql: string, params: import("../db").SqlValue[]) => db.select<Record<string, unknown>>(sql, params);
+      const pdf = pdfProvenanceReader(query);
+      // The schema check is the same for every test; read it once.
+      const schema = new Map<string, Promise<Record<string, unknown>[]>>();
+      const snapshotQuery = (sql: string, params: import("../db").SqlValue[]) => {
+        if (!sql.includes("sqlite_master")) return query(sql, params);
+        let hit = schema.get(sql);
+        if (!hit) { hit = query(sql, params); schema.set(sql, hit); }
+        return hit;
+      };
       for (const row of rows) {
         const test = mapPracticeTest(row);
-        const snapshot = await readCurrentSnapshot(
-          (sql, params) => db.select(sql, params),
-          test.sourceMaterialId,
-        );
+        const snapshot = await readCurrentSnapshot(snapshotQuery, test.sourceMaterialId);
         const authored = withStoredQuestionMetadata(test, snapshot);
         if (snapshot) {
           authored.questions = await Promise.all(authored.questions.map(async (question, index) => {
             const item = snapshot.questions[index];
             if (!item) return question;
-            const pdfProvenance = await readPdfItemProvenance((sql, params) => db.select(sql, params), test.sourceMaterialId, "question", item.identity, question as unknown as Record<string, unknown>, question.origin);
+            const pdfProvenance = await pdf(test.sourceMaterialId, "question", item.identity, question as unknown as Record<string, unknown>, question.origin);
             return pdfProvenance ? { ...question, pdfProvenance } : question;
           }));
         }

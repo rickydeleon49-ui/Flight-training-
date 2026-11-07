@@ -75,11 +75,37 @@ export async function readCardPageSource(query: Query, owner: string, kind: stri
 }
 async function readPageSource(query: Query, owner: string, kind: string, key: string, fingerprint: string): Promise<PageSource | undefined> {
   if (!(await query("SELECT 1 FROM sqlite_master WHERE name = 'study_page_sources'", [])).length) return;
-  const rows = await query(`SELECT DISTINCT s.* FROM study_page_sources s JOIN study_page_source_bindings b ON b.source_id=s.id WHERE b.owner_key=? AND b.binding_kind=? AND b.item_key=? AND b.content_fingerprint=?`, [owner,kind,key,fingerprint]);
+  return toPageSource(await query(`SELECT DISTINCT s.* FROM study_page_sources s JOIN study_page_source_bindings b ON b.source_id=s.id WHERE b.owner_key=? AND b.binding_kind=? AND b.item_key=? AND b.content_fingerprint=?`, [owner,kind,key,fingerprint]));
+}
+function toPageSource(rows: Record<string, unknown>[]): PageSource | undefined {
   if (!rows.length) return;
   const r = rows[0]!;
   const ambiguous = rows.some(x => x.material_title !== r.material_title || x.source_material_id !== r.source_material_id || x.content_sha256 !== r.content_sha256 || x.physical_page !== r.physical_page || x.printed_label !== r.printed_label);
   return { id:String(r.id), materialId:r.source_material_id as string|null, materialTitle:String(r.material_title), contentSha256:ambiguous ? null : r.content_sha256 as string|null, physicalPage:Number(r.physical_page), printedLabel:r.printed_label as string|null };
+}
+/**
+ * Card page sources for a whole list with one read of the bindings (two with
+ * the table check). Results match readCardPageSource. `only` limits the read
+ * to one owner.
+ */
+export function cardPageSourceReader(query: Query, kind: string, only?: string) {
+  let grouped: Promise<Map<string, Record<string, unknown>[]> | null> | undefined;
+  const load = async () => {
+    if (!(await hasPageSources(query))) return null;
+    const rows = await query(`SELECT DISTINCT s.*, b.owner_key AS binding_owner, b.item_key AS binding_item, b.content_fingerprint AS binding_fingerprint
+      FROM study_page_sources s JOIN study_page_source_bindings b ON b.source_id=s.id WHERE b.binding_kind=?${only === undefined ? "" : " AND b.owner_key=?"}`, only === undefined ? [kind] : [kind, only]);
+    const map = new Map<string, Record<string, unknown>[]>();
+    for (const row of rows) {
+      const key = JSON.stringify([row.binding_owner, row.binding_item, row.binding_fingerprint]);
+      map.set(key, [...(map.get(key) ?? []), row]);
+    }
+    return map;
+  };
+  return async (owner: string, key: string, card: StoredCard): Promise<PageSource | undefined> => {
+    const map = await (grouped ??= load());
+    if (!map) return;
+    return toPageSource(map.get(JSON.stringify([owner, key, await cardSourceFingerprint(card)])) ?? []);
+  };
 }
 export async function freezeCardSources(run: Run, query: Query, owner: string, items: {itemId:string}[], cards: StoredCard[]) {
   if (!(await query("SELECT 1 FROM sqlite_master WHERE name = 'study_page_sources'", [])).length) return;
