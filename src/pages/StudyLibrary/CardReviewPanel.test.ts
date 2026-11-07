@@ -1327,6 +1327,49 @@ describe("REVIEW-ANYWAY-01 panel", () => {
     expect(screen.queryByRole("button", { name: /anyway/ })).toBeNull();
   });
 
+  it.each(["visible", "above", "below"])("extra ratings scroll only when the next card is off-screen (%s)", async (position) => {
+    await rateAll();
+    const scroll = vi.fn();
+    vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(scroll);
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(() =>
+      ({ top: position === "above" ? -200 : 120, bottom: position === "below" ? 1000 : 420 }) as DOMRect);
+    renderDetail();
+    await reviewHeading();
+    fireEvent.click(button("Review 3 anyway"));
+    await screen.findByText(/^Extra review · Card 1/);
+    scroll.mockClear();
+    await revealAndRate("Good");
+    const heading = await screen.findByText(/^Extra review · Card 2/);
+    expect(document.activeElement).toBe(heading);
+    expect(scroll).toHaveBeenCalledTimes(position === "visible" ? 0 : 1);
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("body Space leaves review and practice untouched; focused card Space still flips", async () => {
+    await seed();
+    renderDetail();
+    await reviewHeading();
+    const before = await counts();
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    const nativeScroll = vi.fn();
+    // Model the browser's page-scroll default, which jsdom does not perform.
+    const space = new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true });
+    if (document.body.dispatchEvent(space)) nativeScroll();
+    expect(space.defaultPrevented).toBe(true);
+    expect(nativeScroll).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect((await counts()).attempts).toBe(before.attempts);
+    expect(geminiService.generatePracticeTest).not.toHaveBeenCalled();
+    await openSession();
+    fireEvent.keyDown(document.body, { key: " " });
+    expect(sessionRegion().queryByText(CARDS[0]!.back)).toBeNull();
+    const region = screen.getByLabelText(/^Card review session/);
+    region.focus();
+    fireEvent.keyDown(region, { key: " " });
+    expect(sessionRegion().getByText(CARDS[0]!.back)).toBeTruthy();
+  });
+
   it("offers it only when caught up; an extra session says so, rates normally and returns to caught up", async () => {
     await rateAll();
     renderDetail();

@@ -128,7 +128,7 @@ const sessionReady = (position: string) => () => {
 };
 const advance = (ms: number) => act(async () => void (await vi.advanceTimersByTimeAsync(ms)));
 const heading = () => screen.getByRole("heading", { level: 3 }).textContent;
-const reviewDisabled = () => screen.getByRole("button", { name: "Review cards" }).hasAttribute("disabled");
+const reviewMissing = () => !screen.queryByRole("button", { name: "Review cards" });
 const focusWindow = () => act(async () => void fireEvent.focus(window));
 const setVisibility = (next: DocumentVisibilityState) =>
   act(async () => {
@@ -183,7 +183,7 @@ describe("relearning readiness while a material stays open", () => {
     expect(new Date().toISOString()).toBe(DUE);
   });
 
-  it("reaching the saved Again instant enables Review cards, and starting selects the now-due card", async () => {
+  it("reaching the saved Again instant shows Review cards, and starting selects the now-due card", async () => {
     await savedAgainMaterial();
     vi.setSystemTime(new Date(at(T0, MINUTE)));
     const before = await stored();
@@ -191,17 +191,17 @@ describe("relearning readiness while a material stays open", () => {
     render(panel());
     await settle();
     expect(heading()).toBe("All caught up. Next review: in 9 minutes.");
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     const initialReads = selects.length;
 
     await advance(9 * MINUTE - 1); // one millisecond before the instant: no countdown renders
     expect(heading()).toBe("All caught up. Next review: in 9 minutes.");
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
 
     await advance(1); // the instant itself
     expect(new Date().toISOString()).toBe(DUE);
     expect(heading()).toBe("1 card due");
-    expect(reviewDisabled()).toBe(false);
+    expect(reviewMissing()).toBe(false);
     expect(selects).toHaveLength(initialReads); // the clock read nothing
     expect(writes).toEqual([]);
     expect(screen.queryByRole("button", { name: "Show answer" })).toBeNull(); // never started by itself
@@ -223,15 +223,15 @@ describe("relearning readiness while a material stays open", () => {
     observe();
     render(panel());
     await settle();
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     const reads = selects.length;
 
     vi.setSystemTime(new Date(at(T0, 30 * MINUTE))); // slept: the clock moved, the timer did not fire
     await setVisibility("hidden");
-    expect(reviewDisabled()).toBe(true); // hiding alone changes nothing
+    expect(reviewMissing()).toBe(true); // hiding alone changes nothing
     await setVisibility("visible");
     expect(heading()).toBe("1 card due");
-    expect(reviewDisabled()).toBe(false);
+    expect(reviewMissing()).toBe(false);
     expect(selects).toHaveLength(reads);
     expect(writes).toEqual([]);
     expect(await stored()).toEqual(before);
@@ -248,18 +248,18 @@ describe("relearning readiness while a material stays open", () => {
     vi.setSystemTime(new Date(at(T0, 12 * MINUTE)));
     await focusWindow();
     expect(heading()).toBe("1 card due");
-    expect(reviewDisabled()).toBe(false);
+    expect(reviewMissing()).toBe(false);
 
     vi.setSystemTime(new Date(at(T0, 2 * MINUTE))); // the clock was corrected backwards
     await focusWindow();
     expect(heading()).toBe("All caught up. Next review: in 8 minutes.");
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     for (let i = 0; i < 4; i += 1) await focusWindow(); // repeated events add no timers
     await advance(8 * MINUTE - 1);
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     await advance(1);
     expect(heading()).toBe("1 card due");
-    expect(reviewDisabled()).toBe(false);
+    expect(reviewMissing()).toBe(false);
     expect(selects).toHaveLength(reads);
   });
 
@@ -300,11 +300,11 @@ describe("relearning readiness while a material stays open", () => {
     const reads = selects.length;
     const caughtUp = heading();
     expect(caughtUp).toMatch(/^All caught up\. Next review: /);
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     await advance(30 * MINUTE);
     await focusWindow();
     expect(heading()).toBe(caughtUp);
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     expect(selects).toHaveLength(reads);
     expect(await stored()).toEqual(before);
   });
@@ -361,7 +361,7 @@ describe("relearning readiness while a material stays open", () => {
     observe();
     const view = render(panel("m1"));
     await settle();
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     view.rerender(panel("m2"));
     await settle();
     const second = heading();
@@ -369,7 +369,7 @@ describe("relearning readiness while a material stays open", () => {
     const reads = selects.length;
     await advance(30 * MINUTE);
     expect(heading()).toBe(second);
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     expect(selects).toHaveLength(reads);
     view.unmount();
     await advance(DAY);
@@ -383,10 +383,10 @@ describe("relearning readiness while a material stays open", () => {
     observe();
     render(panel("m1", true));
     await settle();
-    expect(reviewDisabled()).toBe(true);
+    expect(reviewMissing()).toBe(true);
     await advance(9 * MINUTE);
     expect(heading()).toBe("1 card due");
-    expect(reviewDisabled()).toBe(false);
+    expect(reviewMissing()).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
     expect(writes).toEqual([]);
   });

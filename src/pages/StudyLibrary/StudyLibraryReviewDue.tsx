@@ -19,6 +19,7 @@ import { CardLibraryReadError } from "@/logic/cardLibrary";
 import { currentTimeZone, nextLocalMidnightUtc } from "@/logic/localDay";
 import { isOneOf, useRememberedState } from "@/state/useRememberedState";
 
+import { useReviewBodySpace } from "./useReviewBodySpace";
 import { LibraryExtraReview } from "./LibraryExtraReview";
 import { EXTRA_REVIEW_LIMIT } from "./useCardReview";
 import { useLibraryDueStream } from "./useLibraryReviews";
@@ -57,6 +58,7 @@ export function StudyLibraryReviewDue({
   reviews?: CardReviewRepository;
   dataRevision: number;
 }) {
+  useReviewBodySpace();
   const navigate = useNavigate();
   const [status, setStatus] = useRememberedState<StatusChoice>(
     "library.due.status",

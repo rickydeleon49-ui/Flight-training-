@@ -537,13 +537,26 @@ describe("REVIEW-ANYWAY-01 library extra review", () => {
     await rate("wx", 0, "easy", at(T0, -3 * 60_000));
     await rate("nav", 0, "easy", at(T0, -2 * 60_000));
     await rate("wx", 1, "easy", at(T0, -60_000));
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ top: 120, bottom: 420 } as DOMRect);
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
     renderApp("/study?tab=due");
-    expect(await screen.findByText("All caught up!")).toBeTruthy();
+    const caughtUp = await screen.findByText("All caught up!");
+    const anyway = screen.getByRole("button", { name: "Review 10 anyway from any book" });
+    // Already above any list: caught-up review renders no material list, and
+    // the action shares the caught-up card, immediately after its message.
+    expect(screen.queryByRole("list", { name: "Materials with cards to review" })).toBeNull();
+    expect(caughtUp.closest(".card")?.contains(anyway)).toBe(true);
+    expect(caughtUp.compareDocumentPosition(anyway) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fireEvent.keyDown(document.body, { key: " " })).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Review 10 anyway from any book" }));
 
     expect((await sessionHeading()).textContent).toMatch(/^Extra review · Card 1 of 3/);
     expect(screen.getByText("From Weather basics")).toBeTruthy();
     expect(screen.getByText("Weather question 0")).toBeTruthy();
+    scroll.mockClear();
+    scrollTo.mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
     fireEvent.click(await screen.findByRole("button", { name: /^Good: again in/ }));
 
@@ -551,6 +564,9 @@ describe("REVIEW-ANYWAY-01 library extra review", () => {
     expect(await screen.findByText(/^Extra review · Card 2 of 3/)).toBeTruthy();
     expect(screen.getByText("From Navigation")).toBeTruthy();
     expect(screen.getByText("Nav question 0")).toBeTruthy();
+    expect(scroll).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(screen.getByText(/^Extra review · Card 2/));
     expect(await ratingEvents("wx")).toBe(3);
     expect(await ratingEvents("nav")).toBe(1);
     expect(location.pathname).toBe("/study");
