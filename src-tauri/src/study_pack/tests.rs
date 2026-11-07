@@ -1538,3 +1538,28 @@ fn guides_and_item_json_count_toward_the_memory_budget() {
     assert!(!lib.out("budget.hfdpack").exists());
     assert!(run(files + 10 * 1024 * 1024).is_ok());
 }
+
+#[test]
+fn item_json_alone_counts_toward_the_memory_budget() {
+    // A picture has no guide, so only its file and its item JSON are charged.
+    let (lib, _) = seeded();
+    let ids = vec!["m-pic".to_string()];
+    let file = PANEL.len() as u64;
+    let run = |max_bytes| {
+        super::export::export_study_pack_with(
+            lib.root(),
+            &ids,
+            &lib.out("item-budget.hfdpack"),
+            "0.6.9",
+            super::export::Limits {
+                max_items: 500,
+                max_bytes,
+            },
+            validate_pack,
+        )
+    };
+    let error = run(file).unwrap_err();
+    assert!(error.contains("too large to share in one"), "{error}");
+    assert!(!lib.out("item-budget.hfdpack").exists());
+    assert!(run(file + 1024 * 1024).is_ok());
+}
