@@ -22,12 +22,40 @@ export interface PdfOutline {
   mostlyPictures?: boolean;
 }
 
+/** A stored PDF's chapters (see detectPdfChapters). */
+export interface PdfChapters {
+  pages: number;
+  /** Chapters covering every page, in order; the first may be "Front pages". */
+  chapters: PdfChapter[];
+  /** How the chapters were found: the PDF's outline, its page text, or even chunks. */
+  chapterSource: "outline" | "text" | "chunks";
+}
+
+export interface PdfChapter {
+  title: string;
+  firstPage: number;
+  lastPage: number;
+}
+
+/** A page range to save as its own part. */
+export interface PdfRangeRequest {
+  firstPage: number;
+  lastPage: number;
+  title: string;
+}
+
 export const canSplitPdfs = (): boolean => isTauri();
 
 /** How many pages a stored PDF has. */
 export async function inspectPdf(relativePath: string): Promise<PdfOutline> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<PdfOutline>("inspect_pdf", { relativePath });
+}
+
+/** Find a stored PDF's chapters. Can read every page of a long book: call it only on request. */
+export async function detectPdfChapters(relativePath: string): Promise<PdfChapters> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<PdfChapters>("detect_pdf_chapters", { relativePath });
 }
 
 /**
@@ -71,6 +99,27 @@ export async function splitPdfAutomatically(
   if (!isTauri()) throw new DesktopOnlyError();
   const receipt = await call("split_pdf_automatically", request);
   if (!isSplitSourceReceipt(receipt)) throw new SplitResultShapeError("split_pdf_automatically");
+  return receipt;
+}
+
+/**
+ * Save several page ranges (chapters) as parts under ONE receipt: all or
+ * nothing. Ranges too long or too large to study are split further natively;
+ * a single page too large to send is refused by name. The original is kept.
+ */
+export async function splitPdfRanges(
+  request: {
+    relativePath: string;
+    batchId: string;
+    fileName: string;
+    ranges: PdfRangeRequest[];
+    sourceMaterialId: string;
+  },
+  call: (command: string, args: Record<string, unknown>) => Promise<unknown> = invoke,
+): Promise<SplitSourceReceipt> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  const receipt = await call("split_pdf_ranges", request);
+  if (!isSplitSourceReceipt(receipt)) throw new SplitResultShapeError("split_pdf_ranges");
   return receipt;
 }
 

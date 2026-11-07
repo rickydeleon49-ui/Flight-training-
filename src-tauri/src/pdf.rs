@@ -55,6 +55,24 @@ pub struct PdfOutline {
     pub mostly_pictures: bool,
 }
 
+/// A stored PDF's chapters, read only when she asks to split by chapter:
+/// finding them can read every page of a long book (so not in `inspect_pdf`).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfChapters {
+    pub pages: u32,
+    /// Chapters worked out from the outline, the page text, or even chunks, so
+    /// every page belongs to exactly one entry. See `chapters`.
+    pub chapters: Vec<chapters::Chapter>,
+    /// "outline", "text" or "chunks": how `chapters` was found.
+    pub chapter_source: &'static str,
+}
+
+mod chapters;
+pub(crate) use chapters::{detect_chapters, outline_levels};
+#[doc(hidden)]
+pub use chapters::{split_ranges_at, PageRangeRequest};
+
 /// A page with fewer extracted characters than this counts as a picture. A
 /// text page of a handbook has hundreds; a page number or running header alone
 /// is well under 40.
@@ -586,6 +604,30 @@ pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOut
     .await
 }
 
+/// Find a stored PDF's chapters (outline, then page headings, then even chunks).
+#[tauri::command]
+pub async fn detect_pdf_chapters(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<PdfChapters, String> {
+    let path = documents::stored_document_path(&app, &relative_path)?;
+    run_off_thread(move || {
+        let document = open_pdf(&path)?;
+        let pages = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+        if pages == 0 {
+            return Err("That PDF has no pages this application can read.".to_string());
+        }
+        let (chapters, chapter_source) =
+            detect_chapters(&document, pages, mostly_pictures(&document));
+        Ok(PdfChapters {
+            pages,
+            chapters,
+            chapter_source,
+        })
+    })
+    .await
+}
+
 /// Save a page range from a stored PDF as a study document of its own, and
 /// record a receipt of exactly what was split (see `lineage`).
 ///
@@ -613,6 +655,34 @@ pub async fn split_pdf(
             first_page,
             last_page,
             &file_name,
+        )
+    })
+    .await
+}
+
+/// Save several page ranges (chapters) of a stored PDF as separate parts, all
+/// under ONE receipt. All or nothing: if any range fails, every file this
+/// operation made is removed and no receipt is recorded. Ranges over the study
+/// kit's page limit or the provider's size limit are split further before they
+/// are returned. The original PDF is kept.
+#[tauri::command]
+pub async fn split_pdf_ranges(
+    app: AppHandle,
+    relative_path: String,
+    batch_id: String,
+    file_name: String,
+    ranges: Vec<PageRangeRequest>,
+    source_material_id: String,
+) -> Result<SplitSourceReceipt, String> {
+    let root = crate::storage::app_root(&app)?;
+    run_off_thread(move || {
+        split_ranges_at(
+            &root,
+            &source_material_id,
+            &relative_path,
+            &batch_id,
+            &file_name,
+            &ranges,
         )
     })
     .await
@@ -650,6 +720,37 @@ impl SplitFiles {
         self.paths.retain(|path| path != &temporary);
         Ok((destination, stored_name))
     }
+}
+
+impl SplitFiles {
+    /// Remove every owned path now. Returns whether all removals succeeded
+    /// (a file already gone counts as removed). Drop then does nothing more.
+    fn discard(&mut self) -> bool {
+        let mut all_removed = true;
+        for path in self.paths.drain(..) {
+            #[cfg(test)]
+            if tests_remove_fails() {
+                all_removed = false;
+                continue;
+            }
+            match std::fs::remove_file(&path) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(_) => all_removed = false,
+            }
+        }
+        all_removed
+    }
+}
+
+#[cfg(test)]
+thread_local! {
+    pub(crate) static FAIL_SPLIT_REMOVE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+#[cfg(test)]
+fn tests_remove_fails() -> bool {
+    FAIL_SPLIT_REMOVE.with(|flag| flag.get())
 }
 
 impl Drop for SplitFiles {
