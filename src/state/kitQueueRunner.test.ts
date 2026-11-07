@@ -810,6 +810,52 @@ describe("kit queue runner", () => {
         } finally { env.db.close(); }
       });
 
+      it("Stop while a reopen's store write has landed but not returned wins: nothing is sent and the store ends stopped", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["failed"]);
+          const g = gate();
+          let landed!: () => void;
+          const written = new Promise<void>((resolve) => { landed = resolve; });
+          const deps: RunnerDeps = { ...env.deps, reopen: async (q) => { const ok = await env.repo.reopen(q); landed(); await g.wait(); return ok; } };
+          const r = new KitQueueRunner(deps, () => {}, done);
+          const retrying = r.retry(0);
+          await written;
+          expect((await env.repo.get("q1"))?.state).toBe("active");
+          const stopping = r.stop();
+          g.release();
+          await stopping;
+          expect(await retrying).toBe(false);
+          expect(env.w.calls).toEqual([]);
+          expect((await env.repo.get("q1"))?.state).toBe("stopped");
+          expect(await env.repo.findOpen()).toBeNull();
+          expect(r.queue?.state).toBe("stopped");
+        } finally { env.db.close(); }
+      });
+
+      it("Stop before a reopen's store write lands wins: nothing is sent and the store ends stopped", async () => {
+        const env = await sqliteWorld(ids(1));
+        try {
+          const done = await seed(env, "q1", "done", ["failed"]);
+          const g = gate();
+          let asked!: () => void;
+          const reached = new Promise<void>((resolve) => { asked = resolve; });
+          const deps: RunnerDeps = { ...env.deps, reopen: async (q) => { asked(); await g.wait(); return env.repo.reopen(q); } };
+          const r = new KitQueueRunner(deps, () => {}, done);
+          const retrying = r.retry(0);
+          await reached;
+          expect((await env.repo.get("q1"))?.state).toBe("done");
+          const stopping = r.stop();
+          g.release();
+          await stopping;
+          expect(await retrying).toBe(false);
+          expect(env.w.calls).toEqual([]);
+          expect((await env.repo.get("q1"))?.state).toBe("stopped");
+          expect(await env.repo.findOpen()).toBeNull();
+          expect(r.queue?.state).toBe("stopped");
+        } finally { env.db.close(); }
+      });
+
       it("a second Make again after a successful one works the same way", async () => {
         const env = await sqliteWorld(ids(1));
         try {

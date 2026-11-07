@@ -66,6 +66,8 @@ export class KitQueueRunner {
   private epoch = 0;
   /** Writes land in the order they were made. */
   private writes: Promise<void> = Promise.resolve();
+  /** The queue Make again is reopening right now: Stop must still win while it is done in memory. */
+  private reopening: string | null = null;
 
   constructor(private readonly deps: RunnerDeps, private readonly onChange: (queue: Queue | null, message: string | null) => void, initial: Queue | null = null) {
     this.q = initial;
@@ -178,7 +180,7 @@ export class KitQueueRunner {
   /** Stop before the next chapter and ask the running one to cancel. A finished draft is still kept. */
   async stop(): Promise<void> {
     const q = this.q;
-    if (!q || q.state === "stopped" || q.state === "done") return;
+    if (!q || q.state === "stopped" || (q.state === "done" && this.reopening !== q.id)) return;
     this.epoch += 1;
     const running = q.items.find((item) => item.status === "running");
     await this.commit({ ...q, state: "stopped", pauseReason: null }, TEXT.stopped);
@@ -210,7 +212,12 @@ export class KitQueueRunner {
         item = retryable(this.q);
         if (this.epoch !== epoch || !item || item.status !== "unclear" || this.holdsUnkept()) return false;
       }
-      if (!(await this.reopen({ ...moveIn(this.q!, position, "waiting", { requestId: null }, this.deps.now()), state: "active", pauseReason: null }, position, epoch))) return false;
+      this.reopening = id;
+      let reopened: boolean;
+      try {
+        reopened = await this.reopen({ ...moveIn(this.q!, position, "waiting", { requestId: null }, this.deps.now()), state: "active", pauseReason: null }, position, epoch);
+      } finally { this.reopening = null; }
+      if (!reopened) return false;
       await this.loop();
       return true;
     } finally { this.running = false; working.delete(id); }
@@ -229,7 +236,14 @@ export class KitQueueRunner {
     let stored: Queue | null = null;
     try { stored = await this.deps.stored(next.id); } catch { stored = null; }
     // Stopped here meanwhile: Stop wins, and its write lands after this one.
-    if (this.epoch !== epoch || this.q?.state === "stopped") return false;
+    if (this.epoch !== epoch || this.q?.state === "stopped") {
+      // Show the queue as it ends up stored (stopped, or still done when the reopen was refused).
+      await this.writes;
+      let after: Queue | null = null;
+      try { after = await this.deps.stored(next.id); } catch { after = null; }
+      if (after && after.state !== "stopped" && this.q?.id === after.id) this.adopt(after);
+      return false;
+    }
     const row = stored?.items.find((item) => item.position === position);
     if (!ok || !stored || stored.state !== "active" || row?.status !== "waiting") {
       if (stored) this.adopt(stored);
