@@ -46,7 +46,7 @@ const ARCHIVE_VERSION: u32 = 3;
 const V2_ARCHIVE_VERSION: u32 = 2;
 const LEGACY_ARCHIVE_VERSION: u32 = 1;
 const RESTORE_STAGING_DIR: &str = ".restore-staging";
-const RESTORE_PENDING_DIR: &str = ".restore-pending";
+pub(crate) const RESTORE_PENDING_DIR: &str = ".restore-pending";
 pub(crate) const RESTORE_JOURNAL_FILE: &str = "restore-journal.json";
 /// Written into the staged folder to say what kind of restore was asked for.
 ///
@@ -717,6 +717,9 @@ fn verify_application_connection_with_ceiling(
     if newest_migration >= 36 {
         verify_schema_36_kit_queue(connection)?;
     }
+    if newest_migration >= 37 {
+        verify_schema_37_study_packs(connection)?;
+    }
     if newest_migration >= 27 {
         verify_schema_27_faa_references(connection)?;
     }
@@ -945,6 +948,80 @@ pub(crate) fn verify_schema_36_kit_queue(connection: &Connection) -> Result<(), 
         |c: &Connection| card_index_sql(c, "kit_queue_one_open").map(|sql| normalize_sql(&sql));
     if index(connection).is_none() || index(connection) != index(&reference) {
         return Err("Damaged study kit queue schema.".into());
+    }
+    Ok(())
+}
+
+/// PACK-01: the study-pack provenance tables, exactly as migrated, then their
+/// row rules (the TS twin is `validateStudyPackState`).
+pub(crate) fn verify_schema_37_study_packs(connection: &Connection) -> Result<(), String> {
+    let reference = get_reference_schema_connection()?;
+    let damaged = || "Damaged study pack provenance.".to_string();
+    for table in ["study_pack_imports", "study_pack_items", "study_pack_acks"] {
+        let present = card_count(
+            connection,
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+            &[&table],
+        )?;
+        if present != 1 {
+            return Err(format!("The database is missing required table: {table}"));
+        }
+        if m3_columns(connection, table)? != m3_columns(&reference, table)?
+            || foreign_key_shapes(connection, table)? != foreign_key_shapes(&reference, table)?
+            || m3_key_indexes(connection, table)? != m3_key_indexes(&reference, table)?
+            || check_constraints(&table_sql(connection, table)?)
+                != check_constraints(&table_sql(&reference, table)?)
+            || m3_count(
+                connection,
+                &format!("SELECT COUNT(*) FROM pragma_foreign_key_check('{table}')"),
+                &[],
+            )? != 0
+        {
+            return Err(damaged());
+        }
+    }
+    for index in [
+        "idx_study_pack_items_identity",
+        "idx_study_pack_items_revision",
+        "idx_study_pack_items_file",
+        "idx_study_pack_items_added",
+    ] {
+        let sql = |c: &Connection| card_index_sql(c, index).map(|sql| normalize_sql(&sql));
+        if sql(connection).is_none() || sql(connection) != sql(&reference) {
+            return Err(damaged());
+        }
+    }
+    let bad = |sql: &str| -> Result<bool, String> {
+        Ok(m3_count(connection, sql, &[])? != 0)
+    };
+    if bad("SELECT COUNT(*) FROM study_pack_imports
+            WHERE added < 0 OR skipped < 0 OR new_versions < 0 OR readded < 0
+               OR cards_left_out < 0 OR cards_left_out_removed < 0
+               OR cards_left_out_removed > cards_left_out
+               OR added_guides < 0 OR added_documents < 0 OR added_pictures < 0
+               OR added_practice < 0
+               OR added_guides > added OR added_documents > added
+               OR added_pictures > added OR added_practice > added
+               OR added < new_versions + readded + added_pictures
+               OR length(committed_at) != 24
+               OR typeof(added) != 'integer' OR typeof(skipped) != 'integer'")?
+        || bad("SELECT COUNT(*) FROM study_pack_items i
+                WHERE i.link NOT IN ('added', 'alias')
+                   OR i.kind NOT IN ('document', 'picture', 'guide')
+                   OR (i.kind = 'guide' AND i.file_sha256 IS NOT NULL)
+                   OR (i.kind != 'guide' AND i.file_sha256 IS NULL)
+                   OR length(i.revision) != 64 OR i.revision GLOB '*[^0-9a-f]*'
+                   OR length(i.imported_at) != 24
+                   OR NOT EXISTS (SELECT 1 FROM study_pack_imports r WHERE r.operation_id = i.operation_id)
+                   OR (i.material_id IS NOT NULL
+                       AND NOT EXISTS (SELECT 1 FROM study_materials m WHERE m.id = i.material_id))")?
+        || bad("SELECT COUNT(*) FROM (SELECT material_id FROM study_pack_items
+                WHERE link = 'added' AND material_id IS NOT NULL
+                GROUP BY material_id HAVING COUNT(*) > 1)")?
+        || bad("SELECT COUNT(*) FROM study_pack_acks a
+                WHERE NOT EXISTS (SELECT 1 FROM study_pack_imports r WHERE r.operation_id = a.operation_id)")?
+    {
+        return Err(damaged());
     }
     Ok(())
 }
@@ -6593,10 +6670,17 @@ pub async fn create_complete_backup(
     crate::picked_paths::require_picked(&app, &destination_path)?;
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
-        create_consistent_complete_backup_with_retry(
+        crate::library_lock::with_library_lock(
             &root,
-            Path::new(&destination_path),
-            &app.package_info().version.to_string(),
+            crate::library_lock::owned(&app),
+            crate::study_pack::reconcile::Mode::Normal,
+            |_| {
+                create_consistent_complete_backup_with_retry(
+                    &root,
+                    Path::new(&destination_path),
+                    &app.package_info().version.to_string(),
+                )
+            },
         )
     })
     .await
@@ -7635,11 +7719,20 @@ pub async fn stage_complete_restore(
     tauri::async_runtime::spawn_blocking(move || {
         let root = app_root(&app)?;
         crate::picked_paths::require_picked_or_inside(&app, &root, &source_path)?;
-        stage_complete_restore_guarded_in(
+        // An interrupted study pack is quarantined first, so a restore can
+        // never stage next to a half-installed one (design section 1).
+        crate::library_lock::with_library_lock(
             &root,
-            Path::new(&source_path),
-            &app.package_info().version.to_string(),
-            cfg!(target_os = "ios"),
+            crate::library_lock::owned(&app),
+            crate::study_pack::reconcile::Mode::Restore,
+            |_| {
+                stage_complete_restore_guarded_in(
+                    &root,
+                    Path::new(&source_path),
+                    &app.package_info().version.to_string(),
+                    cfg!(target_os = "ios"),
+                )
+            },
         )
     })
     .await
@@ -7828,8 +7921,16 @@ pub(crate) fn stage_complete_restore_in(
 /// update, and her files never went anywhere.
 #[tauri::command]
 pub async fn stage_local_restore(app: AppHandle, name: String) -> Result<BackupInfo, String> {
-    tauri::async_runtime::spawn_blocking(move || stage_local_restore_in(&app_root(&app)?, &name))
-        .await
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = app_root(&app)?;
+        crate::library_lock::with_library_lock(
+            &root,
+            crate::library_lock::owned(&app),
+            crate::study_pack::reconcile::Mode::Restore,
+            |_| stage_local_restore_in(&root, &name),
+        )
+    })
+    .await
         .map_err(|error| format!("Could not finish restoring that safety copy: {error}"))?
 }
 
@@ -8950,7 +9051,10 @@ fn forget_gemini_jobs(root: &Path) -> bool {
 /// fails at any point.
 #[allow(dead_code)]
 pub fn apply_pending_restore(app: &AppHandle) -> Result<(), String> {
-    apply_pending_restore_in(&app_root(app)?)
+    let root = app_root(app)?;
+    // Only the lock: the database is not open yet, so no pack can be reconciled.
+    let _guard = crate::library_lock::try_acquire(&root, crate::library_lock::Holder::Library)?;
+    apply_pending_restore_in(&root)
 }
 
 /// Install whatever was staged, against a plain directory.

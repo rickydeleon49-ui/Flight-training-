@@ -257,6 +257,7 @@ export async function validateApplicationDatabase(query: ValidationQuery, refere
   if (newest >= 31) await validateFaaDownloads(query, reference);
   if (newest >= 32) await validateOralAnswers(query, reference);
   if (newest >= 36) await validateKitQueue(query, reference);
+  if (newest >= 37) await validateStudyPackState(query, reference);
   if (newest >= 27) await validateFaaReferences(query, reference);
   await validatePracticeAcsTasks(query, reference, newest >= 28);
 }
@@ -2179,6 +2180,59 @@ export async function validateKitQueue(query: ValidationQuery, reference: Valida
   const [actualIndex] = await query(indexSql, []);
   const [expectedIndex] = await reference(indexSql, []);
   if (!actualIndex || !expectedIndex || normalizeSql(text(actualIndex, "sql")) !== normalizeSql(text(expectedIndex, "sql"))) refuse("Damaged study kit queue schema.");
+}
+
+/** PACK-01 provenance (native `verify_schema_37_study_packs`). */
+export async function validateStudyPackState(query: ValidationQuery, reference: ValidationQuery) {
+  const damaged = () => refuse("Damaged study pack provenance.");
+  for (const table of ["study_pack_imports", "study_pack_items", "study_pack_acks"]) {
+    if ((await count(query, "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name = ?", [table])) !== 1) {
+      refuse(`The database is missing required table: ${table}`);
+    }
+    if (!same(await navigationColumns(query, table), await navigationColumns(reference, table)) ||
+        !same(await foreignKeyShapes(query, table), await foreignKeyShapes(reference, table)) ||
+        !same(await navigationKeyIndexes(query, table), await navigationKeyIndexes(reference, table)) ||
+        !same(checkConstraints(await tableSql(query, table)), checkConstraints(await tableSql(reference, table))) ||
+        (await query(`SELECT * FROM pragma_foreign_key_check('${table}')`, [])).length) damaged();
+  }
+  for (const index of [
+    "idx_study_pack_items_identity",
+    "idx_study_pack_items_revision",
+    "idx_study_pack_items_file",
+    "idx_study_pack_items_added",
+  ]) {
+    const sql = "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?";
+    const [actual] = await query(sql, [index]);
+    const [expected] = await reference(sql, [index]);
+    if (!actual || !expected || normalizeSql(text(actual, "sql")) !== normalizeSql(text(expected, "sql"))) damaged();
+  }
+  const bad = async (sql: string) => (await count(query, sql, [])) !== 0;
+  if (await bad(`SELECT COUNT(*) AS n FROM study_pack_imports
+      WHERE added < 0 OR skipped < 0 OR new_versions < 0 OR readded < 0
+         OR cards_left_out < 0 OR cards_left_out_removed < 0
+         OR cards_left_out_removed > cards_left_out
+         OR added_guides < 0 OR added_documents < 0 OR added_pictures < 0
+         OR added_practice < 0
+         OR added_guides > added OR added_documents > added
+         OR added_pictures > added OR added_practice > added
+         OR added < new_versions + readded + added_pictures
+         OR length(committed_at) != 24
+         OR typeof(added) != 'integer' OR typeof(skipped) != 'integer'`) ||
+      await bad(`SELECT COUNT(*) AS n FROM study_pack_items i
+      WHERE i.link NOT IN ('added', 'alias')
+         OR i.kind NOT IN ('document', 'picture', 'guide')
+         OR (i.kind = 'guide' AND i.file_sha256 IS NOT NULL)
+         OR (i.kind != 'guide' AND i.file_sha256 IS NULL)
+         OR length(i.revision) != 64 OR i.revision GLOB '*[^0-9a-f]*'
+         OR length(i.imported_at) != 24
+         OR NOT EXISTS (SELECT 1 FROM study_pack_imports r WHERE r.operation_id = i.operation_id)
+         OR (i.material_id IS NOT NULL
+             AND NOT EXISTS (SELECT 1 FROM study_materials m WHERE m.id = i.material_id))`) ||
+      await bad(`SELECT COUNT(*) AS n FROM (SELECT material_id FROM study_pack_items
+      WHERE link = 'added' AND material_id IS NOT NULL
+      GROUP BY material_id HAVING COUNT(*) > 1)`) ||
+      await bad(`SELECT COUNT(*) AS n FROM study_pack_acks a
+      WHERE NOT EXISTS (SELECT 1 FROM study_pack_imports r WHERE r.operation_id = a.operation_id)`)) damaged();
 }
 
 export async function validateFaaDownloads(query: ValidationQuery, reference: ValidationQuery) {

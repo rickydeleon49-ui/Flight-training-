@@ -12,15 +12,15 @@ use super::format::*;
 use super::validate::validate_pack;
 use crate::practice_sessions::compute_canonical_hash;
 
-const NOW: &str = "2026-11-01T10:00:00.000Z";
-const PANEL: &[u8] = include_bytes!("../../../src/testing/fixtures/visual/practice-panel.png");
-const Q1: &str = "aaaaaaaa-0000-4000-8000-000000000001";
-const Q2: &str = "aaaaaaaa-0000-4000-8000-000000000002";
-const GONE: &str = "bbbbbbbb-0000-4000-8000-000000000009";
+pub(super) const NOW: &str = "2026-11-01T10:00:00.000Z";
+pub(super) const PANEL: &[u8] = include_bytes!("../../../src/testing/fixtures/visual/practice-panel.png");
+pub(super) const Q1: &str = "aaaaaaaa-0000-4000-8000-000000000001";
+pub(super) const Q2: &str = "aaaaaaaa-0000-4000-8000-000000000002";
+pub(super) const GONE: &str = "bbbbbbbb-0000-4000-8000-000000000009";
 
-struct TempDir(PathBuf);
+pub(super) struct TempDir(PathBuf);
 impl TempDir {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         static COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let n = COUNT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let p = std::env::temp_dir().join(format!(
@@ -34,7 +34,7 @@ impl TempDir {
         std::fs::create_dir_all(&p).unwrap();
         Self(p)
     }
-    fn path(&self) -> &Path {
+    pub(super) fn path(&self) -> &Path {
         &self.0
     }
 }
@@ -44,7 +44,7 @@ impl Drop for TempDir {
     }
 }
 
-fn pdf_bytes(pages: u32, marker: &str) -> Vec<u8> {
+pub(super) fn pdf_bytes(pages: u32, marker: &str) -> Vec<u8> {
     let mut document = Document::with_version("1.5");
     let pages_id = document.new_object_id();
     let kids: Vec<Object> = (0..pages)
@@ -74,7 +74,7 @@ fn pdf_bytes(pages: u32, marker: &str) -> Vec<u8> {
 }
 
 /// A structurally valid PNG of any size (the app checks structure, not pixels).
-fn fake_png(width: u32, height: u32, marker: &str) -> Vec<u8> {
+pub(super) fn fake_png(width: u32, height: u32, marker: &str) -> Vec<u8> {
     let mut out = vec![137, 80, 78, 71, 13, 10, 26, 10];
     let mut chunk = |kind: &[u8; 4], data: &[u8]| {
         out.extend_from_slice(&(data.len() as u32).to_be_bytes());
@@ -92,17 +92,17 @@ fn fake_png(width: u32, height: u32, marker: &str) -> Vec<u8> {
     out
 }
 
-fn sha(bytes: &[u8]) -> String {
+pub(super) fn sha(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-struct Lib {
-    dir: TempDir,
-    outside: TempDir,
-    conn: Connection,
+pub(super) struct Lib {
+    pub(super) dir: TempDir,
+    pub(super) outside: TempDir,
+    pub(super) conn: Connection,
 }
 
-fn lib() -> Lib {
+pub(super) fn lib() -> Lib {
     let dir = TempDir::new();
     std::fs::create_dir_all(dir.path().join("documents")).unwrap();
     let conn = Connection::open(dir.path().join("her-flight-deck.db")).unwrap();
@@ -122,11 +122,11 @@ fn lib() -> Lib {
 }
 
 impl Lib {
-    fn root(&self) -> &Path {
+    pub(super) fn root(&self) -> &Path {
         self.dir.path()
     }
 
-    fn material(&self, id: &str, title: &str, file: Option<(&str, &[u8])>) {
+    pub(super) fn material(&self, id: &str, title: &str, file: Option<(&str, &[u8])>) {
         let (path, name) = match file {
             Some((name, bytes)) => {
                 let rel = format!("{id}-{name}");
@@ -145,7 +145,7 @@ impl Lib {
             .unwrap();
     }
 
-    fn replace_file(&self, id: &str, bytes: &[u8]) {
+    pub(super) fn replace_file(&self, id: &str, bytes: &[u8]) {
         let rel: String = self
             .conn
             .query_row(
@@ -157,7 +157,7 @@ impl Lib {
         std::fs::write(self.root().join("documents").join(rel), bytes).unwrap();
     }
 
-    fn guide(&self, id: &str, summary: &str, sections: Value, cards: Value) {
+    pub(super) fn guide(&self, id: &str, summary: &str, sections: Value, cards: Value) {
         self.conn
             .execute(
                 "INSERT INTO ai_study_sets (source_material_id, title, summary, sections_json,
@@ -170,7 +170,7 @@ impl Lib {
             .unwrap();
     }
 
-    fn region(&self, owner: &str, image: &str, rect: (i64, i64, i64, i64)) -> String {
+    pub(super) fn region(&self, owner: &str, image: &str, rect: (i64, i64, i64, i64)) -> String {
         let (sha, (w, h)) = {
             let bytes = self.file_of(image);
             (
@@ -202,7 +202,7 @@ impl Lib {
         region.id
     }
 
-    fn file_of(&self, id: &str) -> Vec<u8> {
+    pub(super) fn file_of(&self, id: &str) -> Vec<u8> {
         let rel: String = self
             .conn
             .query_row(
@@ -214,7 +214,7 @@ impl Lib {
         std::fs::read(self.root().join("documents").join(rel)).unwrap()
     }
 
-    fn practice(&self, id: &str) {
+    pub(super) fn practice(&self, id: &str) {
         self.conn
             .execute(
                 "INSERT INTO practice_test_versions (id, source_material_id, history_key,
@@ -265,7 +265,7 @@ impl Lib {
         }
     }
 
-    fn video(&self, id: &str, url: &str, title: &str) {
+    pub(super) fn video(&self, id: &str, url: &str, title: &str) {
         self.conn
             .execute(
                 "INSERT INTO material_video_links (id, material_id, url, title, created_at, updated_at)
@@ -275,23 +275,23 @@ impl Lib {
             .unwrap();
     }
 
-    fn export(&self, ids: &[&str], name: &str) -> Result<ExportSummary, String> {
+    pub(super) fn export(&self, ids: &[&str], name: &str) -> Result<ExportSummary, String> {
         let ids: Vec<String> = ids.iter().map(|s| s.to_string()).collect();
         export_study_pack_in(self.root(), &ids, &self.out(name), "0.6.9")
     }
 
-    fn out(&self, name: &str) -> PathBuf {
+    pub(super) fn out(&self, name: &str) -> PathBuf {
         self.outside.path().join(name)
     }
 }
 
-fn summary_hash(summary: &str) -> String {
+pub(super) fn summary_hash(summary: &str) -> String {
     compute_canonical_hash(&json!(summary))
 }
 
 /// A library with a handbook (guide, practice, citations, video, picture
 /// card), a picture, a guide-only material and a chapter-split child.
-fn seeded() -> (Lib, String) {
+pub(super) fn seeded() -> (Lib, String) {
     let lib = lib();
     let pdf = pdf_bytes(5, "handbook");
     lib.material("m-pdf", "Handbook", Some(("handbook.pdf", &pdf)));
@@ -395,7 +395,7 @@ fn seeded() -> (Lib, String) {
     (lib, pdf_sha)
 }
 
-fn read_pack(path: &Path) -> Vec<(String, Vec<u8>)> {
+pub(super) fn read_pack(path: &Path) -> Vec<(String, Vec<u8>)> {
     let mut archive = zip::ZipArchive::new(std::fs::File::open(path).unwrap()).unwrap();
     (0..archive.len())
         .map(|i| {
@@ -409,16 +409,16 @@ fn read_pack(path: &Path) -> Vec<(String, Vec<u8>)> {
 }
 
 #[derive(Clone, Copy)]
-enum Method {
+pub(super) enum Method {
     Stored,
     Deflated,
 }
 
-fn write_pack(path: &Path, entries: &[(String, Vec<u8>)]) {
+pub(super) fn write_pack(path: &Path, entries: &[(String, Vec<u8>)]) {
     write_pack_with(path, entries, |_| (Method::Stored, None));
 }
 
-fn write_pack_with(
+pub(super) fn write_pack_with(
     path: &Path,
     entries: &[(String, Vec<u8>)],
     how: impl Fn(&str) -> (Method, Option<u32>),
@@ -442,7 +442,7 @@ fn write_pack_with(
 
 /// Rewrite a valid pack with `edit` applied, then re-seal the manifest's
 /// checksums so only the edit itself can fail.
-fn tampered(
+pub(super) fn tampered(
     lib: &Lib,
     base: &Path,
     name: &str,
@@ -479,12 +479,12 @@ fn tampered(
     out
 }
 
-fn item_json(entries: &mut [(String, Vec<u8>)], name: &str) -> Value {
+pub(super) fn item_json(entries: &mut [(String, Vec<u8>)], name: &str) -> Value {
     let e = entries.iter().find(|(n, _)| n == name).unwrap();
     serde_json::from_slice(&e.1).unwrap()
 }
 
-fn set_item_json(entries: &mut [(String, Vec<u8>)], name: &str, value: &Value) {
+pub(super) fn set_item_json(entries: &mut [(String, Vec<u8>)], name: &str, value: &Value) {
     let e = entries.iter_mut().find(|(n, _)| n == name).unwrap();
     e.1 = serde_json::to_vec(value).unwrap();
 }
@@ -498,7 +498,7 @@ fn revisions(path: &Path) -> HashMap<String, String> {
         .collect()
 }
 
-fn all_ids() -> [&'static str; 4] {
+pub(super) fn all_ids() -> [&'static str; 4] {
     ["m-pdf", "m-guide", "m-child", "m-pic"]
 }
 

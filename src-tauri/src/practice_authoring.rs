@@ -1174,6 +1174,84 @@ fn same_snapshot(current: Option<&Snapshot>, expected: Option<&Snapshot>) -> boo
     canonical_json(&left) == canonical_json(&right)
 }
 
+/// What `insert_version_rows` needs to know about the version it writes.
+pub(crate) struct VersionRows<'a> {
+    pub version_id: &'a str,
+    pub material_id: &'a str,
+    pub source_material_title: &'a str,
+    pub version_number: i64,
+    pub content_hash: &'a str,
+}
+
+/// The INSERTs of one practice version: the version, its items, and each
+/// item's ACS task and origin. `apply_operation` and study-pack import share
+/// it. It writes nothing else and never reads or changes other versions.
+pub(crate) fn insert_version_rows(
+    tx: &Transaction,
+    p: &VersionRows<'_>,
+    next: &PracticeNext,
+    now: &str,
+) -> Check<Vec<(Value, String)>> {
+    tx.execute(
+        "INSERT INTO practice_test_versions (
+           id, source_material_id, history_key, source_material_title,
+           version_number, provider, model, title, content_hash, created_at, is_active
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 1)",
+        params![
+            p.version_id,
+            p.material_id,
+            p.material_id,
+            p.source_material_title,
+            p.version_number,
+            next.provider,
+            next.model,
+            next.title,
+            p.content_hash,
+            now
+        ],
+    )
+    .map_err(storage)?;
+    let mut saved_items: Vec<(Value, String)> = Vec::with_capacity(next.questions.len());
+    for (index, question) in next.questions.iter().enumerate() {
+        let item_id = generate_uuid_v4(tx).map_err(storage)?;
+        saved_items.push((question_value(question), item_id.clone()));
+        tx.execute(
+            "INSERT INTO practice_test_items (
+               id, version_id, ordinal, question_text, options_json,
+               correct_index, explanation, source_page, logical_id, replaces_id
+             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            params![
+                item_id,
+                p.version_id,
+                index as i64,
+                question.question,
+                json!(question.options).to_string(),
+                question.correct_index,
+                question.explanation,
+                question.source_page,
+                question.identity,
+                question.replaces
+            ],
+        )
+        .map_err(storage)?;
+        if let Some(task) = &question.acs_task {
+            tx.execute(
+                "INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?1, ?2)",
+                params![item_id, task],
+            )
+            .map_err(storage)?;
+        }
+        if let Some(origin) = &question.origin {
+            tx.execute(
+                "INSERT INTO practice_item_origins (item_id, origin) VALUES (?1, ?2)",
+                params![item_id, origin],
+            )
+            .map_err(storage)?;
+        }
+    }
+    Ok(saved_items)
+}
+
 /// Mirrors the TS `applyOperation`: every guard fires before any write; a
 /// rusqlite failure surfaces as `STORAGE_ERROR` and rolls the transaction
 /// back whole.
@@ -1421,63 +1499,18 @@ pub fn apply_operation(
         params![&operation.material_id],
     )
     .map_err(storage)?;
-    tx.execute(
-        "INSERT INTO practice_test_versions (
-           id, source_material_id, history_key, source_material_title,
-           version_number, provider, model, title, content_hash, created_at, is_active
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 1)",
-        params![
-            version_id,
-            operation.material_id,
-            operation.material_id,
-            material_title.unwrap_or_else(|| next.title.clone()),
-            next_ver,
-            next.provider,
-            next.model,
-            next.title,
-            content_hash,
-            now
-        ],
-    )
-    .map_err(storage)?;
-    let mut saved_items: Vec<(Value, String)> = Vec::with_capacity(next.questions.len());
-    for (index, question) in next.questions.iter().enumerate() {
-        let item_id = generate_uuid_v4(tx).map_err(storage)?;
-        saved_items.push((question_value(question), item_id.clone()));
-        tx.execute(
-            "INSERT INTO practice_test_items (
-               id, version_id, ordinal, question_text, options_json,
-               correct_index, explanation, source_page, logical_id, replaces_id
-             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-            params![
-                item_id,
-                version_id,
-                index as i64,
-                question.question,
-                json!(question.options).to_string(),
-                question.correct_index,
-                question.explanation,
-                question.source_page,
-                question.identity,
-                question.replaces
-            ],
-        )
-        .map_err(storage)?;
-        if let Some(task) = &question.acs_task {
-            tx.execute(
-                "INSERT INTO practice_item_acs_tasks (item_id, acs_task) VALUES (?1, ?2)",
-                params![item_id, task],
-            )
-            .map_err(storage)?;
-        }
-        if let Some(origin) = &question.origin {
-            tx.execute(
-                "INSERT INTO practice_item_origins (item_id, origin) VALUES (?1, ?2)",
-                params![item_id, origin],
-            )
-            .map_err(storage)?;
-        }
-    }
+    let saved_items = insert_version_rows(
+        tx,
+        &VersionRows {
+            version_id: &version_id,
+            material_id: &operation.material_id,
+            source_material_title: &material_title.unwrap_or_else(|| next.title.clone()),
+            version_number: next_ver,
+            content_hash: &content_hash,
+        },
+        next,
+        now,
+    )?;
     if let Some(source) = &operation.page_source {
         let seeded = saved_items
             .iter()

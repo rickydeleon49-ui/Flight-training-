@@ -22,6 +22,7 @@ mod card_library;
 mod card_reviews;
 mod debrief;
 mod documents;
+mod library_lock;
 pub mod extraction;
 mod phone_activity;
 mod phone_work;
@@ -96,7 +97,7 @@ use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// The SQLite database lives in the app data directory, never the repository.
 const DB_URL: &str = "sqlite:her-flight-deck.db";
-pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 36;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 37;
 
 /// Schema migrations, applied in order on startup.
 ///
@@ -321,6 +322,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0036_kit_queue.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 37,
+            description: "study_pack_provenance",
+            sql: include_str!("../migrations/0037_study_pack_provenance.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -491,6 +498,12 @@ pub fn run() {
             faa_downloads::cancel_faa_download,
             faa_downloads::faa_download_progress,
             study_pack::export_study_pack,
+            study_pack::inspect_study_pack,
+            study_pack::add_study_pack,
+            study_pack::reconcile_study_pack_imports,
+            study_pack::study_pack_result,
+            study_pack::pending_study_pack_results,
+            study_pack::ack_study_pack_result,
             backup::import_picked_backup,
             backup::discard_incoming_backup,
             backup::exit_for_restore,
