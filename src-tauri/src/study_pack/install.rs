@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{Connection, OpenFlags};
+use rusqlite::Connection;
 use sha2::{Digest, Sha256};
 use zip::ZipArchive;
 

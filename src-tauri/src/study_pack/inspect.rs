@@ -3,7 +3,6 @@
 
 use std::path::Path;
 
-use rusqlite::{Connection, OpenFlags};
 use serde::Serialize;
 
 use super::plan::{self, Decision};
