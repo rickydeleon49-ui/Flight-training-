@@ -136,3 +136,11 @@ it("offers one plain Try again when the saved key can't be read, and keeps the k
   expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   expect(disconnect).not.toHaveBeenCalled();
 });
+
+it("lets Claude's two models be chosen and names each", async () => {
+  const { geminiModelName, CLAUDE_MODEL_CHOICES } = await import("@/services/gemini");
+  expect(CLAUDE_MODEL_CHOICES.standard.label).toBe("Standard — Claude Haiku 5.5");
+  expect(CLAUDE_MODEL_CHOICES["most-capable"].label).toBe("Most capable — Claude Sonnet 5.5");
+  expect(geminiModelName("claude-sonnet-5-5")).toBe("Claude Sonnet 5.5");
+  expect(geminiModelName("claude-haiku-5-5")).toBe("Claude Haiku 5.5");
+});

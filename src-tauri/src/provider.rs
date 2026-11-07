@@ -289,7 +289,10 @@ impl AnyProvider {
     pub(crate) fn models(self, tier: Tier) -> (&'static str, &'static str) {
         match self {
             Self::Gemini(p) => p.models(tier),
-            Self::Claude(_) => (claude::MODEL, claude::MODEL),
+            Self::Claude(_) => match tier {
+                Tier::Standard => (claude::MODEL, claude::MODEL),
+                Tier::MostCapable => (claude::CAPABLE_MODEL, claude::MODEL),
+            },
         }
     }
     pub(crate) async fn verify_key(self, key: &str) -> Result<(), String> {

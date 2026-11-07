@@ -4,7 +4,14 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 
 pub(crate) const BASE: &str = "https://api.anthropic.com";
 pub(crate) const MODEL: &str = "claude-haiku-5-5";
-const VERSION: &str = "2026-10-21";
+/// "Most capable": Sonnet 5.5. Both models allow 128K output, above every max_tokens we send.
+pub(crate) const CAPABLE_MODEL: &str = "claude-sonnet-5-5";
+/// Anthropic API version header. "2023-06-01" is the current stable value; a made-up date gets HTTP 400.
+const VERSION: &str = "2023-06-01";
+/// Output cap for every non-kit request. Haiku/Sonnet 5.5 think adaptively and
+/// that thinking counts toward max_tokens, so 16,000 could be eaten before the
+/// answer; both models allow 128K output. The kit keeps its own 49,152.
+pub(crate) const MAX_OUTPUT_TOKENS: u32 = 32_000;
 const MAX_REQUEST_BYTES: usize = 32_000_000;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -114,7 +121,7 @@ impl ClaudeProvider {
         {
             crate::gemini::study_kit::KIT_OUTPUT_TOKENS
         } else {
-            16000
+            MAX_OUTPUT_TOKENS
         };
         json!({"model":model,"max_tokens":tokens,"messages":[{"role":"user","content":content}],
             "output_config":{"effort":"medium","format":{"type":"json_schema",
@@ -175,7 +182,8 @@ impl ClaudeProvider {
                 return Ok(());
             }
             if !matches!(status, 429 | 500 | 502 | 503 | 504 | 529) {
-                return Err(error_message(status));
+                let body = response.text().await.unwrap_or_default();
+                return Err(verify_error(status, &body));
             }
             if attempt == 3 {
                 break;
@@ -193,6 +201,16 @@ impl ClaudeProvider {
         }
         Err("Claude is busy, so the key could not be checked. Wait a little and try again.".into())
     }
+}
+
+pub(crate) const WORKSPACE_MESSAGE: &str = "This Claude key isn't tied to a workspace. In Anthropic's console, open a workspace, create a key there, and paste that key here.";
+
+/// Key check errors: a 400 for a key without a workspace gets its own fix-it message.
+fn verify_error(status: u16, body: &str) -> String {
+    if status == 400 && body.contains("anthropic-workspace-id") {
+        return WORKSPACE_MESSAGE.into();
+    }
+    error_message(status)
 }
 
 pub(crate) fn error_message(status: u16) -> String {
@@ -237,4 +255,43 @@ pub(crate) fn extract_text(raw: &str) -> Result<String, String> {
         return Err("Claude did not return a usable answer. Try the document again.".into());
     }
     Ok(text)
+}
+
+#[cfg(test)]
+mod version_tests {
+    use serde_json::json;
+    #[test]
+    fn sends_the_real_anthropic_api_version() {
+        // Only real versions are accepted; an invented date fails every call with HTTP 400.
+        assert_eq!(super::VERSION, "2023-06-01");
+    }
+
+    #[test]
+    fn a_key_without_a_workspace_says_how_to_fix_it() {
+        let body = r#"{"type":"error","error":{"type":"invalid_request_error","message":"This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use."}}"#;
+        assert_eq!(super::verify_error(400, body), super::WORKSPACE_MESSAGE);
+        assert_eq!(super::verify_error(400, "{}"), super::error_message(400));
+        assert_eq!(super::verify_error(401, body), super::error_message(401));
+    }
+
+    #[test]
+    fn non_kit_requests_get_32k_and_the_kit_keeps_its_own_cap() {
+        let body = json!({"generationConfig":{"responseSchema":{"type":"OBJECT","properties":{"title":{"type":"STRING"}}}},"contents":[{"parts":[{"text":"x"}]}]});
+        let sent = super::ClaudeProvider.body(super::MODEL, &body);
+        assert_eq!(sent["max_tokens"], 32_000);
+        assert_eq!(super::MAX_OUTPUT_TOKENS, 32_000);
+        const { assert!(crate::gemini::study_kit::KIT_OUTPUT_TOKENS > super::MAX_OUTPUT_TOKENS) };
+    }
+
+    #[test]
+    fn each_choice_selects_its_claude_model() {
+        use crate::provider::{AnyProvider, ProviderId, Tier};
+        let p = AnyProvider::from(ProviderId::Claude);
+        assert_eq!(p.models(Tier::Standard), (super::MODEL, super::MODEL));
+        assert_eq!(
+            p.models(Tier::MostCapable),
+            (super::CAPABLE_MODEL, super::MODEL)
+        );
+        assert_eq!(super::CAPABLE_MODEL, "claude-sonnet-5-5");
+    }
 }

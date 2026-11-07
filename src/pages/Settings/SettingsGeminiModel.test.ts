@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Choosing the Gemini model in Settings, once a key is connected. */
 import { createElement as h } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -79,7 +79,9 @@ describe("Gemini model choice in Settings", () => {
     expect(disclosure.open).toBe(false);
     expect(screen.getByRole("button", { name: "Disconnect Claude" }).closest("details")?.id).toBe("settings-advanced");
     expect(disclosure.textContent).toContain("Gemini can turn a selected Study Library document");
-    if (configured) expect(screen.getByRole("radio", { name: /Standard —/ }).closest("details")).toBe(disclosure);
+    expect(screen.getByRole("radio", { name: /Standard — Claude Haiku 5.5/ }).closest("details")?.id).toBe("settings-advanced");
+    expect(screen.getByRole("radio", { name: /Most capable — Claude Sonnet 5.5/ })).toBeTruthy();
+    if (configured) expect(within(disclosure).getByRole("radio", { name: /Standard —/ })).toBeTruthy();
     else expect(screen.getByLabelText("Gemini API key").closest("details")).toBe(disclosure);
     await waitFor(()=>expect(header.querySelector(".card__eyebrow")!.textContent).toBe("Connected"));
   });

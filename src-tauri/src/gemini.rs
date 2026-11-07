@@ -58,6 +58,19 @@ const CAPABLE_MODEL: &str = "gemini-3.8-flash";
 const MODEL_CHOICE_FILE: &str = "gemini-model";
 /// Where a partly written choice waits before it replaces the real one.
 const MODEL_CHOICE_WRITING: &str = "gemini-model.writing";
+/// Claude keeps its own choice, so an explicit Gemini choice never decides
+/// which (far costlier) Claude model she is switched to.
+const CLAUDE_MODEL_CHOICE_FILE: &str = "claude-model-choice";
+const CLAUDE_MODEL_CHOICE_WRITING: &str = "claude-model-choice.writing";
+
+/// The (choice file, temp file) for the selected provider.
+fn choice_files(root: &Path) -> (&'static str, &'static str) {
+    if crate::provider::load_choice(root) == crate::provider::ProviderId::Claude {
+        (CLAUDE_MODEL_CHOICE_FILE, CLAUDE_MODEL_CHOICE_WRITING)
+    } else {
+        (MODEL_CHOICE_FILE, MODEL_CHOICE_WRITING)
+    }
+}
 
 /// Which Gemini model her documents go to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -93,7 +106,8 @@ impl ModelChoice {
         }
     }
 
-    /// The model asked first.
+    /// The model asked first (Gemini; generation asks the provider).
+    #[cfg(test)]
     fn primary(self) -> &'static str {
         AnyProvider::default().models(self.into()).0
     }
@@ -115,12 +129,19 @@ impl ModelChoice {
 }
 
 /// Her saved choice. Anything missing, unreadable or unrecognised means the
-/// default model. An explicit Standard choice remains available.
+/// default model: Most capable for Gemini, Standard (the cheaper Haiku) for
+/// Claude. An explicit choice is always kept.
 pub(crate) fn load_choice(root: &Path) -> ModelChoice {
-    std::fs::read_to_string(root.join(MODEL_CHOICE_FILE))
+    std::fs::read_to_string(root.join(choice_files(root).0))
         .ok()
         .and_then(|value| ModelChoice::parse(&value))
-        .unwrap_or(ModelChoice::MostCapable)
+        .unwrap_or_else(|| {
+            if crate::provider::load_choice(root) == crate::provider::ProviderId::Claude {
+                ModelChoice::Standard
+            } else {
+                ModelChoice::MostCapable
+            }
+        })
 }
 
 /// Save her choice, replacing any previous one.
@@ -129,10 +150,11 @@ fn save_choice(root: &Path, choice: ModelChoice) -> Result<(), String> {
         .map_err(|e| format!("Could not create the application data directory: {e}"))?;
     // Write beside the target and rename over it, so an interrupted write
     // leaves the previous choice rather than an unreadable one.
-    let writing = root.join(MODEL_CHOICE_WRITING);
+    let (file, temp) = choice_files(root);
+    let writing = root.join(temp);
     std::fs::write(&writing, choice.as_str())
         .map_err(|e| format!("Could not save the Gemini model choice: {e}"))?;
-    std::fs::rename(&writing, root.join(MODEL_CHOICE_FILE)).map_err(|e| {
+    std::fs::rename(&writing, root.join(file)).map_err(|e| {
         let _ = std::fs::remove_file(&writing);
         format!("Could not save the Gemini model choice: {e}")
     })
@@ -508,18 +530,31 @@ pub struct GeminiStatus {
 
 impl GeminiStatus {
     fn from_key_read(key: Result<Option<String>, String>, choice: ModelChoice) -> Self {
+        Self::from_key_read_for(AnyProvider::default(), key, choice)
+    }
+
+    fn from_key_read_for(
+        provider: AnyProvider,
+        key: Result<Option<String>, String>,
+        choice: ModelChoice,
+    ) -> Self {
         let (configured, key_unreadable) = secrets::key_read_status(key);
         Self {
             key_unreadable,
-            ..Self::new(configured, choice)
+            ..Self::new_for(provider, configured, choice)
         }
     }
 
     fn new(configured: bool, choice: ModelChoice) -> Self {
+        Self::new_for(AnyProvider::default(), configured, choice)
+    }
+
+    /// The model shown is the one the selected provider uses for her choice.
+    fn new_for(provider: AnyProvider, configured: bool, choice: ModelChoice) -> Self {
         GeminiStatus {
             configured,
             key_unreadable: false,
-            model: choice.primary(),
+            model: provider.models(choice.into()).0,
             choice: choice.as_str(),
         }
     }
@@ -596,12 +631,11 @@ fn gemini_status_blocking(app: AppHandle, gemini_only: Option<bool>) -> GeminiSt
         if let Ok(root) = app_root(&app) {
             let provider = AnyProvider::selected(&root);
             if provider.id() == crate::provider::ProviderId::Claude {
-                let mut status = GeminiStatus::from_key_read(
+                return GeminiStatus::from_key_read_for(
+                    provider,
                     secrets::status_key_for(&root, provider.id()),
-                    ModelChoice::Standard,
+                    load_choice(&root),
                 );
-                status.model = crate::provider::claude::MODEL;
-                return status;
             }
         }
     }
@@ -624,8 +658,10 @@ pub fn set_gemini_model(app: AppHandle, choice: String) -> Result<GeminiStatus, 
         .ok_or_else(|| "That is not one of the Gemini models this version offers.".to_string())?;
     let root = app_root(&app)?;
     save_choice(&root, choice)?;
-    Ok(GeminiStatus::from_key_read(
-        secrets::status_key_for(&root, crate::provider::ProviderId::Gemini),
+    let provider = AnyProvider::selected(&root);
+    Ok(GeminiStatus::from_key_read_for(
+        provider,
+        secrets::status_key_for(&root, provider.id()),
         choice,
     ))
 }
@@ -3013,6 +3049,58 @@ mod tests {
         assert_eq!(choice.primary(), "gemini-3.8-flash");
         assert_eq!(choice.fallback(), "gemini-3.5-flash");
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn claude_defaults_to_haiku_until_she_chooses() {
+        let root = choice_scratch("claude-default");
+        std::fs::write(root.join("ai-provider"), "claude").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        // The Gemini choice never decides the Claude model.
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "most-capable").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::Standard);
+        std::fs::write(root.join(CLAUDE_MODEL_CHOICE_FILE), "most-capable").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn saving_while_claude_is_selected_leaves_the_gemini_choice_alone() {
+        let root = choice_scratch("claude-separate");
+        std::fs::write(root.join(MODEL_CHOICE_FILE), "most-capable").unwrap();
+        std::fs::write(root.join("ai-provider"), "claude").unwrap();
+        save_choice(&root, ModelChoice::MostCapable).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join(CLAUDE_MODEL_CHOICE_FILE)).unwrap(),
+            "most-capable"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join(MODEL_CHOICE_FILE)).unwrap(),
+            "most-capable"
+        );
+        save_choice(&root, ModelChoice::Standard).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join(MODEL_CHOICE_FILE)).unwrap(),
+            "most-capable"
+        );
+        std::fs::write(root.join("ai-provider"), "gemini").unwrap();
+        assert_eq!(load_choice(&root), ModelChoice::MostCapable);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn claude_status_reports_the_model_her_choice_sends_documents_to() {
+        let claude = AnyProvider::from(crate::provider::ProviderId::Claude);
+        let standard = GeminiStatus::new_for(claude, true, ModelChoice::Standard);
+        assert_eq!(
+            (standard.model, standard.choice),
+            ("claude-haiku-5-5", "standard")
+        );
+        let capable = GeminiStatus::new_for(claude, true, ModelChoice::MostCapable);
+        assert_eq!(
+            (capable.model, capable.choice),
+            ("claude-sonnet-5-5", "most-capable")
+        );
     }
 
     #[test]

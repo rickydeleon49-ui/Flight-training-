@@ -279,7 +279,7 @@ export const PRIVACY_HELP: Array<{ title: string; notes: HowToNote[] }> = [
       {
         lead: "Settings › AI provider",
         text: "Standard (Gemini 3.5 Flash) is fast and inexpensive and works with a free Google AI Studio key. Most capable (Gemini 3.8 Flash) is a little more thorough and may use slightly more of your Google credits.",
-        claude: "Claude has one choice, Claude Haiku 5.5. You can also choose Use a different provider there.",
+        claude: "Standard is Claude Haiku 5.5; Most capable is Claude Sonnet 5.5, which costs more. You can also choose Use a different provider there.",
       },
       { lead: "Fewer requests", text: "Make my study kit reads the PDF once, instead of three separate requests." },
     ],
