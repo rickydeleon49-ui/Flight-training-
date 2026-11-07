@@ -61,6 +61,9 @@ function run(ctx, args, env = {}) {
   const base = { ...process.env };
   delete base.APPLE_SIGNING_IDENTITY;
   delete base.HFD_NOTARY_PROFILE;
+  delete base.HFD_NOTARY_KEY;
+  delete base.HFD_NOTARY_KEY_ID;
+  delete base.HFD_NOTARY_ISSUER;
   const r = spawnSync('bash', [path.join(ctx.repo, 'scripts', 'build-signed-mac.sh'), ...args], {
     cwd: ctx.repo, encoding: 'utf8',
     env: { ...base, PATH: `${ctx.bin}:${process.env.PATH}`, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', ...env },
@@ -143,16 +146,49 @@ describe('build-signed-mac.sh refusals', () => {
     assert.match(r.output, /keychain profile "my-notary" is missing/);
     assert.deepEqual(r.calls.find((c) => c[0] === 'xcrun'), ['xcrun', 'notarytool', 'history', '--keychain-profile', 'my-notary']);
   });
+
+  it('mentions a locked Mac when the keychain profile does not work', () => {
+    const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: ONE, FAKE_XCRUN_EXIT: '1' });
+    assert.match(r.output, /Mac may be locked/);
+  });
+
+  it('refuses a partial API key setting', () => {
+    const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: ONE, HFD_NOTARY_KEY: '/nonexistent/AuthKey.p8' });
+    assert.equal(r.status, 1);
+    assert.match(r.output, /set all three of HFD_NOTARY_KEY, HFD_NOTARY_KEY_ID and HFD_NOTARY_ISSUER/);
+    assert.deepEqual(r.tools, ['security']);
+  });
+
+  it('refuses a missing API key file', () => {
+    const r = run(setup(), ['1.2.3'], { FAKE_IDENTITIES: ONE, HFD_NOTARY_KEY: '/nonexistent/AuthKey.p8', HFD_NOTARY_KEY_ID: 'KEY123', HFD_NOTARY_ISSUER: 'issuer-1' });
+    assert.equal(r.status, 1);
+    assert.match(r.output, /HFD_NOTARY_KEY is not a readable file/);
+    assert.deepEqual(r.tools, ['security']);
+  });
+
+  it('checks the API key with notarytool instead of a keychain profile', () => {
+    const ctx = setup();
+    const key = path.join(path.dirname(ctx.repo), 'AuthKey_KEY123.p8');
+    fs.writeFileSync(key, 'not a real key\n');
+    const r = run(ctx, ['1.2.3'], { FAKE_IDENTITIES: ONE, FAKE_XCRUN_EXIT: '1', HFD_NOTARY_KEY: key, HFD_NOTARY_KEY_ID: 'KEY123', HFD_NOTARY_ISSUER: 'issuer-1' });
+    assert.equal(r.status, 1);
+    assert.match(r.output, /notary API key KEY123 is not working/);
+    assert.doesNotMatch(r.output, /not a real key/);
+    assert.deepEqual(r.calls.find((c) => c[0] === 'xcrun'), ['xcrun', 'notarytool', 'history', '--key', key, '--key-id', 'KEY123', '--issuer', 'issuer-1']);
+  });
 });
 
 describe('build-signed-mac.sh source guarantees', () => {
   const source = fs.readFileSync(SCRIPT, 'utf8');
+  it('keeps the display awake while it runs', () => {
+    assert.ok(source.includes('caffeinate -d -i -u -w $$'));
+  });
   it('never strips quarantine or weakens Gatekeeper', () => {
     assert.doesNotMatch(source, /xattr|com\.apple\.quarantine|--master-disable|--add\b|--disable/);
   });
   it('signs via env and a temporary --config, builds the offline DMG, and verifies with the opt-in gate', () => {
     for (const piece of ['HFD_OFFLINE_EXTRACTION=1', 'APPLE_SIGNING_IDENTITY="$IDENTITY"', 'npm run tauri -- build --bundles dmg --config "$CONFIG"',
-      'hardenedRuntime: true', '--keychain-profile "$NOTARY_PROFILE" --wait', 'xcrun stapler staple', 'xcrun stapler validate',
+      'hardenedRuntime: true', 'NOTARY_AUTH=(--keychain-profile "$NOTARY_PROFILE")', '"${NOTARY_AUTH[@]}" --wait', 'xcrun stapler staple', 'xcrun stapler validate',
       'HFD_EXPECT_DEVELOPER_ID_TEAM="$TEAM_ID" bash scripts/verify-macos-bundle-signature.sh', 'source=Notarized Developer ID', 'shasum -a 256',
       'BUNDLE_ID="com.herflightdeck.app"']) {
       assert.ok(source.includes(piece), piece);
