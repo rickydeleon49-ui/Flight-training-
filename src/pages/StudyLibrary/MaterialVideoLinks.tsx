@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { isTauri } from "@/data";
 import { Button, Card, CardBody, ConfirmDialog, Dialog } from "@/components/ui";
 import { useAppData } from "@/state/AppDataContext";
-import { validateVideoUrl, videoLinkLabel, type MaterialVideoLink } from "@/data/repositories/materialVideoLinkRepository";
+import { openExternalLink } from "./openExternalLink";
+import { videoLinkLabel, type MaterialVideoLink } from "@/data/repositories/materialVideoLinkRepository";
 
 export function MaterialVideoLinks({ materialId }: { materialId: string }) {
   const { repositories } = useAppData();
@@ -34,9 +33,7 @@ export function MaterialVideoLinks({ materialId }: { materialId: string }) {
   }
   async function open(link: MaterialVideoLink) {
     try {
-      const safeUrl = validateVideoUrl(link.url);
-      if (isTauri()) await openUrl(safeUrl);
-      else window.open(safeUrl, "_blank", "noopener,noreferrer");
+      await openExternalLink(link.url);
     } catch { setError("That link couldn't be opened. Check the web address and try again."); }
   }
   // A small closed dropdown: optional extra next to the section's own study material.
