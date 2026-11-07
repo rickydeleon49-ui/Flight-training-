@@ -1066,6 +1066,8 @@ function MaterialDetailPage() {
           </div>
         }
       />
+      {/* The File menu closes on click, so say here that chapters are being found. */}
+      {splittingByChapter && !chapterOutline ? <p className="tiny muted" role="status">Finding chapters…</p> : null}
       </div>
 
       {linkTarget && (linkTarget.kind === "practice" || linkTarget.kind === "problem") ? (
