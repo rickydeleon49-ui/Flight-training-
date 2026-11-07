@@ -6414,6 +6414,21 @@ fn write_journal(root: &Path, journal: &RestoreJournal) -> Result<(), String> {
     Ok(())
 }
 
+/// Is a restore unfinished, so that new study packs must wait? Decided from
+/// the journal phase like `fresh_staging`: a finished (Committed or
+/// RolledBack) journal left behind does not block; anything unreadable or
+/// unfinished does, as does a pending folder with no finished journal.
+pub(crate) fn restore_blocks_study_pack_import(root: &Path) -> bool {
+    match read_journal(root) {
+        Ok(Some(journal)) => !matches!(
+            journal.phase,
+            RestorePhase::Committed | RestorePhase::RolledBack
+        ),
+        Ok(None) => std::fs::symlink_metadata(root.join(RESTORE_PENDING_DIR)).is_ok(),
+        Err(_) => true,
+    }
+}
+
 fn read_journal(root: &Path) -> Result<Option<RestoreJournal>, String> {
     #[cfg(test)]
     check_injected_fault(InjectedFault::JournalRead)

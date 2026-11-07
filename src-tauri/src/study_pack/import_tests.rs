@@ -2327,6 +2327,36 @@ fn an_import_is_refused_while_a_restore_is_pending_and_changes_nothing() {
     }
 }
 
+fn write_restore_journal(root: &Path, phase: crate::backup::RestorePhase) {
+    let mut journal = crate::backup::RestoreJournal::new("backups/x".to_string(), false);
+    journal.phase = phase;
+    std::fs::write(
+        root.join(crate::backup::RESTORE_JOURNAL_FILE),
+        serde_json::to_vec(&journal).unwrap(),
+    )
+    .unwrap();
+}
+
+#[test]
+fn a_finished_restore_journal_does_not_block_adding_a_pack() {
+    use crate::backup::RestorePhase;
+    let (producer, _) = seeded();
+    let pack = all_pack(&producer);
+    for phase in [RestorePhase::Committed, RestorePhase::RolledBack] {
+        let her = her();
+        write_restore_journal(her.root(), phase);
+        add(&her, &pack).expect("a finished restore must not block");
+    }
+    for phase in [
+        crate::backup::RestorePhase::Activating,
+        crate::backup::RestorePhase::UnresolvedRecovery,
+    ] {
+        let her = her();
+        write_restore_journal(her.root(), phase);
+        assert_eq!(add(&her, &pack).unwrap_err(), install::RESTORE_FIRST);
+    }
+}
+
 #[test]
 fn a_result_is_recovered_from_its_receipt_and_acknowledged_once() {
     let (producer, _) = seeded();

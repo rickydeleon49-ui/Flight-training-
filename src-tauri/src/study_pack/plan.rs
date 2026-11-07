@@ -276,37 +276,27 @@ impl<'a> Pictures<'a> {
             let mut map: HashMap<String, usize> = HashMap::new();
             let mut statement = self
                 .conn
-                .prepare(pack_sql("SELECT flashcards_json FROM ai_study_sets")?)
+                .prepare(pack_sql(
+                    "SELECT r.image_material_id, COUNT(*) \
+                     FROM ai_study_sets s, \
+                          json_each(CASE WHEN json_valid(s.flashcards_json) \
+                                          AND json_type(s.flashcards_json) = 'array' \
+                                    THEN s.flashcards_json ELSE '[]' END) c \
+                     JOIN visual_card_regions r \
+                       ON r.id = json_extract(c.value, '$.visualRegionId') \
+                      AND json_type(c.value, '$.visualRegionId') = 'text' \
+                     WHERE r.image_material_id IS NOT NULL \
+                     GROUP BY r.image_material_id",
+                )?)
                 .map_err(fail)?;
-            let sets: Vec<String> = statement
-                .query_map([], |r| r.get::<_, String>(0))
-                .map_err(fail)?
-                .collect::<Result<_, _>>()
+            let rows = statement
+                .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))
                 .map_err(fail)?;
-            for text in sets {
-                let Ok(serde_json::Value::Array(cards)) = serde_json::from_str(&text) else {
-                    continue;
-                };
-                for card in cards {
-                    let Some(region) = card.get("visualRegionId").and_then(|v| v.as_str()) else {
-                        continue;
-                    };
-                    let image: Option<Option<String>> = self
-                        .conn
-                        .query_row(
-                            pack_sql(
-                                "SELECT image_material_id FROM visual_card_regions WHERE id = ?1",
-                            )?,
-                            [region],
-                            |r| r.get(0),
-                        )
-                        .optional()
-                        .map_err(fail)?;
-                    if let Some(Some(image)) = image {
-                        *map.entry(image).or_default() += 1;
-                    }
-                }
+            for row in rows {
+                let (image, count) = row.map_err(fail)?;
+                map.insert(image, count as usize);
             }
+            drop(statement);
             self.usage = Some(map);
         }
         Ok(self

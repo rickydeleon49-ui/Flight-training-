@@ -141,9 +141,7 @@ pub fn add_locked(
     if !owned {
         return Err(UNSUPPORTED.to_string());
     }
-    if root.join(crate::backup::RESTORE_PENDING_DIR).exists()
-        || root.join(crate::backup::RESTORE_JOURNAL_FILE).exists()
-    {
+    if crate::backup::restore_blocks_study_pack_import(root) {
         return Err(RESTORE_FIRST.to_string());
     }
     if !crate::study_sets::is_lower_uuid_v4(op_id) {
