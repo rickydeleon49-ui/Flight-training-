@@ -20,10 +20,15 @@ export interface PdfOutline {
   maxPagesPerSplit: number;
   /** Most pages are pictures with almost no text (a scan). Absent in old data. */
   mostlyPictures?: boolean;
+}
+
+/** A stored PDF's chapters (see detectPdfChapters). */
+export interface PdfChapters {
+  pages: number;
   /** Chapters covering every page, in order; the first may be "Front pages". */
-  chapters?: PdfChapter[];
+  chapters: PdfChapter[];
   /** How the chapters were found: the PDF's outline, its page text, or even chunks. */
-  chapterSource?: "outline" | "text" | "chunks";
+  chapterSource: "outline" | "text" | "chunks";
 }
 
 export interface PdfChapter {
@@ -45,6 +50,12 @@ export const canSplitPdfs = (): boolean => isTauri();
 export async function inspectPdf(relativePath: string): Promise<PdfOutline> {
   if (!isTauri()) throw new DesktopOnlyError();
   return invoke<PdfOutline>("inspect_pdf", { relativePath });
+}
+
+/** Find a stored PDF's chapters. Can read every page of a long book: call it only on request. */
+export async function detectPdfChapters(relativePath: string): Promise<PdfChapters> {
+  if (!isTauri()) throw new DesktopOnlyError();
+  return invoke<PdfChapters>("detect_pdf_chapters", { relativePath });
 }
 
 /**

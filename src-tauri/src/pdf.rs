@@ -53,6 +53,14 @@ pub struct PdfOutline {
     /// is stored and no migration is needed.
     #[serde(default)]
     pub mostly_pictures: bool,
+}
+
+/// A stored PDF's chapters, read only when she asks to split by chapter:
+/// finding them can read every page of a long book (so not in `inspect_pdf`).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfChapters {
+    pub pages: u32,
     /// Chapters worked out from the outline, the page text, or even chunks, so
     /// every page belongs to exactly one entry. See `chapters`.
     pub chapters: Vec<chapters::Chapter>,
@@ -587,12 +595,32 @@ pub async fn inspect_pdf(app: AppHandle, relative_path: String) -> Result<PdfOut
         if pages == 0 {
             return Err("That PDF has no pages this application can read.".to_string());
         }
-        let mostly_pictures = mostly_pictures(&document);
-        let (chapters, chapter_source) = detect_chapters(&document, pages, mostly_pictures);
         Ok(PdfOutline {
             pages,
             max_pages_per_split: MAX_PAGES,
-            mostly_pictures,
+            mostly_pictures: mostly_pictures(&document),
+        })
+    })
+    .await
+}
+
+/// Find a stored PDF's chapters (outline, then page headings, then even chunks).
+#[tauri::command]
+pub async fn detect_pdf_chapters(
+    app: AppHandle,
+    relative_path: String,
+) -> Result<PdfChapters, String> {
+    let path = documents::stored_document_path(&app, &relative_path)?;
+    run_off_thread(move || {
+        let document = open_pdf(&path)?;
+        let pages = u32::try_from(document.get_pages().len()).unwrap_or(u32::MAX);
+        if pages == 0 {
+            return Err("That PDF has no pages this application can read.".to_string());
+        }
+        let (chapters, chapter_source) =
+            detect_chapters(&document, pages, mostly_pictures(&document));
+        Ok(PdfChapters {
+            pages,
             chapters,
             chapter_source,
         })

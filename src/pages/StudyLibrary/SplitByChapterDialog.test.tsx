@@ -17,8 +17,11 @@ const chapters = [
   { title: "Weather", firstPage: 5, lastPage: 20 },
   { title: "Maps", firstPage: 21, lastPage: 30 },
 ];
-const outline = (source: "outline" | "text" | "chunks" = "outline"): pdf.PdfOutline =>
-  ({ pages: 30, maxPagesPerSplit: 150, chapters, chapterSource: source }) as pdf.PdfOutline;
+const outline = (source: "outline" | "text" | "chunks" = "outline"): pdf.PdfChapters => ({
+  pages: 30,
+  chapters,
+  chapterSource: source,
+});
 const receipt = {
   core: { plan: [{ id: "p1", selection: { start: 5, end: 20 } }] },
   receiptHash: "h",
@@ -92,6 +95,18 @@ it("shows the native error as-is and saves nothing", async () => {
   expect(splitSave.saveSplitParts).not.toHaveBeenCalled();
 });
 
+it.each([
+  [false, /nothing was changed/],
+  [true, /restart the app/],
+] as const)("tells her plainly when saving fails (cleanup failed: %s)", async (cleanupFailed, message) => {
+  vi.spyOn(pdf, "splitPdfRanges").mockResolvedValue(receipt);
+  vi.spyOn(splitSave, "saveSplitParts").mockResolvedValue({ saved: false, cleanupFailed });
+  const onCreated = setup();
+  fireEvent.click(save());
+  await waitFor(() => expect(screen.getByText(message)).toBeTruthy());
+  expect(onCreated).not.toHaveBeenCalled();
+});
+
 it("blocks a second save while busy", async () => {
   let finish: (value: never) => void = () => {};
   const spy = vi.spyOn(pdf, "splitPdfRanges").mockReturnValue(new Promise((resolve) => { finish = resolve as never; }));
@@ -107,7 +122,7 @@ it("blocks a second save while busy", async () => {
 });
 
 it("offers no chapter choice when chapters are absent", async () => {
-  vi.spyOn(pdf, "inspectPdf").mockResolvedValue({ pages: 30, maxPagesPerSplit: 150 });
+  vi.spyOn(pdf, "detectPdfChapters").mockResolvedValue({ pages: 30, chapters: [], chapterSource: "chunks" });
   const unavailable = vi.fn();
   const { result } = renderHook(() => useChapterChoice(material.filePath, true, unavailable));
   await waitFor(() => expect(unavailable).toHaveBeenCalledWith(expect.stringContaining("No chapters")));
@@ -117,13 +132,13 @@ it("offers no chapter choice when chapters are absent", async () => {
 });
 
 it("does not read the PDF until she asks", () => {
-  const spy = vi.spyOn(pdf, "inspectPdf").mockResolvedValue(outline());
+  const spy = vi.spyOn(pdf, "detectPdfChapters").mockResolvedValue(outline());
   renderHook(() => useChapterChoice(material.filePath, false));
   expect(spy).not.toHaveBeenCalled();
 });
 
 it("offers the choice when chapters exist", async () => {
-  vi.spyOn(pdf, "inspectPdf").mockResolvedValue(outline());
+  vi.spyOn(pdf, "detectPdfChapters").mockResolvedValue(outline());
   const { result } = renderHook(() => useChapterChoice(material.filePath, true));
   await waitFor(() => expect(result.current).not.toBeNull());
 });

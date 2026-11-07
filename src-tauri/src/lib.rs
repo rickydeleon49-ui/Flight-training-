@@ -543,6 +543,7 @@ pub fn run() {
             documents::save_material_operation,
             debrief::save_debrief_operation,
             pdf::inspect_pdf,
+            pdf::detect_pdf_chapters,
             pdf::split_pdf,
             pdf::split_pdf_automatically,
             pdf::split_pdf_ranges,

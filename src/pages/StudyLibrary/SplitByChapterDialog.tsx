@@ -4,7 +4,7 @@ import { Button, Dialog } from "@/components/ui";
 import type { StudyMaterial } from "@/domain/types";
 import { newId } from "@/lib/id";
 import { pdfPartNotes } from "@/logic/pdfParts";
-import { inspectPdf, splitPdfRanges, type PdfChapter, type PdfOutline } from "@/services/pdf";
+import { detectPdfChapters, splitPdfRanges, type PdfChapter, type PdfChapters } from "@/services/pdf";
 import { useAppData } from "@/state/AppDataContext";
 
 import { saveSplitParts } from "./splitSave";
@@ -32,15 +32,15 @@ export function useChapterChoice(
   filePath: string | null | undefined,
   enabled: boolean,
   onUnavailable?: (message: string) => void,
-): PdfOutline | null {
-  const [outline, setOutline] = useState<PdfOutline | null>(null);
+): PdfChapters | null {
+  const [outline, setOutline] = useState<PdfChapters | null>(null);
   const unavailable = useRef(onUnavailable);
   unavailable.current = onUnavailable;
   useEffect(() => {
     setOutline(null);
     if (!enabled || !filePath) return;
     let cancelled = false;
-    inspectPdf(filePath)
+    detectPdfChapters(filePath)
       .then((found) => {
         if (cancelled) return;
         if (found.chapters && found.chapters.length > 0) setOutline(found);
@@ -89,7 +89,7 @@ export function rowProblems(rows: readonly Row[], pages: number): Map<number, st
 interface Props {
   open: boolean;
   material: StudyMaterial;
-  outline: PdfOutline;
+  outline: PdfChapters;
   onClose: () => void;
   onCreated: (materialIds: string[]) => void;
 }
@@ -157,7 +157,11 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
         }),
       );
       if (!outcome.saved) {
-        setError("The chapters could not be saved, so nothing was changed. The original PDF is untouched — try once more.");
+        setError(
+          outcome.cleanupFailed
+            ? "The chapters could not be saved to your library, and their temporary files could not be removed; restart the app before trying again. The original PDF is untouched."
+            : "The chapters could not be saved, so nothing was changed. The original PDF is untouched — try once more.",
+        );
         return;
       }
       onCreated(outcome.ids);
@@ -187,7 +191,7 @@ export function SplitByChapterDialog({ open, material, outline, onClose, onCreat
       }
     >
       <div className="stack stack--4">
-        <p className="small muted">{SOURCE_LINES[outline.chapterSource ?? "chunks"]}</p>
+        <p className="small muted">{SOURCE_LINES[outline.chapterSource]}</p>
         <ul className="stack stack--2" style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {rows.map((row, index) => (
             <li key={index} className="stack stack--1">
