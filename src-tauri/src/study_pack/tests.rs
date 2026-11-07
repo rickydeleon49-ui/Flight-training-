@@ -44,7 +44,7 @@ impl Drop for TempDir {
     }
 }
 
-fn pdf_bytes(pages: u32, salt: &str) -> Vec<u8> {
+fn pdf_bytes(pages: u32, marker: &str) -> Vec<u8> {
     let mut document = Document::with_version("1.5");
     let pages_id = document.new_object_id();
     let kids: Vec<Object> = (0..pages)
@@ -66,7 +66,7 @@ fn pdf_bytes(pages: u32, salt: &str) -> Vec<u8> {
     );
     let catalog_id = document.add_object(dictionary! { "Type" => "Catalog", "Pages" => pages_id });
     document.trailer.set("Root", catalog_id);
-    let info = document.add_object(dictionary! { "Title" => Object::string_literal(salt) });
+    let info = document.add_object(dictionary! { "Title" => Object::string_literal(marker) });
     document.trailer.set("Info", info);
     let mut out = Vec::new();
     document.save_to(&mut out).unwrap();
@@ -74,7 +74,7 @@ fn pdf_bytes(pages: u32, salt: &str) -> Vec<u8> {
 }
 
 /// A structurally valid PNG of any size (the app checks structure, not pixels).
-fn fake_png(width: u32, height: u32, salt: &str) -> Vec<u8> {
+fn fake_png(width: u32, height: u32, marker: &str) -> Vec<u8> {
     let mut out = vec![137, 80, 78, 71, 13, 10, 26, 10];
     let mut chunk = |kind: &[u8; 4], data: &[u8]| {
         out.extend_from_slice(&(data.len() as u32).to_be_bytes());
@@ -87,7 +87,7 @@ fn fake_png(width: u32, height: u32, salt: &str) -> Vec<u8> {
     header.extend_from_slice(&height.to_be_bytes());
     header.extend_from_slice(&[8, 2, 0, 0, 0]);
     chunk(b"IHDR", &header);
-    chunk(b"IDAT", salt.as_bytes());
+    chunk(b"IDAT", marker.as_bytes());
     chunk(b"IEND", &[]);
     out
 }
@@ -585,7 +585,10 @@ fn nothing_private_is_in_any_entry() {
             "SECRET-KEY-FILE",
             "provider_secret",
         ] {
-            assert!(!text.contains(secret), "{secret} leaked into {name}");
+            assert!(
+                !text.contains(secret),
+                "a private marker leaked into {name}"
+            );
         }
     }
     // The library itself is untouched except for the namespace key.
@@ -1475,8 +1478,8 @@ fn a_failed_export_leaves_an_existing_pack_and_removes_only_its_temp() {
 #[test]
 fn a_limit_hit_while_loading_stops_before_reading_more_files() {
     let lib = lib();
-    for (id, salt) in [("a", "one"), ("b", "two"), ("c", "three")] {
-        lib.material(id, id, Some(("f.pdf", &pdf_bytes(2, salt))));
+    for (id, marker) in [("a", "one"), ("b", "two"), ("c", "three")] {
+        lib.material(id, id, Some(("f.pdf", &pdf_bytes(2, marker))));
     }
     let size = std::fs::metadata(lib.root().join("documents").join("a-f.pdf"))
         .unwrap()
