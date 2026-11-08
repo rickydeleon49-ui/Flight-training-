@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { StudyPackPreview, StudyPackResult } from "@/data/studyPack";
-import { addedLine, packAlreadyHaveLine, packContentsLine, resultLines } from "./studyPackText";
+import { addedLine, packAlreadyHaveLine, packContentsLine, packSavedSentence, resultLines } from "./studyPackText";
 
 const base: StudyPackResult = {
   operationId: "op", packId: "p", added: 0, addedGuides: 0, addedDocuments: 0, addedPictures: 0, addedPractice: 0,
@@ -52,5 +52,19 @@ describe("study pack sentences", () => {
   it("never says 'newer' in any result sentence", () => {
     const all = resultLines(result({ addedGuides: 3, addedDocuments: 2, newVersions: 2, readded: 2, cardsLeftOut: 5, cardsLeftOutRemoved: 2 }));
     for (const line of all) expect(line.toLowerCase()).not.toContain("newer");
+  });
+});
+
+describe("packSavedSentence", () => {
+  const base = { items: 3, documents: 2, guides: 2, cards: 40, questions: 20, videos: 3, cardsLeftOut: 0 };
+  it("lists what went into the pack", () => {
+    expect(packSavedSentence(base)).toBe("Your study pack is saved: 2 guides · 40 cards · 20 practice questions · 3 videos · 2 PDFs.");
+  });
+  it("names left-out picture cards, singular and plural", () => {
+    expect(packSavedSentence({ ...base, cardsLeftOut: 1 })).toContain(" 1 picture card was left out because its picture couldn't be shared.");
+    expect(packSavedSentence({ ...base, cardsLeftOut: 4 })).toContain(" 4 picture cards were left out because their pictures couldn't be shared.");
+  });
+  it("handles an empty pack", () => {
+    expect(packSavedSentence({ ...base, documents: 0, guides: 0, cards: 0, questions: 0, videos: 0 })).toBe("Your study pack is saved.");
   });
 });

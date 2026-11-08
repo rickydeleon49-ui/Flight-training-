@@ -15,6 +15,7 @@ import type { StudyMaterial } from "@/domain/types";
 import { chooseStudyPackDestination, exportStudyPack, studyPackErrorMessage, studyPacksAvailable } from "@/data/studyPack";
 import { chapterCountLabel } from "@/logic/chapterGroups";
 import { packMaterialIds, packRows } from "@/logic/studyPackSelection";
+import { packSavedSentence } from "@/logic/studyPackText";
 import { deviceCan } from "@/services/platform";
 import { DesktopOnlyError } from "@/services/documents";
 import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
@@ -86,8 +87,8 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
     try {
       const destination = await chooseStudyPackDestination();
       if (!destination) return;
-      await exportStudyPack(destination, packIds);
-      setSaved("Your study pack is saved.");
+      const summary = await exportStudyPack(destination, packIds);
+      setSaved(packSavedSentence(summary));
     } catch (caught) {
       setError(studyPackErrorMessage(caught, "The study pack could not be saved. Nothing was changed."));
     } finally {
@@ -163,7 +164,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
       )}
     >
       <div className="stack stack--4">
-        <p className="small">Picture cards are omitted from study packets, CSV and handouts. Use a complete backup to keep pictures, covers and review history.</p>
+        {output === "pack" ? null : <p className="small">Picture cards are omitted from study packets, CSV and handouts. Use a complete backup to keep pictures, covers and review history.</p>}
         <fieldset className="export-study__choices" disabled={working}>
           <legend className="field__label">Save as</legend>
           <label className="small"><input type="radio" name="export-center-output" checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout</label>

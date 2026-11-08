@@ -3,7 +3,7 @@
  * Counts only; no file names, no ids. Pictures are never named, and nothing
  * here says "newer": a pack's age cannot be proved from its contents.
  */
-import type { StudyPackPreview, StudyPackResult } from "@/data/studyPack";
+import type { StudyPackExportSummary, StudyPackPreview, StudyPackResult } from "@/data/studyPack";
 
 const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -63,4 +63,15 @@ export function resultLines(r: StudyPackResult): string[] {
     );
   }
   return lines;
+}
+
+/** After sharing: what went into the pack, so the sender can check it before sending. */
+export function packSavedSentence(s: StudyPackExportSummary): string {
+  const contents = packContentsLine({ ...s, alreadyInLibrary: 0 });
+  const left = s.cardsLeftOut > 0
+    ? (s.cardsLeftOut === 1
+      ? " 1 picture card was left out because its picture couldn't be shared."
+      : ` ${s.cardsLeftOut} picture cards were left out because their pictures couldn't be shared.`)
+    : "";
+  return `Your study pack is saved${contents ? `: ${contents}` : ""}.${left}`;
 }
