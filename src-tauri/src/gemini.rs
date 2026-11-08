@@ -193,7 +193,7 @@ fn inline_request_bytes(bytes: u64) -> u64 {
 /// The model reads roughly a million tokens and a megabyte of text is roughly
 /// a quarter of a million of them, so four megabytes is the honest ceiling —
 /// beyond it Google rejects the request for a reason she cannot act on.
-const MAX_TEXT_BYTES: u64 = 4 * 1024 * 1024;
+pub(crate) const MAX_TEXT_BYTES: u64 = 4 * 1024 * 1024;
 
 /* ------------------------------------------------------------------ */
 /* Waiting out a busy model                                            */

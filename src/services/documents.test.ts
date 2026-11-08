@@ -38,6 +38,7 @@ import {
   importUnlinkedFile,
   openDocument,
   pickAndImportDocument,
+  savePastedText,
   removeMaterialWithFile,
   revealDocument,
   reattachUnlinkedFile,
@@ -397,4 +398,24 @@ it("on the phone the picker is PDF-only and the app is told so", async () => {
   expect(mocks.pick).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ name: "PDF", extensions: ["pdf"] }] }));
   expect(mocks.invoke).toHaveBeenCalledWith("import_document", { sourcePath: "file:///synthetic/local.pdf", materialId: "m", pdfOnly: true });
   mocks.isIOS.mockReturnValue(false);
+});
+
+describe("savePastedText", () => {
+  beforeEach(() => {
+    mocks.invoke.mockReset();
+    mocks.isTauri.mockReturnValue(false);
+  });
+
+  it("is unavailable outside the desktop shell", async () => {
+    await expect(savePastedText("m1", "Notes", "hello")).rejects.toBeInstanceOf(DesktopOnlyError);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+  });
+
+  it("asks the native side to store the text and returns the document", async () => {
+    mocks.isTauri.mockReturnValue(true);
+    const doc = { relativePath: "m1.txt", originalFileName: "Notes.txt", fileSize: 5 };
+    mocks.invoke.mockResolvedValue(doc);
+    await expect(savePastedText("m1", "Notes", "hello")).resolves.toBe(doc);
+    expect(mocks.invoke).toHaveBeenCalledWith("save_pasted_text", { materialId: "m1", title: "Notes", text: "hello" });
+  });
 });

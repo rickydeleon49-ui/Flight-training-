@@ -257,3 +257,65 @@ fn clean_file_name_keeps_ordinary_odd_names() {
     );
     assert_eq!(clean_file_name("\u{202E}\u{200F} "), "document");
 }
+
+#[test]
+fn pasted_text_round_trips_as_utf8_txt() {
+    let c = scratch();
+    let docs = c.join("documents");
+    let text = "Class B airspace \u{2014} caf\u{e9}\nline two";
+    let done = save_pasted_text_in(&docs, "m1", "Airspace notes", text).unwrap();
+    assert_eq!(done.relative_path, "m1.txt");
+    assert_eq!(done.original_file_name, "Airspace notes.txt");
+    assert_eq!(done.file_size, text.len() as u64);
+    assert!(done.pdf_identity.is_none());
+    assert_eq!(std::fs::read_to_string(docs.join("m1.txt")).unwrap(), text);
+    assert!(names(&docs.join(".incoming")).is_empty());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn pasted_text_refuses_empty_and_whitespace_and_writes_nothing() {
+    let c = scratch();
+    let docs = c.join("documents");
+    for text in ["", "  \n\t "] {
+        assert!(save_pasted_text_in(&docs, "m1", "T", text).is_err());
+    }
+    assert!(!docs.join("m1.txt").exists());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn pasted_text_enforces_the_four_megabyte_limit() {
+    let c = scratch();
+    let docs = c.join("documents");
+    let max = crate::gemini::MAX_TEXT_BYTES as usize;
+    assert!(save_pasted_text_in(&docs, "ok", "T", &"a".repeat(max)).is_ok());
+    assert!(save_pasted_text_in(&docs, "big", "T", &"a".repeat(max + 1)).is_err());
+    assert!(!docs.join("big.txt").exists());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn pasted_text_stays_inside_the_documents_folder() {
+    let c = scratch();
+    let docs = c.join("documents");
+    let done = save_pasted_text_in(&docs, "../../evil", "../../x/y", "hello").unwrap();
+    assert!(!done.relative_path.contains('/') && !done.relative_path.contains(".."));
+    assert!(docs.join(&done.relative_path).is_file());
+    assert!(!c.join("evil.txt").exists());
+    std::fs::remove_dir_all(c).unwrap();
+}
+
+#[test]
+fn pasted_text_never_overwrites_an_existing_file() {
+    let c = scratch();
+    let docs = c.join("documents");
+    let a = save_pasted_text_in(&docs, "m1", "A", "one").unwrap();
+    let b = save_pasted_text_in(&docs, "m1", "A", "two").unwrap();
+    assert_ne!(a.relative_path, b.relative_path);
+    assert_eq!(
+        std::fs::read_to_string(docs.join(&a.relative_path)).unwrap(),
+        "one"
+    );
+    std::fs::remove_dir_all(c).unwrap();
+}

@@ -17,7 +17,7 @@ import {
   type StudyMaterial,
   type Topic,
 } from "@/domain/types";
-import { canHandleFiles, cleanupDocuments, documentErrorMessage, formatFileSize, pickAndImportDocument } from "@/services/documents";
+import { canHandleFiles, cleanupDocuments, documentErrorMessage, formatFileSize, pickAndImportDocument, savePastedText } from "@/services/documents";
 
 export interface MaterialDraft {
   id?: Id;
@@ -76,6 +76,8 @@ export function MaterialFormDialog({
   const [fileError, setFileError] = useState<string | null>(null);
   const [cleanupFailedPath, setCleanupFailedPath] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [pasting, setPasting] = useState(false);
+  const [pastedText, setPastedText] = useState("");
   const [saving, setSaving] = useState(false);
   const ownedPaths = useRef(new Set<string>());
   const submitting = useRef(false);
@@ -85,6 +87,8 @@ export function MaterialFormDialog({
     setError(null);
     setFileError(null);
     setCleanupFailedPath(null);
+    setPasting(false);
+    setPastedText("");
     ownedPaths.current.clear();
     if (material) {
       setDraft({ ...material });
@@ -123,6 +127,31 @@ export function MaterialFormDialog({
       }
     } catch (importError) {
       setFileError(documentErrorMessage(importError, "That file could not be added."));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const usePastedText = async () => {
+    if (!pastedText.trim()) return;
+    setFileError(null);
+    setImporting(true);
+    try {
+      const firstLine = pastedText.trim().split("\n")[0]?.trim().slice(0, 60) ?? "";
+      const title = draft.title.trim() || firstLine || "Pasted text";
+      const imported = await savePastedText(material?.id ?? newMaterialId, title, pastedText);
+      ownedPaths.current.add(imported.relativePath);
+      setDraft((current) => ({
+        ...current,
+        filePath: imported.relativePath,
+        originalFileName: imported.originalFileName,
+        fileSize: imported.fileSize,
+        title: current.title || title,
+      }));
+      setPasting(false);
+      setPastedText("");
+    } catch (saveError) {
+      setFileError(documentErrorMessage(saveError, "That text could not be added."));
     } finally {
       setImporting(false);
     }
@@ -282,11 +311,41 @@ export function MaterialFormDialog({
                 Remove
               </Button>
             </div>
+          ) : pasting ? (
+            <div className="stack stack--2">
+              <TextArea
+                aria-label="Pasted text"
+                rows={8}
+                value={pastedText}
+                placeholder="Paste a web page or type notes"
+                onChange={(e) => setPastedText(e.target.value)}
+              />
+              <p className="tiny dim">Plain text, no pictures.</p>
+              <div className="row">
+                <Button onClick={() => setPasting(false)} disabled={importing}>
+                  Back
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => void usePastedText()}
+                  disabled={importing || !pastedText.trim()}
+                >
+                  {importing ? "Adding…" : "Add text"}
+                </Button>
+              </div>
+            </div>
           ) : deviceCan().importFiles ? (
-            <Button onClick={chooseFile} disabled={importing || !canHandleFiles() || fileLock !== null}>
-              <DocumentIcon size={16} />
-              {importing ? "Adding…" : "Choose a file"}
-            </Button>
+            <div className="row">
+              <Button onClick={chooseFile} disabled={importing || !canHandleFiles() || fileLock !== null}>
+                <DocumentIcon size={16} />
+                {importing ? "Adding…" : "Choose a file"}
+              </Button>
+              {!isIOS() && canHandleFiles() ? (
+                <Button onClick={() => setPasting(true)} disabled={importing || fileLock !== null}>
+                  Paste text
+                </Button>
+              ) : null}
+            </div>
           ) : null}
           {fileLock ? (
             <p className="tiny dim">{fileLock}</p>

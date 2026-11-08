@@ -519,6 +519,7 @@ pub fn run() {
             extraction::search_api::search_offline_content,
             extraction::search_api::verify_offline_destination,
             documents::import_document,
+            documents::save_pasted_text,
             documents::document_path,
             documents::document_bytes,
             documents::document_exists,
