@@ -1033,21 +1033,21 @@ fn assembly(d: &Draft) -> Result<GeneratedStudyAid, SectionError> {
         model: produced_by(d),
     })
 }
-/// The model that wrote most sections (ties go to the one that is not the
-/// frozen primary, so a fallback is never labelled as the stronger model).
+/// Every model that wrote a section, primary first ("a + b" when mixed), so a
+/// guide with fallback sections is never labelled as the primary alone.
 /// Each section's own model stays in the provenance above.
 fn produced_by(d: &Draft) -> String {
-    let mut counts: Vec<(&str, usize)> = Vec::new();
+    let mut used: Vec<&str> = Vec::new();
     for c in d.results.values().filter_map(|r| r.content.as_ref()) {
-        match counts.iter_mut().find(|(m, _)| *m == c.model) {
-            Some((_, n)) => *n += 1,
-            None => counts.push((&c.model, 1)),
+        if !used.contains(&c.model.as_str()) {
+            used.push(&c.model);
         }
     }
-    counts
-        .into_iter()
-        .max_by_key(|(m, n)| (*n, *m != d.identity.model))
-        .map_or_else(|| d.identity.model.clone(), |(m, _)| m.to_string())
+    if used.is_empty() {
+        return d.identity.model.clone();
+    }
+    used.sort_by_key(|m| (*m != d.identity.model, *m));
+    used.join(" + ")
 }
 
 pub(super) async fn activate(
@@ -1186,9 +1186,6 @@ pub(super) async fn activate(
                 hook("after-descriptor-commit");
                 Some(lease)
             };
-            // Once a section falls back, the rest of this run stays on the
-            // fallback: one switch per run, so it cannot drain the spare sends.
-            let mut model = ctx.primary();
             for (index, section) in identity.manifest.iter().enumerate() {
                 if read_draft(root, &id)?.results[&section.id].status == Status::Complete {
                     continue;
@@ -1219,7 +1216,6 @@ pub(super) async fn activate(
                     &body,
                     section,
                     &identity.chosen_pages,
-                    &mut model,
                     hook,
                 )
                 .await?;
@@ -1309,9 +1305,11 @@ async fn section_generate(
     body: &Value,
     section: &Section,
     pages: &[u32],
-    model: &mut &'static str,
     hook: Hook<'_>,
 ) -> Result<ResultBody, SectionError> {
+    // A fallback switch lasts for this section only; the next one starts on the primary.
+    let mut current = ctx.primary();
+    let model = &mut current;
     let mut shape_retried = false;
     for attempt in 1..=3 {
         if ctx.budget.start_attempt().is_none() {
@@ -1345,14 +1343,8 @@ async fn section_generate(
                         if shape_retried || attempt == 3 {
                             return Err(error);
                         }
+                        // A bad-shaped answer is retried on the same model.
                         shape_retried = true;
-                        if ctx.primary() != ctx.fallback()
-                            && ctx.choice == ModelChoice::MostCapable
-                            && *model != ctx.fallback()
-                        {
-                            *model = ctx.fallback();
-                            (ctx.say)(ctx.choice.fallback_notice().to_string());
-                        }
                         continue;
                     }
                 }

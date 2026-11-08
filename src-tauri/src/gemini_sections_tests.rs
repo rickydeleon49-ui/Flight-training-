@@ -1989,7 +1989,7 @@ fn validate_section_unescapes_newlines_before_digest_and_storage() {
 }
 
 #[test]
-fn capable_model_max_tokens_answer_falls_back_to_standard_once() {
+fn capable_model_max_tokens_answer_retries_the_same_model_once() {
     let mut r = Rig::new(4);
     r.choice = ModelChoice::MostCapable;
     r.fake.behave(|b| {
@@ -1999,23 +1999,18 @@ fn capable_model_max_tokens_answer_falls_back_to_standard_once() {
         ]
     });
     let answer = r.run(None).unwrap();
-    assert_eq!(answer.answer.model, "gemini-3.5-flash");
+    assert_eq!(answer.answer.model, "gemini-3.8-flash");
     let log = r.fake.log();
     let requests: Vec<_> = log.iter().filter(|r| r.is_generate()).collect();
     assert_eq!(requests.len(), 2);
     assert!(requests[0].path.contains("gemini-3.8-flash"));
-    assert!(requests[1].path.contains("gemini-3.5-flash"));
-    assert!(r
+    assert!(requests[1].path.contains("gemini-3.8-flash"));
+    assert!(!r
         .messages
         .lock()
         .unwrap()
         .iter()
         .any(|m| m == r.choice.fallback_notice()));
-    let d = read_draft(r.dir.path(), &r.id()).unwrap();
-    assert_eq!(
-        d.results["section-01"].content.as_ref().unwrap().model,
-        "gemini-3.5-flash"
-    );
 }
 #[test]
 fn capable_model_403_falls_back_without_consuming_extra_reservations() {
@@ -2110,7 +2105,7 @@ fn internal_section_failure_text_is_not_marked_as_a_plain_reason() {
 }
 
 #[test]
-fn capable_fallback_stays_for_the_rest_of_the_guide() {
+fn bad_shaped_answer_retries_the_same_model_with_no_fallback_notice() {
     // 15 pages plan three sections (14 merge into two).
     let mut r = Rig::new(450);
     r.choice = ModelChoice::MostCapable;
@@ -2124,7 +2119,32 @@ fn capable_fallback_stays_for_the_rest_of_the_guide() {
     });
     let answer = r.run(None).unwrap();
     assert_eq!(answer.answer.sections.len(), 3);
-    assert_eq!(answer.answer.model, "gemini-3.5-flash");
+    assert_eq!(answer.answer.model, "gemini-3.8-flash");
+    let log = r.fake.log();
+    let generates: Vec<_> = log.iter().filter(|q| q.is_generate()).collect();
+    assert_eq!(generates.len(), 4);
+    assert!(generates.iter().all(|q| q.path.contains("gemini-3.8-flash")));
+    assert!(!r
+        .messages
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|m| m == r.choice.fallback_notice()));
+}
+
+#[test]
+fn availability_fallback_covers_one_section_then_resets_and_labels_the_mix() {
+    let mut r = Rig::new(450);
+    r.choice = ModelChoice::MostCapable;
+    r.fake.behave(|b| {
+        b.generate_statuses = vec![(503, "{}".into())];
+        b.generate_answers = vec![
+            reply("First", 1),
+            reply("Second", 151),
+            reply("Third", 301),
+        ]
+    });
+    let answer = r.run(None).unwrap();
     let log = r.fake.log();
     let paths: Vec<_> = log
         .iter()
@@ -2132,13 +2152,11 @@ fn capable_fallback_stays_for_the_rest_of_the_guide() {
         .map(|q| q.path.clone())
         .collect();
     assert_eq!(paths.len(), 4);
-    assert_eq!(
-        paths
-            .iter()
-            .filter(|p| p.contains("gemini-3.8-flash"))
-            .count(),
-        1
-    );
+    assert!(paths[0].contains("gemini-3.8-flash"));
+    assert!(paths[1].contains("gemini-3.5-flash"));
+    assert!(paths[2].contains("gemini-3.8-flash"));
+    assert!(paths[3].contains("gemini-3.8-flash"));
+    assert_eq!(answer.answer.model, "gemini-3.8-flash + gemini-3.5-flash");
 }
 
 #[test]
