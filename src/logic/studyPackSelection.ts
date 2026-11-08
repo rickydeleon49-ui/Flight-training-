@@ -31,11 +31,30 @@ export function packMaterialIds(materials: readonly StudyMaterial[], chosen: Rea
   return ids;
 }
 
+/** Mirrors MAX_PDF_BYTES in src-tauri/src/pdf.rs (a Rust test keeps them equal). */
+export const MAX_SHARED_FILE_BYTES = 50 * 1024 * 1024;
+
+/** A material whose file is over the sharing limit cannot go into a pack. */
+export function packFileTooLarge(material: Pick<StudyMaterial, "filePath" | "fileSize">): boolean {
+  return Boolean(material.filePath?.trim()) && (material.fileSize ?? 0) > MAX_SHARED_FILE_BYTES;
+}
+
+/** The short note shown beside a material that is too large to share. */
+export function packTooLargeNote(hasChapters: boolean): string {
+  return hasChapters ? "The full book is too large to share. Its chapters are shared." : "Too large to share (over 50 MB).";
+}
+
+/** A row that cannot be chosen: its file is too big and it has no chapters to carry the content. */
+export function packRowBlocked(row: PackRow): boolean {
+  return packFileTooLarge(row.material) && row.chapters.length === 0;
+}
+
 /**
  * Whether a material can go into a shared pack. Mirrors the native export: a
  * material with a file always can; a note needs a guide, at least one practice question or
  * saved video links.
  */
 export function isPackExportable(material: StudyMaterial, hasGuide: boolean, practiceQuestionCount: number, hasVideos = false): boolean {
+  if (packFileTooLarge(material)) return false;
   return Boolean(material.filePath?.trim()) || hasGuide || practiceQuestionCount > 0 || hasVideos;
 }

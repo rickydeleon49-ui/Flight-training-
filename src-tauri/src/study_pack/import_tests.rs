@@ -2883,3 +2883,61 @@ fn a_failed_receipt_lookup_is_an_unknown_outcome_not_a_refusal() {
     assert!(error.starts_with(install::UNKNOWN_MARK), "got {error}");
     assert!(!super::mark_add_error(error).starts_with(super::REFUSED_MARK));
 }
+
+#[test]
+fn a_split_book_over_the_limit_travels_without_its_file_and_keeps_its_chapters() {
+    let producer = lib();
+    producer.material("bk", "Big Handbook", Some(("bk.pdf", &pdf_bytes(6, "bk"))));
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(producer.root().join("documents").join("bk-bk.pdf"))
+        .unwrap()
+        .set_len(crate::pdf::MAX_PDF_BYTES + 1)
+        .unwrap();
+    for (id, start) in [("ch1", 1), ("ch2", 4)] {
+        producer.material(
+            id,
+            &format!("Chapter {id}"),
+            Some(("c.pdf", &pdf_bytes(3, id))),
+        );
+        producer
+            .conn
+            .execute(
+                "INSERT INTO material_split_lineage (material_id, parent_material_id, root_material_id,
+                     source_page_start, source_page_end, child_page_count, source_file_name, source_title,
+                     source_total_pages, nested_level, created_at)
+                 VALUES (?1,'bk','bk',?2,?3,3,'bk.pdf','Big Handbook',6,1,?4)",
+                params![id, start, start + 2, NOW],
+            )
+            .unwrap();
+    }
+    let pack = pack_of(&producer, &["bk", "ch1", "ch2"], "big.hfdpack");
+    let checked = super::validate::validate_pack(&pack).unwrap();
+    let book = checked
+        .items
+        .iter()
+        .find(|i| i.manifest.item_id == "bk")
+        .unwrap();
+    assert!(book.manifest.file.is_none());
+    assert_eq!(checked.items.len(), 3);
+
+    let her = lib();
+    add(&her, &pack).unwrap();
+    let root = new_material(&her, "Big Handbook");
+    assert_eq!(
+        count(
+            &her,
+            &format!(
+                "SELECT COUNT(*) FROM study_materials WHERE id='{root}' AND file_path IS NULL"
+            )
+        ),
+        1
+    );
+    assert_eq!(
+        count(
+            &her,
+            &format!("SELECT COUNT(*) FROM material_split_lineage WHERE root_material_id='{root}' AND parent_material_id='{root}'")
+        ),
+        2
+    );
+}

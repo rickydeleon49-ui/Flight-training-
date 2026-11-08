@@ -155,6 +155,9 @@ struct Loaded {
     topic: String,
     file_name: String,
     file: Option<FileData>,
+    /// A split book whose own PDF is too big to share: it travels without its file,
+    /// and its chapters carry the content.
+    book_without_file: bool,
 }
 
 fn no_longer_exists() -> String {
@@ -164,16 +167,18 @@ fn no_longer_exists() -> String {
 fn read_stored_file(
     root: &Path,
     relative: &str,
+    title: &str,
     limit: u64,
     budget: &mut Budget,
 ) -> Result<Vec<u8>, String> {
+    let too_large = || format!("\"{title}\" is too large to share (over 50 MB).");
     let unreadable = || "A file in your library can't be read.".to_string();
     let documents = root.join("documents");
     let path = crate::documents::contained_document_path(&documents, relative)
         .map_err(|_| unreadable())?;
     let meta = std::fs::symlink_metadata(&path).map_err(|_| unreadable())?;
     if !meta.is_file() || meta.len() > limit {
-        return Err("A file in your library is too large to share.".to_string());
+        return Err(too_large());
     }
     budget.take_bytes(meta.len())?;
     let mut bytes = Vec::new();
@@ -183,7 +188,7 @@ fn read_stored_file(
         .read_to_end(&mut bytes)
         .map_err(|_| unreadable())?;
     if bytes.len() as u64 > limit {
-        return Err("A file in your library is too large to share.".to_string());
+        return Err(too_large());
     }
     Ok(bytes)
 }
@@ -192,6 +197,7 @@ fn load_material(
     conn: &Connection,
     root: &Path,
     id: &str,
+    split_book: bool,
     budget: &mut Budget,
 ) -> Result<Loaded, String> {
     budget.take_item()?;
@@ -206,13 +212,18 @@ fn load_material(
         .optional()
         .map_err(|_| "Could not read your library.".to_string())?;
     let (title, material_type, topic, file_path, original) = row.ok_or_else(no_longer_exists)?;
+    let mut book_without_file = false;
     let (file, default_name) = match file_path.as_deref().filter(|p| !p.is_empty()) {
         None => (None, String::new()),
+        Some(relative) if split_book && stored_len(root, relative) > MAX_PDF_BYTES => {
+            book_without_file = true;
+            (None, String::new())
+        }
         Some(relative) => {
-            let bytes = read_stored_file(root, relative, MAX_PDF_BYTES, budget)?;
+            let bytes = read_stored_file(root, relative, &title, MAX_PDF_BYTES, budget)?;
             if bytes.starts_with(&PNG_SIGNATURE) {
                 if bytes.len() as u64 > MAX_PNG_BYTES {
-                    return Err("A picture in your library is too large to share.".to_string());
+                    return Err(format!("\"{title}\" is too large to share (over 50 MB)."));
                 }
                 let (width, height) = crate::visual_cards::inspect_png(&bytes)
                     .map_err(|_| format!("\"{title}\" is not a picture this app can share."))?;
@@ -254,7 +265,38 @@ fn load_material(
         topic,
         file_name,
         file,
+        book_without_file,
     })
+}
+
+/// Size of a stored file, or 0 when it can't be found (the normal read reports that).
+fn stored_len(root: &Path, relative: &str) -> u64 {
+    crate::documents::contained_document_path(&root.join("documents"), relative)
+        .ok()
+        .and_then(|path| std::fs::symlink_metadata(path).ok())
+        .map_or(0, |meta| meta.len())
+}
+
+/// Ids among `selected` that are the book (parent or root) of another selected chapter.
+fn split_books(conn: &Connection, selected: &[String]) -> Vec<String> {
+    let mut books = Vec::new();
+    for id in selected {
+        let Ok(mut stmt) = conn.prepare(
+            "SELECT parent_material_id, root_material_id FROM material_split_lineage WHERE material_id = ?1",
+        ) else {
+            continue;
+        };
+        let links: Vec<(Option<String>, Option<String>)> = stmt
+            .query_map([id], |r| Ok((r.get(0)?, r.get(1)?)))
+            .map(|rows| rows.flatten().collect())
+            .unwrap_or_default();
+        for book in links.into_iter().flat_map(|(a, b)| [a, b]).flatten() {
+            if selected.contains(&book) && !books.contains(&book) {
+                books.push(book);
+            }
+        }
+    }
+    books
 }
 
 impl DbGuide {
@@ -967,8 +1009,15 @@ pub(crate) fn export_study_pack_with(
         .map_err(|_| "Could not read your library.".to_string())?;
 
     let mut loaded: Vec<Loaded> = Vec::new();
+    let books = split_books(&read, &selected);
     for id in &selected {
-        loaded.push(load_material(&read, root, id, &mut budget)?);
+        loaded.push(load_material(
+            &read,
+            root,
+            id,
+            books.contains(id),
+            &mut budget,
+        )?);
     }
     let mut guides: HashMap<String, DbGuide> = HashMap::new();
     for m in &loaded {
@@ -999,7 +1048,7 @@ pub(crate) fn export_study_pack_with(
     }
     dependencies.sort();
     for id in dependencies {
-        match load_material(&read, root, &id, &mut budget) {
+        match load_material(&read, root, &id, false, &mut budget) {
             Ok(m) if matches!(m.file, Some(FileData::Png { .. })) => loaded.push(m),
             Ok(_) => {}
             Err(error) if budget.tripped => return Err(error),
@@ -1079,7 +1128,12 @@ pub(crate) fn export_study_pack_with(
         } else {
             None
         };
-        if kind == "guide" && guide.is_none() && practice.is_none() && videos.is_empty() {
+        if kind == "guide"
+            && !m.book_without_file
+            && guide.is_none()
+            && practice.is_none()
+            && videos.is_empty()
+        {
             return Err(format!("\"{}\" has nothing to share yet.", m.title));
         }
         let item = ItemJson {

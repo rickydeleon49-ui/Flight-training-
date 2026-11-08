@@ -41,3 +41,34 @@ describe("isPackExportable", () => {
     expect(isPackExportable(m(null), false, 0, true)).toBe(true);
   });
 });
+
+import { MAX_SHARED_FILE_BYTES, packFileTooLarge, packTooLargeNote } from "./studyPackSelection";
+describe("oversized files", () => {
+  const big = { filePath: "afh.pdf", fileSize: MAX_SHARED_FILE_BYTES + 1 } as never;
+  it("are not exportable even with a guide, and the limit itself is allowed", () => {
+    expect(packFileTooLarge(big)).toBe(true);
+    expect(isPackExportable(big, true, 5, true)).toBe(false);
+    expect(isPackExportable({ filePath: "a.pdf", fileSize: MAX_SHARED_FILE_BYTES } as never, false, 0)).toBe(true);
+    expect(packFileTooLarge({ filePath: null, fileSize: null })).toBe(false);
+  });
+  it("have a short plain note", () => {
+    expect(packTooLargeNote(true)).toBe("The full book is too large to share. Its chapters are shared.");
+    expect(packTooLargeNote(false)).toBe("Too large to share (over 50 MB).");
+  });
+});
+
+import { packRowBlocked } from "./studyPackSelection";
+describe("oversized books", () => {
+  const big = (id: string, root: string | null = null) => ({ ...m(id, root), filePath: `${id}.pdf`, fileSize: MAX_SHARED_FILE_BYTES + 1 }) as StudyMaterial;
+  const small = (id: string, root: string | null) => ({ ...m(id, root), filePath: `${id}.pdf`, fileSize: 1000 }) as StudyMaterial;
+  const library = [big("afh"), small("c1", "afh"), small("c2", "afh"), big("lone")];
+  it("a big book with chapters stays selectable and travels with its chapters", () => {
+    const rows = packRows(library);
+    expect(rows.map(packRowBlocked)).toEqual([false, true]);
+    const selectable = rows.filter((row) => !packRowBlocked(row)).map((row) => row.material.id);
+    expect(packMaterialIds(library, new Set(selectable))).toEqual(["afh", "c1", "c2"]);
+  });
+  it("says so in plain words", () => {
+    expect(packTooLargeNote(true)).toBe("The full book is too large to share. Its chapters are shared.");
+  });
+});
