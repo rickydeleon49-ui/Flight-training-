@@ -57,3 +57,30 @@ it("stays silent when nothing is pending or the read fails", async () => {
   await waitFor(() => expect(mocks.pending).toHaveBeenCalled());
   expect(container.textContent).toBe("");
 });
+
+it("leaves a result pending when ack fails, and shows it again on the next start", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  mocks.pending.mockResolvedValue([result]);
+  mocks.ack.mockRejectedValue(new Error("disk"));
+  const first = render(<StudyPackNotice />);
+  await screen.findByText("Your study pack was added.");
+  await waitFor(() => expect(warn).toHaveBeenCalled());
+  first.unmount();
+  render(<StudyPackNotice />);
+  expect(await screen.findByText("Your study pack was added.")).toBeTruthy();
+  warn.mockRestore();
+});
+
+it("does not mark a result told if the page went away before it was shown", async () => {
+  let release!: (value: StudyPackResult[]) => void;
+  mocks.pending.mockReturnValue(new Promise<StudyPackResult[]>((resolve) => { release = resolve; }));
+  const view = render(<StudyPackNotice />);
+  await waitFor(() => expect(mocks.pending).toHaveBeenCalled());
+  view.unmount();
+  release([result]);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(mocks.ack).not.toHaveBeenCalled();
+  mocks.pending.mockResolvedValue([result]);
+  render(<StudyPackNotice />);
+  expect(await screen.findByText("Your study pack was added.")).toBeTruthy();
+});

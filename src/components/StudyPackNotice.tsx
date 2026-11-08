@@ -6,14 +6,21 @@ import { resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
 
 /**
- * A study pack that finished while the app was closed (or before she was told)
- * is announced once after the library opens. It is marked as told as soon as it
- * is shown, so it never comes back.
+ * A study pack that finished while the app was closed (or before you were told)
+ * is announced after the library opens. It is marked as told only after it is
+ * shown. If that fails it may show again, which is safer than losing it.
  */
 export function StudyPackNotice() {
   const { status } = useAppData();
   const [results, setResults] = useState<StudyPackResult[]>([]);
   const asked = useRef(false);
+  const mounted = useRef(true);
+  const told = useRef(new Set<string>());
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   useEffect(() => {
     if (status !== "ready" || asked.current) return;
@@ -21,14 +28,23 @@ export function StudyPackNotice() {
     void (async () => {
       try {
         const pending = await pendingStudyPackResults();
-        if (pending.length === 0) return;
+        if (pending.length === 0 || !mounted.current) return;
         setResults(pending);
-        for (const result of pending) await ackStudyPackResult(result.operationId).catch(() => {});
+
       } catch {
-        /* nothing to tell her; the next start asks again */
+        /* nothing to tell you; the next start asks again */
       }
     })();
   }, [status]);
+
+  // Runs after the notice is on screen: only then is a result marked told.
+  useEffect(() => {
+    for (const result of results) {
+      if (told.current.has(result.operationId)) continue;
+      told.current.add(result.operationId);
+      void ackStudyPackResult(result.operationId).catch((error) => console.warn("study pack result not marked told", error));
+    }
+  }, [results]);
 
   if (results.length === 0) return null;
   return (

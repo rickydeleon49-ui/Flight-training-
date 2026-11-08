@@ -19,7 +19,10 @@ vi.mock("@/services/backups", async (original) => ({
   ...await original<typeof import("@/services/backups")>(), recordFreshPhoneBaseline: vi.fn(),
 }));
 
-function Ready() { return useAppData().status === "ready" ? <p>ready</p> : null; }
+function Ready() {
+  const { status, lastError } = useAppData();
+  return status === "ready" ? <><p>ready</p>{lastError ? <p>{lastError}</p> : null}</> : null;
+}
 beforeEach(async () => { vi.resetAllMocks(); localStorage.clear(); db = await createNodeSqliteDatabase(); });
 afterEach(() => { cleanup(); db.close(); localStorage.clear(); });
 
@@ -29,13 +32,27 @@ it("reconciles unfinished study packs once after the database opens, only on the
   render(<AppDataProvider><MemoryRouter><Ready /></MemoryRouter></AppDataProvider>);
   await screen.findByText("ready");
   expect(mocks.reconcile).toHaveBeenCalledOnce();
+  expect(screen.queryByText(/didn't finish adding/)).toBeNull();
 });
 
-it("a failed reconcile never blocks the app, and the web build never calls it", async () => {
+it("runs the reconcile before the library is created", async () => {
+  mocks.native = true;
+  let starterPresentDuringReconcile: unknown = "unset";
+  mocks.reconcile.mockImplementation(async () => {
+    const rows = await db.select<{ n: number }>("SELECT COUNT(*) AS n FROM study_materials");
+    starterPresentDuringReconcile = rows[0]?.n;
+  });
+  render(<AppDataProvider><MemoryRouter><Ready /></MemoryRouter></AppDataProvider>);
+  await screen.findByText("ready");
+  expect(starterPresentDuringReconcile).toBe(0);
+});
+
+it("a failed reconcile never blocks the app but tells her plainly, and the web build never calls it", async () => {
   mocks.native = true;
   mocks.reconcile.mockRejectedValue("busy");
   const first = render(<AppDataProvider><MemoryRouter><Ready /></MemoryRouter></AppDataProvider>);
   await screen.findByText("ready");
+  expect(await screen.findByText(/didn't finish adding/)).toBeTruthy();
   first.unmount();
   mocks.reconcile.mockClear();
   mocks.native = false;

@@ -96,7 +96,7 @@ describe("Add study pack dialog", () => {
     open();
     fireEvent.click(await addButton());
     await screen.findByText("1 you had removed was added back.");
-    expect(screen.getByText(/2 are other versions of guides you have/)).toBeTruthy();
+    expect(screen.getByText(/2 are other versions of things you have/)).toBeTruthy();
     expect(screen.getByText("4 picture cards were left out because you removed their picture.")).toBeTruthy();
     expect(screen.getByText("1 picture card was left out because its picture couldn't be used.")).toBeTruthy();
     expect(screen.getByRole("status").textContent!.toLowerCase()).not.toContain("newer");
@@ -131,5 +131,40 @@ describe("Add study pack dialog", () => {
     open();
     fireEvent.click(await addButton());
     expect((await screen.findByRole("alert")).textContent).toBe("That study pack couldn't be added. Nothing was changed.");
+  });
+
+  it("when the receipt lookup also fails, says it is unknown (not 'nothing changed') and retries with the same operation id", async () => {
+    mocks.add.mockRejectedValueOnce(new Error("transport closed")).mockResolvedValueOnce(done());
+    mocks.result.mockRejectedValue(new Error("lookup failed"));
+    open();
+    fireEvent.click(await addButton());
+    const message = (await screen.findByRole("alert")).textContent!;
+    expect(message).toMatch(/couldn't tell/);
+    expect(message).not.toMatch(/Nothing was changed/);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByText(/^Added 11 guides/);
+    expect(mocks.add.mock.calls[0]![0]).toBe(mocks.add.mock.calls[1]![0]);
+  });
+
+  it("acknowledges only after the summary is shown, and leaves it pending if closed during refresh", async () => {
+    mocks.add.mockResolvedValue(done());
+    let release!: () => void;
+    mocks.refresh.mockReturnValue(new Promise<void>((resolve) => { release = resolve; }));
+    const view = render(<AddStudyPackDialog open onClose={vi.fn()} />);
+    fireEvent.click(await addButton());
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    expect(mocks.ack).not.toHaveBeenCalled();
+    view.unmount();
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(mocks.ack).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges after showing the summary", async () => {
+    mocks.add.mockResolvedValue(done());
+    open();
+    fireEvent.click(await addButton());
+    await screen.findByText(/^Added 11 guides/);
+    await waitFor(() => expect(mocks.ack).toHaveBeenCalledWith("op"));
   });
 });

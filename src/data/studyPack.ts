@@ -52,7 +52,7 @@ export function studyPackErrorMessage(error: unknown, fallback: string): string 
   return typeof error === "string" && error.trim() ? error : fallback;
 }
 
-/** Ask which pack to add. Null when she cancels. */
+/** Ask which pack to add. Null when the user cancels. */
 export async function chooseStudyPack(): Promise<string | null> {
   if (!isTauri()) throw needsDesktop();
   const selected = await open({
@@ -64,7 +64,7 @@ export async function chooseStudyPack(): Promise<string | null> {
   return typeof selected === "string" ? selected : null;
 }
 
-/** Ask where to save a pack. Null when she cancels. */
+/** Ask where to save a pack. Null when the user cancels. */
 export async function chooseStudyPackDestination(): Promise<string | null> {
   if (!isTauri()) throw needsDesktop();
   return save({

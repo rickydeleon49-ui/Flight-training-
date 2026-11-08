@@ -204,6 +204,23 @@ describe("Share a study pack", () => {
       expect(packMocks.exportPack.mock.calls[0]![1]).toEqual(["book", "c1", "c2", "solo"]);
     });
 
+    it("Select all works for a large library, and deselecting a book drops its chapters", async () => {
+      const big = [mat("bigbook"), ...Array.from({ length: 100 }, (_, i) => mat(`bc${i}`, "bigbook")), ...Array.from({ length: 111 }, (_, i) => mat(`pdf${i}`))];
+      expect(big).toHaveLength(212);
+      render(h(ExportCenterDialog, { open: true, sources, materials: big, onClose: () => {} }));
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack.mock.calls[0]![1]).toHaveLength(212);
+      fireEvent.click(screen.getByRole("checkbox", { name: /bigbook/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await waitFor(() => expect(packMocks.exportPack).toHaveBeenCalledTimes(2));
+      const second = packMocks.exportPack.mock.calls[1]![1] as string[];
+      expect(second).toHaveLength(111);
+      expect(second.some((id) => id === "bigbook" || id.startsWith("bc"))).toBe(false);
+    });
+
     it("saves nothing when she cancels the save dialog, and shows an export sentence plainly", async () => {
       openPack();
       fireEvent.click(screen.getByLabelText("Share a study pack"));

@@ -29,6 +29,7 @@ export function addedLine(r: StudyPackResult): string {
     r.addedGuides ? n(r.addedGuides, "guide", "guides") : null,
     r.addedDocuments ? n(r.addedDocuments, "PDF", "PDFs") : null,
   ].filter((part): part is string => part !== null);
+  if (parts.length === 0 && r.added > 0) return "Your study pack was added. Your own work wasn't changed.";
   if (parts.length === 0) return "Everything in this study pack was already in your library. Nothing was changed.";
   return `Added ${parts.join(" and ")}. Your own work wasn't changed.`;
 }
@@ -39,8 +40,8 @@ export function resultLines(r: StudyPackResult): string[] {
   if (r.newVersions > 0) {
     lines.push(
       r.newVersions === 1
-        ? "1 is another version of a guide you have, added next to yours (marked “updated”)."
-        : `${r.newVersions} are other versions of guides you have, added next to yours (marked “updated”).`,
+        ? "1 is another version of something you have, added next to yours (marked “updated”)."
+        : `${r.newVersions} are other versions of things you have, added next to yours (marked “updated”).`,
     );
   }
   if (r.readded > 0) {

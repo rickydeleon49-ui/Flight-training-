@@ -335,7 +335,7 @@ export function StudyLibrary() {
                 {deviceCan().splitFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
-                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
+                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0 && !(studyPacksAvailable() && data.materials.length > 0)}>
                   {deviceCan().revealFiles ? "Export handout or cards…" : "Save handout or cards"}
                 </Button> : null}
               </div>

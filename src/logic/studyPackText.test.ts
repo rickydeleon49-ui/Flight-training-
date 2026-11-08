@@ -29,10 +29,17 @@ describe("study pack sentences", () => {
     expect(addedLine(result({ added: 3, addedPictures: 3 }))).not.toMatch(/picture/i);
   });
 
+  it("uses a generic success sentence for practice-only and picture-only adds", () => {
+    expect(addedLine(result({ added: 5, addedPractice: 5 }))).toBe("Your study pack was added. Your own work wasn't changed.");
+    const pics = addedLine(result({ added: 3, addedPictures: 3 }));
+    expect(pics).toBe("Your study pack was added. Your own work wasn't changed.");
+    expect(pics).not.toMatch(/picture|nothing was changed/i);
+  });
+
   it("shows added-back, another-version and left-out lines only when non-zero", () => {
     expect(resultLines(result({ addedGuides: 2 }))).toHaveLength(1);
-    expect(resultLines(result({ addedGuides: 2, newVersions: 2 }))[1]).toBe("2 are other versions of guides you have, added next to yours (marked “updated”).");
-    expect(resultLines(result({ addedGuides: 2, newVersions: 1 }))[1]).toBe("1 is another version of a guide you have, added next to yours (marked “updated”).");
+    expect(resultLines(result({ addedGuides: 2, newVersions: 2 }))[1]).toBe("2 are other versions of things you have, added next to yours (marked “updated”).");
+    expect(resultLines(result({ addedGuides: 2, newVersions: 1 }))[1]).toBe("1 is another version of something you have, added next to yours (marked “updated”).");
     expect(resultLines(result({ addedGuides: 2, readded: 1 }))[1]).toBe("1 you had removed was added back.");
     expect(resultLines(result({ addedGuides: 2, readded: 3 }))[1]).toBe("3 you had removed were added back.");
   });

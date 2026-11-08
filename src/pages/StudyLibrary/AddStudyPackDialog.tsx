@@ -24,6 +24,7 @@ type Phase =
   | { kind: "failed"; path: string; opId: string; preview: StudyPackPreview; message: string }
   | { kind: "added"; result: StudyPackResult };
 
+const UNKNOWN = "We couldn't tell if your study pack was added. Try again to check. It won't be added twice.";
 const CANT_ADD = "That study pack couldn't be added. Nothing was changed.";
 
 interface Props {
@@ -33,7 +34,7 @@ interface Props {
 
 /**
  * Add one study pack. Opening asks for a file; the dialog shows only counts.
- * One button, "Add". Nothing about her own work is ever changed. Any refusal
+ * One button, "Add". Nothing about your own work is ever changed. Any refusal
  * is one plain sentence. The operation id is minted once per preview, so
  * "Try again" (or an unknown answer) can never add the pack twice.
  */
@@ -75,15 +76,21 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
     // Only opening starts a pick.
   }, [open]);
 
+  // Leaving the page ends any pending "show the summary" step.
+  useEffect(() => () => { sessionRef.current += 1; }, []);
+
   const finish = async (result: StudyPackResult, session: number) => {
-    // Told once: the startup notice must not repeat what she just read.
-    await ackStudyPackResult(result.operationId).catch(() => {});
     try {
       await refresh();
     } catch {
       /* the summary still stands; the list updates next time it loads */
     }
-    if (sessionRef.current === session) setPhase({ kind: "added", result });
+    // Only a result you have been shown is marked told. If the dialog went away
+    // first, it stays pending and the startup notice shows it.
+    if (sessionRef.current !== session) return;
+    setPhase({ kind: "added", result });
+    // If this fails the result stays pending and may show once more: safer than losing it.
+    await ackStudyPackResult(result.operationId).catch((error) => console.warn("study pack result not marked told", error));
   };
 
   const add = async (current: { path: string; opId: string; preview: StudyPackPreview }) => {
@@ -100,14 +107,20 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
       } catch (error) {
         failure = error;
       }
+      let lookupFailed = false;
       if (result === null) {
         // Unknown outcome: the receipt says whether it was added.
-        const recorded = await studyPackResult(current.opId).catch(() => null);
-        if (recorded) result = recorded;
+        try {
+          const recorded = await studyPackResult(current.opId);
+          if (recorded) result = recorded;
+        } catch {
+          lookupFailed = true;
+        }
       }
       if (result) await finish(result, session);
       else if (sessionRef.current === session) {
-        setPhase({ ...current, kind: "failed", message: studyPackErrorMessage(failure, CANT_ADD) });
+        // Same opId on retry, so a pack that did go in comes back as its receipt.
+        setPhase({ ...current, kind: "failed", message: lookupFailed ? UNKNOWN : studyPackErrorMessage(failure, CANT_ADD) });
       }
     } finally {
       addingRef.current = false;
