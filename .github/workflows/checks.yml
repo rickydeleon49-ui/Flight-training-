@@ -1,12 +1,15 @@
 # Every change gets checked before it reaches main.
 #
-# Linux only, and deliberately one job: the packaging workflows already build
-# the real installers on macOS and Windows, and those runners bill at ten and
-# two times the Linux rate. This is the cheap gate that catches a broken test,
-# a type error, or a backup and restore guard that no longer holds.
+# Linux only: the packaging workflows already build the real installers on
+# macOS and Windows, and those runners bill at ten and two times the Linux
+# rate. This is the cheap gate that catches a broken test, a type error, or a
+# backup and restore guard that no longer holds.
 #
-# The TypeScript checks run first so an ordinary mistake fails in about a
-# minute, before the slower Rust toolchain is set up at all.
+# The app (TypeScript) side and the Rust side run as two parallel jobs, so a
+# full run takes as long as the slower one (Rust) instead of both added up.
+# Every code change runs both sides in full; only a documentation-only pull
+# request skips them. The final job keeps the old check name, so it is the
+# one result to wait on.
 #
 # The Rust side is also formatted and linted here. There is no equivalent gate
 # on the TypeScript yet.
@@ -28,13 +31,13 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Tests, types, and the data-safety guards
+  scope:
+    name: Change scope
     runs-on: ubuntu-latest
-    # A full run now takes about 45 minutes (the Rust tests are most of it).
-    # The default is six hours, which is how long a stuck run sat here before
-    # anyone noticed, so keep a cap with headroom over the normal run.
-    timeout-minutes: 60
+    timeout-minutes: 5
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      rust: ${{ steps.filter.outputs.rust }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -45,12 +48,15 @@ jobs:
       - name: Public repository hygiene
         run: bash scripts/public-hygiene.sh
 
+      # A documentation-only pull request skips both test jobs. Every other
+      # change runs both sides in full.
       - name: Detect change scope
         id: filter
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
+          heavy=true
           if [ "$EVENT_NAME" = "pull_request" ]; then
             git fetch origin "$BASE_REF" --depth=1
             CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
@@ -58,60 +64,75 @@ jobs:
             echo "$CHANGED"
             NON_DOCS=$(echo "$CHANGED" | grep -v -E '^(\.agents/|\.gemini/|docs/|.*\.md$|LICENSE(\.txt)?$)' || true)
             if [ -z "$NON_DOCS" ]; then
-              echo "Only documentation/markdown changed. Using lightweight verification path."
-              echo "run_heavy=false" >> "$GITHUB_OUTPUT"
-              exit 0
+              echo "Only documentation/markdown changed. Skipping the test jobs."
+              heavy=false
             fi
           fi
-          echo "run_heavy=true" >> "$GITHUB_OUTPUT"
+          echo "web=$heavy" >> "$GITHUB_OUTPUT"
+          echo "rust=$heavy" >> "$GITHUB_OUTPUT"
 
-      - name: Fast documentation verification
-        if: steps.filter.outputs.run_heavy == 'false'
-        run: |
-          echo "Documentation-only PR confirmed. Verification passed."
+  web:
+    name: App tests and build
+    needs: scope
+    if: needs.scope.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        if: steps.filter.outputs.run_heavy != 'false'
         with:
           node-version: 22
           cache: npm
 
-      - if: steps.filter.outputs.run_heavy != 'false'
-        run: npm ci
+      - run: npm ci
 
       # Public users install this app, so a known high or critical advisory in
       # a package that ships in the bundle stops the change (PUB-R7).
       - name: npm dependency advisories (shipped packages)
-        if: steps.filter.outputs.run_heavy != 'false'
         run: npm audit --omit=dev --audit-level=high
 
-      - if: steps.filter.outputs.run_heavy != 'false'
-        run: npm test
+      - run: npm test
 
       # The 1,000-card Study Library tier (src/perf) runs alone, after the unit
       # suite, so its long renders never compete with it for the runner's cores.
       - name: Study Library perf tier
-        if: steps.filter.outputs.run_heavy != 'false'
         run: npm run test:perf
         timeout-minutes: 10
 
       - name: Signed Mac build script refusals
-        if: steps.filter.outputs.run_heavy != 'false'
         run: node --test scripts/build-signed-mac.test.mjs
 
       - name: Third-party notices generator regressions
-        if: steps.filter.outputs.run_heavy != 'false'
         run: node --test scripts/third-party-notices.test.mjs
 
       # `npm run build` typechecks first, then produces the real frontend
       # bundle — which is also what the Rust side compiles against.
-      - if: steps.filter.outputs.run_heavy != 'false'
-        run: npm run build
+      - run: npm run build
+
+
+  rust:
+    name: Rust tests and the data-safety guards
+    needs: scope
+    if: needs.scope.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    # The Rust tests are most of a full run (about 25 minutes cold).
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      # The Rust crate compiles against the built frontend (frontendDist), and
+      # the lockfile and notices checks below are npm scripts.
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
 
       # Her backup and restore guards are Rust tests, and they need the same
       # system libraries a desktop build does.
       - name: Linux desktop libraries
-        if: steps.filter.outputs.run_heavy != 'false'
         # Usually under a minute; a slow mirror once took 29 and ate the job
         # limit. Give each try five minutes and retry instead of hanging.
         run: |
@@ -131,7 +152,6 @@ jobs:
           exit 1
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
-        if: steps.filter.outputs.run_heavy != 'false'
         with:
           components: rustfmt, clippy
       # A cache is an optimization, and it must never be able to hold the build
@@ -139,7 +159,6 @@ jobs:
       # without restoring anything or failing, so it is bounded and allowed to
       # lose: a cold compile is slow, a hung run tells you nothing at all.
       - uses: swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
-        if: steps.filter.outputs.run_heavy != 'false'
         with:
           workspaces: src-tauri
         timeout-minutes: 10
@@ -148,32 +167,45 @@ jobs:
       # Formatting and lint before the tests: both are seconds once the crate
       # is built, and both are the kind of drift nobody notices by reading.
       - name: Rust formatting
-        if: steps.filter.outputs.run_heavy != 'false'
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
 
       - name: Rust lint
-        if: steps.filter.outputs.run_heavy != 'false'
         run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
-      - if: steps.filter.outputs.run_heavy != 'false'
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
 
       - name: Cargo lockfile synchronization check
-        if: steps.filter.outputs.run_heavy != 'false'
         run: npm run test:cargo-lock
 
       # Regenerates public/THIRD_PARTY_NOTICES.txt from package-lock.json and
       # `cargo metadata` and fails if the committed file differs, so a new or
       # upgraded dependency cannot ship without its license notice.
       - name: Third-party notices are complete and current
-        if: steps.filter.outputs.run_heavy != 'false'
         run: node scripts/third-party-notices.mjs --check
 
       # RustSec advisories for every crate in Cargo.lock (PUB-R7). The tool is
       # built from crates.io with its own lockfile; rust-cache keeps the binary
       # in ~/.cargo/bin, so warm runs skip the install.
       - name: Rust dependency advisories
-        if: steps.filter.outputs.run_heavy != 'false'
         run: |
           cargo audit --version || cargo install cargo-audit --locked
           cargo audit --file src-tauri/Cargo.lock
+
+  # The one result to wait on. Passes when every side that had to run passed;
+  # a side skipped by the scope check counts as passed.
+  checks:
+    name: Tests, types, and the data-safety guards
+    needs: [scope, web, rust]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All required sides passed
+        env:
+          RESULTS: ${{ needs.scope.result }} ${{ needs.web.result }} ${{ needs.rust.result }}
+        run: |
+          echo "scope web rust: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) exit 1 ;; esac
+          done
+          test "${{ needs.scope.result }}" = success
