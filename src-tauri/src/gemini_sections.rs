@@ -237,6 +237,16 @@ struct PlannedSection {
 /// Chosen pages one request may cover. 150 pages stay well inside Gemini's
 /// document limits and Claude's 300-page / 32 MB request guards.
 const PART_PAGES: usize = 150;
+/// Claude writes longer answers than the study set can store when one request
+/// covers a whole chapter, so its guide parts are smaller.
+const CLAUDE_PART_PAGES: usize = 12;
+fn part_pages_for(model: &str) -> usize {
+    if model.starts_with("claude-") {
+        CLAUDE_PART_PAGES
+    } else {
+        PART_PAGES
+    }
+}
 /// The planner and prompt one guide is made with.
 #[derive(Clone, Copy, Debug)]
 struct Recipe {
@@ -278,11 +288,12 @@ fn plan_for(
     planner: &str,
     pages: &[u32],
     hints: &[(u32, u32, String)],
+    part_pages: usize,
 ) -> Result<Vec<Section>, SectionError> {
     if planner == LEGACY_PLANNER {
         plan_legacy(pages, hints)
     } else {
-        plan(pages, hints)
+        plan_parts(pages, hints, part_pages)
     }
 }
 fn too_many_sections() -> SectionError {
@@ -308,29 +319,37 @@ fn check_pages(pages: &[u32]) -> Result<(), SectionError> {
 /// The current planner: each run of consecutive chosen pages is one request
 /// when it has at most PART_PAGES pages; a longer run splits into the fewest
 /// parts, ending a part just before a chapter start when one keeps that count.
+#[cfg(test)]
 fn plan(pages: &[u32], hints: &[(u32, u32, String)]) -> Result<Vec<Section>, SectionError> {
+    plan_parts(pages, hints, PART_PAGES)
+}
+fn plan_parts(
+    pages: &[u32],
+    hints: &[(u32, u32, String)],
+    part_pages: usize,
+) -> Result<Vec<Section>, SectionError> {
     check_pages(pages)?;
     let starts: Vec<u32> = hints.iter().map(|(start, _, _)| *start).collect();
     let mut output = Vec::new();
     let mut run_start = 0;
     for at in 0..pages.len() {
         if at + 1 == pages.len() || pages[at + 1] != pages[at] + 1 {
-            split_run(&pages[run_start..=at], &starts, &mut output);
+            split_run(&pages[run_start..=at], &starts, part_pages, &mut output);
             run_start = at + 1;
         }
     }
     condense(output, MAX_SECTIONS).ok_or_else(too_many_sections)
 }
-fn split_run(run: &[u32], starts: &[u32], output: &mut Vec<PlannedSection>) {
+fn split_run(run: &[u32], starts: &[u32], part_pages: usize, output: &mut Vec<PlannedSection>) {
     let mut at = 0;
     while at < run.len() {
         let left = run.len() - at;
-        let parts = left.div_ceil(PART_PAGES);
+        let parts = left.div_ceil(part_pages);
         let even = left.div_ceil(parts);
         // The chapter start nearest the even split that still leaves the rest
         // within the remaining parts.
-        let size = (1..left.min(PART_PAGES + 1))
-            .filter(|&len| left - len <= PART_PAGES * (parts - 1))
+        let size = (1..left.min(part_pages + 1))
+            .filter(|&len| left - len <= part_pages * (parts - 1))
             .filter(|&len| starts.contains(&run[at + len]))
             .min_by_key(|&len| len.abs_diff(even))
             .unwrap_or(even);
@@ -600,7 +619,12 @@ fn source(
             )
         })
         .collect();
-    let manifest = plan_for(recipe.planner, &request.chosen_pages, &hints)?;
+    let manifest = plan_for(
+        recipe.planner,
+        &request.chosen_pages,
+        &hints,
+        part_pages_for(model),
+    )?;
     let selected = crate::pdf::selected_bytes(&bytes, &request.chosen_pages)?;
     if model.starts_with("claude-") {
         crate::provider::claude::check_size(selected.len() as u64)?;
@@ -851,6 +875,7 @@ fn validate_section(
 }
 /// `keep_pages` caps the cited pages: guide parts keep 10, a study kit keeps
 /// every valid citation (it can cover 150 pages).
+const TOO_LONG_MESSAGE: &str = "This section came back too long to save. Try again, or split the material into smaller page ranges.";
 fn validate_section_keeping(
     s: &Section,
     text: &str,
@@ -884,10 +909,10 @@ fn validate_section_keeping(
     source_pages.truncate(keep_pages);
     // The prompt asks for at most REQUESTED_BODY_CHARS; models sometimes run
     // over, so accept anything the study set itself can store.
-    if body.trim().is_empty()
-        || body.chars().count() > crate::study_sets::MAX_BODY
-        || source_pages.is_empty()
-    {
+    if body.chars().count() > crate::study_sets::MAX_BODY {
+        return Err(TOO_LONG_MESSAGE.into());
+    }
+    if body.trim().is_empty() || source_pages.is_empty() {
         return Err(
             "The section answer or its source pages were invalid; earlier sections are kept."
                 .into(),
