@@ -150,10 +150,15 @@ pub fn add_locked(
     if !crate::study_sets::is_lower_uuid_v4(op_id) {
         return Err(NOT_ADDED.to_string());
     }
-    reconcile::reconcile_locked(guard, root, Mode::Normal)?;
+    // From here to the receipt check, a failure can hide an earlier commit of
+    // this same operation, so the outcome is unknown, never "refused".
+    let unknown = |e: String| format!("{UNKNOWN_MARK}{e}");
+    reconcile::reconcile_locked(guard, root, Mode::Normal).map_err(unknown)?;
     // A retry of an import that already committed answers from its receipt.
-    if reconcile::receipt_exists(root, op_id)? {
-        return read_result(&read_only(root)?, op_id)?.ok_or_else(|| NOT_ADDED.to_string());
+    if reconcile::receipt_exists(root, op_id).map_err(unknown)? {
+        return read_result(&read_only(root).map_err(unknown)?, op_id)
+            .map_err(unknown)?
+            .ok_or_else(|| unknown(NOT_ADDED.to_string()));
     }
     let pack = validate_pack(pack_path)?;
     let pack_sha = sha256_of_file(pack_path)?;

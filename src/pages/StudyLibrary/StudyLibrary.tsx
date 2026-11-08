@@ -309,7 +309,7 @@ export function StudyLibrary() {
   const packEligibleIds = useMemo(() => new Set(data.materials.filter((material) => isPackExportable(
     material,
     data.aiStudySets.some((set) => set.sourceMaterialId === material.id),
-    data.practiceTests.some((test) => test.sourceMaterialId === material.id),
+    data.practiceTests.find((test) => test.sourceMaterialId === material.id)?.questions.length ?? 0,
     videoMaterialIds.has(material.id),
   )).map((material) => material.id)), [data.materials, data.aiStudySets, data.practiceTests, videoMaterialIds]);
   const canSharePack = packEligibleIds.size > 0;

@@ -33,11 +33,11 @@ import { isPackExportable } from "./studyPackSelection";
 describe("isPackExportable", () => {
   const m = (filePath: string | null) => ({ filePath }) as never;
   it("is false for an empty material and true for a PDF or generated content", () => {
-    expect(isPackExportable(m(null), false, false)).toBe(false);
-    expect(isPackExportable(m("  "), false, false)).toBe(false);
-    expect(isPackExportable(m("a.pdf"), false, false)).toBe(true);
-    expect(isPackExportable(m(null), true, false)).toBe(true);
-    expect(isPackExportable(m(null), false, true)).toBe(true);
-    expect(isPackExportable(m(null), false, false, true)).toBe(true);
+    expect(isPackExportable(m(null), false, 0)).toBe(false);
+    expect(isPackExportable(m("  "), false, 0)).toBe(false);
+    expect(isPackExportable(m("a.pdf"), false, 0)).toBe(true);
+    expect(isPackExportable(m(null), true, 0)).toBe(true);
+    expect(isPackExportable(m(null), false, 3)).toBe(true);
+    expect(isPackExportable(m(null), false, 0, true)).toBe(true);
   });
 });

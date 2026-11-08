@@ -2870,3 +2870,16 @@ fn the_preview_counts_what_is_in_the_pack_and_what_she_has_without_writing_anyth
     let preview = super::inspect::inspect_study_pack_in(her.root(), &pack).unwrap();
     assert_eq!(preview.already_in_library, 3, "the picture is never named");
 }
+
+#[test]
+fn a_failed_receipt_lookup_is_an_unknown_outcome_not_a_refusal() {
+    let (producer, _) = seeded();
+    let her = her();
+    let pack = all_pack(&producer);
+    her.conn
+        .execute_batch("DROP TABLE study_pack_acks; DROP TABLE study_pack_items; DROP TABLE study_pack_imports;")
+        .unwrap();
+    let error = add(&her, &pack).unwrap_err();
+    assert!(error.starts_with(install::UNKNOWN_MARK), "got {error}");
+    assert!(!super::mark_add_error(error).starts_with(super::REFUSED_MARK));
+}
