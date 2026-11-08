@@ -1355,6 +1355,7 @@ async fn section_generate(
                 retry_after,
             } => {
                 if ctx.provider.id() == crate::provider::ProviderId::Claude {
+                    // Intentional: Claude 429/529 keep retrying the primary and never drop to Haiku.
                     if !matches!(status, 408 | 429 | 500 | 502 | 503 | 504 | 529) {
                         return Err(SectionError::native(
                             &crate::provider::claude::error_message(status),

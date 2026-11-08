@@ -2157,6 +2157,87 @@ fn availability_fallback_covers_one_section_then_resets_and_labels_the_mix() {
     assert!(paths[2].contains("gemini-3.8-flash"));
     assert!(paths[3].contains("gemini-3.8-flash"));
     assert_eq!(answer.answer.model, "gemini-3.8-flash + gemini-3.5-flash");
+    assert!(r
+        .messages
+        .lock()
+        .unwrap()
+        .iter()
+        .any(|m| m == r.choice.fallback_notice()));
+}
+
+#[test]
+fn claude_bad_shaped_answer_retries_sonnet_without_haiku_or_notice() {
+    use std::io::{BufRead, BufReader, Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let models = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let seen = models.clone();
+    let server = std::thread::spawn(move || {
+        for (n, stream) in listener.incoming().take(2).enumerate() {
+            let mut stream = stream.unwrap();
+            let mut reader = BufReader::new(stream.try_clone().unwrap());
+            let mut length = 0;
+            loop {
+                let mut line = String::new();
+                reader.read_line(&mut line).unwrap();
+                if line == "\r\n" || line.is_empty() {
+                    break;
+                }
+                if let Some((k, v)) = line.trim_end().split_once(':') {
+                    if k.eq_ignore_ascii_case("content-length") {
+                        length = v.trim().parse().unwrap();
+                    }
+                }
+            }
+            let mut body = vec![0; length];
+            reader.read_exact(&mut body).unwrap();
+            let sent: Value = serde_json::from_slice(&body).unwrap();
+            seen.lock().unwrap().push(sent["model"].as_str().unwrap().into());
+            let text = if n == 0 {
+                "not the expected shape".to_string()
+            } else {
+                json!({"body":"Synthetic section.","sourcePages":[1]}).to_string()
+            };
+            let body = json!({"stop_reason":"end_turn","content":[{"type":"text","text":text}]}).to_string();
+            let _ = write!(stream, "HTTP/1.1 200 Test\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
+        }
+    });
+    let http = generation_client().unwrap();
+    let cache = PreparedSources::new(gemini_files::Policy::default(), gemini_files::system_clock());
+    let budget = Budget::new(Duration::from_secs(30));
+    budget.allocate_with(Arc::new(|| Some(1)));
+    let messages = std::sync::Mutex::new(Vec::<String>::new());
+    let say = |m: String| messages.lock().unwrap().push(m);
+    let ctx = GenContext {
+        provider: crate::provider::AnyProvider::Claude(crate::provider::claude::ClaudeProvider),
+        http: &http,
+        base: &base,
+        api_key: "synthetic-claude-key-only",
+        choice: ModelChoice::MostCapable,
+        cache: &cache,
+        epoch: cache.epoch(),
+        budget: &budget,
+        say: &say,
+    };
+    let section = Section {
+        id: "section-01".into(),
+        heading: "Pages 1-4".into(),
+        page_start: 1,
+        page_end: 4,
+    };
+    let done = tauri::async_runtime::block_on(section_generate(
+        &ctx,
+        &json!({}),
+        &section,
+        &[1, 2, 3, 4],
+        &|_| {},
+    ))
+    .unwrap();
+    server.join().unwrap();
+    assert_eq!(done.model, ctx.primary());
+    assert_eq!(*models.lock().unwrap(), vec![ctx.primary(); 2]);
+    assert_ne!(ctx.primary(), ctx.fallback());
+    assert!(messages.lock().unwrap().is_empty());
 }
 
 #[test]
