@@ -2123,7 +2123,9 @@ fn bad_shaped_answer_retries_the_same_model_with_no_fallback_notice() {
     let log = r.fake.log();
     let generates: Vec<_> = log.iter().filter(|q| q.is_generate()).collect();
     assert_eq!(generates.len(), 4);
-    assert!(generates.iter().all(|q| q.path.contains("gemini-3.8-flash")));
+    assert!(generates
+        .iter()
+        .all(|q| q.path.contains("gemini-3.8-flash")));
     assert!(!r
         .messages
         .lock()
@@ -2138,11 +2140,7 @@ fn availability_fallback_covers_one_section_then_resets_and_labels_the_mix() {
     r.choice = ModelChoice::MostCapable;
     r.fake.behave(|b| {
         b.generate_statuses = vec![(503, "{}".into())];
-        b.generate_answers = vec![
-            reply("First", 1),
-            reply("Second", 151),
-            reply("Third", 301),
-        ]
+        b.generate_answers = vec![reply("First", 1), reply("Second", 151), reply("Third", 301)]
     });
     let answer = r.run(None).unwrap();
     let log = r.fake.log();
@@ -2192,18 +2190,24 @@ fn claude_bad_shaped_answer_retries_sonnet_without_haiku_or_notice() {
             let mut body = vec![0; length];
             reader.read_exact(&mut body).unwrap();
             let sent: Value = serde_json::from_slice(&body).unwrap();
-            seen.lock().unwrap().push(sent["model"].as_str().unwrap().into());
+            seen.lock()
+                .unwrap()
+                .push(sent["model"].as_str().unwrap().into());
             let text = if n == 0 {
                 "not the expected shape".to_string()
             } else {
                 json!({"body":"Synthetic section.","sourcePages":[1]}).to_string()
             };
-            let body = json!({"stop_reason":"end_turn","content":[{"type":"text","text":text}]}).to_string();
+            let body = json!({"stop_reason":"end_turn","content":[{"type":"text","text":text}]})
+                .to_string();
             let _ = write!(stream, "HTTP/1.1 200 Test\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
         }
     });
     let http = generation_client().unwrap();
-    let cache = PreparedSources::new(gemini_files::Policy::default(), gemini_files::system_clock());
+    let cache = PreparedSources::new(
+        gemini_files::Policy::default(),
+        gemini_files::system_clock(),
+    );
     let budget = Budget::new(Duration::from_secs(30));
     budget.allocate_with(Arc::new(|| Some(1)));
     let messages = std::sync::Mutex::new(Vec::<String>::new());

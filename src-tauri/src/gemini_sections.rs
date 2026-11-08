@@ -1211,14 +1211,8 @@ pub(super) async fn activate(
                     1 => "Gemini is writing your study guide…".to_string(),
                     n => format!("Writing part {} of {n}: {}…", index + 1, section.heading),
                 });
-                let content = section_generate(
-                    ctx,
-                    &body,
-                    section,
-                    &identity.chosen_pages,
-                    hook,
-                )
-                .await?;
+                let content =
+                    section_generate(ctx, &body, section, &identity.chosen_pages, hook).await?;
                 hook("before-section-commit");
                 let mut d = read_draft(root, &id)?;
                 d.results.insert(
