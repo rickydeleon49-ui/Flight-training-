@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 
@@ -26,17 +27,27 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-it("shows a pending result once and marks it told", async () => {
-  mocks.pending.mockResolvedValue([result]);
-  const first = render(<StudyPackNotice />);
+// A tiny durable store: pending until acknowledged, like the native receipts.
+function durable(fail = false) {
+  const told = new Set<string>();
+  mocks.pending.mockImplementation(async () => (told.has(result.operationId) ? [] : [result]));
+  mocks.ack.mockImplementation(async (id: string) => {
+    if (fail) throw new Error("disk");
+    told.add(id);
+  });
+}
+
+it("shows a pending result once, acknowledges it exactly once under StrictMode, and never again", async () => {
+  durable();
+  const first = render(<StrictMode><StudyPackNotice /></StrictMode>);
   expect(await screen.findByText("Your study pack was added.")).toBeTruthy();
   expect(screen.getByText("Added 4 guides and 1 PDF. Your own work wasn't changed.")).toBeTruthy();
-  await waitFor(() => expect(mocks.ack).toHaveBeenCalledWith("op1"));
+  await waitFor(() => expect(mocks.ack).toHaveBeenCalled());
+  expect(mocks.ack).toHaveBeenCalledTimes(1);
+  expect(mocks.ack).toHaveBeenCalledWith("op1");
   first.unmount();
-  // The next start finds nothing pending because the ack was recorded.
-  mocks.pending.mockResolvedValue([]);
   render(<StudyPackNotice />);
-  await waitFor(() => expect(mocks.pending).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(mocks.pending.mock.calls.length).toBeGreaterThanOrEqual(2));
   expect(screen.queryByText("Your study pack was added.")).toBeNull();
 });
 
@@ -58,10 +69,9 @@ it("stays silent when nothing is pending or the read fails", async () => {
   expect(container.textContent).toBe("");
 });
 
-it("leaves a result pending when ack fails, and shows it again on the next start", async () => {
+it("leaves a result pending when ack fails, and shows it again on the next mount", async () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  mocks.pending.mockResolvedValue([result]);
-  mocks.ack.mockRejectedValue(new Error("disk"));
+  durable(true);
   const first = render(<StudyPackNotice />);
   await screen.findByText("Your study pack was added.");
   await waitFor(() => expect(warn).toHaveBeenCalled());

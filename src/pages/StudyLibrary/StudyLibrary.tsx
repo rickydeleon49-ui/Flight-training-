@@ -42,6 +42,7 @@ import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
 import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
+import { isPackExportable } from "@/logic/studyPackSelection";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -294,6 +295,11 @@ export function StudyLibrary() {
   };
 
   const hasAny = data.materials.length > 0;
+  const canSharePack = useMemo(() => data.materials.some((material) => isPackExportable(
+    material,
+    data.aiStudySets.some((set) => set.sourceMaterialId === material.id),
+    data.practiceTests.some((test) => test.sourceMaterialId === material.id),
+  )), [data.materials, data.aiStudySets, data.practiceTests]);
   const exportSources = useMemo(() => data.materials.flatMap((material) => {
     const source = {
       material: { title: material.title },
@@ -335,7 +341,7 @@ export function StudyLibrary() {
                 {deviceCan().splitFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
-                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0 && !(studyPacksAvailable() && data.materials.length > 0)}>
+                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0 && !(studyPacksAvailable() && canSharePack)}>
                   {deviceCan().revealFiles ? "Export handout or cards…" : "Save handout or cards"}
                 </Button> : null}
               </div>

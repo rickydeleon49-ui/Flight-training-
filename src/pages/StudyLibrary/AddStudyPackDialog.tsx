@@ -85,13 +85,21 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
     } catch {
       /* the summary still stands; the list updates next time it loads */
     }
-    // Only a result you have been shown is marked told. If the dialog went away
-    // first, it stays pending and the startup notice shows it.
+    // If the dialog went away first, the result stays pending and the startup
+    // notice shows it. It is marked told only after the summary is on screen
+    // (see the effect below).
     if (sessionRef.current !== session) return;
     setPhase({ kind: "added", result });
-    // If this fails the result stays pending and may show once more: safer than losing it.
-    await ackStudyPackResult(result.operationId).catch((error) => console.warn("study pack result not marked told", error));
   };
+
+  const toldRef = useRef(new Set<string>());
+  const shownResult = phase.kind === "added" ? phase.result : null;
+  useEffect(() => {
+    if (!shownResult || toldRef.current.has(shownResult.operationId)) return;
+    toldRef.current.add(shownResult.operationId);
+    // If this fails the result stays pending and may show once more: safer than losing it.
+    void ackStudyPackResult(shownResult.operationId).catch((error) => console.warn("study pack result not marked told", error));
+  }, [shownResult]);
 
   const add = async (current: { path: string; opId: string; preview: StudyPackPreview }) => {
     current = { path: current.path, opId: current.opId, preview: current.preview };
@@ -107,20 +115,22 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
       } catch (error) {
         failure = error;
       }
-      let lookupFailed = false;
+      // Only a plain sentence from the app is a definite refusal. Anything else
+      // (a lost connection, an unknown error) leaves the outcome unknown.
+      const definite = typeof failure === "string" && failure.trim() !== "";
       if (result === null) {
-        // Unknown outcome: the receipt says whether it was added.
+        // The receipt says whether it was added.
         try {
           const recorded = await studyPackResult(current.opId);
           if (recorded) result = recorded;
         } catch {
-          lookupFailed = true;
+          /* unknown outcome; handled below */
         }
       }
       if (result) await finish(result, session);
       else if (sessionRef.current === session) {
         // Same opId on retry, so a pack that did go in comes back as its receipt.
-        setPhase({ ...current, kind: "failed", message: lookupFailed ? UNKNOWN : studyPackErrorMessage(failure, CANT_ADD) });
+        setPhase({ ...current, kind: "failed", message: definite ? studyPackErrorMessage(failure, CANT_ADD) : UNKNOWN });
       }
     } finally {
       addingRef.current = false;

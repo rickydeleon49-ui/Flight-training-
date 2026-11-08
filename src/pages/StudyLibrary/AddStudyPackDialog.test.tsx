@@ -125,12 +125,23 @@ describe("Add study pack dialog", () => {
     expect(mocks.ack).toHaveBeenCalledWith("op");
   });
 
-  it("with no receipt and no sentence, says nothing was changed", async () => {
+  it("with a transport failure and no receipt, says the outcome is unknown, not 'nothing changed'", async () => {
     mocks.add.mockRejectedValue(new Error("transport closed"));
     mocks.result.mockResolvedValue(null);
     open();
     fireEvent.click(await addButton());
-    expect((await screen.findByRole("alert")).textContent).toBe("That study pack couldn't be added. Nothing was changed.");
+    const message = (await screen.findByRole("alert")).textContent!;
+    expect(message).toMatch(/couldn't tell/);
+    expect(message).not.toMatch(/Nothing was changed/);
+  });
+
+  it("keeps a definite refusal when the receipt lookup also fails", async () => {
+    const busy = "Your library is busy. Try again in a moment.";
+    mocks.add.mockRejectedValue(busy);
+    mocks.result.mockRejectedValue(new Error("lookup failed"));
+    open();
+    fireEvent.click(await addButton());
+    expect((await screen.findByRole("alert")).textContent).toBe(busy);
   });
 
   it("when the receipt lookup also fails, says it is unknown (not 'nothing changed') and retries with the same operation id", async () => {
@@ -160,11 +171,17 @@ describe("Add study pack dialog", () => {
     expect(mocks.ack).not.toHaveBeenCalled();
   });
 
-  it("acknowledges after showing the summary", async () => {
+  it("acknowledges only once the summary is in the document", async () => {
     mocks.add.mockResolvedValue(done());
+    let shownAtAck: boolean | null = null;
+    mocks.ack.mockImplementation(async () => {
+      shownAtAck = document.body.textContent!.includes("Added 11 guides and 3 PDFs.");
+    });
     open();
     fireEvent.click(await addButton());
     await screen.findByText(/^Added 11 guides/);
     await waitFor(() => expect(mocks.ack).toHaveBeenCalledWith("op"));
+    expect(shownAtAck).toBe(true);
+    expect(mocks.ack).toHaveBeenCalledTimes(1);
   });
 });

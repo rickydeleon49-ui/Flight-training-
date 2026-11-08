@@ -28,3 +28,15 @@ describe("study pack selection", () => {
     expect(packMaterialIds(library, new Set(["orphan", "solo", "nope"]))).toEqual(["solo", "orphan"]);
   });
 });
+
+import { isPackExportable } from "./studyPackSelection";
+describe("isPackExportable", () => {
+  const m = (filePath: string | null) => ({ filePath }) as never;
+  it("is false for an empty material and true for a PDF or generated content", () => {
+    expect(isPackExportable(m(null), false, false)).toBe(false);
+    expect(isPackExportable(m("  "), false, false)).toBe(false);
+    expect(isPackExportable(m("a.pdf"), false, false)).toBe(true);
+    expect(isPackExportable(m(null), true, false)).toBe(true);
+    expect(isPackExportable(m(null), false, true)).toBe(true);
+  });
+});

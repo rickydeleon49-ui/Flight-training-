@@ -30,3 +30,12 @@ export function packMaterialIds(materials: readonly StudyMaterial[], chosen: Rea
   }
   return ids;
 }
+
+/**
+ * Whether a material can go into a shared pack. Mirrors the native export: a
+ * material with a file always can; a note needs a guide or practice questions
+ * (its video links are not loaded here).
+ */
+export function isPackExportable(material: StudyMaterial, hasGuide: boolean, hasPractice: boolean): boolean {
+  return Boolean(material.filePath?.trim()) || hasGuide || hasPractice;
+}
