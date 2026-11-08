@@ -19,10 +19,10 @@ vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ refresh: mocks.r
 
 const { AddStudyPackDialog } = await import("./AddStudyPackDialog");
 
-const preview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 3, skippedItems: [], nothingNew: false };
+const preview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 3, skippedItems: [], labelledItems: [], nothingNew: false };
 const done = (patch: Partial<StudyPackResult> = {}): StudyPackResult => ({
   operationId: "op", packId: "p", added: 14, addedGuides: 11, addedDocuments: 3, addedPictures: 0, addedPractice: 0,
-  skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "x", skippedItems: [], ...patch,
+  skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "x", skippedItems: [], labelledItems: [], ...patch,
 });
 
 beforeEach(() => {
@@ -86,8 +86,8 @@ describe("Add study pack dialog", () => {
     fireEvent.click(await addButton());
     expect(await screen.findByText("Added 11 guides and 3 PDFs. Your own work wasn't changed.")).toBeTruthy();
     expect(mocks.add).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f-]{36}$/), "/picked/pack.hfdpack");
-    expect(mocks.ack).toHaveBeenCalledWith("op");
-    expect(mocks.refresh).toHaveBeenCalled();
+    await waitFor(() => expect(mocks.ack).toHaveBeenCalledWith("op"));
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
     expect(screen.queryByText(/another version|added back|left out/)).toBeNull();
   });
 
@@ -116,18 +116,47 @@ describe("Add study pack dialog", () => {
     expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
   });
 
-  it("titles a pack with nothing new 'Already in your library', in the preview and after adding", async () => {
+  it("with nothing new there is no Add button, only Close, and the items are named", async () => {
     const skippedItems = [{ title: "Handbook", reason: "already in your library" }];
     mocks.inspect.mockResolvedValue({ ...preview, alreadyInLibrary: 1, skippedItems, nothingNew: true });
-    mocks.add.mockResolvedValue(done({ added: 0, addedGuides: 0, addedDocuments: 0, skipped: 1, skippedItems }));
+    open();
+    await screen.findByRole("heading", { name: "Already in your library" });
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+    expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Close" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(mocks.add).not.toHaveBeenCalled();
+  });
+
+  it("names each labelled item in the preview and in the summary", async () => {
+    const labelledItems = [{ title: "AC 90-66C", reason: 'added as "AC 90-66C (from study pack)" next to yours' }];
+    const line = 'AC 90-66C — added as "AC 90-66C (from study pack)" next to yours';
+    mocks.inspect.mockResolvedValue({ ...preview, labelledItems });
+    mocks.add.mockResolvedValue(done({ newVersions: 1, labelledItems }));
     open();
     await addButton();
-    expect(screen.getByRole("heading", { name: "Already in your library" })).toBeTruthy();
+    expect(screen.getByText(line)).toBeTruthy();
     fireEvent.click(await addButton());
-    await screen.findByText("Everything in this study pack was already in your library. Nothing was changed.");
-    expect(screen.getByRole("heading", { name: "Already in your library" })).toBeTruthy();
-    expect(screen.queryByText("Study pack added")).toBeNull();
-    expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
+    await screen.findByText("Added 11 guides and 3 PDFs. Your own work wasn't changed.");
+    expect(screen.getByText(line)).toBeTruthy();
+  });
+
+  it("shows the waiting line while previewing and while adding", async () => {
+    const wait = "This can take a minute or two. Keep the app open.";
+    let release: (p: typeof preview) => void = () => {};
+    mocks.inspect.mockReturnValue(new Promise((r) => { release = r; }));
+    let finish: (r: ReturnType<typeof done>) => void = () => {};
+    mocks.add.mockReturnValue(new Promise((r) => { finish = r; }));
+    open();
+    expect(await screen.findByText(wait)).toBeTruthy();
+    release(preview);
+    expect(await screen.findByRole("button", { name: "Add" })).toBeTruthy();
+    expect(screen.queryByText(wait)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(await screen.findByText(wait)).toBeTruthy();
+    finish(done());
+    await screen.findByText("Study pack added");
+    expect(screen.queryByText(wait)).toBeNull();
   });
 
   it("shows the busy sentence, changes nothing, and Try again reuses the same operation id", async () => {

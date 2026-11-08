@@ -153,6 +153,31 @@ fn cards(n: u64, why: &str) -> String {
 }
 
 impl Plan {
+    /// Every item added next to something of hers with a label, by title,
+    /// with the title it was stored under. Pictures are not counted here.
+    pub fn labelled(&self, pack: &ValidatedPack) -> Vec<SkippedItem> {
+        let mut out = Vec::new();
+        for (plan, item) in self.items.iter().zip(&pack.items) {
+            if plan.decision != Decision::Add
+                || plan.label.is_none()
+                || item.manifest.kind == "picture"
+            {
+                continue;
+            }
+            let stored = titles::stored(&item.json.title, plan.label.as_deref());
+            let title = if item.json.title.trim().is_empty() {
+                "Untitled".to_string()
+            } else {
+                item.json.title.clone()
+            };
+            out.push(SkippedItem {
+                title,
+                reason: format!("added as \"{stored}\" next to yours"),
+            });
+        }
+        out
+    }
+
     /// Every skipped item and everything left out, by title, with a reason.
     pub fn named(&self, pack: &ValidatedPack) -> Vec<SkippedItem> {
         let added: BTreeSet<&str> = self

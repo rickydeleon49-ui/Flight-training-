@@ -32,6 +32,9 @@ export function namedItemLines(items: readonly StudyPackNamedItem[] | undefined)
   return (items ?? []).map((item) => `${item.title} — ${item.reason}`);
 }
 
+/** Shown while a big pack is being read or added. */
+export const WAIT_LINE = "This can take a minute or two. Keep the app open.";
+
 /** "Added 11 guides and 3 PDFs." from the guide and PDF counts only. */
 export function addedLine(r: StudyPackResult): string {
   const parts = [
@@ -75,12 +78,12 @@ export function resultLines(r: StudyPackResult): string[] {
         : `${other} picture cards were left out because their picture couldn't be used.`,
     );
   }
-  return [...lines, ...named];
+  return [...lines, ...namedItemLines(r.labelledItems), ...named];
 }
 
 /** After sharing: what went into the pack, so the sender can check it before sending. */
 export function packSavedSentence(s: StudyPackExportSummary): string {
-  const contents = packContentsLine({ ...s, alreadyInLibrary: 0, skippedItems: [], nothingNew: false });
+  const contents = packContentsLine({ ...s, alreadyInLibrary: 0, skippedItems: [], labelledItems: [], nothingNew: false });
   const left = s.cardsLeftOut > 0
     ? (s.cardsLeftOut === 1
       ? " 1 picture card was left out because its picture couldn't be shared."
