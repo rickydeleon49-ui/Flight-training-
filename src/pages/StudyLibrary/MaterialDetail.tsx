@@ -1121,7 +1121,8 @@ function MaterialDetailPage() {
             <p>This study file is missing. Everything you wrote is still here.</p>
             {deviceCan().splitFiles ? <Button disabled={restoringFile} onClick={() => void restoreFile()}>{restoringFile ? "Restoring…" : "Find and restore file"}</Button> : null}
           </div> : null}
-          {!material.filePath && !studySet ? <Card><CardBody>
+          {!material.filePath && !studySet && chapterPartIds.length > 0 ? <p className="small muted" role="status">This book's chapters are listed under it in your library.</p> : null}
+          {!material.filePath && !studySet && chapterPartIds.length === 0 ? <Card><CardBody>
             <p className="small muted">Write a study guide in your own words.</p>
             <StartManualStudySet material={material} />
           </CardBody></Card> : null}

@@ -1567,3 +1567,35 @@ fn item_json_alone_counts_toward_the_memory_budget() {
     assert!(!lib.out("item-budget.hfdpack").exists());
     assert!(run(file + 1024 * 1024).is_ok());
 }
+
+#[test]
+fn a_file_over_the_share_limit_errors_with_its_title() {
+    let lib = lib();
+    lib.material(
+        "big",
+        "Airplane Flying Handbook",
+        Some(("f.pdf", &pdf_bytes(2, "big"))),
+    );
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(lib.root().join("documents").join("big-f.pdf"))
+        .unwrap()
+        .set_len(crate::pdf::MAX_PDF_BYTES + 1)
+        .unwrap();
+    let error = lib.export(&["big"], "big.hfdpack").unwrap_err();
+    assert_eq!(
+        error,
+        "\"Airplane Flying Handbook\" is too large to share (over 50 MB)."
+    );
+    assert!(!lib.out("big.hfdpack").exists());
+}
+
+#[test]
+fn the_typescript_share_limit_matches_the_native_one() {
+    let typescript = include_str!("../../../src/logic/studyPackSelection.ts");
+    let mb = crate::pdf::MAX_PDF_BYTES / (1024 * 1024);
+    assert!(
+        typescript.contains(&format!("MAX_SHARED_FILE_BYTES = {mb} * 1024 * 1024;")),
+        "update MAX_SHARED_FILE_BYTES"
+    );
+}

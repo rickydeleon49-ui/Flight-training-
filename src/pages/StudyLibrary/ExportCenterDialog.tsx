@@ -14,7 +14,7 @@ import { buildFlashcardCsv, EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv"
 import type { StudyMaterial } from "@/domain/types";
 import { chooseStudyPackDestination, exportStudyPack, studyPackErrorMessage, studyPacksAvailable } from "@/data/studyPack";
 import { chapterCountLabel } from "@/logic/chapterGroups";
-import { packMaterialIds, packRows } from "@/logic/studyPackSelection";
+import { packFileTooLarge, packMaterialIds, packRowBlocked, packRows, packTooLargeNote } from "@/logic/studyPackSelection";
 import { packSavedSentence } from "@/logic/studyPackText";
 import { deviceCan } from "@/services/platform";
 import { DesktopOnlyError } from "@/services/documents";
@@ -162,6 +162,8 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
       description="Choose study materials to bring together in a file. Your library stays the same."
       footer={(
         <>
+          {error ? <p className="field__error" role="alert" style={{ flexBasis: "100%", margin: 0 }}>{error}</p> : null}
+          {saved ? <p className="small" role="status" style={{ flexBasis: "100%", margin: 0 }}>{saved}</p> : null}
           <Button variant="ghost" onClick={onClose} disabled={working}>{saved ? "Done" : "Cancel"}</Button>
           <Button variant="primary" onClick={() => void save()} disabled={working || (output === "pack" ? packIds.length === 0 : output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
             {working ? "Saving…" : output === "pack" ? "Save study pack…" : output === "csv" ? (mac ? "Save CSV…" : "Save CSV") : (mac ? "Save handout…" : "Save handout")}
@@ -215,8 +217,6 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
           );
         })}
         {output !== "pack" && hasQuestions ? <Choice checked={answerKey} onChange={setAnswerKey} disabled={working} label="Add one answer key at the end" detail="Quiz yourself before turning to the answers." /> : null}
-        {error ? <p className="field__error" role="alert">{error}</p> : null}
-        {saved ? <p className="small" role="status">{saved}</p> : null}
       </div>
     </Dialog>
   );
@@ -224,7 +224,8 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
 
 function PackPicker({ materials, chosen, disabled, onChange }: { materials: StudyMaterial[]; chosen: Set<string>; disabled: boolean; onChange: (next: Set<string>) => void }) {
   const rows = packRows(materials);
-  const allChosen = rows.length > 0 && rows.every((row) => chosen.has(row.material.id));
+  const selectable = rows.filter((row) => !packRowBlocked(row));
+  const allChosen = selectable.length > 0 && selectable.every((row) => chosen.has(row.material.id));
   const toggle = (id: string, checked: boolean) => {
     const next = new Set(chosen);
     if (checked) next.add(id); else next.delete(id);
@@ -234,13 +235,17 @@ function PackPicker({ materials, chosen, disabled, onChange }: { materials: Stud
     <fieldset className="export-study__choices" disabled={disabled}>
       <legend className="field__label">Choose what to share</legend>
       <label className="small">
-        <input type="checkbox" checked={allChosen} onChange={(event) => onChange(event.target.checked ? new Set(rows.map((row) => row.material.id)) : new Set())} /> Select all
+        <input type="checkbox" checked={allChosen} onChange={(event) => onChange(event.target.checked ? new Set(selectable.map((row) => row.material.id)) : new Set())} /> Select all
       </label>
-      {rows.map(({ material, chapters }) => (
+      {rows.map(({ material, chapters }) => {
+        const tooLarge = packFileTooLarge(material);
+        const blocked = tooLarge && chapters.length === 0;
+        return (
         <div key={material.id} className="stack stack--1">
           <label className="small">
-            <input type="checkbox" checked={chosen.has(material.id)} onChange={(event) => toggle(material.id, event.target.checked)} /> <strong>{material.title.trim() || "Study material"}</strong>
-            {chapters.length > 0 ? <span className="tiny dim"> — with its {chapterCountLabel(chapters.length)}</span> : null}
+            <input type="checkbox" checked={!blocked && chosen.has(material.id)} disabled={blocked} onChange={(event) => toggle(material.id, event.target.checked)} /> <strong>{material.title.trim() || "Study material"}</strong>
+            {tooLarge ? <span className="tiny dim"> — {packTooLargeNote(chapters.length > 0)}</span>
+              : chapters.length > 0 ? <span className="tiny dim"> — with its {chapterCountLabel(chapters.length)}</span> : null}
           </label>
           {chapters.length > 0 ? (
             <ul className="tiny dim" aria-label={`Chapters of ${material.title.trim() || "this book"}`}>
@@ -248,7 +253,8 @@ function PackPicker({ materials, chosen, disabled, onChange }: { materials: Stud
             </ul>
           ) : null}
         </div>
-      ))}
+        );
+      })}
     </fieldset>
   );
 }

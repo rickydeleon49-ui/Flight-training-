@@ -221,6 +221,22 @@ describe("Share a study pack", () => {
       expect(second.some((id) => id === "bigbook" || id.startsWith("bc"))).toBe(false);
     });
 
+    it("shows a rejection next to the buttons, and disables an oversized book", async () => {
+      const huge = { ...(mat("huge") as object), filePath: "huge.pdf", fileSize: 260 * 1024 * 1024 } as never;
+      render(h(ExportCenterDialog, { open: true, sources, materials: [huge, ...library], onClose: () => {} }));
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      expect((screen.getByRole("checkbox", { name: /huge/ }) as HTMLInputElement).disabled).toBe(true);
+      expect(screen.getByText(/Too large to share \(over 50 MB\)\./)).toBeTruthy();
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      packMocks.exportPack.mockRejectedValue('"AFH" is too large to share (over 50 MB).');
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe('"AFH" is too large to share (over 50 MB).');
+      expect(packMocks.exportPack.mock.calls[0]![1]).not.toContain("huge");
+      const footer = screen.getByRole("button", { name: "Save study pack…" }).closest(".dialog__footer");
+      expect(footer?.contains(alert)).toBe(true);
+    });
+
     it("leaves out materials with nothing to share, and Select all skips them", async () => {
       render(h(ExportCenterDialog, { open: true, sources, materials: library, packEligibleIds: new Set(["book", "c1", "c2"]), onClose: () => {} }));
       fireEvent.click(screen.getByLabelText("Share a study pack"));

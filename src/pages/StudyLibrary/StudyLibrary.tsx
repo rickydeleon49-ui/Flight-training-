@@ -42,7 +42,7 @@ import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
 import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
-import { isPackExportable } from "@/logic/studyPackSelection";
+import { isPackExportable, packFileTooLarge, packRowBlocked, packRows } from "@/logic/studyPackSelection";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -306,13 +306,14 @@ export function StudyLibrary() {
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [videoLinks, dataRevision]);
-  const packEligibleIds = useMemo(() => new Set(data.materials.filter((material) => isPackExportable(
+  // Oversized files stay listed (disabled) so the student sees why they are not offered.
+  const packEligibleIds = useMemo(() => new Set(data.materials.filter((material) => packFileTooLarge(material) || isPackExportable(
     material,
     data.aiStudySets.some((set) => set.sourceMaterialId === material.id),
     data.practiceTests.find((test) => test.sourceMaterialId === material.id)?.questions.length ?? 0,
     videoMaterialIds.has(material.id),
   )).map((material) => material.id)), [data.materials, data.aiStudySets, data.practiceTests, videoMaterialIds]);
-  const canSharePack = packEligibleIds.size > 0;
+  const canSharePack = useMemo(() => packRows(data.materials.filter((material) => packEligibleIds.has(material.id))).some((row) => !packRowBlocked(row)), [data.materials, packEligibleIds]);
   const exportSources = useMemo(() => data.materials.flatMap((material) => {
     const source = {
       material: { title: material.title },
