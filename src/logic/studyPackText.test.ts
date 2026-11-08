@@ -1,25 +1,26 @@
 import { describe, expect, it } from "vitest";
 
 import type { StudyPackPreview, StudyPackResult } from "@/data/studyPack";
-import { addedLine, packAlreadyHaveLine, packContentsLine, packSavedSentence, resultLines } from "./studyPackText";
+import { ALREADY_TITLE, addedLine, namedItemLines, packAlreadyHaveLine, packContentsLine, packSavedSentence, resultLines } from "./studyPackText";
 
 const base: StudyPackResult = {
   operationId: "op", packId: "p", added: 0, addedGuides: 0, addedDocuments: 0, addedPictures: 0, addedPractice: 0,
   skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "2026-11-07T00:00:00Z",
+  skippedItems: [],
 };
 const result = (patch: Partial<StudyPackResult>): StudyPackResult => ({ ...base, ...patch });
 
 describe("study pack sentences", () => {
   it("counts only what the pack holds", () => {
-    const p: StudyPackPreview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 0 };
+    const p: StudyPackPreview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 0, skippedItems: [], nothingNew: false };
     expect(packContentsLine(p)).toBe("14 guides · 280 cards · 140 practice questions · 31 videos · 14 PDFs");
     expect(packContentsLine({ ...p, guides: 1, cards: 0, questions: 0, videos: 0, documents: 1 })).toBe("1 guide · 1 PDF");
   });
 
   it("says 'already in your library' only when non-zero", () => {
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 0 })).toBeNull();
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3 })).toBe("3 are already in your library.");
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1 })).toBe("1 is already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 0, skippedItems: [], nothingNew: false })).toBeNull();
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3, skippedItems: [], nothingNew: false })).toBe("3 are already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1, skippedItems: [], nothingNew: false })).toBe("1 is already in your library.");
   });
 
   it("builds the Added line from guides and PDFs only, dropping a zero part, never naming pictures", () => {
@@ -38,8 +39,8 @@ describe("study pack sentences", () => {
 
   it("shows added-back, another-version and left-out lines only when non-zero", () => {
     expect(resultLines(result({ addedGuides: 2 }))).toHaveLength(1);
-    expect(resultLines(result({ addedGuides: 2, newVersions: 2 }))[1]).toBe("2 are other versions of things you have, added next to yours (marked “updated”).");
-    expect(resultLines(result({ addedGuides: 2, newVersions: 1 }))[1]).toBe("1 is another version of something you have, added next to yours (marked “updated”).");
+    expect(resultLines(result({ addedGuides: 2, newVersions: 2 }))[1]).toBe("2 are other versions of things you have, added next to yours with a label.");
+    expect(resultLines(result({ addedGuides: 2, newVersions: 1 }))[1]).toBe("1 is another version of something you have, added next to yours with a label.");
     expect(resultLines(result({ addedGuides: 2, readded: 1 }))[1]).toBe("1 you had removed was added back.");
     expect(resultLines(result({ addedGuides: 2, readded: 3 }))[1]).toBe("3 you had removed were added back.");
   });
@@ -54,6 +55,31 @@ describe("study pack sentences", () => {
 
   it("says nothing was changed when everything was already there", () => {
     expect(resultLines(result({ skipped: 5 }))).toEqual(["Everything in this study pack was already in your library. Nothing was changed."]);
+  });
+
+  it("names each skipped or left-out item by title and reason, after the counts", () => {
+    const skippedItems = [
+      { title: "Handbook", reason: "already in your library" },
+      { title: "Notes", reason: "same as another item in this study pack" },
+      { title: "Panel guide", reason: "1 picture card left out (the picture already has 20 cards)" },
+    ];
+    expect(namedItemLines(skippedItems)).toEqual([
+      "Handbook — already in your library",
+      "Notes — same as another item in this study pack",
+      "Panel guide — 1 picture card left out (the picture already has 20 cards)",
+    ]);
+    expect(namedItemLines(undefined)).toEqual([]);
+    const lines = resultLines(result({ added: 1, addedGuides: 1, skipped: 2, cardsLeftOut: 1, skippedItems }));
+    expect(lines).toEqual([
+      "Added 1 guide. Your own work wasn't changed.",
+      "Handbook — already in your library",
+      "Notes — same as another item in this study pack",
+      "Panel guide — 1 picture card left out (the picture already has 20 cards)",
+    ]);
+  });
+
+  it("titles a pack with nothing new 'Already in your library'", () => {
+    expect(ALREADY_TITLE).toBe("Already in your library");
   });
 
   it("never says 'newer' in any result sentence", () => {

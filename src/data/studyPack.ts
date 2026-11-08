@@ -8,6 +8,12 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 
 import { isTauri } from "@/data";
 
+/** One item not added (or added with something left out), by title, with the reason. */
+export interface StudyPackNamedItem {
+  title: string;
+  reason: string;
+}
+
 export interface StudyPackPreview {
   guides: number;
   cards: number;
@@ -15,6 +21,9 @@ export interface StudyPackPreview {
   videos: number;
   documents: number;
   alreadyInLibrary: number;
+  skippedItems: StudyPackNamedItem[];
+  /** Nothing in the pack would be added. */
+  nothingNew: boolean;
 }
 
 export interface StudyPackResult {
@@ -31,6 +40,8 @@ export interface StudyPackResult {
   cardsLeftOut: number;
   cardsLeftOutRemoved: number;
   committedAt: string;
+  /** Told once, right after adding; a result read back from its receipt has none. */
+  skippedItems: StudyPackNamedItem[];
 }
 
 export interface StudyPackExportSummary {

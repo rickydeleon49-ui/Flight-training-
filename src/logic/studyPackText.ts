@@ -1,9 +1,10 @@
 /**
  * The plain sentences a student reads about a study pack (design section 7).
- * Counts only; no file names, no ids. Pictures are never named, and nothing
- * here says "newer": a pack's age cannot be proved from its contents.
+ * Counts, plus each skipped or left-out item by its title and reason; no file
+ * names, no ids. Nothing here says "newer": a pack's age cannot be proved from
+ * its contents.
  */
-import type { StudyPackExportSummary, StudyPackPreview, StudyPackResult } from "@/data/studyPack";
+import type { StudyPackExportSummary, StudyPackNamedItem, StudyPackPreview, StudyPackResult } from "@/data/studyPack";
 
 const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
@@ -23,6 +24,14 @@ export function packAlreadyHaveLine(p: StudyPackPreview): string | null {
   return `${p.alreadyInLibrary} ${p.alreadyInLibrary === 1 ? "is" : "are"} already in your library.`;
 }
 
+/** Title shown when nothing in the pack would be (or was) added. */
+export const ALREADY_TITLE = "Already in your library";
+
+/** "Handbook — already in your library", one line per named item. */
+export function namedItemLines(items: readonly StudyPackNamedItem[] | undefined): string[] {
+  return (items ?? []).map((item) => `${item.title} — ${item.reason}`);
+}
+
 /** "Added 11 guides and 3 PDFs." from the guide and PDF counts only. */
 export function addedLine(r: StudyPackResult): string {
   const parts = [
@@ -40,15 +49,18 @@ export function resultLines(r: StudyPackResult): string[] {
   if (r.newVersions > 0) {
     lines.push(
       r.newVersions === 1
-        ? "1 is another version of something you have, added next to yours (marked “updated”)."
-        : `${r.newVersions} are other versions of things you have, added next to yours (marked “updated”).`,
+        ? "1 is another version of something you have, added next to yours with a label."
+        : `${r.newVersions} are other versions of things you have, added next to yours with a label.`,
     );
   }
   if (r.readded > 0) {
     lines.push(r.readded === 1 ? "1 you had removed was added back." : `${r.readded} you had removed were added back.`);
   }
-  const removed = Math.min(r.cardsLeftOutRemoved, r.cardsLeftOut);
-  const other = r.cardsLeftOut - removed;
+  const named = namedItemLines(r.skippedItems);
+  // Named items already say which cards were left out and why.
+  const cardsLeftOut = named.length > 0 ? 0 : r.cardsLeftOut;
+  const removed = Math.min(r.cardsLeftOutRemoved, cardsLeftOut);
+  const other = cardsLeftOut - removed;
   if (removed > 0) {
     lines.push(
       removed === 1
@@ -63,12 +75,12 @@ export function resultLines(r: StudyPackResult): string[] {
         : `${other} picture cards were left out because their picture couldn't be used.`,
     );
   }
-  return lines;
+  return [...lines, ...named];
 }
 
 /** After sharing: what went into the pack, so the sender can check it before sending. */
 export function packSavedSentence(s: StudyPackExportSummary): string {
-  const contents = packContentsLine({ ...s, alreadyInLibrary: 0 });
+  const contents = packContentsLine({ ...s, alreadyInLibrary: 0, skippedItems: [], nothingNew: false });
   const left = s.cardsLeftOut > 0
     ? (s.cardsLeftOut === 1
       ? " 1 picture card was left out because its picture couldn't be shared."

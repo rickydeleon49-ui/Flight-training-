@@ -18,6 +18,7 @@ const { StudyPackNotice } = await import("./StudyPackNotice");
 const result: StudyPackResult = {
   operationId: "op1", packId: "p", added: 5, addedGuides: 4, addedDocuments: 1, addedPictures: 0, addedPractice: 0,
   skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "x",
+  skippedItems: [],
 };
 
 beforeEach(() => {

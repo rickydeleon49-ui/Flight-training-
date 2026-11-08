@@ -1304,3 +1304,126 @@ pub(crate) fn entry_names(path: &Path) -> std::collections::HashSet<String> {
         .map(|i| archive.by_index(i).unwrap().name().unwrap().into_owned())
         .collect()
 }
+
+/* ------------------------------------------------------------------ */
+/* Fresh fingerprint (import's identical-now check)                    */
+/* ------------------------------------------------------------------ */
+
+/// One material as it is in the library right now, in pack form: its kind,
+/// its item and its file (re-read and re-hashed). Pictures its cards use are
+/// re-hashed too. Read-only. `Err` when it can't be read in full, which never
+/// counts as identical.
+pub(super) fn fresh_item(
+    conn: &Connection,
+    root: &Path,
+    material_id: &str,
+) -> Result<(String, ItemJson, Option<ManifestFile>), String> {
+    let mut budget = Budget::new(Limits {
+        max_items: usize::MAX,
+        max_bytes: u64::MAX,
+    });
+    let m = load_material(conn, root, material_id, false, &mut budget)?;
+    let is_picture = matches!(m.file, Some(FileData::Png { .. }));
+    let kind = match &m.file {
+        None => "guide",
+        Some(FileData::Pdf { .. }) => "document",
+        Some(FileData::Png { .. }) => "picture",
+    };
+    let (mut guide, mut regions, mut ids) = (None, None, IdMap::default());
+    if !is_picture {
+        if let Some(db) = read_guide(conn, &m.id)? {
+            let mut pictures: HashMap<String, PictureRef> = HashMap::new();
+            for card in &db.cards {
+                let Some(image) = card
+                    .get("visualRegionId")
+                    .and_then(Value::as_str)
+                    .and_then(|r| crate::visual_cards::read_region(conn, r).ok())
+                    .and_then(|r| r.image_material_id)
+                else {
+                    continue;
+                };
+                if pictures.contains_key(&image) {
+                    continue;
+                }
+                if let Ok(Loaded {
+                    file:
+                        Some(FileData::Png {
+                            sha, width, height, ..
+                        }),
+                    ..
+                }) = load_material(conn, root, &image, false, &mut budget)
+                {
+                    pictures.insert(
+                        image,
+                        PictureRef {
+                            item_ref: String::new(),
+                            sha,
+                            width,
+                            height,
+                        },
+                    );
+                }
+            }
+            let b = build_guide(conn, &db, &pictures, &m)?;
+            if b.left_out > 0 {
+                return Err("A picture card can't be read.".to_string());
+            }
+            ids = b.ids;
+            regions = (!b.regions.is_empty()).then_some(b.regions);
+            guide = Some(b.guide);
+        }
+    }
+    let practice = if is_picture {
+        None
+    } else {
+        build_practice(conn, &m, &mut ids)?
+    };
+    let videos = if is_picture {
+        Vec::new()
+    } else {
+        build_videos(conn, &m.id)?
+    };
+    let lineage = if kind == "document" {
+        build_lineage(conn, &m.id, &HashMap::new())?
+    } else {
+        None
+    };
+    let file = m.file.as_ref().map(|f| match f {
+        FileData::Pdf { bytes, sha, pages } => ManifestFile {
+            entry: String::new(),
+            sha256: sha.clone(),
+            bytes: bytes.len() as u64,
+            total_pages: Some(*pages),
+            width: None,
+            height: None,
+            original_file_name: String::new(),
+        },
+        FileData::Png {
+            bytes,
+            sha,
+            width,
+            height,
+        } => ManifestFile {
+            entry: String::new(),
+            sha256: sha.clone(),
+            bytes: bytes.len() as u64,
+            total_pages: None,
+            width: Some(*width),
+            height: Some(*height),
+            original_file_name: String::new(),
+        },
+    });
+    let item = ItemJson {
+        item_ref: String::new(),
+        title: m.title,
+        material_type: m.material_type,
+        topic: m.topic,
+        guide,
+        citations: None,
+        visual_regions: regions,
+        practice,
+        videos,
+        lineage,
+    };
+    Ok((kind.to_string(), item, file))
+}
