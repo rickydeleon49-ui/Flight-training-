@@ -5,6 +5,7 @@ import {
   ackStudyPackResult,
   addStudyPack,
   chooseStudyPack,
+  isDefiniteRefusal,
   inspectStudyPack,
   studyPackErrorMessage,
   studyPackResult,
@@ -115,9 +116,9 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
       } catch (error) {
         failure = error;
       }
-      // Only a plain sentence from the app is a definite refusal. Anything else
+      // Only a refusal the app marked is definite. Anything else
       // (a lost connection, an unknown error) leaves the outcome unknown.
-      const definite = typeof failure === "string" && failure.trim() !== "";
+      const definite = isDefiniteRefusal(failure);
       if (result === null) {
         // The receipt says whether it was added.
         try {

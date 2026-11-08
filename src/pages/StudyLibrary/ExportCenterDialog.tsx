@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Dialog } from "@/components/ui";
 import {
@@ -27,6 +27,8 @@ interface Props {
   initialOutput?: "handout" | "csv";
   /** The whole library, for "Share a study pack". Without it the choice is not offered. */
   materials?: StudyMaterial[];
+  /** Materials that have something to share. Others are left out of the pack choices. */
+  packEligibleIds?: ReadonlySet<string>;
 }
 
 type SelectionState = { include: boolean; selection: ExportSelection };
@@ -38,7 +40,11 @@ function initialState(sources: ExportSource[]): SelectionState[] {
   }));
 }
 
-export function ExportCenterDialog({ open, sources, onClose, initialOutput = "handout", materials }: Props) {
+export function ExportCenterDialog({ open, sources, onClose, initialOutput = "handout", materials: allMaterials, packEligibleIds }: Props) {
+  const materials = useMemo(
+    () => (packEligibleIds ? allMaterials?.filter((material) => packEligibleIds.has(material.id)) : allMaterials),
+    [allMaterials, packEligibleIds],
+  );
   const [rows, setRows] = useState<SelectionState[]>(() => initialState(sources));
   const [output, setOutput] = useState<"handout" | "csv" | "pack">(initialOutput);
   const [packChosen, setPackChosen] = useState<Set<string>>(new Set());

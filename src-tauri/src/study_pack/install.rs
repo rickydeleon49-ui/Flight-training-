@@ -22,6 +22,9 @@ use super::result::{read_result, PackResult};
 use super::validate::{validate_pack, ValidatedPack};
 use crate::library_lock::{try_acquire, Holder, LibraryGuard};
 
+/// Starts the message of an add whose outcome is not known (the commit may or
+/// may not have happened). The command layer turns it into "no refusal mark".
+pub const UNKNOWN_MARK: &str = "[unknown] ";
 pub const UNSUPPORTED: &str = "Study packs can't be added to this library's storage yet.";
 pub const RESTORE_FIRST: &str = "Finish the restore first.";
 const NOT_ADDED: &str = "That study pack couldn't be added.";
@@ -159,7 +162,7 @@ pub fn add_locked(
     match outcome {
         Ok(result) => Ok(result),
         Err(Stop::Crash) => Err(CRASH.to_string()),
-        Err(Stop::Keep(message)) => Err(message),
+        Err(Stop::Keep(message)) => Err(format!("{UNKNOWN_MARK}{message}")),
         Err(Stop::Fail(message)) => {
             if op.exists() {
                 // No receipt: whatever this operation did is undone, by the

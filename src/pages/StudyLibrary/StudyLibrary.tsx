@@ -295,11 +295,24 @@ export function StudyLibrary() {
   };
 
   const hasAny = data.materials.length > 0;
-  const canSharePack = useMemo(() => data.materials.some((material) => isPackExportable(
+  const [videoMaterialIds, setVideoMaterialIds] = useState<ReadonlySet<string>>(new Set());
+  const videoLinks = repositories?.materialVideoLinks;
+  useEffect(() => {
+    if (!videoLinks) return;
+    let cancelled = false;
+    void videoLinks.materialIdsWithLinks().then((ids) => {
+      if (cancelled) return;
+      setVideoMaterialIds((current) => (current.size === ids.length && ids.every((id) => current.has(id)) ? current : new Set(ids)));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [videoLinks, dataRevision]);
+  const packEligibleIds = useMemo(() => new Set(data.materials.filter((material) => isPackExportable(
     material,
     data.aiStudySets.some((set) => set.sourceMaterialId === material.id),
     data.practiceTests.some((test) => test.sourceMaterialId === material.id),
-  )), [data.materials, data.aiStudySets, data.practiceTests]);
+    videoMaterialIds.has(material.id),
+  )).map((material) => material.id)), [data.materials, data.aiStudySets, data.practiceTests, videoMaterialIds]);
+  const canSharePack = packEligibleIds.size > 0;
   const exportSources = useMemo(() => data.materials.flatMap((material) => {
     const source = {
       material: { title: material.title },
@@ -611,6 +624,7 @@ export function StudyLibrary() {
         open={exportingHandouts}
         sources={exportSources}
         materials={data.materials}
+        packEligibleIds={packEligibleIds}
         onClose={() => setExportingHandouts(false)}
       /> : null}
     </>

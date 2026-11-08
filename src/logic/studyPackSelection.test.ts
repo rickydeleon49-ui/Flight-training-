@@ -38,5 +38,6 @@ describe("isPackExportable", () => {
     expect(isPackExportable(m("a.pdf"), false, false)).toBe(true);
     expect(isPackExportable(m(null), true, false)).toBe(true);
     expect(isPackExportable(m(null), false, true)).toBe(true);
+    expect(isPackExportable(m(null), false, false, true)).toBe(true);
   });
 });

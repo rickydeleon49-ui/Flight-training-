@@ -49,7 +49,15 @@ const needsDesktop = () => new Error("Study packs need the desktop application."
 
 /** Native commands fail with a plain sentence; anything else (a transport error) gets `fallback`. */
 export function studyPackErrorMessage(error: unknown, fallback: string): string {
-  return typeof error === "string" && error.trim() ? error : fallback;
+  if (typeof error !== "string") return fallback;
+  const text = error.startsWith(REFUSED_MARK) ? error.slice(REFUSED_MARK.length) : error;
+  return text.trim() ? text : fallback;
+}
+
+/** The app marks an add it definitely refused. Any other failure (a lost connection, an unknown outcome) is not proof. */
+export const REFUSED_MARK = "refused: ";
+export function isDefiniteRefusal(error: unknown): boolean {
+  return typeof error === "string" && error.startsWith(REFUSED_MARK) && error.slice(REFUSED_MARK.length).trim() !== "";
 }
 
 /** Ask which pack to add. Null when the user cancels. */

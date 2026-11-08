@@ -104,7 +104,7 @@ describe("Add study pack dialog", () => {
 
   it("shows the busy sentence, changes nothing, and Try again reuses the same operation id", async () => {
     const busy = "Your library is busy. Try again in a moment.";
-    mocks.add.mockRejectedValueOnce(busy).mockResolvedValueOnce(done());
+    mocks.add.mockRejectedValueOnce(`refused: ${busy}`).mockResolvedValueOnce(done());
     mocks.result.mockResolvedValue(null);
     open();
     fireEvent.click(await addButton());
@@ -135,9 +135,33 @@ describe("Add study pack dialog", () => {
     expect(message).not.toMatch(/Nothing was changed/);
   });
 
+  it("treats a bare string from the IPC layer as unknown, not a refusal", async () => {
+    mocks.add.mockRejectedValue("failed to acquire webview reference");
+    mocks.result.mockResolvedValue(null);
+    open();
+    fireEvent.click(await addButton());
+    const message = (await screen.findByRole("alert")).textContent!;
+    expect(message).toMatch(/couldn't tell/);
+    expect(message).not.toMatch(/webview|Nothing was changed/);
+  });
+
+  it.each([
+    "Study packs can't be added to this library's storage yet.",
+    "Finish the restore first.",
+    "There isn't enough free space to add this study pack.",
+    "Your library changed while adding. Press Add again.",
+    "That study pack can't be opened.",
+  ])("shows the known refusal '%s' as it is", async (sentence) => {
+    mocks.add.mockRejectedValue(`refused: ${sentence}`);
+    mocks.result.mockResolvedValue(null);
+    open();
+    fireEvent.click(await addButton());
+    expect((await screen.findByRole("alert")).textContent).toBe(sentence);
+  });
+
   it("keeps a definite refusal when the receipt lookup also fails", async () => {
     const busy = "Your library is busy. Try again in a moment.";
-    mocks.add.mockRejectedValue(busy);
+    mocks.add.mockRejectedValue(`refused: ${busy}`);
     mocks.result.mockRejectedValue(new Error("lookup failed"));
     open();
     fireEvent.click(await addButton());

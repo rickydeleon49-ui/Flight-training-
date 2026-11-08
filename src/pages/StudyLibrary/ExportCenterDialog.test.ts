@@ -221,6 +221,16 @@ describe("Share a study pack", () => {
       expect(second.some((id) => id === "bigbook" || id.startsWith("bc"))).toBe(false);
     });
 
+    it("leaves out materials with nothing to share, and Select all skips them", async () => {
+      render(h(ExportCenterDialog, { open: true, sources, materials: library, packEligibleIds: new Set(["book", "c1", "c2"]), onClose: () => {} }));
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      expect(screen.queryByRole("checkbox", { name: /solo/ })).toBeNull();
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack.mock.calls[0]![1]).toEqual(["book", "c1", "c2"]);
+    });
+
     it("saves nothing when she cancels the save dialog, and shows an export sentence plainly", async () => {
       openPack();
       fireEvent.click(screen.getByLabelText("Share a study pack"));

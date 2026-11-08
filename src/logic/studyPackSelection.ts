@@ -33,9 +33,9 @@ export function packMaterialIds(materials: readonly StudyMaterial[], chosen: Rea
 
 /**
  * Whether a material can go into a shared pack. Mirrors the native export: a
- * material with a file always can; a note needs a guide or practice questions
- * (its video links are not loaded here).
+ * material with a file always can; a note needs a guide, practice questions or
+ * saved video links.
  */
-export function isPackExportable(material: StudyMaterial, hasGuide: boolean, hasPractice: boolean): boolean {
-  return Boolean(material.filePath?.trim()) || hasGuide || hasPractice;
+export function isPackExportable(material: StudyMaterial, hasGuide: boolean, hasPractice: boolean, hasVideos = false): boolean {
+  return Boolean(material.filePath?.trim()) || hasGuide || hasPractice || hasVideos;
 }

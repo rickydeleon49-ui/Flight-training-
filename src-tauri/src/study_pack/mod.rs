@@ -25,6 +25,20 @@ mod tests;
 
 use tauri::AppHandle;
 
+/// Starts every message that says an add was definitely refused (nothing was
+/// committed). The screen shows the sentence after it. A message without this
+/// start (a lost connection, an unknown outcome) is never read as a refusal.
+pub const REFUSED_MARK: &str = "refused: ";
+
+/// Mark a definite refusal; pass an unknown outcome through without the mark.
+pub(crate) fn mark_add_error(message: String) -> String {
+    if message.starts_with(install::UNKNOWN_MARK) {
+        message
+    } else {
+        format!("{REFUSED_MARK}{message}")
+    }
+}
+
 /// Save the chosen study items (and the pictures their picture cards use) as
 /// a study pack at a path the user picked in the save dialog.
 #[tauri::command]
@@ -70,15 +84,16 @@ pub async fn add_study_pack(
     op_id: String,
     source_path: String,
 ) -> Result<result::PackResult, String> {
-    crate::picked_paths::require_picked(&app, &source_path)?;
+    crate::picked_paths::require_picked(&app, &source_path).map_err(mark_add_error)?;
     tauri::async_runtime::spawn_blocking(move || {
-        let root = crate::storage::app_root(&app)?;
+        let root = crate::storage::app_root(&app).map_err(mark_add_error)?;
         install::add_study_pack_in(
             &root,
             crate::library_lock::owned(&app),
             std::path::Path::new(&source_path),
             &op_id,
         )
+        .map_err(mark_add_error)
     })
     .await
     .map_err(|error| format!("Could not finish adding the study pack: {error}"))?
@@ -168,4 +183,19 @@ pub async fn ack_study_pack_result(app: AppHandle, op_id: String) -> Result<(), 
     })
     .await
     .map_err(|error| format!("Could not record the study pack: {error}"))?
+}
+
+#[cfg(test)]
+mod mark_tests {
+    use super::*;
+
+    #[test]
+    fn only_a_known_refusal_is_marked() {
+        assert_eq!(
+            mark_add_error("Finish the restore first.".into()),
+            "refused: Finish the restore first."
+        );
+        let unknown = format!("{}maybe", install::UNKNOWN_MARK);
+        assert!(!mark_add_error(unknown).starts_with(REFUSED_MARK));
+    }
 }

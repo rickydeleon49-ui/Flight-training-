@@ -38,6 +38,11 @@ export function videoLinkLabel(link: Pick<MaterialVideoLink, "title" | "url">): 
 }
 export function materialVideoLinkRepository(db: SqlDatabase) {
   return {
+    /** Ids of materials that have at least one saved video link. */
+    async materialIdsWithLinks(): Promise<string[]> {
+      const rows = await db.select<{ materialId: string }>("SELECT DISTINCT material_id AS materialId FROM material_video_links");
+      return rows.map((row) => row.materialId);
+    },
     async list(materialId: string): Promise<MaterialVideoLink[]> {
       return db.select<MaterialVideoLink>(`SELECT id, material_id AS materialId, url, title,
         created_at AS createdAt, updated_at AS updatedAt FROM material_video_links
