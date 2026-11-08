@@ -11,6 +11,10 @@ import {
 } from "@/logic/studyExport";
 import { buildMultiMaterialHandoutHtml } from "@/logic/studyHandout";
 import { buildFlashcardCsv, EXPORT_CARDS_CSV_LABEL } from "@/logic/flashcardCsv";
+import type { StudyMaterial } from "@/domain/types";
+import { chooseStudyPackDestination, exportStudyPack, studyPackErrorMessage, studyPacksAvailable } from "@/data/studyPack";
+import { chapterCountLabel } from "@/logic/chapterGroups";
+import { packMaterialIds, packRows } from "@/logic/studyPackSelection";
 import { deviceCan } from "@/services/platform";
 import { DesktopOnlyError } from "@/services/documents";
 import { savedStudyExportSentence, saveStudyExport, StudyExportError } from "@/services/studyExport";
@@ -20,6 +24,8 @@ interface Props {
   sources: ExportSource[];
   onClose: () => void;
   initialOutput?: "handout" | "csv";
+  /** The whole library, for "Share a study pack". Without it the choice is not offered. */
+  materials?: StudyMaterial[];
 }
 
 type SelectionState = { include: boolean; selection: ExportSelection };
@@ -31,9 +37,10 @@ function initialState(sources: ExportSource[]): SelectionState[] {
   }));
 }
 
-export function ExportCenterDialog({ open, sources, onClose, initialOutput = "handout" }: Props) {
+export function ExportCenterDialog({ open, sources, onClose, initialOutput = "handout", materials }: Props) {
   const [rows, setRows] = useState<SelectionState[]>(() => initialState(sources));
-  const [output, setOutput] = useState<"handout" | "csv">(initialOutput);
+  const [output, setOutput] = useState<"handout" | "csv" | "pack">(initialOutput);
+  const [packChosen, setPackChosen] = useState<Set<string>>(new Set());
   const [answerKey, setAnswerKey] = useState(true);
   const [working, setWorking] = useState(false);
   const busy = useRef(false);
@@ -45,6 +52,7 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
     if (!open) return;
     setRows(initialState(sources));
     setOutput(initialOutput);
+    setPackChosen(new Set());
     setAnswerKey(true);
     setError(null);
     setSaved(null);
@@ -66,7 +74,30 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
     return row?.include && selection.flashcards && exportableParts(effective).flashcards ? [{ source, selection }] : [];
   });
 
+  const canPack = studyPacksAvailable() && (materials?.length ?? 0) > 0;
+  const packIds = packMaterialIds(materials ?? [], packChosen);
+
+  const savePack = async () => {
+    if (busy.current || packIds.length === 0) return;
+    busy.current = true;
+    setWorking(true);
+    setError(null);
+    setSaved(null);
+    try {
+      const destination = await chooseStudyPackDestination();
+      if (!destination) return;
+      await exportStudyPack(destination, packIds);
+      setSaved("Your study pack is saved.");
+    } catch (caught) {
+      setError(studyPackErrorMessage(caught, "The study pack could not be saved. Nothing was changed."));
+    } finally {
+      busy.current = false;
+      setWorking(false);
+    }
+  };
+
   const save = async () => {
+    if (output === "pack") return savePack();
     if (busy.current || (output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)) return;
     busy.current = true;
     setWorking(true);
@@ -125,8 +156,8 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
       footer={(
         <>
           <Button variant="ghost" onClick={onClose} disabled={working}>{saved ? "Done" : "Cancel"}</Button>
-          <Button variant="primary" onClick={() => void save()} disabled={working || (output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
-            {working ? "Saving…" : output === "csv" ? (mac ? "Save CSV…" : "Save CSV") : (mac ? "Save handout…" : "Save handout")}
+          <Button variant="primary" onClick={() => void save()} disabled={working || (output === "pack" ? packIds.length === 0 : output === "handout" ? chosenItems.length === 0 : chosenCsvItems.length === 0)}>
+            {working ? "Saving…" : output === "pack" ? "Save study pack…" : output === "csv" ? (mac ? "Save CSV…" : "Save CSV") : (mac ? "Save handout…" : "Save handout")}
           </Button>
         </>
       )}
@@ -137,10 +168,19 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
           <legend className="field__label">Save as</legend>
           <label className="small"><input type="radio" name="export-center-output" checked={output === "handout"} onChange={() => setOutput("handout")} /> Printable handout</label>
           <label className="small"><input type="radio" name="export-center-output" checked={output === "csv"} onChange={() => setOutput("csv")} /> {EXPORT_CARDS_CSV_LABEL}</label>
+          {canPack ? <label className="small"><input type="radio" name="export-center-output" checked={output === "pack"} onChange={() => setOutput("pack")} /> Share a study pack</label> : null}
           {output === "csv" ? <p className="tiny dim">Spreadsheet formula cells get a leading apostrophe for safety. Some flashcard importers may show it.</p> : null}
         </fieldset>
-        {sources.length === 0 ? <p className="small">No study materials are ready to export yet.</p> : null}
-        {sources.map((source, index) => {
+        {output === "pack" ? (
+          <PackPicker
+            materials={materials ?? []}
+            chosen={packChosen}
+            disabled={working}
+            onChange={setPackChosen}
+          />
+        ) : null}
+        {output === "pack" ? null : sources.length === 0 ? <p className="small">No study materials are ready to export yet.</p> : null}
+        {output === "pack" ? null : sources.map((source, index) => {
           const row = rows[index] ?? initialState([source])[0]!;
           const effective = exportSourceFor(source, row.selection);
           const available = exportableParts(effective);
@@ -167,11 +207,42 @@ export function ExportCenterDialog({ open, sources, onClose, initialOutput = "ha
             </section>
           );
         })}
-        {hasQuestions ? <Choice checked={answerKey} onChange={setAnswerKey} disabled={working} label="Add one answer key at the end" detail="Quiz yourself before turning to the answers." /> : null}
+        {output !== "pack" && hasQuestions ? <Choice checked={answerKey} onChange={setAnswerKey} disabled={working} label="Add one answer key at the end" detail="Quiz yourself before turning to the answers." /> : null}
         {error ? <p className="field__error" role="alert">{error}</p> : null}
         {saved ? <p className="small" role="status">{saved}</p> : null}
       </div>
     </Dialog>
+  );
+}
+
+function PackPicker({ materials, chosen, disabled, onChange }: { materials: StudyMaterial[]; chosen: Set<string>; disabled: boolean; onChange: (next: Set<string>) => void }) {
+  const rows = packRows(materials);
+  const allChosen = rows.length > 0 && rows.every((row) => chosen.has(row.material.id));
+  const toggle = (id: string, checked: boolean) => {
+    const next = new Set(chosen);
+    if (checked) next.add(id); else next.delete(id);
+    onChange(next);
+  };
+  return (
+    <fieldset className="export-study__choices" disabled={disabled}>
+      <legend className="field__label">Choose what to share</legend>
+      <label className="small">
+        <input type="checkbox" checked={allChosen} onChange={(event) => onChange(event.target.checked ? new Set(rows.map((row) => row.material.id)) : new Set())} /> Select all
+      </label>
+      {rows.map(({ material, chapters }) => (
+        <div key={material.id} className="stack stack--1">
+          <label className="small">
+            <input type="checkbox" checked={chosen.has(material.id)} onChange={(event) => toggle(material.id, event.target.checked)} /> <strong>{material.title.trim() || "Study material"}</strong>
+            {chapters.length > 0 ? <span className="tiny dim"> — with its {chapterCountLabel(chapters.length)}</span> : null}
+          </label>
+          {chapters.length > 0 ? (
+            <ul className="tiny dim" aria-label={`Chapters of ${material.title.trim() || "this book"}`}>
+              {chapters.map((chapter) => <li key={chapter.id}>{chapter.title.trim() || "Chapter"}</li>)}
+            </ul>
+          ) : null}
+        </div>
+      ))}
+    </fieldset>
   );
 }
 

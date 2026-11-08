@@ -15,6 +15,7 @@ import { preparePhoneProgress } from "@/services/phoneProgress";
 import { isIOS } from "@/services/platform";
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { initializeAirlineStarterPack } from "@/data/starter";
+import { reconcileStudyPacks } from "@/data/studyPack";
 import type {
   ChecklistItem,
   FlightSchool,
@@ -298,6 +299,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (!startupRef.current) {
       startupRef.current = (async () => {
         const db = await getDatabase();
+        // Finish or undo any study pack that did not finish, before anything is read.
+        if (isTauri()) await reconcileStudyPacks().catch(() => {});
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
         const firstRun = await initializeAirlineStarterPack(repositories);

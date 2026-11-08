@@ -9,6 +9,7 @@ import {
   quickFindShortcutLabel,
 } from "@/components/quickfind/QuickFind";
 import { GeminiOrphanNotices } from "@/components/gemini/GeminiOrphanNotices";
+import { StudyPackNotice } from "@/components/StudyPackNotice";
 import { KitQueueDialog } from "@/pages/StudyLibrary/KitQueueDialog";
 import { ReminderNotifications } from "@/components/reminders/ReminderNotifications";
 import { UndoBar } from "@/components/undo/UndoBar";
@@ -262,6 +263,7 @@ export function AppShell() {
         {tabs ? <IosBackButton /> : null}
         <div className="content__inner">
           <GeminiOrphanNotices />
+          <StudyPackNotice />
           <KitQueueDialog />
           <Suspense fallback={<Loading label="Opening this section" />}>
             <Outlet />
