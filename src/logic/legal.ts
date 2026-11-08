@@ -24,6 +24,12 @@ export const LEGAL_POINTS = [
 export const AGE_NOTE = "You need to be 13 or older to use this app, and 18 or older to use the AI features with your own key.";
 export const AFFILIATION_NOTE = "Not affiliated with the FAA, Google or Anthropic. FAA standards text comes from the FAA and is public domain.";
 
+/** The one short disclaimer line, shown in the sidebar/More note, Add study pack and the README. */
+export const DISCLAIMER_LINE = "Independent study aid. Not FAA-approved or endorsed. AI-assisted content can contain errors — check current FAA publications and your instructor.";
+
+/** Where students report a mistake or send beta feedback. */
+export const ISSUES_URL = "https://github.com/rickydeleon49-ui/Flight-training-/issues/new/choose";
+
 /** One line under live METAR/TAF. */
 export const WEATHER_BRIEFING_NOTE = "Not an official weather briefing.";
 

@@ -15,6 +15,7 @@ import {
 import { useAppData } from "@/state/AppDataContext";
 
 import "./more.css";
+import { DISCLAIMER_LINE } from "@/logic/legal";
 
 interface Row {
   to: string;
@@ -92,8 +93,7 @@ export function More() {
       </ul>
 
       <p className="more__note">
-        Your instructor and official aviation guidance stay authoritative. This is
-        here to keep your training organized.
+        {DISCLAIMER_LINE}
       </p>
     </div>
   );

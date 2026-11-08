@@ -10,6 +10,7 @@ import {
   ACK_TITLE,
   AFFILIATION_NOTE,
   AGE_NOTE,
+  ISSUES_URL,
   LEGAL_ACK_KEY,
   LEGAL_POINTS,
   LICENSE_NAME,
@@ -89,6 +90,18 @@ export function AboutLegal({ version }: { version: string }) {
         >
           {LICENSE_NAME}
         </a>.
+      </p>
+      <p className="small">
+        <a
+          href={ISSUES_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => {
+            if (isTauri()) { event.preventDefault(); void openUrl(ISSUES_URL).catch(() => undefined); }
+          }}
+        >
+          Report a mistake or send feedback
+        </a>
       </p>
       <Licenses />
     </div>

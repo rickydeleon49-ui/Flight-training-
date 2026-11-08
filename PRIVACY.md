@@ -1,6 +1,7 @@
 # Your Flight Deck privacy policy
 
-Last updated: 2 November 2026
+Last updated: 8 November 2026
+Provider terms last reviewed: 8 November 2026
 
 Your Flight Deck is a study companion for student pilots. This policy explains
 what the app keeps on your device, what it sends over the internet, and when.
@@ -54,10 +55,14 @@ IP address.
   They do not pass through any server of ours.
 - What the provider keeps is set by its own terms. Google keeps an uploaded
   PDF for up to 48 hours so it does not have to be sent again, and on the free
-  tier Google may use what you send to improve its products. Anthropic says
-  your files are not used for training and are deleted within 30 days. Send
-  study material only. The app asks Google to delete its copy sooner when the
-  file changes or you disconnect.
+  tier Google may use what you send to improve its products. How long
+  Anthropic keeps your files, and whether they are used for training, is set
+  by Anthropic's own terms and privacy policy. These terms can change, so see
+  [Google's Gemini API terms](https://ai.google.dev/gemini-api/terms) and
+  [Anthropic's commercial terms](https://www.anthropic.com/legal/commercial-terms)
+  and [privacy policy](https://www.anthropic.com/legal/privacy). Send study
+  material only. The app asks Google to delete its copy sooner when the file
+  changes or you disconnect. Provider terms last reviewed: 8 November 2026.
 - AI answers are saved on your device only after you choose to save them.
   Ask conversations are not saved.
 
@@ -79,14 +84,21 @@ IP address.
 
 ## Your API key
 
-- Your key is saved as a plain text file in the app's folder on your device
-  (`gemini-key` or `claude-key`), readable only by your user account on a Mac.
-  It is not encrypted. Anything running as your user account could read it.
+- Your key is kept in your operating system's secure store: the macOS login
+  Keychain (on the signed, released app) or Windows Credential Manager. If the
+  secure store is not available, for example in a development or unsigned
+  build, the key is saved instead as a private file in the app's folder on your
+  device (`gemini-key` or `claude-key`), readable only by your user account on
+  a Mac. That file is not encrypted, so anything running as your user account
+  could read it.
+- A key from an older version that was saved as a file is moved into the secure
+  store, checked, and only then is the file deleted. If the move fails, the
+  file stays in use and the move is tried again at the next launch.
 - The key passes once from the settings screen to the app's own engine when you
   paste it. After that it is used only by that engine and is never shown again,
   logged, or put in the database.
 - Your key is never included in a backup.
-- Disconnecting in Settings deletes the key file. You can also revoke the key at
+- Disconnecting in Settings deletes the key from the secure store and any key file. You can also revoke the key at
   any time in Google AI Studio or the Anthropic Console.
 
 ## Backups and Send to iPhone
