@@ -15,6 +15,7 @@ import {
 import { newId } from "@/lib/id";
 import { packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
+import { DISCLAIMER_LINE } from "@/logic/legal";
 
 type Phase =
   | { kind: "idle" }
@@ -164,6 +165,7 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
           <p className="small">{packContentsLine(withPreview.preview) || "This study pack has nothing new in it."}</p>
           {packAlreadyHaveLine(withPreview.preview) ? <p className="small">{packAlreadyHaveLine(withPreview.preview)}</p> : null}
           <p className="tiny dim">Your own work won't be changed.</p>
+          <p className="tiny dim">{DISCLAIMER_LINE}</p>
           {phase.kind === "failed" ? <p className="field__error" role="alert">{phase.message}</p> : null}
         </div>
       ) : null}

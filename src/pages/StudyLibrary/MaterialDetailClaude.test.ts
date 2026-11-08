@@ -88,7 +88,7 @@ describe("Claude confirmations and model labels", () => {
     fireEvent.click(await screen.findByRole("button",{name:"Create study aid"}));
     const dialog=await screen.findByRole("dialog",{name:"Send this file to Anthropic?"});
     expect(dialog.textContent).toContain("It will be read by Claude Haiku 5.5.");
-    expect(dialog.textContent).toContain("Anthropic: your files are not used for training and are deleted within 30 days.");
+    expect(dialog.textContent).toContain("Anthropic: how long Anthropic keeps your files, and whether they are used for training, is set by Anthropic's own terms and privacy policy.");
     expect(dialog.textContent).not.toMatch(/Google|Gemini|48 hours/);
     expect(dialog.textContent).toContain("Short sources may give you fewer cards.");
     expect(dialog.textContent).not.toContain("A maximum, not a promise");
@@ -143,7 +143,7 @@ describe("Claude confirmations and model labels", () => {
     const claudeDialog = await screen.findByRole("dialog", { name: "Send this file to Anthropic?" });
     const claudeMessage = claudeDialog.querySelector("p.muted")?.textContent ?? "";
     expect(claudeMessage).toBe(
-      `“handbook.txt” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying. Only “handbook.txt” leaves this Mac, with each request. Anthropic: your files are not used for training and are deleted within 30 days. ${providerTermsNote("claude")} Your copy on this Mac is not changed. It will be read by Claude Haiku 5.5.`,
+      `“handbook.txt” will be sent to Anthropic to generate the study aid. Send study material only — never anything personal or identifying. Only “handbook.txt” leaves this Mac, with each request. Anthropic: how long Anthropic keeps your files, and whether they are used for training, is set by Anthropic's own terms and privacy policy. ${providerTermsNote("claude")} Your copy on this Mac is not changed. It will be read by Claude Haiku 5.5.`,
     );
     expect(claudeDialog.querySelector("details")).toBeNull();
   });

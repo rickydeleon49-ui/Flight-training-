@@ -36,8 +36,8 @@ describe("privacy policy", () => {
   });
 
   it("repeats the in-app retention and sending claims", () => {
-    expect(CLAUDE_PRIVACY).toContain("not used for training and are deleted within 30 days");
-    expect(flat).toContain("your files are not used for training and are deleted within 30 days");
+    expect(CLAUDE_PRIVACY).toContain("set by Anthropic's own terms and privacy policy");
+    expect(flat).toContain("set by Anthropic's own terms and privacy policy");
     const notes = PRIVACY_HELP.flatMap((g) => g.notes);
     expect(notes.find((n) => n.lead === "What {company} keeps")!.text).toContain("up to 48 hours");
     expect(flat).toContain("PDF for up to 48 hours");
@@ -48,7 +48,7 @@ describe("privacy policy", () => {
   it("states the age rules and the honest key storage", () => {
     expect(flat).toContain("aged 13 and over");
     expect(flat).toContain("18 or over");
-    expect(flat).toContain("plain text file");
+    expect(flat).toContain("Keychain");
     expect(flat).toContain("never included in a backup");
     expect(flat).toContain("no analytics");
   });

@@ -20,8 +20,13 @@ builds and the iOS keychain. When the secure store is unavailable, keys fall bac
 to a private file in the application data folder. An older key file is moved
 into the secure store and deleted only after it reads back unchanged.
 
-> **Study aid, not flight instruction.** Always check material against official
-> FAA guidance and your flight instructor.
+> **Study aid, not flight instruction.** Independent study aid. Not FAA-approved
+> or endorsed. AI-assisted content can contain errors — check current FAA
+> publications and your instructor.
+
+**Report a mistake:** found a wrong card, question or guide? Open a
+[content correction](https://github.com/rickydeleon49-ui/Flight-training-/issues/new?template=content-correction.md)
+or send [beta feedback](https://github.com/rickydeleon49-ui/Flight-training-/issues/new?template=beta-feedback.md).
 
 ## Platforms
 

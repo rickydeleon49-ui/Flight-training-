@@ -121,7 +121,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Create study guide" }));
     const text = (await waitFor(sendDialog)).textContent ?? "";
     expect(text).toMatch(/Only “handbook\.pdf” leaves this Mac/);
-    expect(text).toMatch(/temporary copy for up to 48 hours/);
+    expect(text).toMatch(/temporary copy \(currently up to 48 hours/);
     expect(text).toMatch(/practice test can use it without uploading it again/);
     expect(text).toMatch(/copy on this Mac is not changed/);
   });
@@ -141,7 +141,7 @@ describe("choosing what to send (GEN-REL-01)", () => {
       expect(details?.open).toBe(false);
       expect(details?.querySelector("summary")?.textContent).toBe("What Google keeps");
       expect(details?.textContent).toMatch(/Only “handbook\.pdf” leaves this Mac/);
-      expect(details?.textContent).toMatch(/temporary copy for up to 48 hours/);
+      expect(details?.textContent).toMatch(/temporary copy \(currently up to 48 hours/);
       fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Send this file to Google?" })).toBeNull());
     }

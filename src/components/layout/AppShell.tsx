@@ -36,6 +36,7 @@ import { IosBackButton } from "./IosBackButton";
 import { IosTabBar } from "./IosTabBar";
 
 import "./shell.css";
+import { DISCLAIMER_LINE } from "@/logic/legal";
 
 interface NavItem {
   to: string;
@@ -251,8 +252,7 @@ export function AppShell() {
               <span>Settings</span>
             </NavLink>
             <p className="sidebar__note">
-              Your instructor and official aviation guidance stay authoritative. This is
-              here to keep your training organized.
+              {DISCLAIMER_LINE}
             </p>
           </div>
         </div>
