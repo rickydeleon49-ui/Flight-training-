@@ -31,6 +31,17 @@ function withTimezone<T>(tz: string, fn: () => T): T {
 
 describe("studyContentProvenance pure helper", () => {
   describe("Gemini content provenance", () => {
+    it("shows a mixed-model run with both models and the Claude origin", () => {
+      const result = formatStudyContentProvenance("Notes", {
+        provider: "claude",
+        model: "claude-sonnet-5-5 + claude-haiku-5-5",
+        generatedAt: "2026-11-01T12:00:00Z",
+      } as never);
+      expect(result.originLabel).toBe("Claude");
+      expect(result.modelLabel).toBe("claude-sonnet-5-5 + claude-haiku-5-5");
+      expect(result.summaryText).toContain("Model: claude-sonnet-5-5 + claude-haiku-5-5");
+    });
+
     it("formats Gemini content with stored model and ISO 8601 UTC timestamp", () => {
       withTimezone("UTC", () => {
         const result = formatStudyContentProvenance("Aerodynamics Manual", {

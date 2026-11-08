@@ -194,6 +194,12 @@ describe("CARDS-FIX-01: preserveOtherStudyContent", () => {
   });
   const saved = [{ front: "Saved", back: "A", sourcePage: null }];
   const fresh = [{ front: "New", back: "B", sourcePage: 1 }];
+  it("a card-only save keeps a mixed guide label without duplicates", () => {
+    const guide = { ...set([]), sections: [{ heading: "H", body: "B" }], model: "claude-sonnet-5-5 + claude-haiku-5-5" };
+    const next = preserveOtherStudyContent({ ...set(fresh), model: "claude-haiku-5-5" }, guide, "flashcards");
+    expect(next.model).toBe("claude-sonnet-5-5 + claude-haiku-5-5");
+    expect(preserveOtherStudyContent({ ...set(fresh), model: "claude-haiku-5-5" }, set([]), "flashcards").model).toBe("claude-haiku-5-5");
+  });
   it("a guide save keeps saved cards over generated ones", () => {
     expect(preserveOtherStudyContent(set(fresh, "New"), set(saved), "study-aid").flashcards).toEqual(saved);
   });

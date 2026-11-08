@@ -224,7 +224,11 @@ export function retiredWording(index: ReadonlyMap<string, ItemText>, entry: Reti
  */
 export function preserveOtherStudyContent(next: NextStudySet, current: NextStudySet | null, kind: "study-aid" | "flashcards"): NextStudySet {
   if (kind === "study-aid") return { ...next, flashcards: current?.flashcards.length ? current.flashcards : next.flashcards };
+  // The kept guide sections keep their models in the label (no duplicates).
+  const kept = (current?.sections.length ? current.model : "").split(" + ").map(m => m.trim()).filter(Boolean);
+  const model = [...new Set([...kept, ...(next.model.trim() ? [next.model.trim()] : [])])].join(" + ");
   return { ...next,
+    model: model || next.model,
     title: current?.title ?? next.title,
     summary: current?.summary ?? "", summaryOrigin: current?.summaryOrigin ?? null,
     sections: current?.sections ?? [], sourceNotes: current?.sourceNotes ?? next.sourceNotes,
