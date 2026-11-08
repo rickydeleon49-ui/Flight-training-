@@ -221,6 +221,9 @@ export function Settings() {
   const selectedKeyUnreadable = providerConnection?.selected === "claude"
     ? providerConnection.providers.some((p) => p.id === "claude" && p.keyUnreadable)
     : gemini?.keyUnreadable;
+  const providerConnected = providerConnection?.selected === "claude"
+    ? providerConnection.providers.some((p) => p.id === "claude" && p.connected)
+    : gemini?.configured;
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiBusy, setGeminiBusy] = useState(false);
   const [geminiNote, setGeminiNote] = useState<string | null>(null);
@@ -1312,13 +1315,13 @@ export function Settings() {
         </details>
 
         <details id="settings-advanced" className="card material-fold" ref={advancedFold}>
-          <summary id="settings-advanced-summary">Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !gemini?.configured ? " · AI provider not set up" : ""}</summary>
+          <summary id="settings-advanced-summary">Advanced{selectedKeyUnreadable ? " · Saved AI key unavailable" : !providerConnected ? " · AI provider not set up" : ""}</summary>
         {deviceCan().geminiKey ? (
         <Card>
           <CardHeader
             title="AI provider"
             headingId="ai-provider"
-            eyebrow={(providerConnection?.selected === "claude" ? providerConnection.providers.some((p) => p.id === "claude" && p.connected) : gemini?.configured) ? "Connected" : "Optional online AI"}
+            eyebrow={providerConnected ? "Connected" : "Optional online AI"}
           />
           <CardBody>
             <ProviderControls onStatus={setProviderConnection} reloadToken={providerReload} onRetried={refreshGemini}>
