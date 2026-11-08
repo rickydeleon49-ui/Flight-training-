@@ -22,6 +22,8 @@ export interface StudyPackPreview {
   documents: number;
   alreadyInLibrary: number;
   skippedItems: StudyPackNamedItem[];
+  /** Items that would be added next to your own copy with a label. */
+  labelledItems: StudyPackNamedItem[];
   /** Nothing in the pack would be added. */
   nothingNew: boolean;
 }
@@ -42,6 +44,8 @@ export interface StudyPackResult {
   committedAt: string;
   /** Told once, right after adding; a result read back from its receipt has none. */
   skippedItems: StudyPackNamedItem[];
+  /** Items added next to your own with a label; told once like skippedItems. */
+  labelledItems: StudyPackNamedItem[];
 }
 
 export interface StudyPackExportSummary {

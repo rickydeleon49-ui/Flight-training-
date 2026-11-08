@@ -26,6 +26,8 @@ pub struct PackResult {
     /// Named skips and left-out cards. Told once, right after the import;
     /// not kept in the receipt.
     pub skipped_items: Vec<SkippedItem>,
+    /// Items added next to hers with a label. Told once; not kept in the receipt.
+    pub labelled_items: Vec<SkippedItem>,
 }
 
 const COLUMNS: &str = "operation_id, pack_id, added, added_guides, added_documents,
@@ -49,6 +51,7 @@ fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<PackResult> {
         cards_left_out_removed: n(11)?,
         committed_at: r.get(12)?,
         skipped_items: Vec::new(),
+        labelled_items: Vec::new(),
     })
 }
 

@@ -20,6 +20,8 @@ pub struct Preview {
     pub already_in_library: u64,
     /// What would not be added, by title, with the reason.
     pub skipped_items: Vec<SkippedItem>,
+    /// What would be added next to her own copy with a label, by title.
+    pub labelled_items: Vec<SkippedItem>,
     /// Nothing in the pack would be added.
     pub nothing_new: bool,
 }
@@ -49,6 +51,7 @@ pub fn inspect_study_pack_in(root: &Path, pack_path: &Path) -> Result<Preview, S
         documents: c.documents,
         already_in_library: already,
         skipped_items: plan.named(&pack),
+        labelled_items: plan.labelled(&pack),
         nothing_new: plan.items.iter().all(|p| p.decision == Decision::Skip),
     })
 }

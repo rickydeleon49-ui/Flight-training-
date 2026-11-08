@@ -281,6 +281,7 @@ fn run(
         }
     })?;
     result.skipped_items = plan.named(pack);
+    result.labelled_items = plan.labelled(pack);
     journal.state = State::Committed;
     if let Err(message) = journal::write(op, &journal) {
         if message == CRASH {

@@ -6,21 +6,21 @@ import { ALREADY_TITLE, addedLine, namedItemLines, packAlreadyHaveLine, packCont
 const base: StudyPackResult = {
   operationId: "op", packId: "p", added: 0, addedGuides: 0, addedDocuments: 0, addedPictures: 0, addedPractice: 0,
   skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "2026-11-07T00:00:00Z",
-  skippedItems: [],
+  skippedItems: [], labelledItems: [],
 };
 const result = (patch: Partial<StudyPackResult>): StudyPackResult => ({ ...base, ...patch });
 
 describe("study pack sentences", () => {
   it("counts only what the pack holds", () => {
-    const p: StudyPackPreview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 0, skippedItems: [], nothingNew: false };
+    const p: StudyPackPreview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 0, skippedItems: [], labelledItems: [], nothingNew: false };
     expect(packContentsLine(p)).toBe("14 guides · 280 cards · 140 practice questions · 31 videos · 14 PDFs");
     expect(packContentsLine({ ...p, guides: 1, cards: 0, questions: 0, videos: 0, documents: 1 })).toBe("1 guide · 1 PDF");
   });
 
   it("says 'already in your library' only when non-zero", () => {
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 0, skippedItems: [], nothingNew: false })).toBeNull();
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3, skippedItems: [], nothingNew: false })).toBe("3 are already in your library.");
-    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1, skippedItems: [], nothingNew: false })).toBe("1 is already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 0, skippedItems: [], labelledItems: [], nothingNew: false })).toBeNull();
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 3, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("3 are already in your library.");
+    expect(packAlreadyHaveLine({ guides: 1, cards: 0, questions: 0, videos: 0, documents: 0, alreadyInLibrary: 1, skippedItems: [], labelledItems: [], nothingNew: false })).toBe("1 is already in your library.");
   });
 
   it("builds the Added line from guides and PDFs only, dropping a zero part, never naming pictures", () => {

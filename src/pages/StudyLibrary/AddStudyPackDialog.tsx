@@ -13,13 +13,14 @@ import {
   type StudyPackResult,
 } from "@/data/studyPack";
 import { newId } from "@/lib/id";
-import { ALREADY_TITLE, namedItemLines, packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
+import { ALREADY_TITLE, namedItemLines, WAIT_LINE, packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
 import { DISCLAIMER_LINE } from "@/logic/legal";
 
 type Phase =
   | { kind: "idle" }
   | { kind: "picking" }
+  | { kind: "previewing" }
   | { kind: "refused"; message: string }
   | { kind: "preview"; path: string; opId: string; preview: StudyPackPreview }
   | { kind: "adding"; path: string; opId: string; preview: StudyPackPreview }
@@ -68,6 +69,7 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
         onClose();
         return;
       }
+      setPhase({ kind: "previewing" });
       try {
         const preview = await inspectStudyPack(path);
         if (sessionRef.current === session) setPhase({ kind: "preview", path, opId: newId(), preview });
@@ -140,10 +142,16 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
   };
 
   const adding = phase.kind === "adding";
+  const previewing = phase.kind === "previewing";
   const visible = open && phase.kind !== "idle" && phase.kind !== "picking";
   const withPreview = phase.kind === "preview" || phase.kind === "adding" || phase.kind === "failed" ? phase : null;
 
-  const footer = withPreview ? (
+  const nothingNew = withPreview?.preview.nothingNew === true && phase.kind === "preview";
+  const footer = previewing ? (
+    <Button disabled>Cancel</Button>
+  ) : withPreview && nothingNew ? (
+    <Button onClick={onClose}>Close</Button>
+  ) : withPreview ? (
     <>
       <Button onClick={onClose} disabled={adding}>Cancel</Button>
       <Button variant="primary" disabled={adding} onClick={() => void add(withPreview)}>
@@ -156,24 +164,34 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
 
   const title = withPreview
     ? (withPreview.preview.nothingNew ? ALREADY_TITLE : "Add study pack")
-    : phase.kind === "added"
+    : previewing
+      ? "Add study pack"
+      : phase.kind === "added"
       ? (phase.result.added === 0 ? ALREADY_TITLE : "Study pack added")
       : "This study pack can't be added";
   const previewNamed = withPreview ? namedItemLines(withPreview.preview.skippedItems) : [];
+  const previewLabelled = withPreview ? namedItemLines(withPreview.preview.labelledItems) : [];
 
   return (
     <Dialog open={visible} onClose={onClose} dismissible={!adding} title={title} footer={footer}>
+      {previewing ? <p className="small" role="status">{WAIT_LINE}</p> : null}
       {phase.kind === "refused" ? <p className="small" role="alert">{phase.message}</p> : null}
 
       {withPreview ? (
         <div className="stack stack--3">
           <p className="small">{packContentsLine(withPreview.preview) || "This study pack has nothing new in it."}</p>
           {packAlreadyHaveLine(withPreview.preview) ? <p className="small">{packAlreadyHaveLine(withPreview.preview)}</p> : null}
+          {previewLabelled.length > 0 ? (
+            <ul className="tiny" aria-label="Added with a label">
+              {previewLabelled.map((line, i) => <li key={i}>{line}</li>)}
+            </ul>
+          ) : null}
           {previewNamed.length > 0 ? (
             <ul className="tiny" aria-label="Not added">
               {previewNamed.map((line, i) => <li key={i}>{line}</li>)}
             </ul>
           ) : null}
+          {adding ? <p className="small" role="status">{WAIT_LINE}</p> : null}
           <p className="tiny dim">Your own work won't be changed.</p>
           <p className="tiny dim">{DISCLAIMER_LINE}</p>
           {phase.kind === "failed" ? <p className="field__error" role="alert">{phase.message}</p> : null}

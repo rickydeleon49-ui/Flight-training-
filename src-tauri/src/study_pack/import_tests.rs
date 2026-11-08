@@ -3337,6 +3337,28 @@ fn s14_the_staged_id_map_holds_only_what_is_added() {
 }
 
 #[test]
+fn a_labelled_item_is_named_in_the_preview_and_the_result() {
+    let (producer, _) = seeded();
+    let her = her();
+    let pack = revision_pack(&producer, "MY OWN HANDBOOK");
+    let line = named(
+        "MY OWN HANDBOOK",
+        "added as \"MY OWN HANDBOOK (from study pack)\" next to yours",
+    );
+    let preview = super::inspect::inspect_study_pack_in(her.root(), &pack).unwrap();
+    assert_eq!(preview.labelled_items, vec![line.clone()]);
+    let result = add(&her, &pack).unwrap();
+    assert_eq!(result.labelled_items, vec![line]);
+    new_material(&her, "MY OWN HANDBOOK (from study pack)");
+    // An item with a free title has none; a stored receipt keeps none.
+    let (other, _) = seeded();
+    let free = revision_pack(&other, "Brand new title");
+    let preview = super::inspect::inspect_study_pack_in(her.root(), &free).unwrap();
+    assert!(preview.labelled_items.is_empty());
+    assert!(add(&her, &free).unwrap().labelled_items.is_empty());
+}
+
+#[test]
 fn the_plan_is_the_same_each_time_it_is_made_on_the_same_library() {
     let (producer, _) = seeded();
     let pack_path = all_pack(&producer);
