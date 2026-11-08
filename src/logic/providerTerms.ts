@@ -13,7 +13,7 @@ export const PROVIDER_TERMS = {
     termsUrl: "https://ai.google.dev/gemini-api/terms",
     fileCopy: `Google may keep a temporary copy (currently ${googleRetention}, see Google's terms) so a study guide and a practice test can use it without uploading it again.`,
     reuse: `if Google already has a copy from the last ${googleReuseDuration}, that copy is used instead`,
-    setupFreeTier: "Google states that free-tier content may be used to improve its products, and its terms require you to be 18 or older.",
+    setupFreeTier: "Google states that free-tier content may be used to improve its products.",
     freeTier: "On the free tier Google may use it to improve its products, so send study material only — never anything personal or identifying.",
     help: `Google may keep a copy of the PDF (currently ${googleRetention}) so it doesn't have to be sent again. On the free tier Google may use it to improve its products, so send study material only. Retention can change; see Google's terms.`,
   },
