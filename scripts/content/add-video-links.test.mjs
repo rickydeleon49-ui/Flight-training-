@@ -6,6 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
+import { createHash } from 'node:crypto';
+import { linkSync, symlinkSync, renameSync } from 'node:fs';
 import { validateTitle, validateVideoUrl } from './add-video-links.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -156,4 +158,76 @@ test('validators agree with the app parity cases and repository rules', () => {
   // The TypeScript source still carries the rules this copy mirrors.
   const src = readFileSync(path.join(root, 'src/data/repositories/materialVideoLinkRepository.ts'), 'utf8');
   assert.ok(src.includes('url.length > 2000') && src.includes('title.length > 200') && src.includes('parsed.protocol === "http:"'));
+});
+
+const dbFile = dir => path.join(dir, 'her-flight-deck.db');
+
+test('refuses a symlinked database', t => {
+  const { home, dir } = setup(t);
+  renameSync(dbFile(dir), path.join(home, 'real.db'));
+  symlinkSync(path.join(home, 'real.db'), dbFile(dir));
+  const r = cli(home, dir, manifest(home, [entry()]));
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /symbolic link/);
+});
+
+test('refuses a hard-linked database', t => {
+  const { home, dir } = setup(t);
+  linkSync(dbFile(dir), path.join(home, 'alias.db'));
+  const r = cli(home, dir, manifest(home, [entry()]), '--check');
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /hard link/);
+});
+
+test('--check reports wrong title, extra link and missing material', t => {
+  const { home, dir } = setup(t);
+  const file = manifest(home, [entry()]);
+  assert.equal(cli(home, dir, file).status, 0);
+  const db = new DatabaseSync(dbFile(dir));
+  db.prepare('UPDATE material_video_links SET title = ? WHERE url = ?').run('Renamed', 'https://example.com/a');
+  db.prepare('INSERT INTO material_video_links VALUES (?,?,?,?,?,?)').run('x9', M1, 'https://example.com/extra', 'Extra', 't', 't');
+  db.close();
+  const r = cli(home, dir, file, '--check');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /wrong title/);
+  assert.match(r.stdout, /extra:/);
+  const gone = cli(home, dir, manifest(home, [entry({ materialId: 'b1000000-0000-4000-8000-0000000000ff' })]), '--check');
+  assert.notEqual(gone.status, 0);
+  assert.match(gone.stderr, /Material not found/);
+});
+
+test('--check reports a missing link', t => {
+  const { home, dir } = setup(t);
+  const r = cli(home, dir, manifest(home, [entry()]), '--check');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /missing:/);
+});
+
+test('refuses a material with no identity row', t => {
+  const { home, dir } = setup(t);
+  const db = new DatabaseSync(dbFile(dir));
+  db.prepare('DELETE FROM material_content_identities WHERE material_id = ?').run(M1);
+  db.close();
+  const r = cli(home, dir, manifest(home, [entry()]));
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /open this chapter once in the app/);
+  assert.equal(links(dir).length, 0);
+});
+
+test('--print-checksums hashes the real file and flags a mismatch', t => {
+  const { home, dir } = setup(t);
+  mkdirSync(path.join(dir, 'documents'));
+  writeFileSync(path.join(dir, 'documents', 'one.pdf'), 'hello');
+  writeFileSync(path.join(dir, 'documents', 'two.pdf'), 'world');
+  const sum = createHash('sha256').update('hello').digest('hex');
+  const db = new DatabaseSync(dbFile(dir));
+  db.prepare('UPDATE study_materials SET file_path = ? WHERE id = ?').run('one.pdf', M1);
+  db.prepare('UPDATE study_materials SET file_path = ? WHERE id = ?').run('two.pdf', M2);
+  db.prepare('UPDATE material_content_identities SET content_sha256 = ? WHERE material_id = ?').run(sum, M1);
+  db.close();
+  const r = spawnSync(process.execPath, [script, '--profile', dir, '--print-checksums'], { env: { ...process.env, HOME: home }, encoding: 'utf8' });
+  assert.equal(r.status, 1, r.stderr);
+  const lines = r.stdout.split('\n');
+  assert.ok(lines.find(l => l.startsWith(M1) && l.includes(sum) && l.endsWith('\tok')));
+  assert.ok(lines.find(l => l.startsWith(M2) && l.endsWith('\tMISMATCH')));
 });
