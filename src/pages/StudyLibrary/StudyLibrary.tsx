@@ -36,11 +36,13 @@ import {
   type StudyMaterial,
   type Topic,
 } from "@/domain/types";
+import { studyPacksAvailable } from "@/data/studyPack";
 import type { CardLibraryRepository } from "@/data/repositories/cardLibraryRepository";
 import { offlineStudyEnabled } from "@/services/offlineContent";
 import { searchText } from "@/logic/searchText";
 import { chapterCountLabel, groupChapterParts } from "@/logic/chapterGroups";
 import { exportableParts } from "@/logic/studyExport";
+import { isPackExportable } from "@/logic/studyPackSelection";
 import { newId } from "@/lib/id";
 import { MATERIAL_SORT_OPTIONS, sortMaterials, type MaterialSort } from "@/logic/library";
 import { useAppData } from "@/state/AppDataContext";
@@ -51,6 +53,7 @@ import { FaaReferences } from "./FaaReferences";
 import { AcsCodeLookupPanel } from "./AcsCodeLookupPanel";
 import { AcsAreaMaterialCoveragePanel } from "./AcsAreaMaterialCoveragePanel";
 import { ImportStudyPacketDialog } from "./ImportStudyPacketDialog";
+import { AddStudyPackDialog } from "./AddStudyPackDialog";
 import { ExportCenterDialog } from "./ExportCenterDialog";
 import { MaterialFormDialog, type MaterialDraft } from "./MaterialFormDialog";
 import { PhotoPictureButton } from "./PhotoPictureButton";
@@ -146,6 +149,7 @@ export function StudyLibrary() {
     [data.aiStudySets],
   );
   const [importing, setImporting] = useState(false);
+  const [addingPack, setAddingPack] = useState(false);
   const [exportingHandouts, setExportingHandouts] = useState(false);
   // Kept while the app is open, so moving to a material and back does not
   // throw away the filtering the student just set up.
@@ -291,6 +295,24 @@ export function StudyLibrary() {
   };
 
   const hasAny = data.materials.length > 0;
+  const [videoMaterialIds, setVideoMaterialIds] = useState<ReadonlySet<string>>(new Set());
+  const videoLinks = repositories?.materialVideoLinks;
+  useEffect(() => {
+    if (!videoLinks) return;
+    let cancelled = false;
+    void videoLinks.materialIdsWithLinks().then((ids) => {
+      if (cancelled) return;
+      setVideoMaterialIds((current) => (current.size === ids.length && ids.every((id) => current.has(id)) ? current : new Set(ids)));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [videoLinks, dataRevision]);
+  const packEligibleIds = useMemo(() => new Set(data.materials.filter((material) => isPackExportable(
+    material,
+    data.aiStudySets.some((set) => set.sourceMaterialId === material.id),
+    data.practiceTests.find((test) => test.sourceMaterialId === material.id)?.questions.length ?? 0,
+    videoMaterialIds.has(material.id),
+  )).map((material) => material.id)), [data.materials, data.aiStudySets, data.practiceTests, videoMaterialIds]);
+  const canSharePack = packEligibleIds.size > 0;
   const exportSources = useMemo(() => data.materials.flatMap((material) => {
     const source = {
       material: { title: material.title },
@@ -332,11 +354,12 @@ export function StudyLibrary() {
                 {deviceCan().splitFiles ? <Button onClick={fromMoreMenu(() => setImporting(true))} disabled={importing}>
                   <NoteIcon size={16} /> Import study packet…
                 </Button> : null}
-                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0}>
+                {deviceCan().sharePrint ? <Button onClick={fromMoreMenu(() => setExportingHandouts(true))} disabled={exportSources.length === 0 && !(studyPacksAvailable() && canSharePack)}>
                   {deviceCan().revealFiles ? "Export handout or cards…" : "Save handout or cards"}
                 </Button> : null}
               </div>
             </details> : null}
+            {studyPacksAvailable() ? <Button onClick={() => setAddingPack(true)} disabled={addingPack}>Add study pack</Button> : null}
             {deviceCan().importFiles ? <Button variant="primary" onClick={() => setCreating(true)}>
               <PlusIcon size={16} /> Add material
             </Button> : null}
@@ -595,9 +618,13 @@ export function StudyLibrary() {
         }}
       />
 
+      {studyPacksAvailable() ? <AddStudyPackDialog open={addingPack} onClose={() => setAddingPack(false)} /> : null}
+
       {deviceCan().sharePrint ? <ExportCenterDialog
         open={exportingHandouts}
         sources={exportSources}
+        materials={data.materials}
+        packEligibleIds={packEligibleIds}
         onClose={() => setExportingHandouts(false)}
       /> : null}
     </>

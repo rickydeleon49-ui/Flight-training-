@@ -15,6 +15,7 @@ import { preparePhoneProgress } from "@/services/phoneProgress";
 import { isIOS } from "@/services/platform";
 import { createRepositories, type Repositories } from "@/data/repositories";
 import { initializeAirlineStarterPack } from "@/data/starter";
+import { reconcileStudyPacks } from "@/data/studyPack";
 import type {
   ChecklistItem,
   FlightSchool,
@@ -298,6 +299,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (!startupRef.current) {
       startupRef.current = (async () => {
         const db = await getDatabase();
+        // Finish or undo any study pack that did not finish, before the repositories
+        // are created and the library is loaded. (getDatabase has already opened the
+        // database and run its own conversions.)
+        if (isTauri()) {
+          await reconcileStudyPacks().catch(() => {
+            // The app stays usable; it tries again the next time it starts.
+            setLastError("A study pack didn't finish adding. Close and reopen the app to try again.");
+          });
+        }
         const repositories = createRepositories(db);
         repositoriesRef.current = repositories;
         const firstRun = await initializeAirlineStarterPack(repositories);

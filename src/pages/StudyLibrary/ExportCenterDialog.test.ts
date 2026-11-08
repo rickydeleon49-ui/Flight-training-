@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import type { AiStudySet, PracticeTest } from "@/domain/types";
 import type { ExportSource } from "@/logic/studyExport";
@@ -10,6 +10,14 @@ const saveStudyExport = vi.fn();
 vi.mock("@/services/studyExport", async (original) => ({
   ...(await original<typeof import("@/services/studyExport")>()),
   saveStudyExport: (...args: unknown[]) => saveStudyExport(...args),
+}));
+
+const packMocks = vi.hoisted(() => ({ native: true, choose: vi.fn(), exportPack: vi.fn() }));
+vi.mock("@/data/studyPack", async (original) => ({
+  ...(await original<typeof import("@/data/studyPack")>()),
+  studyPacksAvailable: () => packMocks.native,
+  chooseStudyPackDestination: packMocks.choose,
+  exportStudyPack: packMocks.exportPack,
 }));
 
 const { ExportCenterDialog } = await import("./ExportCenterDialog");
@@ -152,3 +160,87 @@ it("on the phone saves cards CSV into Files with no ellipsis", async () => {
     expect(await screen.findByText("Saved in Files → Your Flight Deck → Exports → Flashcards.csv.")).toBeTruthy();
   } finally { spy.mockRestore(); }
 });
+
+describe("Share a study pack", () => {
+    const mat = (id: string, root: string | null = null) => ({ id, title: id === "book" ? "Big Book" : id, lineage: root ? { materialId: id, rootMaterialId: root } : null }) as never;
+    const library = [mat("book"), mat("c1", "book"), mat("c2", "book"), mat("solo")];
+    const openPack = () => render(h(ExportCenterDialog, { open: true, sources, materials: library, onClose: () => {} }));
+
+    beforeEach(() => {
+      packMocks.native = true;
+      packMocks.choose.mockReset().mockResolvedValue("/dest/p.hfdpack");
+      packMocks.exportPack.mockReset().mockResolvedValue({});
+    });
+
+    it("is not offered on the web build or without a library", () => {
+      packMocks.native = false;
+      openPack();
+      expect(screen.queryByLabelText("Share a study pack")).toBeNull();
+    });
+
+    it("lists books with their chapters, has Select all, and needs a choice before saving", () => {
+      openPack();
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      expect(screen.getByRole("list", { name: "Chapters of Big Book" }).textContent).toContain("c1");
+      expect(screen.getByText(/with its 2 chapters/)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Save study pack…" }).hasAttribute("disabled")).toBe(true);
+    });
+
+    it("choosing a split book exports the book and every chapter", async () => {
+      openPack();
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      fireEvent.click(screen.getByRole("checkbox", { name: /Big Book/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack).toHaveBeenCalledWith("/dest/p.hfdpack", ["book", "c1", "c2"]);
+    });
+
+    it("Select all chooses every book and loose item", async () => {
+      openPack();
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack.mock.calls[0]![1]).toEqual(["book", "c1", "c2", "solo"]);
+    });
+
+    it("Select all works for a large library, and deselecting a book drops its chapters", async () => {
+      const big = [mat("bigbook"), ...Array.from({ length: 100 }, (_, i) => mat(`bc${i}`, "bigbook")), ...Array.from({ length: 111 }, (_, i) => mat(`pdf${i}`))];
+      expect(big).toHaveLength(212);
+      render(h(ExportCenterDialog, { open: true, sources, materials: big, onClose: () => {} }));
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack.mock.calls[0]![1]).toHaveLength(212);
+      fireEvent.click(screen.getByRole("checkbox", { name: /bigbook/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await waitFor(() => expect(packMocks.exportPack).toHaveBeenCalledTimes(2));
+      const second = packMocks.exportPack.mock.calls[1]![1] as string[];
+      expect(second).toHaveLength(111);
+      expect(second.some((id) => id === "bigbook" || id.startsWith("bc"))).toBe(false);
+    });
+
+    it("leaves out materials with nothing to share, and Select all skips them", async () => {
+      render(h(ExportCenterDialog, { open: true, sources, materials: library, packEligibleIds: new Set(["book", "c1", "c2"]), onClose: () => {} }));
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      expect(screen.queryByRole("checkbox", { name: /solo/ })).toBeNull();
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await screen.findByText("Your study pack is saved.");
+      expect(packMocks.exportPack.mock.calls[0]![1]).toEqual(["book", "c1", "c2"]);
+    });
+
+    it("saves nothing when she cancels the save dialog, and shows an export sentence plainly", async () => {
+      openPack();
+      fireEvent.click(screen.getByLabelText("Share a study pack"));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+      packMocks.choose.mockResolvedValueOnce(null);
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      await waitFor(() => expect(packMocks.choose).toHaveBeenCalled());
+      expect(packMocks.exportPack).not.toHaveBeenCalled();
+      packMocks.exportPack.mockRejectedValueOnce("That is too many items for one study pack.");
+      fireEvent.click(screen.getByRole("button", { name: "Save study pack…" }));
+      expect((await screen.findByRole("alert")).textContent).toBe("That is too many items for one study pack.");
+    });
+  });
