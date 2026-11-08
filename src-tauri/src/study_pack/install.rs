@@ -265,7 +265,7 @@ fn run(
 
     // The receipt must be found again on a fresh connection before any
     // recovery evidence is removed.
-    let result = match read_result(&read_only(root).map_err(Stop::Keep)?, op_id) {
+    let mut result = match read_result(&read_only(root).map_err(Stop::Keep)?, op_id) {
         Ok(Some(result)) => result,
         _ => {
             return Err(Stop::Keep(
@@ -280,6 +280,7 @@ fn run(
             Stop::Keep(e)
         }
     })?;
+    result.skipped_items = plan.named(pack);
     journal.state = State::Committed;
     if let Err(message) = journal::write(op, &journal) {
         if message == CRASH {

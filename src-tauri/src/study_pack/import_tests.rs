@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use super::fault;
 use super::install::{self, add_study_pack_in};
 use super::journal;
+use super::plan::SkippedItem;
 use super::result::PackResult;
 use super::tests::*;
 use crate::practice_sessions::compute_canonical_hash;
@@ -518,13 +519,35 @@ fn another_version_is_added_beside_hers_and_never_touches_hers() {
     her.conn
         .execute("UPDATE ai_study_sets SET summary='Mine now' WHERE source_material_id=(SELECT id FROM study_materials WHERE title='Notes')", [])
         .unwrap();
+    // Her copy is no longer identical: the pack's is added beside it, labeled.
+    let edited = snapshot(&her);
     let again = add(&her, &r1).unwrap();
     assert_eq!(
-        (again.added, again.skipped),
-        (0, 1),
-        "edited copy: same revision is skipped"
+        (again.added, again.skipped, again.new_versions),
+        (1, 0, 1),
+        "edited copy: the pack's version is added as a labeled copy"
     );
+    assert!(again.skipped_items.is_empty());
+    assert_untouched(&edited, &her);
     assert_eq!(text(&her, "SELECT summary FROM ai_study_sets WHERE source_material_id=(SELECT id FROM study_materials WHERE title='Notes')"), "Mine now");
+    let labeled = new_material(&her, "Notes (from study pack)");
+    assert_eq!(
+        text(
+            &her,
+            &format!("SELECT title FROM ai_study_sets WHERE source_material_id='{labeled}'")
+        ),
+        "Guide title (from study pack)"
+    );
+    // Now the labeled copy is identical, so the same pack skips it, by name.
+    let third = add(&her, &r1).unwrap();
+    assert_eq!((third.added, third.skipped), (0, 1));
+    assert_eq!(
+        third.skipped_items,
+        vec![SkippedItem {
+            title: "Notes".to_string(),
+            reason: "already in your library".to_string()
+        }]
+    );
 
     let before = snapshot(&her);
     let rows_before = item_rows(&her);
@@ -556,7 +579,7 @@ fn another_version_is_added_beside_hers_and_never_touches_hers() {
             &her,
             "SELECT COUNT(*) FROM study_materials WHERE title LIKE 'Notes%'"
         ),
-        3
+        4
     );
     assert_untouched(&before, &her);
 }
@@ -834,7 +857,7 @@ fn a_guide_uses_the_picture_she_already_has() {
 }
 
 #[test]
-fn a_removed_picture_stays_removed_and_its_cards_are_left_out_and_counted() {
+fn a_deleted_picture_comes_back_with_its_cards() {
     let p = pic_producer();
     let her = her();
     let pack = pack_of(&p, &["m-pdf"], "all.hfdpack");
@@ -842,38 +865,68 @@ fn a_removed_picture_stays_removed_and_its_cards_are_left_out_and_counted() {
     delete_material(&her, "Panel picture");
     delete_material(&her, "Handbook");
     assert_eq!(live_pictures(&her), 0);
+    let before = snapshot(&her);
     let result = add(&her, &pack).unwrap();
     assert_eq!(
         (result.added, result.readded, result.added_pictures),
-        (1, 1, 0)
+        (2, 1, 1)
     );
     assert_eq!(
         (result.cards_left_out, result.cards_left_out_removed),
-        (1, 1)
+        (0, 0)
     );
-    assert_eq!(live_pictures(&her), 0, "the picture was not added back");
+    assert!(result.skipped_items.is_empty());
+    assert_untouched(&before, &her);
+    assert_eq!(live_pictures(&her), 1, "the picture came back");
     let handbook = new_material(&her, "Handbook");
+    let picture = new_material(&her, "Panel picture");
     let cards: Vec<Value> = serde_json::from_str(&text(
         &her,
         &format!("SELECT flashcards_json FROM ai_study_sets WHERE source_material_id='{handbook}'"),
     ))
     .unwrap();
-    assert_eq!(cards.len(), 1);
+    assert_eq!(cards.len(), 2, "its picture card came back too");
     assert_eq!(
-        count(
+        text(
             &her,
             &format!(
-                "SELECT COUNT(*) FROM visual_card_regions WHERE owner_material_id='{handbook}'"
+                "SELECT image_material_id FROM visual_card_regions WHERE owner_material_id='{handbook}'"
             )
         ),
-        0,
-        "no unused region"
+        picture
     );
     crate::backup::verify_schema_37_study_packs(&her.conn).unwrap();
 }
 
 #[test]
-fn a_deleted_second_copy_of_a_picture_is_not_re_added() {
+fn a_deleted_picture_alone_comes_back_and_her_guide_keeps_its_cards() {
+    let p = pic_producer();
+    let her = her();
+    let pack = pack_of(&p, &["m-pdf"], "all.hfdpack");
+    add(&her, &pack).unwrap();
+    delete_material(&her, "Panel picture");
+    let before = snapshot(&her);
+    let result = add(&her, &pack).unwrap();
+    // Her guide's picture card lost its picture, so hers is no longer the
+    // pack's: both come back as a labeled copy, and hers is left alone.
+    assert_eq!(
+        (result.added, result.added_pictures, result.skipped),
+        (2, 1, 0)
+    );
+    assert_untouched(&before, &her);
+    assert_eq!(live_pictures(&her), 1);
+    let copy = new_material(&her, "Handbook (from study pack)");
+    assert_eq!(
+        count(
+            &her,
+            &format!("SELECT COUNT(*) FROM visual_card_regions WHERE owner_material_id='{copy}' AND image_material_id IS NOT NULL")
+        ),
+        1
+    );
+}
+
+#[test]
+fn a_deleted_second_copy_of_a_picture_comes_back() {
     let p = pic_producer();
     let her = her();
     add(&her, &pic_pack(&p, "r1.hfdpack")).unwrap();
@@ -886,15 +939,15 @@ fn a_deleted_second_copy_of_a_picture_is_not_re_added() {
         (1, 1, 0)
     );
     assert_eq!(live_pictures(&her), 2);
-    delete_material(&her, &format!("Panel v2{}", date_suffix(&r2)));
+    delete_material(&her, "Panel v2");
     let again = add(&her, &r2).unwrap();
-    assert_eq!((again.added, again.skipped), (0, 1), "P3, not P4");
-    assert_eq!(live_pictures(&her), 1);
-    assert_eq!(item_rows(&her), 2, "no row for a removed picture");
+    assert_eq!((again.added, again.added_pictures), (1, 1), "added back");
+    assert_eq!(live_pictures(&her), 2);
+    assert_eq!(item_rows(&her), 3);
 }
 
 #[test]
-fn identical_bytes_under_a_new_namespace_after_she_deleted_it_are_not_re_added() {
+fn identical_bytes_under_a_new_namespace_after_she_deleted_it_come_back() {
     let a = pic_producer();
     let b = pic_producer();
     let her = her();
@@ -902,13 +955,16 @@ fn identical_bytes_under_a_new_namespace_after_she_deleted_it_are_not_re_added()
     delete_material(&her, "Panel picture");
     rename(&b, "m-pic", "Another title");
     let result = add(&her, &pic_pack(&b, "b.hfdpack")).unwrap();
-    assert_eq!((result.added, result.skipped), (0, 1));
-    assert_eq!(live_pictures(&her), 0);
-    assert_eq!(item_rows(&her), 1);
+    assert_eq!(
+        (result.added, result.skipped, result.added_pictures),
+        (1, 0, 1)
+    );
+    assert_eq!(live_pictures(&her), 1);
+    assert_eq!(item_rows(&her), 2);
 }
 
 #[test]
-fn two_items_with_the_same_tombstoned_picture_are_both_removed_and_write_no_rows() {
+fn two_items_with_the_same_deleted_picture_bring_back_one_picture() {
     let p = pic_producer();
     p.material("m-pic2", "Panel picture", Some(("panel2.png", PANEL)));
     let her = her();
@@ -920,13 +976,20 @@ fn two_items_with_the_same_tombstoned_picture_are_both_removed_and_write_no_rows
         (1, 1),
         "one added and one alias"
     );
+    assert_eq!(
+        first.skipped_items,
+        vec![SkippedItem {
+            title: "Panel picture".to_string(),
+            reason: "same as another item in this study pack".to_string()
+        }]
+    );
     assert_eq!(item_rows(&her), 2);
     delete_material(&her, "Panel picture");
     let rows = item_rows(&her);
     let second = add(&her, &both).unwrap();
-    assert_eq!((second.added, second.skipped), (0, 2));
-    assert_eq!(item_rows(&her), rows);
-    assert_eq!(live_pictures(&her), 0);
+    assert_eq!((second.added, second.skipped), (1, 1));
+    assert_eq!(item_rows(&her), rows + 2);
+    assert_eq!(live_pictures(&her), 1);
 }
 
 #[test]
@@ -973,16 +1036,11 @@ fn a_changed_picture_with_a_new_guide_copy_adds_a_new_picture_and_leaves_hers() 
     );
 }
 
-#[test]
-fn a_picture_over_the_card_limit_or_with_other_bytes_leaves_those_cards_out() {
-    let p = pic_producer();
-    let her = her();
-    add(&her, &pic_pack(&p, "pic.hfdpack")).unwrap();
-    let picture = new_material(&her, "Panel picture");
-    // Her library already uses that picture on 20 cards.
+/// Her own guide uses this picture on 20 cards (the most it may have).
+fn fill_picture(her: &Lib, picture: &str) {
     let mut cards = Vec::new();
     for i in 0..20 {
-        let region = her.region("her-1", &picture, (i, 0, 5, 5));
+        let region = her.region("her-1", picture, (i, 0, 5, 5));
         cards.push(json!({"front": format!("f{i}"), "back": "b", "sourcePage": null, "itemId": format!("pc-{i}"), "visualRegionId": region}));
     }
     her.conn
@@ -991,6 +1049,16 @@ fn a_picture_over_the_card_limit_or_with_other_bytes_leaves_those_cards_out() {
             [Value::Array(cards).to_string()],
         )
         .unwrap();
+}
+
+#[test]
+fn a_picture_over_the_card_limit_leaves_those_cards_out_and_a_changed_one_comes_back() {
+    let p = pic_producer();
+    let her = her();
+    add(&her, &pic_pack(&p, "pic.hfdpack")).unwrap();
+    let picture = new_material(&her, "Panel picture");
+    // Her library already uses that picture on 20 cards.
+    fill_picture(&her, &picture);
     let guide = pack_of(&p, &["m-pdf"], "guide.hfdpack");
     let result = add(&her, &guide).unwrap();
     assert_eq!(
@@ -998,35 +1066,49 @@ fn a_picture_over_the_card_limit_or_with_other_bytes_leaves_those_cards_out() {
         (1, 0)
     );
 
-    // A picture whose file no longer has the bytes: left out too.
-    let her2 = her_with_picture(&p);
-    let picture2 = new_material(&her2, "Panel picture");
-    her2.replace_file(&picture2, &fake_png(12, 12, "other"));
-    let result = add(&her2, &guide).unwrap();
     assert_eq!(
-        (result.cards_left_out, result.cards_left_out_removed),
-        (1, 0)
+        result.skipped_items,
+        vec![
+            SkippedItem {
+                title: "Handbook".to_string(),
+                reason: "1 picture card left out (the picture already has 20 cards)".to_string()
+            },
+            SkippedItem {
+                title: "Panel picture".to_string(),
+                reason: "already in your library".to_string()
+            }
+        ]
     );
-    // A missing file is unusable.
-    let her3 = her_with_picture(&p);
-    let picture3 = new_material(&her3, "Panel picture");
-    let rel = text(
-        &her3,
-        &format!("SELECT file_path FROM study_materials WHERE id='{picture3}'"),
-    );
-    std::fs::remove_file(her3.root().join("documents").join(rel)).unwrap();
-    let result = add(&her3, &guide).unwrap();
-    assert_eq!(result.cards_left_out, 1);
-    let handbook = new_material(&her3, "Handbook");
-    assert_eq!(
-        count(
-            &her3,
-            &format!(
-                "SELECT COUNT(*) FROM visual_card_regions WHERE owner_material_id='{handbook}'"
-            )
-        ),
-        0
-    );
+
+    // A picture whose file no longer has the bytes, or has none: the pack's
+    // picture is added beside hers and the card keeps it.
+    for missing in [false, true] {
+        let her2 = her_with_picture(&p);
+        let picture2 = new_material(&her2, "Panel picture");
+        if missing {
+            let rel = text(
+                &her2,
+                &format!("SELECT file_path FROM study_materials WHERE id='{picture2}'"),
+            );
+            std::fs::remove_file(her2.root().join("documents").join(rel)).unwrap();
+        } else {
+            her2.replace_file(&picture2, &fake_png(12, 12, "other"));
+        }
+        let before = snapshot(&her2);
+        let result = add(&her2, &guide).unwrap();
+        assert_eq!(
+            (result.cards_left_out, result.added, result.added_pictures),
+            (0, 2, 1)
+        );
+        assert!(result.skipped_items.is_empty());
+        assert_untouched(&before, &her2);
+        let handbook = new_material(&her2, "Handbook");
+        let image = text(
+            &her2,
+            &format!("SELECT image_material_id FROM visual_card_regions WHERE owner_material_id='{handbook}'"),
+        );
+        assert_ne!(image, picture2, "the card uses the pack's picture");
+    }
 }
 
 fn her_with_picture(p: &Lib) -> Lib {
@@ -1225,7 +1307,7 @@ fn seed_extra_row(
 }
 
 #[test]
-fn the_oldest_live_link_of_an_identity_and_revision_is_the_one_used() {
+fn the_oldest_live_link_that_is_still_identical_is_the_one_used() {
     let (producer, _) = seeded();
     let pair = pack_of(&producer, &["m-pdf", "m-child"], "pc.hfdpack");
     let pack = super::validate::validate_pack(&pair).unwrap();
@@ -1266,18 +1348,19 @@ fn the_oldest_live_link_of_an_identity_and_revision_is_the_one_used() {
         delete_material(&her, "Chapter 2");
         let result = add(&her, &pair).unwrap();
         assert_eq!((result.added, result.readded), (1, 1));
+        // The lookup lists the oldest live link first ...
+        let look = super::plan::Lookups { conn: &her.conn };
+        let listed = look
+            .l1(&pack.manifest.namespace, &parent.item_id, &parent.revision)
+            .unwrap();
+        assert_eq!(listed[0], if rival_wins { "rival" } else { first.as_str() });
+        // ... but only a material just proven identical is used: the rival
+        // isn't the pack's Handbook, so it is passed over every time.
         let linked: String = text(
             &her,
             "SELECT parent_material_id FROM material_split_lineage",
         );
-        assert_eq!(
-            linked,
-            if rival_wins {
-                "rival".to_string()
-            } else {
-                first
-            }
-        );
+        assert_eq!(linked, first);
     }
 }
 
@@ -1540,7 +1623,10 @@ fn lookups_break_ties_by_the_stated_total_orders_and_the_text_is_fixed_width() {
     );
     let look = super::plan::Lookups { conn: &her.conn };
     // L2: smaller operation id first (then namespace, item).
-    assert_eq!(look.l2(&rev).unwrap().as_deref(), Some("m1"));
+    assert_eq!(
+        look.l2(&rev).unwrap().first().map(String::as_str),
+        Some("m1")
+    );
     // L3 (current): greater operation id for the same identity.
     seed_extra_row(
         &her,
@@ -1560,12 +1646,15 @@ fn lookups_break_ties_by_the_stated_total_orders_and_the_text_is_fixed_width() {
         )
         .unwrap();
     assert_eq!(
-        look.l2(&rev).unwrap().as_deref(),
+        look.l2(&rev).unwrap().first().map(String::as_str),
         Some("m1"),
         "the other operation still has the smaller id"
     );
     her.conn.execute("DELETE FROM study_pack_items WHERE operation_id='00000000-0000-4000-8000-000000000001'", []).unwrap();
-    assert_eq!(look.l2(&rev).unwrap().as_deref(), Some("m2"));
+    assert_eq!(
+        look.l2(&rev).unwrap().first().map(String::as_str),
+        Some("m2")
+    );
     assert_eq!(
         text(&her, &format!("SELECT item_id FROM study_pack_items WHERE revision='{rev}' ORDER BY imported_at, operation_id, namespace, item_id LIMIT 1")),
         "item-0"
@@ -2806,12 +2895,14 @@ fn dropped_picture_cards_leave_no_citation_and_a_run_with_nothing_left_is_omitte
         let her = her();
         let pack = pack_of(&p, &["m-pdf"], "cited.hfdpack");
         add(&her, &pack).unwrap();
-        delete_material(&her, "Panel picture");
         delete_material(&her, "Handbook");
+        // Her own guide now uses that picture on 20 cards: the pack's picture
+        // card no longer fits and is left out.
+        fill_picture(&her, &new_material(&her, "Panel picture"));
         let result = add(&her, &pack).unwrap();
         assert_eq!(
             (result.cards_left_out, result.cards_left_out_removed),
-            (1, 1)
+            (1, 0)
         );
         let handbook = new_material(&her, "Handbook");
         let runs = count(
@@ -2940,4 +3031,371 @@ fn a_split_book_over_the_limit_travels_without_its_file_and_keeps_its_chapters()
         ),
         2
     );
+}
+
+/* ------------------------------------------------------------------ */
+/* PACK-IMPORT-02: every item is added or named with a fresh proof     */
+/* ------------------------------------------------------------------ */
+
+const ALREADY: &str = "already in your library";
+const IN_PACK: &str = "same as another item in this study pack";
+
+fn named(title: &str, reason: &str) -> SkippedItem {
+    SkippedItem {
+        title: title.to_string(),
+        reason: reason.to_string(),
+    }
+}
+
+/// The invariant: each pack item is added, or skipped and named.
+fn assert_added_or_named(result: &PackResult, pack: &Path) {
+    let items = super::validate::validate_pack(pack).unwrap().items.len() as u64;
+    let skips = result
+        .skipped_items
+        .iter()
+        .filter(|s| s.reason == ALREADY || s.reason == IN_PACK)
+        .count() as u64;
+    assert_eq!(result.added + result.skipped, items, "every item counted");
+    assert_eq!(skips, result.skipped, "every skipped item is named");
+}
+
+fn edit_guide(lib: &Lib, title: &str, summary: &str) {
+    lib.conn
+        .execute(
+            "UPDATE ai_study_sets SET summary=?1 WHERE source_material_id=(SELECT id FROM study_materials WHERE title=?2)",
+            params![summary, title],
+        )
+        .unwrap();
+}
+
+#[test]
+fn s1_an_unchanged_pack_again_skips_every_item_by_name_and_changes_nothing() {
+    let (producer, _) = seeded();
+    let pack = all_pack(&producer);
+    let her = her();
+    let first = add(&her, &pack).unwrap();
+    assert_added_or_named(&first, &pack);
+    assert!(first.skipped_items.is_empty());
+    let before = snapshot(&her);
+    let again = add(&her, &pack).unwrap();
+    assert_added_or_named(&again, &pack);
+    assert_eq!(again.added, 0);
+    let items = super::validate::validate_pack(&pack).unwrap().items.len();
+    assert_eq!(again.skipped_items.len(), items, "each one by name");
+    assert!(again.skipped_items.iter().all(|s| s.reason == ALREADY));
+    assert!(again.skipped_items.contains(&named("Notes guide", ALREADY)));
+    assert_untouched(&before, &her);
+}
+
+#[test]
+fn s1_a_renamed_copy_is_not_proof_and_the_pack_item_is_added_again() {
+    let (producer, _) = seeded();
+    let her = her();
+    let pack = revision_pack(&producer, "Notes");
+    add(&her, &pack).unwrap();
+    her.conn
+        .execute(
+            "UPDATE study_materials SET title='My notes' WHERE title='Notes'",
+            [],
+        )
+        .unwrap();
+    let before = snapshot(&her);
+    let again = add(&her, &pack).unwrap();
+    assert_added_or_named(&again, &pack);
+    assert_eq!((again.added, again.skipped), (1, 0));
+    assert_untouched(&before, &her);
+    // "Notes" is free again, so it needs no label.
+    assert_eq!(
+        count(
+            &her,
+            "SELECT COUNT(*) FROM study_materials WHERE title='Notes'"
+        ),
+        1
+    );
+}
+
+#[test]
+fn s2_an_alias_from_another_namespace_is_rechecked_and_an_edit_adds_a_labeled_copy() {
+    let (a, _) = seeded();
+    let (b, _) = seeded();
+    let her = her();
+    add(&her, &revision_pack(&a, "Notes")).unwrap();
+    let from_b = revision_pack(&b, "Notes");
+    let alias = add(&her, &from_b).unwrap();
+    assert_eq!(alias.skipped_items, vec![named("Notes", ALREADY)]);
+    edit_guide(&her, "Notes", "Mine now");
+    let before = snapshot(&her);
+    let again = add(&her, &from_b).unwrap();
+    assert_added_or_named(&again, &from_b);
+    assert_eq!((again.added, again.new_versions), (1, 1));
+    assert_untouched(&before, &her);
+    new_material(&her, "Notes (from study pack)");
+}
+
+#[test]
+fn the_same_id_in_another_namespace_with_other_content_is_added_with_a_label() {
+    let (a, _) = seeded();
+    let (b, _) = seeded();
+    b.conn
+        .execute(
+            "UPDATE ai_study_sets SET summary='Different' WHERE source_material_id='m-guide'",
+            [],
+        )
+        .unwrap();
+    let her = her();
+    add(&her, &revision_pack(&a, "Notes")).unwrap();
+    let before = snapshot(&her);
+    let pack = revision_pack(&b, "Notes");
+    let result = add(&her, &pack).unwrap();
+    assert_added_or_named(&result, &pack);
+    assert_eq!((result.added, result.skipped), (1, 0));
+    assert_untouched(&before, &her);
+    let copy = new_material(&her, "Notes (from study pack)");
+    assert_eq!(
+        text(
+            &her,
+            &format!("SELECT summary FROM ai_study_sets WHERE source_material_id='{copy}'")
+        ),
+        "Different"
+    );
+}
+
+#[test]
+fn a_title_she_already_uses_for_her_own_material_gets_the_label() {
+    let (producer, _) = seeded();
+    let her = her();
+    let before = snapshot(&her);
+    // Compared without case: her "My own handbook" is taken.
+    let pack = revision_pack(&producer, "MY OWN HANDBOOK");
+    let result = add(&her, &pack).unwrap();
+    assert_added_or_named(&result, &pack);
+    assert_eq!((result.added, result.new_versions), (1, 1));
+    assert_untouched(&before, &her);
+    new_material(&her, "MY OWN HANDBOOK (from study pack)");
+    assert_eq!(
+        text(&her, "SELECT title FROM study_materials WHERE id='her-1'"),
+        "My own handbook"
+    );
+}
+
+fn three_twins() -> Lib {
+    let p = lib();
+    for (id, summary) in [
+        ("t-1", "One"),
+        ("t-2", "Two"),
+        ("t-3", "Three"),
+        ("t-4", "One"),
+    ] {
+        p.material(id, "Twin", None);
+        p.guide(id, summary, json!([]), json!([]));
+    }
+    p
+}
+
+fn twin_titles(her: &Lib) -> Vec<(String, String)> {
+    her.conn
+        .prepare(
+            "SELECT m.title, g.summary FROM study_materials m
+             JOIN ai_study_sets g ON g.source_material_id = m.id
+             WHERE m.title LIKE 'Twin%' ORDER BY m.title",
+        )
+        .unwrap()
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+}
+
+#[test]
+fn same_titles_in_one_pack_are_told_apart_the_same_way_every_time() {
+    let p = three_twins();
+    let pack = pack_of(&p, &["t-1", "t-2", "t-3", "t-4"], "twins.hfdpack");
+    let mut seen = Vec::new();
+    for _ in 0..2 {
+        let her = her();
+        let result = add(&her, &pack).unwrap();
+        assert_added_or_named(&result, &pack);
+        assert_eq!((result.added, result.skipped), (3, 1));
+        // S3: the identical fourth is named, not silently merged.
+        assert_eq!(result.skipped_items, vec![named("Twin", IN_PACK)]);
+        seen.push(twin_titles(&her));
+        // Labeled copies prove identical on the next add.
+        let before = snapshot(&her);
+        let again = add(&her, &pack).unwrap();
+        assert_eq!((again.added, again.skipped), (0, 4));
+        assert_untouched(&before, &her);
+    }
+    assert_eq!(seen[0], seen[1]);
+    let titles: Vec<&str> = seen[0].iter().map(|(t, _)| t.as_str()).collect();
+    assert_eq!(
+        titles,
+        ["Twin", "Twin (from study pack 2)", "Twin (from study pack)"]
+    );
+}
+
+#[test]
+fn s4_s5_a_picture_whose_bytes_she_replaced_is_added_beside_hers() {
+    let p = pic_producer();
+    let her = her_with_picture(&p);
+    let picture = new_material(&her, "Panel picture");
+    her.replace_file(&picture, &fake_png(30, 30, "hers"));
+    let before = snapshot(&her);
+    let pack = pic_pack(&p, "pic2.hfdpack");
+    let result = add(&her, &pack).unwrap();
+    assert_added_or_named(&result, &pack);
+    assert_eq!((result.added, result.added_pictures), (1, 1));
+    assert_untouched(&before, &her);
+    assert_eq!(live_pictures(&her), 2);
+    assert_eq!(her.file_of(&picture), fake_png(30, 30, "hers"));
+    // Pictures never carry the label.
+    assert_eq!(
+        count(
+            &her,
+            "SELECT COUNT(*) FROM study_materials WHERE title='Panel picture'"
+        ),
+        2
+    );
+}
+
+#[test]
+fn s6_a_picture_twice_in_one_pack_is_named() {
+    let p = pic_producer();
+    p.material("m-pic2", "Panel again", Some(("panel2.png", PANEL)));
+    let her = her();
+    let pack = pack_of(&p, &["m-pic", "m-pic2"], "two-pics.hfdpack");
+    let result = add(&her, &pack).unwrap();
+    assert_added_or_named(&result, &pack);
+    assert_eq!((result.added, result.skipped), (1, 1));
+    assert_eq!(result.skipped_items, vec![named("Panel again", IN_PACK)]);
+}
+
+#[test]
+fn s8_to_s11_each_reason_for_a_left_out_card_is_named() {
+    let p = pic_producer();
+    let pack = super::validate::validate_pack(&pack_of(&p, &["m-pdf"], "why.hfdpack")).unwrap();
+    let handbook = pack
+        .items
+        .iter()
+        .position(|i| i.json.title == "Handbook")
+        .unwrap();
+    let her = her();
+    let mut n = 0;
+    let mut ids = |_: &str| {
+        n += 1;
+        format!("id-{n}")
+    };
+    let mut plan = super::plan::compute(&her.conn, her.root(), &pack, &mut ids).unwrap();
+    plan.items[handbook].left_out = super::plan::LeftOut {
+        removed: 1,
+        changed: 2,
+        over_capacity: 1,
+        unusable: 1,
+    };
+    let reasons: Vec<String> = plan
+        .named(&pack)
+        .into_iter()
+        .filter(|s| s.title == "Handbook")
+        .map(|s| s.reason)
+        .collect();
+    assert_eq!(
+        reasons,
+        [
+            "1 picture card left out (the picture already has 20 cards)",
+            "1 picture card left out (its picture can't be read)",
+            "2 picture cards left out (its picture changed)",
+            "1 picture card left out (its picture isn't in this pack)",
+        ]
+    );
+}
+
+#[test]
+fn s13_a_chapter_without_its_book_is_added_and_named() {
+    let (producer, _) = seeded();
+    let pack = pack_of(&producer, &["m-child"], "child.hfdpack");
+    let her = her();
+    let result = add(&her, &pack).unwrap();
+    assert_added_or_named(&result, &pack);
+    assert_eq!(
+        result.skipped_items,
+        vec![named(
+            "Chapter 2",
+            "added without its link to the book it came from"
+        )]
+    );
+}
+
+#[test]
+fn s14_the_staged_id_map_holds_only_what_is_added() {
+    let (producer, _) = seeded();
+    let pack = all_pack(&producer);
+    let her = her();
+    add(&her, &pack).unwrap();
+    edit_guide(&her, "Notes guide", "Mine now");
+    die_at(&her, &pack, "staged");
+    let j = journal::read(&op_dir_of(&her)).unwrap();
+    assert_eq!(j.id_map.len(), 1, "only the labeled copy: {:?}", j.id_map);
+}
+
+#[test]
+fn the_plan_is_the_same_each_time_it_is_made_on_the_same_library() {
+    let (producer, _) = seeded();
+    let pack_path = all_pack(&producer);
+    let her = her();
+    add(&her, &pack_path).unwrap();
+    edit_guide(&her, "Notes guide", "Mine now");
+    let pack = super::validate::validate_pack(&pack_path).unwrap();
+    let plan = || {
+        let mut n = 0;
+        let mut ids = |r: &str| {
+            n += 1;
+            format!("{r}-{n}")
+        };
+        super::plan::compute(&her.conn, her.root(), &pack, &mut ids).unwrap()
+    };
+    let first = plan();
+    assert_eq!(first, plan());
+    assert!(first
+        .items
+        .iter()
+        .any(|p| p.label.as_deref() == Some(" (from study pack)")));
+}
+
+#[test]
+fn an_edit_between_preview_and_commit_cancels_with_a_plain_message() {
+    let (producer, _) = seeded();
+    let her = her();
+    let pack = revision_pack(&producer, "Notes");
+    add(&her, &pack).unwrap();
+    let preview = super::inspect::inspect_study_pack_in(her.root(), &pack).unwrap();
+    assert_eq!(preview.skipped_items, vec![named("Notes", ALREADY)]);
+    assert!(preview.nothing_new);
+    let root = her.root().to_path_buf();
+    fault::set_hook(move |point| {
+        if point == "staged" {
+            let conn = Connection::open(root.join("her-flight-deck.db")).unwrap();
+            conn.execute(
+                "UPDATE ai_study_sets SET summary='Edited mid-add' WHERE source_material_id=(SELECT id FROM study_materials WHERE title='Notes')",
+                [],
+            )
+            .unwrap();
+        }
+        Ok(())
+    });
+    let before = count(&her, "SELECT COUNT(*) FROM study_materials");
+    let error = add(&her, &pack).unwrap_err();
+    fault::clear();
+    assert_eq!(error, super::commit::CHANGED);
+    assert_eq!(
+        super::commit::CHANGED,
+        "Your library changed while adding. Press Add again."
+    );
+    assert_eq!(count(&her, "SELECT COUNT(*) FROM study_materials"), before);
+    assert!(!staging_left(&her));
+    // Pressing Add again plans against the edit: a labeled copy.
+    let preview = super::inspect::inspect_study_pack_in(her.root(), &pack).unwrap();
+    assert!(preview.skipped_items.is_empty());
+    assert!(!preview.nothing_new);
+    let again = add(&her, &pack).unwrap();
+    assert_eq!((again.added, again.new_versions), (1, 1));
+    new_material(&her, "Notes (from study pack)");
 }

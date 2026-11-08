@@ -13,7 +13,7 @@ import {
   type StudyPackResult,
 } from "@/data/studyPack";
 import { newId } from "@/lib/id";
-import { packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
+import { ALREADY_TITLE, namedItemLines, packAlreadyHaveLine, packContentsLine, resultLines } from "@/logic/studyPackText";
 import { useAppData } from "@/state/AppDataContext";
 import { DISCLAIMER_LINE } from "@/logic/legal";
 
@@ -154,7 +154,12 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
     <Button onClick={onClose}>{phase.kind === "added" ? "Done" : "Close"}</Button>
   );
 
-  const title = withPreview ? "Add study pack" : phase.kind === "added" ? "Study pack added" : "This study pack can't be added";
+  const title = withPreview
+    ? (withPreview.preview.nothingNew ? ALREADY_TITLE : "Add study pack")
+    : phase.kind === "added"
+      ? (phase.result.added === 0 ? ALREADY_TITLE : "Study pack added")
+      : "This study pack can't be added";
+  const previewNamed = withPreview ? namedItemLines(withPreview.preview.skippedItems) : [];
 
   return (
     <Dialog open={visible} onClose={onClose} dismissible={!adding} title={title} footer={footer}>
@@ -164,6 +169,11 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
         <div className="stack stack--3">
           <p className="small">{packContentsLine(withPreview.preview) || "This study pack has nothing new in it."}</p>
           {packAlreadyHaveLine(withPreview.preview) ? <p className="small">{packAlreadyHaveLine(withPreview.preview)}</p> : null}
+          {previewNamed.length > 0 ? (
+            <ul className="tiny" aria-label="Not added">
+              {previewNamed.map((line, i) => <li key={i}>{line}</li>)}
+            </ul>
+          ) : null}
           <p className="tiny dim">Your own work won't be changed.</p>
           <p className="tiny dim">{DISCLAIMER_LINE}</p>
           {phase.kind === "failed" ? <p className="field__error" role="alert">{phase.message}</p> : null}
@@ -172,7 +182,7 @@ export function AddStudyPackDialog({ open, onClose }: Props) {
 
       {phase.kind === "added" ? (
         <div className="stack stack--2" role="status">
-          {resultLines(phase.result).map((line) => <p className="small" key={line}>{line}</p>)}
+          {resultLines(phase.result).map((line, i) => <p className="small" key={i}>{line}</p>)}
         </div>
       ) : null}
     </Dialog>

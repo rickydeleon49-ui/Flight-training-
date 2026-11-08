@@ -41,6 +41,30 @@ pub fn suffix(created_at: &str) -> String {
     }
 }
 
+/// The label for an item added beside a same-titled one: ` (from study
+/// pack)`, then ` (from study pack 2)` and so on.
+pub fn from_pack(n: usize) -> String {
+    if n <= 1 {
+        " (from study pack)".to_string()
+    } else {
+        format!(" (from study pack {n})")
+    }
+}
+
+/// The title without a label this import adds at the end (` (updated ...)`
+/// or ` (from study pack ...)`), or None when it has no such label.
+pub fn without_label(title: &str) -> Option<&str> {
+    let inner = title.strip_suffix(')')?;
+    let open = inner.rfind(" (")?;
+    let label = &inner[open + 2..];
+    let from_pack = label == "from study pack"
+        || label
+            .strip_prefix("from study pack ")
+            .is_some_and(|n| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit()));
+    let updated = label == "updated" || label.starts_with("updated ");
+    (from_pack || updated).then(|| &title[..open])
+}
+
 /// The stored title. A blank title stays blank, with no suffix.
 pub fn stored(title: &str, second_copy_suffix: Option<&str>) -> String {
     let title = normalize(title);
@@ -68,6 +92,19 @@ mod tests {
         assert_eq!(normalize(" \t "), "");
         assert_eq!(stored(" \t ", Some(" (updated x)")), "");
         assert_eq!(stored("  Notes  ", None), "Notes");
+    }
+
+    #[test]
+    fn labels_are_numbered_and_can_be_taken_off() {
+        assert_eq!(from_pack(1), " (from study pack)");
+        assert_eq!(from_pack(3), " (from study pack 3)");
+        assert_eq!(without_label("Notes (from study pack)"), Some("Notes"));
+        assert_eq!(without_label("Notes (from study pack 12)"), Some("Notes"));
+        assert_eq!(without_label("Notes (updated 1 Nov 2026)"), Some("Notes"));
+        assert_eq!(without_label("Notes (updated)"), Some("Notes"));
+        assert_eq!(without_label("Notes (mine)"), None);
+        assert_eq!(without_label("Notes (from study pack x)"), None);
+        assert_eq!(without_label("Notes"), None);
     }
 
     #[test]

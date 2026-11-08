@@ -5,6 +5,7 @@ use rusqlite::{Connection, OptionalExtension};
 use serde::Serialize;
 
 use super::guard::pack_sql;
+use super::plan::SkippedItem;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -22,6 +23,9 @@ pub struct PackResult {
     pub cards_left_out: u64,
     pub cards_left_out_removed: u64,
     pub committed_at: String,
+    /// Named skips and left-out cards. Told once, right after the import;
+    /// not kept in the receipt.
+    pub skipped_items: Vec<SkippedItem>,
 }
 
 const COLUMNS: &str = "operation_id, pack_id, added, added_guides, added_documents,
@@ -44,6 +48,7 @@ fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<PackResult> {
         cards_left_out: n(10)?,
         cards_left_out_removed: n(11)?,
         committed_at: r.get(12)?,
+        skipped_items: Vec::new(),
     })
 }
 

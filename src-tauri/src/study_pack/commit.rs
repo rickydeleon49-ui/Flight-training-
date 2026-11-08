@@ -139,7 +139,7 @@ fn write_all(tx: &Transaction, input: &CommitInput<'_>, plan: &Plan) -> Result<(
         insert_lineage(tx, item, ip, &now)?;
     }
     for (item, ip) in &adds {
-        insert_content(tx, input, item, ip, &now)?;
+        insert_content(tx, item, ip, &now)?;
     }
 
     for (item, ip) in pack.items.iter().zip(&plan.items) {
@@ -170,11 +170,6 @@ fn write_all(tx: &Transaction, input: &CommitInput<'_>, plan: &Plan) -> Result<(
     Ok(())
 }
 
-fn second_copy_suffix(input: &CommitInput<'_>, ip: &ItemPlan) -> Option<String> {
-    ip.second_copy
-        .then(|| titles::suffix(&input.pack.manifest.created_at))
-}
-
 fn material_of(ip: &ItemPlan) -> Result<&str, String> {
     ip.material
         .as_deref()
@@ -189,7 +184,7 @@ fn insert_material(
     now: &str,
 ) -> Result<(), String> {
     let material = material_of(ip)?;
-    let suffix = second_copy_suffix(input, ip);
+    let suffix = ip.label.clone();
     let title = titles::stored(&item.json.title, suffix.as_deref());
     let (path, original, size): (Option<String>, Option<String>, Option<i64>) =
         match &item.manifest.file {
@@ -279,13 +274,12 @@ fn insert_lineage(
 
 fn insert_content(
     tx: &Transaction,
-    input: &CommitInput<'_>,
     item: &PackItem,
     ip: &ItemPlan,
     now: &str,
 ) -> Result<(), String> {
     let material = material_of(ip)?;
-    let suffix = second_copy_suffix(input, ip);
+    let suffix = ip.label.clone();
 
     // R1: fresh ids for everything inside the item.
     let mut card_ids: HashMap<String, String> = HashMap::new();

@@ -12,9 +12,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::Path;
 
 use rusqlite::{Connection, OptionalExtension};
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 
+use super::format::{ItemJson, ManifestFile};
 use super::guard::pack_sql;
+use super::revision;
+use super::titles;
 use super::validate::{PackItem, ValidatedPack};
 
 pub const MAX_CARDS_PER_PICTURE: usize = 20;
@@ -24,10 +28,9 @@ pub const MAX_CARDS_PER_PICTURE: usize = 20;
 pub enum Decision {
     /// A new material is made for it.
     Add,
-    /// Nothing is made; the item resolves to an existing or earlier material.
+    /// Nothing is made; the item resolves to an existing material that was
+    /// just checked to be identical, or to an earlier item of this pack.
     Skip,
-    /// A picture she removed: not brought back, resolves to nothing.
-    Removed,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,8 +46,11 @@ pub struct ItemPlan {
     pub material: Option<String>,
     /// The one provenance row W1/W2 allows: `(link, material)`. None for W3.
     pub row: Option<(Link, String)>,
-    /// Row 3 (or P4): a second copy with the date suffix.
+    /// Row 3 (or P4): another version of an item she has.
     pub second_copy: bool,
+    /// The label added to the titles, such as ` (from study pack)`. Never
+    /// on a picture.
+    pub label: Option<String>,
     /// Row 4: all copies of this identity were deleted; added back.
     pub readded: bool,
     pub parent: Option<String>,
@@ -117,15 +123,86 @@ impl Plan {
                 t.added_practice += 1;
             }
             if !picture {
-                if plan.second_copy {
-                    t.new_versions += 1;
-                }
                 if plan.readded {
                     t.readded += 1;
+                } else if plan.second_copy || plan.label.is_some() {
+                    t.new_versions += 1;
                 }
             }
         }
         t
+    }
+}
+
+/// One item the student is told about by name: skipped, or added with
+/// something left out.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkippedItem {
+    pub title: String,
+    pub reason: String,
+}
+
+fn cards(n: u64, why: &str) -> String {
+    let what = if n == 1 {
+        "picture card"
+    } else {
+        "picture cards"
+    };
+    format!("{n} {what} left out ({why})")
+}
+
+impl Plan {
+    /// Every skipped item and everything left out, by title, with a reason.
+    pub fn named(&self, pack: &ValidatedPack) -> Vec<SkippedItem> {
+        let added: BTreeSet<&str> = self
+            .items
+            .iter()
+            .filter(|p| p.decision == Decision::Add)
+            .filter_map(|p| p.material.as_deref())
+            .collect();
+        let mut out = Vec::new();
+        for (plan, item) in self.items.iter().zip(&pack.items) {
+            let mut title = titles::stored(&item.json.title, plan.label.as_deref());
+            if title.is_empty() {
+                title = "Untitled".to_string();
+            }
+            let mut name = |reason: String| {
+                out.push(SkippedItem {
+                    title: title.clone(),
+                    reason,
+                })
+            };
+            if plan.decision != Decision::Add {
+                let earlier = plan.material.as_deref().is_some_and(|m| added.contains(m));
+                name(if earlier {
+                    "same as another item in this study pack".to_string()
+                } else {
+                    "already in your library".to_string()
+                });
+                continue;
+            }
+            let l = plan.left_out;
+            for (n, why) in [
+                (l.over_capacity, "the picture already has 20 cards"),
+                (l.unusable, "its picture can't be read"),
+                (l.changed, "its picture changed"),
+                (l.removed, "its picture isn't in this pack"),
+            ] {
+                if n > 0 {
+                    name(cards(n, why));
+                }
+            }
+            if let Some(lineage) = &item.json.lineage {
+                let asked = |r: &Option<String>, id: &Option<String>| r.is_some() || id.is_some();
+                if (asked(&lineage.parent_ref, &lineage.parent_item_id) && plan.parent.is_none())
+                    || (asked(&lineage.root_ref, &lineage.root_item_id) && plan.root.is_none())
+                {
+                    name("added without its link to the book it came from".to_string());
+                }
+            }
+        }
+        out
     }
 }
 
@@ -150,6 +227,40 @@ impl Lookups<'_> {
             .map_err(|e| format!("Could not read the study pack records: {e}"))
     }
 
+    /// Every material the query names, in its order, each once.
+    fn materials(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<Vec<String>, String> {
+        let fail = |e: rusqlite::Error| format!("Could not read the study pack records: {e}");
+        let mut statement = self.conn.prepare(pack_sql(sql)?).map_err(fail)?;
+        let rows = statement
+            .query_map(params, |r| r.get::<_, String>(0))
+            .map_err(fail)?;
+        let mut out: Vec<String> = Vec::new();
+        for row in rows {
+            let material = row.map_err(fail)?;
+            if !out.contains(&material) {
+                out.push(material);
+            }
+        }
+        Ok(out)
+    }
+
+    /// The normalized, lower-case titles of every material she has.
+    fn live_titles(&self) -> Result<BTreeSet<String>, String> {
+        let fail = |e: rusqlite::Error| format!("Could not read your library: {e}");
+        let mut statement = self
+            .conn
+            .prepare(pack_sql("SELECT title FROM study_materials")?)
+            .map_err(fail)?;
+        let rows = statement
+            .query_map([], |r| r.get::<_, Option<String>>(0))
+            .map_err(fail)?;
+        let mut out = BTreeSet::new();
+        for row in rows {
+            out.insert(title_key(&row.map_err(fail)?.unwrap_or_default()));
+        }
+        Ok(out)
+    }
+
     fn exists(&self, sql: &str, params: &[&dyn rusqlite::ToSql]) -> Result<bool, String> {
         let sql = pack_sql(sql)?;
         self.conn
@@ -159,22 +270,22 @@ impl Lookups<'_> {
             .map_err(|e| format!("Could not read the study pack records: {e}"))
     }
 
-    /// L1: this identity's own live row with this revision. Oldest link wins.
-    pub(super) fn l1(&self, ns: &str, id: &str, rev: &str) -> Result<Option<String>, String> {
-        self.material(
+    /// L1: this identity's own live rows with this revision, oldest link first.
+    pub(super) fn l1(&self, ns: &str, id: &str, rev: &str) -> Result<Vec<String>, String> {
+        self.materials(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND revision = ?3 AND material_id IS NOT NULL
-             ORDER BY imported_at, operation_id LIMIT 1",
+             ORDER BY imported_at, operation_id",
             &[&ns, &id, &rev],
         )
     }
 
-    /// L2: any live row with this revision. Oldest link wins.
-    pub(super) fn l2(&self, rev: &str) -> Result<Option<String>, String> {
-        self.material(
+    /// L2: any live rows with this revision, oldest link first.
+    pub(super) fn l2(&self, rev: &str) -> Result<Vec<String>, String> {
+        self.materials(
             "SELECT material_id FROM study_pack_items
              WHERE revision = ?1 AND material_id IS NOT NULL
-             ORDER BY imported_at, operation_id, namespace, item_id LIMIT 1",
+             ORDER BY imported_at, operation_id, namespace, item_id",
             &[&rev],
         )
     }
@@ -203,27 +314,27 @@ impl Lookups<'_> {
         )
     }
 
-    /// A live picture row of this identity with these bytes (any revision).
+    /// Live picture rows of this identity with these bytes (any revision).
     pub(super) fn own_picture_bytes(
         &self,
         ns: &str,
         id: &str,
         sha: &str,
-    ) -> Result<Option<String>, String> {
-        self.material(
+    ) -> Result<Vec<String>, String> {
+        self.materials(
             "SELECT material_id FROM study_pack_items
              WHERE namespace = ?1 AND item_id = ?2 AND kind = 'picture' AND file_sha256 = ?3
                AND material_id IS NOT NULL
-             ORDER BY imported_at, operation_id LIMIT 1",
+             ORDER BY imported_at, operation_id",
             &[&ns, &id, &sha],
         )
     }
 
-    pub(super) fn picture_bytes(&self, sha: &str) -> Result<Option<String>, String> {
-        self.material(
+    pub(super) fn picture_bytes(&self, sha: &str) -> Result<Vec<String>, String> {
+        self.materials(
             "SELECT material_id FROM study_pack_items
              WHERE kind = 'picture' AND file_sha256 = ?1 AND material_id IS NOT NULL
-             ORDER BY imported_at, operation_id, namespace, item_id LIMIT 1",
+             ORDER BY imported_at, operation_id, namespace, item_id",
             &[&sha],
         )
     }
@@ -361,14 +472,68 @@ impl<'a> Pictures<'a> {
 /* Compute                                                             */
 /* ------------------------------------------------------------------ */
 
-#[derive(Clone)]
-enum Outcome {
-    Material(String),
-    Removed,
+/// Her material read fresh from disk (files re-hashed), or None when it
+/// can't be read in full. Cached per material for one plan.
+type Fresh = Option<(String, ItemJson, Option<ManifestFile>)>;
+
+fn title_key(title: &str) -> String {
+    titles::normalize(title).to_lowercase()
+}
+
+/// True when her material, read fresh, holds exactly this item's content.
+/// Only what import itself does to an item is allowed for: whitespace in
+/// titles, a label it added, a blank title read back as "Untitled", and
+/// questions keeping their first known ACS task.
+fn same_content(item: &PackItem, fresh: &Fresh) -> bool {
+    let Some((kind, mine, file)) = fresh else {
+        return false;
+    };
+    if kind != &item.manifest.kind {
+        return false;
+    }
+    let mut pack = item.json.clone();
+    let mut mine = mine.clone();
+    let unlabel = |stored: &mut String, wanted: &str| {
+        let n = titles::normalize(stored);
+        if n == wanted || titles::without_label(&n) == Some(wanted) {
+            *stored = wanted.to_string();
+        }
+    };
+    pack.title = titles::normalize(&pack.title);
+    if pack.title.is_empty() {
+        pack.title = "Untitled".to_string();
+    }
+    unlabel(&mut mine.title, &pack.title);
+    if let Some(g) = pack.guide.as_mut() {
+        g.title = titles::normalize(&g.title);
+        if let Some(mg) = mine.guide.as_mut() {
+            unlabel(&mut mg.title, &g.title);
+        }
+    }
+    if let Some(p) = pack.practice.as_mut() {
+        p.title = titles::normalize(&p.title);
+        for q in &mut p.questions {
+            q.acs_tasks = q
+                .acs_tasks
+                .first()
+                .and_then(|t| crate::acs_tasks::normalize(t))
+                .into_iter()
+                .collect();
+        }
+        if let Some(mp) = mine.practice.as_mut() {
+            unlabel(&mut mp.title, &p.title);
+        }
+    }
+    revision::revision_of(&item.manifest.kind, &pack, item.manifest.file.as_ref())
+        == revision::revision_of(kind, &mine, file.as_ref())
 }
 
 /// Plan a validated pack against the library. `new_id` hands out the material
 /// id for a pack ref (the same one every time it is asked for that ref).
+///
+/// An item is skipped only when a material she has, read fresh now, is
+/// identical to it (or an earlier item of this pack is). Everything else is
+/// added, beside her material and never over it.
 pub fn compute(
     conn: &Connection,
     root: &Path,
@@ -377,8 +542,11 @@ pub fn compute(
 ) -> Result<Plan, String> {
     let look = Lookups { conn };
     let namespace = pack.manifest.namespace.as_str();
-    let mut by_revision: HashMap<String, Outcome> = HashMap::new();
-    let mut by_bytes: HashMap<String, Outcome> = HashMap::new();
+    let mut by_revision: HashMap<String, String> = HashMap::new();
+    let mut by_bytes: HashMap<String, String> = HashMap::new();
+    let mut fresh: HashMap<String, Fresh> = HashMap::new();
+    let mut pictures = Pictures::new(conn, root);
+    let mut taken = look.live_titles()?;
     let mut items: Vec<ItemPlan> = Vec::with_capacity(pack.items.len());
 
     // Pass 1.
@@ -393,6 +561,7 @@ pub fn compute(
             material: None,
             row: None,
             second_copy: false,
+            label: None,
             readded: false,
             parent: None,
             root: None,
@@ -405,78 +574,104 @@ pub fn compute(
             row: Some((Link::Alias, material)),
             ..blank.clone()
         };
-        let add = |second_copy: bool, readded: bool, new_id: &mut dyn FnMut(&str) -> String| {
+        let skip_own = |material: String| ItemPlan {
+            material: Some(material), // 1a: no row (W3)
+            ..blank.clone()
+        };
+        let mut add = |second_copy: bool, readded: bool, label: Option<String>| {
             let material = new_id(&m.item_ref);
             ItemPlan {
                 decision: Decision::Add,
                 material: Some(material.clone()),
                 row: Some((Link::Added, material)),
                 second_copy,
+                label,
                 readded,
                 ..blank.clone()
             }
         };
         let plan = if !picture {
-            if let Some(material) = look.l1(namespace, id, revision)? {
-                // 1a: already here under this identity (W3: no row).
-                ItemPlan {
-                    material: Some(material),
-                    ..blank.clone()
+            let mut proven = |candidates: Vec<String>| -> Result<(Option<String>, bool), String> {
+                let tried = !candidates.is_empty();
+                for material in candidates {
+                    let fresh = fresh
+                        .entry(material.clone())
+                        .or_insert_with(|| super::export::fresh_item(conn, root, &material).ok());
+                    if same_content(item, fresh) {
+                        return Ok((Some(material), tried));
+                    }
                 }
-            } else if let Some(material) = look.l2(revision)? {
-                skip_alias(material) // 1b
-            } else if let Some(Outcome::Material(material)) = by_revision.get(revision) {
-                skip_alias(material.clone()) // 2
-            } else if look.l3(namespace, id)?.is_some() {
-                add(true, false, new_id) // 3: another version beside hers
-            } else if look.identity_known(namespace, id)? || look.revision_known(revision)? {
-                add(false, true, new_id) // 4: she deleted every copy
+                Ok((None, tried))
+            };
+            let (own, tried_own) = proven(look.l1(namespace, id, revision)?)?;
+            let (any, tried_any) = if own.is_some() {
+                (None, false)
             } else {
-                add(false, false, new_id) // 5
+                proven(look.l2(revision)?)?
+            };
+            if let Some(material) = own {
+                skip_own(material) // 1a, just proven identical
+            } else if let Some(material) = any {
+                skip_alias(material) // 1b, just proven identical
+            } else if let Some(material) = by_revision.get(revision) {
+                skip_alias(material.clone()) // 2: an earlier item of this pack
+            } else if tried_own || tried_any {
+                // She changed it after import: hers stays, the pack's is added.
+                let label = pick_label(&mut taken, &item.json.title, None);
+                add(false, false, label)
+            } else if look.l3(namespace, id)?.is_some() {
+                let updated = titles::suffix(&pack.manifest.created_at);
+                let label = pick_label(&mut taken, &item.json.title, Some(updated));
+                add(true, false, label) // 3: another version beside hers
+            } else if look.identity_known(namespace, id)? || look.revision_known(revision)? {
+                let label = pick_label(&mut taken, &item.json.title, None);
+                add(false, true, label) // 4: she deleted every copy
+            } else {
+                let label = pick_label(&mut taken, &item.json.title, None);
+                add(false, false, label) // 5
             }
         } else {
             let sha = sha.unwrap_or("");
-            if let Some(material) = look.l1(namespace, id, revision)? {
-                ItemPlan {
-                    material: Some(material),
-                    ..blank.clone()
-                }
-            } else if let Some(material) = look.l2(revision)? {
+            let (width, height) = m
+                .file
+                .as_ref()
+                .map_or((0, 0), |f| (f.width.unwrap_or(0), f.height.unwrap_or(0)));
+            let mut holds = |candidates: Vec<String>| {
+                candidates
+                    .into_iter()
+                    .find(|c| pictures.holds_bytes(c, sha, width, height) == Held::Yes)
+            };
+            if let Some(material) = holds(look.l1(namespace, id, revision)?) {
+                skip_own(material)
+            } else if let Some(material) = holds(look.l2(revision)?) {
                 skip_alias(material)
-            } else if let Some(material) = look.own_picture_bytes(namespace, id, sha)? {
+            } else if let Some(material) = holds(look.own_picture_bytes(namespace, id, sha)?) {
                 skip_alias(material) // P1 by bytes under the same identity
-            } else if let Some(material) = look.picture_bytes(sha)? {
+            } else if let Some(material) = holds(look.picture_bytes(sha)?) {
                 skip_alias(material) // P1 by bytes, another identity
-            } else if let Some(outcome) = by_revision.get(revision).or_else(|| by_bytes.get(sha)) {
-                match outcome {
-                    Outcome::Material(material) => skip_alias(material.clone()), // P2
-                    Outcome::Removed => ItemPlan {
-                        decision: Decision::Removed,
-                        ..blank.clone()
-                    },
-                }
+            } else if let Some(material) = by_revision.get(revision).or_else(|| by_bytes.get(sha)) {
+                skip_alias(material.clone()) // P2
+            } else if look.l3(namespace, id)?.is_some() {
+                add(true, false, None) // P4
             } else if look.revision_known(revision)?
                 || look.picture_bytes_known(sha)?
-                || (look.identity_known(namespace, id)? && look.l3(namespace, id)?.is_none())
+                || look.identity_known(namespace, id)?
             {
-                ItemPlan {
-                    decision: Decision::Removed, // P3: she removed it; not re-added
-                    ..blank.clone()
-                }
-            } else if look.l3(namespace, id)?.is_some() {
-                add(true, false, new_id) // P4
+                add(false, true, None) // P3: she removed it; it comes back
             } else {
-                add(false, false, new_id) // P5
+                add(false, false, None) // P5
             }
         };
-        let outcome = match &plan.material {
-            Some(material) => Outcome::Material(material.clone()),
-            None => Outcome::Removed,
-        };
-        by_revision.insert(revision.to_string(), outcome.clone());
-        if picture {
-            if let Some(sha) = sha {
-                by_bytes.insert(sha.to_string(), outcome);
+        if let Some(material) = &plan.material {
+            by_revision
+                .entry(revision.to_string())
+                .or_insert_with(|| material.clone());
+            if picture {
+                if let Some(sha) = sha {
+                    by_bytes
+                        .entry(sha.to_string())
+                        .or_insert_with(|| material.clone());
+                }
             }
         }
         items.push(plan);
@@ -494,7 +689,6 @@ pub fn compute(
         .filter(|p| p.decision == Decision::Add)
         .filter_map(|p| p.material.clone())
         .collect();
-    let mut pictures = Pictures::new(conn, root);
     for (item, plan) in pack.items.iter().zip(items.iter_mut()) {
         if plan.decision != Decision::Add {
             continue;
@@ -517,6 +711,27 @@ pub fn compute(
         plan_pictures(item, plan, &by_ref, &in_this_pack, &mut pictures)?;
     }
     Ok(Plan { items })
+}
+
+/// The label for an added item: the first of `first` (if any), then ` (from
+/// study pack)`, ` (from study pack 2)`, ... whose stored title no material
+/// has yet. No label when the title is free (and `first` is None) or blank.
+fn pick_label(taken: &mut BTreeSet<String>, title: &str, first: Option<String>) -> Option<String> {
+    if titles::normalize(title).is_empty() {
+        return None;
+    }
+    let mut candidates = vec![first];
+    let mut n = 1;
+    loop {
+        for label in candidates.drain(..) {
+            let key = title_key(&titles::stored(title, label.as_deref()));
+            if taken.insert(key) {
+                return label;
+            }
+        }
+        candidates.push(Some(titles::from_pack(n)));
+        n += 1;
+    }
 }
 
 fn plan_pictures(

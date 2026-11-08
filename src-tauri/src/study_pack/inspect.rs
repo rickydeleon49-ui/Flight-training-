@@ -5,7 +5,7 @@ use std::path::Path;
 
 use serde::Serialize;
 
-use super::plan::{self, Decision};
+use super::plan::{self, Decision, SkippedItem};
 use super::validate::validate_pack;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -18,6 +18,10 @@ pub struct Preview {
     pub documents: u64,
     /// Guides, PDFs and practice sets already in her library.
     pub already_in_library: u64,
+    /// What would not be added, by title, with the reason.
+    pub skipped_items: Vec<SkippedItem>,
+    /// Nothing in the pack would be added.
+    pub nothing_new: bool,
 }
 
 pub fn inspect_study_pack_in(root: &Path, pack_path: &Path) -> Result<Preview, String> {
@@ -44,5 +48,7 @@ pub fn inspect_study_pack_in(root: &Path, pack_path: &Path) -> Result<Preview, S
         videos: c.videos,
         documents: c.documents,
         already_in_library: already,
+        skipped_items: plan.named(&pack),
+        nothing_new: plan.items.iter().all(|p| p.decision == Decision::Skip),
     })
 }

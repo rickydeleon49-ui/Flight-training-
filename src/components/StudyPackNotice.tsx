@@ -55,7 +55,7 @@ export function StudyPackNotice() {
             <AlertIcon size={16} />
             <div className="stack stack--1">
               <p className="tiny">Your study pack was added.</p>
-              {resultLines(result).map((line) => <p className="tiny" key={line}>{line}</p>)}
+              {resultLines(result).map((line, i) => <p className="tiny" key={i}>{line}</p>)}
             </div>
           </div>
           <div className="row row--wrap">

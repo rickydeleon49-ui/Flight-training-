@@ -19,10 +19,10 @@ vi.mock("@/state/AppDataContext", () => ({ useAppData: () => ({ refresh: mocks.r
 
 const { AddStudyPackDialog } = await import("./AddStudyPackDialog");
 
-const preview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 3 };
+const preview = { guides: 14, cards: 280, questions: 140, videos: 31, documents: 14, alreadyInLibrary: 3, skippedItems: [], nothingNew: false };
 const done = (patch: Partial<StudyPackResult> = {}): StudyPackResult => ({
   operationId: "op", packId: "p", added: 14, addedGuides: 11, addedDocuments: 3, addedPictures: 0, addedPractice: 0,
-  skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "x", ...patch,
+  skipped: 0, newVersions: 0, readded: 0, cardsLeftOut: 0, cardsLeftOutRemoved: 0, committedAt: "x", skippedItems: [], ...patch,
 });
 
 beforeEach(() => {
@@ -100,6 +100,34 @@ describe("Add study pack dialog", () => {
     expect(screen.getByText("4 picture cards were left out because you removed their picture.")).toBeTruthy();
     expect(screen.getByText("1 picture card was left out because its picture couldn't be used.")).toBeTruthy();
     expect(screen.getByRole("status").textContent!.toLowerCase()).not.toContain("newer");
+  });
+
+  it("names each skipped item in the preview and in the summary", async () => {
+    const skippedItems = [{ title: "Handbook", reason: "already in your library" }];
+    mocks.inspect.mockResolvedValue({ ...preview, skippedItems });
+    mocks.add.mockResolvedValue(done({ skipped: 1, skippedItems }));
+    open();
+    await addButton();
+    expect(screen.getByRole("heading", { name: "Add study pack" })).toBeTruthy();
+    expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
+    fireEvent.click(await addButton());
+    await screen.findByText("Added 11 guides and 3 PDFs. Your own work wasn't changed.");
+    expect(screen.getByRole("heading", { name: "Study pack added" })).toBeTruthy();
+    expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
+  });
+
+  it("titles a pack with nothing new 'Already in your library', in the preview and after adding", async () => {
+    const skippedItems = [{ title: "Handbook", reason: "already in your library" }];
+    mocks.inspect.mockResolvedValue({ ...preview, alreadyInLibrary: 1, skippedItems, nothingNew: true });
+    mocks.add.mockResolvedValue(done({ added: 0, addedGuides: 0, addedDocuments: 0, skipped: 1, skippedItems }));
+    open();
+    await addButton();
+    expect(screen.getByRole("heading", { name: "Already in your library" })).toBeTruthy();
+    fireEvent.click(await addButton());
+    await screen.findByText("Everything in this study pack was already in your library. Nothing was changed.");
+    expect(screen.getByRole("heading", { name: "Already in your library" })).toBeTruthy();
+    expect(screen.queryByText("Study pack added")).toBeNull();
+    expect(screen.getByText("Handbook — already in your library")).toBeTruthy();
   });
 
   it("shows the busy sentence, changes nothing, and Try again reuses the same operation id", async () => {
