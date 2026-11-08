@@ -152,6 +152,34 @@ fn ranges(manifest: &[Section]) -> Vec<(u32, u32)> {
 }
 
 #[test]
+fn over_length_answer_has_its_own_message() {
+    let chosen = (1..=16).collect::<Vec<_>>();
+    let s = &plan(&chosen, &[]).unwrap()[0];
+    let long = json!({"body":"x".repeat(crate::study_sets::MAX_BODY + 1),"sourcePages":[1]});
+    let err = validate_section(s, &long.to_string(), &chosen, "model").unwrap_err();
+    assert_eq!(
+        err.message,
+        "This section came back too long to save. Try again, or split the material into smaller page ranges."
+    );
+    let empty = json!({"body":"  ","sourcePages":[1]});
+    let err = validate_section(s, &empty.to_string(), &chosen, "model").unwrap_err();
+    assert!(err
+        .message
+        .starts_with("The section answer or its source pages were invalid"));
+}
+
+#[test]
+fn claude_splits_long_runs_into_twelve_page_parts() {
+    let pages = |n: u32| (1..=n).collect::<Vec<_>>();
+    let parts = |model: &str, n: u32| {
+        ranges(&plan_for("current", &pages(n), &[], part_pages_for(model)).unwrap())
+    };
+    assert_eq!(parts("claude-sonnet-4", 24), [(1, 12), (13, 24)]);
+    assert_eq!(parts("claude-sonnet-4", 12), [(1, 12)]);
+    assert_eq!(parts("gemini-3-flash", 24), [(1, 24)]);
+}
+
+#[test]
 fn planner_bounds() {
     let pages = |n: u32| (1..=n).collect::<Vec<_>>();
     let p = plan(&pages(16), &[]).unwrap();
