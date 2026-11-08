@@ -186,7 +186,8 @@ describe("GEMINI-FLASHCARDS step 1: separate flashcards action and guide preserv
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Review the new flashcards" })).toBeNull());
     const after = (await repos.documents.readStudySetForEdit("mat-pdf"))!;
     for (const key of ["title", "summary", "summary_origin", "sections_json", "source_notes"] as const) expect(after.stored[key]).toEqual(before.stored[key]);
-    expect(after.set.model).toBe("new-model");
+    // The kept guide sections came from old-model, so the label names both (GEN-FALLBACK-01).
+    expect(after.set.model).toBe("old-model + new-model");
   });
 
   it.each(["restore", "dismiss"])("CARDS-FIX-01: recovery notice %s stays quiet across page visits", async action => {
