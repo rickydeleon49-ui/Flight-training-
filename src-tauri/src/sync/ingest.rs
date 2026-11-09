@@ -194,6 +194,8 @@ pub(crate) fn ingest_archive(
     extract(&mut zip, DB_WAL, &dir.0.join(DB_WAL))?;
 
     let bad_db = || IngestError::Archive("The backup database could not be read.");
+    // RUSTSEC-2026-0459: refuse a mismatched -wal before SQLite opens the pair.
+    crate::sqlite_guard::check_wal_pair(&db_path).map_err(|_| bad_db())?;
     // A normal open: the export needs BEGIN IMMEDIATE.
     let mut copy = Connection::open(&db_path).map_err(|_| bad_db())?;
     let has_ledger: bool = copy
