@@ -142,7 +142,7 @@ describe("Add study pack dialog", () => {
   });
 
   it("shows the waiting line while previewing and while adding", async () => {
-    const wait = "This can take a minute or two. Keep the app open.";
+    const wait = "Large packs can take several minutes. Keep the app open.";
     let release: (p: typeof preview) => void = () => {};
     mocks.inspect.mockReturnValue(new Promise((r) => { release = r; }));
     let finish: (r: ReturnType<typeof done>) => void = () => {};

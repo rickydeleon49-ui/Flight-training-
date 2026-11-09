@@ -325,6 +325,7 @@ fn run(
     })?;
     result.skipped_items = plan.named(pack);
     result.labelled_items = plan.labelled(pack);
+    (result.added_cards, result.added_questions) = plan.added_cards_and_questions(pack);
     journal.state = State::Committed;
     if let Err(message) = journal::write(op, &journal) {
         if message == CRASH {

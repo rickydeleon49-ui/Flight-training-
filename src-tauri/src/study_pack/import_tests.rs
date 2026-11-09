@@ -224,6 +224,16 @@ fn a_study_pack_is_added_field_by_field() {
         ),
         (4, 2, 2, 1, 0, 0, 0, 0, 0)
     );
+    let counts = super::validate::validate_pack(&pack)
+        .unwrap()
+        .manifest
+        .counts;
+    assert!(counts.cards > 0 || counts.questions > 0);
+    assert_eq!(
+        (result.added_cards, result.added_questions),
+        (counts.cards, counts.questions),
+        "the summary counts the flashcards and questions that went in"
+    );
     assert_untouched(&before, &her);
     assert!(!staging_left(&her));
     assert_eq!(count(&her, "SELECT COUNT(*) FROM study_materials"), 5);

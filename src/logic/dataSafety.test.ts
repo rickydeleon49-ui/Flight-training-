@@ -333,3 +333,13 @@ describe("unavailable FAA reference notices", () => {
     expect(note.message).toContain("1 FAA reference copy no longer has its matching PDF.");
   });
 });
+
+describe("fileCount", () => {
+  it("never says '1 files'", async () => {
+    const { fileCount } = await import("./dataSafety");
+    expect(fileCount(1)).toBe("1 file");
+    expect(fileCount(0)).toBe("0 files");
+    expect(fileCount(2)).toBe("2 files");
+    expect(fileCount(1234)).toBe("1,234 files");
+  });
+});

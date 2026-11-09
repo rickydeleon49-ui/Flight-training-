@@ -28,6 +28,10 @@ pub struct PackResult {
     pub skipped_items: Vec<SkippedItem>,
     /// Items added next to hers with a label. Told once; not kept in the receipt.
     pub labelled_items: Vec<SkippedItem>,
+    /// Flashcards and practice questions that went in. Told once; not kept in
+    /// the receipt, so 0 when read back later.
+    pub added_cards: u64,
+    pub added_questions: u64,
 }
 
 const COLUMNS: &str = "operation_id, pack_id, added, added_guides, added_documents,
@@ -52,6 +56,8 @@ fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<PackResult> {
         committed_at: r.get(12)?,
         skipped_items: Vec::new(),
         labelled_items: Vec::new(),
+        added_cards: 0,
+        added_questions: 0,
     })
 }
 

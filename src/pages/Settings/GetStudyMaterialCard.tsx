@@ -8,7 +8,6 @@ import {
   type ActivitySummary, type CompleteBackupInfo, type UnsavedPhoneWork,
 } from "@/services/backups";
 import { fileCount } from "@/logic/dataSafety";
-import { fileCount } from "@︎/logic/dataSafety";
 import { isIOS } from "@/services/platform";
 
 function activitySentence(activity: ActivitySummary): string {
