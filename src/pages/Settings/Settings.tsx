@@ -64,6 +64,7 @@ import {
   backupHealthTone,
   formatCompleteBackupReminderFailureNote,
   formatCompleteBackupSuccessNote,
+  fileCount,
   formatRestorePreviewNotice,
   restoreWarning,
 } from "@/logic/dataSafety";
@@ -1260,7 +1261,7 @@ export function Settings() {
               {libraryReport ? (
                 <div className="stack stack--4" aria-label="Library check results">
                   <p className="small" role="status">
-                    Checked {libraryReport.totalMaterials} materials and {libraryReport.totalFiles} stored files. {libraryReport.missingMaterials.length} missing files; {libraryReport.unlinkedFiles.length} unlinked files.
+                    Checked {libraryReport.totalMaterials} materials and {fileCount(libraryReport.totalFiles)} stored. {fileCount(libraryReport.missingMaterials.length)} missing; {fileCount(libraryReport.unlinkedFiles.length)} unlinked.
                   </p>
                   {libraryReport.missingMaterials.length > 0 ? (
                     <div className="stack stack--2">
@@ -1514,7 +1515,7 @@ export function Settings() {
         title="Restore this complete backup?"
         message={
           restoreCandidate
-            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${restoreCandidate.files} files (${formatBytes(restoreCandidate.fileBytes)}). ${formatRestorePreviewNotice(restoreCandidate) ? `${formatRestorePreviewNotice(restoreCandidate)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
+            ? `This backup was created ${formatBackupDate(restoreCandidate.createdAt)} with app version ${restoreCandidate.appVersion}. It contains ${fileCount(restoreCandidate.files)} (${formatBytes(restoreCandidate.fileBytes)}). ${formatRestorePreviewNotice(restoreCandidate) ? `${formatRestorePreviewNotice(restoreCandidate)} ` : ""}The app will protect the current data, replace it with this backup, and restart.`
             : ""
         }
         confirmLabel="Restore and restart"

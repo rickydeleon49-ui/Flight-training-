@@ -490,6 +490,47 @@ fn revision_pack(producer: &Lib, title: &str) -> PathBuf {
     pack_of(producer, &["m-guide"], &name)
 }
 
+#[test]
+fn a_very_long_title_is_not_added_again_after_it_was_cut_to_fit_its_label() {
+    let (producer, _) = seeded();
+    let her = her();
+    let long = format!("{} end", "L".repeat(490));
+    let pack = revision_pack(&producer, &long);
+    assert_eq!(add(&her, &pack).unwrap().added, 1);
+    her.conn
+        .execute("UPDATE ai_study_sets SET summary='Mine now' WHERE source_material_id=(SELECT id FROM study_materials WHERE title LIKE 'LLLL%')", [])
+        .unwrap();
+    let second = add(&her, &pack).unwrap();
+    assert_eq!((second.added, second.new_versions), (1, 1));
+    let third = add(&her, &pack).unwrap();
+    assert_eq!(
+        (third.added, third.skipped),
+        (0, 1),
+        "the cut, labeled copy is recognised"
+    );
+    assert_eq!(
+        count(
+            &her,
+            "SELECT COUNT(*) FROM study_materials WHERE title LIKE 'LLLL%'"
+        ),
+        2
+    );
+}
+
+#[test]
+fn progress_is_reported_in_order_while_adding() {
+    use std::sync::Mutex;
+    let (producer, _) = seeded();
+    let pack = pack_of(&producer, &["m-pdf", "m-guide"], "progress.hfdpack");
+    let her = her();
+    let seen = Mutex::new(Vec::new());
+    let report = |p: super::install::Progress| seen.lock().unwrap().push(p.stage);
+    super::install::add_study_pack_reporting(her.root(), true, &pack, &op(), &report).unwrap();
+    let mut stages = seen.into_inner().unwrap();
+    stages.dedup();
+    assert_eq!(stages, ["copying", "adding", "checking", "saving"]);
+}
+
 fn date_suffix(pack: &Path) -> String {
     super::titles::suffix(
         &super::validate::validate_pack(pack)

@@ -520,7 +520,10 @@ fn same_content(item: &PackItem, fresh: &Fresh) -> bool {
     let mut mine = mine.clone();
     let unlabel = |stored: &mut String, wanted: &str| {
         let n = titles::normalize(stored);
-        if n == wanted || titles::without_label(&n) == Some(wanted) {
+        if n == wanted
+            || titles::without_label(&n) == Some(wanted)
+            || titles::without_label(&n).is_some_and(|cut| titles::is_cut_of(cut, wanted))
+        {
             *stored = wanted.to_string();
         }
     };

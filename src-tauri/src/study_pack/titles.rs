@@ -65,6 +65,16 @@ pub fn without_label(title: &str) -> Option<&str> {
     (from_pack || updated).then(|| &title[..open])
 }
 
+/// True when `cut` is what `stored` left of `full` after cutting it to make
+/// room for a label (so a very long title still matches its own re-import).
+pub fn is_cut_of(cut: &str, full: &str) -> bool {
+    let cut_len = cut.chars().count();
+    full.chars().count() > cut_len && cut_len + MAX_LABEL >= TITLE_LIMIT && full.starts_with(cut)
+}
+
+/// Longest label this import adds, with room to spare.
+const MAX_LABEL: usize = 60;
+
 /// The stored title. A blank title stays blank, with no suffix.
 pub fn stored(title: &str, second_copy_suffix: Option<&str>) -> String {
     let title = normalize(title);
@@ -127,5 +137,21 @@ mod tests {
         let out = stored(&multi, Some(&s));
         assert_eq!(out.chars().count(), TITLE_LIMIT);
         assert!(out.ends_with(&s));
+    }
+
+    #[test]
+    fn a_cut_title_is_recognised_as_its_own_long_original() {
+        let s = suffix("2026-11-01T10:00:00.000Z");
+        let full = format!("{} tail", "x".repeat(600));
+        let stored_title = stored(&full, Some(&s));
+        let cut = without_label(&stored_title).expect("label");
+        assert!(is_cut_of(cut, &full));
+        assert!(!is_cut_of(cut, cut), "an uncut title is not a cut");
+        assert!(!is_cut_of("short", &full), "a short title is not a cut");
+        let other = format!("y{}", "x".repeat(600));
+        assert!(
+            !is_cut_of(cut, &other),
+            "a different long title is not a match"
+        );
     }
 }
