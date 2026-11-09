@@ -35,6 +35,14 @@ it("Backups and data and Advanced start closed", async () => {
   expect(fold("advanced").open).toBe(false);
   expect(screen.getByText("Advanced · AI provider not set up")).toBeTruthy();
 });
+it("Advanced has no 'not set up' note when Claude is the connected provider", async () => {
+  vi.spyOn(backups, "backupsAvailable").mockReturnValue(false);
+  vi.spyOn(appData, "isTauri").mockReturnValue(true);
+  vi.spyOn(provider, "providerStatus").mockResolvedValue({ selected: "claude", providers: [{ id: "gemini", connected: false }, { id: "claude", connected: true }] });
+  await open();
+  await waitFor(() => expect(document.getElementById("settings-advanced-summary")!.textContent).toBe("Advanced"));
+  expect(screen.getByText("Connected")).toBeTruthy();
+});
 it.each(["backup", "restore"])("a %s result opens Backups and data; she can close it after seeing it", async (operation) => {
   vi.spyOn(backups, "backupsAvailable").mockReturnValue(true);
   vi.spyOn(backups, "upgradeCopyFailed").mockResolvedValue(false);
