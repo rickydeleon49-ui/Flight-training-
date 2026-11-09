@@ -615,6 +615,8 @@ fn get_reference_schema_connection_through(version: i64) -> Result<Connection, S
 
 pub(crate) fn verify_application_database(path: &Path) -> Result<(), String> {
     verify_sqlite_file(path)?;
+    // RUSTSEC-2026-0459: a mismatched -wal must be refused before SQLite opens it.
+    crate::sqlite_guard::check_wal_pair(path)?;
     let connection = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         .map_err(|e| format!("Could not open the database in that backup: {e}"))?;
     // `rusqlite` opens with no busy timeout of its own — unlike the app's
@@ -7961,6 +7963,7 @@ fn stage_local_restore_in(root: &Path, name: &str) -> Result<BackupInfo, String>
     }
     let database = folder.join(DB_FILES[0]);
     verify_sqlite_file(&database)?;
+    crate::sqlite_guard::check_wal_pair(&database)?;
 
     let (staging, pending) = fresh_staging(root)?;
 
@@ -8741,7 +8744,9 @@ where
             "A staged restore was incomplete; current data was left unchanged.".to_string(),
         ));
     }
-    if let Err(error) = verify_sqlite_file(&pending.join(DB_FILES[0])) {
+    if let Err(error) = verify_sqlite_file(&pending.join(DB_FILES[0]))
+        .and_then(|()| crate::sqlite_guard::check_wal_pair(&pending.join(DB_FILES[0])))
+    {
         let _ = std::fs::remove_dir_all(&pending);
         return Ok(RestoreApplicationResult::RefusedUnchanged(format!(
             "The staged restore was not usable, so nothing was changed: {error}"
@@ -16498,6 +16503,120 @@ mod tests {
         assert!(
             verify_application_database(&f.0.join("her-flight-deck.db")).is_err(),
             "null completed score was accepted"
+        );
+    }
+
+    /// A legacy-format archive holding a real WAL-mode database and its WAL,
+    /// with the WAL bytes passed through `edit` first. Returns (current root,
+    /// archive path); the root holds her "current original row".
+    fn sqlite_guard_fixture(label: &str, edit: impl Fn(Vec<u8>) -> Vec<u8>) -> (PathBuf, PathBuf) {
+        let root = scratch(&format!("{label}-root"));
+        let elsewhere = scratch(&format!("{label}-src"));
+        write_database(&elsewhere.join(DB_FILES[0]), "selected checkpointed row");
+        let conn = Connection::open(elsewhere.join(DB_FILES[0])).unwrap();
+        conn.pragma_update(None, "journal_mode", "WAL").unwrap();
+        conn.pragma_update(None, "wal_autocheckpoint", 0).unwrap();
+        conn.execute(
+            "UPDATE audit_payload SET value = 'selected WAL-only row'",
+            [],
+        )
+        .unwrap();
+        let wal_bytes = edit(std::fs::read(elsewhere.join(DB_FILES[1])).unwrap());
+        let edited = elsewhere.join("edited").join(DB_FILES[1]);
+        std::fs::create_dir_all(edited.parent().unwrap()).unwrap();
+        std::fs::write(&edited, wal_bytes).unwrap();
+        let archive_path = elsewhere.join("guard.hfdbackup");
+        let mut zip = ZipWriter::new(File::create(&archive_path).unwrap());
+        zip.start_file(ARCHIVE_MANIFEST, archive_options()).unwrap();
+        zip.write_all(
+            serde_json::to_string(&CompleteBackupManifest {
+                format: ARCHIVE_FORMAT.into(),
+                format_version: LEGACY_ARCHIVE_VERSION,
+                app_version: "0.3.0".into(),
+                created_at: 0,
+                missing_at_export: vec![],
+                detached_at_export: Vec::new(),
+                schema_version: None,
+                device_id: None,
+                platform: None,
+            })
+            .unwrap()
+            .as_bytes(),
+        )
+        .unwrap();
+        add_file_to_archive(&mut zip, &elsewhere.join(DB_FILES[0]), DB_FILES[0]).unwrap();
+        add_file_to_archive(&mut zip, &edited, DB_FILES[1]).unwrap();
+        zip.finish().unwrap();
+        drop(conn);
+        write_database(&root.join(DB_FILES[0]), "current original row");
+        (root, archive_path)
+    }
+
+    fn assert_refused_and_untouched(root: &Path, archive: &Path) {
+        let err = stage_complete_restore_in(root, archive, "0.5.3").unwrap_err();
+        assert!(
+            err.contains("looks damaged") || err.contains("damaged"),
+            "{err}"
+        );
+        assert!(!root.join(RESTORE_PENDING_DIR).exists());
+        assert!(!root.join(DB_FILES[1]).exists());
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "current original row"
+        );
+    }
+
+    #[test]
+    fn sqlite_guard_matching_wal_still_restores() {
+        let (root, archive) = sqlite_guard_fixture("sg-match", |wal| wal);
+        stage_complete_restore_in(&root, &archive, "0.5.3").unwrap();
+        apply_pending_restore_in(&root).unwrap();
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "selected WAL-only row"
+        );
+    }
+
+    #[test]
+    fn sqlite_guard_refuses_wal_with_different_page_size() {
+        let (root, archive) = sqlite_guard_fixture("sg-size", |mut wal| {
+            wal[8..12].copy_from_slice(&8192u32.to_be_bytes());
+            wal
+        });
+        assert_refused_and_untouched(&root, &archive);
+    }
+
+    #[test]
+    fn sqlite_guard_refuses_truncated_wal() {
+        let (root, archive) = sqlite_guard_fixture("sg-short", |wal| wal[..20].to_vec());
+        assert_refused_and_untouched(&root, &archive);
+    }
+
+    #[test]
+    fn sqlite_guard_refuses_wal_with_bad_magic() {
+        let (root, archive) = sqlite_guard_fixture("sg-magic", |mut wal| {
+            wal[0] ^= 0xff;
+            wal
+        });
+        assert_refused_and_untouched(&root, &archive);
+    }
+
+    #[test]
+    fn sqlite_guard_refuses_mismatched_safety_copy() {
+        let root = scratch("sg-local");
+        write_database(&root.join(DB_FILES[0]), "current original row");
+        let copy = backup_dir(&root).unwrap().join("manual-bad");
+        std::fs::create_dir_all(&copy).unwrap();
+        write_database(&copy.join(DB_FILES[0]), "copy row");
+        let mut wal = vec![0u8; 64];
+        wal[0..4].copy_from_slice(&0x377f_0682u32.to_be_bytes());
+        wal[8..12].copy_from_slice(&1024u32.to_be_bytes());
+        std::fs::write(copy.join(DB_FILES[1]), wal).unwrap();
+        assert!(stage_local_restore_in(&root, "manual-bad").is_err());
+        assert!(!root.join(RESTORE_PENDING_DIR).exists());
+        assert_eq!(
+            database_contents(&root.join(DB_FILES[0])),
+            "current original row"
         );
     }
 

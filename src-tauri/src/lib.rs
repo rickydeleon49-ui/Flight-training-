@@ -73,6 +73,7 @@ mod practice_sessions;
 mod repository_writes;
 mod secrets;
 mod skill_evidence;
+mod sqlite_guard;
 mod startup_guard;
 mod storage;
 mod study_export;

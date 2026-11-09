@@ -1,4 +1,14 @@
 [advisories]
 # This lockfile entry is not selected for any release target. Keep the
 # exception narrow and remove it when the upstream lock graph drops rsa.
-ignore = ["RUSTSEC-2023-0071"]
+ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0459"]
+# RUSTSEC-2026-0459 (SQLite < 3.54 reads uninitialised memory when a database
+# is opened next to a -wal file of a different page size). sqlx-sqlite, via
+# tauri-plugin-sql, caps libsqlite3-sys below 0.38, so the fix (>=0.39) cannot
+# be taken yet. Every outside database/-wal pair is refused by
+# sqlite_guard::check_wal_pair before SQLite opens it: backup::
+# verify_application_database (archive restore staging and checks),
+# backup::stage_local_restore_in and the pending-restore check in
+# backup::apply_pending_restore_in (safety copies), and sync::ingest::
+# ingest_archive (phone archives). Remove this once sqlx allows
+# libsqlite3-sys >=0.39.
