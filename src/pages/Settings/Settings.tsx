@@ -1261,7 +1261,7 @@ export function Settings() {
               {libraryReport ? (
                 <div className="stack stack--4" aria-label="Library check results">
                   <p className="small" role="status">
-                    Checked {libraryReport.totalMaterials} materials and {fileCount(libraryReport.totalFiles)} stored. {fileCount(libraryReport.missingMaterials.length)} missing; {fileCount(libraryReport.unlinkedFiles.length)} unlinked.
+                    Checked {libraryReport.totalMaterials} materials and {libraryReport.totalFiles} stored {libraryReport.totalFiles === 1 ? "file" : "files"}. {fileCount(libraryReport.missingMaterials.length)} missing; {fileCount(libraryReport.unlinkedFiles.length)} unlinked.
                   </p>
                   {libraryReport.missingMaterials.length > 0 ? (
                     <div className="stack stack--2">
