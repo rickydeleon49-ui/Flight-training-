@@ -40,7 +40,7 @@ it("keeps split chapters under their book until asked to show them", () => {
   render(<MemoryRouter initialEntries={["/study"]}><StudyLibrary /></MemoryRouter>);
   expect(screen.getByText("Big Book")).toBeTruthy();
   expect(screen.queryByText(/Chapter 1: Topic 1/)).toBeNull();
-  expect(screen.getByText("Showing 1 of 1 materials")).toBeTruthy();
+  expect(screen.getByText("Showing 1 of 1 materials (3 more are chapters inside the books)")).toBeTruthy();
   const toggle = screen.getByRole("button", { name: /Show 3 chapters from Big Book/ });
   expect(toggle.getAttribute("aria-expanded")).toBe("false");
   fireEvent.click(toggle);

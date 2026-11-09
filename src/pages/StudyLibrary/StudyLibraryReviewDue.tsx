@@ -44,6 +44,12 @@ export function describeCounts(entry: Pick<LibraryReviewMaterialEntry, "againCou
   return parts.join(" · ");
 }
 
+/** One short line at the top so due cards show without scrolling on a phone. */
+export function dueLine(rows: readonly Pick<LibraryReviewMaterialEntry, "againCount" | "dayCount" | "newCount">[], complete = true): string {
+  const cards = rows.reduce((sum, r) => sum + r.againCount + r.dayCount + r.newCount, 0);
+  return `${plural(cards, "card")} ready in ${plural(rows.length, "material")}${complete ? "" : " so far"}`;
+}
+
 /** Cursor problems cannot be fixed by repeating the same read; start over instead. */
 const needsStartOver = (error: unknown) =>
   error instanceof CardLibraryReadError && (error.code === "STALE_CURSOR" || error.code === "INVALID_CURSOR");
@@ -108,6 +114,7 @@ export function StudyLibraryReviewDue({
             Review due
           </h2>
           <p className="small muted">Flashcards ready now, most urgent first. Open one material to review its cards.</p>
+          {state.rows.length > 0 ? <p className="small strong" role="status">{dueLine(state.rows, state.isComplete)}</p> : null}
         </div>
         <Button size="small" onClick={refresh} disabled={state.loading !== null}>
           Check again
@@ -137,8 +144,6 @@ export function StudyLibraryReviewDue({
           style={{ width: "auto" }}
         />
       </div>
-
-      <p className="tiny dim">{CARD_RATINGS_ARE_NOT_SCORES}</p>
 
       {loadingFirst ? (
         <p className="small muted" role="status">
@@ -174,6 +179,8 @@ export function StudyLibraryReviewDue({
           ))}
         </ul>
       ) : null}
+
+      {state.rows.length > 0 ? <p className="tiny dim">{CARD_RATINGS_ARE_NOT_SCORES}</p> : null}
 
       {state.issues.length > 0 ? (
         <div className="library-review__issues" role="note">
