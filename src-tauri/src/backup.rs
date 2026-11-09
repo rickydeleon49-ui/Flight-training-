@@ -7994,8 +7994,80 @@ fn stage_local_restore_in(root: &Path, name: &str) -> Result<BackupInfo, String>
 /// Restart so the staged database can be installed before SQLite opens again.
 #[tauri::command]
 pub fn restart_for_restore(app: AppHandle) -> Result<(), String> {
+    // Tauri's own restart starts the new copy while this one still holds the
+    // single-instance lock, so the new copy hands over to us and quits, and we
+    // then exit: the app never reopens. Instead a helper waits for this process
+    // to be gone, then opens the app again.
+    #[cfg(target_os = "macos")]
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(bundle) = mac_bundle_of(&exe) {
+            let script = mac_relaunch_script(std::process::id(), &bundle);
+            if std::process::Command::new("/bin/sh")
+                .arg("-c")
+                .arg(script)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn()
+                .is_ok()
+            {
+                app.exit(0);
+                return Ok(());
+            }
+        }
+    }
     app.request_restart();
     Ok(())
+}
+
+/// The `.app` folder that holds this executable, or None when it isn't run from one.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub(crate) fn mac_bundle_of(exe: &Path) -> Option<PathBuf> {
+    let macos = exe.parent()?;
+    if macos.file_name()? != "MacOS" {
+        return None;
+    }
+    let contents = macos.parent()?;
+    if contents.file_name()? != "Contents" {
+        return None;
+    }
+    let bundle = contents.parent()?;
+    (bundle.extension()? == "app").then(|| bundle.to_path_buf())
+}
+
+/// Wait until `pid` has exited, then open the app bundle again.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub(crate) fn mac_relaunch_script(pid: u32, bundle: &Path) -> String {
+    let quoted = bundle.to_string_lossy().replace('\'', "'\\''");
+    format!(
+        "while kill -0 {pid} 2>/dev/null; do sleep 0.2; done; sleep 0.3; /usr/bin/open -n '{quoted}'"
+    )
+}
+
+#[cfg(test)]
+mod relaunch_tests {
+    use super::*;
+
+    #[test]
+    fn the_bundle_is_found_from_the_executable() {
+        assert_eq!(
+            mac_bundle_of(Path::new(
+                "/Applications/Her Flight Deck.app/Contents/MacOS/her-flight-deck"
+            )),
+            Some(PathBuf::from("/Applications/Her Flight Deck.app"))
+        );
+        assert_eq!(
+            mac_bundle_of(Path::new("/tmp/target/debug/her-flight-deck")),
+            None
+        );
+    }
+
+    #[test]
+    fn the_relaunch_waits_for_this_process_then_opens_the_app() {
+        let script = mac_relaunch_script(42, Path::new("/Applications/Her's Deck.app"));
+        assert!(script.starts_with("while kill -0 42 "));
+        assert!(script.contains("open -n '/Applications/Her'\\''s Deck.app'"));
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
