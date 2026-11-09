@@ -37,7 +37,7 @@ describe("StudyGuideNoticeCard", () => {
     render(<StudyGuideNoticeCard />);
     fireEvent.click(box());
     expect(await screen.findByText(NOTICE_DENIED_LINE)).toBeTruthy();
-    expect(NOTICE_DENIED_LINE).toBe("Turn on notifications for Her Flight Deck in System Settings › Notifications.");
+    expect(NOTICE_DENIED_LINE).toBe("Turn on notifications for Your Flight Deck in System Settings › Notifications.");
     expect(save).not.toHaveBeenCalled();
     expect(box().checked).toBe(false);
   });

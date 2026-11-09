@@ -74,7 +74,7 @@ describe("Add study pack dialog", () => {
   });
 
   it("shows the app-update refusal, the only sentence allowed to say 'newer'", async () => {
-    const sentence = "This study pack needs a newer Her Flight Deck. Update the app, then try again.";
+    const sentence = "This study pack needs a newer version of Your Flight Deck. Update the app, then try again.";
     mocks.inspect.mockRejectedValue(sentence);
     open();
     expect((await screen.findByRole("alert")).textContent).toBe(sentence);

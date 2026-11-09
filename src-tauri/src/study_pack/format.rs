@@ -26,7 +26,7 @@ pub const MAX_VIDEOS_PER_ITEM: usize = 200;
 pub const NOT_A_PACK: &str = "This file isn't a study pack.";
 pub const DAMAGED: &str = "This study pack is damaged.";
 pub const NEWER_APP: &str =
-    "This study pack needs a newer Her Flight Deck. Update the app, then try again.";
+    "This study pack needs a newer version of Your Flight Deck. Update the app, then try again.";
 
 /// What an archive entry name may be.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

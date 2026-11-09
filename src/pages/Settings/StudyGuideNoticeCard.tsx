@@ -5,7 +5,7 @@ import { askPermission } from "@/services/notify";
 import { useAppData } from "@/state/AppDataContext";
 
 export const NOTICE_DENIED_LINE =
-  "Turn on notifications for Her Flight Deck in System Settings › Notifications.";
+  "Turn on notifications for Your Flight Deck in System Settings › Notifications.";
 export const NOTICE_ASK_LINE = "Your Mac will ask once — choose Allow.";
 
 /** One switch: tell you when a study guide is ready while the app is in the background. */
