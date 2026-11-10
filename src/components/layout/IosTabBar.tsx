@@ -9,6 +9,8 @@ import {
   MoreIcon,
 } from "@/components/ui";
 
+import { useScrollDirection } from "./useScrollDirection";
+
 import "./iosTabBar.css";
 
 /** Pages that live under the More tab. */
@@ -53,6 +55,7 @@ interface Props {
 export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
   const { pathname } = useLocation();
   const moreActive = isMoreRoute(pathname);
+  const compact = useScrollDirection(pathname);
 
   // Tapping the tab you are already on scrolls back to the top (no new history entry).
   const scrollIfCurrent = (root: string) => (event: MouseEvent) => {
@@ -63,7 +66,7 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
   };
 
   return (
-    <nav className="ios-tab-bar" aria-label="Main">
+    <nav className={`ios-tab-bar${compact ? " is-compact" : ""}`} aria-label="Main">
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}

@@ -62,13 +62,31 @@ html.is-ios .ios-tab-bar__tab {
   transition: transform 100ms;
 }
 
+html.is-ios .ios-tab-bar {
+  transition: transform 200ms ease;
+}
+
+/* Scrolling down: labels fade, icons shrink, the bar settles toward the home indicator.
+   Transform and opacity only, so the bar's box (and the page padding) never changes. */
+html.is-ios .ios-tab-bar.is-compact {
+  transform: translateY(14px);
+}
+
+html.is-ios .ios-tab-bar.is-compact .ios-tab-bar__icon {
+  transform: scale(0.8);
+}
+
+html.is-ios .ios-tab-bar.is-compact .ios-tab-bar__label {
+  opacity: 0;
+}
+
 html.is-ios .ios-tab-bar__tab:active { transform: scale(.97); }
 
 html.is-ios a, html.is-ios button, html.is-ios [role="button"], html.is-ios label { -webkit-tap-highlight-color: transparent; }
 
 html.is-ios .ios-tab-bar__tab.is-active { color: var(--accent-primary); }
 
-html.is-ios .ios-tab-bar__icon { display: inline-flex; }
+html.is-ios .ios-tab-bar__icon { display: inline-flex; transition: transform 200ms ease; }
 
 html.is-ios .ios-tab-bar__label {
   font-size: min(0.625rem, 12px);
@@ -78,6 +96,7 @@ html.is-ios .ios-tab-bar__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: opacity 200ms ease;
 }
 
 html.is-ios .ios-tab-bar__badge {

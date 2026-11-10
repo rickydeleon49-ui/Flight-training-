@@ -32,3 +32,13 @@ it("hides the material page's own Study Library link where the back button shows
   const rule = css.match(/html\.is-ios \.shell--tabs \.material-breadcrumb\s*\{([^}]*)\}/)?.[1] ?? "";
   expect(rule).toMatch(/display:\s*none/);
 });
+
+it("the compact tab bar rules change only transform and opacity", () => {
+  const css = readFileSync(new URL("./iosTabBar.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...css.matchAll(/([^{}]*\.is-compact[^{}]*)\{([^}]*)\}/g)];
+  expect(rules.length).toBeGreaterThanOrEqual(3);
+  for (const [, , body] of rules) {
+    const props = body!.split(";").map((d) => d.split(":")[0]!.trim()).filter(Boolean);
+    for (const prop of props) expect(["transform", "opacity"]).toContain(prop);
+  }
+});
