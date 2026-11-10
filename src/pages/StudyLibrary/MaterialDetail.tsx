@@ -1429,6 +1429,7 @@ function MaterialDetailPage() {
                     className="row row--wrap"
                     style={{ alignItems: "center", margin: "var(--space-4) var(--space-5) 0", paddingTop: "var(--space-3)", borderTop: "1px solid var(--border, rgba(128,128,128,0.25))", gap: "var(--space-3)" }}
                   >
+                    <span className="small muted">Uses {helper}</span>
                           <label className="row row--compact small" style={{ alignItems: "center", gap: "var(--space-2)" }}>
                             Target cards
                             <select
