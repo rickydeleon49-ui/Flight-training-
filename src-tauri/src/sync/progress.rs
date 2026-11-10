@@ -207,6 +207,7 @@ fn zero_counts() -> UnsavedPhoneWork {
         materials: 0,
         guides: 0,
         generated_tests: 0,
+        organization: 0,
         since: None,
     }
 }
@@ -261,7 +262,17 @@ fn would_change_row(conn: &Connection, change: &Change) -> bool {
 /// What the file would add, by the kinds the phone-work card counts.
 fn count_changes(conn: &Connection, changes: &[Change]) -> UnsavedPhoneWork {
     let mut slots = [0i64; KINDS.len()];
+    let mut organization = 0;
     for change in changes {
+        if matches!(
+            change.table.as_str(),
+            "library_folders" | "library_placements"
+        ) {
+            if would_change_row(conn, change) {
+                organization += 1;
+            }
+            continue;
+        }
         let Some(slot) = KINDS.iter().position(|(table, _)| *table == change.table) else {
             continue;
         };
@@ -277,6 +288,7 @@ fn count_changes(conn: &Connection, changes: &[Change]) -> UnsavedPhoneWork {
         materials: slots[4],
         guides: slots[5],
         generated_tests: slots[6],
+        organization,
         since: None,
     }
 }
@@ -379,6 +391,7 @@ fn add_counts(total: &mut UnsavedPhoneWork, more: &UnsavedPhoneWork) {
     total.materials += more.materials;
     total.guides += more.guides;
     total.generated_tests += more.generated_tests;
+    total.organization += more.organization;
 }
 
 const MAX_MANIFEST_BYTES: u64 = 64 * 1024;
@@ -695,6 +708,7 @@ fn phone_preflight(
             + work.materials
             + work.guides
             + work.generated_tests
+            + work.organization
             > 0
         {
             return Err(w.send_first.to_string());

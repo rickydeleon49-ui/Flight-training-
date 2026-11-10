@@ -11,8 +11,8 @@ vi.mock("@/services/phoneProgress", async (original) => ({
 }));
 import { PhoneProgressCard } from "./PhoneProgressCard";
 
-const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
-const some = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+const none = { reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
+const some = { reviews: 12, tests: 1, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
 const saved = { fileName: "My phone work.hfdbackup", savedAt: "2026-11-04T10:00:00.000Z", fileBytes: 10 };
 
 const sent = { fileName: "My phone progress.hfdprogress", sentAt: "2026-11-04T10:00:00.000Z", nothingNew: false, counts: some, pdfsIncluded: 1, pdfsLeft: 0, fileBytes: 10 };

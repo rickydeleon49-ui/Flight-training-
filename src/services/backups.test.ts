@@ -133,7 +133,7 @@ describe("phone import plumbing", () => {
 
   it("reads unsaved phone work through the app", async () => {
     mocks.isTauri.mockReturnValue(true);
-    const work = { reviews: 1, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null };
+    const work = { reviews: 1, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null };
     mocks.invoke.mockResolvedValueOnce(work);
     expect(await unsavedPhoneWork()).toBe(work);
     expect(mocks.invoke).toHaveBeenCalledWith("unsaved_phone_work");
@@ -153,7 +153,7 @@ describe("phone import plumbing", () => {
     await discardIncomingBackup();
     await expect(exitForRestore()).rejects.toThrow("Restore needs the application.");
     expect(await phoneActivitySummary()).toEqual({ latestReviewAt: null, reviewsLast7Days: 0, attemptsLast7Days: 0 });
-    expect(await unsavedPhoneWork()).toEqual({ reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, since: null });
+    expect(await unsavedPhoneWork()).toEqual({ reviews: 0, tests: 0, bookmarks: 0, readingPositions: 0, materials: 0, guides: 0, generatedTests: 0, organization: 0, since: null });
     expect(mocks.invoke).not.toHaveBeenCalled();
   });
 });

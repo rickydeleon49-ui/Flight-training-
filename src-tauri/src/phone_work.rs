@@ -24,6 +24,14 @@ pub(crate) const KINDS: [(&str, &str); 7] = [
     ("practice_tests", "updated_at"),
 ];
 
+/// Her own folders and where she put each material. Counted as one "folder
+/// change" kind (kept out of `KINDS`, which drives the first-send seeding;
+/// these tables have had ledger triggers since they were created).
+pub(crate) const ORGANIZATION_KINDS: [(&str, &str); 2] = [
+    ("library_folders", "updated_at"),
+    ("library_placements", "updated_at"),
+];
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UnsavedPhoneWork {
@@ -34,6 +42,8 @@ pub struct UnsavedPhoneWork {
     pub materials: i64,
     pub guides: i64,
     pub generated_tests: i64,
+    /// Folder and "move to folder" changes (library_folders, library_placements).
+    pub organization: i64,
     pub since: Option<String>,
 }
 
@@ -118,7 +128,7 @@ fn newest(connection: &Connection, table: &str, column: &str) -> Result<Option<S
 pub(crate) fn record_baseline_in(root: &Path, now: &str) -> Result<(), String> {
     let mut best = now.to_string();
     if let Some(connection) = open_read_only(root)? {
-        for (table, column) in KINDS {
+        for (table, column) in KINDS.into_iter().chain(ORGANIZATION_KINDS) {
             if let Some(candidate) = newest(&connection, table, column)? {
                 let later: i64 = connection
                     .query_row(
@@ -435,7 +445,21 @@ pub(crate) fn unsaved_phone_work_in(root: &Path) -> Result<UnsavedPhoneWork, Str
             )?;
         }
     }
+    let mut organization = 0;
+    if let Some(connection) = open_read_only(root)? {
+        let own = own_device_id(&connection);
+        for (table, column) in ORGANIZATION_KINDS {
+            organization += count_newer(
+                &connection,
+                table,
+                column,
+                baseline.as_deref(),
+                own.as_deref(),
+            )?;
+        }
+    }
     Ok(UnsavedPhoneWork {
+        organization,
         reviews: counts[0],
         tests: counts[1],
         bookmarks: counts[2],
@@ -480,6 +504,7 @@ pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
         ),
         part(work.guides, "study guide", "study guides"),
         part(work.materials, "study material", "study materials"),
+        part(work.organization, "folder change", "folder changes"),
     ]
     .into_iter()
     .flatten()
@@ -487,8 +512,12 @@ pub(crate) fn sentence(work: &UnsavedPhoneWork) -> Option<String> {
     if parts.is_empty() {
         return None;
     }
-    let total =
-        work.reviews + work.tests + work.bookmarks + work.reading_positions + work.materials;
+    let total = work.reviews
+        + work.tests
+        + work.bookmarks
+        + work.reading_positions
+        + work.materials
+        + work.organization;
     let verb = if total == 1 { "isn't" } else { "aren't" };
     Some(format!(
         "This phone has {} that {verb} saved anywhere else yet. Save my phone work first, then get your study material.",
