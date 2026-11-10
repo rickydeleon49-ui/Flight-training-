@@ -26,6 +26,7 @@ export function LibrarySections({
   onShowMore,
   hideEmpty,
   renderBook,
+  gridClass = "material-grid",
 }: {
   view: string;
   sections: LibrarySection[];
@@ -35,6 +36,7 @@ export function LibrarySections({
   onShowMore: (viewKey: string, next: number) => void;
   hideEmpty: boolean;
   renderBook: (material: StudyMaterial) => ReactNode;
+  gridClass?: string;
 }) {
   return (
     <div className="library__sections">
@@ -64,7 +66,7 @@ export function LibrarySections({
                 <p className="small muted">Empty folder</p>
               ) : (
                 <>
-                  <div className="material-grid">{shown.map(renderBook)}</div>
+                  <div className={gridClass}>{shown.map(renderBook)}</div>
                   {section.items.length > limit ? (
                     <div className="library__more">
                       <Button onClick={() => onShowMore(viewKey, limit + SECTION_PAGE_SIZE)}>

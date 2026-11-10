@@ -163,3 +163,29 @@ it("hides the jump link when nothing is outside a folder", async () => {
   expect(jumpLinks(/^Not in a folder/).length).toBe(0);
   await act(async () => {});
 });
+
+it("List layout shows rows, is remembered, and still links to the material", async () => {
+  open();
+  await screen.findByText("METAR basics");
+  expect(screen.getByRole("button", { name: "Cards" }).getAttribute("aria-pressed")).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "List" }));
+  expect(screen.getByRole("button", { name: "List" }).getAttribute("aria-pressed")).toBe("true");
+  expect(document.querySelectorAll(".material-row").length).toBe(3);
+  expect(document.querySelectorAll(".material-card").length).toBe(0);
+  const link = screen.getByText("METAR basics").closest("a")!;
+  expect(link.getAttribute("href")).toBe("/study/m1");
+  cleanup();
+  open();
+  await screen.findByText("METAR basics");
+  expect(screen.getByRole("button", { name: "List" }).getAttribute("aria-pressed")).toBe("true");
+  expect(document.querySelectorAll(".material-row").length).toBe(3);
+});
+
+it("List layout keeps the chapter toggle and works in By folder", async () => {
+  localStorage.setItem("her-flight-deck.view.library.layout", JSON.stringify("list"));
+  open();
+  await screen.findByText("METAR basics");
+  setView("folder");
+  fireEvent.click(await screen.findByRole("button", { name: /Show 1 chapter from Big Book/ }));
+  expect(screen.getByText(/Chapter 1: Topic 1/).closest("a")?.className).toBe("material-row");
+});

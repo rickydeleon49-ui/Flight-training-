@@ -59,6 +59,7 @@ import {
   type LibrarySection,
 } from "@/logic/libraryFolders";
 import { useAppData } from "@/state/AppDataContext";
+import { formatShortDate, localDayOf } from "@/lib/dates";
 import { isOneOf, isText, useRememberedState } from "@/state/useRememberedState";
 
 import { DocumentSearchPanel } from "./DocumentSearchPanel";
@@ -239,6 +240,11 @@ export function StudyLibrary() {
   const [view, setView] = useRememberedState<LibraryView>(
     "library.view", "everything", isOneOf(VIEW_OPTIONS.map((option) => option.value)), "device",
   );
+  const [layout, setLayout] = useRememberedState<"cards" | "list">(
+    "library.layout", "cards", isOneOf(["cards", "list"] as const), "device",
+  );
+  const listLayout = layout === "list";
+  const gridClass = listLayout ? "material-grid material-grid--list" : "material-grid";
   const [folderSort, setFolderSort] = useRememberedState<FolderSort>(
     "library.folderSort", "manual", isOneOf(FOLDER_SORT_VALUES), "device",
   );
@@ -376,6 +382,7 @@ export function StudyLibrary() {
     <MaterialCard
       key={item.id}
       material={item}
+      list={listLayout}
       nextActionTitle={nextActionTitles.get(item.id)}
       offline={offlineBadges.get(item.id)}
       review={tab === "library" ? reviewIndicator(binderStatus, item.id, materialsWithCards.has(item.id)) : null}
@@ -590,6 +597,10 @@ export function StudyLibrary() {
               style={{ width: "auto" }}
             />
           )}
+          <div className="library__layout" role="group" aria-label="Layout">
+            <Button aria-pressed={!listLayout} onClick={() => setLayout("cards")}>Cards</Button>
+            <Button aria-pressed={listLayout} onClick={() => setLayout("list")}>List</Button>
+          </div>
         </div>
       )}
 
@@ -690,9 +701,10 @@ export function StudyLibrary() {
               onShowMore={(key, next) => setSectionPage({ key: filterKey, limits: { ...sectionLimits, [key]: next } })}
               hideEmpty={filtersActive}
               renderBook={renderBook}
+              gridClass={gridClass}
             />
           ) : (
-            <div className="material-grid">{shownMaterials.map(renderBook)}</div>
+            <div className={gridClass}>{shownMaterials.map(renderBook)}</div>
           )}
           {!sectioned && grouped.topLevel.length > visibleLimit ? (
             <div className="library__more">
@@ -776,7 +788,9 @@ function MaterialCard({
   review,
   offline,
   folderName,
+  list,
 }: {
+  list?: boolean;
   material: StudyMaterial;
   nextActionTitle?: string;
   review?: string | null;
@@ -789,6 +803,20 @@ function MaterialCard({
       : material.reviewStatus === "studying"
         ? "study"
         : "neutral";
+
+  if (list) {
+    const day = localDayOf(material.createdAt);
+    return (
+      <Link className="material-row" to={`/study/${material.id}`} state={{ fromLibrary: true }}>
+        <span className="material-row__title wrap-anywhere">{material.title}</span>
+        <span className="material-row__col">{MATERIAL_TYPE_LABELS[material.materialType]}</span>
+        <span className="material-row__col material-row__topic">{TOPIC_LABELS[material.topic]}</span>
+        <span className="material-row__col">{REVIEW_STATUS_LABELS[material.reviewStatus]}</span>
+        {day ? <span className="material-row__col material-row__date">added {formatShortDate(day)}</span> : null}
+        {folderName ? <span className="tiny dim library__in-folder">In: {folderName}</span> : null}
+      </Link>
+    );
+  }
 
   return (
     <Link className="material-card" to={`/study/${material.id}`} state={{ fromLibrary: true }}>
