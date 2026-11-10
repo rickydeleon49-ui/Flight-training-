@@ -57,6 +57,15 @@ describe("iPhone tab bar", () => {
     expect(tab("Home").getAttribute("aria-current")).toBe("page");
   });
 
+  it("the active tab icon has the heavier stroke", () => {
+    mount("/study");
+    const w = (name: string) => tab(name).querySelector("svg")?.getAttribute("stroke-width");
+    expect(w("Study")).toBe("2.25");
+    for (const n of ["Home", "Schedule", "Log", "More"]) expect(w(n)).toBe("1.75");
+    expect(tab("Study").getAttribute("aria-current")).toBe("page");
+    expect(tab("Home").getAttribute("aria-current")).toBeNull();
+  });
+
   it("a wide iPad keeps the sidebar and has no tab bar", () => {
     mount("/", 1200);
     expect(document.querySelector(".ios-tab-bar")).toBeNull();

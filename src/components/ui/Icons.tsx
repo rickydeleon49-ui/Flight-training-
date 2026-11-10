@@ -15,7 +15,7 @@ const Icon = ({ size = 18, children, ...props }: IconProps) => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth={1.6}
+    strokeWidth={1.75}
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"

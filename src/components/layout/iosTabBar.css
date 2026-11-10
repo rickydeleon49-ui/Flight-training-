@@ -49,7 +49,7 @@ html.is-ios .ios-tab-bar {
   min-height: 49px;
   padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
   background: var(--surface-card);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 0.5px solid var(--border-subtle); /* iOS is always 2x or 3x */
 }
 
 html.is-ios .ios-tab-bar__tab {
@@ -61,7 +61,7 @@ html.is-ios .ios-tab-bar__tab {
   justify-content: center;
   gap: 2px;
   padding: 4px 2px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-decoration: none;
   touch-action: manipulation;
   position: relative;
@@ -78,7 +78,7 @@ html.is-ios .ios-tab-bar__icon { display: inline-flex; }
 
 html.is-ios .ios-tab-bar__label {
   font-size: min(0.625rem, 12px);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.1;
   max-width: 100%;
   overflow: hidden;
@@ -88,20 +88,21 @@ html.is-ios .ios-tab-bar__label {
 
 html.is-ios .ios-tab-bar__badge {
   position: absolute;
-  top: 4px;
+  top: 2px;
   left: calc(50% + 6px);
-  min-width: 16px;
-  padding: 0 4px;
+  min-width: 18px;
+  padding: 0 5px;
   border-radius: var(--radius-pill);
   background: var(--badge-alert);
   color: var(--text-on-accent);
   font-size: min(0.625rem, 12px);
-  line-height: 16px;
+  font-weight: 600;
+  line-height: 18px;
   text-align: center;
 }
 
 html.is-ios .ios-tab-bar__badge--quiet {
-  background: var(--text-tertiary);
+  background: var(--text-secondary);
 }
 
 /* Hide while typing, in a full-screen layer or in the fallback PDF viewer. */

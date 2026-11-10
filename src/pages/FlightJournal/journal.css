@@ -151,6 +151,7 @@
   background: transparent;
   color: var(--text-primary);
   font-size: var(--text-sm);
+  white-space: nowrap;
 }
 .view-tabs.filter-chips .filter-chip:hover { background: transparent; }
 .view-tabs.filter-chips .filter-chip.is-active,
@@ -159,6 +160,33 @@
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
   font-weight: 600;
+}
+
+/* Dark: the raised fill is darker than the track, so use the control edge grey. */
+:root[data-theme="dark"] .view-tabs.filter-chips .filter-chip.is-active,
+:root[data-theme="dark"] .view-tabs.filter-chips .filter-chip[aria-selected="true"] {
+  background: var(--border-control);
+  color: var(--text-on-accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .view-tabs.filter-chips .filter-chip.is-active,
+  :root:not([data-theme="light"]):not([data-theme="light-grey"]) .view-tabs.filter-chips .filter-chip[aria-selected="true"] {
+    background: var(--border-control);
+    color: var(--text-on-accent);
+  }
+}
+
+/* Phone: keep each label on one line; the track scrolls sideways if it must. */
+@media (max-width: 700px) {
+  .view-tabs.filter-chips {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .view-tabs.filter-chips .filter-chip {
+    flex: 0 0 auto;
+    padding: 0 6px;
+    font-size: 0.6875rem;
+  }
 }
 
 /* ----------------------------- Flight log ----------------------------- */

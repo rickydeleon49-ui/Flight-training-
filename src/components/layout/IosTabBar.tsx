@@ -31,14 +31,17 @@ export function isMoreRoute(pathname: string): boolean {
 interface Tab {
   to: string;
   label: string;
-  icon: ReactElement;
+  icon: (strokeWidth: number) => ReactElement;
 }
 
+const STROKE = 1.75;
+const STROKE_ACTIVE = 2.25;
+
 const TABS: Tab[] = [
-  { to: "/", label: "Home", icon: <DeckIcon size={22} /> },
-  { to: "/study", label: "Study", icon: <BookIcon size={22} /> },
-  { to: "/schedule", label: "Schedule", icon: <CalendarIcon size={22} /> },
-  { to: "/journal", label: "Log", icon: <JournalIcon size={22} /> },
+  { to: "/", label: "Home", icon: (w) => <DeckIcon size={26} strokeWidth={w} /> },
+  { to: "/study", label: "Study", icon: (w) => <BookIcon size={26} strokeWidth={w} /> },
+  { to: "/schedule", label: "Schedule", icon: (w) => <CalendarIcon size={26} strokeWidth={w} /> },
+  { to: "/journal", label: "Log", icon: (w) => <JournalIcon size={26} strokeWidth={w} /> },
 ];
 
 interface Props {
@@ -71,14 +74,20 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
             `ios-tab-bar__tab${isActive ? " is-active" : ""}`
           }
         >
-          <span className="ios-tab-bar__icon">{tab.icon}</span>
-          <span className="ios-tab-bar__label">{tab.label}</span>
-          {tab.to === "/" && overdueCount > 0 ? (
-            <span className="ios-tab-bar__badge">
-              {overdueCount}
-              <span className="visually-hidden"> overdue</span>
-            </span>
-          ) : null}
+          {({ isActive }) => (
+            <>
+              <span className="ios-tab-bar__icon">
+                {tab.icon(isActive ? STROKE_ACTIVE : STROKE)}
+              </span>
+              <span className="ios-tab-bar__label">{tab.label}</span>
+              {tab.to === "/" && overdueCount > 0 ? (
+                <span className="ios-tab-bar__badge">
+                  {overdueCount}
+                  <span className="visually-hidden"> overdue</span>
+                </span>
+              ) : null}
+            </>
+          )}
         </NavLink>
       ))}
       <Link
@@ -88,7 +97,7 @@ export function IosTabBar({ overdueCount, questionsToAsk }: Props) {
         className={`ios-tab-bar__tab${moreActive ? " is-active" : ""}`}
       >
         <span className="ios-tab-bar__icon">
-          <MoreIcon size={22} />
+          <MoreIcon size={26} strokeWidth={moreActive ? STROKE_ACTIVE : STROKE} />
         </span>
         <span className="ios-tab-bar__label">More</span>
         {questionsToAsk > 0 ? (
