@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 pub(super) const QUOTE_RULE: &str = "Every card and question must include a required quote of at most 300 characters, copied word-for-word as one continuous passage (no ellipses) from its cited sourcePage. sourcePage is the physical PDF page (1 = first page), never the printed page label.";
 const UNVERIFIED: &str = "Couldn't check this against the page";
+pub(super) const UNCERTAIN: &str = "Not matched to the page word for word";
 pub(super) const FALLBACK: &str = "Couldn't check more than half of these items against the pages. All items were kept for you to review.";
 
 #[derive(Default, Debug, Serialize)]
@@ -18,6 +19,7 @@ pub(super) struct Counts {
     pub kept: usize,
     pub dropped_by_quote: usize,
     pub unverified: usize,
+    pub uncertain: usize,
     pub dropped_by_choices: usize,
     #[serde(skip)]
     pub majority_fallback: bool,
@@ -78,12 +80,24 @@ fn numbers(t: &str) -> Vec<String> {
         .collect()
 }
 
+/// How well a quote fits a page. Only `Exact` counts as verified.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub(crate) enum Fit {
+    None = 0,
+    /// Most words are on the page but not as one ordered passage: it may even
+    /// say the opposite ("increases" and "decreases" swapped). Kept, flagged.
+    Loose = 1,
+    /// Same words in the same order (after punctuation, ligature and layout
+    /// normalization), in one contiguous passage.
+    Exact = 2,
+}
+
 /// Kit quote check, tolerant of what PDF text extraction does to real quotes
 /// (31 Oct live bench: every quote drop was a real sentence): punctuation and
-/// curly quotes, headings run into the sentence, two-column order, page breaks.
-/// Pass when the letters/digits match contiguously, or when a quote of 6+ words
-/// has ≥80% of its words on the page and every number it states.
-pub(crate) fn kit_quote_matches(page: &str, quote: &str) -> bool {
+/// curly quotes, headings run into the sentence, page breaks.
+/// Exact when the letters/digits match contiguously. A quote of 6+ words with
+/// >=80% of its words on the page and every number it states is only Loose.
+pub(crate) fn kit_quote_fit(page: &str, quote: &str) -> Fit {
     // Elided quotes ("A … B"): every part must match on its own.
     let parts: Vec<&str> = quote
         .split(['…'])
@@ -92,32 +106,40 @@ pub(crate) fn kit_quote_matches(page: &str, quote: &str) -> bool {
         .filter(|p| !p.is_empty())
         .collect();
     if parts.len() > 1 {
-        return parts.iter().all(|p| one_quote_matches(page, p));
+        return parts
+            .iter()
+            .map(|p| one_quote_fit(page, p))
+            .min()
+            .unwrap_or(Fit::None);
     }
-    one_quote_matches(page, quote)
+    one_quote_fit(page, quote)
 }
 
-fn one_quote_matches(page: &str, quote: &str) -> bool {
+fn one_quote_fit(page: &str, quote: &str) -> Fit {
     // A tiny fragment ("engine power") proves nothing about a whole card.
     let q = loose(quote);
     if q.chars().count() < 12 {
-        return false;
+        return Fit::None;
     }
     // Numbers must match exactly on every path ("12-15" is not "1215").
     let page_numbers = numbers(page);
     if !numbers(quote).iter().all(|n| page_numbers.contains(n)) {
-        return false;
+        return Fit::None;
     }
     if crate::gemini_ask_evidence::quote_matches(page, quote) || loose(page).contains(&q) {
-        return true;
+        return Fit::Exact;
     }
     let qw = words(quote);
     if qw.len() < 6 {
-        return false;
+        return Fit::None;
     }
     let pw: std::collections::HashSet<String> = words(page).into_iter().collect();
     let hit = qw.iter().filter(|w| pw.contains(*w)).count();
-    hit * 10 >= qw.len() * 8
+    if hit * 10 >= qw.len() * 8 {
+        Fit::Loose
+    } else {
+        Fit::None
+    }
 }
 
 pub(super) fn check_source_items(
@@ -178,7 +200,7 @@ pub(super) fn check_items(
         valid
     });
     let mut cached = HashMap::new();
-    // 0 = verified, 1 = unavailable, 2 = failed.
+    // 0 = verified, 1 = unavailable, 2 = failed, 3 = uncertain (loose match only).
     let states: Vec<u8> = items
         .iter_mut()
         .map(|item| {
@@ -200,6 +222,7 @@ pub(super) fn check_items(
                 return 2;
             }
             let mut cited_available = false;
+            let mut loose_match = false;
             for candidate in [Some(page), page.checked_sub(1), page.checked_add(1)]
                 .into_iter()
                 .flatten()
@@ -211,12 +234,14 @@ pub(super) fn check_items(
                 if candidate == page {
                     cited_available = text.is_some();
                 }
-                if text
-                    .as_ref()
-                    .is_some_and(|text| kit_quote_matches(text, &quote))
-                {
-                    item["sourcePage"] = json!(candidate);
-                    return 0;
+                match text.as_ref().map(|text| kit_quote_fit(text, &quote)) {
+                    Some(Fit::Exact) => {
+                        item["sourcePage"] = json!(candidate);
+                        return 0;
+                    }
+                    // A loose match never moves the item to another page.
+                    Some(Fit::Loose) => loose_match = true,
+                    _ => {}
                 }
             }
             // A sentence that runs over a page break: cited page + the next one.
@@ -227,12 +252,16 @@ pub(super) fn check_items(
                     .clone();
                 let here = cached.get(&page).cloned().flatten();
                 if let (Some(a), Some(b)) = (here, next) {
-                    if kit_quote_matches(&format!("{a}\n{b}"), &quote) {
-                        return 0;
+                    match kit_quote_fit(&format!("{a}\n{b}"), &quote) {
+                        Fit::Exact => return 0,
+                        Fit::Loose => loose_match = true,
+                        Fit::None => {}
                     }
                 }
             }
-            if cited_available {
+            if loose_match {
+                3
+            } else if cited_available {
                 2
             } else {
                 1
@@ -250,24 +279,30 @@ pub(super) fn check_items(
             counts.dropped_by_quote += 1;
             return false;
         }
-        if fallback || state == 1 {
+        if fallback || state == 1 || state == 3 {
             if item.is_object() {
                 item["verificationNote"] = json!(if fallback && first {
                     FALLBACK
+                } else if state == 3 {
+                    UNCERTAIN
                 } else {
                     UNVERIFIED
                 });
             }
             counts.unverified += 1;
+            if state == 3 {
+                counts.uncertain += 1;
+            }
         }
         counts.kept += 1;
         true
     });
     crate::logging::log::info!(
-        "Study item checks: kept {}, dropped by quote {}, unverified {}, dropped by choices {}",
+        "Study item checks: kept {}, dropped by quote {}, unverified {} (uncertain {}), dropped by choices {}",
         counts.kept,
         counts.dropped_by_quote,
         counts.unverified,
+        counts.uncertain,
         counts.dropped_by_choices
     );
     counts
@@ -276,6 +311,9 @@ pub(super) fn check_items(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn kit_quote_exact(page: &str, quote: &str) -> bool {
+        kit_quote_fit(page, quote) == Fit::Exact
+    }
     fn card(page: u32, quote: &str) -> Value {
         json!({"front":"Synthetic?", "back":"Synthetic.","sourcePage":page,"quote":quote})
     }
@@ -362,23 +400,27 @@ mod tests {
     #[test]
     fn real_pdf_quirks_from_the_live_bench_pass() {
         // punctuation / curly quotes / heading run-in
-        assert!(kit_quote_matches("risks of flight into four categories: Pilot-in-command (PIC),\nAircraft, enVironment, and External pressures (PAVE)", "four categories: Pilot-in-command (PIC), Aircraft, enVironment, and External pressures (PAVE)"));
-        assert!(kit_quote_matches(
+        assert!(kit_quote_exact("risks of flight into four categories: Pilot-in-command (PIC),\nAircraft, enVironment, and External pressures (PAVE)", "four categories: Pilot-in-command (PIC), Aircraft, enVironment, and External pressures (PAVE)"));
+        assert!(kit_quote_exact(
             "Get-there-itis\nThis disposition impairs pilot judgment",
             "Get-there-itis This disposition impairs pilot judgment"
         ));
-        // two-column order: all words present, not contiguous
-        assert!(kit_quote_matches("The purpose of an AOA indicator is to give\nOTHER COLUMN TEXT\nthe pilot better situation awareness pertaining to the aerodynamic health of the airfoil.", "The purpose of an AOA indicator is to give the pilot better situation awareness pertaining to the aerodynamic health of the airfoil."));
+    }
+    #[test]
+    fn two_column_order_is_only_uncertain() {
+        let page = "The purpose of an AOA indicator is to give\nOTHER COLUMN TEXT\nthe pilot better situation awareness pertaining to the aerodynamic health of the airfoil.";
+        let quote = "The purpose of an AOA indicator is to give the pilot better situation awareness pertaining to the aerodynamic health of the airfoil.";
+        assert_eq!(kit_quote_fit(page, quote), Fit::Loose);
     }
     #[test]
     fn elided_quotes_need_every_part() {
         let page =
             "Macho: “I can do it.” Pilots who try to prove... Antidote: Taking chances is foolish.";
-        assert!(kit_quote_matches(
+        assert!(kit_quote_exact(
             page,
             "Macho: “I can do it.” ... Taking chances is foolish."
         ));
-        assert!(!kit_quote_matches(
+        assert!(!kit_quote_exact(
             page,
             "Macho: “I can do it.” … Always take chances when flying."
         ));
@@ -394,13 +436,13 @@ mod tests {
     #[test]
     fn wrong_page_wrong_numbers_and_short_fragments_still_fail() {
         let page = "Density altitude increases as temperature rises. High density altitude reduces engine power, propeller thrust and wing lift.";
-        assert!(!kit_quote_matches(page, "Pilots should always complete a full preflight inspection before every flight in the aircraft."));
-        assert!(!kit_quote_matches(
+        assert!(!kit_quote_exact(page, "Pilots should always complete a full preflight inspection before every flight in the aircraft."));
+        assert!(!kit_quote_exact(
             page,
             "High density altitude reduces engine power by 30 percent and wing lift."
         ));
-        assert!(!kit_quote_matches(page, "engine power"));
-        assert!(kit_quote_matches(
+        assert!(!kit_quote_exact(page, "engine power"));
+        assert!(kit_quote_exact(
             page,
             "High density altitude reduces engine power, propeller thrust, and wing lift."
         ));
@@ -416,12 +458,12 @@ mod tests {
     #[test]
     fn pdf_ligatures_match_plain_letters_but_numbers_stay_exact() {
         let page = "Eﬃcient ﬂight control is the ﬁrst skill; maximum 12 knots.";
-        assert!(kit_quote_matches(page, "Efficient flight control"));
-        assert!(kit_quote_matches(
+        assert!(kit_quote_exact(page, "Efficient flight control"));
+        assert!(kit_quote_exact(
             page,
             "efficient flight control is the first skill"
         ));
-        assert!(!kit_quote_matches(
+        assert!(!kit_quote_exact(
             page,
             "efficient flight control; maximum 13 knots"
         ));
@@ -429,5 +471,102 @@ mod tests {
             page,
             "Efficient flight control"
         ));
+    }
+    #[test]
+    fn reversed_meaning_is_uncertain_and_an_ordered_quote_is_verified() {
+        let page = "Pressure increases as temperature decreases in this fictional example.";
+        assert_eq!(
+            kit_quote_fit(
+                page,
+                "Pressure increases as temperature decreases in this fictional example."
+            ),
+            Fit::Exact
+        );
+        assert_eq!(
+            kit_quote_fit(
+                page,
+                "Pressure decreases as temperature increases in this fictional example."
+            ),
+            Fit::Loose
+        );
+        let mut items = json!([card(
+            1,
+            "Pressure decreases as temperature increases in this fictional example."
+        )]);
+        let c = run(&mut items, |_| Some(page.into()));
+        assert_eq!(
+            (c.kept, c.dropped_by_quote, c.unverified, c.uncertain),
+            (1, 0, 1, 1)
+        );
+        assert_eq!(items[0]["verificationNote"], UNCERTAIN);
+    }
+    #[test]
+    fn a_loose_match_on_a_neighbour_page_does_not_move_the_item() {
+        let mut items = json!([card(
+            1,
+            "Pressure decreases as temperature increases in this fictional example."
+        )]);
+        let c = run(&mut items, |p| {
+            Some(
+                if p == 2 {
+                    "Pressure increases as temperature decreases in this fictional example."
+                } else {
+                    "Unrelated words only."
+                }
+                .into(),
+            )
+        });
+        assert_eq!((c.kept, c.uncertain), (1, 1));
+        assert_eq!(items[0]["sourcePage"], 1);
+    }
+    #[test]
+    fn an_exact_match_on_a_neighbour_page_still_moves_the_item() {
+        let mut items = json!([card(
+            1,
+            "Pressure increases as temperature decreases in this fictional example."
+        )]);
+        let c = run(&mut items, |p| {
+            Some(
+                if p == 2 {
+                    "Pressure increases as temperature decreases in this fictional example."
+                } else {
+                    "Unrelated words only."
+                }
+                .into(),
+            )
+        });
+        assert_eq!((c.kept, c.uncertain, c.unverified), (1, 0, 0));
+        assert_eq!(items[0]["sourcePage"], 2);
+    }
+    #[test]
+    fn number_difference_still_fails() {
+        let page =
+            "Pressure increases to 30 PSI as temperature decreases in this fictional example.";
+        assert_eq!(
+            kit_quote_fit(
+                page,
+                "Pressure increases to 40 PSI as temperature decreases in this fictional example."
+            ),
+            Fit::None
+        );
+        let mut items = json!([
+            card(
+                1,
+                "Pressure increases to 30 PSI as temperature decreases in this fictional example."
+            ),
+            card(
+                1,
+                "Pressure increases to 40 PSI as temperature decreases in this fictional example."
+            )
+        ]);
+        let c = run(&mut items, |_| Some(page.into()));
+        assert_eq!((c.kept, c.dropped_by_quote, c.uncertain), (1, 1, 0));
+    }
+    #[test]
+    fn elided_quote_with_loose_part_is_only_loose() {
+        let page = "Macho: “I can do it.” Pilots who try to prove... Antidote: Taking chances is foolish and dangerous for pilots.";
+        // Part 1 is exact, part 2 has words reversed (loose)
+        let quote = "Macho: “I can do it.” ... chances Taking foolish and dangerous is for pilots.";
+        assert_eq!(kit_quote_fit(page, quote), Fit::Loose);
     }
 }
