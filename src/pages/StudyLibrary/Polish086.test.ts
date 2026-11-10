@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement as h } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -144,6 +144,7 @@ describe("POLISH-086 guide-pack friction", () => {
     expect(more.closest("header")).toBeNull();
     const header = (await screen.findByRole("heading", { name: "Flashcards" })).closest("header")!;
     expect(header.contains(make)).toBe(false);
+    expect(within(group as HTMLElement).getByText("Uses Gemini")).toBeTruthy();
   });
 
   it("item 2: fewer cards than the target are explained once", async () => {
