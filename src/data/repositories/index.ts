@@ -26,12 +26,14 @@ import { flightSchoolRepository } from "./flightSchoolRepository";
 import { oralScenarioRepository } from "./oralScenarioRepository";
 import { oralAnswerRepository } from "./oralAnswerRepository";
 
+import { libraryFolderRepository } from "./libraryFolderRepository";
 import { materialVideoLinkRepository } from "./materialVideoLinkRepository";
 import { studentPilotStepRepository } from "./studentPilotStepRepository";
 import { faaDownloadRepository } from "./faaDownloadRepository";
 import { kitQueueRepository } from "./kitQueueRepository";
 
 export interface Repositories {
+  libraryFolders: ReturnType<typeof libraryFolderRepository>;
   materialVideoLinks: ReturnType<typeof materialVideoLinkRepository>;
   studentPilotSteps: ReturnType<typeof studentPilotStepRepository>;
   faaDownloads: ReturnType<typeof faaDownloadRepository>;
@@ -63,6 +65,7 @@ export function createRepositories(db: SqlDatabase): Repositories {
   const documents = documentRepository(db);
   return {
     faaDownloads: faaDownloadRepository(db, documents),
+    libraryFolders: libraryFolderRepository(db),
     materialVideoLinks: materialVideoLinkRepository(db),
     studentPilotSteps: studentPilotStepRepository(db),
     kitQueue: kitQueueRepository(db),

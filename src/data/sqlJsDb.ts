@@ -32,7 +32,7 @@
  * write is durable or undone, so between operations the live database always
  * equals those bytes, and they are what a failed write is restored from.
  */
-import { replaceMaterialLinks, createFundGoal } from "./repositoryWriteTransaction";
+import { replaceMaterialLinks, createFundGoal, deleteLibraryFolder } from "./repositoryWriteTransaction";
 import initSqlJs, { type Database as SqlJsDatabaseHandle } from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 
@@ -399,6 +399,9 @@ export async function createSqlJsDatabase(): Promise<SqlDatabase> {
     },
     replaceMaterialLinksAtomically(kind, id, materialIds) {
       return owner.exclusive(() => durableWrite(() => replaceMaterialLinks(exec, run, kind, id, materialIds)));
+    },
+    deleteLibraryFolderAtomically(id, updatedAt) {
+      return owner.exclusive(() => durableWrite(() => deleteLibraryFolder(exec, run, id, updatedAt)));
     },
     createFundGoalAtomically(goal) {
       return owner.exclusive(() => durableWrite(() => createFundGoal(exec, run, query, goal)));

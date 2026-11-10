@@ -102,6 +102,28 @@ pub async fn replace_material_links_atomically(
     .await
     .map_err(|_| STORAGE_ERROR)?
 }
+fn delete_folder(conn: &mut Connection, id: &str, updated_at: &str) -> rusqlite::Result<()> {
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    tx.execute(
+        "UPDATE library_placements SET folder_id = NULL, position = NULL, updated_at = ?1 WHERE folder_id = ?2",
+        params![updated_at, id],
+    )?;
+    tx.execute("DELETE FROM library_folders WHERE id = ?1", [id])?;
+    tx.commit()
+}
+#[tauri::command]
+pub async fn delete_library_folder_atomically(
+    app: AppHandle,
+    id: String,
+    updated_at: String,
+) -> Result<(), String> {
+    let root = crate::storage::app_root(&app)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        delete_folder(&mut open(&root)?, &id, &updated_at).map_err(|_| STORAGE_ERROR.into())
+    })
+    .await
+    .map_err(|_| STORAGE_ERROR)?
+}
 #[tauri::command]
 pub async fn create_fund_goal_atomically(app: AppHandle, goal: FundGoal) -> Result<(), String> {
     let root = crate::storage::app_root(&app)?;
@@ -156,6 +178,73 @@ mod tests {
     #[test]
     fn schedule_links_rollback_and_success() {
         links_test(LinkKind::Schedule, "event_materials");
+    }
+    fn folder_database() -> Connection {
+        let db = database();
+        db.execute_batch(
+            "CREATE TABLE library_folders (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, position INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+             CREATE TABLE library_placements (material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE, folder_id TEXT, position INTEGER, updated_at TEXT NOT NULL);
+             INSERT INTO library_folders VALUES ('f','Weather',1,'old','old'),('g','Regs',2,'old','old');
+             INSERT INTO library_placements VALUES ('a','f',1,'old'),('b','f',2,'old'),('old','g',1,'old');",
+        )
+        .unwrap();
+        db
+    }
+    fn placements(db: &Connection) -> Vec<(String, Option<String>, Option<i64>, String)> {
+        db.prepare("SELECT material_id, folder_id, position, updated_at FROM library_placements ORDER BY material_id")
+            .unwrap()
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
+            .unwrap()
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .unwrap()
+    }
+    fn count(db: &Connection, table: &str) -> i64 {
+        db.query_row(&format!("SELECT count(*) FROM {table}"), [], |r| r.get(0))
+            .unwrap()
+    }
+    #[test]
+    fn folder_delete_clears_placements_removes_folder_and_keeps_materials() {
+        let mut db = folder_database();
+        delete_folder(&mut db, "f", "new").unwrap();
+        assert_eq!(
+            placements(&db),
+            [
+                ("a".to_string(), None, None, "new".to_string()),
+                ("b".to_string(), None, None, "new".to_string()),
+                (
+                    "old".to_string(),
+                    Some("g".to_string()),
+                    Some(1),
+                    "old".to_string()
+                ),
+            ]
+        );
+        let folders: Vec<String> = db
+            .prepare("SELECT id FROM library_folders")
+            .unwrap()
+            .query_map([], |r| r.get(0))
+            .unwrap()
+            .collect::<rusqlite::Result<_>>()
+            .unwrap();
+        assert_eq!(folders, ["g"]);
+        assert_eq!(count(&db, "study_materials"), 3);
+    }
+    #[test]
+    fn folder_delete_failure_rolls_back_placements_and_folder() {
+        let mut db = folder_database();
+        db.execute_batch("CREATE TRIGGER fail_folder BEFORE DELETE ON library_folders BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END").unwrap();
+        assert!(delete_folder(&mut db, "f", "new").is_err());
+        assert_eq!(
+            placements(&db)[0],
+            (
+                "a".to_string(),
+                Some("f".to_string()),
+                Some(1),
+                "old".to_string()
+            )
+        );
+        assert_eq!(count(&db, "library_folders"), 2);
+        assert_eq!(count(&db, "study_materials"), 3);
     }
     fn goal(id: &str) -> FundGoal {
         FundGoal {

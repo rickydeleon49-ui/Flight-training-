@@ -3,7 +3,7 @@ import { createElement as h } from "react";
 import { readFileSync } from "node:fs";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { MaterialActionsMenu } from "./MaterialActionsMenu";
+import { MaterialActionsMenu, MoveToFolderItem } from "./MaterialActionsMenu";
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 it("floats within a narrow viewport, limits height and aligns every action including Delete", () => {
   vi.stubGlobal("innerWidth", 390); vi.stubGlobal("innerHeight", 500);
@@ -27,4 +27,14 @@ it("floats within a narrow viewport, limits height and aligns every action inclu
   fireEvent.keyDown(screen.getByText("Delete"), { key: "Escape" });
   expect(summary.closest("details")!.open).toBe(false);
   expect(document.activeElement).toBe(summary);
+});
+it("shows Move to folder and disables it for a chapter with a hint", () => {
+  const onMove = vi.fn();
+  const { rerender } = render(h(MaterialActionsMenu, null, h(MoveToFolderItem, { isChapter: false, onMove })));
+  fireEvent.click(screen.getByRole("button", { name: "Move to folder…" }));
+  expect(onMove).toHaveBeenCalledTimes(1);
+  rerender(h(MaterialActionsMenu, null, h(MoveToFolderItem, { isChapter: true, onMove })));
+  const item = screen.getByRole("button", { name: "Move to folder…" }) as HTMLButtonElement;
+  expect(item.disabled).toBe(true);
+  expect(item.title).toBe("Chapters stay with their book.");
 });

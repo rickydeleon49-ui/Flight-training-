@@ -27,6 +27,27 @@ export async function replaceMaterialLinks(
   }
 }
 
+/** Called only while the driver owns its single connection. Native twin: repository_writes.rs. Never touches study_materials. */
+export async function deleteLibraryFolder(
+  exec: (sql: string) => void,
+  run: Run,
+  id: string,
+  updatedAt: string,
+): Promise<void> {
+  exec("BEGIN IMMEDIATE");
+  try {
+    await run(
+      `UPDATE library_placements SET folder_id = NULL, position = NULL, updated_at = ? WHERE folder_id = ?`,
+      [updatedAt, id],
+    );
+    await run(`DELETE FROM library_folders WHERE id = ?`, [id]);
+    exec("COMMIT");
+  } catch (error) {
+    exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export async function createFundGoal(
   exec: (sql: string) => void,
   run: Run,
