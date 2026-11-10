@@ -16,7 +16,7 @@ export interface KeyDate {
   id: string;
   label: string;
   date: IsoDate;
-  kind: "medical" | "milestone";
+  kind: "medical" | "milestone" | "checkride";
   /** Negative once the date has passed. */
   daysAway: number;
   passed: boolean;
@@ -27,8 +27,21 @@ export function upcomingKeyDates(
   milestones: Milestone[],
   today: IsoDate = todayIso(),
   horizonDays = 180,
+  checkrideDate: IsoDate | null = null,
 ): KeyDate[] {
   const dates: KeyDate[] = [];
+
+  const checkrideAway = checkrideDate ? daysBetween(today, checkrideDate) : null;
+  if (checkrideDate && checkrideAway !== null && checkrideAway >= 0 && checkrideAway <= horizonDays) {
+    dates.push({
+      id: "checkride",
+      label: "Checkride",
+      date: checkrideDate,
+      kind: "checkride",
+      daysAway: checkrideAway,
+      passed: false,
+    });
+  }
 
   if (profile.medicalExpiry) {
     const daysAway = daysBetween(today, profile.medicalExpiry);
@@ -47,6 +60,8 @@ export function upcomingKeyDates(
 
   for (const milestone of milestones) {
     if (!milestone.targetDate || milestone.status === "completed") continue;
+    // A checkride milestone on the same day is the same date: show it once.
+    if (checkrideDate && milestone.targetDate === checkrideDate && /check\s?ride/i.test(milestone.title)) continue;
     const daysAway = daysBetween(today, milestone.targetDate);
     if (daysAway < 0 || daysAway > horizonDays) continue;
     dates.push({

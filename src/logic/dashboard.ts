@@ -6,6 +6,7 @@
  * decides what "most important next" means.
  */
 import { daysBetween, todayIso } from "@/lib/dates";
+import { daysToCheckride } from "./checkride";
 import type {
   Goal,
   JournalEntry,
@@ -55,6 +56,7 @@ export interface DashboardSources {
   questions: Question[];
   transactions: Transaction[];
   today?: IsoDate;
+  checkrideDate?: IsoDate | null;
   homework?: readonly import("@/domain/homework").HomeworkSnapshot[];
   notes?: Note[];
   dailyPlan?: DailyPlanState | null;
@@ -149,7 +151,8 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
     sources.actions.length === 0 &&
     sources.events.length === 0 &&
     sources.materials.length === 0 &&
-    sources.goals.length === 0;
+    sources.goals.length === 0 &&
+    daysToCheckride(sources.checkrideDate, today) === null;
 
   const focusLabel = sources.profile.currentFocus || milestone?.title || "";
 
@@ -211,7 +214,7 @@ export function buildDashboard(sources: DashboardSources, now: Date = new Date()
       ? { material: focusMaterial, nextAction: relatedAction("material", focusMaterial.id) }
       : null,
     needsAttention: overdue,
-    keyDates: upcomingKeyDates(sources.profile, sources.milestones, today),
+    keyDates: upcomingKeyDates(sources.profile, sources.milestones, today, 180, sources.checkrideDate ?? null),
     // Nothing appears until the student has actually put something there.
     personal:
       sources.profile.whyNote.trim() || sources.profile.photo
