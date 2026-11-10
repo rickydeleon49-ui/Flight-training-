@@ -2792,7 +2792,7 @@ fn schema_37_upgrades_a_36_database_and_leaves_its_rows_alone() {
         .collect();
     assert_eq!(before, after);
     crate::backup::verify_schema_37_study_packs(&conn).unwrap();
-    assert_eq!(crate::CURRENT_SCHEMA_VERSION, 37);
+    assert!(crate::CURRENT_SCHEMA_VERSION >= 37);
 }
 
 #[test]

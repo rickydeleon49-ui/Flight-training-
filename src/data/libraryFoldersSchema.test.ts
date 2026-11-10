@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { applyMigrations, MIGRATIONS } from "./migrations";
+import { validateLibraryFolders } from "./practiceStateValidation";
 import { openNodeEngine } from "./testing/skillEvidenceEngines";
 
 describe("library folders schema 38", () => {
@@ -147,6 +148,53 @@ describe("library folders schema 38", () => {
       expect(engine.query("SELECT * FROM library_placements")).toEqual([]);
     } finally {
       engine.close();
+    }
+  });
+
+  it.each([
+    "DROP TABLE library_folders",
+    "DROP TABLE library_placements",
+    "DROP INDEX idx_library_placements_folder",
+    "ALTER TABLE library_folders DROP COLUMN position",
+    "ALTER TABLE library_placements DROP COLUMN position",
+    `DROP TABLE library_placements;
+     CREATE TABLE library_placements (
+       material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id),
+       folder_id TEXT,
+       position INTEGER,
+       updated_at TEXT NOT NULL
+     );
+     CREATE INDEX idx_library_placements_folder ON library_placements(folder_id);`,
+    `DROP TABLE library_placements;
+     DROP TABLE library_folders;
+     CREATE TABLE library_folders (
+       id TEXT PRIMARY KEY NOT NULL,
+       name TEXT NOT NULL,
+       position INTEGER NOT NULL,
+       created_at TEXT NOT NULL,
+       updated_at TEXT NOT NULL
+     );
+     CREATE TABLE library_placements (
+       material_id TEXT PRIMARY KEY NOT NULL REFERENCES study_materials(id) ON DELETE CASCADE,
+       folder_id TEXT,
+       position INTEGER,
+       updated_at TEXT NOT NULL
+     );
+     CREATE INDEX idx_library_placements_folder ON library_placements(folder_id);`,
+  ])("refuses schema damage: %s", async (damage) => {
+    const reference = await openNodeEngine();
+    const damaged = await openNodeEngine();
+    try {
+      await applyMigrations((sql) => reference.exec(sql), new Set());
+      await applyMigrations((sql) => damaged.exec(sql), new Set());
+      const query = async (sql: string, params: Parameters<typeof damaged.query>[1]) => damaged.query(sql, params);
+      const ref = async (sql: string, params: Parameters<typeof reference.query>[1]) => reference.query(sql, params);
+      await validateLibraryFolders(query, ref);
+      damaged.exec(damage);
+      await expect(validateLibraryFolders(query, ref)).rejects.toThrow();
+    } finally {
+      reference.close();
+      damaged.close();
     }
   });
 });
