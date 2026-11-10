@@ -51,3 +51,34 @@ export async function notify(title: string, body: string): Promise<boolean> {
     return false;
   }
 }
+
+const DAILY_ID = 41001;
+
+/**
+ * iPhone only: keep ONE repeating notice at HH:MM local time with the system
+ * (it shows even when the app is closed). Replaces any earlier one. False when
+ * nothing was scheduled (no permission, not in the app, or an error).
+ */
+export async function scheduleDaily(time: string, title: string, body: string): Promise<boolean> {
+  try {
+    const p = await plugin();
+    if (!p || (await p.isPermissionGranted()) !== true) return false;
+    const [hour, minute] = time.split(":").map(Number);
+    if (hour === undefined || minute === undefined || Number.isNaN(hour) || Number.isNaN(minute)) return false;
+    await p.cancel([DAILY_ID]);
+    p.sendNotification({ id: DAILY_ID, title, body, schedule: p.Schedule.interval({ hour, minute }) });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Remove the repeating daily notice, if any. Never throws. */
+export async function cancelDaily(): Promise<void> {
+  try {
+    const p = await plugin();
+    if (p) await p.cancel([DAILY_ID]);
+  } catch {
+    /* nothing to cancel */
+  }
+}

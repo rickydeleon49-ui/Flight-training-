@@ -106,6 +106,17 @@ describe("toolkit defaults without structuredClone", () => {
     expect(normalizeToolkitState({ studyGuideNotice: false }).studyGuideNotice).toBe(false);
   });
 
+  it("daily study reminder defaults off at 19:00 and tolerates bad values", () => {
+    expect(defaultToolkitState().studyReminder).toEqual({ enabled: false, time: "19:00" });
+    expect(normalizeToolkitState({}).studyReminder).toEqual({ enabled: false, time: "19:00" });
+    for (const bad of [null, "x", 5, [], { enabled: "yes", time: "25:00" }, { enabled: true, time: "7:30" }, { time: 700 }]) {
+      const r = normalizeToolkitState({ studyReminder: bad } as never).studyReminder!;
+      expect(r.enabled).toBe(typeof bad === "object" && bad !== null && (bad as { enabled?: unknown }).enabled === true);
+      expect(r.time).toBe("19:00");
+    }
+    expect(normalizeToolkitState({ studyReminder: { enabled: true, time: "06:05" } }).studyReminder).toEqual({ enabled: true, time: "06:05" });
+  });
+
   it("keeps valid stored values and owns every nested object and array", async () => {
     const stored = normalizeToolkitState({
       ...DEFAULT_TOOLKIT_STATE,
