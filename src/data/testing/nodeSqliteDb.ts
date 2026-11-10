@@ -18,7 +18,7 @@
  * when pending migrations had to run before validation could refuse it
  * (M4S1-R4: before this, the file was left upgraded).
  */
-import { replaceMaterialLinks, createFundGoal } from "../repositoryWriteTransaction";
+import { replaceMaterialLinks, createFundGoal, deleteLibraryFolder } from "../repositoryWriteTransaction";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 import type { SqlDatabase, SqlValue } from "../db";
@@ -183,6 +183,9 @@ export async function createNodeSqliteDatabase(path = ":memory:"): Promise<TestD
     },
     replaceMaterialLinksAtomically(kind, id, materialIds) {
       return owner.exclusive(() => replaceMaterialLinks(exec, run, kind, id, materialIds));
+    },
+    deleteLibraryFolderAtomically(id, updatedAt) {
+      return owner.exclusive(() => deleteLibraryFolder(exec, run, id, updatedAt));
     },
     createFundGoalAtomically(goal) {
       return owner.exclusive(() => createFundGoal(exec, run, query, goal));

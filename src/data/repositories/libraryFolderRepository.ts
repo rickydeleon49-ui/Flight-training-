@@ -100,14 +100,13 @@ export function libraryFolderRepository(db: SqlDatabase) {
 
     /**
      * Clears the placements, then removes the folder. Never touches study_materials.
-     * Order is safe if the second step fails: the folder stays, just empty.
+     * One transaction: if the delete fails, the placements are restored too.
      */
     async deleteFolder(id: string): Promise<void> {
-      await db.execute(
-        `UPDATE library_placements SET folder_id = NULL, position = NULL, updated_at = ? WHERE folder_id = ?`,
-        [nowIso(), id],
-      );
-      await db.execute(`DELETE FROM library_folders WHERE id = ?`, [id]);
+      if (!db.deleteLibraryFolderAtomically) {
+        throw new Error("Atomic folder deletes require transaction support.");
+      }
+      await db.deleteLibraryFolderAtomically(id, nowIso());
     },
 
     /** Moves materials to the end of a folder (or to "Not in a folder" with null) in one statement. */

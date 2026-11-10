@@ -67,6 +67,17 @@ describe("library folders", () => {
     expect(placements.every((p) => p.folderId === null && p.position === null)).toBe(true);
   });
 
+  it("a failed folder delete rolls back the placement changes too", async () => {
+    const f = await lf().createFolder("Weather");
+    await lf().moveMaterials(["a", "b"], f.id);
+    await db.execute(
+      "CREATE TRIGGER fail_folder BEFORE DELETE ON library_folders BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END",
+    );
+    await expect(lf().deleteFolder(f.id)).rejects.toThrow();
+    expect(await lf().listFolders()).toHaveLength(1);
+    expect((await lf().listPlacements()).every((p) => p.folderId === f.id && p.position !== null)).toBe(true);
+  });
+
   it("deleting a material removes its placement", async () => {
     const f = await lf().createFolder("Weather");
     await lf().moveMaterials(["a", "b"], f.id);

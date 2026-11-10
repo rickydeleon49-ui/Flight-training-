@@ -541,6 +541,7 @@ export async function createTauriDatabase(): Promise<SqlDatabase> {
     saveHomeworkAtomically: (operation) => invokeHomeworkSave(operation),
     saveOralScenarioAtomically: (operation) => invokeOralScenarioSave(operation),
     replaceMaterialLinksAtomically: (kind, id, materialIds) => invoke("replace_material_links_atomically", { kind, id, materialIds }),
+    deleteLibraryFolderAtomically: (id, updatedAt) => invoke("delete_library_folder_atomically", { id, updatedAt }),
     createFundGoalAtomically: (goal) => invoke("create_fund_goal_atomically", { goal }),
     saveStudySetAtomically: (operation, guideJobId) => invokeStudySetSave(operation, invoke, guideJobId),
     erasePracticeHistoryAtomically(

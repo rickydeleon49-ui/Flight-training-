@@ -9,6 +9,8 @@
  */
 export interface SqlDatabase {
   replaceMaterialLinksAtomically?(kind: import("./repositoryWriteTransaction").MaterialLinkKind, id: string, materialIds: string[]): Promise<void>;
+  /** LIBRARY-ORG-01: clear a folder's placements and delete it in one transaction. No sequential fallback. */
+  deleteLibraryFolderAtomically?(id: string, updatedAt: string): Promise<void>;
   createFundGoalAtomically?(goal: import("@/domain/types").FundGoal): Promise<void>;
   /** HW-01b: no sequential fallback. */
   saveHomeworkAtomically?(operation: import("@/domain/homework").HomeworkOperation): Promise<import("@/domain/homework").HomeworkResult>;
