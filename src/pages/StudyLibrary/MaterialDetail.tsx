@@ -1233,10 +1233,10 @@ function MaterialDetailPage() {
                   }
                 />
                 {guideStatusLine ? (
-                  <p aria-live="polite" className="small" data-guide-status style={{ padding: "var(--space-3) var(--space-5) 0" }}>{guideStatusLine}</p>
+                  <p aria-live="polite" className="small material-detail__intro" data-guide-status>{guideStatusLine}</p>
                 ) : null}
                 {!tipsHidden && !hasSavedGuide ? (
-                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                  <p className="tiny muted material-detail__intro">
                     {pdfSet
                       ? "Review the guide saved from your PDF text, and follow page references back to the source."
                       : importedSet
@@ -1251,7 +1251,7 @@ function MaterialDetailPage() {
                     <Button variant="secondary" onClick={() => jumpTo("material-pdf-kit")}>or make a kit on this Mac</Button>
                   </p> : null}
                   {deviceCan().generate && isOverLimit ? (
-                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                    <div className="stack stack--3 material-detail__mb-4">
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
                         <p className="tiny">{tooBig}</p>
@@ -1269,7 +1269,7 @@ function MaterialDetailPage() {
                     ) : null
                   ) : null}
                   {generationError ? (
-                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                    <div className="stack stack--3 material-detail__mt-3">
                       <GeminiErrorText model={gemini?.model} message={generationError} />
                       {retryStudy ? (
                         <div className="row row--wrap">
@@ -1424,7 +1424,7 @@ function MaterialDetailPage() {
                         : "Optional"
                   }
                   action={
-                    <div className="row row--wrap" style={{ alignItems: "center" }}>
+                    <div className="row row--wrap material-detail__center">
                       {cardsOnlyManual && deviceCan().editStudyMaterial ? (
                         <Button
                           size="small"
@@ -1457,18 +1457,17 @@ function MaterialDetailPage() {
                   }
                 />
                 {cardsOnlyManual && editingSet && studySet && deviceCan().editStudyMaterial ? (
-                  <div className="stack stack--5" style={{ padding: "var(--space-4) var(--space-5) 0" }}>
+                  <div className="stack stack--5 material-detail__editor">
                     <StudySetEditor material={material} studySet={studySet} />
                   </div>
                 ) : null}
                 {canOfferGemini && !(deviceCan().splitFiles && isOverLimit) ? (
                   <div
                     data-gemini-cards
-                    className="row row--wrap"
-                    style={{ alignItems: "center", margin: "var(--space-4) var(--space-5) 0", paddingTop: "var(--space-3)", borderTop: "1px solid var(--border-subtle)", gap: "var(--space-3)" }}
+                    className="row row--wrap material-detail__toolbar"
                   >
                     <span className="small muted">Uses {helper}</span>
-                          <label className="row row--compact small" style={{ alignItems: "center", gap: "var(--space-2)" }}>
+                          <label className="row row--compact small material-detail__target">
                             Target cards
                             <select
                               aria-label="Target cards"
@@ -1513,17 +1512,17 @@ function MaterialDetailPage() {
                   </div>
                 ) : null}
                 {cardsStatusLine ? (
-                  <p aria-live="polite" className="small" data-cards-status style={{ padding: "var(--space-3) var(--space-5) 0" }}>{cardsStatusLine}</p>
+                  <p aria-live="polite" className="small material-detail__intro" data-cards-status>{cardsStatusLine}</p>
                 ) : null}
                 {!tipsHidden ? (
-                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                  <p className="tiny muted material-detail__intro">
                     Create key flashcards to practice recall, and review cards you've saved.
                   </p>
                 ) : null}
                 <CardBody>
                   <GuideCardRecoveryNotice materialId={material.id} />
                   {deviceCan().generate && isOverLimit ? (
-                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                    <div className="stack stack--3 material-detail__mb-4">
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
                         <p className="tiny">{tooBig}</p>
@@ -1541,7 +1540,7 @@ function MaterialDetailPage() {
                     ) : null
                   ) : null}
                   {cardGenerationError ? (
-                    <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                    <div className="stack stack--3 material-detail__mb-3">
                       <GeminiErrorText model={gemini?.model} message={cardGenerationError} />
                       {retryFlashcards ? (
                         <div className="row row--wrap">
@@ -1749,13 +1748,13 @@ function MaterialDetailPage() {
                   }
                 />
                 {!tipsHidden ? (
-                  <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>
+                  <p className="tiny muted material-detail__intro">
                     Try saved questions with explanations; your completed attempts stay in practice history.
                   </p>
                 ) : null}
                 <CardBody>
                   {deviceCan().generate && isOverLimit ? (
-                    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+                    <div className="stack stack--3 material-detail__mb-4">
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
                         <p className="tiny">{tooBig}</p>
@@ -1775,7 +1774,7 @@ function MaterialDetailPage() {
                     ) : null
                   ) : null}
                   {practiceGenerationError ? (
-                    <div className="stack stack--3" style={{ marginTop: "var(--space-3)" }}>
+                    <div className="stack stack--3 material-detail__mt-3">
                       <GeminiErrorText model={gemini?.model} message={practiceGenerationError} />
                       {retryPractice ? (
                         <div className="row row--wrap">
@@ -1803,7 +1802,7 @@ function MaterialDetailPage() {
                     />
                   ) : null}
                   {practiceMetadata.phase === "failed" ? (
-                    <div className="stack stack--3" style={{ marginBottom: "var(--space-3)" }}>
+                    <div className="stack stack--3 material-detail__mb-3">
                       <div className="ai-disclaimer" role="alert">
                         <AlertIcon size={16} />
                         <p className="tiny">
@@ -1844,8 +1843,8 @@ function MaterialDetailPage() {
                     </div>
                   ) : practiceTest ? (
                     <div className="stack stack--4">
-                      <div className="row row--between row--wrap" style={{ alignItems: "center" }}>
-                        <div className="ai-disclaimer" style={{ flex: "1 1 16rem", margin: 0 }}>
+                      <div className="row row--between row--wrap material-detail__center">
+                        <div className="ai-disclaimer material-detail__disclaimer">
                           <AlertIcon size={16} />
                           <p className="tiny">
                             {pdfTest
@@ -1928,28 +1927,22 @@ function MaterialDetailPage() {
               action={
                 notesStatus === "idle" ? null : (
                   <span
-                    className="tiny"
                     role="status"
-                    style={{
-                      color:
-                        notesStatus === "saved"
-                          ? "var(--status-complete)"
-                          : "var(--text-tertiary)",
-                    }}
+                    className={`tiny material-detail__notes-status${notesStatus === "saved" ? " is-saved" : ""}`}
                   >
                     {notesStatus === "saving" ? "Saving…" : notesStatus === "error" ? "Save failed" : "Saved"}
                   </span>
                 )
               }
             />
-            {!tipsHidden && !notesConflict ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
+            {!tipsHidden && !notesConflict ? <p className="tiny muted material-detail__intro">Write what you want to remember. Your notes save as you type; watch for Saved.</p> : null}
             <CardBody>
               {notesConflict ? (
                 <div role="status">
                   <p>You have unsaved notes from earlier.</p>
                   <Button onClick={keepDraft}>Keep these</Button>{" "}
                   <Button onClick={useSaved}>Use the saved notes</Button>
-                  <details><summary>Saved notes</summary><p style={{ whiteSpace: "pre-wrap" }}>{material.notes || "No saved notes."}</p></details>
+                  <details><summary>Saved notes</summary><p className="material-detail__pre-wrap">{material.notes || "No saved notes."}</p></details>
                 </div>
               ) : null}
               <TextArea
@@ -1978,12 +1971,12 @@ function MaterialDetailPage() {
           </div><div className="detail__column">
           <Card>
             <CardHeader title="Questions for my instructor" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Keep questions here to ask later; they also appear on your Questions page.</p> : null}
+            {!tipsHidden ? <p className="tiny muted material-detail__intro">Keep questions here to ask later; they also appear on your Questions page.</p> : null}
             <CardBody>
               <div className="stack stack--3">
                 {questions.map((question) => (
                   <div className="row row--between" key={question.id}>
-                    <span className="small wrap-anywhere" style={{ whiteSpace: "pre-line" }}>{question.text}</span>
+                    <span className="small wrap-anywhere material-detail__pre-line">{question.text}</span>
                     <Badge>{question.status === "answered" ? "Answered" : "To ask"}</Badge>
                   </div>
                 ))}
@@ -2016,15 +2009,15 @@ function MaterialDetailPage() {
                 </Button>
               }
             />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Give this material a small next step, and add a date if you have one in mind.</p> : null}
+            {!tipsHidden ? <p className="tiny muted material-detail__intro">Give this material a small next step, and add a date if you have one in mind.</p> : null}
             <CardBody flush>
               {relatedActions.length === 0 ? (
-                <p className="small muted" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
+                <p className="small muted material-detail__empty">
                   What should you do with this material? &ldquo;Review pages 4&ndash;8 before
                   Saturday&rdquo; is more useful than &ldquo;study&rdquo;.
                 </p>
               ) : (
-                <div style={{ paddingBottom: "var(--space-3)" }}>
+                <div className="material-detail__pb-3">
                   {relatedActions.map((action) => (
                     <ActionRow
                       key={action.id}
@@ -2049,7 +2042,7 @@ function MaterialDetailPage() {
           <RelatedStudy key={material.id} materialId={material.id} initiallyOpen={tab === "more"} />
           <Card>
             <CardHeader title="Details and review status" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>Choose where you are with this material, and record a review when you finish one.</p> : null}
+            {!tipsHidden ? <p className="tiny muted material-detail__intro">Choose where you are with this material, and record a review when you finish one.</p> : null}
             <CardBody>
               <div className="stack stack--4">
                 <Select
@@ -2103,7 +2096,7 @@ function MaterialDetailPage() {
                   </div>
                 </div>
                 {deviceCan().splitFiles && fileMissing ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                  <div className="row row--between row--wrap material-detail__mt-3">
                     <p className="tiny muted">
                       Everything you wrote is still here. Choose the original or a replacement
                       copy; it will be copied back inside the desktop app.
@@ -2119,7 +2112,7 @@ function MaterialDetailPage() {
                   </div>
                 ) : null}
                 {openError ? (
-                  <div className="row row--between row--wrap" style={{ marginTop: "var(--space-3)" }}>
+                  <div className="row row--between row--wrap material-detail__mt-3">
                     <p className="field__error">{openError}</p>
                     {deviceCan().revealFiles && !fileMissing ? (
                       <Button size="small" onClick={() => void revealStoredFile()}>
@@ -2138,7 +2131,7 @@ function MaterialDetailPage() {
             <section id="material-mac-backup" tabIndex={-1} aria-label="On this Mac (backup)">
               <Card>
                 <CardHeader title="On this Mac (backup)" headingId="material-backup-heading" />
-                {deviceCan().pdfKit && !tipsHidden && material.filePath ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
+                {deviceCan().pdfKit && !tipsHidden && material.filePath ? <p className="tiny muted material-detail__intro">No internet, or don't want to use {helper}? Read this PDF's text and make a study kit right on your Mac.</p> : null}
                 <CardBody><div className="stack stack--4">
                   {deviceCan().pdfKit && material.filePath ? <>
                     <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div>
@@ -2268,7 +2261,7 @@ function MaterialDetailPage() {
           ) : material.filePath ? <div id="material-offline-study" tabIndex={-1}><OfflineStudyPanel material={material} focusRequested={tab === "more" && location.hash === "#read-pdf-text"} /></div> : null}
           <Card>
             <CardHeader title="Details" />
-            {!tipsHidden ? <p className="tiny muted" style={{ padding: "var(--space-3) var(--space-5) 0" }}>See how this material is organized. Use Edit under File to change its details.</p> : null}
+            {!tipsHidden ? <p className="tiny muted material-detail__intro">See how this material is organized. Use Edit under File to change its details.</p> : null}
             <CardBody>
               <dl className="definition">
                 <dt>Type</dt>
@@ -2300,7 +2293,7 @@ function MaterialDetailPage() {
               </dl>
 
               {material.tags.length > 0 ? (
-                <div className="tag-list" style={{ marginTop: "var(--space-4)" }}>
+                <div className="tag-list material-detail__mt-4">
                   {material.tags.map((tag) => (
                     <span className="tag" key={tag}>
                       {tag}
@@ -2629,7 +2622,7 @@ function GenerationNoticeView({
   // The phone has no AI settings, so "Connect ... in Settings" would be a dead end.
   if (notice.settings && !deviceCan().generate) return null;
   return (
-    <div className="stack stack--3" style={{ marginBottom: "var(--space-4)" }}>
+    <div className="stack stack--3 material-detail__mb-4">
       <div className="ai-disclaimer" role="note">
         <AlertIcon size={16} />
         <p className="tiny">{notice.text}</p>
